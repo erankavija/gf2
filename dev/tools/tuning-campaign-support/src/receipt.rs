@@ -1,6 +1,6 @@
 //! Benchmark receipt schema and the independent acceptance evaluation.
 //!
-//! A receipt is the committed evidence of one bounded campaign: pinned
+//! A receipt is the durable evidence of one bounded campaign: pinned
 //! protocol, contract and addendum identities, source and build identities,
 //! runtime host observation, lock evidence, the append-only execution log,
 //! checkpoints, every arm's raw timing windows, and the runner's own claims.
@@ -16,10 +16,11 @@ use crate::host::{CoreArm, HostObservation};
 use crate::journal::{ExecutionLog, JournalEvent, JournalRecord};
 use crate::protocol::{
     is_hex, sha256_hex, ArtifactPin, BuildIdentity, CacheState, CellObjective, CellRole,
-    DecoderArmKind, FamilyAddendum, Normalization, PinSource, Precision, ReceiptLabel, Schedule,
+    DecoderArmKind, FamilyAddendum, Normalization, Precision, ReceiptLabel, Schedule,
     SharedSettings, Stopping, ACCEPTANCE_SCHEMA_ID, ADDENDUM_SCHEMA_PATH, CONTRACT_PATH,
     PROTOCOL_PATH, RECEIPT_SCHEMA_ID, SHARED_SETTINGS,
 };
+use crate::provenance::{ProducingInputs, ProducingSnapshot};
 use crate::schema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -44,9 +45,22 @@ pub const CHECKPOINT_DIR: &str = "checkpoints";
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceIdentity {
+    /// Informational source-control locator; never an acceptance key.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub revision: String,
+    /// Historical repository-tree digest; informational for old receipts.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub tree_sha256: String,
+    /// Historical whole-worktree observation; informational for old receipts.
+    #[serde(default, skip_serializing_if = "is_false")]
     pub clean: bool,
+    /// Canonical content closure of producing code and build inputs.
+    #[serde(default)]
+    pub producing: Option<ProducingSnapshot>,
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
 }
 
 /// Lock evidence observed inside the wrapper.
@@ -256,6 +270,9 @@ pub struct BenchmarkReceipt {
     pub schema: String,
     pub campaign_id: String,
     pub issue: String,
+    /// Repository-relative publication path, used to reject self-references.
+    #[serde(default)]
+    pub receipt_path: String,
     pub label: ReceiptLabel,
     pub campaign_seed: u64,
     pub settings: SharedSettings,
@@ -413,10 +430,8 @@ impl Evaluation {
     }
 }
 
-/// Evaluates the receipt directory. `repo_root` enables content verification
-/// of pinned artifacts and the prior-trial ledger; without it those checks
-/// are recorded as notes.
-pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<AcceptanceSummary> {
+/// Evaluates a self-contained receipt directory from its durable snapshots.
+pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
     let receipt_bytes = fs::read(receipt_dir.join(RECEIPT_FILE))?;
     let receipt_sha256 = sha256_hex(&receipt_bytes);
     let receipt = BenchmarkReceipt::decode(&receipt_bytes)
@@ -436,6 +451,7 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
             ),
         );
     }
+    let mut verified_pins: BTreeMap<&str, Vec<u8>> = BTreeMap::new();
     for (rule, name, pin, expected_path) in [
         ("P-02", "protocol", &receipt.protocol, Some(PROTOCOL_PATH)),
         ("P-02", "contract", &receipt.contract, Some(CONTRACT_PATH)),
@@ -459,32 +475,11 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
                 );
             }
         }
-        match repo_root {
-            Some(root) => match pin.verify_content(root) {
-                Err(message) => e.error(rule, None, format!("{name} identity: {message}")),
-                Ok(PinSource::WorkingTree) => e.note(
-                    rule,
-                    None,
-                    format!(
-                        "{name} verified against the working tree; commit {} is not resolvable here",
-                        pin.git_commit
-                    ),
-                ),
-                Ok(PinSource::Commit) => {
-                    if pin.working_tree_matches(root) == Some(false) {
-                        e.note(
-                            rule,
-                            None,
-                            format!("{name} changed in the working tree after this measurement; the pinned version governed the run"),
-                        );
-                    }
-                }
-            },
-            None => e.note(
-                rule,
-                None,
-                format!("{name} content digest not verified: no repository root"),
-            ),
+        match pin.verify_content(receipt_dir) {
+            Err(message) => e.error(rule, None, format!("{name} identity: {message}")),
+            Ok(bytes) => {
+                verified_pins.insert(name, bytes);
+            }
         }
     }
     if receipt.settings != SHARED_SETTINGS && !receipt.settings_deviation {
@@ -502,79 +497,80 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
         );
     }
 
-    // Addendum: decode from the repository when available, otherwise trust nothing beyond identity.
-    let addendum = match repo_root {
-        Some(root) => match receipt.addendum.read_pinned(root).map(|(bytes, _)| bytes) {
-            Ok(bytes) => match FamilyAddendum::decode(&bytes) {
-                Ok(addendum) => {
-                    if let Err(errors) = addendum.validate() {
-                        for message in errors {
-                            e.error("P-03", None, format!("addendum: {message}"));
-                        }
+    // Decode the schema and addendum only from the exact pinned bytes already
+    // authenticated above.
+    let addendum = match verified_pins.remove("addendum") {
+        Some(bytes) => match FamilyAddendum::decode(&bytes) {
+            Ok(addendum) => {
+                if let Err(errors) = addendum.validate() {
+                    for message in errors {
+                        e.error("P-03", None, format!("addendum: {message}"));
                     }
-                    if let Ok((schema_bytes, _)) = receipt.addendum_schema.read_pinned(root) {
-                        match (
-                            serde_json::from_slice::<Value>(&schema_bytes),
-                            serde_json::from_slice::<Value>(&bytes),
-                        ) {
-                            (Ok(schema_value), Ok(instance)) => {
-                                for violation in schema::validate(&schema_value, &instance) {
-                                    e.error(
-                                        "P-03",
-                                        None,
-                                        format!(
-                                            "addendum schema violation at {}: {}",
-                                            violation.instance_path, violation.message
-                                        ),
-                                    );
-                                }
+                }
+                if let Some(schema_bytes) = verified_pins.get("addendum schema") {
+                    match (
+                        serde_json::from_slice::<Value>(schema_bytes),
+                        serde_json::from_slice::<Value>(&bytes),
+                    ) {
+                        (Ok(schema_value), Ok(instance)) => {
+                            for violation in schema::validate(&schema_value, &instance) {
+                                e.error(
+                                    "P-03",
+                                    None,
+                                    format!(
+                                        "addendum schema violation at {}: {}",
+                                        violation.instance_path, violation.message
+                                    ),
+                                );
                             }
-                            _ => e.error("P-03", None, "addendum schema or addendum is not JSON"),
                         }
-                    } else {
-                        e.error(
-                            "P-03",
-                            None,
-                            "addendum schema file is missing from the repository",
-                        );
+                        _ => e.error("P-03", None, "addendum schema or addendum is not JSON"),
                     }
-                    Some(addendum)
+                } else {
+                    e.error(
+                        "P-03",
+                        None,
+                        "addendum schema snapshot is missing from the receipt",
+                    );
                 }
-                Err(message) => {
-                    e.error("P-03", None, message);
-                    None
-                }
-            },
+                Some(addendum)
+            }
             Err(message) => {
-                e.error(
-                    "P-03",
-                    None,
-                    format!("addendum {} unreadable: {message}", receipt.addendum.path),
-                );
+                e.error("P-03", None, message);
                 None
             }
         },
         None => {
-            e.note(
+            e.error(
                 "P-03",
                 None,
-                "addendum not decoded: no repository root; cells are evaluated structurally only",
+                "addendum not decoded because its pinned bytes were not verified",
             );
             None
         }
     };
 
-    if !is_hex(&receipt.source.revision, 40) {
-        e.error("P-05", None, "source revision is not a 40-hex object ID");
-    }
-    if !is_hex(&receipt.source.tree_sha256, 64) {
-        e.error("P-05", None, "source tree digest is not 64 hex digits");
-    }
-    if !receipt.source.clean {
-        e.error("P-05", None, "measurement ran on a dirty source tree");
-    }
     if receipt.toolchain.trim().is_empty() {
         e.error("P-05", None, "toolchain identity is empty");
+    }
+    match &receipt.source.producing {
+        Some(snapshot) => {
+            if let Err(error) =
+                ProducingInputs::verify_snapshot(&receipt_dir.join("inputs/producing"), snapshot)
+            {
+                e.error("P-05", None, format!("producing inputs: {error}"));
+            }
+        }
+        None => e.error("P-05", None, "receipt lacks a producing-input snapshot"),
+    }
+    if let Some(addendum) = &addendum {
+        verify_resolution_evidence(
+            e,
+            receipt_dir,
+            &receipt.receipt_path,
+            &receipt_sha256,
+            addendum,
+        );
     }
     let host = &receipt.host;
     if host.cpu_model.trim().is_empty()
@@ -624,6 +620,20 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
             }
             match ExecutionLog::validate_prefix(&bytes, &receipt.campaign_id) {
                 Ok(records) => {
+                    let frozen_addendum = records.first().and_then(|record| {
+                        record
+                            .details
+                            .get("addendum")
+                            .cloned()
+                            .and_then(|value| serde_json::from_value::<ArtifactPin>(value).ok())
+                    });
+                    if frozen_addendum.as_ref() != Some(&receipt.addendum) {
+                        e.error(
+                            "P-03",
+                            None,
+                            "campaign-start does not freeze the receipt addendum content pin",
+                        );
+                    }
                     let mut seen_cell = false;
                     for record in &records {
                         match record.event {
@@ -1246,24 +1256,18 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
                 e.error("P-21", Some(&declared.cell_id), "declared cell is absent from the receipt; negative and unavailable results must be recorded");
             }
         }
-        if let Some(root) = repo_root {
-            for trial in &addendum.family_wise.prior_trials {
-                match fs::read(root.join(&trial.receipt)) {
-                    Ok(bytes) if sha256_hex(&bytes) == trial.sha256 => {}
-                    Ok(_) => e.error(
-                        "P-22",
-                        None,
-                        format!(
-                            "prior trial {} digest differs from the ledger",
-                            trial.receipt
-                        ),
-                    ),
-                    Err(error) => e.error(
-                        "P-22",
-                        None,
-                        format!("prior trial {} unreadable: {error}", trial.receipt),
-                    ),
-                }
+        for trial in &addendum.family_wise.prior_trials {
+            let pin = ArtifactPin {
+                path: trial.receipt.clone(),
+                snapshot: format!("inputs/prior-trials/{}.json", trial.sha256),
+                sha256: trial.sha256.clone(),
+            };
+            if let Err(message) = pin.verify_content(receipt_dir) {
+                e.error(
+                    "P-22",
+                    None,
+                    format!("prior trial {} snapshot invalid: {message}", trial.receipt),
+                );
             }
         }
     }
@@ -1295,6 +1299,72 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
         findings: evaluation.findings,
         cells: verdicts,
     })
+}
+
+fn verify_resolution_evidence(
+    evaluation: &mut Evaluation,
+    receipt_dir: &Path,
+    evaluated_receipt_path: &str,
+    evaluated_receipt_sha256: &str,
+    addendum: &FamilyAddendum,
+) {
+    if addendum.effect.measurement_resolution.is_none() {
+        return;
+    }
+    let Some(evidence) = &addendum.effect.resolution_evidence else {
+        // Structural validation emits the precise missing-field finding.
+        return;
+    };
+    let evidence_path = Path::new(&evidence.receipt);
+    if evidence_path.is_absolute()
+        || evidence_path
+            .components()
+            .any(|component| matches!(component, std::path::Component::ParentDir))
+    {
+        evaluation.error(
+            "P-03",
+            None,
+            "resolution evidence receipt is not repository-relative",
+        );
+        return;
+    }
+    if evidence.receipt == evaluated_receipt_path || evidence.sha256 == evaluated_receipt_sha256 {
+        evaluation.error(
+            "P-03",
+            None,
+            "resolution evidence names the receipt under evaluation",
+        );
+        return;
+    }
+    let pin = ArtifactPin {
+        path: evidence.receipt.clone(),
+        snapshot: "inputs/resolution-evidence/receipt.json".into(),
+        sha256: evidence.sha256.clone(),
+    };
+    let bytes = match pin.verify_content(receipt_dir) {
+        Ok(bytes) => bytes,
+        Err(message) => {
+            evaluation.error(
+                "P-03",
+                None,
+                format!("resolution evidence is not a verified pilot snapshot: {message}"),
+            );
+            return;
+        }
+    };
+    match BenchmarkReceipt::decode(&bytes) {
+        Ok(pilot) if pilot.label == ReceiptLabel::Pilot => {}
+        Ok(_) => evaluation.error(
+            "P-03",
+            None,
+            "resolution evidence receipt is not labelled pilot",
+        ),
+        Err(message) => evaluation.error(
+            "P-03",
+            None,
+            format!("resolution evidence receipt does not decode: {message}"),
+        ),
+    }
 }
 
 fn close(left: f64, right: f64) -> bool {

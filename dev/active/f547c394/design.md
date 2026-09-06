@@ -15,7 +15,7 @@ the schema is [`addendum.schema.json`](addendum.schema.json).
 | Protocol identity, frozen settings, addendum and plan contracts (`protocol`), receipt schema and acceptance evaluation (`receipt`), JSON Schema subset validator (`schema`) | New library modules | One typed source for the receipt and addendum contracts serves the runner, the acceptance tool and the tests (`@/inv/semantic-types`); the committed JSON Schema is the declared machine-readable contract and is enforced at acceptance time by the subset validator, so the two cannot drift silently. |
 | Acceptance tool (`benchmark-acceptance`) | Rust binary in the crate rather than a generalization of `dev/scripts/validate-tuning-extent-campaign.py` | The Python validator is deliberately specific to the a835 campaign: it hard-codes cell counts, grids, defaults and owner protocols. It keeps its convention of trusting no producer counter, which the Rust tool follows by recomputing every digest, interval and decision from raw samples. A Rust home lets the deterministic fixtures run in the fast test tier through the existing crate steps of `scripts/cargo-ci.sh`. |
 | Protocol runner (`benchmark-ab-runner`) and the smoke arm (`ab-smoke-workload`) | Thin binaries over the library primitives | Binaries stay consumers: the runner owns only plan parsing, cell iteration and receipt assembly; every durable-evidence rule comes from `journal`, `process`, `host`, `abtest` and `receipt`. |
-| Protocol, schema, addenda | `dev/active/f547c394/` | The owning development directory named by `jit doc dir`; receipts pin these files by path, commit and digest. |
+| Protocol, schema, addenda | `dev/active/f547c394/` | The owning development directory named by `jit doc dir`; receipts carry immutable local snapshots and bind each source path and exact byte digest. |
 | Smoke receipt | `dev/bench_results/f547c394/` | The owning issue's receipt area named by the measurement contract. |
 
 ## Named exception: session lifecycle store
@@ -33,6 +33,12 @@ onto it. Until then the runner's lock, log and checkpoint discipline is the
 shared one; only the mode-claim bookkeeping is absent.
 
 ## Decisions worth knowing
+
+- **Protocol version remains 1.** No benchmark family has consumed this
+  protocol and issue `f547c394` is still incomplete, so completing content and
+  freeze verification finishes version 1 rather than amending a published
+  protocol. The first family receipt accepted after this issue closes consumes
+  the frozen version.
 
 - **Resampling unit.** The paired execution of two fresh children is the unit
   because it is what the runner can randomize and what removes carried-over
@@ -55,11 +61,19 @@ shared one; only the mode-claim bookkeeping is absent.
   the set without an unsafe pre-exec hook; every arm reports the mask it
   observed and the acceptance tool compares it with the resolved set.
 - **Smoke family.** The synthetic XOR-fold arms differ only through the
-  `GF2_SMOKE_PASSES` environment of the baseline arm; the frozen smoke
-  addendum's margins are pipeline checks, and its receipt is labelled `smoke`
-  so nothing in it can be cited as a performance result.
+  `GF2_SMOKE_PASSES` environment of the baseline arm. A durable exploratory
+  receipt establishes the measurement resolution; a later frozen addendum
+  cites that pilot by path and digest, and a separate confirmation exercises
+  the decision rules. Both receipts are pipeline checks, so neither is a
+  performance result about gf2.
 
 ## Pre-existing fragility observed
+
+The a835 campaign driver consumes the shared `ProducingInputs` parser and hash
+projection, while its own protocol still checks repository revisions and tree
+state in addition to those content identities. Issue `0ba493e1` owns migration
+of that separate campaign's identity contract. This issue does not reinterpret
+or rerun its historical evidence.
 
 The a835 producing-input manifest lists
 `dev/tools/tuning-profile-compose/Cargo.lock` as a build input, but that file

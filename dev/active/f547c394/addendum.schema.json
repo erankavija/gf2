@@ -31,9 +31,9 @@
     "frozen": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["at_commit", "frozen_utc"],
+      "description": "Human-readable freeze time. The receipt-local addendum pin and premeasurement campaign-start record prove the exact bytes and ordering of the freeze.",
+      "required": ["frozen_utc"],
       "properties": {
-        "at_commit": { "$ref": "#/$defs/nullable_hex40" },
         "frozen_utc": { "type": ["string", "null"] }
       }
     },
@@ -45,7 +45,20 @@
         "worthwhile_speedup": { "type": ["number", "null"], "exclusiveMinimum": 1 },
         "rationale": { "type": "string" },
         "measurement_resolution": { "type": ["number", "null"], "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
-        "resolution_evidence": { "type": ["string", "null"] },
+        "resolution_evidence": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["receipt", "sha256"],
+              "properties": {
+                "receipt": { "type": "string", "minLength": 1 },
+                "sha256": { "$ref": "#/$defs/hex64" }
+              }
+            }
+          ]
+        },
         "equivalence_margin": { "type": ["number", "null"], "minimum": 1 },
         "equivalence_rationale": { "type": "string" },
         "material_gap_threshold": { "type": ["number", "null"], "minimum": 1 },
@@ -111,7 +124,6 @@
   "$defs": {
     "kebab": { "type": "string", "minLength": 1 },
     "hex64": { "type": "string", "minLength": 64, "maxLength": 64 },
-    "nullable_hex40": { "type": ["string", "null"], "minLength": 40, "maxLength": 40 },
     "build_identity": { "enum": ["conservative-portable", "tuned-portable", "native", "external"] },
     "cell": {
       "type": "object",

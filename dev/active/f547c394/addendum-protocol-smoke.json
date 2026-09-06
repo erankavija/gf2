@@ -8,14 +8,13 @@
     "description": "Synthetic XOR-fold arms that exercise every receipt path of the protocol tooling. No cell here is a performance claim about gf2; the family exists so the pipeline is proven on this host before real families freeze their addenda."
   },
   "frozen": {
-    "at_commit": "974a21f4f48d75fc850f1fe98da77e15fb2a5a05",
     "frozen_utc": "2026-09-06T21:00:00Z"
   },
   "effect": {
     "worthwhile_speedup": 1.5,
     "rationale": "The smoke candidate arm performs one extra pass over the same buffer, so a genuine pipeline records a speedup near 2 for the doubled-work baseline cell; 1.5 sits far above the resolution and far below that expected effect, so a working pipeline passes and a broken one does not. This threshold is a pipeline check, not a consumer-benefit judgment.",
-    "measurement_resolution": 0.05,
-    "resolution_evidence": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/acceptance-summary.json",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
     "equivalence_margin": 1.1,
     "equivalence_rationale": "Identical arms must be declared not worse; a 10% equivalence margin exceeds the smoke resolution while still catching a pipeline that swaps arms or drops samples.",
     "material_gap_threshold": 1.5,

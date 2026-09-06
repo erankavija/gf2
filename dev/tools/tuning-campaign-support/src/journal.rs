@@ -1336,9 +1336,11 @@ fn validate_recovery_record_details(
 pub struct ResumeIdentity {
     /// Digest of the reviewed premeasurement protocol.
     pub protocol_digest: String,
-    /// Canonical lowercase Git object ID of the producing source revision.
+    /// Optional source-control locator for display and historical receipts.
+    /// This field is informational and is excluded from resume equivalence.
+    #[serde(default)]
     pub source_revision: String,
-    /// Digest of the complete producing source identity.
+    /// Digest of the complete selected producing-input content snapshot.
     pub source_sha256: String,
     /// Digest of the fixed ordered unit manifest.
     pub ordered_work_manifest_sha256: String,
@@ -1358,6 +1360,25 @@ pub struct ResumeIdentity {
     pub thread_contract: String,
     /// Stable identity of the measurement host.
     pub host_identity: String,
+}
+
+impl ResumeIdentity {
+    /// Whether two identities describe the same measurement behavior and
+    /// inputs. Source-control locators are informational and do not affect
+    /// checkpoint compatibility.
+    pub fn resume_equivalent(&self, other: &Self) -> bool {
+        self.protocol_digest == other.protocol_digest
+            && self.source_sha256 == other.source_sha256
+            && self.ordered_work_manifest_sha256 == other.ordered_work_manifest_sha256
+            && self.process_descriptors_sha256 == other.process_descriptors_sha256
+            && self.executable_sha256 == other.executable_sha256
+            && self.behavior_sha256 == other.behavior_sha256
+            && self.lifecycle_schema == other.lifecycle_schema
+            && self.lifecycle_behavior_sha256 == other.lifecycle_behavior_sha256
+            && self.feature_contract == other.feature_contract
+            && self.thread_contract == other.thread_contract
+            && self.host_identity == other.host_identity
+    }
 }
 
 /// Immutable checkpoint manifest.
@@ -1465,9 +1486,19 @@ impl CheckpointStore {
         };
         let expected = canonical_bytes(&manifest)?;
         let path = root.join("manifest.json");
-        if path.try_exists()? && fs::read(&path)? != expected {
-            return Err(invalid("checkpoint initialization identity changed"));
-        }
+        let manifest_exists = path.try_exists()?;
+        let publication = if manifest_exists {
+            let stored: CheckpointManifest = read_canonical_json(&path)?;
+            if stored.schema != CHECKPOINT_SCHEMA
+                || stored.campaign_id != campaign_id
+                || !stored.identity.resume_equivalent(&identity)
+            {
+                return Err(invalid("checkpoint initialization identity changed"));
+            }
+            canonical_bytes(&stored)?
+        } else {
+            expected
+        };
         for name in ["units", "pending"] {
             let directory = root.join(name);
             if !path.try_exists()?
@@ -1481,7 +1512,7 @@ impl CheckpointStore {
             fs::create_dir_all(directory)?;
         }
         File::open(root)?.sync_all()?;
-        publish(&path, &expected)?;
+        publish(&path, &publication)?;
         Self::resume(root, campaign_id, identity)
     }
     /// Creates an absent checkpoint directory and immutable manifest.
@@ -1543,7 +1574,7 @@ impl CheckpointStore {
         let manifest: CheckpointManifest = read_canonical_json(&root.join("manifest.json"))?;
         if manifest.schema != CHECKPOINT_SCHEMA
             || manifest.campaign_id != campaign_id
-            || manifest.identity != expected_identity
+            || !manifest.identity.resume_equivalent(&expected_identity)
         {
             return Err(invalid("checkpoint resume manifest identity mismatch"));
         }
@@ -2175,14 +2206,6 @@ pub(crate) fn validate_resume_identity(identity: &ResumeIdentity) -> io::Result<
         &identity.lifecycle_behavior_sha256,
         "lifecycle behavior digest",
     )?;
-    if !matches!(identity.source_revision.len(), 40 | 64)
-        || !identity
-            .source_revision
-            .bytes()
-            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
-    {
-        return Err(invalid("source revision is not a 40- or 64-hex object ID"));
-    }
     validate_digest_map(&identity.executable_sha256, "executable")?;
     validate_digest_map(&identity.behavior_sha256, "behavior")?;
     checked_identity(identity.lifecycle_schema.clone(), "lifecycle schema")?;

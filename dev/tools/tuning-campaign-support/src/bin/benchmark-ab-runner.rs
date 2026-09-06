@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::env;
-use std::fs::{self, File};
+use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -33,6 +33,7 @@ use tuning_campaign_support::protocol::{
     sha256_hex, ArtifactPin, CacheState, CellRole, FamilyAddendum, RunnerPlan, SharedSettings,
     ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
 };
+use tuning_campaign_support::provenance::{ProducingInputs, ProducingSnapshot};
 use tuning_campaign_support::receipt::{
     ArmQuality, ArmRecord, BenchmarkReceipt, CellClaim, CellRecord, CellStatus, CheckpointRecord,
     ConversionCosts, ExecutionRecord, LockRecord, LogRecord, PairRecord, SourceIdentity,
@@ -45,6 +46,7 @@ const ARM_REQUEST_SCHEMA: &str = "zen3-benchmark-arm-request-v1";
 /// Schema of the one result line each arm child writes.
 const ARM_RESULT_SCHEMA: &str = "zen3-benchmark-arm-result-v1";
 const CHILD_KILL_GRACE: Duration = Duration::from_secs(5);
+const PRODUCING_MANIFEST_PATH: &str = "dev/active/f547c394/producing-inputs.json";
 static ALL_REAPED: AtomicBool = AtomicBool::new(true);
 
 fn invalid(message: impl ToString) -> io::Error {
@@ -52,7 +54,7 @@ fn invalid(message: impl ToString) -> io::Error {
 }
 
 /// Request forwarded to an arm child.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ArmRequest {
     schema: String,
@@ -122,19 +124,29 @@ fn repository_root() -> io::Result<PathBuf> {
     Ok(cwd)
 }
 
-fn source_identity(root: &Path) -> io::Result<SourceIdentity> {
-    let porcelain = command_text(
-        "git",
-        &["status", "--porcelain", "--untracked-files=all"],
-        root,
-    )?;
-    Ok(SourceIdentity {
-        revision: command_text("git", &["rev-parse", "HEAD"], root)?,
-        tree_sha256: sha256_hex(
-            command_text("git", &["rev-parse", "HEAD^{tree}"], root)?.as_bytes(),
-        ),
-        clean: porcelain.is_empty(),
-    })
+fn source_identity(producing: ProducingSnapshot) -> SourceIdentity {
+    SourceIdentity {
+        revision: String::new(),
+        tree_sha256: String::new(),
+        clean: false,
+        producing: Some(producing),
+    }
+}
+
+impl CampaignFacts {
+    fn resume_equivalent(&self, other: &Self) -> bool {
+        self.plan_sha256 == other.plan_sha256
+            && self.identity.resume_equivalent(&other.identity)
+            && self.protocol == other.protocol
+            && self.contract == other.contract
+            && self.addendum_schema == other.addendum_schema
+            && self.addendum == other.addendum
+            && self.source.producing == other.source.producing
+            && self.toolchain == other.toolchain
+            && self.settings == other.settings
+            && self.settings_deviation == other.settings_deviation
+            && self.arms == other.arms
+    }
 }
 
 fn utc_compact() -> String {
@@ -155,9 +167,8 @@ fn read_plan(path: &Path) -> io::Result<(RunnerPlan, Vec<u8>)> {
     Ok((plan, bytes))
 }
 
-fn load_addendum(root: &Path, plan: &RunnerPlan) -> io::Result<FamilyAddendum> {
-    let addendum =
-        FamilyAddendum::decode(&fs::read(root.join(&plan.addendum))?).map_err(invalid)?;
+fn load_addendum(bytes: &[u8], plan: &RunnerPlan) -> io::Result<FamilyAddendum> {
+    let addendum = FamilyAddendum::decode(bytes).map_err(invalid)?;
     addendum
         .validate()
         .map_err(|errors| invalid(format!("addendum invalid: {}", errors.join("; "))))?;
@@ -193,31 +204,44 @@ fn arm_records(plan: &RunnerPlan) -> io::Result<BTreeMap<String, ArmRecord>> {
     Ok(arms)
 }
 
-fn facts(root: &Path, plan: &RunnerPlan, plan_bytes: &[u8]) -> io::Result<CampaignFacts> {
-    let protocol = ArtifactPin::pin(root, PROTOCOL_PATH)?;
-    let contract = ArtifactPin::pin(root, CONTRACT_PATH)?;
-    let addendum_schema = ArtifactPin::pin(root, ADDENDUM_SCHEMA_PATH)?;
-    let addendum = ArtifactPin::pin(root, &plan.addendum)?;
-    let source = source_identity(root)?;
-    if !source.clean {
-        return Err(invalid("measurement requires a clean source tree"));
-    }
+fn facts(
+    root: &Path,
+    stage: &Path,
+    plan: &RunnerPlan,
+    plan_bytes: &[u8],
+) -> io::Result<CampaignFacts> {
+    let protocol = ArtifactPin::capture(root, stage, PROTOCOL_PATH, "inputs/protocol.md")?;
+    let contract =
+        ArtifactPin::capture(root, stage, CONTRACT_PATH, "inputs/measurement-contract.md")?;
+    let addendum_schema = ArtifactPin::capture(
+        root,
+        stage,
+        ADDENDUM_SCHEMA_PATH,
+        "inputs/addendum.schema.json",
+    )?;
+    let addendum =
+        ArtifactPin::capture(root, stage, &plan.addendum, "inputs/family-addendum.json")?;
+    let producing = ProducingInputs::capture_to(
+        root,
+        PRODUCING_MANIFEST_PATH,
+        &stage.join("inputs/producing"),
+    )?;
+    let source = source_identity(producing.clone());
     let arms = arm_records(plan)?;
-    let runner = fs::read(env::current_exe()?)?;
     let (settings, settings_deviation) = plan.settings();
     let identity = ResumeIdentity {
         protocol_digest: protocol.sha256.clone(),
         source_revision: source.revision.clone(),
-        source_sha256: source.tree_sha256.clone(),
+        source_sha256: producing.identity_sha256()?,
         ordered_work_manifest_sha256: sha256_hex(&canonical_json(&plan.cells)?),
         process_descriptors_sha256: sha256_hex(&canonical_json(&arms)?),
         executable_sha256: arms
             .iter()
             .map(|(name, arm)| (name.clone(), arm.executable_sha256.clone()))
             .collect(),
-        behavior_sha256: BTreeMap::from([("benchmark-ab-runner".to_owned(), sha256_hex(&runner))]),
+        behavior_sha256: producing.behavior_sha256.clone(),
         lifecycle_schema: RUNNER_LIFECYCLE_SCHEMA.to_owned(),
-        lifecycle_behavior_sha256: sha256_hex(&runner),
+        lifecycle_behavior_sha256: producing.lifecycle_sha256()?,
         feature_contract: "release".to_owned(),
         thread_contract: format!(
             "RAYON_NUM_THREADS={}",
@@ -240,6 +264,35 @@ fn facts(root: &Path, plan: &RunnerPlan, plan_bytes: &[u8]) -> io::Result<Campai
     })
 }
 
+fn capture_referenced_receipts(
+    root: &Path,
+    stage: &Path,
+    addendum: &FamilyAddendum,
+) -> io::Result<()> {
+    if let Some(evidence) = &addendum.effect.resolution_evidence {
+        let pin = ArtifactPin::capture(
+            root,
+            stage,
+            &evidence.receipt,
+            "inputs/resolution-evidence/receipt.json",
+        )?;
+        if pin.sha256 != evidence.sha256 {
+            return Err(invalid("resolution-evidence snapshot digest differs"));
+        }
+    }
+    for trial in &addendum.family_wise.prior_trials {
+        let snapshot = format!("inputs/prior-trials/{}.json", trial.sha256);
+        let pin = ArtifactPin::capture(root, stage, &trial.receipt, &snapshot)?;
+        if pin.sha256 != trial.sha256 {
+            return Err(invalid(format!(
+                "prior-trial snapshot {} digest differs",
+                trial.receipt
+            )));
+        }
+    }
+    Ok(())
+}
+
 struct Session {
     log: ExecutionLog,
     checkpoints: CheckpointStore,
@@ -252,7 +305,6 @@ struct Session {
 
 fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Session> {
     let (plan, plan_bytes) = read_plan(plan_path)?;
-    let addendum = load_addendum(root, &plan)?;
     fs::create_dir_all(stage)?;
     let stage = fs::canonicalize(stage)?;
     let staged_plan = stage.join("plan.json");
@@ -263,10 +315,12 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
             ));
         }
     } else {
-        fs::write(&staged_plan, &plan_bytes)?;
-        File::open(&staged_plan)?.sync_all()?;
+        tuning_campaign_support::journal::atomic_write_new(&staged_plan, &plan_bytes)?;
     }
-    let facts = facts(root, &plan, &plan_bytes)?;
+    let facts = facts(root, &stage, &plan, &plan_bytes)?;
+    let addendum_bytes = facts.addendum.verify_content(&stage).map_err(invalid)?;
+    let addendum = load_addendum(&addendum_bytes, &plan)?;
+    capture_referenced_receipts(root, &stage, &addendum)?;
     let holder = inherited_lock(Path::new(&plan.lock_path))?;
     let session_id = format!("session-{}-{}", utc_compact(), std::process::id());
     let log_path = stage.join(LOG_FILE);
@@ -288,7 +342,7 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
         let records = ExecutionLog::validate_prefix(&bytes, &plan.campaign_id)?;
         let first: CampaignFacts = serde_json::from_value(records[0].details.clone())
             .map_err(|error| invalid(format!("campaign-start facts do not decode: {error}")))?;
-        if first.identity != facts.identity {
+        if !first.resume_equivalent(&facts) {
             return Err(invalid(
                 "resume identity differs from the campaign-start facts",
             ));
@@ -785,6 +839,7 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
     fs::create_dir_all(out_dir)?;
     fs::write(out_dir.join("plan.json"), &plan_bytes)?;
     fs::write(out_dir.join(LOG_FILE), &log_bytes)?;
+    copy_tree(&stage.join("inputs"), &out_dir.join("inputs"))?;
     let checkpoint_out = out_dir.join(CHECKPOINT_DIR);
     fs::create_dir_all(&checkpoint_out)?;
     fs::copy(
@@ -796,10 +851,17 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
         &checkpoint_out.join("units"),
     )?;
     let manifest_bytes = fs::read(checkpoint_out.join("manifest.json"))?;
+    let receipt_path = fs::canonicalize(out_dir)?
+        .strip_prefix(fs::canonicalize(&root)?)
+        .map_err(|_| invalid("receipt output must be inside the repository"))?
+        .join(RECEIPT_FILE)
+        .to_string_lossy()
+        .into_owned();
     let receipt = BenchmarkReceipt {
         schema: tuning_campaign_support::protocol::RECEIPT_SCHEMA_ID.into(),
         campaign_id: plan.campaign_id.clone(),
         issue: plan.issue.clone(),
+        receipt_path,
         label: plan.label,
         campaign_seed: plan.campaign_seed,
         settings: facts.settings,
