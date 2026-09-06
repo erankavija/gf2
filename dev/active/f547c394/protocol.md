@@ -185,7 +185,7 @@ the code.
 |---|---|---|
 | `family_alpha` | `0.05` | Two-sided family-wise error rate; the conventional level, applied per family rather than per cell. |
 | `bootstrap_resamples` | `10000` | Percentile intervals need at least about a thousand replicates [EfronTibshirani1993]; ten thousand keeps the Monte-Carlo error of the interval endpoints well below the declared resolutions at negligible cost. |
-| `confirmatory_pairs` | `24` | Four counterbalanced blocks of six pairs; enough pairs for a non-degenerate percentile interval of a median-based statistic while keeping a confirmatory cell at about one minute of timed work under the window settings below. Fixed in advance so confirmation is never data-adaptive. |
+| `confirmatory_pairs` | `24` | Four counterbalanced blocks of six pairs; enough pairs for a non-degenerate percentile interval of a median-based statistic while bounding a confirmatory cell at 24 seconds of timed windows by construction (24 pairs, two arms, five windows of 100 ms) before calibration and process start-up. Fixed in advance so confirmation is never data-adaptive. |
 | `pilot_min_pairs` | `6` | One counterbalanced block; the smallest pilot that still estimates a resolution. |
 | `pilot_max_pairs` | `24` | Pilots never exceed a confirmatory sample so they cannot masquerade as confirmation. |
 | `windows_per_execution` | `5` | The retained calibration protocol's window count (`timing::WINDOWS`); five windows give a per-execution median robust to one disturbed window. |

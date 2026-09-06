@@ -18,4 +18,4 @@ Family `protocol-smoke`: 3 comparisons at family-wise alpha 0.05, per-comparison
 
 ## Findings
 
-No findings.
+- P-02 Note: protocol changed in the working tree after this measurement; the pinned version governed the run
