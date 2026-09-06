@@ -1,0 +1,139 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "b066dd3f61e6cfb97744845df6e7dc950ef5e33ef9e65aba7c514d5c8c022055",
+  "campaign_id": "smoke-f547c394-20260906t213607z",
+  "label": "smoke",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "protocol-smoke",
+    "comparisons": 3,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.9833333333333333,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [
+    {
+      "rule": "P-02",
+      "severity": "note",
+      "cell": null,
+      "message": "protocol changed in the working tree after this measurement; the pinned version governed the run"
+    }
+  ],
+  "cells": [
+    {
+      "cell_id": "xor-fold-double-pass-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 2.0000399477114255,
+        "lower": 1.992644673214072,
+        "upper": 2.011325799932199,
+        "confidence": 0.9833333333333333,
+        "resamples": 10000,
+        "seed": 9529593830585880163,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.5,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "xor-fold-identical-1core",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.997531832908309,
+        "lower": 0.9484537221898061,
+        "upper": 1.0025530342554048,
+        "confidence": 0.9833333333333333,
+        "resamples": 10000,
+        "seed": 10374432831382001202,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.5,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "xor-fold-streaming-pilot-6core",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "physical-cores-6",
+      "resolved_cpus": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.9794288132104289,
+        "lower": 0.9626939058928089,
+        "upper": 0.997648613186732,
+        "confidence": 0.9833333333333333,
+        "resamples": 10000,
+        "seed": 7986823752743336379,
+        "pairs": 6
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.5,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "xor-fold-identical-12core",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "physical-cores-12",
+      "resolved_cpus": [],
+      "status": "unavailable",
+      "outcome": "unavailable",
+      "pairs": 0,
+      "flagged_windows": 0,
+      "total_windows": 0,
+      "interval": null,
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [],
+      "reason": "affinity mask holds 6 physical cores, 12 required"
+    }
+  ]
+}

@@ -10,20 +10,20 @@ use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::env;
 use std::fs::{self, File};
-use std::io::{self, Read, Write};
-use std::os::unix::process::{CommandExt, ExitStatusExt};
+use std::io::{self, Write};
 use std::path::Path;
-use std::process::{Command, Stdio};
-use std::sync::mpsc;
-use std::thread;
+use std::process::Command;
 use std::time::{Duration, Instant};
 use tuning_campaign_support::campaign::*;
+use tuning_campaign_support::host::{
+    command_text, inherited_lock, lock_available, require_affinity, CpuAffinity,
+};
 use tuning_campaign_support::journal::{
     CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity,
 };
+use tuning_campaign_support::process::{live_group, ProcessResult};
 use tuning_campaign_support::transport;
 
-static RUNNER_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 static SESSION_START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 static ALL_REAPED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
 fn check_budget() -> io::Result<()> {
@@ -37,6 +37,25 @@ fn check_budget() -> io::Result<()> {
         ));
     }
     Ok(())
+}
+fn run_process(
+    command: Command,
+    input: &[u8],
+    timeout: Duration,
+    grace: Duration,
+    started: impl FnMut(u32) -> io::Result<()>,
+    stderr_callback: impl FnMut(&[u8]) -> io::Result<()>,
+) -> io::Result<ProcessResult> {
+    tuning_campaign_support::process::run_process(
+        command,
+        input,
+        timeout,
+        grace,
+        check_budget,
+        &ALL_REAPED,
+        started,
+        stderr_callback,
+    )
 }
 fn invalid(message: impl ToString) -> io::Error {
     io::Error::other(message.to_string())
@@ -67,19 +86,6 @@ fn artifact(path: &Path) -> io::Result<ArtifactIdentity> {
 }
 fn utc() -> io::Result<String> {
     command_text("date", &["-u", "+%Y-%m-%dT%H:%M:%SZ"])
-}
-fn command_text(program: &str, args: &[&str]) -> io::Result<String> {
-    let result = Command::new(program).args(args).output()?;
-    if !result.status.success() {
-        return Err(invalid(format!(
-            "{program} failed: {}",
-            String::from_utf8_lossy(&result.stderr)
-        )));
-    }
-    Ok(String::from_utf8(result.stdout)
-        .map_err(invalid)?
-        .trim()
-        .to_owned())
 }
 fn ns(start: Instant) -> u64 {
     u64::try_from(start.elapsed().as_nanos())
@@ -121,391 +127,6 @@ fn record_budget(
     Ok(())
 }
 
-struct ProcessResult {
-    stdout: Vec<u8>,
-    stderr: Vec<u8>,
-    outcome: ProcessOutcome,
-    callback_error: Option<io::Error>,
-}
-enum Stream {
-    Stdout(Vec<u8>),
-    Stderr(Vec<u8>),
-    End,
-    Error(io::Error),
-}
-fn drain(mut input: impl Read, tx: mpsc::Sender<Stream>, stderr: bool) {
-    let mut buffer = [0u8; 8192];
-    loop {
-        match input.read(&mut buffer) {
-            Ok(0) => break,
-            Ok(n) => {
-                if tx
-                    .send(if stderr {
-                        Stream::Stderr(buffer[..n].to_vec())
-                    } else {
-                        Stream::Stdout(buffer[..n].to_vec())
-                    })
-                    .is_err()
-                {
-                    return;
-                }
-            }
-            Err(e) => {
-                let _ = tx.send(Stream::Error(e));
-                break;
-            }
-        }
-    }
-    let _ = tx.send(Stream::End);
-}
-// Fresh owners do not spawn children. Process groups also contain accidental
-// descendants, which are killed before a completed process can be accepted.
-fn live_group(group: u32) -> io::Result<bool> {
-    for entry in fs::read_dir("/proc")? {
-        let path = entry?.path();
-        if path
-            .file_name()
-            .and_then(|s| s.to_str())
-            .is_none_or(|s| s.parse::<u32>().is_err())
-        {
-            continue;
-        }
-        let Ok(stat) = fs::read_to_string(path.join("stat")) else {
-            continue;
-        };
-        let Some((_, tail)) = stat.rsplit_once(") ") else {
-            continue;
-        };
-        let fields: Vec<_> = tail.split_whitespace().collect();
-        if fields.get(2).and_then(|s| s.parse::<u32>().ok()) == Some(group)
-            && fields.first() != Some(&"Z")
-        {
-            return Ok(true);
-        }
-    }
-    Ok(false)
-}
-fn signal_group(group: u32, signal: rustix::process::Signal) -> io::Result<()> {
-    match rustix::process::kill_process_group(
-        rustix::process::Pid::from_raw(group as i32)
-            .ok_or_else(|| invalid("invalid process group"))?,
-        signal,
-    ) {
-        Ok(()) => Ok(()),
-        Err(rustix::io::Errno::SRCH) => Ok(()),
-        Err(error) => Err(error.into()),
-    }
-}
-fn signal_descendants(signal: rustix::process::Signal) -> io::Result<()> {
-    let mut parentage = Vec::new();
-    for entry in fs::read_dir("/proc")? {
-        let path = entry?.path();
-        let Some(pid) = path
-            .file_name()
-            .and_then(|name| name.to_str())
-            .and_then(|name| name.parse::<u32>().ok())
-        else {
-            continue;
-        };
-        let stat = match fs::read_to_string(path.join("stat")) {
-            Ok(stat) => stat,
-            Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
-            Err(error) => return Err(error),
-        };
-        let (_, tail) = stat
-            .rsplit_once(')')
-            .ok_or_else(|| invalid("invalid process stat"))?;
-        let parent = tail
-            .split_whitespace()
-            .nth(1)
-            .ok_or_else(|| invalid("missing parent pid"))?
-            .parse::<u32>()
-            .map_err(invalid)?;
-        parentage.push((pid, parent));
-    }
-    let mut descendants = std::collections::BTreeSet::from([std::process::id()]);
-    loop {
-        let before = descendants.len();
-        for (pid, parent) in &parentage {
-            if descendants.contains(parent) {
-                descendants.insert(*pid);
-            }
-        }
-        if descendants.len() == before {
-            break;
-        }
-    }
-    descendants.remove(&std::process::id());
-    for pid in descendants {
-        match rustix::process::kill_process(
-            rustix::process::Pid::from_raw(pid as i32)
-                .ok_or_else(|| invalid("invalid descendant PID"))?,
-            signal,
-        ) {
-            Ok(()) | Err(rustix::io::Errno::SRCH) => {}
-            Err(error) => return Err(error.into()),
-        }
-    }
-    Ok(())
-}
-fn reap_adopted() -> io::Result<bool> {
-    loop {
-        match rustix::process::wait(rustix::process::WaitOptions::NOHANG) {
-            Ok(Some(_)) => continue,
-            Ok(None) => return Ok(false),
-            Err(rustix::io::Errno::CHILD) => return Ok(true),
-            Err(error) => return Err(error.into()),
-        }
-    }
-}
-struct ChildGuard {
-    child: std::process::Child,
-    group: u32,
-    done: bool,
-}
-impl std::ops::Deref for ChildGuard {
-    type Target = std::process::Child;
-    fn deref(&self) -> &Self::Target {
-        &self.child
-    }
-}
-impl std::ops::DerefMut for ChildGuard {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.child
-    }
-}
-impl Drop for ChildGuard {
-    fn drop(&mut self) {
-        if self.done {
-            return;
-        }
-        let _ = signal_group(self.group, rustix::process::Signal::KILL);
-        let _ = signal_descendants(rustix::process::Signal::KILL);
-        let _ = self.child.kill();
-        let _ = self.child.wait();
-        let start = Instant::now();
-        while start.elapsed() < Duration::from_secs(CHILD_KILL_GRACE_SECONDS) {
-            if reap_adopted().unwrap_or(false) {
-                ALL_REAPED.store(true, std::sync::atomic::Ordering::SeqCst);
-                return;
-            }
-            let _ = signal_descendants(rustix::process::Signal::KILL);
-            thread::sleep(Duration::from_millis(10));
-        }
-    }
-}
-fn run_process(
-    mut command: Command,
-    input: &[u8],
-    timeout: Duration,
-    grace: Duration,
-    mut started: impl FnMut(u32) -> io::Result<()>,
-    mut stderr_callback: impl FnMut(&[u8]) -> io::Result<()>,
-) -> io::Result<ProcessResult> {
-    let _runner = RUNNER_LOCK
-        .lock()
-        .map_err(|_| invalid("process runner lock poisoned"))?;
-    rustix::process::set_child_subreaper(Some(rustix::process::getpid()))?;
-    command
-        .process_group(0)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    let begin = Instant::now();
-    check_budget()?;
-    let child = command.spawn()?;
-    let mut child = ChildGuard {
-        group: child.id(),
-        child,
-        done: false,
-    };
-    ALL_REAPED.store(false, std::sync::atomic::Ordering::SeqCst);
-    let pid = child.id();
-    let mut callback_error = started(pid).err();
-    let stdin = child.stdin.take().ok_or_else(|| invalid("missing stdin"))?;
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or_else(|| invalid("missing stdout"))?;
-    let stderr = child
-        .stderr
-        .take()
-        .ok_or_else(|| invalid("missing stderr"))?;
-    let (tx, rx) = mpsc::channel();
-    let input = input.to_vec();
-    let writer = thread::spawn(move || {
-        let mut stdin = stdin;
-        stdin.write_all(&input)
-    });
-    let out_tx = tx.clone();
-    let err_tx = tx.clone();
-    drop(tx);
-    let out_thread = thread::spawn(move || drain(stdout, out_tx, false));
-    let err_thread = thread::spawn(move || drain(stderr, err_tx, true));
-    let mut out = Vec::new();
-    let mut err = Vec::new();
-    let mut ends = 0;
-    let mut status = None;
-    let mut stopped = None;
-    let mut timed_out = false;
-    let mut killed = false;
-    loop {
-        match rx.recv_timeout(Duration::from_millis(10)) {
-            Ok(Stream::Stdout(bytes)) => out.extend_from_slice(&bytes),
-            Ok(Stream::Stderr(bytes)) => {
-                err.extend_from_slice(&bytes);
-                if callback_error.is_none() {
-                    callback_error = stderr_callback(&bytes).err();
-                }
-            }
-            Ok(Stream::End) => ends += 1,
-            Ok(Stream::Error(e)) => {
-                if callback_error.is_none() {
-                    callback_error = Some(e);
-                }
-            }
-            Err(mpsc::RecvTimeoutError::Disconnected) => {}
-            Err(mpsc::RecvTimeoutError::Timeout) => {}
-        }
-        if status.is_none() {
-            status = child.try_wait()?;
-        }
-        if stopped.is_none()
-            && (begin.elapsed() >= timeout
-                || callback_error.is_some()
-                || (status.is_some() && (live_group(pid)? || !reap_adopted()?)))
-        {
-            timed_out = begin.elapsed() >= timeout;
-            signal_group(pid, rustix::process::Signal::TERM)?;
-            signal_descendants(rustix::process::Signal::TERM)?;
-            stopped = Some(Instant::now());
-        }
-        if stopped.is_some_and(|s| s.elapsed() >= grace) && !killed {
-            signal_group(pid, rustix::process::Signal::KILL)?;
-            signal_descendants(rustix::process::Signal::KILL)?;
-            killed = true;
-        }
-        if stopped.is_some() {
-            signal_descendants(if killed {
-                rustix::process::Signal::KILL
-            } else {
-                rustix::process::Signal::TERM
-            })?;
-        }
-        if status.is_some() && ends == 2 && !live_group(pid)? && reap_adopted()? {
-            break;
-        }
-        if stopped.is_some_and(|s| s.elapsed() > grace + Duration::from_secs(1)) {
-            return Err(invalid(
-                "child process tree did not terminate/drain within kill grace",
-            ));
-        }
-    }
-    let status = child.wait()?;
-    writer
-        .join()
-        .map_err(|_| invalid("stdin writer panicked"))??;
-    out_thread
-        .join()
-        .map_err(|_| invalid("stdout reader panicked"))?;
-    err_thread
-        .join()
-        .map_err(|_| invalid("stderr reader panicked"))?;
-    child.done = true;
-    ALL_REAPED.store(true, std::sync::atomic::Ordering::SeqCst);
-    let elapsed_ns = ns(begin);
-    let outcome = if timed_out {
-        ProcessOutcome::TimedOut {
-            pid,
-            elapsed_ns,
-            kill_grace_exhausted: killed,
-            all_descendants_reaped: true,
-        }
-    } else if let Some(exit_code) = status.code() {
-        ProcessOutcome::Exited {
-            pid,
-            exit_code,
-            elapsed_ns,
-            all_descendants_reaped: true,
-        }
-    } else {
-        ProcessOutcome::Signaled {
-            pid,
-            signal: status
-                .signal()
-                .ok_or_else(|| invalid("unknown process termination"))?,
-            elapsed_ns,
-            all_descendants_reaped: true,
-        }
-    };
-    Ok(ProcessResult {
-        stdout: out,
-        stderr: err,
-        outcome,
-        callback_error,
-    })
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(try_from = "Vec<u32>", into = "Vec<u32>")]
-struct CpuAffinity(Vec<u32>);
-impl TryFrom<Vec<u32>> for CpuAffinity {
-    type Error = io::Error;
-    fn try_from(cpus: Vec<u32>) -> io::Result<Self> {
-        if cpus.is_empty() || cpus.windows(2).any(|pair| pair[0] >= pair[1]) {
-            return Err(invalid(
-                "CPU affinity must be a nonempty increasing CPU set",
-            ));
-        }
-        Ok(Self(cpus))
-    }
-}
-impl From<CpuAffinity> for Vec<u32> {
-    fn from(value: CpuAffinity) -> Self {
-        value.0
-    }
-}
-impl CpuAffinity {
-    fn parse(list: &str) -> io::Result<Self> {
-        let mut cpus = Vec::new();
-        for part in list.split(',') {
-            if let Some((first, last)) = part.split_once('-') {
-                let first = first.parse::<u32>().map_err(invalid)?;
-                let last = last.parse::<u32>().map_err(invalid)?;
-                if first > last {
-                    return Err(invalid("reversed CPU affinity range"));
-                }
-                cpus.extend(first..=last);
-            } else {
-                cpus.push(part.parse::<u32>().map_err(invalid)?);
-            }
-        }
-        Self::try_from(cpus)
-    }
-    fn observe() -> io::Result<Self> {
-        let status = fs::read_to_string("/proc/self/status")?;
-        let list = status
-            .lines()
-            .find_map(|line| line.strip_prefix("Cpus_allowed_list:"))
-            .ok_or_else(|| invalid("OS CPU affinity unavailable"))?;
-        Self::parse(list.trim())
-    }
-    fn host_identity(&self) -> io::Result<String> {
-        Ok(format!(
-            "{};cpus={}",
-            command_text("hostname", &[])?,
-            serde_json::to_string(&self.0).map_err(invalid)?
-        ))
-    }
-}
-fn require_affinity(expected: &CpuAffinity, observed: &CpuAffinity) -> io::Result<()> {
-    if expected != observed {
-        return Err(invalid(
-            "actual CPU affinity differs from immutable preparation",
-        ));
-    }
-    Ok(())
-}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct HostAdmissionPolicy {
@@ -1347,38 +968,6 @@ fn resolved_manifests(config: &CampaignConfig) -> io::Result<Vec<OwnerManifest>>
     }
     Ok(manifests)
 }
-fn lock_available(path: &Path) -> io::Result<bool> {
-    let file = File::options().read(true).write(true).open(path)?;
-    match file.try_lock() {
-        Ok(()) => {
-            file.unlock()?;
-            Ok(true)
-        }
-        Err(std::fs::TryLockError::WouldBlock) => Ok(false),
-        Err(std::fs::TryLockError::Error(e)) => Err(e),
-    }
-}
-fn inherited_lock(path: &Path) -> io::Result<u32> {
-    if lock_available(path)? {
-        return Err(invalid("benchmark lock is not held"));
-    }
-    let expected = fs::canonicalize(path)?;
-    let pid = std::process::id();
-    let mut inherited = false;
-    for fd in fs::read_dir(format!("/proc/{pid}/fd"))? {
-        let fd = fd?;
-        if fs::read_link(fd.path()).ok().as_ref() == Some(&expected) {
-            inherited = true;
-            break;
-        }
-    }
-    if !inherited {
-        return Err(invalid(
-            "driver has no inherited descriptor for the held lock",
-        ));
-    }
-    Ok(pid)
-}
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum UnitBoundary {
     Completion,
@@ -1611,7 +1200,7 @@ fn make_receipt(
         .ok_or_else(|| invalid("receipt session count missing"))?;
     save(&stage.join("receipt-projection.json"), &projection)?;
     let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nSee `campaign.json`, owner responses and `composition.json` for runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal and checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nSee each raw result payload below.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through `receipt-projection.json` raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n## Raw result index\n\n",config.campaign_id.as_str(),config.protocol.path.display(),config.protocol.sha256.as_str(),config.identity.source_revision,serde_json::to_string_pretty(responses).map_err(invalid)?);
-    receipt.push_str(&format!("Preparation CPU affinity: `{:?}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n",config.affinity.0));
+    receipt.push_str(&format!("Preparation CPU affinity: `{:?}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n",config.affinity.cpus()));
     for manifest in &config.manifests {
         receipt.push_str(&format!(
             "Owner `{}` uses protocol `{}` and behavior `{}`; executable `{}`.\n\n",
@@ -2636,16 +2225,16 @@ mod tests {
     #[test]
     fn affinity_is_observed_from_the_current_os_mask_and_binds_resume() {
         let affinity = CpuAffinity::observe().unwrap();
-        assert!(!affinity.0.is_empty());
-        let cpu = affinity.0[0];
+        assert!(!affinity.cpus().is_empty());
+        let cpu = affinity.cpus()[0];
         let output=Command::new("taskset").args(["-c",&cpu.to_string(),"python3","-c","print(next(x.split(':',1)[1].strip() for x in open('/proc/self/status') if x.startswith('Cpus_allowed_list:')))"]).output().unwrap();
         assert!(output.status.success());
         let restricted =
             CpuAffinity::parse(std::str::from_utf8(&output.stdout).unwrap().trim()).unwrap();
-        assert_eq!(restricted.0, vec![cpu]);
+        assert_eq!(restricted.cpus(), &[cpu]);
         assert!(CpuAffinity::parse("2-1").is_err());
         assert!(CpuAffinity::parse("").is_err());
-        let changed = CpuAffinity(vec![cpu + 1]);
+        let changed = CpuAffinity::try_from(vec![cpu + 1]).unwrap();
         assert!(require_affinity(&restricted, &changed).is_err());
     }
     fn probe_fixture(
