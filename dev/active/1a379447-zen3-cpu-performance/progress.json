@@ -11,7 +11,7 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "rework 2 delivered (lead committed 4b2c2eb2, bf7801a8; merged 873f7ec6); gates: code-review PASS, cargo-ci flaky GPU tests (pass in isolation) re-run pending, doc-review stale report claim fixed re-run pending, research-review reviewer produced no output re-run pending",
+          "status": "rework 2 delivered and merged (873f7ec6); code-review PASS, doc-review PASS; cargo-ci and research-review open (see handoff-3.md); gating stopped by invoker",
           "dispatch": {
             "model": "gpt-6-astra",
             "worktree": ".agents/worktrees/agent-f547c394",
@@ -44,7 +44,7 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "dispatched (group B, anchored after the f547c394 merge)",
+          "status": "stopped by invoker; 9 commits (harness, generated-code evidence), no final report",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10",
@@ -59,7 +59,7 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "dispatched (group B, anchored after the f547c394 merge)",
+          "status": "stopped by invoker; 7 commits (pins, pilot addendum), no final report",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
@@ -74,7 +74,7 @@
           "short_id": "c077a88b",
           "title": "Establish compatible LDPC decoder benchmark arms",
           "classification": "research",
-          "status": "dispatched (group A, tooling-independent phases first; receipts after f547c394 lands)",
+          "status": "stopped by invoker; 13 commits, no receipts, no final report",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c077a88b",
@@ -89,7 +89,7 @@
           "short_id": "eda07788",
           "title": "Establish compatible shift and coding-permutation baselines",
           "classification": "research",
-          "status": "dispatched (group B, anchored after the f547c394 merge)",
+          "status": "stopped by invoker; reported: REQ-02 MET, REQ-03 PARTIAL, REQ-01/04 UNMET; drafts committed 6d5f09ea",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-eda07788",
@@ -104,7 +104,7 @@
           "short_id": "c7113c5a",
           "title": "Establish equivalent polynomial multiplication baselines",
           "classification": "research",
-          "status": "dispatched (group A, tooling-independent phases first; receipts after f547c394 lands)",
+          "status": "stopped by invoker; 17 commits, pilot receipt accepted, confirmatory addendum frozen, confirmation not run, no final report",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c7113c5a",
@@ -119,7 +119,7 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "dispatched (group B, anchored after the f547c394 merge)",
+          "status": "stopped by invoker; 3 commits (findings, addenda), no final report",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c",
@@ -134,7 +134,7 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "dispatched (group A, tooling-independent phases first; receipts after f547c394 lands)",
+          "status": "stopped by invoker; 2 commits + uncommitted harnesses, no main merge, no receipts, no final report",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-6fb89a3c",
@@ -149,7 +149,7 @@
           "short_id": "1d0da41f",
           "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
           "classification": "implementation",
-          "status": "dispatched (group A, tooling-independent phases first; receipts after f547c394 lands)",
+          "status": "stopped by invoker; reported: REQ-07/08/10 MET, REQ-01/09 PARTIAL; pilot falsifies premise; not mergeable until adoption default follows confirmatory receipt",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-1d0da41f",
@@ -329,7 +329,8 @@
     "Invocation 2026-09-07 (session 3): drive the whole epic; model ladder by difficulty gpt-6-astra > gpt-5.6-sol > gpt-5.6-terra > gpt-5.6-luna (astra replaces Fable per user); parallel worktrees whenever feasible.",
     "User instruction 2026-09-07 (session 3): dispatch wave-2 group A early (tooling-independent phases first) and run those four as native Claude subagents; f547c394 rework stays on codex astra. Group B (04b85d10 6c6b09b1 26465e6c eda07788) follows when wave 1 closes and disk allows.",
     "Session 3: codex workspace-write sandbox mounts .git read-only even with --add-dir; the lead commits codex workers' validated trees on their branches. Native subagents commit themselves.",
-    "User instruction 2026-09-07 ~19:50Z: rate limits close; let running wave-2 workers finish, write the handoff, no more gate runs this session."
+    "User instruction 2026-09-07 ~19:50Z: rate limits close; let running wave-2 workers finish, write the handoff, no more gate runs this session.",
+    "Session 3 ended 2026-09-07 ~20:05Z on invoker instruction (rate limits): handoff-3.md is final; wave 1 not closed; wave 2 branches unmerged and ungated."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [

@@ -1,6 +1,6 @@
 # Handoff — Maximize Zen 3 CPU throughput against open-source baselines (1a379447) — session 3
 
-**Date:** 2026-09-07T20:00Z (preliminary; updated when the wave-2 workers finish)
+**Date:** 2026-09-07T20:05Z (final for session 3; some workers were still committing when written)
 **Session number:** 3
 **Prior handoffs:** [session 1](handoff.md), [session 2](handoff-2.md)
 
@@ -20,20 +20,22 @@
 - A third cargo-ci run queued under `dev/scripts/ccx1-bench-flock.sh --full-host env CARGO_CI_NO_LOCK=1 jit gate evaluate ...` was cancelled on the invoker's stop instruction before it acquired the mutex.
 - Lead review tiers completed: Tier 1.5 resolution table (worker report `dev/active/f547c394/rework-validation.md`, 28 rows), Tier 2 (diff read: `CampaignFacts::resume_equivalent` shared comparator, `CheckpointStore::inspect` read-only entry point, P-23 in `protocol.md`), Tier 2.5 sweep clean (only frozen receipt-local snapshots of the older protocol text remain, by design), Tier 2.75 clean. Tier 1 is blocked only by the two gate runs above.
 
-### Wave 2 dispatch state (all native Claude subagents, worktrees under `.agents/worktrees/agent-<id>`)
+### Wave 2 dispatch state (native Claude subagents, worktrees `.agents/worktrees/agent-<id>`, branches `worktree-agent-<id>`)
 
-| Issue | Model | Base | Notes at handoff time |
-|---|---|---|---|
-| c077a88b LDPC arms | Opus | c423c801 (pre-merge; must `git merge main` before receipts, instructed) | AFF3CT v4.7.0 built under `.agents/ext/c077a88b`, srsRAN/xdsopl/OAI staged, arm + capability probe committed, BFER runs in progress |
-| c7113c5a polynomial | Opus | c423c801 (merged main itself) | gf2x built conservative/tuned/native, pilot and confirmatory addenda frozen, pilot receipt queued on the mutex |
-| 6fb89a3c transpose/logical | Sonnet | c423c801 | scaffolding + pilot addenda; harnesses written; taking over from two finished codex jobs |
-| 1d0da41f YMM clmul repair | Opus | c423c801 (merged main itself) | repair + asm artefact + correctness done; pilot FALSIFIES the premise (YMM lane 1.24–1.72x slower); confirmatory receipt running; adoption via detect-time lane tag in `gf2m::detect_x86` |
-| 6c6b09b1 byte-field | Opus | 037885c3 | pins committed |
-| 04b85d10 profiling | Opus | 037885c3 | harness scaffold committed |
-| 26465e6c popcount | Sonnet | 037885c3 | waiting on one codex job it had started, then direct work |
-| eda07788 shifts/permutations | Sonnet | 037885c3 | xdsopl PCTITL matched arm validated bit-exact for DVB-T2 interleaver; three unmatched results documented; receipts pending |
+At ~19:45Z the invoker ordered all workers to commit what they have and report (rate limits). State at 20:05Z; workers marked "still committing" may add commits after this handoff, so re-read each branch before acting.
 
-Dispatch prompts (full text) are preserved in the session scratchpad only; the reusable parts are summarized in the Traps and the progress file.
+| Issue | Model | Branch head / commits | Has f547c394 merge | Reported state |
+|---|---|---|---|---|
+| c077a88b LDPC arms | Opus | `296362a3`, 13 commits, clean | yes | No final report yet. findings.md and matched-algorithm + quality-compatible pilot addenda committed; AFF3CT v4.7.0, srsRAN, xdsopl, OAI staged under `.agents/ext/c077a88b`; BFER quality runs were starving the exclusive mutex (instructed to stop). No receipts seen on the branch. |
+| c7113c5a polynomial | Opus | `6abb3e13`, 17 commits, clean | yes | No final report yet. gf2x 1.3.0 built conservative/tuned/native; both arms validated (8922 checks per variant, zero failures); pilot receipt `dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot` committed and accepted; confirmatory addendum frozen; confirmatory run cancelled while queued. |
+| 6fb89a3c transpose/logical | Sonnet | `74f1b296`, 2 commits, 1 dirty file | **no** | No final report yet. findings.md scaffold and three pilot addenda drafts; C harnesses (M4RI/Bitshuffle/ISA-L) and gf2-side harness written but not committed at handoff time. Must merge main before any receipt. |
+| 1d0da41f YMM clmul repair | Opus | `ef31a936`, 10 commits, clean | yes | Reported. REQ-07/08/10 MET (predicate + safety contract `crates/gf2-kernels-simd/src/x86/clmul.rs`, lane suites, consumer test, `asm/clmul.asm.txt` at rustc 1.95 with `vpclmulqdq ymm`); pilot receipt accepted and FALSIFIES the premise (YMM lane 1.24–1.72x slower than sequential PCLMULQDQ, 1.29x through the consumer); REQ-01/09 PARTIAL: confirmatory receipt never acquired the mutex. **Not mergeable as is**: commit `e78dd4ac` makes the YMM lane the default; the adoption default must follow the confirmatory receipt via detect-time lane selection in `gf2m::detect_x86`. |
+| 6c6b09b1 byte-field | Opus | `da729f8a`, 7 commits, clean | yes | No final report yet. Pins and pilot addendum committed. |
+| 04b85d10 profiling | Opus | `e2ff5405`, 9 commits, 1 dirty file | yes | No final report yet. Harness, pilot addendum and classified generated-code (spill vs scratch) evidence committed. |
+| 26465e6c popcount | Sonnet | `0152643d`, 3 commits, 1 dirty file | yes | No final report yet. findings.md plus popcount and AND-popcount pilot/confirmatory addenda committed. |
+| eda07788 shifts/permutations | Sonnet | `6d5f09ea`, 2 commits, clean | yes | Reported. REQ-02 MET (xdsopl `PCTITL` DVB-T2 interleaver arm validated bit-exact over 64 800 positions for two MODCODs; AFF3CT has no DVB-T2/NR; arbitrary shifts, NR circulant rotation and NR rate matching recorded as unmatched with code-level evidence); REQ-03 PARTIAL; REQ-01/04 UNMET: no frozen addendum, no receipt; `survey/fetch-build.sh` never executed (validation used an ad-hoc clone at the same pin); drafts in `dev/active/eda07788/survey/drafts/`. |
+
+Leak check on main: clean at 20:05Z. Disk: 80 GB free. No wave-2 branch is merged; no wave-2 gate has run.
 
 ## What just happened
 
@@ -44,8 +46,10 @@ Dispatch prompts (full text) are preserved in the session scratchpad only; the r
 
 ## What to do next
 
+- [ ] First: collect the six missing final reports. Each worker is a named subagent of session `cbccd0cf`; if that session is gone, read each branch (`git log main..worktree-agent-<id>`, `findings.md`) and treat the branch as the report. Lead-preserve any dirty worktree (`git add -A && git commit` with a `wip(jit:<id>)` subject) before anything else.
 - [ ] `f547c394`: re-run `cargo-ci` on a quiet host (nothing else building) through the gate, ideally `dev/scripts/ccx1-bench-flock.sh --full-host env CARGO_CI_NO_LOCK=1 JIT_AGENT_ID=agent:jit-execution-lead jit gate evaluate f547c394 cargo-ci`; the checker's 900 s budget starts after the mutex is acquired.
 - [ ] `f547c394`: resolve the research-review checker failure (see Open questions), then re-run `research-review`. Then `jit issue update f547c394 --state done`, commit, `jit graph downstream`, `jit validate`, release the lease, reclaim `agent-f547c394` and `agent-f547c394-identity-tests` worktrees.
+- [ ] Wave 2 review order suggestion: c7113c5a and 1d0da41f (closest to complete; both need a confirmatory receipt on a quiet host), then eda07788 (run `fetch-build.sh`, re-validate, freeze the drafts, pilot + confirmation), then the four with no report. Wave 2 is unlikely to close without one more dispatch round per issue; budget it.
 - [ ] Wave 2: for each finished worker, run `check-leak-into-main.sh`, lead-preserve any uncommitted worktree changes, merge `--no-ff` one branch at a time, gate the merged tree (cargo-ci) after each merge, then code/doc/research reviews individually, six-tier lead review, rework up to 2 attempts. Group-A branches that did not merge main must be merged with main first (conflict-free by construction: they touch none of the protocol files).
 - [ ] `1d0da41f` closure needs both the negative receipt and the adoption default that follows it; check the asm artefact is in the same commit as the last SIMD source change (`scripts/asm-artefact-present.sh` inspects HEAD~1..HEAD of the merge).
 - [ ] After wave 2 closes: advance `current_wave` to 3, write the wave-3 dispatch (3be770d5, 53c5a8c0, 19513245, 1d4fd63d, 5cbb6545, 2037941f, c04dd4ac).
@@ -61,6 +65,8 @@ Dispatch prompts (full text) are preserved in the session scratchpad only; the r
 - **`du -sh` over hardlink-seeded worktrees miscounts.** The first worktree listed absorbs the whole 135 GB pool; use per-worktree `du` invocations or `df` to reason about disk. Disk was 84 GB free at 19:30Z with eight worktrees.
 - **Background `./scripts/cargo-ci.sh > log` was blocked by the auto-mode classifier;** run CI through `jit gate evaluate` (background) instead.
 - **Group-A wave-2 branches predate the f547c394 merge.** They must merge `main` before their receipt runs (instructed in the prompt) and the lead must verify the receipts' producing-input identities match post-merge tooling before accepting them.
+- **Do NOT dispatch eight measurement workers on one host at once.** The exclusive CCX1 mutex became the bottleneck: confirmatory campaigns queued 40+ minutes and were cancelled; `flock` is not FIFO, so short shared holders (aff3ct BFER runs) starve exclusive waiters indefinitely. Next time: at most two or three timed campaigns in flight, quality sims pinned off CCX1 without the mutex, builds batched under one shared hold.
+- **Do NOT plan a session around eight native Opus/Sonnet workers plus AI review gates under a shared rate limit.** The invoker hit the limit within ~2.5 hours and stopped the session before any wave-2 issue closed.
 - Unresolved traps from [session 2](handoff-2.md#traps--do-not-repeat-these) and [session 1](handoff.md#traps--do-not-repeat-these) remain in force: `jit claim acquire --agent-id agent:jit-execution-lead` and `JIT_AGENT_ID` for gate evaluation; evaluate gates individually, never `evaluate-all` after HEAD moved; commit early; no `nextest` without `cargo` through the budget wrapper; nested `Cargo.lock` snapshots must be force-added; `jit doc check-links` warnings are nonzero.
 
 ## Open questions needing invoker input
