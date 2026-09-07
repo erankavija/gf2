@@ -1569,17 +1569,46 @@ impl CheckpointStore {
     ) -> io::Result<Self> {
         let campaign_id = checked_identity(campaign_id.into(), "campaign")?;
         validate_resume_identity(&expected_identity)?;
-        let root = fs::canonicalize(root.as_ref())?;
+        Self::open(root.as_ref(), Some((&campaign_id, &expected_identity)))
+    }
+
+    /// Reads and validates a portable checkpoint export without changing files.
+    ///
+    /// Shares manifest, canonical encoding, unit and digest validation with
+    /// [`Self::resume`]. An absent empty `pending/` directory is permitted in
+    /// committed exports. Pending evidence rejects without recovery or cleanup.
+    /// Cost is linear in the total checkpoint bytes. Returns an I/O error for
+    /// unavailable content or invalid checkpoint evidence; never panics.
+    pub fn inspect(root: impl AsRef<Path>) -> io::Result<Self> {
+        Self::open(root.as_ref(), None)
+    }
+
+    fn open(root: &Path, resume: Option<(&str, &ResumeIdentity)>) -> io::Result<Self> {
+        let root = fs::canonicalize(root)?;
         reject_unexpected_root_entries(&root)?;
         let manifest: CheckpointManifest = read_canonical_json(&root.join("manifest.json"))?;
+        checked_identity(manifest.campaign_id.clone(), "campaign")?;
+        validate_resume_identity(&manifest.identity)?;
         if manifest.schema != CHECKPOINT_SCHEMA
-            || manifest.campaign_id != campaign_id
-            || !manifest.identity.resume_equivalent(&expected_identity)
+            || resume.is_some_and(|(campaign, identity)| {
+                manifest.campaign_id != campaign || !manifest.identity.resume_equivalent(identity)
+            })
         {
             return Err(invalid("checkpoint resume manifest identity mismatch"));
         }
+        let campaign_id = &manifest.campaign_id;
         let identity_sha256 = sha256_bytes(&canonical_bytes(&manifest.identity)?);
-        let pending_recovery = recover_checkpoint_pending(&root, &campaign_id, &identity_sha256)?;
+        let pending_recovery = if resume.is_some() {
+            recover_checkpoint_pending(&root, campaign_id, &identity_sha256)?
+        } else {
+            let pending = root.join("pending");
+            if pending.try_exists()? && fs::read_dir(pending)?.next().is_some() {
+                return Err(invalid(
+                    "checkpoint inspection requires no pending evidence",
+                ));
+            }
+            None
+        };
         let mut completed = BTreeMap::new();
         for entry in fs::read_dir(root.join("units"))? {
             let entry = entry?;
@@ -1595,7 +1624,7 @@ impl CheckpointStore {
             let text = std::str::from_utf8(&bytes)
                 .map_err(|_| invalid("checkpoint unit is not UTF-8 JSON"))?;
             let unit: CheckpointUnit = decode_canonical(text, "checkpoint unit")?;
-            validate_unit(&unit, &campaign_id, &identity_sha256, &entry.path())?;
+            validate_unit(&unit, campaign_id, &identity_sha256, &entry.path())?;
             if completed
                 .insert(
                     unit.key,
@@ -1670,6 +1699,11 @@ impl CheckpointStore {
         };
         self.completed.insert(key.to_owned(), completed.clone());
         Ok(completed)
+    }
+
+    /// Validated immutable checkpoint manifest.
+    pub fn manifest(&self) -> &CheckpointManifest {
+        &self.manifest
     }
 
     /// Campaign identity pinned by the immutable checkpoint manifest.

@@ -95,7 +95,7 @@ LAUNCH_LOG="$STAGE.launcher.log"
   echo "# stage: $STAGE"
   echo "# load_avg_start: $(uptime)"
 } >"$LAUNCH_LOG"
-# Session 1 measures two cells and pauses; session 2 resumes and completes.
+# Session 1 obeys the plan's cell limit and pauses; session 2 resumes and completes.
 # The wrapper's default mode pins CCX1 (taskset -c 6-11) and holds the mutex.
 set +e
 GF2_BENCH=1 dev/scripts/ccx1-bench-flock.sh "$RUNNER" run "$STAGE" "$PLAN" | tee -a "$LAUNCH_LOG"
