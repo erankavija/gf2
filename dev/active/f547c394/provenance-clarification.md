@@ -35,28 +35,28 @@ not a passing verdict on the incomplete implementation.
 
 ## Verification status
 
-The implementation stores and verifies receipt-local snapshots for the shared
-protocol, contract, schema, family addendum, producing-input closure and pilot
-evidence. Shared checkpoint resume compares producing content while preserving
-informational source-control locators. The tuning-campaign-support suite passes
-147 tests, including independent checkpoint provenance tests and receipt tests
-for missing or changed snapshots, metadata-independent acceptance, premeasurement
-addendum freezing and distinct pilot evidence.
+The implementation verifies receipt-local snapshots for the protocol, contract,
+schema, addendum, producing-input closure and pilot evidence. The complete
+`receipt::CampaignFacts` representation binds each receipt to the opening
+campaign record, with the same semantic comparison used by runner resume.
+Acceptance validates exact saved-plan bytes and their cell/arm connections,
+and uses read-only shared checkpoint inspection. Source-control locators remain
+informational.
 
-The durable pilot receipt at
-`dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json`
-has SHA-256
-`6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf`;
-its acceptance summary reports zero findings across two resumed sessions. The
-separately frozen confirmatory addendum cites that digest. Its confirmatory
-receipt at
-`dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json`
-has SHA-256
-`e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344`
-and is accepted with zero findings across two resumed sessions. It preserves
-the unavailable 12-core cell observed under the six-core CCX1 affinity. The
-current acceptance CLI accepts exactly one receipt directory and preserves the
-same evaluation and output semantics as the source captured in both receipts;
-clean exports of both committed trees revalidate under the current release
-binary. The configured issue gates remain the execution lead's completion step.
-This is the first rework attempt under the clarified contract.
+[Revalidation evidence](../../bench_results/f547c394/revalidation.json) records
+the release acceptance executable digest, its source/build input identities,
+toolchain, commands, results and unchanged raw-evidence digests. It includes
+results from both committed receipt directories and their clean Git exports,
+plus the preceding acceptance summaries for comparison. The
+[pilot](../../bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json)
+and [confirmation](../../bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json)
+carry all required opening facts; neither requires regeneration. The frozen
+logs, plans, receipts, snapshots and raw samples retain their original bytes.
+The pilot supplies exploratory evidence only and does not qualify for
+production selection. Confirmation retains every negative and unavailable
+outcome, including the cell requiring twelve physical cores.
+
+These receipts check the protocol pipeline and make no gf2 performance claim.
+The [rework validation report](rework-validation.md) records behavioral tests,
+MSRV validation, CI results, cumulative finding resolutions and the raw audits.
+Tracker state and formal review decisions belong to the execution lead.

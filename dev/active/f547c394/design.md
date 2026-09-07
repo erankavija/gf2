@@ -10,9 +10,9 @@ the schema is [`addendum.schema.json`](addendum.schema.json).
 | Deliverable | Home | Reason |
 |---|---|---|
 | Shared runner primitives: append-only execution log, immutable checkpoints, fresh-child framing, fixed-window timing | `tuning-campaign-support` crate, existing `journal`, `transport` and `timing` modules | The a835 protocol made this workspace member the crate-neutral development support library; the benchmark runner consumes those modules unchanged rather than duplicating them. |
-| Host observation and lock evidence (`host`), child execution with concurrent draining and process-tree reaping (`process`) | New library modules lifted out of the a835 driver binary | Two consumers (the a835 driver and the benchmark runner) need the same mechanics; a private copy in a second binary would be the parallel variant the invariant forbids. The driver keeps thin wrappers so its behavior and journal output are byte-identical. |
-| Paired A/B statistics (`abtest`) | New library module beside `statistics` | `statistics` implements the a835 extent argmin rule over fixed strata; the protocol's paired resampling, bootstrap interval and equivalence decisions are a distinct estimator family with its own deterministic generator, so they sit beside it rather than inside it. |
-| Protocol identity, frozen settings, addendum and plan contracts (`protocol`), receipt schema and acceptance evaluation (`receipt`), JSON Schema subset validator (`schema`) | New library modules | One typed source for the receipt and addendum contracts serves the runner, the acceptance tool and the tests (`@/inv/semantic-types`); the committed JSON Schema is the declared machine-readable contract and is enforced at acceptance time by the subset validator, so the two cannot drift silently. |
+| Host observation and lock evidence (`host`), child execution with concurrent draining and process-tree reaping (`process`) | Library modules `host` and `process` | Two consumers (the a835 driver and the benchmark runner) need the same mechanics; a private copy in a second binary would be the parallel variant the invariant forbids. The driver keeps thin wrappers so its behavior and journal output are byte-identical. |
+| Paired A/B statistics (`abtest`) | Library module beside `statistics` | `statistics` implements the a835 extent argmin rule over fixed strata; the protocol's paired resampling, bootstrap interval and equivalence decisions are a distinct estimator family with its own deterministic generator, so they sit beside it rather than inside it. |
+| Protocol identity, frozen settings, addendum and plan contracts (`protocol`), receipt schema and acceptance evaluation (`receipt`), JSON Schema subset validator (`schema`) | Library modules | One typed source for the receipt and addendum contracts serves the runner, the acceptance tool and the tests (`@/inv/semantic-types`); the committed JSON Schema is the declared machine-readable contract and is enforced at acceptance time by the subset validator, so the two cannot drift silently. |
 | Acceptance tool (`benchmark-acceptance`) | Rust binary in the crate rather than a generalization of `dev/scripts/validate-tuning-extent-campaign.py` | The Python validator is deliberately specific to the a835 campaign: it hard-codes cell counts, grids, defaults and owner protocols. It keeps its convention of trusting no producer counter, which the Rust tool follows by recomputing every digest, interval and decision from raw samples. A Rust home lets the deterministic fixtures run in the fast test tier through the existing crate steps of `scripts/cargo-ci.sh`. |
 | Protocol runner (`benchmark-ab-runner`) and the smoke arm (`ab-smoke-workload`) | Thin binaries over the library primitives | Binaries stay consumers: the runner owns only plan parsing, cell iteration and receipt assembly; every durable-evidence rule comes from `journal`, `process`, `host`, `abtest` and `receipt`. |
 | Protocol, schema, addenda | `dev/active/f547c394/` | The owning development directory named by `jit doc dir`; receipts carry immutable local snapshots and bind each source path and exact byte digest. |
@@ -31,6 +31,15 @@ second consumer needs the full lifecycle store, parameterize
 `SessionDescriptor::validate` over its contracts and counts and move the runner
 onto it. Until then the runner's lock, log and checkpoint discipline is the
 shared one; only the mode-claim bookkeeping is absent.
+
+Acceptance calls `journal::CheckpointStore::inspect`, a read-only entry point
+sharing the canonical manifest and unit validation with resume. It rejects
+pending evidence without cleanup, recovery or publication and permits an absent
+empty pending directory in a portable export. The evaluator owns only the
+benchmark semantics of each typed case/result pair; it has no checkpoint JSON
+parser. `receipt::CampaignFacts::resume_equivalent` is the common comparison for
+runner resume and acceptance, with `validate_receipt` checking plan-to-receipt
+connections and the derived checkpoint identities.
 
 ## Decisions worth knowing
 
@@ -85,3 +94,12 @@ the driver unit test `producing_input_manifest_rejects_authority_and_path_mutati
 fails until `scripts/cargo-ci.sh` reaches its `tuning-composer` step, which
 runs after the crate's own test step. This is an `a83583e0` artifact and is
 left for its owner; it is reported rather than patched here.
+
+## Validation evidence
+
+The [revalidation record](../../bench_results/f547c394/revalidation.json)
+identifies the release evaluator and preserves its results over the committed
+pilot and confirmation and their portable exports. Both opening records contain
+the complete frozen facts. The [validation report](rework-validation.md)
+contains the tests, command output and cumulative review resolutions. These
+receipts exercise the protocol pipeline without claiming a gf2 speedup.
