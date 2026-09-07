@@ -176,9 +176,9 @@ Rust 1.95.0 toolchain. The repository wrapper supplies CPU and test locks.
 ## Resolution table
 
 Source filenames below resolve under `dev/tools/tuning-campaign-support/` unless
-a repository-relative path is given. The Git mount block prevents HEAD closure.
+a repository-relative path is given. Line numbers refer to the committed tree of the merge into `main`.
 
-| # | Round | Source | Finding (verbatim) | Resolution (validated working tree unless stated) |
+| # | Round | Source | Finding (verbatim) | Resolution (committed tree) |
 |---|---|---|---|---|
 | 1 | R1 | reviewer | F1 (protocol.rs:185-215, receipt.rs:463): a pinned artifact is verified only against the bytes at its pinned commit; an unavailable Git object or a digest mismatch is an error-severity finding that rejects the receipt. Remove the working-tree fallback and the note path. | Git-object requirement superseded by `dev/active/f547c394/provenance-clarification.md:13`; receipt-local verification with no repository fallback: `src/protocol.rs:203`, missing/mismatch regressions `tests/protocol_contracts.rs:1015` and `:1043`. |
 | 2 | R1 | reviewer | F2 (addendum-protocol-smoke.json:11,18; protocol.rs:666): prove freezing rather than declaring it. The receipt's addendum pin commit must contain the addendum with the pinned digest and be an ancestor of or equal to the receipt's source revision; a self-referential or missing `frozen.at_commit` is not acceptable. `resolution_evidence` must name a committed pilot receipt (path and digest) distinct from the receipt under evaluation, verified by the tool. Regenerate the smoke evidence as a pilot receipt followed by a confirmatory receipt that cites it. | Git-ancestry and at_commit demands superseded by the clarification; `src/bin/benchmark-ab-runner.rs:301` opens with complete facts, `src/receipt.rs:1004` checks freeze, `:1623` checks distinct digest-pinned pilot. Both historical receipts independently pass: `dev/bench_results/f547c394/revalidation.json`. |
@@ -203,16 +203,16 @@ a repository-relative path is given. The Git mount block prevents HEAD closure.
 | 21 | Final CI | CI test failure | TIMEOUT [   8.124s] gf2-sim::permanent_rare_event_artifacts rare_event_artifact_partial_publish_recovery | Unresolved full-suite timing failure outside this issue: initial CI passed this test; the focused rerun passes in 2.36 seconds. Both outcomes and the full-suite timeout are preserved below. Test budget and unrelated simulation code are unchanged. Lead owns any separate issue tracking. |
 | 22 | Pre-edit | audit-step-1 | No matching gate runs for issue f547c394; zsh:2: no matches found: .jit/gate-runs/*/result.json | Raw records are unavailable in this worktree. Committed R1/R2 reviews supply findings; this absence remains an audit limitation, not an inferred passing gate. |
 | 23 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md:120` | limit, preserved experiment or tracked falsifiable follow-up within the search | OUT-OF-SCOPE per issue text: "family comparator builds, baseline campaigns and consumer profiling are separate work." This clause governs later family research. |
-| 24 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md:23` | ### Deferred-items audit (Tier 2.75) | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`, subject to the Git commit block. |
+| 24 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md:23` | ### Deferred-items audit (Tier 2.75) | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`. |
 | 25 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md:24` | design.md "Pre-existing fragility observed" (a83583e0 composer lockfile) — legitimately out of scope, recorded in surfaced_pitfalls. design.md "Named exception: session lifecycle store" — tracked exception with a convergence condition; OK. | Historical audit. `dev/active/f547c394/design.md:21` retains the session-store exception and convergence condition. OUT-OF-SCOPE per issue text: "family comparator builds, baseline campaigns and consumer profiling are separate work" covers separate a835 composer lockfile fragility. |
-| 26 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md:30` | Formal criterion and holistic acceptance stop at the failed gate. The mandatory prior-findings and deferred-items audits are complete. R2 F1 violates the complete frozen-content obligation in REQ-01/REQ-04. | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`, subject to the Git commit block. |
-| 27 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md:36` | ### Deferred-items audit (Tier 2.75) | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`, subject to the Git commit block. |
+| 26 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md:30` | Formal criterion and holistic acceptance stop at the failed gate. The mandatory prior-findings and deferred-items audits are complete. R2 F1 violates the complete frozen-content obligation in REQ-01/REQ-04. | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`. |
+| 27 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md:36` | ### Deferred-items audit (Tier 2.75) | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`. |
 | 28 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md:38` | The linked protocol/design/schema/addenda/clarification and measurement contract contain no in-scope deferred deliverable. `measurement-contract.md:120` requires future family work to track falsifiable residual gaps; the issue explicitly excludes family surveys and production optimization. `design.md:70-86` identifies pre-existing a835 Git-policy migration (`0ba493e1`) and its untracked composer lockfile fragility (`a83583e0`); these belong to the separate campaign contract, not this protocol task. `design.md:21-33` preserves the named session lifecycle-store exception and explicit convergence condition. The historical review records superseded findings rather than current unresolved implementation. | Historical audit preserves explicit scope decisions. Session-store convergence remains in design.md; separate a835 migration belongs to 0ba493e1. OUT-OF-SCOPE per issue text: "family comparator builds, baseline campaigns and consumer profiling are separate work." |
 
 ## Success criteria and scope
 
 - REQ-01/REQ-04: shared typed freeze binding and strict portable validation have
-  behavioral evidence; publication as final commits remains blocked.
+  behavioral evidence and are committed in final form.
 - REQ-02: paired/bootstrap/statistical rules, numeric settings, holdout and stop
   policies remain in protocol v1 and pass their behavioral suites.
 - REQ-03: family margins and complexity fields remain explicit; pilots never
@@ -220,8 +220,8 @@ a repository-relative path is given. The Git mount block prevents HEAD closure.
 - REQ-05: canonical locking, log announcement, resume and observed worker/host
   behavior remain covered by runner integration and host/process suites.
 - REQ-06: decoder matched/quality-compatible schemas and quality evidence pass.
-- REQ-07: protocol/schema/evidence are reviewable in the working tree; final-form
-  commits and formal lead review acceptance are not complete.
+- REQ-07: protocol, schema, tooling validation and linked evidence are committed;
+  formal gate evaluation and lead review are the tracker-side completion steps.
 
 The known a835 composer-lockfile test fragility is reported in `design.md` and
 is not patched. Its unit test passes in this pre-seeded worktree, where the
