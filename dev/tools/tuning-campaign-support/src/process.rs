@@ -118,7 +118,14 @@ fn signal_descendants(signal: rustix::process::Signal) -> io::Result<()> {
         };
         let stat = match fs::read_to_string(path.join("stat")) {
             Ok(stat) => stat,
-            Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
+            // A process can disappear after its procfs entry is enumerated or
+            // opened. Linux reports either ENOENT or ESRCH at this boundary.
+            Err(error)
+                if error.kind() == io::ErrorKind::NotFound
+                    || error.raw_os_error() == Some(rustix::io::Errno::SRCH.raw_os_error()) =>
+            {
+                continue;
+            }
             Err(error) => return Err(error),
         };
         let (_, tail) = stat
