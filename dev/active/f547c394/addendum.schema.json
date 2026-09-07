@@ -31,7 +31,7 @@
     "frozen": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Human-readable freeze time. The receipt-local addendum pin and premeasurement campaign-start record prove the exact bytes and ordering of the freeze.",
+      "description": "Human-readable freeze time. The receipt-local addendum pin is one field of receipt::CampaignFacts in the premeasurement campaign-start record. The shared typed comparison binds all receipt and plan provenance, including these exact addendum bytes, before measurement (protocol P-23).",
       "required": ["frozen_utc"],
       "properties": {
         "frozen_utc": { "type": ["string", "null"] }

@@ -1,0 +1,1141 @@
+{
+  "schema": "f547c394-acceptance-revalidation-v1",
+  "purpose": "Independent acceptance validation of protocol pipeline evidence; no benchmark measurements or gf2 performance claims.",
+  "tool": {
+    "executable": "target/release/benchmark-acceptance",
+    "executable_sha256": "0584560cf922589414e534fafb0b1a2164746d07d33c420dbeca3cdad3c9ce0d",
+    "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "build_command": "./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support --bin benchmark-acceptance",
+    "input_manifest": "dev/active/f547c394/producing-inputs.json",
+    "input_manifest_sha256": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+    "input_digests": {
+      "behavior_sources": {
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      },
+      "lifecycle_sources": {
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554"
+      },
+      "build_inputs": {
+        ".cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      }
+    },
+    "behavior_source_map_sha256": "b96863ac52f36852f2f180cd5dd87fdaa548b3b6ec14331daece1c217ff5c907",
+    "behavior_source_map_encoding": "UTF-8 JSON object sorted by path, compact separators, no trailing newline"
+  },
+  "receipts_regenerated": false,
+  "evaluations": [
+    {
+      "receipt_directory": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation",
+      "command": [
+        "target/release/benchmark-acceptance",
+        "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation"
+      ],
+      "exit_code": 0,
+      "stdout": "GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0\n",
+      "summary": {
+        "schema": "zen3-benchmark-acceptance-v1",
+        "receipt_sha256": "e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344",
+        "campaign_id": "confirmation-f547c394-20260906t230920z",
+        "label": "confirmation",
+        "verdict": "accepted",
+        "qualifies": false,
+        "family": {
+          "family_id": "protocol-smoke",
+          "comparisons": 3,
+          "family_alpha": 0.05,
+          "per_comparison_confidence": 0.9833333333333333,
+          "bootstrap_resamples": 10000
+        },
+        "sessions": 2,
+        "resumed": true,
+        "findings": [],
+        "cells": [
+          {
+            "cell_id": "xor-fold-double-pass-1core",
+            "role": "confirmatory",
+            "objective": "improvement",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pass",
+            "pairs": 24,
+            "flagged_windows": 0,
+            "total_windows": 240,
+            "interval": {
+              "estimate": 1.999306201903797,
+              "lower": 1.9065889025987186,
+              "upper": 2.0535634964978393,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 4601929107371892610,
+              "pairs": 24
+            },
+            "decision": "improved",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-1core",
+            "role": "confirmatory",
+            "objective": "non-regression",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pass",
+            "pairs": 24,
+            "flagged_windows": 0,
+            "total_windows": 240,
+            "interval": {
+              "estimate": 1.0371472448916095,
+              "lower": 0.9861962072217164,
+              "upper": 1.0896666667725476,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 18091774859665624329,
+              "pairs": 24
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-streaming-pilot-6core",
+            "role": "exploratory",
+            "objective": "improvement",
+            "core_arm": "physical-cores-6",
+            "resolved_cpus": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 0.9861303904228828,
+              "lower": 0.9613273906420885,
+              "upper": 1.0107677802004174,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 12792100729105745411,
+              "pairs": 6
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-12core",
+            "role": "confirmatory",
+            "objective": "non-regression",
+            "core_arm": "physical-cores-12",
+            "resolved_cpus": [],
+            "status": "unavailable",
+            "outcome": "unavailable",
+            "pairs": 0,
+            "flagged_windows": 0,
+            "total_windows": 0,
+            "interval": null,
+            "decision": null,
+            "margins": null,
+            "unresolved_settings": [],
+            "reason": "affinity mask holds 6 physical cores, 12 required"
+          }
+        ]
+      },
+      "prior_summary": {
+        "schema": "zen3-benchmark-acceptance-v1",
+        "receipt_sha256": "e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344",
+        "campaign_id": "confirmation-f547c394-20260906t230920z",
+        "label": "confirmation",
+        "verdict": "accepted",
+        "qualifies": false,
+        "family": {
+          "family_id": "protocol-smoke",
+          "comparisons": 3,
+          "family_alpha": 0.05,
+          "per_comparison_confidence": 0.9833333333333333,
+          "bootstrap_resamples": 10000
+        },
+        "sessions": 2,
+        "resumed": true,
+        "findings": [],
+        "cells": [
+          {
+            "cell_id": "xor-fold-double-pass-1core",
+            "role": "confirmatory",
+            "objective": "improvement",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pass",
+            "pairs": 24,
+            "flagged_windows": 0,
+            "total_windows": 240,
+            "interval": {
+              "estimate": 1.999306201903797,
+              "lower": 1.9065889025987186,
+              "upper": 2.0535634964978393,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 4601929107371892610,
+              "pairs": 24
+            },
+            "decision": "improved",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-1core",
+            "role": "confirmatory",
+            "objective": "non-regression",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pass",
+            "pairs": 24,
+            "flagged_windows": 0,
+            "total_windows": 240,
+            "interval": {
+              "estimate": 1.0371472448916095,
+              "lower": 0.9861962072217164,
+              "upper": 1.0896666667725476,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 18091774859665624329,
+              "pairs": 24
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-streaming-pilot-6core",
+            "role": "exploratory",
+            "objective": "improvement",
+            "core_arm": "physical-cores-6",
+            "resolved_cpus": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 0.9861303904228828,
+              "lower": 0.9613273906420885,
+              "upper": 1.0107677802004174,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 12792100729105745411,
+              "pairs": 6
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-12core",
+            "role": "confirmatory",
+            "objective": "non-regression",
+            "core_arm": "physical-cores-12",
+            "resolved_cpus": [],
+            "status": "unavailable",
+            "outcome": "unavailable",
+            "pairs": 0,
+            "flagged_windows": 0,
+            "total_windows": 0,
+            "interval": null,
+            "decision": null,
+            "margins": null,
+            "unresolved_settings": [],
+            "reason": "affinity mask holds 6 physical cores, 12 required"
+          }
+        ]
+      },
+      "raw_files_sha256": {
+        "checkpoints/manifest.json": "7618c1dc74937decdd49fbfb8931030d5e48255de2e47455cefc29eef5921c74",
+        "checkpoints/units/295f489da8b8ac5b85c3e8491c47960afa9f83fd97da5c7857454da1c45aa3a9.json": "ca5dfe98d5e1af1a8ff8b38005c507024cfcb1d06e64f18842dac57deb102b3f",
+        "checkpoints/units/53a628b30dce9d08eb855ed8b03d34365cdfb422e0dd77563ffb2d502e740bf7.json": "721700ba680442787cadc117c6fb1fa9b887d8c04591f902282ab7c6df49c9fc",
+        "checkpoints/units/69f210fdbb77f19b2cd82f268422b8497c15ebec5dde16d7a3c7d091702295a7.json": "4747d11143105b620f69c557025760cfa1b35caba7555f7a102ab8044f23f77e",
+        "checkpoints/units/74bc25473626a097c05c79d3a62504c61158a35ea4b0e8239394058740d81cf7.json": "9e3a2a15d2ed35b8fd79ae459fd998f98c50e1e39d8c14001f8f9b7474693c6e",
+        "execution.log": "cbfe54076c39b6d2f5f436491eb1ad6f82cfec40ee01e9f5e9613588283bbe69",
+        "inputs/addendum.schema.json": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+        "inputs/family-addendum.json": "307b6a2baf2da5025a26820ed44be55a212747440f3d9d00e09bdaf8b1d8a69c",
+        "inputs/measurement-contract.md": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+        "inputs/producing/.cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "inputs/producing/.producing-snapshot.pending.json": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+        "inputs/producing/Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "inputs/producing/Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "inputs/producing/dev/active/f547c394/producing-inputs.json": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+        "inputs/producing/dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "inputs/producing/dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "inputs/producing/dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "inputs/producing/producing-snapshot.json": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+        "inputs/protocol.md": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48",
+        "inputs/resolution-evidence/receipt.json": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+        "launcher.log": "3b4401c8674230893ccc18619368b05bea5de5cc787c4d4be69e3f341551342e",
+        "plan.json": "5c2b1f5a2b8ff0384a5cd0d5baf00cd19659d53df3fc6606edcfe6f166eb899d",
+        "receipt.json": "e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344"
+      },
+      "raw_files_match_committed_bytes": true
+    },
+    {
+      "receipt_directory": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation",
+      "command": [
+        "target/release/benchmark-acceptance",
+        "target/rework/export/dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation"
+      ],
+      "exit_code": 0,
+      "stdout": "GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0\n",
+      "summary": {
+        "schema": "zen3-benchmark-acceptance-v1",
+        "receipt_sha256": "e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344",
+        "campaign_id": "confirmation-f547c394-20260906t230920z",
+        "label": "confirmation",
+        "verdict": "accepted",
+        "qualifies": false,
+        "family": {
+          "family_id": "protocol-smoke",
+          "comparisons": 3,
+          "family_alpha": 0.05,
+          "per_comparison_confidence": 0.9833333333333333,
+          "bootstrap_resamples": 10000
+        },
+        "sessions": 2,
+        "resumed": true,
+        "findings": [],
+        "cells": [
+          {
+            "cell_id": "xor-fold-double-pass-1core",
+            "role": "confirmatory",
+            "objective": "improvement",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pass",
+            "pairs": 24,
+            "flagged_windows": 0,
+            "total_windows": 240,
+            "interval": {
+              "estimate": 1.999306201903797,
+              "lower": 1.9065889025987186,
+              "upper": 2.0535634964978393,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 4601929107371892610,
+              "pairs": 24
+            },
+            "decision": "improved",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-1core",
+            "role": "confirmatory",
+            "objective": "non-regression",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pass",
+            "pairs": 24,
+            "flagged_windows": 0,
+            "total_windows": 240,
+            "interval": {
+              "estimate": 1.0371472448916095,
+              "lower": 0.9861962072217164,
+              "upper": 1.0896666667725476,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 18091774859665624329,
+              "pairs": 24
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-streaming-pilot-6core",
+            "role": "exploratory",
+            "objective": "improvement",
+            "core_arm": "physical-cores-6",
+            "resolved_cpus": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 0.9861303904228828,
+              "lower": 0.9613273906420885,
+              "upper": 1.0107677802004174,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 12792100729105745411,
+              "pairs": 6
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-12core",
+            "role": "confirmatory",
+            "objective": "non-regression",
+            "core_arm": "physical-cores-12",
+            "resolved_cpus": [],
+            "status": "unavailable",
+            "outcome": "unavailable",
+            "pairs": 0,
+            "flagged_windows": 0,
+            "total_windows": 0,
+            "interval": null,
+            "decision": null,
+            "margins": null,
+            "unresolved_settings": [],
+            "reason": "affinity mask holds 6 physical cores, 12 required"
+          }
+        ]
+      },
+      "prior_summary": {
+        "schema": "zen3-benchmark-acceptance-v1",
+        "receipt_sha256": "e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344",
+        "campaign_id": "confirmation-f547c394-20260906t230920z",
+        "label": "confirmation",
+        "verdict": "accepted",
+        "qualifies": false,
+        "family": {
+          "family_id": "protocol-smoke",
+          "comparisons": 3,
+          "family_alpha": 0.05,
+          "per_comparison_confidence": 0.9833333333333333,
+          "bootstrap_resamples": 10000
+        },
+        "sessions": 2,
+        "resumed": true,
+        "findings": [],
+        "cells": [
+          {
+            "cell_id": "xor-fold-double-pass-1core",
+            "role": "confirmatory",
+            "objective": "improvement",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pass",
+            "pairs": 24,
+            "flagged_windows": 0,
+            "total_windows": 240,
+            "interval": {
+              "estimate": 1.999306201903797,
+              "lower": 1.9065889025987186,
+              "upper": 2.0535634964978393,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 4601929107371892610,
+              "pairs": 24
+            },
+            "decision": "improved",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-1core",
+            "role": "confirmatory",
+            "objective": "non-regression",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pass",
+            "pairs": 24,
+            "flagged_windows": 0,
+            "total_windows": 240,
+            "interval": {
+              "estimate": 1.0371472448916095,
+              "lower": 0.9861962072217164,
+              "upper": 1.0896666667725476,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 18091774859665624329,
+              "pairs": 24
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-streaming-pilot-6core",
+            "role": "exploratory",
+            "objective": "improvement",
+            "core_arm": "physical-cores-6",
+            "resolved_cpus": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 0.9861303904228828,
+              "lower": 0.9613273906420885,
+              "upper": 1.0107677802004174,
+              "confidence": 0.9833333333333333,
+              "resamples": 10000,
+              "seed": 12792100729105745411,
+              "pairs": 6
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-12core",
+            "role": "confirmatory",
+            "objective": "non-regression",
+            "core_arm": "physical-cores-12",
+            "resolved_cpus": [],
+            "status": "unavailable",
+            "outcome": "unavailable",
+            "pairs": 0,
+            "flagged_windows": 0,
+            "total_windows": 0,
+            "interval": null,
+            "decision": null,
+            "margins": null,
+            "unresolved_settings": [],
+            "reason": "affinity mask holds 6 physical cores, 12 required"
+          }
+        ]
+      },
+      "raw_files_sha256": {
+        "checkpoints/manifest.json": "7618c1dc74937decdd49fbfb8931030d5e48255de2e47455cefc29eef5921c74",
+        "checkpoints/units/295f489da8b8ac5b85c3e8491c47960afa9f83fd97da5c7857454da1c45aa3a9.json": "ca5dfe98d5e1af1a8ff8b38005c507024cfcb1d06e64f18842dac57deb102b3f",
+        "checkpoints/units/53a628b30dce9d08eb855ed8b03d34365cdfb422e0dd77563ffb2d502e740bf7.json": "721700ba680442787cadc117c6fb1fa9b887d8c04591f902282ab7c6df49c9fc",
+        "checkpoints/units/69f210fdbb77f19b2cd82f268422b8497c15ebec5dde16d7a3c7d091702295a7.json": "4747d11143105b620f69c557025760cfa1b35caba7555f7a102ab8044f23f77e",
+        "checkpoints/units/74bc25473626a097c05c79d3a62504c61158a35ea4b0e8239394058740d81cf7.json": "9e3a2a15d2ed35b8fd79ae459fd998f98c50e1e39d8c14001f8f9b7474693c6e",
+        "execution.log": "cbfe54076c39b6d2f5f436491eb1ad6f82cfec40ee01e9f5e9613588283bbe69",
+        "inputs/addendum.schema.json": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+        "inputs/family-addendum.json": "307b6a2baf2da5025a26820ed44be55a212747440f3d9d00e09bdaf8b1d8a69c",
+        "inputs/measurement-contract.md": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+        "inputs/producing/.cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "inputs/producing/.producing-snapshot.pending.json": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+        "inputs/producing/Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "inputs/producing/Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "inputs/producing/dev/active/f547c394/producing-inputs.json": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+        "inputs/producing/dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "inputs/producing/dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "inputs/producing/dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "inputs/producing/producing-snapshot.json": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+        "inputs/protocol.md": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48",
+        "inputs/resolution-evidence/receipt.json": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+        "launcher.log": "3b4401c8674230893ccc18619368b05bea5de5cc787c4d4be69e3f341551342e",
+        "plan.json": "5c2b1f5a2b8ff0384a5cd0d5baf00cd19659d53df3fc6606edcfe6f166eb899d",
+        "receipt.json": "e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344"
+      },
+      "raw_files_match_committed_bytes": true
+    },
+    {
+      "receipt_directory": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot",
+      "command": [
+        "target/release/benchmark-acceptance",
+        "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot"
+      ],
+      "exit_code": 0,
+      "stdout": "GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0\n",
+      "summary": {
+        "schema": "zen3-benchmark-acceptance-v1",
+        "receipt_sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+        "campaign_id": "pilot-f547c394-20260906t230725z",
+        "label": "pilot",
+        "verdict": "accepted",
+        "qualifies": false,
+        "family": {
+          "family_id": "protocol-smoke-pilot",
+          "comparisons": 1,
+          "family_alpha": 0.05,
+          "per_comparison_confidence": 0.95,
+          "bootstrap_resamples": 10000
+        },
+        "sessions": 2,
+        "resumed": true,
+        "findings": [],
+        "cells": [
+          {
+            "cell_id": "xor-fold-double-pass-1core",
+            "role": "exploratory",
+            "objective": "improvement",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 2.0542046625201906,
+              "lower": 1.989192806830739,
+              "upper": 2.118240030372137,
+              "confidence": 0.95,
+              "resamples": 10000,
+              "seed": 4601929107371892610,
+              "pairs": 6
+            },
+            "decision": "improved",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [
+              "effect.measurement_resolution"
+            ],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-1core",
+            "role": "exploratory",
+            "objective": "non-regression",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 1.0043242093257032,
+              "lower": 0.9958084098554143,
+              "upper": 1.0085614610544895,
+              "confidence": 0.95,
+              "resamples": 10000,
+              "seed": 18091774859665624329,
+              "pairs": 6
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [
+              "effect.measurement_resolution"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      "prior_summary": {
+        "schema": "zen3-benchmark-acceptance-v1",
+        "receipt_sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+        "campaign_id": "pilot-f547c394-20260906t230725z",
+        "label": "pilot",
+        "verdict": "accepted",
+        "qualifies": true,
+        "family": {
+          "family_id": "protocol-smoke-pilot",
+          "comparisons": 1,
+          "family_alpha": 0.05,
+          "per_comparison_confidence": 0.95,
+          "bootstrap_resamples": 10000
+        },
+        "sessions": 2,
+        "resumed": true,
+        "findings": [],
+        "cells": [
+          {
+            "cell_id": "xor-fold-double-pass-1core",
+            "role": "exploratory",
+            "objective": "improvement",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 2.0542046625201906,
+              "lower": 1.989192806830739,
+              "upper": 2.118240030372137,
+              "confidence": 0.95,
+              "resamples": 10000,
+              "seed": 4601929107371892610,
+              "pairs": 6
+            },
+            "decision": "improved",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [
+              "effect.measurement_resolution"
+            ],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-1core",
+            "role": "exploratory",
+            "objective": "non-regression",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 1.0043242093257032,
+              "lower": 0.9958084098554143,
+              "upper": 1.0085614610544895,
+              "confidence": 0.95,
+              "resamples": 10000,
+              "seed": 18091774859665624329,
+              "pairs": 6
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [
+              "effect.measurement_resolution"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      "raw_files_sha256": {
+        "checkpoints/manifest.json": "e5b8cb2afffaf425c72514dce2949899f5fff39c89674272bb50436cbb7b930a",
+        "checkpoints/units/295f489da8b8ac5b85c3e8491c47960afa9f83fd97da5c7857454da1c45aa3a9.json": "6ea27ac6855e7c420f8fa758393f34864c390bc71c4b1bddc825ea3493693cc7",
+        "checkpoints/units/53a628b30dce9d08eb855ed8b03d34365cdfb422e0dd77563ffb2d502e740bf7.json": "8941ba5698b865beabca3f24189505175d8e791fff26685830de3eb2eceb03d7",
+        "execution.log": "884d32b3a8dba0ccdf21b630e440bfde5e1e46d414dedd104fb3534475fc190c",
+        "inputs/addendum.schema.json": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+        "inputs/family-addendum.json": "6f762913988f8cb517f5e17c2832fff06d22359a7f1eb8c59d2f47a7ffe0feb4",
+        "inputs/measurement-contract.md": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+        "inputs/producing/.cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "inputs/producing/.producing-snapshot.pending.json": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+        "inputs/producing/Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "inputs/producing/Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "inputs/producing/dev/active/f547c394/producing-inputs.json": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+        "inputs/producing/dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "inputs/producing/dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "inputs/producing/dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "inputs/producing/producing-snapshot.json": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+        "inputs/protocol.md": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48",
+        "launcher.log": "1a502b616de5a3d24d19666e1451cbb62e556e54cdb0f1893bf0ed996e2ae097",
+        "plan.json": "53a0f2d66709dc7764735ed743acf036977d0275c14d0e40da800e035bc130d9",
+        "receipt.json": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf"
+      },
+      "raw_files_match_committed_bytes": true
+    },
+    {
+      "receipt_directory": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot",
+      "command": [
+        "target/release/benchmark-acceptance",
+        "target/rework/export/dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot"
+      ],
+      "exit_code": 0,
+      "stdout": "GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0\n",
+      "summary": {
+        "schema": "zen3-benchmark-acceptance-v1",
+        "receipt_sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+        "campaign_id": "pilot-f547c394-20260906t230725z",
+        "label": "pilot",
+        "verdict": "accepted",
+        "qualifies": false,
+        "family": {
+          "family_id": "protocol-smoke-pilot",
+          "comparisons": 1,
+          "family_alpha": 0.05,
+          "per_comparison_confidence": 0.95,
+          "bootstrap_resamples": 10000
+        },
+        "sessions": 2,
+        "resumed": true,
+        "findings": [],
+        "cells": [
+          {
+            "cell_id": "xor-fold-double-pass-1core",
+            "role": "exploratory",
+            "objective": "improvement",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 2.0542046625201906,
+              "lower": 1.989192806830739,
+              "upper": 2.118240030372137,
+              "confidence": 0.95,
+              "resamples": 10000,
+              "seed": 4601929107371892610,
+              "pairs": 6
+            },
+            "decision": "improved",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [
+              "effect.measurement_resolution"
+            ],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-1core",
+            "role": "exploratory",
+            "objective": "non-regression",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 1.0043242093257032,
+              "lower": 0.9958084098554143,
+              "upper": 1.0085614610544895,
+              "confidence": 0.95,
+              "resamples": 10000,
+              "seed": 18091774859665624329,
+              "pairs": 6
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [
+              "effect.measurement_resolution"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      "prior_summary": {
+        "schema": "zen3-benchmark-acceptance-v1",
+        "receipt_sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+        "campaign_id": "pilot-f547c394-20260906t230725z",
+        "label": "pilot",
+        "verdict": "accepted",
+        "qualifies": true,
+        "family": {
+          "family_id": "protocol-smoke-pilot",
+          "comparisons": 1,
+          "family_alpha": 0.05,
+          "per_comparison_confidence": 0.95,
+          "bootstrap_resamples": 10000
+        },
+        "sessions": 2,
+        "resumed": true,
+        "findings": [],
+        "cells": [
+          {
+            "cell_id": "xor-fold-double-pass-1core",
+            "role": "exploratory",
+            "objective": "improvement",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 2.0542046625201906,
+              "lower": 1.989192806830739,
+              "upper": 2.118240030372137,
+              "confidence": 0.95,
+              "resamples": 10000,
+              "seed": 4601929107371892610,
+              "pairs": 6
+            },
+            "decision": "improved",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [
+              "effect.measurement_resolution"
+            ],
+            "reason": null
+          },
+          {
+            "cell_id": "xor-fold-identical-1core",
+            "role": "exploratory",
+            "objective": "non-regression",
+            "core_arm": "single-core",
+            "resolved_cpus": [
+              6
+            ],
+            "status": "measured",
+            "outcome": "pilot",
+            "pairs": 6,
+            "flagged_windows": 0,
+            "total_windows": 60,
+            "interval": {
+              "estimate": 1.0043242093257032,
+              "lower": 0.9958084098554143,
+              "upper": 1.0085614610544895,
+              "confidence": 0.95,
+              "resamples": 10000,
+              "seed": 18091774859665624329,
+              "pairs": 6
+            },
+            "decision": "not-worse",
+            "margins": {
+              "improvement": 1.5,
+              "equivalence": 1.1
+            },
+            "unresolved_settings": [
+              "effect.measurement_resolution"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      "raw_files_sha256": {
+        "checkpoints/manifest.json": "e5b8cb2afffaf425c72514dce2949899f5fff39c89674272bb50436cbb7b930a",
+        "checkpoints/units/295f489da8b8ac5b85c3e8491c47960afa9f83fd97da5c7857454da1c45aa3a9.json": "6ea27ac6855e7c420f8fa758393f34864c390bc71c4b1bddc825ea3493693cc7",
+        "checkpoints/units/53a628b30dce9d08eb855ed8b03d34365cdfb422e0dd77563ffb2d502e740bf7.json": "8941ba5698b865beabca3f24189505175d8e791fff26685830de3eb2eceb03d7",
+        "execution.log": "884d32b3a8dba0ccdf21b630e440bfde5e1e46d414dedd104fb3534475fc190c",
+        "inputs/addendum.schema.json": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+        "inputs/family-addendum.json": "6f762913988f8cb517f5e17c2832fff06d22359a7f1eb8c59d2f47a7ffe0feb4",
+        "inputs/measurement-contract.md": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+        "inputs/producing/.cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "inputs/producing/.producing-snapshot.pending.json": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+        "inputs/producing/Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "inputs/producing/Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "inputs/producing/dev/active/f547c394/producing-inputs.json": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+        "inputs/producing/dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "inputs/producing/dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "inputs/producing/dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "inputs/producing/dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "inputs/producing/producing-snapshot.json": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+        "inputs/protocol.md": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48",
+        "launcher.log": "1a502b616de5a3d24d19666e1451cbb62e556e54cdb0f1893bf0ed996e2ae097",
+        "plan.json": "53a0f2d66709dc7764735ed743acf036977d0275c14d0e40da800e035bc130d9",
+        "receipt.json": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf"
+      },
+      "raw_files_match_committed_bytes": true
+    }
+  ]
+}

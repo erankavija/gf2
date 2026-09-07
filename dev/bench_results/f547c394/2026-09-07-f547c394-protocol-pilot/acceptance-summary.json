@@ -4,7 +4,7 @@
   "campaign_id": "pilot-f547c394-20260906t230725z",
   "label": "pilot",
   "verdict": "accepted",
-  "qualifies": true,
+  "qualifies": false,
   "family": {
     "family_id": "protocol-smoke-pilot",
     "comparisons": 1,
