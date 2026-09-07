@@ -11,13 +11,14 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "rework 2: complete frozen-record binding",
+          "status": "rework 2 interrupted by user stop; preserved in worker checkout",
           "dispatch": {
             "model": "gpt-5.6-sol",
             "worktree": ".agents/worktrees/agent-f547c394",
             "branch": "worktree-agent-f547c394",
-            "base": "613e1ac3",
-            "attempt": 3
+            "base": "430c8f5d",
+            "attempt": 3,
+            "preserved_commit": "cf2e7270"
           },
           "merge_commit": "7a222264",
           "reviews": [
@@ -26,7 +27,7 @@
           ],
           "gates": {
             "cargo-ci": "passed: final metadata-independent runner test",
-            "code-review": "failed R2 F1: incomplete campaign-start provenance binding",
+            "code-review": "failed R2 F1: complete frozen-record binding; rework unreviewed",
             "doc-review": "passed",
             "research-review": "awaiting re-evaluation after approved citation repair"
           }
@@ -243,10 +244,12 @@
     "Invocation 2026-09-07: complete waves 1 and 2; use Sol, Terra and Luna by difficulty.",
     "User approved citation metadata repair on 2026-09-07; six survey descriptions carry existing registry keys; criteria and gates unchanged.",
     "User instruction 2026-09-07: Git hashes shall never be critical provenance; user explicitly requests project invariant. Canonical behavioral-evidence-validity, measurement contract and f547c394 criteria are clarified for content-addressed immutable snapshots and metadata-independent resume. Prior R1 Git-object/ancestry demands are superseded; genuine missing-content/digest mismatch and pilot/freeze ordering remain required.",
-    "User steering 2026-09-07: complete wave 1, write handoff and end session; do not dispatch wave 2."
+    "User steering 2026-09-07: complete wave 1, write handoff and end session; do not dispatch wave 2.",
+    "User final instruction 2026-09-07: stop here. Agents stopped; rework2 preserved on worker branch, lease released. Wave1 remains open, wave2 not dispatched. Resume from handoff-2.md."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
-    "handoff.md"
+    "handoff.md",
+    "handoff-2.md"
   ]
 }
