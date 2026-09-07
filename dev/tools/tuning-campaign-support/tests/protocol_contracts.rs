@@ -222,6 +222,7 @@ struct CellSpec {
     jitter: f64,
     unavailable: Option<&'static str>,
     claim: bool,
+    quality: Option<DecoderQualityRecord>,
 }
 
 fn pairs(
@@ -470,11 +471,7 @@ fn build_receipt(
                 "baseline_arm": fixture_arm_name("baseline", declared.builds.baseline),
                 "candidate_arm": fixture_arm_name("candidate", declared.builds.candidate),
                 "case": {"fixture": spec.id},
-                "pilot_pairs": if declared.role == CellRole::Exploratory {
-                    Some(6)
-                } else {
-                    None
-                }
+                "pilot_pairs": null
             })
         }).collect::<Vec<_>>(),
         "max_cells_per_session": if resume_after_first { Some(1) } else { None }
@@ -565,7 +562,7 @@ fn build_receipt(
             unavailable_reason: spec.unavailable.map(str::to_owned),
             pairs: Vec::new(),
             claimed: None,
-            decoder_quality: None,
+            decoder_quality: spec.quality.clone(),
             checkpoint_sha256: None,
         };
         if spec.unavailable.is_none() {
@@ -678,6 +675,7 @@ fn spec(id: &'static str, speedup: f64) -> CellSpec {
         jitter: 0.02,
         unavailable: None,
         claim: true,
+        quality: None,
     }
 }
 
@@ -688,25 +686,6 @@ fn outcome(summary: &tuning_campaign_support::receipt::AcceptanceSummary, id: &s
         .find(|cell| cell.cell_id == id)
         .unwrap()
         .outcome
-}
-
-fn republish_checkpoint_results(dir: &Path, receipt: &mut BenchmarkReceipt) {
-    for cell in &mut receipt.cells {
-        let path = dir
-            .join(CHECKPOINT_DIR)
-            .join("units")
-            .join(format!("{}.json", sha256_hex(cell.key.as_bytes())));
-        let mut unit: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
-        let mut checkpoint_cell = cell.clone();
-        checkpoint_cell.checkpoint_sha256 = None;
-        unit["result"] = serde_json::to_value(checkpoint_cell).unwrap();
-        unit["result_sha256"] = json!(sha256_hex(
-            &serde_json::to_vec(unit.get("result").unwrap()).unwrap()
-        ));
-        let bytes = serde_json::to_vec(&unit).unwrap();
-        fs::write(path, &bytes).unwrap();
-        cell.checkpoint_sha256 = Some(sha256_hex(&bytes));
-    }
 }
 
 #[test]
@@ -1146,6 +1125,31 @@ fn acceptance_rejects_changed_producing_input_snapshot() {
 }
 
 #[test]
+fn exploratory_only_receipts_never_qualify_for_production_selection() {
+    let family = addendum(vec![cell(
+        "pilot",
+        CellObjective::Improvement,
+        CellRole::Exploratory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "pilot-qualification",
+        &family,
+        &[spec("pilot", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(outcome(&summary, "pilot"), CellOutcome::Pilot);
+    assert!(
+        !summary.qualifies,
+        "exploration supplies no confirmatory evidence"
+    );
+}
+
+#[test]
 fn acceptance_rejects_every_self_consistent_frozen_fact_replacement() {
     let family = addendum(vec![cell(
         "a",
@@ -1153,15 +1157,22 @@ fn acceptance_rejects_every_self_consistent_frozen_fact_replacement() {
         CellRole::Exploratory,
         CoreArm::SingleCore,
     )]);
-    let mut accepted = Vec::new();
     for replacement in [
         "protocol-pin",
+        "contract-pin",
+        "schema-pin",
+        "addendum-pin",
+        "executable",
+        "execution-environment",
         "producing-inputs",
         "plan",
         "settings",
         "toolchain",
         "arm-descriptor",
         "checkpoint-identity",
+        "missing-plan",
+        "plan-case",
+        "plan-arm",
     ] {
         let built = build_receipt(
             &format!("replaced-{replacement}"),
@@ -1174,10 +1185,33 @@ fn acceptance_rejects_every_self_consistent_frozen_fact_replacement() {
         let receipt_path = built.dir.join(RECEIPT_FILE);
         let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
         match replacement {
-            "protocol-pin" => {
-                let bytes = b"replacement protocol with a self-consistent digest\n";
-                fs::write(built.dir.join(&receipt.protocol.snapshot), bytes).unwrap();
-                receipt.protocol.sha256 = sha256_hex(bytes);
+            "protocol-pin" | "contract-pin" | "schema-pin" | "addendum-pin" => {
+                let pin = match replacement {
+                    "protocol-pin" => &mut receipt.protocol,
+                    "contract-pin" => &mut receipt.contract,
+                    "schema-pin" => &mut receipt.addendum_schema,
+                    _ => &mut receipt.addendum,
+                };
+                let mut bytes = fs::read(built.dir.join(&pin.snapshot)).unwrap();
+                bytes.push(b' ');
+                fs::write(built.dir.join(&pin.snapshot), &bytes).unwrap();
+                pin.sha256 = sha256_hex(&bytes);
+                pin.verify_content(&built.dir).unwrap();
+            }
+            "executable" => {
+                receipt
+                    .arms
+                    .get_mut("candidate-portable")
+                    .unwrap()
+                    .executable_sha256 = sha256_hex(b"another executable");
+            }
+            "execution-environment" => {
+                receipt
+                    .arms
+                    .get_mut("candidate-portable")
+                    .unwrap()
+                    .environment
+                    .insert("GF2_SMOKE_PASSES".into(), "3".into());
             }
             "producing-inputs" => {
                 fs::write(
@@ -1194,11 +1228,18 @@ fn acceptance_rejects_every_self_consistent_frozen_fact_replacement() {
                 )
                 .unwrap();
             }
-            "plan" => {
+            "missing-plan" => {
+                fs::remove_file(built.dir.join(PLAN_FILE)).unwrap();
+            }
+            "plan" | "plan-case" | "plan-arm" => {
                 let plan_path = built.dir.join("plan.json");
                 let mut plan: Value =
                     serde_json::from_slice(&fs::read(&plan_path).unwrap()).unwrap();
-                plan["max_cells_per_session"] = json!(1);
+                match replacement {
+                    "plan-case" => plan["cells"][0]["case"] = json!({"fixture": "different-input"}),
+                    "plan-arm" => plan["cells"][0]["candidate_arm"] = json!("baseline-portable"),
+                    _ => plan["max_cells_per_session"] = json!(1),
+                }
                 fs::write(plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
             }
             "settings" => {
@@ -1213,27 +1254,81 @@ fn acceptance_rejects_every_self_consistent_frozen_fact_replacement() {
                     .unwrap()
                     .description = "self-consistent replacement candidate".into();
             }
-            "checkpoint-identity" => {
-                let manifest_path = built.dir.join(&receipt.checkpoints.manifest_path);
-                let mut manifest: Value =
-                    serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
-                manifest["identity"]["feature_contract"] = json!("replacement-release");
-                let bytes = serde_json::to_vec(&manifest).unwrap();
-                fs::write(&manifest_path, &bytes).unwrap();
-                receipt.checkpoints.manifest_sha256 = sha256_hex(&bytes);
-            }
+            "checkpoint-identity" => {}
             _ => unreachable!(),
+        }
+        if !matches!(replacement, "missing-plan" | "plan-case" | "plan-arm") {
+            // Publish a completely consistent replacement content closure. The
+            // opening record remains byte-for-byte unchanged: only its binding
+            // can distinguish these replacements from valid standalone facts.
+            let plan_path = built.dir.join(PLAN_FILE);
+            let mut plan: RunnerPlan = RunnerPlan::decode(&fs::read(&plan_path).unwrap()).unwrap();
+            for (name, arm) in &receipt.arms {
+                let planned = plan.arms.get_mut(name).unwrap();
+                planned.description = arm.description.clone();
+                planned.environment = arm.environment.clone();
+            }
+            if replacement == "settings" {
+                plan.timing_override = Some(tuning_campaign_support::protocol::TimingOverride {
+                    windows_per_execution: receipt.settings.windows_per_execution,
+                    window_target_ms: receipt.settings.window_target_ms,
+                });
+            }
+            fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
+            let mut replacement_identity = identity(
+                &receipt.protocol,
+                &receipt.source.producing,
+                &plan,
+                &receipt.arms,
+                &receipt.host,
+            );
+            if replacement == "checkpoint-identity" {
+                replacement_identity.feature_contract = "replacement-release".into();
+            }
+            let checkpoint_root = built.dir.join(CHECKPOINT_DIR);
+            fs::remove_dir_all(&checkpoint_root).unwrap();
+            let mut store = CheckpointStore::create_new(
+                &checkpoint_root,
+                &receipt.campaign_id,
+                replacement_identity,
+            )
+            .unwrap();
+            for cell in &mut receipt.cells {
+                let planned = plan
+                    .cells
+                    .iter()
+                    .find(|p| p.cell_id == cell.cell_id)
+                    .unwrap();
+                let case = json!({"key": cell.key, "cell_id": cell.cell_id, "case": planned.case});
+                cell.checkpoint_sha256 = None;
+                cell.checkpoint_sha256 = Some(store.accept(&cell.key, &case, cell).unwrap().sha256);
+            }
+            receipt.checkpoints.manifest_sha256 =
+                sha256_hex(&fs::read(checkpoint_root.join("manifest.json")).unwrap());
+            CheckpointStore::inspect(&checkpoint_root).unwrap();
         }
         fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
         let summary = evaluate(&built.dir).unwrap();
-        if summary.verdict == Verdict::Accepted {
-            accepted.push(replacement);
+        assert_eq!(summary.verdict, Verdict::Rejected, "{replacement}");
+        if !matches!(replacement, "missing-plan" | "plan-case" | "plan-arm") {
+            assert!(
+                summary
+                    .findings
+                    .iter()
+                    .all(|finding| finding.severity != Severity::Error || finding.rule == "P-23"),
+                "replacement must fail specifically at the freeze: {replacement}: {:?}",
+                summary.findings
+            );
         }
+        assert!(
+            summary
+                .findings
+                .iter()
+                .any(|finding| finding.rule == "P-23" && finding.severity == Severity::Error),
+            "{replacement}: {:?}",
+            summary.findings
+        );
     }
-    assert!(
-        accepted.is_empty(),
-        "acceptance trusted receipt-local replacements absent from campaign-start: {accepted:?}"
-    );
 }
 
 #[test]
@@ -1265,7 +1360,7 @@ fn acceptance_rejects_an_addendum_not_frozen_before_measurement() {
     let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
-        finding.rule == "P-03"
+        finding.rule == "P-23"
             && finding.severity == Severity::Error
             && finding.message.contains("campaign-start")
     }));
@@ -1417,6 +1512,21 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
             && finding.message.contains("checkpoint result")
     }));
     fs::write(&receipt_path, original_receipt).unwrap();
+    let unavailable_unit = built
+        .dir
+        .join(CHECKPOINT_DIR)
+        .join("units")
+        .join(format!("{}.json", sha256_hex(b"twelve")));
+    let unit_bytes = fs::read(&unavailable_unit).unwrap();
+    fs::remove_file(&unavailable_unit).unwrap();
+    let missing = evaluate(&built.dir).unwrap();
+    assert_eq!(missing.verdict, Verdict::Rejected);
+    assert_eq!(outcome(&missing, "twelve"), CellOutcome::Invalid);
+    assert!(missing
+        .findings
+        .iter()
+        .any(|finding| finding.rule == "P-12" && finding.cell.as_deref() == Some("twelve")));
+    fs::write(unavailable_unit, unit_bytes).unwrap();
     // Dropping a declared cell from the receipt is a rejected incomplete negative result.
     let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
     receipt.cells.retain(|cell| cell.cell_id != "twelve");
@@ -1537,30 +1647,32 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
     let built = build_receipt(
         "decoder",
         &family,
-        &[spec("matched", 2.0), spec("fastest", 2.0)],
+        &[
+            CellSpec {
+                quality: Some(DecoderQualityRecord {
+                    baseline: quality(20, matched_settings()),
+                    candidate: quality(20, matched_settings()),
+                }),
+                ..spec("matched", 2.0)
+            },
+            CellSpec {
+                quality: Some(DecoderQualityRecord {
+                    baseline: quality(20, matched_settings()),
+                    candidate: quality(
+                        60,
+                        DecoderArmSettings {
+                            schedule: Schedule::Layered,
+                            ..matched_settings()
+                        },
+                    ),
+                }),
+                ..spec("fastest", 2.0)
+            },
+        ],
         false,
         false,
-        |receipt| {
-            receipt.cells[0].decoder_quality = Some(DecoderQualityRecord {
-                baseline: quality(20, matched_settings()),
-                candidate: quality(20, matched_settings()),
-            });
-            receipt.cells[1].decoder_quality = Some(DecoderQualityRecord {
-                baseline: quality(20, matched_settings()),
-                candidate: quality(
-                    60,
-                    DecoderArmSettings {
-                        schedule: Schedule::Layered,
-                        ..matched_settings()
-                    },
-                ),
-            });
-        },
+        |_| {},
     );
-    let receipt_path = built.dir.join(RECEIPT_FILE);
-    let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
-    republish_checkpoint_results(&built.dir, &mut receipt);
-    fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
     let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "matched"), CellOutcome::Pass);

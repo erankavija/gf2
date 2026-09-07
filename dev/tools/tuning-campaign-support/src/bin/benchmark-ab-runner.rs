@@ -30,8 +30,8 @@ use tuning_campaign_support::journal::{
 };
 use tuning_campaign_support::process::run_process;
 use tuning_campaign_support::protocol::{
-    sha256_hex, ArtifactPin, CacheState, CellRole, FamilyAddendum, RunnerPlan,
-    ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
+    sha256_hex, ArtifactPin, CacheState, FamilyAddendum, RunnerPlan, ADDENDUM_SCHEMA_PATH,
+    CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
 };
 use tuning_campaign_support::provenance::{ProducingInputs, ProducingSnapshot};
 use tuning_campaign_support::receipt::{
@@ -552,10 +552,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
         Ok(cpus) => {
             record.resolved_cpus = cpus.clone();
             record.status = CellStatus::Measured;
-            let pairs = match declared.role {
-                CellRole::Exploratory => plan_cell.pilot_pairs.unwrap_or(settings.pilot_min_pairs),
-                CellRole::Confirmatory | CellRole::Holdout => settings.confirmatory_pairs,
-            };
+            let pairs = plan_cell.pair_count(declared.role, &settings);
             let cell_seed = bootstrap_seed(session.plan.campaign_seed, &key);
             let orders = pair_orders(cell_seed, pairs as usize);
             set_affinity(&cpus)?;
