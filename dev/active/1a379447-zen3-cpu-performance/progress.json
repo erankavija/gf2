@@ -58,7 +58,15 @@
           "short_id": "c077a88b",
           "title": "Establish compatible LDPC decoder benchmark arms",
           "classification": "research",
-          "status": "pending"
+          "status": "dispatched (group A, tooling-independent phases first; receipts after f547c394 lands)",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-c077a88b",
+            "branch": "worktree-agent-c077a88b",
+            "base": "c423c801",
+            "attempt": 1,
+            "session": 3
+          }
         },
         {
           "id": "eda07788-23a0-4852-939b-2cfcda36f9d1",
@@ -72,7 +80,15 @@
           "short_id": "c7113c5a",
           "title": "Establish equivalent polynomial multiplication baselines",
           "classification": "research",
-          "status": "pending"
+          "status": "dispatched (group A, tooling-independent phases first; receipts after f547c394 lands)",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-c7113c5a",
+            "branch": "worktree-agent-c7113c5a",
+            "base": "c423c801",
+            "attempt": 1,
+            "session": 3
+          }
         },
         {
           "id": "26465e6c-6852-44b6-9183-ba2cb5a5fca5",
@@ -86,14 +102,30 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "pending"
+          "status": "dispatched (group A, tooling-independent phases first; receipts after f547c394 lands)",
+          "dispatch": {
+            "model": "claude-sonnet (native subagent)",
+            "worktree": ".agents/worktrees/agent-6fb89a3c",
+            "branch": "worktree-agent-6fb89a3c",
+            "base": "c423c801",
+            "attempt": 1,
+            "session": 3
+          }
         },
         {
           "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
           "short_id": "1d0da41f",
           "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
           "classification": "implementation",
-          "status": "pending"
+          "status": "dispatched (group A, tooling-independent phases first; receipts after f547c394 lands)",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-1d0da41f",
+            "branch": "worktree-agent-1d0da41f",
+            "base": "c423c801",
+            "attempt": 1,
+            "session": 3
+          }
         }
       ]
     },
@@ -248,7 +280,8 @@
     "User instruction 2026-09-07: Git hashes shall never be critical provenance; user explicitly requests project invariant. Canonical behavioral-evidence-validity, measurement contract and f547c394 criteria are clarified for content-addressed immutable snapshots and metadata-independent resume. Prior R1 Git-object/ancestry demands are superseded; genuine missing-content/digest mismatch and pilot/freeze ordering remain required.",
     "User steering 2026-09-07: complete wave 1, write handoff and end session; do not dispatch wave 2.",
     "User final instruction 2026-09-07: stop here. Agents stopped; rework2 preserved on worker branch, lease released. Wave1 remains open, wave2 not dispatched. Resume from handoff-2.md.",
-    "Invocation 2026-09-07 (session 3): drive the whole epic; model ladder by difficulty gpt-6-astra > gpt-5.6-sol > gpt-5.6-terra > gpt-5.6-luna (astra replaces Fable per user); parallel worktrees whenever feasible."
+    "Invocation 2026-09-07 (session 3): drive the whole epic; model ladder by difficulty gpt-6-astra > gpt-5.6-sol > gpt-5.6-terra > gpt-5.6-luna (astra replaces Fable per user); parallel worktrees whenever feasible.",
+    "User instruction 2026-09-07 (session 3): dispatch wave-2 group A early (tooling-independent phases first) and run those four as native Claude subagents; f547c394 rework stays on codex astra. Group B (04b85d10 6c6b09b1 26465e6c eda07788) follows when wave 1 closes and disk allows."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
