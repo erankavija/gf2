@@ -300,6 +300,20 @@
       "origin": "issue-impact, tracked exception",
       "disposition": "advisory; convergence condition: parameterize SessionDescriptor::validate when a second consumer needs the lifecycle store",
       "criterion_named_by": "none in 1a379447"
+    },
+    {
+      "issue": "f547c394",
+      "subject": "cargo-ci flakes under host contention: GPU tests test_gpu_box_muller_within_1_ulp_over_1024_frames (SIGABRT) and test_gpu_chacha_raw_words_full_range_byte_identical (timeout), calibration test accepted_complete_experiment_measures_defaults_and_reopens_only_its_27_leaves (8.0 s timeout; 5.7 s in isolation under load 12), rare_event_artifact_partial_publish_recovery timeout; all pass in isolation",
+      "origin": "pre-existing (test-tier-budgets margin)",
+      "disposition": "advisory; propose a bug task outside the epic",
+      "criterion_named_by": "none in 1a379447"
+    },
+    {
+      "issue": "f547c394",
+      "subject": "research-review checker: gpt-5.6-sol reviewer at xhigh exhausts its 258400-token context on the linked footprint (rework-validation.md 154 KB + receipts) and exits with no output (gate runs ba756d8f, b2af1fd3)",
+      "origin": "gate infrastructure",
+      "disposition": "open question in handoff-3.md",
+      "criterion_named_by": "none in 1a379447"
     }
   ],
   "notes": [
@@ -314,11 +328,13 @@
     "User final instruction 2026-09-07: stop here. Agents stopped; rework2 preserved on worker branch, lease released. Wave1 remains open, wave2 not dispatched. Resume from handoff-2.md.",
     "Invocation 2026-09-07 (session 3): drive the whole epic; model ladder by difficulty gpt-6-astra > gpt-5.6-sol > gpt-5.6-terra > gpt-5.6-luna (astra replaces Fable per user); parallel worktrees whenever feasible.",
     "User instruction 2026-09-07 (session 3): dispatch wave-2 group A early (tooling-independent phases first) and run those four as native Claude subagents; f547c394 rework stays on codex astra. Group B (04b85d10 6c6b09b1 26465e6c eda07788) follows when wave 1 closes and disk allows.",
-    "Session 3: codex workspace-write sandbox mounts .git read-only even with --add-dir; the lead commits codex workers' validated trees on their branches. Native subagents commit themselves."
+    "Session 3: codex workspace-write sandbox mounts .git read-only even with --add-dir; the lead commits codex workers' validated trees on their branches. Native subagents commit themselves.",
+    "User instruction 2026-09-07 ~19:50Z: rate limits close; let running wave-2 workers finish, write the handoff, no more gate runs this session."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
     "handoff.md",
-    "handoff-2.md"
+    "handoff-2.md",
+    "handoff-3.md"
   ]
 }

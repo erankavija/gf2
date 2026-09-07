@@ -107,6 +107,31 @@
       "doc_type": "notes",
       "label": "Session 2 immediate-stop handoff",
       "path": "dev/active/1a379447-zen3-cpu-performance/handoff-2.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5152ff20a3dfa5b3c69405d7c1d176f1d8a8bac0c17bc644de0dcf672d6cb0ce",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-2.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "41813c83bf8525c387e541b149ec8f4fb11baef8f49ef6e5475c0ca917ff4719",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Session 3 handoff",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-3.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -130,5 +155,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-06T23:53:38.792042203Z"
+  "updated_at": "2026-09-07T19:43:25.586138374Z"
 }

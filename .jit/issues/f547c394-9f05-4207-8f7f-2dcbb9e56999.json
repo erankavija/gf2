@@ -259,7 +259,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "failed",
-      "updated_at": "2026-09-07T19:22:53.643273529Z",
+      "updated_at": "2026-09-07T19:28:20.983263076Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -268,13 +268,13 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-07T19:17:27.152393474Z",
+      "status": "passed",
+      "updated_at": "2026-09-07T19:30:11.935285290Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-09-07T19:26:46.109145872Z",
+      "updated_at": "2026-09-07T19:39:43.933595606Z",
       "updated_by": "auto:executor"
     }
   },
@@ -292,5 +292,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-07T19:26:46.109145872Z"
+  "updated_at": "2026-09-07T19:39:43.933595606Z"
 }
