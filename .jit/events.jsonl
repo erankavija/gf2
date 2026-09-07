@@ -11179,3 +11179,11 @@
 {"assignee":"agent:worker","id":"0efcc604-bb60-47d1-a1fe-694eebc95f94","issue_id":"1d0da41f-f366-4a81-ab1a-016f8395db94","timestamp":"2026-09-07T18:42:24.113006856Z","type":"issue_claimed"}
 {"fields":["documents"],"id":"0a0c9bfb-5080-4199-8ef1-4650c7addb51","issue_id":"f547c394-9f05-4207-8f7f-2dcbb9e56999","timestamp":"2026-09-07T19:11:40.652279202Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"a206affb-3f85-4db0-8b8d-3aefdbc87eb5","issue_id":"f547c394-9f05-4207-8f7f-2dcbb9e56999","timestamp":"2026-09-07T19:11:40.972846764Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"14e41a9e-41f4-46f5-abc6-e3b860b78cef","issue_id":"f547c394-9f05-4207-8f7f-2dcbb9e56999","timestamp":"2026-09-07T19:17:27.152393474Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"b72b2ea4-aef0-41b3-8a1a-18748ae9564a","issue_id":"f547c394-9f05-4207-8f7f-2dcbb9e56999","timestamp":"2026-09-07T19:18:45.377713876Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"3c90b01a-78ab-4ae2-aeee-4d976376652b","issue_id":"f547c394-9f05-4207-8f7f-2dcbb9e56999","timestamp":"2026-09-07T19:22:53.643273529Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"d6a08928-f80e-445e-9ea4-c1770b4a1d9d","issue_id":"f547c394-9f05-4207-8f7f-2dcbb9e56999","timestamp":"2026-09-07T19:26:46.109145872Z","type":"gate_failed","updated_by":"auto:executor"}
+{"assignee":"agent:worker","id":"cce7acd9-f9ef-4cb8-a394-7bc3db5f15a4","issue_id":"6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2","timestamp":"2026-09-07T19:27:24.491313581Z","type":"issue_claimed"}
+{"assignee":"agent:worker","id":"8c6d7839-0541-4157-9f14-7f51c7984ec5","issue_id":"04b85d10-fb4f-467c-b6e5-869c99018adc","timestamp":"2026-09-07T19:27:24.853449209Z","type":"issue_claimed"}
+{"assignee":"agent:worker","id":"b069fd36-ba77-494f-a197-6b75cecc6879","issue_id":"26465e6c-6852-44b6-9183-ba2cb5a5fca5","timestamp":"2026-09-07T19:27:25.194987940Z","type":"issue_claimed"}
+{"assignee":"agent:worker","id":"4b606e50-f6f5-4049-ad5e-cf618ddc4769","issue_id":"eda07788-23a0-4852-939b-2cfcda36f9d1","timestamp":"2026-09-07T19:27:25.520098009Z","type":"issue_claimed"}
