@@ -234,6 +234,19 @@
       "format": "markdown",
       "label": "Review round 2: frozen-record binding",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Rework validation report (round 3)",
+      "path": "dev/active/f547c394/rework-validation.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Acceptance revalidation record",
+      "path": "dev/bench_results/f547c394/revalidation.json"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
@@ -279,5 +292,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-06T23:35:50.828156050Z"
+  "updated_at": "2026-09-07T19:11:40.972846764Z"
 }
