@@ -11,7 +11,7 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "rework 2 resumed in session 3 (gpt-6-astra); worker branch merged with main at f0595bd6; salvage ref salvage/f547c394-rework2-cf2e7270",
+          "status": "rework 2 delivered (lead committed 4b2c2eb2, bf7801a8; merged 873f7ec6); gates: code-review PASS, cargo-ci flaky GPU tests (pass in isolation) re-run pending, doc-review stale report claim fixed re-run pending, research-review reviewer produced no output re-run pending",
           "dispatch": {
             "model": "gpt-6-astra",
             "worktree": ".agents/worktrees/agent-f547c394",
@@ -22,16 +22,16 @@
             "session": 3,
             "resumed_from": "cf2e7270"
           },
-          "merge_commit": "7a222264",
+          "merge_commit": "873f7ec6",
           "reviews": [
             "reviews/f547c394-r1.md",
             "reviews/f547c394-r2.md"
           ],
           "gates": {
-            "cargo-ci": "passed: final metadata-independent runner test",
-            "code-review": "failed R2 F1: complete frozen-record binding; rework unreviewed",
-            "doc-review": "passed",
-            "research-review": "awaiting re-evaluation after approved citation repair"
+            "cargo-ci": "failed on GPU-test flake at 037885c3 (SIGABRT/timeout, pass in isolation); re-run pending",
+            "code-review": "passed (run on 037885c3, zero findings)",
+            "doc-review": "failed F1 stale delivery-status claims in rework-validation.md; fixed; re-run pending",
+            "research-review": "checker failure: reviewer agent produced no output; re-run pending"
           }
         }
       ]
@@ -44,14 +44,30 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "pending"
+          "status": "dispatched (group B, anchored after the f547c394 merge)",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-04b85d10",
+            "branch": "worktree-agent-04b85d10",
+            "base": "037885c3",
+            "attempt": 1,
+            "session": 3
+          }
         },
         {
           "id": "6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2",
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "pending"
+          "status": "dispatched (group B, anchored after the f547c394 merge)",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-6c6b09b1",
+            "branch": "worktree-agent-6c6b09b1",
+            "base": "037885c3",
+            "attempt": 1,
+            "session": 3
+          }
         },
         {
           "id": "c077a88b-2d35-49ed-bfe0-6fbc7055cea1",
@@ -73,7 +89,15 @@
           "short_id": "eda07788",
           "title": "Establish compatible shift and coding-permutation baselines",
           "classification": "research",
-          "status": "pending"
+          "status": "dispatched (group B, anchored after the f547c394 merge)",
+          "dispatch": {
+            "model": "claude-sonnet (native subagent)",
+            "worktree": ".agents/worktrees/agent-eda07788",
+            "branch": "worktree-agent-eda07788",
+            "base": "037885c3",
+            "attempt": 1,
+            "session": 3
+          }
         },
         {
           "id": "c7113c5a-94da-462f-954e-3b7894bb95df",
@@ -95,7 +119,15 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "pending"
+          "status": "dispatched (group B, anchored after the f547c394 merge)",
+          "dispatch": {
+            "model": "claude-sonnet (native subagent)",
+            "worktree": ".agents/worktrees/agent-26465e6c",
+            "branch": "worktree-agent-26465e6c",
+            "base": "037885c3",
+            "attempt": 1,
+            "session": 3
+          }
         },
         {
           "id": "6fb89a3c-f1a7-439d-a397-add1782afe2b",
@@ -281,7 +313,8 @@
     "User steering 2026-09-07: complete wave 1, write handoff and end session; do not dispatch wave 2.",
     "User final instruction 2026-09-07: stop here. Agents stopped; rework2 preserved on worker branch, lease released. Wave1 remains open, wave2 not dispatched. Resume from handoff-2.md.",
     "Invocation 2026-09-07 (session 3): drive the whole epic; model ladder by difficulty gpt-6-astra > gpt-5.6-sol > gpt-5.6-terra > gpt-5.6-luna (astra replaces Fable per user); parallel worktrees whenever feasible.",
-    "User instruction 2026-09-07 (session 3): dispatch wave-2 group A early (tooling-independent phases first) and run those four as native Claude subagents; f547c394 rework stays on codex astra. Group B (04b85d10 6c6b09b1 26465e6c eda07788) follows when wave 1 closes and disk allows."
+    "User instruction 2026-09-07 (session 3): dispatch wave-2 group A early (tooling-independent phases first) and run those four as native Claude subagents; f547c394 rework stays on codex astra. Group B (04b85d10 6c6b09b1 26465e6c eda07788) follows when wave 1 closes and disk allows.",
+    "Session 3: codex workspace-write sandbox mounts .git read-only even with --add-dir; the lead commits codex workers' validated trees on their branches. Native subagents commit themselves."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
