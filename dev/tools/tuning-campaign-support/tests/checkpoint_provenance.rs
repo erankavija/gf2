@@ -153,3 +153,35 @@ fn changed_producing_digest_rejects_before_mutating_checkpoint_evidence() {
     );
     assert_eq!(fs::read(unit_path).unwrap(), unit_before);
 }
+
+#[test]
+fn inspection_validates_without_recovering_or_creating_files() {
+    let scratch = Scratch::new();
+    let root = scratch.0.join("checkpoints");
+    let mut store = CheckpointStore::create_new(&root, "campaign", identity()).unwrap();
+    let unit = store
+        .accept("unit", &json!({"input": 1}), &json!({"value": 42}))
+        .unwrap();
+    let before = fs::read(&unit.path).unwrap();
+    drop(store);
+    // Committed exports omit empty directories.
+    fs::remove_dir(root.join("pending")).unwrap();
+    let inspected = CheckpointStore::inspect(&root).unwrap();
+    let (_, value): (serde_json::Value, serde_json::Value) = inspected.load("unit").unwrap();
+    assert_eq!(value, json!({"value": 42}));
+    assert!(!root.join("pending").exists());
+    fs::create_dir(root.join("pending")).unwrap();
+    let pending = root.join("pending/.interrupted.tmp");
+    fs::write(&pending, b"partial evidence").unwrap();
+    assert!(CheckpointStore::inspect(&root).is_err());
+    assert_eq!(fs::read(&pending).unwrap(), b"partial evidence");
+    assert_eq!(fs::read(&unit.path).unwrap(), before);
+    fs::remove_file(pending).unwrap();
+    // A parseable but noncanonical unit fails through the shared validator.
+    let mut corrupt = before;
+    corrupt.push(b' ');
+    fs::write(&unit.path, &corrupt).unwrap();
+    assert!(CheckpointStore::inspect(&root).is_err());
+    assert!(CheckpointStore::resume(&root, "campaign", identity()).is_err());
+    assert_eq!(fs::read(&unit.path).unwrap(), corrupt);
+}

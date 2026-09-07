@@ -30,14 +30,14 @@ use tuning_campaign_support::journal::{
 };
 use tuning_campaign_support::process::run_process;
 use tuning_campaign_support::protocol::{
-    sha256_hex, ArtifactPin, CacheState, CellRole, FamilyAddendum, RunnerPlan, SharedSettings,
-    ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
+    sha256_hex, ArtifactPin, CacheState, FamilyAddendum, RunnerPlan, ADDENDUM_SCHEMA_PATH,
+    CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
 };
 use tuning_campaign_support::provenance::{ProducingInputs, ProducingSnapshot};
 use tuning_campaign_support::receipt::{
-    ArmQuality, ArmRecord, BenchmarkReceipt, CellClaim, CellRecord, CellStatus, CheckpointRecord,
-    ConversionCosts, ExecutionRecord, LockRecord, LogRecord, PairRecord, SourceIdentity,
-    WindowRecord, WorkerReport, CHECKPOINT_DIR, LOG_FILE, RECEIPT_FILE,
+    ArmQuality, ArmRecord, BenchmarkReceipt, CampaignFacts, CellClaim, CellRecord, CellStatus,
+    CheckpointRecord, ConversionCosts, ExecutionRecord, LockRecord, LogRecord, PairRecord,
+    SourceIdentity, WindowRecord, WorkerReport, CHECKPOINT_DIR, LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
 use tuning_campaign_support::transport::{self, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 
@@ -84,23 +84,6 @@ struct ArmResult {
     quality: Option<ArmQuality>,
 }
 
-/// Immutable facts the campaign-start record carries for finalization.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct CampaignFacts {
-    plan_sha256: String,
-    identity: ResumeIdentity,
-    protocol: ArtifactPin,
-    contract: ArtifactPin,
-    addendum_schema: ArtifactPin,
-    addendum: ArtifactPin,
-    source: SourceIdentity,
-    toolchain: String,
-    settings: SharedSettings,
-    settings_deviation: bool,
-    arms: BTreeMap<String, ArmRecord>,
-}
-
 fn command_text(program: &str, args: &[&str], cwd: &Path) -> io::Result<String> {
     let output = Command::new(program).args(args).current_dir(cwd).output()?;
     if !output.status.success() {
@@ -128,22 +111,6 @@ fn source_identity(producing: ProducingSnapshot) -> SourceIdentity {
     SourceIdentity {
         revision: String::new(),
         producing,
-    }
-}
-
-impl CampaignFacts {
-    fn resume_equivalent(&self, other: &Self) -> bool {
-        self.plan_sha256 == other.plan_sha256
-            && self.identity.resume_equivalent(&other.identity)
-            && self.protocol == other.protocol
-            && self.contract == other.contract
-            && self.addendum_schema == other.addendum_schema
-            && self.addendum == other.addendum
-            && self.source.producing == other.source.producing
-            && self.toolchain == other.toolchain
-            && self.settings == other.settings
-            && self.settings_deviation == other.settings_deviation
-            && self.arms == other.arms
     }
 }
 
@@ -305,7 +272,7 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
     let (plan, plan_bytes) = read_plan(plan_path)?;
     fs::create_dir_all(stage)?;
     let stage = fs::canonicalize(stage)?;
-    let staged_plan = stage.join("plan.json");
+    let staged_plan = stage.join(PLAN_FILE);
     if staged_plan.exists() {
         if fs::read(&staged_plan)? != plan_bytes {
             return Err(invalid(
@@ -585,10 +552,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
         Ok(cpus) => {
             record.resolved_cpus = cpus.clone();
             record.status = CellStatus::Measured;
-            let pairs = match declared.role {
-                CellRole::Exploratory => plan_cell.pilot_pairs.unwrap_or(settings.pilot_min_pairs),
-                CellRole::Confirmatory | CellRole::Holdout => settings.confirmatory_pairs,
-            };
+            let pairs = plan_cell.pair_count(declared.role, &settings);
             let cell_seed = bootstrap_seed(session.plan.campaign_seed, &key);
             let orders = pair_orders(cell_seed, pairs as usize);
             set_affinity(&cpus)?;
@@ -755,7 +719,7 @@ fn copy_tree(source: &Path, target: &Path) -> io::Result<()> {
 fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
     let root = repository_root()?;
     let stage = fs::canonicalize(stage)?;
-    let (plan, plan_bytes) = read_plan(&stage.join("plan.json"))?;
+    let (plan, plan_bytes) = read_plan(&stage.join(PLAN_FILE))?;
     let log_bytes = fs::read(stage.join(LOG_FILE))?;
     let records = ExecutionLog::validate_prefix(&log_bytes, &plan.campaign_id)?;
     let facts: CampaignFacts = serde_json::from_value(
@@ -835,7 +799,7 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
         cells.push(record);
     }
     fs::create_dir_all(out_dir)?;
-    fs::write(out_dir.join("plan.json"), &plan_bytes)?;
+    fs::write(out_dir.join(PLAN_FILE), &plan_bytes)?;
     fs::write(out_dir.join(LOG_FILE), &log_bytes)?;
     copy_tree(&stage.join("inputs"), &out_dir.join("inputs"))?;
     let checkpoint_out = out_dir.join(CHECKPOINT_DIR);

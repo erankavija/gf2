@@ -985,6 +985,18 @@ pub struct PlanCell {
     pub pilot_pairs: Option<u32>,
 }
 
+impl PlanCell {
+    /// Number of paired executions fixed by this cell's role and settings.
+    /// Exploratory cells without an explicit count use the frozen pilot minimum;
+    /// confirmation and holdout use the fixed confirmatory budget.
+    pub fn pair_count(&self, role: CellRole, settings: &SharedSettings) -> u32 {
+        match role {
+            CellRole::Exploratory => self.pilot_pairs.unwrap_or(settings.pilot_min_pairs),
+            CellRole::Confirmatory | CellRole::Holdout => settings.confirmatory_pairs,
+        }
+    }
+}
+
 /// The runner's input: a bounded campaign over frozen addendum cells.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]

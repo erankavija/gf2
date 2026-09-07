@@ -36,8 +36,8 @@ crate is the canonical home.
 
 | Contract clause | Protocol section | Checks |
 |---|---|---|
-| Protocol identity and freezing: one versioned protocol, independently versioned addenda, receipts pin all identities | Identity and versioning; Addenda | P-01, P-02, P-03 |
-| Freezing: exploratory pilots labelled and excluded; all numeric settings committed before the first confirmatory trial; amendments retain data | Roles and freezing; Frozen shared settings | P-03, P-04, P-13, P-15, P-22 |
+| Protocol identity and freezing: one versioned protocol, independently versioned addenda, receipts pin all identities | Identity and versioning; Addenda | P-01, P-02, P-03, P-23 |
+| Freezing: exploratory pilots labelled and excluded; all numeric settings committed before the first confirmatory trial; amendments retain data | Roles and freezing; Frozen shared settings | P-03, P-04, P-13, P-15, P-22, P-23 |
 | Holdout reserved for calibrated selectors and final integration | Roles and freezing | P-03 (addendum validation) |
 | Statistics: paired/interleaved/randomized A/B, resampling unit, ratio of medians, bootstrap interval, paired handling | Sampling design; Estimator and interval | P-15, P-16, P-20 |
 | Multiple comparisons within predeclared families; selection across candidate trials | Families and selection | P-20, family summary |
@@ -48,7 +48,7 @@ crate is the canonical home.
 | Bounded resumable runs, execution log announced before the first bounded run, checkpoints not repeated | Execution log and checkpoints | P-10, P-11, P-12 |
 | Comparable operations and costs: setup, conversion, batch fill, dispatch in whole-consumer cells; isolated kernels separate | Cell schema | P-17 (conversion costs) |
 | Decoder comparisons: matched-algorithm and fastest quality-compatible arms, quality tolerances, BER/FER intervals, stopping contracts | Decoder cells | P-18, P-19 |
-| Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `dev/bench_results` | Receipt layout | P-01 to P-12, summary files |
+| Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `dev/bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
 | Production change needs a fresh pinned before/after measurement | Roles and freezing | P-05 (source identity) |
 
 ## Roles and freezing
@@ -75,10 +75,16 @@ improvement and non-regression cells, `material_gap_threshold` and
 `equivalence_margin` for comparator-gap cells) and
 `complexity_budget.max_added_source_lines` for adoptable cells.
 
-The receipt's addendum pin and first `campaign-start` record are the freeze
-proof. The pin names immutable receipt-local bytes, and the runner records the
-complete pin before any `cell-start`. `frozen.frozen_utc` is descriptive
-metadata. When `measurement_resolution` is set, `resolution_evidence` names a
+The opening `campaign-start` record freezes `receipt::CampaignFacts` before
+any cell measurement. Acceptance projects the receipt and saved plan into that
+same typed representation and uses the runner's semantic comparison (P-23).
+The projection binds the exact plan bytes, protocol, contract, schema and
+addendum pins, producing-input closure, toolchain, numerical settings and
+deviation flag, arm descriptors and executable identities. Checkpoint identity
+also binds ordered work, process descriptors, lifecycle, features, threads and
+host affinity. Git revision strings remain informational.
+
+The addendum pin names immutable receipt-local bytes. Resolution evidence names a
 repository-relative pilot `receipt.json` and its SHA-256. Before opening the
 campaign log, the runner captures that receipt at
 `inputs/resolution-evidence/receipt.json`; the acceptance tool verifies the
@@ -294,13 +300,22 @@ first `cell-start` (P-10). The campaign-start record binds the exact plan,
 protocol, contract, schema, addendum, producing-input snapshot, process
 descriptors and executable digests. Resume compares these content identities;
 source-control locators and unrelated repository files do not participate.
+Acceptance verifies the saved plan digest, validates its schema and addendum
+connections, and checks campaign, issue, label, seed, lock wrapper, timing,
+arm descriptors, cell inputs, arm pairing and sample counts against the receipt
+and journal (P-23, P-11, P-13, P-15). An omitted exploratory `pilot_pairs`
+selects the frozen `pilot_min_pairs`; confirmation uses `confirmatory_pairs`.
 Each completed cell is accepted into the immutable
 checkpoint store (`journal::CheckpointStore`) under the campaign's resume
 identity; a resumed session journals an omission for every completed cell and
 never starts it again, so the log holds exactly one `cell-start` and one
 `cell-complete` per cell across all sessions (P-11). The receipt pins the log
 and checkpoint manifest digests and every cell's checkpoint unit digest
-(P-12). A campaign is finalized only from a `complete` terminal record;
+(P-12). Acceptance uses `CheckpointStore::inspect` and typed `load` to validate
+canonical checkpoint encoding, manifest and unit identity, keys, case/result
+digests and receipt results. Inspection performs no recovery and changes no
+files; pending evidence rejects. Unavailable cells require the same durable
+checkpoint evidence as measured cells. A campaign is finalized only from a `complete` terminal record;
 `paused`, `budget-exhausted` and `failed` sessions resume under the same stage
 and identity.
 
@@ -311,8 +326,9 @@ unavailable with a reason (P-21). Outcomes are `pass`, `not-material`, `fail`,
 `inconclusive`, `unstable`, `unavailable`, `pilot`, `not-confirmatory`,
 `quality-incompatible` and `invalid`; all are retained in the summary and the
 Markdown table. A receipt is `accepted` when no error-severity finding exists
-and `rejected` otherwise; `qualifies` is true only when every non-exploratory
-cell passed. A rejected or non-qualifying receipt is committed like any other.
+and `rejected` otherwise; `qualifies` requires at least one non-exploratory cell and every such
+cell to pass. Exploratory-only receipts never qualify for production selection.
+A rejected or non-qualifying receipt is committed like any other.
 
 ## Receipt layout
 
@@ -322,7 +338,7 @@ Each bounded campaign writes one directory under the owning issue's
 
 | File | Content |
 |---|---|
-| `plan.json` | The runner plan: arms, cells, opaque cases, seed, lock path, wrapper, budget. |
+| `plan.json` | Exact `zen3-benchmark-plan-v1` bytes whose SHA-256 is frozen in the opening `CampaignFacts`; `protocol::RunnerPlan` is the strict typed schema. |
 | `receipt.json` | `zen3-benchmark-receipt-v1`: identities, source, toolchain, host observation, lock evidence, worker report, log and checkpoint digests, arms, and every cell with its raw windows, per-execution values, observed CPUs and the runner's claim. |
 | `execution.log` | The append-only journal of every session. |
 | `inputs/` | Immutable protocol, contract, schema, addendum, producing-input and referenced-receipt snapshots used by this campaign. |
@@ -341,7 +357,7 @@ receipt. Neither is a performance result about gf2.
 |---|---|
 | P-01 | Receipt schema is `zen3-benchmark-receipt-v1`. |
 | P-02 | Protocol, contract and addendum-schema pins name the canonical source paths, literal receipt-local snapshot paths and 64-hex digests; missing snapshots and digest mismatches reject. |
-| P-03 | The addendum matches its receipt-local snapshot, its exact pin appears in campaign-start before any cell, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt snapshot. |
+| P-03 | The addendum matches its receipt-local snapshot, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt snapshot. |
 | P-04 | Receipt settings equal the frozen shared settings unless a deviation is declared; a deviation makes every cell non-confirmatory. |
 | P-05 | The manifest and every declared producing/build input match their receipt-local content snapshot, and the toolchain is recorded. Source-control metadata is informational. |
 | P-06 | The host observation carries model, flags, kernel, governors, affinity and topology. |
@@ -350,7 +366,7 @@ receipt. Neither is a performance result about gf2.
 | P-09 | Every arm named by a cell is described with an executable digest. |
 | P-10 | The execution log matches its digest, replays under the journal rules, opens with `campaign-start`, and was announced before the first cell. |
 | P-11 | Session count and resumed flag match the log, the terminal state is `complete`, and no cell starts or completes more than once. |
-| P-12 | The checkpoint manifest and every measured cell's unit match their digests and keys. |
+| P-12 | The canonical checkpoint manifest and every cell's unit match their identities, digests, keys, planned input and receipt result, including unavailable cells; read-only inspection rejects pending evidence. |
 | P-13 | Cells are unique, declared, and match the declared role and core arm. |
 | P-14 | Measured cells resolved CPUs; unavailable cells carry a reason and no samples. |
 | P-15 | Pair counts follow the role, executions carry the frozen window count with positive windows, and per-execution values are the medians of their windows. |
@@ -361,3 +377,4 @@ receipt. Neither is a performance result about gf2.
 | P-20 | The bootstrap interval and decision recompute from the raw pairs at the family confidence; a contradicting runner claim rejects the cell. |
 | P-21 | Every declared cell is present in the receipt. |
 | P-22 | Every prior trial in the family ledger exists with its recorded digest. |
+| P-23 | Complete opening `receipt::CampaignFacts` decode under the strict typed schema and compare with the receipt, exact saved plan and checkpoint identity through `CampaignFacts::resume_equivalent`; every semantic connection described above holds. Missing or inconsistent frozen content rejects. |
