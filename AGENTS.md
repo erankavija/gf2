@@ -47,8 +47,12 @@ release mode.
   serializes.
 - `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
 - `dev/scripts/ccx1-bench-flock.sh --full-host` holds the CCX1 mutex
-  exclusively and budget work holds it shared, so budget work waits. Such a run
-  sets `CARGO_CI_NO_LOCK=1` for its own cargo work or it deadlocks.
+  exclusively and budget work holds it shared, so budget work waits. A pending
+  exclusive request does not block a new shared one, so both sides also pass
+  through a turnstile that the measurement run holds for its whole run: without
+  it, sibling builds keep the shared side permanently occupied and the
+  measurement run is never granted. Such a run sets `CARGO_CI_NO_LOCK=1` for
+  its own cargo work or it deadlocks against its own locks.
 - `RAYON_NUM_THREADS` in `.cargo/config.toml` pairs with `threads-required` in
   `.config/nextest.toml`; change one and change the other. A binary run directly
   from `target/` inherits neither.

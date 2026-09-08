@@ -116,20 +116,52 @@ mkdir -p "$LOCK_DIR"
 # A run that already holds the exclusive side MUST set CARGO_CI_NO_LOCK=1 for
 # its own cargo work: flock conflicts across open file descriptions regardless
 # of process, so taking the shared side underneath your own exclusive side
-# deadlocks against yourself. That is why the early-exit above precedes this.
+# deadlocks against yourself, and it would also block on the turnstile below
+# that it is holding itself. That is why the early-exit above precedes this.
+#
+# The turnstile gives the exclusive side priority. A pending `flock -x` does
+# not block a new `flock -s` on Linux, so without it a stream of sibling builds
+# leaves no instant with zero shared holders and a measurement run is never
+# granted (observed 2026-09-08: four runners queued 10-29 minutes behind seven
+# shared holders that kept being replenished). `ccx1-bench-flock.sh` therefore
+# holds the turnstile for its whole run; a build passes through it, so a build
+# that arrives after a measurement run blocks here instead of entering the
+# shared side ahead of it. The pass-through is exclusive but momentary: it is
+# released as soon as the shared side is held, so builds never serialize
+# against each other beyond one acquisition. Deadlock is not reachable — a
+# build holds the turnstile only while no measurement run does, so its `-s`
+# acquisition below cannot be blocked by an exclusive holder.
 #
 # Bounded and announced for the same reason the test lock is, and it exits 75
-# so `cargo-ci.sh` reports a queue timeout rather than a test failure.
+# so `cargo-ci.sh` reports a queue timeout rather than a test failure. The
+# timeout is a deadline over both stages, not a budget per stage.
 CCX1_LOCK="${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}"
+CCX1_TURNSTILE="${GF2_CCX1_TURNSTILE:-${CCX1_LOCK}.turnstile}"
 CCX1_TIMEOUT="${CARGO_CI_CCX1_TIMEOUT:-1800}"
-exec {CCX1_FD}>"$CCX1_LOCK"
-if ! flock -s -n "$CCX1_FD"; then
-  echo "cargo-budget: a --full-host bench run holds $CCX1_LOCK; waiting up to ${CCX1_TIMEOUT}s" >&2
-  if ! flock -s -w "$CCX1_TIMEOUT" "$CCX1_FD"; then
-    echo "ERROR: cargo-budget: timed out after ${CCX1_TIMEOUT}s waiting for $CCX1_LOCK" >&2
+CCX1_DEADLINE=$(( $(date +%s) + CCX1_TIMEOUT ))
+
+exec {CCX1_TS_FD}>"$CCX1_TURNSTILE"
+if ! flock -x -n "$CCX1_TS_FD"; then
+  echo "cargo-budget: a --full-host bench run holds or is waiting for $CCX1_LOCK; waiting up to ${CCX1_TIMEOUT}s" >&2
+  if ! flock -x -w "$CCX1_TIMEOUT" "$CCX1_TS_FD"; then
+    echo "ERROR: cargo-budget: timed out after ${CCX1_TIMEOUT}s waiting for $CCX1_TURNSTILE" >&2
     exit 75
   fi
 fi
+
+exec {CCX1_FD}>"$CCX1_LOCK"
+ccx1_remaining=$(( CCX1_DEADLINE - $(date +%s) ))
+[ "$ccx1_remaining" -lt 1 ] && ccx1_remaining=1
+if ! flock -s -w "$ccx1_remaining" "$CCX1_FD"; then
+  echo "ERROR: cargo-budget: timed out after ${CCX1_TIMEOUT}s waiting for $CCX1_LOCK" >&2
+  exit 75
+fi
+
+# Held only across the acquisition above, so the next build is not queued
+# behind this one's whole run. Closed as well as unlocked so the child never
+# inherits it.
+flock -u "$CCX1_TS_FD"
+exec {CCX1_TS_FD}>&-
 
 # Claims and counts both work by trying to lock each slot, so they are
 # serialized against each other: an unserialized count momentarily holds every
