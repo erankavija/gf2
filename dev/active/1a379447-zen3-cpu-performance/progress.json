@@ -11,26 +11,28 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "rework round 3 in flight on codex gpt-6-astra, branch worktree-agent-f547c394-r3. Its own validation reports the v2 markers: protocol_version 2, host_observations 2, cold_calls_verified 10000, decoder_quality_in_every_measured_cell true, original_receipt_unchanged true, all 81 published v1 files byte-identical. Findings grew from the gate's 7 blocking to 19 (F8 elevated on measured evidence; F13-F19 from a commissioned read-only audit). Verify the rework closed F13-F19 and not only F1-F7.",
+          "status": "rework round 4 in flight on codex gpt-5.6-terra xhigh in worktree-agent-f547c394-r3. Two independent Terra xhigh audits converged: F1-F12 closed; F13-F19 open because the rate-limited round-3 worker never incorporated the late audit addenda. The invoker reset the counter with explicit convergence, Terra-review and no-rearchitecture guidance. Round 4 is one bounded cumulative pass; review record reviews/f547c394-r4.md.",
           "dispatch": {
-            "model": "gpt-6-astra",
+            "model": "gpt-5.6-terra",
             "worktree": ".agents/worktrees/agent-f547c394",
             "branch": "worktree-agent-f547c394-r3",
-            "base": "23aa0824",
-            "attempt": 5,
-            "rework_round": 3,
-            "session": 4
+            "base": "c01be44e (candidate plus current main through 2d5c9aef)",
+            "attempt": 6,
+            "rework_round": 4,
+            "session": 5
           },
           "merge_commit": "873f7ec6",
           "reviews": [
             "reviews/f547c394-r1.md",
-            "reviews/f547c394-r2.md"
+            "reviews/f547c394-r2.md",
+            "reviews/f547c394-r3.md",
+            "reviews/f547c394-r4.md"
           ],
           "gates": {
             "cargo-ci": "passed 2026-09-08 at 259c1b9a on a quiet host under the full-host mutex: 5952 tests, 0 failed, 248 skipped, 35.7 s",
             "code-review": "passed (run on 037885c3, zero findings)",
             "doc-review": "passed 2026-09-08 at 259c1b9a after the raw-transcript split",
-            "research-review": "failed 2026-09-08 at 259c1b9a with 12 findings (7 blocking): F1 resume host provenance, F2 trial-ledger completeness, F3 runner drops decoder quality, F4 decoder counts unbound to the plan, F5 BER interval assumes bit independence, F6 FER bound is marginal not ratio, F7 cold-cache calibration is not cold; advisories F8-F12"
+            "research-review": "failed on the older main tree at 259c1b9a. Candidate review r4 closes F1-F12 and finds F13-F19 still open; the next checker uses gpt-5.6-terra xhigh and runs only after cumulative lead review passes"
           }
         }
       ]
@@ -293,6 +295,15 @@
       "resolution": "Invoker authorized rework round 3 (counter reset) and chose to keep wave 2 running: version-independent survey work continues, affected timed campaigns are re-run under protocol v2 before acceptance."
     },
     {
+      "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5)",
+      "issue": "f547c394",
+      "question": "the rate-limited round-3 worker closed F1-F12 but omitted every late audit finding F13-F19",
+      "recommendation": "reset once for a cumulative bounded pass after two independent reviews converge on one change set",
+      "status": "resolved",
+      "raised_at": "2026-09-08T14:00Z",
+      "resolution": "Invoker directed that research verdicts converge, use Terra xhigh for research review, and neither rearchitect nor over-engineer. Counter reset; round 4 is dispatched on Terra xhigh with the complete r4 verdict and smallest contract-literal remedies."
+    },
+    {
       "category": "shared infrastructure (policy item 8)",
       "issue": "none (test-tier budgets)",
       "question": "four contention-sensitive tests killed at the 8 s fast-tier cap while passing in isolation; file a bug or absorb the margin",
@@ -312,7 +323,7 @@
     }
   ],
   "rework_counts": {
-    "f547c394": 3
+    "f547c394": 1
   },
   "surfaced_pitfalls": [
     {
