@@ -1,4 +1,6 @@
-# Proposed registry addition for the lead; the worker cannot edit .jit/.
+# Registered as Hoeffding1963 in .jit/references.toml by the lead. This exact
+# record remains as issue-local citation provenance; the worker does not edit
+# .jit/.
 [[references]]
 key = "Hoeffding1963"
 citation = "Hoeffding — Probability Inequalities for Sums of Bounded Random Variables. J. Amer. Statist. Assoc. 58(301):13–30, 1963, Theorem 2."

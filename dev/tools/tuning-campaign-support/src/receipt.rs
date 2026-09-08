@@ -1754,12 +1754,7 @@ pub fn evaluate_version(
         let decision = margins.and_then(|margins| decide(&interval, &margins).ok());
         verdict.decision = decision;
         if let Some(claim) = &cell.claimed {
-            let same = close(claim.interval.lower, interval.lower)
-                && close(claim.interval.upper, interval.upper)
-                && close(claim.interval.estimate, interval.estimate)
-                && claim.interval.resamples == interval.resamples
-                && claim.interval.seed == interval.seed
-                && close(claim.interval.confidence, interval.confidence);
+            let same = claim_matches_interval(claim, &interval, version >= 3);
             if !same {
                 e.error(
                     "P-20",
@@ -1959,7 +1954,14 @@ fn verify_resolution_evidence(
                     );
                     return;
                 }
-                match pilot_resolution(&pilot) {
+                let corrected_alpha = match verified_pilot_alpha(&pilot, receipt_dir) {
+                    Ok(alpha) => alpha,
+                    Err(message) => {
+                        evaluation.error("P-03", None, message);
+                        return;
+                    }
+                };
+                match pilot_resolution(&pilot, corrected_alpha) {
                     Ok(derived) if addendum.effect.measurement_resolution.unwrap() < derived => {
                         evaluation.error(
                             "P-03",
@@ -1989,7 +1991,7 @@ fn verify_resolution_evidence(
 
 /// Recomputes the conservative widest relative interval half-width from a
 /// verified v3 pilot receipt's raw paired observations.
-fn pilot_resolution(pilot: &BenchmarkReceipt) -> Result<f64, String> {
+fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f64, String> {
     let mut widest: Option<f64> = None;
     for cell in &pilot.cells {
         if cell.pairs.is_empty() {
@@ -2012,10 +2014,16 @@ fn pilot_resolution(pilot: &BenchmarkReceipt) -> Result<f64, String> {
         let interval = paired_bootstrap_speedup(
             &observations,
             pilot.settings.bootstrap_resamples,
-            claimed.interval.alpha,
+            corrected_alpha,
             claimed.interval.seed,
         )
         .map_err(|error| format!("pilot cell {} bootstrap: {error}", cell.cell_id))?;
+        if !claim_matches_interval(claimed, &interval, true) {
+            return Err(format!(
+                "pilot interval for cell {} differs from the independently recomputed interval",
+                cell.cell_id
+            ));
+        }
         if !(interval.estimate.is_finite() && interval.estimate > 0.0) {
             return Err(format!(
                 "pilot cell {} has no positive finite speedup estimate",
@@ -2029,6 +2037,68 @@ fn pilot_resolution(pilot: &BenchmarkReceipt) -> Result<f64, String> {
         widest = Some(widest.map_or(half_width, |current| current.max(half_width)));
     }
     widest.ok_or_else(|| "pilot receipt contains no measured paired cells".into())
+}
+
+/// Derives the v3 pilot's family-corrected bootstrap alpha from its frozen
+/// addendum and ledger snapshots, never from a receipt claim.
+fn verified_pilot_alpha(pilot: &BenchmarkReceipt, receipt_dir: &Path) -> Result<f64, String> {
+    let addendum_pin = ArtifactPin {
+        path: pilot.addendum.path.clone(),
+        snapshot: "inputs/resolution-evidence/family-addendum.json".into(),
+        sha256: pilot.addendum.sha256.clone(),
+    };
+    let addendum = FamilyAddendum::decode(
+        &addendum_pin
+            .verify_content(receipt_dir)
+            .map_err(|error| format!("pilot addendum is not verified: {error}"))?,
+    )
+    .map_err(|error| format!("pilot addendum does not decode: {error}"))?;
+    if addendum.protocol.version != 3
+        || addendum.family.id != pilot.family_id
+        || addendum.family.issue != pilot.issue
+    {
+        return Err("pilot addendum does not match the v3 pilot identity".into());
+    }
+    let ledger = pilot
+        .trial_ledger
+        .as_ref()
+        .ok_or_else(|| "v3 pilot lacks a frozen trial ledger".to_owned())?;
+    if addendum.family_wise.ledger_path.as_deref() != Some(&ledger.path) {
+        return Err("pilot ledger path differs from its frozen addendum".into());
+    }
+    let ledger = ArtifactPin {
+        path: ledger.path.clone(),
+        snapshot: "inputs/resolution-evidence/trial-ledger.jsonl".into(),
+        sha256: ledger.sha256.clone(),
+    };
+    let entries = crate::trial_ledger::decode(
+        &ledger
+            .verify_content(receipt_dir)
+            .map_err(|error| format!("pilot ledger is not verified: {error}"))?,
+        &addendum.family.id,
+    )
+    .map_err(|error| format!("pilot ledger does not decode: {error}"))?;
+    let family_alpha = crate::trial_ledger::attempt_alpha(&ledger, receipt_dir, &addendum)
+        .map_err(|error| format!("pilot alpha is not verified: {error}"))?;
+    Ok(family_alpha
+        / f64::from(
+            crate::trial_ledger::comparisons(&entries)
+                .map_err(|error| format!("pilot comparison count is not verified: {error}"))?,
+        ))
+}
+
+fn claim_matches_interval(
+    claim: &CellClaim,
+    interval: &BootstrapInterval,
+    compare_alpha: bool,
+) -> bool {
+    close(claim.interval.lower, interval.lower)
+        && close(claim.interval.upper, interval.upper)
+        && close(claim.interval.estimate, interval.estimate)
+        && claim.interval.resamples == interval.resamples
+        && claim.interval.seed == interval.seed
+        && close(claim.interval.confidence, interval.confidence)
+        && (!compare_alpha || close(claim.interval.alpha, interval.alpha))
 }
 
 fn close(left: f64, right: f64) -> bool {

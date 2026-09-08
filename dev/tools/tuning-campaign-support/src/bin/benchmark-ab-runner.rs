@@ -26,7 +26,7 @@ use tuning_campaign_support::host::{
     inherited_lock, resolve_core_arm, CpuAffinity, HostObservation,
 };
 use tuning_campaign_support::journal::{
-    CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity, TerminalState,
+    atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity, TerminalState,
 };
 use tuning_campaign_support::process::run_process;
 use tuning_campaign_support::protocol::{
@@ -257,6 +257,31 @@ fn capture_referenced_receipts(
         if pin.sha256 != evidence.sha256 {
             return Err(invalid("resolution-evidence snapshot digest differs"));
         }
+        if addendum.protocol.version >= 3 {
+            let pilot = BenchmarkReceipt::decode(&pin.verify_content(stage).map_err(invalid)?)
+                .map_err(invalid)?;
+            let pilot_dir = root
+                .join(&evidence.receipt)
+                .parent()
+                .ok_or_else(|| invalid("resolution evidence receipt has no parent"))?
+                .to_path_buf();
+            capture_pilot_input(
+                &pilot_dir,
+                stage,
+                &pilot.addendum,
+                "inputs/resolution-evidence/family-addendum.json",
+            )?;
+            let ledger = pilot
+                .trial_ledger
+                .as_ref()
+                .ok_or_else(|| invalid("v3 resolution evidence pilot lacks trial ledger"))?;
+            capture_pilot_input(
+                &pilot_dir,
+                stage,
+                ledger,
+                "inputs/resolution-evidence/trial-ledger.jsonl",
+            )?;
+        }
     }
     for trial in &addendum.family_wise.prior_trials {
         let snapshot = format!("inputs/prior-trials/{}.json", trial.sha256);
@@ -269,6 +294,28 @@ fn capture_referenced_receipts(
         }
     }
     Ok(())
+}
+
+/// Copies an input already authenticated by a referenced pilot receipt. A
+/// resumed campaign keeps the original bytes and rejects a changed source.
+fn capture_pilot_input(
+    pilot_dir: &Path,
+    stage: &Path,
+    pin: &ArtifactPin,
+    snapshot: &str,
+) -> io::Result<()> {
+    let bytes = pin.verify_content(pilot_dir).map_err(invalid)?;
+    let destination = stage.join(snapshot);
+    if destination.exists() {
+        if fs::read(&destination)? != bytes {
+            return Err(invalid(
+                "resolution evidence pilot input changed after freeze",
+            ));
+        }
+        return Ok(());
+    }
+    fs::create_dir_all(destination.parent().unwrap())?;
+    atomic_write_new(&destination, &bytes)
 }
 
 struct Session {

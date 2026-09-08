@@ -232,6 +232,7 @@ struct CellSpec {
     unavailable: Option<&'static str>,
     claim: bool,
     claim_confidence: Option<f64>,
+    claim_alpha: Option<f64>,
     quality: Option<DecoderQualityRecord>,
 }
 
@@ -312,6 +313,12 @@ struct ResumeFixture {
     repeat_first: bool,
 }
 
+#[derive(Clone, Copy, Default)]
+struct PilotFixture<'a> {
+    family_id: Option<&'a str>,
+    claim_alpha: Option<f64>,
+}
+
 fn fixture_pilot_receipt(repo: &Path, addendum: ArtifactPin) -> BenchmarkReceipt {
     BenchmarkReceipt {
         session_hosts: Vec::new(),
@@ -375,7 +382,7 @@ fn build_receipt(
         specs,
         resume_after_first.then_some(ResumeFixture { repeat_first }),
         &[],
-        None,
+        PilotFixture::default(),
         mutate,
     )
 }
@@ -386,7 +393,38 @@ fn build_receipt_with_pilot_family(
     specs: &[CellSpec],
     pilot_family: &str,
 ) -> Built {
-    build_receipt_with_history(name, addendum, specs, None, &[], Some(pilot_family), |_| {})
+    build_receipt_with_history(
+        name,
+        addendum,
+        specs,
+        None,
+        &[],
+        PilotFixture {
+            family_id: Some(pilot_family),
+            claim_alpha: None,
+        },
+        |_| {},
+    )
+}
+
+fn build_receipt_with_pilot_alpha(
+    name: &str,
+    addendum: &FamilyAddendum,
+    specs: &[CellSpec],
+    claim_alpha: f64,
+) -> Built {
+    build_receipt_with_history(
+        name,
+        addendum,
+        specs,
+        None,
+        &[],
+        PilotFixture {
+            family_id: None,
+            claim_alpha: Some(claim_alpha),
+        },
+        |_| {},
+    )
 }
 
 fn build_receipt_with_history(
@@ -395,7 +433,7 @@ fn build_receipt_with_history(
     specs: &[CellSpec],
     resume: Option<ResumeFixture>,
     prior_failed: &[&str],
-    pilot_family_override: Option<&str>,
+    pilot_fixture: PilotFixture<'_>,
     mutate: impl FnOnce(&mut BenchmarkReceipt),
 ) -> Built {
     let root = scratch(name);
@@ -434,12 +472,45 @@ fn build_receipt_with_history(
     pilot_addendum_bytes.push(b'\n');
     fs::write(repo.join(pilot_addendum_path), pilot_addendum_bytes).unwrap();
     let pilot_path = "dev/bench_results/f547c394/pilot/receipt.json";
-    let mut pilot = fixture_pilot_receipt(&repo, pin(&repo, pilot_addendum_path));
+    let pilot_dir = repo.join(pilot_path).parent().unwrap().to_path_buf();
+    fs::create_dir_all(&pilot_dir).unwrap();
+    fs::create_dir_all(pilot_dir.join("inputs")).unwrap();
+    let pilot_addendum_pin = ArtifactPin::capture(
+        &repo,
+        &pilot_dir,
+        pilot_addendum_path,
+        "inputs/family-addendum.json",
+    )
+    .unwrap();
+    let mut pilot = fixture_pilot_receipt(&repo, pilot_addendum_pin);
     if addendum.protocol.version >= 3 {
         pilot.family_id = addendum.family.id.clone();
-        if let Some(family) = pilot_family_override {
+        if let Some(family) = pilot_fixture.family_id {
             pilot.family_id = family.into();
         }
+        let ledger = tuning_campaign_support::trial_ledger::reserve(
+            &repo,
+            &pilot_dir,
+            &pilot_addendum,
+            &pilot.campaign_id,
+            &pilot.addendum.sha256,
+            &[],
+        )
+        .unwrap();
+        let alpha = tuning_campaign_support::trial_ledger::attempt_alpha(
+            &ledger,
+            &pilot_dir,
+            &pilot_addendum,
+        )
+        .unwrap();
+        let entries = tuning_campaign_support::trial_ledger::decode(
+            &fs::read(pilot_dir.join(&ledger.snapshot)).unwrap(),
+            &pilot_addendum.family.id,
+        )
+        .unwrap();
+        let corrected_alpha = alpha
+            / f64::from(tuning_campaign_support::trial_ledger::comparisons(&entries).unwrap());
+        pilot.trial_ledger = Some(ledger);
         let cpus = vec![pilot.host.affinity.cpus()[0]];
         pilot.cells = specs
             .iter()
@@ -465,11 +536,11 @@ fn build_receipt_with_history(
                 let interval = paired_bootstrap_speedup(
                     &observations,
                     SHARED_SETTINGS.bootstrap_resamples,
-                    SHARED_SETTINGS.family_alpha / specs.len().max(1) as f64,
+                    corrected_alpha,
                     bootstrap_seed(CAMPAIGN_SEED, spec.id),
                 )
                 .unwrap();
-                CellRecord {
+                let mut record = CellRecord {
                     cell_id: spec.id.into(),
                     key: spec.id.into(),
                     role: CellRole::Exploratory,
@@ -488,13 +559,16 @@ fn build_receipt_with_history(
                     }),
                     decoder_quality: None,
                     checkpoint_sha256: None,
+                };
+                if let Some(alpha) = pilot_fixture.claim_alpha {
+                    record.claimed.as_mut().unwrap().interval.alpha = alpha;
                 }
+                record
             })
             .collect();
     }
     let mut pilot_bytes = serde_json::to_vec_pretty(&pilot).unwrap();
     pilot_bytes.push(b'\n');
-    fs::create_dir_all(repo.join(pilot_path).parent().unwrap()).unwrap();
     fs::write(repo.join(pilot_path), &pilot_bytes).unwrap();
     let mut addendum = addendum.clone();
     if addendum
@@ -533,6 +607,20 @@ fn build_receipt_with_history(
         &pilot_bytes,
     )
     .unwrap();
+    if addendum.protocol.version >= 3 {
+        for (pin, snapshot) in [
+            (
+                &pilot.addendum,
+                "inputs/resolution-evidence/family-addendum.json",
+            ),
+            (
+                pilot.trial_ledger.as_ref().unwrap(),
+                "inputs/resolution-evidence/trial-ledger.jsonl",
+            ),
+        ] {
+            fs::write(dir.join(snapshot), pin.verify_content(&pilot_dir).unwrap()).unwrap();
+        }
+    }
     let producing = ProducingInputs::capture_to(
         &repo,
         "producing-inputs.json",
@@ -802,11 +890,15 @@ fn build_receipt_with_history(
                 }
                 .unwrap();
                 let margins = addendum.margins(declared).unwrap();
-                record.claimed = Some(CellClaim {
+                let mut claim = CellClaim {
                     interval,
                     decision: decide(&interval, &margins).unwrap(),
                     margins,
-                });
+                };
+                if let Some(alpha) = spec.claim_alpha {
+                    claim.interval.alpha = alpha;
+                }
+                record.claimed = Some(claim);
             }
         }
         let accepted = checkpoints.accept(&key, &case, &record).unwrap();
@@ -900,6 +992,7 @@ fn spec(id: &'static str, speedup: f64) -> CellSpec {
         unavailable: None,
         claim: true,
         claim_confidence: None,
+        claim_alpha: None,
         quality: None,
     }
 }
@@ -2511,6 +2604,45 @@ fn v3_resolution_derives_the_pilot_half_width_and_binds_its_family() {
 }
 
 #[test]
+fn v3_binds_claimed_alpha_in_receipts_and_pilot_resolution() {
+    let family = v3_family();
+    let claimed = build_receipt(
+        "v3-altered-claimed-alpha",
+        &family,
+        &[CellSpec {
+            claim_alpha: Some(0.02),
+            ..spec("quality", 2.0)
+        }],
+        false,
+        false,
+        |_| {},
+    );
+    let summary = evaluate(&claimed.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected, "{:?}", summary.findings);
+    assert!(
+        summary
+            .findings
+            .iter()
+            .any(|finding| finding.rule == "P-20"),
+        "{:?}",
+        summary.findings
+    );
+
+    let pilot = build_receipt_with_pilot_alpha(
+        "v3-altered-pilot-alpha",
+        &family,
+        &[spec("quality", 2.0)],
+        0.02,
+    );
+    let summary = evaluate(&pilot.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected, "{:?}", summary.findings);
+    assert!(summary
+        .findings
+        .iter()
+        .any(|finding| { finding.rule == "P-03" && finding.message.contains("pilot interval") }));
+}
+
+#[test]
 fn v3_lock_evidence_records_observed_lock_facts_without_a_wrapper_identity() {
     let family = v3_family();
     let built = build_receipt(
@@ -2738,7 +2870,7 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
         &[spec("quality", 2.0)],
         None,
         &["failed-prior"],
-        None,
+        PilotFixture::default(),
         |_| {},
     );
     let accepted = evaluate(&complete.dir).unwrap();

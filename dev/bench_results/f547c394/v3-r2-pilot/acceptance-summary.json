@@ -1,0 +1,86 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "81617be7002434c4a7f0a395eb72805cb7f6e3cca542a17f63899c9aca99c597",
+  "campaign_id": "protocol-v3-r2-pilot",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "protocol-smoke-v3-r2",
+    "comparisons": 1,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "decoder-pipeline",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.9997946022265818,
+        "lower": 0.9973138264493572,
+        "upper": 1.002495747134869,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 6645957355747684682,
+        "pairs": 6
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.5,
+        "equivalence": 1.3
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "cold-first-use",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.5011420792689717,
+        "lower": 0.4978349531046531,
+        "upper": 0.5049544622665226,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 15117321376236779582,
+        "pairs": 6
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.5,
+        "equivalence": 1.3
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}

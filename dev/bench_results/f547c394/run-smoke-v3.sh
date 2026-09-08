@@ -7,11 +7,11 @@ ACTION=${1:?prepare|session|finalize}
 MODE=${2:?pilot|confirmation}
 case "$MODE" in pilot|confirmation) ;; *) exit 2;; esac
 
-OUT="dev/bench_results/f547c394/v3-$MODE"
-STAGE="/tmp/gf2-f547c394-v3-$MODE-r1"
-PLAN="dev/active/f547c394/plan-smoke-v3-$MODE-r1.json"
-ADDENDUM="dev/active/f547c394/addendum-smoke-v3-$MODE-r1.json"
-LEDGER="dev/bench_results/f547c394/v3-family-ledger.jsonl"
+OUT="dev/bench_results/f547c394/v3-r2-$MODE"
+STAGE="/tmp/gf2-f547c394-v3-r2-$MODE"
+PLAN="dev/active/f547c394/plan-smoke-v3-$MODE-r2.json"
+ADDENDUM="dev/active/f547c394/addendum-smoke-v3-$MODE-r2.json"
+LEDGER="dev/bench_results/f547c394/v3-r2-family-ledger.jsonl"
 
 case "$ACTION" in
 prepare)
@@ -35,7 +35,7 @@ addendum = json.loads(base.read_bytes())
 addendum['schema'] = 'zen3-benchmark-addendum-v3'
 addendum['protocol']['version'] = 3
 addendum['family'].update(
-    id='protocol-smoke-v3',
+    id='protocol-smoke-v3-r2',
     purpose='decoder-family',
     description='Synthetic timing and deterministic decoder-quality pipeline proof; no gf2 performance or coding-quality claim.',
 )
@@ -74,7 +74,7 @@ for cell in addendum['cells']:
     cell['decoder'] = decoder
 
 if mode == 'confirmation':
-    pilot = pathlib.Path('dev/bench_results/f547c394/v3-pilot/receipt.json')
+    pilot = pathlib.Path('dev/bench_results/f547c394/v3-r2-pilot/receipt.json')
     summary = json.loads(pilot.with_name('acceptance-summary.json').read_bytes())
     assert summary['verdict'] == 'accepted'
     widths = [max(cell['interval']['estimate'] - cell['interval']['lower'],
@@ -98,7 +98,7 @@ def arm(passes):
             'tuning_profile': None}
 
 plan = {
-    'schema': 'zen3-benchmark-plan-v1', 'campaign_id': f'protocol-v3-{mode}-r1',
+    'schema': 'zen3-benchmark-plan-v1', 'campaign_id': f'protocol-v3-r2-{mode}',
     'issue': 'f547c394', 'label': 'pilot' if mode == 'pilot' else 'smoke',
     'campaign_seed': 20260908, 'addendum': addendumpath,
     'lock_path': '/tmp/gf2-ccx1.lock', 'wrapper': 'dev/scripts/ccx1-bench-flock.sh',
@@ -121,7 +121,7 @@ PY
 session)
   test -f "$PLAN"
   test -f "$ADDENDUM"
-  LAUNCH_LOG="dev/bench_results/f547c394/v3-$MODE-r1-launcher.log"
+  LAUNCH_LOG="dev/bench_results/f547c394/v3-r2-$MODE-launcher.log"
   printf '# session start UTC: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$LAUNCH_LOG"
   printf '# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host target/release/benchmark-ab-runner run %s %s\n' "$STAGE" "$PLAN" >> "$LAUNCH_LOG"
   set +e
@@ -135,7 +135,7 @@ session)
 finalize)
   test ! -e "$OUT"
   target/release/benchmark-ab-runner finalize "$STAGE" "$OUT"
-  cp "dev/bench_results/f547c394/v3-$MODE-r1-launcher.log" "$OUT/launcher.log"
+  cp "dev/bench_results/f547c394/v3-r2-$MODE-launcher.log" "$OUT/launcher.log"
   target/release/benchmark-acceptance "$OUT"
   ;;
 *)
