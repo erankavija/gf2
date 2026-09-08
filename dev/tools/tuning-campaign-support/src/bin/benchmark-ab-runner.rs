@@ -2,10 +2,13 @@
 //! canonical quiet-host lock, with the shared append-only execution log and
 //! checkpoint/resume primitives.
 //!
-//! `run <stage> <plan.json>` executes unfinished cells inside the lock wrapper
+//! `run <stage> <plan.json> [producing-manifest]` executes unfinished cells inside the lock wrapper
 //! and pauses or completes; `finalize <stage> <out-dir>` assembles the receipt
 //! directory from the stage after the wrapper returns. Every arm is a fresh
 //! child process speaking the canonical child-v2 framing.
+//! The optional repository-relative manifest extends source provenance to the
+//! measured arms. Its exact path and contents enter the shared snapshot and
+//! resume identity; omitting it selects the protocol smoke manifest.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -174,6 +177,7 @@ fn facts(
     stage: &Path,
     plan: &RunnerPlan,
     plan_bytes: &[u8],
+    producing_manifest: &str,
 ) -> io::Result<CampaignFacts> {
     let protocol = ArtifactPin::capture(root, stage, PROTOCOL_PATH, "inputs/protocol.md")?;
     let contract =
@@ -186,11 +190,8 @@ fn facts(
     )?;
     let addendum =
         ArtifactPin::capture(root, stage, &plan.addendum, "inputs/family-addendum.json")?;
-    let producing = ProducingInputs::capture_to(
-        root,
-        PRODUCING_MANIFEST_PATH,
-        &stage.join("inputs/producing"),
-    )?;
+    let producing =
+        ProducingInputs::capture_to(root, producing_manifest, &stage.join("inputs/producing"))?;
     let source = source_identity(producing.clone());
     let arms = arm_records(plan)?;
     let (settings, settings_deviation) = plan.settings();
@@ -268,7 +269,12 @@ struct Session {
     host: HostObservation,
 }
 
-fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Session> {
+fn open_session(
+    root: &Path,
+    stage: &Path,
+    plan_path: &Path,
+    producing_manifest: &str,
+) -> io::Result<Session> {
     let (plan, plan_bytes) = read_plan(plan_path)?;
     fs::create_dir_all(stage)?;
     let stage = fs::canonicalize(stage)?;
@@ -282,7 +288,7 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
     } else {
         tuning_campaign_support::journal::atomic_write_new(&staged_plan, &plan_bytes)?;
     }
-    let facts = facts(root, &stage, &plan, &plan_bytes)?;
+    let facts = facts(root, &stage, &plan, &plan_bytes, producing_manifest)?;
     let addendum_bytes = facts.addendum.verify_content(&stage).map_err(invalid)?;
     let addendum = load_addendum(&addendum_bytes, &plan)?;
     capture_referenced_receipts(root, &stage, &addendum)?;
@@ -658,9 +664,9 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
     Ok(())
 }
 
-fn run(stage: &Path, plan_path: &Path) -> io::Result<i32> {
+fn run(stage: &Path, plan_path: &Path, producing_manifest: &str) -> io::Result<i32> {
     let root = repository_root()?;
-    let mut session = open_session(&root, stage, plan_path)?;
+    let mut session = open_session(&root, stage, plan_path, producing_manifest)?;
     let budget = session.plan.max_cells_per_session;
     let mut measured = 0u32;
     let outcome = (|| -> io::Result<TerminalState> {
@@ -879,13 +885,14 @@ fn main() {
         .collect::<Vec<_>>()
         .as_slice()
     {
-        [_, "run", stage, plan] => run(Path::new(stage), Path::new(plan)),
+        [_, "run", stage, plan] => run(Path::new(stage), Path::new(plan), PRODUCING_MANIFEST_PATH),
+        [_, "run", stage, plan, manifest] => run(Path::new(stage), Path::new(plan), manifest),
         [_, "finalize", stage, out_dir] => {
             finalize(Path::new(stage), Path::new(out_dir)).map(|()| 0)
         }
         _ => {
             eprintln!(
-                "usage: benchmark-ab-runner run <stage> <plan.json> | finalize <stage> <out-dir>"
+                "usage: benchmark-ab-runner run <stage> <plan.json> [producing-manifest] | finalize <stage> <out-dir>"
             );
             std::process::exit(2);
         }
