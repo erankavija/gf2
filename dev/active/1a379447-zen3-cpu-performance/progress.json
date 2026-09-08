@@ -320,7 +320,7 @@
     "Wave numbers are dependency depth; dispatch is dependency-driven within a wave.",
     "1362381c depends on fd9d5416 (BCH epic ae03bcd0): cross-epic dependency, part of the user-approved plan (plan-review.md); revisit at wave 7.",
     "Invocation scope: the first wave only (user instruction 2026-09-06).",
-    "Trap: a worker hitting its usage limit leaves uncommitted work; require an early first commit once the scaffold compiles.",
+    "Trap: a worker that stops mid-task leaves uncommitted work; require an early first commit once the scaffold compiles.",
     "Invocation 2026-09-07: complete waves 1 and 2; use Sol, Terra and Luna by difficulty.",
     "User approved citation metadata repair on 2026-09-07; six survey descriptions carry existing registry keys; criteria and gates unchanged.",
     "User instruction 2026-09-07: Git hashes shall never be critical provenance; user explicitly requests project invariant. Canonical behavioral-evidence-validity, measurement contract and f547c394 criteria are clarified for content-addressed immutable snapshots and metadata-independent resume. Prior R1 Git-object/ancestry demands are superseded; genuine missing-content/digest mismatch and pilot/freeze ordering remain required.",
@@ -329,8 +329,9 @@
     "Invocation 2026-09-07 (session 3): drive the whole epic; model ladder by difficulty gpt-6-astra > gpt-5.6-sol > gpt-5.6-terra > gpt-5.6-luna (astra replaces Fable per user); parallel worktrees whenever feasible.",
     "User instruction 2026-09-07 (session 3): dispatch wave-2 group A early (tooling-independent phases first) and run those four as native Claude subagents; f547c394 rework stays on codex astra. Group B (04b85d10 6c6b09b1 26465e6c eda07788) follows when wave 1 closes and disk allows.",
     "Session 3: codex workspace-write sandbox mounts .git read-only even with --add-dir; the lead commits codex workers' validated trees on their branches. Native subagents commit themselves.",
-    "User instruction 2026-09-07 ~19:50Z: rate limits close; let running wave-2 workers finish, write the handoff, no more gate runs this session.",
-    "Session 3 ended 2026-09-07 ~20:05Z on invoker instruction (rate limits): handoff-3.md is final; wave 1 not closed; wave 2 branches unmerged and ungated."
+    "User instruction 2026-09-07 ~19:50Z: let running wave-2 workers finish, write the handoff, no more gate runs this session.",
+    "Session 3 ended 2026-09-07 ~20:05Z on invoker instruction: handoff-3.md is final; wave 1 not closed; wave 2 branches unmerged and ungated.",
+    "Invocation 2026-09-08 (session 4): drive the whole epic; subagent model by task difficulty, alternating native Opus and codex gpt-5.6-sol for difficult tasks and codex gpt-6-astra for the most critical; parallel worktrees whenever feasible. Rate-limit instructions are void and were erased from the handoff chain and these notes."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
