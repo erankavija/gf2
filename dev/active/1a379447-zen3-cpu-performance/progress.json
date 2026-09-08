@@ -11,7 +11,7 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "merged at 873f7ec6; cargo-ci PASS, code-review PASS, doc-review PASS on a quiet host; research-review FAIL with 7 blocking + 5 advisory findings (first verdict the checker ever produced); rework 3 authorized by the invoker and dispatched on codex gpt-6-astra",
+          "status": "rework round 3 in flight on codex gpt-6-astra, branch worktree-agent-f547c394-r3. Its own validation reports the v2 markers: protocol_version 2, host_observations 2, cold_calls_verified 10000, decoder_quality_in_every_measured_cell true, original_receipt_unchanged true, all 81 published v1 files byte-identical. Findings grew from the gate's 7 blocking to 19 (F8 elevated on measured evidence; F13-F19 from a commissioned read-only audit). Verify the rework closed F13-F19 and not only F1-F7.",
           "dispatch": {
             "model": "gpt-6-astra",
             "worktree": ".agents/worktrees/agent-f547c394",
@@ -43,7 +43,7 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "session-4 continuation dispatched: profile receipt and classified generated-code evidence exist, no findings.md at all",
+          "status": "in flight on codex gpt-5.6-sol. Holding position in the CI queue rather than abandoning an in-progress contract run. Its launcher takes flock -s on the CCX1 mutex directly, bypassing the turnstile.",
           "dispatch": {
             "model": "gpt-5.6-sol",
             "worktree": ".agents/worktrees/agent-04b85d10",
@@ -73,7 +73,7 @@
           "short_id": "c077a88b",
           "title": "Establish compatible LDPC decoder benchmark arms",
           "classification": "research",
-          "status": "session-4 continuation dispatched: no campaign receipt yet; matched and quality-compatible arms, srsRAN/xdsopl/OAI pins",
+          "status": "in flight on codex gpt-6-astra. Past the F3 wall — producing an LDPC matched-algorithm pilot receipt — by making the P-18 decoder-quality repair itself in benchmark-ab-runner.rs and protocol_contracts.rs. Those edits are committed on its branch and COLLIDE with the v2 rework's F3 fix; resolve in favour of the rework's implementation and re-run this survey. Its source-evidence.json citation ledger audited clean on 37 citations and is the pattern the epic is adopting.",
           "dispatch": {
             "model": "gpt-6-astra",
             "worktree": ".agents/worktrees/agent-c077a88b",
@@ -133,7 +133,7 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "session-4 continuation dispatched: least progress: harnesses preserved at faa0b925, no receipts, Findings empty",
+          "status": "in flight on codex gpt-5.6-sol. Preserved a failed campaign launch as explicitly-not-a-receipt evidence and is re-running under a fresh campaign identity and executable digest after a formatter fix. Findings document was a stale draft at audit time. Outstanding: M4RI licence label GPL-2.0 -> GPL-2.0-or-later, to agree with 6c6b09b1.",
           "dispatch": {
             "model": "gpt-5.6-sol",
             "worktree": ".agents/worktrees/agent-6fb89a3c",
@@ -390,12 +390,16 @@
     "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record — c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
     "Session 4: the lead commissioned two stood-down duplicate workers as read-only auditors rather than idling them. One verified 106 citations across all five survey findings documents and nine external checkouts; the other audited the shared crate for the defect class the first F13 instance revealed. Between them they produced F13-F19 and two false claims that would have reached receipts. Neither wrote a byte in any worktree.",
     "Session 4 convention adopted: a survey records code claims in a source-evidence.json ledger (project, commit, path, line, the verbatim text of that line, and why) rather than putting line numbers in prose. c077a88b did this and audited clean on 37 citations in seconds; the four prose-citation surveys took minutes each and two carried claims their citations did not support.",
-    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted — the F3 repair it needs to emit a decoder receipt at all — in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey."
+    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted — the F3 repair it needs to emit a decoder receipt at all — in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
+    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots — re-read each branch before acting.",
+    "Session 4 sequencing rule still in force: four surveys were told to hold their confirmatory campaigns until the lead says protocol v2 has landed. v2 is the critical path.",
+    "Session 4 open question for the invoker: whether the 5G NR whole-consumer encoder cell eda07788 proposed becomes a new survey family in this epic, a tracked follow-up outside it, or is dropped. Lead recommends a tracked follow-up outside the epic."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
     "handoff.md",
     "handoff-2.md",
-    "handoff-3.md"
+    "handoff-3.md",
+    "handoff-4.md"
   ]
 }
