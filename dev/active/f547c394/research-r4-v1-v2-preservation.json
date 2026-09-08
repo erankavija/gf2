@@ -1,0 +1,26 @@
+{
+  "schema": "f547c394-evidence-preservation-v1",
+  "baseline": "c01be44e",
+  "scope": {
+    "v1_paths": [
+      "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/",
+      "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/",
+      "dev/bench_results/f547c394/revalidation.json",
+      "dev/bench_results/f547c394/run-smoke.sh"
+    ],
+    "v2_paths": [
+      "dev/bench_results/f547c394/v2-pilot/",
+      "dev/bench_results/f547c394/v2-confirmation/",
+      "dev/bench_results/f547c394/v2-pilot-preflight-rejected/",
+      "dev/bench_results/f547c394/v2-family-ledger.jsonl",
+      "dev/bench_results/f547c394/v2-*-launcher.log",
+      "dev/bench_results/f547c394/run-smoke-v2.sh"
+    ]
+  },
+  "verification": {
+    "command": "git diff --exit-code c01be44e -- dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation dev/bench_results/f547c394/v2-pilot dev/bench_results/f547c394/v2-confirmation dev/bench_results/f547c394/v2-pilot-preflight-rejected dev/bench_results/f547c394/v2-family-ledger.jsonl dev/bench_results/f547c394/v2-pilot-launcher.log dev/bench_results/f547c394/v2-pilot-r1-launcher.log dev/bench_results/f547c394/v2-confirmation-r1-launcher.log dev/bench_results/f547c394/revalidation.json dev/bench_results/f547c394/run-smoke.sh dev/bench_results/f547c394/run-smoke-v2.sh",
+    "tracked_path_count": 205,
+    "result": "pass",
+    "meaning": "Every tracked v1 and v2 evidence byte equals the baseline; v3 evidence is published only under new v3 paths."
+  }
+}

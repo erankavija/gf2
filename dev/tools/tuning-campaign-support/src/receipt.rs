@@ -9,8 +9,8 @@
 
 use crate::abtest::{
     bonferroni_confidence, bootstrap_seed, decide, flagged_windows, median, pair_orders,
-    paired_bootstrap_speedup, wilson_interval_95, ArmOrder, BootstrapInterval, Decision, Margins,
-    PairedObservation,
+    paired_bootstrap_speedup, paired_bootstrap_speedup_legacy, wilson_interval_95, ArmOrder,
+    BootstrapInterval, Decision, Margins, PairedObservation,
 };
 use crate::host::{CoreArm, HostObservation};
 use crate::journal::{
@@ -65,10 +65,10 @@ pub struct SourceIdentity {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CampaignFacts {
-    /// V2 complete premeasurement host observation; only material fields bind resume.
+    /// Versioned complete premeasurement host observation; only material fields bind resume.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub host: Option<HostObservation>,
-    /// V2 immutable ledger prefix including this campaign's reservation.
+    /// Versioned immutable ledger prefix including this campaign's reservation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trial_ledger: Option<ArtifactPin>,
     pub plan_sha256: String,
@@ -91,7 +91,8 @@ pub struct LockRecord {
     pub lock_path: String,
     pub holder_pid: u32,
     pub observation: String,
-    /// Wrapper script the launcher used, repository-relative.
+    /// V1/v2 launcher label retained only for historical receipt decoding.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub wrapper: String,
 }
 
@@ -195,7 +196,7 @@ pub struct IterationDistribution {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArmQuality {
-    /// V2 information-bit errors in each independent frame, in frozen input order.
+    /// Versioned information-bit errors in each independent frame, in frozen input order.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub frame_bit_errors: Vec<u64>,
     pub frames: u64,
@@ -218,10 +219,10 @@ pub struct ArmQuality {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExecutionRecord {
-    /// V2 decoder evidence retained from the actual child response.
+    /// Versioned decoder evidence retained from the actual child response.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality: Option<ArmQuality>,
-    /// V2 records whether the workload ran before its first timing window.
+    /// Versioned protocol records whether the workload ran before its first timing window.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub calibrated: Option<bool>,
     pub arm: String,
@@ -297,14 +298,17 @@ pub struct CellRecord {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct BenchmarkReceipt {
-    /// V2 ordered session observations, also present in the execution journal.
+    /// Versioned ordered session observations, also present in the execution journal.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub session_hosts: Vec<HostObservation>,
-    /// V2 frozen reservation chain.
+    /// Versioned frozen reservation chain.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trial_ledger: Option<ArtifactPin>,
     pub schema: String,
     pub campaign_id: String,
+    /// Canonical family identity, recorded in v3 pilot bytes for derivation.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub family_id: String,
     pub issue: String,
     /// Repository-relative publication path, used to reject self-references.
     #[serde(default)]
@@ -380,7 +384,7 @@ impl CampaignFacts {
         }
 
         let projection = Self {
-            host: (addendum.protocol.version == 2).then(|| receipt.host.clone()),
+            host: (addendum.protocol.version >= 2).then(|| receipt.host.clone()),
             trial_ledger: receipt.trial_ledger.clone(),
             plan_sha256: sha256_hex(plan_bytes),
             identity: checkpoint.identity.clone(),
@@ -423,10 +427,12 @@ impl CampaignFacts {
             plan.lock_path == receipt.lock.lock_path,
             "saved plan lock path differs from receipt lock evidence"
         );
-        require!(
-            plan.wrapper == receipt.lock.wrapper,
-            "saved plan wrapper differs from receipt lock evidence"
-        );
+        if addendum.protocol.version < 3 {
+            require!(
+                plan.wrapper == receipt.lock.wrapper,
+                "saved plan wrapper differs from receipt lock evidence"
+            );
+        }
         let (plan_settings, plan_deviation) = plan.settings();
         require!(
             plan_settings == self.settings && plan_deviation == self.settings_deviation,
@@ -879,10 +885,14 @@ pub fn evaluate_version(
     {
         e.error("P-06", None, "host observation is incomplete");
     }
-    if !receipt.lock.lock_path.starts_with('/')
-        || receipt.lock.holder_pid == 0
-        || receipt.lock.observation.trim().is_empty()
-        || receipt.lock.wrapper.trim().is_empty()
+    let lock_observation_is_complete = receipt.lock.lock_path.starts_with('/')
+        && receipt.lock.holder_pid != 0
+        && !receipt.lock.observation.trim().is_empty();
+    let v3_lock_observation_is_complete =
+        receipt.lock.observation == "inherited-fd-and-independent-flock-conflict";
+    if !lock_observation_is_complete
+        || (version >= 3 && !v3_lock_observation_is_complete)
+        || (version < 3 && receipt.lock.wrapper.trim().is_empty())
     {
         e.error("P-07", None, "lock evidence is incomplete");
     }
@@ -933,7 +943,7 @@ pub fn evaluate_version(
                                 }
                             }
                         });
-                    if version == 2 {
+                    if version >= 2 {
                         if !addendum.as_ref().is_some_and(|a| {
                             records.first().is_some_and(|r| {
                                 crate::protocol::freeze_precedes(&a.frozen, &r.timestamp_utc)
@@ -1135,11 +1145,11 @@ pub fn evaluate_version(
     }
     // Cells.
     let family = addendum.as_ref().map(|addendum| {
-        let comparisons = if version == 2 {
+        let comparisons = if version >= 2 {
             match receipt
                 .trial_ledger
                 .as_ref()
-                .ok_or_else(|| io::Error::other("v2 receipt lacks trial ledger"))
+                .ok_or_else(|| io::Error::other("versioned receipt lacks trial ledger"))
                 .and_then(|pin| {
                     crate::trial_ledger::verify(
                         pin,
@@ -1166,7 +1176,7 @@ pub fn evaluate_version(
         } else {
             addendum.family_comparisons()
         };
-        let alpha = if version == 2 {
+        let alpha = if version >= 2 {
             receipt
                 .trial_ledger
                 .as_ref()
@@ -1470,9 +1480,12 @@ pub fn evaluate_version(
                     .map(|window| window.ns_per_call())
                     .collect();
                 all_windows.extend(values.iter().copied());
-                if version == 2 {
-                    verdict.flagged_windows +=
-                        flagged_windows(&values, settings.flagged_window_factor).unwrap_or(0);
+                if version >= 2 {
+                    verdict.flagged_windows += if version >= 3 {
+                        flagged_windows(&values, settings.flagged_window_factor).unwrap_or(0)
+                    } else {
+                        flagged_windows_legacy(&values, settings.flagged_window_factor).unwrap_or(0)
+                    };
                 }
                 match median(&mut values) {
                     Ok(center)
@@ -1500,7 +1513,7 @@ pub fn evaluate_version(
                     invalid = true;
                 }
                 if let Some(declared) = declaration {
-                    if version == 2
+                    if version >= 2
                         && declared.cache_state == CacheState::Cold
                         && (execution.calibrated != Some(false)
                             || declared.cold_calls.is_none()
@@ -1556,7 +1569,7 @@ pub fn evaluate_version(
         verdict.total_windows = all_windows.len();
         if version == 1 && !all_windows.is_empty() {
             verdict.flagged_windows =
-                flagged_windows(&all_windows, settings.flagged_window_factor).unwrap_or(0);
+                flagged_windows_legacy(&all_windows, settings.flagged_window_factor).unwrap_or(0);
         }
         // Decoder quality.
         let mut quality_incompatible = false;
@@ -1572,7 +1585,7 @@ pub fn evaluate_version(
                             ("baseline", &quality.baseline),
                             ("candidate", &quality.candidate),
                         ] {
-                            if version == 2 {
+                            if version >= 2 {
                                 if let Err(message) = validate_frame_quality(arm, decoder) {
                                     e.error("P-18", Some(id), format!("{name}: {message}"));
                                     invalid = true;
@@ -1607,7 +1620,7 @@ pub fn evaluate_version(
                             }
                             match (
                                 wilson_interval_95(arm.frame_errors, arm.frames),
-                                if version == 2 {
+                                if version >= 2 {
                                     crate::abtest::frame_ber_interval(
                                         &arm.frame_bit_errors,
                                         decoder.code.k,
@@ -1659,7 +1672,7 @@ pub fn evaluate_version(
                                 invalid = true;
                             }
                         }
-                        let exceeds_tolerance = if version == 2 {
+                        let exceeds_tolerance = if version >= 2 {
                             crate::abtest::paired_fer_upper(
                                 &quality.baseline.frame_bit_errors,
                                 &quality.candidate.frame_bit_errors,
@@ -1699,12 +1712,25 @@ pub fn evaluate_version(
             .as_ref()
             .map(|family| family.per_comparison_confidence)
             .unwrap_or(1.0 - settings.family_alpha);
-        let interval = match paired_bootstrap_speedup(
-            &observations,
-            settings.bootstrap_resamples,
-            confidence,
-            cell_seed,
-        ) {
+        let corrected_alpha = family
+            .as_ref()
+            .map(|family| family.family_alpha / f64::from(family.comparisons))
+            .unwrap_or(settings.family_alpha);
+        let interval = match if version >= 3 {
+            paired_bootstrap_speedup(
+                &observations,
+                settings.bootstrap_resamples,
+                corrected_alpha,
+                cell_seed,
+            )
+        } else {
+            paired_bootstrap_speedup_legacy(
+                &observations,
+                settings.bootstrap_resamples,
+                confidence,
+                cell_seed,
+            )
+        } {
             Ok(interval) => interval,
             Err(error) => {
                 e.error("P-20", Some(id), format!("bootstrap failed: {error}"));
@@ -1756,13 +1782,22 @@ pub fn evaluate_version(
             }
         }
         let mut endpoint_unresolved = false;
-        if version == 2 && cell.role != CellRole::Exploratory {
-            let check = paired_bootstrap_speedup(
-                &observations,
-                settings.bootstrap_resamples,
-                confidence,
-                cell_seed ^ 0xd1b54a32d192ed03,
-            )
+        if version >= 2 && cell.role != CellRole::Exploratory {
+            let check = if version >= 3 {
+                paired_bootstrap_speedup(
+                    &observations,
+                    settings.bootstrap_resamples,
+                    corrected_alpha,
+                    cell_seed ^ 0xd1b54a32d192ed03,
+                )
+            } else {
+                paired_bootstrap_speedup_legacy(
+                    &observations,
+                    settings.bootstrap_resamples,
+                    confidence,
+                    cell_seed ^ 0xd1b54a32d192ed03,
+                )
+            }
             .map_err(io::Error::other)?;
             let endpoint_shift = (check.lower - interval.lower)
                 .abs()
@@ -1772,7 +1807,7 @@ pub fn evaluate_version(
                 .as_ref()
                 .and_then(|a| a.effect.measurement_resolution);
             endpoint_unresolved = resolution.is_none_or(|r| endpoint_shift > r)
-                || f64::from(settings.bootstrap_resamples) * (1.0 - confidence) / 2.0 < 20.0;
+                || f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;
             if endpoint_unresolved {
                 e.note("P-20", Some(id), "bootstrap endpoints lack declared numerical resolution or twenty tail replicates");
             }
@@ -1914,7 +1949,31 @@ fn verify_resolution_evidence(
         }
     };
     match BenchmarkReceipt::decode(&bytes) {
-        Ok(pilot) if pilot.label == ReceiptLabel::Pilot => {}
+        Ok(pilot) if pilot.label == ReceiptLabel::Pilot => {
+            if addendum.protocol.version >= 3 {
+                if pilot.family_id != addendum.family.id || pilot.issue != addendum.family.issue {
+                    evaluation.error(
+                        "P-03",
+                        None,
+                        "resolution evidence pilot belongs to a different family",
+                    );
+                    return;
+                }
+                match pilot_resolution(&pilot) {
+                    Ok(derived) if addendum.effect.measurement_resolution.unwrap() < derived => {
+                        evaluation.error(
+                            "P-03",
+                            None,
+                            format!(
+                                "declared measurement resolution is below the verified pilot half-width {derived}"
+                            ),
+                        );
+                    }
+                    Ok(_) => {}
+                    Err(message) => evaluation.error("P-03", None, message),
+                }
+            }
+        }
         Ok(_) => evaluation.error(
             "P-03",
             None,
@@ -1928,8 +1987,66 @@ fn verify_resolution_evidence(
     }
 }
 
+/// Recomputes the conservative widest relative interval half-width from a
+/// verified v3 pilot receipt's raw paired observations.
+fn pilot_resolution(pilot: &BenchmarkReceipt) -> Result<f64, String> {
+    let mut widest: Option<f64> = None;
+    for cell in &pilot.cells {
+        if cell.pairs.is_empty() {
+            continue;
+        }
+        let claimed = cell.claimed.as_ref().ok_or_else(|| {
+            format!(
+                "pilot cell {} lacks a declared bootstrap alpha",
+                cell.cell_id
+            )
+        })?;
+        let observations: Vec<_> = cell
+            .pairs
+            .iter()
+            .map(|pair| PairedObservation {
+                baseline_ns_per_call: pair.baseline.ns_per_call,
+                candidate_ns_per_call: pair.candidate.ns_per_call,
+            })
+            .collect();
+        let interval = paired_bootstrap_speedup(
+            &observations,
+            pilot.settings.bootstrap_resamples,
+            claimed.interval.alpha,
+            claimed.interval.seed,
+        )
+        .map_err(|error| format!("pilot cell {} bootstrap: {error}", cell.cell_id))?;
+        if !(interval.estimate.is_finite() && interval.estimate > 0.0) {
+            return Err(format!(
+                "pilot cell {} has no positive finite speedup estimate",
+                cell.cell_id
+            ));
+        }
+        let half_width = (interval.estimate - interval.lower)
+            .abs()
+            .max((interval.upper - interval.estimate).abs())
+            / interval.estimate;
+        widest = Some(widest.map_or(half_width, |current| current.max(half_width)));
+    }
+    widest.ok_or_else(|| "pilot receipt contains no measured paired cells".into())
+}
+
 fn close(left: f64, right: f64) -> bool {
     (left - right).abs() <= 1e-9 * left.abs().max(right.abs()).max(1.0)
+}
+
+/// Preserves the strict v1/v2 boundary while their frozen receipts remain
+/// reproducibly evaluable. Version 3 uses `abtest::flagged_windows`.
+fn flagged_windows_legacy(
+    ns_per_call: &[f64],
+    factor: f64,
+) -> Result<usize, crate::abtest::AbError> {
+    let mut sorted = ns_per_call.to_vec();
+    let center = median(&mut sorted)?;
+    Ok(ns_per_call
+        .iter()
+        .filter(|value| **value > factor * center)
+        .count())
 }
 
 fn is_announcement(record: &JournalRecord) -> bool {
@@ -2038,7 +2155,7 @@ pub fn render_markdown(summary: &AcceptanceSummary) -> String {
     out
 }
 
-/// Checks v2 quality denominators, frame counts, points and interval method
+/// Checks versioned quality denominators, frame counts, points and interval method
 /// against the frozen code/input contract. BER counts information bits (`k`).
 /// Each frame vector slot corresponds to the same recorded input in both arms.
 pub fn validate_frame_quality(
@@ -2065,7 +2182,7 @@ pub fn validate_frame_quality(
         return Err("BER point differs from error counts".into());
     }
     if arm.interval_method != "frame-hoeffding-95+fer-wilson-95" {
-        return Err("v2 requires frame-independent BER intervals".into());
+        return Err("versioned protocol requires frame-independent BER intervals".into());
     }
     Ok(())
 }

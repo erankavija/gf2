@@ -18,8 +18,8 @@ use std::process::Command;
 use std::sync::atomic::AtomicBool;
 use std::time::{Duration, Instant};
 use tuning_campaign_support::abtest::{
-    bonferroni_confidence, bootstrap_seed, decide, median, pair_orders, paired_bootstrap_speedup,
-    ArmOrder, PairedObservation,
+    bootstrap_seed, decide, median, pair_orders, paired_bootstrap_speedup, ArmOrder,
+    PairedObservation,
 };
 use tuning_campaign_support::campaign::{LockEvidence, ProcessOutcome, Token};
 use tuning_campaign_support::host::{
@@ -200,7 +200,7 @@ fn facts(
     let source = source_identity(producing.clone());
     let family = FamilyAddendum::decode(&addendum.verify_content(stage).map_err(invalid)?)
         .map_err(invalid)?;
-    let host = (family.protocol.version == 2)
+    let host = (family.protocol.version >= 2)
         .then(HostObservation::observe)
         .transpose()?;
     let arms = arm_records(plan)?;
@@ -309,13 +309,13 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
     }
     capture_referenced_receipts(root, &stage, &addendum)?;
     let holder = inherited_lock(Path::new(&plan.lock_path))?;
-    if addendum.protocol.version == 2 {
+    if addendum.protocol.version >= 2 {
         if !tuning_campaign_support::protocol::freeze_precedes(
             &addendum.frozen,
             &facts
                 .host
                 .as_ref()
-                .ok_or_else(|| invalid("v2 lacks host observation"))?
+                .ok_or_else(|| invalid("versioned protocol lacks host observation"))?
                 .observed_utc,
         ) {
             return Err(invalid("addendum freeze timestamp is after campaign start"));
@@ -397,11 +397,7 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
         holder_pid: holder,
         observation: Token::new("inherited-fd-and-independent-flock-conflict")?,
     };
-    log.append(
-        JournalEvent::LockHold,
-        None,
-        json!({"evidence": evidence, "wrapper": plan.wrapper}),
-    )?;
+    log.append(JournalEvent::LockHold, None, json!({"evidence": evidence}))?;
     log.append(
         JournalEvent::DriverDiagnostic,
         None,
@@ -708,7 +704,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                     )?,
                 )?
             } else {
-                session.addendum.family_comparisons()
+                session.addendum.family_comparisons().max(1)
             };
             let alpha = if let Some(pin) = &session.facts.trial_ledger {
                 tuning_campaign_support::trial_ledger::attempt_alpha(
@@ -719,11 +715,11 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
             } else {
                 settings.family_alpha
             };
-            let confidence = bonferroni_confidence(alpha, comparisons).map_err(invalid)?;
+            let corrected_alpha = alpha / f64::from(comparisons);
             let interval = paired_bootstrap_speedup(
                 &observations,
                 settings.bootstrap_resamples,
-                confidence,
+                corrected_alpha,
                 cell_seed,
             )
             .map_err(invalid)?;
@@ -829,6 +825,8 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
             "staged plan differs from the campaign-start plan digest",
         ));
     }
+    let addendum = FamilyAddendum::decode(&facts.addendum.verify_content(&stage).map_err(invalid)?)
+        .map_err(invalid)?;
     let terminal = records.iter().rev().find(|record| {
         matches!(
             record.event,
@@ -931,6 +929,7 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
         trial_ledger: facts.trial_ledger,
         schema: tuning_campaign_support::protocol::RECEIPT_SCHEMA_ID.into(),
         campaign_id: plan.campaign_id.clone(),
+        family_id: addendum.family.id.clone(),
         issue: plan.issue.clone(),
         receipt_path,
         label: plan.label,
@@ -948,7 +947,7 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
             lock_path: evidence.lock_path.to_string_lossy().into_owned(),
             holder_pid: evidence.holder_pid,
             observation: evidence.observation.as_str().to_owned(),
-            wrapper: plan.wrapper.clone(),
+            wrapper: String::new(),
         },
         workers: WorkerReport {
             environment_rayon_threads: workers.details["environment_rayon_threads"]

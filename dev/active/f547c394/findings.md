@@ -1,4 +1,4 @@
-# Research rework findings: protocol v2
+# Research rework findings: protocol v3
 
 ## Question and method
 
@@ -9,6 +9,22 @@ fixtures, workspace sweeps, and bounded release pipeline receipts. Timing uses
 paired fresh child executions; quality uses independent frame slots paired
 between arms. Synthetic smoke quality is deterministic fixture data, not a
 Monte Carlo estimate of a decoder or a scientific performance claim.
+
+## Current protocol v3 state
+
+Protocol v3 applies the bounded convergence rules for margins, bootstrap alpha,
+outlier boundaries, document guards, legacy receipt paths, pilot-derived
+resolution, and lock observations. The active runner produces fresh v3 pilot
+and confirmation smoke evidence at
+`dev/bench_results/f547c394/v3-pilot/` and
+`dev/bench_results/f547c394/v3-confirmation/`; both independently evaluate as
+accepted with zero findings. The smoke receipts are pipeline evidence and make
+no gf2 performance or decoder-quality claim.
+
+The v1 and v2 receipt collections remain byte-for-byte equal to baseline
+`c01be44e`. The machine-readable preservation proof is
+[`research-r4-v1-v2-preservation.json`](research-r4-v1-v2-preservation.json).
+Historical rows below retain their reviewed wording and evidence references.
 
 [The raw pre-work audit](research-r3-prework.txt) precedes source edits.
 The local tracker reports no matching research/code review runs. The linked
@@ -23,7 +39,7 @@ is invented or represented as reviewed.
 
 ## Pinned arms and mappings
 
-The v2 launcher pins the release executable, toolchain, producing/build closure,
+The v3 launcher pins the release executable, toolchain, producing/build closure,
 protocol, schema, contract, addendum and exact plan. Arm descriptors use
 repository-relative executable paths. `GF2_SMOKE_PASSES` selects one or two XOR
 passes; the second pass is the deliberately losing timing arm. The decoder
@@ -84,6 +100,13 @@ this table. The accompanying JSON preserves every exact match and command.
 | F10 | Research R3 | `protocol.md:176` | a one-sided non-inferiority decision is attributed to TOST equivalence; Schuirmann's procedure is two one-sided tests. | Fixed the active protocol and decision rustdoc. Historical v1 text remains immutable and is identified in the amendment record. `dev/active/f547c394/protocol.md:220`, `dev/tools/tuning-campaign-support/src/abtest.rs:260`. |
 | F11 | Research R3 | `addendum-protocol-smoke-pilot.json:11` | the declared freeze timestamp `2026-09-07T00:00:00Z` is later than the launcher start `2026-09-06T23:07:25Z`. | Recorded the v1 metadata contradiction without editing evidence. V2 preparation records actual UTC time before launch and both runner and acceptance reject a later declared freeze. `dev/active/f547c394/amendment-v2.md:18`, `dev/tools/tuning-campaign-support/src/protocol.rs:1215`, `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs:2480`. |
 | F12 | Research R3 | `protocol.md:27` | the current protocol and the receipt-pinned protocol have different digests and different acceptance semantics while both identify as version 1, which the protocol's own versioning rule forbids. | Published v2 semantics and schema, preserved v1 evidence and its evaluator branch, and reject version mismatches in both directions. `dev/active/f547c394/amendment-v2.md:27`, `dev/tools/tuning-campaign-support/src/receipt.rs:700`, `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs:2133`. |
+| F13 | Research R4 | Declared margins accept equality with resolution or reconstruct decimal deltas. | V3 compares each declared margin directly with `1 + measurement_resolution` and rejects equality. `src/protocol.rs`; equality and one-percent-above coverage: `tests/protocol_contracts.rs`. |
+| F14 | Research R4 | Bootstrap rank selection reconstructs alpha from displayed confidence. | V3 passes declared corrected alpha to bootstrap rank selection and records it in the interval. `src/abtest.rs`, `src/receipt.rs`, and `tests/protocol_contracts.rs`. |
+| F15 | Research R4 | The flagged-window equality boundary differs between the protocol and evaluator. | V3 flags windows at or above the factor while retaining strict `max_flagged_fraction`. `src/abtest.rs`, `src/receipt.rs`, and `tests/protocol_contracts.rs`. |
+| F16 | Research R4 | The protocol guard omits semantic justifications and assumes a bounded P-rule range. | The guard compares full table rows and derives the P-rule set from the evaluator source. `src/protocol.rs` and `tests/protocol_contracts.rs`. |
+| F17 | Research R4 | V1 prior-trial receipt paths bypass the repository-relative path rule. | Every declared prior-trial path uses `validate_relative`. `src/protocol.rs` and `tests/protocol_contracts.rs`. |
+| F18 | Research R4 | Resolution evidence does not establish its derived width or family identity. | V3 recomputes the widest relative pilot interval half-width and checks family and issue identity. `src/receipt.rs` and `tests/protocol_contracts.rs`. |
+| F19 | Research R4 | P-07 named facts beyond the runner's observations. | V3 requires only the inherited held descriptor and independent conflicting-lock observation, with path and PID. `src/receipt.rs`, `src/bin/benchmark-ab-runner.rs`, and `tests/protocol_contracts.rs`. |
 | A01 | Sweep consequence | Sequential alpha/m across attempts | Repeated alpha/m decisions need an overall error budget. | `dev/tools/tuning-campaign-support/src/trial_ledger.rs:214` derives alpha/[t(t+1)] from the chain; the summable allocation is stated in protocol.md and shared by runner/evaluator. |
 | A03 | Ledger consequence | Candidate attempts | The frozen per-candidate attempt cap needs enforcement across failed trials. | `dev/tools/tuning-campaign-support/src/trial_ledger.rs:224`, `dev/tools/tuning-campaign-support/src/trial_ledger.rs:87` and `dev/tools/tuning-campaign-support/src/trial_ledger.rs:37` bind behavioral arm identities and reject repeat reservations within one protocol version; the ledger fixture covers a failed candidate retry. |
 | A02 | Prior ledger audit | research-review R1 ledger | research-review R1's closure ledger | `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r3.md:34` is the lead’s explicit prior-findings ledger: code R1 F1/F2 and research R1 citation-label drift are closed, code R2 F1 is reopened as current F1. H01/H02/H13 and F1 retain those closures. Raw gate stdout is unavailable locally. |
