@@ -44,7 +44,7 @@
     "findings": {
       "P-20-note": 5
     },
-    "incompatibility": "The second-attempt family alpha is 0.008333333333333333. Across ten reserved comparisons, per-comparison alpha is 0.0008333333333333333, yielding about 8.33 expected tail draws from 10000 resamples; P-20 requires at least twenty."
+    "incompatibility": "The second-attempt family alpha is 0.008333333333333333. Across ten reserved comparisons, per-comparison alpha is 0.0008333333333333333, yielding about 4.17 expected draws in each tail from 10000 resamples; P-20 requires at least twenty per tail."
   },
   "producing_manifest": {
     "path": "dev/active/1d0da41f/producing-inputs.json",
