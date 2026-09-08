@@ -43,8 +43,8 @@ connections and the derived checkpoint identities.
 
 ## Decisions worth knowing
 
-- **Versioned acceptance.** [Protocol v2](protocol.md) and its
-  [amendment record](amendment-v2.md) specify current measurement behavior.
+- **Versioned acceptance.** [Protocol v3](protocol.md) and its
+  [amendment record](amendment-v3.md) specify current measurement behavior.
   The shared evaluator keeps the named v1 evidence boundary while committed
   v1 receipts require reproducible evaluation. Producing new evidence requires
   the current document version to match the addendum before measurement.
@@ -103,13 +103,14 @@ left for its owner; it is reported rather than patched here.
 
 ## Validation evidence
 
-The [revalidation record](../../bench_results/f547c394/revalidation.json)
-identifies the release evaluator and preserves its results over the committed
-pilot and confirmation and their portable exports. Both opening records contain
-the complete frozen facts. The [validation report](rework-validation.md)
-contains the tests, command output and cumulative review resolutions. These
-receipts exercise the protocol pipeline without claiming a gf2 speedup.
+The [validation report](rework-validation-r5.md) identifies the release
+evaluator, records the focused tests, and verifies the frozen
+[v3 r2 pilot](../../bench_results/f547c394/v3-r2-pilot/receipt.json) and
+[confirmation](../../bench_results/f547c394/v3-r2-confirmation/receipt.json)
+receipts. Both evidence collections contain their complete frozen inputs and
+report zero acceptance findings. These receipts exercise the protocol pipeline
+without claiming a gf2 speedup.
 
-The [v2 findings](findings.md) carry the version amendment, current behavioral
-validation and independently frozen decoder/cold pipeline receipts. V1 evidence
-is preserved under its pinned rules.
+The [findings](findings.md) carry the version amendments and cumulative review
+resolutions. The v1 and v2 collections remain preserved under their pinned
+rules, and the v3 r1 collection remains preserved as falsified evidence.
