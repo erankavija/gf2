@@ -1,0 +1,3 @@
+cargo-budget: 24 jobs (1 live, 24 cpus)
+    Checking tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/dev/tools/tuning-campaign-support)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.74s

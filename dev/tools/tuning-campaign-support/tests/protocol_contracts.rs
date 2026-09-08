@@ -318,6 +318,7 @@ struct ResumeFixture {
 struct PilotFixture<'a> {
     family_id: Option<&'a str>,
     claim_alpha: Option<f64>,
+    omit_claim: bool,
 }
 
 fn fixture_pilot_receipt(repo: &Path, addendum: ArtifactPin) -> BenchmarkReceipt {
@@ -403,6 +404,7 @@ fn build_receipt_with_pilot_family(
         PilotFixture {
             family_id: Some(pilot_family),
             claim_alpha: None,
+            ..PilotFixture::default()
         },
         |_| {},
     )
@@ -423,6 +425,7 @@ fn build_receipt_with_pilot_alpha(
         PilotFixture {
             family_id: None,
             claim_alpha: Some(claim_alpha),
+            ..PilotFixture::default()
         },
         |_| {},
     )
@@ -563,6 +566,9 @@ fn build_receipt_with_history(
                 };
                 if let Some(alpha) = pilot_fixture.claim_alpha {
                     record.claimed.as_mut().unwrap().interval.alpha = alpha;
+                }
+                if pilot_fixture.omit_claim {
+                    record.claimed = None;
                 }
                 record
             })
@@ -2620,6 +2626,40 @@ fn v3_resolution_derives_the_pilot_half_width_and_binds_its_family() {
         .findings
         .iter()
         .any(|finding| { finding.rule == "P-03" && finding.message.contains("different family") }));
+}
+
+#[test]
+fn v3_resolution_uses_raw_pilot_pairs_without_a_decision_claim() {
+    for (name, resolution, expected) in [
+        ("v3-pilot-without-claim", 0.02, Verdict::Accepted),
+        (
+            "v3-pilot-without-claim-underdeclared",
+            0.000_001,
+            Verdict::Rejected,
+        ),
+    ] {
+        let mut family = v3_family();
+        family.effect.measurement_resolution = Some(resolution);
+        let built = build_receipt_with_history(
+            name,
+            &family,
+            &[spec("quality", 2.0)],
+            None,
+            &[],
+            PilotFixture {
+                omit_claim: true,
+                ..PilotFixture::default()
+            },
+            |_| {},
+        );
+        let summary = evaluate(&built.dir).unwrap();
+        assert_eq!(summary.verdict, expected, "{:?}", summary.findings);
+        if expected == Verdict::Rejected {
+            assert!(summary.findings.iter().any(|finding| {
+                finding.rule == "P-03" && finding.message.contains("pilot half-width")
+            }));
+        }
+    }
 }
 
 #[test]
