@@ -58,7 +58,7 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "session-4 continuation dispatched: adapters and pilot addendum done, no receipt of any kind, Findings section is one line",
+          "status": "pilot accepted, three of three cells measured; confirmation addendum frozen at 9176ab91 and held for v2. Derived the F8 onset predicate in closed form (fast_max < slow_max - slow_min) and validated it on three cells. Preserves a cell gf2 wins by 1.66x. Open: the 0x11B framing correction, since the cited lines are test fixtures and gf2 ships no 0x11B GF(2^8) type.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
@@ -88,7 +88,7 @@
           "short_id": "eda07788",
           "title": "Establish compatible shift and coding-permutation baselines",
           "classification": "research",
-          "status": "session-4 continuation dispatched: REQ-01/04 unmet: fetch-build.sh never executed, addenda are drafts, no receipt",
+          "status": "pilot accepted, ten of ten cells measured; gf2 leads the xdsopl comparator 2.2x on Normal FECFRAME and ~6x on Short, with the comparator's cost dominated by representation conversion that the whole-consumer cell correctly includes. Falsified its own committed claim that AFF3CT lacks 5G NR support and built an executable comparison showing identical bit selection in all six surveyed configurations. Three citation corrections outstanding. Confirmation held for v2.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-eda07788",
@@ -103,7 +103,7 @@
           "short_id": "c7113c5a",
           "title": "Establish equivalent polynomial multiplication baselines",
           "classification": "research",
-          "status": "session-4 continuation dispatched: confirmatory receipt completed and accepted over 2 sessions, preserved at c1630c2f; diagnose the 5 Unstable cells and report",
+          "status": "confirmatory receipt accepted; REQ-01..04 met, REQ-05 PARTIAL (conservative/tuned cells need a superseding addendum, frozen and unrun). Proved the six Unstable cells are an artifact of the pooled outlier threshold: zero flagged windows per arm in every cell, widest window 1.21x its own arm's median, against 116-119 pooled in exactly the six cells at ratios >=167x. Derived a closed form for the onset.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c7113c5a",
@@ -118,7 +118,7 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "session-4 continuation dispatched: popcount pilot receipt preserved at e7dcb5b6; AND-popcount pilot and both confirmations missing",
+          "status": "FALSIFIED ITS OWN PREMISE: libpopcnt and Mula beat gf2's dispatcher materially at four of nine cells, and the measured crossover lands exactly on the 512-byte carry-save boundary read off the disassembly before the campaign ran. Found two comparison-validity defects in the inherited harness (misaligned gf2 fixture windows; gf2 arms rotating 8x the working set) and superseded the receipt taken through it. Found F13. Zero flagged windows pooled and per arm across four receipts at ratios 1.09x-3.07x, bounding F8's onset from below.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c",
@@ -148,7 +148,7 @@
           "short_id": "1d0da41f",
           "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
           "classification": "implementation",
-          "status": "session-4 continuation dispatched: confirmatory receipt + adoption default via detect-time lane selection + asm artefact",
+          "status": "delivered and merged into main at 4d630aec. Confirmatory receipt accepted and REJECTS YMM adoption: production keeps sequential PCLMULQDQ via canonical detect-time lane selection, the REQ-07 predicate/safety repair is retained, and the falsified premise is stated in the findings. cargo-ci exit 0 on the worker tree (5959 tests). Also carries three CI-contract fixes that unblocked every worker: the observation-quiet feature gate, the HIP dispatcher test no longer asserting this host's gfx1030, and a Rust 1.95 clippy collapsible-if in receipt.rs. ISSUE STAYS OPEN: the receipt pins protocol v1 and is queued for the v2 re-run.",
           "dispatch": {
             "model": "gpt-6-astra",
             "worktree": ".agents/worktrees/agent-1d0da41f",
@@ -156,7 +156,9 @@
             "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
             "attempt": 2,
             "session": 4
-          }
+          },
+          "merge_commit": "4d630aec",
+          "note": "F14 biases toward declaring improvement and this receipt declined to, so the negative result holds a fortiori: the known defect works against the conclusion reached, not for it."
         }
       ]
     },
@@ -298,6 +300,15 @@
       "status": "resolved",
       "raised_at": "2026-09-08T12:05Z",
       "resolution": "Invoker instructed raising the cap immediately to 15 s instead of filing a bug. Done in 23aa0824, with the profile's rationale comment rewritten."
+    },
+    {
+      "category": "shared infrastructure (policy item 8)",
+      "issue": "none (scripts/cargo-budget.sh, dev/scripts/ccx1-bench-flock.sh)",
+      "question": "the CCX1 mutex starved every exclusive waiter because a pending flock -x does not block a new flock -s; four runners queued 10-29 minutes for work needing under 5",
+      "recommendation": "add a turnstile both sides pass through",
+      "status": "resolved",
+      "raised_at": "2026-09-08T13:00Z",
+      "resolution": "Invoker authorized. Landed at d088c284 with an ordering test that fails against the previous behaviour. The fix binds only checkouts carrying it, so main was merged into all nine live worktrees and the lead held the turnstile to drain the six runners launched under the old wrapper."
     }
   ],
   "rework_counts": {
@@ -338,6 +349,20 @@
       "origin": "pre-existing (test-tier-budgets margin)",
       "disposition": "resolved; supersedes the earlier advisory proposing a bug task",
       "criterion_named_by": "none in 1a379447"
+    },
+    {
+      "issue": "f547c394",
+      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set — declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property — is the rework's design target.",
+      "origin": "issue-impact",
+      "disposition": "all recorded in reviews/f547c394-r3.md; the rework worker reads that file as part of its mandatory audit step",
+      "criterion_named_by": "REQ-02, REQ-03, REQ-04, REQ-06 of f547c394"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "F18: no declared measurement_resolution in this epic has ever been checked against the pilot pinned as having measured it, and F13 means two of three margin fields are never checked against the resolution at all. Every survey must verify by hand that its declared resolution is at least its pilot's widest relative CI half-width, and report both numbers.",
+      "origin": "issue-impact",
+      "disposition": "instructed to all four surveys with a pilot; answers go in each findings.md",
+      "criterion_named_by": "REQ-01 of every survey issue (measurement-contract conformance)"
     }
   ],
   "notes": [
@@ -362,7 +387,10 @@
     "Session 4 confirmed empirically: codex --add-dir <repo>/.git does NOT make a linked worktree's git directory writable; the sandbox mounts it read-only regardless. Codex workers keep a COMMIT-PLAN.md and the lead commits for them.",
     "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations — but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
     "Session 4: the CCX1 mutex starved every exclusive waiter because cargo-budget.sh took the shared side with flock -s and a pending flock -x does not block a new flock -s on Linux. Fixed at d088c284 with a turnstile both sides pass through, authorized by the invoker as a shared-infrastructure change. The fix binds only checkouts that have it, so the lead merged main into all nine live worktrees and then held the turnstile to drain the six runners launched under the old wrapper.",
-    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record — c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case."
+    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record — c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
+    "Session 4: the lead commissioned two stood-down duplicate workers as read-only auditors rather than idling them. One verified 106 citations across all five survey findings documents and nine external checkouts; the other audited the shared crate for the defect class the first F13 instance revealed. Between them they produced F13-F19 and two false claims that would have reached receipts. Neither wrote a byte in any worktree.",
+    "Session 4 convention adopted: a survey records code claims in a source-evidence.json ledger (project, commit, path, line, the verbatim text of that line, and why) rather than putting line numbers in prose. c077a88b did this and audited clean on 37 citations in seconds; the four prose-citation surveys took minutes each and two carried claims their citations did not support.",
+    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted — the F3 repair it needs to emit a decoder receipt at all — in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
