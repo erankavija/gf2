@@ -1,0 +1,70 @@
+{
+  "schema": "ymm-clmul-v3-validation-v1",
+  "runner": {
+    "path": "/tmp/gf2-1d0da41f-target/release/benchmark-ab-runner",
+    "sha256": "0bc46fa34b8f1a5f835ce341f6edc991da3e006bffcd19672ddbdc9f525ebe30",
+    "protocol_v3_identity_present": true
+  },
+  "family_ledger": {
+    "path": "dev/bench_results/1d0da41f/v3-family-ledger.jsonl",
+    "sha256": "aafd18d9713b51c30d12ab0402ffc97c58c0a80d11b3cbc6b6954bc8fb0a9409",
+    "reservations": 4,
+    "comparisons": 10
+  },
+  "pilot": {
+    "receipt": "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
+    "receipt_sha256": "c69a28da7906dbb951ce93fa65a5b3c3e93d4fe58b27b92e12610fe2713b6b98",
+    "acceptance_summary_sha256": "7fa548f666cbf2b9ca49aabc350f23cf8cb10df8667028f4534f30ebe531621e",
+    "verdict": "accepted",
+    "findings": 0,
+    "measurement_resolution": 0.12460141476908276,
+    "margins_admissible": false
+  },
+  "resolution_pilot": {
+    "receipt": "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json",
+    "receipt_sha256": "17c144365f39706f62afa5709b3db795bbef6a179d3b3310da7223261186881f",
+    "acceptance_summary_sha256": "e74f0945403d545fd49b83d5a7b6d9d62731307a36a225d0e76d6ddb1cd8c1eb",
+    "verdict": "accepted",
+    "findings": 0,
+    "measurement_resolution": 0.003885473929820891,
+    "margins_admissible": true
+  },
+  "confirmation": {
+    "receipt": "dev/bench_results/1d0da41f/v3-confirmation/receipt.json",
+    "receipt_sha256": "91f11a886f4635c24a99c8913bf9995860eacc38645f3ec8ea7ff267cada20b8",
+    "acceptance_summary_sha256": "873b61d2d2f3674abe5d666d5caf3ef14b3210876abfecfaa1b0bad8ff835fba",
+    "verdict": "accepted",
+    "qualifies": false,
+    "sessions": 3,
+    "resumed": true,
+    "cell_decisions": {
+      "regressed": 5,
+      "not_confirmatory": 5
+    },
+    "findings": {
+      "P-20-note": 5
+    },
+    "incompatibility": "The second-attempt family alpha is 0.008333333333333333. Across ten reserved comparisons, per-comparison alpha is 0.0008333333333333333, yielding about 8.33 expected tail draws from 10000 resamples; P-20 requires at least twenty."
+  },
+  "producing_manifest": {
+    "path": "dev/active/1d0da41f/producing-inputs.json",
+    "sha256": "66eb27945ceecc6ff22db51f8fb1e2dc603ad703d9b7e25f47a2d6c928891ba0",
+    "bound_by_all_v3_receipts": true
+  },
+  "validation": {
+    "artifact_links_and_digests": "passed",
+    "focused_protocol_contracts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "focused_clmul_and_fieldvec_correctness": {
+      "passed": 41,
+      "failed": 0,
+      "toolchain": "Rust 1.95",
+      "runner": "scripts/cargo-budget.sh --test"
+    },
+    "assembly_gate": "passed: no SIMD source changed in this continuation"
+  },
+  "timing_retry_permitted": false,
+  "production_default": "pclmulqdq-scalar-xmm"
+}
