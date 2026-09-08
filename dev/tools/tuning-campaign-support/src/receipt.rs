@@ -1034,10 +1034,10 @@ pub fn evaluate_version(
                             JournalEvent::CampaignStart | JournalEvent::SessionStart => {
                                 sessions += 1
                             }
-                            JournalEvent::OrchestrationStart if is_announcement(record) => {
-                                if !seen_cell {
-                                    announced_before_first_cell = true;
-                                }
+                            JournalEvent::OrchestrationStart
+                                if is_announcement(record) && !seen_cell =>
+                            {
+                                announced_before_first_cell = true;
                             }
                             JournalEvent::CellStart => {
                                 seen_cell = true;
