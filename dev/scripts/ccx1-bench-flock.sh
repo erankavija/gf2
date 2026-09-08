@@ -42,6 +42,15 @@
 # cargo work. That was already required to avoid taking the shared side
 # underneath its own exclusive side; it now also avoids blocking on the
 # turnstile it is holding itself.
+#
+# The turnstile binds only acquirers that pass through it. A script taking
+# `flock -s` on this mutex directly — rather than through
+# `scripts/cargo-budget.sh` — skips it and can still enter ahead of a queued
+# measurement run. Observed in two survey launchers, wrapping a harness build.
+# One such holder delays a measurement run by the length of its build, which is
+# bounded; a stream of them restores the starvation this turnstile removes.
+# Take the shared side through `cargo-budget.sh`, which is the only supported
+# shared acquirer.
 set -euo pipefail
 
 LOCK_FILE="${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}"
