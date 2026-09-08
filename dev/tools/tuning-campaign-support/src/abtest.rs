@@ -257,7 +257,7 @@ pub enum Decision {
     /// The interval's lower bound reaches the improvement margin.
     Improved,
     /// The lower bound clears the equivalence floor without reaching the
-    /// improvement margin: non-regression as an equivalence statement.
+    /// improvement margin: one-sided non-inferiority.
     NotWorse,
     /// The upper bound lies below the equivalence floor.
     Regressed,
@@ -304,8 +304,7 @@ pub fn flagged_windows(ns_per_call: &[f64], factor: f64) -> Result<usize, AbErro
         .count())
 }
 
-/// Wilson score interval at 95% for a binomial proportion such as FER or
-/// BER; `errors` must not exceed `trials` and `trials` must be positive.
+/// Wilson score interval at 95% for a binomial proportion with independent trials (e.g. frame errors for FER); `errors` must not exceed `trials` and `trials` must be positive.
 pub fn wilson_interval_95(errors: u64, trials: u64) -> Result<(f64, f64), AbError> {
     if trials == 0 || errors > trials {
         return Err(AbError("invalid binomial counts".into()));
@@ -316,6 +315,71 @@ pub fn wilson_interval_95(errors: u64, trials: u64) -> Result<(f64, f64), AbErro
     let center = (p + z2 / (2.0 * n)) / (1.0 + z2 / n);
     let half = Z_95 * (p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt() / (1.0 + z2 / n);
     Ok(((center - half).max(0.0), (center + half).min(1.0)))
+}
+
+/// Distribution-free interval for a bounded mean, using independent observations.
+/// Hoeffding's inequality gives simultaneous two-sided coverage `confidence`.
+/// Values must lie in [lower, upper]; no within-observation independence is assumed.
+/// Returns an error for empty data or invalid bounds/confidence. O(n) time.
+pub fn bounded_mean_interval(
+    values: &[f64],
+    lower: f64,
+    upper: f64,
+    confidence: f64,
+) -> Result<(f64, f64), AbError> {
+    if values.is_empty()
+        || !lower.is_finite()
+        || !upper.is_finite()
+        || lower >= upper
+        || !(0.0 < confidence && confidence < 1.0)
+        || values
+            .iter()
+            .any(|x| !x.is_finite() || *x < lower || *x > upper)
+    {
+        return Err(AbError("invalid bounded observations".into()));
+    }
+    let mean = values.iter().sum::<f64>() / values.len() as f64;
+    let half =
+        (upper - lower) * ((2.0 / (1.0 - confidence)).ln() / (2.0 * values.len() as f64)).sqrt();
+    Ok(((mean - half).max(lower), (mean + half).min(upper)))
+}
+
+/// BER interval treating each frame's information-bit error fraction as one
+/// independent bounded observation. Bits inside a frame can be arbitrarily dependent.
+pub fn frame_ber_interval(
+    errors: &[u64],
+    bits_per_frame: u64,
+    confidence: f64,
+) -> Result<(f64, f64), AbError> {
+    if bits_per_frame == 0 || errors.iter().any(|e| *e > bits_per_frame) {
+        return Err(AbError("invalid frame bit counts".into()));
+    }
+    let rates: Vec<_> = errors
+        .iter()
+        .map(|e| *e as f64 / bits_per_frame as f64)
+        .collect();
+    bounded_mean_interval(&rates, 0.0, 1.0, confidence)
+}
+
+/// Upper confidence bound on FER(candidate) - ratio * FER(baseline).
+/// Each paired same-frame observation is C_i - ratio B_i in [-ratio, 1].
+/// A nonpositive upper bound establishes the declared ratio non-inferiority.
+/// Zero observed baseline errors do not automatically certify equivalence.
+pub fn paired_fer_upper(
+    baseline: &[u64],
+    candidate: &[u64],
+    ratio: f64,
+    confidence: f64,
+) -> Result<f64, AbError> {
+    if baseline.len() != candidate.len() || !ratio.is_finite() || ratio < 1.0 {
+        return Err(AbError("invalid paired FER contract".into()));
+    }
+    let differences: Vec<_> = baseline
+        .iter()
+        .zip(candidate)
+        .map(|(b, c)| f64::from(u8::from(*c > 0)) - ratio * f64::from(u8::from(*b > 0)))
+        .collect();
+    bounded_mean_interval(&differences, -ratio, 1.0, confidence).map(|(_, upper)| upper)
 }
 
 #[cfg(test)]

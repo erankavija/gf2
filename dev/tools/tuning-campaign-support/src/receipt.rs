@@ -65,6 +65,12 @@ pub struct SourceIdentity {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CampaignFacts {
+    /// V2 complete premeasurement host observation; only material fields bind resume.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub host: Option<HostObservation>,
+    /// V2 immutable ledger prefix including this campaign's reservation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trial_ledger: Option<ArtifactPin>,
     pub plan_sha256: String,
     pub identity: ResumeIdentity,
     pub protocol: ArtifactPin,
@@ -189,6 +195,9 @@ pub struct IterationDistribution {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArmQuality {
+    /// V2 information-bit errors in each independent frame, in frozen input order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub frame_bit_errors: Vec<u64>,
     pub frames: u64,
     pub frame_errors: u64,
     pub bits: u64,
@@ -209,6 +218,12 @@ pub struct ArmQuality {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExecutionRecord {
+    /// V2 decoder evidence retained from the actual child response.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quality: Option<ArmQuality>,
+    /// V2 records whether the workload ran before its first timing window.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub calibrated: Option<bool>,
     pub arm: String,
     pub pid: u32,
     pub windows: Vec<WindowRecord>,
@@ -282,6 +297,12 @@ pub struct CellRecord {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct BenchmarkReceipt {
+    /// V2 ordered session observations, also present in the execution journal.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub session_hosts: Vec<HostObservation>,
+    /// V2 frozen reservation chain.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trial_ledger: Option<ArtifactPin>,
     pub schema: String,
     pub campaign_id: String,
     pub issue: String,
@@ -320,7 +341,13 @@ impl CampaignFacts {
     /// Whether two opening records describe the same measurement behavior and
     /// inputs. Git locators are informational at both levels.
     pub fn resume_equivalent(&self, other: &Self) -> bool {
-        self.plan_sha256 == other.plan_sha256
+        match (&self.host, &other.host) {
+            (Some(a), Some(b)) if a.material_equivalent(b) => {}
+            (None, None) => {}
+            _ => return false,
+        }
+        self.trial_ledger == other.trial_ledger
+            && self.plan_sha256 == other.plan_sha256
             && self.identity.resume_equivalent(&other.identity)
             && self.protocol == other.protocol
             && self.contract == other.contract
@@ -353,6 +380,8 @@ impl CampaignFacts {
         }
 
         let projection = Self {
+            host: (addendum.protocol.version == 2).then(|| receipt.host.clone()),
+            trial_ledger: receipt.trial_ledger.clone(),
             plan_sha256: sha256_hex(plan_bytes),
             identity: checkpoint.identity.clone(),
             protocol: receipt.protocol.clone(),
@@ -663,6 +692,15 @@ impl Evaluation {
 
 /// Evaluates a self-contained receipt directory from its durable snapshots.
 pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
+    evaluate_version(receipt_dir, None)
+}
+
+/// Evaluates only under the receipt-pinned rules. An explicit expected version
+/// rejects a differently pinned receipt; it cannot select different semantics.
+pub fn evaluate_version(
+    receipt_dir: &Path,
+    expected_version: Option<u32>,
+) -> io::Result<AcceptanceSummary> {
     let receipt_bytes = fs::read(receipt_dir.join(RECEIPT_FILE))?;
     let receipt_sha256 = sha256_hex(&receipt_bytes);
     let receipt = BenchmarkReceipt::decode(&receipt_bytes)
@@ -781,6 +819,25 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
         }
     };
 
+    let version = addendum.as_ref().map(|a| a.protocol.version).unwrap_or(0);
+    if expected_version.is_some_and(|expected| expected != version) {
+        e.error(
+            "P-01",
+            None,
+            "requested protocol version differs from receipt pin",
+        );
+    }
+    let marker = format!("Protocol `zen3-benchmark-protocol` version {version}.");
+    if !verified_pins
+        .get("protocol")
+        .is_some_and(|bytes| String::from_utf8_lossy(bytes).contains(&marker))
+    {
+        e.error(
+            "P-01",
+            None,
+            "pinned protocol document version differs from addendum",
+        );
+    }
     if receipt.toolchain.trim().is_empty() {
         e.error("P-05", None, "toolchain identity is empty");
     }
@@ -876,16 +933,77 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                                 }
                             }
                         });
+                    if version == 2 {
+                        if !addendum.as_ref().is_some_and(|a| {
+                            records.first().is_some_and(|r| {
+                                crate::protocol::freeze_precedes(&a.frozen, &r.timestamp_utc)
+                            })
+                        }) {
+                            e.error(
+                                "P-23",
+                                None,
+                                "addendum freeze timestamp is after campaign start",
+                            );
+                        }
+                        let hosts: Vec<HostObservation> = records
+                            .iter()
+                            .filter(|r| {
+                                r.event == JournalEvent::DriverDiagnostic
+                                    && r.details["kind"] == "host-observation"
+                            })
+                            .filter_map(|r| {
+                                serde_json::from_value(r.details["observation"].clone()).ok()
+                            })
+                            .collect();
+                        let session_count = records
+                            .iter()
+                            .filter(|r| {
+                                matches!(
+                                    r.event,
+                                    JournalEvent::CampaignStart | JournalEvent::SessionStart
+                                )
+                            })
+                            .count();
+                        let frozen = campaign_facts.as_ref().and_then(|f| f.host.as_ref());
+                        if hosts != receipt.session_hosts
+                            || hosts.len() != session_count
+                            || frozen.is_none()
+                            || hosts
+                                .iter()
+                                .any(|h| !frozen.unwrap().material_equivalent(h))
+                            || hosts.last() != Some(&receipt.host)
+                        {
+                            e.error("P-23", None, "session host observations differ from frozen material conditions or journal");
+                        }
+                        let mut observed_sessions = BTreeSet::new();
+                        for record in &records {
+                            if record.event == JournalEvent::DriverDiagnostic
+                                && record.details["kind"] == "host-observation"
+                                && !observed_sessions.insert(record.session_id.clone())
+                            {
+                                e.error("P-23", None, "session repeats host observation");
+                            }
+                            if record.event == JournalEvent::CellStart
+                                && !observed_sessions.contains(&record.session_id)
+                            {
+                                e.error(
+                                    "P-23",
+                                    None,
+                                    "measurement precedes session host observation",
+                                );
+                            }
+                        }
+                    }
                     let mut seen_cell = false;
                     for record in &records {
                         match record.event {
                             JournalEvent::CampaignStart | JournalEvent::SessionStart => {
                                 sessions += 1
                             }
-                            JournalEvent::OrchestrationStart
-                                if is_announcement(record) && !seen_cell =>
-                            {
-                                announced_before_first_cell = true;
+                            JournalEvent::OrchestrationStart if is_announcement(record) => {
+                                if !seen_cell {
+                                    announced_before_first_cell = true;
+                                }
                             }
                             JournalEvent::CellStart => {
                                 seen_cell = true;
@@ -1017,13 +1135,52 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
     }
     // Cells.
     let family = addendum.as_ref().map(|addendum| {
-        let comparisons = addendum.family_comparisons();
-        let confidence = bonferroni_confidence(receipt.settings.family_alpha, comparisons)
+        let comparisons = if version == 2 {
+            match receipt
+                .trial_ledger
+                .as_ref()
+                .ok_or_else(|| io::Error::other("v2 receipt lacks trial ledger"))
+                .and_then(|pin| {
+                    crate::trial_ledger::verify(
+                        pin,
+                        receipt_dir,
+                        addendum,
+                        &receipt.campaign_id,
+                        &receipt.addendum.sha256,
+                        &crate::trial_ledger::candidate_ids(
+                            addendum,
+                            &saved_plan
+                                .as_ref()
+                                .ok_or_else(|| io::Error::other("missing saved plan"))?
+                                .0,
+                            &receipt.arms,
+                        )?,
+                    )
+                }) {
+                Ok(count) => count,
+                Err(error) => {
+                    e.error("P-22", None, error.to_string());
+                    1
+                }
+            }
+        } else {
+            addendum.family_comparisons()
+        };
+        let alpha = if version == 2 {
+            receipt
+                .trial_ledger
+                .as_ref()
+                .and_then(|pin| crate::trial_ledger::attempt_alpha(pin, receipt_dir, addendum).ok())
+                .unwrap_or(receipt.settings.family_alpha)
+        } else {
+            receipt.settings.family_alpha
+        };
+        let confidence = bonferroni_confidence(alpha, comparisons)
             .unwrap_or(1.0 - receipt.settings.family_alpha);
         FamilySummary {
             family_id: addendum.family.id.clone(),
             comparisons,
-            family_alpha: receipt.settings.family_alpha,
+            family_alpha: alpha,
             per_comparison_confidence: confidence,
             bootstrap_resamples: receipt.settings.bootstrap_resamples,
         }
@@ -1313,6 +1470,10 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                     .map(|window| window.ns_per_call())
                     .collect();
                 all_windows.extend(values.iter().copied());
+                if version == 2 {
+                    verdict.flagged_windows +=
+                        flagged_windows(&values, settings.flagged_window_factor).unwrap_or(0);
+                }
                 match median(&mut values) {
                     Ok(center)
                         if (center - execution.ns_per_call).abs() <= 1e-9 * center.max(1.0) => {}
@@ -1339,6 +1500,22 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                     invalid = true;
                 }
                 if let Some(declared) = declaration {
+                    if version == 2
+                        && declared.cache_state == CacheState::Cold
+                        && (execution.calibrated != Some(false)
+                            || declared.cold_calls.is_none()
+                            || execution
+                                .windows
+                                .iter()
+                                .any(|w| Some(w.calls) != declared.cold_calls))
+                    {
+                        e.error(
+                            "P-17",
+                            Some(id),
+                            "cold execution used calibration or differs from frozen call count",
+                        );
+                        invalid = true;
+                    }
                     if execution.cache_state_applied != declared.cache_state {
                         e.error(
                             "P-17",
@@ -1377,7 +1554,7 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
             });
         }
         verdict.total_windows = all_windows.len();
-        if !all_windows.is_empty() {
+        if version == 1 && !all_windows.is_empty() {
             verdict.flagged_windows =
                 flagged_windows(&all_windows, settings.flagged_window_factor).unwrap_or(0);
         }
@@ -1395,7 +1572,28 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                             ("baseline", &quality.baseline),
                             ("candidate", &quality.candidate),
                         ] {
-                            if arm.interval_method != "wilson-95" {
+                            if version == 2 {
+                                if let Err(message) = validate_frame_quality(arm, decoder) {
+                                    e.error("P-18", Some(id), format!("{name}: {message}"));
+                                    invalid = true;
+                                }
+                                if cell.pairs.iter().any(|p| {
+                                    let execution = if name == "baseline" {
+                                        &p.baseline
+                                    } else {
+                                        &p.candidate
+                                    };
+                                    execution.quality.as_ref() != Some(arm)
+                                }) {
+                                    e.error(
+                                        "P-18",
+                                        Some(id),
+                                        "decoder quality differs from runner execution evidence",
+                                    );
+                                    invalid = true;
+                                }
+                            }
+                            if version == 1 && arm.interval_method != "wilson-95" {
                                 e.error(
                                     "P-18",
                                     Some(id),
@@ -1409,7 +1607,15 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                             }
                             match (
                                 wilson_interval_95(arm.frame_errors, arm.frames),
-                                wilson_interval_95(arm.bit_errors, arm.bits),
+                                if version == 2 {
+                                    crate::abtest::frame_ber_interval(
+                                        &arm.frame_bit_errors,
+                                        decoder.code.k,
+                                        settings.quality_confidence,
+                                    )
+                                } else {
+                                    wilson_interval_95(arm.bit_errors, arm.bits)
+                                },
                             ) {
                                 (Ok(fer), Ok(ber)) => {
                                     if !close(fer.0, arm.fer_interval[0])
@@ -1453,10 +1659,24 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                                 invalid = true;
                             }
                         }
-                        if matches!(decoder.arm_kind, DecoderArmKind::FastestQualityCompatible)
-                            && quality.candidate.fer_interval[1]
+                        let exceeds_tolerance = if version == 2 {
+                            crate::abtest::paired_fer_upper(
+                                &quality.baseline.frame_bit_errors,
+                                &quality.candidate.frame_bit_errors,
+                                decoder.quality_tolerance.fer_ratio_max,
+                                family
+                                    .as_ref()
+                                    .map(|f| f.per_comparison_confidence)
+                                    .unwrap_or(0.95),
+                            )
+                            .map_or(true, |upper| upper > 0.0)
+                        } else {
+                            quality.candidate.fer_interval[1]
                                 > decoder.quality_tolerance.fer_ratio_max
                                     * quality.baseline.fer_interval[1]
+                        };
+                        if matches!(decoder.arm_kind, DecoderArmKind::FastestQualityCompatible)
+                            && exceeds_tolerance
                         {
                             quality_incompatible = true;
                             e.note(
@@ -1535,10 +1755,32 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                 continue;
             }
         }
+        let mut endpoint_unresolved = false;
+        if version == 2 && cell.role != CellRole::Exploratory {
+            let check = paired_bootstrap_speedup(
+                &observations,
+                settings.bootstrap_resamples,
+                confidence,
+                cell_seed ^ 0xd1b54a32d192ed03,
+            )
+            .map_err(io::Error::other)?;
+            let endpoint_shift = (check.lower - interval.lower)
+                .abs()
+                .max((check.upper - interval.upper).abs())
+                / interval.estimate;
+            let resolution = addendum
+                .as_ref()
+                .and_then(|a| a.effect.measurement_resolution);
+            endpoint_unresolved = resolution.is_none_or(|r| endpoint_shift > r)
+                || f64::from(settings.bootstrap_resamples) * (1.0 - confidence) / 2.0 < 20.0;
+            if endpoint_unresolved {
+                e.note("P-20", Some(id), "bootstrap endpoints lack declared numerical resolution or twenty tail replicates");
+            }
+        }
         let flagged_fraction = verdict.flagged_windows as f64 / verdict.total_windows.max(1) as f64;
         verdict.outcome = if matches!(cell.role, CellRole::Exploratory) {
             CellOutcome::Pilot
-        } else if receipt.settings_deviation || !unresolved.is_empty() {
+        } else if receipt.settings_deviation || !unresolved.is_empty() || endpoint_unresolved {
             CellOutcome::NotConfirmatory
         } else if flagged_fraction > settings.max_flagged_fraction {
             CellOutcome::Unstable
@@ -1794,4 +2036,36 @@ pub fn render_markdown(summary: &AcceptanceSummary) -> String {
         );
     }
     out
+}
+
+/// Checks v2 quality denominators, frame counts, points and interval method
+/// against the frozen code/input contract. BER counts information bits (`k`).
+/// Each frame vector slot corresponds to the same recorded input in both arms.
+pub fn validate_frame_quality(
+    arm: &ArmQuality,
+    decoder: &crate::protocol::DecoderCell,
+) -> Result<(), String> {
+    if arm.frames != decoder.input.frames || arm.frame_bit_errors.len() as u64 != arm.frames {
+        return Err("frame count differs from frozen input".into());
+    }
+    if decoder.code.k.checked_mul(arm.frames) != Some(arm.bits) || arm.bits == 0 {
+        return Err("bit denominator differs from frozen information-bit identity".into());
+    }
+    let errors = arm
+        .frame_bit_errors
+        .iter()
+        .try_fold(0u64, |n, e| n.checked_add(*e));
+    if arm.frame_bit_errors.iter().any(|e| *e > decoder.code.k)
+        || errors != Some(arm.bit_errors)
+        || arm.frame_bit_errors.iter().filter(|e| **e != 0).count() as u64 != arm.frame_errors
+    {
+        return Err("aggregate error counts differ from frame evidence".into());
+    }
+    if !close(arm.ber, arm.bit_errors as f64 / arm.bits as f64) {
+        return Err("BER point differs from error counts".into());
+    }
+    if arm.interval_method != "frame-hoeffding-95+fer-wilson-95" {
+        return Err("v2 requires frame-independent BER intervals".into());
+    }
+    Ok(())
 }
