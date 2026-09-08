@@ -1,0 +1,69 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "protocol-v3-r2-confirmation",
+  "issue": "f547c394",
+  "label": "smoke",
+  "campaign_seed": 20260908,
+  "addendum": "dev/active/f547c394/addendum-smoke-v3-confirmation-r2.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "baseline": {
+      "build": "conservative-portable",
+      "description": "synthetic XOR fold 1 pass; deterministic quality fixture",
+      "executable": "target/release/ab-smoke-workload",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "1"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "candidate": {
+      "build": "conservative-portable",
+      "description": "synthetic XOR fold 1 pass; deterministic quality fixture",
+      "executable": "target/release/ab-smoke-workload",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "1"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "losing": {
+      "build": "conservative-portable",
+      "description": "synthetic XOR fold 2 pass; deterministic quality fixture",
+      "executable": "target/release/ab-smoke-workload",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "2"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "decoder-pipeline",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "case": {
+        "words": 4096,
+        "seed": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "cold-first-use",
+      "baseline_arm": "baseline",
+      "candidate_arm": "losing",
+      "case": {
+        "words": 4096,
+        "seed": 2
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 1
+}

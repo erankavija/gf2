@@ -9,8 +9,8 @@
 
 use crate::abtest::{
     bonferroni_confidence, bootstrap_seed, decide, flagged_windows, median, pair_orders,
-    paired_bootstrap_speedup, wilson_interval_95, ArmOrder, BootstrapInterval, Decision, Margins,
-    PairedObservation,
+    paired_bootstrap_speedup, paired_bootstrap_speedup_legacy, wilson_interval_95, ArmOrder,
+    BootstrapInterval, Decision, Margins, PairedObservation,
 };
 use crate::host::{CoreArm, HostObservation};
 use crate::journal::{
@@ -65,6 +65,12 @@ pub struct SourceIdentity {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CampaignFacts {
+    /// Versioned complete premeasurement host observation; only material fields bind resume.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub host: Option<HostObservation>,
+    /// Versioned immutable ledger prefix including this campaign's reservation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trial_ledger: Option<ArtifactPin>,
     pub plan_sha256: String,
     pub identity: ResumeIdentity,
     pub protocol: ArtifactPin,
@@ -85,7 +91,8 @@ pub struct LockRecord {
     pub lock_path: String,
     pub holder_pid: u32,
     pub observation: String,
-    /// Wrapper script the launcher used, repository-relative.
+    /// V1/v2 launcher label retained only for historical receipt decoding.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub wrapper: String,
 }
 
@@ -189,6 +196,9 @@ pub struct IterationDistribution {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArmQuality {
+    /// Versioned information-bit errors in each independent frame, in frozen input order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub frame_bit_errors: Vec<u64>,
     pub frames: u64,
     pub frame_errors: u64,
     pub bits: u64,
@@ -209,6 +219,12 @@ pub struct ArmQuality {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExecutionRecord {
+    /// Versioned decoder evidence retained from the actual child response.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quality: Option<ArmQuality>,
+    /// Versioned protocol records whether the workload ran before its first timing window.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub calibrated: Option<bool>,
     pub arm: String,
     pub pid: u32,
     pub windows: Vec<WindowRecord>,
@@ -282,8 +298,17 @@ pub struct CellRecord {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct BenchmarkReceipt {
+    /// Versioned ordered session observations, also present in the execution journal.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub session_hosts: Vec<HostObservation>,
+    /// Versioned frozen reservation chain.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trial_ledger: Option<ArtifactPin>,
     pub schema: String,
     pub campaign_id: String,
+    /// Canonical family identity, recorded in v3 pilot bytes for derivation.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub family_id: String,
     pub issue: String,
     /// Repository-relative publication path, used to reject self-references.
     #[serde(default)]
@@ -320,7 +345,13 @@ impl CampaignFacts {
     /// Whether two opening records describe the same measurement behavior and
     /// inputs. Git locators are informational at both levels.
     pub fn resume_equivalent(&self, other: &Self) -> bool {
-        self.plan_sha256 == other.plan_sha256
+        match (&self.host, &other.host) {
+            (Some(a), Some(b)) if a.material_equivalent(b) => {}
+            (None, None) => {}
+            _ => return false,
+        }
+        self.trial_ledger == other.trial_ledger
+            && self.plan_sha256 == other.plan_sha256
             && self.identity.resume_equivalent(&other.identity)
             && self.protocol == other.protocol
             && self.contract == other.contract
@@ -353,6 +384,8 @@ impl CampaignFacts {
         }
 
         let projection = Self {
+            host: (addendum.protocol.version >= 2).then(|| receipt.host.clone()),
+            trial_ledger: receipt.trial_ledger.clone(),
             plan_sha256: sha256_hex(plan_bytes),
             identity: checkpoint.identity.clone(),
             protocol: receipt.protocol.clone(),
@@ -394,10 +427,12 @@ impl CampaignFacts {
             plan.lock_path == receipt.lock.lock_path,
             "saved plan lock path differs from receipt lock evidence"
         );
-        require!(
-            plan.wrapper == receipt.lock.wrapper,
-            "saved plan wrapper differs from receipt lock evidence"
-        );
+        if addendum.protocol.version < 3 {
+            require!(
+                plan.wrapper == receipt.lock.wrapper,
+                "saved plan wrapper differs from receipt lock evidence"
+            );
+        }
         let (plan_settings, plan_deviation) = plan.settings();
         require!(
             plan_settings == self.settings && plan_deviation == self.settings_deviation,
@@ -663,6 +698,15 @@ impl Evaluation {
 
 /// Evaluates a self-contained receipt directory from its durable snapshots.
 pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
+    evaluate_version(receipt_dir, None)
+}
+
+/// Evaluates only under the receipt-pinned rules. An explicit expected version
+/// rejects a differently pinned receipt; it cannot select different semantics.
+pub fn evaluate_version(
+    receipt_dir: &Path,
+    expected_version: Option<u32>,
+) -> io::Result<AcceptanceSummary> {
     let receipt_bytes = fs::read(receipt_dir.join(RECEIPT_FILE))?;
     let receipt_sha256 = sha256_hex(&receipt_bytes);
     let receipt = BenchmarkReceipt::decode(&receipt_bytes)
@@ -781,6 +825,25 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
         }
     };
 
+    let version = addendum.as_ref().map(|a| a.protocol.version).unwrap_or(0);
+    if expected_version.is_some_and(|expected| expected != version) {
+        e.error(
+            "P-01",
+            None,
+            "requested protocol version differs from receipt pin",
+        );
+    }
+    let marker = format!("Protocol `zen3-benchmark-protocol` version {version}.");
+    if !verified_pins
+        .get("protocol")
+        .is_some_and(|bytes| String::from_utf8_lossy(bytes).contains(&marker))
+    {
+        e.error(
+            "P-01",
+            None,
+            "pinned protocol document version differs from addendum",
+        );
+    }
     if receipt.toolchain.trim().is_empty() {
         e.error("P-05", None, "toolchain identity is empty");
     }
@@ -822,10 +885,14 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
     {
         e.error("P-06", None, "host observation is incomplete");
     }
-    if !receipt.lock.lock_path.starts_with('/')
-        || receipt.lock.holder_pid == 0
-        || receipt.lock.observation.trim().is_empty()
-        || receipt.lock.wrapper.trim().is_empty()
+    let lock_observation_is_complete = receipt.lock.lock_path.starts_with('/')
+        && receipt.lock.holder_pid != 0
+        && !receipt.lock.observation.trim().is_empty();
+    let v3_lock_observation_is_complete =
+        receipt.lock.observation == "inherited-fd-and-independent-flock-conflict";
+    if !lock_observation_is_complete
+        || (version >= 3 && !v3_lock_observation_is_complete)
+        || (version < 3 && receipt.lock.wrapper.trim().is_empty())
     {
         e.error("P-07", None, "lock evidence is incomplete");
     }
@@ -876,16 +943,77 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                                 }
                             }
                         });
+                    if version >= 2 {
+                        if !addendum.as_ref().is_some_and(|a| {
+                            records.first().is_some_and(|r| {
+                                crate::protocol::freeze_precedes(&a.frozen, &r.timestamp_utc)
+                            })
+                        }) {
+                            e.error(
+                                "P-23",
+                                None,
+                                "addendum freeze timestamp is after campaign start",
+                            );
+                        }
+                        let hosts: Vec<HostObservation> = records
+                            .iter()
+                            .filter(|r| {
+                                r.event == JournalEvent::DriverDiagnostic
+                                    && r.details["kind"] == "host-observation"
+                            })
+                            .filter_map(|r| {
+                                serde_json::from_value(r.details["observation"].clone()).ok()
+                            })
+                            .collect();
+                        let session_count = records
+                            .iter()
+                            .filter(|r| {
+                                matches!(
+                                    r.event,
+                                    JournalEvent::CampaignStart | JournalEvent::SessionStart
+                                )
+                            })
+                            .count();
+                        let frozen = campaign_facts.as_ref().and_then(|f| f.host.as_ref());
+                        if hosts != receipt.session_hosts
+                            || hosts.len() != session_count
+                            || frozen.is_none()
+                            || hosts
+                                .iter()
+                                .any(|h| !frozen.unwrap().material_equivalent(h))
+                            || hosts.last() != Some(&receipt.host)
+                        {
+                            e.error("P-23", None, "session host observations differ from frozen material conditions or journal");
+                        }
+                        let mut observed_sessions = BTreeSet::new();
+                        for record in &records {
+                            if record.event == JournalEvent::DriverDiagnostic
+                                && record.details["kind"] == "host-observation"
+                                && !observed_sessions.insert(record.session_id.clone())
+                            {
+                                e.error("P-23", None, "session repeats host observation");
+                            }
+                            if record.event == JournalEvent::CellStart
+                                && !observed_sessions.contains(&record.session_id)
+                            {
+                                e.error(
+                                    "P-23",
+                                    None,
+                                    "measurement precedes session host observation",
+                                );
+                            }
+                        }
+                    }
                     let mut seen_cell = false;
                     for record in &records {
                         match record.event {
                             JournalEvent::CampaignStart | JournalEvent::SessionStart => {
                                 sessions += 1
                             }
-                            JournalEvent::OrchestrationStart
-                                if is_announcement(record) && !seen_cell =>
-                            {
-                                announced_before_first_cell = true;
+                            JournalEvent::OrchestrationStart if is_announcement(record) => {
+                                if !seen_cell {
+                                    announced_before_first_cell = true;
+                                }
                             }
                             JournalEvent::CellStart => {
                                 seen_cell = true;
@@ -1017,13 +1145,52 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
     }
     // Cells.
     let family = addendum.as_ref().map(|addendum| {
-        let comparisons = addendum.family_comparisons();
-        let confidence = bonferroni_confidence(receipt.settings.family_alpha, comparisons)
+        let comparisons = if version >= 2 {
+            match receipt
+                .trial_ledger
+                .as_ref()
+                .ok_or_else(|| io::Error::other("versioned receipt lacks trial ledger"))
+                .and_then(|pin| {
+                    crate::trial_ledger::verify(
+                        pin,
+                        receipt_dir,
+                        addendum,
+                        &receipt.campaign_id,
+                        &receipt.addendum.sha256,
+                        &crate::trial_ledger::candidate_ids(
+                            addendum,
+                            &saved_plan
+                                .as_ref()
+                                .ok_or_else(|| io::Error::other("missing saved plan"))?
+                                .0,
+                            &receipt.arms,
+                        )?,
+                    )
+                }) {
+                Ok(count) => count,
+                Err(error) => {
+                    e.error("P-22", None, error.to_string());
+                    1
+                }
+            }
+        } else {
+            addendum.family_comparisons()
+        };
+        let alpha = if version >= 2 {
+            receipt
+                .trial_ledger
+                .as_ref()
+                .and_then(|pin| crate::trial_ledger::attempt_alpha(pin, receipt_dir, addendum).ok())
+                .unwrap_or(receipt.settings.family_alpha)
+        } else {
+            receipt.settings.family_alpha
+        };
+        let confidence = bonferroni_confidence(alpha, comparisons)
             .unwrap_or(1.0 - receipt.settings.family_alpha);
         FamilySummary {
             family_id: addendum.family.id.clone(),
             comparisons,
-            family_alpha: receipt.settings.family_alpha,
+            family_alpha: alpha,
             per_comparison_confidence: confidence,
             bootstrap_resamples: receipt.settings.bootstrap_resamples,
         }
@@ -1313,6 +1480,13 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                     .map(|window| window.ns_per_call())
                     .collect();
                 all_windows.extend(values.iter().copied());
+                if version >= 2 {
+                    verdict.flagged_windows += if version >= 3 {
+                        flagged_windows(&values, settings.flagged_window_factor).unwrap_or(0)
+                    } else {
+                        flagged_windows_legacy(&values, settings.flagged_window_factor).unwrap_or(0)
+                    };
+                }
                 match median(&mut values) {
                     Ok(center)
                         if (center - execution.ns_per_call).abs() <= 1e-9 * center.max(1.0) => {}
@@ -1339,6 +1513,22 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                     invalid = true;
                 }
                 if let Some(declared) = declaration {
+                    if version >= 2
+                        && declared.cache_state == CacheState::Cold
+                        && (execution.calibrated != Some(false)
+                            || declared.cold_calls.is_none()
+                            || execution
+                                .windows
+                                .iter()
+                                .any(|w| Some(w.calls) != declared.cold_calls))
+                    {
+                        e.error(
+                            "P-17",
+                            Some(id),
+                            "cold execution used calibration or differs from frozen call count",
+                        );
+                        invalid = true;
+                    }
                     if execution.cache_state_applied != declared.cache_state {
                         e.error(
                             "P-17",
@@ -1377,9 +1567,9 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
             });
         }
         verdict.total_windows = all_windows.len();
-        if !all_windows.is_empty() {
+        if version == 1 && !all_windows.is_empty() {
             verdict.flagged_windows =
-                flagged_windows(&all_windows, settings.flagged_window_factor).unwrap_or(0);
+                flagged_windows_legacy(&all_windows, settings.flagged_window_factor).unwrap_or(0);
         }
         // Decoder quality.
         let mut quality_incompatible = false;
@@ -1395,7 +1585,28 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                             ("baseline", &quality.baseline),
                             ("candidate", &quality.candidate),
                         ] {
-                            if arm.interval_method != "wilson-95" {
+                            if version >= 2 {
+                                if let Err(message) = validate_frame_quality(arm, decoder) {
+                                    e.error("P-18", Some(id), format!("{name}: {message}"));
+                                    invalid = true;
+                                }
+                                if cell.pairs.iter().any(|p| {
+                                    let execution = if name == "baseline" {
+                                        &p.baseline
+                                    } else {
+                                        &p.candidate
+                                    };
+                                    execution.quality.as_ref() != Some(arm)
+                                }) {
+                                    e.error(
+                                        "P-18",
+                                        Some(id),
+                                        "decoder quality differs from runner execution evidence",
+                                    );
+                                    invalid = true;
+                                }
+                            }
+                            if version == 1 && arm.interval_method != "wilson-95" {
                                 e.error(
                                     "P-18",
                                     Some(id),
@@ -1409,7 +1620,15 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                             }
                             match (
                                 wilson_interval_95(arm.frame_errors, arm.frames),
-                                wilson_interval_95(arm.bit_errors, arm.bits),
+                                if version >= 2 {
+                                    crate::abtest::frame_ber_interval(
+                                        &arm.frame_bit_errors,
+                                        decoder.code.k,
+                                        settings.quality_confidence,
+                                    )
+                                } else {
+                                    wilson_interval_95(arm.bit_errors, arm.bits)
+                                },
                             ) {
                                 (Ok(fer), Ok(ber)) => {
                                     if !close(fer.0, arm.fer_interval[0])
@@ -1453,10 +1672,24 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                                 invalid = true;
                             }
                         }
-                        if matches!(decoder.arm_kind, DecoderArmKind::FastestQualityCompatible)
-                            && quality.candidate.fer_interval[1]
+                        let exceeds_tolerance = if version >= 2 {
+                            crate::abtest::paired_fer_upper(
+                                &quality.baseline.frame_bit_errors,
+                                &quality.candidate.frame_bit_errors,
+                                decoder.quality_tolerance.fer_ratio_max,
+                                family
+                                    .as_ref()
+                                    .map(|f| f.per_comparison_confidence)
+                                    .unwrap_or(0.95),
+                            )
+                            .map_or(true, |upper| upper > 0.0)
+                        } else {
+                            quality.candidate.fer_interval[1]
                                 > decoder.quality_tolerance.fer_ratio_max
                                     * quality.baseline.fer_interval[1]
+                        };
+                        if matches!(decoder.arm_kind, DecoderArmKind::FastestQualityCompatible)
+                            && exceeds_tolerance
                         {
                             quality_incompatible = true;
                             e.note(
@@ -1479,12 +1712,25 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
             .as_ref()
             .map(|family| family.per_comparison_confidence)
             .unwrap_or(1.0 - settings.family_alpha);
-        let interval = match paired_bootstrap_speedup(
-            &observations,
-            settings.bootstrap_resamples,
-            confidence,
-            cell_seed,
-        ) {
+        let corrected_alpha = family
+            .as_ref()
+            .map(|family| family.family_alpha / f64::from(family.comparisons))
+            .unwrap_or(settings.family_alpha);
+        let interval = match if version >= 3 {
+            paired_bootstrap_speedup(
+                &observations,
+                settings.bootstrap_resamples,
+                corrected_alpha,
+                cell_seed,
+            )
+        } else {
+            paired_bootstrap_speedup_legacy(
+                &observations,
+                settings.bootstrap_resamples,
+                confidence,
+                cell_seed,
+            )
+        } {
             Ok(interval) => interval,
             Err(error) => {
                 e.error("P-20", Some(id), format!("bootstrap failed: {error}"));
@@ -1508,12 +1754,7 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
         let decision = margins.and_then(|margins| decide(&interval, &margins).ok());
         verdict.decision = decision;
         if let Some(claim) = &cell.claimed {
-            let same = close(claim.interval.lower, interval.lower)
-                && close(claim.interval.upper, interval.upper)
-                && close(claim.interval.estimate, interval.estimate)
-                && claim.interval.resamples == interval.resamples
-                && claim.interval.seed == interval.seed
-                && close(claim.interval.confidence, interval.confidence);
+            let same = claim_matches_interval(claim, &interval, version >= 3);
             if !same {
                 e.error(
                     "P-20",
@@ -1535,10 +1776,41 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                 continue;
             }
         }
+        let mut endpoint_unresolved = false;
+        if version >= 2 && cell.role != CellRole::Exploratory {
+            let check = if version >= 3 {
+                paired_bootstrap_speedup(
+                    &observations,
+                    settings.bootstrap_resamples,
+                    corrected_alpha,
+                    cell_seed ^ 0xd1b54a32d192ed03,
+                )
+            } else {
+                paired_bootstrap_speedup_legacy(
+                    &observations,
+                    settings.bootstrap_resamples,
+                    confidence,
+                    cell_seed ^ 0xd1b54a32d192ed03,
+                )
+            }
+            .map_err(io::Error::other)?;
+            let endpoint_shift = (check.lower - interval.lower)
+                .abs()
+                .max((check.upper - interval.upper).abs())
+                / interval.estimate;
+            let resolution = addendum
+                .as_ref()
+                .and_then(|a| a.effect.measurement_resolution);
+            endpoint_unresolved = resolution.is_none_or(|r| endpoint_shift > r)
+                || f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;
+            if endpoint_unresolved {
+                e.note("P-20", Some(id), "bootstrap endpoints lack declared numerical resolution or twenty tail replicates");
+            }
+        }
         let flagged_fraction = verdict.flagged_windows as f64 / verdict.total_windows.max(1) as f64;
         verdict.outcome = if matches!(cell.role, CellRole::Exploratory) {
             CellOutcome::Pilot
-        } else if receipt.settings_deviation || !unresolved.is_empty() {
+        } else if receipt.settings_deviation || !unresolved.is_empty() || endpoint_unresolved {
             CellOutcome::NotConfirmatory
         } else if flagged_fraction > settings.max_flagged_fraction {
             CellOutcome::Unstable
@@ -1672,7 +1944,38 @@ fn verify_resolution_evidence(
         }
     };
     match BenchmarkReceipt::decode(&bytes) {
-        Ok(pilot) if pilot.label == ReceiptLabel::Pilot => {}
+        Ok(pilot) if pilot.label == ReceiptLabel::Pilot => {
+            if addendum.protocol.version >= 3 {
+                if pilot.family_id != addendum.family.id || pilot.issue != addendum.family.issue {
+                    evaluation.error(
+                        "P-03",
+                        None,
+                        "resolution evidence pilot belongs to a different family",
+                    );
+                    return;
+                }
+                let corrected_alpha = match verified_pilot_alpha(&pilot, receipt_dir) {
+                    Ok(alpha) => alpha,
+                    Err(message) => {
+                        evaluation.error("P-03", None, message);
+                        return;
+                    }
+                };
+                match pilot_resolution(&pilot, corrected_alpha) {
+                    Ok(derived) if addendum.effect.measurement_resolution.unwrap() < derived => {
+                        evaluation.error(
+                            "P-03",
+                            None,
+                            format!(
+                                "declared measurement resolution is below the verified pilot half-width {derived}"
+                            ),
+                        );
+                    }
+                    Ok(_) => {}
+                    Err(message) => evaluation.error("P-03", None, message),
+                }
+            }
+        }
         Ok(_) => evaluation.error(
             "P-03",
             None,
@@ -1686,8 +1989,134 @@ fn verify_resolution_evidence(
     }
 }
 
+/// Recomputes the conservative widest relative interval half-width from a
+/// verified v3 pilot receipt's raw paired observations.
+fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f64, String> {
+    let mut widest: Option<f64> = None;
+    for cell in &pilot.cells {
+        if cell.pairs.is_empty() {
+            continue;
+        }
+        let claimed = cell.claimed.as_ref().ok_or_else(|| {
+            format!(
+                "pilot cell {} lacks a declared bootstrap alpha",
+                cell.cell_id
+            )
+        })?;
+        let observations: Vec<_> = cell
+            .pairs
+            .iter()
+            .map(|pair| PairedObservation {
+                baseline_ns_per_call: pair.baseline.ns_per_call,
+                candidate_ns_per_call: pair.candidate.ns_per_call,
+            })
+            .collect();
+        let interval = paired_bootstrap_speedup(
+            &observations,
+            pilot.settings.bootstrap_resamples,
+            corrected_alpha,
+            claimed.interval.seed,
+        )
+        .map_err(|error| format!("pilot cell {} bootstrap: {error}", cell.cell_id))?;
+        if !claim_matches_interval(claimed, &interval, true) {
+            return Err(format!(
+                "pilot interval for cell {} differs from the independently recomputed interval",
+                cell.cell_id
+            ));
+        }
+        if !(interval.estimate.is_finite() && interval.estimate > 0.0) {
+            return Err(format!(
+                "pilot cell {} has no positive finite speedup estimate",
+                cell.cell_id
+            ));
+        }
+        let half_width = (interval.estimate - interval.lower)
+            .abs()
+            .max((interval.upper - interval.estimate).abs())
+            / interval.estimate;
+        widest = Some(widest.map_or(half_width, |current| current.max(half_width)));
+    }
+    widest.ok_or_else(|| "pilot receipt contains no measured paired cells".into())
+}
+
+/// Derives the v3 pilot's family-corrected bootstrap alpha from its frozen
+/// addendum and ledger snapshots, never from a receipt claim.
+fn verified_pilot_alpha(pilot: &BenchmarkReceipt, receipt_dir: &Path) -> Result<f64, String> {
+    let addendum_pin = ArtifactPin {
+        path: pilot.addendum.path.clone(),
+        snapshot: "inputs/resolution-evidence/family-addendum.json".into(),
+        sha256: pilot.addendum.sha256.clone(),
+    };
+    let addendum = FamilyAddendum::decode(
+        &addendum_pin
+            .verify_content(receipt_dir)
+            .map_err(|error| format!("pilot addendum is not verified: {error}"))?,
+    )
+    .map_err(|error| format!("pilot addendum does not decode: {error}"))?;
+    if addendum.protocol.version != 3
+        || addendum.family.id != pilot.family_id
+        || addendum.family.issue != pilot.issue
+    {
+        return Err("pilot addendum does not match the v3 pilot identity".into());
+    }
+    let ledger = pilot
+        .trial_ledger
+        .as_ref()
+        .ok_or_else(|| "v3 pilot lacks a frozen trial ledger".to_owned())?;
+    if addendum.family_wise.ledger_path.as_deref() != Some(&ledger.path) {
+        return Err("pilot ledger path differs from its frozen addendum".into());
+    }
+    let ledger = ArtifactPin {
+        path: ledger.path.clone(),
+        snapshot: "inputs/resolution-evidence/trial-ledger.jsonl".into(),
+        sha256: ledger.sha256.clone(),
+    };
+    let entries = crate::trial_ledger::decode(
+        &ledger
+            .verify_content(receipt_dir)
+            .map_err(|error| format!("pilot ledger is not verified: {error}"))?,
+        &addendum.family.id,
+    )
+    .map_err(|error| format!("pilot ledger does not decode: {error}"))?;
+    let family_alpha = crate::trial_ledger::attempt_alpha(&ledger, receipt_dir, &addendum)
+        .map_err(|error| format!("pilot alpha is not verified: {error}"))?;
+    Ok(family_alpha
+        / f64::from(
+            crate::trial_ledger::comparisons(&entries)
+                .map_err(|error| format!("pilot comparison count is not verified: {error}"))?,
+        ))
+}
+
+fn claim_matches_interval(
+    claim: &CellClaim,
+    interval: &BootstrapInterval,
+    compare_alpha: bool,
+) -> bool {
+    close(claim.interval.lower, interval.lower)
+        && close(claim.interval.upper, interval.upper)
+        && close(claim.interval.estimate, interval.estimate)
+        && claim.interval.resamples == interval.resamples
+        && claim.interval.seed == interval.seed
+        && close(claim.interval.confidence, interval.confidence)
+        && (!compare_alpha || close(claim.interval.alpha, interval.alpha))
+}
+
 fn close(left: f64, right: f64) -> bool {
     (left - right).abs() <= 1e-9 * left.abs().max(right.abs()).max(1.0)
+}
+
+/// Preserves the strict v1/v2 boundary while their frozen receipts remain
+/// reproducibly evaluable. Version 3 uses `abtest::flagged_windows`.
+fn flagged_windows_legacy(
+    ns_per_call: &[f64],
+    factor: f64,
+) -> Result<usize, crate::abtest::AbError> {
+    let mut sorted = ns_per_call.to_vec();
+    let center = median(&mut sorted)?;
+    Ok(ns_per_call
+        .iter()
+        .filter(|value| **value > factor * center)
+        .count())
 }
 
 fn is_announcement(record: &JournalRecord) -> bool {
@@ -1794,4 +2223,36 @@ pub fn render_markdown(summary: &AcceptanceSummary) -> String {
         );
     }
     out
+}
+
+/// Checks versioned quality denominators, frame counts, points and interval method
+/// against the frozen code/input contract. BER counts information bits (`k`).
+/// Each frame vector slot corresponds to the same recorded input in both arms.
+pub fn validate_frame_quality(
+    arm: &ArmQuality,
+    decoder: &crate::protocol::DecoderCell,
+) -> Result<(), String> {
+    if arm.frames != decoder.input.frames || arm.frame_bit_errors.len() as u64 != arm.frames {
+        return Err("frame count differs from frozen input".into());
+    }
+    if decoder.code.k.checked_mul(arm.frames) != Some(arm.bits) || arm.bits == 0 {
+        return Err("bit denominator differs from frozen information-bit identity".into());
+    }
+    let errors = arm
+        .frame_bit_errors
+        .iter()
+        .try_fold(0u64, |n, e| n.checked_add(*e));
+    if arm.frame_bit_errors.iter().any(|e| *e > decoder.code.k)
+        || errors != Some(arm.bit_errors)
+        || arm.frame_bit_errors.iter().filter(|e| **e != 0).count() as u64 != arm.frame_errors
+    {
+        return Err("aggregate error counts differ from frame evidence".into());
+    }
+    if !close(arm.ber, arm.bit_errors as f64 / arm.bits as f64) {
+        return Err("BER point differs from error counts".into());
+    }
+    if arm.interval_method != "frame-hoeffding-95+fer-wilson-95" {
+        return Err("versioned protocol requires frame-independent BER intervals".into());
+    }
+    Ok(())
 }

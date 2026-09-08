@@ -1,0 +1,26 @@
+[
+  {
+    "receipt": "dev/bench_results/f547c394/v2-pilot/receipt.json",
+    "pinned_protocol_sha256": "9e0193ecce1453119a575e07d6ff84bf8c82eca3ce38d53f3b01fafe14df0eae",
+    "active_protocol_sha256": "8d15b231e9115c69ad4bf2acfc56e3eec36e9192b3720c34fe3df63499480bd8",
+    "frozen_shared_setting_columns_identical": true,
+    "behavior_files_differing_from_current_source": [
+      "dev/bench_results/f547c394/run-smoke-v2.sh"
+    ],
+    "launcher_difference": "Only two descriptive rationale assignments; validation-r3/launcher-description.diff records exact diff.",
+    "rust_acceptance_and_measurement_sources_identical": true,
+    "arm_executables_identical": true
+  },
+  {
+    "receipt": "dev/bench_results/f547c394/v2-confirmation/receipt.json",
+    "pinned_protocol_sha256": "fb313954a9d6fd51deec8c26aa1b85310400e181c9f0672533fc7755b2d6d0ba",
+    "active_protocol_sha256": "8d15b231e9115c69ad4bf2acfc56e3eec36e9192b3720c34fe3df63499480bd8",
+    "frozen_shared_setting_columns_identical": true,
+    "behavior_files_differing_from_current_source": [
+      "dev/bench_results/f547c394/run-smoke-v2.sh"
+    ],
+    "launcher_difference": "Only two descriptive rationale assignments; validation-r3/launcher-description.diff records exact diff.",
+    "rust_acceptance_and_measurement_sources_identical": true,
+    "arm_executables_identical": true
+  }
+]

@@ -2,7 +2,7 @@
 //! family/cell addendum contract.
 //!
 //! The protocol document, the addendum schema and this module describe one
-//! protocol version. Receipts pin the document and schema by source path,
+//! versioned contract. Receipts pin the document and schema by source path,
 //! receipt-local snapshot and content digest; the acceptance tool recomputes every digest and every
 //! statistic instead of trusting a receipt's own claims.
 
@@ -20,7 +20,7 @@ use crate::journal::atomic_write_new;
 /// Stable protocol identifier; a new version keeps the identifier.
 pub const PROTOCOL_ID: &str = "zen3-benchmark-protocol";
 /// Protocol version described by this module and the committed document.
-pub const PROTOCOL_VERSION: u32 = 1;
+pub const PROTOCOL_VERSION: u32 = 3;
 /// Repository-relative path of the executable protocol document.
 pub const PROTOCOL_PATH: &str = "dev/active/f547c394/protocol.md";
 /// Repository-relative path of the addendum JSON Schema.
@@ -28,7 +28,7 @@ pub const ADDENDUM_SCHEMA_PATH: &str = "dev/active/f547c394/addendum.schema.json
 /// Repository-relative path of the normative measurement contract.
 pub const CONTRACT_PATH: &str = "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md";
 /// Schema identity carried by every addendum.
-pub const ADDENDUM_SCHEMA_ID: &str = "zen3-benchmark-addendum-v1";
+pub const ADDENDUM_SCHEMA_ID: &str = "zen3-benchmark-addendum-v3";
 /// Schema identity carried by every runner plan.
 pub const PLAN_SCHEMA_ID: &str = "zen3-benchmark-plan-v1";
 /// Schema identity carried by every receipt.
@@ -38,7 +38,7 @@ pub const ACCEPTANCE_SCHEMA_ID: &str = "zen3-benchmark-acceptance-v1";
 /// Lifecycle schema recorded in the runner's resume identity.
 pub const RUNNER_LIFECYCLE_SCHEMA: &str = "zen3-benchmark-runner-session-v1";
 
-/// Shared numeric settings frozen by protocol version 1.
+/// Shared numeric settings retained by protocol versions 1 and 2.
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SharedSettings {
@@ -70,7 +70,7 @@ pub struct SharedSettings {
     pub quality_confidence: f64,
 }
 
-/// The frozen version-1 settings.
+/// Frozen settings shared by the versioned evaluators.
 pub const SHARED_SETTINGS: SharedSettings = SharedSettings {
     family_alpha: 0.05,
     bootstrap_resamples: 10_000,
@@ -88,40 +88,46 @@ pub const SHARED_SETTINGS: SharedSettings = SharedSettings {
 };
 
 impl SharedSettings {
-    /// Name/value rows in the order the protocol document tabulates them.
-    pub fn table(&self) -> Vec<(&'static str, String)> {
+    /// Name, value, and semantic justification rows in protocol-table order.
+    pub fn table(&self) -> Vec<(&'static str, String, &'static str)> {
         vec![
-            ("family_alpha", format!("{}", self.family_alpha)),
-            ("bootstrap_resamples", self.bootstrap_resamples.to_string()),
-            ("confirmatory_pairs", self.confirmatory_pairs.to_string()),
-            ("pilot_min_pairs", self.pilot_min_pairs.to_string()),
-            ("pilot_max_pairs", self.pilot_max_pairs.to_string()),
+            ("family_alpha", format!("{}", self.family_alpha), "Two-sided family-wise error rate; the conventional level, applied per family rather than per cell."),
+            ("bootstrap_resamples", self.bootstrap_resamples.to_string(), "Fixed computational budget [EfronTibshirani1993], not a universal resolution guarantee. P-20 checks endpoint stability and tail support as described below."),
+            ("confirmatory_pairs", self.confirmatory_pairs.to_string(), "Four counterbalanced blocks of six pairs, fixed before confirmation. Warm/streaming windows have a nominal total target of 24 seconds (24 pairs, two arms, five windows of 100 ms), excluding calibration and startup; calibration is approximate and this is not a duration cap. Fixed-call cold windows have workload-dependent duration. The child timeout bounds each child."),
+            ("pilot_min_pairs", self.pilot_min_pairs.to_string(), "One counterbalanced block; the smallest pilot that still estimates a resolution."),
+            ("pilot_max_pairs", self.pilot_max_pairs.to_string(), "Pilots never exceed a confirmatory sample so they cannot masquerade as confirmation."),
             (
                 "windows_per_execution",
                 self.windows_per_execution.to_string(),
+                "The retained calibration protocol's window count (`timing::WINDOWS`); five windows give a per-execution median robust to one disturbed window.",
             ),
-            ("window_target_ms", self.window_target_ms.to_string()),
+            ("window_target_ms", self.window_target_ms.to_string(), "Long enough that timer and loop overhead are negligible for nanosecond kernels; short enough that whole-consumer executions stay bounded."),
             (
                 "flagged_window_factor",
                 format!("{}", self.flagged_window_factor),
+                "A window at or above twice its own execution median is flagged; this does not identify its cause.",
             ),
             (
                 "max_flagged_fraction",
                 format!("{}", self.max_flagged_fraction),
+                "More than a tenth of flagged windows marks the cell unstable under this protocol; no cause is inferred and no samples are trimmed.",
             ),
             (
                 "max_pilot_trials_per_cell",
                 self.max_pilot_trials_per_cell.to_string(),
+                "Bounds exploratory search per cell; a family declares a value up to this cap.",
             ),
             (
                 "max_confirmatory_attempts_per_candidate",
                 self.max_confirmatory_attempts_per_candidate.to_string(),
+                "One confirmatory attempt per candidate identity and protocol version; the family ledger counts every attempt.",
             ),
             (
                 "child_timeout_seconds",
                 self.child_timeout_seconds.to_string(),
+                "The retained campaign child timeout (`campaign::CHILD_TIMEOUT_SECONDS`).",
             ),
-            ("quality_confidence", format!("{}", self.quality_confidence)),
+            ("quality_confidence", format!("{}", self.quality_confidence), "Marginal FER uses Wilson at 95% [Wilson1927] [BrownCaiDasGupta2001]; BER uses the frame-bounded interval below."),
         ]
     }
 }
@@ -347,6 +353,9 @@ pub struct FamilyWise {
     /// Confirmatory trials already spent under this protocol version.
     pub prior_confirmatory_trials: u32,
     pub prior_trials: Vec<PriorTrial>,
+    /// Versioned authoritative append-only family reservation ledger, repository-relative.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ledger_path: Option<String>,
 }
 
 /// Bounded search declaration.
@@ -554,7 +563,7 @@ pub struct Batching {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct QualityTolerance {
-    /// Candidate FER upper bound may be at most this multiple of the baseline FER upper bound.
+    /// Maximum candidate/baseline FER ratio, certified by the paired bound.
     pub fer_ratio_max: f64,
     pub confidence: f64,
 }
@@ -597,6 +606,9 @@ pub struct CellDeclaration {
     pub core_arm: CoreArm,
     pub workers: WorkerDeclaration,
     pub cache_state: CacheState,
+    /// Versioned cold cells fix calls before measurement; no calibration is permitted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cold_calls: Option<u64>,
     pub builds: ArmBuilds,
     pub conversion_costs_included: bool,
     pub decoder: Option<DecoderCell>,
@@ -627,13 +639,13 @@ impl FamilyAddendum {
     /// Structural and semantic validation independent of freezing state.
     pub fn validate(&self) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
-        if self.schema != ADDENDUM_SCHEMA_ID {
+        if self.schema != format!("zen3-benchmark-addendum-v{}", self.protocol.version) {
             errors.push(format!(
                 "schema {:?} is not {ADDENDUM_SCHEMA_ID}",
                 self.schema
             ));
         }
-        if self.protocol.id != PROTOCOL_ID || self.protocol.version != PROTOCOL_VERSION {
+        if self.protocol.id != PROTOCOL_ID || !matches!(self.protocol.version, 1..=3) {
             errors.push(format!(
                 "addendum targets protocol {}/{} rather than {PROTOCOL_ID}/{PROTOCOL_VERSION}",
                 self.protocol.id, self.protocol.version
@@ -659,11 +671,53 @@ impl FamilyAddendum {
             errors.push("prior_confirmatory_trials disagrees with the prior_trials ledger".into());
         }
         for trial in &self.family_wise.prior_trials {
+            if validate_relative(&trial.receipt, "prior trial receipt").is_err() {
+                errors.push(format!(
+                    "prior trial {} receipt is not repository-relative",
+                    trial.receipt
+                ));
+            }
             if !is_hex(&trial.sha256, 64) {
                 errors.push(format!(
                     "prior trial {} sha256 is not 64 hex digits",
                     trial.receipt
                 ));
+            }
+        }
+        if self.protocol.version >= 2 {
+            if self
+                .frozen
+                .frozen_utc
+                .as_deref()
+                .is_none_or(|time| !valid_freeze_time(time))
+            {
+                errors.push(
+                    "versioned frozen_utc must be whole-second UTC YYYY-MM-DDTHH:MM:SSZ".into(),
+                );
+            }
+            if self
+                .family_wise
+                .ledger_path
+                .as_ref()
+                .is_none_or(|p| validate_relative(p, "family ledger").is_err())
+            {
+                errors.push(
+                    "versioned protocol requires a repository-relative family ledger_path".into(),
+                );
+            }
+            if self.family_wise.prior_confirmatory_trials != 0
+                || !self.family_wise.prior_trials.is_empty()
+            {
+                errors.push("versioned protocol derives prior comparisons from the authoritative ledger; supplied v1 counters must be empty".into());
+            }
+            for cell in &self.cells {
+                if (cell.cache_state == CacheState::Cold) != cell.cold_calls.is_some()
+                    || cell
+                        .cold_calls
+                        .is_some_and(|n| n == 0 || n > crate::timing::MAX_CALLS)
+                {
+                    errors.push(format!("cell {}: cold cells require fixed cold_calls; warm/streaming cells calibrate", cell.cell_id));
+                }
             }
         }
         let effect = &self.effect;
@@ -673,13 +727,6 @@ impl FamilyAddendum {
             }
             if effect.rationale.trim().is_empty() {
                 errors.push("worthwhile_speedup needs a rationale".into());
-            }
-            if let Some(resolution) = effect.measurement_resolution {
-                if value - 1.0 < resolution {
-                    errors.push(format!(
-                        "worthwhile_speedup {value} lies inside the measurement resolution {resolution}"
-                    ));
-                }
             }
         }
         if let Some(value) = effect.measurement_resolution {
@@ -714,6 +761,21 @@ impl FamilyAddendum {
             }
             if effect.material_gap_rationale.trim().is_empty() {
                 errors.push("material_gap_threshold needs a rationale".into());
+            }
+        }
+        if self.protocol.version >= 3 {
+            if let Some(resolution) = effect.measurement_resolution {
+                for (name, margin) in [
+                    ("worthwhile_speedup", effect.worthwhile_speedup),
+                    ("equivalence_margin", effect.equivalence_margin),
+                    ("material_gap_threshold", effect.material_gap_threshold),
+                ] {
+                    if margin.is_some_and(|value| value <= 1.0 + resolution) {
+                        errors.push(format!(
+                            "{name} must strictly exceed one plus the measurement resolution {resolution}"
+                        ));
+                    }
+                }
             }
         }
         if self
@@ -964,7 +1026,7 @@ pub struct TuningProfileRef {
 pub struct PlanArm {
     pub build: BuildIdentity,
     pub description: String,
-    /// Absolute executable path; its bytes are digested at run time.
+    /// Executable path relative to the repository or absolute; bytes are digested at run time.
     pub executable: String,
     pub arguments: Vec<String>,
     pub environment: BTreeMap<String, String>,
@@ -1136,4 +1198,48 @@ impl RunnerPlan {
             None => (SHARED_SETTINGS, false),
         }
     }
+}
+
+/// Versioned freeze timestamp format, with calendar/time component bounds. Whole
+/// seconds compare lexically to journal timestamps before the fractional part.
+pub fn valid_freeze_time(time: &str) -> bool {
+    let b = time.as_bytes();
+    if b.len() != 20
+        || [4, 7, 10, 13, 16, 19]
+            .into_iter()
+            .zip(b"--T::Z")
+            .any(|(i, c)| b[i] != *c)
+        || b.iter()
+            .enumerate()
+            .any(|(i, c)| ![4, 7, 10, 13, 16, 19].contains(&i) && !c.is_ascii_digit())
+    {
+        return false;
+    }
+    let number = |a, b| time[a..b].parse::<u32>().unwrap_or(0);
+    let year = number(0, 4);
+    let month = number(5, 7);
+    let day = number(8, 10);
+    let leap = year.is_multiple_of(4) && (!year.is_multiple_of(100) || year.is_multiple_of(400));
+    let days = match month {
+        4 | 6 | 9 | 11 => 30,
+        2 => {
+            if leap {
+                29
+            } else {
+                28
+            }
+        }
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        _ => 0,
+    };
+    day > 0 && day <= days && number(11, 13) < 24 && number(14, 16) < 60 && number(17, 19) < 60
+}
+
+/// Checks a validated freeze time precedes a canonical UTC journal timestamp.
+pub fn freeze_precedes(frozen: &Frozen, observed: &str) -> bool {
+    frozen
+        .frozen_utc
+        .as_deref()
+        .filter(|t| valid_freeze_time(t))
+        .is_some_and(|t| observed.get(..19).is_some_and(|o| &t[..19] <= o))
 }

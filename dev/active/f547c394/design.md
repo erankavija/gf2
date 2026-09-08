@@ -43,21 +43,27 @@ connections and the derived checkpoint identities.
 
 ## Decisions worth knowing
 
-- **Protocol version remains 1.** No benchmark family has consumed this
-  protocol to support a production performance claim. The protocol pilot and
-  confirmation exercise its infrastructure and establish version 1 with
-  content-based provenance before downstream family measurements begin. An
-  incompatible change to experimental semantics creates a later version and
-  retains version 1 evidence.
+- **Versioned acceptance.** [Protocol v2](protocol.md) and its
+  [amendment record](amendment-v2.md) specify current measurement behavior.
+  The shared evaluator keeps the named v1 evidence boundary while committed
+  v1 receipts require reproducible evaluation. Producing new evidence requires
+  the current document version to match the addendum before measurement.
+- **Family reservations.** `trial_ledger` owns append-only attempt accounting;
+  it is a library consumer of the shared atomic publisher. Each reservation
+  binds its predecessor and exists before measurement, including attempts
+  that never finalize. The runner and evaluator share the ledger verifier.
+- **Frame independence.** `abtest` owns bounded-mean intervals and the paired
+  FER bound; `receipt` validates the raw frame evidence and frozen denominators.
+  The smoke arm supplies explicitly synthetic quality slots for pipeline tests.
 
 - **Resampling unit.** The paired execution of two fresh children is the unit
-  because it is what the runner can randomize and what removes carried-over
-  process state; windows inside an execution are summarized by their median
+  because it is what the runner can randomize and what isolates process-local
+  allocator state; windows inside an execution are summarized by their median
   and retained raw.
 - **Bonferroni over Holm.** Confidence-interval decisions need a fixed
   per-comparison level; Holm's step-down needs ordered p-values. Bonferroni
   costs some power at family sizes below ten and buys validity under arbitrary
-  dependence and a rule a reviewer can recompute from the addendum alone.
+  dependence and a rule a reviewer can recompute from the frozen reservation chain.
 - **Fixed confirmatory sample size.** Precision-based stopping would make
   confirmation data-adaptive; a fixed 24 pairs keeps every confirmatory trial
   comparable and the search bounded by the family ledger instead.
@@ -71,7 +77,7 @@ connections and the derived checkpoint identities.
   the set without an unsafe pre-exec hook; every arm reports the mask it
   observed and the acceptance tool compares it with the resolved set.
 - **Smoke family.** The synthetic XOR-fold arms differ only through the
-  `GF2_SMOKE_PASSES` environment of the baseline arm. A durable exploratory
+  `GF2_SMOKE_PASSES` arm environment. A durable exploratory
   receipt establishes the measurement resolution; a later frozen addendum
   cites that pilot by path and digest, and a separate confirmation exercises
   the decision rules. Both receipts are pipeline checks, so neither is a
@@ -103,3 +109,7 @@ pilot and confirmation and their portable exports. Both opening records contain
 the complete frozen facts. The [validation report](rework-validation.md)
 contains the tests, command output and cumulative review resolutions. These
 receipts exercise the protocol pipeline without claiming a gf2 speedup.
+
+The [v2 findings](findings.md) carry the version amendment, current behavioral
+validation and independently frozen decoder/cold pipeline receipts. V1 evidence
+is preserved under its pinned rules.

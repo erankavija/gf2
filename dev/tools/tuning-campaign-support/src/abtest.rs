@@ -178,17 +178,20 @@ pub struct BootstrapInterval {
     pub lower: f64,
     pub upper: f64,
     pub confidence: f64,
+    /// Declared two-sided error rate used for nearest-rank tail selection.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub alpha: f64,
     pub resamples: u32,
     pub seed: u64,
     pub pairs: usize,
 }
 
 /// Resamples whole pairs with replacement and reports the nearest-rank
-/// percentile interval of the speedup at the given two-sided confidence.
+/// percentile interval of the speedup at the declared two-sided error rate.
 pub fn paired_bootstrap_speedup(
     pairs: &[PairedObservation],
     resamples: u32,
-    confidence: f64,
+    alpha: f64,
     seed: u64,
 ) -> Result<BootstrapInterval, AbError> {
     if pairs.len() < 2 {
@@ -197,8 +200,8 @@ pub fn paired_bootstrap_speedup(
     if resamples < 100 {
         return Err(AbError("bootstrap needs at least 100 resamples".into()));
     }
-    if !(0.5..1.0).contains(&confidence) {
-        return Err(AbError("confidence must lie in [0.5, 1)".into()));
+    if !(0.0 < alpha && alpha <= 0.5) {
+        return Err(AbError("two-sided alpha must lie in (0, 0.5]".into()));
     }
     let estimate = speedup_of_medians(pairs)?;
     let mut generator = Xoshiro256StarStar::seed_from_u64(seed);
@@ -212,18 +215,43 @@ pub fn paired_bootstrap_speedup(
         replicates.push(speedup_of_medians(&draw)?);
     }
     replicates.sort_by(|a, b| a.partial_cmp(b).expect("finite replicates"));
-    let alpha = 1.0 - confidence;
     let count = replicates.len();
-    let rank = |quantile: f64| ((quantile * count as f64).ceil() as usize).clamp(1, count) - 1;
     Ok(BootstrapInterval {
         estimate,
-        lower: replicates[rank(alpha / 2.0)],
-        upper: replicates[rank(1.0 - alpha / 2.0)],
-        confidence,
+        lower: replicates[bootstrap_rank(alpha / 2.0, count)],
+        upper: replicates[bootstrap_rank(1.0 - alpha / 2.0, count)],
+        confidence: 1.0 - alpha,
+        alpha,
         resamples,
         seed,
         pairs: pairs.len(),
     })
+}
+
+/// Preserves the v1/v2 evaluator's confidence-parameterized interval.
+///
+/// Version 3 callers pass their declared corrected alpha to
+/// [`paired_bootstrap_speedup`]. This compatibility boundary remains only while
+/// committed v1/v2 receipts need reproducible evaluation.
+pub fn paired_bootstrap_speedup_legacy(
+    pairs: &[PairedObservation],
+    resamples: u32,
+    confidence: f64,
+    seed: u64,
+) -> Result<BootstrapInterval, AbError> {
+    if !(0.5..1.0).contains(&confidence) {
+        return Err(AbError("confidence must lie in [0.5, 1)".into()));
+    }
+    paired_bootstrap_speedup(pairs, resamples, 1.0 - confidence, seed)
+}
+
+/// Zero-based nearest-rank index for a percentile in a sorted sample.
+fn bootstrap_rank(quantile: f64, count: usize) -> usize {
+    ((quantile * count as f64).ceil() as usize).clamp(1, count) - 1
+}
+
+fn is_zero(value: &f64) -> bool {
+    *value == 0.0
 }
 
 /// Family-declared speedup margins.
@@ -257,7 +285,7 @@ pub enum Decision {
     /// The interval's lower bound reaches the improvement margin.
     Improved,
     /// The lower bound clears the equivalence floor without reaching the
-    /// improvement margin: non-regression as an equivalence statement.
+    /// improvement margin: one-sided non-inferiority.
     NotWorse,
     /// The upper bound lies below the equivalence floor.
     Regressed,
@@ -300,12 +328,11 @@ pub fn flagged_windows(ns_per_call: &[f64], factor: f64) -> Result<usize, AbErro
     let center = median(&mut sorted)?;
     Ok(ns_per_call
         .iter()
-        .filter(|value| **value > factor * center)
+        .filter(|value| **value >= factor * center)
         .count())
 }
 
-/// Wilson score interval at 95% for a binomial proportion such as FER or
-/// BER; `errors` must not exceed `trials` and `trials` must be positive.
+/// Wilson score interval at 95% for a binomial proportion with independent trials (e.g. frame errors for FER); `errors` must not exceed `trials` and `trials` must be positive.
 pub fn wilson_interval_95(errors: u64, trials: u64) -> Result<(f64, f64), AbError> {
     if trials == 0 || errors > trials {
         return Err(AbError("invalid binomial counts".into()));
@@ -316,6 +343,71 @@ pub fn wilson_interval_95(errors: u64, trials: u64) -> Result<(f64, f64), AbErro
     let center = (p + z2 / (2.0 * n)) / (1.0 + z2 / n);
     let half = Z_95 * (p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt() / (1.0 + z2 / n);
     Ok(((center - half).max(0.0), (center + half).min(1.0)))
+}
+
+/// Distribution-free interval for a bounded mean, using independent observations.
+/// Hoeffding's inequality gives simultaneous two-sided coverage `confidence`.
+/// Values must lie in [lower, upper]; no within-observation independence is assumed.
+/// Returns an error for empty data or invalid bounds/confidence. O(n) time.
+pub fn bounded_mean_interval(
+    values: &[f64],
+    lower: f64,
+    upper: f64,
+    confidence: f64,
+) -> Result<(f64, f64), AbError> {
+    if values.is_empty()
+        || !lower.is_finite()
+        || !upper.is_finite()
+        || lower >= upper
+        || !(0.0 < confidence && confidence < 1.0)
+        || values
+            .iter()
+            .any(|x| !x.is_finite() || *x < lower || *x > upper)
+    {
+        return Err(AbError("invalid bounded observations".into()));
+    }
+    let mean = values.iter().sum::<f64>() / values.len() as f64;
+    let half =
+        (upper - lower) * ((2.0 / (1.0 - confidence)).ln() / (2.0 * values.len() as f64)).sqrt();
+    Ok(((mean - half).max(lower), (mean + half).min(upper)))
+}
+
+/// BER interval treating each frame's information-bit error fraction as one
+/// independent bounded observation. Bits inside a frame can be arbitrarily dependent.
+pub fn frame_ber_interval(
+    errors: &[u64],
+    bits_per_frame: u64,
+    confidence: f64,
+) -> Result<(f64, f64), AbError> {
+    if bits_per_frame == 0 || errors.iter().any(|e| *e > bits_per_frame) {
+        return Err(AbError("invalid frame bit counts".into()));
+    }
+    let rates: Vec<_> = errors
+        .iter()
+        .map(|e| *e as f64 / bits_per_frame as f64)
+        .collect();
+    bounded_mean_interval(&rates, 0.0, 1.0, confidence)
+}
+
+/// Upper confidence bound on FER(candidate) - ratio * FER(baseline).
+/// Each paired same-frame observation is C_i - ratio B_i in [-ratio, 1].
+/// A nonpositive upper bound establishes the declared ratio non-inferiority.
+/// Zero observed baseline errors do not automatically certify equivalence.
+pub fn paired_fer_upper(
+    baseline: &[u64],
+    candidate: &[u64],
+    ratio: f64,
+    confidence: f64,
+) -> Result<f64, AbError> {
+    if baseline.len() != candidate.len() || !ratio.is_finite() || ratio < 1.0 {
+        return Err(AbError("invalid paired FER contract".into()));
+    }
+    let differences: Vec<_> = baseline
+        .iter()
+        .zip(candidate)
+        .map(|(b, c)| f64::from(u8::from(*c > 0)) - ratio * f64::from(u8::from(*b > 0)))
+        .collect();
+    bounded_mean_interval(&differences, -ratio, 1.0, confidence).map(|(_, upper)| upper)
 }
 
 #[cfg(test)]
@@ -340,9 +432,20 @@ mod tests {
                 candidate_ns_per_call: 100.0 + index as f64,
             })
             .collect();
-        let interval = paired_bootstrap_speedup(&pairs, 1000, 0.95, 7).unwrap();
+        let interval = paired_bootstrap_speedup(&pairs, 1000, 0.05, 7).unwrap();
         assert!(interval.lower <= interval.estimate && interval.estimate <= interval.upper);
         assert_eq!(interval.pairs, 10);
+    }
+
+    #[test]
+    fn declared_alpha_tail_ranks_cover_frozen_family_sizes() {
+        for comparisons in [1, 2, 5, 10, 25] {
+            let alpha = 0.05 / f64::from(comparisons);
+            assert_eq!(
+                bootstrap_rank(alpha / 2.0, 10_000),
+                250 / comparisons as usize - 1
+            );
+        }
     }
 
     #[test]
