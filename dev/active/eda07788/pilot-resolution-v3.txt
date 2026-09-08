@@ -1,0 +1,18 @@
+receipt_sha256 d4d178248321fd148a4bb6966f84b7ae27d5967fc77ae061dc4145c7c7f28db5
+label pilot verdict accepted
+per-comparison confidence 0.9958333333333333
+
+cell_id                                                   estimate     lower     upper  rel_half
+dvb-t2-qam16-r12-normal-null-native-vs-native               0.9996    0.9905    1.0030    0.0092
+dvb-t2-qam16-r12-normal-gap-native-vs-xdsopl                0.4883    0.4833    0.4907    0.0102
+dvb-t2-qam16-r12-normal-gap-portable-vs-xdsopl              0.4901    0.4889    0.4911    0.0024
+dvb-t2-qam16-r12-normal-control-portable-vs-native          1.0006    0.9970    1.0077    0.0071
+dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl                0.4576    0.4548    0.4611    0.0076
+dvb-t2-qam64-r12-normal-gap-portable-vs-xdsopl              0.4583    0.4573    0.4604    0.0045
+dvb-t2-qam64-r12-normal-control-portable-vs-native          0.9998    0.9955    1.0067    0.0069
+dvb-t2-qam16-r12-short-gap-native-vs-xdsopl                 0.2242    0.1898    0.2528    0.1536
+dvb-t2-qam64-r12-short-gap-native-vs-xdsopl                 0.2215    0.2182    0.2256    0.0184
+dvb-t2-qam16-r12-normal-streaming-gap-native-vs-xdsopl      0.5638    0.5618    0.5653    0.0037
+
+largest relative half-width: 0.153611
+rounded up to two decimals:  0.16

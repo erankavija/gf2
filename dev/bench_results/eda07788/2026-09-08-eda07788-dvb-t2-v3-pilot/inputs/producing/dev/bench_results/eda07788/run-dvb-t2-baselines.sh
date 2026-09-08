@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # DVB-T2 bit-interleaver external-baseline campaign (jit:eda07788).
 #
-# Usage: dev/bench_results/eda07788/run-dvb-t2-baselines.sh pilot-v3|pilot-v3-r2|confirmation-v3 [date-utc]
+# Usage: dev/bench_results/eda07788/run-dvb-t2-baselines.sh pilot-v3|confirmation-v3 [date-utc]
 #
 # Builds the three arm executables through the committed fetch/build path,
 # builds the protocol runner and acceptance tool under `--release`, projects a
@@ -29,24 +29,15 @@ case "$MODE" in
     ADDENDUM=dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-pilot.json
     OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-dvb-t2-v3-pilot"
     MAX_CELLS=5
-    PILOT_PAIRS=
-    ;;
-  pilot-v3-r2)
-    LABEL=pilot
-    ADDENDUM=dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-pilot-r2.json
-    OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-dvb-t2-v3-pilot-r2"
-    MAX_CELLS=1
-    PILOT_PAIRS=24
     ;;
   confirmation-v3)
     LABEL=confirmation
     ADDENDUM=dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json
     OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-dvb-t2-v3-confirmation"
     MAX_CELLS=2
-    PILOT_PAIRS=
     ;;
   *)
-    echo "usage: $0 pilot-v3|pilot-v3-r2|confirmation-v3 [date-utc]" >&2
+    echo "usage: $0 pilot-v3|confirmation-v3 [date-utc]" >&2
     exit 2
     ;;
 esac
@@ -79,11 +70,11 @@ LOCK=${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}
 touch "$LOCK"
 LOCK=$(realpath "$LOCK")
 export GF2_CCX1_LOCK="$LOCK"
-python3 - "$PLAN" "$CAMPAIGN" "$LABEL" "$ADDENDUM" "$LOCK" "$MAX_CELLS" "$PILOT_PAIRS" \
+python3 - "$PLAN" "$CAMPAIGN" "$LABEL" "$ADDENDUM" "$LOCK" "$MAX_CELLS" \
   "$GF2_NATIVE" "$GF2_PORTABLE" "$XDSOPL" <<'PY_PLAN'
 import json, sys
 
-(plan_path, campaign, label, addendum_path, lock, max_cells, pilot_pairs,
+(plan_path, campaign, label, addendum_path, lock, max_cells,
  gf2_native, gf2_portable, xdsopl) = sys.argv[1:]
 
 with open(addendum_path) as handle:
@@ -148,7 +139,7 @@ for declared in addendum["cells"]:
         "case": {"modcod": identity[len(WORKLOAD_PREFIX):], "seed": declared["workload"]["seed"]},
         # `null` selects the frozen pilot minimum for an exploratory cell and
         # is rejected outright for a confirmatory one.
-        "pilot_pairs": int(pilot_pairs) if pilot_pairs else None,
+        "pilot_pairs": None,
     })
 
 plan = {
