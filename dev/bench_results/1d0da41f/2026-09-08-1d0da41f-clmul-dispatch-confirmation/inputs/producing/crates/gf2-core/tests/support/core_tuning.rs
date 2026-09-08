@@ -1,0 +1,158 @@
+use std::io::Write;
+use std::process::{Command, Stdio};
+
+#[cfg(feature = "tuning-profile")]
+use gf2_core::tuning::{CanonicalValue, CoreTuningCodec, SectionCodec};
+use gf2_core::tuning::{CompiledProfileProvenance, CoreTuning, PreparedEnvelope, ProfileId};
+
+const SENTINEL: &str = "GF2_TUNING_FRESH_CASE";
+const SENTINEL_VALUE: &str = "child-v1";
+const RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";
+
+/// One named scenario for the guarded fresh-process test protocol.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct FreshProcessCase(String);
+
+impl FreshProcessCase {
+    pub(crate) fn named(name: &str) -> Result<Self, String> {
+        if name.is_empty()
+            || !name
+                .bytes()
+                .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_')
+        {
+            return Err(format!("invalid fresh-process case name {name:?}"));
+        }
+        Ok(Self(name.to_owned()))
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.0
+    }
+
+    fn canonical_json(&self) -> String {
+        format!(
+            "{{\"case\":{}}}",
+            serde_json::to_string(self.name()).expect("a case name is JSON-encodable")
+        )
+    }
+}
+
+#[allow(dead_code)]
+#[cfg(feature = "tuning-profile")]
+pub fn prepared_core_json(body: &str) -> Result<PreparedEnvelope, String> {
+    let canonical: CanonicalValue = serde_json::from_str(body)
+        .map_err(|error| format!("core selector body is not JSON: {error}"))?;
+    let section = CoreTuningCodec::decode_body(canonical)
+        .map_err(|error| format!("core selector body is invalid: {error}"))?;
+    Ok(prepared_core(section))
+}
+
+pub fn prepared_core(section: CoreTuning) -> PreparedEnvelope {
+    let id = ProfileId::parse("core-route-test").unwrap();
+    PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
+        .insert(section)
+        .unwrap()
+        .build()
+        .unwrap()
+}
+
+pub(crate) fn fresh_tuning_process(case: FreshProcessCase) -> Result<(), String> {
+    let executable =
+        std::env::current_exe().map_err(|error| format!("test binary has no path: {error}"))?;
+    let mut child = Command::new(&executable)
+        .args(["--exact", "fresh_tuning_process_child", "--nocapture"])
+        .env(SENTINEL, SENTINEL_VALUE)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|error| format!("cannot spawn {}: {error}", executable.display()))?;
+    child
+        .stdin
+        .take()
+        .ok_or("fresh-process child has no stdin")?
+        .write_all(case.canonical_json().as_bytes())
+        .map_err(|error| format!("cannot write child case: {error}"))?;
+    let output = child
+        .wait_with_output()
+        .map_err(|error| format!("cannot wait for child: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "fresh-process child exited with {}\nstdout:\n{}\nstderr:\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let stdout = String::from_utf8(output.stdout)
+        .map_err(|_| "fresh-process child stdout is not UTF-8".to_owned())?;
+    let results: Vec<&str> = stdout
+        .lines()
+        .filter_map(|line| line.strip_prefix(RESULT_PREFIX))
+        .collect();
+    if results != [r#"{"status":"ok"}"#] {
+        return Err(format!(
+            "fresh-process child emitted invalid results {results:?}"
+        ));
+    }
+    Ok(())
+}
+
+pub fn child_case() -> Result<Option<FreshProcessCase>, String> {
+    let sentinel = match std::env::var(SENTINEL) {
+        Err(std::env::VarError::NotPresent) => return Ok(None),
+        Err(error) => return Err(format!("cannot read fresh-process sentinel: {error}")),
+        Ok(value) => value,
+    };
+    if sentinel != SENTINEL_VALUE {
+        return Err(format!("invalid fresh-process sentinel {sentinel:?}"));
+    }
+    let mut input = String::new();
+    std::io::Read::read_to_string(&mut std::io::stdin(), &mut input)
+        .map_err(|error| format!("cannot read fresh-process stdin: {error}"))?;
+    let value: serde_json::Value = serde_json::from_str(&input)
+        .map_err(|error| format!("fresh-process case is not JSON: {error}"))?;
+    let object = value
+        .as_object()
+        .ok_or("fresh-process case is not an object")?;
+    if object.len() != 1 {
+        return Err("fresh-process case has unexpected fields".to_owned());
+    }
+    let case = object
+        .get("case")
+        .and_then(serde_json::Value::as_str)
+        .ok_or("fresh-process case name is missing")?;
+    let case = FreshProcessCase::named(case)?;
+    if input != case.canonical_json() {
+        return Err("fresh-process case is not in canonical compact form".to_owned());
+    }
+    Ok(Some(case))
+}
+
+pub fn emit_ok() {
+    println!("{RESULT_PREFIX}{{\"status\":\"ok\"}}");
+}
+
+macro_rules! fresh_tuning_test {
+    ($name:ident, $body:block) => {
+        #[test]
+        fn $name() {
+            let case = crate::support::FreshProcessCase::named(stringify!($name)).unwrap();
+            crate::support::fresh_tuning_process(case).unwrap();
+        }
+
+        #[test]
+        fn fresh_tuning_process_child() {
+            let Some(case) =
+                crate::support::child_case().expect("fresh-process protocol is valid")
+            else {
+                return;
+            };
+            assert_eq!(case.name(), stringify!($name));
+            $body
+            crate::support::emit_ok();
+        }
+    };
+}
+
+pub(crate) use fresh_tuning_test;

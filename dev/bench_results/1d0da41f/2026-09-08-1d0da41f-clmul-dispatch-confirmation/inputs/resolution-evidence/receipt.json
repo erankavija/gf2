@@ -1,0 +1,3092 @@
+{
+  "schema": "zen3-benchmark-receipt-v1",
+  "campaign_id": "pilot-1d0da41f-20260907t191830z",
+  "issue": "1d0da41f",
+  "receipt_path": "dev/bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot/receipt.json",
+  "label": "pilot",
+  "campaign_seed": 20260907,
+  "settings": {
+    "family_alpha": 0.05,
+    "bootstrap_resamples": 10000,
+    "confirmatory_pairs": 24,
+    "pilot_min_pairs": 6,
+    "pilot_max_pairs": 24,
+    "windows_per_execution": 5,
+    "window_target_ms": 100,
+    "flagged_window_factor": 2.0,
+    "max_flagged_fraction": 0.1,
+    "max_pilot_trials_per_cell": 8,
+    "max_confirmatory_attempts_per_candidate": 1,
+    "child_timeout_seconds": 120,
+    "quality_confidence": 0.95
+  },
+  "settings_deviation": false,
+  "protocol": {
+    "path": "dev/active/f547c394/protocol.md",
+    "snapshot": "inputs/protocol.md",
+    "sha256": "4cc897ed267e40a8bfa1fbc18950e6539c4456d0e22a6b84d42d9dab43132117"
+  },
+  "contract": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+    "snapshot": "inputs/measurement-contract.md",
+    "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3"
+  },
+  "addendum_schema": {
+    "path": "dev/active/f547c394/addendum.schema.json",
+    "snapshot": "inputs/addendum.schema.json",
+    "sha256": "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1"
+  },
+  "addendum": {
+    "path": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch-pilot.json",
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "93db518b75326096c9cc2ed599a3bf4cef531b1f1ed59d831d2b8be48649a639"
+  },
+  "source": {
+    "producing": {
+      "manifest_path": "dev/active/f547c394/producing-inputs.json",
+      "manifest_sha256": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+      "behavior_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      },
+      "lifecycle_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554"
+      },
+      "build_inputs_sha256": {
+        ".cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      }
+    }
+  },
+  "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "host": {
+    "observed_utc": "2026-09-07T19:19:29.454319798Z",
+    "hostname": "fraktaali",
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "cpu_flags": [
+      "3dnowprefetch",
+      "abm",
+      "adx",
+      "aes",
+      "aperfmperf",
+      "apic",
+      "arat",
+      "avic",
+      "avx",
+      "avx2",
+      "bmi1",
+      "bmi2",
+      "bpext",
+      "cat_l3",
+      "cdp_l3",
+      "clflush",
+      "clflushopt",
+      "clwb",
+      "clzero",
+      "cmov",
+      "cmp_legacy",
+      "constant_tsc",
+      "cpb",
+      "cpuid",
+      "cqm",
+      "cqm_llc",
+      "cqm_mbm_local",
+      "cqm_mbm_total",
+      "cqm_occup_llc",
+      "cr8_legacy",
+      "cx16",
+      "cx8",
+      "de",
+      "debug_swap",
+      "decodeassists",
+      "erms",
+      "extapic",
+      "extd_apicid",
+      "f16c",
+      "flushbyasid",
+      "fma",
+      "fpu",
+      "fsgsbase",
+      "fsrm",
+      "fxsr",
+      "fxsr_opt",
+      "ht",
+      "hw_pstate",
+      "ibpb",
+      "ibrs",
+      "ibs",
+      "invpcid",
+      "irperf",
+      "lahf_lm",
+      "lbrv",
+      "lm",
+      "mba",
+      "mca",
+      "mce",
+      "misalignsse",
+      "mmx",
+      "mmxext",
+      "monitor",
+      "movbe",
+      "msr",
+      "mtrr",
+      "mwaitx",
+      "nonstop_tsc",
+      "nopl",
+      "npt",
+      "nrip_save",
+      "nx",
+      "ospke",
+      "osvw",
+      "overflow_recov",
+      "pae",
+      "pat",
+      "pausefilter",
+      "pclmulqdq",
+      "pdpe1gb",
+      "perfctr_core",
+      "perfctr_llc",
+      "perfctr_nb",
+      "pfthreshold",
+      "pge",
+      "pku",
+      "pni",
+      "popcnt",
+      "pse",
+      "pse36",
+      "rapl",
+      "rdpid",
+      "rdpru",
+      "rdrand",
+      "rdseed",
+      "rdt_a",
+      "rdtscp",
+      "rep_good",
+      "sep",
+      "sha_ni",
+      "skinit",
+      "smap",
+      "smca",
+      "smep",
+      "ssbd",
+      "sse",
+      "sse2",
+      "sse4_1",
+      "sse4_2",
+      "sse4a",
+      "ssse3",
+      "stibp",
+      "succor",
+      "svm_lock",
+      "syscall",
+      "tce",
+      "topoext",
+      "tsc",
+      "tsc_scale",
+      "umip",
+      "user_shstk",
+      "v_spec_ctrl",
+      "v_vmsave_vmload",
+      "vaes",
+      "vgif",
+      "vmcb_clean",
+      "vme",
+      "vmmcall",
+      "vpclmulqdq",
+      "wbnoinvd",
+      "wdt",
+      "x2apic",
+      "xgetbv1",
+      "xsave",
+      "xsavec",
+      "xsaveerptr",
+      "xsaveopt",
+      "xsaves",
+      "xtopology"
+    ],
+    "os_kernel": "Linux 7.2.2-arch1-1",
+    "governors": {
+      "cpu0": "powersave",
+      "cpu1": "powersave",
+      "cpu10": "powersave",
+      "cpu11": "powersave",
+      "cpu12": "powersave",
+      "cpu13": "powersave",
+      "cpu14": "powersave",
+      "cpu15": "powersave",
+      "cpu16": "powersave",
+      "cpu17": "powersave",
+      "cpu18": "powersave",
+      "cpu19": "powersave",
+      "cpu2": "powersave",
+      "cpu20": "powersave",
+      "cpu21": "powersave",
+      "cpu22": "powersave",
+      "cpu23": "powersave",
+      "cpu3": "powersave",
+      "cpu4": "powersave",
+      "cpu5": "powersave",
+      "cpu6": "powersave",
+      "cpu7": "powersave",
+      "cpu8": "powersave",
+      "cpu9": "powersave"
+    },
+    "smt_active": true,
+    "affinity": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "topology": {
+      "cpus": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 6,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 7,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 8,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 9,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 10,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 11,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 12,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 13,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 14,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 15,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 16,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 17,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 18,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 19,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 20,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 21,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 22,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 23,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        }
+      ],
+      "smt_active": true
+    },
+    "load_average": [
+      12.6,
+      13.09,
+      10.33
+    ],
+    "available_memory_kib": 55574952
+  },
+  "lock": {
+    "lock_path": "/tmp/gf2-ccx1.lock",
+    "holder_pid": 1251153,
+    "observation": "inherited-fd-and-independent-flock-conflict",
+    "wrapper": "dev/scripts/ccx1-bench-flock.sh"
+  },
+  "workers": {
+    "environment_rayon_threads": null,
+    "runner_threads": 1
+  },
+  "execution_log": {
+    "path": "execution.log",
+    "sha256": "b8fbc8766035f68657255b5c5cfeb9ccda7a5d2971e225a60c0e54c0df5572ff",
+    "sessions": 2,
+    "resumed": true
+  },
+  "checkpoints": {
+    "manifest_path": "checkpoints/manifest.json",
+    "manifest_sha256": "2233964b39ca61a8b561dabd1dc10a71e7742d9303be97b2dcf19c52253b7b21"
+  },
+  "arms": {
+    "baseline": {
+      "build": "conservative-portable",
+      "description": "pre-change crates: raw batch dispatch requires AVX512VL",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/1d0da41f/arms/target-baseline/release/ymm-clmul-arm",
+      "executable_sha256": "74b757c27a623a9b2b564b4b0d83aa7bfbc415ec6efee65f502ad9d2be7e5161",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "candidate": {
+      "build": "conservative-portable",
+      "description": "repaired crates: raw batch dispatch requires AVX2+VPCLMULQDQ",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/1d0da41f/arms/target-candidate/release/ymm-clmul-arm",
+      "executable_sha256": "ba5c06a9a702e62586a300187609ce1330ea63be626dae2ea3ac39229cb5619b",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "raw-batch-small-8-1core",
+      "key": "raw-batch-small-8-1core",
+      "role": "exploratory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243012,
+            "windows": [
+              {
+                "calls": 10212391,
+                "elapsed_ns": 95574299
+              },
+              {
+                "calls": 10212391,
+                "elapsed_ns": 90511681
+              },
+              {
+                "calls": 10212391,
+                "elapsed_ns": 90021048
+              },
+              {
+                "calls": 10212391,
+                "elapsed_ns": 89818956
+              },
+              {
+                "calls": 10212391,
+                "elapsed_ns": 92278351
+              }
+            ],
+            "ns_per_call": 8.862927496606819,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 440,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 524643839
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1243122,
+            "windows": [
+              {
+                "calls": 5039339,
+                "elapsed_ns": 53947704
+              },
+              {
+                "calls": 5039339,
+                "elapsed_ns": 54362217
+              },
+              {
+                "calls": 5039339,
+                "elapsed_ns": 54469917
+              },
+              {
+                "calls": 5039339,
+                "elapsed_ns": 54597438
+              },
+              {
+                "calls": 5039339,
+                "elapsed_ns": 54955930
+              }
+            ],
+            "ns_per_call": 10.808940815452186,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 320,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 355642976
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243501,
+            "windows": [
+              {
+                "calls": 11424413,
+                "elapsed_ns": 100754828
+              },
+              {
+                "calls": 11424413,
+                "elapsed_ns": 109238317
+              },
+              {
+                "calls": 11424413,
+                "elapsed_ns": 117353471
+              },
+              {
+                "calls": 11424413,
+                "elapsed_ns": 100933800
+              },
+              {
+                "calls": 11424413,
+                "elapsed_ns": 99143429
+              }
+            ],
+            "ns_per_call": 8.834922196877862,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 260,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 619134792
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1243224,
+            "windows": [
+              {
+                "calls": 9268935,
+                "elapsed_ns": 100355696
+              },
+              {
+                "calls": 9268935,
+                "elapsed_ns": 99086929
+              },
+              {
+                "calls": 9268935,
+                "elapsed_ns": 99447401
+              },
+              {
+                "calls": 9268935,
+                "elapsed_ns": 99198359
+              },
+              {
+                "calls": 9268935,
+                "elapsed_ns": 100131785
+              }
+            ],
+            "ns_per_call": 10.729107605134786,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 370,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 563245797
+          }
+        },
+        {
+          "index": 2,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243710,
+            "windows": [
+              {
+                "calls": 11770864,
+                "elapsed_ns": 100329856
+              },
+              {
+                "calls": 11770864,
+                "elapsed_ns": 116207215
+              },
+              {
+                "calls": 11770864,
+                "elapsed_ns": 100337966
+              },
+              {
+                "calls": 11770864,
+                "elapsed_ns": 100041464
+              },
+              {
+                "calls": 11770864,
+                "elapsed_ns": 100117185
+              }
+            ],
+            "ns_per_call": 8.523576179284715,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 250,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 606699602
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1243621,
+            "windows": [
+              {
+                "calls": 9130513,
+                "elapsed_ns": 98180333
+              },
+              {
+                "calls": 9130513,
+                "elapsed_ns": 97933323
+              },
+              {
+                "calls": 9130513,
+                "elapsed_ns": 99943983
+              },
+              {
+                "calls": 9130513,
+                "elapsed_ns": 97427090
+              },
+              {
+                "calls": 9130513,
+                "elapsed_ns": 97174758
+              }
+            ],
+            "ns_per_call": 10.725938728743937,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 520,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 554849070
+          }
+        },
+        {
+          "index": 3,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243715,
+            "windows": [
+              {
+                "calls": 11680456,
+                "elapsed_ns": 100044144
+              },
+              {
+                "calls": 11680456,
+                "elapsed_ns": 99386601
+              },
+              {
+                "calls": 11680456,
+                "elapsed_ns": 99708862
+              },
+              {
+                "calls": 11680456,
+                "elapsed_ns": 99781693
+              },
+              {
+                "calls": 11680456,
+                "elapsed_ns": 99244509
+              }
+            ],
+            "ns_per_call": 8.536384367185665,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 670,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 587882506
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1243721,
+            "windows": [
+              {
+                "calls": 9425573,
+                "elapsed_ns": 100131225
+              },
+              {
+                "calls": 9425573,
+                "elapsed_ns": 100095014
+              },
+              {
+                "calls": 9425573,
+                "elapsed_ns": 100299656
+              },
+              {
+                "calls": 9425573,
+                "elapsed_ns": 100702688
+              },
+              {
+                "calls": 9425573,
+                "elapsed_ns": 100682628
+              }
+            ],
+            "ns_per_call": 10.641226374248017,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 360,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 564011331
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243744,
+            "windows": [
+              {
+                "calls": 11538039,
+                "elapsed_ns": 100056814
+              },
+              {
+                "calls": 11538039,
+                "elapsed_ns": 99886144
+              },
+              {
+                "calls": 11538039,
+                "elapsed_ns": 99971083
+              },
+              {
+                "calls": 11538039,
+                "elapsed_ns": 100348476
+              },
+              {
+                "calls": 11538039,
+                "elapsed_ns": 100415747
+              }
+            ],
+            "ns_per_call": 8.671908111941725,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 330,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 590184449
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1243757,
+            "windows": [
+              {
+                "calls": 9354586,
+                "elapsed_ns": 99288130
+              },
+              {
+                "calls": 9354586,
+                "elapsed_ns": 99282710
+              },
+              {
+                "calls": 9354586,
+                "elapsed_ns": 99380050
+              },
+              {
+                "calls": 9354586,
+                "elapsed_ns": 99604532
+              },
+              {
+                "calls": 9354586,
+                "elapsed_ns": 99406301
+              }
+            ],
+            "ns_per_call": 10.623671640840119,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 270,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 557806057
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243787,
+            "windows": [
+              {
+                "calls": 11770732,
+                "elapsed_ns": 99991684
+              },
+              {
+                "calls": 11770732,
+                "elapsed_ns": 100800578
+              },
+              {
+                "calls": 11770732,
+                "elapsed_ns": 100473357
+              },
+              {
+                "calls": 11770732,
+                "elapsed_ns": 100136505
+              },
+              {
+                "calls": 11770732,
+                "elapsed_ns": 100274946
+              }
+            ],
+            "ns_per_call": 8.519006804334683,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 260,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 591319286
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1243761,
+            "windows": [
+              {
+                "calls": 9420700,
+                "elapsed_ns": 99990104
+              },
+              {
+                "calls": 9420700,
+                "elapsed_ns": 100102045
+              },
+              {
+                "calls": 9420700,
+                "elapsed_ns": 100450517
+              },
+              {
+                "calls": 9420700,
+                "elapsed_ns": 100260495
+              },
+              {
+                "calls": 9420700,
+                "elapsed_ns": 100173435
+              }
+            ],
+            "ns_per_call": 10.633332448756462,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 330,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 563780279
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 0.8053615159606636,
+          "lower": 0.7946694825360866,
+          "upper": 0.8234535920442819,
+          "confidence": 0.95,
+          "resamples": 10000,
+          "seed": 16397261047810422796,
+          "pairs": 6
+        },
+        "decision": "regressed",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.05
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "91999ebbd85ef06c7ab6bdbcadcde5e0fa9ef4c05ed23745cf7a52209eac889d"
+    },
+    {
+      "cell_id": "raw-batch-odd-tail-65-1core",
+      "key": "raw-batch-odd-tail-65-1core",
+      "role": "exploratory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243866,
+            "windows": [
+              {
+                "calls": 2917290,
+                "elapsed_ns": 99643692
+              },
+              {
+                "calls": 2917290,
+                "elapsed_ns": 99679232
+              },
+              {
+                "calls": 2917290,
+                "elapsed_ns": 110163141
+              },
+              {
+                "calls": 2917290,
+                "elapsed_ns": 99659502
+              },
+              {
+                "calls": 2917290,
+                "elapsed_ns": 100070775
+              }
+            ],
+            "ns_per_call": 34.16843440316184,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 410,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 599666632
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1243861,
+            "windows": [
+              {
+                "calls": 1774269,
+                "elapsed_ns": 99626422
+              },
+              {
+                "calls": 1774269,
+                "elapsed_ns": 99580761
+              },
+              {
+                "calls": 1774269,
+                "elapsed_ns": 99628382
+              },
+              {
+                "calls": 1774269,
+                "elapsed_ns": 99903854
+              },
+              {
+                "calls": 1774269,
+                "elapsed_ns": 100007454
+              }
+            ],
+            "ns_per_call": 56.15179096292614,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 500,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 574534710
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243876,
+            "windows": [
+              {
+                "calls": 2915974,
+                "elapsed_ns": 100038634
+              },
+              {
+                "calls": 2915974,
+                "elapsed_ns": 100066055
+              },
+              {
+                "calls": 2915974,
+                "elapsed_ns": 100065134
+              },
+              {
+                "calls": 2915974,
+                "elapsed_ns": 100128195
+              },
+              {
+                "calls": 2915974,
+                "elapsed_ns": 100012114
+              }
+            ],
+            "ns_per_call": 34.31619554906868,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 480,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 590470121
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1243901,
+            "windows": [
+              {
+                "calls": 1771674,
+                "elapsed_ns": 99771393
+              },
+              {
+                "calls": 1771674,
+                "elapsed_ns": 99704332
+              },
+              {
+                "calls": 1771674,
+                "elapsed_ns": 99707303
+              },
+              {
+                "calls": 1771674,
+                "elapsed_ns": 99493821
+              },
+              {
+                "calls": 1771674,
+                "elapsed_ns": 99549511
+              }
+            ],
+            "ns_per_call": 56.27690647376436,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 470,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 575745857
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1243967,
+            "windows": [
+              {
+                "calls": 2860092,
+                "elapsed_ns": 99969644
+              },
+              {
+                "calls": 2860092,
+                "elapsed_ns": 100278296
+              },
+              {
+                "calls": 2860092,
+                "elapsed_ns": 99916643
+              },
+              {
+                "calls": 2860092,
+                "elapsed_ns": 99794843
+              },
+              {
+                "calls": 2860092,
+                "elapsed_ns": 100035464
+              }
+            ],
+            "ns_per_call": 34.953296607242,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 400,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 591185235
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1244005,
+            "windows": [
+              {
+                "calls": 1768229,
+                "elapsed_ns": 99417170
+              },
+              {
+                "calls": 1768229,
+                "elapsed_ns": 99543592
+              },
+              {
+                "calls": 1768229,
+                "elapsed_ns": 99968253
+              },
+              {
+                "calls": 1768229,
+                "elapsed_ns": 99569502
+              },
+              {
+                "calls": 1768229,
+                "elapsed_ns": 99457111
+              }
+            ],
+            "ns_per_call": 56.29564496453796,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 400,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 575569286
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1244031,
+            "windows": [
+              {
+                "calls": 2925903,
+                "elapsed_ns": 100464577
+              },
+              {
+                "calls": 2925903,
+                "elapsed_ns": 100490806
+              },
+              {
+                "calls": 2925903,
+                "elapsed_ns": 100377326
+              },
+              {
+                "calls": 2925903,
+                "elapsed_ns": 99876134
+              },
+              {
+                "calls": 2925903,
+                "elapsed_ns": 100178175
+              }
+            ],
+            "ns_per_call": 34.306443515044755,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 380,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 591397345
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1244015,
+            "windows": [
+              {
+                "calls": 1779943,
+                "elapsed_ns": 100364796
+              },
+              {
+                "calls": 1779943,
+                "elapsed_ns": 100688468
+              },
+              {
+                "calls": 1779943,
+                "elapsed_ns": 100369416
+              },
+              {
+                "calls": 1779943,
+                "elapsed_ns": 100395997
+              },
+              {
+                "calls": 1779943,
+                "elapsed_ns": 100762648
+              }
+            ],
+            "ns_per_call": 56.40405170277925,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 480,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 579967732
+          }
+        },
+        {
+          "index": 4,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1244079,
+            "windows": [
+              {
+                "calls": 2928144,
+                "elapsed_ns": 100044474
+              },
+              {
+                "calls": 2928144,
+                "elapsed_ns": 99969214
+              },
+              {
+                "calls": 2928144,
+                "elapsed_ns": 100182195
+              },
+              {
+                "calls": 2928144,
+                "elapsed_ns": 99968794
+              },
+              {
+                "calls": 2928144,
+                "elapsed_ns": 100942080
+              }
+            ],
+            "ns_per_call": 34.16651435175319,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 400,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 590852292
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1244073,
+            "windows": [
+              {
+                "calls": 1773405,
+                "elapsed_ns": 99761002
+              },
+              {
+                "calls": 1773405,
+                "elapsed_ns": 99845523
+              },
+              {
+                "calls": 1773405,
+                "elapsed_ns": 99996014
+              },
+              {
+                "calls": 1773405,
+                "elapsed_ns": 99916904
+              },
+              {
+                "calls": 1773405,
+                "elapsed_ns": 99819183
+              }
+            ],
+            "ns_per_call": 56.30159100713035,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 450,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 576329511
+          }
+        },
+        {
+          "index": 5,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1244092,
+            "windows": [
+              {
+                "calls": 2923187,
+                "elapsed_ns": 99907824
+              },
+              {
+                "calls": 2923187,
+                "elapsed_ns": 99924383
+              },
+              {
+                "calls": 2923187,
+                "elapsed_ns": 99743703
+              },
+              {
+                "calls": 2923187,
+                "elapsed_ns": 99797313
+              },
+              {
+                "calls": 2923187,
+                "elapsed_ns": 99981434
+              }
+            ],
+            "ns_per_call": 34.177705360621815,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 470,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 588657250
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1244143,
+            "windows": [
+              {
+                "calls": 1778574,
+                "elapsed_ns": 100207855
+              },
+              {
+                "calls": 1778574,
+                "elapsed_ns": 100113915
+              },
+              {
+                "calls": 1778574,
+                "elapsed_ns": 100082595
+              },
+              {
+                "calls": 1778574,
+                "elapsed_ns": 100198175
+              },
+              {
+                "calls": 1778574,
+                "elapsed_ns": 100493567
+              }
+            ],
+            "ns_per_call": 56.33624184318448,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 410,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 577588248
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 0.6082222914681363,
+          "lower": 0.6066735061198728,
+          "upper": 0.6152295812575314,
+          "confidence": 0.95,
+          "resamples": 10000,
+          "seed": 14647261453854425098,
+          "pairs": 6
+        },
+        "decision": "regressed",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.05
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "86a73077d8939a46523d36e0698f426281b309ff4d36fb77475cafa3c3493787"
+    },
+    {
+      "cell_id": "raw-batch-l1-512-1core",
+      "key": "raw-batch-l1-512-1core",
+      "role": "exploratory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251172,
+            "windows": [
+              {
+                "calls": 413500,
+                "elapsed_ns": 99648232
+              },
+              {
+                "calls": 413500,
+                "elapsed_ns": 99612962
+              },
+              {
+                "calls": 413500,
+                "elapsed_ns": 99632482
+              },
+              {
+                "calls": 413500,
+                "elapsed_ns": 99384160
+              },
+              {
+                "calls": 413500,
+                "elapsed_ns": 104091447
+              }
+            ],
+            "ns_per_call": 240.94917049576785,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 4880,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 585372841
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251216,
+            "windows": [
+              {
+                "calls": 241160,
+                "elapsed_ns": 99879463
+              },
+              {
+                "calls": 241160,
+                "elapsed_ns": 100040664
+              },
+              {
+                "calls": 241160,
+                "elapsed_ns": 99894154
+              },
+              {
+                "calls": 241160,
+                "elapsed_ns": 99987853
+              },
+              {
+                "calls": 241160,
+                "elapsed_ns": 99811523
+              }
+            ],
+            "ns_per_call": 414.2235611212473,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 4080,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 572608499
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251274,
+            "windows": [
+              {
+                "calls": 369994,
+                "elapsed_ns": 88952442
+              },
+              {
+                "calls": 369994,
+                "elapsed_ns": 88938572
+              },
+              {
+                "calls": 369994,
+                "elapsed_ns": 89464904
+              },
+              {
+                "calls": 369994,
+                "elapsed_ns": 88998212
+              },
+              {
+                "calls": 369994,
+                "elapsed_ns": 88988462
+              }
+            ],
+            "ns_per_call": 240.51325697173468,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 4140,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 532331823
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251245,
+            "windows": [
+              {
+                "calls": 241866,
+                "elapsed_ns": 100097655
+              },
+              {
+                "calls": 241866,
+                "elapsed_ns": 100152654
+              },
+              {
+                "calls": 241866,
+                "elapsed_ns": 102820560
+              },
+              {
+                "calls": 241866,
+                "elapsed_ns": 100080324
+              },
+              {
+                "calls": 241866,
+                "elapsed_ns": 100040105
+              }
+            ],
+            "ns_per_call": 413.85583339535117,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 4280,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 576221309
+          }
+        },
+        {
+          "index": 2,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251350,
+            "windows": [
+              {
+                "calls": 415620,
+                "elapsed_ns": 100078454
+              },
+              {
+                "calls": 415620,
+                "elapsed_ns": 100205716
+              },
+              {
+                "calls": 415620,
+                "elapsed_ns": 101533392
+              },
+              {
+                "calls": 415620,
+                "elapsed_ns": 99990104
+              },
+              {
+                "calls": 415620,
+                "elapsed_ns": 99966164
+              }
+            ],
+            "ns_per_call": 240.79316202300177,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 4110,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 583599491
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251326,
+            "windows": [
+              {
+                "calls": 241090,
+                "elapsed_ns": 99948094
+              },
+              {
+                "calls": 241090,
+                "elapsed_ns": 99894073
+              },
+              {
+                "calls": 241090,
+                "elapsed_ns": 99997494
+              },
+              {
+                "calls": 241090,
+                "elapsed_ns": 99892143
+              },
+              {
+                "calls": 241090,
+                "elapsed_ns": 99783623
+              }
+            ],
+            "ns_per_call": 414.34349413082253,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 4260,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 4
+            },
+            "elapsed_ns": 572688089
+          }
+        },
+        {
+          "index": 3,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251355,
+            "windows": [
+              {
+                "calls": 416758,
+                "elapsed_ns": 100306895
+              },
+              {
+                "calls": 416758,
+                "elapsed_ns": 100163705
+              },
+              {
+                "calls": 416758,
+                "elapsed_ns": 100056284
+              },
+              {
+                "calls": 416758,
+                "elapsed_ns": 102663579
+              },
+              {
+                "calls": 416758,
+                "elapsed_ns": 99877933
+              }
+            ],
+            "ns_per_call": 240.3402094260938,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 6740,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 584652377
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251366,
+            "windows": [
+              {
+                "calls": 241076,
+                "elapsed_ns": 100001684
+              },
+              {
+                "calls": 241076,
+                "elapsed_ns": 99667002
+              },
+              {
+                "calls": 241076,
+                "elapsed_ns": 99842263
+              },
+              {
+                "calls": 241076,
+                "elapsed_ns": 99810793
+              },
+              {
+                "calls": 241076,
+                "elapsed_ns": 99790413
+              }
+            ],
+            "ns_per_call": 414.022105062304,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 4220,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 572434298
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251392,
+            "windows": [
+              {
+                "calls": 386950,
+                "elapsed_ns": 92753383
+              },
+              {
+                "calls": 386950,
+                "elapsed_ns": 92712653
+              },
+              {
+                "calls": 386950,
+                "elapsed_ns": 92821033
+              },
+              {
+                "calls": 386950,
+                "elapsed_ns": 92750064
+              },
+              {
+                "calls": 386950,
+                "elapsed_ns": 92943023
+              }
+            ],
+            "ns_per_call": 239.70379377180515,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 4060,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 548235102
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251408,
+            "windows": [
+              {
+                "calls": 241779,
+                "elapsed_ns": 100011934
+              },
+              {
+                "calls": 241779,
+                "elapsed_ns": 99903383
+              },
+              {
+                "calls": 241779,
+                "elapsed_ns": 101087520
+              },
+              {
+                "calls": 241779,
+                "elapsed_ns": 101053910
+              },
+              {
+                "calls": 241779,
+                "elapsed_ns": 99872013
+              }
+            ],
+            "ns_per_call": 413.6502094888307,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 4180,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 574682880
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251483,
+            "windows": [
+              {
+                "calls": 414086,
+                "elapsed_ns": 99644042
+              },
+              {
+                "calls": 414086,
+                "elapsed_ns": 99836373
+              },
+              {
+                "calls": 414086,
+                "elapsed_ns": 100206185
+              },
+              {
+                "calls": 414086,
+                "elapsed_ns": 99341910
+              },
+              {
+                "calls": 414086,
+                "elapsed_ns": 99324380
+              }
+            ],
+            "ns_per_call": 240.63610457731002,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 4150,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 580556283
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251461,
+            "windows": [
+              {
+                "calls": 242038,
+                "elapsed_ns": 100162685
+              },
+              {
+                "calls": 242038,
+                "elapsed_ns": 102133886
+              },
+              {
+                "calls": 242038,
+                "elapsed_ns": 100686628
+              },
+              {
+                "calls": 242038,
+                "elapsed_ns": 100079434
+              },
+              {
+                "calls": 242038,
+                "elapsed_ns": 99963114
+              }
+            ],
+            "ns_per_call": 413.83041092720975,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 4210,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 575875578
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 0.5811839393201258,
+          "lower": 0.580109362736202,
+          "upper": 0.581500399463949,
+          "confidence": 0.95,
+          "resamples": 10000,
+          "seed": 17026480007551895980,
+          "pairs": 6
+        },
+        "decision": "regressed",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.05
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "9e0b520bba9a96b40605f81272edeaebcd51090d1aed9e3dce3a7701f9d235f1"
+    },
+    {
+      "cell_id": "fieldvec-dot-1024-1core",
+      "key": "fieldvec-dot-1024-1core",
+      "role": "exploratory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251509,
+            "windows": [
+              {
+                "calls": 85365,
+                "elapsed_ns": 100299056
+              },
+              {
+                "calls": 85365,
+                "elapsed_ns": 100276925
+              },
+              {
+                "calls": 85365,
+                "elapsed_ns": 100279115
+              },
+              {
+                "calls": 85365,
+                "elapsed_ns": 100419197
+              },
+              {
+                "calls": 85365,
+                "elapsed_ns": 100434796
+              }
+            ],
+            "ns_per_call": 1174.9435482926258,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 23370,
+              "pack_ns": 1490,
+              "unpack_ns": 3320,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 597210478
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251488,
+            "windows": [
+              {
+                "calls": 66017,
+                "elapsed_ns": 99900674
+              },
+              {
+                "calls": 66017,
+                "elapsed_ns": 103863145
+              },
+              {
+                "calls": 66017,
+                "elapsed_ns": 99940124
+              },
+              {
+                "calls": 66017,
+                "elapsed_ns": 99785323
+              },
+              {
+                "calls": 66017,
+                "elapsed_ns": 100014284
+              }
+            ],
+            "ns_per_call": 1513.8543708438735,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 25740,
+              "pack_ns": 1470,
+              "unpack_ns": 3770,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 572085896
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251515,
+            "windows": [
+              {
+                "calls": 84722,
+                "elapsed_ns": 99908914
+              },
+              {
+                "calls": 84722,
+                "elapsed_ns": 99554581
+              },
+              {
+                "calls": 84722,
+                "elapsed_ns": 99620422
+              },
+              {
+                "calls": 84722,
+                "elapsed_ns": 99704372
+              },
+              {
+                "calls": 84722,
+                "elapsed_ns": 100257035
+              }
+            ],
+            "ns_per_call": 1176.8415759779043,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 26251,
+              "pack_ns": 1380,
+              "unpack_ns": 3340,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 596096741
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251569,
+            "windows": [
+              {
+                "calls": 65520,
+                "elapsed_ns": 100205364
+              },
+              {
+                "calls": 65520,
+                "elapsed_ns": 100237766
+              },
+              {
+                "calls": 65520,
+                "elapsed_ns": 100299905
+              },
+              {
+                "calls": 65520,
+                "elapsed_ns": 101139040
+              },
+              {
+                "calls": 65520,
+                "elapsed_ns": 101847395
+              }
+            ],
+            "ns_per_call": 1530.8288308913309,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 25521,
+              "pack_ns": 1470,
+              "unpack_ns": 3590,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 573173162
+          }
+        },
+        {
+          "index": 2,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251666,
+            "windows": [
+              {
+                "calls": 84036,
+                "elapsed_ns": 98934828
+              },
+              {
+                "calls": 84036,
+                "elapsed_ns": 98931478
+              },
+              {
+                "calls": 84036,
+                "elapsed_ns": 98489075
+              },
+              {
+                "calls": 84036,
+                "elapsed_ns": 99101939
+              },
+              {
+                "calls": 84036,
+                "elapsed_ns": 99148939
+              }
+            ],
+            "ns_per_call": 1177.2910181350849,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 23361,
+              "pack_ns": 1410,
+              "unpack_ns": 3210,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 591404844
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251650,
+            "windows": [
+              {
+                "calls": 65509,
+                "elapsed_ns": 101384991
+              },
+              {
+                "calls": 65509,
+                "elapsed_ns": 99939434
+              },
+              {
+                "calls": 65509,
+                "elapsed_ns": 99693742
+              },
+              {
+                "calls": 65509,
+                "elapsed_ns": 99074069
+              },
+              {
+                "calls": 65509,
+                "elapsed_ns": 99330970
+              }
+            ],
+            "ns_per_call": 1521.832755804546,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 22640,
+              "pack_ns": 1430,
+              "unpack_ns": 3390,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 568634717
+          }
+        },
+        {
+          "index": 3,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251690,
+            "windows": [
+              {
+                "calls": 84768,
+                "elapsed_ns": 99685302
+              },
+              {
+                "calls": 84768,
+                "elapsed_ns": 99606542
+              },
+              {
+                "calls": 84768,
+                "elapsed_ns": 99575981
+              },
+              {
+                "calls": 84768,
+                "elapsed_ns": 100212765
+              },
+              {
+                "calls": 84768,
+                "elapsed_ns": 100073505
+              }
+            ],
+            "ns_per_call": 1175.9779869762174,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 22990,
+              "pack_ns": 1370,
+              "unpack_ns": 1690,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 595180217
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251728,
+            "windows": [
+              {
+                "calls": 65774,
+                "elapsed_ns": 100397886
+              },
+              {
+                "calls": 65774,
+                "elapsed_ns": 100037044
+              },
+              {
+                "calls": 65774,
+                "elapsed_ns": 100404176
+              },
+              {
+                "calls": 65774,
+                "elapsed_ns": 109038665
+              },
+              {
+                "calls": 65774,
+                "elapsed_ns": 99909773
+              }
+            ],
+            "ns_per_call": 1526.4068780977286,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 25720,
+              "pack_ns": 1420,
+              "unpack_ns": 3640,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 578638133
+          }
+        },
+        {
+          "index": 4,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251802,
+            "windows": [
+              {
+                "calls": 85310,
+                "elapsed_ns": 100261836
+              },
+              {
+                "calls": 85310,
+                "elapsed_ns": 100303525
+              },
+              {
+                "calls": 85310,
+                "elapsed_ns": 100358056
+              },
+              {
+                "calls": 85310,
+                "elapsed_ns": 100145695
+              },
+              {
+                "calls": 85310,
+                "elapsed_ns": 100580407
+              }
+            ],
+            "ns_per_call": 1175.7534286719024,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 25770,
+              "pack_ns": 1500,
+              "unpack_ns": 3130,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 598047032
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251783,
+            "windows": [
+              {
+                "calls": 65937,
+                "elapsed_ns": 100224934
+              },
+              {
+                "calls": 65937,
+                "elapsed_ns": 100159655
+              },
+              {
+                "calls": 65937,
+                "elapsed_ns": 100385007
+              },
+              {
+                "calls": 65937,
+                "elapsed_ns": 101709583
+              },
+              {
+                "calls": 65937,
+                "elapsed_ns": 100895149
+              }
+            ],
+            "ns_per_call": 1522.4381910005004,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 22160,
+              "pack_ns": 1410,
+              "unpack_ns": 3330,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 572117886
+          }
+        },
+        {
+          "index": 5,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1251814,
+            "windows": [
+              {
+                "calls": 85414,
+                "elapsed_ns": 99936144
+              },
+              {
+                "calls": 85414,
+                "elapsed_ns": 100012964
+              },
+              {
+                "calls": 85414,
+                "elapsed_ns": 100078114
+              },
+              {
+                "calls": 85414,
+                "elapsed_ns": 99782703
+              },
+              {
+                "calls": 85414,
+                "elapsed_ns": 103722805
+              }
+            ],
+            "ns_per_call": 1170.9200365279696,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "pclmulqdq-scalar-xmm",
+            "conversion": {
+              "setup_ns": 23651,
+              "pack_ns": 1420,
+              "unpack_ns": 3310,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 599039888
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 1251824,
+            "windows": [
+              {
+                "calls": 65874,
+                "elapsed_ns": 100059754
+              },
+              {
+                "calls": 65874,
+                "elapsed_ns": 100045394
+              },
+              {
+                "calls": 65874,
+                "elapsed_ns": 100725028
+              },
+              {
+                "calls": 65874,
+                "elapsed_ns": 100057534
+              },
+              {
+                "calls": 65874,
+                "elapsed_ns": 99998224
+              }
+            ],
+            "ns_per_call": 1518.9230045237878,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "avx2+vpclmulqdq-ymm",
+            "conversion": {
+              "setup_ns": 25280,
+              "pack_ns": 1410,
+              "unpack_ns": 3560,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 3
+            },
+            "elapsed_ns": 569985204
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 0.7725105474321382,
+          "lower": 0.7698729754579847,
+          "upper": 0.7748300668790029,
+          "confidence": 0.95,
+          "resamples": 10000,
+          "seed": 3939033917835799044,
+          "pairs": 6
+        },
+        "decision": "regressed",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.05
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "f3f4ce68fd0a584c776a1c7ed05f0b3d06cd02ecff5be25a4ad982ec05b2b902"
+    }
+  ]
+}

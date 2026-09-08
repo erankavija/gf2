@@ -1,0 +1,24 @@
+{
+  "tool": "target/release/benchmark-acceptance",
+  "tool_sha256": "3f555693ae01720cce9962595fa1a68e965b2d3e3f90bbca912c474f709d88a1",
+  "receipt": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation",
+  "receipt_sha256": "210ff5d6c7c07ac3a5bed2b713868f8f6a47375bbc6b2fd0a4d2f1ca660901c7",
+  "original_receipt_unchanged": true,
+  "valid_snapshot": {
+    "exit": 0,
+    "stdout": "GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0"
+  },
+  "corrupted_copy": {
+    "mutation": "Append a comment to the receipt-local candidate clmul.rs snapshot; original receipt remains untouched.",
+    "exit": 1,
+    "stdout": "GF2_BENCHMARK_ACCEPTANCE=Rejected qualifies=false findings=1",
+    "findings": [
+      {
+        "rule": "P-05",
+        "severity": "error",
+        "cell": null,
+        "message": "producing inputs: producing-input snapshot content differs"
+      }
+    ]
+  }
+}
