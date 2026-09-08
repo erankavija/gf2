@@ -44,3 +44,16 @@ output agreements. The earlier untimed preparation remains in
 `superseded-before-final-rebuild/`. The initial snapshot failure in
 `snapshot-inputs-final.log` records the unavailable compiler cache; the final
 refresh uses the repository no-sccache override and existing offline dependencies.
+
+`pilot-claim-red.log` preserves the P-03 no-claim failure (and fixture preparation
+errors). `pilot-claim-green-suite.log` retains the test fixture's initially
+underdeclared resolution and the final complete passing shared suite. The
+canonical raw-pair/seed/ledger recomputation remains strict for underdeclared
+resolution and altered claims. `pilot-claim-clippy.log` and
+`pilot-claim-evaluator-build.log` identify the passing lint and release evaluator
+build. The full final CI rerun is `cargo-ci-after-acceptance-fix.log`.
+
+The quality family stops at its accepted negative pilot. No quality confirmation
+is run. The matched confirmation's original rejected summary is preserved in
+`../v3-r1-matched-confirmation-rejection/`; its independent reevaluation audit
+records unchanged receipt bytes in `../v3-r1-matched-confirmation-reevaluation.log`.
