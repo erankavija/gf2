@@ -1,6 +1,6 @@
 # Zen 3 benchmark protocol
 
-Protocol `zen3-benchmark-protocol` version 2. This document is the executable
+Protocol `zen3-benchmark-protocol` version 3. This document is the executable
 shared protocol required by the
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
 of epic `1a379447`. Every rule below is enforced by a check the acceptance tool
@@ -14,7 +14,7 @@ crate is the canonical home.
 
 ## Identity and versioning
 
-- The protocol identity is the pair `zen3-benchmark-protocol` version 2, the
+- The protocol identity is the pair `zen3-benchmark-protocol` version 3, the
   constants `PROTOCOL_ID` and `PROTOCOL_VERSION` in `src/protocol.rs`.
 - The content identity of this document, the addendum schema, the measurement
   contract and every addendum is an `ArtifactPin`: its original path, its
@@ -24,12 +24,12 @@ crate is the canonical home.
   rejects a missing snapshot or digest mismatch (P-02, P-03). Git revisions,
   commit ancestry and whole-tree state are optional navigation metadata and do
   not decide acceptance or resume compatibility.
-- This is version 2. [The amendment record](amendment-v2.md) identifies the
-  scientific changes. Version 1 is evaluated using its receipt-local pinned
-  document and v1 rules; its receipts, snapshots and negative results remain
-  immutable. Confirmation under v2 uses fresh samples. The evaluator refuses
-  an explicit version different from the receipt pin (P-01, P-22, P-13).
-- The addendum schema identity is `zen3-benchmark-addendum-v2`; receipts carry
+- This is version 3. [The amendment record](amendment-v3.md) identifies the
+  superseded v1/v2 rules and evidence. Their receipts, snapshots and negative
+  results remain immutable. Confirmation under v3 uses fresh samples. The
+  evaluator refuses an explicit version different from the receipt pin
+  (P-01, P-22, P-13).
+- The addendum schema identity is `zen3-benchmark-addendum-v3`; receipts carry
   `zen3-benchmark-receipt-v1`; acceptance summaries carry
   `zen3-benchmark-acceptance-v1`; runner plans carry `zen3-benchmark-plan-v1`.
 
@@ -76,7 +76,7 @@ improvement and non-regression cells, `material_gap_threshold` and
 `equivalence_margin` for comparator-gap cells) and
 `complexity_budget.max_added_source_lines` for adoptable cells.
 
-V2 `frozen_utc` is a validated whole-second UTC calendar time and must not
+V3 `frozen_utc` is a validated whole-second UTC calendar time and must not
 follow the opening record. The opening `campaign-start` record freezes `receipt::CampaignFacts` before
 any cell measurement. Acceptance projects the receipt and saved plan into that
 same typed representation and uses the runner's semantic comparison (P-23).
@@ -84,7 +84,7 @@ The projection binds the exact plan bytes, protocol, contract, schema and
 addendum pins, producing-input closure, toolchain, numerical settings and
 deviation flag, arm descriptors and executable identities. Checkpoint identity
 also binds ordered work, process descriptors, lifecycle, features, threads and
-host affinity. V2 also binds hostname, kernel, model, CPU flags, governors,
+host affinity. V3 also binds hostname, kernel, model, CPU flags, governors,
 SMT and the complete observed topology. Each session retains its own timestamp,
 load and available memory in `session_hosts` and the journal; those three
 informational fields can vary. All material fields must match the first session
@@ -94,13 +94,15 @@ The addendum pin names immutable receipt-local bytes. Resolution evidence names 
 repository-relative pilot `receipt.json` and its SHA-256. Before opening the
 campaign log, the runner captures that receipt at
 `inputs/resolution-evidence/receipt.json`; the acceptance tool verifies the
-snapshot's digest and `pilot` label and rejects missing, self-referential or
-non-pilot evidence (P-03). Thus the pilot evidence and all settings derived
-from it are frozen before confirmation begins. A run with a timing override
+snapshot's digest, `pilot` label, and family identity. It recomputes the widest
+relative bootstrap half-width from the pilot's paired bytes and rejects a
+declared resolution below that conservative value. Missing, self-referential,
+cross-family, or non-pilot evidence rejects (P-03). Thus the pilot evidence
+and all settings derived from it are frozen before confirmation begins. A run with a timing override
 records `settings_deviation: true`; the tool then reports every cell as
 `not-confirmatory` (P-04).
 
-Failed confirmations stay. V2 uses `family_wise.ledger_path`, the independently
+Failed confirmations stay. V3 uses `family_wise.ledger_path`, the independently
 maintained append-only JSONL family ledger. Create the empty genesis file once
 before the family's first campaign and retain it with all stages and receipts.
 The runner requires the file to exist, locks it, and appends a reservation before
@@ -122,7 +124,7 @@ every link, terminal campaign/addendum/cell count, and recomputes the comparison
 count from that prefix (P-22). Removing an interior failed attempt breaks its
 successor's link; truncating a prefix removes the required terminal reservation.
 The premeasurement pin anchors the prefix against later rewriting. V1's
-`prior_trials` and supplied count are empty in v2 and do not control correction.
+`prior_trials` and supplied count are empty in v3 and do not control correction.
 A renamed family is a different scientific question, not a way to retry the same
 question without its history. The contract trusts contributors to retain the
 canonical family file, as it trusts their raw measurements; it is not a defense
@@ -160,7 +162,7 @@ Cache-state policy is declared per cell and applied by the arm, which reports
   `timing::FIXTURE_BANKS`. Rotation and the declared working-set size are
   established; rotation alone does not prove eviction from any cache level.
 
-Outlier policy: no sample is removed. A window slower than
+Outlier policy: no sample is removed. A window at or above
 `flagged_window_factor` times its own execution's median is flagged and counted
 (`abtest::flagged_windows`); a confirmatory cell whose flagged fraction exceeds
 `max_flagged_fraction` is `unstable` and does not qualify. The attempt cap
@@ -180,7 +182,9 @@ pair $i$. Values above 1 favour the candidate. The interval is the percentile
 bootstrap [Efron1979] [EfronTibshirani1993]: draw $n$ pairs with replacement
 $B$ times, recompute $\hat{s}$ on each draw, sort the replicates and take the
 nearest-rank quantiles at $\alpha_c/2$ and $1 - \alpha_c/2$, where $\alpha_c$
-is the per-comparison error rate below. Resampling whole pairs keeps the
+is the declared corrected per-comparison error rate below. The runner and
+evaluator pass that alpha directly to rank selection; they do not reconstruct
+it from a displayed confidence. Resampling whole pairs keeps the
 pairing intact. The generator is xoshiro256** seeded through SplitMix64
 [BlackmanVigna2021] [Steele2014], implemented in `abtest.rs` without an external
 dependency, so the interval is bit-reproducible from the raw samples and the
@@ -191,7 +195,7 @@ seed (P-20).
 The family is the canonical question named by the ledger. Let $m$ be the sum
 of all confirmatory/holdout cell reservations through this campaign (at least
 one for exploratory summaries), recomputed by `trial_ledger::verify`. Let $t$
-be the number of non-exploratory reservations through this campaign. V2 spends
+be the number of non-exploratory reservations through this campaign. V3 spends
 $\alpha_t=\alpha/[t(t+1)]$ on attempt $t$; exploratory summaries use $t=1$.
 The sum of these attempt budgets over any finite or infinite sequence is at
 most $\alpha$. Within an attempt, Bonferroni [Dunn1961] uses
@@ -232,8 +236,9 @@ uses the material-gap threshold as $\theta_{\text{imp}}$ and its `improved`
 means a material gap in the comparator's favour that needs attribution.
 `regressed` is `fail`, `inconclusive` stays `inconclusive`. There is no blanket
 15% or 1.5x threshold: every family declares its own margins with a rationale
-tied to consumer benefit and to its pilot-measured resolution, and the schema
-rejects a worthwhile speedup that lies inside that resolution (P-03).
+tied to consumer benefit and to its pilot-measured resolution. Every declared
+worthwhile speedup, equivalence margin, and material-gap threshold strictly
+exceeds one plus that resolution; equality rejects (P-03).
 
 ## Frozen shared settings
 
@@ -250,7 +255,7 @@ the code.
 | `pilot_max_pairs` | `24` | Pilots never exceed a confirmatory sample so they cannot masquerade as confirmation. |
 | `windows_per_execution` | `5` | The retained calibration protocol's window count (`timing::WINDOWS`); five windows give a per-execution median robust to one disturbed window. |
 | `window_target_ms` | `100` | Long enough that timer and loop overhead are negligible for nanosecond kernels; short enough that whole-consumer executions stay bounded. |
-| `flagged_window_factor` | `2` | A window above twice its own execution median is flagged; this does not identify its cause. |
+| `flagged_window_factor` | `2` | A window at or above twice its own execution median is flagged; this does not identify its cause. |
 | `max_flagged_fraction` | `0.1` | More than a tenth of flagged windows marks the cell unstable under this protocol; no cause is inferred and no samples are trimmed. |
 | `max_pilot_trials_per_cell` | `8` | Bounds exploratory search per cell; a family declares a value up to this cap. |
 | `max_confirmatory_attempts_per_candidate` | `1` | One confirmatory attempt per candidate identity and protocol version; the family ledger counts every attempt. |
@@ -260,7 +265,7 @@ the code.
 ### Bootstrap numerical resolution
 
 Ten thousand draws do not guarantee any arbitrary endpoint resolution. For each
-v2 non-exploratory cell, P-20 recomputes an independent deterministic seed stream
+v3 non-exploratory cell, P-20 recomputes an independent deterministic seed stream
 (the cell seed XOR `0xd1b54a32d192ed03`). Both endpoint shifts, relative to the
 point estimate, must fit the frozen pilot-derived measurement resolution.
 Each tail must also contain at least twenty expected draws at the corrected
@@ -334,8 +339,8 @@ $$
 h=\sqrt{\frac{\log(2/\alpha_q)}{2N}}.
 $$
 
-This is Hoeffding's finite-sample bound for independent bounded variables,
-Theorem 2 of [the original paper](https://doi.org/10.1080/01621459.1963.10500830).
+This is Hoeffding's finite-sample bound for independent bounded variables
+[Hoeffding1963].
 It is conservative, remains nonzero for an observed zero-error sample, and
 requires no independent-bit assumption. Marginal FER uses Wilson-95 on the
 frame error indicators; the method identifier is
@@ -367,9 +372,9 @@ contracts are reported without asserting equivalence.
   (P-09). Native, tuned-portable and conservative-portable builds are separate
   arms, never mixed in one arm.
 - Timed work runs under `dev/scripts/ccx1-bench-flock.sh`; the runner refuses
-  to measure unless it inherits the held lock descriptor and an independent
-  `flock` attempt conflicts (`host::inherited_lock`), and journals the lock
-  evidence (P-07). No Cargo command runs under the lock.
+  to measure unless it observes an inherited descriptor for the held lock and
+  a conflicting independent `flock` attempt (`host::inherited_lock`), and
+  journals those observations (P-07).
 - The runner observes at run time the CPU model and flags, kernel, per-CPU
   governors, SMT state, its own affinity mask, the sysfs topology (core,
   package, thread siblings, last-level cache sharing), load average and
@@ -398,7 +403,7 @@ protocol, contract, schema, addendum, producing-input snapshot, process
 descriptors and executable digests. Resume compares these content identities;
 source-control locators and unrelated repository files do not participate.
 Acceptance verifies the saved plan digest, validates its schema and addendum
-connections, and checks campaign, issue, label, seed, lock wrapper, timing,
+connections, and checks campaign, issue, label, seed, lock observations, timing,
 arm descriptors, cell inputs, arm pairing and sample counts against the receipt
 and journal (P-23, P-11, P-13, P-15). An omitted exploratory `pilot_pairs`
 selects the frozen `pilot_min_pairs`; confirmation uses `confirmatory_pairs`.
@@ -454,11 +459,11 @@ receipt. Neither is a performance result about gf2.
 |---|---|
 | P-01 | Receipt envelope is `zen3-benchmark-receipt-v1`; the pinned protocol and addendum versions agree with each other and any explicitly requested evaluation version. |
 | P-02 | Protocol, contract and addendum-schema pins name the canonical source paths, literal receipt-local snapshot paths and 64-hex digests; missing snapshots and digest mismatches reject. |
-| P-03 | The addendum matches its receipt-local snapshot, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt snapshot. |
+| P-03 | The addendum matches its receipt-local snapshot, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt snapshot from the same family whose widest relative bootstrap half-width supports the declared resolution. |
 | P-04 | Receipt settings equal the frozen shared settings unless a deviation is declared; a deviation makes every cell non-confirmatory. |
 | P-05 | The manifest and every declared producing/build input match their receipt-local content snapshot, and the toolchain is recorded. Source-control metadata is informational. |
 | P-06 | The host observation carries model, flags, kernel, governors, affinity and topology. |
-| P-07 | Lock evidence carries an absolute lock path, the holder PID, the observation and the wrapper. |
+| P-07 | Lock evidence records the inherited held descriptor and conflicting-lock observation with its absolute lock path and holder PID. |
 | P-08 | The worker report carries the runner thread count. |
 | P-09 | Every arm named by a cell is described with an executable digest. |
 | P-10 | The execution log matches its digest, replays under the journal rules, opens with `campaign-start`, and was announced before the first cell. |

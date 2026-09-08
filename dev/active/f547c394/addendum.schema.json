@@ -1,20 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "zen3-benchmark-addendum-v2",
-  "title": "Zen 3 benchmark protocol family addendum, protocol version 2",
+  "$id": "zen3-benchmark-addendum-v3",
+  "title": "Zen 3 benchmark protocol family addendum, protocol version 3",
   "description": "Independently frozen family and cell settings consumed with protocol.md. A null value in a nullable field is an unresolved setting: it makes every cell that depends on it non-confirmatory. Addenda cannot override shared protocol settings; shared values that appear here must equal the frozen ones.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "protocol", "family", "frozen", "effect", "complexity_budget", "family_wise", "search_budget", "holdout", "cells"],
   "properties": {
-    "schema": { "const": "zen3-benchmark-addendum-v2" },
+    "schema": { "const": "zen3-benchmark-addendum-v3" },
     "protocol": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "version"],
       "properties": {
         "id": { "const": "zen3-benchmark-protocol" },
-        "version": { "const": 2 }
+        "version": { "const": 3 }
       }
     },
     "family": {

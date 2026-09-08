@@ -178,17 +178,20 @@ pub struct BootstrapInterval {
     pub lower: f64,
     pub upper: f64,
     pub confidence: f64,
+    /// Declared two-sided error rate used for nearest-rank tail selection.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub alpha: f64,
     pub resamples: u32,
     pub seed: u64,
     pub pairs: usize,
 }
 
 /// Resamples whole pairs with replacement and reports the nearest-rank
-/// percentile interval of the speedup at the given two-sided confidence.
+/// percentile interval of the speedup at the declared two-sided error rate.
 pub fn paired_bootstrap_speedup(
     pairs: &[PairedObservation],
     resamples: u32,
-    confidence: f64,
+    alpha: f64,
     seed: u64,
 ) -> Result<BootstrapInterval, AbError> {
     if pairs.len() < 2 {
@@ -197,8 +200,8 @@ pub fn paired_bootstrap_speedup(
     if resamples < 100 {
         return Err(AbError("bootstrap needs at least 100 resamples".into()));
     }
-    if !(0.5..1.0).contains(&confidence) {
-        return Err(AbError("confidence must lie in [0.5, 1)".into()));
+    if !(0.0 < alpha && alpha <= 0.5) {
+        return Err(AbError("two-sided alpha must lie in (0, 0.5]".into()));
     }
     let estimate = speedup_of_medians(pairs)?;
     let mut generator = Xoshiro256StarStar::seed_from_u64(seed);
@@ -212,18 +215,43 @@ pub fn paired_bootstrap_speedup(
         replicates.push(speedup_of_medians(&draw)?);
     }
     replicates.sort_by(|a, b| a.partial_cmp(b).expect("finite replicates"));
-    let alpha = 1.0 - confidence;
     let count = replicates.len();
-    let rank = |quantile: f64| ((quantile * count as f64).ceil() as usize).clamp(1, count) - 1;
     Ok(BootstrapInterval {
         estimate,
-        lower: replicates[rank(alpha / 2.0)],
-        upper: replicates[rank(1.0 - alpha / 2.0)],
-        confidence,
+        lower: replicates[bootstrap_rank(alpha / 2.0, count)],
+        upper: replicates[bootstrap_rank(1.0 - alpha / 2.0, count)],
+        confidence: 1.0 - alpha,
+        alpha,
         resamples,
         seed,
         pairs: pairs.len(),
     })
+}
+
+/// Preserves the v1/v2 evaluator's confidence-parameterized interval.
+///
+/// Version 3 callers pass their declared corrected alpha to
+/// [`paired_bootstrap_speedup`]. This compatibility boundary remains only while
+/// committed v1/v2 receipts need reproducible evaluation.
+pub fn paired_bootstrap_speedup_legacy(
+    pairs: &[PairedObservation],
+    resamples: u32,
+    confidence: f64,
+    seed: u64,
+) -> Result<BootstrapInterval, AbError> {
+    if !(0.5..1.0).contains(&confidence) {
+        return Err(AbError("confidence must lie in [0.5, 1)".into()));
+    }
+    paired_bootstrap_speedup(pairs, resamples, 1.0 - confidence, seed)
+}
+
+/// Zero-based nearest-rank index for a percentile in a sorted sample.
+fn bootstrap_rank(quantile: f64, count: usize) -> usize {
+    ((quantile * count as f64).ceil() as usize).clamp(1, count) - 1
+}
+
+fn is_zero(value: &f64) -> bool {
+    *value == 0.0
 }
 
 /// Family-declared speedup margins.
@@ -300,7 +328,7 @@ pub fn flagged_windows(ns_per_call: &[f64], factor: f64) -> Result<usize, AbErro
     let center = median(&mut sorted)?;
     Ok(ns_per_call
         .iter()
-        .filter(|value| **value > factor * center)
+        .filter(|value| **value >= factor * center)
         .count())
 }
 
@@ -404,9 +432,20 @@ mod tests {
                 candidate_ns_per_call: 100.0 + index as f64,
             })
             .collect();
-        let interval = paired_bootstrap_speedup(&pairs, 1000, 0.95, 7).unwrap();
+        let interval = paired_bootstrap_speedup(&pairs, 1000, 0.05, 7).unwrap();
         assert!(interval.lower <= interval.estimate && interval.estimate <= interval.upper);
         assert_eq!(interval.pairs, 10);
+    }
+
+    #[test]
+    fn declared_alpha_tail_ranks_cover_frozen_family_sizes() {
+        for comparisons in [1, 2, 5, 10, 25] {
+            let alpha = 0.05 / f64::from(comparisons);
+            assert_eq!(
+                bootstrap_rank(alpha / 2.0, 10_000),
+                250 / comparisons as usize - 1
+            );
+        }
     }
 
     #[test]
