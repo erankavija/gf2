@@ -44,8 +44,8 @@ cell as slower. Its [acceptance summary](../../bench_results/1d0da41f/v3-confirm
 classifies all five cells as `not-confirmatory` under P-20. The retrospective
 v1 reservation and the fresh v3 reservation produce ten family comparisons;
 the second-attempt family alpha is 0.0083333333 and the per-comparison alpha is
-0.0008333333. Ten thousand bootstrap draws therefore provide only about 8.33
-expected tail draws, below the protocol's fixed minimum of twenty. This limit
+0.0008333333. Ten thousand bootstrap draws therefore provide only about 4.17
+expected draws in each tail, below the protocol's fixed minimum of twenty. This limit
 is independent of the observed interval widths. The one permitted v3 candidate
 attempt is spent, so no timing retry or post-hoc method change is made.
 
