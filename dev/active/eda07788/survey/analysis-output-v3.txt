@@ -1,0 +1,22 @@
+cargo-budget: 24 jobs (1 live, 24 cpus)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.06s
+PASS zero-fill semantics: 148 shifts over lengths [0, 1, 63, 64, 65, 127, 128, 4096, 64800] match an independent zero-fill reference with canonical indexing and zero tail padding
+PASS wrap is a different operation: 88/88 nonzero offsets give a different result under wrap-around rotation than under gf2's zero-fill shift
+
+AGREE  BG2 target_n=256 target_k=121 (Z=22, full_k=220, full_n=1144, 2Z=44, parity_kept=179): 256 selected bits identical; lifting gf2 (Kb=10, Z=22) vs AFF3CT (Kb=6, Z=22)
+AGREE  BG2 target_n=512 target_k=200 (Z=26, full_k=260, full_n=1352, 2Z=52, parity_kept=364): 512 selected bits identical; lifting gf2 (Kb=10, Z=26) vs AFF3CT (Kb=8, Z=26)
+AGREE  BG2 target_n=1024 target_k=400 (Z=52, full_k=520, full_n=2704, 2Z=104, parity_kept=728): 1024 selected bits identical; lifting gf2 (Kb=10, Z=52) vs AFF3CT (Kb=8, Z=52)
+AGREE  BG1 target_n=1024 target_k=512 (Z=24, full_k=528, full_n=1632, 2Z=48, parity_kept=560): 1024 selected bits identical; lifting same (Kb, Z)
+AGREE  BG1 target_n=2048 target_k=1024 (Z=48, full_k=1056, full_n=3264, 2Z=96, parity_kept=1120): 2048 selected bits identical; lifting same (Kb, Z)
+AGREE  BG1 target_n=4096 target_k=2048 (Z=96, full_k=2112, full_n=6528, 2Z=192, parity_kept=2240): 4096 selected bits identical; lifting same (Kb, Z)
+
+6 configurations agree, 0 diverge, out of 6

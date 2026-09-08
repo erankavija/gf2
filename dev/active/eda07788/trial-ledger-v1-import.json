@@ -1,0 +1,51 @@
+{
+  "schema": "retrospective-trial-ledger-derivation-v1",
+  "family": "dvb-t2-bit-interleave-baselines",
+  "purpose": "Account for the completed protocol-v1 confirmation in the continuing family. This imported line is retrospective accounting, not a premeasurement reservation.",
+  "source": {
+    "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation/receipt.json",
+    "plan": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation/plan.json",
+    "addendum_snapshot": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation/inputs/family-addendum.json",
+    "receipt_sha256": "7aa2efe0979c6482ec340a9966df3e80eb1406e773188c279ae793a7e6364073",
+    "plan_sha256": "88c66a3fcf37ed547116be71594a82b75c2094a5522cf8d641d95682185b410f",
+    "addendum_sha256": "8d9059db17e9168b8d3fa914d25c1366c71feaed3d8c9188cdbbf3632b6515aa"
+  },
+  "source_fields": {
+    "campaign": "receipt.campaign_id",
+    "family": "decoded receipt-local addendum family.id",
+    "protocol_version": "decoded receipt-local addendum protocol.version",
+    "comparisons": "count of decoded addendum cells whose role is not exploratory"
+  },
+  "candidate_identity": {
+    "implementation": "tuning_campaign_support::trial_ledger::candidate_ids",
+    "inputs": [
+      "decoded receipt-local family addendum",
+      "saved runner plan",
+      "receipt.arms"
+    ],
+    "normalization": "For every non-exploratory plan cell, serialize its candidate ArmRecord after removing description and executable_path; SHA-256 the bytes; sort and deduplicate.",
+    "ids_by_arm": {
+      "gf2-native": "843e8e84d263c9c9c9b479600f4136838c82471cbd6a41496d3375737f65e307",
+      "xdsopl-external": "b99c12ba619003ee5d1120e99b6a5219dcc981c7e5a7ab653a1a866b85381cd7"
+    }
+  },
+  "prior_confirmation_search": {
+    "receipt_directories": [
+      "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation"
+    ],
+    "failed_or_interrupted_confirmations": []
+  },
+  "ledger_entry": {
+    "sequence": 0,
+    "predecessor": "0000000000000000000000000000000000000000000000000000000000000000",
+    "family": "dvb-t2-bit-interleave-baselines",
+    "campaign": "confirmation-eda07788-20260908t094903z",
+    "addendum_sha256": "8d9059db17e9168b8d3fa914d25c1366c71feaed3d8c9188cdbbf3632b6515aa",
+    "comparisons": 6,
+    "protocol_version": 1,
+    "candidates": [
+      "843e8e84d263c9c9c9b479600f4136838c82471cbd6a41496d3375737f65e307",
+      "b99c12ba619003ee5d1120e99b6a5219dcc981c7e5a7ab653a1a866b85381cd7"
+    ]
+  }
+}

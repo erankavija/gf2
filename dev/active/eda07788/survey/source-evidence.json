@@ -1,0 +1,229 @@
+{
+  "schema": "shift-permutation-source-evidence-v1",
+  "commits": {
+    "aff3ct": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+    "aff3ct-conf": "ecae10cd0375f12febe2f5513f8ca39f2540c640",
+    "srsran": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+    "xdsopl-ldpc": "32357d8ad55a6a302c34e093759f0454e45cca56"
+  },
+  "claims": [
+    {
+      "claim": "xdsopl-dvb-t2-standard",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "README.md",
+      "line": 50,
+      "text": "* [en_302755v010401p.pdf](https://www.etsi.org/deliver/etsi_en/302700_302799/302755/01.04.01_60/en_302755v010401p.pdf)",
+      "why": "The project names ETSI EN 302 755 v1.4.1."
+    },
+    {
+      "claim": "xdsopl-dvb-t2-table-a1",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "tables_handler.cc",
+      "line": 150,
+      "text": "return new LDPC<DVB_T2_TABLE_A1>();",
+      "why": "The program selects the rate-1/2 DVB-T2 table."
+    },
+    {
+      "claim": "xdsopl-pitl-definition",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 63,
+      "text": "struct PITL",
+      "why": "PITL is the parity-interleaving stage."
+    },
+    {
+      "claim": "xdsopl-pctitl-definition",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 87,
+      "text": "struct PCTITL",
+      "why": "PCTITL composes parity interleaving with column twisting."
+    },
+    {
+      "claim": "xdsopl-ct8-definition",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 251,
+      "text": "struct CT8",
+      "why": "CT8 supplies the eight-column twist."
+    },
+    {
+      "claim": "xdsopl-ct12-definition",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 279,
+      "text": "struct CT12",
+      "why": "CT12 supplies the twelve-column twist."
+    },
+    {
+      "claim": "xdsopl-normal-r12-instantiation",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "itls_handler.cc",
+      "line": 81,
+      "text": "return new BITL<code_type, PCTITL<code_type, 64800, 90, CT>, _71425360>();",
+      "why": "The program instantiates normal rate-1/2 PCTITL."
+    },
+    {
+      "claim": "xdsopl-short-r12-instantiation",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "itls_handler.cc",
+      "line": 102,
+      "text": "return new BITL<code_type, PCTITL<code_type, 16200, 25, CT>, _71425360>();",
+      "why": "The program instantiates short rate-1/2 PCTITL."
+    },
+    {
+      "claim": "aff3ct-bg-selection",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 30,
+      "text": "if (K <= 292 || (K <= 3824 && R <= 0.67f) || R <= 0.25f)",
+      "why": "AFF3CT selects the 5G base graph from K and rate."
+    },
+    {
+      "claim": "aff3ct-kb-560-640",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 77,
+      "text": "else if (K > 560 && K <= 640)",
+      "why": "The pinned implementation uses Kb=8 in this band."
+    },
+    {
+      "claim": "aff3ct-mother-dimensions",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 115,
+      "text": "base_graph.K_LDPC = base_graph.K_LDPC * base_graph.Zc;",
+      "why": "AFF3CT scales mother-code dimensions by Zc."
+    },
+    {
+      "claim": "aff3ct-puncture-entry",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 33,
+      "text": "Puncturer_5G<B, Q>::_puncture(const B* X_N1, B* X_N2, const size_t /*frame_id*/) const",
+      "why": "The 5G puncturer owns the selection operation."
+    },
+    {
+      "claim": "aff3ct-puncture-selection",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 42,
+      "text": "X_N2[k] = X_N1[j % (this->N_cw - 2 * this->base_graph.Zc) + 2 * this->base_graph.Zc];",
+      "why": "The operation reads the circular buffer while skipping fillers."
+    },
+    {
+      "claim": "aff3ct-puncturer-factory",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Puncturer/LDPC/Puncturer_LDPC.cpp",
+      "line": 114,
+      "text": "if (this->type == \"LDPC_5G\") return new module::Puncturer_5G<B, Q>(this->K, this->N, this->N_cw, this->pattern);",
+      "why": "The puncturer factory constructs Puncturer_5G."
+    },
+    {
+      "claim": "aff3ct-codec-5g-wiring",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Tools/Codec/LDPC/Codec_LDPC.cpp",
+      "line": 75,
+      "text": "if (enc->type == \"LDPC_5G\")",
+      "why": "The codec wires encoder and decoder to the 5G standard and dimensions."
+    },
+    {
+      "claim": "aff3ct-encoder-5g-header",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Encoder/LDPC/Encoder_LDPC.cpp",
+      "line": 101,
+      "text": "if (this->type == \"LDPC_5G\")",
+      "why": "The encoder factory exposes 5G source and build paths."
+    },
+    {
+      "claim": "aff3ct-encoder-5g-build",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Encoder/LDPC/Encoder_LDPC.cpp",
+      "line": 154,
+      "text": "return new module::Encoder_LDPC_QC_fast<B>(",
+      "why": "The encoder factory selects the QC implementation."
+    },
+    {
+      "claim": "aff3ct-decoder-5g-build",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Decoder/LDPC/Decoder_LDPC.cpp",
+      "line": 156,
+      "text": "if (this->H_path.empty() && this->standard == \"5G\")",
+      "why": "The decoder factory derives its 5G base graph and matrix path."
+    },
+    {
+      "claim": "aff3ct-qc-rotation",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC.cpp",
+      "line": 87,
+      "text": "std::rotate(Gen.begin() + j * Zc, Gen.begin() + (j + 1) * Zc - 1, Gen.begin() + (j + 1) * Zc);",
+      "why": "The QC encoder rotates each Zc-sized generator block."
+    },
+    {
+      "claim": "aff3ct-qc-rotation-call",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC.cpp",
+      "line": 105,
+      "text": "res = this->_CSRAA(this->Zc, this->G[i], X_N + i * this->Zc, this->K_LDPC, this->N);",
+      "why": "The encoder invokes the rotation from its per-block loop."
+    },
+    {
+      "claim": "srsran-circular-shift-backward",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "include/srsran/srsvec/circ_shift.h",
+      "line": 71,
+      "text": "void circ_shift_backward(T&& out, const U& in, unsigned shift)",
+      "why": "srsRAN exposes a circular backward shift."
+    },
+    {
+      "claim": "srsran-ldpc-encoder-rotation",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_encoder_avx2.cpp",
+      "line": 218,
+      "text": "srsvec::circ_shift_backward(",
+      "why": "The AVX2 LDPC encoder consumes the circular shift."
+    }
+  ],
+  "inventories": {
+    "aff3ct-5g-matrix-count": 97
+  },
+  "negative_searches": [
+    {
+      "project": "aff3ct",
+      "roots": [
+        "src",
+        "include"
+      ],
+      "case_insensitive_terms": [
+        "dvb-t2",
+        "dvb_t2",
+        "302 755",
+        "302755"
+      ],
+      "matching_paths": []
+    }
+  ],
+  "errors": []
+}
