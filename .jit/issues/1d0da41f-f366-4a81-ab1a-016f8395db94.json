@@ -14,6 +14,228 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "4cc897ed267e40a8bfa1fbc18950e6539c4456d0e22a6b84d42d9dab43132117",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "40e2223beca83b7f66904cbc1f443b05c52c94ca48e6215b5e7b8b0b83089282",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/1d0da41f/run-clmul-ab.sh",
+          "resolved_path": "dev/bench_results/1d0da41f/run-clmul-ab.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3581d006221ba2a387eb6a4c9c933309d9a1b83674ebef26a7697b62eec68efb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e43c11408930f5c5306577e3b1167fee9946ee7cedc08eee7b6f734626a8e05d",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/default-failing-test.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/default-failing-test.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "96c7089898abec5b0a51ec38ec53108be8ea4f23efba17bc7d8a4e258dd244fd",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/preflight-tests.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/preflight-tests.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ymm-clmul-dispatch.json",
+          "resolved_path": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "49d85124f418eda5069b50435313721fb5aa3acf1d81ecb45a7bdcc5c51c6181",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/ci-prerequisite-failures.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/ci-prerequisite-failures.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3f6b3bc16c707471ded7e4ad971a2f880c13efa9a34a9060417c89c864c6aca1",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/asm-gate.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/asm-gate.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dedf6bdcb818242169c83c425b82e42f220d34f45f207fdf7284deb577b27e35",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/portable-tests.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/portable-tests.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "89c0cd7ea52cd11099e30492b9f632a59d8161c9cc6a438efd59aa08d0f9f410",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/req07-failing-test.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/req07-failing-test.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "66eb27945ceecc6ff22db51f8fb1e2dc603ad703d9b7e25f47a2d6c928891ba0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "producing-inputs.json",
+          "resolved_path": "dev/active/1d0da41f/producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e7aa1aa534d3a938d7049c723167afde82dcbb5126f3846df842151afea92213",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "210ff5d6c7c07ac3a5bed2b713868f8f6a47375bbc6b2fd0a4d2f1ca660901c7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "788518d4ea707d02e41c00dfef00561bdc4bea5ccae95aeb86395a32e6e3a319",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/adoption-tests.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/adoption-tests.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6dec69703bd75605cfce9b0f32fe6a43dd4c7c95eff463bb4879e0e790870eb2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/cargo-ci.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/cargo-ci.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a8d63435609caaf5f0bb2a22586b9de2913a338c3941bed8c560a4de6b72d728",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "evidence/assembly-audit.json",
+          "resolved_path": "dev/active/1d0da41f/evidence/assembly-audit.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b6f0f5ebaee59ab6ba5a5feffc371654219099281f107ee97740695fe49272e2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt",
+          "resolved_path": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ae6fbc48e8619859e42671b73bbe53045df6d002d6c37f94f383902e0dc3a63e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "evidence/reproduction.md",
+          "resolved_path": "dev/active/1d0da41f/evidence/reproduction.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4f607e48db53859e48c12839f2d0778c11aefd8e767d97c8f0feb2262173fe94",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/baseline-source.tar.gz",
+          "resolved_path": "dev/active/1d0da41f/survey/baseline-source.tar.gz"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "1d0da41f findings and falsification",
+      "path": "dev/active/1d0da41f/findings.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "789f06888c90e4ac33e77aa78accded1a172abc4618228154fb31813d328be37",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "receipt-validation.json",
+          "resolved_path": "dev/active/1d0da41f/evidence/receipt-validation.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Reproduction instructions",
+      "path": "dev/active/1d0da41f/evidence/reproduction.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Assembly audit",
+      "path": "dev/active/1d0da41f/evidence/assembly-audit.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Receipt validation",
+      "path": "dev/active/1d0da41f/evidence/receipt-validation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "cargo-ci verdict",
+      "path": "dev/active/1d0da41f/evidence/cargo-ci.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Confirmatory receipt",
+      "path": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Confirmation execution log",
+      "path": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Rust 1.95 YMM VPCLMULQDQ assembly",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:15.026003250Z",
@@ -37,5 +259,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
-  "updated_at": "2026-09-07T18:42:24.113006856Z"
+  "updated_at": "2026-09-08T10:18:07.350389993Z"
 }
