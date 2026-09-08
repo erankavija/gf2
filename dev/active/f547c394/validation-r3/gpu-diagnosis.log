@@ -1,0 +1,74 @@
+cargo-budget: 4 jobs (6 live, 24 cpus)
+cargo-budget: another test run holds the lock; waiting up to 600s
+   Compiling syn v2.0.111
+   Compiling zerocopy v0.8.31
+   Compiling num-traits v0.2.19
+   Compiling rayon v1.11.0
+   Compiling rustix v1.1.2
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.3.1
+   Compiling rand v0.8.5
+   Compiling rand_chacha v0.9.0
+   Compiling gf2-kernels-hip v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/crates/gf2-kernels-hip)
+   Compiling regex-automata v0.4.13
+   Compiling num-integer v0.1.47
+   Compiling serde_derive v1.0.228
+   Compiling tracing-attributes v0.1.31
+   Compiling tracing v0.1.44
+   Compiling matchers v0.2.0
+   Compiling num-bigint v0.4.8
+   Compiling serde v1.0.228
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/crates/gf2-core)
+warning: function `choose_k_block` is never used
+   --> crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling toml_datetime v0.6.11
+   Compiling serde_spanned v0.6.9
+   Compiling toml_edit v0.22.27
+   Compiling tracing-serde v0.2.0
+   Compiling tracing-subscriber v0.3.23
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling toml v0.8.23
+   Compiling rand_distr v0.4.3
+   Compiling rand v0.9.2
+   Compiling gf2-stats v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/crates/gf2-stats)
+   Compiling tempfile v3.23.0
+   Compiling rusty-fork v0.3.1
+   Compiling proptest v1.9.0
+   Compiling trybuild v1.0.116
+warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
+   Compiling gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/crates/gf2-algebra)
+   Compiling gf2-coding v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/crates/gf2-coding)
+   Compiling gf2-sim v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/crates/gf2-sim)
+    Finished `ci-test` profile [optimized] target(s) in 1m 13s
+────────────
+ Nextest run ID 6604d28d-af48-456e-aff0-07c347ef3f78 with nextest profile: ci
+    Starting 1 test across 54 binaries (636 tests skipped)
+        FAIL [   0.017s] (1/1) gf2-sim gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates
+  stdout ───
+
+    running 1 test
+    test gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates ... FAILED
+
+    failures:
+
+    failures:
+        gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 354 filtered out; finished in 0.00s
+
+  stderr ───
+
+    thread 'gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates' (5912) panicked at crates/gf2-sim/src/gpu/mod.rs:418:53:
+    build dispatcher on gfx1030: Fatal(KernelLaunch { hip_code: 100, kernel: "GfxTarget::detect_device", args: "hip context: hipGetDeviceCount" })
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+────────────
+     Summary [   0.019s] 1 test run: 0 passed, 1 failed, 636 skipped
+        FAIL [   0.017s] (1/1) gf2-sim gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates
+error: test run failed

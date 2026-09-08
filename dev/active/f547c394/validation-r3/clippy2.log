@@ -1,0 +1,17 @@
+cargo-budget: 4 jobs (6 live, 24 cpus)
+    Checking tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/dev/tools/tuning-campaign-support)
+error[E0603]: function `utc_now` is private
+    --> dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs:315:48
+     |
+ 315 |             &tuning_campaign_support::journal::utc_now()?,
+     |                                                ^^^^^^^ private function
+     |
+note: the function `utc_now` is defined here
+    --> dev/tools/tuning-campaign-support/src/journal.rs:2286:1
+     |
+2286 | pub(crate) fn utc_now() -> io::Result<String> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0603`.
+error: could not compile `tuning-campaign-support` (bin "benchmark-ab-runner" test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

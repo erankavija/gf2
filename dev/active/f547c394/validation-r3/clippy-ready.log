@@ -1,0 +1,4 @@
+cargo-budget: 6 jobs (4 live, 24 cpus)
+    Blocking waiting for file lock on build directory
+    Checking tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/dev/tools/tuning-campaign-support)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 20.04s

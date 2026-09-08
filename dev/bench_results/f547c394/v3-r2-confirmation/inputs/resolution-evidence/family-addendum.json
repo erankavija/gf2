@@ -1,0 +1,172 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "protocol-smoke-v3-r2",
+    "issue": "f547c394",
+    "purpose": "decoder-family",
+    "description": "Synthetic timing and deterministic decoder-quality pipeline proof; no gf2 performance or coding-quality claim."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-08T16:36:19Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.5,
+    "rationale": "The two-pass baseline provides a visible exploratory effect for the pipeline pilot.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.3,
+    "equivalence_rationale": "Pipeline-only tolerance for identical synthetic arms; no adoption claim.",
+    "material_gap_threshold": 1.5,
+    "material_gap_rationale": "No comparator-gap objective is declared in this pipeline proof."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This synthetic pipeline proof adopts no implementation."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/f547c394/v3-r2-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "decoder-pipeline",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "xor-fold",
+        "size": {
+          "words": 4096
+        },
+        "seed": 1
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": {
+        "arm_kind": "fastest-quality-compatible",
+        "code": {
+          "identity": "synthetic-pipeline-code",
+          "n": 64,
+          "k": 32,
+          "h_sha256": "7ab16f41f89b8a3083ae77bcbb31e182f34c6191efdfda7412ddc24b8302627a"
+        },
+        "input": {
+          "llr_source": "synthetic deterministic frame slots, not channel samples",
+          "llr_sha256": "63b66737851afd4489bad67727fb5e0cf65bbc287039989f4044437f006ae065",
+          "frames": 1000,
+          "seed": 20260908,
+          "codeword_source": "both",
+          "snr_db": 0.0
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "min-sum",
+          "factor": null
+        },
+        "iteration_cap": 1,
+        "stopping": {
+          "kind": "fixed",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.5,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "cold-first-use",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "xor-fold",
+        "size": {
+          "words": 4096
+        },
+        "seed": 2
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": {
+        "arm_kind": "fastest-quality-compatible",
+        "code": {
+          "identity": "synthetic-pipeline-code",
+          "n": 64,
+          "k": 32,
+          "h_sha256": "7ab16f41f89b8a3083ae77bcbb31e182f34c6191efdfda7412ddc24b8302627a"
+        },
+        "input": {
+          "llr_source": "synthetic deterministic frame slots, not channel samples",
+          "llr_sha256": "63b66737851afd4489bad67727fb5e0cf65bbc287039989f4044437f006ae065",
+          "frames": 1000,
+          "seed": 20260908,
+          "codeword_source": "both",
+          "snr_db": 0.0
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "min-sum",
+          "factor": null
+        },
+        "iteration_cap": 1,
+        "stopping": {
+          "kind": "fixed",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.5,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      },
+      "cold_calls": 10000
+    }
+  ]
+}
