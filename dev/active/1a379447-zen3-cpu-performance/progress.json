@@ -77,14 +77,14 @@
           "short_id": "c077a88b",
           "title": "Establish compatible LDPC decoder benchmark arms",
           "classification": "research",
-          "status": "in flight on codex gpt-6-astra. Past the F3 wall — producing an LDPC matched-algorithm pilot receipt — by making the P-18 decoder-quality repair itself in benchmark-ab-runner.rs and protocol_contracts.rs. Those edits are committed on its branch and COLLIDE with the v2 rework's F3 fix; resolve in favour of the rework's implementation and re-run this survey. Its source-evidence.json citation ledger audited clean on 37 citations and is the pattern the epic is adopting.",
+          "status": "in progress on gpt-6-astra xhigh because the LDPC methodology and result shape Waves 3 through 6. Dirty session-5 evidence is preserved losslessly at 02beeb9c and is source material only. A fresh main-based reconstruction keeps the canonical v3 runner, contracts and GPU behavior, adds only the narrow plan-bound family producing-input selection proven necessary, and regenerates both LDPC families under v3. No timed campaign has started.",
           "dispatch": {
             "model": "gpt-6-astra",
-            "worktree": ".agents/worktrees/agent-c077a88b",
-            "branch": "worktree-agent-c077a88b",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "worktree": ".worktrees-local/agent-c077a88b-v3",
+            "branch": "worktree-agent-c077a88b-v3w",
+            "base": "a416fa33",
+            "attempt": 3,
+            "session": 6
           }
         },
         {
@@ -92,14 +92,14 @@
           "short_id": "eda07788",
           "title": "Establish compatible shift and coding-permutation baselines",
           "classification": "research",
-          "status": "pilot accepted, ten of ten cells measured; gf2 leads the xdsopl comparator 2.2x on Normal FECFRAME and ~6x on Short, with the comparator's cost dominated by representation conversion that the whole-consumer cell correctly includes. Falsified its own committed claim that AFF3CT lacks 5G NR support and built an executable comparison showing identical bit selection in all six surveyed configurations. Three citation corrections outstanding. Confirmation held for v2.",
+          "status": "in progress on gpt-5.6-sol high. A fresh main-based branch is preserving the accepted protocol-v1 receipts as historical evidence, correcting the three citations, adding the source-evidence ledger, and migrating issue-owned launch material to v3. Timed work waits for c077a88b's canonical family producing-input binding.",
           "dispatch": {
-            "model": "claude-opus (native subagent)",
-            "worktree": ".agents/worktrees/agent-eda07788",
-            "branch": "worktree-agent-eda07788",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "model": "gpt-5.6-sol",
+            "worktree": ".worktrees-local/agent-eda07788-v3",
+            "branch": "worktree-agent-eda07788-v3w",
+            "base": "5203ae88",
+            "attempt": 3,
+            "session": 6
           }
         },
         {
@@ -152,14 +152,14 @@
           "short_id": "1d0da41f",
           "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
           "classification": "implementation",
-          "status": "delivered and merged into main at 4d630aec. Confirmatory receipt accepted and REJECTS YMM adoption: production keeps sequential PCLMULQDQ via canonical detect-time lane selection, the REQ-07 predicate/safety repair is retained, and the falsified premise is stated in the findings. cargo-ci exit 0 on the worker tree (5959 tests). Also carries three CI-contract fixes that unblocked every worker: the observation-quiet feature gate, the HIP dispatcher test no longer asserting this host's gfx1030, and a Rust 1.95 clippy collapsible-if in receipt.rs. ISSUE STAYS OPEN: the receipt pins protocol v1 and is queued for the v2 re-run.",
+          "status": "in progress on gpt-5.6-sol medium. The production predicate and safety repair remains merged at 4d630aec and the accepted protocol-v1 receipt remains immutable negative evidence. The worker is regenerating the same five-cell pilot and confirmation under v3; production code changes only if current-main validation proves drift.",
           "dispatch": {
-            "model": "gpt-6-astra",
+            "model": "gpt-5.6-sol",
             "worktree": ".agents/worktrees/agent-1d0da41f",
             "branch": "worktree-agent-1d0da41f",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "base": "1abedf0a",
+            "attempt": 3,
+            "session": 6
           },
           "merge_commit": "4d630aec",
           "note": "F14 biases toward declaring improvement and this receipt declined to, so the negative result holds a fortiori: the known defect works against the conclusion reached, not for it."
