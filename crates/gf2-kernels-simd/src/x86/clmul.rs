@@ -52,11 +52,11 @@ pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
     (hi as u128) << 64 | (lo as u128)
 }
 
-/// Batch carry-less multiplication of aligned slices.
+/// Sequential PCLMULQDQ batch carry-less multiplication.
 ///
 /// Computes `out[i] = a[i] * b[i]` (carry-less, no reduction) for each index.
-/// Uses VPCLMULQDQ when available for higher throughput, falling back to
-/// sequential PCLMULQDQ otherwise.
+/// Lane selection belongs to [`crate::gf2m::detect`]; this entry point
+/// executes the sequential lane without a per-call feature check.
 ///
 /// # Arguments
 ///
@@ -86,29 +86,50 @@ pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
 ///
 /// # Complexity
 ///
-/// O(n) where n is the slice length. With VPCLMULQDQ (256-bit), processes 2 elements per instruction.
+/// O(n) where n is the slice length.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_batch(a: &[u64], b: &[u64], out: &mut [u128]) {
+    assert_batch_lengths(a, b, out);
+    clmul_batch_sequential(a, b, out);
+}
+
+pub(crate) fn assert_batch_lengths(a: &[u64], b: &[u64], out: &[u128]) {
     assert_eq!(a.len(), b.len(), "input slices must have equal length");
     assert_eq!(
         a.len(),
         out.len(),
         "output slice must have same length as inputs"
     );
+}
 
-    // Try VPCLMULQDQ for 2-wide processing (two 128-bit lanes per 256-bit register)
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    {
-        use std::arch::is_x86_feature_detected;
-        if is_x86_feature_detected!("vpclmulqdq") && is_x86_feature_detected!("avx512vl") {
-            clmul_batch_vpclmul(a, b, out);
-            return;
-        }
-    }
+/// Lane tag published when [`crate::gf2m::detect_with_clmul_batch_preference`] selects the 256-bit
+/// VPCLMULQDQ kernel.
+pub(crate) const CLMUL_BATCH_PATH_YMM: &str = "avx2+vpclmulqdq-ymm";
 
-    // Fallback: sequential PCLMULQDQ
-    clmul_batch_sequential(a, b, out);
+/// Lane tag published when [`crate::gf2m::detect`] selects the sequential
+/// PCLMULQDQ kernel.
+pub(crate) const CLMUL_BATCH_PATH_XMM: &str = "pclmulqdq-scalar-xmm";
+
+/// Reports whether this host supports the 256-bit VPCLMULQDQ raw batch lane.
+///
+/// The detect-time selector uses this capability predicate. It names exactly the
+/// features [`clmul_batch_vpclmul`] executes:
+///
+/// - `avx2` for the 256-bit lane construction and 128-bit lane extraction,
+/// - `vpclmulqdq` for the two-lane carry-less multiply,
+/// - `pclmulqdq` and `sse4.1` for the odd-length tail through [`clmul_u64`].
+///
+/// AVX512VL is unnecessary for the VEX-encoded YMM instruction.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[inline]
+pub(crate) fn ymm_batch_lane_supported() -> bool {
+    use std::arch::is_x86_feature_detected;
+
+    is_x86_feature_detected!("avx2")
+        && is_x86_feature_detected!("vpclmulqdq")
+        && is_x86_feature_detected!("pclmulqdq")
+        && is_x86_feature_detected!("sse4.1")
 }
 
 /// Sequential PCLMULQDQ fallback for batch carry-less multiplication.
@@ -120,17 +141,27 @@ unsafe fn clmul_batch_sequential(a: &[u64], b: &[u64], out: &mut [u128]) {
     }
 }
 
-/// VPCLMULQDQ batch carry-less multiplication for 2x throughput.
+/// VPCLMULQDQ batch carry-less multiplication, two products per instruction.
 ///
 /// Processes 2 carry-less multiplications per 256-bit VPCLMULQDQ instruction.
-/// Each `__m256i` holds two 64-bit operands in the low halves of its 128-bit lanes.
+/// Each `__m256i` holds two 64-bit operands in the low halves of its 128-bit
+/// lanes. An odd trailing element goes through [`clmul_u64`].
 ///
 /// # Safety
 ///
-/// Requires AVX512VL and VPCLMULQDQ CPU features.
+/// Requires the AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1 CPU features:
+/// AVX2 for the 256-bit lane construction and extraction, VPCLMULQDQ for the
+/// two-lane carry-less multiply, and PCLMULQDQ with SSE4.1 for the
+/// odd-length tail. [`ymm_batch_lane_supported`] is the runtime predicate
+/// that establishes them.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[target_feature(enable = "avx512vl", enable = "vpclmulqdq")]
-unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128]) {
+#[target_feature(
+    enable = "avx2",
+    enable = "vpclmulqdq",
+    enable = "pclmulqdq",
+    enable = "sse4.1"
+)]
+pub(crate) unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128]) {
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
     #[cfg(target_arch = "x86_64")]
@@ -355,75 +386,131 @@ mod tests {
         }
     }
 
-    #[test]
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    fn test_clmul_batch_matches_sequential() {
-        use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            return;
+    /// Operand palette that stresses every structural case of a 64x64
+    /// carry-less product: zero, one, the low and high single bits, the
+    /// all-ones word, and the two alternating masks.
+    const ADVERSARIAL: [u64; 8] = [
+        0,
+        1,
+        0x8000_0000_0000_0000,
+        0xFFFF_FFFF_FFFF_FFFF,
+        0xAAAA_AAAA_AAAA_AAAA,
+        0x5555_5555_5555_5555,
+        0x0123_4567_89AB_CDEF,
+        0xFEDC_BA98_7654_3210,
+    ];
+
+    /// SplitMix64, so random operands are reproducible without a dependency.
+    fn splitmix64(state: &mut u64) -> u64 {
+        *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+        let mut z = *state;
+        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+        z ^ (z >> 31)
+    }
+
+    /// The batch cases every raw-batch lane reproduces bit for bit.
+    ///
+    /// Lengths cover the empty input, the odd lengths that leave a non-vector
+    /// tail, and the 0/1/63/64/65 word boundaries. Operands cover the
+    /// adversarial palette and seeded random words.
+    fn lane_conformance_cases() -> Vec<(Vec<u64>, Vec<u64>)> {
+        let lengths = [0usize, 1, 2, 3, 4, 5, 7, 63, 64, 65, 127, 128, 129];
+        let mut cases = Vec::new();
+        for len in lengths {
+            let a: Vec<u64> = (0..len)
+                .map(|i| ADVERSARIAL[i % ADVERSARIAL.len()])
+                .collect();
+            let b: Vec<u64> = (0..len)
+                .map(|i| ADVERSARIAL[(i * 3 + 1) % ADVERSARIAL.len()])
+                .collect();
+            cases.push((a, b));
+
+            let mut state = 0xC0FF_EE00_D15E_A5E5 ^ (len as u64);
+            let a: Vec<u64> = (0..len).map(|_| splitmix64(&mut state)).collect();
+            let b: Vec<u64> = (0..len).map(|_| splitmix64(&mut state)).collect();
+            cases.push((a, b));
         }
+        cases
+    }
 
-        let a_vals: Vec<u64> = (0..100)
-            .map(|i| {
-                (i as u64)
-                    .wrapping_mul(0x9E37_79B9_7F4A_7C15)
-                    .wrapping_add(0xDEAD)
-            })
-            .collect();
-        let b_vals: Vec<u64> = (0..100)
-            .map(|i| {
-                (i as u64)
-                    .wrapping_mul(0x6C62_272E_07BB_0142)
-                    .wrapping_add(0xBEEF)
-            })
-            .collect();
+    /// The portable scalar batch reference: the workspace-wide bit-by-bit
+    /// carry-less multiply applied element by element.
+    fn scalar_batch(a: &[u64], b: &[u64]) -> Vec<u128> {
+        a.iter()
+            .zip(b.iter())
+            .map(|(&x, &y)| scalar_clmul(x, y))
+            .collect()
+    }
 
-        // Compute sequentially
-        let expected: Vec<u128> = a_vals
-            .iter()
-            .zip(b_vals.iter())
-            .map(|(&a, &b)| unsafe { clmul_u64(a, b) })
-            .collect();
-
-        // Compute via batch
-        let mut batch_out = vec![0u128; 100];
-        unsafe { clmul_batch(&a_vals, &b_vals, &mut batch_out) };
-
-        assert_eq!(batch_out, expected, "batch output differs from sequential");
+    /// Runs the shared batch conformance suite against one lane.
+    fn assert_lane_matches_scalar(lane: &str, mut run: impl FnMut(&[u64], &[u64], &mut [u128])) {
+        for (a, b) in lane_conformance_cases() {
+            let expected = scalar_batch(&a, &b);
+            let mut out = vec![0u128; a.len()];
+            run(&a, &b, &mut out);
+            assert_eq!(
+                out,
+                expected,
+                "{lane} lane differs from the portable scalar reference at len={}",
+                a.len()
+            );
+        }
     }
 
     #[test]
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    fn test_clmul_batch_odd_length() {
-        use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+    fn ymm_lane_matches_portable_scalar() {
+        if !ymm_batch_lane_supported() {
+            eprintln!("Skipping: host lacks AVX2+VPCLMULQDQ+PCLMULQDQ+SSE4.1");
             return;
         }
-
-        // Test with odd-length slices (exercises the remainder handling)
-        let a_vals = vec![0xABu64, 0xCD, 0xEF];
-        let b_vals = vec![0x12u64, 0x34, 0x56];
-        let mut out = vec![0u128; 3];
-
-        unsafe { clmul_batch(&a_vals, &b_vals, &mut out) };
-
-        for i in 0..3 {
-            let expected = unsafe { clmul_u64(a_vals[i], b_vals[i]) };
-            assert_eq!(out[i], expected, "mismatch at index {i}");
-        }
+        let fns = crate::gf2m::detect_with_clmul_batch_preference(crate::gf2m::ClmulBatchLane::Ymm)
+            .unwrap();
+        assert_lane_matches_scalar(CLMUL_BATCH_PATH_YMM, fns.clmul_batch_fn.unwrap());
     }
 
     #[test]
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    fn test_clmul_batch_empty() {
+    fn sequential_lane_matches_portable_scalar() {
         use std::arch::is_x86_feature_detected;
         if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
             return;
         }
+        assert_lane_matches_scalar(CLMUL_BATCH_PATH_XMM, |a, b, out| unsafe {
+            clmul_batch_sequential(a, b, out);
+        });
+    }
 
-        let mut out: Vec<u128> = vec![];
-        unsafe { clmul_batch(&[], &[], &mut out) };
-        assert!(out.is_empty());
+    #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn dispatched_batch_matches_portable_scalar() {
+        use std::arch::is_x86_feature_detected;
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
+            return;
+        }
+        let fns = crate::gf2m::detect().unwrap();
+        assert_lane_matches_scalar(fns.clmul_batch_path.unwrap(), fns.clmul_batch_fn.unwrap());
+    }
+
+    #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn dispatched_batch_agrees_with_both_lanes() {
+        if !ymm_batch_lane_supported() {
+            eprintln!("Skipping: host lacks the YMM lane");
+            return;
+        }
+        for (a, b) in lane_conformance_cases() {
+            let mut ymm = vec![0u128; a.len()];
+            let mut xmm = vec![0u128; a.len()];
+            unsafe {
+                clmul_batch_vpclmul(&a, &b, &mut ymm);
+                clmul_batch_sequential(&a, &b, &mut xmm);
+            }
+            assert_eq!(ymm, xmm, "lanes disagree at len={}", a.len());
+        }
     }
 
     #[test]

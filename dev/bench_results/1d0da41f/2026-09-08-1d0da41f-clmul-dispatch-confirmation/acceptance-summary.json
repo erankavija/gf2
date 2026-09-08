@@ -1,0 +1,175 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "210ff5d6c7c07ac3a5bed2b713868f8f6a47375bbc6b2fd0a4d2f1ca660901c7",
+  "campaign_id": "confirmation-1d0da41f-20260908t084330z",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "ymm-clmul-dispatch",
+    "comparisons": 5,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.99,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 3,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "raw-batch-small-8-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.7934081580366196,
+        "lower": 0.7791810761940441,
+        "upper": 0.8116984739005485,
+        "confidence": 0.99,
+        "resamples": 10000,
+        "seed": 16397261047810422796,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "raw-batch-odd-tail-65-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.6051679211454423,
+        "lower": 0.6041215922859533,
+        "upper": 0.6063618440869016,
+        "confidence": 0.99,
+        "resamples": 10000,
+        "seed": 14647261453854425098,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "raw-batch-l1-512-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.5853774952384059,
+        "lower": 0.5832968752923793,
+        "upper": 0.5872376905493862,
+        "confidence": 0.99,
+        "resamples": 10000,
+        "seed": 17026480007551895980,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "fieldvec-dot-1024-1core",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.773219985589662,
+        "lower": 0.7682543090941422,
+        "upper": 0.7779571376473804,
+        "confidence": 0.99,
+        "resamples": 10000,
+        "seed": 3939033917835799044,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "raw-batch-l1-512-streaming-6core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "physical-cores-6",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.5856042151054783,
+        "lower": 0.5826670094235852,
+        "upper": 0.5872221853501006,
+        "confidence": 0.99,
+        "resamples": 10000,
+        "seed": 9038975200217216910,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

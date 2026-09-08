@@ -1,0 +1,38 @@
+Command: RUSTUP_TOOLCHAIN=1.95.0 CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-ci.sh
+Exit: 0
+
+The lead merged main (7c54b8f8) during this invocation and created checkpoint
+6b934ec0. The merge changes tracker/documentation, the benchmark-lock wrapper
+and nextest's timeout; it changes no Rust source. The workspace tests passed
+under the preceding stricter 8-second timeout; subsequent artifact checks
+used the updated lock wrapper. No from-start repeat after that lead merge
+was performed. The lead still evaluates gates on the final merged commits.
+
+Verbatim command output:
+
+  ✓ check: ok (6s)
+  ✓ tuning-core-no-default: ok (1s)
+  ✓ tuning-core-codec-only: ok (1s)
+  ✓ tuning-algebra-no-default: ok (1s)
+  ✓ tuning-algebra-codec-only: ok (1s)
+  ✓ tuning-coding-no-default: ok (0s)
+  ✓ tuning-coding-codec-only: ok (1s)
+  ✓ test-build: ok (209s)
+  ✓ test: 5959 passed, 0 failed, 248 skipped (473s)
+  ✓ tuning-profile-build: ok (10s)
+  ✓ tuning-profile-nextest: ok (173s)
+  ✓ tuning-algebra-calibration-build: ok (2s)
+  ✓ tuning-algebra-calibration-nextest: ok (42s)
+  ✓ tuning-campaign-support-build: ok (23s)
+  ✓ tuning-campaign-support-nextest: ok (1s)
+  ✓ tuning-campaign-validator: ok (0s)
+  ✓ tuning-campaign-launcher-syntax: ok (0s)
+  ✓ tuning-lifecycle-cargo: ok (1s)
+  ✓ clippy: ok (19s)
+  ✓ fmt: ok (2s)
+  ✓ baked-core: ok (174s)
+  ✓ tuning-core-artifact: ok (324s)
+  ✓ tuning-algebra-artifacts: ok (395s)
+  ✓ tuning-coding-codec: ok (34s)
+  ✓ tuning-composer: ok (135s)
+

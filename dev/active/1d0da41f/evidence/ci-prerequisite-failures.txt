@@ -1,0 +1,32 @@
+Failures from the first completed workspace test step of scripts/cargo-ci.sh.
+Compiler path prefixes normalized to repository-relative paths.
+
+    thread 'gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates' (49678) panicked at crates/gf2-sim/src/gpu/mod.rs:418:53:
+    build dispatcher on gfx1030: Fatal(KernelLaunch { hip_code: 100, kernel: "GfxTarget::detect_device", args: "hip context: hipGetDeviceCount" })
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+    thread 'tests::producing_input_manifest_rejects_authority_and_path_mutations' (53334) panicked at dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:2615:37:
+    called `Result::unwrap()` on an `Err` value: Os { code: 2, kind: NotFound, message: "No such file or directory" }
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+error: this `if` can be collapsed into the outer `match`
+   --> dev/tools/tuning-campaign-support/src/receipt.rs:886:33
+    |
+886 | / ...                   if !seen_cell {
+887 | | ...                       announced_before_first_cell = true;
+888 | | ...                   }
+    | |_______________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#collapsible_match
+    = note: `-D clippy::collapsible-match` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::collapsible_match)]`
+help: collapse nested if block
+    |
+885 ~                             JournalEvent::OrchestrationStart if is_announcement(record)
+886 ~                                 && !seen_cell => {
+887 |                                     announced_before_first_cell = true;
+888 ~                                 }
+    |
+

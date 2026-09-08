@@ -1,0 +1,50 @@
+{
+  "command": "RUSTUP_TOOLCHAIN=1.95.0 CARGO_CI_NO_SCCACHE=1 EXTRA_RUSTFLAGS='-C link-dead-code' ./scripts/cargo-budget.sh dev/scripts/regen-asm.sh gf2-kernels-simd gf2_kernels_simd::x86::clmul::clmul_u64 crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt 'gf2_kernels_simd::x86::clmul::clmul_batch#0' gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul gf2_kernels_simd::x86::clmul::clmul_barrett_reduce gf2_kernels_simd::gf2m::detect_with_clmul_batch_preference gf2_kernels_simd::clmul_scalar::clmul_u64_scalar",
+  "cwd": "repository root",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "target_cpu": null,
+  "link_dead_code_reason": "Retain the standalone portable scalar symbol; no ISA feature is globally enabled.",
+  "assembly": {
+    "path": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt",
+    "sha256": "b6f0f5ebaee59ab6ba5a5feffc371654219099281f107ee97740695fe49272e2"
+  },
+  "source": {
+    "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+    "sha256": "a4c59d76fb90bcfa4ca9ff87459b80741e88003abd7c71f8d5c4167c915b0616"
+  },
+  "measured_source": {
+    "path": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/inputs/producing/crates/gf2-kernels-simd/src/x86/clmul.rs",
+    "sha256": "e70300c5f2e921c6b5b2f1accb101e1e9c7c468b25fc2fe8428cab5850296e69"
+  },
+  "unchanged_arithmetic_bodies": {
+    "clmul_batch_vpclmul": {
+      "identical": true,
+      "sha256": "d7af12388d1e59b90bde412837d213ac45f89c6d893830d5e8b3fa8591073d70"
+    },
+    "clmul_batch_sequential": {
+      "identical": true,
+      "sha256": "92a60d9470041259578bc6e2a32cebb3e9456b28cd515ff7337771a6967dd04b"
+    },
+    "clmul_u64": {
+      "identical": true,
+      "sha256": "f920d2078e4d739525ccc4dbe9ead8dc4cbad58cc4e4916f21ece940ea99f935"
+    }
+  },
+  "observations": [
+    "YMM vpclmulqdq with packing and extraction retained",
+    "Sequential XMM pclmulqdq and YMM function XMM tail",
+    "Detect-time selector and no-feature None return",
+    "Portable scalar bit-scan, shifts and XOR loop",
+    "No ZMM register"
+  ],
+  "scope": "No new unsafe multiplication kernel; no unrolling, fusion or long-polynomial change.",
+  "production_line_delta_including_comments_and_blanks": {
+    "crates/gf2-kernels-simd/src/gf2m.rs": 49,
+    "crates/gf2-kernels-simd/src/x86/clmul.rs": 31
+  },
+  "total_production_line_delta": 80,
+  "dispatch_source": {
+    "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+    "sha256": "30a6c259fe90dabc84b94c32b61363531b2b33bd819ddcb71e112f8dab8260bb"
+  }
+}

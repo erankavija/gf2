@@ -1,0 +1,46 @@
+# REQ-07 failing evidence: raw batch dispatch on Zen 3
+#
+# Host       : AMD Ryzen 9 5900X (avx2 yes, vpclmulqdq yes, avx512vl no)
+# Tree state : dispatch predicate reads
+#              is_x86_feature_detected!("vpclmulqdq") && is_x86_feature_detected!("avx512vl")
+#              in crates/gf2-kernels-simd/src/x86/clmul.rs
+# Command    : ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-kernels-simd \
+#                  --all-features --cargo-profile ci-test --profile ci \
+#                  -E 'test(clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host) or \
+#                      test(clmul_batch_path_accompanies_clmul_batch_fn)' --no-capture
+# Outcome    : 1 passed, 1 failed. The AVX2+VPCLMULQDQ host selects
+#              "pclmulqdq-scalar-xmm" where the YMM lane is available.
+# Cargo build output above the nextest banner is elided.
+
+    Starting 2 tests across 1 binary (286 tests skipped)
+       START [         ] (1/2) gf2-kernels-simd gf2m::tests::clmul_batch_path_accompanies_clmul_batch_fn
+
+running 1 test
+test gf2m::tests::clmul_batch_path_accompanies_clmul_batch_fn ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 287 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (1/2) gf2-kernels-simd gf2m::tests::clmul_batch_path_accompanies_clmul_batch_fn
+       START [         ] (2/2) gf2-kernels-simd gf2m::tests::clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host
+
+running 1 test
+
+thread 'gf2m::tests::clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host' (1037793) panicked at crates/gf2-kernels-simd/src/gf2m.rs:268:9:
+assertion `left == right` failed: AVX2+VPCLMULQDQ host must select the YMM raw-batch lane (avx512vl on this host: false)
+  left: Some("pclmulqdq-scalar-xmm")
+ right: Some("avx2+vpclmulqdq-ymm")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test gf2m::tests::clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host ... FAILED
+
+failures:
+
+failures:
+    gf2m::tests::clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 287 filtered out; finished in 0.00s
+
+        FAIL [   0.004s] (2/2) gf2-kernels-simd gf2m::tests::clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host
+────────────
+     Summary [   0.009s] 2 tests run: 1 passed, 1 failed, 286 skipped
+        FAIL [   0.004s] (2/2) gf2-kernels-simd gf2m::tests::clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host
+error: test run failed

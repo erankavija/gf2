@@ -1,0 +1,21 @@
+# command: dev/bench_results/1d0da41f/run-clmul-ab.sh confirmation 2026-09-08
+# started_utc: 2026-09-08T08:43:30Z
+# gf2 revision (informational): 3217f1cd6529a9377349ae7b434a57d4de190651
+# mode: confirmation
+# addendum: dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json
+# campaign: confirmation-1d0da41f-20260908t084330z
+# stage: /tmp/gf2-confirmation-1d0da41f-20260908t084330z
+# baseline arm: /tmp/gf2-1d0da41f-arms/target-baseline/release/ymm-clmul-arm
+# candidate arm: /tmp/gf2-1d0da41f-arms/target-candidate/release/ymm-clmul-arm
+# load_avg_start:  11:43:30 up 4 days, 13:12,  5 users,  load average: 6.28, 6.09, 3.84
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-1d0da41f-20260908t084330z/execution.log
+# session 1 exit: 3 (3 = paused after max_cells_per_session)
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-1d0da41f-20260908t084330z/execution.log
+# session 2 exit: 3 (3 = paused after max_cells_per_session)
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-1d0da41f-20260908t084330z/execution.log
+# session 3 exit: 0 (3 = paused after max_cells_per_session)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  11:49:06 up 4 days, 13:18,  5 users,  load average: 3.33, 4.14, 3.64
+# finished_utc: 2026-09-08T08:49:06Z
