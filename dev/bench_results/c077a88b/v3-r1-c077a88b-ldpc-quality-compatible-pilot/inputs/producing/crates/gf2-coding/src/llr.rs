@@ -1,0 +1,1068 @@
+//! Log-Likelihood Ratio (LLR) types and operations for soft-decision decoding.
+//!
+//! # Background
+//!
+//! In soft-decision decoding, we work with **log-likelihood ratios** (LLRs) instead of
+//! hard bit decisions. For a received signal `r` corresponding to transmitted bit `b`:
+//!
+//! ```text
+//! LLR = ln(P(b=0|r) / P(b=1|r))
+//! ```
+//!
+//! **Interpretation**:
+//! - `LLR > 0`: bit is more likely 0
+//! - `LLR < 0`: bit is more likely 1
+//! - `|LLR|`: confidence (magnitude indicates reliability)
+//!
+//! # AWGN Channel Example
+//!
+//! For BPSK modulation over AWGN with noise variance `sigma^2`:
+//! - Bit 0 maps to symbol `+1`
+//! - Bit 1 maps to symbol `-1`
+//! - LLR for received symbol `r`: `LLR = (4 * r) / (2 * sigma^2)`
+//!
+//! # LLR Operations
+//!
+//! Common operations in belief propagation and soft-decision decoding:
+//! - **Hard decision**: `sign(LLR)` gives most likely bit
+//! - **XOR in LLR domain**: `boxplus` operation for convolutional/LDPC decoding
+//! - **Saturation**: clip to prevent overflow in fixed-point arithmetic
+
+#![allow(dead_code)]
+
+/// Log-Likelihood Ratio represented as a floating-point value.
+///
+/// Positive values indicate bit 0 is more likely, negative values indicate bit 1.
+/// The magnitude represents confidence.
+///
+/// **Precision**: Uses `f32` for efficient SIMD operations. This is sufficient
+/// for LDPC decoding where even 6-8 bit fixed-point LLRs work well in practice.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Llr(f32);
+
+/// Deterministic index orders for a slice of reliability magnitudes.
+///
+/// Both orders contain every input index exactly once. [`Self::ascending`]
+/// orders smaller magnitudes first, while [`Self::descending`] orders larger
+/// magnitudes first. Equal numeric magnitudes, including `-0.0` and `0.0`,
+/// are ordered by their original index in both directions.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::llr::ReliabilityPermutation;
+///
+/// let order = ReliabilityPermutation::from_magnitudes(&[2.0, 1.0, 2.0]);
+/// assert_eq!(order.ascending(), &[1, 0, 2]);
+/// assert_eq!(order.descending(), &[0, 2, 1]);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReliabilityPermutation {
+    ascending: Vec<usize>,
+    descending: Vec<usize>,
+}
+
+impl ReliabilityPermutation {
+    /// Builds deterministic ascending and descending index orders.
+    ///
+    /// The input values are interpreted as numeric reliability magnitudes.
+    /// Infinite values participate in the natural `f32` order. Equal values
+    /// are tied by original index, so each returned order is a permutation of
+    /// `0..magnitudes.len()`.
+    ///
+    /// # Arguments
+    ///
+    /// * `magnitudes` - Reliability magnitudes to order by index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any magnitude is NaN. NaN has no numeric ordering and is not
+    /// a valid reliability magnitude for this API.
+    ///
+    /// # Complexity
+    ///
+    /// O(n log n) time and O(n) additional space for `n` magnitudes.
+    pub fn from_magnitudes(magnitudes: &[f32]) -> Self {
+        assert!(
+            !magnitudes.iter().any(|magnitude| magnitude.is_nan()),
+            "reliability magnitude cannot be NaN"
+        );
+
+        let mut ascending: Vec<usize> = (0..magnitudes.len()).collect();
+        ascending.sort_by(|&left, &right| {
+            magnitudes[left]
+                .partial_cmp(&magnitudes[right])
+                .expect("NaN magnitudes were rejected above")
+                .then(left.cmp(&right))
+        });
+
+        let mut descending: Vec<usize> = (0..magnitudes.len()).collect();
+        descending.sort_by(|&left, &right| {
+            magnitudes[right]
+                .partial_cmp(&magnitudes[left])
+                .expect("NaN magnitudes were rejected above")
+                .then(left.cmp(&right))
+        });
+
+        Self {
+            ascending,
+            descending,
+        }
+    }
+
+    /// Returns indices from least reliable to most reliable.
+    ///
+    /// Equal magnitudes retain ascending original-index order.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    pub fn ascending(&self) -> &[usize] {
+        &self.ascending
+    }
+
+    /// Returns indices from most reliable to least reliable.
+    ///
+    /// Equal magnitudes retain ascending original-index order; this is not
+    /// necessarily the reverse of [`Self::ascending`].
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    pub fn descending(&self) -> &[usize] {
+        &self.descending
+    }
+}
+
+impl Llr {
+    /// Creates a new LLR from a raw f32 value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let llr = Llr::new(3.5);  // High confidence in bit 0
+    /// ```
+    pub fn new(value: f32) -> Self {
+        Llr(value)
+    }
+
+    /// Returns the raw LLR value.
+    pub fn value(self) -> f32 {
+        self.0
+    }
+
+    /// Makes a hard decision: returns `false` (bit 0) if LLR >= 0, `true` (bit 1) if LLR < 0.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// assert_eq!(Llr::new(3.5).hard_decision(), false);   // bit 0
+    /// assert_eq!(Llr::new(-2.0).hard_decision(), true);   // bit 1
+    /// assert_eq!(Llr::new(0.0).hard_decision(), false);   // tie goes to 0
+    /// ```
+    pub fn hard_decision(self) -> bool {
+        self.0 < 0.0
+    }
+
+    /// Returns the magnitude (absolute value) of the LLR, representing confidence.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// assert_eq!(Llr::new(3.5).magnitude(), 3.5);
+    /// assert_eq!(Llr::new(-2.0).magnitude(), 2.0);
+    /// ```
+    pub fn magnitude(self) -> f32 {
+        self.0.abs()
+    }
+
+    /// Builds deterministic reliability index orders from LLR magnitudes.
+    ///
+    /// This convenience surface extracts each magnitude with
+    /// [`Llr::magnitude`] and delegates the ordering contract to
+    /// [`ReliabilityPermutation::from_magnitudes`].
+    ///
+    /// # Arguments
+    ///
+    /// * `llrs` - LLR values to order by reliability magnitude.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any LLR has a NaN magnitude.
+    ///
+    /// # Complexity
+    ///
+    /// O(n log n) time and O(n) additional space for `n` LLRs.
+    pub fn reliability_permutation(llrs: &[Llr]) -> ReliabilityPermutation {
+        let magnitudes: Vec<f32> = llrs.iter().map(|llr| llr.magnitude()).collect();
+        ReliabilityPermutation::from_magnitudes(&magnitudes)
+    }
+
+    /// Creates an LLR representing infinite confidence in bit 0.
+    pub fn infinity() -> Self {
+        Llr(f32::INFINITY)
+    }
+
+    /// Creates an LLR representing infinite confidence in bit 1.
+    pub fn neg_infinity() -> Self {
+        Llr(f32::NEG_INFINITY)
+    }
+
+    /// Creates an LLR representing complete uncertainty (equal probability).
+    pub fn zero() -> Self {
+        Llr(0.0)
+    }
+
+    /// Maximum absolute value of the tanh product before applying atanh.
+    ///
+    /// In f32, `tanh(x)` returns exactly `1.0` for `|x| >= ~9.01`, causing
+    /// `atanh(1.0) = Inf`. During iterative LDPC decoding, var-to-check
+    /// messages grow over iterations, making all `tanh(L/2)` values saturate
+    /// to `1.0`, which produces `atanh(1.0) = Inf` → `Inf - Inf = NaN`
+    /// at the variable node update, poisoning the entire decoder.
+    ///
+    /// Clamping the product to `1 - ε` (where `ε = f32::EPSILON ≈ 1.19e-7`)
+    /// bounds the output of `atanh` to approximately `±18.4`, which is finite
+    /// and large enough not to distort the decoding.
+    const MAX_TANH_PRODUCT: f32 = 1.0 - f32::EPSILON;
+
+    /// Saturates the LLR to the range `[-max, max]` to prevent overflow.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// assert_eq!(Llr::new(100.0).saturate(10.0).value(), 10.0);
+    /// assert_eq!(Llr::new(-100.0).saturate(10.0).value(), -10.0);
+    /// assert_eq!(Llr::new(5.0).saturate(10.0).value(), 5.0);
+    /// ```
+    pub fn saturate(self, max: f32) -> Self {
+        Llr(self.0.clamp(-max, max))
+    }
+
+    /// Box-plus operation: approximates LLR of XOR of two independent bits.
+    ///
+    /// For bits `a` and `b` with LLRs `L_a` and `L_b`:
+    /// ```text
+    /// LLR(a XOR b) ≈ 2 * atanh(tanh(L_a/2) * tanh(L_b/2))
+    /// ```
+    ///
+    /// This is equivalent to:
+    /// ```text
+    /// sign(L_a) * sign(L_b) * min(|L_a|, |L_b|)  [min-sum approximation]
+    /// ```
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let a = Llr::new(3.0);
+    /// let b = Llr::new(2.0);
+    /// let result = a.boxplus(b);
+    /// // Result should be positive (both bits likely 0, so XOR likely 0)
+    /// assert!(result.value() > 0.0);
+    /// ```
+    pub fn boxplus(self, other: Llr) -> Llr {
+        let a = self.0 / 2.0;
+        let b = other.0 / 2.0;
+        let product = (a.tanh() * b.tanh()).clamp(-Self::MAX_TANH_PRODUCT, Self::MAX_TANH_PRODUCT);
+        Llr(2.0 * product.atanh())
+    }
+
+    /// Min-sum approximation of box-plus: faster but less accurate.
+    ///
+    /// ```text
+    /// sign(L_a) * sign(L_b) * min(|L_a|, |L_b|)
+    /// ```
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let a = Llr::new(3.0);
+    /// let b = Llr::new(2.0);
+    /// assert_eq!(a.boxplus_minsum(b).value(), 2.0);
+    ///
+    /// let c = Llr::new(3.0);
+    /// let d = Llr::new(-2.0);
+    /// assert_eq!(c.boxplus_minsum(d).value(), -2.0);
+    /// ```
+    pub fn boxplus_minsum(self, other: Llr) -> Llr {
+        let sign = if (self.0 >= 0.0) == (other.0 >= 0.0) {
+            1.0
+        } else {
+            -1.0
+        };
+        Llr(sign * self.0.abs().min(other.0.abs()))
+    }
+
+    /// Multi-operand box-plus operation for check node updates in LDPC decoding.
+    ///
+    /// Computes the LLR of the XOR of multiple independent bits using the exact formula:
+    ///
+    /// $$
+    /// \text{LLR}(b_1 \oplus b_2 \oplus \cdots \oplus b_n) = 2 \cdot \text{atanh}\left(\prod_{i=1}^{n} \tanh\left(\frac{L_i}{2}\right)\right)
+    /// $$
+    ///
+    /// where $L_i$ is the LLR of bit $b_i$.
+    ///
+    /// # Arguments
+    ///
+    /// * `llrs` - Slice of LLRs to combine
+    ///
+    /// # Returns
+    ///
+    /// The combined LLR representing the XOR of all input bits
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let llrs = vec![Llr::new(3.0), Llr::new(2.0), Llr::new(4.0)];
+    /// let result = Llr::boxplus_n(&llrs);
+    /// // All bits likely 0, so XOR likely 0 (positive LLR)
+    /// assert!(result.value() > 0.0);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llrs` is empty.
+    pub fn boxplus_n(llrs: &[Llr]) -> Llr {
+        assert!(!llrs.is_empty(), "Cannot compute boxplus_n of empty slice");
+
+        let product: f32 = llrs.iter().map(|llr| (llr.0 / 2.0).tanh()).product();
+        let clamped = product.clamp(-Self::MAX_TANH_PRODUCT, Self::MAX_TANH_PRODUCT);
+        Llr(2.0 * clamped.atanh())
+    }
+
+    /// Multi-operand min-sum approximation of box-plus for check nodes.
+    ///
+    /// Uses the min-sum approximation for computational efficiency:
+    ///
+    /// $$
+    /// \text{LLR}(b_1 \oplus \cdots \oplus b_n) \approx \left(\prod_{i=1}^{n} \text{sign}(L_i)\right) \cdot \min_{i=1}^{n} |L_i|
+    /// $$
+    ///
+    /// This avoids transcendental functions while maintaining reasonable accuracy.
+    ///
+    /// # Arguments
+    ///
+    /// * `llrs` - Slice of LLRs to combine
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let llrs = vec![Llr::new(3.0), Llr::new(2.0), Llr::new(4.0)];
+    /// assert_eq!(Llr::boxplus_minsum_n(&llrs).value(), 2.0);
+    ///
+    /// let llrs2 = vec![Llr::new(3.0), Llr::new(-2.0), Llr::new(4.0)];
+    /// assert_eq!(Llr::boxplus_minsum_n(&llrs2).value(), -2.0);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llrs` is empty.
+    pub fn boxplus_minsum_n(llrs: &[Llr]) -> Llr {
+        assert!(
+            !llrs.is_empty(),
+            "Cannot compute boxplus_minsum_n of empty slice"
+        );
+
+        // Try SIMD path (no conversion needed - Llr is f32)
+        #[cfg(feature = "simd")]
+        {
+            use once_cell::sync::Lazy;
+            static SIMD_FNS: Lazy<Option<gf2_kernels_simd::llr::LlrFns>> =
+                Lazy::new(gf2_kernels_simd::llr::detect);
+
+            if let Some(ref fns) = *SIMD_FNS {
+                // Direct f32 slice - no conversion!
+                let f32_vals: Vec<f32> = llrs.iter().map(|l| l.0).collect();
+                let result = (fns.minsum_fn)(&f32_vals);
+                return Llr(result);
+            }
+        }
+
+        // Fallback: scalar implementation
+        Self::boxplus_minsum_n_scalar(llrs)
+    }
+
+    /// Scalar implementation of boxplus_minsum_n (always available).
+    fn boxplus_minsum_n_scalar(llrs: &[Llr]) -> Llr {
+        let sign_product: f32 = llrs
+            .iter()
+            .map(|llr| if llr.0 >= 0.0 { 1.0 } else { -1.0 })
+            .product();
+
+        let min_magnitude = llrs
+            .iter()
+            .map(|llr| llr.0.abs())
+            .fold(f32::INFINITY, f32::min);
+
+        Llr(sign_product * min_magnitude)
+    }
+
+    /// Saturate a batch of LLRs to the range `[-max, max]`.
+    ///
+    /// **SIMD Acceleration**: Automatically uses AVX2 if available.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let llrs = vec![Llr::new(100.0), Llr::new(-100.0), Llr::new(5.0)];
+    /// let saturated = Llr::saturate_batch(&llrs, 10.0);
+    /// assert_eq!(saturated[0].value(), 10.0);
+    /// assert_eq!(saturated[1].value(), -10.0);
+    /// assert_eq!(saturated[2].value(), 5.0);
+    /// ```
+    pub fn saturate_batch(llrs: &[Llr], max: f32) -> Vec<Llr> {
+        // TODO: Add SIMD implementation in gf2-kernels-simd
+        // For now, use scalar
+        llrs.iter().map(|llr| llr.saturate(max)).collect()
+    }
+
+    /// Make hard decisions for a batch of LLRs.
+    ///
+    /// Returns `false` (bit 0) if LLR >= 0, `true` (bit 1) if LLR < 0.
+    ///
+    /// **SIMD Acceleration**: Automatically uses AVX2 if available.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let llrs = vec![Llr::new(3.0), Llr::new(-2.0), Llr::new(0.5)];
+    /// let bits = Llr::hard_decision_batch(&llrs);
+    /// assert_eq!(bits, vec![false, true, false]);
+    /// ```
+    pub fn hard_decision_batch(llrs: &[Llr]) -> Vec<bool> {
+        // TODO: Add SIMD implementation in gf2-kernels-simd
+        // For now, use scalar
+        llrs.iter().map(|llr| llr.hard_decision()).collect()
+    }
+
+    /// Normalized min-sum approximation with scaling factor.
+    ///
+    /// Applies a normalization factor $\alpha$ to reduce the bias of min-sum:
+    ///
+    /// $$
+    /// \text{LLR} \approx \alpha \cdot \left(\prod_{i=1}^{n} \text{sign}(L_i)\right) \cdot \min_{i=1}^{n} |L_i|
+    /// $$
+    ///
+    /// Typical values: $\alpha \in [0.75, 0.95]$. Common choice: $\alpha = 0.875$.
+    ///
+    /// # Arguments
+    ///
+    /// * `llrs` - Slice of LLRs to combine
+    /// * `alpha` - Normalization factor (typically 0.75-0.95)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llrs` is empty (delegates to [`Llr::boxplus_minsum_n`]).
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n = `llrs.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let llrs = vec![Llr::new(4.0), Llr::new(6.0)];
+    /// let result = Llr::boxplus_normalized_minsum_n(&llrs, 0.875);
+    /// assert_eq!(result.value(), 0.875 * 4.0);
+    /// ```
+    pub fn boxplus_normalized_minsum_n(llrs: &[Llr], alpha: f32) -> Llr {
+        let minsum = Self::boxplus_minsum_n(llrs);
+        Llr(alpha * minsum.0)
+    }
+
+    /// Offset min-sum approximation with offset correction.
+    ///
+    /// Applies an offset $\beta$ to compensate for min-sum overestimation:
+    ///
+    /// $$
+    /// \text{LLR} \approx \left(\prod_{i=1}^{n} \text{sign}(L_i)\right) \cdot \max\left(0, \min_{i=1}^{n} |L_i| - \beta\right)
+    /// $$
+    ///
+    /// Typical values: $\beta \in [0.25, 0.5]$. Common choice: $\beta = 0.5$.
+    ///
+    /// # Arguments
+    ///
+    /// * `llrs` - Slice of LLRs to combine
+    /// * `beta` - Offset value (typically 0.25-0.5)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llrs` is empty.
+    ///
+    /// # Complexity
+    ///
+    /// O(n) where n = `llrs.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let llrs = vec![Llr::new(4.0), Llr::new(6.0)];
+    /// let result = Llr::boxplus_offset_minsum_n(&llrs, 0.5);
+    /// assert_eq!(result.value(), 3.5);
+    /// ```
+    pub fn boxplus_offset_minsum_n(llrs: &[Llr], beta: f32) -> Llr {
+        assert!(
+            !llrs.is_empty(),
+            "Cannot compute boxplus_offset_minsum_n of empty slice"
+        );
+
+        let sign_product: f32 = llrs
+            .iter()
+            .map(|llr| if llr.0 >= 0.0 { 1.0 } else { -1.0 })
+            .product();
+
+        let min_magnitude = llrs
+            .iter()
+            .map(|llr| llr.0.abs())
+            .fold(f32::INFINITY, f32::min);
+        let offset_magnitude = (min_magnitude - beta).max(0.0);
+
+        Llr(sign_product * offset_magnitude)
+    }
+
+    /// Checks if the LLR value is finite (not NaN or infinity).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// assert!(Llr::new(3.5).is_finite());
+    /// assert!(!Llr::infinity().is_finite());
+    /// assert!(!Llr::neg_infinity().is_finite());
+    /// ```
+    pub fn is_finite(self) -> bool {
+        self.0.is_finite()
+    }
+
+    /// Safe box-plus operation with overflow detection.
+    ///
+    /// Performs box-plus but returns zero LLR (complete uncertainty) if the result
+    /// would be non-finite (NaN or infinity from numerical issues).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let a = Llr::new(3.0);
+    /// let b = Llr::new(2.0);
+    /// let result = a.safe_boxplus(b);
+    /// assert!(result.is_finite());
+    /// ```
+    pub fn safe_boxplus(self, other: Llr) -> Llr {
+        let result = self.boxplus(other);
+        if result.is_finite() {
+            result
+        } else {
+            Llr::zero()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_llr() {
+        let llr = Llr::new(3.5);
+        assert_eq!(llr.value(), 3.5);
+    }
+
+    #[test]
+    fn test_hard_decision_positive() {
+        let llr = Llr::new(3.5);
+        assert!(!llr.hard_decision()); // bit 0
+    }
+
+    #[test]
+    fn test_hard_decision_negative() {
+        let llr = Llr::new(-2.0);
+        assert!(llr.hard_decision()); // bit 1
+    }
+
+    #[test]
+    fn test_hard_decision_zero() {
+        let llr = Llr::new(0.0);
+        assert!(!llr.hard_decision()); // tie goes to 0
+    }
+
+    #[test]
+    fn test_magnitude() {
+        assert_eq!(Llr::new(3.5).magnitude(), 3.5);
+        assert_eq!(Llr::new(-2.0).magnitude(), 2.0);
+        assert_eq!(Llr::new(0.0).magnitude(), 0.0);
+    }
+
+    #[test]
+    fn test_infinity() {
+        let llr = Llr::infinity();
+        assert!(llr.value().is_infinite() && llr.value() > 0.0);
+        assert!(!llr.hard_decision());
+    }
+
+    #[test]
+    fn test_neg_infinity() {
+        let llr = Llr::neg_infinity();
+        assert!(llr.value().is_infinite() && llr.value() < 0.0);
+        assert!(llr.hard_decision());
+    }
+
+    #[test]
+    fn test_zero() {
+        let llr = Llr::zero();
+        assert_eq!(llr.value(), 0.0);
+    }
+
+    #[test]
+    fn test_saturate_positive_overflow() {
+        let llr = Llr::new(100.0).saturate(10.0);
+        assert_eq!(llr.value(), 10.0);
+    }
+
+    #[test]
+    fn test_saturate_negative_overflow() {
+        let llr = Llr::new(-100.0).saturate(10.0);
+        assert_eq!(llr.value(), -10.0);
+    }
+
+    #[test]
+    fn test_saturate_within_range() {
+        let llr = Llr::new(5.0).saturate(10.0);
+        assert_eq!(llr.value(), 5.0);
+    }
+
+    #[test]
+    fn test_boxplus_both_positive() {
+        let a = Llr::new(3.0);
+        let b = Llr::new(2.0);
+        let result = a.boxplus(b);
+        // Both bits likely 0, so XOR likely 0 (positive LLR)
+        assert!(result.value() > 0.0);
+        assert!(result.value() < 3.0); // Should be less than max
+    }
+
+    #[test]
+    fn test_boxplus_opposite_signs() {
+        let a = Llr::new(3.0); // bit likely 0
+        let b = Llr::new(-2.0); // bit likely 1
+        let result = a.boxplus(b);
+        // XOR likely 1 (negative LLR)
+        assert!(result.value() < 0.0);
+    }
+
+    #[test]
+    fn test_boxplus_both_negative() {
+        let a = Llr::new(-3.0);
+        let b = Llr::new(-2.0);
+        let result = a.boxplus(b);
+        // Both bits likely 1, so XOR likely 0 (positive LLR)
+        assert!(result.value() > 0.0);
+    }
+
+    #[test]
+    fn test_boxplus_with_zero() {
+        let a = Llr::new(3.0);
+        let b = Llr::zero();
+        let result = a.boxplus(b);
+        // Complete uncertainty in b, result should be near zero
+        assert!(result.value().abs() < 0.1);
+    }
+
+    #[test]
+    fn test_boxplus_minsum_both_positive() {
+        let a = Llr::new(3.0);
+        let b = Llr::new(2.0);
+        assert_eq!(a.boxplus_minsum(b).value(), 2.0); // min magnitude, positive sign
+    }
+
+    #[test]
+    fn test_boxplus_minsum_opposite_signs() {
+        let a = Llr::new(3.0);
+        let b = Llr::new(-2.0);
+        assert_eq!(a.boxplus_minsum(b).value(), -2.0); // min magnitude, negative sign
+    }
+
+    #[test]
+    fn test_boxplus_minsum_both_negative() {
+        let a = Llr::new(-3.0);
+        let b = Llr::new(-2.0);
+        assert_eq!(a.boxplus_minsum(b).value(), 2.0); // min magnitude, positive sign
+    }
+
+    #[test]
+    fn test_boxplus_minsum_symmetric() {
+        let a = Llr::new(3.0);
+        let b = Llr::new(2.0);
+        assert_eq!(a.boxplus_minsum(b), b.boxplus_minsum(a));
+    }
+
+    // Tests for multi-operand box-plus operations
+
+    #[test]
+    fn test_boxplus_n_all_positive() {
+        let llrs = vec![Llr::new(3.0), Llr::new(2.0), Llr::new(4.0)];
+        let result = Llr::boxplus_n(&llrs);
+        // All bits likely 0 → XOR likely 0 (odd number of 0s → 0)
+        assert!(result.value() > 0.0);
+        assert!(result.value() < 2.0); // Should be less than minimum
+    }
+
+    #[test]
+    fn test_boxplus_n_mixed_signs_odd() {
+        let llrs = vec![Llr::new(3.0), Llr::new(2.0), Llr::new(-4.0)];
+        let result = Llr::boxplus_n(&llrs);
+        // Two bits likely 0, one likely 1 → XOR likely 1
+        assert!(result.value() < 0.0);
+    }
+
+    #[test]
+    fn test_boxplus_n_mixed_signs_even() {
+        let llrs = vec![Llr::new(3.0), Llr::new(-2.0), Llr::new(-4.0), Llr::new(5.0)];
+        let result = Llr::boxplus_n(&llrs);
+        // Two likely 0, two likely 1 → XOR likely 0
+        assert!(result.value() > 0.0);
+    }
+
+    #[test]
+    fn test_boxplus_n_single_element() {
+        let llrs = vec![Llr::new(3.5)];
+        let result = Llr::boxplus_n(&llrs);
+        // Single element should return approximately the same value
+        assert!((result.value() - 3.5).abs() < 0.1);
+    }
+
+    #[test]
+    fn test_boxplus_n_two_elements_matches_binary() {
+        let llrs = vec![Llr::new(3.0), Llr::new(2.0)];
+        let result_n = Llr::boxplus_n(&llrs);
+        let result_binary = Llr::new(3.0).boxplus(Llr::new(2.0));
+        assert!((result_n.value() - result_binary.value()).abs() < 1e-6);
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot compute boxplus_n of empty slice")]
+    fn test_boxplus_n_empty_panics() {
+        let llrs: Vec<Llr> = vec![];
+        Llr::boxplus_n(&llrs);
+    }
+
+    #[test]
+    fn test_boxplus_minsum_n_all_positive() {
+        let llrs = vec![Llr::new(3.0), Llr::new(2.0), Llr::new(4.0)];
+        let result = Llr::boxplus_minsum_n(&llrs);
+        // Min magnitude with positive sign
+        assert_eq!(result.value(), 2.0);
+    }
+
+    #[test]
+    fn test_boxplus_minsum_n_one_negative() {
+        let llrs = vec![Llr::new(3.0), Llr::new(-2.0), Llr::new(4.0)];
+        let result = Llr::boxplus_minsum_n(&llrs);
+        // Min magnitude with negative sign (odd number of negatives)
+        assert_eq!(result.value(), -2.0);
+    }
+
+    #[test]
+    fn test_boxplus_minsum_n_two_negatives() {
+        let llrs = vec![Llr::new(3.0), Llr::new(-2.0), Llr::new(-4.0)];
+        let result = Llr::boxplus_minsum_n(&llrs);
+        // Min magnitude with positive sign (even number of negatives)
+        assert_eq!(result.value(), 2.0);
+    }
+
+    #[test]
+    fn test_boxplus_minsum_n_single_element() {
+        let llrs = vec![Llr::new(3.5)];
+        let result = Llr::boxplus_minsum_n(&llrs);
+        assert_eq!(result.value(), 3.5);
+    }
+
+    #[test]
+    fn test_boxplus_minsum_n_matches_binary() {
+        let llrs = vec![Llr::new(3.0), Llr::new(2.0)];
+        let result_n = Llr::boxplus_minsum_n(&llrs);
+        let result_binary = Llr::new(3.0).boxplus_minsum(Llr::new(2.0));
+        assert_eq!(result_n.value(), result_binary.value());
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot compute boxplus_minsum_n of empty slice")]
+    fn test_boxplus_minsum_n_empty_panics() {
+        let llrs: Vec<Llr> = vec![];
+        Llr::boxplus_minsum_n(&llrs);
+    }
+
+    #[test]
+    fn test_boxplus_normalized_minsum_n() {
+        let llrs = vec![Llr::new(4.0), Llr::new(6.0)];
+        let result = Llr::boxplus_normalized_minsum_n(&llrs, 0.875);
+        assert_eq!(result.value(), 0.875 * 4.0);
+    }
+
+    #[test]
+    fn test_boxplus_normalized_minsum_n_scales_correctly() {
+        let llrs = vec![Llr::new(3.0), Llr::new(-2.0), Llr::new(5.0)];
+        let alpha = 0.8;
+        let result = Llr::boxplus_normalized_minsum_n(&llrs, alpha);
+        let expected = -0.8 * 2.0; // Negative sign, min magnitude 2.0, scaled by alpha
+        assert_eq!(result.value(), expected);
+    }
+
+    #[test]
+    fn test_boxplus_offset_minsum_n() {
+        let llrs = vec![Llr::new(4.0), Llr::new(6.0)];
+        let result = Llr::boxplus_offset_minsum_n(&llrs, 0.5);
+        assert_eq!(result.value(), 3.5);
+    }
+
+    #[test]
+    fn test_boxplus_offset_minsum_n_clamps_to_zero() {
+        let llrs = vec![Llr::new(0.3), Llr::new(6.0)];
+        let result = Llr::boxplus_offset_minsum_n(&llrs, 0.5);
+        // Min is 0.3, after offset 0.3 - 0.5 = -0.2, should clamp to 0
+        assert_eq!(result.value(), 0.0);
+    }
+
+    #[test]
+    fn test_boxplus_offset_minsum_n_preserves_sign() {
+        let llrs = vec![Llr::new(-4.0), Llr::new(6.0)];
+        let result = Llr::boxplus_offset_minsum_n(&llrs, 0.5);
+        // Negative sign (odd number), min 4.0, after offset 3.5
+        assert_eq!(result.value(), -3.5);
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot compute boxplus_offset_minsum_n of empty slice")]
+    fn test_boxplus_offset_minsum_n_empty_panics() {
+        let llrs: Vec<Llr> = vec![];
+        Llr::boxplus_offset_minsum_n(&llrs, 0.5);
+    }
+
+    #[test]
+    fn test_is_finite_normal_value() {
+        assert!(Llr::new(3.5).is_finite());
+        assert!(Llr::new(-2.0).is_finite());
+        assert!(Llr::new(0.0).is_finite());
+    }
+
+    #[test]
+    fn test_is_finite_infinity() {
+        assert!(!Llr::infinity().is_finite());
+        assert!(!Llr::neg_infinity().is_finite());
+    }
+
+    #[test]
+    fn test_is_finite_nan() {
+        let nan_llr = Llr::new(f32::NAN);
+        assert!(!nan_llr.is_finite());
+    }
+
+    #[test]
+    fn test_safe_boxplus_normal_case() {
+        let a = Llr::new(3.0);
+        let b = Llr::new(2.0);
+        let result = a.safe_boxplus(b);
+        assert!(result.is_finite());
+        assert!((result.value() - a.boxplus(b).value()).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_safe_boxplus_extreme_values() {
+        // Very large values might cause numerical issues in tanh/atanh
+        let a = Llr::new(1000.0);
+        let b = Llr::new(1000.0);
+        let result = a.safe_boxplus(b);
+        // Should handle gracefully, either returning finite result or zero
+        assert!(result.is_finite());
+    }
+}
+
+#[cfg(test)]
+mod property_tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn hard_decision_consistent_with_sign(value in -100.0f32..100.0f32) {
+            let llr = Llr::new(value);
+            assert_eq!(llr.hard_decision(), value < 0.0);
+        }
+
+        #[test]
+        fn magnitude_always_non_negative(value in -100.0f32..100.0f32) {
+            let llr = Llr::new(value);
+            assert!(llr.magnitude() >= 0.0);
+        }
+
+        #[test]
+        fn saturate_stays_within_bounds(value in -1000.0f32..1000.0f32, max in 1.0f32..100.0f32) {
+            let saturated = Llr::new(value).saturate(max);
+            assert!(saturated.value().abs() <= max);
+        }
+
+        #[test]
+        fn boxplus_minsum_symmetric(a in -10.0f32..10.0f32, b in -10.0f32..10.0f32) {
+            let llr_a = Llr::new(a);
+            let llr_b = Llr::new(b);
+            assert_eq!(
+                llr_a.boxplus_minsum(llr_b).value(),
+                llr_b.boxplus_minsum(llr_a).value()
+            );
+        }
+
+        #[test]
+        fn boxplus_symmetric(a in -10.0f32..10.0f32, b in -10.0f32..10.0f32) {
+            let llr_a = Llr::new(a);
+            let llr_b = Llr::new(b);
+            let ab = llr_a.boxplus(llr_b).value();
+            let ba = llr_b.boxplus(llr_a).value();
+            prop_assert!((ab - ba).abs() < 1e-6);
+        }
+
+        #[test]
+        fn boxplus_magnitude_bounded(a in -10.0f32..10.0f32, b in -10.0f32..10.0f32) {
+            let result = Llr::new(a).boxplus(Llr::new(b));
+            // Box-plus result magnitude should not exceed max of inputs
+            assert!(result.magnitude() <= a.abs().max(b.abs()) + 1e-6);
+        }
+
+        #[test]
+        fn boxplus_n_commutative(
+            values in prop::collection::vec(-10.0f32..10.0f32, 2..6)
+        ) {
+            let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
+            let mut shuffled = llrs.clone();
+            shuffled.reverse(); // Simple permutation
+
+            let result1 = Llr::boxplus_n(&llrs);
+            let result2 = Llr::boxplus_n(&shuffled);
+
+            // f32 precision near saturation (|LLR| ~10) causes atanh amplification
+            // of ~1/(2*exp(-10)) ≈ 11000x, so per-ULP error reaches ~1e-3.
+            prop_assert!((result1.value() - result2.value()).abs() < 1e-2);
+        }
+
+        #[test]
+        fn boxplus_minsum_n_commutative(
+            values in prop::collection::vec(-10.0f32..10.0f32, 2..6)
+        ) {
+            let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
+            let mut shuffled = llrs.clone();
+            shuffled.reverse();
+
+            let result1 = Llr::boxplus_minsum_n(&llrs);
+            let result2 = Llr::boxplus_minsum_n(&shuffled);
+
+            prop_assert_eq!(result1.value(), result2.value());
+        }
+
+        #[test]
+        fn boxplus_minsum_n_magnitude_is_minimum(
+            values in prop::collection::vec(-10.0f32..10.0f32, 1..6)
+        ) {
+            let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
+            let result = Llr::boxplus_minsum_n(&llrs);
+            let min_magnitude = values.iter().map(|v| v.abs()).fold(f32::INFINITY, f32::min);
+
+            // Allow small tolerance due to f32 SIMD conversion (f32->f32->f32)
+            let diff = (result.magnitude() - min_magnitude).abs();
+            prop_assert!(diff < 1e-6, "magnitude {} differs from expected {} by {}",
+                result.magnitude(), min_magnitude, diff);
+        }
+
+        #[test]
+        fn boxplus_normalized_minsum_scales_result(
+            values in prop::collection::vec(-10.0f32..10.0f32, 2..5),
+            alpha in 0.5f32..1.0f32
+        ) {
+            let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
+            let minsum = Llr::boxplus_minsum_n(&llrs);
+            let normalized = Llr::boxplus_normalized_minsum_n(&llrs, alpha);
+
+            prop_assert!((normalized.value() - alpha * minsum.value()).abs() < 1e-6);
+        }
+
+        #[test]
+        fn boxplus_offset_minsum_reduces_magnitude(
+            values in prop::collection::vec(-10.0f32..10.0f32, 2..5),
+            beta in 0.1f32..1.0f32
+        ) {
+            let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
+            let minsum = Llr::boxplus_minsum_n(&llrs);
+            let offset = Llr::boxplus_offset_minsum_n(&llrs, beta);
+
+            // Offset result magnitude should be at most minsum magnitude
+            prop_assert!(offset.magnitude() <= minsum.magnitude());
+        }
+
+        #[test]
+        fn boxplus_n_matches_binary_for_two_elements(
+            a in -10.0f32..10.0f32,
+            b in -10.0f32..10.0f32
+        ) {
+            let llrs = vec![Llr::new(a), Llr::new(b)];
+            let result_n = Llr::boxplus_n(&llrs);
+            let result_binary = Llr::new(a).boxplus(Llr::new(b));
+
+            prop_assert!((result_n.value() - result_binary.value()).abs() < 1e-6);
+        }
+
+        #[test]
+        fn boxplus_minsum_approximates_boxplus(
+            values in prop::collection::vec(1.0f32..10.0f32, 2..5)
+        ) {
+            let llrs: Vec<Llr> = values.iter().map(|&v| Llr::new(v)).collect();
+            let exact = Llr::boxplus_n(&llrs);
+            let approx = Llr::boxplus_minsum_n(&llrs);
+
+            // Min-sum should have same sign
+            prop_assert_eq!(exact.value() >= 0.0, approx.value() >= 0.0);
+
+            // Min-sum approximation quality varies with input
+            // Min-sum overestimates more for uniform small inputs (e.g., four
+            // values of 1.0: exact boxplus ≈ 0.09, min-sum = 1.0, ratio ≈ 11).
+            // Bound of 15x accommodates worst-case uniform-small inputs.
+            let ratio = (approx.magnitude() / exact.magnitude()).max(exact.magnitude() / approx.magnitude());
+            prop_assert!(ratio < 15.0, "Approximation ratio {} exceeds acceptable bounds", ratio);
+        }
+
+        #[test]
+        fn safe_boxplus_always_finite(a in -100.0f32..100.0f32, b in -100.0f32..100.0f32) {
+            let result = Llr::new(a).safe_boxplus(Llr::new(b));
+            prop_assert!(result.is_finite());
+        }
+
+        #[test]
+        fn is_finite_correct_for_normal_values(value: f32) {
+            prop_assert!(Llr::new(value).is_finite());
+        }
+    }
+}

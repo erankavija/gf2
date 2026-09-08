@@ -36,9 +36,87 @@ Immutable superseded v1 attempt: `2026-09-08-r3-c077a88b-ldpc-matched-algorithm-
 
 Immutable superseded v1 attempt: `2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/README.md`; see `superseded-v1-evidence.json`. It supplies no v3 resolution or confirmatory claim.
 
+Source: `v3-r1-c077a88b-ldpc-matched-algorithm-pilot/receipt.json` and its independently recomputed acceptance summary.
+Label: **pilot**; acceptance: **accepted**. This survey adopts no production implementation.
+Ledger-derived attempt alpha: 0.025; reserved comparisons: 1.
+
+| Cell | Pairs | Useful frames/call | Baseline median ms/call | Candidate median ms/call | Speedup [family interval] | Confidence | Outcome |
+|---|---|---|---|---|---|---|---|
+| dvb-t2-r12-matched-pilot | 6 | 1 | 251.586 | 1781.429 | 0.1412 [0.1389, 0.1448] | 0.975 | pilot |
+| nr-bg1-z384-matched-pilot | 6 | 1 | 263.453 | 278.019 | 0.9476 [0.9258, 0.963] | 0.975 | pilot |
+
+A `quality-incompatible` outcome means the frozen paired bound does not establish
+quality non-inferiority; it does not by itself establish worse decoder quality.
+
+Call latency includes recorded AList loading, matrix and decoder construction, conversion, output and destruction. The median
+columns are descriptive summaries of the recorded executions; the paired bootstrap
+interval estimates the implementation ratio. Throughput is useful frames per call
+divided by call latency. A native SIMD wave is not counted as one useful frame.
+
+Untimed setup/conversion diagnostics from the same receipt (median across pairs):
+
+| Cell | Arm | Matrix + decoder setup ms | Full-bundle preflight pack ms | Additional unpack / fill / dispatch ms |
+|---|---|---|---|---|
+| dvb-t2-r12-matched-pilot | baseline | 21.896 | 4.800 | 0.000 / 0.000 / 0.000 |
+| dvb-t2-r12-matched-pilot | candidate | 1788.491 | 0.000 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-matched-pilot | baseline | 15.676 | 1.062 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-matched-pilot | candidate | 265.550 | 0.000 | 0.000 / 0.000 / 0.000 |
+
+These diagnostics are outside the calibrated windows and are not additive
+components of the timed median. gf2 preflight packs the full input bundle;
+the timed body separately converts its declared batch. AFF3CT converts and
+reorders inside its decode call. Zero additional costs therefore mean no
+separate stage, not free conversion. All measured batches are already filled;
+arrival queueing delay is unmeasured.
+
 ## Quality-compatible timing
 
 Immutable superseded v1 attempt: `2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/README.md`; see `superseded-v1-evidence.json`. It supplies no v3 resolution or confirmatory claim.
 
 Immutable superseded v1 attempt: `2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/README.md`; see `superseded-v1-evidence.json`. It supplies no v3 resolution or confirmatory claim.
+
+Source: `v3-r1-c077a88b-ldpc-quality-compatible-pilot/receipt.json` and its independently recomputed acceptance summary.
+Label: **pilot**; acceptance: **accepted**. This survey adopts no production implementation.
+Ledger-derived attempt alpha: 0.025; reserved comparisons: 1.
+
+| Cell | Pairs | Useful frames/call | Baseline median ms/call | Candidate median ms/call | Speedup [family interval] | Confidence | Outcome |
+|---|---|---|---|---|---|---|---|
+| dvb-t2-r12-f32-scalar-pilot | 6 | 16 | 5486.218 | 332.145 | 16.52 [16.43, 16.73] | 0.975 | pilot; quality admission unestablished (P-19) |
+| dvb-t2-r12-f32-inter-pilot | 6 | 16 | 5476.146 | 111.887 | 48.94 [47.85, 49.49] | 0.975 | pilot; quality admission unestablished (P-19) |
+| dvb-t2-r12-i16-inter-pilot | 6 | 16 | 5486.522 | 83.705 | 65.55 [64.36, 66.29] | 0.975 | pilot; quality admission unestablished (P-19) |
+| nr-bg1-z384-f32-scalar-pilot | 6 | 16 | 3493.684 | 148.545 | 23.52 [18.47, 24.3] | 0.975 | pilot; quality admission unestablished (P-19) |
+| nr-bg1-z384-f32-inter-pilot | 6 | 16 | 3587.357 | 47.478 | 75.56 [72.22, 76.28] | 0.975 | pilot; quality admission unestablished (P-19) |
+| nr-bg1-z384-i16-inter-pilot | 6 | 16 | 3562.251 | 39.776 | 89.56 [87.63, 90.31] | 0.975 | pilot; quality admission unestablished (P-19) |
+
+A `quality-incompatible` outcome means the frozen paired bound does not establish
+quality non-inferiority; it does not by itself establish worse decoder quality.
+
+Call latency includes recorded AList loading, matrix and decoder construction, conversion, output and destruction. The median
+columns are descriptive summaries of the recorded executions; the paired bootstrap
+interval estimates the implementation ratio. Throughput is useful frames per call
+divided by call latency. A native SIMD wave is not counted as one useful frame.
+
+Untimed setup/conversion diagnostics from the same receipt (median across pairs):
+
+| Cell | Arm | Matrix + decoder setup ms | Full-bundle preflight pack ms | Additional unpack / fill / dispatch ms |
+|---|---|---|---|---|
+| dvb-t2-r12-f32-scalar-pilot | baseline | 21.381 | 4.721 | 0.000 / 0.000 / 0.000 |
+| dvb-t2-r12-f32-scalar-pilot | candidate | 46.932 | 0.000 | 0.000 / 0.000 / 0.000 |
+| dvb-t2-r12-f32-inter-pilot | baseline | 21.578 | 4.574 | 0.000 / 0.000 / 0.000 |
+| dvb-t2-r12-f32-inter-pilot | candidate | 79.556 | 0.000 | 0.000 / 0.000 / 0.000 |
+| dvb-t2-r12-i16-inter-pilot | baseline | 21.915 | 4.736 | 0.000 / 0.000 / 0.000 |
+| dvb-t2-r12-i16-inter-pilot | candidate | 81.280 | 0.000 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-f32-scalar-pilot | baseline | 15.525 | 1.071 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-f32-scalar-pilot | candidate | 33.684 | 0.000 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-f32-inter-pilot | baseline | 15.311 | 1.031 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-f32-inter-pilot | candidate | 46.364 | 0.000 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-i16-inter-pilot | baseline | 15.457 | 1.057 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-i16-inter-pilot | candidate | 45.989 | 0.000 | 0.000 / 0.000 / 0.000 |
+
+These diagnostics are outside the calibrated windows and are not additive
+components of the timed median. gf2 preflight packs the full input bundle;
+the timed body separately converts its declared batch. AFF3CT converts and
+reorders inside its decode call. Zero additional costs therefore mean no
+separate stage, not free conversion. All measured batches are already filled;
+arrival queueing delay is unmeasured.
 

@@ -1,0 +1,184 @@
+[package]
+name = "gf2-algebra"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+description = "Packed-field abstractions and permanent algorithms over small primes (F_3, F_5, F_7) on top of gf2-core"
+license = "MIT"
+keywords = ["finite-field", "permanent", "packed", "gf2", "algebra"]
+categories = ["algorithms", "mathematics"]
+rust-version = "1.95"
+
+[dependencies]
+# Always linked: provides the FiniteField / Fp<P> / BitVec primitives the
+# packed types and permanent algorithms operate over. See D1a §3 for the
+# dependency-edge graph.
+gf2-core = { path = "../gf2-core" }
+num-bigint = { workspace = true }
+# Rayon dispatch is gated behind the `parallel` feature; the rayon crate
+# itself is therefore an optional dep. See D1c §2 row `parallel`.
+rayon = { workspace = true, optional = true }
+# HIP/ROCm GPU device-kernel handles. The crate is in workspace `exclude`
+# (root `Cargo.toml` lines 9-11) and is opt-in via `--features hip`. The
+# path-dep is therefore optional. See D1c §5.2.
+gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
+# SIMD kernel bundle for the bipedal3 SIMD dispatch path (T13). Optional:
+# only pulled in when the `simd` feature is active; the crate is always in
+# the workspace so no build-config friction. See D1c §2 row `simd`.
+gf2-kernels-simd = { path = "../gf2-kernels-simd", optional = true }
+# Serde Serialize/Deserialize derives on the packed types. Off by default;
+# users who need round-trip serialisation opt in via `--features serde`.
+serde = { version = "1", features = ["derive"], optional = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+criterion = { workspace = true }
+tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
+# Campaign probes use the canonical dedicated-pool and effective-observation
+# seams without adding either facility to gf2-algebra's production surface.
+gf2-core = { path = "../gf2-core", features = ["test-support"] }
+# Production-only validation boundary: exact algebra anchors exercise the
+# sampler and interval estimator without making algebra depend on statistics.
+gf2-stats = { path = "../gf2-stats" }
+# SHA-256 for the `paper_repro_slope` example's input-fingerprint column
+# (criterion 5 amendment 2026-05-11). Test-time only.
+sha2 = "0.10"
+serde_json = { workspace = true }
+# Self-dev-dependency exposing the `test-support` feature so integration
+# tests and benches can use `gf2_algebra::testutil::random_matrix` —
+# the workspace SSOT for deterministic mod-P matrix generation via
+# `gf2_core::rng::Lcg`. Mirrors the `gf2-core` pattern (see
+# `crates/gf2-core/Cargo.toml` lines 28-31, 53-56).
+gf2-algebra = { path = ".", features = ["test-support"] }
+
+# ── Issue `b315564a` (epic `ae82bd73`) — Criterion bench suite for permanent ──
+[[bench]]
+name = "permanent"
+harness = false
+
+# ── Issue `c98ed603` (epic `ae82bd73`) — S1 n=36 dedicated speedup bench ──
+[[bench]]
+name = "s1_n36_speedup"
+harness = false
+required-features = ["simd", "test-support"]
+
+# ── Issue `8cb4def5` — determinant companion campaign-cost receipt ──
+[[bench]]
+name = "determinant_companion"
+harness = false
+required-features = ["test-support"]
+
+# ── Issue `ddd0c6ee` — four-matrix F_3 AVX2 receipt ──
+[[bench]]
+name = "batched_f3_permanent"
+harness = false
+required-features = ["simd", "test-support"]
+
+[[bench]]
+name = "tuning_calibration"
+harness = false
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
+
+# ── Issue `96dcbec4` (epic `ae82bd73`) — paper Table 2 slope reproduction ──
+[[example]]
+name = "paper_repro_slope"
+required-features = ["test-support"]
+
+# ── Issue `05250df5` (epic `ae82bd73`) — T15 parallel chunk-size sweep bench ──
+[[example]]
+name = "parallel_chunk_sweep"
+required-features = ["parallel", "test-support"]
+
+# ── Issue `4513209c` (epic `ae82bd73`) — S2 parallel scaling sweep ──
+[[example]]
+name = "parallel_scaling_sweep"
+required-features = ["parallel", "test-support"]
+
+# ── Issue `363556e6` (epic `ae82bd73`) — S3 scalar-vs-AVX2 sanity sweep ──
+[[example]]
+name = "s3_scalar_vs_avx2_sanity"
+required-features = ["simd", "test-support"]
+
+# ── Issue `16f03734` (epic `ae82bd73`) — headline benchmark demo ──
+# No `required-features`: the example carries its own inline deterministic
+# LCG, so `cargo run -p gf2-algebra --example permanent_demo --release`
+# works against the default feature set (epic criterion 12).
+[[example]]
+name = "permanent_demo"
+
+[features]
+# `f5` and `f7` flipped to default-on as the W4 closing edit per
+# R1 §1 and dev/plans/d1c_feature_gate_matrix.md §8.1 — the encodings
+# have landed (jit:6917eb85, jit:56c5dabc) and the default-on flip
+# ensures the standard `cargo test` and `tests` gates exercise them.
+default = ["simd", "parallel", "f5", "f7"]
+
+# Enable runtime SIMD dispatch hooks. Mirrors gf2-coding's pattern: the
+# gf2-kernels-simd rlib is always linked (gf2-core needs it for the SSOT
+# scalar `clmul_u64_scalar`), so this feature only flips the runtime
+# detection wiring in gf2-core. On hosts without AVX2, runtime
+# `is_x86_feature_detected!` returns false and the scalar fallback is
+# selected — no functional change with this flag off, just a slightly
+# smaller compiled-out detection table.
+simd = ["gf2-core/simd", "dep:gf2-kernels-simd"]
+
+# Rayon-based parallel permanent. Pulls in rayon and the parallel
+# helpers in gf2-core. On by default because the headline workload
+# (permanent_bipedal3 at n=36) is a 2^36-step Gray-code walk where
+# parallel scaling is the entire point of W3.
+parallel = ["dep:rayon", "gf2-core/parallel"]
+
+# HIP/ROCm GPU dispatch (gfx1030+). Off by default — matches
+# gf2-coding's "hip" feature, since hipcc/ROCm is not present on most
+# developer hosts. Pulls in the gf2-kernels-hip crate (which is in
+# workspace `exclude`).
+hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
+
+# F_5 packed permanent. Default-on as of W4 closing edit; the W4
+# implementation landed `packed5::Packed5` (jit:6917eb85) per R1
+# outcome in dev/plans/6b3f6054/r1_f5_encoding_decision.md. Opt out via
+# `--no-default-features` (or by selecting features explicitly without
+# `f5`) if the F_5 surface is unwanted.
+f5 = []
+
+# F_7 packed permanent. Default-on as of W4 closing edit; the W4
+# implementation landed `packed7::Packed7` (jit:56c5dabc) per R2
+# outcome in dev/plans/f10152f6/r2_f7_encoding_decision.md. Same opt-out
+# semantics as `f5`.
+f7 = []
+
+# Serde Serialize/Deserialize for packed types. Off by default because
+# permanent computation does not typically involve serialisation; users
+# who need it (e.g. caching matrices for reproducibility benchmarks) opt
+# in. Pulls in serde with the derive feature.
+serde = ["dep:serde"]
+
+# Strict format-2 owner codec for algebra-owned tuning. The typed selector
+# section and active accessor are always available; only JSON support is gated.
+tuning-profile = ["gf2-core/tuning-profile", "dep:serde"]
+
+# Exposes the canonical test-only matrix generators (`testutil::random_matrix`,
+# `testutil::random_matrix_with_rng`) to integration tests, benchmarks, and
+# downstream crates. Off by default; auto-enabled under `cargo test` via the
+# self-dev-dependency above. Mirrors the `gf2-core::test-support` pattern.
+test-support = []
+
+[[test]]
+name = "tuning_section"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_repository_envelopes"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_permanent_install"
+required-features = ["parallel", "tuning-profile"]
+
+[[test]]
+name = "tuning_profile_permanent_install_large_chunk"
+required-features = ["parallel", "tuning-profile"]
+
+[[test]]
+name = "tuning_calibration_harness"
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
