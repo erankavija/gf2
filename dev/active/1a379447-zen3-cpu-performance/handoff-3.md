@@ -10,7 +10,7 @@
 - Wave in progress: wave 1 of 7 (`f547c394`) nearly closed; wave 2 of 7 dispatched early on the invoker's instruction.
 - Children summary: 0 done, 1 in_progress (`f547c394`), 8 assigned and backlog (wave 2), 12 backlog, 0 rejected.
 - Active claims: lead lease on `f547c394` (`agent:jit-execution-lead`, TTL 3600 s, acquired ~19:10Z); wave-2 issues assigned to `agent:worker` with `--assign-only`.
-- Open escalations: none formally raised. The invoker instructed at ~19:50Z: rate limits are close; let the running workers finish, write this handoff, run no more gates.
+- Open escalations: none formally raised. The invoker instructed at ~19:50Z to let the running workers finish, write this handoff, and run no more gates.
 - Progress file: `progress.json` in this directory.
 
 ### Wave 1 (`f547c394`) exact state
@@ -22,7 +22,7 @@
 
 ### Wave 2 dispatch state (native Claude subagents, worktrees `.agents/worktrees/agent-<id>`, branches `worktree-agent-<id>`)
 
-At ~19:45Z the invoker ordered all workers to commit what they have and report (rate limits). State at 20:05Z; workers marked "still committing" may add commits after this handoff, so re-read each branch before acting.
+At ~19:45Z the invoker ordered all workers to commit what they have and report. State at 20:05Z; workers marked "still committing" may add commits after this handoff, so re-read each branch before acting.
 
 | Issue | Model | Branch head / commits | Has f547c394 merge | Reported state |
 |---|---|---|---|---|
@@ -66,7 +66,6 @@ Leak check on main: clean at 20:05Z. Disk: 80 GB free. No wave-2 branch is merge
 - **Background `./scripts/cargo-ci.sh > log` was blocked by the auto-mode classifier;** run CI through `jit gate evaluate` (background) instead.
 - **Group-A wave-2 branches predate the f547c394 merge.** They must merge `main` before their receipt runs (instructed in the prompt) and the lead must verify the receipts' producing-input identities match post-merge tooling before accepting them.
 - **Do NOT dispatch eight measurement workers on one host at once.** The exclusive CCX1 mutex became the bottleneck: confirmatory campaigns queued 40+ minutes and were cancelled; `flock` is not FIFO, so short shared holders (aff3ct BFER runs) starve exclusive waiters indefinitely. Next time: at most two or three timed campaigns in flight, quality sims pinned off CCX1 without the mutex, builds batched under one shared hold.
-- **Do NOT plan a session around eight native Opus/Sonnet workers plus AI review gates under a shared rate limit.** The invoker hit the limit within ~2.5 hours and stopped the session before any wave-2 issue closed.
 - Unresolved traps from [session 2](handoff-2.md#traps--do-not-repeat-these) and [session 1](handoff.md#traps--do-not-repeat-these) remain in force: `jit claim acquire --agent-id agent:jit-execution-lead` and `JIT_AGENT_ID` for gate evaluation; evaluate gates individually, never `evaluate-all` after HEAD moved; commit early; no `nextest` without `cargo` through the budget wrapper; nested `Cargo.lock` snapshots must be force-added; `jit doc check-links` warnings are nonzero.
 
 ## Open questions needing invoker input

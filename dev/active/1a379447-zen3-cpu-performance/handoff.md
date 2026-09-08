@@ -16,7 +16,7 @@
 ## What just happened
 
 - Planned 7 dependency-depth waves over the 21 children created by the user-approved plan revision (`412dab33`, `4e08a061`); wave 1 = `f547c394` alone because every other child depends on it.
-- Dispatched `f547c394` (implementation, Fable model) in a worktree anchored to `974a21f4`. The worker hit its usage limit after scaffolding six modules with nothing committed; resumed the same worker after the reset, with an instruction to commit early.
+- Dispatched `f547c394` (implementation, Fable model) in a worktree anchored to `974a21f4`. The worker stopped after scaffolding six modules with nothing committed; resumed the same worker with an instruction to commit early.
 - Worker delivered eleven `jit:f547c394` commits: protocol document with a clause coverage table and rules P-01..P-22, JSON Schema for family addenda, paired-bootstrap A/B statistics, receipt acceptance tool, lock-wrapped protocol runner over the existing journal and checkpoint primitives, host/process mechanics lifted from the a83583e0 driver, 137 crate tests, and a two-session smoke receipt under `dev/bench_results/f547c394/`.
 - Lead: leak check clean; merged `--no-ff` at `7a222264`; linked 11 documents (`4fda522e`); cargo-ci gate PASSED on the merged tree (`43310ff7`); recorded pitfalls (`740ebb86`).
 - Review gates: code-review FAILED with two blocking findings (run `2421a450`); doc-review PASSED with no findings; research-review FAILED at its deterministic tier 1 (eight `cites:` labels without a matching citation in the issue text) before any AI review ran.
@@ -33,7 +33,7 @@
 
 ## Traps — do not repeat these
 
-- **Do NOT let a worker run long without a first commit.** The Fable worker hit its usage limit after ~40 minutes with six modules uncommitted; only the worktree on disk saved the work. Require a commit as soon as the scaffold compiles.
+- **Do NOT let a worker run long without a first commit.** The Fable worker stopped after ~40 minutes with six modules uncommitted; only the worktree on disk saved the work. Require a commit as soon as the scaffold compiles.
 - **Do NOT commit on main while a gate evaluation is running, and do NOT use `jit gate evaluate-all` after HEAD has moved.** HEAD moved during the cargo-ci evaluation (doc-link commit `4fda522e`), so a later `evaluate-all` would re-run the 10-minute cargo-ci checker instead of reusing the pass. Evaluate the review gates individually by key.
 - **Do NOT expect `jit doc add` to work from a worker worktree.** The tracker refuses state writes from linked checkouts; the lead links artifacts from the primary checkout and re-validates with `jit doc check-links --scope issue:<id>`. This is not permission laundering: it is jit's worktree write policy.
 - **Do NOT accept a working-tree fallback when verifying pinned evidence.** The code reviewer rejects it (F1, `protocol.rs:185`): a pinned artifact is verified only against `git show <commit>:<path>`; an unavailable object is a rejection, never a note.
