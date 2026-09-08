@@ -35,7 +35,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Establish population-count and fused-reduction baselines",
-  "updated_at": "2026-09-07T19:27:25.194987940Z"
+  "updated_at": "2026-09-08T17:32:22.764770102Z"
 }

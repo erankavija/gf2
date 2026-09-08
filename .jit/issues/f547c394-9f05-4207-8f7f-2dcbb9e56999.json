@@ -553,6 +553,7 @@
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r6.md"
     }
   ],
+  "done_at": "2026-09-08T17:31:50.985783908Z",
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
   "gates_required": [
     "cargo-ci",
@@ -563,22 +564,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-08T17:04:46.062005066Z",
+      "updated_at": "2026-09-08T17:21:41.130824101Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-08T17:08:19.176677792Z",
+      "status": "passed",
+      "updated_at": "2026-09-08T17:24:50.790290940Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-08T17:11:17.042602689Z",
+      "status": "passed",
+      "updated_at": "2026-09-08T17:27:18.780439939Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-09-08T17:16:05.191042838Z",
+      "updated_at": "2026-09-08T17:31:12.159834080Z",
       "updated_by": "auto:executor"
     }
   },
@@ -594,7 +595,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-08T17:16:05.191042838Z"
+  "updated_at": "2026-09-08T17:31:50.985783908Z"
 }

@@ -34,7 +34,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Establish equivalent polynomial multiplication baselines",
-  "updated_at": "2026-09-07T18:42:23.547957752Z"
+  "updated_at": "2026-09-08T17:33:15.323140150Z"
 }

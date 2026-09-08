@@ -37,7 +37,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Establish compatible LDPC decoder benchmark arms",
-  "updated_at": "2026-09-07T18:42:23.247905384Z"
+  "updated_at": "2026-09-08T17:33:04.754390768Z"
 }

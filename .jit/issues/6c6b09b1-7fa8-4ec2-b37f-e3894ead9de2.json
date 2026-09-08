@@ -36,7 +36,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Establish byte-field vector and matrix comparison arms",
-  "updated_at": "2026-09-07T19:27:24.491313581Z"
+  "updated_at": "2026-09-08T17:32:33.254008242Z"
 }

@@ -36,7 +36,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Establish transpose and logical-buffer comparison arms",
-  "updated_at": "2026-09-07T18:42:23.836140462Z"
+  "updated_at": "2026-09-08T17:32:54.198076848Z"
 }
