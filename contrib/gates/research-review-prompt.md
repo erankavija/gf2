@@ -18,6 +18,10 @@ The issue description may record user decisions under a `## Decisions` heading (
 
 Verify every prior blocking finding's state at HEAD before any new judgment and open the report with a one-line-per-finding closure ledger: closed (cite the closing artifact), open, or regressed; a regression outranks any new finding. After the first round, judge what changed since the reviewed revision plus prior open findings; a new blocking finding against content unchanged since a prior round names the round that could have observed it and why it is material now, else report it as advisory. A `## Decisions` item forecloses its remedy class across the whole attributable footprint — the same foreclosed-evidence class on a sibling surface of the same dataset is re-raised only as a factual-premise advisory citing the decision.
 
+## Remedy discipline
+
+Review the issue's existing scientific contract; do not redesign its architecture. A finding states the observable claim or hard criterion put in doubt and the smallest sufficient property needed to restore it. Do not require a new framework, generalized subsystem, public API, or adversarial hardening when a local contract-literal correction suffices. Apply `@/inv/caller-trusted-fast-paths`: validation catches caller mistakes and preserves research meaning; it does not defend against hostile inputs. A broader architectural improvement is advisory unless an existing hard criterion explicitly requires it.
+
 ## Rubric — blocking on failure
 
 - Trace every quantitative claim (speedup, BLER, threshold, probability estimate, crossover, sample statistic) in attributable text to a committed artifact. Reject prose-only numbers. A number the text marks as a projection, budget, or worked example, and from which no reported result derives, traces to its derivation rather than to a measurement artifact.
