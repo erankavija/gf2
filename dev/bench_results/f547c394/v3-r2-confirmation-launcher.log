@@ -1,0 +1,10 @@
+# session start UTC: 2026-09-08T16:37:16Z
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host target/release/benchmark-ab-runner run /tmp/gf2-f547c394-v3-r2-confirmation dev/active/f547c394/plan-smoke-v3-confirmation-r2.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-f547c394-v3-r2-confirmation/execution.log
+# session exit: 3; end UTC: 2026-09-08T16:37:43Z
+# session start UTC: 2026-09-08T16:37:52Z
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host target/release/benchmark-ab-runner run /tmp/gf2-f547c394-v3-r2-confirmation dev/active/f547c394/plan-smoke-v3-confirmation-r2.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-f547c394-v3-r2-confirmation/execution.log
+# session exit: 0; end UTC: 2026-09-08T16:37:55Z

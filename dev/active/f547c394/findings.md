@@ -14,16 +14,23 @@ Monte Carlo estimate of a decoder or a scientific performance claim.
 
 Protocol v3 applies the bounded convergence rules for margins, bootstrap alpha,
 outlier boundaries, document guards, legacy receipt paths, pilot-derived
-resolution, and lock observations. The active runner produces fresh v3 pilot
-and confirmation smoke evidence at
-`dev/bench_results/f547c394/v3-pilot/` and
-`dev/bench_results/f547c394/v3-confirmation/`; both independently evaluate as
-accepted with zero findings. The smoke receipts are pipeline evidence and make
-no gf2 performance or decoder-quality claim.
+resolution, and lock observations. P-20 independently binds the stored v3
+alpha, and pilot resolution derives its corrected alpha from frozen pilot
+addendum and ledger snapshots. The active runner produces fresh r2 pilot and
+confirmation smoke evidence at
+`dev/bench_results/f547c394/v3-r2-pilot/` and
+`dev/bench_results/f547c394/v3-r2-confirmation/`; both independently evaluate
+as accepted with zero findings. The smoke receipts are pipeline evidence and
+make no gf2 performance or decoder-quality claim.
 
 The v1 and v2 receipt collections remain byte-for-byte equal to baseline
-`c01be44e`. The machine-readable preservation proof is
-[`research-r4-v1-v2-preservation.json`](research-r4-v1-v2-preservation.json).
+`c01be44e`. The v3 r1 evidence collection remains byte-for-byte equal to
+`7756e1fd` as falsified incomplete-provenance evidence: its closure captures
+`run-smoke-v2.sh` instead of the launcher that ran. The machine-readable
+preservation proofs are
+[`research-r4-v1-v2-preservation.json`](research-r4-v1-v2-preservation.json)
+and
+[`research-r5-v3-r1-preservation.json`](research-r5-v3-r1-preservation.json).
 Historical rows below retain their reviewed wording and evidence references.
 
 [The raw pre-work audit](research-r3-prework.txt) precedes source edits.

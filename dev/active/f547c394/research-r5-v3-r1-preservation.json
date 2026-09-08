@@ -1,0 +1,27 @@
+{
+  "schema": "f547c394-evidence-preservation-v2",
+  "baseline": "7756e1fd",
+  "scope": {
+    "v3_r1_paths": [
+      "dev/bench_results/f547c394/v3-pilot/",
+      "dev/bench_results/f547c394/v3-confirmation/",
+      "dev/bench_results/f547c394/v3-family-ledger.jsonl",
+      "dev/bench_results/f547c394/v3-pilot-r1-launcher.log",
+      "dev/bench_results/f547c394/v3-confirmation-r1-launcher.log",
+      "dev/active/f547c394/addendum-smoke-v3-pilot-r1.json",
+      "dev/active/f547c394/addendum-smoke-v3-confirmation-r1.json",
+      "dev/active/f547c394/plan-smoke-v3-pilot-r1.json",
+      "dev/active/f547c394/plan-smoke-v3-confirmation-r1.json"
+    ]
+  },
+  "verification": {
+    "command": "git diff --exit-code 7756e1fd -- dev/bench_results/f547c394/v3-pilot dev/bench_results/f547c394/v3-confirmation dev/bench_results/f547c394/v3-family-ledger.jsonl dev/bench_results/f547c394/v3-pilot-r1-launcher.log dev/bench_results/f547c394/v3-confirmation-r1-launcher.log dev/active/f547c394/addendum-smoke-v3-pilot-r1.json dev/active/f547c394/addendum-smoke-v3-confirmation-r1.json dev/active/f547c394/plan-smoke-v3-pilot-r1.json dev/active/f547c394/plan-smoke-v3-confirmation-r1.json",
+    "tracked_path_count": 90,
+    "result": "pass"
+  },
+  "falsification": {
+    "status": "preserved-incomplete-provenance",
+    "contradiction": "The v3 r1 receipts freeze run-smoke-v2.sh in their producing closures, while v3-r1-launcher.log records execution through run-smoke-v3.sh. The frozen evidence therefore lacks the actual launcher identity.",
+    "disposition": "The r1 bytes remain unchanged. Fresh v3 r2 pilot and confirmation evidence freeze and snapshot run-smoke-v3.sh in every applicable producing closure."
+  }
+}
