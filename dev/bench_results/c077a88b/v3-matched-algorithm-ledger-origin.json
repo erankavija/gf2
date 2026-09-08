@@ -1,0 +1,47 @@
+{
+  "kind": "retrospective-v1-exploratory-history",
+  "family": "ldpc-matched-algorithm-alist-v1",
+  "ledger": "dev/bench_results/c077a88b/v3-matched-algorithm-family-ledger.jsonl",
+  "initial_sha256": "4f662b725e3e88facf76c05121ec0f98a84ad69de56c10279c522ebd14371dd8",
+  "sources": [
+    {
+      "sequence": 0,
+      "line_sha256": "460dbd396a1f670fd42bae26f6d59f791227c7ea04ca4fc48518364e0e364f62",
+      "plan": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/plan.json",
+      "plan_sha256": "1c2428c3affe28827ae72c3ee851ecf8a72a6fd7140f635aad3399a8c4f1cf03",
+      "addendum": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "b39f67cd2ecef9af8ca2bf8d719fe5e47d1e5416416fe5887c170dd822ca1f0e",
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "receipt_sha256": "891ef421ee18c3c7cbdb26ebb6a892505df68a03a0b6b318ef9bfcbc8056df22"
+    },
+    {
+      "sequence": 1,
+      "line_sha256": "27b9932ba5a2ca75915c4f4eb882a03cfbf8becbadaf59a72fd899a6eb335eea",
+      "plan": "dev/bench_results/c077a88b/2026-09-08-r2-c077a88b-ldpc-matched-algorithm-pilot/plan.json",
+      "plan_sha256": "a720af10bb8a34821160d4512af96fbfc6c56890eb89efc38e7acd34a6557372",
+      "addendum": "dev/bench_results/c077a88b/2026-09-08-r2-c077a88b-ldpc-matched-algorithm-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "b39f67cd2ecef9af8ca2bf8d719fe5e47d1e5416416fe5887c170dd822ca1f0e",
+      "disposition": "unfinished attempt; preserved plan, log and checkpoint"
+    },
+    {
+      "sequence": 2,
+      "line_sha256": "f268d4eb71078726a298c6120cb9061674e37874f45fa84393f8d7e5fb313cf8",
+      "plan": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/plan.json",
+      "plan_sha256": "fb6c8477a941aacc4f03c9374f28877fee36607f9551fdc7c230e30c5e3b0aa1",
+      "addendum": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "db0264eb5c6f779496ad164ca0e388bd4d41c1f505a4f671954ab21255f0d944",
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "receipt_sha256": "888bdfb4685fcb3a38c5d5b34f51d816b0c78dcd5d6839d6ecaad3f9afe16d57"
+    },
+    {
+      "sequence": 3,
+      "line_sha256": "4960eb6ba8714f6b8649f91a1c40cb8b19dcacafa50a0e5dcca72929a58a1d39",
+      "plan": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/plan.json",
+      "plan_sha256": "93814ee422fa1349c1ecbd85552aa3c9510db88efce62d8e4761defca0a8c7a8",
+      "addendum": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "2eb10cb32a589a40bd5321bf45a11bb4376cce64948261fc98960d96c275671b",
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "receipt_sha256": "76d6b067c0c1de7c0993aa2ea3ce0b5ed867674d2aec7b3743b8db4df9606939"
+    }
+  ]
+}

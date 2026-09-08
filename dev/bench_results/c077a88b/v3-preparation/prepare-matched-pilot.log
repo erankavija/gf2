@@ -1,0 +1,27 @@
+cargo-budget: 12 jobs (2 live, 24 cpus)
+   Compiling version_check v0.9.5
+   Compiling proc-macro2 v1.0.103
+   Compiling quote v1.0.42
+   Compiling unicode-ident v1.0.22
+   Compiling typenum v1.20.0
+   Compiling serde_core v1.0.228
+   Compiling serde_json v1.0.145
+   Compiling rustix v1.1.2
+   Compiling serde v1.0.228
+   Compiling memchr v2.7.6
+   Compiling cpufeatures v0.2.17
+   Compiling cfg-if v1.0.4
+   Compiling bitflags v2.10.0
+   Compiling ryu v1.0.20
+   Compiling linux-raw-sys v0.11.0
+   Compiling itoa v1.0.15
+   Compiling generic-array v0.14.7
+   Compiling syn v2.0.111
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling serde_derive v1.0.228
+   Compiling tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/dev/tools/tuning-campaign-support)
+    Finished `release` profile [optimized] target(s) in 44.85s
+/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-matched-algorithm-pilot.plan.json

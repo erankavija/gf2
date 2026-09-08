@@ -1,0 +1,194 @@
+cargo-budget: 4 jobs (5 live, 24 cpus)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c077a88b/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling gf2-sim v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c077a88b/crates/gf2-sim)
+warning: ldpc-survey-harness@0.0.0: In file included from /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:1721,
+warning: ldpc-survey-harness@0.0.0:                  from /tmp/c077a88b-ext/aff3ct/include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx:2,
+warning: ldpc-survey-harness@0.0.0:                  from /tmp/c077a88b-ext/aff3ct/include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hpp:70,
+warning: ldpc-survey-harness@0.0.0:                  from cpp/aff3ct_shim.cpp:25:
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp_impl_AVX.hxx: In function 'mipp::reg mipp::combine(reg, reg) [with int S = 0; T = double; reg = __m256]':
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp_impl_AVX.hxx:970:63: warning: unused parameter 'v2' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   970 |         inline reg combine<0, double>(const reg v1, const reg v2)
+warning: ldpc-survey-harness@0.0.0:       |                                                     ~~~~~~~~~~^~
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp_impl_AVX.hxx: In function 'mipp::reg mipp::combine(reg, reg) [with int S = 0; T = float; reg = __m256]':
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp_impl_AVX.hxx:1010:62: warning: unused parameter 'v2' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:  1010 |         inline reg combine<0, float>(const reg v1, const reg v2)
+warning: ldpc-survey-harness@0.0.0:       |                                                    ~~~~~~~~~~^~
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp_impl_AVX.hxx: In function 'mipp::reg mipp::combine(reg, reg) [with int S = 0; T = signed char; reg = __m256]':
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp_impl_AVX.hxx:1103:63: warning: unused parameter 'v2' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:  1103 |         inline reg combine<0, int8_t>(const reg v1, const reg v2)
+warning: ldpc-survey-harness@0.0.0:       |                                                     ~~~~~~~~~~^~
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'mipp::reg mipp::compress(reg, msk) [with T = long int; reg = __m256; msk = __m256i]':
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:1997:95:   required from here
+warning: ldpc-survey-harness@0.0.0:  1997 | template <> inline reg compress<uint64_t>(const reg v, const msk m) { return compress<int64_t>(v, m); }
+warning: ldpc-survey-harness@0.0.0:       |                                                                              ~~~~~~~~~~~~~~~~~^~~~~~
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:722:71: warning: unused parameter 'm' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   722 | template <typename T> inline reg   compress     (const reg, const msk m)          { errorMessage<T>("compress");      exit(-1); }
+warning: ldpc-survey-harness@0.0.0:       |                                                             ~~~~~~~~~~^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'mipp::reg mipp::compress(reg, msk) [with T = int; reg = __m256; msk = __m256i]':
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:1999:95:   required from here
+warning: ldpc-survey-harness@0.0.0:  1999 | template <> inline reg compress<uint32_t>(const reg v, const msk m) { return compress<int32_t>(v, m); }
+warning: ldpc-survey-harness@0.0.0:       |                                                                              ~~~~~~~~~~~~~~~~~^~~~~~
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:722:71: warning: unused parameter 'm' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   722 | template <typename T> inline reg   compress     (const reg, const msk m)          { errorMessage<T>("compress");      exit(-1); }
+warning: ldpc-survey-harness@0.0.0:       |                                                             ~~~~~~~~~~^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'mipp::reg mipp::compress(reg, msk) [with T = short int; reg = __m256; msk = __m256i]':
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:2001:95:   required from here
+warning: ldpc-survey-harness@0.0.0:  2001 | template <> inline reg compress<uint16_t>(const reg v, const msk m) { return compress<int16_t>(v, m); }
+warning: ldpc-survey-harness@0.0.0:       |                                                                              ~~~~~~~~~~~~~~~~~^~~~~~
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:722:71: warning: unused parameter 'm' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   722 | template <typename T> inline reg   compress     (const reg, const msk m)          { errorMessage<T>("compress");      exit(-1); }
+warning: ldpc-survey-harness@0.0.0:       |                                                             ~~~~~~~~~~^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'mipp::reg mipp::compress(reg, msk) [with T = signed char; reg = __m256; msk = __m256i]':
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:2002:95:   required from here
+warning: ldpc-survey-harness@0.0.0:  2002 | template <> inline reg compress<uint8_t >(const reg v, const msk m) { return compress<int8_t >(v, m); }
+warning: ldpc-survey-harness@0.0.0:       |                                                                              ~~~~~~~~~~~~~~~~~^~~~~~
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:722:71: warning: unused parameter 'm' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   722 | template <typename T> inline reg   compress     (const reg, const msk m)          { errorMessage<T>("compress");      exit(-1); }
+warning: ldpc-survey-harness@0.0.0:       |                                                             ~~~~~~~~~~^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'void mipp::allocator<T>::deallocate(T*, std::size_t) [with T = unsigned char; std::size_t = long unsigned int]':
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/alloc_traits.h:441:23:   required from 'static void std::allocator_traits< <template-parameter-1-1> >::deallocate(_Alloc&, pointer, size_type) [with _Alloc = mipp::allocator<unsigned char>; pointer = unsigned char*; size_type = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   441 |       { __a.deallocate(__p, __n); }
+warning: ldpc-survey-harness@0.0.0:       |         ~~~~~~~~~~~~~~^~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:398:19:   required from 'void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(pointer, std::size_t) [with _Tp = unsigned char; _Alloc = mipp::allocator<unsigned char>; pointer = unsigned char*; std::size_t = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   398 |           _Tr::deallocate(_M_impl, __p, __n);
+warning: ldpc-survey-harness@0.0.0:       |           ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:378:2:   required from 'std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = unsigned char; _Alloc = mipp::allocator<unsigned char>]'
+warning: ldpc-survey-harness@0.0.0:   378 |         _M_deallocate(_M_impl._M_start, size_t(__n));
+warning: ldpc-survey-harness@0.0.0:       |         ^~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:591:47:   required from 'std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = unsigned char; _Alloc = mipp::allocator<unsigned char>; size_type = long unsigned int; value_type = unsigned char; allocator_type = mipp::allocator<unsigned char>]'
+warning: ldpc-survey-harness@0.0.0:   591 |       : _Base(_S_check_init_len(__n, __a), __a)
+warning: ldpc-survey-harness@0.0.0:       |                                               ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx:41:33:   required from 'aff3ct::module::Decoder_LDPC_BP_flooding<B, R, Update_rule, Syndrome_checker>::Decoder_LDPC_BP_flooding(int, int, int, const aff3ct::tools::Sparse_matrix&, const std::vector<unsigned int>&, const Update_rule&, bool, int) [with B = int; R = float; Update_rule = aff3ct::tools::Update_rule_MS<float>; Syndrome_checker = aff3ct::tools::LDPC_syndrome]'
+warning: ldpc-survey-harness@0.0.0:    41 |     mipp::vector<unsigned char> connections(this->H.get_n_rows(), 0);
+warning: ldpc-survey-harness@0.0.0:       |                                 ^~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: cpp/aff3ct_shim.cpp:108:17:   required from '{anonymous}::Counting_flooding<Q, Update_rule>::Counting_flooding(int, int, int, const aff3ct::tools::Sparse_matrix&, const std::vector<unsigned int>&, const Update_rule&, bool, int) [with Q = float; Update_rule = aff3ct::tools::Update_rule_MS<float>]'
+warning: ldpc-survey-harness@0.0.0:   108 |       , counter()
+warning: ldpc-survey-harness@0.0.0:       |                 ^
+warning: ldpc-survey-harness@0.0.0: cpp/aff3ct_shim.cpp:236:47:   required from '{anonymous}::Handle_base* {anonymous}::build_flooding(const std::string&, int, int, int, const aff3ct::tools::Sparse_matrix&, float, float, bool, int, float, Q, std::string&) [with Q = float; std::string = std::__cxx11::basic_string<char>]'
+warning: ldpc-survey-harness@0.0.0:   236 |         Counting_flooding<Q, Rule>* decoder = new Counting_flooding<Q, Rule>(
+warning: ldpc-survey-harness@0.0.0:       |                                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0:   237 |           K, N, n_ite, H, positions, Rule(), enable_syndrome, syndrome_depth);
+warning: ldpc-survey-harness@0.0.0:       |           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: cpp/aff3ct_shim.cpp:370:33:   required from '{anonymous}::Handle_base* {anonymous}::build_for_precision(const std::string&, const std::string&, const std::string&, int, int, int, const aff3ct::tools::Sparse_matrix&, float, float, bool, int, float, Q, std::string&) [with Q = float; std::string = std::__cxx11::basic_string<char>]'
+warning: ldpc-survey-harness@0.0.0:   370 |         return build_flooding<Q>(implem, K, N, n_ite, H, norm_factor, offset,
+warning: ldpc-survey-harness@0.0.0:       |                ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0:   371 |                                  enable_syndrome, syndrome_depth, scale, limit, failure);
+warning: ldpc-survey-harness@0.0.0:       |                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: cpp/aff3ct_shim.cpp:426:48:   required from here
+warning: ldpc-survey-harness@0.0.0:   426 |             handle = build_for_precision<float>(kind_s, implem_s, simd_s, K, N, n_ite, H,
+warning: ldpc-survey-harness@0.0.0:       |                      ~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0:   427 |                                                 norm_factor, offset, enable_syndrome != 0,
+warning: ldpc-survey-harness@0.0.0:       |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0:   428 |                                                 syndrome_depth, quant_scale, 0.f, failure);
+warning: ldpc-survey-harness@0.0.0:       |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:583:43: warning: unused parameter 'n' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   583 |         void deallocate(T* p, std::size_t n) { mipp::free<T>(p); }
+warning: ldpc-survey-harness@0.0.0:       |                               ~~~~~~~~~~~~^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'void mipp::allocator<T>::deallocate(T*, std::size_t) [with T = mipp::Reg<signed char>; std::size_t = long unsigned int]':
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/alloc_traits.h:441:23:   required from 'static void std::allocator_traits< <template-parameter-1-1> >::deallocate(_Alloc&, pointer, size_type) [with _Alloc = mipp::allocator<mipp::Reg<signed char> >; pointer = mipp::Reg<signed char>*; size_type = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   441 |       { __a.deallocate(__p, __n); }
+warning: ldpc-survey-harness@0.0.0:       |         ~~~~~~~~~~~~~~^~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:398:19:   required from 'void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(pointer, std::size_t) [with _Tp = mipp::Reg<signed char>; _Alloc = mipp::allocator<mipp::Reg<signed char> >; pointer = mipp::Reg<signed char>*; std::size_t = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   398 |           _Tr::deallocate(_M_impl, __p, __n);
+warning: ldpc-survey-harness@0.0.0:       |           ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:378:2:   required from 'std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = mipp::Reg<signed char>; _Alloc = mipp::allocator<mipp::Reg<signed char> >]'
+warning: ldpc-survey-harness@0.0.0:   378 |         _M_deallocate(_M_impl._M_start, size_t(__n));
+warning: ldpc-survey-harness@0.0.0:       |         ^~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:795:7:   required from 'std::vector<_Tp, _Alloc>::~vector() [with _Tp = mipp::Reg<signed char>; _Alloc = mipp::allocator<mipp::Reg<signed char> >]'
+warning: ldpc-survey-harness@0.0.0:   795 |       }
+warning: ldpc-survey-harness@0.0.0:       |       ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/include/Module/Decoder/LDPC/BP/Horizontal_layered/ONMS/Decoder_LDPC_BP_horizontal_layered_ONMS_inter.hpp:51:13:   required from '{anonymous}::Owned_handle<Q, Decoder>::~Owned_handle() [with Q = signed char; Decoder = aff3ct::module::Decoder_LDPC_BP_horizontal_layered_ONMS_inter<signed char, signed char>]'
+warning: ldpc-survey-harness@0.0.0:    51 |     virtual ~Decoder_LDPC_BP_horizontal_layered_ONMS_inter() = default;
+warning: ldpc-survey-harness@0.0.0:       |             ^
+warning: ldpc-survey-harness@0.0.0: cpp/aff3ct_shim.cpp:166:5:   required from here
+warning: ldpc-survey-harness@0.0.0:   166 |     ~Owned_handle() { delete decoder; }
+warning: ldpc-survey-harness@0.0.0:       |     ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:583:43: warning: unused parameter 'n' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   583 |         void deallocate(T* p, std::size_t n) { mipp::free<T>(p); }
+warning: ldpc-survey-harness@0.0.0:       |                               ~~~~~~~~~~~~^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'void mipp::allocator<T>::deallocate(T*, std::size_t) [with T = mipp::Reg<short int>; std::size_t = long unsigned int]':
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/alloc_traits.h:441:23:   required from 'static void std::allocator_traits< <template-parameter-1-1> >::deallocate(_Alloc&, pointer, size_type) [with _Alloc = mipp::allocator<mipp::Reg<short int> >; pointer = mipp::Reg<short int>*; size_type = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   441 |       { __a.deallocate(__p, __n); }
+warning: ldpc-survey-harness@0.0.0:       |         ~~~~~~~~~~~~~~^~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:398:19:   required from 'void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(pointer, std::size_t) [with _Tp = mipp::Reg<short int>; _Alloc = mipp::allocator<mipp::Reg<short int> >; pointer = mipp::Reg<short int>*; std::size_t = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   398 |           _Tr::deallocate(_M_impl, __p, __n);
+warning: ldpc-survey-harness@0.0.0:       |           ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:378:2:   required from 'std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = mipp::Reg<short int>; _Alloc = mipp::allocator<mipp::Reg<short int> >]'
+warning: ldpc-survey-harness@0.0.0:   378 |         _M_deallocate(_M_impl._M_start, size_t(__n));
+warning: ldpc-survey-harness@0.0.0:       |         ^~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:795:7:   required from 'std::vector<_Tp, _Alloc>::~vector() [with _Tp = mipp::Reg<short int>; _Alloc = mipp::allocator<mipp::Reg<short int> >]'
+warning: ldpc-survey-harness@0.0.0:   795 |       }
+warning: ldpc-survey-harness@0.0.0:       |       ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/include/Module/Decoder/LDPC/BP/Horizontal_layered/ONMS/Decoder_LDPC_BP_horizontal_layered_ONMS_inter.hpp:51:13:   required from '{anonymous}::Owned_handle<Q, Decoder>::~Owned_handle() [with Q = short int; Decoder = aff3ct::module::Decoder_LDPC_BP_horizontal_layered_ONMS_inter<short int, short int>]'
+warning: ldpc-survey-harness@0.0.0:    51 |     virtual ~Decoder_LDPC_BP_horizontal_layered_ONMS_inter() = default;
+warning: ldpc-survey-harness@0.0.0:       |             ^
+warning: ldpc-survey-harness@0.0.0: cpp/aff3ct_shim.cpp:166:5:   required from here
+warning: ldpc-survey-harness@0.0.0:   166 |     ~Owned_handle() { delete decoder; }
+warning: ldpc-survey-harness@0.0.0:       |     ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:583:43: warning: unused parameter 'n' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   583 |         void deallocate(T* p, std::size_t n) { mipp::free<T>(p); }
+warning: ldpc-survey-harness@0.0.0:       |                               ~~~~~~~~~~~~^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'void mipp::allocator<T>::deallocate(T*, std::size_t) [with T = mipp::Reg<float>; std::size_t = long unsigned int]':
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/alloc_traits.h:441:23:   required from 'static void std::allocator_traits< <template-parameter-1-1> >::deallocate(_Alloc&, pointer, size_type) [with _Alloc = mipp::allocator<mipp::Reg<float> >; pointer = mipp::Reg<float>*; size_type = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   441 |       { __a.deallocate(__p, __n); }
+warning: ldpc-survey-harness@0.0.0:       |         ~~~~~~~~~~~~~~^~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:398:19:   required from 'void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(pointer, std::size_t) [with _Tp = mipp::Reg<float>; _Alloc = mipp::allocator<mipp::Reg<float> >; pointer = mipp::Reg<float>*; std::size_t = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   398 |           _Tr::deallocate(_M_impl, __p, __n);
+warning: ldpc-survey-harness@0.0.0:       |           ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:378:2:   required from 'std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = mipp::Reg<float>; _Alloc = mipp::allocator<mipp::Reg<float> >]'
+warning: ldpc-survey-harness@0.0.0:   378 |         _M_deallocate(_M_impl._M_start, size_t(__n));
+warning: ldpc-survey-harness@0.0.0:       |         ^~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:795:7:   required from 'std::vector<_Tp, _Alloc>::~vector() [with _Tp = mipp::Reg<float>; _Alloc = mipp::allocator<mipp::Reg<float> >]'
+warning: ldpc-survey-harness@0.0.0:   795 |       }
+warning: ldpc-survey-harness@0.0.0:       |       ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/include/Module/Decoder/LDPC/BP/Horizontal_layered/ONMS/Decoder_LDPC_BP_horizontal_layered_ONMS_inter.hpp:51:13:   required from '{anonymous}::Owned_handle<Q, Decoder>::~Owned_handle() [with Q = float; Decoder = aff3ct::module::Decoder_LDPC_BP_horizontal_layered_ONMS_inter<int, float>]'
+warning: ldpc-survey-harness@0.0.0:    51 |     virtual ~Decoder_LDPC_BP_horizontal_layered_ONMS_inter() = default;
+warning: ldpc-survey-harness@0.0.0:       |             ^
+warning: ldpc-survey-harness@0.0.0: cpp/aff3ct_shim.cpp:166:5:   required from here
+warning: ldpc-survey-harness@0.0.0:   166 |     ~Owned_handle() { delete decoder; }
+warning: ldpc-survey-harness@0.0.0:       |     ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:583:43: warning: unused parameter 'n' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   583 |         void deallocate(T* p, std::size_t n) { mipp::free<T>(p); }
+warning: ldpc-survey-harness@0.0.0:       |                               ~~~~~~~~~~~~^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h: In instantiation of 'void mipp::allocator<T>::deallocate(T*, std::size_t) [with T = mipp::Reg<int>; std::size_t = long unsigned int]':
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/alloc_traits.h:441:23:   required from 'static void std::allocator_traits< <template-parameter-1-1> >::deallocate(_Alloc&, pointer, size_type) [with _Alloc = mipp::allocator<mipp::Reg<int> >; pointer = mipp::Reg<int>*; size_type = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   441 |       { __a.deallocate(__p, __n); }
+warning: ldpc-survey-harness@0.0.0:       |         ~~~~~~~~~~~~~~^~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:398:19:   required from 'void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(pointer, std::size_t) [with _Tp = mipp::Reg<int>; _Alloc = mipp::allocator<mipp::Reg<int> >; pointer = mipp::Reg<int>*; std::size_t = long unsigned int]'
+warning: ldpc-survey-harness@0.0.0:   398 |           _Tr::deallocate(_M_impl, __p, __n);
+warning: ldpc-survey-harness@0.0.0:       |           ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:378:2:   required from 'std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = mipp::Reg<int>; _Alloc = mipp::allocator<mipp::Reg<int> >]'
+warning: ldpc-survey-harness@0.0.0:   378 |         _M_deallocate(_M_impl._M_start, size_t(__n));
+warning: ldpc-survey-harness@0.0.0:       |         ^~~~~~~~~~~~~
+warning: ldpc-survey-harness@0.0.0: /usr/include/c++/16/bits/stl_vector.h:795:7:   required from 'std::vector<_Tp, _Alloc>::~vector() [with _Tp = mipp::Reg<int>; _Alloc = mipp::allocator<mipp::Reg<int> >]'
+warning: ldpc-survey-harness@0.0.0:   795 |       }
+warning: ldpc-survey-harness@0.0.0:       |       ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/include/Module/Decoder/LDPC/BP/Horizontal_layered/ONMS/Decoder_LDPC_BP_horizontal_layered_ONMS_inter.hpp:51:13:   required from '{anonymous}::Owned_handle<Q, Decoder>::~Owned_handle() [with Q = float; Decoder = aff3ct::module::Decoder_LDPC_BP_horizontal_layered_ONMS_inter<int, float>]'
+warning: ldpc-survey-harness@0.0.0:    51 |     virtual ~Decoder_LDPC_BP_horizontal_layered_ONMS_inter() = default;
+warning: ldpc-survey-harness@0.0.0:       |             ^
+warning: ldpc-survey-harness@0.0.0: cpp/aff3ct_shim.cpp:166:5:   required from here
+warning: ldpc-survey-harness@0.0.0:   166 |     ~Owned_handle() { delete decoder; }
+warning: ldpc-survey-harness@0.0.0:       |     ^
+warning: ldpc-survey-harness@0.0.0: /tmp/c077a88b-ext/aff3ct/lib/MIPP/include/mipp.h:583:43: warning: unused parameter 'n' [-Wunused-parameter]
+warning: ldpc-survey-harness@0.0.0:   583 |         void deallocate(T* p, std::size_t n) { mipp::free<T>(p); }
+warning: ldpc-survey-harness@0.0.0:       |                               ~~~~~~~~~~~~^
+   Compiling ldpc-survey-harness v0.0.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c077a88b/dev/active/c077a88b/survey/harness)
+    Finished `release` profile [optimized] target(s) in 38.52s
+     Running unittests src/lib.rs (/tmp/c077a88b-build/release/deps/ldpc_survey-0cd88dee0b933052)
+
+running 4 tests
+test alist_tests::alist_rejects_disagreeing_graph_sections ... ok
+test arm::tests::timing_banks_cover_both_alternating_codeword_classes ... ok
+test alist_tests::alist_preserves_parity_at_word_boundaries ... ok
+test arm::tests::timing_uses_the_declared_cache_working_set ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

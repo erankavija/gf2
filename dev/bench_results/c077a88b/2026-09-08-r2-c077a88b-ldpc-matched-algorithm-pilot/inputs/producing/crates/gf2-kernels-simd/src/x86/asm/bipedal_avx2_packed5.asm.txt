@@ -1,0 +1,311 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::bipedal_avx2_packed5::run_add5_batch
+; extra symbols : gf2_kernels_simd::x86::bipedal_avx2_packed5::run_sub5_batch gf2_kernels_simd::x86::bipedal_avx2_packed5::run_mul5_batch gf2_kernels_simd::x86::bipedal_avx2_packed5::run_neg5_batch
+; output        : crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : 5c35cf9f
+; regenerated   : 2026-05-14T14:29:54Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed5::run_add5_batch
+;==========================================================
+
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-1f769232/crates/gf2-kernels-simd)
+
+    Finished `release` profile [optimized] target(s) in 1.58s
+gf2_kernels_simd::x86::bipedal_avx2_packed5::run_add5_batch:
+	test rsi, rsi
+	je .LBB31_4
+	push r14
+	push rbx
+	mov rax, qword ptr [rsp + 48]
+	mov r10, qword ptr [rsp + 40]
+	mov r11, qword ptr [rsp + 32]
+	mov rbx, qword ptr [rsp + 24]
+	xor r14d, r14d
+	vpcmpeqd ymm0, ymm0, ymm0
+.LBB31_2:
+	vmovdqu ymm1, ymmword ptr [rdi + 8*r14]
+	vmovdqu ymm2, ymmword ptr [rdx + 8*r14]
+	vmovdqu ymm6, ymmword ptr [rcx + 8*r14]
+	vmovdqu ymm9, ymmword ptr [r8 + 8*r14]
+	vmovdqu ymm7, ymmword ptr [r9 + 8*r14]
+	vmovdqu ymm10, ymmword ptr [rbx + 8*r14]
+	vpor ymm3, ymm6, ymm2
+	vpxor ymm4, ymm3, ymm0
+	vpandn ymm5, ymm6, ymm2
+	vpor ymm8, ymm2, ymm1
+	vpandn ymm2, ymm1, ymm4
+	vpandn ymm3, ymm3, ymm1
+	vpandn ymm4, ymm1, ymm5
+	vpand ymm5, ymm5, ymm1
+	vpandn ymm1, ymm8, ymm6
+	vpor ymm8, ymm10, ymm7
+	vpxor ymm6, ymm8, ymm0
+	vpandn ymm11, ymm10, ymm7
+	vpor ymm12, ymm9, ymm7
+	vpandn ymm6, ymm9, ymm6
+	vpandn ymm7, ymm8, ymm9
+	vpandn ymm8, ymm9, ymm11
+	vpand ymm9, ymm11, ymm9
+	vpandn ymm10, ymm12, ymm10
+	vpand ymm11, ymm7, ymm2
+	vpand ymm12, ymm6, ymm3
+	vpand ymm13, ymm10, ymm4
+	vpand ymm14, ymm9, ymm5
+	vpor ymm13, ymm14, ymm13
+	vpor ymm11, ymm13, ymm11
+	vpand ymm13, ymm8, ymm1
+	vpor ymm12, ymm12, ymm13
+	vpor ymm11, ymm11, ymm12
+	vpand ymm12, ymm8, ymm2
+	vpand ymm13, ymm7, ymm3
+	vpor ymm12, ymm12, ymm13
+	vpand ymm13, ymm6, ymm4
+	vpand ymm14, ymm10, ymm5
+	vpor ymm13, ymm13, ymm14
+	vpor ymm12, ymm13, ymm12
+	vpand ymm13, ymm9, ymm1
+	vpor ymm12, ymm12, ymm13
+	vpand ymm13, ymm9, ymm2
+	vpand ymm14, ymm8, ymm3
+	vpor ymm13, ymm13, ymm14
+	vpand ymm14, ymm7, ymm4
+	vpand ymm15, ymm10, ymm1
+	vpor ymm14, ymm14, ymm15
+	vpand ymm15, ymm6, ymm5
+	vpor ymm14, ymm14, ymm15
+	vpor ymm13, ymm14, ymm13
+	vpand ymm2, ymm10, ymm2
+	vpand ymm3, ymm9, ymm3
+	vpand ymm4, ymm8, ymm4
+	vpand ymm5, ymm7, ymm5
+	vpor ymm4, ymm4, ymm5
+	vpor ymm2, ymm4, ymm2
+	vpand ymm1, ymm6, ymm1
+	vpor ymm1, ymm3, ymm1
+	vpor ymm1, ymm2, ymm1
+	vpor ymm2, ymm11, ymm13
+	vpor ymm3, ymm12, ymm13
+	vmovdqu ymmword ptr [r11 + 8*r14], ymm2
+	vmovdqu ymmword ptr [r10 + 8*r14], ymm3
+	vmovdqu ymmword ptr [rax + 8*r14], ymm1
+	add r14, 4
+	cmp r14, rsi
+	jb .LBB31_2
+	pop rbx
+	pop r14
+.LBB31_4:
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed5::run_sub5_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2_packed5::run_sub5_batch:
+	test rsi, rsi
+	je .LBB34_4
+	push r14
+	push rbx
+	mov rax, qword ptr [rsp + 48]
+	mov r10, qword ptr [rsp + 40]
+	mov r11, qword ptr [rsp + 32]
+	mov rbx, qword ptr [rsp + 24]
+	xor r14d, r14d
+	vpcmpeqd ymm0, ymm0, ymm0
+.LBB34_2:
+	vmovdqu ymm1, ymmword ptr [rdi + 8*r14]
+	vmovdqu ymm2, ymmword ptr [rdx + 8*r14]
+	vmovdqu ymm6, ymmword ptr [rcx + 8*r14]
+	vmovdqu ymm7, ymmword ptr [r8 + 8*r14]
+	vmovdqu ymm8, ymmword ptr [r9 + 8*r14]
+	vmovdqu ymm9, ymmword ptr [rbx + 8*r14]
+	vpor ymm3, ymm6, ymm2
+	vpxor ymm4, ymm3, ymm0
+	vpandn ymm5, ymm6, ymm2
+	vpor ymm10, ymm2, ymm1
+	vpandn ymm2, ymm1, ymm4
+	vpandn ymm3, ymm3, ymm1
+	vpandn ymm4, ymm1, ymm5
+	vpand ymm5, ymm5, ymm1
+	vpandn ymm1, ymm10, ymm6
+	vpor ymm10, ymm9, ymm8
+	vpxor ymm6, ymm10, ymm0
+	vpandn ymm11, ymm9, ymm8
+	vpor ymm8, ymm8, ymm7
+	vpandn ymm6, ymm7, ymm6
+	vpandn ymm10, ymm10, ymm7
+	vpandn ymm12, ymm7, ymm11
+	vpand ymm7, ymm11, ymm7
+	vpandn ymm8, ymm8, ymm9
+	vpand ymm9, ymm8, ymm2
+	vpand ymm11, ymm6, ymm3
+	vpand ymm13, ymm10, ymm4
+	vpand ymm14, ymm12, ymm5
+	vpor ymm13, ymm13, ymm14
+	vpor ymm9, ymm13, ymm9
+	vpand ymm13, ymm7, ymm1
+	vpor ymm11, ymm11, ymm13
+	vpor ymm9, ymm9, ymm11
+	vpand ymm11, ymm7, ymm2
+	vpand ymm13, ymm8, ymm3
+	vpand ymm14, ymm6, ymm4
+	vpand ymm15, ymm10, ymm5
+	vpor ymm13, ymm13, ymm15
+	vpor ymm13, ymm14, ymm13
+	vpand ymm14, ymm12, ymm1
+	vpor ymm11, ymm11, ymm14
+	vpor ymm11, ymm13, ymm11
+	vpand ymm13, ymm12, ymm2
+	vpand ymm14, ymm7, ymm3
+	vpor ymm13, ymm13, ymm14
+	vpand ymm14, ymm8, ymm4
+	vpand ymm15, ymm6, ymm5
+	vpor ymm14, ymm15, ymm14
+	vpor ymm13, ymm14, ymm13
+	vpand ymm14, ymm10, ymm1
+	vpor ymm13, ymm13, ymm14
+	vpand ymm2, ymm10, ymm2
+	vpand ymm3, ymm12, ymm3
+	vpand ymm4, ymm7, ymm4
+	vpand ymm5, ymm8, ymm5
+	vpor ymm4, ymm4, ymm5
+	vpor ymm2, ymm4, ymm2
+	vpand ymm1, ymm6, ymm1
+	vpor ymm1, ymm3, ymm1
+	vpor ymm1, ymm2, ymm1
+	vpor ymm2, ymm9, ymm13
+	vpor ymm3, ymm11, ymm13
+	vmovdqu ymmword ptr [r11 + 8*r14], ymm2
+	vmovdqu ymmword ptr [r10 + 8*r14], ymm3
+	vmovdqu ymmword ptr [rax + 8*r14], ymm1
+	add r14, 4
+	cmp r14, rsi
+	jb .LBB34_2
+	pop rbx
+	pop r14
+.LBB34_4:
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed5::run_mul5_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2_packed5::run_mul5_batch:
+	test rsi, rsi
+	je .LBB32_4
+	push r14
+	push rbx
+	mov rax, qword ptr [rsp + 48]
+	mov r10, qword ptr [rsp + 40]
+	mov r11, qword ptr [rsp + 32]
+	mov rbx, qword ptr [rsp + 24]
+	xor r14d, r14d
+.LBB32_2:
+	vmovups ymm0, ymmword ptr [rdi + 8*r14]
+	vmovups ymm1, ymmword ptr [rdx + 8*r14]
+	vmovups ymm2, ymmword ptr [rcx + 8*r14]
+	vmovups ymm3, ymmword ptr [r8 + 8*r14]
+	vmovups ymm4, ymmword ptr [r9 + 8*r14]
+	vmovups ymm5, ymmword ptr [rbx + 8*r14]
+	vandnps ymm6, ymm2, ymm1
+	vorps ymm7, ymm1, ymm0
+	vorps ymm1, ymm1, ymm2
+	vandnps ymm1, ymm1, ymm0
+	vandnps ymm8, ymm0, ymm6
+	vandps ymm6, ymm6, ymm0
+	vandnps ymm0, ymm7, ymm2
+	vandnps ymm2, ymm5, ymm4
+	vorps ymm7, ymm4, ymm3
+	vorps ymm4, ymm4, ymm5
+	vandnps ymm4, ymm4, ymm3
+	vandnps ymm9, ymm3, ymm2
+	vandps ymm2, ymm2, ymm3
+	vandnps ymm3, ymm7, ymm5
+	vandps ymm5, ymm4, ymm1
+	vandps ymm7, ymm8, ymm2
+	vorps ymm5, ymm5, ymm7
+	vandps ymm7, ymm9, ymm6
+	vandps ymm10, ymm3, ymm0
+	vorps ymm7, ymm10, ymm7
+	vorps ymm5, ymm7, ymm5
+	vandps ymm7, ymm9, ymm1
+	vandps ymm10, ymm8, ymm4
+	vorps ymm7, ymm10, ymm7
+	vandps ymm10, ymm3, ymm6
+	vandps ymm11, ymm2, ymm0
+	vorps ymm10, ymm11, ymm10
+	vorps ymm7, ymm10, ymm7
+	vandps ymm10, ymm2, ymm1
+	vandps ymm11, ymm8, ymm3
+	vandps ymm12, ymm4, ymm6
+	vorps ymm11, ymm12, ymm11
+	vandps ymm12, ymm9, ymm0
+	vorps ymm10, ymm12, ymm10
+	vorps ymm10, ymm11, ymm10
+	vandps ymm1, ymm3, ymm1
+	vandps ymm3, ymm9, ymm8
+	vandps ymm2, ymm2, ymm6
+	vorps ymm1, ymm2, ymm1
+	vandps ymm0, ymm4, ymm0
+	vorps ymm0, ymm0, ymm3
+	vorps ymm0, ymm1, ymm0
+	vorps ymm1, ymm10, ymm5
+	vorps ymm2, ymm10, ymm7
+	vmovups ymmword ptr [r11 + 8*r14], ymm1
+	vmovups ymmword ptr [r10 + 8*r14], ymm2
+	vmovups ymmword ptr [rax + 8*r14], ymm0
+	add r14, 4
+	cmp r14, rsi
+	jb .LBB32_2
+	pop rbx
+	pop r14
+.LBB32_4:
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed5::run_neg5_batch
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::bipedal_avx2_packed5::run_neg5_batch:
+	test rsi, rsi
+	je .LBB33_3
+	mov rax, qword ptr [rsp + 8]
+	xor r10d, r10d
+.LBB33_2:
+	vmovups ymm0, ymmword ptr [rdi + 8*r10]
+	vmovups ymm1, ymmword ptr [rdx + 8*r10]
+	vmovups ymm2, ymmword ptr [rcx + 8*r10]
+	vandnps ymm3, ymm2, ymm1
+	vorps ymm4, ymm1, ymm0
+	vorps ymm1, ymm1, ymm2
+	vandnps ymm1, ymm1, ymm0
+	vandnps ymm0, ymm0, ymm3
+	vandnps ymm2, ymm4, ymm2
+	vorps ymm0, ymm0, ymm2
+	vmovups ymmword ptr [r8 + 8*r10], ymm0
+	vmovups ymmword ptr [r9 + 8*r10], ymm3
+	vmovups ymmword ptr [rax + 8*r10], ymm1
+	add r10, 4
+	cmp r10, rsi
+	jb .LBB33_2
+.LBB33_3:
+	vzeroupper
+	ret

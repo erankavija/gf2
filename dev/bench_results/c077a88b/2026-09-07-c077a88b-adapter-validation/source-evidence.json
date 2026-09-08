@@ -1,0 +1,156 @@
+{
+  "schema": "ldpc-survey-source-evidence-v1",
+  "commits": {
+    "aff3ct": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+    "srsran": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+    "xdsopl-ldpc": "32357d8ad55a6a302c34e093759f0454e45cca56",
+    "oai": "b3930e39f53e626b821c6bb84c22c841811c4536"
+  },
+  "claims": [
+    {
+      "claim": "aff3ct-cxx-standard-11",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "CMakeLists.txt",
+      "line": 64,
+      "text": "set(CMAKE_CXX_STANDARD 11)",
+      "why": "The pinned build compiles as C++11, so __cpp_aligned_new is undefined."
+    },
+    {
+      "claim": "aff3ct-flooding-inter-gated",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Decoder/LDPC/Decoder_LDPC.cpp",
+      "line": 739,
+      "text": "else if (this->type == \"BP_FLOODING\" && this->simd_strategy == \"INTER\")",
+      "why": "The flooding INTER branch sits behind the aligned-new guard above it."
+    },
+    {
+      "claim": "aff3ct-info-bits-iota",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Codec/LDPC/Codec_LDPC.cpp",
+      "line": 135,
+      "text": "std::iota(info_bits_pos->begin(), info_bits_pos->end(), 0);",
+      "why": "Without an encoder AFF3CT scores codeword positions 0..K-1, the window this survey scores."
+    },
+    {
+      "claim": "aff3ct-layered-inter-no-int8",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Decoder/LDPC/BP/Horizontal_layered/ONMS/Decoder_LDPC_BP_horizontal_layered_ONMS_inter.cpp",
+      "line": 48,
+      "text": "__FILE__, __LINE__, __func__, \"This decoder does not work in 8-bit fixed-point.\");",
+      "why": "The inter-frame layered decoder refuses 8-bit fixed point by construction."
+    },
+    {
+      "claim": "aff3ct-flooding-single-ite-virtual",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hpp",
+      "line": 63,
+      "text": "virtual void _decode_single_ite(const std::vector<R>& msg_var_to_chk, std::vector<R>& msg_chk_to_var);",
+      "why": "The one virtual hook that lets the survey count flooding iterations exactly."
+    },
+    {
+      "claim": "srsran-scaling-factor",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_decoder_impl.h",
+      "line": 198,
+      "text": "float scaling_factor = 0.8;",
+      "why": "srsRAN fixes its normalized min-sum factor privately; no public field reaches it."
+    },
+    {
+      "claim": "srsran-shortened-input",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_decoder_impl.cpp",
+      "line": 65,
+      "text": "uint16_t max_input_length = bg_N_short * lifting_size;",
+      "why": "srsRAN takes the shortened codeblock, not the mother code."
+    },
+    {
+      "claim": "srsran-crc-stopping",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "include/srsran/phy/upper/channel_coding/ldpc/ldpc_decoder.h",
+      "line": 64,
+      "text": "/// \\param[in]  crc     Pointer to a CRC calculator for early stopping. Set to \\c nullptr for disabling early",
+      "why": "srsRAN stops on a CRC or not at all; it exposes no syndrome stopping."
+    },
+    {
+      "claim": "srsran-avx2-source",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/CMakeLists.txt",
+      "line": 44,
+      "text": "set_source_files_properties(ldpc_decoder_avx2.cpp PROPERTIES COMPILE_OPTIONS \"-mavx2;\")",
+      "why": "The accelerated backend and the exact flag srsRAN gives it."
+    },
+    {
+      "claim": "xdsopl-dvb-t2-table",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "dvb_t2_tables.hh",
+      "line": 13,
+      "text": "struct DVB_T2_TABLE_A1",
+      "why": "The DVB-T2 rate-1/2 accumulator table the code-identity check rebuilds."
+    },
+    {
+      "claim": "xdsopl-parity-orientation",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "flooding_decoder.hh",
+      "line": 49,
+      "text": "cnv[i] = alg.sign(alg.sign(alg.one(), bnv[i-1]), bnv[i]);",
+      "why": "Check i involves parity i-1 and i, fixing the staircase orientation."
+    },
+    {
+      "claim": "xdsopl-no-normalized-min-sum",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "generic.hh",
+      "line": 324,
+      "text": "struct MinSumCAlgorithm",
+      "why": "The correction-factor rule xdsopl offers in place of a normalized min-sum."
+    },
+    {
+      "claim": "oai-parity-check-stopping",
+      "project": "oai",
+      "commit": "b3930e39f53e626b821c6bb84c22c841811c4536",
+      "path": "openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c",
+      "line": 203,
+      "text": "while ((numIter < numMaxIter) && (pcRes != 0)) {",
+      "why": "OpenAirInterface stops on a parity check rather than a fixed count."
+    },
+    {
+      "claim": "oai-punctured-prefix",
+      "project": "oai",
+      "commit": "b3930e39f53e626b821c6bb84c22c841811c4536",
+      "path": "openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c",
+      "line": 197,
+      "text": "// because first 2 cols/BNs in BG are punctured and cannot be",
+      "why": "OpenAirInterface takes the punctured codeblock, not the mother code."
+    },
+    {
+      "claim": "oai-avx512-kernel",
+      "project": "oai",
+      "commit": "b3930e39f53e626b821c6bb84c22c841811c4536",
+      "path": "openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_cnProc.h",
+      "line": 22,
+      "text": "#if defined(__AVX512BW__)",
+      "why": "The accelerated check-node kernels the build selects at compile time."
+    },
+    {
+      "claim": "oai-max-llr",
+      "project": "oai",
+      "commit": "b3930e39f53e626b821c6bb84c22c841811c4536",
+      "path": "openair1/PHY/CODING/nrLDPC_decoder/nrLDPCdecoder_defs.h",
+      "line": 75,
+      "text": "#define NR_LDPC_MAX_NUM_LLR 27000",
+      "why": "The buffer bound that decides whether BG1 lifting 384 fits."
+    }
+  ],
+  "claims_not_found": []
+}

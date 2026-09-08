@@ -1,0 +1,2 @@
+cargo-budget: 24 jobs (1 live, 24 cpus)
+error: profile `ci` not found (known profiles: default, default-miri)

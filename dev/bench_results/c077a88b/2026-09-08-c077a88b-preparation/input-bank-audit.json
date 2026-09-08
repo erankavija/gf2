@@ -1,0 +1,94 @@
+{
+  "schema": "ldpc-survey-input-bank-audit-v1",
+  "finding": "The rejected stride selects only all-zero codewords. A contiguous bank mapping covers both recorded classes. No timing evidence was produced with the rejected mapping.",
+  "rows": [
+    {
+      "bundle": "dvb-t2-r12-waterfall",
+      "codeword_sha256": "4b70fec2970f72c57e55678192e01b5a72c3cdc4043e2330f9fa221f097dc44a",
+      "rejected_indices": [
+        0,
+        16,
+        32,
+        48,
+        64,
+        80,
+        96,
+        112
+      ],
+      "rejected_codeword_classes": [
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero"
+      ],
+      "corrected_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "corrected_codeword_classes": [
+        "all-zero",
+        "nonzero encoded message",
+        "all-zero",
+        "nonzero encoded message",
+        "all-zero",
+        "nonzero encoded message",
+        "all-zero",
+        "nonzero encoded message"
+      ]
+    },
+    {
+      "bundle": "nr-bg1-z384-mother",
+      "codeword_sha256": "7bb775743d7f17a807db66663185e49f2d6ab49202ed75692d090375733296af",
+      "rejected_indices": [
+        0,
+        16,
+        32,
+        48,
+        64,
+        80,
+        96,
+        112
+      ],
+      "rejected_codeword_classes": [
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero",
+        "all-zero"
+      ],
+      "corrected_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "corrected_codeword_classes": [
+        "all-zero",
+        "nonzero encoded message",
+        "all-zero",
+        "nonzero encoded message",
+        "all-zero",
+        "nonzero encoded message",
+        "all-zero",
+        "nonzero encoded message"
+      ]
+    }
+  ]
+}
