@@ -1,23 +1,31 @@
 [profile.default]
 slow-timeout = { period = "10s", terminate-after = 1 }
 
-# 8 s, raised from 5 s when the gate moved to the `ci-test` cargo profile.
-# Dropping LTO buys 280 s of build time per fresh worktree and costs runtime on
-# the hot paths: the slowest fast-tier test went from 3.754 s under `release` to
-# 4.899 s, i.e. from 25% headroom against a 5 s cap to 2%. Two gf2-algebra
-# permanent cross-checks sit at the top (bipedal5 and bipedal7
-# `test_cross_check_n14`) and neither is covered by the gf2-sim override below.
+# 15 s, raised from 8 s on 2026-09-08; 8 s had itself been raised from 5 s when
+# the gate moved to the `ci-test` cargo profile. Dropping LTO buys 280 s of
+# build time per fresh worktree and costs runtime on the hot paths: the slowest
+# fast-tier test went from 3.754 s under `release` to 4.899 s, i.e. from 25%
+# headroom against a 5 s cap to 2%. Two gf2-algebra permanent cross-checks sit
+# at the top (bipedal5 and bipedal7 `test_cross_check_n14`) and neither is
+# covered by the gf2-sim override below.
 #
-# 8 s is ~1.6x the measured worst case, restoring the margin the 5 s cap had
-# under `release`. The margin matters more than it did: the CPU budget in
-# `scripts/cargo-budget.sh` lets sibling builds run during a test step, so a
-# test now meets more contention than it used to, not less.
+# 8 s was ~1.6x the measured worst case in isolation, and that margin proved too
+# thin in practice. The CPU budget in `scripts/cargo-budget.sh` lets sibling
+# builds run during a test step, and a parallel agent wave puts several of them
+# there at once. Under that load four tests were killed at the 8 s boundary
+# while passing in isolation: the two GPU smokes
+# `test_gpu_box_muller_within_1_ulp_over_1024_frames` (SIGABRT) and
+# `test_gpu_chacha_raw_words_full_range_byte_identical`,
+# `tuning_calibration::campaign_owner::tests::accepted_complete_experiment_measures_defaults_and_reopens_only_its_27_leaves`
+# (5.7 s in isolation under load 12), and
+# `rare_event_artifact_partial_publish_recovery`. 15 s restores roughly 3x
+# headroom over the measured worst case.
 #
-# This is a tier-budget change, not an accommodation of a busy runner — the
-# generated code really is slower. Tests that grow past this budget get faster
-# or get a descriptive `#[ignore]`; the cap does not move again to hold them.
+# This remains a tier budget, not a hanging-test amnesty: a test that grows past
+# it gets faster or gets a descriptive `#[ignore]`. What moved the cap is
+# host contention the tier now genuinely meets, not slower tests.
 [profile.ci]
-slow-timeout = { period = "8s", terminate-after = 1 }
+slow-timeout = { period = "15s", terminate-after = 1 }
 fail-fast = false
 
 # The gf2-sim typestate compile-fail guard (issue 81d05bab) uses `trybuild`,
@@ -32,13 +40,14 @@ filter = 'test(typestate_rejects_out_of_order_calls)'
 slow-timeout = { period = "90s", terminate-after = 1 }
 
 # CPU "smoke" sim regression guards. In isolation they run in 0.8-2.5 s, well
-# inside the 5 s fast-tier cap, but they are CPU-bound and starve under the full
-# parallel workspace battery on the 2-core GitHub runner, intermittently grazing
-# the cap (observed 2026-06-30: dvb_t2_regression 5.11 s, pipeline_run_cpu
-# 5.03 s, preset_vs_graph 5.03 s, stage_driven 5.02 s — all four killed at the
-# boundary). They are genuinely fast-tier tests, not slow ones, so raise only
-# their per-test ceiling to absorb runner contention; every other test keeps the
-# default 5 s budget. (dvb_t2_regression and stage_driven_byte_identity are also
+# inside the 5 s fast-tier cap of the time, but they are CPU-bound and starve
+# under the full parallel workspace battery on the 2-core GitHub runner, grazing
+# the cap (observed 2026-06-30, against the 5 s cap of the time:
+# dvb_t2_regression 5.11 s, pipeline_run_cpu 5.03 s, preset_vs_graph 5.03 s,
+# stage_driven 5.02 s — all four killed at the boundary). They are genuinely
+# fast-tier tests, not slow ones, so raise only their per-test ceiling to absorb
+# runner contention; every other test keeps the profile budget above.
+# (dvb_t2_regression and stage_driven_byte_identity are also
 # in the gpu-serial group below; nextest merges the two overrides.)
 [[profile.ci.overrides]]
 filter = 'package(gf2-sim) and (binary(dvb_t2_regression) or binary(pipeline_run_cpu) or binary(preset_vs_graph_byte_identity) or binary(stage_driven_byte_identity))'
@@ -47,8 +56,8 @@ slow-timeout = { period = "20s", terminate-after = 1 }
 # GPU-gated tests share ONE physical gfx1030. nextest runs test binaries in
 # parallel, so two GPU tests scheduled concurrently contend the device and
 # each runs ~2x slower — un-ignored GPU smokes sized with headroom against the
-# 5 s cap in isolation (3.3-3.8 s) then TIMEOUT when the workspace battery
-# reaches them together (observed: hybrid_partial_point_restore +
+# 5 s cap of the time in isolation (3.3-3.8 s) then TIMEOUT when the workspace
+# battery reaches them together (observed: hybrid_partial_point_restore +
 # hybrid_checkpointed_recoverable_fault_aborts_resumably, both at 5.04 s).
 # This group serializes the GPU-exercising gf2-sim test binaries so at most
 # one GPU job runs at a time. Scheduling only — no per-test timeout changes.
