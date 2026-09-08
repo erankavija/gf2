@@ -213,6 +213,47 @@
       "format": "markdown",
       "label": "Session 4 handoff",
       "path": "dev/active/1a379447-zen3-cpu-performance/handoff-4.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "f44fd307d977d1fd8b746c6c799ea8bee725bed97d1717775ab936148340d033",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-3.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5152ff20a3dfa5b3c69405d7c1d176f1d8a8bac0c17bc644de0dcf672d6cb0ce",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-2.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9124a0bc155424c1be0b63f72c0c5ebb81d0d5656ec34907ead7fcb3211a5559",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "998f661b39ed136e9a9e5458a63fe9d808982dcab6819b14f06dca6c49040341",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-4.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-4.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Session 6 halt handoff",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-5.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -236,5 +277,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-08T10:31:13.595291575Z"
+  "updated_at": "2026-09-08T19:48:40.934809972Z"
 }
