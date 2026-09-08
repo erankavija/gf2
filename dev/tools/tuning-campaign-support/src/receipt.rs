@@ -215,6 +215,26 @@ pub struct ArmQuality {
     pub settings: DecoderArmSettings,
 }
 
+impl ArmQuality {
+    /// Compares exact decoder evidence on the frozen frames, excluding process
+    /// memory and latency diagnostics that can vary across fresh executions.
+    /// Both diagnostics remain recorded in each execution and its checkpoint.
+    pub fn same_decoder_evidence(&self, other: &Self) -> bool {
+        self.frame_bit_errors == other.frame_bit_errors
+            && self.frames == other.frames
+            && self.frame_errors == other.frame_errors
+            && self.bits == other.bits
+            && self.bit_errors == other.bit_errors
+            && self.fer == other.fer
+            && self.fer_interval == other.fer_interval
+            && self.ber == other.ber
+            && self.ber_interval == other.ber_interval
+            && self.interval_method == other.interval_method
+            && self.iterations == other.iterations
+            && self.settings == other.settings
+    }
+}
+
 /// One fresh execution of an arm.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -433,6 +453,10 @@ impl CampaignFacts {
                 "saved plan wrapper differs from receipt lock evidence"
             );
         }
+        require!(
+            plan.producing_manifest_path() == self.source.producing.manifest_path,
+            "saved plan producing manifest differs from campaign-start"
+        );
         let (plan_settings, plan_deviation) = plan.settings();
         require!(
             plan_settings == self.settings && plan_deviation == self.settings_deviation,
@@ -1596,7 +1620,13 @@ pub fn evaluate_version(
                                     } else {
                                         &p.candidate
                                     };
-                                    execution.quality.as_ref() != Some(arm)
+                                    execution.quality.as_ref().is_none_or(|observed| {
+                                        if version >= 3 {
+                                            !observed.same_decoder_evidence(arm)
+                                        } else {
+                                            observed != arm
+                                        }
+                                    })
                                 }) {
                                     e.error(
                                         "P-18",

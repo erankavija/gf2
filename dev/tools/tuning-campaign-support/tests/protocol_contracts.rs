@@ -234,6 +234,7 @@ struct CellSpec {
     claim_confidence: Option<f64>,
     claim_alpha: Option<f64>,
     quality: Option<DecoderQualityRecord>,
+    execution_quality: Option<DecoderQualityRecord>,
 }
 
 fn pairs(
@@ -668,6 +669,7 @@ fn build_receipt_with_history(
     let plan = json!({
         "schema": "zen3-benchmark-plan-v1",
         "campaign_id": campaign,
+        "producing_manifest": "producing-inputs.json",
         "issue": "f547c394",
         "label": "confirmation",
         "campaign_seed": CAMPAIGN_SEED,
@@ -845,11 +847,17 @@ fn build_receipt_with_history(
                     for (execution, quality) in [
                         (
                             &mut pair.baseline,
-                            spec.quality.as_ref().map(|q| &q.baseline),
+                            spec.execution_quality
+                                .as_ref()
+                                .or(spec.quality.as_ref())
+                                .map(|q| &q.baseline),
                         ),
                         (
                             &mut pair.candidate,
-                            spec.quality.as_ref().map(|q| &q.candidate),
+                            spec.execution_quality
+                                .as_ref()
+                                .or(spec.quality.as_ref())
+                                .map(|q| &q.candidate),
                         ),
                     ] {
                         execution.quality = quality.cloned();
@@ -994,6 +1002,7 @@ fn spec(id: &'static str, speedup: f64) -> CellSpec {
         claim_confidence: None,
         claim_alpha: None,
         quality: None,
+        execution_quality: None,
     }
 }
 
@@ -2318,6 +2327,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
     let plan = json!({
         "schema": "zen3-benchmark-plan-v1",
         "campaign_id": "runner-contract",
+        "producing_manifest": "producing-inputs.json",
         "issue": "f547c394",
         "label": "pilot",
         "campaign_seed": 5,
@@ -2450,6 +2460,15 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
     );
     assert_eq!(summary.cells[0].resolved_cpus, vec![0]);
     let receipt = BenchmarkReceipt::decode(&fs::read(out.join(RECEIPT_FILE)).unwrap()).unwrap();
+    assert_eq!(
+        receipt.source.producing.manifest_path,
+        "producing-inputs.json"
+    );
+    assert!(receipt
+        .source
+        .producing
+        .behavior_sha256
+        .contains_key("producer.rs"));
     assert!(receipt.settings_deviation);
     assert!(receipt.lock.holder_pid > 0);
     assert_eq!(receipt.workers.runner_threads, 1);
@@ -2983,4 +3002,130 @@ fn v2_unresolved_bootstrap_endpoint_resolution_prevents_confirmation() {
         .findings
         .iter()
         .any(|f| f.rule == "P-20" && f.message.contains("resolution")));
+}
+
+#[test]
+fn v3_family_producing_manifest_is_selected_by_the_plan_and_bound_to_facts() {
+    let built = build_receipt(
+        "v3-family-producing",
+        &v3_family(),
+        &[spec("quality", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    let bytes = fs::read(built.dir.join(PLAN_FILE)).unwrap();
+    let mut value: Value = serde_json::from_slice(&bytes).unwrap();
+    value["producing_manifest"] = json!("producing-inputs.json");
+    let plan_bytes = serde_json::to_vec(&value).unwrap();
+    let plan = RunnerPlan::decode(&plan_bytes)
+        .expect("a plan must select the family producing-input manifest");
+    let receipt =
+        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    let records = ExecutionLog::validate_prefix(
+        &fs::read(built.dir.join(LOG_FILE)).unwrap(),
+        "fixture-campaign",
+    )
+    .unwrap();
+    let mut facts: CampaignFacts = serde_json::from_value(records[0].details.clone()).unwrap();
+    facts.plan_sha256 = sha256_hex(&plan_bytes);
+    let checkpoint = serde_json::from_slice(
+        &fs::read(built.dir.join(CHECKPOINT_DIR).join("manifest.json")).unwrap(),
+    )
+    .unwrap();
+    assert!(facts
+        .validate_receipt(&receipt, &plan, &plan_bytes, &v3_family(), &checkpoint)
+        .is_empty());
+    value["producing_manifest"] = json!("another-family.json");
+    let changed_bytes = serde_json::to_vec(&value).unwrap();
+    let changed = RunnerPlan::decode(&changed_bytes).unwrap();
+    facts.plan_sha256 = sha256_hex(&changed_bytes);
+    assert!(facts
+        .validate_receipt(
+            &receipt,
+            &changed,
+            &changed_bytes,
+            &v3_family(),
+            &checkpoint
+        )
+        .iter()
+        .any(|e| e.contains("producing")));
+    value.as_object_mut().unwrap().remove("producing_manifest");
+    let omitted_bytes = serde_json::to_vec(&value).unwrap();
+    let omitted = RunnerPlan::decode(&omitted_bytes).unwrap();
+    facts.plan_sha256 = sha256_hex(&omitted_bytes);
+    assert!(
+        facts
+            .validate_receipt(
+                &receipt,
+                &omitted,
+                &omitted_bytes,
+                &v3_family(),
+                &checkpoint
+            )
+            .iter()
+            .any(|e| e.contains("producing")),
+        "an omitted field selects the historical default, not the family manifest"
+    );
+    for invalid in ["/tmp/manifest.json", "../manifest.json", "family/*.json"] {
+        value["producing_manifest"] = json!(invalid);
+        assert!(
+            RunnerPlan::decode(&serde_json::to_vec(&value).unwrap()).is_err(),
+            "{invalid}"
+        );
+    }
+}
+
+#[test]
+fn v3_decoder_quality_preserves_exact_vectors_but_allows_process_diagnostics() {
+    let mut family = v3_family();
+    let decoder = decoder(DecoderArmKind::FastestQualityCompatible);
+    family.cells[0].decoder = Some(decoder.clone());
+    let good = frame_quality(&decoder, false);
+    for defect in 0..4 {
+        let mut observed = good.clone();
+        observed.memory_bytes += 4096;
+        observed.latency_ns_p50 += 100;
+        match defect {
+            1 => {
+                observed.frame_bit_errors.swap(0, 1);
+            }
+            2 => {
+                observed.settings.iteration_cap += 1;
+            }
+            3 => {
+                observed.iterations.max += 1;
+            }
+            _ => {}
+        }
+        let built = build_receipt(
+            &format!("v3-quality-diagnostics-{defect}"),
+            &family,
+            &[CellSpec {
+                quality: Some(DecoderQualityRecord {
+                    baseline: good.clone(),
+                    candidate: good.clone(),
+                }),
+                execution_quality: Some(DecoderQualityRecord {
+                    baseline: observed.clone(),
+                    candidate: observed,
+                }),
+                ..spec("quality", 1.0)
+            }],
+            false,
+            false,
+            |_| {},
+        );
+        let summary = evaluate(&built.dir).unwrap();
+        assert_eq!(
+            summary.verdict,
+            if defect == 0 {
+                Verdict::Accepted
+            } else {
+                Verdict::Rejected
+            },
+            "{defect}: {:?}",
+            summary.findings
+        );
+    }
 }
