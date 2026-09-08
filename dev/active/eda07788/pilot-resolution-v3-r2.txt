@@ -1,0 +1,9 @@
+receipt_sha256 753c500b47e17f94c3d3a8ac53645290c001afb3f6a71ae71444be3420d3798d
+label pilot verdict accepted
+per-comparison confidence 0.9958333333333333
+
+cell_id                                                   estimate     lower     upper  rel_half
+dvb-t2-qam16-r12-short-gap-native-vs-xdsopl                 0.2289    0.2215    0.2327    0.0326
+
+largest relative half-width: 0.032632
+rounded up to two decimals:  0.04
