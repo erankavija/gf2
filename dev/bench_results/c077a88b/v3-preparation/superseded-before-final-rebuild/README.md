@@ -1,0 +1,1 @@
+These untimed preparation outputs precede the final AFF3CT arm rebuild. They are superseded by the parent directory’s final binary-bound validation and are retained as evidence. No campaign measured these preparation bytes.

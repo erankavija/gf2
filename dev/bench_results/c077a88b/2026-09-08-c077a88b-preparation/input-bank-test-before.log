@@ -1,0 +1,33 @@
+cargo-budget: 4 jobs (5 live, 24 cpus)
+cargo-budget: another test run holds the lock; waiting up to 600s
+warning: function `choose_k_block` is never used
+   --> ./crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling ldpc-survey-harness v0.0.0 (./dev/active/c077a88b/survey/harness)
+    Finished `release` profile [optimized] target(s) in 4.50s
+     Running unittests src/lib.rs (/tmp/c077a88b-build/release/deps/ldpc_survey-b1a27e0ce1c8daca)
+
+running 1 test
+test arm::tests::timing_banks_cover_both_alternating_codeword_classes ... FAILED
+
+failures:
+
+---- arm::tests::timing_banks_cover_both_alternating_codeword_classes stdout ----
+
+thread 'arm::tests::timing_banks_cover_both_alternating_codeword_classes' (89) panicked at src/arm.rs:288:13:
+assertion failed: indices.iter().any(|i| i % 2 == 1)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    arm::tests::timing_banks_cover_both_alternating_codeword_classes
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

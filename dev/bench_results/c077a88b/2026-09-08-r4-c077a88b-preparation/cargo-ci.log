@@ -1,0 +1,156 @@
+--- check output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-core-no-default output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-core-codec-only output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-algebra-no-default output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-algebra-codec-only output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-coding-no-default output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-coding-codec-only output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- test-build output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo metadata '--format-version=1' --all-features --filter-platform x86_64-unknown-linux-gnu` failed with exit status: 101
+--- test failures ---
+--- tuning-profile-build output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo metadata '--format-version=1' --all-features --filter-platform x86_64-unknown-linux-gnu` failed with exit status: 101
+--- tuning-profile-nextest output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo metadata '--format-version=1' --all-features --filter-platform x86_64-unknown-linux-gnu` failed with exit status: 101
+--- tuning-algebra-calibration-build output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo metadata '--format-version=1' --all-features --filter-platform x86_64-unknown-linux-gnu` failed with exit status: 101
+--- tuning-algebra-calibration-nextest output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo metadata '--format-version=1' --all-features --filter-platform x86_64-unknown-linux-gnu` failed with exit status: 101
+--- tuning-campaign-support-build output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo metadata '--format-version=1' --all-features --filter-platform x86_64-unknown-linux-gnu` failed with exit status: 101
+--- tuning-campaign-support-nextest output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo metadata '--format-version=1' --all-features --filter-platform x86_64-unknown-linux-gnu` failed with exit status: 101
+--- tuning-lifecycle-cargo output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- clippy diagnostics ---
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/clippy-driver /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- baked-core output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-core-artifact output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-algebra-artifacts output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-coding-codec output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+--- tuning-composer output ---
+cargo-budget: 12 jobs (2 live, 24 cpus)
+error: process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -vV` (exit status: 2)
+--- stderr
+sccache: error: Operation not permitted (os error 1)
+
+  ✗ check: FAILED (exit 101, 0s)
+  ✗ tuning-core-no-default: FAILED (exit 101, 0s)
+  ✗ tuning-core-codec-only: FAILED (exit 101, 0s)
+  ✗ tuning-algebra-no-default: FAILED (exit 101, 0s)
+  ✗ tuning-algebra-codec-only: FAILED (exit 101, 0s)
+  ✗ tuning-coding-no-default: FAILED (exit 101, 0s)
+  ✗ tuning-coding-codec-only: FAILED (exit 101, 0s)
+  ✗ test-build: FAILED (exit 102, 0s)
+  ✗ test: FAILED (exit 102, 1s)
+  ✗ tuning-profile-build: FAILED (exit 102, 0s)
+  ✗ tuning-profile-nextest: FAILED (exit 102, 0s)
+  ✗ tuning-algebra-calibration-build: FAILED (exit 102, 0s)
+  ✗ tuning-algebra-calibration-nextest: FAILED (exit 102, 0s)
+  ✗ tuning-campaign-support-build: FAILED (exit 102, 0s)
+  ✗ tuning-campaign-support-nextest: FAILED (exit 102, 0s)
+  ✓ tuning-campaign-validator: ok (0s)
+  ✓ tuning-campaign-launcher-syntax: ok (0s)
+  ✗ tuning-lifecycle-cargo: FAILED (exit 101, 0s)
+  ✗ clippy: FAILED (exit 101, 0s)
+  ✓ fmt: ok (2s)
+  ✗ baked-core: FAILED (exit 101, 0s)
+  ✗ tuning-core-artifact: FAILED (exit 101, 0s)
+  ✗ tuning-algebra-artifacts: FAILED (exit 101, 0s)
+  ✗ tuning-coding-codec: FAILED (exit 101, 1s)
+  ✗ tuning-composer: FAILED (exit 101, 0s)
+

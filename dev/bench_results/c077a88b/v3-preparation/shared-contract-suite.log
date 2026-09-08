@@ -1,0 +1,177 @@
+cargo-budget: 8 jobs (3 live, 24 cpus)
+   Compiling tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/dev/tools/tuning-campaign-support)
+    Finished `ci-test` profile [optimized] target(s) in 27.74s
+────────────
+ Nextest run ID 0c64a1a4-0d63-4ce4-a078-7a45b2a5562b with nextest profile: ci
+    Starting 169 tests across 12 binaries
+        PASS [   0.005s] (  1/169) tuning-campaign-support abtest::tests::wilson_interval_brackets_the_point_estimate
+        PASS [   0.006s] (  2/169) tuning-campaign-support abtest::tests::nearest_rank_percentiles_use_the_frozen_ranks
+        PASS [   0.006s] (  3/169) tuning-campaign-support abtest::tests::declared_alpha_tail_ranks_cover_frozen_family_sizes
+        PASS [   0.007s] (  4/169) tuning-campaign-support campaign::publication_tests::preparation_discovery_rejects_intent_under_another_session_root
+        PASS [   0.007s] (  5/169) tuning-campaign-support abtest::tests::xoshiro_matches_the_reference_first_output
+        PASS [   0.008s] (  6/169) tuning-campaign-support campaign::publication_tests::resume_identity_precedes_temporary_cleanup_and_namespace_is_exact
+        PASS [   0.008s] (  7/169) tuning-campaign-support campaign::publication_tests::uncommitted_mode_intent_never_claims_a_launch_occurred
+        PASS [   0.008s] (  8/169) tuning-campaign-support campaign::publication_tests::tampered_or_cross_identity_publication_preserves_all_original_evidence
+        PASS [   0.009s] (  9/169) tuning-campaign-support campaign::publication_tests::prelock_evidence_binds_every_distinct_mode_writer_and_replay_checks_mutation
+        PASS [   0.009s] ( 10/169) tuning-campaign-support campaign::publication_tests::preparation_replays_descriptor_prepare_and_active_claim_gaps
+        PASS [   0.010s] ( 11/169) tuning-campaign-support campaign::publication_tests::immutable_artifact_publication_preserves_ambiguous_bytes_and_excludes_writers
+        PASS [   0.010s] ( 12/169) tuning-campaign-support campaign::publication_tests::immutable_artifact_publication_replays_intent_and_target_boundaries
+        PASS [   0.010s] ( 13/169) tuning-campaign-support campaign::publication_tests::preparation_intent_replays_initial_publication_and_rejects_changed_identity
+        PASS [   0.010s] ( 14/169) tuning-campaign-support campaign::publication_tests::recovered_interruption_journals_cleanup_after_release_without_inventing_work
+        PASS [   0.005s] ( 15/169) tuning-campaign-support timing::tests::timed_calls_supply_the_exact_rotating_fixture_bank
+        PASS [   0.012s] ( 16/169) tuning-campaign-support campaign::publication_tests::synced_transition_intent_recovers_observation_and_journals_it_once
+        PASS [   0.013s] ( 17/169) tuning-campaign-support campaign::publication_tests::session_checksum_requires_strict_artifact_path_order
+        PASS [   0.007s] ( 18/169) tuning-campaign-support journal::active_repair_tests::active_repair_preserves_complete_malformed_records_and_rejects_wrong_session
+        PASS [   0.013s] ( 19/169) tuning-campaign-support campaign::publication_tests::preparation_recovers_every_uncommitted_initial_intent_boundary
+        PASS [   0.014s] ( 20/169) tuning-campaign-support campaign::publication_tests::replacement_preparation_rejects_byte_identical_checksum_alias
+        PASS [   0.014s] ( 21/169) tuning-campaign-support campaign::publication_tests::mode_publication_replays_intent_sync_temporary_sync_and_destination_link
+        PASS [   0.007s] ( 22/169) tuning-campaign-support::campaign_contracts candidate_blocks_require_exact_three_candidate_rotation_and_interleaving
+        PASS [   0.005s] ( 23/169) tuning-campaign-support::campaign_contracts clean_lifecycle_cannot_publish_before_observed_release
+        PASS [   0.010s] ( 24/169) tuning-campaign-support::campaign_contracts acceptance_reconciliation_rejects_unknown_keys_wrong_cases_and_duplicates
+        PASS [   0.009s] ( 25/169) tuning-campaign-support::campaign_contracts checkpoints_bind_progress_then_reconcile_missing_acceptance_once
+        PASS [   0.008s] ( 26/169) tuning-campaign-support::campaign_contracts completed_exit_cannot_accept_after_its_retained_raw_artifact_changes
+        PASS [   0.010s] ( 27/169) tuning-campaign-support::campaign_contracts campaign_reconciliation_validates_the_complete_all_owner_universe
+        PASS [   0.006s] ( 28/169) tuning-campaign-support::campaign_contracts configured_timing_emits_outside_intervals_and_stops_on_callback_error
+        PASS [   0.009s] ( 29/169) tuning-campaign-support::campaign_contracts completion_records_missing_callback_progress_before_rejecting_exit
+        PASS [   0.011s] ( 30/169) tuning-campaign-support::campaign_contracts clean_exit_recovery_rejects_raw_stream_and_progress_mutations
+        PASS [   0.006s] ( 31/169) tuning-campaign-support::campaign_contracts opaque_cases_preserve_order_but_reject_noncanonical_and_duplicate_keys
+        PASS [   0.014s] ( 32/169) tuning-campaign-support::campaign_contracts active_claim_and_torn_log_recover_in_place_before_release_and_replacement
+        PASS [   0.007s] ( 33/169) tuning-campaign-support::campaign_contracts derived_manifests_cannot_change_reserved_slots_or_input_digest
+        PASS [   0.014s] ( 34/169) tuning-campaign-support::campaign_contracts budget_terminal_checksum_gap_and_same_identity_resume_preserve_the_prefix
+        PASS [   0.012s] ( 35/169) tuning-campaign-support::campaign_contracts completed_raw_result_never_overrides_failure_or_timeout_observation
+        PASS [   0.022s] ( 36/169) tuning-campaign-support journal::active_repair_tests::active_claim_survives_every_same_session_torn_repair_boundary
+        PASS [   0.010s] ( 37/169) tuning-campaign-support::campaign_contracts interleaved_manifest_accepts_rotated_candidate_blocks_and_rejects_mutations
+        PASS [   0.006s] ( 38/169) tuning-campaign-support::campaign_contracts pending_recovery_requires_synced_journal_handshake_and_is_idempotent
+        PASS [   0.010s] ( 39/169) tuning-campaign-support::campaign_contracts durable_descriptors_reject_concurrent_writer_reuse_and_identity_change
+        PASS [   0.005s] ( 40/169) tuning-campaign-support::campaign_contracts prelock_failure_does_not_invent_release_and_timeout_never_accepts
+        PASS [   0.009s] ( 41/169) tuning-campaign-support::campaign_contracts missing_progress_or_validation_never_accepts_a_checkpoint
+        PASS [   0.011s] ( 42/169) tuning-campaign-support::campaign_contracts invalid_utf8_stdout_keeps_exact_exit_bytes_and_cannot_accept
+        PASS [   0.007s] ( 43/169) tuning-campaign-support::campaign_contracts prefix_replay_rejects_overlapping_spawns_and_resampling_before_validation
+        PASS [   0.012s] ( 44/169) tuning-campaign-support::campaign_contracts every_bound_child_record_requires_its_exact_structured_case
+        PASS [   0.026s] ( 45/169) tuning-campaign-support campaign::publication_tests::retirement_and_reopen_reject_noncanonical_checksum_bindings
+        PASS [   0.006s] ( 46/169) tuning-campaign-support::campaign_contracts progress_rejects_probe_wrong_identity_and_out_of_order_events
+        PASS [   0.007s] ( 47/169) tuning-campaign-support::campaign_contracts process_paths_environment_and_staged_bytes_are_strict
+        PASS [   0.006s] ( 48/169) tuning-campaign-support::campaign_contracts result_digest_excludes_stdout_framing_and_environment_is_canonical
+        PASS [   0.005s] ( 49/169) tuning-campaign-support::campaign_contracts wrong_identity_incomplete_stream_and_probe_windows_reject
+        PASS [   0.007s] ( 50/169) tuning-campaign-support::campaign_contracts progress_framing_and_result_consistency_are_exact
+        PASS [   0.005s] ( 51/169) tuning-campaign-support::campaign_contracts unclean_wrapper_needs_dead_tree_and_independent_lock_observation
+        PASS [   0.005s] ( 52/169) tuning-campaign-support::checkpoint_provenance changed_producing_digest_rejects_before_mutating_checkpoint_evidence
+        PASS [   0.006s] ( 53/169) tuning-campaign-support::checkpoint_provenance inspection_validates_without_recovering_or_creating_files
+        PASS [   0.006s] ( 54/169) tuning-campaign-support::checkpoint_provenance metadata_only_resume_retains_completed_result_and_original_manifest
+        PASS [   0.006s] ( 55/169) tuning-campaign-support::contracts atomic_helpers_distinguish_immutable_evidence_from_mutable_pointers
+        PASS [   0.008s] ( 56/169) tuning-campaign-support::campaign_contracts transition_projection_recovers_once_after_durable_state_commit
+        PASS [   0.016s] ( 57/169) tuning-campaign-support::campaign_contracts pending_completion_rejects_wrong_outcome_case_artifacts_and_duplicate_intent
+        PASS [   0.032s] ( 58/169) tuning-campaign-support campaign::publication_tests::preparation_replacement_recovers_before_after_and_during_session_start
+        PASS [   0.015s] ( 59/169) tuning-campaign-support::campaign_contracts prelock_abort_rejects_any_held_or_fabricated_wrapper_evidence
+        PASS [   0.014s] ( 60/169) tuning-campaign-support::campaign_contracts prepared_writer_death_closes_without_fictitious_wrapper_or_release
+        PASS [   0.006s] ( 61/169) tuning-campaign-support::contracts checkpoint_manifest_and_temp_namespace_fail_closed
+        PASS [   0.012s] ( 62/169) tuning-campaign-support::campaign_contracts raw_stderr_validity_and_progress_equivalence_cannot_be_mutated_into_acceptance
+        PASS [   0.007s] ( 63/169) tuning-campaign-support::contracts checkpoint_identity_is_validated_before_pending_recovery
+        PASS [   0.006s] ( 64/169) tuning-campaign-support::contracts child_v2_framing_is_canonical_and_fail_closed
+        PASS [   0.005s] ( 65/169) tuning-campaign-support::contracts coupled_gemm_records_corner_edge_and_interior_grid_boundaries
+        PASS [   0.006s] ( 66/169) tuning-campaign-support::contracts checkpoint_pending_namespace_requires_the_exact_generated_shape
+        PASS [   0.012s] ( 67/169) tuning-campaign-support::campaign_contracts recovery_requires_release_then_censored_interruption_and_allows_resume
+        PASS [   0.011s] ( 68/169) tuning-campaign-support::checkpoint_provenance metadata_only_revision_change_allows_resume_and_initialize_replay
+        PASS [   0.005s] ( 69/169) tuning-campaign-support::contracts coupled_gemm_ties_and_cross_stratum_regressions_keep_the_pair_default
+        PASS [   0.007s] ( 70/169) tuning-campaign-support::contracts checkpoint_pending_recovery_replays_every_deletion_boundary
+        PASS [   0.006s] ( 71/169) tuning-campaign-support::contracts coupled_gemm_requires_all_slices_and_one_strict_pair_winner
+        PASS [   0.010s] ( 72/169) tuning-campaign-support::contracts call_calibration_and_window_rotation_preserve_the_protocol
+        PASS [   0.027s] ( 73/169) tuning-campaign-support::campaign_contracts clean_exit_recovery_reuses_timing_before_and_after_owner_validation
+        PASS [   0.005s] ( 74/169) tuning-campaign-support::contracts execution_log_is_durable_append_only_and_resumes_sequence
+        PASS [   0.037s] ( 75/169) tuning-campaign-support campaign::publication_tests::initial_preparation_replays_log_config_checkpoint_and_active_handoff_gaps
+        PASS [   0.005s] ( 76/169) tuning-campaign-support::contracts extent_argmin_handles_unique_wins_plateaus_and_curve_reversals
+        PASS [   0.009s] ( 77/169) tuning-campaign-support::contracts checkpoint_units_are_immutable_and_resume_validates_identity_and_bytes
+        PASS [   0.006s] ( 78/169) tuning-campaign-support::contracts extent_statistics_cover_equal_weighting_quartiles_and_fail_closed_paths
+        PASS [   0.006s] ( 79/169) tuning-campaign-support::contracts journal_recovery_after_a_paused_prefix_records_recovery_without_interruption
+        PASS [   0.006s] ( 80/169) tuning-campaign-support::contracts m4rm_joint_vector_rejects_any_stratum_regression
+        PASS [   0.007s] ( 81/169) tuning-campaign-support::contracts journal_recovery_records_interruption_and_preserves_torn_tail
+        PASS [   0.006s] ( 82/169) tuning-campaign-support::contracts terminal_journal_lifecycle_fails_closed
+        PASS [   0.007s] ( 83/169) tuning-campaign-support::contracts journal_recovery_treats_a_complete_record_without_newline_as_torn
+        PASS [   0.006s] ( 84/169) tuning-campaign-support::contracts retained_threshold_rule_keeps_its_existing_direction_and_noise_semantics
+        PASS [   0.007s] ( 85/169) tuning-campaign-support::contracts threshold_fallbacks_cover_missing_no_win_and_reversal
+        PASS [   0.006s] ( 86/169) tuning-campaign-support::host_process_contracts affinity_round_trips_serde_and_rejects_unordered_sets
+        PASS [   0.005s] ( 87/169) tuning-campaign-support::host_process_contracts lock_observation_requires_a_held_inherited_descriptor
+        PASS [   0.008s] ( 88/169) tuning-campaign-support::contracts journal_recovery_intent_is_idempotent_at_every_durable_boundary
+        PASS [   0.008s] ( 89/169) tuning-campaign-support::contracts seed_mixer_matches_the_committed_vector_and_banked_roles
+        PASS [   0.007s] ( 90/169) tuning-campaign-support::host_process_contracts core_arms_resolve_inside_the_mask_or_carry_a_reason
+        PASS [   0.022s] ( 91/169) tuning-campaign-support::campaign_contracts rejected_stderr_remains_durable_across_completion_and_exit_crashes
+        PASS [   0.010s] ( 92/169) tuning-campaign-support::driver_launcher launcher_rejects_arbitrary_stage_paths_before_creating_them
+        PASS [   0.005s] ( 93/169) tuning-campaign-support::protocol_contracts bonferroni_level_widens_with_the_family_and_prior_trials
+        PASS [   0.007s] ( 94/169) tuning-campaign-support::protocol_contracts addendum_schema_accepts_the_frozen_smoke_addendum_and_rejects_unknown_fields
+        PASS [   0.013s] ( 95/169) tuning-campaign-support::host_process_contracts topology_and_host_observation_report_runtime_facts
+        PASS [   0.005s] ( 96/169) tuning-campaign-support::protocol_contracts cold_cells_reject_precalibrated_plans_and_execute_only_timed_calls
+        PASS [   0.005s] ( 97/169) tuning-campaign-support::protocol_contracts decisions_follow_confidence_bound_margins_not_significance
+        PASS [   0.005s] ( 98/169) tuning-campaign-support::protocol_contracts declared_margins_must_clear_resolution_at_all_three_boundaries
+        PASS [   0.007s] ( 99/169) tuning-campaign-support::protocol_contracts flagged_windows_include_the_exact_boundary_without_pooling_arms
+        PASS [   0.018s] (100/169) tuning-campaign-support::protocol_contracts bootstrap_uses_declared_corrected_alpha_for_all_family_sizes
+        PASS [   0.005s] (101/169) tuning-campaign-support::protocol_contracts pair_orders_are_counterbalanced_and_seed_determined
+        PASS [   0.028s] (102/169) tuning-campaign-support::protocol_contracts exploratory_only_receipts_never_qualify_for_production_selection
+        PASS [   0.011s] (103/169) tuning-campaign-support::protocol_contracts paired_bootstrap_interval_is_deterministic_and_brackets_known_ratios
+        PASS [   0.081s] (104/169) tuning-campaign-support campaign::publication_tests::prelock_interruption_checksum_and_retirement_recover_every_publication_gap
+        PASS [   0.050s] (105/169) tuning-campaign-support::protocol_contracts acceptance_marks_an_interval_spanning_the_margin_inconclusive
+        PASS [   0.011s] (106/169) tuning-campaign-support::protocol_contracts protocol_document_guard_includes_justifications_and_every_rule_it_declares
+        PASS [   0.010s] (107/169) tuning-campaign-support::protocol_contracts protocol_document_pins_the_frozen_shared_settings
+        PASS [   0.051s] (108/169) tuning-campaign-support::protocol_contracts acceptance_rejects_a_digest_that_does_not_match_the_snapshot
+        PASS [   0.050s] (109/169) tuning-campaign-support::protocol_contracts acceptance_summary_markdown_renders_from_the_summary_only
+        PASS [   0.082s] (110/169) tuning-campaign-support::campaign_contracts completion_intent_recovers_every_raw_exit_validation_and_checkpoint_boundary
+        PASS [   0.052s] (111/169) tuning-campaign-support::protocol_contracts acceptance_rejects_a_missing_snapshot_despite_matching_source_bytes
+        PASS [   0.051s] (112/169) tuning-campaign-support::protocol_contracts acceptance_rejects_an_addendum_not_frozen_before_measurement
+        PASS [   0.055s] (113/169) tuning-campaign-support::protocol_contracts acceptance_passes_a_confirmed_improvement_receipt
+        PASS [   0.053s] (114/169) tuning-campaign-support::protocol_contracts acceptance_rejects_a_snapshot_path_that_escapes_the_receipt
+        PASS [   0.006s] (115/169) tuning-campaign-support::protocol_contracts v1_prior_trial_receipts_must_be_repository_relative
+        PASS [   0.059s] (116/169) tuning-campaign-support::protocol_contracts acceptance_fails_a_regression_beyond_the_equivalence_margin
+        PASS [   0.058s] (117/169) tuning-campaign-support::protocol_contracts acceptance_rejects_changed_producing_input_snapshot
+        PASS [   0.044s] (118/169) tuning-campaign-support::protocol_contracts material_host_changes_reject_resume_but_observation_time_load_memory_do_not
+        PASS [   0.005s] (119/169) tuning-campaign-support::schema_subset arrays_refs_and_combinators_are_enforced
+        PASS [   0.005s] (120/169) tuning-campaign-support::schema_subset nullable_type_arrays_accept_null_and_reject_other_types
+        PASS [   0.005s] (121/169) tuning-campaign-support::schema_subset numeric_bounds_and_enums_are_enforced
+        PASS [   0.005s] (122/169) tuning-campaign-support::schema_subset types_required_and_additional_properties_are_enforced
+        PASS [   0.037s] (123/169) tuning-campaign-support::protocol_contracts unresolved_required_settings_make_a_cell_non_confirmatory
+        PASS [   0.005s] (124/169) tuning-campaign-support::schema_subset unsupported_keywords_and_dangling_refs_are_reported_not_ignored
+        PASS [   0.091s] (125/169) tuning-campaign-support::protocol_contracts acceptance_rejects_a_receipt_with_missing_protocol_identity
+        PASS [   0.006s] (126/169) tuning-campaign-support::schema_subset violations_are_addressed_by_json_pointer
+        PASS [   0.099s] (127/169) tuning-campaign-support::driver_launcher launcher_discovers_publisher_intent_before_selecting_identity_or_building
+        PASS [   0.005s] (128/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::campaign_stage_policy_rejects_non_tmp_and_mismatched_paths
+        PASS [   0.043s] (129/169) tuning-campaign-support::protocol_contracts v3_family_producing_manifest_is_selected_by_the_plan_and_bound_to_facts
+        PASS [   0.089s] (130/169) tuning-campaign-support::protocol_contracts decoder_cells_require_quality_intervals_and_matched_settings
+        PASS [   0.104s] (131/169) tuning-campaign-support::driver_launcher launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_building
+        PASS [   0.098s] (132/169) tuning-campaign-support::protocol_contracts acceptance_rejects_missing_and_self_referential_resolution_evidence
+        PASS [   0.054s] (133/169) tuning-campaign-support::protocol_contracts source_control_metadata_does_not_change_acceptance
+        PASS [   0.005s] (134/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::held_lock_requires_an_inherited_descriptor
+        PASS [   0.005s] (135/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::live_writer_and_reused_identity_are_distinguished
+        PASS [   0.007s] (136/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::interrupted_derived_projection_publication_is_replayed_and_bound
+        PASS [   0.011s] (137/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::incomplete_executable_staging_replays_before_campaign_config_exists
+        PASS [   0.008s] (138/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::producing_input_manifest_rejects_authority_and_path_mutations
+        PASS [   0.010s] (139/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::nonzero_exit_is_never_eligible
+        PASS [   0.006s] (140/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::promotion_is_idempotent_and_rejects_different_occupied_bytes
+        PASS [   0.005s] (141/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::relocated_build_source_observation_is_rejected_before_campaign_work
+        PASS [   0.009s] (142/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::relocated_preflight_report_is_rejected_before_campaign_work
+        PASS [   0.123s] (143/169) tuning-campaign-support::protocol_contracts acceptance_preserves_unavailable_and_not_material_cells
+        PASS [   0.070s] (144/169) tuning-campaign-support::protocol_contracts v2_outlier_flags_do_not_depend_on_cross_arm_effect_size
+        PASS [   0.071s] (145/169) tuning-campaign-support::protocol_contracts v2_unresolved_bootstrap_endpoint_resolution_prevents_confirmation
+        PASS [   0.007s] (146/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::staged_process_receives_only_the_declared_measurement_environment
+        PASS [   0.072s] (147/169) tuning-campaign-support::protocol_contracts v2_rejects_a_freeze_timestamp_after_the_opening_record
+        PASS [   0.038s] (148/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::affinity_is_observed_from_the_current_os_mask_and_binds_resume
+        PASS [   0.012s] (149/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::stderr_callback_failure_still_drains_and_reaps
+        PASS [   0.137s] (150/169) tuning-campaign-support::protocol_contracts acceptance_accepts_a_resumed_run_and_rejects_a_repeated_cell
+        PASS [   0.025s] (151/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::simultaneous_binary_streams_are_drained_without_loss
+        PASS [   0.018s] (152/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::staged_reporting_preflights_use_their_actual_cli_flags_and_empty_stdin
+        PASS [   0.049s] (153/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::a_probe_streams_validates_and_commits_one_bound_checkpoint
+        PASS [   0.131s] (154/169) tuning-campaign-support::protocol_contracts ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction
+        PASS [   0.096s] (155/169) tuning-campaign-support::protocol_contracts v3_lock_evidence_records_observed_lock_facts_without_a_wrapper_identity
+        PASS [   0.104s] (156/169) tuning-campaign-support::protocol_contracts v1_published_receipts_keep_their_pinned_rules_and_refuse_v2
+        PASS [   0.055s] (157/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::progress_is_delivered_before_exit
+        PASS [   0.055s] (158/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::rejected_raw_streams_cannot_recover_after_completion_crash
+        PASS [   0.117s] (159/169) tuning-campaign-support::protocol_contracts v3_binds_claimed_alpha_in_receipts_and_pilot_resolution
+        PASS [   0.119s] (160/169) tuning-campaign-support::protocol_contracts v3_resolution_derives_the_pilot_half_width_and_binds_its_family
+        PASS [   0.098s] (161/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::clean_completion_crashes_recover_without_fresh_child_replay
+        PASS [   0.090s] (162/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::timeout_kills_descendant_holding_pipes
+        PASS [   0.233s] (163/169) tuning-campaign-support::host_process_contracts run_process_drains_both_streams_and_times_out_cleanly
+        PASS [   0.108s] (164/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::timeout_reaps_an_escaped_descendant
+        PASS [   0.139s] (165/169) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::kill_grace_handles_a_child_ignoring_term
+        PASS [   0.204s] (166/169) tuning-campaign-support::protocol_contracts v3_decoder_quality_preserves_exact_vectors_but_allows_process_diagnostics
+        PASS [   0.292s] (167/169) tuning-campaign-support::protocol_contracts acceptance_rejects_every_self_consistent_frozen_fact_replacement
+        PASS [   0.246s] (168/169) tuning-campaign-support::protocol_contracts v2_decoder_denominators_points_and_clustered_intervals_are_enforced
+        PASS [   0.487s] (169/169) tuning-campaign-support::protocol_contracts runner_announces_the_log_before_work_and_resumes_without_repeating
+────────────
+     Summary [   0.569s] 169 tests run: 169 passed, 0 skipped

@@ -1,0 +1,30 @@
+start=2026-09-08T18:43:45Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot/execution.log
+terminal=3 end=2026-09-08T18:48:04Z
+start=2026-09-08T18:49:20Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot/execution.log
+terminal=3 end=2026-09-08T18:53:17Z
+start=2026-09-08T18:53:49Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot/execution.log
+terminal=3 end=2026-09-08T18:57:47Z
+start=2026-09-08T18:58:20Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot/execution.log
+terminal=3 end=2026-09-08T19:00:57Z
+start=2026-09-08T19:01:16Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot/execution.log
+terminal=3 end=2026-09-08T19:03:53Z
+start=2026-09-08T19:04:03Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/target/ldpc-campaigns/v3-r1-quality-compatible-pilot/execution.log
+terminal=0 end=2026-09-08T19:06:38Z

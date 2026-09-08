@@ -1,0 +1,183 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 1
+  },
+  "family": {
+    "id": "ldpc-matched-algorithm",
+    "issue": "c077a88b",
+    "purpose": "decoder-family",
+    "description": "Confirmatory comparison of the matched-algorithm LDPC decoder cells: gf2-coding against AFF3CT v4.7.0, both f32 flooding normalized min-sum at factor 0.75, iteration cap 50 and syndrome stopping, on bit-identical parity-check matrices and bit-identical recorded LLRs. It estimates comparator gaps under frozen decision margins and makes no adoption decision. Each call includes decoder construction, conversion, output and destruction. The identical timed batch is processed by both arms; latency is per batch, and throughput is frames per batch divided by batch time. Prepared 128-frame quality evidence is reused without resampling. Warm timing uses fixed fixture bank zero: the first recorded frame for matched latency and the first sixteen recorded frames for quality-compatible batch throughput. The remaining recorded frames supply quality validation, not additional timed samples. Both arms prepare their native parity-check matrix inside each call: gf2 from its table-driven code constructor, AFF3CT from the identical recorded AList. Exact upstream revisions, actual compiler/backend observations and executable identities are pinned by dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json (SHA-256 1ec2e69490aa6d43ecc022c09b84f1a3864b95470e15b0673ed9d1e98bbed773). The receipt snapshots this record and the complete producing-input closure."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-08T10:44:49.387558+00:00"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "This family reports a comparator gap and adopts nothing, so it declares no worthwhile speedup; the material-gap threshold below is the margin it decides on.",
+    "measurement_resolution": 0.02,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "sha256": "888bdfb4685fcb3a38c5d5b34f51d816b0c78dcd5d6839d6ecaad3f9afe16d57"
+    },
+    "equivalence_margin": 1.04,
+    "equivalence_rationale": "Twice the pilot-observed measurement resolution of 0.020. A comparator within that factor of the gf2 decoder is not a gap this host can resolve, so the family declares it equivalent rather than reading a difference the harness cannot see.",
+    "material_gap_threshold": 1.08,
+    "material_gap_rationale": "Four times the pilot-observed measurement resolution of 0.020, and outside the equivalence margin. A comparator faster than that on a whole-consumer decode is a gap a consumer would notice on a real frame budget and one that needs an attributed explanation rather than a note."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": null,
+    "maintenance_rationale": "A survey adopts nothing into production, so it budgets no new unsafe kernel and no production source."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-matched-single-core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 1,
+          "timed_frames": 1,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-matched-single-core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 1,
+          "timed_frames": 1,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    }
+  ]
+}
