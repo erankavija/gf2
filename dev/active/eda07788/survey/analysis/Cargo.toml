@@ -1,0 +1,31 @@
+# Mapping-analysis tools for the eda07788 survey.
+#
+# These answer semantic questions about operations that reach no timed cell,
+# so they are deliberately separate from `../gf2-side`: they link no external
+# comparator, need no fetched checkout, and their build cannot perturb the
+# timed arms' content identity.
+
+[workspace]
+
+[package]
+name = "survey-analysis"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[[bin]]
+name = "validate-shift-semantics"
+path = "src/bin/validate-shift-semantics.rs"
+
+[[bin]]
+name = "compare-nr-rate-matching"
+path = "src/bin/compare-nr-rate-matching.rs"
+
+[dependencies]
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+gf2-core = { path = "../../../../../crates/gf2-core" }
+tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+
+[profile.release]
+opt-level = 3
