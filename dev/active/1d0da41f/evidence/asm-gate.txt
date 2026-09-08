@@ -1,0 +1,8 @@
+Command: scripts/asm-artefact-present.sh
+HEAD at evaluation: 1235812b (temporary lead checkpoint)
+Exit: 0
+
+asm-artefact-present: PASS (1 SIMD file(s) covered)
+
+The lead must preserve the source/assembly pairing when replacing the temporary
+checkpoint with the final commit plan and rerun the gate on the merged tree.
