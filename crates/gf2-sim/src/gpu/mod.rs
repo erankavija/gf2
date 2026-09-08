@@ -406,7 +406,7 @@ mod imp {
             }
         }
 
-        /// Finding 6: exercise `HipDispatcher` end-to-end on the gfx1030 host —
+        /// Exercise `HipDispatcher` end-to-end on an available supported device —
         /// build it, acquire a stream from its pool, and allocate a small
         /// `DeviceBuffer` — so it is covered rather than dead code. Phase B
         /// kernel stages (`ed575f15` and the next-wave kernel owners) and the
@@ -415,11 +415,17 @@ mod imp {
         fn test_dispatcher_acquires_stream_and_allocates() {
             use gf2_kernels_hip::host::DeviceBuffer;
 
-            let mut disp = HipDispatcher::new(0, 4).expect("build dispatcher on gfx1030");
+            let target = match GfxTarget::detect_device(0) {
+                Ok(target) => target,
+                Err(error) if error.code() == HipError::NoDevice.code() => {
+                    eprintln!("Skipping device allocation: no HIP device is visible");
+                    return;
+                }
+                Err(error) => panic!("detect HIP device: {error:?}"),
+            };
+            let mut disp = HipDispatcher::new(0, 4).expect("build dispatcher on detected device");
             assert_eq!(disp.device_id(), 0);
-            // Construction detected the device's gfx target (production detect
-            // path); this CI host is a gfx1030 (RX 6950 XT).
-            assert_eq!(disp.target(), GfxTarget::Gfx1030);
+            assert_eq!(disp.target(), target);
             assert_eq!(disp.streams().len(), 4);
 
             // Acquire a stream from the shared pool (round-robin path).
