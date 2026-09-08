@@ -1,7 +1,7 @@
 {
   "epic_id": "1a379447-212f-4aff-b2c3-a83c13021e1d",
   "epic_short_id": "1a379447",
-  "current_wave": 1,
+  "current_wave": 2,
   "waves": [
     {
       "wave_number": 1,
@@ -11,7 +11,7 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "integrated at 097ce251; final gates pending. Round 5 closed the three converged residual blockers, preserves the first v3 evidence as falsified, and publishes accepted v3 r2 pilot and confirmation evidence with complete launcher provenance. Two independent Terra xhigh final reviews converge on semantic PASS with no architecture or scope change. Current protocol, schema, validation, preservation records, launcher, addenda, plans, ledgers, logs, receipts and summaries are linked; raw command transcripts remain intentionally unlinked to keep review context bounded.",
+          "status": "done. Integrated at 097ce251 and finalized at 78a20863. Round 5 closed the three converged residual blockers, preserves the first v3 evidence as falsified, and publishes accepted v3 r2 pilot and confirmation evidence with complete launcher provenance. Two independent Terra xhigh reviews and the configured Terra xhigh research gate converge on PASS with no architecture or scope change. Current protocol, schema, validation, preservation records, launcher, addenda, plans, ledgers, logs, receipts and summaries are linked; raw command transcripts remain intentionally unlinked to keep review context bounded.",
           "dispatch": {
             "model": "gpt-5.6-terra",
             "worktree": ".agents/worktrees/agent-f547c394",
@@ -31,10 +31,10 @@
             "reviews/f547c394-r6.md"
           ],
           "gates": {
-            "cargo-ci": "passed 2026-09-08 at 259c1b9a on a quiet host under the full-host mutex: 5952 tests, 0 failed, 248 skipped, 35.7 s",
-            "code-review": "passed (run on 037885c3, zero findings)",
-            "doc-review": "passed 2026-09-08 at 259c1b9a after the raw-transcript split",
-            "research-review": "failed on the older main tree at 259c1b9a. Two independent Terra xhigh final reviews at 75c3d041 converge on semantic PASS; the configured gpt-5.6-terra xhigh checker is pending on the integrated and linked tree"
+            "cargo-ci": "passed 2026-09-08T17:21:41Z at 78a20863 under the full-host mutex",
+            "code-review": "passed 2026-09-08T17:24:50Z at 78a20863 with zero findings",
+            "doc-review": "passed 2026-09-08T17:27:18Z at 78a20863 with zero findings",
+            "research-review": "passed 2026-09-08T17:31:12Z at 78a20863 on gpt-5.6-terra xhigh, converging with both independent Terra xhigh final reviews"
           }
         }
       ]
