@@ -1,0 +1,106 @@
+$ jit item show @/inv/behavioral-evidence-validity
+Qualified id: @/invariant/behavioral-evidence-validity
+Kind:         invariant
+Self id:      behavioral-evidence-validity
+Scope:        @ (project)
+Text:         Committed measurement evidence is invalidated only by a change to the producing tool's measurement behavior — sampling, evaluation, timing, or output semantics — never by a documentation, narrative, or review-artifact change; the tool pins its behavioral identity so the two are distinguishable. Git commit IDs and repository-wide clean/dirty status are informational only; acceptance, invalidation, and checkpoint/resume depend on the content identities of producing code, executables, configuration, and inputs, so unrelated commits and parallel-session edits do not invalidate evidence.
+
+$ jit item show @/inv/falsification-preserved
+Qualified id: @/invariant/falsification-preserved
+Kind:         invariant
+Self id:      falsification-preserved
+Scope:        @ (project)
+Text:         Data that contradicts a criterion, hypothesis, or cited claim is recorded together with the contradiction; silent rework of the falsified statement is a defect.
+
+$ jit item show @/inv/convention-convergence
+Qualified id: @/invariant/convention-convergence
+Kind:         invariant
+Self id:      convention-convergence
+Scope:        @ (project)
+Text:         A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition.
+
+$ jit item show @/inv/library-first-generality
+Qualified id: @/invariant/library-first-generality
+Kind:         invariant
+Self id:      library-first-generality
+Scope:        @ (project)
+Text:         New behavior lands as a reusable API in the layer-appropriate library crate, generic over its natural domain; binaries, simulations, and orchestration stay thin consumers. A capability implemented privately inside a consumer that a library layer could own is a defect unless cited as a tracked exception.
+
+$ jit item show @/inv/single-source-prose
+Qualified id: @/invariant/single-source-prose
+Kind:         invariant
+Self id:      single-source-prose
+Scope:        @ (project)
+Text:         Every fact with a single source of truth reaches prose by projection or citation; volatile facts (counts, enumerations, registry contents) are stated structurally or derived, and a hand-maintained copy is a staleness defect.
+
+$ jit item show @/citation/Schuirmann1987
+Qualified id: @/citation/Schuirmann1987
+Kind:         citation
+Self id:      Schuirmann1987
+Scope:        @ (project)
+Text:         Schuirmann — A Comparison of the Two One-Sided Tests Procedure and the Power Approach for Assessing the Equivalence of Average Bioavailability. J. Pharmacokinet. Biopharm. 15(6):657–680, 1987.
+
+$ jit item show @/citation/Wilson1927
+Qualified id: @/citation/Wilson1927
+Kind:         citation
+Self id:      Wilson1927
+Scope:        @ (project)
+Text:         Wilson — Probable Inference, the Law of Succession, and Statistical Inference. J. Amer. Statist. Assoc. 22(158):209–212, 1927.
+
+$ jit item show @/citation/BrownCaiDasGupta2001
+Qualified id: @/citation/BrownCaiDasGupta2001
+Kind:         citation
+Self id:      BrownCaiDasGupta2001
+Scope:        @ (project)
+Text:         Brown, Cai, DasGupta — Interval Estimation for a Binomial Proportion. Statist. Sci. 16(2):101–133, 2001.
+
+$ jit item show @/citation/Dunn1961
+Qualified id: @/citation/Dunn1961
+Kind:         citation
+Self id:      Dunn1961
+Scope:        @ (project)
+Text:         Dunn — Multiple Comparisons Among Means. J. Amer. Statist. Assoc. 56(293):52–64, 1961.
+
+$ jit item show @/citation/Efron1979
+Qualified id: @/citation/Efron1979
+Kind:         citation
+Self id:      Efron1979
+Scope:        @ (project)
+Text:         Efron — Bootstrap Methods: Another Look at the Jackknife. Ann. Statist. 7(1):1–26, 1979.
+
+$ jit item show @/citation/EfronTibshirani1993
+Qualified id: @/citation/EfronTibshirani1993
+Kind:         citation
+Self id:      EfronTibshirani1993
+Scope:        @ (project)
+Text:         Efron, Tibshirani — An Introduction to the Bootstrap. Chapman & Hall/CRC Monographs on Statistics and Applied Probability 57, 1993.
+
+$ jit item show @/citation/HoeflerBelli2015
+Qualified id: @/citation/HoeflerBelli2015
+Kind:         citation
+Self id:      HoeflerBelli2015
+Scope:        @ (project)
+Text:         Hoefler, Belli — Scientific Benchmarking of Parallel Computing Systems: Twelve Ways to Tell the Masses when Reporting Performance Results. SC '15, 2015.
+
+$ jit item show @/citation/KaliberaJones2013
+Qualified id: @/citation/KaliberaJones2013
+Kind:         citation
+Self id:      KaliberaJones2013
+Scope:        @ (project)
+Text:         Kalibera, Jones — Rigorous Benchmarking in Reasonable Time. ISMM '13, 2013.
+
+$ jit item show @/citation/Hoeffding1963
+Error: project scope '@' declares no addressable item of kind 'citation' with self-id 'Hoeffding1963'
+
+$ jit item show protocol:P-17
+Error: 'protocol:P-17' is not a qualified id; expected '<short-id>/<self-id>'
+
+$ jit item show protocol:P-18
+Error: 'protocol:P-18' is not a qualified id; expected '<short-id>/<self-id>'
+
+$ jit item show protocol:P-19
+Error: 'protocol:P-19' is not a qualified id; expected '<short-id>/<self-id>'
+
+$ jit item show protocol:P-22
+Error: 'protocol:P-22' is not a qualified id; expected '<short-id>/<self-id>'
+

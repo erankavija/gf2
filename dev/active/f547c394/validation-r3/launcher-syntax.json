@@ -1,0 +1,11 @@
+{
+  "command": [
+    "bash",
+    "-n",
+    "dev/bench_results/f547c394/run-smoke-v2.sh"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "",
+  "launcher_sha256": "147d03f4cccc183c94b16a7bacfbfabfb06c26965cdbf0c20ffa295b3c5d0f97"
+}

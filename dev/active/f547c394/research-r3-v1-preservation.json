@@ -1,0 +1,414 @@
+{
+  "comparison_source": "23aa0824 (navigation only; exact bytes compared)",
+  "command": "git show 23aa0824:<path>; compare to current file bytes",
+  "files": [
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.json",
+      "sha256": "3e3dcd6cf23ad16cfae0d7c65c7959a0d19f77c7938f2b72258abd16220cf039",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.md",
+      "sha256": "c6159f48ada1acbfabfcd528371dc52a6761f2000e5a535d9ff5b48d73d5c3c9",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/checkpoints/manifest.json",
+      "sha256": "7618c1dc74937decdd49fbfb8931030d5e48255de2e47455cefc29eef5921c74",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/checkpoints/units/295f489da8b8ac5b85c3e8491c47960afa9f83fd97da5c7857454da1c45aa3a9.json",
+      "sha256": "ca5dfe98d5e1af1a8ff8b38005c507024cfcb1d06e64f18842dac57deb102b3f",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/checkpoints/units/53a628b30dce9d08eb855ed8b03d34365cdfb422e0dd77563ffb2d502e740bf7.json",
+      "sha256": "721700ba680442787cadc117c6fb1fa9b887d8c04591f902282ab7c6df49c9fc",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/checkpoints/units/69f210fdbb77f19b2cd82f268422b8497c15ebec5dde16d7a3c7d091702295a7.json",
+      "sha256": "4747d11143105b620f69c557025760cfa1b35caba7555f7a102ab8044f23f77e",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/checkpoints/units/74bc25473626a097c05c79d3a62504c61158a35ea4b0e8239394058740d81cf7.json",
+      "sha256": "9e3a2a15d2ed35b8fd79ae459fd998f98c50e1e39d8c14001f8f9b7474693c6e",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/execution.log",
+      "sha256": "cbfe54076c39b6d2f5f436491eb1ad6f82cfec40ee01e9f5e9613588283bbe69",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/addendum.schema.json",
+      "sha256": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/family-addendum.json",
+      "sha256": "307b6a2baf2da5025a26820ed44be55a212747440f3d9d00e09bdaf8b1d8a69c",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/measurement-contract.md",
+      "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/.cargo/config.toml",
+      "sha256": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/.producing-snapshot.pending.json",
+      "sha256": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/Cargo.lock",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/Cargo.toml",
+      "sha256": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/active/f547c394/producing-inputs.json",
+      "sha256": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/bench_results/f547c394/run-smoke.sh",
+      "sha256": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/scripts/ccx1-bench-flock.sh",
+      "sha256": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/Cargo.toml",
+      "sha256": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/abtest.rs",
+      "sha256": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
+      "sha256": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+      "sha256": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
+      "sha256": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/campaign.rs",
+      "sha256": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/host.rs",
+      "sha256": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/journal.rs",
+      "sha256": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/lib.rs",
+      "sha256": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/process.rs",
+      "sha256": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/protocol.rs",
+      "sha256": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/provenance.rs",
+      "sha256": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/receipt.rs",
+      "sha256": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/schema.rs",
+      "sha256": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/seed.rs",
+      "sha256": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/statistics.rs",
+      "sha256": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/timing.rs",
+      "sha256": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/transport.rs",
+      "sha256": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/producing/producing-snapshot.json",
+      "sha256": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/protocol.md",
+      "sha256": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/inputs/resolution-evidence/receipt.json",
+      "sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/launcher.log",
+      "sha256": "3b4401c8674230893ccc18619368b05bea5de5cc787c4d4be69e3f341551342e",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/plan.json",
+      "sha256": "5c2b1f5a2b8ff0384a5cd0d5baf00cd19659d53df3fc6606edcfe6f166eb899d",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json",
+      "sha256": "e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.json",
+      "sha256": "a69ef345daebe0e5f0a94aeb715753109abbe443a45098a568dd5297fb9b089d",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.md",
+      "sha256": "d2aa7bc654733c563ac4848e568c4c06c0f314f8637021b65f3f14de15630560",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/checkpoints/manifest.json",
+      "sha256": "e5b8cb2afffaf425c72514dce2949899f5fff39c89674272bb50436cbb7b930a",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/checkpoints/units/295f489da8b8ac5b85c3e8491c47960afa9f83fd97da5c7857454da1c45aa3a9.json",
+      "sha256": "6ea27ac6855e7c420f8fa758393f34864c390bc71c4b1bddc825ea3493693cc7",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/checkpoints/units/53a628b30dce9d08eb855ed8b03d34365cdfb422e0dd77563ffb2d502e740bf7.json",
+      "sha256": "8941ba5698b865beabca3f24189505175d8e791fff26685830de3eb2eceb03d7",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/execution.log",
+      "sha256": "884d32b3a8dba0ccdf21b630e440bfde5e1e46d414dedd104fb3534475fc190c",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/addendum.schema.json",
+      "sha256": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/family-addendum.json",
+      "sha256": "6f762913988f8cb517f5e17c2832fff06d22359a7f1eb8c59d2f47a7ffe0feb4",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/measurement-contract.md",
+      "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/.cargo/config.toml",
+      "sha256": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/.producing-snapshot.pending.json",
+      "sha256": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/Cargo.lock",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/Cargo.toml",
+      "sha256": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/active/f547c394/producing-inputs.json",
+      "sha256": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/bench_results/f547c394/run-smoke.sh",
+      "sha256": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/scripts/ccx1-bench-flock.sh",
+      "sha256": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/Cargo.toml",
+      "sha256": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/abtest.rs",
+      "sha256": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
+      "sha256": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+      "sha256": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
+      "sha256": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/campaign.rs",
+      "sha256": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/host.rs",
+      "sha256": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/journal.rs",
+      "sha256": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/lib.rs",
+      "sha256": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/process.rs",
+      "sha256": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/protocol.rs",
+      "sha256": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/provenance.rs",
+      "sha256": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/receipt.rs",
+      "sha256": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/schema.rs",
+      "sha256": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/seed.rs",
+      "sha256": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/statistics.rs",
+      "sha256": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/timing.rs",
+      "sha256": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/dev/tools/tuning-campaign-support/src/transport.rs",
+      "sha256": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing/producing-snapshot.json",
+      "sha256": "11330c8b0adecbffee0610f4c42e28244690d34f6d49244b9a5c925f495e3ec9",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/protocol.md",
+      "sha256": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/launcher.log",
+      "sha256": "1a502b616de5a3d24d19666e1451cbb62e556e54cdb0f1893bf0ed996e2ae097",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/plan.json",
+      "sha256": "53a0f2d66709dc7764735ed743acf036977d0275c14d0e40da800e035bc130d9",
+      "unchanged": true
+    },
+    {
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json",
+      "sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+      "unchanged": true
+    }
+  ],
+  "evaluator_sha256": "335066fe57c89e2944bb1762c0a38d1276233defb62e96c812d9a537c2ad708b",
+  "v1_acceptance_test": "v1_published_receipts_keep_their_pinned_rules_and_refuse_v2",
+  "test_output": "validation-r3/suite-chain.log"
+}
