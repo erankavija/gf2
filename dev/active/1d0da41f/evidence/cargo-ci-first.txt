@@ -1,0 +1,41 @@
+Command: RUSTUP_TOOLCHAIN=1.95.0 CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-ci.sh
+Exit: 1
+Compiler path prefixes normalized to repository-relative paths.
+
+--- test failures ---
+        FAIL [   0.021s] (5274/5959) gf2-sim gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates
+        FAIL [   0.008s] (5936/5959) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::producing_input_manifest_rejects_authority_and_path_mutations
+        FAIL [   0.021s] (5274/5959) gf2-sim gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates
+        FAIL [   0.008s] (5936/5959) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::producing_input_manifest_rejects_authority_and_path_mutations
+--- clippy diagnostics ---
+warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
+error: this `if` can be collapsed into the outer `match`
+error: could not compile `tuning-campaign-support` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `tuning-campaign-support` (lib test) due to 1 previous error
+  ✓ check: ok (19s)
+  ✓ tuning-core-no-default: ok (1s)
+  ✓ tuning-core-codec-only: ok (1s)
+  ✓ tuning-algebra-no-default: ok (0s)
+  ✓ tuning-algebra-codec-only: ok (1s)
+  ✓ tuning-coding-no-default: ok (1s)
+  ✓ tuning-coding-codec-only: ok (1s)
+  ✓ test-build: ok (258s)
+  ✗ test: FAILED (exit 100, 289s)
+  ✓ tuning-profile-build: ok (20s)
+  ✓ tuning-profile-nextest: ok (181s)
+  ✓ tuning-algebra-calibration-build: ok (10s)
+  ✓ tuning-algebra-calibration-nextest: ok (33s)
+  ✓ tuning-campaign-support-build: ok (27s)
+  ✓ tuning-campaign-support-nextest: ok (1s)
+  ✓ tuning-campaign-validator: ok (0s)
+  ✓ tuning-campaign-launcher-syntax: ok (0s)
+  ✓ tuning-lifecycle-cargo: ok (0s)
+  ✗ clippy: FAILED (exit 101, 9s)
+  ✓ fmt: ok (2s)
+  ✓ baked-core: ok (183s)
+  ✓ tuning-core-artifact: ok (12s)
+  ✓ tuning-algebra-artifacts: ok (2s)
+  ✓ tuning-coding-codec: ok (17s)
+  ✓ tuning-composer: ok (10s)
+

@@ -1,0 +1,30 @@
+Failure exposed by the initial focused nextest build with --features simd.
+The integration target requires tuning-profile in addition to test-support.
+Compiler path prefixes normalized to repository-relative paths.
+
+error[E0425]: cannot find function `prepared_core_json` in module `support`
+  --> crates/gf2-core/tests/tuning_observation_quiet.rs:34:28
+   |
+34 |     let profile = support::prepared_core_json(
+   |                            ^^^^^^^^^^^^^^^^^^
+   |
+  ::: crates/gf2-core/tests/support/core_tuning.rs:50:1
+   |
+50 | pub fn prepared_core(section: CoreTuning) -> PreparedEnvelope {
+   | ------------------------------------------------------------- similarly named function `prepared_core` defined here
+   |
+note: found an item that was configured out
+  --> crates/gf2-core/tests/support/core_tuning.rs:42:8
+   |
+41 | #[cfg(feature = "tuning-profile")]
+   |       -------------------------- the item is gated behind the `tuning-profile` feature
+42 | pub fn prepared_core_json(body: &str) -> Result<PreparedEnvelope, String> {
+   |        ^^^^^^^^^^^^^^^^^^
+help: a function with a similar name exists
+   |
+34 -     let profile = support::prepared_core_json(
+34 +     let profile = support::prepared_core(
+   |
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `gf2-core` (test "tuning_observation_quiet") due to 1 previous error
