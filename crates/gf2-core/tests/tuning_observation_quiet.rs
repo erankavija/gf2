@@ -1,6 +1,6 @@
 //! Observation-free specialization of the complete solve subtree.
 
-#![cfg(feature = "test-support")]
+#![cfg(all(feature = "test-support", feature = "tuning-profile"))]
 
 #[path = "support/core_tuning.rs"]
 mod support;

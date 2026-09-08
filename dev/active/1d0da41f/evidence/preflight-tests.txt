@@ -1,0 +1,53 @@
+Command (repository root): RUSTUP_TOOLCHAIN=1.95.0 CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-kernels-simd -p gf2-core --lib --features simd,test-support,tuning-profile --cargo-profile ci-test --profile ci -E 'test(clmul) | test(simd_dot_product)'
+Compiler path prefixes normalized to repository-relative paths.
+
+cargo-budget: 12 jobs (2 live, 24 cpus)
+cargo-budget: another test run holds the lock; waiting up to 600s
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
+   Compiling gf2-algebra v0.1.0 (crates/gf2-algebra)
+   Compiling gf2-kernels-simd v0.1.0 (crates/gf2-kernels-simd)
+    Finished `ci-test` profile [optimized] target(s) in 2m 36s
+────────────
+ Nextest run ID fe873d85-6555-4dbe-b2c4-9fa208247b4b with nextest profile: ci
+    Starting 39 tests across 2 binaries (2272 tests skipped)
+        PASS [   0.005s] ( 1/39) gf2-core gf2m::wide::tests::clmul_wide_tests::test_clmul_wide_all_ones_squared_n2
+        PASS [   0.005s] ( 2/39) gf2-core gf2m::barrett::tests::test_clmul_commutative_prop
+        PASS [   0.005s] ( 3/39) gf2-core field::vec::tests::test_simd_dot_product_fallback_correctness
+        PASS [   0.006s] ( 4/39) gf2-core field::vec::tests::simd_dot_product_matches_scalar_at_boundaries
+        PASS [   0.006s] ( 5/39) gf2-core field::vec::tests::test_simd_dot_product_matches_scalar_gf256_1000
+        PASS [   0.006s] ( 6/39) gf2-core field::vec::tests::test_simd_dot_product_length_one
+        PASS [   0.006s] ( 7/39) gf2-core field::vec::tests::test_simd_dot_product_length_two
+        PASS [   0.006s] ( 8/39) gf2-core field::vec::tests::test_simd_dot_product_matches_scalar_all_m
+        PASS [   0.008s] ( 9/39) gf2-core gf2m::barrett::tests::test_reduce_with_clmul_matches_reduce_all_primitive_polys
+        PASS [   0.003s] (10/39) gf2-kernels-simd gf2m::tests::clmul_batch_path_accompanies_clmul_batch_fn
+        PASS [   0.004s] (11/39) gf2-core gf2m::wide::tests::clmul_wide_tests::test_clmul_wide_x_plus_one_squared
+        PASS [   0.010s] (12/39) gf2-core field::vec::tests::prop_simd_dot_product_commutative_gf256
+        PASS [   0.004s] (13/39) gf2-kernels-simd gf2m_batch::tests::detect_returns_some_on_avx2_vpclmulqdq_host
+        PASS [   0.004s] (14/39) gf2-kernels-simd gf2m_gemm::tests::detect_returns_some_on_avx2_vpclmulqdq_host
+        PASS [   0.004s] (15/39) gf2-kernels-simd x86::clmul::tests::dispatched_batch_agrees_with_both_lanes
+        PASS [   0.004s] (16/39) gf2-kernels-simd gf2m::tests::clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host
+        PASS [   0.004s] (17/39) gf2-kernels-simd gf2m_wide::tests::detect_returns_some_when_pclmulqdq_available
+        PASS [   0.005s] (18/39) gf2-core gf2m::wide::tests::clmul_wide_tests::test_clmul_wide_x_times_x
+        PASS [   0.004s] (19/39) gf2-kernels-simd x86::clmul::tests::dispatched_batch_matches_portable_scalar
+        PASS [   0.004s] (20/39) gf2-kernels-simd x86::clmul::tests::test_clmul_u64_commutative
+        PASS [   0.004s] (21/39) gf2-kernels-simd x86::clmul::tests::test_clmul_u64_matches_scalar
+        PASS [   0.005s] (22/39) gf2-kernels-simd x86::clmul::tests::test_clmul_u64_exhaustive_small
+        PASS [   0.004s] (23/39) gf2-kernels-simd x86::clmul::tests::ymm_lane_matches_portable_scalar
+        PASS [   0.005s] (24/39) gf2-kernels-simd x86::clmul::tests::sequential_lane_matches_portable_scalar
+        PASS [   0.016s] (25/39) gf2-core gf2m::wide::tests::clmul_wide_tests::prop_clmul_wide_commutative_n2
+        PASS [   0.016s] (26/39) gf2-core gf2m::barrett::tests::test_barrett_clmul_reduce_matches_naive_gf2_16
+        PASS [   0.016s] (27/39) gf2-core gf2m::wide::tests::clmul_wide_tests::test_clmul_wide_all_ones_squared_n1
+        PASS [   0.016s] (28/39) gf2-core gf2m::barrett::tests::test_clmul_identity
+        PASS [   0.017s] (29/39) gf2-core field::vec::tests::simd_dot_product_empty_panics
+        PASS [   0.017s] (30/39) gf2-core gf2m::barrett::tests::test_clmul_commutative
+        PASS [   0.017s] (31/39) gf2-core gf2m::wide::tests::clmul_wide_tests::prop_clmul_wide_commutative_n1
+        PASS [   0.017s] (32/39) gf2-core gf2m::barrett::tests::test_clmul_distributive_prop
+        PASS [   0.006s] (33/39) gf2-core gf2m::barrett::tests::test_clmul_zero
+        PASS [   0.006s] (34/39) gf2-core gf2m::barrett::tests::test_clmul_known_products
+        PASS [   0.017s] (35/39) gf2-core gf2m::wide::tests::clmul_wide_tests::test_clmul_wide_one_times_one
+        PASS [   0.006s] (36/39) gf2-core gf2m::wide::tests::clmul_wide_tests::prop_clmul_wide_commutative_n4
+        PASS [   0.018s] (37/39) gf2-core gf2m::wide::tests::clmul_wide_tests::prop_clmul_wide_n2_matches_reference
+        PASS [   0.018s] (38/39) gf2-core gf2m::barrett::tests::test_barrett_clmul_reduce_matches_naive_gf2_8
+        PASS [   0.156s] (39/39) gf2-kernels-simd x86::clmul::tests::test_clmul_barrett_reduce_matches_scalar
+────────────
+     Summary [   0.172s] 39 tests run: 39 passed, 2272 skipped

@@ -1944,6 +1944,7 @@ mod tests {
             let a: FieldVec<Gf2mElement> = xs[..len].iter().map(|&v| f.element(v)).collect();
             let b: FieldVec<Gf2mElement> = ys[..len].iter().map(|&v| f.element(v)).collect();
             proptest::prop_assert_eq!(a.simd_dot_product(&b), b.simd_dot_product(&a));
+            proptest::prop_assert_eq!(a.simd_dot_product(&b), a.dot_product(&b));
         }
     }
 
@@ -2004,6 +2005,61 @@ mod tests {
         let a = FieldVec::from(vec![f.element(0x53), f.element(0xCA)]);
         let b = FieldVec::from(vec![f.element(0x12), f.element(0x34)]);
         assert_eq!(a.dot_product(&b), a.simd_dot_product(&b));
+    }
+
+    #[test]
+    #[should_panic(expected = "vectors must not be empty")]
+    fn simd_dot_product_empty_panics() {
+        let empty = FieldVec::<Gf2mElement>::new();
+        empty.simd_dot_product(&empty);
+    }
+
+    /// The GF(2^m) SIMD dot product agrees with the scalar reference at the
+    /// batch and chunk boundaries and on high-bit-bearing operands.
+    ///
+    /// This is the production consumer of the raw carry-less batch kernel:
+    /// it packs field elements into `u64` buffers, calls the batch kernel,
+    /// XOR-accumulates the 128-bit products and Barrett-reduces once. The
+    /// lengths cover 1, 2, the 63/64/65 word boundary, the odd lengths that
+    /// leave a non-vector batch tail, and the 255/256/257 chunk boundary of
+    /// `DOT_CHUNK_LEN_SELECTED`. GF(2^32) carries operand bits far above the
+    /// 16-bit fields the other cases use.
+    #[test]
+    fn simd_dot_product_matches_scalar_at_boundaries() {
+        use crate::primitive_polys::PrimitivePolynomialDatabase;
+
+        let lengths = [
+            1usize, 2, 3, 5, 63, 64, 65, 127, 128, 129, 255, 256, 257, 513,
+        ];
+        for m in [8usize, 16, 32] {
+            let poly = PrimitivePolynomialDatabase::standard(m)
+                .expect("standard primitive polynomial for this degree");
+            let f = Gf2mField::new(m, poly);
+            let mask = if m == 64 { u64::MAX } else { (1u64 << m) - 1 };
+            // Adversarial values inside the field: zero, one, the high bit,
+            // all ones, and the two alternating masks.
+            let palette = [
+                0u64,
+                1,
+                1u64 << (m - 1),
+                mask,
+                0xAAAA_AAAA_AAAA_AAAA & mask,
+                0x5555_5555_5555_5555 & mask,
+            ];
+            for n in lengths {
+                let a: FieldVec<Gf2mElement> = (0..n)
+                    .map(|i| f.element(palette[i % palette.len()]))
+                    .collect();
+                let b: FieldVec<Gf2mElement> = (0..n)
+                    .map(|i| f.element(palette[(i * 5 + 2) % palette.len()]))
+                    .collect();
+                assert_eq!(
+                    a.simd_dot_product(&b),
+                    a.dot_product(&b),
+                    "GF(2^{m}) dot product differs from scalar at n={n}"
+                );
+            }
+        }
     }
 
     // ── FieldVec<Fp<65537>> SIMD-dispatch tests ────────────────────────────

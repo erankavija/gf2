@@ -1,0 +1,55 @@
+Command (repository root): RUSTUP_TOOLCHAIN=1.95.0 CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --lib --no-default-features --cargo-profile ci-test --profile ci -E 'test(simd_dot_product)'
+Compiler path prefixes normalized to repository-relative paths.
+
+cargo-budget: 4 jobs (5 live, 24 cpus)
+cargo-budget: another test run holds the lock; waiting up to 600s
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
+warning: unused import: `super::*`
+    --> crates/gf2-core/src/gfp/simd_ops.rs:3569:9
+     |
+3569 |     use super::*;
+     |         ^^^^^^^^
+     |
+     = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `WORD_BOUNDARY_LENS` is never used
+    --> crates/gf2-core/src/gfp/simd_ops.rs:3571:11
+     |
+3571 |     const WORD_BOUNDARY_LENS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];
+     |           ^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `BOUNDARY_LENS` is never used
+    --> crates/gf2-core/src/gfp/simd_ops.rs:3673:15
+     |
+3673 |         const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
+     |               ^^^^^^^^^^^^^
+
+warning: constant `BOUNDARY_LENS` is never used
+    --> crates/gf2-core/src/gfp/simd_ops.rs:3766:15
+     |
+3766 |         const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65, 128, 129];
+     |               ^^^^^^^^^^^^^
+
+warning: constant `SIMD_MIN_WORDS` is never used
+  --> crates/gf2-core/src/tuning/baked.rs:17:18
+   |
+17 | pub(crate) const SIMD_MIN_WORDS: usize = 4;
+   |                  ^^^^^^^^^^^^^^
+
+warning: `gf2-core` (lib test) generated 5 warnings (run `cargo fix --lib -p gf2-core --tests` to apply 1 suggestion)
+    Finished `ci-test` profile [optimized] target(s) in 2m 26s
+────────────
+ Nextest run ID 6396aab0-836e-40ff-9262-0fa4c96f7cb3 with nextest profile: ci
+    Starting 8 tests across 1 binary (1979 tests skipped)
+        PASS [   0.005s] (1/8) gf2-core field::vec::tests::test_simd_dot_product_matches_scalar_gf256_1000
+        PASS [   0.005s] (2/8) gf2-core field::vec::tests::simd_dot_product_matches_scalar_at_boundaries
+        PASS [   0.006s] (3/8) gf2-core field::vec::tests::test_simd_dot_product_length_one
+        PASS [   0.006s] (4/8) gf2-core field::vec::tests::test_simd_dot_product_length_two
+        PASS [   0.006s] (5/8) gf2-core field::vec::tests::simd_dot_product_empty_panics
+        PASS [   0.006s] (6/8) gf2-core field::vec::tests::test_simd_dot_product_fallback_correctness
+        PASS [   0.006s] (7/8) gf2-core field::vec::tests::test_simd_dot_product_matches_scalar_all_m
+        PASS [   0.011s] (8/8) gf2-core field::vec::tests::prop_simd_dot_product_commutative_gf256
+────────────
+     Summary [   0.017s] 8 tests run: 8 passed, 1979 skipped
