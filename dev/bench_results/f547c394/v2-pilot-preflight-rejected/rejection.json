@@ -1,0 +1,8 @@
+{
+  "status": "preflight-rejected",
+  "diagnostic": "addendum invalid: decoder-family cell cold-first-use lacks decoder fields",
+  "measurement_started": false,
+  "ledger_reserved": false,
+  "preserved_addendum": "dev/active/f547c394/addendum-smoke-v2-pilot.json",
+  "preserved_plan": "dev/active/f547c394/plan-smoke-v2-pilot.json"
+}

@@ -1,0 +1,9 @@
+cargo-budget: a --full-host bench run holds /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 4 jobs (6 live, 24 cpus)
+error: failed to run `rustc` to learn about target-specific information
+
+Caused by:
+  process didn't exit successfully: `sccache /home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc - --crate-name ___ --print=file-names --target x86_64-unknown-linux-gnu --crate-type bin --crate-type rlib --crate-type dylib --crate-type cdylib --crate-type staticlib --crate-type proc-macro --print=sysroot --print=split-debuginfo --print=crate-name --print=cfg -Wwarnings` (exit status: 2)
+  --- stderr
+  sccache: error: Operation not permitted (os error 1)
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo metadata '--format-version=1' --all-features --filter-platform x86_64-unknown-linux-gnu` failed with exit status: 101

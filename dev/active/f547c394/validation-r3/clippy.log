@@ -1,0 +1,79 @@
+cargo-budget: 4 jobs (6 live, 24 cpus)
+    Checking tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/dev/tools/tuning-campaign-support)
+error: items after a test module
+   --> dev/tools/tuning-campaign-support/src/abtest.rs:321:1
+    |
+321 |   mod tests {
+    |   ^^^^^^^^^
+...
+360 | / pub fn bounded_mean_interval(
+361 | |     values: &[f64],
+362 | |     lower: f64,
+363 | |     upper: f64,
+364 | |     confidence: f64,
+365 | | ) -> Result<(f64, f64), AbError> {
+    | |________________________________^
+...
+385 | / pub fn frame_ber_interval(
+386 | |     errors: &[u64],
+387 | |     bits_per_frame: u64,
+388 | |     confidence: f64,
+389 | | ) -> Result<(f64, f64), AbError> {
+    | |________________________________^
+...
+404 | / pub fn paired_fer_upper(
+405 | |     baseline: &[u64],
+406 | |     candidate: &[u64],
+407 | |     ratio: f64,
+408 | |     confidence: f64,
+409 | | ) -> Result<f64, AbError> {
+    | |_________________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#items_after_test_module
+    = note: `-D clippy::items-after-test-module` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::items_after_test_module)]`
+    = help: move the items to before the test module was defined
+
+error: this `if` statement can be collapsed
+   --> dev/tools/tuning-campaign-support/src/receipt.rs:980:29
+    |
+980 | / ...                   if record.event == JournalEvent::DriverDiagnostic
+981 | | ...                       && record.details["kind"] == "host-observation"
+982 | | ...                   {
+983 | | ...                       if !observed_sessions.insert(record.session_id.clone()) {
+...   |
+986 | | ...                   }
+    | |_______________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#collapsible_if
+    = note: `-D clippy::collapsible-if` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+    |
+981 ~                                 && record.details["kind"] == "host-observation"
+982 ~                                 && !observed_sessions.insert(record.session_id.clone()) {
+983 |                                     e.error("P-23", None, "session repeats host observation");
+984 ~                                 }
+    |
+
+error: called `Iterator::last` on a `DoubleEndedIterator`; this will needlessly iterate the entire iterator
+   --> dev/tools/tuning-campaign-support/src/trial_ledger.rs:116:26
+    |
+116 |               predecessor: bytes
+    |  __________________________^
+117 | |                 .split_inclusive(|b| *b == b'\n')
+118 | |                 .last()
+    | |_______________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#double_ended_iterator_last
+    = note: `-D clippy::double-ended-iterator-last` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::double_ended_iterator_last)]`
+help: try
+    |
+118 -                 .last()
+118 +                 .next_back()
+    |
+
+error: could not compile `tuning-campaign-support` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `tuning-campaign-support` (lib test) due to 3 previous errors

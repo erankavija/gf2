@@ -1,0 +1,32 @@
+[
+  {
+    "receipt": "dev/bench_results/f547c394/v2-pilot/receipt.json",
+    "receipt_sha256": "42b93aa349bff167866e453f3d50efccfec316acc9f3a2ee1af058442902eb1f",
+    "evaluator_sha256": "335066fe57c89e2944bb1762c0a38d1276233defb62e96c812d9a537c2ad708b",
+    "portable_acceptance": "GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0",
+    "exit": 0,
+    "summary_byte_identical": true,
+    "original_receipt_unchanged": true,
+    "protocol_version": 2,
+    "host_observations": 2,
+    "frozen_utc": "2026-09-08T09:53:21Z",
+    "opening_utc": "2026-09-08T10:05:54.726824479Z",
+    "cold_calls_verified": 10000,
+    "decoder_quality_in_every_measured_cell": true
+  },
+  {
+    "receipt": "dev/bench_results/f547c394/v2-confirmation/receipt.json",
+    "receipt_sha256": "29df2562dd160080331047c068d4edc70e84258574ee8ba53fc9ae3250f59cf0",
+    "evaluator_sha256": "335066fe57c89e2944bb1762c0a38d1276233defb62e96c812d9a537c2ad708b",
+    "portable_acceptance": "GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0",
+    "exit": 0,
+    "summary_byte_identical": true,
+    "original_receipt_unchanged": true,
+    "protocol_version": 2,
+    "host_observations": 2,
+    "frozen_utc": "2026-09-08T10:18:45Z",
+    "opening_utc": "2026-09-08T10:29:00.639628145Z",
+    "cold_calls_verified": 10000,
+    "decoder_quality_in_every_measured_cell": true
+  }
+]

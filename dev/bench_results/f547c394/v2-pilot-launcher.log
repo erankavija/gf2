@@ -1,0 +1,5 @@
+# session start UTC: 2026-09-08T09:49:36Z
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host target/release/benchmark-ab-runner run /tmp/gf2-f547c394-v2-pilot dev/active/f547c394/plan-smoke-v2-pilot.json
+nice: cannot set niceness: Permission denied
+benchmark-ab-runner: addendum invalid: decoder-family cell cold-first-use lacks decoder fields
+# session exit: 1; end UTC: 2026-09-08T09:50:16Z

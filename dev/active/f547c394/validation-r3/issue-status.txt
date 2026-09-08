@@ -1,0 +1,69 @@
+ID: f547c394-9f05-4207-8f7f-2dcbb9e56999
+Title: Freeze the shared Zen 3 benchmark protocol and acceptance rules
+Description: Provide the shared measurement protocol and acceptance-summary support that independently runnable CPU benchmark families consume.
+
+## Background
+
+The existing coding comparison runners, offline tuning system and exclusive host lock are canonical. This task specifies reusable statistical and receipt rules; family comparator builds, baseline campaigns and consumer profiling are separate work. The measurement contract states the normative requirements without pretending that numeric experiment settings are already frozen.
+
+## Success Criteria
+
+- [hard] REQ-01: Publish a versioned executable protocol satisfying the [measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), with an explicit schema for independently frozen cell addenda. Store the protocol and schema under the owning development directory and pin immutable artifact snapshots by content digest in emitted receipts; Git revisions are optional navigation metadata.
+
+- [hard] REQ-02: Define paired/interleaved A/B sampling and bootstrap confidence intervals for the ratio of medians, the resampling unit, cache-state and outlier policies, family-wise multiple-comparison treatment, independent holdout confirmation and bounded search/stop rules. Freeze shared numerical settings and require applicable family-specific settings before each confirmatory trial.
+
+- [hard] REQ-03: Define family-specific worthwhile-effect and complexity-budget fields, with justified improvement and non-regression equivalence margins. Do not impose a blanket 15% or 1.5x threshold; retain hard correctness and mandatory benchmarking. Distinguish exploratory pilots from confirmation and prevent failed confirmation data from being silently relabeled or discarded.
+
+- [hard] REQ-04: Extend the canonical receipt/acceptance tooling to check required provenance, protocol/addendum identity, sample budgets, confidence-bound decisions, unavailable cells and complete negative results. Exercise pass, fail, inconclusive, missing-content, digest-mismatch and resumed-run cases, including metadata-only Git commits and unrelated edits between sessions with deterministic fixtures and a bounded release smoke receipt; no production performance change is included.
+
+- [hard] REQ-05: Verify canonical quiet-host locking, append-only execution logs, checkpoint/resume, runtime topology/affinity and worker reporting in the shared runner. Include separate kernel/whole-consumer and single-core/multicore metrics, conservative/tuned/native build identities and conversion costs in the schema without requiring all family campaigns to run here.
+
+- [hard] REQ-06: Define matched-algorithm versus fastest quality-compatible decoder cell schemas, including input/code identity, precision, schedule, stopping, batching, memory and BER/FER confidence intervals. Actual comparator compatibility and build choices remain family survey outputs.
+
+- [hard] REQ-07: Commit the reviewed protocol, schema, tooling validation and linked reproducible smoke evidence. Numeric family settings may be supplied later by addenda, but every unresolved required setting makes its cell non-confirmatory rather than implicitly defaulted.
+
+## Notes
+
+Provenance and resume follow @/inv/behavioral-evidence-validity: content identities of producing code, executables, configuration and inputs are authoritative; Git-object availability, commit ancestry and repository-wide clean/dirty status are not acceptance conditions. Freeze the content snapshot in the append-only execution record before measurements and cite a distinct pilot receipt by digest.
+
+This is measurement infrastructure only. It does not build every comparator, profile every consumer, tune production dispatch or establish a claimed speedup.
+
+
+State: InProgress
+Priority: High
+Assignee: Some("agent:jit-execution-lead")
+Dependencies: None
+Gates:
+  - cargo-ci [Passed] (last run: never run)
+  - code-review [Passed] (last run: never run)
+  - doc-review [Passed] (last run: never run)
+  - research-review [Failed] (last run: never run)
+Created: 2026-09-06T19:16:06.002331323+00:00
+Updated: 2026-09-08T08:48:43.086819334+00:00
+Documents:
+  - dev/active/1a379447-zen3-cpu-performance/measurement-contract.md (Shared Zen 3 measurement contract) [HEAD]
+  - dev/active/f547c394/protocol.md (Zen 3 benchmark protocol v1) [HEAD]
+  - dev/active/f547c394/addendum.schema.json (Family addendum schema v1) [HEAD]
+  - dev/active/f547c394/addendum-protocol-smoke.json (Frozen smoke family addendum) [HEAD]
+  - dev/active/f547c394/design.md (Canonical homes and design decisions) [HEAD]
+  - dev/bench_results/f547c394/run-smoke.sh (Smoke receipt launcher) [HEAD]
+  - dev/active/f547c394/provenance-clarification.md (Invoker provenance clarification) [HEAD]
+  - dev/active/f547c394/addendum-protocol-smoke-pilot.json (Exploratory smoke addendum) [HEAD]
+  - dev/active/f547c394/producing-inputs.json (Producing input closure) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json (Protocol pilot: receipt.json) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/plan.json (Protocol pilot: plan.json) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/execution.log (Protocol pilot: execution.log) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/launcher.log (Protocol pilot: launcher.log) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.json (Protocol pilot: acceptance-summary.json) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.md (Protocol pilot: acceptance-summary.md) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json (Protocol confirmation: receipt.json) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/plan.json (Protocol confirmation: plan.json) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/execution.log (Protocol confirmation: execution.log) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/launcher.log (Protocol confirmation: launcher.log) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.json (Protocol confirmation: acceptance-summary.json) [HEAD]
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.md (Protocol confirmation: acceptance-summary.md) [HEAD]
+  - dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md (Historical review round 1) [HEAD]
+  - dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md (Review round 2: frozen-record binding) [HEAD]
+  - dev/active/f547c394/rework-validation.md (Rework validation report (round 3)) [HEAD]
+  - dev/bench_results/f547c394/revalidation.json (Acceptance revalidation record) [HEAD]
+  - dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r3.md (f547c394 review round 3) [HEAD]

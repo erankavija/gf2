@@ -1,0 +1,112 @@
+$ jit gate status f547c394 research-review --all
+No matching gate runs for issue f547c394
+
+$ jit gate status f547c394 code-review --all
+No matching gate runs for issue f547c394
+
+$ jit doc list f547c394
+Document references for issue f547c394-9f05-4207-8f7f-2dcbb9e56999:
+  - dev/active/1a379447-zen3-cpu-performance/measurement-contract.md (Shared Zen 3 measurement contract) [HEAD] <specification>
+  - dev/active/f547c394/protocol.md (Zen 3 benchmark protocol v1) [HEAD] <specification>
+  - dev/active/f547c394/addendum.schema.json (Family addendum schema v1) [HEAD] <specification>
+  - dev/active/f547c394/addendum-protocol-smoke.json (Frozen smoke family addendum) [HEAD] <specification>
+  - dev/active/f547c394/design.md (Canonical homes and design decisions) [HEAD] <design>
+  - dev/bench_results/f547c394/run-smoke.sh (Smoke receipt launcher) [HEAD] <benchmark>
+  - dev/active/f547c394/provenance-clarification.md (Invoker provenance clarification) [HEAD] <review>
+  - dev/active/f547c394/addendum-protocol-smoke-pilot.json (Exploratory smoke addendum) [HEAD] <specification>
+  - dev/active/f547c394/producing-inputs.json (Producing input closure) [HEAD] <specification>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json (Protocol pilot: receipt.json) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/plan.json (Protocol pilot: plan.json) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/execution.log (Protocol pilot: execution.log) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/launcher.log (Protocol pilot: launcher.log) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.json (Protocol pilot: acceptance-summary.json) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.md (Protocol pilot: acceptance-summary.md) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json (Protocol confirmation: receipt.json) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/plan.json (Protocol confirmation: plan.json) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/execution.log (Protocol confirmation: execution.log) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/launcher.log (Protocol confirmation: launcher.log) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.json (Protocol confirmation: acceptance-summary.json) [HEAD] <benchmark>
+  - dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.md (Protocol confirmation: acceptance-summary.md) [HEAD] <benchmark>
+  - dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md (Historical review round 1) [HEAD] <review>
+  - dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md (Review round 2: frozen-record binding) [HEAD] <review>
+  - dev/active/f547c394/rework-validation.md (Rework validation report (round 3)) [HEAD] <report>
+  - dev/bench_results/f547c394/revalidation.json (Acceptance revalidation record) [HEAD] <benchmark>
+
+Total: 25
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/1a379447-zen3-cpu-performance/measurement-contract.md
+120:limit, preserved experiment or tracked falsifiable follow-up within the search
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/f547c394/protocol.md
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/f547c394/addendum.schema.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/f547c394/addendum-protocol-smoke.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/f547c394/design.md
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/f547c394/provenance-clarification.md
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/f547c394/addendum-protocol-smoke-pilot.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/f547c394/producing-inputs.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/plan.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.md
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/plan.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.json
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.md
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md
+23:### Deferred-items audit (Tier 2.75)
+24:design.md "Pre-existing fragility observed" (a83583e0 composer lockfile) — legitimately out of scope, recorded in surfaced_pitfalls. design.md "Named exception: session lifecycle store" — tracked exception with a convergence condition; OK.
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md
+30:Formal criterion and holistic acceptance stop at the failed gate. The mandatory prior-findings and deferred-items audits are complete. R2 F1 violates the complete frozen-content obligation in REQ-01/REQ-04.
+36:### Deferred-items audit (Tier 2.75)
+38:The linked protocol/design/schema/addenda/clarification and measurement contract contain no in-scope deferred deliverable. `measurement-contract.md:120` requires future family work to track falsifiable residual gaps; the issue explicitly excludes family surveys and production optimization. `design.md:70-86` identifies pre-existing a835 Git-policy migration (`0ba493e1`) and its untracked composer lockfile fragility (`a83583e0`); these belong to the separate campaign contract, not this protocol task. `design.md:21-33` preserves the named session lifecycle-store exception and explicit convergence condition. The historical review records superseded findings rather than current unresolved implementation.
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/active/f547c394/rework-validation.md
+36:$ grep -inE deferred-pattern dev/active/1a379447-zen3-cpu-performance/measurement-contract.md
+37:120:limit, preserved experiment or tracked falsifiable follow-up within the search
+39:$ grep -inE deferred-pattern dev/active/f547c394/protocol.md
+41:$ grep -inE deferred-pattern dev/active/f547c394/addendum.schema.json
+43:$ grep -inE deferred-pattern dev/active/f547c394/addendum-protocol-smoke.json
+45:$ grep -inE deferred-pattern dev/active/f547c394/design.md
+47:$ grep -inE deferred-pattern dev/active/f547c394/provenance-clarification.md
+49:$ grep -inE deferred-pattern dev/active/f547c394/addendum-protocol-smoke-pilot.json
+51:$ grep -inE deferred-pattern dev/active/f547c394/producing-inputs.json
+53:$ grep -inE deferred-pattern dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json
+55:$ grep -inE deferred-pattern dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/plan.json
+57:$ grep -inE deferred-pattern dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.json
+59:$ grep -inE deferred-pattern dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.md
+61:$ grep -inE deferred-pattern dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json
+63:$ grep -inE deferred-pattern dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/plan.json
+65:$ grep -inE deferred-pattern dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.json
+67:$ grep -inE deferred-pattern dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.md
+69:$ grep -inE deferred-pattern dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md
+70:23:### Deferred-items audit (Tier 2.75)
+71:24:design.md "Pre-existing fragility observed" (a83583e0 composer lockfile) — legitimately out of scope, recorded in surfaced_pitfalls. design.md "Named exception: session lifecycle store" — tracked exception with a convergence condition; OK.
+73:$ grep -inE deferred-pattern dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md
+74:30:Formal criterion and holistic acceptance stop at the failed gate. The mandatory prior-findings and deferred-items audits are complete. R2 F1 violates the complete frozen-content obligation in REQ-01/REQ-04.
+75:36:### Deferred-items audit (Tier 2.75)
+76:38:The linked protocol/design/schema/addenda/clarification and measurement contract contain no in-scope deferred deliverable. `measurement-contract.md:120` requires future family work to track falsifiable residual gaps; the issue explicitly excludes family surveys and production optimization. `design.md:70-86` identifies pre-existing a835 Git-policy migration (`0ba493e1`) and its untracked composer lockfile fragility (`a83583e0`); these belong to the separate campaign contract, not this protocol task. `design.md:21-33` preserves the named session lifecycle-store exception and explicit convergence condition. The historical review records superseded findings rather than current unresolved implementation.
+205:| 23 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md:120` | limit, preserved experiment or tracked falsifiable follow-up within the search | OUT-OF-SCOPE per issue text: "family comparator builds, baseline campaigns and consumer profiling are separate work." This clause governs later family research. |
+206:| 24 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md:23` | ### Deferred-items audit (Tier 2.75) | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`. |
+207:| 25 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md:24` | design.md "Pre-existing fragility observed" (a83583e0 composer lockfile) — legitimately out of scope, recorded in surfaced_pitfalls. design.md "Named exception: session lifecycle store" — tracked exception with a convergence condition; OK. | Historical audit. `dev/active/f547c394/design.md:21` retains the session-store exception and convergence condition. OUT-OF-SCOPE per issue text: "family comparator builds, baseline campaigns and consumer profiling are separate work" covers separate a835 composer lockfile fragility. |
+208:| 26 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md:30` | Formal criterion and holistic acceptance stop at the failed gate. The mandatory prior-findings and deferred-items audits are complete. R2 F1 violates the complete frozen-content obligation in REQ-01/REQ-04. | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`. |
+209:| 27 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md:36` | ### Deferred-items audit (Tier 2.75) | Historical review/audit marker, not a deferred deliverable; R2 freeze closure is `src/receipt.rs:338` and `:1004`. |
+210:| 28 | Historical audit | audit-step-3: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md:38` | The linked protocol/design/schema/addenda/clarification and measurement contract contain no in-scope deferred deliverable. `measurement-contract.md:120` requires future family work to track falsifiable residual gaps; the issue explicitly excludes family surveys and production optimization. `design.md:70-86` identifies pre-existing a835 Git-policy migration (`0ba493e1`) and its untracked composer lockfile fragility (`a83583e0`); these belong to the separate campaign contract, not this protocol task. `design.md:21-33` preserves the named session lifecycle-store exception and explicit convergence condition. The historical review records superseded findings rather than current unresolved implementation. | Historical audit preserves explicit scope decisions. Session-store convergence remains in design.md; separate a835 migration belongs to 0ba493e1. OUT-OF-SCOPE per issue text: "family comparator builds, baseline campaigns and consumer profiling are separate work." |
+258:The deferred-items sweep over every linked Markdown/JSON document and the two
+
+$ grep -inE "\\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|won't (do|fix)|punt(ed)?)\\b" dev/bench_results/f547c394/revalidation.json

@@ -1,0 +1,5 @@
+# Proposed registry addition for the lead; the worker cannot edit .jit/.
+[[references]]
+key = "Hoeffding1963"
+citation = "Hoeffding — Probability Inequalities for Sums of Bounded Random Variables. J. Amer. Statist. Assoc. 58(301):13–30, 1963, Theorem 2."
+doi = "10.1080/01621459.1963.10500830"

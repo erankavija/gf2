@@ -1,0 +1,49 @@
+cargo-budget: 4 jobs (5 live, 24 cpus)
+cargo-budget: another test run holds the lock; waiting up to 600s
+   Compiling generic-array v0.14.7
+   Compiling proc-macro2 v1.0.103
+   Compiling serde_core v1.0.228
+   Compiling rustix v1.1.2
+   Compiling linux-raw-sys v0.11.0
+   Compiling quote v1.0.42
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling syn v2.0.111
+   Compiling sha2 v0.10.9
+   Compiling serde_json v1.0.145
+   Compiling serde_derive v1.0.228
+   Compiling serde v1.0.228
+   Compiling tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/dev/tools/tuning-campaign-support)
+    Finished `ci-test` profile [optimized] target(s) in 32.58s
+────────────
+ Nextest run ID 84be2039-b73c-42be-b81a-21d557095d08 with nextest profile: ci
+    Starting 1 test across 12 binaries (149 tests skipped)
+        FAIL [   0.052s] (1/1) tuning-campaign-support::protocol_contracts runner_announces_the_log_before_work_and_resumes_without_repeating
+  stdout ───
+
+    running 1 test
+    test runner_announces_the_log_before_work_and_resumes_without_repeating ... FAILED
+
+    failures:
+
+    failures:
+        runner_announces_the_log_before_work_and_resumes_without_repeating
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 24 filtered out; finished in 0.05s
+
+  stderr ───
+
+    thread 'runner_announces_the_log_before_work_and_resumes_without_repeating' (1416) panicked at dev/tools/tuning-campaign-support/tests/protocol_contracts.rs:1889:5:
+    assertion `left == right` failed: GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-f547c394-runner-1415/stage/execution.log
+
+    benchmark-ab-runner: arm candidate did not exit cleanly: Exited { pid: 1433, exit_code: 2, elapsed_ns: 4228198, all_descendants_reaped: true }
+
+      left: Some(1)
+     right: Some(3)
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+────────────
+     Summary [   0.053s] 1 test run: 0 passed, 1 failed, 149 skipped
+        FAIL [   0.052s] (1/1) tuning-campaign-support::protocol_contracts runner_announces_the_log_before_work_and_resumes_without_repeating
+error: test run failed

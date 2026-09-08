@@ -1,0 +1,12 @@
+{
+  "pilot_protocol_sha256": "9e0193ecce1453119a575e07d6ff84bf8c82eca3ce38d53f3b01fafe14df0eae",
+  "clarified_protocol_sha256": "fb313954a9d6fd51deec8c26aa1b85310400e181c9f0672533fc7755b2d6d0ba",
+  "changes": [
+    "bank rotation does not prove cache eviction",
+    "warm window total is a nominal target, not a duration cap",
+    "outlier flags do not identify a cause"
+  ],
+  "numerical_settings_changed": false,
+  "acceptance_implementation_changed": false,
+  "pilot_snapshot_preserved": true
+}

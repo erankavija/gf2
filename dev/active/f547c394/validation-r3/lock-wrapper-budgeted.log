@@ -1,0 +1,7 @@
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+cargo-budget: 24 jobs (1 live, 24 cpus)
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/tmp.Ebz5aMK3PT/rt.lock; waiting up to 1800s
+nice: cannot set niceness: Permission denied
+cargo-budget: 24 jobs (1 live, 24 cpus)
+ccx1-bench-flock.test: ok
