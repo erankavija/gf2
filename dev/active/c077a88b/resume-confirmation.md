@@ -34,17 +34,20 @@ checkpointed. Exit 0 completes that family. Other exits require inspecting the
 announced authoritative execution log and preserving the failed attempt. Never
 launch both commands concurrently. Each invocation holds the repository's
 `--full-host` CCX1 mutex for one bounded session and prints the durable log before
-measurement. Quality simulation never runs under the timing mutex.
+measurement. Quality simulation uses the shared CPU-budget lock; timed windows require the
+exclusive full-host lock.
 
 4. Finalize each completed pilot by replacing `run` with `finalize`; the launcher
-   runs the independent acceptance binary. Freeze its confirmation addendum with
-   `survey/freeze-addendum.py`, using the exact accepted pilot receipt and its
-   canonical family ID. The derivation file records the pilot alpha and snapshots.
-   Publish the pilot, ledger and frozen addendum before confirmation.
-5. Prepare, run, resume and finalize confirmation with the same launcher and
-   `confirmation` in place of `pilot`. Its fixed sample budget includes all
-   predeclared quality candidates even when quality admission is unestablished.
-   The launcher checks publication of the exact confirmation addendum.
+   runs the independent acceptance binary. Freeze the matched confirmation addendum with
+   `survey/freeze-addendum.py`, using its exact accepted pilot receipt and canonical
+   family ID. The derivation file records the pilot alpha and snapshots. Publish
+   the pilot, ledger and frozen addendum before confirmation. The quality family
+   stops at its accepted six-candidate pilot: all P-19 admission checks fail, so
+   no candidate is eligible for quality confirmation or fastest-arm selection.
+5. Prepare, run, resume and finalize the matched confirmation with the same
+   launcher and `confirmation` in place of `pilot`. Its fixed sample budget
+   measures both matched cells. The launcher checks publication of the exact
+   confirmation addendum. Do not run a quality confirmation from this pilot.
 6. Regenerate the projection with `python3 dev/active/c077a88b/survey/summarize.py`.
    Report receipt acceptance separately from a cell's qualifying outcome.
 
