@@ -25,7 +25,15 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "32cd1bd99d6ec87c59106a61bf8ff2ec339418c0e4f198021d171dba9775091b",
+          "content_hash": "ef0304736301968ef5422e0821e762816c88378c3a192088c7e49f59d9052876",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "amendment-v3.md",
+          "resolved_path": "dev/active/f547c394/amendment-v3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9102bea62588ffd47a30627df8b06ee57dc44a69031cf8b0544e5f3a6f87aef5",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "design.md",
@@ -33,7 +41,7 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+          "content_hash": "513f37627dd82dbce95f49ff3f714af83131320fdbd0fe704baffc18a57412cd",
           "is_shared": false,
           "mime_type": null,
           "original_path": "addendum.schema.json",
@@ -43,13 +51,13 @@
       "commit": null,
       "doc_type": "specification",
       "format": "markdown",
-      "label": "Zen 3 benchmark protocol v1",
+      "label": "Zen 3 benchmark protocol v3",
       "path": "dev/active/f547c394/protocol.md"
     },
     {
       "commit": null,
       "doc_type": "specification",
-      "label": "Family addendum schema v1",
+      "label": "Family addendum schema v3",
       "path": "dev/active/f547c394/addendum.schema.json"
     },
     {
@@ -268,6 +276,281 @@
       "format": "markdown",
       "label": "f547c394 converged review round 5",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r5.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Protocol v3 amendment and evidence disposition",
+      "path": "dev/active/f547c394/amendment-v3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol v3 r2 pilot addendum",
+      "path": "dev/active/f547c394/addendum-smoke-v3-pilot-r2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol v3 r2 confirmation addendum",
+      "path": "dev/active/f547c394/addendum-smoke-v3-confirmation-r2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol v3 r2 pilot plan",
+      "path": "dev/active/f547c394/plan-smoke-v3-pilot-r2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol v3 r2 confirmation plan",
+      "path": "dev/active/f547c394/plan-smoke-v3-confirmation-r2.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "209fa77d7e91838e71c514abae423990b9734cf2524482210a025ef68d4575d1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "smoke-v2-evidence.json",
+          "resolved_path": "dev/active/f547c394/smoke-v2-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "331de6dea8fa621602deb7410f916d245947756c285ad1574834b2cdefabedbb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "research-r3-portability.json",
+          "resolved_path": "dev/active/f547c394/research-r3-portability.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1bcc0b8e4bf003f3873b4399a45ba7a7856371eab38b42e432dd641266a9b498",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "citation-additions.toml",
+          "resolved_path": "dev/active/f547c394/citation-additions.toml"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6bcd6ae2c145a9e36ea76bf5d63ba2782a850c2ea90fdb2302aca8a70d8c31c8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "research-r5-v3-r1-preservation.json",
+          "resolved_path": "dev/active/f547c394/research-r5-v3-r1-preservation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "41fe2b5dc1f3c28ea2282fc77dea8fa859e72d312f5ee6d3d6fa8cf0183cdf7d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "research-r3-v1-preservation.json",
+          "resolved_path": "dev/active/f547c394/research-r3-v1-preservation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "84e1318c6ea5799b22aa708f124ce7cc95476d053c2d0b026aa1c2ee97a0417b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "research-r3-sweep-resolutions.md",
+          "resolved_path": "dev/active/f547c394/research-r3-sweep-resolutions.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "264e50704d89f87d9c6280e958b70dd9546cfa536c8095e22f478526b39862b6",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "research-r3-deferred-resolutions.md",
+          "resolved_path": "dev/active/f547c394/research-r3-deferred-resolutions.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cd8fd7b57514760381d312841277c7c8a85cc35319bdc1fe22984b2b657e0e88",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/reviews/f547c394-r3.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b059220be88a297912c34ead6a2fd322182eebd10b35e0edf062268d3c816123",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "validation-r3/cargo-ci.log",
+          "resolved_path": "dev/active/f547c394/validation-r3/cargo-ci.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "19d323b5eb921fba400b1ba430843a5e4416f6298002a7fcc0fd50cc0470e414",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "validation-r3/commands.md",
+          "resolved_path": "dev/active/f547c394/validation-r3/commands.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b1e0614869eec91eb048c942872b7d75d926a3ac90f7a03e91fe07d609b353d3",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "research-r3-prework.txt",
+          "resolved_path": "dev/active/f547c394/research-r3-prework.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2d0a5c5124220f91e22db708d5ce7f72ac6e8934b99e84f2a8e87c57144800bc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "research-r4-v1-v2-preservation.json",
+          "resolved_path": "dev/active/f547c394/research-r4-v1-v2-preservation.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol findings and criterion closure",
+      "path": "dev/active/f547c394/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol v3 r2 validation report",
+      "path": "dev/active/f547c394/rework-validation-r5.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "V1 and v2 evidence preservation record",
+      "path": "dev/active/f547c394/research-r4-v1-v2-preservation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "V3 r1 falsification and preservation record",
+      "path": "dev/active/f547c394/research-r5-v3-r1-preservation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol v3 reproducible smoke launcher",
+      "path": "dev/bench_results/f547c394/run-smoke-v3.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 family trial ledger",
+      "path": "dev/bench_results/f547c394/v3-r2-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol v3 r2 pilot outer launcher log",
+      "path": "dev/bench_results/f547c394/v3-r2-pilot-launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol v3 r2 confirmation outer launcher log",
+      "path": "dev/bench_results/f547c394/v3-r2-confirmation-launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 pilot receipt",
+      "path": "dev/bench_results/f547c394/v3-r2-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 pilot frozen plan",
+      "path": "dev/bench_results/f547c394/v3-r2-pilot/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 pilot execution log",
+      "path": "dev/bench_results/f547c394/v3-r2-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol v3 r2 pilot published launcher log",
+      "path": "dev/bench_results/f547c394/v3-r2-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 pilot acceptance summary JSON",
+      "path": "dev/bench_results/f547c394/v3-r2-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol v3 r2 pilot acceptance summary",
+      "path": "dev/bench_results/f547c394/v3-r2-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 confirmation receipt",
+      "path": "dev/bench_results/f547c394/v3-r2-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 confirmation frozen plan",
+      "path": "dev/bench_results/f547c394/v3-r2-confirmation/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 confirmation execution log",
+      "path": "dev/bench_results/f547c394/v3-r2-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol v3 r2 confirmation published launcher log",
+      "path": "dev/bench_results/f547c394/v3-r2-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 r2 confirmation acceptance summary JSON",
+      "path": "dev/bench_results/f547c394/v3-r2-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol v3 r2 confirmation acceptance summary",
+      "path": "dev/bench_results/f547c394/v3-r2-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "f547c394 final converged review round 6",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r6.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
@@ -313,5 +596,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-08T16:18:23.434585662Z"
+  "updated_at": "2026-09-08T16:55:52.463685106Z"
 }

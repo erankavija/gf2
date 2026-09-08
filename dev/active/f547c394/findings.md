@@ -223,13 +223,13 @@ No build, quality simulation or extra timed work ran inside a measurement lock.
 
 | Criterion | Worker status | Evidence |
 |---|---|---|
-| REQ-01 | MET | `protocol.md`, `addendum.schema.json`, `amendment-v2.md`; verified immutable pins in both v2 receipts and v1 compatibility fixtures. |
+| REQ-01 | MET | `protocol.md`, `addendum.schema.json`, `amendment-v3.md`; verified immutable pins in both accepted v3 r2 receipts and v1/v2 compatibility fixtures. |
 | REQ-02 | MET | Protocol sampling/decision/settings sections; `abtest.rs`, `timing.rs`, ledger and numerical-resolution fixtures; cold receipt path. |
 | REQ-03 | MET | Frozen effect/budget declarations, `trial_ledger.rs`, failed-attempt/omission/count/retry fixtures, and the retained negative confirmation. |
-| REQ-04 | MET | Complete frozen-fact/host comparator, pass/fail/inconclusive/provenance fixtures, real Git changes between runner sessions, both bounded v2 receipts and portable evaluation. |
+| REQ-04 | MET | Complete frozen-fact/host comparator, pass/fail/inconclusive/provenance fixtures, real Git changes between runner sessions, both bounded v3 r2 receipts and portable evaluation. |
 | REQ-05 | MET | Canonical mutex regression, inherited-lock runner check, two-session release journals, checkpoints, observed host/core/worker fields and declared metric/build/conversion schema. |
 | REQ-06 | MET | Matched/fastest decoder schemas, frozen information-bit counts, independent-frame BER and paired FER bound; actual runner-produced accepted decoder cells. Real comparator compatibility remains family work by criterion. |
-| REQ-07 | PARTIAL | Protocol, schema, validation, evidence and complete resolution artifacts are prepared. Final commits, tracker links, citation registration and review gates are lead-owned; full CI has the reproduced HIP-device failure. |
+| REQ-07 | MET | Protocol, schema, validation, preservation records, launcher, addenda, plans, logs, receipts and summaries are committed and linked. The canonical Hoeffding citation is registered, and two independent Terra xhigh reviews converge on semantic PASS. |
 
 ## Remaining scope boundaries
 
@@ -241,10 +241,8 @@ is changed. General binomial event-count intervals and algebraic binomials
 found by the sweep do not assume decoded bits are independent. The OSD campaign
 already uses block-level uncertainty (`crates/gf2-sim/src/osd_campaign.rs`).
 
-The cited Hoeffding paper is verified at its DOI and original PDF. The worker's
-tracker is read-only, so [citation-additions.toml](citation-additions.toml)
-contains the exact proposed registry addition for the lead. No invented
-qualified citation address is used. The requested `protocol:P-17` address is
-not accepted by this checkout's JIT resolver; the normative P-17 text is read
-in protocol.md. The unrelated `@/issue/ec530af9` pointer in AGENTS.md also fails
-to resolve locally; this change does not act on that simulation issue.
+The cited Hoeffding paper is verified at its DOI and original PDF. The lead
+registered `Hoeffding1963` in the canonical citation registry;
+[citation-additions.toml](citation-additions.toml) retains the exact
+issue-local citation provenance. No invented qualified citation address is
+used. The normative P-17 text remains in `protocol.md`.
