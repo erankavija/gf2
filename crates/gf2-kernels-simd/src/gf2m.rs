@@ -59,40 +59,81 @@ pub type ClmulBatchFn = fn(&[u64], &[u64], &mut [u128]);
 /// The reduced product, fitting in m bits.
 pub type ClmulBarrettFn = fn(u64, u64, u64, u64, u32) -> u64;
 
+/// Preferred raw carry-less batch implementation, subject to CPU support.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ClmulBatchLane {
+    /// One 128-bit PCLMULQDQ product at a time.
+    Sequential,
+    /// Two products per YMM VPCLMULQDQ instruction.
+    Ymm,
+}
+
 /// Bundle of GF(2^m) multiplication functions for different field sizes.
 pub struct Gf2mFns {
     /// General multiplication for any m ≤ 64 (PCLMULQDQ + shift-and-XOR reduction)
     pub mul_fn: Gf2mMulFn,
     /// Raw carry-less multiply (no reduction). Available when PCLMULQDQ is present.
     pub clmul_fn: Option<ClmulFn>,
-    /// Batch carry-less multiply (no reduction). Uses VPCLMULQDQ when available,
-    /// falls back to sequential PCLMULQDQ otherwise. `None` if no PCLMULQDQ.
+    /// Batch carry-less multiply (no reduction), selected at detection time.
+    /// The default is sequential PCLMULQDQ. `None` if no PCLMULQDQ.
     pub clmul_batch_fn: Option<ClmulBatchFn>,
+    /// Runtime-observed lane tag of [`Gf2mFns::clmul_batch_fn`], one of
+    /// `"avx2+vpclmulqdq-ymm"` or `"pclmulqdq-scalar-xmm"`. `Some` exactly
+    /// when `clmul_batch_fn` is `Some`.
+    pub clmul_batch_path: Option<&'static str>,
     /// All-in-one carry-less multiply + Barrett reduce. Uses three PCLMULQDQ
     /// instructions in one `#[target_feature]` scope, eliminating function-pointer
     /// call overhead. `None` if no PCLMULQDQ.
     pub clmul_barrett_fn: Option<ClmulBarrettFn>,
 }
 
-/// Detect and return the best available GF(2^m) function bundle.
+/// Detect the default GF(2^m) function bundle.
+///
+/// The raw batch retains sequential PCLMULQDQ: the frozen Zen 3 confirmation
+/// for jit:1d0da41f rejects YMM adoption (see `dev/active/1d0da41f/findings.md`).
+/// Returns `None` without PCLMULQDQ and SSE4.1; callers use their scalar path.
 pub fn detect() -> Option<Gf2mFns> {
+    detect_with_clmul_batch_preference(ClmulBatchLane::Sequential)
+}
+
+/// Detect a GF(2^m) bundle with a preferred raw-batch lane.
+///
+/// YMM requires AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1, without AVX512VL.
+/// An unsupported preference falls back to sequential PCLMULQDQ; without
+/// PCLMULQDQ and SSE4.1 this returns `None`. Selection happens once here,
+/// and the returned safe function pointer needs no per-call feature check.
+/// Other functions in the bundle have the same selection as [`detect`].
+pub fn detect_with_clmul_batch_preference(preference: ClmulBatchLane) -> Option<Gf2mFns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
-        return detect_x86();
+        return detect_x86(preference);
     }
     #[allow(unreachable_code)]
-    None
+    {
+        let _ = preference;
+        None
+    }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn detect_x86() -> Option<Gf2mFns> {
+fn detect_x86(preference: ClmulBatchLane) -> Option<Gf2mFns> {
     use std::arch::is_x86_feature_detected;
 
     if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
+        let (batch, path): (ClmulBatchFn, _) =
+            if preference == ClmulBatchLane::Ymm && crate::x86::clmul::ymm_batch_lane_supported() {
+                (
+                    clmul_batch_ymm_safe,
+                    crate::x86::clmul::CLMUL_BATCH_PATH_YMM,
+                )
+            } else {
+                (clmul_batch_safe, crate::x86::clmul::CLMUL_BATCH_PATH_XMM)
+            };
         Some(Gf2mFns {
             mul_fn: gf2m_mul_pclmul_safe,
             clmul_fn: Some(clmul_u64_safe),
-            clmul_batch_fn: Some(clmul_batch_safe),
+            clmul_batch_fn: Some(batch),
+            clmul_batch_path: Some(path),
             clmul_barrett_fn: Some(clmul_barrett_reduce_safe),
         })
     } else {
@@ -109,7 +150,15 @@ fn clmul_u64_safe(a: u64, b: u64) -> u128 {
 /// Safe wrapper for batch carry-less multiplication.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn clmul_batch_safe(a: &[u64], b: &[u64], out: &mut [u128]) {
+    // SAFETY: detect_x86 publishes this pointer only with PCLMULQDQ + SSE4.1.
     unsafe { crate::x86::clmul::clmul_batch(a, b, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_batch_ymm_safe(a: &[u64], b: &[u64], out: &mut [u128]) {
+    crate::x86::clmul::assert_batch_lengths(a, b, out);
+    // SAFETY: detect_x86 checks all four features via ymm_batch_lane_supported.
+    unsafe { crate::x86::clmul::clmul_batch_vpclmul(a, b, out) }
 }
 
 /// Safe wrapper for all-in-one carry-less multiply + Barrett reduce.
@@ -239,6 +288,74 @@ unsafe fn reduce_generic(mut lo: u64, hi: u64, m: usize, primitive_poly: u64) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn clmul_batch_default_retains_sequential_lane() {
+        if let Some(fns) = detect() {
+            assert_eq!(fns.clmul_batch_path, Some("pclmulqdq-scalar-xmm"));
+        }
+    }
+
+    #[test]
+    fn clmul_batch_preferences_preserve_length_contract() {
+        for preference in [ClmulBatchLane::Sequential, ClmulBatchLane::Ymm] {
+            let Some(fns) = detect_with_clmul_batch_preference(preference) else {
+                continue;
+            };
+            let batch = fns.clmul_batch_fn.unwrap();
+            assert!(std::panic::catch_unwind(|| batch(&[1], &[], &mut [0])).is_err());
+            assert!(std::panic::catch_unwind(|| batch(&[1], &[1], &mut [])).is_err());
+        }
+    }
+
+    /// An AVX2 + VPCLMULQDQ host can select the 256-bit raw-batch lane.
+    ///
+    /// VPCLMULQDQ at 256 bits is VEX-encodable, so AVX512VL is not part of the
+    /// lane's feature contract. Zen 3 publishes AVX2 and VPCLMULQDQ without
+    /// AVX512VL, and this assertion pins that such a host reaches the YMM lane.
+    #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host() {
+        use std::arch::is_x86_feature_detected;
+
+        if !(is_x86_feature_detected!("avx2")
+            && is_x86_feature_detected!("vpclmulqdq")
+            && is_x86_feature_detected!("pclmulqdq")
+            && is_x86_feature_detected!("sse4.1"))
+        {
+            eprintln!("Skipping: host lacks AVX2+VPCLMULQDQ+PCLMULQDQ+SSE4.1");
+            return;
+        }
+
+        let fns = detect_with_clmul_batch_preference(ClmulBatchLane::Ymm)
+            .expect("a PCLMULQDQ host publishes a GF(2^m) bundle");
+        assert_eq!(
+            fns.clmul_batch_path,
+            Some("avx2+vpclmulqdq-ymm"),
+            "AVX2+VPCLMULQDQ host must select the YMM raw-batch lane \
+             (avx512vl on this host: {})",
+            is_x86_feature_detected!("avx512vl")
+        );
+    }
+
+    /// The published lane tag accompanies the published batch kernel.
+    #[test]
+    fn clmul_batch_path_accompanies_clmul_batch_fn() {
+        let Some(fns) = detect() else {
+            return; // no PCLMULQDQ on this host
+        };
+        assert_eq!(
+            fns.clmul_batch_fn.is_some(),
+            fns.clmul_batch_path.is_some(),
+            "clmul_batch_path must be published exactly when clmul_batch_fn is"
+        );
+        if let Some(path) = fns.clmul_batch_path {
+            assert!(
+                path == "avx2+vpclmulqdq-ymm" || path == "pclmulqdq-scalar-xmm",
+                "unexpected raw-batch lane tag: {path}"
+            );
+        }
+    }
 
     #[test]
     fn test_detection() {
