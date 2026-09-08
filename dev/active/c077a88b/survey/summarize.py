@@ -34,6 +34,7 @@ for family in ['matched-algorithm', 'quality-compatible']:
         plan = json.loads((path.parent / 'plan.json').read_text())
         cases = {c['cell_id']: c['case'] for c in plan['cells']}
         verdicts = {c['cell_id']: c for c in summary['cells']}
+        quality_notes = {finding['cell'] for finding in summary['findings'] if finding['rule'] == 'P-19'}
         if not path.parent.name.startswith('v3-'):
             lines += [f"Immutable superseded v1 attempt: `{path.parent.name}/README.md`; see `superseded-v1-evidence.json`. It supplies no v3 resolution or confirmatory claim.", '']
             continue
@@ -44,12 +45,13 @@ for family in ['matched-algorithm', 'quality-compatible']:
                   '|---|---|---|---|---|---|---|---|']
         for cell in receipt['cells']:
             v = verdicts[cell['cell_id']]; ci = v.get('interval'); pairs = cell['pairs']
+            outcome = v['outcome'] + ('; quality admission unestablished (P-19)' if cell['cell_id'] in quality_notes else '')
             if not pairs:
-                lines.append(f"| {cell['cell_id']} | 0 | — | — | — | — | — | {v['outcome']} |")
+                lines.append(f"| {cell['cell_id']} | 0 | — | — | — | — | — | {outcome} |")
                 continue
             med = lambda name: statistics.median(p[name]['ns_per_call'] for p in pairs) / 1e6
             text = f"{ci['estimate']:.4g} [{ci['lower']:.4g}, {ci['upper']:.4g}]" if ci else 'unavailable'
-            lines.append(f"| {cell['cell_id']} | {len(pairs)} | {cases[cell['cell_id']]['batch_size']} | {med('baseline'):.3f} | {med('candidate'):.3f} | {text} | {ci['confidence'] if ci else '—'} | {v['outcome']} |")
+            lines.append(f"| {cell['cell_id']} | {len(pairs)} | {cases[cell['cell_id']]['batch_size']} | {med('baseline'):.3f} | {med('candidate'):.3f} | {text} | {ci['confidence'] if ci else '—'} | {outcome} |")
         lines += ['', 'A `quality-incompatible` outcome means the frozen paired bound does not establish',
                   'quality non-inferiority; it does not by itself establish worse decoder quality.', '', 'Call latency includes recorded AList loading, matrix and decoder construction, conversion, output and destruction. The median',
                   'columns are descriptive summaries of the recorded executions; the paired bootstrap',
