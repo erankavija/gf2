@@ -1,6 +1,6 @@
 # Zen 3 benchmark protocol
 
-Protocol `zen3-benchmark-protocol` version 2. This document is the executable
+Protocol `zen3-benchmark-protocol` version 1. This document is the executable
 shared protocol required by the
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
 of epic `1a379447`. Every rule below is enforced by a check the acceptance tool
@@ -14,7 +14,7 @@ crate is the canonical home.
 
 ## Identity and versioning
 
-- The protocol identity is the pair `zen3-benchmark-protocol` version 2, the
+- The protocol identity is the pair `zen3-benchmark-protocol` version 1, the
   constants `PROTOCOL_ID` and `PROTOCOL_VERSION` in `src/protocol.rs`.
 - The content identity of this document, the addendum schema, the measurement
   contract and every addendum is an `ArtifactPin`: its original path, its
@@ -24,12 +24,11 @@ crate is the canonical home.
   rejects a missing snapshot or digest mismatch (P-02, P-03). Git revisions,
   commit ancestry and whole-tree state are optional navigation metadata and do
   not decide acceptance or resume compatibility.
-- This is version 2. [The amendment record](amendment-v2.md) identifies the
-  scientific changes. Version 1 is evaluated using its receipt-local pinned
-  document and v1 rules; its receipts, snapshots and negative results remain
-  immutable. Confirmation under v2 uses fresh samples. The evaluator refuses
-  an explicit version different from the receipt pin (P-01, P-22, P-13).
-- The addendum schema identity is `zen3-benchmark-addendum-v2`; receipts carry
+- An amendment creates version 2 with a new document; version 1 data,
+  contradictions and failed trials stay committed. Confirmation under a new
+  version starts from fresh samples. A version bump never reclassifies a failed
+  confirmatory trial as a pilot (P-22, P-13).
+- The addendum schema identity is `zen3-benchmark-addendum-v1`; receipts carry
   `zen3-benchmark-receipt-v1`; acceptance summaries carry
   `zen3-benchmark-acceptance-v1`; runner plans carry `zen3-benchmark-plan-v1`.
 
@@ -76,19 +75,14 @@ improvement and non-regression cells, `material_gap_threshold` and
 `equivalence_margin` for comparator-gap cells) and
 `complexity_budget.max_added_source_lines` for adoptable cells.
 
-V2 `frozen_utc` is a validated whole-second UTC calendar time and must not
-follow the opening record. The opening `campaign-start` record freezes `receipt::CampaignFacts` before
+The opening `campaign-start` record freezes `receipt::CampaignFacts` before
 any cell measurement. Acceptance projects the receipt and saved plan into that
 same typed representation and uses the runner's semantic comparison (P-23).
 The projection binds the exact plan bytes, protocol, contract, schema and
 addendum pins, producing-input closure, toolchain, numerical settings and
 deviation flag, arm descriptors and executable identities. Checkpoint identity
 also binds ordered work, process descriptors, lifecycle, features, threads and
-host affinity. V2 also binds hostname, kernel, model, CPU flags, governors,
-SMT and the complete observed topology. Each session retains its own timestamp,
-load and available memory in `session_hosts` and the journal; those three
-informational fields can vary. All material fields must match the first session
-before measurements resume. Git revision strings remain informational.
+host affinity. Git revision strings remain informational.
 
 The addendum pin names immutable receipt-local bytes. Resolution evidence names a
 repository-relative pilot `receipt.json` and its SHA-256. Before opening the
@@ -100,44 +94,22 @@ from it are frozen before confirmation begins. A run with a timing override
 records `settings_deviation: true`; the tool then reports every cell as
 `not-confirmatory` (P-04).
 
-Failed confirmations stay. V2 uses `family_wise.ledger_path`, the independently
-maintained append-only JSONL family ledger. Create the empty genesis file once
-before the family's first campaign and retain it with all stages and receipts.
-The runner requires the file to exist, locks it, and appends a reservation before
-any measurement. Each exact line binds its predecessor's SHA-256, sequence,
-family, campaign, addendum digest, protocol version, canonical candidate
-identities and number of confirmatory/holdout cells. Candidate identity hashes
-executable bytes and launch/build settings, excluding navigation paths and prose.
-The chain rejects a second confirmatory reservation for the same candidate in
-one protocol version; resuming its existing reservation does not spend another
-attempt.
-Exploratory-only reservations spend zero comparisons. Crashed, interrupted and
-failed confirmations spend their full reservation even without a final receipt.
-The campaign ID links every reservation to its durable execution log; keep losing
-and unfinished stages available alongside published outcomes. Completion never
-removes or discounts a reservation.
-
-The receipt pins the complete prefix through its reservation. Acceptance validates
-every link, terminal campaign/addendum/cell count, and recomputes the comparison
-count from that prefix (P-22). Removing an interior failed attempt breaks its
-successor's link; truncating a prefix removes the required terminal reservation.
-The premeasurement pin anchors the prefix against later rewriting. V1's
-`prior_trials` and supplied count are empty in v2 and do not control correction.
-A renamed family is a different scientific question, not a way to retry the same
-question without its history. The contract trusts contributors to retain the
-canonical family file, as it trusts their raw measurements; it is not a defense
-against wholesale fabricated evidence.
+Failed confirmations stay. The family ledger `family_wise.prior_trials` lists
+every earlier confirmatory receipt with its digest and recorded outcome, and
+`prior_confirmatory_trials` equals the ledger length; the tool verifies each
+listed receipt exists with that digest (P-22). Re-freezing an addendum after a
+failed confirmation therefore grows the family and widens every later interval.
 
 ## Sampling design
 
 The resampling unit is the **paired execution**: one fresh baseline child and
 one fresh candidate child, launched adjacently by the runner in a
 seed-determined order. Each child performs `windows_per_execution` timing
-windows of `window_target_ms` target length with its declared call-count policy
-(`timing::execution_windows_fixed_or_calibrated`); its per-execution value is the median
-nanoseconds per call over its windows. Fresh processes establish separate allocator state; CPU caches and frequency
-state persist across processes. Adjacency and randomized order mitigate slow
-drift within pairs [HoeflerBelli2015] [KaliberaJones2013].
+windows of `window_target_ms` target length after its own calibration
+(`timing::execution_windows_configured`); its per-execution value is the median
+nanoseconds per call over its windows. Fresh processes remove carried-over
+allocator, cache and frequency state between arms; adjacency and randomized
+order cancel slow drift within pairs [HoeflerBelli2015] [KaliberaJones2013].
 
 Pair orders are counterbalanced: every block of two consecutive pairs contains
 one baseline-first and one candidate-first execution in an order drawn from the
@@ -148,23 +120,15 @@ the bootstrap so the acceptance tool reproduces both (P-16).
 Cache-state policy is declared per cell and applied by the arm, which reports
 `cache_state_applied`; a mismatch invalidates the cell (P-17):
 
-- `cold`: **first-use workload**, with fresh buffers and no execution of the
-  measured workload before its first timed window. Positive `cold_calls` is
-  frozen in the addendum; a missing count, reported calibration, or window with
-  another count invalidates the cell. Allocation and initialization touch memory.
-  No L1, L2 or L3 invalidation, cache eviction, TLB reset or frequency reset is
-  established. Later calls/windows can be warm. These are first-use series,
-  not estimates of hardware cache-miss latency.
+- `cold`: no warm-up pass before the first window; fresh buffers per process.
 - `warm`: one untimed pass over the working set before calibration.
 - `streaming`: the working set rotates through the eight fixture banks of
-  `timing::FIXTURE_BANKS`. Rotation and the declared working-set size are
-  established; rotation alone does not prove eviction from any cache level.
+  `timing::FIXTURE_BANKS`, so successive calls do not reuse cache-resident data.
 
 Outlier policy: no sample is removed. A window slower than
-`flagged_window_factor` times its own execution's median is flagged and counted
+`flagged_window_factor` times its cell's median is flagged and counted
 (`abtest::flagged_windows`); a confirmatory cell whose flagged fraction exceeds
-`max_flagged_fraction` is `unstable` and does not qualify. The attempt cap
-  still applies; instability does not authorize an extra confirmation. Medians and
+`max_flagged_fraction` is `unstable` and must be re-run. Medians and
 whole-pair resampling make the estimator robust to the retained outliers.
 
 ## Estimator and interval
@@ -188,25 +152,19 @@ seed (P-20).
 
 ## Families and selection
 
-The family is the canonical question named by the ledger. Let $m$ be the sum
-of all confirmatory/holdout cell reservations through this campaign (at least
-one for exploratory summaries), recomputed by `trial_ledger::verify`. Let $t$
-be the number of non-exploratory reservations through this campaign. V2 spends
-$\alpha_t=\alpha/[t(t+1)]$ on attempt $t$; exploratory summaries use $t=1$.
-The sum of these attempt budgets over any finite or infinite sequence is at
-most $\alpha$. Within an attempt, Bonferroni [Dunn1961] uses
-$\alpha_c=\alpha_t/m$. This additionally counts all previously spent cells,
-including unfinished and losing attempts. `FamilySummary.family_alpha` reports
-the allocated attempt budget and `comparisons` reports $m$; the addendum and
-shared settings retain the overall family budget. Merely using $\alpha/m$
-repeatedly would not control sequential error spending.
-
-The union bound gives this allocation under arbitrary dependence between
-attempts and cells; the confidence procedure inside each comparison retains
-its own assumptions (the timing percentile bootstrap is approximate).
-Pilots never enter confirmation and repeated attempts require fresh samples.
-Each candidate identity has the declared bounded attempt policy; changing
-protocol version does not erase reservations for the same family question.
+The family is the set of confirmatory and holdout cells in one addendum plus
+its prior confirmatory trials; its size $m$ is `family_comparisons()`. The
+family-wise level is `family_alpha`, controlled by Bonferroni [Dunn1961]: each
+comparison uses $\alpha_c = \alpha / m$, so each interval is computed at
+confidence $1 - \alpha / m$. Bonferroni is chosen because it is valid under
+arbitrary dependence between cells and applies directly to confidence
+intervals; its conservatism is acceptable at the family sizes this epic
+declares. Selection across candidate trials is accounted for twice: pilots
+never enter confirmation (fresh samples), and every confirmatory attempt ever
+spent in the family counts in $m$ through the ledger (P-22). Each candidate
+identity gets `max_confirmatory_attempts_per_candidate` confirmatory attempt
+per protocol version; a further attempt needs a new candidate identity or a
+new protocol version and still counts in the family.
 
 ## Decision rule
 
@@ -217,13 +175,11 @@ $[\ell, u]$ (`abtest::decide`):
 - `improved` when $\ell \ge \theta_{\text{imp}}$;
 - `not-worse` when $\ell \ge 1/\theta_{\text{eq}}$ and not improved: the
   candidate is at most a factor $\theta_{\text{eq}}$ slower at the family
-  confidence: a one-sided non-inferiority decision. This is not two-sided
-  equivalence; Schuirmann's two one-sided tests require both bounds
-  [Schuirmann1987];
+  confidence, an equivalence statement in the sense of two one-sided tests
+  [Schuirmann1987], never the absence of a significant difference;
 - `regressed` when $u < 1/\theta_{\text{eq}}$;
-- `inconclusive` otherwise: the interval spans a margin and does not establish
-  adoption. Additional evidence requires an attempt permitted by the frozen
-  candidate/version policy; this outcome does not extend its budget.
+- `inconclusive` otherwise: the interval spans a margin and the cell needs more
+  evidence under a new trial.
 
 The cell outcome combines the decision with the cell objective: an improvement
 cell passes on `improved` and records `not-material` on `not-worse`; a
@@ -244,30 +200,18 @@ the code.
 | Setting | Value | Justification |
 |---|---|---|
 | `family_alpha` | `0.05` | Two-sided family-wise error rate; the conventional level, applied per family rather than per cell. |
-| `bootstrap_resamples` | `10000` | Fixed computational budget [EfronTibshirani1993], not a universal resolution guarantee. P-20 checks endpoint stability and tail support as described below. |
-| `confirmatory_pairs` | `24` | Four counterbalanced blocks of six pairs, fixed before confirmation. Warm/streaming windows have a nominal total target of 24 seconds (24 pairs, two arms, five windows of 100 ms), excluding calibration and startup; calibration is approximate and this is not a duration cap. Fixed-call cold windows have workload-dependent duration. The child timeout bounds each child. |
+| `bootstrap_resamples` | `10000` | Percentile intervals need at least about a thousand replicates [EfronTibshirani1993]; ten thousand keeps the Monte-Carlo error of the interval endpoints well below the declared resolutions at negligible cost. |
+| `confirmatory_pairs` | `24` | Four counterbalanced blocks of six pairs; enough pairs for a non-degenerate percentile interval of a median-based statistic while bounding a confirmatory cell at 24 seconds of timed windows by construction (24 pairs, two arms, five windows of 100 ms) before calibration and process start-up. Fixed in advance so confirmation is never data-adaptive. |
 | `pilot_min_pairs` | `6` | One counterbalanced block; the smallest pilot that still estimates a resolution. |
 | `pilot_max_pairs` | `24` | Pilots never exceed a confirmatory sample so they cannot masquerade as confirmation. |
 | `windows_per_execution` | `5` | The retained calibration protocol's window count (`timing::WINDOWS`); five windows give a per-execution median robust to one disturbed window. |
 | `window_target_ms` | `100` | Long enough that timer and loop overhead are negligible for nanosecond kernels; short enough that whole-consumer executions stay bounded. |
-| `flagged_window_factor` | `2` | A window above twice its own execution median is flagged; this does not identify its cause. |
-| `max_flagged_fraction` | `0.1` | More than a tenth of flagged windows marks the cell unstable under this protocol; no cause is inferred and no samples are trimmed. |
+| `flagged_window_factor` | `2` | A window at least twice the median is a disturbance, not variance of the workload. |
+| `max_flagged_fraction` | `0.1` | More than a tenth of flagged windows means the host was not quiet; the cell is re-run rather than trimmed. |
 | `max_pilot_trials_per_cell` | `8` | Bounds exploratory search per cell; a family declares a value up to this cap. |
 | `max_confirmatory_attempts_per_candidate` | `1` | One confirmatory attempt per candidate identity and protocol version; the family ledger counts every attempt. |
 | `child_timeout_seconds` | `120` | The retained campaign child timeout (`campaign::CHILD_TIMEOUT_SECONDS`). |
-| `quality_confidence` | `0.95` | Marginal FER uses Wilson at 95% [Wilson1927] [BrownCaiDasGupta2001]; BER uses the frame-bounded interval below. |
-
-### Bootstrap numerical resolution
-
-Ten thousand draws do not guarantee any arbitrary endpoint resolution. For each
-v2 non-exploratory cell, P-20 recomputes an independent deterministic seed stream
-(the cell seed XOR `0xd1b54a32d192ed03`). Both endpoint shifts, relative to the
-point estimate, must fit the frozen pilot-derived measurement resolution.
-Each tail must also contain at least twenty expected draws at the corrected
-confidence. Failure yields `not-confirmatory`. This is a numerical stability
-diagnostic, not a theorem bounding Monte Carlo error or bootstrap coverage.
-The approximate percentile interval still relies on representative independent
-pairs; a stable endpoint cannot repair a biased or undersampled experiment.
+| `quality_confidence` | `0.95` | BER/FER intervals use the Wilson score interval at 95% [Wilson1927] [BrownCaiDasGupta2001]. |
 
 ## Addenda
 
@@ -285,8 +229,8 @@ cannot express (P-03). It declares:
   rationale;
 - the complexity budget: new unsafe kernels allowed, added source lines
   allowed, maintenance rationale;
-- the family-wise declaration: alpha (must equal the frozen value) and the
-  canonical append-only ledger path (v1 prior-counter fields are empty);
+- the family-wise declaration: alpha (must equal the frozen value), prior
+  confirmatory trials and their ledger;
 - the search budget and the holdout declaration;
 - the cells: identifier, objective (`improvement`, `non-regression`,
   `comparator-gap`), role, workload identity and sizes, metric kind
@@ -310,54 +254,13 @@ seed, codeword source `all-zero`, `random` or `both`, SNR), precision,
 schedule, normalization kind and factor, iteration cap, stopping contract
 (`syndrome`, `crc` with polynomial, `fixed`, `none`), batching with batch-fill
 accounting, the predeclared quality tolerance and any rate matching. Receipts
-record both arms' frame count, per-frame information-bit error counts in frozen
-input order, aggregate counts, FER/BER points and intervals, iterations, memory,
-latency and settings. `frames` equals `input.frames`; `bits` equals
-`input.frames * code.k` (information bits, with no punctured/filler denominator
-substitution). Aggregates must equal the per-frame evidence, BER must equal
-`bit_errors / bits`, and FER must equal `frame_errors / frames` (P-18).
-A frame error means at least one erroneous information bit; a stopping-rule
-failure alone is not a substitute for that event.
-Repeated timing executions decode the same frozen input, so their quality vectors
-must agree exactly and are retained in the execution records. Repetitions do not
-multiply the quality sample size. The runner passes the full frozen decoder
-contract to each child and carries child-reported quality into the cell receipt.
-
-The independent sampling unit for quality is the **frame**: independent channel
-and codeword draws per input frame, paired between arms. Dependence among bits
-within a decoded frame is unrestricted. Let $X_i$ be information-bit errors in
-frame $i$ divided by $k$. BER is the mean of $X_i \in [0,1]$. The two-sided
-bounded-mean interval at confidence $1-\alpha_q$ is
-
-$$
-\left[\max(0,\bar X-h),\min(1,\bar X+h)\right],\qquad
-h=\sqrt{\frac{\log(2/\alpha_q)}{2N}}.
-$$
-
-This is Hoeffding's finite-sample bound for independent bounded variables,
-Theorem 2 of [the original paper](https://doi.org/10.1080/01621459.1963.10500830).
-It is conservative, remains nonzero for an observed zero-error sample, and
-requires no independent-bit assumption. Marginal FER uses Wilson-95 on the
-frame error indicators; the method identifier is
-`frame-hoeffding-95+fer-wilson-95`. These marginal intervals describe quality;
-they do not make the adoption decision.
-
-For fastest-quality-compatible arms let $B_i,C_i$ be the paired baseline and
-candidate frame-error indicators and $r$ the frozen `fer_ratio_max`. Apply the
-same bounded-mean inequality to $D_i=C_i-rB_i\in[-r,1]$. The upper bound is
-
-$$
-U=\overline D+(1+r)\sqrt{\frac{\log(2/\alpha_c)}{2N}}.
-$$
-
-Only $U\le0$ certifies $p_C\le r p_B$. The implementation clips the bound to
-the known range, which cannot change that decision. $\alpha_c$ uses the family
-correction, so quality adoption carries its own valid confidence statement.
-Zero observed baseline errors do not automatically certify compatibility.
-Matched-algorithm settings must equal the declaration (P-19); a fastest arm
-whose paired bound is positive records `quality-incompatible`, preserving the
-inconclusive/degraded evidence. Iteration counts under different stopping
-contracts are reported without asserting equivalence.
+record for both arms the frames, frame and bit errors, FER and BER with Wilson
+intervals, iteration distribution, memory and latency, and the settings the arm
+actually used. Matched-algorithm arms must report settings identical to the
+declaration (P-19); fastest-quality-compatible arms are `quality-incompatible`
+when the candidate's FER upper bound exceeds `fer_ratio_max` times the
+baseline's FER upper bound (P-19). Iteration counts under different stopping
+contracts are reported, never compared as if equivalent.
 
 ## Host and execution
 
@@ -452,7 +355,7 @@ receipt. Neither is a performance result about gf2.
 
 | Rule | Check |
 |---|---|
-| P-01 | Receipt envelope is `zen3-benchmark-receipt-v1`; the pinned protocol and addendum versions agree with each other and any explicitly requested evaluation version. |
+| P-01 | Receipt schema is `zen3-benchmark-receipt-v1`. |
 | P-02 | Protocol, contract and addendum-schema pins name the canonical source paths, literal receipt-local snapshot paths and 64-hex digests; missing snapshots and digest mismatches reject. |
 | P-03 | The addendum matches its receipt-local snapshot, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt snapshot. |
 | P-04 | Receipt settings equal the frozen shared settings unless a deviation is declared; a deviation makes every cell non-confirmatory. |
@@ -468,10 +371,10 @@ receipt. Neither is a performance result about gf2.
 | P-14 | Measured cells resolved CPUs; unavailable cells carry a reason and no samples. |
 | P-15 | Pair counts follow the role, executions carry the frozen window count with positive windows, and per-execution values are the medians of their windows. |
 | P-16 | Pair orders equal the seed-determined counterbalanced sequence. |
-| P-17 | Observed CPUs, cache state, worker counts and conversion costs match the declaration; cold executions have no calibration and use exactly the frozen calls. |
-| P-18 | Decoder cells bind frozen frame/bit denominators, points and frame-independent BER intervals. |
+| P-17 | Observed CPUs, cache state, worker counts and conversion-cost reporting match the declaration. |
+| P-18 | Decoder cells carry BER/FER evidence whose Wilson intervals recompute. |
 | P-19 | Matched-algorithm arms used the declared settings; fastest-quality-compatible arms stay within the predeclared FER tolerance. |
 | P-20 | The bootstrap interval and decision recompute from the raw pairs at the family confidence; a contradicting runner claim rejects the cell. |
 | P-21 | Every declared cell is present in the receipt. |
-| P-22 | The frozen ledger prefix has every predecessor link and the terminal campaign reservation; comparison count and sequential attempt budget derive from the chain. |
+| P-22 | Every prior trial in the family ledger exists with its recorded digest. |
 | P-23 | Complete opening `receipt::CampaignFacts` decode under the strict typed schema and compare with the receipt, exact saved plan and checkpoint identity through `CampaignFacts::resume_equivalent`; every semantic connection described above holds. Missing or inconsistent frozen content rejects. |

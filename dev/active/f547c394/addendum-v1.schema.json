@@ -1,20 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "zen3-benchmark-addendum-v2",
-  "title": "Zen 3 benchmark protocol family addendum, protocol version 2",
+  "$id": "zen3-benchmark-addendum-v1",
+  "title": "Zen 3 benchmark protocol family addendum, version 1",
   "description": "Independently frozen family and cell settings consumed with protocol.md. A null value in a nullable field is an unresolved setting: it makes every cell that depends on it non-confirmatory. Addenda cannot override shared protocol settings; shared values that appear here must equal the frozen ones.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "protocol", "family", "frozen", "effect", "complexity_budget", "family_wise", "search_budget", "holdout", "cells"],
   "properties": {
-    "schema": { "const": "zen3-benchmark-addendum-v2" },
+    "schema": { "const": "zen3-benchmark-addendum-v1" },
     "protocol": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "version"],
       "properties": {
         "id": { "const": "zen3-benchmark-protocol" },
-        "version": { "const": 2 }
+        "version": { "const": 1 }
       }
     },
     "family": {
@@ -78,11 +78,10 @@
     "family_wise": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["alpha", "prior_confirmatory_trials", "prior_trials", "ledger_path"],
+      "required": ["alpha", "prior_confirmatory_trials", "prior_trials"],
       "properties": {
         "alpha": { "const": 0.05 },
         "prior_confirmatory_trials": { "type": "integer", "minimum": 0 },
-        "ledger_path": { "type": "string", "minLength": 1 },
         "prior_trials": {
           "type": "array",
           "items": {
@@ -156,7 +155,6 @@
             "nested_pools_allowed": { "type": "boolean" }
           }
         },
-        "cold_calls": { "type": ["integer", "null"], "minimum": 1 },
         "cache_state": { "enum": ["cold", "warm", "streaming"] },
         "builds": {
           "type": "object",

@@ -447,6 +447,19 @@ pub struct HostObservation {
 }
 
 impl HostObservation {
+    /// Compares protocol-material conditions. Time, load and available memory
+    /// are retained observations, not resume identity fields.
+    pub fn material_equivalent(&self, other: &Self) -> bool {
+        self.hostname == other.hostname
+            && self.cpu_model == other.cpu_model
+            && self.cpu_flags == other.cpu_flags
+            && self.os_kernel == other.os_kernel
+            && self.governors == other.governors
+            && self.smt_active == other.smt_active
+            && self.affinity == other.affinity
+            && self.topology == other.topology
+    }
+
     /// Observes all host fields at call time from procfs, sysfs, and commands.
     ///
     /// Returns an error when any required runtime observation is unavailable or

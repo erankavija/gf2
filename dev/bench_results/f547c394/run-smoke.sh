@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Historical v1 launcher: reproduce with the receipt-pinned v1 producing inputs.
+# Current protocol evidence uses run-smoke-v2.sh. V1 snapshots remain unchanged.
+#
 # Bounded release smoke of the Zen 3 benchmark protocol pipeline (jit:f547c394).
 #
 # Builds the runner, the acceptance tool and the synthetic arm under

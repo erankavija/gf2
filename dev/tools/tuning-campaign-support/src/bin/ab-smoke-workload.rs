@@ -10,8 +10,11 @@ use std::hint::black_box;
 use std::io;
 use std::time::Duration;
 use tuning_campaign_support::abtest::SplitMix64;
+use tuning_campaign_support::abtest::{frame_ber_interval, wilson_interval_95};
 use tuning_campaign_support::host::CpuAffinity;
-use tuning_campaign_support::timing::{execution_windows_configured, FIXTURE_BANKS};
+use tuning_campaign_support::protocol::DecoderCell;
+use tuning_campaign_support::receipt::{ArmQuality, DecoderArmSettings, IterationDistribution};
+use tuning_campaign_support::timing::{execution_windows_fixed_or_calibrated, FIXTURE_BANKS};
 use tuning_campaign_support::transport;
 
 #[derive(Deserialize, Serialize)]
@@ -24,6 +27,10 @@ struct Request {
     pair: u32,
     case: Value,
     cache_state: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    cold_calls: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    decoder: Option<DecoderCell>,
     windows: u32,
     window_target_ms: u32,
     cpus: Vec<u32>,
@@ -52,7 +59,8 @@ struct Result_ {
     cpus_observed: Vec<u32>,
     selected_path: Option<String>,
     conversion: Option<Value>,
-    quality: Option<Value>,
+    quality: Option<ArmQuality>,
+    calibrated: bool,
 }
 
 fn fold(buffer: &[u64]) -> u64 {
@@ -90,6 +98,10 @@ fn main() {
     let buffers: Vec<Vec<u64>> = (0..banks)
         .map(|_| (0..case.words).map(|_| mixer.next_u64()).collect())
         .collect();
+    if request.cache_state == "cold" && request.cold_calls.is_none() {
+        eprintln!("cold cell requires frozen calls; pre-calibration is forbidden");
+        std::process::exit(2);
+    }
     let mut sink = 0u64;
     if request.cache_state == "warm" {
         sink ^= fold(black_box(&buffers[0]));
@@ -100,10 +112,11 @@ fn main() {
             sink ^= fold(black_box(buffer));
         }
     };
-    let samples = match execution_windows_configured(
+    let samples = match execution_windows_fixed_or_calibrated(
         0,
         u64::from(request.windows),
         Duration::from_millis(u64::from(request.window_target_ms)),
+        request.cold_calls,
         &mut body,
         |_| Ok(()),
     ) {
@@ -131,10 +144,52 @@ fn main() {
         cpus_observed,
         selected_path: Some("xor-fold-scalar".into()),
         conversion: None,
-        quality: None,
+        quality: request.decoder.as_ref().map(synthetic_quality),
+        calibrated: request.cold_calls.is_none(),
     };
     if let Err(error) = transport::write_result_line(io::stdout().lock(), &result) {
         eprintln!("ab-smoke-workload: {error}");
         std::process::exit(1);
+    }
+}
+
+// Deterministic pipeline fixture, not a decoder performance/Monte Carlo result.
+// Half of the independent frame slots carry one information-bit error.
+fn synthetic_quality(decoder: &DecoderCell) -> ArmQuality {
+    let frame_bit_errors: Vec<_> = (0..decoder.input.frames)
+        .map(|i| u64::from(i % 2 == 0))
+        .collect();
+    let frame_errors = frame_bit_errors.iter().filter(|e| **e != 0).count() as u64;
+    let bit_errors = frame_errors;
+    let bits = decoder.input.frames * decoder.code.k;
+    let fer = wilson_interval_95(frame_errors, decoder.input.frames).unwrap();
+    let ber = frame_ber_interval(&frame_bit_errors, decoder.code.k, 0.95).unwrap();
+    ArmQuality {
+        frame_bit_errors,
+        frames: decoder.input.frames,
+        frame_errors,
+        bits,
+        bit_errors,
+        fer: frame_errors as f64 / decoder.input.frames as f64,
+        fer_interval: [fer.0, fer.1],
+        ber: bit_errors as f64 / bits as f64,
+        ber_interval: [ber.0, ber.1],
+        interval_method: "frame-hoeffding-95+fer-wilson-95".into(),
+        iterations: IterationDistribution {
+            mean: 1.0,
+            p50: 1,
+            p90: 1,
+            max: 1,
+        },
+        memory_bytes: 0,
+        latency_ns_p50: 0,
+        settings: DecoderArmSettings {
+            precision: decoder.precision,
+            schedule: decoder.schedule,
+            normalization: decoder.normalization.clone(),
+            iteration_cap: decoder.iteration_cap,
+            stopping: decoder.stopping.clone(),
+            batch_size: decoder.batching.batch_size,
+        },
     }
 }

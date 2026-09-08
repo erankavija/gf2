@@ -2,13 +2,10 @@
 //! canonical quiet-host lock, with the shared append-only execution log and
 //! checkpoint/resume primitives.
 //!
-//! `run <stage> <plan.json> [producing-manifest]` executes unfinished cells inside the lock wrapper
+//! `run <stage> <plan.json>` executes unfinished cells inside the lock wrapper
 //! and pauses or completes; `finalize <stage> <out-dir>` assembles the receipt
 //! directory from the stage after the wrapper returns. Every arm is a fresh
 //! child process speaking the canonical child-v2 framing.
-//! The optional repository-relative manifest extends source provenance to the
-//! measured arms. Its exact path and contents enter the shared snapshot and
-//! resume identity; omitting it selects the protocol smoke manifest.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -67,6 +64,10 @@ struct ArmRequest {
     pair: u32,
     case: Value,
     cache_state: CacheState,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    cold_calls: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    decoder: Option<tuning_campaign_support::protocol::DecoderCell>,
     windows: u32,
     window_target_ms: u32,
     cpus: Vec<u32>,
@@ -85,6 +86,8 @@ struct ArmResult {
     selected_path: Option<String>,
     conversion: Option<ConversionCosts>,
     quality: Option<ArmQuality>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    calibrated: Option<bool>,
 }
 
 fn command_text(program: &str, args: &[&str], cwd: &Path) -> io::Result<String> {
@@ -155,7 +158,7 @@ fn arm_records(plan: &RunnerPlan) -> io::Result<BTreeMap<String, ArmRecord>> {
             ArmRecord {
                 build: arm.build,
                 description: arm.description.clone(),
-                executable_path: path.to_string_lossy().into_owned(),
+                executable_path: arm.executable.clone(),
                 executable_sha256: sha256_hex(&bytes),
                 arguments: arm.arguments.clone(),
                 environment: arm.environment.clone(),
@@ -177,7 +180,6 @@ fn facts(
     stage: &Path,
     plan: &RunnerPlan,
     plan_bytes: &[u8],
-    producing_manifest: &str,
 ) -> io::Result<CampaignFacts> {
     let protocol = ArtifactPin::capture(root, stage, PROTOCOL_PATH, "inputs/protocol.md")?;
     let contract =
@@ -190,9 +192,17 @@ fn facts(
     )?;
     let addendum =
         ArtifactPin::capture(root, stage, &plan.addendum, "inputs/family-addendum.json")?;
-    let producing =
-        ProducingInputs::capture_to(root, producing_manifest, &stage.join("inputs/producing"))?;
+    let producing = ProducingInputs::capture_to(
+        root,
+        PRODUCING_MANIFEST_PATH,
+        &stage.join("inputs/producing"),
+    )?;
     let source = source_identity(producing.clone());
+    let family = FamilyAddendum::decode(&addendum.verify_content(stage).map_err(invalid)?)
+        .map_err(invalid)?;
+    let host = (family.protocol.version == 2)
+        .then(HostObservation::observe)
+        .transpose()?;
     let arms = arm_records(plan)?;
     let (settings, settings_deviation) = plan.settings();
     let identity = ResumeIdentity {
@@ -216,6 +226,8 @@ fn facts(
         host_identity: CpuAffinity::observe()?.host_identity()?,
     };
     Ok(CampaignFacts {
+        host,
+        trial_ledger: None,
         plan_sha256: sha256_hex(plan_bytes),
         identity,
         protocol,
@@ -269,12 +281,7 @@ struct Session {
     host: HostObservation,
 }
 
-fn open_session(
-    root: &Path,
-    stage: &Path,
-    plan_path: &Path,
-    producing_manifest: &str,
-) -> io::Result<Session> {
+fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Session> {
     let (plan, plan_bytes) = read_plan(plan_path)?;
     fs::create_dir_all(stage)?;
     let stage = fs::canonicalize(stage)?;
@@ -288,11 +295,40 @@ fn open_session(
     } else {
         tuning_campaign_support::journal::atomic_write_new(&staged_plan, &plan_bytes)?;
     }
-    let facts = facts(root, &stage, &plan, &plan_bytes, producing_manifest)?;
+    let mut facts = facts(root, &stage, &plan, &plan_bytes)?;
     let addendum_bytes = facts.addendum.verify_content(&stage).map_err(invalid)?;
     let addendum = load_addendum(&addendum_bytes, &plan)?;
+    let protocol_text = facts.protocol.verify_content(&stage).map_err(invalid)?;
+    if !String::from_utf8_lossy(&protocol_text).contains(&format!(
+        "Protocol `zen3-benchmark-protocol` version {}.",
+        addendum.protocol.version
+    )) {
+        return Err(invalid(
+            "protocol document version differs from frozen addendum",
+        ));
+    }
     capture_referenced_receipts(root, &stage, &addendum)?;
     let holder = inherited_lock(Path::new(&plan.lock_path))?;
+    if addendum.protocol.version == 2 {
+        if !tuning_campaign_support::protocol::freeze_precedes(
+            &addendum.frozen,
+            &facts
+                .host
+                .as_ref()
+                .ok_or_else(|| invalid("v2 lacks host observation"))?
+                .observed_utc,
+        ) {
+            return Err(invalid("addendum freeze timestamp is after campaign start"));
+        }
+        facts.trial_ledger = Some(tuning_campaign_support::trial_ledger::reserve(
+            root,
+            &stage,
+            &addendum,
+            &plan.campaign_id,
+            &facts.addendum.sha256,
+            &tuning_campaign_support::trial_ledger::candidate_ids(&addendum, &plan, &facts.arms)?,
+        )?);
+    }
     let session_id = format!("session-{}-{}", utc_compact(), std::process::id());
     let log_path = stage.join(LOG_FILE);
     let resumed = log_path.exists();
@@ -346,7 +382,11 @@ fn open_session(
         )?;
         checkpoints.acknowledge_pending_recovery(&recovery.recovery_id)?;
     }
-    let host = HostObservation::observe()?;
+    let host = facts
+        .host
+        .clone()
+        .map(Ok)
+        .unwrap_or_else(HostObservation::observe)?;
     log.append(
         JournalEvent::DriverDiagnostic,
         None,
@@ -497,6 +537,8 @@ fn run_arm(
         .collect();
     let ns_per_call = median(&mut values).map_err(invalid)?;
     let execution = ExecutionRecord {
+        quality: parsed.quality.clone(),
+        calibrated: parsed.calibrated,
         arm: arm_name.to_owned(),
         pid: spawned_pid,
         windows: parsed.windows,
@@ -572,6 +614,8 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                         pair: pair as u32,
                         case: plan_cell.case.clone(),
                         cache_state: declared.cache_state,
+                        cold_calls: declared.cold_calls,
+                        decoder: declared.decoder.clone(),
                         windows: settings.windows_per_execution,
                         window_target_ms: settings.window_target_ms,
                         cpus: cpus.clone(),
@@ -611,6 +655,26 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                         ArmOrder::BaselineFirst => (first_record, second_record),
                         ArmOrder::CandidateFirst => (second_record, first_record),
                     };
+                    if declared.decoder.is_some() {
+                        let quality = tuning_campaign_support::receipt::DecoderQualityRecord {
+                            baseline: baseline_record
+                                .quality
+                                .clone()
+                                .ok_or_else(|| invalid("baseline decoder omitted quality"))?,
+                            candidate: candidate_record
+                                .quality
+                                .clone()
+                                .ok_or_else(|| invalid("candidate decoder omitted quality"))?,
+                        };
+                        if record
+                            .decoder_quality
+                            .as_ref()
+                            .is_some_and(|prior| prior != &quality)
+                        {
+                            return Err(invalid("decoder quality changed across repeated timing executions on the same frozen frames"));
+                        }
+                        record.decoder_quality = Some(quality);
+                    }
                     record.pairs.push(PairRecord {
                         index: pair as u32,
                         order: *order,
@@ -630,9 +694,32 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                     candidate_ns_per_call: pair.candidate.ns_per_call,
                 })
                 .collect();
-            let confidence =
-                bonferroni_confidence(settings.family_alpha, session.addendum.family_comparisons())
-                    .map_err(invalid)?;
+            let comparisons = if let Some(pin) = &session.facts.trial_ledger {
+                tuning_campaign_support::trial_ledger::verify(
+                    pin,
+                    session.log.path().parent().unwrap(),
+                    &session.addendum,
+                    &session.plan.campaign_id,
+                    &session.facts.addendum.sha256,
+                    &tuning_campaign_support::trial_ledger::candidate_ids(
+                        &session.addendum,
+                        &session.plan,
+                        &session.facts.arms,
+                    )?,
+                )?
+            } else {
+                session.addendum.family_comparisons()
+            };
+            let alpha = if let Some(pin) = &session.facts.trial_ledger {
+                tuning_campaign_support::trial_ledger::attempt_alpha(
+                    pin,
+                    session.log.path().parent().unwrap(),
+                    &session.addendum,
+                )?
+            } else {
+                settings.family_alpha
+            };
+            let confidence = bonferroni_confidence(alpha, comparisons).map_err(invalid)?;
             let interval = paired_bootstrap_speedup(
                 &observations,
                 settings.bootstrap_resamples,
@@ -664,9 +751,9 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
     Ok(())
 }
 
-fn run(stage: &Path, plan_path: &Path, producing_manifest: &str) -> io::Result<i32> {
+fn run(stage: &Path, plan_path: &Path) -> io::Result<i32> {
     let root = repository_root()?;
-    let mut session = open_session(&root, stage, plan_path, producing_manifest)?;
+    let mut session = open_session(&root, stage, plan_path)?;
     let budget = session.plan.max_cells_per_session;
     let mut measured = 0u32;
     let outcome = (|| -> io::Result<TerminalState> {
@@ -825,7 +912,23 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
         .join(RECEIPT_FILE)
         .to_string_lossy()
         .into_owned();
+    let session_hosts = if facts.host.is_some() {
+        records
+            .iter()
+            .filter(|record| {
+                record.event == JournalEvent::DriverDiagnostic
+                    && record.details["kind"] == "host-observation"
+            })
+            .map(|record| {
+                serde_json::from_value(record.details["observation"].clone()).map_err(invalid)
+            })
+            .collect::<io::Result<Vec<HostObservation>>>()?
+    } else {
+        Vec::new()
+    };
     let receipt = BenchmarkReceipt {
+        session_hosts,
+        trial_ledger: facts.trial_ledger,
         schema: tuning_campaign_support::protocol::RECEIPT_SCHEMA_ID.into(),
         campaign_id: plan.campaign_id.clone(),
         issue: plan.issue.clone(),
@@ -885,14 +988,13 @@ fn main() {
         .collect::<Vec<_>>()
         .as_slice()
     {
-        [_, "run", stage, plan] => run(Path::new(stage), Path::new(plan), PRODUCING_MANIFEST_PATH),
-        [_, "run", stage, plan, manifest] => run(Path::new(stage), Path::new(plan), manifest),
+        [_, "run", stage, plan] => run(Path::new(stage), Path::new(plan)),
         [_, "finalize", stage, out_dir] => {
             finalize(Path::new(stage), Path::new(out_dir)).map(|()| 0)
         }
         _ => {
             eprintln!(
-                "usage: benchmark-ab-runner run <stage> <plan.json> [producing-manifest] | finalize <stage> <out-dir>"
+                "usage: benchmark-ab-runner run <stage> <plan.json> | finalize <stage> <out-dir>"
             );
             std::process::exit(2);
         }

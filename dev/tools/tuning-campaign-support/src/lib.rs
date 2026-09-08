@@ -22,3 +22,6 @@ pub mod seed;
 pub mod statistics;
 pub mod timing;
 pub mod transport;
+
+/// Protocol-v2 append-only family attempt ledger.
+pub mod trial_ledger;

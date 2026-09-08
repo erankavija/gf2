@@ -159,7 +159,7 @@ pub fn execution_windows_configured(
     repetitions: u64,
     target: Duration,
     body: &mut impl FnMut(usize),
-    mut progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
+    progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
 ) -> std::io::Result<Vec<TimingSample>> {
     if repetitions == 0 || repetitions > WINDOWS || target.is_zero() {
         return Err(std::io::Error::new(
@@ -173,8 +173,36 @@ pub fn execution_windows_configured(
             format!("execution {execution} is outside 0..{EXECUTIONS}"),
         ));
     }
-    let calls = calibrated_calls(target, body);
-    progress(TimingProgress::CalibrationComplete { calls })?;
+    execution_windows_fixed_or_calibrated(execution, repetitions, target, None, body, progress)
+}
+
+/// Measures windows with a predeclared call count, or calibrates when `calls`
+/// is absent. Fixed calls execute no workload before the first timed window.
+/// Cold callers must supply a positive count; counts above MAX_CALLS fail.
+pub fn execution_windows_fixed_or_calibrated(
+    execution: u64,
+    repetitions: u64,
+    target: Duration,
+    calls: Option<u64>,
+    body: &mut impl FnMut(usize),
+    mut progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
+) -> std::io::Result<Vec<TimingSample>> {
+    if repetitions == 0
+        || repetitions > WINDOWS
+        || target.is_zero()
+        || execution >= EXECUTIONS
+        || calls.is_some_and(|n| n == 0 || n > MAX_CALLS)
+    {
+        return Err(std::io::Error::other("invalid fixed timing protocol"));
+    }
+    let calls = match calls {
+        Some(calls) => calls,
+        None => {
+            let calls = calibrated_calls(target, body);
+            progress(TimingProgress::CalibrationComplete { calls })?;
+            calls
+        }
+    };
     let mut samples = Vec::with_capacity(repetitions as usize);
     for repetition in 0..repetitions {
         let start = execution_window_start(execution, repetition);
