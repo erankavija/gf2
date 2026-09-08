@@ -247,6 +247,13 @@
       "doc_type": "benchmark",
       "label": "Acceptance revalidation record",
       "path": "dev/bench_results/f547c394/revalidation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "f547c394 review round 3",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r3.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
@@ -258,8 +265,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-09-07T19:28:20.983263076Z",
+      "status": "passed",
+      "updated_at": "2026-09-08T08:17:44.053272804Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -269,12 +276,12 @@
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-07T19:30:11.935285290Z",
+      "updated_at": "2026-09-08T08:21:49.596833703Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-09-07T19:39:43.933595606Z",
+      "updated_at": "2026-09-08T08:36:43.956682729Z",
       "updated_by": "auto:executor"
     }
   },
@@ -292,5 +299,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-07T19:39:43.933595606Z"
+  "updated_at": "2026-09-08T08:48:43.086819334Z"
 }
