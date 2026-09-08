@@ -261,6 +261,13 @@
       "format": "markdown",
       "label": "f547c394 converged review round 4",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r4.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "f547c394 converged review round 5",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r5.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
@@ -306,5 +313,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-08T15:21:34.560476657Z"
+  "updated_at": "2026-09-08T16:18:23.434585662Z"
 }
