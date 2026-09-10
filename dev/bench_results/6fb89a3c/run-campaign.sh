@@ -3,7 +3,7 @@
 #
 # Usage:
 #   dev/bench_results/6fb89a3c/run-campaign.sh preflight
-#   dev/bench_results/6fb89a3c/run-campaign.sh transpose|logical|bch pilot|confirmation [run-id]
+#   dev/bench_results/6fb89a3c/run-campaign.sh transpose|logical|bch pilot|confirmation|remeasure [run-id]
 #
 # `preflight` builds the external libraries and every arm through the
 # committed fetch/build path, records the build/backend evidence, runs the
@@ -21,7 +21,9 @@
 # shared settings; this script adds none. The cell-to-arm wiring is derived
 # from the cell identifiers, which name the external arm they compare against.
 # The pilot must be published, and its digest placed in the confirmatory
-# addendum, before the confirmation runs.
+# addendum, before the confirmation runs. `remeasure` runs the family's
+# committed exploratory re-measurement addendum (receipt label `pilot`), which
+# repeats the pilot cells with the gf2 arms that make the protocol's warm pass.
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
@@ -49,18 +51,24 @@ case "$FAMILY" in
   transpose) ADDENDUM_STEM=addendum-transpose ;;
   logical) ADDENDUM_STEM=addendum-logical-buffer ;;
   bch) ADDENDUM_STEM=addendum-bch-genmatrix ;;
-  *) echo "usage: $0 preflight | transpose|logical|bch pilot|confirmation [run-id]" >&2; exit 2 ;;
+  *) echo "usage: $0 preflight | transpose|logical|bch pilot|confirmation|remeasure [run-id]" >&2; exit 2 ;;
 esac
-case "$MODE" in pilot|confirmation) ;; *) echo "usage: $0 preflight | transpose|logical|bch pilot|confirmation [run-id]" >&2; exit 2 ;; esac
+case "$MODE" in
+  pilot|remeasure) LABEL=pilot ;;
+  confirmation) LABEL=confirmation ;;
+  *) echo "usage: $0 preflight | transpose|logical|bch pilot|confirmation|remeasure [run-id]" >&2; exit 2 ;;
+esac
 ADDENDUM=dev/active/$ISSUE/$ADDENDUM_STEM-v3-$MODE.json
 OUT=dev/bench_results/$ISSUE/$RUN_ID-$ISSUE-$FAMILY-$MODE
 LAUNCH_LOG=dev/bench_results/$ISSUE/$RUN_ID-$FAMILY-$MODE-launcher.log
 [[ -f "$ADDENDUM" ]] || { echo "missing frozen addendum $ADDENDUM" >&2; exit 2; }
 [[ ! -e "$OUT" ]] || { echo "receipt directory $OUT already exists" >&2; exit 2; }
-if [[ "$MODE" == confirmation ]]; then
-  # Publication precedes confirmation: the addendum and its pilot digest are committed bytes.
+if [[ "$MODE" != pilot ]]; then
+  # Publication precedes measurement: the addendum is committed bytes.
   git ls-files --error-unmatch "$ADDENDUM" >/dev/null
   git diff --exit-code HEAD -- "$ADDENDUM" >/dev/null
+fi
+if [[ "$MODE" == confirmation ]]; then
   grep -Eq '"sha256": "[0-9a-f]{64}"' "$ADDENDUM" || { echo 'confirmation addendum does not pin a pilot receipt digest' >&2; exit 2; }
 fi
 LEDGER=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["family_wise"]["ledger_path"])' "$ADDENDUM")
@@ -100,25 +108,25 @@ LOCK=$(realpath "$LOCK")
 export GF2_CCX1_LOCK="$LOCK"
 export RAYON_NUM_THREADS=1
 
-python3 - "$PLAN" "$CAMPAIGN" "$MODE" "$ADDENDUM" "$LOCK" "$FAMILY" "$SURVEY" "$repo" <<'PY_PLAN'
+python3 - "$PLAN" "$CAMPAIGN" "$MODE" "$LABEL" "$ADDENDUM" "$LOCK" "$FAMILY" "$SURVEY" "$repo" <<'PY_PLAN'
 import json, sys
-plan_path, campaign, label, addendum_path, lock, family, survey, repo = sys.argv[1:]
+plan_path, campaign, mode, label, addendum_path, lock, family, survey, repo = sys.argv[1:]
 addendum = json.load(open(addendum_path))
 gf2 = f"{repo}/{survey}/gf2-side/target/release"
 PORTABLE = "-C target-cpu=x86-64"
 ARMS = {
     "gf2-transpose": {"build": "conservative-portable", "executable": f"{gf2}/gf2_transpose_arm", "rustflags": PORTABLE,
-                      "description": "gf2 transpose: fixed cells call the runtime-dispatched 64x64 kernel (gf2_kernels_simd::transpose::detect), consumer cells call BitMatrix::transpose with a fresh output; x86-64 baseline build, kernel selected at run time and reported by the child"},
+                      "description": "gf2 transpose: fixed cells call the runtime-dispatched 64x64 kernel (gf2_kernels_simd::transpose::detect), consumer cells call BitMatrix::transpose with a fresh output; x86-64 baseline build, kernel selected at run time and reported by the child; warm cells make one untimed pass before calibration"},
     "m4ri-transpose": {"build": "external", "executable": f"{repo}/{survey}/m4ri_transpose_arm", "rustflags": None,
                        "description": "M4RI 20260122 mzd_transpose (release tarball, GPL-2.0-or-later, gcc -O3 -march=native -fPIC, no runtime dispatch); fixed cells reuse a preallocated output, consumer cells allocate a fresh one"},
     "bitshuffle-transpose": {"build": "external", "executable": f"{repo}/{survey}/bitshuffle_transpose_arm", "rustflags": None,
                              "description": "Bitshuffle 0.5.2 bshuf_bitshuffle (commit 52aec3b80d05606c090956aecfe868489d96b95c, MIT, gcc -O3 -march=native -fPIC, compile-time AVX2 route); fixed cells transform 64 eight-byte elements into a preallocated output, adapter cells pad/pack/unpack around one block into a fresh canonical output"},
     "gf2-logical": {"build": "conservative-portable", "executable": f"{gf2}/gf2_logical_xor_arm", "rustflags": PORTABLE,
-                    "description": "gf2 xor_inplace with the fresh-output arrangement (copy source 0, XOR the remaining sources in place); x86-64 baseline build, backend selected at run time by buffer size and reported by the child"},
+                    "description": "gf2 xor_inplace with the fresh-output arrangement (copy source 0, XOR the remaining sources in place); x86-64 baseline build, backend selected at run time by buffer size and reported by the child; warm cells make one untimed pass before calibration"},
     "isal-base": {"build": "external", "executable": f"{repo}/{survey}/isal_xor_arm", "rustflags": None,
                   "description": "ISA-L v2.32.1 xor_gen_base (commit 7c3479e0a9dac17f448603ec1ad64c7c625f530c, BSD-3-Clause, gcc -O3 -march=native -fPIC); the portable C reference of xor_gen, vects = sources + 1, 32-byte aligned; the NASM multi-binary xor_gen dispatcher is unavailable on this host"},
     "gf2-bch-genmatrix": {"build": "conservative-portable", "executable": f"{gf2}/gf2_bch_genmatrix_arm", "rustflags": PORTABLE,
-                          "description": "gf2 generator-matrix construction on the established bch_genmatrix rows with a fresh BitMatrix per call: the production BchCode::generator_matrix materialization, or (reference cells) the test-support oracle bch_generator_matrix_by_encoding; x86-64 baseline build, route reported by the child"},
+                          "description": "gf2 generator-matrix construction on the established bch_genmatrix rows with a fresh BitMatrix per call: the production BchCode::generator_matrix materialization, or (reference cells) the test-support oracle bch_generator_matrix_by_encoding; x86-64 baseline build, route reported by the child; warm cells make one untimed pass before calibration"},
     "m4ri-bch-genmatrix": {"build": "external", "executable": f"{repo}/{survey}/m4ri_genmatrix_arm", "rustflags": None,
                            "description": "M4RI 20260122 shifted-generator fill plus mzd_echelonize_m4ri, the established construction of issue 4e732b56; fresh mzd_copy per call"},
 }
@@ -160,7 +168,7 @@ plan = {
     "campaign_id": campaign,
     "issue": addendum["family"]["issue"],
     "label": label,
-    "campaign_seed": {"pilot": 20260910, "confirmation": 20260911}[label],
+    "campaign_seed": {"pilot": 20260910, "confirmation": 20260911, "remeasure": 20260912}[mode],
     "addendum": addendum_path,
     "producing_manifest": "dev/active/6fb89a3c/producing-inputs.json",
     "lock_path": lock,
