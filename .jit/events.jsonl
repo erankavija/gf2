@@ -11479,3 +11479,4 @@
 {"id":"8acf09f5-a2d0-47b2-a1cf-653b5ed7ed85","issue_id":"3e59cb9a-54d4-4838-83f9-ad4750caeb55","priority":"normal","timestamp":"2026-09-10T23:38:04.201311708Z","title":"Repair the DVB-T2 arms' warm pass and re-measure the interleaving family","type":"issue_created"}
 {"fields":["dependencies"],"id":"9dbc09f5-502d-40e3-8f84-dbe14aed2152","issue_id":"1362381c-78c0-42eb-bdc9-4327f20bc343","timestamp":"2026-09-10T23:38:17.819532419Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["dependencies"],"id":"4328d284-059a-4bbc-ae06-fc9bfa25e22d","issue_id":"1362381c-78c0-42eb-bdc9-4327f20bc343","timestamp":"2026-09-10T23:38:31.430535906Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"f9a901e4-e95b-4d19-b27f-57a9d707433e","issue_id":"c7113c5a-94da-462f-954e-3b7894bb95df","timestamp":"2026-09-10T23:40:31.344048203Z","type":"gate_passed","updated_by":"auto:executor"}
