@@ -1,0 +1,233 @@
+# label: avx2-and-popcnt
+# pattern: x86::avx2::avx2_and_popcnt
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile
+# binary sha256: 72be1c750584eeab639d99c13b1994da91f7a8dd4ace3f69bacf3c7d56114c64
+# symbols matching this pattern in the binary: 1
+
+## symbol at 000000000009a790, 0x00000000000003d3 bytes
+000000000009a790 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt>:
+   9a790:	cmp    %rsi,%rcx
+   9a793:	cmovb  %rcx,%rsi
+   9a797:	test   %rsi,%rsi
+   9a79a:	je     9a7ba <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x2a>
+   9a79c:	mov    %rsi,%rcx
+   9a79f:	shr    $0x2,%rcx
+   9a7a3:	je     9a7bd <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x2d>
+   9a7a5:	vpxor  %xmm0,%xmm0,%xmm0
+   9a7a9:	cmp    $0x1,%rcx
+   9a7ad:	jne    9a7c6 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x36>
+   9a7af:	xor    %eax,%eax
+   9a7b1:	vpxor  %xmm1,%xmm1,%xmm1
+   9a7b5:	jmp    9a872 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0xe2>
+   9a7ba:	xor    %eax,%eax
+   9a7bc:	ret
+   9a7bd:	vpxor  %xmm1,%xmm1,%xmm1
+   9a7c1:	jmp    9a8b4 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x124>
+   9a7c6:	movabs $0x3fffffffffffffe,%r8
+   9a7d0:	and    %rcx,%r8
+   9a7d3:	vpxor  %xmm2,%xmm2,%xmm2
+   9a7d7:	mov    $0x20,%r9d
+   9a7dd:	xor    %eax,%eax
+   9a7df:	vpbroadcastb -0x7ab83(%rip),%ymm3        # 1fc65 <anon.f09c39ab6a8325ec18e0aaeed8878866.196.llvm.17757164669745943705+0x3bf>
+   9a7e8:	vmovdqa -0x85f30(%rip),%ymm4        # 148c0 <anon.5168fff85ca8528ddc0811ab8cae3bf4.47.llvm.1594372131456583489+0xd60>
+   9a7f0:	vpxor  %xmm1,%xmm1,%xmm1
+   9a7f4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   9a800:	vmovdqu -0x20(%rdx,%r9,1),%ymm5
+   9a807:	vmovdqu (%rdx,%r9,1),%ymm6
+   9a80d:	vpand  -0x20(%rdi,%r9,1),%ymm5,%ymm5
+   9a814:	vpsrlw $0x4,%ymm5,%ymm7
+   9a819:	vpand  %ymm3,%ymm5,%ymm5
+   9a81d:	vpshufb %ymm5,%ymm4,%ymm5
+   9a822:	vpand  %ymm3,%ymm7,%ymm7
+   9a826:	vpshufb %ymm7,%ymm4,%ymm7
+   9a82b:	vpaddb %ymm5,%ymm7,%ymm5
+   9a82f:	vpsadbw %ymm2,%ymm5,%ymm5
+   9a833:	vpand  (%rdi,%r9,1),%ymm6,%ymm6
+   9a839:	vpaddq %ymm1,%ymm5,%ymm1
+   9a83d:	vpsrlw $0x4,%ymm6,%ymm5
+   9a842:	vpand  %ymm3,%ymm6,%ymm6
+   9a846:	vpshufb %ymm6,%ymm4,%ymm6
+   9a84b:	vpand  %ymm3,%ymm5,%ymm5
+   9a84f:	vpshufb %ymm5,%ymm4,%ymm5
+   9a854:	vpaddb %ymm6,%ymm5,%ymm5
+   9a858:	vpsadbw %ymm2,%ymm5,%ymm5
+   9a85c:	vpaddq %ymm1,%ymm5,%ymm1
+   9a860:	add    $0x2,%rax
+   9a864:	add    $0x40,%r9
+   9a868:	cmp    %rax,%r8
+   9a86b:	jne    9a800 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x70>
+   9a86d:	test   $0x1,%cl
+   9a870:	je     9a8b4 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x124>
+   9a872:	shl    $0x5,%rax
+   9a876:	vmovdqu (%rdx,%rax,1),%ymm2
+   9a87b:	vpand  (%rdi,%rax,1),%ymm2,%ymm2
+   9a880:	vpsrlw $0x4,%ymm2,%ymm3
+   9a885:	vpbroadcastb -0x7ac29(%rip),%ymm4        # 1fc65 <anon.f09c39ab6a8325ec18e0aaeed8878866.196.llvm.17757164669745943705+0x3bf>
+   9a88e:	vpand  %ymm4,%ymm2,%ymm2
+   9a892:	vmovdqa -0x85fda(%rip),%ymm5        # 148c0 <anon.5168fff85ca8528ddc0811ab8cae3bf4.47.llvm.1594372131456583489+0xd60>
+   9a89a:	vpshufb %ymm2,%ymm5,%ymm2
+   9a89f:	vpand  %ymm4,%ymm3,%ymm3
+   9a8a3:	vpshufb %ymm3,%ymm5,%ymm3
+   9a8a8:	vpaddb %ymm2,%ymm3,%ymm2
+   9a8ac:	vpsadbw %ymm0,%ymm2,%ymm0
+   9a8b0:	vpaddq %ymm1,%ymm0,%ymm1
+   9a8b4:	vextracti128 $0x1,%ymm1,%xmm0
+   9a8ba:	vpaddq %xmm1,%xmm0,%xmm0
+   9a8be:	vpshufd $0xee,%xmm0,%xmm1
+   9a8c3:	vpaddq %xmm1,%xmm0,%xmm0
+   9a8c7:	vmovq  %xmm0,%rax
+   9a8cc:	movabs $0xffffffffffffffc,%r10
+   9a8d6:	and    %rsi,%r10
+   9a8d9:	cmp    %rsi,%r10
+   9a8dc:	jne    9a8e2 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x152>
+   9a8de:	vzeroupper
+   9a8e1:	ret
+   9a8e2:	push   %r14
+   9a8e4:	push   %rbx
+   9a8e5:	mov    %r10,%r8
+   9a8e8:	or     $0x1,%r8
+   9a8ec:	cmp    %r8,%rsi
+   9a8ef:	cmova  %rsi,%r8
+   9a8f3:	mov    %r8,%rcx
+   9a8f6:	sub    %r10,%rcx
+   9a8f9:	cmp    $0x4,%rcx
+   9a8fd:	jae    9a907 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x177>
+   9a8ff:	mov    %r10,%rcx
+   9a902:	jmp    9aae5 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x355>
+   9a907:	cmp    $0x10,%rcx
+   9a90b:	jae    9a915 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x185>
+   9a90d:	xor    %r9d,%r9d
+   9a910:	jmp    9aa64 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x2d4>
+   9a915:	mov    %rcx,%r9
+   9a918:	and    $0xfffffffffffffff0,%r9
+   9a91c:	vmovq  %rax,%xmm0
+   9a921:	mov    %rsi,%r11
+   9a924:	and    $0xfffffffffffffffc,%r11
+   9a928:	lea    (%rdx,%r11,8),%rax
+   9a92c:	add    $0x60,%rax
+   9a930:	lea    (%rdi,%r11,8),%r11
+   9a934:	add    $0x60,%r11
+   9a938:	vpxor  %xmm1,%xmm1,%xmm1
+   9a93c:	xor    %ebx,%ebx
+   9a93e:	vpbroadcastb -0x7ace2(%rip),%ymm2        # 1fc65 <anon.f09c39ab6a8325ec18e0aaeed8878866.196.llvm.17757164669745943705+0x3bf>
+   9a947:	vmovdqa -0x8608f(%rip),%ymm3        # 148c0 <anon.5168fff85ca8528ddc0811ab8cae3bf4.47.llvm.1594372131456583489+0xd60>
+   9a94f:	vpxor  %xmm4,%xmm4,%xmm4
+   9a953:	vpxor  %xmm5,%xmm5,%xmm5
+   9a957:	vpxor  %xmm6,%xmm6,%xmm6
+   9a95b:	nopl   0x0(%rax,%rax,1)
+   9a960:	vmovdqu -0x60(%rax,%rbx,8),%ymm7
+   9a966:	vmovdqu -0x40(%rax,%rbx,8),%ymm8
+   9a96c:	vmovdqu -0x20(%rax,%rbx,8),%ymm9
+   9a972:	vmovdqu (%rax,%rbx,8),%ymm10
+   9a977:	vpand  -0x60(%r11,%rbx,8),%ymm7,%ymm7
+   9a97e:	vpand  -0x40(%r11,%rbx,8),%ymm8,%ymm8
+   9a985:	vpand  -0x20(%r11,%rbx,8),%ymm9,%ymm9
+   9a98c:	vpand  (%r11,%rbx,8),%ymm10,%ymm10
+   9a992:	vpand  %ymm2,%ymm7,%ymm11
+   9a996:	vpshufb %ymm11,%ymm3,%ymm11
+   9a99b:	vpsrlw $0x4,%ymm7,%ymm7
+   9a9a0:	vpand  %ymm2,%ymm7,%ymm7
+   9a9a4:	vpshufb %ymm7,%ymm3,%ymm7
+   9a9a9:	vpaddb %ymm7,%ymm11,%ymm7
+   9a9ad:	vpsadbw %ymm1,%ymm7,%ymm7
+   9a9b1:	vpaddq %ymm0,%ymm7,%ymm0
+   9a9b5:	vpand  %ymm2,%ymm8,%ymm7
+   9a9b9:	vpshufb %ymm7,%ymm3,%ymm7
+   9a9be:	vpsrlw $0x4,%ymm8,%ymm8
+   9a9c4:	vpand  %ymm2,%ymm8,%ymm8
+   9a9c8:	vpshufb %ymm8,%ymm3,%ymm8
+   9a9cd:	vpaddb %ymm7,%ymm8,%ymm7
+   9a9d1:	vpsadbw %ymm1,%ymm7,%ymm7
+   9a9d5:	vpaddq %ymm4,%ymm7,%ymm4
+   9a9d9:	vpand  %ymm2,%ymm9,%ymm7
+   9a9dd:	vpshufb %ymm7,%ymm3,%ymm7
+   9a9e2:	vpsrlw $0x4,%ymm9,%ymm8
+   9a9e8:	vpand  %ymm2,%ymm8,%ymm8
+   9a9ec:	vpshufb %ymm8,%ymm3,%ymm8
+   9a9f1:	vpaddb %ymm7,%ymm8,%ymm7
+   9a9f5:	vpsadbw %ymm1,%ymm7,%ymm7
+   9a9f9:	vpaddq %ymm5,%ymm7,%ymm5
+   9a9fd:	vpand  %ymm2,%ymm10,%ymm7
+   9aa01:	vpshufb %ymm7,%ymm3,%ymm7
+   9aa06:	vpsrlw $0x4,%ymm10,%ymm8
+   9aa0c:	vpand  %ymm2,%ymm8,%ymm8
+   9aa10:	vpshufb %ymm8,%ymm3,%ymm8
+   9aa15:	vpaddb %ymm7,%ymm8,%ymm7
+   9aa19:	vpsadbw %ymm1,%ymm7,%ymm7
+   9aa1d:	vpaddq %ymm6,%ymm7,%ymm6
+   9aa21:	add    $0x10,%rbx
+   9aa25:	cmp    %rbx,%r9
+   9aa28:	jne    9a960 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x1d0>
+   9aa2e:	vpaddq %ymm0,%ymm4,%ymm0
+   9aa32:	vpaddq %ymm0,%ymm5,%ymm0
+   9aa36:	vpaddq %ymm0,%ymm6,%ymm0
+   9aa3a:	vextracti128 $0x1,%ymm0,%xmm1
+   9aa40:	vpaddq %xmm1,%xmm0,%xmm0
+   9aa44:	vpshufd $0xee,%xmm0,%xmm1
+   9aa49:	vpaddq %xmm1,%xmm0,%xmm0
+   9aa4d:	vmovq  %xmm0,%rax
+   9aa52:	cmp    %r9,%rcx
+   9aa55:	je     9ab54 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x3c4>
+   9aa5b:	test   $0xc,%cl
+   9aa5e:	je     9ab5b <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x3cb>
+   9aa64:	and    $0x3,%r8d
+   9aa68:	sub    %r8,%rcx
+   9aa6b:	add    %r10,%rcx
+   9aa6e:	vmovq  %rax,%xmm0
+   9aa73:	add    %r10,%r9
+   9aa76:	vpbroadcastb -0x7ae1a(%rip),%ymm1        # 1fc65 <anon.f09c39ab6a8325ec18e0aaeed8878866.196.llvm.17757164669745943705+0x3bf>
+   9aa7f:	vmovdqa -0x861c7(%rip),%ymm2        # 148c0 <anon.5168fff85ca8528ddc0811ab8cae3bf4.47.llvm.1594372131456583489+0xd60>
+   9aa87:	vpxor  %xmm3,%xmm3,%xmm3
+   9aa8b:	nopl   0x0(%rax,%rax,1)
+   9aa90:	vmovdqu (%rdx,%r9,8),%ymm4
+   9aa96:	vpand  (%rdi,%r9,8),%ymm4,%ymm4
+   9aa9c:	vpand  %ymm1,%ymm4,%ymm5
+   9aaa0:	vpshufb %ymm5,%ymm2,%ymm5
+   9aaa5:	vpsrlw $0x4,%ymm4,%ymm4
+   9aaaa:	vpand  %ymm1,%ymm4,%ymm4
+   9aaae:	vpshufb %ymm4,%ymm2,%ymm4
+   9aab3:	vpaddb %ymm5,%ymm4,%ymm4
+   9aab7:	vpsadbw %ymm3,%ymm4,%ymm4
+   9aabb:	vpaddq %ymm0,%ymm4,%ymm0
+   9aabf:	add    $0x4,%r9
+   9aac3:	cmp    %r9,%rcx
+   9aac6:	jne    9aa90 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x300>
+   9aac8:	vextracti128 $0x1,%ymm0,%xmm1
+   9aace:	vpaddq %xmm1,%xmm0,%xmm0
+   9aad2:	vpshufd $0xee,%xmm0,%xmm1
+   9aad7:	vpaddq %xmm1,%xmm0,%xmm0
+   9aadb:	vmovq  %xmm0,%rax
+   9aae0:	test   %r8,%r8
+   9aae3:	je     9ab54 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x3c4>
+   9aae5:	movabs $0x5555555555555555,%r8
+   9aaef:	movabs $0x3333333333333333,%r9
+   9aaf9:	movabs $0xf0f0f0f0f0f0f0f,%r10
+   9ab03:	movabs $0x101010101010101,%r11
+   9ab0d:	nopl   (%rax)
+   9ab10:	mov    (%rdx,%rcx,8),%rbx
+   9ab14:	and    (%rdi,%rcx,8),%rbx
+   9ab18:	inc    %rcx
+   9ab1b:	mov    %rbx,%r14
+   9ab1e:	shr    $1,%r14
+   9ab21:	and    %r8,%r14
+   9ab24:	sub    %r14,%rbx
+   9ab27:	mov    %rbx,%r14
+   9ab2a:	and    %r9,%r14
+   9ab2d:	shr    $0x2,%rbx
+   9ab31:	and    %r9,%rbx
+   9ab34:	add    %r14,%rbx
+   9ab37:	mov    %rbx,%r14
+   9ab3a:	shr    $0x4,%r14
+   9ab3e:	add    %rbx,%r14
+   9ab41:	and    %r10,%r14
+   9ab44:	imul   %r11,%r14
+   9ab48:	shr    $0x38,%r14
+   9ab4c:	add    %r14,%rax
+   9ab4f:	cmp    %rsi,%rcx
+   9ab52:	jb     9ab10 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x380>
+   9ab54:	pop    %rbx
+   9ab55:	pop    %r14
+   9ab57:	vzeroupper
+   9ab5a:	ret
+   9ab5b:	add    %r9,%r10
+   9ab5e:	jmp    9a8ff <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x16f>

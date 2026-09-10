@@ -1,0 +1,81 @@
+# case: {"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 10328498748
+#
+# Overhead  Command          Shared Object     Symbol                                        
+# ........  ...............  ................  ..............................................
+#
+    73.17%  consumer-profil  consumer-profile  [.] gf2_core::alg::rref::rref
+            |
+            ---gf2_core::alg::rref::rref
+               |          
+               |--67.38%--<consumer_profile_gf2_side::Prepared>::run
+               |          
+                --1.61%--0x3fe
+
+    13.37%  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_xor_into
+
+     1.83%  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::xor_fn
+               gf2_core::alg::rref::rref
+               <consumer_profile_gf2_side::Prepared>::run
+
+     1.76%  consumer-profil  libc.so.6         [.] 0x0000000000176497
+            |
+            ---0x7f13f2b76497
+               gf2_core::alg::rref::rref
+               <consumer_profile_gf2_side::Prepared>::run
+
+     1.61%  consumer-profil  libc.so.6         [.] 0x0000000000176400
+            |
+            ---0x7f13f2b76400
+               gf2_core::alg::rref::rref
+               <consumer_profile_gf2_side::Prepared>::run
+
+     1.28%  consumer-profil  libc.so.6         [.] 0x0000000000176421
+            |
+            ---0x7f13f2b76421
+               gf2_core::alg::rref::rref
+               <consumer_profile_gf2_side::Prepared>::run
+
+     0.85%  consumer-profil  consumer-profile  [.] <gf2_core::matrix::BitMatrix>::swap_rows
+            |
+            ---<gf2_core::matrix::BitMatrix>::swap_rows
+
+     0.62%  consumer-profil  libc.so.6         [.] 0x0000000000176404
+            |
+            ---0x7f13f2b76404
+               gf2_core::alg::rref::rref
+               <consumer_profile_gf2_side::Prepared>::run
+
+     0.52%  consumer-profil  libc.so.6         [.] 0x0000000000176466
+            |
+            ---0x7f13f2b76466
+               gf2_core::alg::rref::rref
+               <consumer_profile_gf2_side::Prepared>::run
+
+     0.51%  consumer-profil  libc.so.6         [.] 0x0000000000176411
+            |
+            ---0x7f13f2b76411
+               gf2_core::alg::rref::rref
+               <consumer_profile_gf2_side::Prepared>::run
+
+     0.50%  consumer-profil  libc.so.6         [.] 0x0000000000176e8e
+            |
+            ---0x7f13f2b76e8e
+               __rustc::__rust_alloc_zeroed
+
+
+
+#
+# (Tip: If you have debuginfo enabled, try: perf report -s sym,srcline)
+#

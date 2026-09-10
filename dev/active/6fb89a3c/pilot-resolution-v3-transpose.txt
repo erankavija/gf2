@@ -1,0 +1,23 @@
+pilot dev/bench_results/6fb89a3c/v3-r2-6fb89a3c-transpose-pilot
+receipt_sha256 43bc7e386fde8d1c65915d1e9347e60094ff4924d8f202e621186c3a0ec42858
+family transpose-vs-external
+ledger-derived per-comparison confidence 0.975
+
+transpose-64-canonical-vs-m4ri                          0.0082
+transpose-64-canonical-vs-bitshuffle                    0.0048
+transpose-consumer-63-vs-m4ri                           0.0065
+transpose-consumer-64-vs-m4ri                           0.0048
+transpose-consumer-65-vs-m4ri                           0.0078
+transpose-consumer-64-vs-bitshuffle-adapter             0.0060
+transpose-consumer-63-vs-bitshuffle-adapter             0.0076
+transpose-consumer-65-vs-bitshuffle-adapter             0.0125
+
+widest relative half-width 0.012512 (transpose-consumer-65-vs-bitshuffle-adapter)
+frozen measurement_resolution 0.02
+equivalence_margin 1.1
+material_gap_threshold 1.2
+raised: none
+confirmatory cells m=8: transpose-64-canonical-vs-m4ri, transpose-64-canonical-vs-bitshuffle, transpose-consumer-63-vs-m4ri, transpose-consumer-64-vs-m4ri, transpose-consumer-65-vs-m4ri, transpose-consumer-64-vs-bitshuffle-adapter, transpose-consumer-63-vs-bitshuffle-adapter, transpose-consumer-65-vs-bitshuffle-adapter
+expected draws per bootstrap tail at attempt 1: 15.62 (P-20 requires 20)
+max_pilot_trials_per_cell 2
+output dev/active/6fb89a3c/addendum-transpose-v3-confirmation.json

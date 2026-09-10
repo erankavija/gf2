@@ -1,0 +1,205 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "bit-storage-count-consumers",
+    "issue": "04b85d10",
+    "purpose": "consumer-family",
+    "description": "Exploratory pilot of issue 04b85d10, protocol version 3. Question: Where population counts and the fused reductions built on them cost material time in current consumers: the scalar/SIMD dispatch at the four- and eight-word boundaries, the SIMD gain on an L2-resident buffer, and whether an any-nonzero spelling (`find_first_one().is_none()`) replaces the full count materially in an isolated DVB-T2 syndrome buffer and in the whole `LdpcCode::is_valid_codeword` consumer. The fused AND-popcount consumer, dense matvec, is recorded as a pinned identity control because production exposes no alternative route. Every cell is exploratory: the pilot sizes the family's measurement resolution at the confirmatory sample size, records the pinned pre-change baseline latencies, and decides nothing."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-10T16:05:30Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.05,
+    "rationale": "A population-count route or an any-nonzero spelling is a one-line consumer change; five percent of the count is the smallest gain such a change can claim in a syndrome or weight consumer, and the whole-consumer cell decides whether the count is a material share at all. The pilot carries the margin so its recorded decisions are computed under the rule the confirmation uses; pilot cells never pass.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "A spelling at most five percent slower than the current count is not worse for a consumer whose count share is below one; the margin equals the worthwhile threshold.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell compares gf2 against an external comparator, so no comparator-gap objective is exercised and no threshold applies."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This issue is a profile: it selects experiments and adopts no implementation, so its budget for production change is zero unsafe kernels and zero added production lines. A passing improvement cell confirms a candidate's materiality for its downstream issue; it selects nothing here."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "count-popcount-dispatch-4w-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount",
+        "size": {
+          "words": 4
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-popcount-threshold-8w-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount",
+        "size": {
+          "words": 8
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-popcount-bandwidth-65536w-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount",
+        "size": {
+          "words": 65536
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-zero-test-507w-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "zero-test",
+        "size": {
+          "words": 507,
+          "set_bit": 32448
+        },
+        "seed": 202
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-ldpc-check-64800-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "ldpc-codeword-check",
+        "size": {
+          "n": 64800
+        },
+        "seed": 203
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-dense-matvec-1024x4096-control-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dense-matvec",
+        "size": {
+          "rows": 1024,
+          "cols": 4096
+        },
+        "seed": 103
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

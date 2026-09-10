@@ -1,0 +1,28 @@
+# allocation of 128 bytes
+   0: <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+   1: gf2_core::matrix::BitMatrix::matvec_simd
+   2: gf2_core::matrix::BitMatrix::matvec
+   3: consumer_profile_gf2_side::Prepared::run
+   4: consumer_profile::main
+   5: std::sys::backtrace::__rust_begin_short_backtrace
+   6: std::rt::lang_start::{{closure}}
+   7: std::rt::lang_start_internal
+   8: main
+   9: <unknown>
+  10: __libc_start_main
+  11: _start
+
+# allocation of 128 bytes
+   0: <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+   1: gf2_core::matrix::BitMatrix::matvec_simd
+   2: gf2_core::matrix::BitMatrix::matvec
+   3: consumer_profile_gf2_side::Prepared::run
+   4: consumer_profile::main
+   5: std::sys::backtrace::__rust_begin_short_backtrace
+   6: std::rt::lang_start::{{closure}}
+   7: std::rt::lang_start_internal
+   8: main
+   9: <unknown>
+  10: __libc_start_main
+  11: _start
+

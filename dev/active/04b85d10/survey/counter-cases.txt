@@ -1,0 +1,25 @@
+# Hardware-counter cases of the bit-storage consumer profile (jit:04b85d10).
+# Fields: label|case JSON|path|cache state|target milliseconds
+# One row per route whose instruction mix, dependency behaviour or cache
+# traffic the profile has to explain. The sweep in profile-cases.py covers the
+# whole ladder; these rows are the ones the explanation rests on.
+popcount-8w-dispatched|{"workload":"popcount","size":{"words":8},"seed":201}|ops-dispatched|warm|1000
+popcount-8w-scalar|{"workload":"popcount","size":{"words":8},"seed":201}|scalar-backend|warm|1000
+popcount-8w-simd|{"workload":"popcount","size":{"words":8},"seed":201}|simd-backend|warm|1000
+popcount-4096w-simd|{"workload":"popcount","size":{"words":4096},"seed":201}|simd-backend|warm|1000
+popcount-65536w-simd|{"workload":"popcount","size":{"words":65536},"seed":201}|simd-backend|warm|1000
+zero-test-507w-allzero-count|{"workload":"zero-test","size":{"words":507,"set_bit":32448},"seed":202}|count-ones|warm|1000
+zero-test-507w-allzero-find|{"workload":"zero-test","size":{"words":507,"set_bit":32448},"seed":202}|find-first-one|warm|1000
+row-xor-64w-dispatched|{"workload":"row-xor","size":{"rows":64,"words":64},"seed":101}|ops-dispatched|warm|1000
+row-xor-64w-resolved|{"workload":"row-xor","size":{"rows":64,"words":64},"seed":101}|ops-resolved|warm|1000
+row-xor-8192w-dispatched|{"workload":"row-xor","size":{"rows":64,"words":8192},"seed":101}|ops-dispatched|warm|1000
+dense-matvec-1024x4096|{"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}|current|warm|1000
+dense-rref-1024|{"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102}|current|warm|1500
+transpose64-256-scalar|{"workload":"transpose-64x64","size":{"blocks":256},"seed":301}|transpose-scalar|warm|1000
+transpose64-256-detected|{"workload":"transpose-64x64","size":{"blocks":256},"seed":301}|transpose-detected|warm|1000
+dense-transpose-4096|{"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302}|current|warm|1500
+bch-m14-b256-reference|{"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}|family-poly-remainder-scalar|warm|1500
+bch-m14-b256-bitslice|{"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}|family-bitslice-interleaved|warm|1500
+bch-m14-b256-clmul|{"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}|family-clmul-fold|warm|1500
+ldpc-syndrome-64800|{"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}|current|warm|1500
+dvb-bch-7200-b1|{"workload":"dvb-bch-encode","size":{"n":7200,"batch":1},"seed":306}|current|warm|2000

@@ -1,0 +1,143 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "6fb89a3c-v3-r1-logical-pilot",
+  "issue": "6fb89a3c",
+  "label": "pilot",
+  "campaign_seed": 20260910,
+  "addendum": "dev/active/6fb89a3c/addendum-logical-buffer-v3-pilot.json",
+  "producing_manifest": "dev/active/6fb89a3c/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-logical": {
+      "build": "conservative-portable",
+      "description": "gf2 xor_inplace with the fresh-output arrangement (copy source 0, XOR the remaining sources in place); x86-64 baseline build, backend selected at run time by buffer size and reported by the child",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_logical_xor_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64",
+      "tuning_profile": null
+    },
+    "isal-base": {
+      "build": "external",
+      "description": "ISA-L v2.32.1 xor_gen_base (commit 7c3479e0a9dac17f448603ec1ad64c7c625f530c, BSD-3-Clause, gcc -O3 -march=native -fPIC); the portable C reference of xor_gen, vects = sources + 1, 32-byte aligned; the NASM multi-binary xor_gen dispatcher is unavailable on this host",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/dev/active/6fb89a3c/survey/isal_xor_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "logical-xor-7w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 7,
+        "alignment_bytes": 32,
+        "sources": 2,
+        "seed": 20260910100
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "logical-xor-8w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 8,
+        "alignment_bytes": 32,
+        "sources": 2,
+        "seed": 20260910101
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "logical-xor-9w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 9,
+        "alignment_bytes": 32,
+        "sources": 2,
+        "seed": 20260910102
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "logical-xor-63w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 63,
+        "alignment_bytes": 32,
+        "sources": 2,
+        "seed": 20260910103
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "logical-xor-64w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 64,
+        "alignment_bytes": 32,
+        "sources": 2,
+        "seed": 20260910104
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "logical-xor-65w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 65,
+        "alignment_bytes": 32,
+        "sources": 2,
+        "seed": 20260910105
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "logical-xor-16w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 16,
+        "alignment_bytes": 32,
+        "sources": 2,
+        "seed": 20260910106
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "logical-xor-32w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 32,
+        "alignment_bytes": 32,
+        "sources": 2,
+        "seed": 20260910107
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "logical-parity-3src-64w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 64,
+        "alignment_bytes": 32,
+        "sources": 3,
+        "seed": 20260910108
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}

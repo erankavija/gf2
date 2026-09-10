@@ -1,0 +1,133 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "nr-derate-pilot-eda07788-20260910t170155z",
+  "issue": "eda07788",
+  "label": "pilot",
+  "campaign_seed": 20260910,
+  "addendum": "dev/active/eda07788/addendum-nr-llr-derate-pilot.json",
+  "producing_manifest": "dev/active/eda07788/producing-inputs-nr-derate.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-native": {
+      "build": "native",
+      "description": "gf2 Nr5gRateMatchedCode::prepare_llrs on a &[Llr] channel frame, built with -C target-cpu=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-nr-native/release/gf2-nr-derate-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-native-control": {
+      "build": "native",
+      "description": "identity control: the same gf2 native executable as the baseline arm, launched as a second arm",
+      "executable": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-nr-native/release/gf2-nr-derate-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-portable": {
+      "build": "conservative-portable",
+      "description": "scalar/compiler control: gf2 Nr5gRateMatchedCode::prepare_llrs built with -C target-cpu=x86-64 (baseline x86-64, no target feature beyond SSE2)",
+      "executable": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-nr-portable/release/gf2-nr-derate-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64",
+      "tuning_profile": null
+    },
+    "aff3ct-external": {
+      "build": "external",
+      "description": "AFF3CT v4.7.0 (commit e8a65c5047262d97a15563b9edc961f69b2792cc) Puncturer_5G<int32_t, float>::depuncture through a C-ABI shim, static library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529 built -O3 -march=native -funroll-loops; the timed call converts the &[Llr] frame to float, zero-fills the N_LDPC output, runs the public depuncture, and converts back to Vec<Llr> with +inf fillers replaced by gf2's filler value",
+      "executable": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-nr-native/release/aff3ct-nr-derate-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "nr-bg2-n1024-k400-null-native-vs-native",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2-native-control",
+      "case": {
+        "configuration": "bg2-n1024-k400",
+        "seed": 302
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "nr-bg2-n256-k121-gap-native-vs-aff3ct",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "aff3ct-external",
+      "case": {
+        "configuration": "bg2-n256-k121",
+        "seed": 301
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "nr-bg2-n1024-k400-gap-native-vs-aff3ct",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "aff3ct-external",
+      "case": {
+        "configuration": "bg2-n1024-k400",
+        "seed": 302
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "nr-bg2-n1440-k720-gap-native-vs-aff3ct",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "aff3ct-external",
+      "case": {
+        "configuration": "bg2-n1440-k720",
+        "seed": 303
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "nr-bg1-n1200-k900-gap-native-vs-aff3ct",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "aff3ct-external",
+      "case": {
+        "configuration": "bg1-n1200-k900",
+        "seed": 304
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "nr-bg1-n1320-k1056-gap-native-vs-aff3ct",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "aff3ct-external",
+      "case": {
+        "configuration": "bg1-n1320-k1056",
+        "seed": 305
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "nr-bg1-n2560-k2048-gap-native-vs-aff3ct",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "aff3ct-external",
+      "case": {
+        "configuration": "bg1-n2560-k2048",
+        "seed": 306
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "nr-bg1-n2560-k2048-control-portable-vs-native",
+      "baseline_arm": "gf2-portable",
+      "candidate_arm": "gf2-native",
+      "case": {
+        "configuration": "bg1-n2560-k2048",
+        "seed": 306
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}
