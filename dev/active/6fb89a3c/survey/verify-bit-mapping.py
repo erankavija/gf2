@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Independent bit-mapping gate for the external comparison arms."""
+"""Independent bit-mapping gate for the external comparison arms.
+
+Every arm's `--dump-check` output is compared against naive bit arithmetic
+computed here from the same SplitMix64 seeds. The gate covers the canonical
+64x64 transpose, whole-consumer geometries on both sides of the word
+boundary, the Bitshuffle padded-geometry adapter and its unavailability
+without padding, XOR/parity at several word counts and arities, and the
+BCH generator-matrix row-space equivalence. It writes
+`correctness-report.json` and `bitshuffle-bit-mapping.md`.
+"""
 from __future__ import annotations
 
 import os
@@ -15,6 +24,13 @@ GF2_DUMP_CHECK = Path(os.environ.get(
     ROOT / "gf2-side" / "target" / "release" / "gf2_dump_check",
 ))
 GENERATORS_PATH = ROOT.parents[2] / "bench_results" / "4e732b56" / "generators.txt"
+
+TRANSPOSE_FIXED = [{"seed": seed} for seed in (1, 0x123456789ABCDEF0, 0xDEADBEEFCAFEBABE)]
+TRANSPOSE_TILED = [{"rows": rows, "cols": cols, "seed": 7}
+                   for rows, cols in ((63, 63), (64, 64), (65, 65), (1, 64), (64, 1), (100, 130))]
+XOR_CASES = [{"words": words, "seed": 9, "alignment_bytes": 32} for words in (1, 7, 8, 9, 16, 32, 63, 64, 65)]
+PARITY_CASES = [{"words": 64, "seed": 9, "alignment_bytes": 32, "sources": 3},
+                {"words": 9, "seed": 9, "alignment_bytes": 32, "sources": 4}]
 
 
 def splitmix(seed: int):
@@ -41,11 +57,13 @@ def transpose_case(case: dict) -> list[str]:
 
 
 def xor_case(case: dict) -> list[str]:
-    a = splitmix(case["seed"])
-    b = splitmix(case["seed"] + 1)
-    result = [next(a) ^ next(b) for _ in range(case["words"])]
-    # One line, matching the harness's --dump-check output convention (and
-    # check_family's list-of-lines comparison, shared with transpose_case).
+    streams = [splitmix(case["seed"] + s) for s in range(case.get("sources", 2))]
+    result = []
+    for _ in range(case["words"]):
+        word = 0
+        for stream in streams:
+            word ^= next(stream)
+        result.append(word)
     return ["".join(str((word >> bit) & 1) for word in result for bit in range(64))]
 
 
@@ -62,6 +80,9 @@ def run_dump(binary: Path, case: dict, adapter: str | None = None) -> tuple[int,
     return proc.returncode, proc.stdout.splitlines(), proc.stderr.strip()
 
 
+UNAVAILABLE_MARKERS = ("cannot represent", "unavailable without padding", "multiple of 8")
+
+
 def check_family(binary_name: str, cases: list[dict], expected_fn, adapter: str | None = None,
                  unavailable_ok: bool = False):
     binary = ROOT / binary_name
@@ -72,7 +93,7 @@ def check_family(binary_name: str, cases: list[dict], expected_fn, adapter: str 
         expected = expected_fn(case)
         code, actual, stderr = run_dump(binary, case, adapter)
         if code != 0:
-            if unavailable_ok and any(marker in stderr.lower() for marker in ("cannot represent", "unavailable without padding", "multiple of 8")):
+            if unavailable_ok and any(marker in stderr.lower() for marker in UNAVAILABLE_MARKERS):
                 unavailable.append(case)
                 continue
             raise AssertionError(f"{binary_name} case {case}: exit {code}: {stderr}")
@@ -88,9 +109,9 @@ def check_family(binary_name: str, cases: list[dict], expected_fn, adapter: str 
 
 
 def read_code_dims(name: str) -> tuple[int, int]:
-    """Reads (n, k) for `name` from the pre-existing, committed generator
-    dump `dev/bench_results/4e732b56/generators.txt` (jit:4e732b56), which
-    this issue reuses read-only rather than recomputing (@/inv/single-source-prose)."""
+    """Reads (n, k) for `name` from the committed generator dump
+    `dev/bench_results/4e732b56/generators.txt` (jit:4e732b56), reused
+    read-only rather than recomputed (@/inv/single-source-prose)."""
     for line in GENERATORS_PATH.read_text().splitlines():
         fields = line.split()
         if len(fields) == 5 and fields[0] == name:
@@ -102,10 +123,8 @@ def rref(n: int, rows: list[str]) -> tuple[int, tuple[int, ...]]:
     """Canonical GF(2) reduced row echelon form under the given column order.
 
     Ported from `dev/active/4e732b56/baseline-survey/verify-generator-matrices.py`
-    (jit:4e732b56), read-only reuse of an established validation technique
-    (@/inv/convention-convergence), not a private reimplementation: two
-    full-rank generator matrices span the same code exactly when their
-    canonical RREFs under one shared column order are identical.
+    (jit:4e732b56): two full-rank generator matrices span the same code
+    exactly when their canonical RREFs under one shared column order agree.
     """
     pivots: dict[int, int] = {}
     for row in rows:
@@ -124,26 +143,16 @@ def rref(n: int, rows: list[str]) -> tuple[int, tuple[int, ...]]:
 
 
 def check_genmatrix_row_space(name: str) -> None:
-    """Validates that gf2's `bch_generator_matrix_by_encoding` (the
-    established oracle `crates/gf2-coding/benches/bch_genmatrix.rs` already
-    compares against, `SystematicLayout::MessageParityAscending`, the
-    default) and M4RI's `genmatrix-rref` route (`SystematicLayout`-equivalent
-    to `MessageParityDescending`, "repository column order", per
-    `crates/gf2-coding/src/bch/encode.rs`'s documented coordinate formulas)
-    span the same code, i.e. compute operation-equivalent generator matrices
-    of code `name` in two different but individually well-defined systematic
-    coordinate layouts.
+    """Validates that gf2's `bch_generator_matrix_by_encoding`
+    (`SystematicLayout::MessageParityAscending`) and M4RI's RREF of the
+    shifted generator polynomial (repository column order, descending
+    degree) span the same code.
 
-    Raw bit-for-bit dumps of the two routes do NOT match directly (this was
-    checked and falsified: their row bases differ before reduction, and their
-    column layouts are related by a cyclic rotation vs. a reversal, not by a
-    simple shared permutation of the raw dumps). The correct operation-
-    equivalence criterion, reused from the established
-    `verify-generator-matrices.py` methodology, is row-space equality: reindex
-    each raw dump from its own layout into a shared internal-degree column
-    order (`SystematicLayout`'s own documented formulas: gf2 raw column u
-    carries degree (u + n - k) mod n; M4RI raw column c carries degree
-    n - 1 - c), then compare canonical GF(2) RREF under that shared order.
+    Raw dumps do not match bit for bit: the row bases differ before
+    reduction and the column layouts differ (gf2 raw column u carries degree
+    (u + n - k) mod n; M4RI raw column c carries degree n - 1 - c). The
+    operation-equivalent observable is row-space equality after reindexing
+    both dumps to internal polynomial-degree order.
     """
     n, k = read_code_dims(name)
     if not GF2_DUMP_CHECK.exists():
@@ -172,9 +181,13 @@ def check_genmatrix_row_space(name: str) -> None:
             f"genmatrix {name}: row spaces disagree (gf2 rank {gf2_rref[0]}, m4ri rank {m4ri_rref[0]}, "
             f"equal={gf2_rref == m4ri_rref}); the two routes are not computing the same code"
         )
+    if gf2_code == m4ri_rows:
+        raise AssertionError(f"genmatrix {name}: raw dumps unexpectedly identical; the layout premise changed")
 
 
-def bitshuffle_mapping(cases: list[dict]) -> tuple[str, list[dict], dict]:
+def bitshuffle_mapping(cases: list[dict]) -> tuple[str, dict]:
+    """Searches byte/bit-order permutations for the fixed 64x64 mapping; the
+    direct mapping is expected to be the smallest passing one."""
     candidates = [None, "input-byte-reverse", "output-byte-reverse", "both",
                   "element-byte-reverse", "input-byte-reverse+element-byte-reverse",
                   "output-byte-reverse+element-byte-reverse", "both+element-byte-reverse"]
@@ -182,118 +195,132 @@ def bitshuffle_mapping(cases: list[dict]) -> tuple[str, list[dict], dict]:
     direct_failure = None
     for candidate in candidates:
         try:
-            unavailable = check_family("bitshuffle_transpose_arm", cases, transpose_case, candidate, True)
-            results[candidate or "direct"] = (True, unavailable, None)
+            check_family("bitshuffle_transpose_arm", cases, transpose_case, candidate, False)
+            results[candidate or "direct"] = "pass"
         except AssertionError as error:
-            results[candidate or "direct"] = (False, [], str(error))
+            results[candidate or "direct"] = "fail"
             if candidate is None:
                 direct_failure = str(error)
-    passing = [name for name, (ok, unavailable, _) in results.items() if ok and not unavailable]
-    chosen = passing[0] if passing else None
-    return chosen or "no candidate", [], results | {"direct_failure": direct_failure}
+    passing = [name for name, verdict in results.items() if verdict == "pass"]
+    chosen = passing[0] if passing else "no candidate"
+    return chosen, results | {"direct_failure": direct_failure}
 
 
-def write_bitshuffle_report(cases: list[dict], chosen: str, details: dict) -> None:
+def write_bitshuffle_report(chosen: str, details: dict, unavailable: list[dict], adapted: list[dict]) -> None:
     fixed = {"seed": 1}
     expected = transpose_case(fixed)
     direct_code, direct_output, direct_stderr = run_dump(ROOT / "bitshuffle_transpose_arm", fixed)
-    chosen_adapter = None if chosen in ("direct", "no candidate") else chosen
-    pass_code, pass_output, pass_stderr = run_dump(ROOT / "bitshuffle_transpose_arm", fixed, chosen_adapter)
     lines = [
         "# Bitshuffle bit mapping",
         "",
         "This file is generated by `verify-bit-mapping.py`. The harness emits "
         "Bitshuffle's decoded bit-plane output with no adapter in transport mode.",
         "",
+        f"Byte/bit-order permutation search over the fixed 64x64 case: {json.dumps({k: v for k, v in details.items() if k != 'direct_failure'})}.",
+        "",
     ]
     if details.get("direct_failure"):
-        lines += ["The direct mapping fails:", "", f"`{details['direct_failure']}", ""]
+        lines += ["The direct mapping fails:", "", f"`{details['direct_failure']}`", ""]
     if chosen == "no candidate":
-        lines += ["No tested adapter matches the reference mapping.", ""]
+        lines += ["No tested permutation matches the reference mapping.", ""]
     else:
-        lines += [f"The smallest passing adapter is `{chosen}`.", ""]
-    # A fixed seed gives a compact, reproducible failing/passing example. The
-    # full first row is enough to expose byte/bit order and remains a bit string.
+        lines += [f"The smallest passing mapping is `{chosen}`: plane `c` holds column `c`, element `r` at byte `r / 8` bit `r % 8`, LSB-first.", ""]
     lines += ["Smallest reference example (transpose-64, seed 1), first output row:", "", f"expected `{expected[0]}`", ""]
     if direct_code == 0 and direct_output:
         lines += [f"direct actual `{direct_output[0]}`", ""]
-    if pass_code == 0 and pass_output and chosen not in ("direct", "no candidate"):
-        lines += [f"passing `{chosen}` actual `{pass_output[0]}`", ""]
     if direct_code != 0:
         lines += [f"direct dump command exits {direct_code}: `{direct_stderr}`", ""]
-    if pass_code != 0 and chosen not in ("direct", "no candidate"):
-        lines += [f"candidate dump command exits {pass_code}: `{pass_stderr}`", ""]
-    lines += ["The report records the adapter search performed by this script; unavailable geometries are not padded or substituted.", ""]
+    lines += [
+        "## Geometry",
+        "",
+        "Bitshuffle requires the element count (matrix rows) to be a multiple of eight. "
+        f"Without the padded adapter these geometries are unavailable: {json.dumps([[c['rows'], c['cols']] for c in unavailable])}.",
+        "",
+        "With `\"adapter\": \"padded\"` the arm pads rows to a multiple of eight, packs each row "
+        "into `ceil(cols / 8)` bytes, transposes one Bitshuffle block and unpacks the first `cols` planes "
+        f"into the canonical output; these geometries then match the naive reference: {json.dumps([[c['rows'], c['cols']] for c in adapted])}. "
+        "The pack and unpack copies are skipped exactly when the canonical layout already coincides with "
+        "Bitshuffle's (pack: rows % 8 == 0 and cols % 64 == 0; unpack: rows % 64 == 0 and cols % 8 == 0), "
+        "so the 64x64 consumer pays no adapter copy.",
+        "",
+    ]
     (ROOT / "bitshuffle-bit-mapping.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def main() -> int:
-    transpose_fixed = [{"seed": seed} for seed in (1, 0x123456789ABCDEF0, 0xDEADBEEFCAFEBABE)]
-    transpose_tiled = [{"rows": rows, "cols": cols, "seed": 7} for rows, cols in ((63, 63), (64, 64), (65, 65), (1, 64), (64, 1))]
-    xor_cases = [
-        {"words": words, "seed": 9, "alignment_bytes": 32}
-        for words in (1, 7, 8, 9, 16, 32, 63, 64, 65)
-    ]
     try:
-        if not (ROOT / "bitshuffle_transpose_arm").exists():
-            (ROOT / "bitshuffle-bit-mapping.md").write_text(
-                "# Bitshuffle bit mapping\n\n"
-                "This file is generated by `verify-bit-mapping.py`. The mapping search "
-                "does not run because `bitshuffle_transpose_arm` is unavailable until "
-                "the pinned external checkout builds. No adapter result is asserted.\n",
-                encoding="utf-8",
-            )
-        unavailable_m4ri = check_family("m4ri_transpose_arm", transpose_fixed, transpose_case)
+        unavailable_m4ri = check_family("m4ri_transpose_arm", TRANSPOSE_FIXED, transpose_case)
         print("PASS m4ri_transpose_arm transpose-64 (3 seeds)")
-        unavailable_m4ri += check_family("m4ri_transpose_arm", transpose_tiled, transpose_case)
-        print("PASS m4ri_transpose_arm transpose-tiled (5 dimensions)")
-        chosen, _, details = bitshuffle_mapping(transpose_fixed)
-        write_bitshuffle_report(transpose_fixed + transpose_tiled, chosen, details)
-        if chosen == "no candidate":
-            raise AssertionError("Bitshuffle has no matching tested adapter; see bitshuffle-bit-mapping.md")
-        print(f"PASS bitshuffle_transpose_arm transpose mapping ({chosen})")
-        unavailable_bitshuffle = check_family(
-            "bitshuffle_transpose_arm", transpose_tiled, transpose_case,
-            None if chosen == "direct" else chosen, True)
-        if unavailable_bitshuffle:
-            print(f"PASS bitshuffle_transpose_arm transpose-tiled ({len(unavailable_bitshuffle)} unavailable geometries recorded by harness)")
-        else:
-            print("PASS bitshuffle_transpose_arm transpose-tiled (5 dimensions)")
-        check_family("isal_xor_arm", xor_cases, xor_case)
-        print("PASS isal_xor_arm logical-xor (9 word counts, arity 3, 32-byte alignment)")
+        unavailable_m4ri += check_family("m4ri_transpose_arm", TRANSPOSE_TILED, transpose_case)
+        print(f"PASS m4ri_transpose_arm transpose-tiled ({len(TRANSPOSE_TILED)} geometries)")
+        if unavailable_m4ri:
+            raise AssertionError(f"M4RI reported unavailable geometries: {unavailable_m4ri}")
+
+        chosen, details = bitshuffle_mapping(TRANSPOSE_FIXED)
+        if chosen != "direct":
+            write_bitshuffle_report(chosen, details, [], [])
+            raise AssertionError(f"Bitshuffle mapping is {chosen!r}, not direct; see bitshuffle-bit-mapping.md")
+        print("PASS bitshuffle_transpose_arm transpose-64 mapping (direct, 3 seeds)")
+        # Without the adapter the harness must refuse row counts that are
+        # not multiples of eight and pass the rest unchanged.
+        unavailable_bitshuffle = check_family("bitshuffle_transpose_arm", TRANSPOSE_TILED, transpose_case, None, True)
+        expected_unavailable = [case for case in TRANSPOSE_TILED if case["rows"] % 8 != 0]
+        if unavailable_bitshuffle != expected_unavailable:
+            raise AssertionError(f"Bitshuffle unavailability differs: {unavailable_bitshuffle} vs {expected_unavailable}")
+        print(f"PASS bitshuffle_transpose_arm transpose-tiled without adapter ({len(unavailable_bitshuffle)} geometries unavailable, rest exact)")
+        adapted_cases = [dict(case, adapter="padded") for case in TRANSPOSE_TILED]
+        if check_family("bitshuffle_transpose_arm", adapted_cases, transpose_case):
+            raise AssertionError("padded adapter reported an unavailable geometry")
+        print(f"PASS bitshuffle_transpose_arm transpose-tiled with padded adapter ({len(adapted_cases)} geometries)")
+        write_bitshuffle_report(chosen, details, unavailable_bitshuffle, adapted_cases)
+
+        check_family("isal_xor_arm", XOR_CASES, xor_case)
+        print(f"PASS isal_xor_arm logical-xor ({len(XOR_CASES)} word counts, vects 3, 32-byte alignment)")
+        check_family("isal_xor_arm", PARITY_CASES, xor_case)
+        print(f"PASS isal_xor_arm parity ({[c['sources'] for c in PARITY_CASES]} sources)")
+        unaligned = run_dump(ROOT / "isal_xor_arm", {"words": 8, "seed": 9, "alignment_bytes": 8})
+        if unaligned[0] == 0:
+            raise AssertionError("isal_xor_arm accepted an 8-byte alignment outside the xor_gen contract")
+        print("PASS isal_xor_arm refuses alignment outside the documented 32-byte contract")
+
         for code_name in ("B1", "B2", "B3"):
             check_genmatrix_row_space(code_name)
         print("PASS bch-genmatrix row-space equality (gf2 vs m4ri, B1/B2/B3)")
+
         report = {
-            "schema": "gf2-external-comparator-correctness-v1",
+            "schema": "gf2-external-comparator-correctness-v2",
             "issue": "6fb89a3c",
             "status": "pass",
-            "canonical_reference": "naive bit arithmetic in verify-bit-mapping.py",
+            "canonical_reference": "naive bit arithmetic in verify-bit-mapping.py from the same SplitMix64 seeds",
             "transpose": {
                 "m4ri": {
-                    "validated_fixed_seeds": len(transpose_fixed),
-                    "validated_geometries": [[case["rows"], case["cols"]] for case in transpose_tiled],
+                    "validated_fixed_seeds": len(TRANSPOSE_FIXED),
+                    "validated_geometries": [[case["rows"], case["cols"]] for case in TRANSPOSE_TILED],
                     "mapping": "output[c][r] = input[r][c]; row words use bit c = 1u64 << c",
-                    "padding": "M4RI zeroes unused tail bits in partial words",
-                    "aliasing": "distinct input/output; fixed output allocation is reused during kernel timing",
+                    "padding": "M4RI keeps excess bits of a non-window matrix zero (mzd.h policy); the dumps read only valid bits",
+                    "aliasing": "distinct input/output; the kernel-isolated cell reuses a preallocated output, whole-consumer calls allocate a fresh one",
                 },
                 "bitshuffle": {
-                    "validated_fixed_seeds": len(transpose_fixed),
+                    "validated_fixed_seeds": len(TRANSPOSE_FIXED),
                     "mapping": chosen,
-                    "geometry": "size=64 elements, elem_size=8 bytes, block_size=64",
-                    "adaptation_cost": "zero for 64x64 direct layout",
-                    "unavailable_geometries": [[case["rows"], case["cols"]] for case in unavailable_bitshuffle],
-                    "unavailable_reason": "element count is not a multiple of 8; no padding substitution is timed",
+                    "mapping_search": {k: v for k, v in details.items() if k != "direct_failure"},
+                    "fixed_geometry": "size=64 elements, elem_size=8 bytes, block_size=64",
+                    "unavailable_without_adapter": [[case["rows"], case["cols"]] for case in unavailable_bitshuffle],
+                    "unavailable_reason": "element count (rows) is not a multiple of 8",
+                    "validated_with_padded_adapter": [[case["rows"], case["cols"]] for case in adapted_cases],
+                    "adapter": "rows padded to a multiple of 8 and packed into ceil(cols/8)-byte elements; one block of size rows_padded; the first cols planes are unpacked into the canonical cols x rows output; pack/unpack copies skipped when the layouts coincide",
                     "aliasing": "distinct input/output as required by the Bitshuffle interface",
                 },
             },
             "logical_xor": {
-                "validated_word_counts": [case["words"] for case in xor_cases],
-                "mapping": "dest[w].bit[b] = src0[w].bit[b] XOR src1[w].bit[b], LSB-first",
-                "isa_l_parity_arity": {"vects": 3, "sources": 2, "outputs": 1},
+                "validated_word_counts": [case["words"] for case in XOR_CASES],
+                "validated_parity_arities": [{"words": c["words"], "sources": c["sources"], "vects": c["sources"] + 1} for c in PARITY_CASES],
+                "mapping": "dest[w].bit[b] = XOR over sources of src[s][w].bit[b], LSB-first",
+                "isa_l_parity_arity": "vects = sources + 1; two sources (vects 3) in the sized cells, three sources (vects 4) in the arity cell",
                 "alignment_bytes": 32,
-                "arrangement_cost": "the three-pointer array is formed inside every timed call",
-                "aliasing": "unavailable: ISA-L does not contractually permit destination/source aliasing",
+                "unaligned": "unavailable: raid.h requires source and destination pointers aligned to 32 bytes; the harness refuses other alignments",
+                "arrangement_cost": "the pointer array is formed inside every timed call and one formation is reported separately as dispatch_ns; the gf2 fresh-destination copy is inside every timed call and reported separately as pack_ns",
+                "aliasing": "unavailable: raid.h names distinct source pointers and one destination pointer; gf2's dst ^= src accumulate has no ISA-L equivalent",
             },
             "bch_genmatrix": {
                 "validated_codes": ["B1", "B2", "B3"],

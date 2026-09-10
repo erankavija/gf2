@@ -8,18 +8,25 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-GF2_TARGET = ROOT / "gf2-side/target/release"
+GF2_TARGET = Path(os.environ.get("GF2_SURVEY_GF2_TARGET", ROOT / "gf2-side/target/release"))
 CASES = [
     (ROOT / "m4ri_transpose_arm", {"n": 64, "seed": 1}),
     (ROOT / "m4ri_transpose_arm", {"cols": 63, "rows": 63, "seed": 1}),
     (ROOT / "bitshuffle_transpose_arm", {"n": 64, "seed": 1}),
+    (ROOT / "bitshuffle_transpose_arm", {"cols": 64, "rows": 64, "seed": 1, "adapter": "padded"}),
+    (ROOT / "bitshuffle_transpose_arm", {"cols": 65, "rows": 65, "seed": 1, "adapter": "padded"}),
     (ROOT / "isal_xor_arm", {"alignment_bytes": 32, "seed": 1, "words": 8}),
+    (ROOT / "isal_xor_arm", {"alignment_bytes": 32, "seed": 1, "words": 64, "sources": 3}),
     (ROOT / "m4ri_genmatrix_arm", {"code": "B1", "seed": 1}),
     (GF2_TARGET / "gf2_transpose_arm", {"n": 64, "seed": 1}),
     (GF2_TARGET / "gf2_transpose_arm", {"cols": 63, "rows": 63, "seed": 1}),
     (GF2_TARGET / "gf2_logical_xor_arm", {"alignment_bytes": 32, "seed": 1, "words": 8}),
+    (GF2_TARGET / "gf2_logical_xor_arm", {"alignment_bytes": 32, "seed": 1, "words": 64, "sources": 3}),
     (GF2_TARGET / "gf2_bch_genmatrix_arm", {"code": "B1", "seed": 1}),
 ]
+# A whole-consumer arm must report a conversion record; a kernel-isolated arm
+# must not.
+CONSUMER = {"rows", "words", "code"}
 
 
 def main() -> None:
@@ -57,6 +64,9 @@ def main() -> None:
         if len(value.get("windows", [])) != 1:
             raise SystemExit(f"{binary.name}: invalid window count")
         conversion = value.get("conversion")
+        expects_conversion = bool(CONSUMER & set(case))
+        if (conversion is not None) != expects_conversion:
+            raise SystemExit(f"{binary.name} {case}: conversion record presence {conversion is not None} differs from the metric kind")
         if conversion is not None and list(conversion) != [
             "setup_ns", "pack_ns", "unpack_ns", "batch_fill_ns", "dispatch_ns"
         ]:
@@ -66,10 +76,10 @@ def main() -> None:
             "case": case,
             "status": "pass",
             "selected_path": value.get("selected_path"),
-            "conversion_reported": value.get("conversion") is not None,
+            "conversion": conversion,
         })
-        print(f"PASS child-v2 framing: {binary.name}")
-    report = {"schema": "gf2-external-arm-framing-v1", "issue": "6fb89a3c", "arms": results}
+        print(f"PASS child-v2 framing: {binary.name} {value.get('selected_path')}")
+    report = {"schema": "gf2-external-arm-framing-v2", "issue": "6fb89a3c", "arms": results}
     (ROOT / "framing-report.json").write_text(json.dumps(report, indent=2) + "\n")
 
 

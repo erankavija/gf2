@@ -2,15 +2,19 @@
 # Fetch and build the pinned C/C++ external comparison arms for jit:6fb89a3c.
 #
 # All generated trees live below .agents/ext/6fb89a3c, which is git-excluded.
-# M4RI is the GPL-2.0 release tarball pinned by version and SHA-256. Bitshuffle
+# M4RI is the GPL-2.0-or-later release tarball (COPYING is the GPLv2 text;
+# the source headers say "version 2 or higher") pinned by version and SHA-256. Bitshuffle
 # is the MIT tag pinned by commit and is reduced to its two core C files. ISA-L
 # is the BSD-3-Clause tag pinned by commit. Every build action holds the shared
 # benchmark lock, allowing sibling builds while excluding exclusive timed runs.
 #
-# The ISA-L autotools path is used here: the pinned checkout's autogen.sh and
-# configure.ac produce libisal.a directly, while disabling the shared library
-# keeps the harness link self-contained. It is the shortest reproducible path
-# on this host and uses the requested -O3 -march=native flags.
+# ISA-L is reduced to its portable C reference `raid/raid_base.c` because the
+# NASM-built multi-binary dispatcher cannot be assembled on this host; see the
+# note beside that build step. Every external object uses -O3 -march=native.
+#
+# The staged trees and prebuilt libraries are reused when present; every
+# reuse re-checks the pinned commits, and build-evidence.json records the
+# library digests the harness binaries were linked against.
 
 set -euo pipefail
 
@@ -88,11 +92,12 @@ if [[ ! -f "${PREFIX}/lib/libisal_base.a" ]]; then
     # therefore unavailable here. `raid/raid_base.c` carries ISA-L's own
     # portable C reference implementation, `xor_gen_base`, with the exact
     # same (vects, len, array) contract `include/raid.h` documents for
-    # `xor_gen` (array[vects-1] is the fresh XOR of array[0..vects-2]; no
-    # assembly, no alignment requirement beyond what plain word access
-    # needs). This harness measures that portable reference build, not the
-    # SIMD-dispatched one -- recorded as a build-environment limitation in
-    # findings.md, not silently substituted for a different operation.
+    # `xor_gen` (array[vects-1] is the fresh XOR of array[0..vects-2];
+    # source and destination pointers aligned to 32 bytes). This harness
+    # measures that portable reference build, compiled with the same
+    # -O3 -march=native flags, not the NASM-dispatched one -- recorded as a
+    # build-environment limitation in findings.md and build-evidence.json,
+    # not silently substituted for a different operation.
     mkdir -p "${PREFIX}/lib"
     CARGO_CI_NO_SCCACHE=1 "${REPO}/scripts/cargo-budget.sh" bash -c '
         set -euo pipefail
@@ -107,7 +112,11 @@ require_commit bitshuffle "${BITSHUFFLE_COMMIT}" bitshuffle
 require_commit isa-l "${ISAL_COMMIT}" isa-l
 CARGO_CI_NO_SCCACHE=1 "${REPO}/scripts/cargo-budget.sh" \
     make -C "${HERE}" EXT="${EXT}"
+# The gf2 arms are the conservative-portable build identity: the x86-64
+# baseline target with the production runtime dispatch deciding the kernel.
+# RUSTFLAGS is set explicitly so the recorded arm identity is a build fact.
 CARGO_CI_NO_SCCACHE=1 CARGO_TARGET_DIR="${HERE}/gf2-side/target" \
+    RUSTFLAGS="${GF2_SURVEY_RUSTFLAGS:--C target-cpu=x86-64}" \
     "${REPO}/scripts/cargo-budget.sh" cargo +1.95.0 build --release \
     --manifest-path "${HERE}/gf2-side/Cargo.toml"
 echo "baselines and harnesses ready under ${EXT}"

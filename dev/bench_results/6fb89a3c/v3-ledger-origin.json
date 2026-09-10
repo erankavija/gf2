@@ -1,0 +1,65 @@
+{
+  "schema": "family-ledger-origin-v1",
+  "issue": "6fb89a3c",
+  "purpose": "Records why each protocol-v3 family ledger of this issue starts at the empty genesis state and which earlier evidence answers the same scientific question.",
+  "families": [
+    {
+      "family": "transpose-vs-external",
+      "ledger": "dev/bench_results/6fb89a3c/v3-transpose-family-ledger.jsonl",
+      "genesis_sha256_of_empty_file": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "predecessor_question": "protocol-v1 family transpose-vs-external-pilot",
+      "predecessor_evidence": [
+        {
+          "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/receipt.json",
+          "receipt_sha256": "ac8d8d57a6c9319aaf71a7b7afcff7d5770df55c340d4c04b297ac0374c6b7b6",
+          "label": "pilot",
+          "confirmatory_cells": 0,
+          "protocol_version": 1
+        },
+        {
+          "directory": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot-failed-framing",
+          "disposition": "failed launch before any cell completed; no receipt, no samples reused",
+          "confirmatory_cells": 0,
+          "protocol_version": 1
+        },
+        {
+          "directory": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot-failed-canonical-conversion",
+          "disposition": "rejected mid-campaign on child framing; no receipt, no samples reused",
+          "confirmatory_cells": 0,
+          "protocol_version": 1
+        }
+      ]
+    },
+    {
+      "family": "logical-buffer-vs-isal",
+      "ledger": "dev/bench_results/6fb89a3c/v3-logical-buffer-family-ledger.jsonl",
+      "genesis_sha256_of_empty_file": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "predecessor_question": "protocol-v1 family logical-buffer-vs-isal-pilot",
+      "predecessor_evidence": [
+        {
+          "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/receipt.json",
+          "receipt_sha256": "42c3574c67b734c33e50e976b67410275e7a28a1f3c63b7c3ff62009f1b63969",
+          "label": "pilot",
+          "confirmatory_cells": 0,
+          "protocol_version": 1
+        }
+      ]
+    },
+    {
+      "family": "bch-genmatrix-consumer",
+      "ledger": "dev/bench_results/6fb89a3c/v3-bch-genmatrix-family-ledger.jsonl",
+      "genesis_sha256_of_empty_file": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "predecessor_question": "protocol-v1 family bch-genmatrix-consumer-pilot",
+      "predecessor_evidence": [
+        {
+          "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/receipt.json",
+          "receipt_sha256": "b3bf3282b447573c72954fe73dca2877d4f9f5aa3edef527ca17fc4dbb1d9277",
+          "label": "pilot",
+          "confirmatory_cells": 0,
+          "protocol_version": 1
+        }
+      ]
+    }
+  ],
+  "rationale": "Protocol v1 had no family ledger. The v1 families of this issue were exploratory-only pilots whose identifiers carried a `-pilot` role suffix; their reservations would spend zero comparisons under v3 accounting (`comparisons` equals the count of confirmatory/holdout cells, which was zero), so importing them would not change any attempt budget. A retrospective import is nevertheless impossible without inventing a family identity, because `trial_ledger::decode` requires every line to name the ledger's own family and the v1 identifiers differ from the confirmable v3 identifiers. The v3 families therefore start at genesis, the v1 receipts stay committed as immutable superseded history cited above by digest, and no confirmatory reservation for any of these three questions exists under any protocol version."
+}

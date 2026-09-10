@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 {
     char *input = NULL, *error = NULL; size_t length; json_value *root = NULL; const json_value *object; const char *cache, *name; uint64_t windows, target_ms; code_info code; int ok;
     if (argc == 2 && !strcmp(argv[1], "--backend")) {
-        puts("{\"library\":\"m4ri\",\"entrypoint\":\"mzd_echelonize_m4ri\",\"selected_backend\":\"m4ri-rref\",\"runtime_dispatch\":false}");
+        printf("{\"library\":\"m4ri\",\"entrypoint\":\"mzd_echelonize_m4ri\",\"version\":\"%s\",\"algorithm\":\"Method of the Four Russians reduced row echelon form (full=1, k=0 auto)\",\"observation\":\"linked symbol and call arguments\"}\n", M4RI_VERSION_STR);
         return 0;
     }
     if (argc == 3 && !strcmp(argv[1], "--dump-check")) {
