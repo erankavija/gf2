@@ -1,0 +1,447 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 1
+  },
+  "family": {
+    "id": "bit-storage-consumers-pilot",
+    "issue": "04b85d10",
+    "purpose": "consumer-family",
+    "description": "Exploratory profile of current-code bit-storage consumers across the three families of issue 04b85d10: logical row and dense-matrix routes, count and fused-reduction routes, and bit-layout transforms including the binary BCH encoding path. Every arm is a production route that exists today and every compared pair was checked to compute the same result before timing. The pilot observes the measurement resolution of each metric kind and core arm; the confirmatory family derives its margins from it and adopts nothing."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-07T23:20:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Unresolved by construction. The pilot exists to observe the resolution a worthwhile threshold has to clear, so fixing the threshold here would settle it before the evidence for it exists.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "Unresolved for the same reason: the confirmatory equivalence margin is derived from the spread this pilot observes on its identical-route cells.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell of this profile compares gf2 against an external comparator, so no comparator-gap objective is exercised and no threshold applies."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": null,
+    "maintenance_rationale": "This issue is a profile: it selects experiments and adopts no implementation, so its budget for production change is zero unsafe kernels and an unresolved source-line allowance that keeps every cell non-adoptable."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "logical-row-xor-dispatch-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 64
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-row-xor-threshold-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 4
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-dense-rref-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dense-rref",
+        "size": {
+          "rows": 1024,
+          "cols": 1024
+        },
+        "seed": 102
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-ldpc-syndrome-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "ldpc-syndrome",
+        "size": {
+          "n": 64800
+        },
+        "seed": 104
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-popcount-dispatch-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount",
+        "size": {
+          "words": 4
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-popcount-threshold-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount",
+        "size": {
+          "words": 8
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-zero-test-syndrome-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "zero-test",
+        "size": {
+          "words": 507,
+          "set_bit": 32448
+        },
+        "seed": 202
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "count-ldpc-check-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "ldpc-codeword-check",
+        "size": {
+          "n": 64800
+        },
+        "seed": 203
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-transpose-block-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64x64",
+        "size": {
+          "blocks": 256
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-bch-encode-bitslice-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 303
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-bch-encode-fold-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 303
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-bch-encode-alloc-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-encode-batch-alloc",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 304
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-transpose-block-6core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64x64",
+        "size": {
+          "blocks": 4096
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-bch-encode-parallel-12core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-encode-batch-parallel",
+        "size": {
+          "degree": 14,
+          "batch": 1024,
+          "workers": 12
+        },
+        "seed": 305
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-bch-encode-parallel-24logical",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-encode-batch-parallel",
+        "size": {
+          "degree": 14,
+          "batch": 1024,
+          "workers": 24
+        },
+        "seed": 305
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "logical-cpus-24",
+      "workers": {
+        "declared": 24,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

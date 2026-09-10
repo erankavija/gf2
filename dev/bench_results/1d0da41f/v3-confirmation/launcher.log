@@ -1,0 +1,21 @@
+# session start UTC: 2026-09-08T18:24:01Z
+# runner: /tmp/gf2-1d0da41f-target/release/benchmark-ab-runner
+# runner sha256: 0bc46fa34b8f1a5f835ce341f6edc991da3e006bffcd19672ddbdc9f525ebe30
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /tmp/gf2-1d0da41f-target/release/benchmark-ab-runner run /tmp/gf2-1d0da41f-v3-confirmation dev/active/1d0da41f/plan-ymm-clmul-v3-confirmation.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-1d0da41f-v3-confirmation/execution.log
+# session exit: 3; end UTC: 2026-09-08T18:27:03Z
+# session start UTC: 2026-09-08T18:27:33Z
+# runner: /tmp/gf2-1d0da41f-target/release/benchmark-ab-runner
+# runner sha256: 0bc46fa34b8f1a5f835ce341f6edc991da3e006bffcd19672ddbdc9f525ebe30
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /tmp/gf2-1d0da41f-target/release/benchmark-ab-runner run /tmp/gf2-1d0da41f-v3-confirmation dev/active/1d0da41f/plan-ymm-clmul-v3-confirmation.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-1d0da41f-v3-confirmation/execution.log
+# session exit: 3; end UTC: 2026-09-08T18:28:27Z
+# session start UTC: 2026-09-08T18:28:53Z
+# runner: /tmp/gf2-1d0da41f-target/release/benchmark-ab-runner
+# runner sha256: 0bc46fa34b8f1a5f835ce341f6edc991da3e006bffcd19672ddbdc9f525ebe30
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /tmp/gf2-1d0da41f-target/release/benchmark-ab-runner run /tmp/gf2-1d0da41f-v3-confirmation dev/active/1d0da41f/plan-ymm-clmul-v3-confirmation.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-1d0da41f-v3-confirmation/execution.log
+# session exit: 0; end UTC: 2026-09-08T18:29:20Z

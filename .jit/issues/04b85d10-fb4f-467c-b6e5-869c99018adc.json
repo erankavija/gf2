@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-07T19:27:24.853449209Z",
   "context": {},
   "created_at": "2026-09-06T19:59:16.619469775Z",
@@ -14,6 +14,407 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5c7358dd2ade3dc7b0c7e1a5a9931eed8fe5ed2370086daa458039b9c95c79b8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/v3-bit-storage-logical-consumers-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/04b85d10/v3-bit-storage-logical-consumers-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f8a60d0ad54105d9a0b78340fa54edd33dc768fb816ea8b1b41d294fde875866",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "67e99048178315999aa5b30be3eda11d9f5b9e24cda6e63bd9ff48c526617abc",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-v3-logical.txt",
+          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-logical.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "61a8cc25a5ba45672f0fbd482b2cf5c6a48011e0d0cecbf2133647fa96b63270",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f43365c1b72d1bbc52c6d121265c8a09fe944d325507334214cff027a005322b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/run-consumer-campaigns.sh",
+          "resolved_path": "dev/bench_results/04b85d10/run-consumer-campaigns.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "389ba450fd29a256f5171725de3d3d8dcdf9732296ba888d1780155f915833e4",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/popcnt-attribution.txt",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/popcnt-attribution.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a4cfb15eab88e170c16914104d0200bd29695b2dfaceb41815db356b07ba9b29",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/run-profile.sh",
+          "resolved_path": "dev/active/04b85d10/survey/run-profile.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d01a59b6983e2ab3c2e7f72c2c1a778ceaecb3c9bb21b7dccd29f281914d340a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "10be0051db0adb167cf9ed7dfafeda069424b2d0c336367f5ed16fe1e88c4bb8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7b7ab43f820a4a0c2152c67eeaf7b53ac763aac13bdbb2ffe9dec9dd8d6502fb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/04b85d10/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0a05ba95195b6c687813a7f89a583370e588ca2e99acbd07544a926003fab6a7",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "37b7ad069e1b92dc332fefbd4bdede76732412c7130d2542b27c1e00f59308f5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "869fc864d63c76a8107dc7970ac3a48fac4fc2912c76e69c14827ed81cca6635",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/frame-traffic.txt",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/frame-traffic.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b0923d31ced5672cd3330089e756e3aa362926150f0eaf93d372c39302e255c5",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-v3-layout.txt",
+          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-layout.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "57f37470290dc1b9c17a8d98f470602b01f8971b74f34743fa4f1b0e91c2de77",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/profile-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "07be0e81a2ce9c5a9df58a62a8c51f1f65fa90b81b41f0abff6e8f1a14b87b2c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ed3ab1ba9ae12dc2300d6ffe8f6dce574748d94aaaece3df3df8c99dbfa636bc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/producing-inputs.json",
+          "resolved_path": "dev/active/04b85d10/survey/producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d0b5d05ad7a32fe8f77874bba48406816b5ad70bd0036e16570e132375bc2b7f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "ledger-genesis.json",
+          "resolved_path": "dev/active/04b85d10/ledger-genesis.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "32452d4dbcbe3909a094041e447e86c36498b2c0378949c632100532b391b647",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-07-04b85d10-profile/profile-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-07-04b85d10-profile/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e8340fca36b09144a789fd07faffb911d3b3fc160d55f54e7403a181eea885b0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/tables.md",
+          "resolved_path": "dev/bench_results/04b85d10/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cc2b2705ca81ad9c04a12c88b7e189449bcac4a6c2c9a337ff573d7b9832fa81",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ae4be4a21aeb60418059d6c361c83600c30e6254854fb1e8cf51ae27061137bf",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "52770369bc664f121dbf0d293a20875d215a89853c8ca7f10efcfb34358df87d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/attribution-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/attribution-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "86fd4a73c5bdeda86c804388aaad96e5a56ad37273ed8b6c2d152bafe9178abb",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-v3-count.txt",
+          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-count.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "04b85d10 findings and ranked candidate experiments",
+      "path": "dev/active/04b85d10/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Generated v3 receipt tables",
+      "path": "dev/bench_results/04b85d10/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "v3 profile attribution summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/attribution-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Verified code-claim register",
+      "path": "dev/active/04b85d10/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Issue-owned producing-input manifest",
+      "path": "dev/active/04b85d10/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v3 campaign launcher",
+      "path": "dev/bench_results/04b85d10/run-consumer-campaigns.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 logical family ledger",
+      "path": "dev/bench_results/04b85d10/v3-bit-storage-logical-consumers-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 logical pilot addendum",
+      "path": "dev/active/04b85d10/addendum-bit-storage-logical-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 logical frozen confirmation addendum",
+      "path": "dev/active/04b85d10/addendum-bit-storage-logical-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 logical pilot receipt",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 logical pilot acceptance summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 logical confirmation receipt",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 logical confirmation acceptance summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 logical confirmation execution log",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 count family ledger",
+      "path": "dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 count pilot addendum",
+      "path": "dev/active/04b85d10/addendum-bit-storage-count-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 count frozen confirmation addendum",
+      "path": "dev/active/04b85d10/addendum-bit-storage-count-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 count pilot receipt",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 count pilot acceptance summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 count confirmation receipt",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 count confirmation acceptance summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 count confirmation execution log",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 layout family ledger",
+      "path": "dev/bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 layout pilot addendum",
+      "path": "dev/active/04b85d10/addendum-bit-storage-layout-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 layout frozen confirmation addendum",
+      "path": "dev/active/04b85d10/addendum-bit-storage-layout-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 layout pilot receipt",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 layout pilot acceptance summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 layout confirmation receipt",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 layout confirmation acceptance summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 layout confirmation execution log",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/execution.log"
     }
   ],
   "first_ready_at": "2026-09-06T19:59:16.619469775Z",
@@ -23,7 +424,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-10T17:20:14.266846443Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "04b85d10-fb4f-467c-b6e5-869c99018adc",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -36,5 +443,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile bit-storage costs in production consumers",
-  "updated_at": "2026-09-10T15:43:36.025466015Z"
+  "updated_at": "2026-09-10T17:20:35.748482377Z"
 }

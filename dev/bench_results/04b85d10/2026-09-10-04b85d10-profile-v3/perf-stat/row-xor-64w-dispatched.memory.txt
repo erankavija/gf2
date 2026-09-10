@@ -1,0 +1,19 @@
+# case: {"workload":"row-xor","size":{"rows":64,"words":64},"seed":101}
+# path: ops-dispatched  cache_state: warm  target_ms: 1000
+# events: cycles:u,L1-dcache-loads:u,L1-dcache-load-misses:u,cache-references:u,cache-misses:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":2659574,"conversion":null,"elapsed_ns":"895503325","ns_per_call":336.7093094608385,"path":"ops-dispatched","prepare":{"allocated_bytes":67126,"allocations":131,"freed_bytes":32768},"schema":"consumer-profile-record-v1","seed":101,"selected_path":"ops-dispatched/simd","size":{"rows":64,"words":64},"target_ms":1000,"timed":{"allocated_bytes":0,"allocated_bytes_per_call":0.0,"allocations":0,"allocations_per_call":0.0,"freed_bytes":0,"peak_live_bytes":0},"workers_observed":1,"workload":"row-xor"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"row-xor","size":{"rows":64,"words":64},"seed":101} --path ops-dispatched --cache-state warm --target-ms 1000':
+
+     4,250,823,129      cycles:u                                                              
+     5,714,751,728      L1-dcache-loads:u                                                     
+       708,633,768      L1-dcache-load-misses:u                                               
+       956,850,591      cache-references:u                                                    
+            75,206      cache-misses:u                                                        
+
+       0.899681570 seconds time elapsed
+
+       0.894581000 seconds user
+       0.001989000 seconds sys
+
+

@@ -1,0 +1,87 @@
+# label: avx2-find-first-one
+# pattern: x86::avx2::avx2_find_first_one
+# binary: target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 28f0fc82431f1396d61c6a6af7c3080038dbeae41e937a8c5ac643d1874745a6
+# symbols matching this pattern in the binary: 1
+
+## symbol at 0000000000095fb0, 0x0000000000000114 bytes
+0000000000095fb0 <gf2_kernels_simd::x86::avx2::avx2_find_first_one>:
+   95fb0:	test   %rsi,%rsi
+   95fb3:	je     96029 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0x79>
+   95fb5:	mov    %rsi,%rcx
+   95fb8:	shr    $0x2,%rcx
+   95fbc:	je     9602c <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0x7c>
+   95fbe:	shl    $0x2,%rcx
+   95fc2:	mov    $0x3,%r8d
+   95fc8:	xor    %edx,%edx
+   95fca:	xor    %eax,%eax
+   95fcc:	jmp    95fe0 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0x30>
+   95fce:	xchg   %ax,%ax
+   95fd0:	add    $0xfffffffffffffffc,%rax
+   95fd4:	add    $0x4,%r8
+   95fd8:	mov    %rcx,%r9
+   95fdb:	add    %rax,%r9
+   95fde:	je     9602c <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0x7c>
+   95fe0:	vmovdqu -0x18(%rdi,%r8,8),%ymm0
+   95fe7:	vptest %ymm0,%ymm0
+   95fec:	je     95fd0 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0x20>
+   95fee:	cmp    %rsi,%r8
+   95ff1:	jae    9609e <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0xee>
+   95ff7:	mov    -0x18(%rdi,%r8,8),%r9
+   95ffc:	test   %r9,%r9
+   95fff:	jne    96086 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0xd6>
+   96005:	mov    -0x10(%rdi,%r8,8),%r9
+   9600a:	test   %r9,%r9
+   9600d:	jne    9607a <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0xca>
+   9600f:	mov    -0x8(%rdi,%r8,8),%r9
+   96014:	test   %r9,%r9
+   96017:	jne    96081 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0xd1>
+   96019:	mov    (%rdi,%r8,8),%r9
+   9601d:	test   %r9,%r9
+   96020:	je     95fd0 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0x20>
+   96022:	mov    $0x3,%edx
+   96027:	jmp    96086 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0xd6>
+   96029:	xor    %eax,%eax
+   9602b:	ret
+   9602c:	movabs $0xffffffffffffffc,%rdx
+   96036:	and    %rsi,%rdx
+   96039:	mov    %rsi,%rcx
+   9603c:	and    $0xfffffffffffffffc,%rcx
+   96040:	shl    $0x6,%rcx
+   96044:	add    $0xffffffffffffffc0,%rcx
+   96048:	xor    %eax,%eax
+   9604a:	nopw   0x0(%rax,%rax,1)
+   96050:	cmp    %rsi,%rdx
+   96053:	jae    96076 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0xc6>
+   96055:	mov    (%rdi,%rdx,8),%r8
+   96059:	inc    %rdx
+   9605c:	add    $0x40,%rcx
+   96060:	test   %r8,%r8
+   96063:	je     96050 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0xa0>
+   96065:	tzcnt  %r8,%rdx
+   9606a:	add    %rcx,%rdx
+   9606d:	mov    $0x1,%eax
+   96072:	vzeroupper
+   96075:	ret
+   96076:	vzeroupper
+   96079:	ret
+   9607a:	mov    $0x1,%edx
+   9607f:	jmp    96086 <gf2_kernels_simd::x86::avx2::avx2_find_first_one+0xd6>
+   96081:	mov    $0x2,%edx
+   96086:	tzcnt  %r9,%rcx
+   9608b:	sub    %rax,%rdx
+   9608e:	shl    $0x6,%rdx
+   96092:	or     %rcx,%rdx
+   96095:	mov    $0x1,%eax
+   9609a:	vzeroupper
+   9609d:	ret
+   9609e:	push   %rax
+   9609f:	mov    $0x4,%r8d
+   960a5:	sub    %rax,%r8
+   960a8:	neg    %rax
+   960ab:	lea    0x5ef0e(%rip),%rcx        # f4fc0 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x120>
+   960b2:	mov    %rax,%rdi
+   960b5:	mov    %rsi,%rdx
+   960b8:	mov    %r8,%rsi
+   960bb:	vzeroupper
+   960be:	call   *0x61a24(%rip)        # f7ae8 <_DYNAMIC+0x350>

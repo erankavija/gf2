@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-10T17:17:23.114003006Z",
+  "dependencies": [
+    "c7113c5a-94da-462f-954e-3b7894bb95df"
+  ],
+  "description": "gf2-core compiles with dead-code warnings under supported partial feature and tuning configurations that the full-feature lint run does not exercise.\n\n## Background\n\n`crates/gf2-core/src/alg/m4rm.rs` defines `choose_k_block`, whose only caller is the test-support entry point `multiply_rowwise_for_test`; a build without `test` or the `test-support` feature, for example with only the `simd` feature, reports it as never used. `crates/gf2-core/src/tuning/baked.rs` defines `SIMD_MIN_WORDS`, which a baked-tuning build reports as never used. The repository lint gate runs with all features, so neither warning reaches it.\n\n## Success Criteria\n\n- [hard] REQ-01: `gf2-core` builds without dead-code warnings with default features, with only the `simd` feature, and under `--cfg gf2_tuning_baked`.\n- [hard] REQ-02: Every item removed or re-gated has no remaining caller in any supported configuration, and the tuning values the baked configuration documents stay single-sourced.\n\n## Notes\n\nSurfaced by the polynomial-multiplication baseline survey while building its gf2 arm against `gf2-core` with the `simd` feature only.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-10T17:17:23.114003006Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "f40a1c8d-8a85-425e-a19b-562ab3e37fde",
+  "labels": [
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Remove gf2-core dead code under partial feature configurations",
+  "updated_at": "2026-09-10T17:17:35.046665743Z"
+}

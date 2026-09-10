@@ -1,0 +1,31 @@
+# Frame traffic per disassembled routine (jit:04b85d10)
+#
+# One instance of each routine is disassembled and bounded by its
+# own symbol size, so a count is the cost of one call rather than
+# of the copies link-time optimization emitted. `stores` counts
+# instructions writing a register into the routine's own frame and
+# `loads` those reading one back. The reason column separates the
+# two costs the counter cannot: a compiler spill of a value that
+# did not fit in a register, and a buffer the algorithm is defined
+# over. Its evidence is the source declaration that settles it.
+
+routine                   stores  loads  instr  reason
+avx2-and-into                  0      0    101  none: crates/gf2-kernels-simd/src/x86/avx2.rs:202 `unsafe fn avx2_and_into` streams dst/src and declares no local buffer
+avx2-and-popcnt                0      0    225  none: crates/gf2-kernels-simd/src/x86/avx2.rs:316 `unsafe fn avx2_and_popcnt` accumulates in vector registers and declares no local buffer
+avx2-find-first-one            0      0     79  none: crates/gf2-kernels-simd/src/x86/avx2.rs:369 `unsafe fn avx2_find_first_one` tests one vector at a time and declares no local buffer
+avx2-popcnt                    0      0    103  none: crates/gf2-kernels-simd/src/x86/avx2.rs:264 `unsafe fn avx2_popcnt` accumulates in vector registers and declares no local buffer
+avx2-xor-into                  0      0    101  none: crates/gf2-kernels-simd/src/x86/avx2.rs:19 `unsafe fn avx2_xor_into` streams dst/src and declares no local buffer
+bch-unpack-parity             18      4    139  intentional scratch: crates/gf2-kernels-simd/src/bch_encode.rs:290 `pub fn unpack_parity` reads the bit-sliced register back through one 64x64 block transpose per parity word
+bitslice-reduce-avx2           4      0    119  spill: crates/gf2-kernels-simd/src/x86/bch_encode.rs:69 `unsafe fn bitslice_reduce_avx2(register, masks, slices)` reduces over caller slices and declares no local buffer
+bitslice-reduce-scalar         4      0     82  spill: crates/gf2-kernels-simd/src/bch_encode.rs:689 `pub fn bitslice_reduce_scalar(register, masks, slices)` reduces over caller slices and declares no local buffer
+dense-matvec-scalar           17     27    238  spill: crates/gf2-core/src/matrix.rs:1514 `fn matvec_scalar` and the four accumulators of `row_dot_parity_scalar` at matrix.rs:1527
+dense-matvec-simd             10     15    142  spill: crates/gf2-core/src/matrix.rs:1553 `fn matvec_simd` holds only the row slice, the fused-kernel pointer and the output vector
+dense-transpose               75    115    833  intentional scratch: crates/gf2-core/src/matrix.rs:1371 `let mut tile_in = [0u64; 64];` and `tile_out` are the block the tiled driver holds between read and write
+fold-block-pclmul             10      0    135  spill: crates/gf2-kernels-simd/src/x86/bch_encode.rs:139 `unsafe fn fold_block_pclmul` folds over caller slices and declares no local buffer
+fold-block-scalar              9      0    175  spill: crates/gf2-kernels-simd/src/bch_encode.rs:595 `pub fn fold_block_scalar` folds over caller slices and declares no local buffer
+packed-fold-reduce             4     10    170  spill: crates/gf2-coding/src/bch/encode.rs:1901 `fn packed_fold_reduce` reduces over the caller's register slice and declares no local buffer
+packed-table-reduce           16     33    617  spill: crates/gf2-coding/src/bch/encode.rs:1771 `fn packed_table_reduce` reduces over the caller's register slice and declares no local buffer
+packed-write-codeword          0      0    158  none: crates/gf2-coding/src/bch/encode.rs:2023 `fn packed_write_codeword` writes the codeword one bit at a time and holds no buffer
+sparse-matvec                 22     29    230  spill: crates/gf2-core/src/sparse.rs:1367 `pub fn matvec` holds one boolean accumulator and the index cursors and declares no local buffer
+transpose-64x64-avx2          40     19    543  intentional scratch: crates/gf2-kernels-simd/src/x86/transpose.rs:36 `let mut buf: [u64; 64] = *input;` is the same block, of which sixteen ymm registers carry a part
+transpose-64x64-scalar       235    235   1570  intentional scratch: crates/gf2-kernels-simd/src/transpose.rs:194 `let mut buf: [u64; 64] = *input;` is the block the stages mutate in place

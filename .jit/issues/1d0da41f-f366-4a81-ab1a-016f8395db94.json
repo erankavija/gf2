@@ -236,8 +236,112 @@
       "doc_type": "report",
       "label": "Rust 1.95 YMM VPCLMULQDQ assembly",
       "path": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 pilot addendum",
+      "path": "dev/active/1d0da41f/addendum-ymm-clmul-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 resolution pilot addendum",
+      "path": "dev/active/1d0da41f/addendum-ymm-clmul-v3-pilot-r2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 frozen confirmation addendum",
+      "path": "dev/active/1d0da41f/addendum-ymm-clmul-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Family producing-input manifest",
+      "path": "dev/active/1d0da41f/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 family ledger",
+      "path": "dev/bench_results/1d0da41f/v3-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v3 launcher",
+      "path": "dev/bench_results/1d0da41f/run-clmul-v3.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 pilot receipt",
+      "path": "dev/bench_results/1d0da41f/v3-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 pilot acceptance summary",
+      "path": "dev/bench_results/1d0da41f/v3-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 resolution pilot receipt",
+      "path": "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 resolution pilot acceptance summary",
+      "path": "dev/bench_results/1d0da41f/v3-pilot-r2/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 confirmation receipt",
+      "path": "dev/bench_results/1d0da41f/v3-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 confirmation execution log",
+      "path": "dev/bench_results/1d0da41f/v3-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 confirmation acceptance summary",
+      "path": "dev/bench_results/1d0da41f/v3-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 validation",
+      "path": "dev/active/1d0da41f/evidence/v3-validation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 evidence preservation record",
+      "path": "dev/active/1d0da41f/evidence/v1-preservation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 ledger migration record",
+      "path": "dev/active/1d0da41f/evidence/v1-ledger-migration.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 preflight rejection record",
+      "path": "dev/active/1d0da41f/evidence/v3-preflight-rejection.json"
     }
   ],
+  "done_at": "2026-09-10T17:10:33.383941955Z",
   "first_ready_at": "2026-09-06T19:16:15.026003250Z",
   "gates_required": [
     "cargo-ci",
@@ -246,7 +350,33 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-10T16:26:41.863644563Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-10T16:27:29.752734291Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T17:03:15.162599926Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T17:06:55.709233810Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T17:09:47.787559189Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -257,7 +387,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
-  "updated_at": "2026-09-08T17:42:27.140261777Z"
+  "updated_at": "2026-09-10T17:10:33.383941955Z"
 }

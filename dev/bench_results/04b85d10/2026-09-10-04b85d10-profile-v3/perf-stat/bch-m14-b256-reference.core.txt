@@ -1,0 +1,19 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-poly-remainder-scalar  cache_state: warm  target_ms: 1500
+# events: cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":35,"conversion":{"batch_fill_ns":379057,"dispatch_ns":4,"pack_ns":7855,"setup_ns":1911841,"unpack_ns":0},"elapsed_ns":"1410219279","ns_per_call":40291979.4,"path":"family-poly-remainder-scalar","prepare":{"allocated_bytes":5296968,"allocations":6195,"freed_bytes":4175048},"schema":"consumer-profile-record-v1","seed":303,"selected_path":"family-pinned/PolyRemainderScalar","size":{"batch":256,"degree":14},"target_ms":1500,"timed":{"allocated_bytes":501760,"allocated_bytes_per_call":14336.0,"allocations":8960,"allocations_per_call":256.0,"freed_bytes":501760,"peak_live_bytes":56},"workers_observed":1,"workload":"bch-encode-batch"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303} --path family-poly-remainder-scalar --cache-state warm --target-ms 1500':
+
+     7,048,395,125      cycles:u                                                              
+    11,619,577,281      instructions:u                                                        
+     2,856,998,165      branches:u                                                            
+       154,575,051      branch-misses:u                                                       
+       573,144,565      stalled-cycles-frontend:u                                             
+
+       1.504244258 seconds time elapsed
+
+       1.495002000 seconds user
+       0.003981000 seconds sys
+
+

@@ -1,0 +1,33 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-10T16:00:21.023569899Z",
+  "dependencies": [
+    "eda07788-23a0-4852-939b-2cfcda36f9d1"
+  ],
+  "description": "Establish reproducible whole-consumer baselines for 5G NR rate-matched LDPC encoding against compatible open-source encoders, without changing production kernels.\n\n## Background\n\nBit selection for rate matching [ThreeGpp2017] (§5.4.2.1) has no public forward entry point in gf2: its rate-matched NR LDPC encoder fuses the transmitted-position gather into encoding. AFF3CT [Cassagne2019] exposes public puncture and depuncture steps, and srsRAN [Srsran2026] implements the same selection with a redundancy-version offset. Evaluated on gf2's code parameters, AFF3CT's selection rule selects gf2's positions exactly. The projects differ in deriving code parameters from the information length and rate: AFF3CT chooses the base graph itself while gf2 takes it from the caller, and for $560 < K \\le 640$ they use different base-graph-2 row counts when selecting the lifting size. The comparable operation on gf2's public API is the whole consumer: information bits in, rate-matched codeword out.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Preserve negative outcomes.\n- [hard] REQ-02: Pin the AFF3CT and srsRAN NR LDPC encoder and rate-matching paths with revision, license, build flags and selected backend, and establish from source evidence which configurations each implements as specified, including base-graph selection, lifting size, filler bits and the redundancy-version starting offset.\n- [hard] REQ-03: Validate every adapter bit-exactly against gf2's rate-matched encoder for each measured configuration, covering both base graphs, filler bits, lifting-size boundaries and the redundancy versions each arm supports. Configurations whose mother codes or selections differ between projects are recorded as non-equivalent, not timed as matched.\n- [hard] REQ-04: Commit frozen family addenda and baseline receipts for whole-consumer encode cells, including packing and conversion costs, across representative base-graph-1 and base-graph-2 block sizes and code rates. Unavailable and non-equivalent arms are recorded explicitly.\n\n## Notes\n\nPin exact source and build identities in the family addendum. This is a baseline survey; no production encoder change is part of it. Preserve unavailable, incompatible and losing arms rather than substituting a different operation.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-10T16:00:21.023569899Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "component:gf2-coding",
+    "satisfies:REQ-01",
+    "cites:Cassagne2019",
+    "cites:Srsran2026",
+    "cites:ThreeGpp2017",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Establish 5G NR rate-matched encoder baselines",
+  "updated_at": "2026-09-10T16:53:08.518517119Z"
+}

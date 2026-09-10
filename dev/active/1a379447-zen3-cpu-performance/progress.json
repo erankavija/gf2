@@ -47,14 +47,14 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "in flight on codex gpt-5.6-sol. Holding position in the CI queue rather than abandoning an in-progress contract run. Its launcher takes flock -s on the CCX1 mutex directly, bypassing the turnstile.",
+          "status": "worker finished (w-04b85d10, claude-fable): branch worktree-agent-04b85d10-v3 at 7e8079f0, clean; three v3 families (logical, count, layout), six accepted receipts, v3 profile, 71-claim source-evidence, eight ranked candidates. findings.md was written through a Bash heredoc after the report-file hook refused Write (surfaced to the invoker). Integration, reviews and gates pending.",
           "dispatch": {
-            "model": "gpt-5.6-sol",
-            "worktree": ".agents/worktrees/agent-04b85d10",
-            "branch": "worktree-agent-04b85d10",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "model": "claude-fable (native subagent)",
+            "worktree": ".agents/worktrees/agent-04b85d10-v3",
+            "branch": "worktree-agent-04b85d10-v3",
+            "base": "02c39ba6",
+            "attempt": 3,
+            "session": 7
           }
         },
         {
@@ -62,7 +62,7 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "pilot accepted, three of three cells measured; confirmation addendum frozen at 9176ab91 and held for v2. Derived the F8 onset predicate in closed form (fast_max < slow_max - slow_min) and validated it on three cells. Preserves a cell gf2 wins by 1.66x. Open: the 0x11B framing correction, since the cited lines are test fixtures and gf2 ships no 0x11B GF(2^8) type.",
+          "status": "not dispatched in session 7: the invoker stopped new work before a slot freed. Protocol-v3 migration from old branch worktree-agent-6c6b09b1 remains; carry the 0x11B framing correction.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
@@ -77,29 +77,30 @@
           "short_id": "c077a88b",
           "title": "Establish compatible LDPC decoder benchmark arms",
           "classification": "research",
-          "status": "halted at invoker handoff. Final implementation and protocol-v3 evidence are merged to main through 32d8087d; worktree branch is clean at 1517d62d. Matched confirmation is accepted with zero findings and does not qualify; the quality screen has no admissible candidate. Pre-merge cargo-ci passed. Two Terra xhigh reviews were interrupted before verdicts, so converged research review, configured gates, post-merge CI and closure remain.",
+          "status": "done. Session 7 re-attributed the six untagged v3 commits (revert 8bf02a69, tagged re-apply 2cc56a51..df3630ce, identical tree) so review gates could see them. Two independent Terra xhigh reviews and cargo-ci, code-review, doc-review and research-review pass on b8f64b5b with zero findings; closed at ab661b4d. Worktrees reclaimed.",
           "dispatch": {
-            "model": "gpt-6-astra",
-            "worktree": ".worktrees-local/agent-c077a88b-v3",
+            "model": "gpt-6-astra (session 6)",
+            "worktree": "reclaimed",
             "branch": "worktree-agent-c077a88b-v3w",
             "base": "a416fa33",
             "attempt": 3,
             "session": 6
-          }
+          },
+          "merge_commit": "3b6026fc"
         },
         {
           "id": "eda07788-23a0-4852-939b-2cfcda36f9d1",
           "short_id": "eda07788",
           "title": "Establish compatible shift and coding-permutation baselines",
           "classification": "research",
-          "status": "halted at invoker handoff. Branch head 142d0774 preserves an accepted v3 pilot, resolution retry and frozen confirmation inputs. The confirmation completed all six cells over three resumable sessions while the interrupt was delivered; generated verdict accepted, qualifies false, receipt SHA-256 ab94fa3fcb4b9f54d4d236b1e80494767f8cc3e1141b063acc1d4342eeded52d. The ledger modification and untracked confirmation directory are intentional. Validation, findings, tests, commit, integration, links, converged Terra xhigh reviews, gates and closure remain.",
+          "status": "in flight on w-eda07788 (Opus, session 7) in .worktrees-local/agent-eda07788-v3. v3 confirmation committed (63f2fc04) and re-evaluated accepted after merging main; findings and source-evidence corrected (three falsified 5G NR claims). Lead decision: measure the NR LLR de-rate-matching family (AFF3CT public depuncture vs gf2 prepare_llrs) inside this issue as a new first-attempt family.",
           "dispatch": {
-            "model": "gpt-5.6-sol",
+            "model": "claude-opus (native subagent)",
             "worktree": ".worktrees-local/agent-eda07788-v3",
             "branch": "worktree-agent-eda07788-v3w",
-            "base": "5203ae88",
+            "base": "5203ae88 (main merged at 8c4e724e)",
             "attempt": 3,
-            "session": 6
+            "session": 7
           }
         },
         {
@@ -107,14 +108,14 @@
           "short_id": "c7113c5a",
           "title": "Establish equivalent polynomial multiplication baselines",
           "classification": "research",
-          "status": "confirmatory receipt accepted; REQ-01..04 met, REQ-05 PARTIAL (conservative/tuned cells need a superseding addendum, frozen and unrun). Proved the six Unstable cells are an artifact of the pooled outlier threshold: zero flagged windows per arm in every cell, widest window 1.21x its own arm's median, against 116-119 pooled in exactly the six cells at ratios >=167x. Derived a closed form for the onset.",
+          "status": "in flight on w-c7113c5a (claude-opus, session 7): protocol-v3 migration on a fresh worktree from main 02c39ba6; old session-4 branch worktree-agent-c7113c5a ported byte-identically as history.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
-            "worktree": ".agents/worktrees/agent-c7113c5a",
-            "branch": "worktree-agent-c7113c5a",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "worktree": ".agents/worktrees/agent-c7113c5a-v3",
+            "branch": "worktree-agent-c7113c5a-v3",
+            "base": "02c39ba6",
+            "attempt": 3,
+            "session": 7
           }
         },
         {
@@ -122,14 +123,14 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "FALSIFIED ITS OWN PREMISE: libpopcnt and Mula beat gf2's dispatcher materially at four of nine cells, and the measured crossover lands exactly on the 512-byte carry-save boundary read off the disassembly before the campaign ran. Found two comparison-validity defects in the inherited harness (misaligned gf2 fixture windows; gf2 arms rotating 8x the working set) and superseded the receipt taken through it. Found F13. Zero flagged windows pooled and per arm across four receipts at ratios 1.09x-3.07x, bounding F8's onset from below.",
+          "status": "in flight on w-26465e6c (claude-opus, session 7): protocol-v3 migration on .agents/worktrees/agent-26465e6c-v3 from main dda44c25.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
-            "worktree": ".agents/worktrees/agent-26465e6c",
-            "branch": "worktree-agent-26465e6c",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "worktree": ".agents/worktrees/agent-26465e6c-v3",
+            "branch": "worktree-agent-26465e6c-v3",
+            "base": "dda44c25",
+            "attempt": 3,
+            "session": 7
           }
         },
         {
@@ -137,14 +138,14 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "in flight on codex gpt-5.6-sol. Preserved a failed campaign launch as explicitly-not-a-receipt evidence and is re-running under a fresh campaign identity and executable digest after a formatter fix. Findings document was a stale draft at audit time. Outstanding: M4RI licence label GPL-2.0 -> GPL-2.0-or-later, to agree with 6c6b09b1.",
+          "status": "in flight on w-6fb89a3c (claude-fable, session 7): protocol-v3 migration on a fresh worktree from main 02c39ba6; old session-4 branch worktree-agent-6fb89a3c ported byte-identically as history.",
           "dispatch": {
-            "model": "gpt-5.6-sol",
-            "worktree": ".agents/worktrees/agent-6fb89a3c",
-            "branch": "worktree-agent-6fb89a3c",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "model": "claude-fable (native subagent)",
+            "worktree": ".agents/worktrees/agent-6fb89a3c-v3",
+            "branch": "worktree-agent-6fb89a3c-v3",
+            "base": "02c39ba6",
+            "attempt": 3,
+            "session": 7
           }
         },
         {
@@ -152,16 +153,16 @@
           "short_id": "1d0da41f",
           "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
           "classification": "implementation",
-          "status": "halted at invoker handoff. Protocol-v3 negative evidence is complete on unmerged branch e38763d9; only COMMIT-PLAN.md is untracked. A preliminary Terra xhigh review found a tail-count wording error, fixed at e38763d9, and missing v3 JIT links, still open. Integration, links, two converged Terra xhigh reviews, configured gates, post-merge CI and closure remain.",
+          "status": "done. Protocol-v3 branch merged at e36ad350 (clean; shared-crate fix byte-identical to main). cargo-ci and asm-artefact-present pass on e36ad350; lead fixed stale findings notes and linked 17 v3 artifacts (f9ec2385). Round-1 reviews and gates: code and research pass, doc-review F1 (FieldVec rustdoc promised VPCLMULQDQ) fixed by the lead in fecf9e70 (rework 1). Round-2 independent Terra xhigh reviews converge on PASS; code-review, doc-review, research-review pass on dda44c25. One research advisory remains: frozen v3 addenda call v1 superseded while v1 stays the governing adoption evidence (addenda are digest-pinned and cannot change).",
           "dispatch": {
-            "model": "gpt-5.6-sol",
-            "worktree": ".agents/worktrees/agent-1d0da41f",
+            "model": "gpt-5.6-sol (session 6); lead rework session 7",
+            "worktree": "reclaimed",
             "branch": "worktree-agent-1d0da41f",
             "base": "1abedf0a",
             "attempt": 3,
-            "session": 6
+            "session": 7
           },
-          "merge_commit": "4d630aec",
+          "merge_commit": "e36ad350",
           "note": "F14 biases toward declaring improvement and this receipt declined to, so the negative result holds a fortiori: the known defect works against the conclusion reached, not for it."
         }
       ]
@@ -215,6 +216,20 @@
           "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
+          "short_id": "12fdeb5b",
+          "title": "Establish 5G NR rate-matched encoder baselines",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "1c602857-5e5b-4981-949a-09bb7639476b",
+          "short_id": "1c602857",
+          "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
           "status": "pending"
         }
@@ -276,7 +291,26 @@
       ]
     }
   ],
-  "created_during_execution": [],
+  "created_during_execution": [
+    {
+      "id": "12fdeb5b",
+      "type": "task",
+      "in_epic": true,
+      "reason": "invoker decision: 5G NR whole-consumer encoder cell from eda07788 becomes a survey task; depends on eda07788, feeds 1362381c"
+    },
+    {
+      "id": "1c602857",
+      "type": "task",
+      "in_epic": true,
+      "reason": "c7113c5a confirmed from source that public clmul_wide/clmul_wide_slice bypass capability dispatch; depends on c7113c5a, feeds 63bad95d"
+    },
+    {
+      "id": "157c305c",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "eda07788 found NR rate-matched rustdoc documents +inf filler LLRs while de-rate-matching writes 15.0; depends on eda07788"
+    }
+  ],
   "escalations": [
     {
       "category": "issue scope change (labels/description)",
@@ -322,10 +356,38 @@
       "status": "resolved",
       "raised_at": "2026-09-08T13:00Z",
       "resolution": "Invoker authorized. Landed at d088c284 with an ordering test that fails against the previous behaviour. The fix binds only checkouts carrying it, so main was merged into all nine live worktrees and the lead held the turnstile to drain the six runners launched under the old wrapper."
+    },
+    {
+      "category": "history change on main (lead judgment, classifier-blocked)",
+      "issue": "c077a88b",
+      "question": "re-attribute six untagged c077a88b commits so issue-scoped review gates can see them",
+      "recommendation": "revert + tagged re-apply, identical tree",
+      "status": "resolved",
+      "raised_at": "2026-09-10",
+      "resolution": "Invoker approved; done at 8bf02a69..df3630ce, tree 6b4599ab unchanged."
+    },
+    {
+      "category": "scope (open question from session 4)",
+      "issue": "eda07788",
+      "question": "5G NR whole-consumer encoder cell: new epic task, tracked follow-up outside, or drop",
+      "recommendation": "follow-up outside the epic",
+      "status": "resolved",
+      "raised_at": "2026-09-08",
+      "resolution": "Invoker chose a new task inside the epic: 12fdeb5b."
+    },
+    {
+      "category": "issue scope change (description)",
+      "issue": "12fdeb5b",
+      "question": "replace the background paragraph after eda07788's source audit falsified two premises",
+      "recommendation": "replace background, criteria unchanged",
+      "status": "resolved",
+      "raised_at": "2026-09-10",
+      "resolution": "Invoker approved; applied in dda44c25."
     }
   ],
   "rework_counts": {
-    "f547c394": 2
+    "f547c394": 2,
+    "1d0da41f": 1
   },
   "surfaced_pitfalls": [
     {
@@ -365,7 +427,7 @@
     },
     {
       "issue": "f547c394",
-      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set \u2014 declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property \u2014 is the rework's design target.",
+      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set — declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property — is the rework's design target.",
       "origin": "issue-impact",
       "disposition": "all recorded in reviews/f547c394-r3.md; the rework worker reads that file as part of its mandatory audit step",
       "criterion_named_by": "REQ-02, REQ-03, REQ-04, REQ-06 of f547c394"
@@ -376,6 +438,27 @@
       "origin": "issue-impact",
       "disposition": "instructed to all four surveys with a pilot; answers go in each findings.md",
       "criterion_named_by": "REQ-01 of every survey issue (measurement-contract conformance)"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "P-20 requires >= 20 expected bootstrap draws per tail with bootstrap_resamples frozen at 10000: a first-attempt family yields confirmatory cells only with m <= 6, and any family carrying earlier confirmatory reservations (t = 2) only with cumulative m <= 2. eda07788 (m=12) and 1d0da41f (m=10) v3 confirmations are entirely not-confirmatory for this reason.",
+      "origin": "issue-impact (frozen protocol v3)",
+      "disposition": "every dispatch prompt states the bound; surveys report not-confirmatory status plainly. Relevant to REQ-04/REQ-05 holdout design in 63bad95d and 1362381c.",
+      "criterion_named_by": "REQ-01, REQ-04, REQ-05 of 1a379447 (confirmatory evidence design)"
+    },
+    {
+      "issue": "c077a88b",
+      "subject": "session-6 commits used scope (c077a88b) without the jit: tag, hiding them from issue-scoped review gates",
+      "origin": "process",
+      "disposition": "resolved by invoker-approved re-attribution; dispatch prompts require jit:<id> scopes",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "1d0da41f",
+      "subject": "doc-review F1: FieldVec dot-product rustdoc promised VPCLMULQDQ although the default bundle keeps sequential PCLMULQDQ",
+      "origin": "issue-impact",
+      "disposition": "fixed by the lead in fecf9e70 (rework round 1)",
+      "criterion_named_by": "none (doc gate)"
     }
   ],
   "notes": [
@@ -398,16 +481,23 @@
     "Session 4 lead direction on f547c394 F12: the rework materially amends P-17, P-18, P-19 and P-22, so the protocol becomes version 2. Version-1 receipts stay valid as version-1 evidence and acceptance must refuse to evaluate a receipt under a version it was not pinned to.",
     "Session 4: all eight wave-2 branches merged current main and were lead-preserved first. c7113c5a's confirmatory receipt and 26465e6c's popcount pilot receipt were sitting uncommitted in their worktrees and are now on their branches.",
     "Session 4 confirmed empirically: codex --add-dir <repo>/.git does NOT make a linked worktree's git directory writable; the sandbox mounts it read-only regardless. Codex workers keep a COMMIT-PLAN.md and the lead commits for them.",
-    "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations \u2014 but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
+    "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations — but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
     "Session 4: the CCX1 mutex starved every exclusive waiter because cargo-budget.sh took the shared side with flock -s and a pending flock -x does not block a new flock -s on Linux. Fixed at d088c284 with a turnstile both sides pass through, authorized by the invoker as a shared-infrastructure change. The fix binds only checkouts that have it, so the lead merged main into all nine live worktrees and then held the turnstile to drain the six runners launched under the old wrapper.",
-    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record \u2014 c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
+    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record — c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
     "Session 4: the lead commissioned two stood-down duplicate workers as read-only auditors rather than idling them. One verified 106 citations across all five survey findings documents and nine external checkouts; the other audited the shared crate for the defect class the first F13 instance revealed. Between them they produced F13-F19 and two false claims that would have reached receipts. Neither wrote a byte in any worktree.",
     "Session 4 convention adopted: a survey records code claims in a source-evidence.json ledger (project, commit, path, line, the verbatim text of that line, and why) rather than putting line numbers in prose. c077a88b did this and audited clean on 37 citations in seconds; the four prose-citation surveys took minutes each and two carried claims their citations did not support.",
-    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted \u2014 the F3 repair it needs to emit a decoder receipt at all \u2014 in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
-    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots \u2014 re-read each branch before acting.",
+    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted — the F3 repair it needs to emit a decoder receipt at all — in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
+    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots — re-read each branch before acting.",
     "Session 4 sequencing rule still in force: four surveys were told to hold their confirmatory campaigns until the lead says protocol v2 has landed. v2 is the critical path.",
     "Session 4 open question for the invoker: whether the 5G NR whole-consumer encoder cell eda07788 proposed becomes a new survey family in this epic, a tracked follow-up outside it, or is dropped. Lead recommends a tracked follow-up outside the epic.",
-    "Session 6 halted on the invoker request after stopping all three subagents and releasing the c077a88b, 1d0da41f and eda07788 leases. c077a88b is merged but open; 1d0da41f is complete on an unmerged branch; eda07788 completed all six frozen confirmation cells while the interrupt was being delivered and preserves the generated result uncommitted. Exact state and resume order are in handoff-5.md."
+    "Session 6 halted on the invoker request after stopping all three subagents and releasing the c077a88b, 1d0da41f and eda07788 leases. c077a88b is merged but open; 1d0da41f is complete on an unmerged branch; eda07788 completed all six frozen confirmation cells while the interrupt was being delivered and preserves the generated result uncommitted. Exact state and resume order are in handoff-5.md.",
+    "Invocation 2026-09-10 (session 7): drive epic 1a379447; subagent model by task difficulty; parallel worktrees, four workers at a time; clean up worktrees of already closed issues.",
+    "Session 7: reclaimed worktrees of closed issues (4e732b56, 6639435f, 73317b2e, a39bb161, eaae1b56 x3, f547c394-identity-tests, b749bdfc docfix, 9ce34225 gf2-ee-debt, 82dd7384 claude worktree) and c077a88b's three worktrees after closure; branches kept.",
+    "Session 7 invoker instruction: do not use Fable for any dispatch after the two running Fable workers (04b85d10, 6fb89a3c) finish; use Opus for hard work and Sonnet for routine work.",
+    "Session 7: independent research reviews run the unchanged research-review checker and prompt through scratchpad/indep-review.sh with a context built like jit's (issue, gate, latest run), REVIEWER_AGENT as configured (Terra xhigh).",
+    "Session 7: w-c7113c5a and w-eda07788 hit a provider session limit; the invoker reset it and both were revived by message (no re-dispatch).",
+    "Session 7 invoker instruction: start no new work in this session; finish the running issues (04b85d10 integration, eda07788, 6fb89a3c, c7113c5a, 26465e6c). 6c6b09b1 and wave 3 are not started.",
+    "Session 7: a harness hook refuses subagent Write of report-like files (findings.md). Policy: the worker sends the full text to the lead, the lead writes it, the worker reviews and commits; no Bash workaround. w-04b85d10 had already bypassed it with a Bash heredoc before the policy was set."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
