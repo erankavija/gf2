@@ -1,0 +1,20 @@
+# command: dev/active/c7113c5a/survey/run-baseline.sh confirmation
+# started_utc: 2026-09-07T19:49:09Z
+# gf2 revision (informational): d613abf87b3ddbdfc12606cdd202611936d565fe
+# mode: confirmation
+# addendum: dev/active/c7113c5a/addendum-polynomial-baselines.json
+# campaign: confirmation-c7113c5a-20260907t194909z
+# stage: /tmp/gf2-confirmation-c7113c5a-20260907t194909z
+# staging: /home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a/target/release/benchmark-acceptance
+# load_avg_start:  22:49:09 up 4 days, 18 min,  5 users,  load average: 29.67, 24.20, 19.01
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-c7113c5a-20260907t194909z/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-c7113c5a-20260907t194909z/execution.log
+# session 2 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  23:03:14 up 4 days, 32 min,  5 users,  load average: 10.59, 10.86, 13.27
+# finished_utc: 2026-09-07T20:03:14Z
