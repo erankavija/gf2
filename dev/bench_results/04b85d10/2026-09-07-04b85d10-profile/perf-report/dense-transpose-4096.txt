@@ -1,0 +1,38 @@
+# case: {"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12145857069
+#
+# Overhead  Command          Shared Object         Symbol                                                    
+# ........  ...............  ....................  ..........................................................
+#
+    62.57%  consumer-profil  consumer-profile      [.] <gf2_core::matrix::BitMatrix>::transpose
+            |
+            ---<gf2_core::matrix::BitMatrix>::transpose
+
+    32.26%  consumer-profil  consumer-profile      [.] gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+            |
+            ---gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+
+     2.14%  consumer-profil  libc.so.6             [.] 0x0000000000176e84
+            |
+            ---0x7fd4d6f76e84
+               <gf2_core::matrix::BitMatrix>::transpose
+               0x3f
+
+     1.67%  consumer-profil  libc.so.6             [.] 0x0000000000176e8e
+            |
+            ---0x7fd4d6f76e8e
+               <gf2_core::matrix::BitMatrix>::transpose
+               0x3f
+
+
+
+#
+# (Tip: To not record events from perf itself add --exclude-perf)
+#
