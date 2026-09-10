@@ -152,7 +152,7 @@ CLAIMS = [
     ("isal-xor-gen-base-definition", "isa-l", "raid/raid_base.c", "xor_gen_base(int vects, int len, void **array)", 0,
      "The measured routine."),
     ("isal-xor-gen-base-byte-loop", "isa-l", "raid/raid_base.c", "src[vects - 1][i] = parity; // last pointer is dest", 0,
-     "A byte-wise loop writing the destination last; the disassembly probe shows GCC did not vectorize it (33 general-purpose instructions)."),
+     "A byte-wise loop writing the destination last; the disassembly probe shows GCC did not vectorize it (build-evidence.json, isa_l.disassembly.routes.xor_gen_base)."),
     ("isal-multibinary-dispatch", "isa-l", "raid/raid_multibinary.asm", "mbin_dispatch_init6 xor_gen, xor_gen_base, xor_gen_sse, xor_gen_avx, xor_gen_avx, xor_gen_avx512", 0,
      "The public xor_gen dispatches to NASM-assembled SSE/AVX/AVX-512 kernels, none of which can be built without NASM on this host."),
     # Survey harness probes (outside the timed windows)
