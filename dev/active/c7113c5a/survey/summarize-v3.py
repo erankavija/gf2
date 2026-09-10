@@ -173,6 +173,93 @@ def per_product_table(directory, receipt, summary):
     return lines
 
 
+def estimates_table(directory, receipt):
+    """Quotients of medians from one native-family receipt. They are derived
+    estimates without intervals: each divides medians of different cells."""
+    cells = {cell["cell_id"]: cell for cell in receipt["cells"]}
+    needed = ("internal-clmul-batch-1024-1core", "poly-mul-4w-1core", "poly-mul-9w-1core",
+              "poly-mul-256w-1core", "poly-mul-2048w-streaming-1core", "poly-mul-4w-public-api-1core")
+    if not all(name in cells and cells[name]["pairs"] for name in needed):
+        return []
+
+    def med(name, side):
+        return arm_median(cells[name], side)
+
+    def conv(name, side):
+        return statistics.median(p[side]["conversion"]["unpack_ns"] for p in cells[name]["pairs"])
+
+    hardware = med("internal-clmul-batch-1024-1core", "baseline") / 1024
+    scalar256 = med("poly-mul-256w-1core", "baseline") / 256 ** 2
+    scalar2048 = med("poly-mul-2048w-streaming-1core", "baseline") / 2048 ** 2
+    factor = scalar256 / hardware
+    gap256 = med("poly-mul-256w-1core", "baseline") / med("poly-mul-256w-1core", "candidate")
+    gap2048 = (med("poly-mul-2048w-streaming-1core", "baseline")
+               / med("poly-mul-2048w-streaming-1core", "candidate"))
+    rows = [
+        ("gf2 sequential-PCLMULQDQ word product in the raw batch, unpack included", f"{hardware:.4g} ns"),
+        ("gf2 YMM 4-limb kernel per schoolbook word product", f"{med('poly-mul-4w-1core', 'baseline') / 16:.4g} ns"),
+        ("gf2 scalar schoolbook word product at 256 words", f"{scalar256:.4g} ns"),
+        ("gf2 scalar schoolbook word product at 2048 words", f"{scalar2048:.4g} ns"),
+        ("instruction factor: scalar over hardware word product at 256 words", f"{factor:.4g}"),
+        ("256-word gap divided by the instruction factor", f"{gap256 / factor:.4g}"),
+        ("2048-word gap divided by the 2048-word instruction factor", f"{gap2048 / (scalar2048 / hardware):.4g}"),
+        ("gf2x one-word gf2x_mul_r call in the raw-batch arm", f"{med('internal-clmul-batch-1024-1core', 'candidate') / 1024:.4g} ns"),
+        ("gf2x four-word gf2x_mul_r call", f"{med('poly-mul-4w-1core', 'candidate'):.4g} ns"),
+        ("gf2 public API over dispatched kernel at 4 words", f"{med('poly-mul-4w-public-api-1core', 'baseline') / med('poly-mul-4w-1core', 'baseline'):.4g}"),
+    ]
+    for words, name in ((4, "poly-mul-4w-1core"), (9, "poly-mul-9w-1core")):
+        for side, arm in (("baseline", "gf2"), ("candidate", "gf2x")):
+            product, reduction = med(name, side), conv(name, side)
+            rows.append((f"{words}-word {arm} unreduced product + separated reduction (reduction share)",
+                         f"{product:.4g} + {reduction:g} ns ({reduction / (product + reduction):.3g})"))
+    single = {"baseline": med("poly-mul-256w-1core", "baseline") / 256 ** 2,
+              "candidate": med("poly-mul-256w-1core", "candidate") / 256 ** 2}
+    for name in ("poly-mul-256w-6core", "poly-mul-256w-12core", "poly-mul-256w-24smt"):
+        if name not in cells or not cells[name]["pairs"]:
+            continue
+        workers = cells[name]["pairs"][0]["baseline"]["workers_observed"]
+        products = 256 ** 2 * 32 * workers
+        rows.append((f"{workers}-worker aggregate throughput over one core, gf2 / gf2x",
+                     f"{single['baseline'] / (med(name, 'baseline') / products):.3g} / "
+                     f"{single['candidate'] / (med(name, 'candidate') / products):.3g}"))
+    lines = [f"### Derived estimates: `{directory}`", "",
+             "Quotients of per-arm medians from different cells of this receipt; they carry no interval.", "",
+             "| Quantity | Value |", "|---|---:|"]
+    lines += [f"| {label} | {value} |" for label, value in rows]
+    return lines
+
+
+def ladder_table(rows):
+    """Conservative, tuned and native legs of the two ladder sizes, each from
+    its own confirmation cell; a comparison across legs is descriptive."""
+    confirmations = {summary["family"]["family_id"]: (directory, receipt, summary)
+                     for directory, (receipt, summary, _) in rows
+                     if summary["label"] == "confirmation" and receipt.get("family_id")}
+    targeting = confirmations.get("polynomial-host-targeting")
+    native = confirmations.get("polynomial-multiplication-baselines")
+    if not (targeting and native):
+        return []
+    lines = ["## Host-targeting ladder", "",
+             "Each leg is its own cell with its own pairs; conservative and tuned come from the "
+             "host-targeting confirmation, native from the native-family confirmation.", "",
+             "| Size | Level | gf2 median | gf2x median | Speedup | Interval | Outcome |",
+             "|---|---|---:|---:|---:|---|---|"]
+    legs = [("conservative", targeting, "poly-mul-{w}w-conservative-1core"),
+            ("tuned", targeting, "poly-mul-{w}w-tuned-1core"),
+            ("native", native, "poly-mul-{w}w-1core")]
+    for words in (4, 256):
+        for level, (directory, receipt, summary), pattern in legs:
+            cell_id = pattern.format(w=words)
+            cell = next(c for c in receipt["cells"] if c["cell_id"] == cell_id)
+            verdict = next(c for c in summary["cells"] if c["cell_id"] == cell_id)
+            interval = verdict["interval"]
+            lines.append(f"| {words} words | {level} | {ns(arm_median(cell, 'baseline'))} | "
+                         f"{ns(arm_median(cell, 'candidate'))} | {interval['estimate']:.4g} | "
+                         f"[{interval['lower']:.4g}, {interval['upper']:.4g}] at {interval['confidence']:.5f} | "
+                         f"{verdict['outcome']} |")
+    return lines
+
+
 def main():
     output, directories = sys.argv[1], sys.argv[2:]
     rows = [(directory.rstrip("/"), load(directory.rstrip("/"))) for directory in directories]
@@ -186,6 +273,12 @@ def main():
         if summary["label"] == "confirmation":
             lines += conversion_table(directory, receipt) + [""]
             lines += per_product_table(directory, receipt, summary) + [""]
+            estimates = estimates_table(directory, receipt)
+            if estimates:
+                lines += estimates + [""]
+    ladder = ladder_table(rows)
+    if ladder:
+        lines += ladder + [""]
     lines += library_table(rows) + [""]
     lines += sessions_table(rows) + [""]
     with open(output, "w") as handle:

@@ -160,6 +160,30 @@ Each arm's median call divided by the $N^2$ word products the schoolbook definit
 | `poly-mul-256w-24smt` | 256 | 24 | 50331648 | 2.791 | 0.01668 |
 | `poly-mul-4w-public-api-1core` | 4 | 1 | 16 | 34.73 | 0.7574 |
 
+### Derived estimates: `dev/bench_results/c7113c5a/v3-r1-baselines-confirmation`
+
+Quotients of per-arm medians from different cells of this receipt; they carry no interval.
+
+| Quantity | Value |
+|---|---:|
+| gf2 sequential-PCLMULQDQ word product in the raw batch, unpack included | 0.951 ns |
+| gf2 YMM 4-limb kernel per schoolbook word product | 0.4592 ns |
+| gf2 scalar schoolbook word product at 256 words | 35.45 ns |
+| gf2 scalar schoolbook word product at 2048 words | 37.19 ns |
+| instruction factor: scalar over hardware word product at 256 words | 37.28 |
+| 256-word gap divided by the instruction factor | 8.048 |
+| 2048-word gap divided by the 2048-word instruction factor | 22.15 |
+| gf2x one-word gf2x_mul_r call in the raw-batch arm | 6.184 ns |
+| gf2x four-word gf2x_mul_r call | 12.04 ns |
+| gf2 public API over dispatched kernel at 4 words | 75.62 |
+| 4-word gf2 unreduced product + separated reduction (reduction share) | 7.348 + 41.5 ns (0.85) |
+| 4-word gf2x unreduced product + separated reduction (reduction share) | 12.04 + 40 ns (0.769) |
+| 9-word gf2 unreduced product + separated reduction (reduction share) | 22.62 + 85 ns (0.79) |
+| 9-word gf2x unreduced product + separated reduction (reduction share) | 34.55 + 89 ns (0.72) |
+| 6-worker aggregate throughput over one core, gf2 / gf2x | 5.3 / 3.07 |
+| 12-worker aggregate throughput over one core, gf2 / gf2x | 8.73 / 4.84 |
+| 24-worker aggregate throughput over one core, gf2 / gf2x | 12.7 / 7.08 |
+
 ### Costs outside the timed windows: `dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation`
 
 Medians over all executions of each arm. `unpack` is the separated field reduction for the 4-word, 9-word and dot-product cells (rounded up, amortised over 4096 repetitions) and zero elsewhere.
@@ -227,6 +251,19 @@ Each arm's median call divided by the $N^2$ word products the schoolbook definit
 | `poly-mul-256w-6core` | 256 | 6 | 12582912 | 11.56 | 0.06409 |
 | `poly-mul-256w-12core` | 256 | 12 | 25165824 | 5.498 | 0.03181 |
 | `poly-mul-256w-24smt` | 256 | 24 | 50331648 | 3.687 | 0.02208 |
+
+## Host-targeting ladder
+
+Each leg is its own cell with its own pairs; conservative and tuned come from the host-targeting confirmation, native from the native-family confirmation.
+
+| Size | Level | gf2 median | gf2x median | Speedup | Interval | Outcome |
+|---|---|---:|---:|---:|---|---|
+| 4 words | conservative | 7.546 ns | 10.96 ns | 0.6886 | [0.6867, 0.6907] at 0.99375 | fail |
+| 4 words | tuned | 7.559 ns | 11.99 ns | 0.6304 | [0.6291, 0.6325] at 0.99375 | fail |
+| 4 words | native | 7.348 ns | 12.04 ns | 0.6104 | [0.6081, 0.6159] at 0.99960 | not-confirmatory |
+| 256 words | conservative | 2.358 ms | 8.177 us | 288.4 | [287.6, 289.8] at 0.99375 | pass |
+| 256 words | tuned | 2.378 ms | 7.812 us | 304.3 | [303.8, 305.2] at 0.99375 | pass |
+| 256 words | native | 2.323 ms | 7.744 us | 300 | [299, 301.3] at 0.99960 | not-confirmatory |
 
 ## gf2x libraries the candidate arms mapped
 
