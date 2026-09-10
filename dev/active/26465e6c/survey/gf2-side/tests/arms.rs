@@ -121,6 +121,16 @@ fn the_production_route_follows_gf2s_size_threshold() {
 }
 
 #[test]
+fn only_the_two_pass_route_selects_a_backend_per_call() {
+    for words in [4, 7, 8, 4096] {
+        let simd = usize::from(popcount_survey::arms::dispatch_route(words) != "scalar");
+        assert_eq!(AndArm::TwoPass.dispatch(words), 2 * simd, "words={words}");
+        assert_eq!(AndArm::Fused.dispatch(words), 0);
+        assert_eq!(AndArm::ScalarControl.dispatch(words), 0);
+    }
+}
+
+#[test]
 fn arm_names_round_trip() {
     for arm in PopcountArm::ALL {
         assert_eq!(PopcountArm::parse(arm.name()), Some(arm));

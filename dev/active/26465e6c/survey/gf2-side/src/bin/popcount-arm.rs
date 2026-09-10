@@ -95,8 +95,9 @@ fn elapsed_ns(start: Instant) -> u64 {
     u64::try_from(start.elapsed().as_nanos()).unwrap_or(u64::MAX)
 }
 
-/// Mean nanoseconds of one `body` call, calibrated to `PROBE_TARGET`. Probes
-/// run after the timed windows and never subtract from them.
+/// Mean nanoseconds of one `body` call, calibrated to `PROBE_TARGET` and
+/// rounded to the nearest nanosecond. Probes run after the timed windows and
+/// never subtract from them.
 fn probe_ns(mut body: impl FnMut()) -> u64 {
     let mut calls = 1_u64;
     loop {
@@ -106,7 +107,8 @@ fn probe_ns(mut body: impl FnMut()) -> u64 {
         }
         let elapsed = start.elapsed();
         if elapsed >= PROBE_TARGET || calls >= PROBE_MAX_CALLS {
-            return u64::try_from(elapsed.as_nanos() / u128::from(calls)).unwrap_or(u64::MAX);
+            let calls = u128::from(calls);
+            return u64::try_from((elapsed.as_nanos() + calls / 2) / calls).unwrap_or(u64::MAX);
         }
         calls *= 2;
     }
@@ -184,6 +186,7 @@ fn run_and(
     let arm = AndArm::parse(arm_name).ok_or_else(|| format!("{arm_name:?} is not an AND arm"))?;
     let setup_start = Instant::now();
     let op = arm.resolve()?;
+    let setup_ns = elapsed_ns(setup_start);
     let pattern = Pattern::parse(&case.pattern)?;
     let banks = banks(&request.cache_state)?;
     let fixtures = (0..banks)
@@ -194,7 +197,6 @@ fn run_and(
             ))
         })
         .collect::<Result<Vec<_>, String>>()?;
-    let setup_ns = elapsed_ns(setup_start);
     let slots: [(&[u64], &[u64]); FIXTURE_BANKS] = std::array::from_fn(|bank| {
         let (lhs, rhs) = &fixtures[bank % banks];
         (lhs.words(), rhs.words())
@@ -209,6 +211,10 @@ fn run_and(
     };
     let windows = time(request, &mut body)?;
     black_box(sink);
+    // Component costs of a whole-consumer route, each timed outside the
+    // windows that already contain them: `setup_ns` the arm's one-time route
+    // resolution, `pack_ns` one temporary copy of the left operand (allocate,
+    // copy, free), `dispatch_ns` one call's backend selections.
     let conversion = case.whole_consumer.then(|| {
         let (lhs, _) = slots[0];
         ConversionCosts {
@@ -223,9 +229,7 @@ fn run_and(
             batch_fill_ns: 0,
             dispatch_ns: match arm {
                 AndArm::TwoPass => probe_ns(|| {
-                    for _ in 0..2 {
-                        black_box(popcount_survey::arms::dispatch_route(black_box(lhs.len())));
-                    }
+                    black_box(arm.dispatch(black_box(lhs.len())));
                 }),
                 AndArm::Fused | AndArm::ScalarControl => 0,
             },
