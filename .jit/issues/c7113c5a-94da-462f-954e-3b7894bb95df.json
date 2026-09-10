@@ -198,6 +198,32 @@
       "doc_type": "report",
       "label": "Protocol-v3 host-targeting confirmation execution log",
       "path": "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Dot-reduction diagnostic launcher",
+      "path": "dev/bench_results/c7113c5a/run-dot-reduction-diagnostic.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Dot-reduction diagnostic command log",
+      "path": "dev/bench_results/c7113c5a/v3-dot-reduction-diagnostic/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Dot-reduction diagnostic producing identity",
+      "path": "dev/bench_results/c7113c5a/v3-dot-reduction-diagnostic/identity.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Dot-reduction diagnostic raw values",
+      "path": "dev/bench_results/c7113c5a/v3-dot-reduction-diagnostic/diagnostic.jsonl"
     }
   ],
   "first_ready_at": "2026-09-06T19:58:38.222036816Z",
@@ -210,7 +236,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-10T17:30:11.608897023Z",
+      "updated_at": "2026-09-10T23:02:54.073195815Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -241,5 +267,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Establish equivalent polynomial multiplication baselines",
-  "updated_at": "2026-09-10T17:50:11.783900199Z"
+  "updated_at": "2026-09-10T23:03:22.584109133Z"
 }
