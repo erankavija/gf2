@@ -1,0 +1,16 @@
+# command: dev/bench_results/c7113c5a/run-polynomial-v3.sh run host-targeting-confirmation
+# started_utc: 2026-09-10T16:46:46Z
+# gf2 revision (informational): 021165d3e06d04930cdef20bb0b527a12baa0112
+# addendum: dev/active/c7113c5a/addendum-v3-host-targeting-confirmation.json sha256 d5bef4cd9a946bb9e14b8ecc5b19697df9fa554dd9b30b3a27b97adea24cd609
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-campaigns/c7113c5a-v3-r1-host-targeting-confirmation.plan.json sha256 96c0544015a02c471be8d2b28033f02f5915ee21d44dd0f7657aa7bbdbcdb633
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 1.85 1.90 2.17
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-campaigns/c7113c5a-v3-r1-host-targeting-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-campaigns/c7113c5a-v3-r1-host-targeting-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-campaigns/c7113c5a-v3-r1-host-targeting-confirmation/execution.log
+# session 1 exit: 3 at 2026-09-10T16:49:45Z load 1.71 1.84 2.09
+# session 2 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-campaigns/c7113c5a-v3-r1-host-targeting-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-campaigns/c7113c5a-v3-r1-host-targeting-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-campaigns/c7113c5a-v3-r1-host-targeting-confirmation/execution.log
+# session 2 exit: 0 at 2026-09-10T16:51:58Z load 4.11 3.25 2.61
+GF2_BENCHMARK_RECEIPT=dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/receipt.json

@@ -12,7 +12,9 @@ from the raw pairs. The widest relative half-width,
 max(|s - l|, |u - s|) / s over the pilot's cells, rounded up to two decimals,
 becomes the frozen measurement resolution; the pilot receipt is pinned by path
 and SHA-256 as its evidence. Every cell keeps its pilot declaration with the
-confirmatory role. The script refuses to write an addendum whose margins do not
+confirmatory role. A margin the pilot's resolution invalidates may be replaced,
+with its new rationale, through the margin options; the record names every
+replaced value. The script refuses to write an addendum whose margins do not
 strictly exceed one plus that resolution, and it writes the derivation record
 beside the addendum so the frozen number is reproducible from committed bytes.
 """
@@ -31,7 +33,18 @@ def main():
     parser.add_argument("--frozen-utc", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--record", required=True)
+    parser.add_argument("--equivalence-margin", type=float)
+    parser.add_argument("--equivalence-rationale")
+    parser.add_argument("--material-gap-threshold", type=float)
+    parser.add_argument("--material-gap-rationale")
     args = parser.parse_args()
+    replacements = {
+        "equivalence_margin": (args.equivalence_margin, "equivalence_rationale", args.equivalence_rationale),
+        "material_gap_threshold": (args.material_gap_threshold, "material_gap_rationale", args.material_gap_rationale),
+    }
+    for name, (value, rationale_field, rationale) in replacements.items():
+        if (value is None) != (rationale is None):
+            raise SystemExit(f"replacing {name} needs both a value and a rationale")
 
     receipt_path = f"{args.pilot.rstrip('/')}/receipt.json"
     with open(receipt_path, "rb") as handle:
@@ -72,11 +85,16 @@ def main():
     resolution = math.ceil(widest * 100.0) / 100.0
     lines += ["", f"widest relative half-width   {widest:.6f}", f"frozen measurement resolution {resolution:.2f}"]
 
-    effect = addendum["effect"]
+    frozen = copy.deepcopy(addendum)
+    effect = frozen["effect"]
+    for name, (value, rationale_field, rationale) in replacements.items():
+        if value is not None:
+            lines.append(f"replaced {name} {effect[name]} -> {value}")
+            effect[name] = value
+            effect[rationale_field] = rationale
     for name in ("worthwhile_speedup", "equivalence_margin", "material_gap_threshold"):
         if effect[name] is not None and not effect[name] > 1.0 + resolution:
             raise SystemExit(f"{name} {effect[name]} does not exceed 1 + {resolution}")
-    frozen = copy.deepcopy(addendum)
     frozen["frozen"]["frozen_utc"] = args.frozen_utc
     frozen["effect"]["measurement_resolution"] = resolution
     frozen["effect"]["resolution_evidence"] = {"receipt": receipt_path, "sha256": receipt_sha}
