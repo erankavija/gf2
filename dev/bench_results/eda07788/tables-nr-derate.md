@@ -11,6 +11,88 @@ decide nothing. `setup` is one untimed construction.
 `unpack` and `pack` are the AFF3CT adapter's input and output stages, each timed
 alone after the measured windows; they are not additive parts of the timed call.
 
+## Protocol-v3 confirmation
+
+Source: `2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.json` (receipt `e1041cde377fa5742b8f613530647222bcfede7c2f47710711f6c832669de03e`), label **confirmation**, verdict **accepted**, qualifies false, 0 findings. Family `nr-llr-derate-matching-baselines`: 6 comparisons, attempt alpha 0.025, per-comparison confidence 0.995833.
+
+| Cell | Role | Pairs | Flagged windows | Speedup [interval] | gf2 faster by (gap cells) | Relative half-width | Decision | Outcome |
+|---|---|---|---|---|---|---|---|---|
+| `bg2-n256-k121-gap-native-vs-aff3ct` | confirmatory | 24 | 0/240 | 0.3491 [0.3472, 0.3504] | 2.865 [2.854, 2.880] | 0.0054 | regressed | fail |
+| `bg2-n1024-k400-gap-native-vs-aff3ct` | confirmatory | 24 | 0/240 | 0.3428 [0.3418, 0.3476] | 2.918 [2.877, 2.926] | 0.0141 | regressed | fail |
+| `bg2-n1440-k720-gap-native-vs-aff3ct` | confirmatory | 24 | 0/240 | 0.3197 [0.3186, 0.3208] | 3.128 [3.117, 3.139] | 0.0036 | regressed | fail |
+| `bg1-n1320-k1056-gap-native-vs-aff3ct` | confirmatory | 24 | 0/240 | 0.3263 [0.3251, 0.3274] | 3.065 [3.054, 3.076] | 0.0037 | regressed | fail |
+| `bg1-n2560-k2048-gap-native-vs-aff3ct` | confirmatory | 24 | 0/240 | 0.3292 [0.3282, 0.3312] | 3.038 [3.019, 3.047] | 0.0062 | regressed | fail |
+| `bg1-n2560-k2048-control-portable-vs-native` | confirmatory | 24 | 0/240 | 0.9992 [0.9905, 1.0031] | - | 0.0087 | not-worse | not-material |
+
+### Family accounting (P-20)
+
+Source: `2026-09-10-eda07788-nr-derate-confirmation/inputs/trial-ledger.jsonl`, the receipt-local ledger prefix pinned by `receipt.trial_ledger.sha256` = `e3cfbc758f7cc835af691e4f146d6a84ff061a130716c6e88e43edd94e22df28`.
+
+| Sequence | Campaign | Protocol | Comparisons | Candidate identities |
+|---|---|---|---|---|
+| 0 | `nr-derate-pilot-eda07788-20260910t170155z` | 3 | 0 | 0 |
+| 1 | `nr-derate-confirmation-eda07788-20260910t170957z` | 3 | 6 | 2 |
+
+| Quantity | Value | Derivation |
+|---|---|---|
+| family alpha | 0.05 | frozen addendum `family_wise.alpha` |
+| m (reserved comparisons) | 6 | sum of ledger `comparisons` |
+| t (non-exploratory attempts) | 1 | ledger entries with `comparisons` > 0 |
+| attempt alpha | 0.025000 | alpha / (t (t + 1)) |
+| corrected alpha | 0.0041667 | attempt alpha / m |
+| confidence | 0.995833 | 1 - corrected alpha |
+| bootstrap resamples | 10000 | frozen shared setting |
+| expected draws per tail | 20.83 | resamples x corrected alpha / 2 |
+| required draws per tail | 20 | protocol P-20 |
+| tail condition | holds |  |
+| summary agrees | yes | `family` block of the acceptance summary |
+
+### Measurement resolution
+
+| Quantity | Value | Source |
+|---|---|---|
+| declared measurement resolution | 0.03 | `2026-09-10-eda07788-nr-derate-confirmation/inputs/family-addendum.json` |
+| resolution evidence | `8843eeab9b4d95d2740658973c7e0c9b0dafadbbabe645b0743ec94c4797c713` | `dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/receipt.json` |
+| pilot widest relative half-width | 0.007809 (`bg1-n2560-k2048-gap-native-vs-aff3ct`) | `2026-09-10-eda07788-nr-derate-pilot/acceptance-summary.json` |
+| confirmation widest relative half-width | 0.014056 (`bg2-n1024-k400-gap-native-vs-aff3ct`) | `2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.json` |
+
+### Per-arm call time and adapter stages
+
+| Cell | Side | Arm | Executions | Median call ns | Call range ns | Median unpack ns | Median pack ns | Median call - unpack - pack ns | Median setup µs (once, untimed) |
+|---|---|---|---|---|---|---|---|---|---|
+| `bg2-n256-k121-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 225 | 224-247 | 0 | 0 | 225 | 1721.9 |
+| `bg2-n256-k121-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 645 | 644-652 | 71 | 62 | 513 | 49.0 |
+| `bg2-n1024-k400-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 615 | 608-657 | 0 | 0 | 615 | 8843.1 |
+| `bg2-n1024-k400-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 1795 | 1787-1810 | 144 | 105 | 1545 | 52.0 |
+| `bg2-n1440-k720-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 740 | 735-851 | 0 | 0 | 740 | 16843.5 |
+| `bg2-n1440-k720-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 2314 | 2298-2336 | 189 | 137 | 1988 | 51.5 |
+| `bg1-n1320-k1056-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 671 | 667-683 | 0 | 0 | 671 | 10492.1 |
+| `bg1-n1320-k1056-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 2055 | 2043-2070 | 167 | 115 | 1773 | 50.6 |
+| `bg1-n2560-k2048-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 1356 | 1349-1472 | 0 | 0 | 1356 | 46226.1 |
+| `bg1-n2560-k2048-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 4118 | 4093-4165 | 376 | 365 | 3373 | 53.0 |
+| `bg1-n2560-k2048-control-portable-vs-native` | baseline | `gf2-portable` | 24 | 1352 | 1347-1482 | 0 | 0 | 1352 | 39931.4 |
+| `bg1-n2560-k2048-control-portable-vs-native` | candidate | `gf2-native` | 24 | 1353 | 1349-1495 | 0 | 0 | 1353 | 41706.9 |
+
+### Paired adapter attribution
+
+| Cell | Pairs | Pairs where external conversion > paired call gap | Median external (call - unpack - pack) / paired gf2 call | Range |
+|---|---|---|---|---|
+| `bg2-n256-k121-gap-native-vs-aff3ct` | 24 | 0 | 2.2762 | 2.0817-2.2972 |
+| `bg2-n1024-k400-gap-native-vs-aff3ct` | 24 | 0 | 2.5042 | 2.3511-2.5371 |
+| `bg2-n1440-k720-gap-native-vs-aff3ct` | 24 | 0 | 2.6885 | 2.3244-2.7156 |
+| `bg1-n1320-k1056-gap-native-vs-aff3ct` | 24 | 0 | 2.6458 | 2.6001-2.6796 |
+| `bg1-n2560-k2048-gap-native-vs-aff3ct` | 24 | 0 | 2.4846 | 2.2952-2.5094 |
+
+### Sessions and host
+
+Source: `2026-09-10-eda07788-nr-derate-confirmation/receipt.json` `session_hosts`, one runtime host observation per bounded session; toolchain `rustc 1.97.0 (2d8144b78 2026-07-07)`.
+
+| Session | Observed | Host | CPU | Kernel | Governors | SMT | CPUs in mask | Load average 1/5/15 min |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 2026-09-10T17:09:57Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 0.30 / 1.26 / 2.12 |
+| 2 | 2026-09-10T17:10:53Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 1.18 / 1.33 / 2.09 |
+| 3 | 2026-09-10T17:11:50Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 2.32 / 1.59 / 2.13 |
+
 ## Protocol-v3 exploratory pilot
 
 Source: `2026-09-10-eda07788-nr-derate-pilot/acceptance-summary.json` (receipt `8843eeab9b4d95d2740658973c7e0c9b0dafadbbabe645b0743ec94c4797c713`), label **pilot**, verdict **accepted**, qualifies false, 0 findings. Family `nr-llr-derate-matching-baselines`: 1 comparisons, attempt alpha 0.025, per-comparison confidence 0.975000.
@@ -26,35 +108,24 @@ Source: `2026-09-10-eda07788-nr-derate-pilot/acceptance-summary.json` (receipt `
 | `bg1-n2560-k2048-gap-native-vs-aff3ct` | exploratory | 24 | 0/240 | 0.3300 [0.3295, 0.3325] | 3.031 [3.007, 3.035] | 0.0078 | regressed | pilot |
 | `bg1-n2560-k2048-control-portable-vs-native` | exploratory | 24 | 0/240 | 0.9997 [0.9966, 1.0035] | - | 0.0039 | not-worse | pilot |
 
-| Cell | Side | Arm | Executions | Median call µs | Call range µs | Median unpack µs | Median pack µs | Median call - unpack - pack µs | Median setup µs (once, untimed) |
+| Cell | Side | Arm | Executions | Median call ns | Call range ns | Median unpack ns | Median pack ns | Median call - unpack - pack ns | Median setup µs (once, untimed) |
 |---|---|---|---|---|---|---|---|---|---|
-| `bg2-n1024-k400-null-native-vs-native` | baseline | `gf2-native` | 24 | 0.6 | 0.6-0.7 | 0.0 | 0.0 | 0.6 | 8672.7 |
-| `bg2-n1024-k400-null-native-vs-native` | candidate | `gf2-native-control` | 24 | 0.6 | 0.6-0.7 | 0.0 | 0.0 | 0.6 | 8688.6 |
-| `bg2-n256-k121-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 0.2 | 0.2-0.2 | 0.0 | 0.0 | 0.2 | 1719.0 |
-| `bg2-n256-k121-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 0.6 | 0.6-0.7 | 0.1 | 0.1 | 0.5 | 50.4 |
-| `bg2-n1024-k400-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 0.6 | 0.6-0.6 | 0.0 | 0.0 | 0.6 | 8705.8 |
-| `bg2-n1024-k400-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 1.8 | 1.8-1.8 | 0.1 | 0.1 | 1.5 | 50.7 |
-| `bg2-n1440-k720-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 0.7 | 0.7-0.7 | 0.0 | 0.0 | 0.7 | 16762.6 |
-| `bg2-n1440-k720-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 2.3 | 2.3-2.3 | 0.2 | 0.1 | 2.0 | 50.2 |
-| `bg1-n1200-k900-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 0.7 | 0.7-0.8 | 0.0 | 0.0 | 0.7 | 8876.7 |
-| `bg1-n1200-k900-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 2.0 | 2.0-2.0 | 0.2 | 0.1 | 1.7 | 51.3 |
-| `bg1-n1320-k1056-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 0.7 | 0.7-0.8 | 0.0 | 0.0 | 0.7 | 10512.4 |
-| `bg1-n1320-k1056-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 2.0 | 2.0-2.1 | 0.2 | 0.1 | 1.8 | 52.0 |
-| `bg1-n2560-k2048-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 1.4 | 1.3-1.5 | 0.0 | 0.0 | 1.4 | 42127.7 |
-| `bg1-n2560-k2048-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 4.1 | 4.1-4.1 | 0.4 | 0.4 | 3.4 | 51.3 |
-| `bg1-n2560-k2048-control-portable-vs-native` | baseline | `gf2-portable` | 24 | 1.4 | 1.3-1.5 | 0.0 | 0.0 | 1.4 | 40120.0 |
-| `bg1-n2560-k2048-control-portable-vs-native` | candidate | `gf2-native` | 24 | 1.4 | 1.3-1.5 | 0.0 | 0.0 | 1.4 | 41885.1 |
-
-### Sessions and host
-
-Source: `2026-09-10-eda07788-nr-derate-pilot/receipt.json` `session_hosts`, one runtime host observation per bounded session; toolchain `rustc 1.97.0 (2d8144b78 2026-07-07)`.
-
-| Session | Observed | Host | CPU | Kernel | Governors | SMT | CPUs in mask | Load average 1/5/15 min |
-|---|---|---|---|---|---|---|---|---|
-| 1 | 2026-09-10T17:02:09Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 2.65 / 3.50 / 2.98 |
-| 2 | 2026-09-10T17:03:05Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 1.66 / 3.07 / 2.87 |
-| 3 | 2026-09-10T17:04:09Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 2.44 / 2.94 / 2.83 |
-| 4 | 2026-09-10T17:05:05Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 1.82 / 2.69 / 2.75 |
+| `bg2-n1024-k400-null-native-vs-native` | baseline | `gf2-native` | 24 | 608 | 606-725 | 0 | 0 | 608 | 8672.7 |
+| `bg2-n1024-k400-null-native-vs-native` | candidate | `gf2-native-control` | 24 | 610 | 607-727 | 0 | 0 | 610 | 8688.6 |
+| `bg2-n256-k121-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 226 | 225-246 | 0 | 0 | 226 | 1719.0 |
+| `bg2-n256-k121-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 645 | 643-660 | 71 | 62 | 513 | 50.4 |
+| `bg2-n1024-k400-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 612 | 607-644 | 0 | 0 | 612 | 8705.8 |
+| `bg2-n1024-k400-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 1778 | 1768-1798 | 143 | 104 | 1530 | 50.7 |
+| `bg2-n1440-k720-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 733 | 731-736 | 0 | 0 | 733 | 16762.6 |
+| `bg2-n1440-k720-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 2298 | 2290-2333 | 188 | 136 | 1973 | 50.2 |
+| `bg1-n1200-k900-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 655 | 651-769 | 0 | 0 | 655 | 8876.7 |
+| `bg1-n1200-k900-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 1966 | 1958-1982 | 157 | 111 | 1698 | 51.3 |
+| `bg1-n1320-k1056-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 667 | 664-782 | 0 | 0 | 667 | 10512.4 |
+| `bg1-n1320-k1056-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 2041 | 2036-2064 | 165 | 115 | 1761 | 52.0 |
+| `bg1-n2560-k2048-gap-native-vs-aff3ct` | baseline | `gf2-native` | 24 | 1352 | 1347-1505 | 0 | 0 | 1352 | 42127.7 |
+| `bg1-n2560-k2048-gap-native-vs-aff3ct` | candidate | `aff3ct-external` | 24 | 4097 | 4077-4125 | 376 | 364 | 3356 | 51.3 |
+| `bg1-n2560-k2048-control-portable-vs-native` | baseline | `gf2-portable` | 24 | 1350 | 1343-1486 | 0 | 0 | 1350 | 40120.0 |
+| `bg1-n2560-k2048-control-portable-vs-native` | candidate | `gf2-native` | 24 | 1351 | 1344-1481 | 0 | 0 | 1351 | 41885.1 |
 
 ## Arm executables
 
@@ -64,3 +135,6 @@ Source: `2026-09-10-eda07788-nr-derate-pilot/receipt.json` `session_hosts`, one 
 | `2026-09-10-eda07788-nr-derate-pilot` | `gf2-native` | native | `e998288939d9009b2dbcf380c3dde4cd22f96a1e81eb7dbd4193af7d896cb441` |
 | `2026-09-10-eda07788-nr-derate-pilot` | `gf2-native-control` | native | `e998288939d9009b2dbcf380c3dde4cd22f96a1e81eb7dbd4193af7d896cb441` |
 | `2026-09-10-eda07788-nr-derate-pilot` | `gf2-portable` | conservative-portable | `5fe2c4745be27599f403a29b357ff7a6e41b320a11435a0284a9b061c6e3e383` |
+| `2026-09-10-eda07788-nr-derate-confirmation` | `aff3ct-external` | external | `b19b2103f185ede21c39c57c3a191c39ef8b9ad0339c0685cc21cbaab8950642` |
+| `2026-09-10-eda07788-nr-derate-confirmation` | `gf2-native` | native | `e998288939d9009b2dbcf380c3dde4cd22f96a1e81eb7dbd4193af7d896cb441` |
+| `2026-09-10-eda07788-nr-derate-confirmation` | `gf2-portable` | conservative-portable | `5fe2c4745be27599f403a29b357ff7a6e41b320a11435a0284a9b061c6e3e383` |

@@ -102,7 +102,10 @@ def summary_cells(lines, directory):
     return summary
 
 
-def arm_medians(lines, directory):
+def arm_medians(lines, directory, unit="µs"):
+    """Per-arm medians in `unit`: µs for the frame-sized DVB-T2 calls, ns for
+    the sub-microsecond NR calls. Setup is always reported in µs."""
+    call_unit = micro if unit == "µs" else (lambda value_ns: f"{value_ns:.0f}")
     receipt = load(directory, "receipt.json")
     rows = []
     for cell in receipt["cells"]:
@@ -118,16 +121,16 @@ def arm_medians(lines, directory):
                 side,
                 f"`{executions[0]['arm']}`",
                 len(executions),
-                micro(statistics.median(calls)),
-                f"{micro(min(calls))}-{micro(max(calls))}",
-                micro(statistics.median(unpack)),
-                micro(statistics.median(pack)),
-                micro(statistics.median(residual)),
+                call_unit(statistics.median(calls)),
+                f"{call_unit(min(calls))}-{call_unit(max(calls))}",
+                call_unit(statistics.median(unpack)),
+                call_unit(statistics.median(pack)),
+                call_unit(statistics.median(residual)),
                 micro(statistics.median(setup)),
             ])
-    table(lines, ["Cell", "Side", "Arm", "Executions", "Median call µs", "Call range µs",
-                  "Median unpack µs", "Median pack µs", "Median call - unpack - pack µs",
-                  "Median setup µs (once, untimed)"], rows)
+    table(lines, ["Cell", "Side", "Arm", "Executions", f"Median call {unit}", f"Call range {unit}",
+                  f"Median unpack {unit}", f"Median pack {unit}",
+                  f"Median call - unpack - pack {unit}", "Median setup µs (once, untimed)"], rows)
     return receipt
 
 
@@ -320,14 +323,14 @@ def nr_tables():
         lines += ["### Measurement resolution", ""]
         resolution(lines, NR_PILOT, NR_CONFIRMATION, summary)
         lines += ["### Per-arm call time and adapter stages", ""]
-        receipt = arm_medians(lines, NR_CONFIRMATION)
+        receipt = arm_medians(lines, NR_CONFIRMATION, "ns")
         lines += ["### Paired adapter attribution", ""]
         paired_attribution(lines, receipt)
         lines += ["### Sessions and host", ""]
         sessions(lines, NR_CONFIRMATION)
     lines += ["## Protocol-v3 exploratory pilot", ""]
     summary_cells(lines, NR_PILOT)
-    arm_medians(lines, NR_PILOT)
+    arm_medians(lines, NR_PILOT, "ns")
     if NR_CONFIRMATION not in present:
         lines += ["### Sessions and host", ""]
         sessions(lines, NR_PILOT)
