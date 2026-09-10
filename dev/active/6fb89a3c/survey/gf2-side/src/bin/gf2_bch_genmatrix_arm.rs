@@ -148,7 +148,9 @@ fn main() {
                 black_box(out);
             }),
         ),
-        other => fail(format!("unknown route {other:?}; expected materialize or reference")),
+        other => fail(format!(
+            "unknown route {other:?}; expected materialize or reference"
+        )),
     };
     let samples = samples.unwrap_or_else(|error| fail(error));
     let cpus_observed = CpuAffinity::observe()

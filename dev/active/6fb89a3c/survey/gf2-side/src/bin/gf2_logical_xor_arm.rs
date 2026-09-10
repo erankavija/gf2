@@ -122,7 +122,12 @@ fn main() {
     }
     let setup_started = Instant::now();
     let source_storage: Vec<(Vec<u64>, usize)> = (0..sources)
-        .map(|s| aligned_storage(&splitmix_words(words, case.seed.wrapping_add(s as u64)), alignment))
+        .map(|s| {
+            aligned_storage(
+                &splitmix_words(words, case.seed.wrapping_add(s as u64)),
+                alignment,
+            )
+        })
         .collect();
     let (mut dest_storage, dest_start) = aligned_storage(&vec![0u64; words], alignment);
     let setup_ns = u64::try_from(setup_started.elapsed().as_nanos()).unwrap_or(u64::MAX);
