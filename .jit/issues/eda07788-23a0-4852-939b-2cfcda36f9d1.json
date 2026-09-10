@@ -14,6 +14,295 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "a938ddf442e1984dbedace270df1236690cc1dc08e823c3d5b73217507f11c99",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/eda07788/tables-nr-derate.md",
+          "resolved_path": "dev/bench_results/eda07788/tables-nr-derate.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8843eeab9b4d95d2740658973c7e0c9b0dafadbbabe645b0743ec94c4797c713",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/receipt.json"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/eda07788/2026-09-08-eda07788-dvb-t2-pilot/",
+          "resolved_path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-pilot"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ab94fa3fcb4b9f54d4d236b1e80494767f8cc3e1141b063acc1d4342eeded52d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e1041cde377fa5742b8f613530647222bcfede7c2f47710711f6c832669de03e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation/",
+          "resolved_path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b1298d9c63fe4810d907d436e3a12fcbc18ec2f6531ed731337e6d4a62ea92bc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/eda07788/tables-v3.md",
+          "resolved_path": "dev/bench_results/eda07788/tables-v3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "753c500b47e17f94c3d3a8ac53645290c001afb3f6a71ae71444be3420d3798d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot-r2/receipt.json",
+          "resolved_path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot-r2/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "eda07788 findings and criterion map",
+      "path": "dev/active/eda07788/findings.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://www.etsi.org/deliver/etsi_en/302700_302799/302755/01.04.01_60/en_302755v010401p.pdf",
+          "resolved_path": null
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Survey code-claim evidence ledger",
+      "path": "dev/active/eda07788/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "DVB-T2 family producing-input manifest",
+      "path": "dev/active/eda07788/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "NR de-rate-matching family producing-input manifest",
+      "path": "dev/active/eda07788/producing-inputs-nr-derate.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "DVB-T2 family ledger",
+      "path": "dev/active/eda07788/dvb-t2-bit-interleave-baselines-trial-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "DVB-T2 ledger v1 import record",
+      "path": "dev/active/eda07788/trial-ledger-v1-import.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "NR de-rate-matching family ledger",
+      "path": "dev/active/eda07788/nr-llr-derate-matching-trial-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "DVB-T2 v3 pilot addendum",
+      "path": "dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "DVB-T2 v3 resolution pilot addendum",
+      "path": "dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-pilot-r2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "DVB-T2 v3 frozen confirmation addendum",
+      "path": "dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "NR de-rate-matching pilot addendum",
+      "path": "dev/active/eda07788/addendum-nr-llr-derate-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "NR de-rate-matching frozen confirmation addendum",
+      "path": "dev/active/eda07788/addendum-nr-llr-derate-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "DVB-T2 resolution derivation",
+      "path": "dev/active/eda07788/pilot-resolution-v3-r2.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "NR de-rate-matching resolution derivation",
+      "path": "dev/active/eda07788/pilot-resolution-nr-derate.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "DVB-T2 campaign launcher",
+      "path": "dev/bench_results/eda07788/run-dvb-t2-baselines.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "NR de-rate-matching campaign launcher",
+      "path": "dev/bench_results/eda07788/run-nr-derate-baselines.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Receipt 2026-09-08-eda07788-dvb-t2-v3-pilot",
+      "path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Acceptance summary 2026-09-08-eda07788-dvb-t2-v3-pilot",
+      "path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Receipt 2026-09-08-eda07788-dvb-t2-v3-pilot-r2",
+      "path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot-r2/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Acceptance summary 2026-09-08-eda07788-dvb-t2-v3-pilot-r2",
+      "path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot-r2/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Receipt 2026-09-10-eda07788-nr-derate-pilot",
+      "path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Acceptance summary 2026-09-10-eda07788-nr-derate-pilot",
+      "path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Receipt 2026-09-08-eda07788-dvb-t2-v3-confirmation",
+      "path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Acceptance summary 2026-09-08-eda07788-dvb-t2-v3-confirmation",
+      "path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Execution log 2026-09-08-eda07788-dvb-t2-v3-confirmation",
+      "path": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Receipt 2026-09-10-eda07788-nr-derate-confirmation",
+      "path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Acceptance summary 2026-09-10-eda07788-nr-derate-confirmation",
+      "path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Execution log 2026-09-10-eda07788-nr-derate-confirmation",
+      "path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Independent v3 acceptance re-evaluation",
+      "path": "dev/bench_results/eda07788/reevaluation-v3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "DVB-T2 adapter correctness gate",
+      "path": "dev/active/eda07788/survey/validation-output-v3.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "NR AFF3CT pin checks and equivalence gate",
+      "path": "dev/active/eda07788/survey/nr-derate-validation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Shift semantics and NR selection comparison",
+      "path": "dev/active/eda07788/survey/analysis-output-v3.txt"
     }
   ],
   "first_ready_at": "2026-09-06T19:59:07.036587241Z",
@@ -23,7 +312,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-10T22:01:50.245671321Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "eda07788-23a0-4852-939b-2cfcda36f9d1",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -37,5 +332,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Establish compatible shift and coding-permutation baselines",
-  "updated_at": "2026-09-08T17:53:31.446282221Z"
+  "updated_at": "2026-09-10T22:02:48.798879587Z"
 }
