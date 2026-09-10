@@ -1,0 +1,19 @@
+# command: dev/active/6fb89a3c/survey/run-campaign.sh bch pilot 2026-09-08
+# started_utc: 2026-09-08T10:54:14Z
+# family: bch
+# mode: pilot
+# addendum: dev/active/6fb89a3c/addendum-bch-genmatrix-pilot.json
+# addendum_sha256: a3e0e087b4e885d5bbcfabd67b23e49378d511a5dec3a16acd67dbac96fc3750
+# campaign: bch-pilot-6fb89a3c-20260908t105414z
+# stage: /tmp/gf2-bch-pilot-6fb89a3c-20260908t105414z
+# lock invocation: RUSTUP_TOOLCHAIN=1.95.0 CARGO_CI_NO_LOCK=1 GF2_BENCH=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/target/release/benchmark-ab-runner run /tmp/gf2-bch-pilot-6fb89a3c-20260908t105414z /tmp/gf2-bch-pilot-6fb89a3c-20260908t105414z.plan.json
+# load_avg_start:  13:54:14 up 4 days, 15:23,  5 users,  load average: 1.28, 1.85, 3.82
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-bch-pilot-6fb89a3c-20260908t105414z/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-bch-pilot-6fb89a3c-20260908t105414z/execution.log
+# session 2 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  14:05:17 up 4 days, 15:34,  5 users,  load average: 1.21, 2.40, 3.65
+# finished_utc: 2026-09-08T11:05:17Z
