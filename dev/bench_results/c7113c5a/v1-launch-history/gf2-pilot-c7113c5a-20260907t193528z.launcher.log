@@ -1,0 +1,11 @@
+# command: dev/active/c7113c5a/survey/run-baseline.sh pilot 2026-09-07 -b
+# started_utc: 2026-09-07T19:35:28Z
+# gf2 revision (informational): cf4a0fa340c22d26d2b4899937148264cca58548
+# mode: pilot
+# addendum: dev/active/c7113c5a/addendum-polynomial-baselines-pilot.json
+# campaign: pilot-c7113c5a-20260907t193528z
+# stage: /tmp/gf2-pilot-c7113c5a-20260907t193528z
+# staging: /home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a/target/release/benchmark-acceptance
+# load_avg_start:  22:35:28 up 4 days, 4 min,  5 users,  load average: 19.72, 16.71, 13.33

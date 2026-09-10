@@ -10,11 +10,15 @@
 //! gf2x supplies no field reduction, so the whole-consumer dot-product arm
 //! composes gf2x products with gf2's `BarrettReducer`. The reduction cost is
 //! reported separately, and both arms of that cell reduce with the same gf2
-//! code, so the cell compares the product-and-accumulate stage.
+//! code, so the cell compares the product-and-accumulate stage. The 4-word and
+//! 9-word long-product cells likewise report the gf2 `BarrettReducerWide`
+//! reduction of this arm's own product, the stage a GF(2^256) or GF(2^571)
+//! consumer composing gf2x would add.
 
 use gf2_core::gf2m::barrett::{clmul, BarrettReducer};
 use std::os::raw::c_int;
 
+use poly_baseline_arms::wide_field::reduction_probe_ns;
 use poly_baseline_arms::{
     amortised_probe_ns, probe_ns, Backend, Bank, Case, Conversion, DOT_FIELD_DEGREE, DOT_FIELD_POLY,
 };
@@ -98,6 +102,20 @@ pub fn loaded_library() -> String {
     }
 }
 
+/// SHA-256 of the gf2x shared object this process mapped.
+///
+/// The runner digests only the arm executable, so the library bytes the
+/// dynamic loader resolved enter the receipt through the selected path this
+/// arm reports.
+pub fn loaded_library_sha256() -> String {
+    use sha2::{Digest, Sha256};
+    let path = loaded_library();
+    match std::fs::read(&path) {
+        Ok(bytes) => format!("{:x}", Sha256::digest(bytes)),
+        Err(error) => format!("(unreadable: {error})"),
+    }
+}
+
 /// Aborts unless the loaded gf2x is the build `GF2X_PREFIX` named at compile
 /// time.
 ///
@@ -113,6 +131,17 @@ pub fn assert_pinned_library() {
         loaded.starts_with(prefix),
         "loaded gf2x {loaded} is not the pinned build under {prefix}"
     );
+}
+
+/// Runtime-observed identity of the gf2x build this process executes: entry
+/// point, mapped library path and digest, and the CFLAGS it was built with.
+pub fn selected_path() -> String {
+    format!(
+        "gf2x_mul_r library={} sha256={} cflags={}",
+        loaded_library(),
+        loaded_library_sha256(),
+        env!("GF2X_CFLAGS_USED")
+    )
 }
 
 /// An initialised gf2x scratch pool owned by one worker.
@@ -151,11 +180,7 @@ pub struct Gf2xBackend {
 
 impl Backend for Gf2xBackend {
     fn selected_path(&self) -> String {
-        format!(
-            "gf2x_mul_r library={} cflags={}",
-            loaded_library(),
-            env!("GF2X_CFLAGS_USED")
-        )
+        selected_path()
     }
 
     fn create(case: &Case) -> Self {
@@ -209,8 +234,9 @@ impl Backend for Gf2xBackend {
             std::hint::black_box(&pool);
         });
         match case {
-            Case::PolyMul { .. } => Conversion {
+            Case::PolyMul { words, .. } => Conversion {
                 setup_ns,
+                unpack_ns: reduction_probe_ns(*words, bank, |field| self.run(case, field)),
                 ..Conversion::default()
             },
             Case::ClmulBatch { .. } => Conversion {
