@@ -7,9 +7,9 @@ are the acceptance tool's; the script recomputes one interval per receipt
 bit-for-bit from the raw pairs before it writes anything, so its resampling
 port is checked against the tool. It adds, with the method printed in the
 output, the arm medians with bootstrap intervals, the fastest measured arm per
-population-count workload with bootstrapped cross-cell ratios, and the
-conversion-cost probes of whole-consumer cells. The protocol-v1 confirmation
-follows as history.
+population-count workload and each arm's alignment and bit-pattern contrasts
+as bootstrapped cross-cell ratios, and the conversion-cost probes of
+whole-consumer cells. The protocol-v1 confirmation follows as history.
 
 Usage: summarize-receipts.py  (from the repository root)
 """
@@ -43,6 +43,12 @@ V1_COUNTERPARTS = {
     "popcount-csa-boundary-at-vs-mula": "popcount-w64-vs-mula-avx2-harley-seal",
     "popcount-cache-resident-vs-libpopcnt": "popcount-w16384-vs-libpopcnt",
 }
+# (variant workload, reference workload, what the variant changes).
+CONTRASTS = [
+    ("w256-off24", "w256", "window 24 bytes past a vector boundary"),
+    ("w64-ones", "w64", "every bit set"),
+    ("w64-zeros", "w64", "every bit clear"),
+]
 RESAMPLES = 10000
 DESCRIPTIVE_ALPHA = 0.05
 PROBES = ("setup_ns", "pack_ns", "dispatch_ns")
@@ -215,10 +221,11 @@ def workload_text(family, key):
     if family == "popcount":
         words, offset, pattern, cache, seed, _ = families.POPCOUNT_WORKLOADS[key]
         where = f" +{offset * 8} B" if offset else ""
-        data = f"random seed {seed}" if pattern == "random" else pattern.replace("_", "-")
+        data = (f"SplitMix64 seed {seed}" if pattern == "random"
+                else pattern.replace("_", "-"))
         return f"{words} w = {words * 8} B{where}, {data}, {cache}"
     words, cache, seed, _ = families.AND_WORKLOADS[key]
-    return (f"2 x {words} w = 2 x {words * 8} B, random seeds {seed}/"
+    return (f"2 x {words} w = 2 x {words * 8} B, SplitMix64 seeds {seed}/"
             f"{seed + families.AND_RHS_SEED_OFFSET}, {cache}")
 
 
@@ -299,6 +306,38 @@ def popcount_matrix(out, receipt, summary):
     out.append("")
 
 
+def arm_samples(by_cell, key):
+    """Each arm's executions on one workload; the dispatcher pools its cells."""
+    samples = {families.POPCOUNT_BASELINE: []}
+    for candidate in families.POPCOUNT_CANDIDATES:
+        cell = by_cell.get(f"popcount-{key}-vs-{candidate}")
+        if cell is None:
+            continue
+        samples[families.POPCOUNT_BASELINE].extend(values(cell, "baseline"))
+        samples[candidate] = values(cell, "candidate")
+    return samples
+
+
+def workload_contrasts(out, receipt, digest):
+    by_cell = {cell["cell_id"]: cell for cell in receipt["cells"]}
+    out.append(
+        "Workload contrasts: each arm's median on the variant workload over its median on the "
+        "reference workload (above 1: the variant is slower), resampled independently; 95% "
+        "descriptive intervals."
+    )
+    out.append("")
+    arms = [families.POPCOUNT_BASELINE] + families.POPCOUNT_CANDIDATES
+    out.append("| Variant / reference | Change | " + " | ".join(arms) + " |")
+    out.append("|---|---|" + "---|" * len(arms))
+    for variant, reference, change in CONTRASTS:
+        top, bottom = arm_samples(by_cell, variant), arm_samples(by_cell, reference)
+        row = [ratio_text(ratio_interval(top[arm], bottom[arm],
+                                         f"{digest}:{variant}/{reference}:{arm}"))
+               if arm in top and arm in bottom else "not declared" for arm in arms]
+        out.append(f"| {variant} / {reference} | {change} | " + " | ".join(row) + " |")
+    out.append("")
+
+
 def fastest_arms(out, receipt, digest):
     by_cell = {cell["cell_id"]: cell for cell in receipt["cells"]}
     out.append(
@@ -313,13 +352,7 @@ def fastest_arms(out, receipt, digest):
     out.append("|---|---|---:|---|---|---|---|---|")
     for key in families.POPCOUNT_WORKLOADS:
         words = families.POPCOUNT_WORKLOADS[key][0]
-        samples = {families.POPCOUNT_BASELINE: []}
-        for candidate in families.POPCOUNT_CANDIDATES:
-            cell = by_cell.get(f"popcount-{key}-vs-{candidate}")
-            if cell is None:
-                continue
-            samples[families.POPCOUNT_BASELINE].extend(values(cell, "baseline"))
-            samples[candidate] = values(cell, "candidate")
+        samples = arm_samples(by_cell, key)
         ranked = sorted(samples, key=lambda arm: median(samples[arm]))
         fastest, runner_up = ranked[0], ranked[1]
         found = median_interval(samples[fastest], f"{digest}:{key}:{fastest}:fastest")
@@ -446,6 +479,7 @@ def main():
         if family == "popcount":
             popcount_matrix(out, receipt, summary)
             fastest_arms(out, receipt, digest)
+            workload_contrasts(out, receipt, digest)
             if mode == "confirmation":
                 current = (directory.name, summary)
         cell_table(out, receipt, summary, family, digest)
