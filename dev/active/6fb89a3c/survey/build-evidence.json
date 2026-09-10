@@ -1173,43 +1173,43 @@
   },
   "rust_harness_binaries": {
     "gf2_transpose_arm": {
-      "sha256": "e41cfbfe431a9eed0fa9f0b9f16b2c71904706d0d0ace0c9fc6e075cfb954ca3",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=01ee72a0462867d88de08b65efd195eb8e43072c, not stripped"
+      "sha256": "f6fe3288f78d45d03136fa56f77d5694224cceeeeb15ac1631216c4e2e1c1c62",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=575314054e39aa96076172fbe6fc178a14734ccc, not stripped"
     },
     "gf2_logical_xor_arm": {
-      "sha256": "496fe34911a44336eb0d941749def19d76151474e01e9bb864594a2cf34a8167",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=e9ad46bc7987497f681ab7e5f53da744cf22ce15, not stripped"
+      "sha256": "787e438b4a728748018face738e3a342e9b748492f13637cbc7072577f1e67d1",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=09daadbd55eb13334ccd4552b01613676fdf7f13, not stripped"
     },
     "gf2_bch_genmatrix_arm": {
-      "sha256": "7e6c1d05a8365caa0a9561ee9eec3c08183b8a2a8febdae5d3065346376f7ce9",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=631dde3ffc82105d70bb924916ad0c14b6ac45b8, not stripped"
+      "sha256": "f5c15729951dbcf151b38c2932112fa20a492933bb97aa1cb6b3fa1ccf90d83f",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=afc8c424f206e2ba4f897284bc2707bd9bf051c1, not stripped"
     }
   },
   "gf2_disassembly": {
     "gf2_transpose_arm": {
       "file": "gf2_transpose_arm",
-      "sha256": "e41cfbfe431a9eed0fa9f0b9f16b2c71904706d0d0ace0c9fc6e075cfb954ca3",
+      "sha256": "f6fe3288f78d45d03136fa56f77d5694224cceeeeb15ac1631216c4e2e1c1c62",
       "whole_file": {
-        "instructions": 95786,
+        "instructions": 95884,
         "by_register_class": {
-          "general": 91003,
+          "general": 91101,
           "xmm": 4157,
           "ymm": 626
         },
         "cpuid": 10,
         "top_mnemonics": {
-          "mov": 29010,
-          "lea": 5916,
-          "cmp": 4828,
-          "jmp": 4293,
-          "call": 4066,
-          "int3": 4052,
-          "je": 3777,
-          "add": 3245,
-          "test": 2868,
+          "mov": 29050,
+          "lea": 5939,
+          "cmp": 4831,
+          "jmp": 4294,
+          "call": 4081,
+          "int3": 4034,
+          "je": 3779,
+          "add": 3249,
+          "test": 2871,
           "xor": 2752,
-          "pop": 2503,
-          "jne": 2371
+          "pop": 2507,
+          "jne": 2379
         }
       },
       "routes": {
@@ -1332,28 +1332,28 @@
     },
     "gf2_logical_xor_arm": {
       "file": "gf2_logical_xor_arm",
-      "sha256": "496fe34911a44336eb0d941749def19d76151474e01e9bb864594a2cf34a8167",
+      "sha256": "787e438b4a728748018face738e3a342e9b748492f13637cbc7072577f1e67d1",
       "whole_file": {
-        "instructions": 91929,
+        "instructions": 92116,
         "by_register_class": {
-          "general": 87821,
-          "xmm": 3636,
+          "general": 87994,
+          "xmm": 3650,
           "ymm": 472
         },
         "cpuid": 10,
         "top_mnemonics": {
-          "mov": 27305,
-          "lea": 5867,
-          "cmp": 4846,
-          "jmp": 4202,
-          "int3": 4091,
-          "call": 3943,
-          "je": 3729,
-          "add": 3222,
-          "test": 2836,
+          "mov": 27405,
+          "lea": 5879,
+          "cmp": 4862,
+          "jmp": 4206,
+          "int3": 4086,
+          "call": 3960,
+          "je": 3732,
+          "add": 3230,
+          "test": 2841,
           "pop": 2488,
-          "jne": 2403,
-          "xor": 2215
+          "jne": 2411,
+          "xor": 2206
         }
       },
       "routes": {
@@ -1433,28 +1433,28 @@
     },
     "gf2_bch_genmatrix_arm": {
       "file": "gf2_bch_genmatrix_arm",
-      "sha256": "7e6c1d05a8365caa0a9561ee9eec3c08183b8a2a8febdae5d3065346376f7ce9",
+      "sha256": "f5c15729951dbcf151b38c2932112fa20a492933bb97aa1cb6b3fa1ccf90d83f",
       "whole_file": {
-        "instructions": 114752,
+        "instructions": 114870,
         "by_register_class": {
-          "general": 110414,
-          "xmm": 4213,
+          "general": 110524,
+          "xmm": 4221,
           "ymm": 125
         },
         "cpuid": 10,
         "top_mnemonics": {
-          "mov": 35174,
-          "lea": 7517,
-          "cmp": 5601,
-          "call": 5453,
-          "jmp": 5225,
-          "int3": 5171,
-          "je": 4731,
-          "add": 3883,
-          "test": 3658,
-          "jne": 3243,
-          "pop": 3099,
-          "xor": 2654
+          "mov": 35208,
+          "lea": 7541,
+          "cmp": 5603,
+          "call": 5473,
+          "jmp": 5233,
+          "int3": 5183,
+          "je": 4732,
+          "add": 3885,
+          "test": 3656,
+          "jne": 3242,
+          "pop": 3107,
+          "xor": 2653
         }
       },
       "routes": {
@@ -1462,25 +1462,25 @@
           "pattern": "^gf2_bch_genmatrix_arm::main$",
           "functions": {
             "gf2_bch_genmatrix_arm::main": {
-              "instructions": 5225,
+              "instructions": 5366,
               "by_register_class": {
-                "general": 5018,
-                "xmm": 207
+                "general": 5151,
+                "xmm": 215
               },
               "cpuid": 0,
               "top_mnemonics": {
-                "mov": 1710,
-                "lea": 510,
-                "call": 428,
-                "jmp": 337,
-                "je": 323,
-                "cmp": 277,
-                "test": 191,
-                "jne": 176,
-                "xor": 104,
-                "add": 97,
-                "movdqu": 95,
-                "movabs": 89
+                "mov": 1772,
+                "lea": 541,
+                "call": 443,
+                "jmp": 342,
+                "je": 325,
+                "cmp": 280,
+                "test": 193,
+                "jne": 182,
+                "xor": 110,
+                "movdqu": 99,
+                "add": 98,
+                "movq": 75
               }
             }
           }
