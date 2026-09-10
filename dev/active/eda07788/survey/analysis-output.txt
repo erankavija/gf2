@@ -1,0 +1,15 @@
+# command: dev/active/eda07788/survey/run-analysis.sh
+# host: fraktaali
+# utc: 2026-09-08T09:30:12Z
+# toolchain: rustc 1.97.0 (2d8144b78 2026-07-07)
+# AFF3CT rule source: aff3ct v4.7.0 e8a65c5047262d97a15563b9edc961f69b2792cc (transcribed from Puncturer_5G.cpp and 5G_base_graph.cpp, not linked)
+
+PASS zero-fill semantics: 148 shifts over lengths [0, 1, 63, 64, 65, 127, 128, 4096, 64800] match an independent zero-fill reference with canonical indexing and zero tail padding
+PASS wrap is a different operation: 88/88 nonzero offsets give a different result under wrap-around rotation than under gf2's zero-fill shift
+AGREE  BG2 target_n=256 target_k=121 (Z=22, full_k=220, full_n=1144, 2Z=44, parity_kept=179): 256 selected bits identical; lifting gf2 (Kb=10, Z=22) vs AFF3CT (Kb=6, Z=22)
+AGREE  BG2 target_n=512 target_k=200 (Z=26, full_k=260, full_n=1352, 2Z=52, parity_kept=364): 512 selected bits identical; lifting gf2 (Kb=10, Z=26) vs AFF3CT (Kb=8, Z=26)
+AGREE  BG2 target_n=1024 target_k=400 (Z=52, full_k=520, full_n=2704, 2Z=104, parity_kept=728): 1024 selected bits identical; lifting gf2 (Kb=10, Z=52) vs AFF3CT (Kb=8, Z=52)
+AGREE  BG1 target_n=1024 target_k=512 (Z=24, full_k=528, full_n=1632, 2Z=48, parity_kept=560): 1024 selected bits identical; lifting same (Kb, Z)
+AGREE  BG1 target_n=2048 target_k=1024 (Z=48, full_k=1056, full_n=3264, 2Z=96, parity_kept=1120): 2048 selected bits identical; lifting same (Kb, Z)
+AGREE  BG1 target_n=4096 target_k=2048 (Z=96, full_k=2112, full_n=6528, 2Z=192, parity_kept=2240): 4096 selected bits identical; lifting same (Kb, Z)
+6 configurations agree, 0 diverge, out of 6

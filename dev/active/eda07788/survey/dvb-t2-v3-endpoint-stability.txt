@@ -1,0 +1,17 @@
+# command: survey/analysis bootstrap-resolution dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json 0.0006944444444444445
+# The v3 confirmation's own corrected alpha, 0.05 / (2 * 3) / 12.
+receipt dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json
+campaign confirmation-v3-eda07788-20260908t194030z seed 20260908
+alpha 0.0006944444444444445 confidence 0.999306 resamples 10000
+
+cell                                                 estimate    lower    upper  rel_half     shift
+dvb-t2-qam16-r12-normal-gap-native-vs-xdsopl           0.4901   0.4879   0.4937    0.0073    0.0004
+dvb-t2-qam16-r12-normal-gap-portable-vs-xdsopl         0.4890   0.4297   0.4954    0.1214    0.0000
+dvb-t2-qam16-r12-normal-control-portable-vs-native     1.0018   0.9898   1.0098    0.0120    0.0007
+dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl           0.4580   0.4510   0.4626    0.0151    0.0011
+dvb-t2-qam64-r12-normal-gap-portable-vs-xdsopl         0.4623   0.4443   0.4702    0.0390    0.0010
+dvb-t2-qam64-r12-normal-control-portable-vs-native     0.9993   0.9919   1.0048    0.0075    0.0004
+
+widest relative half-width: 0.121401 (dvb-t2-qam16-r12-normal-gap-portable-vs-xdsopl)
+largest endpoint shift:     0.001127 (dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl)
+larger of the two rounded up to two decimals: 0.13
