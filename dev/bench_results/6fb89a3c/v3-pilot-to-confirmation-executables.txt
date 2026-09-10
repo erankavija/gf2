@@ -125,3 +125,35 @@ functions (name: identical|differs|absent, old address -> new address):
   bshuf_trans_byte_elem_SSE_64: identical, 0x72a0 -> 0x73e0 (72 instructions)
   bshuf_trans_bit_byte_AVX: identical, 0x9e60 -> 0x9fa0 (74 instructions)
   main: differs, 0x1200 -> 0x1200 (1018 instructions)
+
+## gf2_logical_xor_arm differing bytes
+# Command: cmp -l <pilot build> <confirmation build> (1-based decimal offset, old and new byte in octal);
+# section file ranges from readelf -S: .note.gnu.build-id 0x31c+0x24, .data.rel.ro 0x73a28+0x2418.
+   813  42 351
+   814  35 255
+   815 110 106
+   816 261 274
+   817 216 171
+   818 102 207
+   819 244 111
+   820 167 177
+   821 212 150
+   822 373  32
+   823 315 267
+   824 237 345
+   825 312 365
+   826 135  75
+   827 113 247
+   828 373 104
+   829 220 317
+   830  23  42
+   831  60 316
+   832   0  25
+474329 212 217
+474353 211 216
+474377 203 210
+474401 214 221
+474425 214 221
+474449 215 222
+# The six .data.rel.ro bytes lie 24 bytes apart and each grows by 5 (octal 212->217, 211->216, 203->210, 214->221, 214->221, 215->222):
+# the line fields of six source locations after the five lines rustfmt inserted into gf2_logical_xor_arm.rs.
