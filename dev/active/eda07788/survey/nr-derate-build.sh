@@ -52,6 +52,14 @@ if [[ "${static}" != "${AFF3CT_STATIC_SHA256}" ]]; then
 fi
 echo "aff3ct: static library sha256 ${static} verified"
 
+# srsRAN's rate dematcher stays a surveyed candidate. Its CMake configuration
+# requires MbedTLS; record whether this host provides it.
+if pkg-config --exists mbedtls; then
+    echo "srsran: pkg-config module mbedtls present"
+else
+    echo "srsran: pkg-config module mbedtls missing; srsRAN's CMake configuration stops, so no srsRAN arm is built"
+fi
+
 mkdir -p "${EXT}"
 EXT="$(cd "${EXT}" && pwd)"
 
