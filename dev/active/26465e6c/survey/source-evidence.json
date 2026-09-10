@@ -1,0 +1,459 @@
+{
+  "schema": "popcount-source-evidence-v1",
+  "pins": {
+    "libpopcnt": {
+      "upstream": "https://github.com/kimwalisch/libpopcnt.git",
+      "tag": "v4.2",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e"
+    },
+    "mula-sse-popcount": {
+      "upstream": "https://github.com/WojciechMula/sse-popcount.git",
+      "tag": null,
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e"
+    }
+  },
+  "commits": {
+    "gf2": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+    "libpopcnt": "923c43377278edc97de155ea70ac3ab20f397f3e",
+    "mula-sse-popcount": "138c91e21c3e6dab7875521b5d33b995e0e4c85e"
+  },
+  "vendored_files": {
+    "dev/active/26465e6c/survey/vendor/libpopcnt/libpopcnt.h": {
+      "project": "libpopcnt",
+      "upstream_path": "libpopcnt.h",
+      "sha256": "6bd9103591511c77a365867fd123b72adfd656233b92ced238e727a5c978fb23"
+    },
+    "dev/active/26465e6c/survey/vendor/libpopcnt/LICENSE": {
+      "project": "libpopcnt",
+      "upstream_path": "LICENSE",
+      "sha256": "d0d93fda0f24b6e96acb6566a2f7c8ca045c9c7bdfc85e5654d893c40adb78ac"
+    },
+    "dev/active/26465e6c/survey/vendor/mula/config.h": {
+      "project": "mula-sse-popcount",
+      "upstream_path": "config.h",
+      "sha256": "1ba15040e0722f2e95a9dae6b49fce53082b4a1b36ba5c15ebe1a347a83369c0"
+    },
+    "dev/active/26465e6c/survey/vendor/mula/popcnt-avx2-harley-seal.cpp": {
+      "project": "mula-sse-popcount",
+      "upstream_path": "popcnt-avx2-harley-seal.cpp",
+      "sha256": "3fe1679cfc8f4a0043b2e71347855be27bf952722099b576e788895f1c0b7f76"
+    },
+    "dev/active/26465e6c/survey/vendor/mula/popcnt-lookup.cpp": {
+      "project": "mula-sse-popcount",
+      "upstream_path": "popcnt-lookup.cpp",
+      "sha256": "4a9a0bd47abef119f37fb514c0fc6f68aaae8db62f0bb281b6cf22839e28d250"
+    },
+    "dev/active/26465e6c/survey/vendor/mula/LICENSE": {
+      "project": "mula-sse-popcount",
+      "upstream_path": "LICENSE",
+      "sha256": "90daf1ece3fe693e3e71a5e7d07feaa343e8726d5b9f665fdb43061e200980cb"
+    }
+  },
+  "claims": [
+    {
+      "claim": "libpopcnt-license",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "LICENSE",
+      "line": 1,
+      "text": "BSD 2-Clause License",
+      "why": "libpopcnt is BSD-2-Clause, so vendoring its header with the licence is permitted."
+    },
+    {
+      "claim": "libpopcnt-single-buffer-entry",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "libpopcnt.h",
+      "line": 777,
+      "text": "static uint64_t popcnt(const void* data, uint64_t size)",
+      "why": "libpopcnt's x86 entry counts one buffer; it exposes no fused AND or XOR reduction."
+    },
+    {
+      "claim": "libpopcnt-cpuid-cached",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "libpopcnt.h",
+      "line": 793,
+      "text": "int cpuid = atomic_load_explicit(&libpopcnt_cpuid, memory_order_relaxed);",
+      "why": "Compiled as C without ISA flags, popcnt() dispatches on a cached CPUID word at run time."
+    },
+    {
+      "claim": "libpopcnt-avx512-branch",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "libpopcnt.h",
+      "line": 827,
+      "text": "size >= 40)",
+      "why": "The AVX-512 VPOPCNTDQ path needs its CPUID bit, which this Zen 3 host lacks; it is emitted but never taken."
+    },
+    {
+      "claim": "libpopcnt-avx2-threshold",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "libpopcnt.h",
+      "line": 838,
+      "text": "size >= 96)",
+      "why": "Below 96 bytes libpopcnt counts with scalar POPCNT; the compiled comparison is cmp $0x5f."
+    },
+    {
+      "claim": "libpopcnt-harley-seal-threshold",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "libpopcnt.h",
+      "line": 843,
+      "text": "if (size >= 1024)",
+      "why": "From 1 KiB libpopcnt switches to the AVX2 Harley-Seal loop; the compiled comparison is cmp $0x3ff."
+    },
+    {
+      "claim": "libpopcnt-medium-loop",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "libpopcnt.h",
+      "line": 846,
+      "text": "cnt += popcnt_avx2_medium(ptr256, size / 32);",
+      "why": "Between 96 bytes and 1 KiB libpopcnt runs a per-vector nibble-lookup loop, gf2's algorithm."
+    },
+    {
+      "claim": "libpopcnt-scalar-loop",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "libpopcnt.h",
+      "line": 867,
+      "text": "cnt += popcnt64(bits);",
+      "why": "libpopcnt's scalar path and every tail use the POPCNT instruction."
+    },
+    {
+      "claim": "libpopcnt-harley-seal-trip",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "libpopcnt.h",
+      "line": 567,
+      "text": "uint64_t limit = size - size % 16;",
+      "why": "libpopcnt's carry-save loop consumes 16 vectors per iteration."
+    },
+    {
+      "claim": "libpopcnt-readme-no-isa-flags",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "README.md",
+      "line": 36,
+      "text": "```libpopcnt.h``` does not require any special compiler flags like ```-mavx2```!",
+      "why": "The upstream build is plain -O3 with runtime dispatch, the deployment model gf2 also uses."
+    },
+    {
+      "claim": "libpopcnt-readme-o3",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "README.md",
+      "line": 41,
+      "text": "cc  -O3 program.c",
+      "why": "The survey compiles libpopcnt with exactly -O3."
+    },
+    {
+      "claim": "libpopcnt-changelog-medium",
+      "project": "libpopcnt",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "path": "ChangeLog",
+      "line": 6,
+      "text": "* `libpopcnt.h`: Up to 3x faster popcount for medium arrays (96 bytes to 1 KB)",
+      "why": "v4.2 introduced the medium-array loop; its thresholds were tuned upstream, not on this host."
+    },
+    {
+      "claim": "mula-license-holder",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "LICENSE",
+      "line": 1,
+      "text": "Copyright (c) 2008-2016, Wojciech Muła",
+      "why": "Copyright line of the vendored reference."
+    },
+    {
+      "claim": "mula-license-binary-clause",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "LICENSE",
+      "line": 13,
+      "text": "2. Redistributions in binary form must reproduce the above copyright",
+      "why": "The two-condition BSD text: BSD-2-Clause, so vendoring with the licence is permitted."
+    },
+    {
+      "claim": "mula-aligned-dereference",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "popcnt-avx2-harley-seal.cpp",
+      "line": 77,
+      "text": "uint64_t total = AVX2_harley_seal::popcnt((const __m256i*) data, size / 32);",
+      "why": "The reference reads through const __m256i*, so its input must be 32-byte aligned (vmovdqa)."
+    },
+    {
+      "claim": "mula-csa-trip",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "popcnt-avx2-harley-seal.cpp",
+      "line": 33,
+      "text": "const uint64_t limit = size - size % 16;",
+      "why": "Mula's carry-save loop engages only from 16 vectors, 512 bytes."
+    },
+    {
+      "claim": "mula-vector-tail",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "popcnt-avx2-harley-seal.cpp",
+      "line": 64,
+      "text": "total = _mm256_add_epi64(total, popcount(data[i]));",
+      "why": "Vectors beyond the last 16-vector block are counted one at a time with the SWAR popcount."
+    },
+    {
+      "claim": "mula-byte-tail",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "popcnt-avx2-harley-seal.cpp",
+      "line": 80,
+      "text": "total += lookup8bit[data[i]];",
+      "why": "Bytes beyond the last whole vector are counted by byte table lookup."
+    },
+    {
+      "claim": "mula-single-buffer-registry",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "function_registry.cpp",
+      "line": 7,
+      "text": "using function_ptr      = std::uint64_t (*)(const uint8_t* data,  const size_t size);",
+      "why": "Every registered sse-popcount implementation counts one buffer; none is a fused AND or XOR reduction."
+    },
+    {
+      "claim": "mula-registry-avx2-harley-seal",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "function_registry.cpp",
+      "line": 162,
+      "text": "add(\"avx2-harley-seal\",",
+      "why": "The surveyed backend is the registry's avx2-harley-seal entry."
+    },
+    {
+      "claim": "mula-makefile-flags",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "Makefile",
+      "line": 17,
+      "text": "FLAGS=-std=c++17 -O2 -Wall -pedantic -Wextra -Wfatal-errors",
+      "why": "Upstream compiles with -O2; the survey reuses these flags."
+    },
+    {
+      "claim": "mula-makefile-intel",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "Makefile",
+      "line": 18,
+      "text": "FLAGS_INTEL=$(FLAGS) -mpopcnt -fabi-version=6",
+      "why": "Upstream's x86 flags."
+    },
+    {
+      "claim": "mula-makefile-avx2",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "Makefile",
+      "line": 28,
+      "text": "FLAGS_AVX2=$(FLAGS_INTEL) -mavx2 -DHAVE_AVX2_INSTRUCTIONS",
+      "why": "Upstream's AVX2 build, which the survey compiles the vendored reference with."
+    },
+    {
+      "claim": "mula-single-translation-unit",
+      "project": "mula-sse-popcount",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "path": "speed.cpp",
+      "line": 11,
+      "text": "#include \"popcnt-all.cpp\"",
+      "why": "Upstream builds its implementations as one translation unit, the model the survey keeps."
+    },
+    {
+      "claim": "gf2-simd-threshold-default",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 83,
+      "text": "pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;",
+      "why": "The shipped conservative build selects SIMD from 8 words; the compiled comparison is cmp $0x7."
+    },
+    {
+      "claim": "gf2-simd-threshold-compare",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 115,
+      "text": "if _size >= SIMD_MIN_WORDS {",
+      "why": "select_backend_for_size compares the word count with the threshold."
+    },
+    {
+      "claim": "gf2-baked-threshold",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/tuning/baked.rs",
+      "line": 17,
+      "text": "pub(crate) const SIMD_MIN_WORDS: usize = 4;",
+      "why": "A four-word threshold exists only under --cfg gf2_tuning_baked, which the measured build does not set."
+    },
+    {
+      "claim": "gf2-popcount-dispatcher",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 204,
+      "text": "pub fn popcount(buf: &[u64]) -> u64 {",
+      "why": "The production dispatcher, the baseline of every popcount cell."
+    },
+    {
+      "claim": "gf2-scalar-count-ones",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/kernels/scalar/logical.rs",
+      "line": 105,
+      "text": "buf.iter().map(|w| w.count_ones() as u64).sum()",
+      "why": "Below the threshold the dispatcher runs this portable loop, which a baseline x86-64 build lowers without POPCNT."
+    },
+    {
+      "claim": "gf2-simd-backend-lazylock",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/kernels/simd/mod.rs",
+      "line": 64,
+      "text": "pub static SIMD_BACKEND: LazyLock<Option<SimdBackend>> = LazyLock::new(SimdBackend::detect);",
+      "why": "Each SIMD-path call reads a lazily initialized backend before its indirect call."
+    },
+    {
+      "claim": "gf2-simd-popcount-indirect",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/kernels/simd/mod.rs",
+      "line": 56,
+      "text": "(self.fns.popcnt_fn)(buf)",
+      "why": "The SIMD path reaches the AVX2 kernel through a function pointer."
+    },
+    {
+      "claim": "gf2-simd-fns-private",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/kernels/simd/mod.rs",
+      "line": 18,
+      "text": "fns: gf2_kernels_simd::LogicalFns,",
+      "why": "gf2-core keeps the kernel bundle private, so it offers no public fused AND-popcount route."
+    },
+    {
+      "claim": "gf2-avx2-popcnt",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 264,
+      "text": "unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {",
+      "why": "gf2's AVX2 nibble-lookup population count."
+    },
+    {
+      "claim": "gf2-avx2-nibble-lookup",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 286,
+      "text": "let pc_lo = _mm256_shuffle_epi8(lut, lo);",
+      "why": "gf2's AVX2 kernel counts every vector by nibble lookup; it has no carry-save stage."
+    },
+    {
+      "claim": "gf2-avx2-byte-tail",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 308,
+      "text": "total += (*tail_ptr.add(k)).count_ones() as u64;",
+      "why": "gf2's AVX2 kernel counts the bytes beyond the last whole vector one byte at a time."
+    },
+    {
+      "claim": "gf2-avx2-and-popcnt",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 316,
+      "text": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
+      "why": "gf2's fused AVX2 AND-popcount kernel."
+    },
+    {
+      "claim": "gf2-kernels-detect-public",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-kernels-simd/src/lib.rs",
+      "line": 103,
+      "text": "pub fn detect() -> Option<LogicalFns> {",
+      "why": "The fused kernel is public only through gf2-kernels-simd's detect() bundle."
+    },
+    {
+      "claim": "gf2-matvec-uses-fused",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1560,
+      "text": "y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);",
+      "why": "The fused kernel is load-bearing in BitMatrix::matvec_simd, which keeps only each row's parity."
+    },
+    {
+      "claim": "gf2-bitvec-count-ones",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 602,
+      "text": "crate::kernels::ops::popcount(&self.data) as usize",
+      "why": "BitVec::count_ones counts every storage word through the dispatcher, relying on zero padding."
+    },
+    {
+      "claim": "gf2-bitvec-and",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 403,
+      "text": "crate::kernels::ops::and_inplace(&mut self.data, &other.data);",
+      "why": "BitVec::bit_and_into is the public AND the two-pass route models."
+    },
+    {
+      "claim": "gf2-from-words-precondition",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 186,
+      "text": "/// The caller must ensure tail masking invariant: padding bits beyond",
+      "why": "Tail semantics are a caller precondition of from_words; count_ones does not mask."
+    },
+    {
+      "claim": "v1-harness-bank-modulo",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "dev/active/26465e6c/superseded/v1/survey/gf2-side/src/main.rs",
+      "line": 448,
+      "text": "let value = popcount_operation(arm, black_box(fixtures[bank % banks].words()))",
+      "why": "The v1 gf2 arm reduced the bank index by a runtime modulus in every timed call (a div in the receipted binary)."
+    },
+    {
+      "claim": "v1-harness-string-dispatch",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "dev/active/26465e6c/superseded/v1/survey/gf2-side/src/main.rs",
+      "line": 279,
+      "text": "fn popcount_operation(arm: &str, buffer: &[u64]) -> Result<u64, String> {",
+      "why": "The v1 gf2 arm matched the arm name as a string inside every timed call."
+    },
+    {
+      "claim": "v1-c-harness-bank",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "dev/active/26465e6c/superseded/v1/survey/wire_common.h",
+      "line": 253,
+      "text": "size_t bank = streaming ? (start + (size_t)i) & (SURVEY_BANKS - 1U) : 0U;",
+      "why": "The v1 C arms selected the bank without a division, so the two sides of a cell ran different harness code."
+    },
+    {
+      "claim": "v1-external-march-native",
+      "project": "gf2",
+      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "path": "dev/active/26465e6c/superseded/v1/survey/Makefile",
+      "line": 16,
+      "text": "OPT ?= -O3 -march=native",
+      "why": "The v1 external arms were built -march=native, not with their upstream flags."
+    }
+  ]
+}

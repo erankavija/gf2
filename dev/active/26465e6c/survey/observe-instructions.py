@@ -3,14 +3,18 @@
 
 Disassembles the built `popcount-arm` binary with objdump and, per arm
 function, counts the instruction classes that decide its algorithm, lists the
-immediate comparisons that implement its dispatch thresholds, and prints the
-shared timed loops in full. The thresholds and backends the findings name are
-read from this output, not from any upstream document or other processor.
+immediate comparisons that implement its dispatch thresholds, lists every
+function of the binary that contains a `popcnt` instruction, and prints the
+shared timed loops in full. It closes with the cache geometry sysfs reports
+for the CPU that runs every cell. The thresholds and backends the findings
+name are read from this output, not from any upstream document or other
+processor.
 
 Usage: observe-instructions.py <popcount-arm> > instruction-observation.txt
 """
 
 import hashlib
+import pathlib
 import re
 import subprocess
 import sys
@@ -34,10 +38,21 @@ FUNCTIONS = [
     ("AND two-pass public route", "popcount_survey::arms::and_two_pass"),
 ]
 TIMED = "popcount_arm::time"
+# The bit-twiddle population count's masks and byte-sum multiplier.
+SWAR_MASKS = {
+    "$0x5555555555555555", "$0x3333333333333333", "$0xf0f0f0f0f0f0f0f", "$0x101010101010101",
+}
+KERNELS_NAMED_POPCNT = [
+    "gf2_kernels_simd::x86::avx2::avx2_popcnt",
+    "gf2_kernels_simd::x86::avx2::avx2_and_popcnt",
+]
+# Every single-core cell resolves to this logical CPU (the receipts' resolved_cpus).
+MEASURED_CPU = 0
+SYSFS_CACHE = f"/sys/devices/system/cpu/cpu{MEASURED_CPU}/cache"
 CLASSES = [
     "popcnt", "vpshufb", "vpsadbw", "psadbw", "vpand", "vpor", "vpxor", "vpaddq",
     "vpaddb", "vpsrlw", "psrlw", "pand", "vmovdqa", "vmovdqu", "movdqu", "cpuid",
-    "xgetbv", "div",
+    "xgetbv", "div", "imul",
 ]
 LINE = re.compile(r"^\s*([0-9a-f]+):\s+(\S+)\s*(.*)$")
 SYMBOL = re.compile(r"^([0-9a-f]+) ([0-9a-f]+) [tTwW] (.*)$")
@@ -83,6 +98,11 @@ def describe(label, name, rows, size):
         for _, mnemonic, operands in rows
         if mnemonic == "and" and operands.startswith("$0xffffffffffff")
     })
+    swar = sorted({
+        operands.split(",")[0]
+        for _, mnemonic, operands in rows
+        if mnemonic == "movabs" and operands.split(",")[0] in SWAR_MASKS
+    })
     indirect = sum(
         1 for _, mnemonic, operands in rows
         if mnemonic in ("call", "jmp") and computed(operands)
@@ -98,6 +118,8 @@ def describe(label, name, rows, size):
     print(f"- immediate comparisons: {' '.join(compares) or 'none'}")
     if masks:
         print(f"- alignment/trip-count masks: {' '.join(masks)}")
+    if swar:
+        print(f"- 64-bit SWAR popcount masks: {' '.join(swar)}")
     print(f"- computed (non-GOT) indirect calls/jumps: {indirect}")
     print(f"- direct calls/jumps out: {'; '.join(direct) or 'none'}")
     print()
@@ -106,6 +128,36 @@ def describe(label, name, rows, size):
 def computed(operands):
     """An indirect target read from a register or data, not a GOT slot."""
     return operands.startswith("*") and "(%rip)" not in operands
+
+
+def popcnt_sites(binary):
+    """Per function: `popcnt` mnemonics, and disassembly lines (header included)
+    that merely contain the substring, such as branch targets named after the
+    function."""
+    mnemonics, substrings = Counter(), Counter()
+    function = None
+    header = re.compile(r"^[0-9a-f]+ <(.*)>:$")
+    for line in run("objdump", "-d", "--no-show-raw-insn", "-C", binary).splitlines():
+        match = header.match(line)
+        if match:
+            function = match.group(1)
+        if function is None:
+            continue
+        if "popcnt" in line:
+            substrings[function] += 1
+        row = LINE.match(line)
+        if row and row.group(2) == "popcnt":
+            mnemonics[function] += 1
+    return mnemonics, substrings
+
+
+def cache_geometry():
+    rows = []
+    for index in sorted(pathlib.Path(SYSFS_CACHE).glob("index*")):
+        fields = {name: (index / name).read_text().strip()
+                  for name in ("level", "type", "size", "shared_cpu_list")}
+        rows.append(fields)
+    return rows
 
 
 def timed_loops(rows):
@@ -142,6 +194,21 @@ def main():
             continue
         start, size = entries[0]
         describe(label, name, disassemble(binary, start, size), size)
+    print("## Every function containing `popcnt`")
+    print()
+    sites, substrings = popcnt_sites(binary)
+    for function, count in sorted(sites.items()):
+        print(f"- `{function}`: {count}")
+    print(f"- total: {sum(sites.values())} `popcnt` instructions in {len(sites)} functions")
+    print()
+    print("Lines that only contain the substring `popcnt`, header included, are not "
+          "instructions; for gf2's AVX2 kernels they are branch targets named after the "
+          "function:")
+    print()
+    for name in KERNELS_NAMED_POPCNT:
+        print(f"- `{name}`: {substrings[name]} lines containing the substring, "
+              f"{sites[name]} `popcnt` instructions")
+    print()
     print("## Shared timed loops")
     print()
     print(
@@ -160,6 +227,11 @@ def main():
                     print(f"{address:x}: {mnemonic} {operands}".rstrip())
             print("```")
             print()
+    print(f"## Cache geometry of CPU {MEASURED_CPU} ({SYSFS_CACHE})")
+    print()
+    for fields in cache_geometry():
+        print(f"- L{fields['level']} {fields['type']}: {fields['size']}, shared with CPUs "
+              f"{fields['shared_cpu_list']}")
 
 
 if __name__ == "__main__":
