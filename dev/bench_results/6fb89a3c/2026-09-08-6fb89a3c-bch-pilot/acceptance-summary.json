@@ -1,0 +1,116 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "b3bf3282b447573c72954fe73dca2877d4f9f5aa3edef527ca17fc4dbb1d9277",
+  "campaign_id": "bch-pilot-6fb89a3c-20260908t105414z",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "bch-genmatrix-consumer-pilot",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.95,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "bch-genmatrix-b1-vs-m4ri",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.6996160792727246,
+        "lower": 1.678705736239831,
+        "upper": 1.7823342858406384,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 8308466053608765781,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "bch-genmatrix-b2-vs-m4ri",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 7.567915645498601,
+        "lower": 7.211098857727825,
+        "upper": 7.696115788252762,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 2726164808548569474,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "bch-genmatrix-b3-vs-m4ri",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 7.07963159809175,
+        "lower": 7.062616436427938,
+        "upper": 7.099317883661334,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 14365866356987059723,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}

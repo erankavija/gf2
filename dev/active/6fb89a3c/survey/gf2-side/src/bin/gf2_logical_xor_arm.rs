@@ -1,0 +1,143 @@
+//! Conforming child-v2 Rust arm for the production logical-buffer XOR.
+//!
+//! The timed body copies `src0` and then calls `xor_inplace`, because the
+//! production API accumulates (`dst ^= src`) rather than writing a fresh
+//! destination.  The copy is deliberately inside every timed call: the
+//! comparator's `xor_gen` path also performs a fresh full-buffer write, so
+//! both arms pay the same destination-write cost.
+
+use gf2_core::kernels::ops::xor_inplace;
+use gf2_core::kernels::select_backend_for_size;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::hint::black_box;
+use std::io;
+use survey_gf2_side_6fb89a3c::{splitmix_words, timed_windows};
+use tuning_campaign_support::host::CpuAffinity;
+use tuning_campaign_support::transport;
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct Request {
+    schema: String,
+    cell_id: String,
+    arm: String,
+    role: String,
+    pair: u32,
+    case: Value,
+    cache_state: String,
+    windows: u32,
+    window_target_ms: u32,
+    cpus: Vec<u32>,
+    workers_declared: u32,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Case {
+    words: u64,
+    seed: u64,
+    alignment_bytes: u64,
+}
+
+#[derive(Serialize)]
+struct Window {
+    calls: u64,
+    elapsed_ns: u64,
+}
+
+#[derive(Serialize)]
+struct ConversionCosts {
+    setup_ns: u64,
+    pack_ns: u64,
+    unpack_ns: u64,
+    batch_fill_ns: u64,
+    dispatch_ns: u64,
+}
+
+#[derive(Serialize)]
+struct Result_ {
+    schema: String,
+    windows: Vec<Window>,
+    cache_state_applied: String,
+    workers_observed: u32,
+    cpus_observed: Vec<u32>,
+    selected_path: Option<String>,
+    conversion: Option<ConversionCosts>,
+    quality: Option<Value>,
+}
+
+fn fail(message: impl std::fmt::Display) -> ! {
+    eprintln!("gf2_logical_xor_arm: {message}");
+    std::process::exit(2);
+}
+
+fn aligned_storage(words: &[u64], alignment: usize) -> (Vec<u64>, usize) {
+    let extra_words = alignment / std::mem::size_of::<u64>();
+    let mut storage = vec![0u64; words.len() + extra_words];
+    let base = storage.as_ptr() as usize;
+    let byte_offset = (alignment - (base % alignment)) % alignment;
+    let start = byte_offset / std::mem::size_of::<u64>();
+    storage[start..start + words.len()].copy_from_slice(words);
+    assert_eq!((storage[start..].as_ptr() as usize) % alignment, 0);
+    (storage, start)
+}
+
+fn main() {
+    let sentinel = std::env::var(transport::FRESH_CASE_VAR).ok();
+    let request: Request = transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock())
+        .unwrap_or_else(|error| fail(error));
+    let case: Case =
+        serde_json::from_value(request.case.clone()).unwrap_or_else(|error| fail(error));
+    let words = usize::try_from(case.words).unwrap_or_else(|_| fail("words does not fit usize"));
+    let alignment = usize::try_from(case.alignment_bytes)
+        .unwrap_or_else(|_| fail("alignment does not fit usize"));
+    if alignment != 32 {
+        fail("the ISA-L operation-equivalent arm requires 32-byte alignment");
+    }
+    let setup_started = std::time::Instant::now();
+    let (src0_storage, src0_start) = aligned_storage(&splitmix_words(words, case.seed), alignment);
+    let (src1_storage, src1_start) =
+        aligned_storage(&splitmix_words(words, case.seed.wrapping_add(1)), alignment);
+    let (mut dest_storage, dest_start) = aligned_storage(&vec![0u64; words], alignment);
+    let setup_ns = u64::try_from(setup_started.elapsed().as_nanos()).unwrap_or(u64::MAX);
+    let src0 = &src0_storage[src0_start..src0_start + words];
+    let src1 = &src1_storage[src1_start..src1_start + words];
+    let selected_path = format!(
+        "gf2-xor_inplace ({})",
+        select_backend_for_size(words).name()
+    );
+    let dest = &mut dest_storage[dest_start..dest_start + words];
+    let samples = timed_windows(request.windows, request.window_target_ms, |_| {
+        dest.copy_from_slice(&src0);
+        xor_inplace(black_box(&mut *dest), black_box(&src1));
+    })
+    .unwrap_or_else(|error| fail(error));
+    black_box(&dest);
+    let cpus_observed = CpuAffinity::observe()
+        .map(|affinity| affinity.cpus().to_vec())
+        .unwrap_or_default();
+    let result = Result_ {
+        schema: "zen3-benchmark-arm-result-v1".into(),
+        windows: samples
+            .into_iter()
+            .map(|sample| Window {
+                calls: sample.calls,
+                elapsed_ns: sample.elapsed_ns,
+            })
+            .collect(),
+        cache_state_applied: request.cache_state,
+        workers_observed: 1,
+        cpus_observed,
+        selected_path: Some(selected_path),
+        conversion: Some(ConversionCosts {
+            setup_ns,
+            pack_ns: 0,
+            unpack_ns: 0,
+            batch_fill_ns: 0,
+            dispatch_ns: 0,
+        }),
+        quality: None,
+    };
+    transport::write_result_line(io::stdout().lock(), &result).unwrap_or_else(|error| fail(error));
+}

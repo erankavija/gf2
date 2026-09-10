@@ -1,0 +1,89 @@
+{
+  "schema": "gf2-external-comparator-correctness-v1",
+  "issue": "6fb89a3c",
+  "status": "pass",
+  "canonical_reference": "naive bit arithmetic in verify-bit-mapping.py",
+  "transpose": {
+    "m4ri": {
+      "validated_fixed_seeds": 3,
+      "validated_geometries": [
+        [
+          63,
+          63
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          65,
+          65
+        ],
+        [
+          1,
+          64
+        ],
+        [
+          64,
+          1
+        ]
+      ],
+      "mapping": "output[c][r] = input[r][c]; row words use bit c = 1u64 << c",
+      "padding": "M4RI zeroes unused tail bits in partial words",
+      "aliasing": "distinct input/output; fixed output allocation is reused during kernel timing"
+    },
+    "bitshuffle": {
+      "validated_fixed_seeds": 3,
+      "mapping": "direct",
+      "geometry": "size=64 elements, elem_size=8 bytes, block_size=64",
+      "adaptation_cost": "zero for 64x64 direct layout",
+      "unavailable_geometries": [
+        [
+          63,
+          63
+        ],
+        [
+          65,
+          65
+        ],
+        [
+          1,
+          64
+        ]
+      ],
+      "unavailable_reason": "element count is not a multiple of 8; no padding substitution is timed",
+      "aliasing": "distinct input/output as required by the Bitshuffle interface"
+    }
+  },
+  "logical_xor": {
+    "validated_word_counts": [
+      1,
+      7,
+      8,
+      9,
+      16,
+      32,
+      63,
+      64,
+      65
+    ],
+    "mapping": "dest[w].bit[b] = src0[w].bit[b] XOR src1[w].bit[b], LSB-first",
+    "isa_l_parity_arity": {
+      "vects": 3,
+      "sources": 2,
+      "outputs": 1
+    },
+    "alignment_bytes": 32,
+    "arrangement_cost": "the three-pointer array is formed inside every timed call",
+    "aliasing": "unavailable: ISA-L does not contractually permit destination/source aliasing"
+  },
+  "bch_genmatrix": {
+    "validated_codes": [
+      "B1",
+      "B2",
+      "B3"
+    ],
+    "equivalence": "full-rank row-space equality after both documented layouts are reindexed to internal polynomial-degree order",
+    "raw_dump_identity": "falsified; bases and systematic column layouts differ"
+  }
+}
