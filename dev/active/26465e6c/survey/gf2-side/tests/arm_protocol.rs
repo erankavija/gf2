@@ -126,6 +126,13 @@ fn whole_consumer_and_cells_report_conversion_costs() {
         let isolated = result(arm, &request(case(false), "warm", None));
         assert_eq!(isolated["conversion"], Value::Null, "{arm}");
     }
+    // Only the two-pass route copies its operand, so only it reports a
+    // temporary-copy cost; the fused kernel makes no per-call selection.
+    let fused = result("and-fused", &request(case(true), "warm", None));
+    assert_eq!(fused["conversion"]["pack_ns"], json!(0));
+    assert_eq!(fused["conversion"]["dispatch_ns"], json!(0));
+    let two_pass = result("and-two-pass", &request(case(true), "warm", None));
+    assert!(two_pass["conversion"]["pack_ns"].as_u64().unwrap() > 0);
 }
 
 #[test]

@@ -134,14 +134,32 @@ impl AndArm {
         Self::ALL.into_iter().find(|arm| arm.name() == name)
     }
 
-    /// Resolves the function the timed calls invoke.
+    /// Resolves the function the timed calls invoke, performing the one-time
+    /// capability detection a consumer of the route pays before its first
+    /// call: `gf2_kernels_simd::detect()` for the fused kernel, and gf2-core's
+    /// lazily detected SIMD backend for the two-pass route, which its first
+    /// dispatch would otherwise initialize inside a timed call.
     pub fn resolve(self) -> Result<AndPopcountFn, String> {
         match self {
             Self::Fused => simd_fns()
                 .map(|fns| fns.and_popcnt_fn)
                 .ok_or_else(|| "and-fused requires AVX2".to_owned()),
             Self::ScalarControl => Ok(and_scalar_control),
-            Self::TwoPass => Ok(and_two_pass),
+            Self::TwoPass => {
+                std::hint::black_box(gf2_core::kernels::simd::maybe_simd());
+                Ok(and_two_pass)
+            }
+        }
+    }
+
+    /// Backend selections one call of the route makes on `words`-word
+    /// operands, each returning whether it chose gf2-core's SIMD backend: the
+    /// two-pass route selects once in `and_inplace` and once in `popcount`;
+    /// the fused kernel and the scalar control select nothing per call.
+    pub fn dispatch(self, words: usize) -> usize {
+        match self {
+            Self::TwoPass => usize::from(selects_simd(words)) + usize::from(selects_simd(words)),
+            Self::Fused | Self::ScalarControl => 0,
         }
     }
 
@@ -157,14 +175,20 @@ impl AndArm {
 
 /// The backend gf2-core's size dispatch selects for `words` on this host.
 pub fn dispatch_route(words: usize) -> String {
-    match gf2_core::kernels::select_backend_for_size(words) {
-        gf2_core::kernels::SelectedBackend::Simd => gf2_core::kernels::simd::maybe_simd()
-            .map_or_else(
-                || "scalar".to_owned(),
-                |backend| format!("simd-{}", backend.name()),
-            ),
-        gf2_core::kernels::SelectedBackend::Scalar => "scalar".to_owned(),
+    match gf2_core::kernels::simd::maybe_simd() {
+        Some(backend) if selects_simd(words) => format!("simd-{}", backend.name()),
+        _ => "scalar".to_owned(),
     }
+}
+
+/// The decision `kernels::ops::popcount` and `kernels::ops::and_inplace`
+/// make before each call: the size threshold, then the lazily detected SIMD
+/// backend.
+fn selects_simd(words: usize) -> bool {
+    matches!(
+        gf2_core::kernels::select_backend_for_size(words),
+        gf2_core::kernels::SelectedBackend::Simd
+    ) && gf2_core::kernels::simd::maybe_simd().is_some()
 }
 
 fn simd_fns() -> Option<gf2_kernels_simd::LogicalFns> {
