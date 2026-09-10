@@ -1,0 +1,179 @@
+# Instruction observation of the survey arm binary
+
+- binary sha256: `a7eebf56a167050b8e1f5602ea0cdf10e90d26e1a829a4b2dae82d7477023741`
+- disassembler: GNU objdump (GNU Binutils) 2.47
+- external build record: `{"units": [{"unit": "libpopcnt_kernels", "compiler": "gcc", "compiler_version": "gcc (GCC) 16.2.1 20260810", "arguments": ["-O3", "-I", "../vendor/libpopcnt", "-c", "csrc/libpopcnt_kernels.c", "-o", "$OUT_DIR/libpopcnt_kernels.o"]}, {"unit": "mula_kernels", "compiler": "g++", "compiler_version": "g++ (GCC) 16.2.1 20260810", "arguments": ["-std=c++17", "-O2", "-Wall", "-pedantic", "-Wextra", "-Wfatal-errors", "-mpopcnt", "-fabi-version=6", "-mavx2", "-DHAVE_AVX2_INSTRUCTIONS", "-I", "../vendor/mula", "-c", "csrc/mula_kernels.cpp", "-o", "$OUT_DIR/mula_kernels.o"]}]}`
+
+## gf2 production dispatcher: `popcount_survey::arms::production_dispatch` (986 bytes, 249 instructions)
+- instruction classes: psadbw=2, psrlw=6, pand=8, movdqu=2
+- immediate comparisons: $0x0 $0x1 $0x2 $0x3 $0x4 $0x5 $0x6 $0x7
+- computed (non-GOT) indirect calls/jumps: 1
+- direct calls/jumps out: none
+
+## gf2 AVX2 nibble-LUT kernel: `gf2_kernels_simd::x86::avx2::avx2_popcnt` (452 bytes, 103 instructions)
+- instruction classes: vpshufb=10, vpsadbw=5, vpand=8, vpxor=7, vpaddq=10, vpaddb=5, vpsrlw=5, vmovdqa=3, vmovdqu=3
+- immediate comparisons: $0x1
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## scalar POPCNT control: `popcount_survey::arms::popcnt_instruction_loop` (130 bytes, 38 instructions)
+- instruction classes: popcnt=5
+- immediate comparisons: $0x4
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## compiler count_ones control: `popcount_survey::arms::compiler_count_ones` (402 bytes, 91 instructions)
+- instruction classes: psadbw=2, psrlw=6, pand=8, movdqu=2
+- immediate comparisons: $0x4
+- alignment/trip-count masks: $0xffffffffffffffe0
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## libpopcnt entry: `survey_libpopcnt_words` (9 bytes, 2 instructions)
+- instruction classes: none of the tracked classes
+- immediate comparisons: none
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: popcnt
+
+## libpopcnt popcnt() dispatch: `popcnt` (1011 bytes, 258 instructions)
+- instruction classes: popcnt=2, cpuid=2, xgetbv=1
+- immediate comparisons: $0x1 $0x2 $0x27 $0x3 $0x3ff $0x4 $0x5 $0x5f $0x6 $0xffffffff
+- alignment/trip-count masks: $0xffffffffffffffe0
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## libpopcnt popcnt_avx2_medium: `popcnt_avx2_medium` (131 bytes, 32 instructions)
+- instruction classes: vpshufb=2, vpsadbw=1, vpand=2, vpxor=1, vpaddq=3, vpsrlw=1, vmovdqa=2, vmovdqu=1
+- immediate comparisons: none
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## libpopcnt popcnt_avx2 (Harley-Seal): `popcnt_avx2` (933 bytes, 194 instructions)
+- instruction classes: vpshufb=12, vpsadbw=6, vpand=42, vpor=15, vpxor=31, vpaddq=8, vpsrlw=6, vmovdqa=17, vmovdqu=17
+- immediate comparisons: none
+- alignment/trip-count masks: $0xfffffffffffffff0
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## Mula entry: `survey_mula_avx2_harley_seal_words` (88 bytes, 22 instructions)
+- instruction classes: none of the tracked classes
+- immediate comparisons: none
+- alignment/trip-count masks: $0xffffffffffffffe0
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: AVX2_harley_seal::popcnt(long long __vector(4) const*, unsigned long)
+
+## Mula popcnt_AVX2_harley_seal: `popcnt_AVX2_harley_seal(unsigned char const*, unsigned long)` (88 bytes, 22 instructions)
+- instruction classes: none of the tracked classes
+- immediate comparisons: none
+- alignment/trip-count masks: $0xffffffffffffffe0
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: AVX2_harley_seal::popcnt(long long __vector(4) const*, unsigned long)
+
+## Mula AVX2_harley_seal::popcnt: `AVX2_harley_seal::popcnt(long long __vector(4) const*, unsigned long)` (1132 bytes, 250 instructions)
+- instruction classes: vpsadbw=6, vpand=54, vpor=15, vpxor=31, vpaddq=6, vpaddb=12, vpsrlw=18, vmovdqa=47
+- immediate comparisons: none
+- alignment/trip-count masks: $0xffffffffffffffe0 $0xfffffffffffffff0
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## gf2 fused AND-popcount kernel: `gf2_kernels_simd::x86::avx2::avx2_and_popcnt` (979 bytes, 225 instructions)
+- instruction classes: vpshufb=16, vpsadbw=8, vpand=24, vpxor=10, vpaddq=17, vpaddb=8, vpsrlw=8, vmovdqa=4, vmovdqu=8
+- immediate comparisons: $0x1 $0x10 $0x4
+- alignment/trip-count masks: $0xfffffffffffffff0 $0xfffffffffffffffc
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## AND scalar control: `popcount_survey::arms::and_scalar_control` (424 bytes, 100 instructions)
+- instruction classes: psadbw=2, psrlw=6, pand=10, movdqu=4
+- immediate comparisons: $0x4
+- alignment/trip-count masks: $0xffffffffffffffe0
+- computed (non-GOT) indirect calls/jumps: 0
+- direct calls/jumps out: none
+
+## AND two-pass public route: `popcount_survey::arms::and_two_pass` (1168 bytes, 267 instructions)
+- instruction classes: psadbw=4, psrlw=12, pand=16, movdqu=4
+- immediate comparisons: $0x0 $0x4 $0x7
+- alignment/trip-count masks: $0xffffffffffffffe0
+- computed (non-GOT) indirect calls/jumps: 2
+- direct calls/jumps out: <gf2_core::kernels::scalar::logical::ScalarBackend as gf2_core::kernels::backend::Backend>::and; _Unwind_Resume@plt
+
+## Shared timed loops
+
+Every arm of a family runs the same `time` monomorph; the arm is the target of its computed indirect call. Each loop below is printed from its backward-branch target to the branch.
+
+### `popcount_arm::time` monomorph 0, loop 0x3cf70..0x3cf9e
+```
+3cf70: lea 0x1(%rax),%rbp
+3cf74: and $0x7,%eax
+3cf77: mov (%r12),%rcx
+3cf7b: shl $0x4,%eax
+3cf7e: movups 0x0(%r13,%rax,1),%xmm0
+3cf84: movups %xmm0,0x18(%rsp)
+3cf89: mov 0x18(%rsp),%rdi
+3cf8e: mov 0x20(%rsp),%rsi
+3cf93: call *%rcx
+3cf95: xor %rax,(%rbx)
+3cf98: mov %rbp,%rax
+3cf9b: cmp %rbp,%r15
+3cf9e: jne 3cf70 <popcount_arm::time+0x250>
+```
+
+### `popcount_arm::time` monomorph 0, loop 0x3d180..0x3d1b3
+```
+3d180: lea (%r15,%r12,1),%eax
+3d184: and $0x7,%eax
+3d187: mov 0x0(%rbp),%rcx
+3d18b: shl $0x4,%eax
+3d18e: movups 0x0(%r13,%rax,1),%xmm0
+3d194: movups %xmm0,0x18(%rsp)
+3d199: lea 0x18(%rsp),%rax
+3d19e: mov 0x18(%rsp),%rdi
+3d1a3: mov 0x20(%rsp),%rsi
+3d1a8: call *%rcx
+3d1aa: inc %r12
+3d1ad: xor %rax,(%rbx)
+3d1b0: cmp %r12,%r14
+3d1b3: jne 3d180 <popcount_arm::time+0x460>
+```
+
+### `popcount_arm::time` monomorph 1, loop 0x3d960..0x3d99d
+```
+3d960: lea 0x1(%rax),%rbp
+3d964: and $0x7,%eax
+3d967: shl $0x5,%eax
+3d96a: movups (%rbx,%rax,1),%xmm0
+3d96e: movups 0x10(%rbx,%rax,1),%xmm1
+3d973: movaps %xmm1,0x10(%rsp)
+3d978: movaps %xmm0,(%rsp)
+3d97c: mov (%rsp),%rdi
+3d980: mov 0x8(%rsp),%rsi
+3d985: mov 0x10(%rsp),%rdx
+3d98a: mov 0x18(%rsp),%rcx
+3d98f: call *0x0(%r13)
+3d993: xor %rax,(%r12)
+3d997: mov %rbp,%rax
+3d99a: cmp %rbp,%r15
+3d99d: jne 3d960 <popcount_arm::time+0x240>
+```
+
+### `popcount_arm::time` monomorph 1, loop 0x3db90..0x3dbd0
+```
+3db90: lea (%r15,%r12,1),%eax
+3db94: and $0x7,%eax
+3db97: shl $0x5,%eax
+3db9a: movups (%rbx,%rax,1),%xmm0
+3db9e: movups 0x10(%rbx,%rax,1),%xmm1
+3dba3: movaps %xmm1,0x10(%rsp)
+3dba8: movaps %xmm0,(%rsp)
+3dbac: mov %rsp,%rax
+3dbaf: mov (%rsp),%rdi
+3dbb3: mov 0x8(%rsp),%rsi
+3dbb8: mov 0x10(%rsp),%rdx
+3dbbd: mov 0x18(%rsp),%rcx
+3dbc2: call *0x0(%r13)
+3dbc6: inc %r12
+3dbc9: xor %rax,0x0(%rbp)
+3dbcd: cmp %r12,%r14
+3dbd0: jne 3db90 <popcount_arm::time+0x470>
+```
+
