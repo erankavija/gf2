@@ -47,7 +47,7 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "worker finished (w-04b85d10, claude-fable): branch worktree-agent-04b85d10-v3 at 7e8079f0, clean; three v3 families (logical, count, layout), six accepted receipts, v3 profile, 71-claim source-evidence, eight ranked candidates. findings.md was written through a Bash heredoc after the report-file hook refused Write (surfaced to the invoker). Integration, reviews and gates pending.",
+          "status": "rework round 1 on w-04b85d10-r1 (claude-opus). Merged at f1a1c975 (cargo-ci passed), linked at 16cfcf35; both independent Terra xhigh reviews FAIL: A-F1 single-run profile shares/times without intervals support rankings; A-F2 seeded profile inputs lack RNG implementation/version; B-F1 m=14 BCH cells mislabelled as DVB-T2 normal frame (m=14 is the short frame) and no [Etsi2015] citation.",
           "dispatch": {
             "model": "claude-fable (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10-v3",
@@ -55,7 +55,8 @@
             "base": "02c39ba6",
             "attempt": 3,
             "session": 7
-          }
+          },
+          "merge_commit": "f1a1c975"
         },
         {
           "id": "6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2",
@@ -93,7 +94,7 @@
           "short_id": "eda07788",
           "title": "Establish compatible shift and coding-permutation baselines",
           "classification": "research",
-          "status": "in flight on w-eda07788 (Opus, session 7) in .worktrees-local/agent-eda07788-v3. v3 confirmation committed (63f2fc04) and re-evaluated accepted after merging main; findings and source-evidence corrected (three falsified 5G NR claims). Lead decision: measure the NR LLR de-rate-matching family (AFF3CT public depuncture vs gf2 prepare_llrs) inside this issue as a new first-attempt family.",
+          "status": "worker finished (w-eda07788, claude-opus): branch at b2abf17a; DVB-T2 v3 confirmation accepted, all six cells not-confirmatory (m=12, t=2); new NR LLR de-rate-matching family confirmatory (m=6, t=1), gf2 2.87-3.13x faster than AFF3CT depuncture; 4 of 12 NR configurations non-equivalent and untimed. findings.md written via Bash heredoc before the hook policy reached the worker (disclosed). Integration pending.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".worktrees-local/agent-eda07788-v3",
@@ -108,7 +109,7 @@
           "short_id": "c7113c5a",
           "title": "Establish equivalent polynomial multiplication baselines",
           "classification": "research",
-          "status": "in flight on w-c7113c5a (claude-opus, session 7): protocol-v3 migration on a fresh worktree from main 02c39ba6; old session-4 branch worktree-agent-c7113c5a ported byte-identically as history.",
+          "status": "worker finished (w-c7113c5a, claude-opus): branch at 38d2c091; host-targeting family confirmatory (m=4, t=1), native baselines family not-confirmatory (m=21, t=2); findings written by the lead from the worker's text (hook policy). Merged at 4edbadf1; cargo-ci passed; reviews and gates pending.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c7113c5a-v3",
@@ -116,7 +117,8 @@
             "base": "02c39ba6",
             "attempt": 3,
             "session": 7
-          }
+          },
+          "merge_commit": "4edbadf1"
         },
         {
           "id": "26465e6c-6852-44b6-9183-ba2cb5a5fca5",
@@ -387,7 +389,8 @@
   ],
   "rework_counts": {
     "f547c394": 2,
-    "1d0da41f": 1
+    "1d0da41f": 1,
+    "04b85d10": 1
   },
   "surfaced_pitfalls": [
     {
