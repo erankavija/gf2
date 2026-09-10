@@ -11274,3 +11274,7 @@
 {"assignee":"agent:worker","id":"a1b1042c-5325-43e7-8235-f81001738644","issue_id":"6fb89a3c-f1a7-439d-a397-add1782afe2b","timestamp":"2026-09-10T15:43:47.157630230Z","type":"issue_claimed"}
 {"from":"ready","id":"00c33e45-fdbe-4f1a-9b2d-7359422d36ee","issue_id":"c7113c5a-94da-462f-954e-3b7894bb95df","timestamp":"2026-09-10T15:43:58.284462442Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"982d700c-8747-4c15-b8f8-484f813ec5f8","issue_id":"c7113c5a-94da-462f-954e-3b7894bb95df","timestamp":"2026-09-10T15:43:58.284462442Z","type":"issue_claimed"}
+{"id":"887d1338-75f8-418d-8257-e1902f4edaa3","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","priority":"normal","timestamp":"2026-09-10T16:00:21.023569899Z","title":"Establish 5G NR rate-matched encoder baselines","type":"issue_created"}
+{"from":"ready","id":"ed3e3c0c-38b8-4387-b9dc-6daff456d50a","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-10T16:00:37.992712647Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"ac3a7678-e0c9-41ad-be71-738c5ef37044","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-10T16:00:37.992712647Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"4c3eeb67-8dd5-47e0-b0a1-881d175fa9e8","issue_id":"1362381c-78c0-42eb-bdc9-4327f20bc343","timestamp":"2026-09-10T16:00:49.154567685Z","type":"issue_updated","updated_by":"dependency-add"}
