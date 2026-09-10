@@ -1,0 +1,82 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "37fda99e6f956ec92bf3a4525577ef825258308dfc2fac7e4ca558cf8a8683b9",
+  "campaign_id": "c077a88b-v3-r1-matched-algorithm-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "ldpc-matched-algorithm-alist-v1",
+    "comparisons": 2,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.9875,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-matched-single-core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 3,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.14213729142573356,
+        "lower": 0.14040080769507127,
+        "upper": 0.1449458018557679,
+        "confidence": 0.9875,
+        "alpha": 0.0125,
+        "resamples": 10000,
+        "seed": 394289925239998502,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.12,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-matched-single-core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-material",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.9617090203576073,
+        "lower": 0.9515280834836789,
+        "upper": 0.9682047705445933,
+        "confidence": 0.9875,
+        "alpha": 0.0125,
+        "resamples": 10000,
+        "seed": 18312058930149525229,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.12,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

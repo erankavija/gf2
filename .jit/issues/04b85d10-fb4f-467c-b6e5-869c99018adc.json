@@ -34,7 +34,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Profile bit-storage costs in production consumers",
-  "updated_at": "2026-09-08T17:32:01.591515424Z"
+  "updated_at": "2026-09-10T15:43:36.025466015Z"
 }

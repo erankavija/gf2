@@ -14,6 +14,170 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "bf211bd370d7f0c27ef2dce137bf0b054d33707ede643efa54334ebbd115018f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-08-c077a88b-preparation/upstream-status.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/upstream-status.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88cd6bbfa5748cd86b6304ab4d50b4d187195aef1828912cf54f3e32b7d1a343",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/xdsopl-code-identity.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/xdsopl-code-identity.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca4adf8647912792f14f7c00850bbe3c6589ce98024557ac60943d7fa5809c6a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c077a88b/tables.md",
+          "resolved_path": "dev/bench_results/c077a88b/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec6153bc3e15bc7c8708b389f32d83a2003864e7ea1d2f36546eeee697b63800",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-08-c077a88b-preparation/capabilities-nr.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/capabilities-nr.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "de2cffa8500619b6b4cbc97f2e14b1af9169d54c78d5e50e763e16e16cf925ee",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-corrections.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-corrections.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7bffa4f4031a0716ea88c9a4002fe8ad5e3bbab1ce347cffa6dc84ccf596c482",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/source-evidence.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fd4cac622bcd92dd55ba6340a37bbf825ff6ee0287bc31dfebd44b6ab009136f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-preparation/shared-contract-red.log",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/shared-contract-red.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "719cb61fe9bf8f48c128fbfbc49560ef0534048d663abdf2340a3d00300a99cd",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/superseded-v1-evidence.json",
+          "resolved_path": "dev/bench_results/c077a88b/superseded-v1-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "81dad8f7a4a3e63fbe6310432cdda44a01116197f52bcc0dd88b75b9a02a58b6",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "resume-confirmation.md",
+          "resolved_path": "dev/active/c077a88b/resume-confirmation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "836de94e8ed87d2c4df77774188a5086472044f614092b31f6770283cde10ec0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-r1-matched-confirmation-rejection/acceptance-summary.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-r1-matched-confirmation-rejection/acceptance-summary.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8f42c2afbea96b763117335d3daab9c415bc84bfebe28272457bc82b65a56eea",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-preparation/build-identity.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/build-identity.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c1dbfda6f7e7508a695308f39b791e7322ea81a514b7fe105236ae8f445be51f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-r1-matched-confirmation-reevaluation.log",
+          "resolved_path": "dev/bench_results/c077a88b/v3-r1-matched-confirmation-reevaluation.log"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "c077a88b findings and criterion map",
+      "path": "dev/active/c077a88b/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "LDPC survey and measurement tables",
+      "path": "dev/bench_results/c077a88b/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 matched-algorithm confirmation receipt",
+      "path": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 matched-algorithm execution log",
+      "path": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 quality-screen pilot receipt",
+      "path": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol v3 quality-screen execution log",
+      "path": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "label": "Pinned decoder adapter validation",
+      "path": "dev/bench_results/c077a88b/v3-preparation/validation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "label": "Rust 1.95 cargo-ci verdict",
+      "path": "dev/bench_results/c077a88b/v3-preparation/cargo-ci-after-acceptance-fix.log"
     }
   ],
   "first_ready_at": "2026-09-06T19:58:19.192165918Z",
@@ -39,5 +203,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Establish compatible LDPC decoder benchmark arms",
-  "updated_at": "2026-09-08T17:47:20.336746865Z"
+  "updated_at": "2026-09-08T19:36:56.518916622Z"
 }

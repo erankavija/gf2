@@ -1,0 +1,338 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::clmul::clmul_u64
+; extra symbols : gf2_kernels_simd::x86::clmul::clmul_batch#0 gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul gf2_kernels_simd::x86::clmul::clmul_barrett_reduce
+; output        : crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : cef0071
+; regenerated   : 2026-04-27T20:44:24Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::clmul::clmul_u64
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
+
+gf2_kernels_simd::x86::clmul::clmul_u64:
+	movq xmm0, rdi
+	movq xmm1, rsi
+	pclmulqdq xmm1, xmm0, 0
+	movq rax, xmm1
+	pextrq rdx, xmm1, 1
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::clmul::clmul_batch (index 0)
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::clmul::clmul_batch:
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 32
+	mov qword ptr [rsp], rsi
+	mov qword ptr [rsp + 8], rcx
+	cmp rsi, rcx
+	jne .LBB29_15
+	mov qword ptr [rsp + 16], rsi
+	mov qword ptr [rsp + 24], r9
+	cmp rsi, r9
+	jne .LBB29_16
+	mov rbx, qword ptr [rip + std_detect::detect::cache::CACHE@GOTPCREL]
+	mov rax, qword ptr [rbx]
+	test rax, rax
+	je .LBB29_3
+	bt rax, 32
+	jae .LBB29_5
+.LBB29_11:
+	mov rax, qword ptr [rbx]
+	test rax, rax
+	je .LBB29_12
+	test eax, 33554432
+	jne .LBB29_14
+.LBB29_5:
+	test rsi, rsi
+	je .LBB29_9
+	lea rax, [8*rsi]
+	xor ecx, ecx
+.LBB29_7:
+	cmp rax, rcx
+	je .LBB29_10
+	movq xmm0, qword ptr [rdi + rcx]
+	movq xmm1, qword ptr [rdx + rcx]
+	pclmulqdq xmm1, xmm0, 0
+	movdqa xmmword ptr [r8 + 2*rcx], xmm1
+	add rcx, 8
+	cmp rax, rcx
+	jne .LBB29_7
+.LBB29_9:
+	add rsp, 32
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	ret
+.LBB29_15:
+	lea rcx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.6]
+	lea r9, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.8]
+	mov rsi, rsp
+	lea rdx, [rsp + 8]
+	mov r8d, 71
+	xor edi, edi
+	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
+.LBB29_16:
+	lea rcx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.9]
+	lea r9, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.10]
+	lea rsi, [rsp + 16]
+	lea rdx, [rsp + 24]
+	mov r8d, 89
+	xor edi, edi
+	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
+.LBB29_3:
+	mov r14, rsi
+	mov r12, r8
+	mov r15, rdx
+	mov r13, rdi
+	call qword ptr [rip + std_detect::detect::cache::detect_and_initialize@GOTPCREL]
+	mov rdi, r13
+	mov rdx, r15
+	mov r8, r12
+	mov rsi, r14
+	bt rax, 32
+	jb .LBB29_11
+	jmp .LBB29_5
+.LBB29_12:
+	mov rbx, rsi
+	mov r15, r8
+	mov r14, rdx
+	mov r12, rdi
+	call qword ptr [rip + std_detect::detect::cache::detect_and_initialize@GOTPCREL]
+	mov rdi, r12
+	mov rdx, r14
+	mov r8, r15
+	mov rsi, rbx
+	test eax, 33554432
+	je .LBB29_5
+.LBB29_14:
+	mov rcx, rsi
+	mov r9, rsi
+	add rsp, 32
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	jmp gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul
+.LBB29_10:
+	lea rdx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.17]
+	mov rdi, rsi
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul:
+	push r14
+	push rbx
+	push rax
+	cmp rsi, 2
+	jae .LBB30_9
+	xor ebx, ebx
+	sub rsi, rbx
+	ja .LBB30_4
+	jmp .LBB30_8
+.LBB30_9:
+	lea r11, [r8 + 16]
+	mov eax, 1
+.LBB30_10:
+	cmp rax, rsi
+	jae .LBB30_11
+	cmp rax, rcx
+	jae .LBB30_17
+	lea r10, [rax - 1]
+	cmp r10, r9
+	jae .LBB30_22
+	vmovq xmm0, qword ptr [rdi + 8*rax]
+	vmovq xmm1, qword ptr [rdi + 8*rax - 8]
+	vinserti128 ymm0, ymm1, xmm0, 1
+	vmovq xmm1, qword ptr [rdx + 8*rax]
+	vmovq xmm2, qword ptr [rdx + 8*rax - 8]
+	vinserti128 ymm1, ymm2, xmm1, 1
+	vpclmulqdq ymm0, ymm0, ymm1, 0
+	vmovdqa xmmword ptr [r11 - 16], xmm0
+	cmp rax, r9
+	jae .LBB30_21
+	vextracti128 xmm0, ymm0, 1
+	vpextrq r10, xmm0, 1
+	vmovq rbx, xmm0
+	mov qword ptr [r11], rbx
+	mov qword ptr [r11 + 8], r10
+	lea rbx, [rax + 2]
+	add r11, 32
+	add rax, 3
+	cmp rax, rsi
+	mov rax, rbx
+	jbe .LBB30_10
+	dec rbx
+	sub rsi, rbx
+	jbe .LBB30_8
+.LBB30_4:
+	cmp rbx, rcx
+	mov rax, rcx
+	cmova rax, rbx
+	cmp rbx, r9
+	mov r10, r9
+	cmova r10, rbx
+	lea rdi, [rdi + 8*rbx]
+	lea rdx, [rdx + 8*rbx]
+	mov r11, rbx
+	shl r11, 4
+	add r8, r11
+	mov r11, r10
+	sub r11, rbx
+	mov r14, rax
+	sub r14, rbx
+	xor ebx, ebx
+.LBB30_5:
+	cmp r14, rbx
+	je .LBB30_12
+	cmp r11, rbx
+	je .LBB30_14
+	vmovq xmm0, qword ptr [rdi + 8*rbx]
+	vmovq xmm1, qword ptr [rdx + 8*rbx]
+	vpclmulqdq xmm0, xmm0, xmm1, 0
+	vmovdqa xmmword ptr [r8], xmm0
+	inc rbx
+	add r8, 16
+	cmp rsi, rbx
+	jne .LBB30_5
+.LBB30_8:
+	add rsp, 8
+	pop rbx
+	pop r14
+	vzeroupper
+	ret
+.LBB30_21:
+	lea rdx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.16]
+	mov rdi, rax
+	mov rsi, r9
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB30_22:
+	lea rdx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.15]
+	mov rdi, r10
+	mov rsi, r9
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB30_12:
+	lea rdx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.11]
+	mov rdi, rax
+	mov rsi, rcx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB30_14:
+	lea rdx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.12]
+	mov rdi, r10
+	mov rsi, r9
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB30_17:
+	lea rdx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.14]
+	mov rdi, rax
+	mov rsi, rcx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB30_11:
+	lea rdx, [rip + .Lanon.abaf104465172f8be6876afe1da8e8ae.13]
+	mov rdi, rax
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::clmul::clmul_barrett_reduce
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+
+gf2_kernels_simd::x86::clmul::clmul_barrett_reduce:
+	xor eax, eax
+	test rdi, rdi
+	je .LBB31_4
+	test rsi, rsi
+	je .LBB31_4
+	mov r9, rcx
+	movq xmm1, rdi
+	movq xmm0, rsi
+	pclmulqdq xmm0, xmm1, 0
+	movq rax, xmm0
+	pextrq rdi, xmm0, 1
+	mov ecx, r8d
+	and ecx, 127
+	mov rsi, rax
+	shrd rsi, rdi, cl
+	shr rdi, cl
+	xor r10d, r10d
+	test cl, 64
+	cmovne rsi, rdi
+	cmove r10, rdi
+	or r10, rsi
+	je .LBB31_4
+	movq xmm1, rsi
+	movq xmm2, rdx
+	pclmulqdq xmm2, xmm1, 0
+	pextrq rax, xmm2, 1
+	movq rdx, xmm2
+	shrd rdx, rax, cl
+	shr rax, cl
+	test cl, 64
+	cmove rax, rdx
+	movq xmm1, rax
+	movq xmm2, r9
+	pclmulqdq xmm2, xmm1, 0
+	pxor xmm2, xmm0
+	pextrq rdx, xmm2, 1
+	mov rsi, rdx
+	shr rsi, cl
+	xor eax, eax
+	test cl, 64
+	movq rdi, xmm2
+	mov r10, rsi
+	cmovne r10, rax
+	mov r11, rdi
+	shrd r11, rdx, cl
+	test cl, 64
+	cmovne r11, rsi
+	or r11, r10
+	mov r11, r9
+	cmove r11, rax
+	xor r11, rdi
+	mov rdi, r11
+	shrd rdi, rdx, cl
+	test cl, 64
+	cmovne rdi, rsi
+	mov rdx, -1
+	mov ecx, r8d
+	shl rdx, cl
+	or rdi, r10
+	cmove r9, rax
+	not rdx
+	xor r9, r11
+	and r9, rdx
+	mov rax, r9
+.LBB31_4:
+	ret

@@ -1,0 +1,10 @@
+cargo-budget: 12 jobs (2 live, 24 cpus)
+   Compiling tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/dev/tools/tuning-campaign-support)
+    Finished `ci-test` profile [optimized] target(s) in 24.98s
+────────────
+ Nextest run ID 716e058d-b048-4a33-a4c1-b633c1186d19 with nextest profile: ci
+    Starting 2 tests across 12 binaries (167 tests skipped)
+        PASS [   0.026s] (1/2) tuning-campaign-support::protocol_contracts v3_family_producing_manifest_is_selected_by_the_plan_and_bound_to_facts
+        PASS [   0.164s] (2/2) tuning-campaign-support::protocol_contracts v3_decoder_quality_preserves_exact_vectors_but_allows_process_diagnostics
+────────────
+     Summary [   0.164s] 2 tests run: 2 passed, 167 skipped

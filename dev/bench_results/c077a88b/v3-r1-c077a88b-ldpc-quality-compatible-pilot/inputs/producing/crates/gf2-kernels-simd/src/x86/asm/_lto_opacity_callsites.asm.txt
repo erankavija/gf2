@@ -1,0 +1,1221 @@
+; gf2-core PPC-spiral LTO-opacity audit artefact
+; ---------------------------------------------------------
+; Pinned non-generic call sites for the two dispatch tables
+; (Fp65537Fns, ClmulWide256Fns) that don't survive monomorphisation
+; as standalone lib symbols at HEAD. Source harness:
+;     crates/gf2-core/examples/lto_opacity_audit.rs
+; Regenerate with:
+;   cargo rustc -p gf2-core --release --features simd \
+;       --example lto_opacity_audit --target-dir <tmp> -- --emit=asm
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; commit        : 36e5888
+; regenerated   : 2026-04-27T18:39:08Z
+; ---------------------------------------------------------
+
+;==========================================================
+; symbol: lto_opacity_callsite_fp65537
+; (Fp65537Fns dispatch via crate::simd::maybe_fp65537())
+;==========================================================
+
+lto_opacity_callsite_fp65537:
+.Lfunc_begin22:
+	.cfi_startproc
+	.cfi_personality 155, DW.ref.rust_eh_personality
+	.cfi_lsda 27, .Lexception1
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	pushq	%r15
+	.cfi_def_cfa_offset 24
+	pushq	%r14
+	.cfi_def_cfa_offset 32
+	pushq	%r13
+	.cfi_def_cfa_offset 40
+	pushq	%r12
+	.cfi_def_cfa_offset 48
+	pushq	%rbx
+	.cfi_def_cfa_offset 56
+	subq	$40, %rsp
+	.cfi_def_cfa_offset 96
+	.cfi_offset %rbx, -56
+	.cfi_offset %r12, -48
+	.cfi_offset %r13, -40
+	.cfi_offset %r14, -32
+	.cfi_offset %r15, -24
+	.cfi_offset %rbp, -16
+	movq	%rcx, %r15
+	movq	%rdx, %r13
+	movq	%rsi, %rbx
+	movq	%rdi, %rbp
+	movq	_ZN8gf2_core4simd11FP65537_FNS17h9e8cb41c68a637baE@GOTPCREL(%rip), %r14
+	movl	32(%r14), %eax
+	testl	%eax, %eax
+	jne	.LBB22_8
+	movq	(%r14), %r14
+	testq	%r14, %r14
+	je	.LBB22_58
+.LBB22_2:
+	movq	%r14, 16(%rsp)
+	leaq	(,%rbx,4), %rax
+	movq	%rax, 32(%rsp)
+	movl	$4, %r12d
+	movl	$4, %r14d
+	testq	%rbx, %rbx
+	je	.LBB22_12
+	leaq	(,%rbx,4), %rdi
+	callq	*malloc@GOTPCREL(%rip)
+	testq	%rax, %rax
+	je	.LBB22_9
+	movq	%rax, %r14
+	cmpq	$4, %rbx
+	jae	.LBB22_6
+	xorl	%eax, %eax
+	jmp	.LBB22_10
+.LBB22_6:
+	movabsq	$1152921504606846972, %rax
+	andq	%rbx, %rax
+	leaq	(%rbx,%rbx), %rcx
+	andq	$-8, %rcx
+	xorl	%edx, %edx
+	.p2align	4
+.LBB22_7:
+	movdqu	(%rbp,%rdx,4), %xmm0
+	movdqu	16(%rbp,%rdx,4), %xmm1
+	pshufd	$232, %xmm0, %xmm0
+	pshufd	$232, %xmm1, %xmm1
+	punpcklqdq	%xmm1, %xmm0
+	movdqu	%xmm0, (%r14,%rdx,2)
+	addq	$8, %rdx
+	cmpq	%rdx, %rcx
+	jne	.LBB22_7
+	jmp	.LBB22_11
+.LBB22_8:
+	callq	_ZN3std4sync9once_lock17OnceLock$LT$T$GT$10initialize17hb313fd8e3cd776c3E
+	movq	(%r14), %r14
+	testq	%r14, %r14
+	jne	.LBB22_2
+	jmp	.LBB22_58
+.LBB22_9:
+	movl	$4, %edi
+	movq	32(%rsp), %rsi
+	callq	*_RNvNtCslNYArtu3iFV_5alloc7raw_vec12handle_error@GOTPCREL(%rip)
+.LBB22_10:
+	movl	(%rbp,%rax,8), %ecx
+	movl	%ecx, (%r14,%rax,4)
+	incq	%rax
+.LBB22_11:
+	cmpq	%rax, %rbx
+	jne	.LBB22_10
+.LBB22_12:
+	testq	%r15, %r15
+	je	.LBB22_22
+	leaq	(,%r15,4), %rbp
+	movq	%rbp, %rdi
+	callq	*malloc@GOTPCREL(%rip)
+	testq	%rax, %rax
+	je	.LBB22_18
+	movq	%rax, %r12
+	cmpq	$4, %r15
+	jae	.LBB22_16
+	xorl	%eax, %eax
+	jmp	.LBB22_20
+.LBB22_16:
+	movabsq	$1152921504606846972, %rax
+	andq	%r15, %rax
+	leaq	(%r15,%r15), %rcx
+	andq	$-8, %rcx
+	xorl	%edx, %edx
+	.p2align	4
+.LBB22_17:
+	movdqu	(%r13,%rdx,4), %xmm0
+	movdqu	16(%r13,%rdx,4), %xmm1
+	pshufd	$232, %xmm0, %xmm0
+	pshufd	$232, %xmm1, %xmm1
+	punpcklqdq	%xmm1, %xmm0
+	movdqu	%xmm0, (%r12,%rdx,2)
+	addq	$8, %rdx
+	cmpq	%rdx, %rcx
+	jne	.LBB22_17
+	jmp	.LBB22_21
+.LBB22_18:
+.Ltmp12:
+	movl	$4, %edi
+	movq	%rbp, %rsi
+	callq	*_RNvNtCslNYArtu3iFV_5alloc7raw_vec12handle_error@GOTPCREL(%rip)
+.Ltmp13:
+	jmp	.LBB22_60
+.LBB22_19:
+.Ltmp14:
+	movq	%rax, %r13
+	jmp	.LBB22_67
+.LBB22_20:
+	movl	(%r13,%rax,8), %ecx
+	movl	%ecx, (%r12,%rax,4)
+	incq	%rax
+.LBB22_21:
+	cmpq	%rax, %r15
+	jne	.LBB22_20
+.LBB22_22:
+	testq	%rbx, %rbx
+	je	.LBB22_25
+	movl	$1, %esi
+	leaq	(,%rbx,4), %r13
+	movq	%r13, %rdi
+	callq	*calloc@GOTPCREL(%rip)
+	testq	%rax, %rax
+	je	.LBB22_59
+	movq	%rax, %rbp
+	jmp	.LBB22_26
+.LBB22_25:
+	movl	$4, %ebp
+	leaq	(,%rbx,4), %r13
+.LBB22_26:
+.Ltmp18:
+	movq	%r14, %rdi
+	movq	%rbx, %rsi
+	movq	%r12, %rdx
+	movq	%r15, %rcx
+	movq	%rbp, %r8
+	movq	%rbx, %r9
+	callq	*16(%rsp)
+.Ltmp19:
+	movabsq	$9223372036854775804, %rdx
+	leaq	(,%r13,2), %rsi
+	cmpq	%rdx, %r13
+	seta	%al
+	leaq	-4(%rdx), %rcx
+	cmpq	%rcx, %rsi
+	seta	%cl
+	orb	%al, %cl
+	je	.LBB22_30
+	xorl	%edi, %edi
+.LBB22_29:
+.Ltmp20:
+	callq	*_RNvNtCslNYArtu3iFV_5alloc7raw_vec12handle_error@GOTPCREL(%rip)
+.Ltmp21:
+	jmp	.LBB22_60
+.LBB22_30:
+	movq	%r13, %rdi
+	shrq	$2, %rdi
+	testq	%rsi, %rsi
+	je	.LBB22_33
+	movq	%rdi, (%rsp)
+	cmpq	$7, %rsi
+	movq	%rsi, 8(%rsp)
+	jbe	.LBB22_34
+	movq	%rsi, %rdi
+	callq	*malloc@GOTPCREL(%rip)
+	movq	%rax, %r13
+	jmp	.LBB22_36
+.LBB22_33:
+	movl	$8, %r13d
+	movq	$0, (%rsp)
+	jmp	.LBB22_37
+.LBB22_34:
+	movq	$0, 24(%rsp)
+	leaq	24(%rsp), %rdi
+	movq	%rsi, %rdx
+	movl	$8, %esi
+	callq	*posix_memalign@GOTPCREL(%rip)
+	movq	8(%rsp), %rsi
+	movl	$8, %edi
+	testl	%eax, %eax
+	jne	.LBB22_29
+	movq	24(%rsp), %r13
+.LBB22_36:
+	movq	(%rsp), %rdi
+	movq	%rdi, (%rsp)
+	testq	%r13, %r13
+	movabsq	$9223372036854775804, %rdx
+	je	.LBB22_61
+.LBB22_37:
+	testq	%rbx, %rbx
+	je	.LBB22_52
+	leaq	(,%rbx,4), %rax
+	cmpq	$56, %rax
+	jb	.LBB22_39
+	andq	%rdx, %rax
+	addq	%rbp, %rax
+	cmpq	%rax, %r13
+	jae	.LBB22_43
+	leaq	(,%rdi,8), %rax
+	addq	%r13, %rax
+	cmpq	%rbp, %rax
+	jbe	.LBB22_43
+.LBB22_39:
+	xorl	%eax, %eax
+.LBB22_46:
+	movq	%rdi, %rdx
+	movq	%rax, %rcx
+	andq	$3, %rdx
+	je	.LBB22_49
+	movq	%rax, %rcx
+	.p2align	4
+.LBB22_48:
+	movl	(%rbp,%rcx,4), %esi
+	movq	%rsi, (%r13,%rcx,8)
+	incq	%rcx
+	decq	%rdx
+	jne	.LBB22_48
+.LBB22_49:
+	subq	%rdi, %rax
+	cmpq	$-4, %rax
+	ja	.LBB22_51
+	.p2align	4
+.LBB22_50:
+	movl	(%rbp,%rcx,4), %eax
+	movq	%rax, (%r13,%rcx,8)
+	movl	4(%rbp,%rcx,4), %eax
+	movq	%rax, 8(%r13,%rcx,8)
+	movl	8(%rbp,%rcx,4), %eax
+	movq	%rax, 16(%r13,%rcx,8)
+	movl	12(%rbp,%rcx,4), %eax
+	movq	%rax, 24(%r13,%rcx,8)
+	addq	$4, %rcx
+	cmpq	%rcx, %rdi
+	jne	.LBB22_50
+	jmp	.LBB22_51
+.LBB22_43:
+	movq	%rdi, %rax
+	andq	$-4, %rax
+	xorl	%ecx, %ecx
+	pxor	%xmm0, %xmm0
+	.p2align	4
+.LBB22_44:
+	movq	(%rbp,%rcx,4), %xmm1
+	movq	8(%rbp,%rcx,4), %xmm2
+	punpckldq	%xmm0, %xmm1
+	punpckldq	%xmm0, %xmm2
+	movdqu	%xmm1, (%r13,%rcx,8)
+	movdqu	%xmm2, 16(%r13,%rcx,8)
+	addq	$4, %rcx
+	cmpq	%rcx, %rax
+	jne	.LBB22_44
+	cmpq	%rax, %rdi
+	jne	.LBB22_46
+.LBB22_51:
+	movq	%rbp, %rdi
+	callq	*free@GOTPCREL(%rip)
+.LBB22_52:
+	testq	%r15, %r15
+	je	.LBB22_54
+	movq	%r12, %rdi
+	callq	*free@GOTPCREL(%rip)
+.LBB22_54:
+	testq	%rbx, %rbx
+	je	.LBB22_56
+	movq	%r14, %rdi
+	callq	*free@GOTPCREL(%rip)
+.LBB22_56:
+	cmpq	$0, (%rsp)
+	movq	16(%rsp), %r14
+	je	.LBB22_58
+	movq	%r13, %rdi
+	callq	*free@GOTPCREL(%rip)
+.LBB22_58:
+	testq	%r14, %r14
+	setne	%al
+	addq	$40, %rsp
+	.cfi_def_cfa_offset 56
+	popq	%rbx
+	.cfi_def_cfa_offset 48
+	popq	%r12
+	.cfi_def_cfa_offset 40
+	popq	%r13
+	.cfi_def_cfa_offset 32
+	popq	%r14
+	.cfi_def_cfa_offset 24
+	popq	%r15
+	.cfi_def_cfa_offset 16
+	popq	%rbp
+	.cfi_def_cfa_offset 8
+	retq
+.LBB22_59:
+	.cfi_def_cfa_offset 96
+.Ltmp15:
+	movl	$4, %edi
+	movq	%r13, %rsi
+	callq	*_RNvNtCslNYArtu3iFV_5alloc7raw_vec12handle_error@GOTPCREL(%rip)
+.Ltmp16:
+.LBB22_60:
+	ud2
+.LBB22_61:
+	movl	$8, %edi
+	movq	8(%rsp), %rsi
+	jmp	.LBB22_29
+.LBB22_62:
+.Ltmp17:
+	movq	%rax, %r13
+	jmp	.LBB22_65
+.LBB22_63:
+.Ltmp22:
+	movq	%rax, %r13
+	testq	%rbx, %rbx
+	je	.LBB22_65
+	movq	%rbp, %rdi
+	callq	*free@GOTPCREL(%rip)
+.LBB22_65:
+	testq	%r15, %r15
+	je	.LBB22_67
+	movq	%r12, %rdi
+	callq	*free@GOTPCREL(%rip)
+.LBB22_67:
+	testq	%rbx, %rbx
+	je	.LBB22_69
+	movq	%r14, %rdi
+	callq	*free@GOTPCREL(%rip)
+.LBB22_69:
+	movq	%r13, %rdi
+	callq	_Unwind_Resume@PLT
+.Lfunc_end22:
+	.size	lto_opacity_callsite_fp65537, .Lfunc_end22-lto_opacity_callsite_fp65537
+	.cfi_endproc
+
+;==========================================================
+; symbol: lto_opacity_callsite_gf2m_wide256
+; (ClmulWide256Fns dispatch via crate::simd::maybe_gf2m_wide256())
+;==========================================================
+
+lto_opacity_callsite_gf2m_wide256:
+.Lfunc_begin23:
+	.cfi_startproc
+	.cfi_personality 155, DW.ref.rust_eh_personality
+	.cfi_lsda 27, .Lexception2
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	pushq	%r15
+	.cfi_def_cfa_offset 24
+	pushq	%r14
+	.cfi_def_cfa_offset 32
+	pushq	%r13
+	.cfi_def_cfa_offset 40
+	pushq	%r12
+	.cfi_def_cfa_offset 48
+	pushq	%rbx
+	.cfi_def_cfa_offset 56
+	subq	$216, %rsp
+	.cfi_def_cfa_offset 272
+	.cfi_offset %rbx, -56
+	.cfi_offset %r12, -48
+	.cfi_offset %r13, -40
+	.cfi_offset %r14, -32
+	.cfi_offset %r15, -24
+	.cfi_offset %rbp, -16
+	movq	%rdx, %r12
+	movq	%rsi, 8(%rsp)
+	movq	%rdi, 136(%rsp)
+	movl	$64, %edi
+	movl	$1, %esi
+	callq	*calloc@GOTPCREL(%rip)
+	testq	%rax, %rax
+	je	.LBB23_126
+	movq	%rax, %rbx
+	movq	_ZN8gf2_core4simd16GF2M_WIDE256_FNS17h1863c32966c1f0aaE@GOTPCREL(%rip), %r13
+	movl	24(%r13), %eax
+	testl	%eax, %eax
+	jne	.LBB23_2
+.LBB23_3:
+	movq	(%r13), %rax
+	testq	%rax, %rax
+	je	.LBB23_4
+.Ltmp25:
+	movq	8(%rsp), %rdi
+	movq	%r12, %rsi
+	movq	%rbx, %rdx
+	callq	*%rax
+.Ltmp26:
+.LBB23_22:
+	movq	_ZN8gf2_core4gf2m4wide13BARRETT_CACHE17haf5939e9e029bdb5E@GOTPCREL(%rip), %rbp
+	movl	56(%rbp), %eax
+	testl	%eax, %eax
+	jne	.LBB23_23
+.LBB23_24:
+	movl	$1, %ecx
+	xorl	%eax, %eax
+	lock		cmpxchgl	%ecx, (%rbp)
+	jne	.LBB23_25
+.LBB23_26:
+	movq	_RNvNtNtCsjrHSEGnQ3l9_3std9panicking11panic_count18GLOBAL_PANIC_COUNT@GOTPCREL(%rip), %r14
+	movq	(%r14), %rax
+	shlq	%rax
+	testq	%rax, %rax
+	jne	.LBB23_28
+	xorl	%r13d, %r13d
+	movzbl	4(%rbp), %eax
+	testb	%al, %al
+	jne	.LBB23_31
+.LBB23_35:
+	movabsq	$9223372036854775807, %r12
+	movabsq	$6960427168301915278, %r15
+	cmpq	$0, 32(%rbp)
+	je	.LBB23_45
+	movq	40(%rbp), %rdi
+	movq	48(%rbp), %rsi
+	movl	$4, %ecx
+	movq	%r15, %rdx
+	callq	_ZN4core4hash11BuildHasher8hash_one17h4ede50f0e55dc618E
+	movq	%rax, %rsi
+	shrq	$57, %rsi
+	movq	8(%rbp), %rcx
+	movq	16(%rbp), %rdx
+	movd	%esi, %xmm0
+	punpcklbw	%xmm0, %xmm0
+	pshuflw	$0, %xmm0, %xmm0
+	pshufd	$68, %xmm0, %xmm0
+	xorl	%esi, %esi
+	pcmpeqd	%xmm1, %xmm1
+	movabsq	$4220057665305900650, %r11
+.LBB23_37:
+	andq	%rdx, %rax
+	movdqu	(%rcx,%rax), %xmm2
+	movdqa	%xmm2, %xmm3
+	pcmpeqb	%xmm0, %xmm3
+	pmovmskb	%xmm3, %edi
+	testl	%edi, %edi
+	je	.LBB23_41
+.LBB23_38:
+	rep		bsfl	%edi, %r8d
+	addq	%rax, %r8
+	andq	%rdx, %r8
+	negq	%r8
+	leaq	(%r8,%r8,4), %r8
+	movq	-32(%rcx,%r8,8), %r9
+	xorq	%r15, %r9
+	movq	-40(%rcx,%r8,8), %r10
+	xorq	%r11, %r10
+	orq	%r9, %r10
+	jne	.LBB23_40
+	cmpq	$4, -24(%rcx,%r8,8)
+	je	.LBB23_58
+.LBB23_40:
+	leal	-1(%rdi), %r8d
+	andw	%di, %r8w
+	movl	%r8d, %edi
+	jne	.LBB23_38
+	.p2align	4
+.LBB23_41:
+	pcmpeqb	%xmm1, %xmm2
+	pmovmskb	%xmm2, %edi
+	testl	%edi, %edi
+	jne	.LBB23_45
+	addq	%rsi, %rax
+	addq	$16, %rax
+	addq	$16, %rsi
+	jmp	.LBB23_37
+.LBB23_45:
+	movl	$72, %edi
+	movl	$1, %esi
+	callq	*calloc@GOTPCREL(%rip)
+	testq	%rax, %rax
+	je	.LBB23_46
+	movq	$1, 64(%rax)
+	pxor	%xmm0, %xmm0
+	movdqa	%xmm0, 160(%rsp)
+	movdqa	%xmm0, 144(%rsp)
+	movl	$256, %esi
+	jmp	.LBB23_48
+	.p2align	4
+.LBB23_51:
+	xorw	$1061, (%rax,%r9,8)
+.LBB23_54:
+	xorq	%r8, (%rax,%rdi,8)
+.LBB23_55:
+	decq	%rsi
+	cmpq	$-1, %rsi
+	je	.LBB23_56
+.LBB23_48:
+	leaq	256(%rsi), %rdi
+	shrq	$6, %rdi
+	movl	%esi, %ecx
+	andl	$63, %ecx
+	movq	(%rax,%rdi,8), %rdx
+	movl	$1, %r8d
+	shlq	%cl, %r8
+	btq	%rcx, %rdx
+	jae	.LBB23_55
+	movq	%rsi, %r9
+	shrq	$6, %r9
+	cmpq	$256, %rsi
+	jae	.LBB23_50
+	orq	%r8, 144(%rsp,%r9,8)
+.LBB23_50:
+	andl	$67108863, %r9d
+	movl	%esi, %edx
+	andl	$63, %edx
+	je	.LBB23_51
+	movl	$1061, %r10d
+	shlq	%cl, %r10
+	xorq	%r10, (%rax,%r9,8)
+	negb	%dl
+	movl	$1061, %r10d
+	movl	%edx, %ecx
+	shrq	%cl, %r10
+	xorq	%r10, 8(%rax,%r9,8)
+	jmp	.LBB23_54
+.LBB23_56:
+	movq	%rax, %rdi
+	callq	*free@GOTPCREL(%rip)
+	movq	$1061, 64(%rsp)
+	pxor	%xmm0, %xmm0
+	movdqu	%xmm0, 72(%rsp)
+	movq	$0, 88(%rsp)
+	movdqa	144(%rsp), %xmm0
+	movdqa	160(%rsp), %xmm1
+	movdqa	%xmm0, 96(%rsp)
+	movdqa	%xmm1, 112(%rsp)
+	movl	$256, 128(%rsp)
+	movl	$72, %edi
+	callq	*malloc@GOTPCREL(%rip)
+	testq	%rax, %rax
+	je	.LBB23_57
+	movq	%rax, %r12
+	movl	%r13d, 8(%rsp)
+	movq	128(%rsp), %rax
+	movq	%rax, 64(%r12)
+	movdqa	64(%rsp), %xmm0
+	movdqa	80(%rsp), %xmm1
+	movdqa	96(%rsp), %xmm2
+	movdqa	112(%rsp), %xmm3
+	movdqu	%xmm3, 48(%r12)
+	movdqu	%xmm2, 32(%r12)
+	movdqu	%xmm1, 16(%r12)
+	movdqu	%xmm0, (%r12)
+	movq	40(%rbp), %rdi
+	movq	48(%rbp), %rsi
+	movl	$4, %ecx
+	movq	%r15, %rdx
+	callq	_ZN4core4hash11BuildHasher8hash_one17h4ede50f0e55dc618E
+	movq	%rax, %r13
+	cmpq	$0, 24(%rbp)
+	je	.LBB23_65
+.LBB23_66:
+	movq	8(%rbp), %rax
+	movq	16(%rbp), %rdx
+	movq	%r13, %rcx
+	shrq	$57, %rcx
+	movd	%ecx, %xmm0
+	punpcklbw	%xmm0, %xmm0
+	pshuflw	$0, %xmm0, %xmm0
+	pshufd	$68, %xmm0, %xmm0
+	xorl	%r8d, %r8d
+	pcmpeqd	%xmm1, %xmm1
+	xorl	%edi, %edi
+.LBB23_67:
+	andq	%rdx, %r13
+	movdqu	(%rax,%r13), %xmm2
+	movdqa	%xmm2, %xmm3
+	pcmpeqb	%xmm0, %xmm3
+	pmovmskb	%xmm3, %r9d
+	testl	%r9d, %r9d
+	je	.LBB23_72
+	movq	%rdi, 56(%rsp)
+.LBB23_69:
+	rep		bsfl	%r9d, %r10d
+	addq	%r13, %r10
+	andq	%rdx, %r10
+	negq	%r10
+	leaq	(%r10,%r10,4), %r10
+	movq	-32(%rax,%r10,8), %r11
+	movq	%r15, %rdi
+	xorq	%r15, %r11
+	movq	-40(%rax,%r10,8), %r14
+	movabsq	$4220057665305900650, %r15
+	xorq	%r15, %r14
+	orq	%r11, %r14
+	jne	.LBB23_71
+	cmpq	$4, -24(%rax,%r10,8)
+	je	.LBB23_83
+.LBB23_71:
+	leal	-1(%r9), %r10d
+	andw	%r9w, %r10w
+	movl	%r10d, %r9d
+	movq	%rdi, %r15
+	movq	56(%rsp), %rdi
+	jne	.LBB23_69
+	.p2align	4
+.LBB23_72:
+	cmpq	$1, %r8
+	je	.LBB23_76
+	pmovmskb	%xmm2, %esi
+	testl	%esi, %esi
+	je	.LBB23_74
+	rep		bsfl	%esi, %esi
+	addq	%r13, %rsi
+	andq	%rdx, %rsi
+.LBB23_76:
+	pcmpeqb	%xmm1, %xmm2
+	pmovmskb	%xmm2, %r8d
+	testl	%r8d, %r8d
+	jne	.LBB23_79
+	movl	$1, %r8d
+	jmp	.LBB23_78
+.LBB23_74:
+	xorl	%r8d, %r8d
+.LBB23_78:
+	addq	%rdi, %r13
+	addq	$16, %r13
+	addq	$16, %rdi
+	jmp	.LBB23_67
+.LBB23_58:
+	leaq	(%rcx,%r8,8), %rax
+	movq	-16(%rax), %r15
+	movq	-8(%rax), %rax
+.Ltmp37:
+	leaq	64(%rsp), %rdi
+	movq	%r15, %rsi
+	callq	*24(%rax)
+.Ltmp38:
+	movdqa	64(%rsp), %xmm0
+	pcmpeqb	.LCPI23_0(%rip), %xmm0
+	pmovmskb	%xmm0, %eax
+	cmpl	$65535, %eax
+	jne	.LBB23_60
+	movq	64(%r15), %rax
+	movq	%rax, 128(%rsp)
+	movups	(%r15), %xmm0
+	movups	16(%r15), %xmm1
+	movups	32(%r15), %xmm2
+	movups	48(%r15), %xmm3
+	movaps	%xmm3, 112(%rsp)
+	movaps	%xmm2, 96(%rsp)
+	movaps	%xmm1, 80(%rsp)
+	movaps	%xmm0, 64(%rsp)
+	testb	%r13b, %r13b
+	jne	.LBB23_92
+	movq	(%r14), %rax
+	testq	%r12, %rax
+	je	.LBB23_92
+.Ltmp41:
+	callq	*_RNvNtNtCsjrHSEGnQ3l9_3std9panicking11panic_count17is_zero_slow_path@GOTPCREL(%rip)
+.Ltmp42:
+	jmp	.LBB23_90
+.LBB23_83:
+	leaq	(%rax,%r10,8), %rax
+	movq	-16(%rax), %r15
+	movq	-8(%rax), %r13
+	movq	%r12, -16(%rax)
+	leaq	.Lanon.6cb419bf7ea8dc25d4e4f505d0374468.18(%rip), %rcx
+	movq	%rcx, -8(%rax)
+	movq	(%r13), %rax
+	testq	%rax, %rax
+	je	.LBB23_85
+.Ltmp46:
+	movq	%r15, %rdi
+	callq	*%rax
+.Ltmp47:
+.LBB23_85:
+	cmpq	$0, 8(%r13)
+	movl	8(%rsp), %r14d
+	movabsq	$9223372036854775807, %r12
+	je	.LBB23_87
+	movq	%r15, %rdi
+	callq	*free@GOTPCREL(%rip)
+.LBB23_87:
+	testb	%r14b, %r14b
+	je	.LBB23_88
+	jmp	.LBB23_92
+.LBB23_4:
+	movq	(%r12), %rcx
+	movq	8(%r12), %rdx
+	movq	16(%r12), %rsi
+	movq	24(%r12), %rdi
+	xorl	%r8d, %r8d
+	xorl	%r9d, %r9d
+	movq	%rcx, 56(%rsp)
+	jmp	.LBB23_5
+	.p2align	4
+.LBB23_17:
+	xorl	%r12d, %r12d
+.LBB23_21:
+	movq	%r13, 24(%rbx,%r9,8)
+	xorq	%r12, 32(%rbx,%r9,8)
+	movq	%r11, %r9
+	cmpq	$4, %r11
+	movq	56(%rsp), %rcx
+	je	.LBB23_22
+.LBB23_5:
+	movq	8(%rsp), %rax
+	movq	(%rax,%r9,8), %rax
+	xorl	%r11d, %r11d
+	xorl	%r13d, %r13d
+	testq	%rcx, %rcx
+	je	.LBB23_7
+	.p2align	4
+.LBB23_6:
+	movq	%rcx, %r12
+	rep		bsfq	%rcx, %rcx
+	xorl	%ebp, %ebp
+	shldq	%cl, %rax, %rbp
+	movq	%rax, %r10
+	shlq	%cl, %r10
+	testb	$64, %cl
+	cmovneq	%r10, %rbp
+	cmovneq	%r8, %r10
+	xorq	%rbp, %r13
+	xorq	%r10, %r11
+	leaq	-1(%r12), %rcx
+	andq	%r12, %rcx
+	jne	.LBB23_6
+.LBB23_7:
+	xorq	%r11, (%rbx,%r9,8)
+	testq	%rdx, %rdx
+	je	.LBB23_8
+	movq	%rdx, %rcx
+	xorl	%ebp, %ebp
+	xorl	%r12d, %r12d
+	.p2align	4
+.LBB23_10:
+	movq	%rcx, %r10
+	rep		bsfq	%rcx, %rcx
+	xorl	%r11d, %r11d
+	shldq	%cl, %rax, %r11
+	movq	%rax, %r14
+	shlq	%cl, %r14
+	testb	$64, %cl
+	cmovneq	%r14, %r11
+	cmovneq	%r8, %r14
+	xorq	%r11, %r12
+	xorq	%r14, %rbp
+	leaq	-1(%r10), %rcx
+	andq	%r10, %rcx
+	jne	.LBB23_10
+	jmp	.LBB23_11
+	.p2align	4
+.LBB23_8:
+	xorl	%ebp, %ebp
+	xorl	%r12d, %r12d
+.LBB23_11:
+	leaq	1(%r9), %r11
+	xorq	(%rbx,%r11,8), %r13
+	xorq	%rbp, %r13
+	movq	%r13, (%rbx,%r11,8)
+	xorq	16(%rbx,%r9,8), %r12
+	movq	%r12, 16(%rbx,%r9,8)
+	testq	%rsi, %rsi
+	je	.LBB23_12
+	movq	%rsi, %rcx
+	xorl	%ebp, %ebp
+	xorl	%r13d, %r13d
+	.p2align	4
+.LBB23_14:
+	movq	%rcx, %r10
+	rep		bsfq	%rcx, %rcx
+	xorl	%r14d, %r14d
+	shldq	%cl, %rax, %r14
+	movq	%rax, %r15
+	shlq	%cl, %r15
+	testb	$64, %cl
+	cmovneq	%r15, %r14
+	cmovneq	%r8, %r15
+	xorq	%r14, %r13
+	xorq	%r15, %rbp
+	leaq	-1(%r10), %rcx
+	andq	%r10, %rcx
+	jne	.LBB23_14
+	xorq	%rbp, %r12
+	jmp	.LBB23_16
+	.p2align	4
+.LBB23_12:
+	xorl	%r13d, %r13d
+.LBB23_16:
+	xorq	24(%rbx,%r9,8), %r13
+	movq	%r12, 16(%rbx,%r9,8)
+	movq	%r13, 24(%rbx,%r9,8)
+	testq	%rdi, %rdi
+	je	.LBB23_17
+	movq	%rdi, %rcx
+	xorl	%ebp, %ebp
+	xorl	%r12d, %r12d
+	.p2align	4
+.LBB23_19:
+	movq	%rcx, %r10
+	rep		bsfq	%rcx, %rcx
+	xorl	%r14d, %r14d
+	shldq	%cl, %rax, %r14
+	movq	%rax, %r15
+	shlq	%cl, %r15
+	testb	$64, %cl
+	cmovneq	%r15, %r14
+	cmovneq	%r8, %r15
+	xorq	%r14, %r12
+	xorq	%r15, %rbp
+	leaq	-1(%r10), %rcx
+	andq	%r10, %rcx
+	jne	.LBB23_19
+	xorq	%rbp, %r13
+	jmp	.LBB23_21
+.LBB23_79:
+	movzbl	(%rax,%rsi), %edi
+	testb	%dil, %dil
+	jns	.LBB23_80
+.LBB23_81:
+	andb	$1, %dil
+	leaq	-16(%rsi), %r8
+	andq	%rdx, %r8
+	movb	%cl, (%rax,%rsi)
+	movb	%cl, 16(%rax,%r8)
+	movdqu	24(%rbp), %xmm0
+	movzbl	%dil, %ecx
+	movd	%ecx, %xmm1
+	shufpd	$2, .LCPI23_1(%rip), %xmm1
+	psubq	%xmm1, %xmm0
+	movdqu	%xmm0, 24(%rbp)
+	negq	%rsi
+	leaq	(%rsi,%rsi,4), %rcx
+	movq	%r15, -32(%rax,%rcx,8)
+	movabsq	$4220057665305900650, %rdx
+	movq	%rdx, -40(%rax,%rcx,8)
+	movq	$4, -24(%rax,%rcx,8)
+	movq	%r12, -16(%rax,%rcx,8)
+	leaq	.Lanon.6cb419bf7ea8dc25d4e4f505d0374468.18(%rip), %rdx
+	movq	%rdx, -8(%rax,%rcx,8)
+	movl	8(%rsp), %r14d
+	movabsq	$9223372036854775807, %r12
+	testb	%r14b, %r14b
+	jne	.LBB23_92
+.LBB23_88:
+	movq	_RNvNtNtCsjrHSEGnQ3l9_3std9panicking11panic_count18GLOBAL_PANIC_COUNT@GOTPCREL(%rip), %rax
+	movq	(%rax), %rax
+	testq	%r12, %rax
+	jne	.LBB23_89
+.LBB23_92:
+	xorl	%eax, %eax
+	xchgl	%eax, (%rbp)
+	cmpl	$2, %eax
+	je	.LBB23_93
+	movl	128(%rsp), %r15d
+	cmpq	$0, 32(%rbx)
+	jne	.LBB23_99
+.LBB23_95:
+	cmpq	$0, 40(%rbx)
+	jne	.LBB23_99
+	cmpq	$0, 48(%rbx)
+	jne	.LBB23_99
+	cmpq	$0, 56(%rbx)
+	jne	.LBB23_99
+	movq	$-1, %rax
+	movl	%r15d, %ecx
+	shlq	%cl, %rax
+	leaq	-192(%r15), %rcx
+	xorl	%edx, %edx
+	cmpq	$64, %rcx
+	cmovbq	%rax, %rdx
+	testq	%rdx, 24(%rbx)
+	je	.LBB23_124
+.LBB23_99:
+	leal	-1(%r15), %edx
+.Ltmp51:
+	leaq	184(%rsp), %rdi
+	movq	%rbx, %rsi
+	callq	_ZN8gf2_core4gf2m7barrett22slice_wide_shr_2n_to_n17h2ed3e9ceadd4e4e1E
+.Ltmp52:
+	movl	$64, %edi
+	movl	$1, %esi
+	callq	*calloc@GOTPCREL(%rip)
+	testq	%rax, %rax
+	je	.LBB23_101
+	movq	%rax, %r12
+	leaq	96(%rsp), %rsi
+.Ltmp53:
+	leaq	184(%rsp), %rdi
+	movl	%r15d, %edx
+	movq	%rax, %rcx
+	callq	_ZN8gf2_core4gf2m7barrett35slice_clmul_wide_with_implicit_high17h138093f5c96d1de0E
+.Ltmp54:
+	leal	1(%r15), %edx
+.Ltmp55:
+	leaq	144(%rsp), %rdi
+	movq	%r12, %rsi
+	callq	_ZN8gf2_core4gf2m7barrett22slice_wide_shr_2n_to_n17h2ed3e9ceadd4e4e1E
+.Ltmp56:
+	movl	$64, %edi
+	movl	$1, %esi
+	callq	*calloc@GOTPCREL(%rip)
+	testq	%rax, %rax
+	je	.LBB23_111
+.Ltmp57:
+	movq	%rax, %r13
+	leaq	144(%rsp), %rdi
+	leaq	64(%rsp), %rsi
+	movl	%r15d, %edx
+	movq	%rax, %rcx
+	callq	_ZN8gf2_core4gf2m7barrett35slice_clmul_wide_with_implicit_high17h138093f5c96d1de0E
+.Ltmp58:
+	movups	(%rbx), %xmm0
+	movups	(%r13), %xmm1
+	xorps	%xmm0, %xmm1
+	movaps	%xmm1, 16(%rsp)
+	movdqu	16(%rbx), %xmm2
+	movdqu	16(%r13), %xmm0
+	pxor	%xmm2, %xmm0
+	leaq	-192(%r15), %rax
+	movq	$-1, %rsi
+	movq	$-1, %rdi
+	movl	%r15d, %ecx
+	shlq	%cl, %rdi
+	xorl	%edx, %edx
+	cmpq	$64, %rax
+	cmovbq	%rdi, %rdx
+	movq	%rdi, %rax
+	notq	%rax
+	cmovaeq	%rsi, %rax
+	movq	%xmm0, 32(%rsp)
+	pshufd	$238, %xmm0, %xmm2
+	movq	%xmm2, %rcx
+	testq	%rdx, %rcx
+	je	.LBB23_117
+	xorps	64(%rsp), %xmm1
+	movaps	%xmm1, 16(%rsp)
+	pxor	80(%rsp), %xmm0
+	movdqa	%xmm0, 32(%rsp)
+	cmpl	$256, %r15d
+	jae	.LBB23_116
+	movl	$1, %esi
+	movl	%r15d, %ecx
+	shlq	%cl, %rsi
+	movl	%r15d, %ecx
+	shrl	$6, %ecx
+	xorq	%rsi, 16(%rsp,%rcx,8)
+	movq	40(%rsp), %rcx
+.LBB23_117:
+	testq	%rdx, %rcx
+	jne	.LBB23_118
+	jmp	.LBB23_120
+.LBB23_116:
+	pshufd	$238, %xmm0, %xmm0
+	movq	%xmm0, %rcx
+	testq	%rdx, %rcx
+	je	.LBB23_120
+.LBB23_118:
+	movdqa	16(%rsp), %xmm0
+	pxor	64(%rsp), %xmm0
+	movdqa	%xmm0, 16(%rsp)
+	movq	80(%rsp), %rdx
+	xorq	%rdx, 32(%rsp)
+	xorq	88(%rsp), %rcx
+	movq	%rcx, 40(%rsp)
+	cmpl	$256, %r15d
+	jae	.LBB23_120
+	movl	$1, %edx
+	movl	%r15d, %ecx
+	shlq	%cl, %rdx
+	shrl	$6, %r15d
+	xorq	%rdx, 16(%rsp,%r15,8)
+	movq	40(%rsp), %rcx
+.LBB23_120:
+	andq	%rax, %rcx
+	movq	%rcx, 40(%rsp)
+	movq	free@GOTPCREL(%rip), %r14
+	movq	%r13, %rdi
+	callq	*%r14
+	movq	%r12, %rdi
+	callq	*%r14
+.LBB23_125:
+	movaps	16(%rsp), %xmm0
+	movaps	32(%rsp), %xmm1
+	movq	136(%rsp), %r14
+	movups	%xmm1, 16(%r14)
+	movups	%xmm0, (%r14)
+	movq	%rbx, %rdi
+	callq	*free@GOTPCREL(%rip)
+	movq	%r14, %rax
+	addq	$216, %rsp
+	.cfi_def_cfa_offset 56
+	popq	%rbx
+	.cfi_def_cfa_offset 48
+	popq	%r12
+	.cfi_def_cfa_offset 40
+	popq	%r13
+	.cfi_def_cfa_offset 32
+	popq	%r14
+	.cfi_def_cfa_offset 24
+	popq	%r15
+	.cfi_def_cfa_offset 16
+	popq	%rbp
+	.cfi_def_cfa_offset 8
+	retq
+.LBB23_124:
+	.cfi_def_cfa_offset 272
+	movdqu	(%rbx), %xmm0
+	movups	16(%rbx), %xmm1
+	movaps	%xmm1, 32(%rsp)
+	movdqa	%xmm0, 16(%rsp)
+	jmp	.LBB23_125
+.LBB23_2:
+.Ltmp23:
+	callq	_ZN3std4sync9once_lock17OnceLock$LT$T$GT$10initialize17hd906d4dc7c8004e1E
+.Ltmp24:
+	jmp	.LBB23_3
+.LBB23_23:
+.Ltmp27:
+	callq	_ZN3std4sync9once_lock17OnceLock$LT$T$GT$10initialize17hfd8cb39a8a24ba07E
+.Ltmp28:
+	jmp	.LBB23_24
+.LBB23_25:
+	movq	_ZN8gf2_core4gf2m4wide13BARRETT_CACHE17haf5939e9e029bdb5E@GOTPCREL(%rip), %rdi
+	callq	*_RNvMNtNtNtNtCsjrHSEGnQ3l9_3std3sys4sync5mutex5futexNtB2_5Mutex14lock_contended@GOTPCREL(%rip)
+	jmp	.LBB23_26
+.LBB23_28:
+.Ltmp29:
+	callq	*_RNvNtNtCsjrHSEGnQ3l9_3std9panicking11panic_count17is_zero_slow_path@GOTPCREL(%rip)
+.Ltmp30:
+	movl	%eax, %r13d
+	xorb	$1, %r13b
+	movzbl	4(%rbp), %eax
+	testb	%al, %al
+	je	.LBB23_35
+.LBB23_31:
+	movq	%rbp, 64(%rsp)
+	movb	%r13b, 72(%rsp)
+.Ltmp31:
+	leaq	.Lanon.6cb419bf7ea8dc25d4e4f505d0374468.13(%rip), %rdi
+	leaq	.Lanon.6cb419bf7ea8dc25d4e4f505d0374468.10(%rip), %rcx
+	leaq	.Lanon.6cb419bf7ea8dc25d4e4f505d0374468.15(%rip), %r8
+	leaq	64(%rsp), %rdx
+	movl	$28, %esi
+	callq	*_RNvNtCsgEmfK2I1SDS_4core6result13unwrap_failed@GOTPCREL(%rip)
+.Ltmp32:
+	jmp	.LBB23_32
+.LBB23_93:
+	movq	_ZN8gf2_core4gf2m4wide13BARRETT_CACHE17haf5939e9e029bdb5E@GOTPCREL(%rip), %rsi
+	movl	$202, %edi
+	movl	$129, %edx
+	movl	$1, %ecx
+	xorl	%eax, %eax
+	callq	*syscall@GOTPCREL(%rip)
+	movl	128(%rsp), %r15d
+	cmpq	$0, 32(%rbx)
+	jne	.LBB23_99
+	jmp	.LBB23_95
+.LBB23_57:
+.Ltmp66:
+	movl	$8, %edi
+	movl	$72, %esi
+	callq	*_RNvNtCslNYArtu3iFV_5alloc5alloc18handle_alloc_error@GOTPCREL(%rip)
+.Ltmp67:
+	jmp	.LBB23_32
+.LBB23_65:
+.Ltmp43:
+	callq	_ZN9hashbrown3raw21RawTable$LT$T$C$A$GT$14reserve_rehash17h5470395dc68571dfE
+.Ltmp44:
+	jmp	.LBB23_66
+.LBB23_60:
+.Ltmp39:
+	leaq	.Lanon.6cb419bf7ea8dc25d4e4f505d0374468.16(%rip), %rdi
+	leaq	.Lanon.6cb419bf7ea8dc25d4e4f505d0374468.17(%rip), %rdx
+	movl	$55, %esi
+	callq	*_RNvNtCsgEmfK2I1SDS_4core6option13expect_failed@GOTPCREL(%rip)
+.Ltmp40:
+	jmp	.LBB23_32
+.LBB23_89:
+.Ltmp49:
+	callq	*_RNvNtNtCsjrHSEGnQ3l9_3std9panicking11panic_count17is_zero_slow_path@GOTPCREL(%rip)
+.Ltmp50:
+.LBB23_90:
+	testb	%al, %al
+	jne	.LBB23_92
+	movb	$1, 4(%rbp)
+	jmp	.LBB23_92
+.LBB23_80:
+	movdqa	(%rax), %xmm0
+	pmovmskb	%xmm0, %esi
+	rep		bsfl	%esi, %esi
+	movzbl	(%rax,%rsi), %edi
+	jmp	.LBB23_81
+.LBB23_126:
+	movl	$8, %edi
+	movl	$64, %esi
+	callq	*_RNvNtCslNYArtu3iFV_5alloc7raw_vec12handle_error@GOTPCREL(%rip)
+.LBB23_101:
+.Ltmp63:
+	movl	$8, %edi
+	movl	$64, %esi
+	callq	*_RNvNtCslNYArtu3iFV_5alloc7raw_vec12handle_error@GOTPCREL(%rip)
+.Ltmp64:
+	jmp	.LBB23_32
+.LBB23_111:
+.Ltmp60:
+	movl	$8, %edi
+	movl	$64, %esi
+	callq	*_RNvNtCslNYArtu3iFV_5alloc7raw_vec12handle_error@GOTPCREL(%rip)
+.Ltmp61:
+	jmp	.LBB23_32
+.LBB23_46:
+.Ltmp68:
+	movl	$8, %edi
+	movl	$72, %esi
+	callq	*_RNvNtCslNYArtu3iFV_5alloc7raw_vec12handle_error@GOTPCREL(%rip)
+.Ltmp69:
+.LBB23_32:
+	ud2
+.LBB23_82:
+.Ltmp45:
+	movq	%rax, %r14
+	movq	%r12, %rdi
+	jmp	.LBB23_105
+.LBB23_102:
+.Ltmp48:
+	movq	%rax, %r14
+	cmpq	$0, 8(%r13)
+	jne	.LBB23_104
+	movl	8(%rsp), %r13d
+	jmp	.LBB23_44
+.LBB23_104:
+	movq	%r15, %rdi
+.LBB23_105:
+	callq	*free@GOTPCREL(%rip)
+	movl	8(%rsp), %r13d
+	jmp	.LBB23_44
+.LBB23_112:
+.Ltmp59:
+	movq	%rax, %r14
+	movq	%r13, %rdi
+	callq	*free@GOTPCREL(%rip)
+	jmp	.LBB23_122
+.LBB23_127:
+.Ltmp65:
+	movq	%rax, %r14
+	movq	%rbx, %rdi
+	callq	*free@GOTPCREL(%rip)
+	movq	%r14, %rdi
+	callq	_Unwind_Resume@PLT
+.LBB23_121:
+.Ltmp62:
+	movq	%rax, %r14
+.LBB23_122:
+	movq	%r12, %rdi
+	callq	*free@GOTPCREL(%rip)
+	movq	%rbx, %rdi
+	callq	*free@GOTPCREL(%rip)
+	movq	%r14, %rdi
+	callq	_Unwind_Resume@PLT
+.LBB23_33:
+.Ltmp33:
+	movq	%rax, %r14
+.Ltmp34:
+	leaq	64(%rsp), %rdi
+	callq	_ZN4core3ptr276drop_in_place$LT$std..sync..poison..PoisonError$LT$std..sync..poison..mutex..MutexGuard$LT$std..collections..hash..map..HashMap$LT$$LP$core..any..TypeId$C$usize$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Sync$u2b$core..marker..Send$GT$$GT$$GT$$GT$$GT$17h142322b7c738203bE
+.Ltmp35:
+	jmp	.LBB23_123
+.LBB23_34:
+.Ltmp36:
+	callq	*_RNvNtCsgEmfK2I1SDS_4core9panicking16panic_in_cleanup@GOTPCREL(%rip)
+.LBB23_43:
+.Ltmp70:
+	movq	%rax, %r14
+.LBB23_44:
+.Ltmp71:
+	movzbl	%r13b, %edi
+	callq	_ZN4core3ptr238drop_in_place$LT$std..sync..poison..mutex..MutexGuard$LT$std..collections..hash..map..HashMap$LT$$LP$core..any..TypeId$C$usize$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Sync$u2b$core..marker..Send$GT$$GT$$GT$$GT$17hae2820b24fb74daaE
+.Ltmp72:
+.LBB23_123:
+	movq	%rbx, %rdi
+	callq	*free@GOTPCREL(%rip)
+	movq	%r14, %rdi
+	callq	_Unwind_Resume@PLT
+.LBB23_106:
+.Ltmp73:
+	callq	*_RNvNtCsgEmfK2I1SDS_4core9panicking16panic_in_cleanup@GOTPCREL(%rip)
+.Lfunc_end23:
+	.size	lto_opacity_callsite_gf2m_wide256, .Lfunc_end23-lto_opacity_callsite_gf2m_wide256
+	.cfi_endproc

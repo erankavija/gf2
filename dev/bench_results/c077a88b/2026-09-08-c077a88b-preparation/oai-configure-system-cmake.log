@@ -1,0 +1,20 @@
+cargo-budget: 6 jobs (4 live, 24 cpus)
+-- The C compiler identification is GNU 16.2.1
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Ccache not found. Consider installing it for faster compilation. Command: sudo apt/dnf install ccache
+-- Found PkgConfig: /usr/bin/pkg-config (found version "3.0.6")
+CMake Error at CMakeLists.txt:102 (message):
+  asn1c not found.  Install it globally or activate AUTO_DOWNLOAD_ASN1C
+
+
+-- Configuring incomplete, errors occurred!
