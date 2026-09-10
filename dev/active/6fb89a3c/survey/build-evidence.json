@@ -1173,43 +1173,43 @@
   },
   "rust_harness_binaries": {
     "gf2_transpose_arm": {
-      "sha256": "08bead21c650e8ba0236f900f9947782bb464a194251661d27d0374045d57300",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=84ebef70169b145d5523d5063a24fc99e93cdfcb, not stripped"
+      "sha256": "e41cfbfe431a9eed0fa9f0b9f16b2c71904706d0d0ace0c9fc6e075cfb954ca3",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=01ee72a0462867d88de08b65efd195eb8e43072c, not stripped"
     },
     "gf2_logical_xor_arm": {
       "sha256": "c7b1d5823a11db4a3ae8fc19eb871a76c40b83d02a8348ab1c4df698a0fdd585",
       "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=221d48b18e42a4778afbcd9fca5d4bfb90133000, not stripped"
     },
     "gf2_bch_genmatrix_arm": {
-      "sha256": "2c051ecd16f0a167daa8e8b3146be02ec3f43ff62d34249bfc9b2675325966e6",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=6ed7242bd4262e520a47c29fb63e3243d773271c, not stripped"
+      "sha256": "7e6c1d05a8365caa0a9561ee9eec3c08183b8a2a8febdae5d3065346376f7ce9",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=631dde3ffc82105d70bb924916ad0c14b6ac45b8, not stripped"
     }
   },
   "gf2_disassembly": {
     "gf2_transpose_arm": {
       "file": "gf2_transpose_arm",
-      "sha256": "08bead21c650e8ba0236f900f9947782bb464a194251661d27d0374045d57300",
+      "sha256": "e41cfbfe431a9eed0fa9f0b9f16b2c71904706d0d0ace0c9fc6e075cfb954ca3",
       "whole_file": {
-        "instructions": 95448,
+        "instructions": 95786,
         "by_register_class": {
-          "general": 90665,
+          "general": 91003,
           "xmm": 4157,
           "ymm": 626
         },
         "cpuid": 10,
         "top_mnemonics": {
-          "mov": 28888,
-          "lea": 5897,
-          "cmp": 4811,
-          "jmp": 4260,
-          "int3": 4049,
-          "call": 4048,
-          "je": 3761,
-          "add": 3238,
-          "test": 2858,
-          "xor": 2750,
-          "pop": 2499,
-          "jne": 2358
+          "mov": 29010,
+          "lea": 5916,
+          "cmp": 4828,
+          "jmp": 4293,
+          "call": 4066,
+          "int3": 4052,
+          "je": 3777,
+          "add": 3245,
+          "test": 2868,
+          "xor": 2752,
+          "pop": 2503,
+          "jne": 2371
         }
       },
       "routes": {
@@ -1433,71 +1433,81 @@
     },
     "gf2_bch_genmatrix_arm": {
       "file": "gf2_bch_genmatrix_arm",
-      "sha256": "2c051ecd16f0a167daa8e8b3146be02ec3f43ff62d34249bfc9b2675325966e6",
+      "sha256": "7e6c1d05a8365caa0a9561ee9eec3c08183b8a2a8febdae5d3065346376f7ce9",
       "whole_file": {
-        "instructions": 113534,
+        "instructions": 114752,
         "by_register_class": {
-          "general": 109228,
-          "xmm": 4181,
+          "general": 110414,
+          "xmm": 4213,
           "ymm": 125
         },
         "cpuid": 10,
         "top_mnemonics": {
-          "mov": 34692,
-          "lea": 7426,
-          "cmp": 5528,
-          "call": 5389,
-          "jmp": 5157,
-          "int3": 5154,
-          "je": 4688,
-          "add": 3859,
-          "test": 3620,
-          "jne": 3205,
-          "pop": 3093,
-          "xor": 2615
+          "mov": 35174,
+          "lea": 7517,
+          "cmp": 5601,
+          "call": 5453,
+          "jmp": 5225,
+          "int3": 5171,
+          "je": 4731,
+          "add": 3883,
+          "test": 3658,
+          "jne": 3243,
+          "pop": 3099,
+          "xor": 2654
         }
       },
       "routes": {
-        "generator_by_encoding": {
-          "pattern": "write_generator_by_encoding|for_each_generator_row",
-          "functions": {}
-        },
-        "systematic_encode": {
-          "pattern": "bch::encode",
+        "arm_main_with_inlined_routes": {
+          "pattern": "^gf2_bch_genmatrix_arm::main$",
           "functions": {
-            "core::ptr::drop_in_place<gf2_coding::bch::encode::ScratchRegisters>": {
-              "instructions": 39,
+            "gf2_bch_genmatrix_arm::main": {
+              "instructions": 5225,
               "by_register_class": {
-                "general": 39
+                "general": 5018,
+                "xmm": 207
               },
               "cpuid": 0,
               "top_mnemonics": {
-                "int3": 14,
-                "mov": 7,
-                "cmpq": 5,
-                "je": 5,
-                "call": 5,
-                "push": 1,
-                "pop": 1,
-                "jmp": 1
+                "mov": 1710,
+                "lea": 510,
+                "call": 428,
+                "jmp": 337,
+                "je": 323,
+                "cmp": 277,
+                "test": 191,
+                "jne": 176,
+                "xor": 104,
+                "add": 97,
+                "movdqu": 95,
+                "movabs": 89
               }
-            },
-            "core::ptr::drop_in_place<gf2_coding::bch::encode::EncodeRegisters<u64>>": {
-              "instructions": 30,
+            }
+          }
+        },
+        "code_construction_setup": {
+          "pattern": "BchCode<X,S,M>::construct",
+          "functions": {
+            "gf2_coding::bch::spec::BchCode<X,S,M>::construct": {
+              "instructions": 3616,
               "by_register_class": {
-                "general": 30
+                "general": 3506,
+                "xmm": 110
               },
               "cpuid": 0,
               "top_mnemonics": {
-                "mov": 6,
-                "cmpq": 5,
-                "je": 5,
-                "int3": 5,
-                "call": 4,
-                "pop": 2,
-                "push": 1,
-                "jmp": 1,
-                "ret": 1
+                "mov": 1421,
+                "call": 240,
+                "je": 233,
+                "jmp": 213,
+                "jne": 177,
+                "lea": 162,
+                "test": 159,
+                "cmp": 111,
+                "xor": 105,
+                "add": 75,
+                "cmpq": 71,
+                "lock": 68
               }
             }
           }

@@ -136,6 +136,10 @@
       "B2",
       "B3"
     ],
+    "validated_gf2_routes": [
+      "materialize (BchCode::generator_matrix, production)",
+      "reference (bch_generator_matrix_by_encoding, test-support oracle)"
+    ],
     "equivalence": "full-rank row-space equality after both documented layouts are reindexed to internal polynomial-degree order",
     "raw_dump_identity": "falsified; bases and systematic column layouts differ"
   }

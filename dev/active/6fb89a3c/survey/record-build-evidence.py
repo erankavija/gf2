@@ -221,8 +221,10 @@ def main() -> None:
                 "xor_fn_wrapper": r"fns::xor_fn",
             }),
             "gf2_bch_genmatrix_arm": probe(GF2_TARGET / "gf2_bch_genmatrix_arm", {
-                "generator_by_encoding": r"write_generator_by_encoding|for_each_generator_row",
-                "systematic_encode": r"bch::encode",
+                # LTO inlines both generator-matrix routes into the arm's main;
+                # the route is identified by the child's reported selected_path.
+                "arm_main_with_inlined_routes": r"^gf2_bch_genmatrix_arm::main$",
+                "code_construction_setup": r"BchCode<X,S,M>::construct",
             }),
         },
     }

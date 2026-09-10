@@ -118,7 +118,7 @@ ARMS = {
     "isal-base": {"build": "external", "executable": f"{repo}/{survey}/isal_xor_arm", "rustflags": None,
                   "description": "ISA-L v2.32.1 xor_gen_base (commit 7c3479e0a9dac17f448603ec1ad64c7c625f530c, BSD-3-Clause, gcc -O3 -march=native -fPIC); the portable C reference of xor_gen, vects = sources + 1, 32-byte aligned; the NASM multi-binary xor_gen dispatcher is unavailable on this host"},
     "gf2-bch-genmatrix": {"build": "conservative-portable", "executable": f"{gf2}/gf2_bch_genmatrix_arm", "rustflags": PORTABLE,
-                          "description": "gf2 bch_generator_matrix_by_encoding on the established bch_genmatrix rows, fresh BitMatrix per call; x86-64 baseline build"},
+                          "description": "gf2 generator-matrix construction on the established bch_genmatrix rows with a fresh BitMatrix per call: the production BchCode::generator_matrix materialization, or (reference cells) the test-support oracle bch_generator_matrix_by_encoding; x86-64 baseline build, route reported by the child"},
     "m4ri-bch-genmatrix": {"build": "external", "executable": f"{repo}/{survey}/m4ri_genmatrix_arm", "rustflags": None,
                            "description": "M4RI 20260122 shifted-generator fill plus mzd_echelonize_m4ri, the established construction of issue 4e732b56; fresh mzd_copy per call"},
 }
@@ -140,7 +140,8 @@ def wiring(cell_id, size, seed):
         return "gf2-logical", "isal-base", case
     if cell_id.startswith("bch-genmatrix-") and cell_id.endswith("-vs-m4ri"):
         code = {15: "B1", 127: "B2", 255: "B3"}[size["n"]]
-        return "gf2-bch-genmatrix", "m4ri-bch-genmatrix", {"code": code, "seed": seed}
+        route = "reference" if cell_id.startswith("bch-genmatrix-reference-") else "materialize"
+        return "gf2-bch-genmatrix", "m4ri-bch-genmatrix", {"code": code, "route": route, "seed": seed}
     raise SystemExit(f"cell {cell_id!r} names no known arm pair")
 cells, used = [], set()
 for declared in addendum["cells"]:

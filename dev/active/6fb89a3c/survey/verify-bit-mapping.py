@@ -142,7 +142,7 @@ def rref(n: int, rows: list[str]) -> tuple[int, tuple[int, ...]]:
     return len(pivots), tuple(pivots[col] for col in sorted(pivots))
 
 
-def check_genmatrix_row_space(name: str) -> None:
+def check_genmatrix_row_space(name: str, route: str) -> None:
     """Validates that gf2's `bch_generator_matrix_by_encoding`
     (`SystematicLayout::MessageParityAscending`) and M4RI's RREF of the
     shifted generator polynomial (repository column order, descending
@@ -158,7 +158,7 @@ def check_genmatrix_row_space(name: str) -> None:
     if not GF2_DUMP_CHECK.exists():
         raise RuntimeError(f"missing binary {GF2_DUMP_CHECK}")
     gf2_code, m4ri_binary = subprocess.run(
-        [str(GF2_DUMP_CHECK), "bch-genmatrix", name], cwd=ROOT.parents[3],
+        [str(GF2_DUMP_CHECK), "bch-genmatrix", name, route], cwd=ROOT.parents[3],
         text=True, capture_output=True, check=True,
     ).stdout.splitlines(), ROOT / "m4ri_genmatrix_arm"
     m4ri_proc = subprocess.run(
@@ -283,9 +283,10 @@ def main() -> int:
             raise AssertionError("isal_xor_arm accepted an 8-byte alignment outside the xor_gen contract")
         print("PASS isal_xor_arm refuses alignment outside the documented 32-byte contract")
 
-        for code_name in ("B1", "B2", "B3"):
-            check_genmatrix_row_space(code_name)
-        print("PASS bch-genmatrix row-space equality (gf2 vs m4ri, B1/B2/B3)")
+        for route in ("materialize", "reference"):
+            for code_name in ("B1", "B2", "B3"):
+                check_genmatrix_row_space(code_name, route)
+            print(f"PASS bch-genmatrix row-space equality (gf2 {route} vs m4ri, B1/B2/B3)")
 
         report = {
             "schema": "gf2-external-comparator-correctness-v2",
@@ -324,6 +325,7 @@ def main() -> int:
             },
             "bch_genmatrix": {
                 "validated_codes": ["B1", "B2", "B3"],
+                "validated_gf2_routes": ["materialize (BchCode::generator_matrix, production)", "reference (bch_generator_matrix_by_encoding, test-support oracle)"],
                 "equivalence": "full-rank row-space equality after both documented layouts are reindexed to internal polynomial-degree order",
                 "raw_dump_identity": "falsified; bases and systematic column layouts differ",
             },

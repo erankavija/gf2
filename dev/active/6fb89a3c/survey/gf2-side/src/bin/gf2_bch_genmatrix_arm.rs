@@ -1,6 +1,15 @@
 //! Conforming child-v2 Rust BCH generator-matrix arm and generator dumper.
+//!
+//! Two gf2 routes are measurable, named by the case's `route`:
+//! `materialize` (default) is the production materialization
+//! `GeneratorMatrixAccess::generator_matrix`, the `materialize/fresh-alloc`
+//! row of `crates/gf2-coding/benches/bch_genmatrix.rs`; `reference` is the
+//! basis-vector oracle `bch_generator_matrix_by_encoding` that bench runs
+//! beside it (`reference/fresh-alloc`). Both allocate a fresh matrix inside
+//! every timed call, matching M4RI's fresh copy per call.
 
 use gf2_coding::test_support::bch_generator_matrix_by_encoding;
+use gf2_coding::traits::block::GeneratorMatrixAccess;
 use gf2_core::BitMatrix;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -33,6 +42,12 @@ struct Request {
 struct Case {
     code: String,
     seed: u64,
+    #[serde(default = "materialize")]
+    route: String,
+}
+
+fn materialize() -> String {
+    "materialize".into()
 }
 
 #[derive(Serialize)]
@@ -115,17 +130,27 @@ fn main() {
     let started = Instant::now();
     let code = build_bch(&case.code).unwrap_or_else(|error| fail(error));
     let setup_ns = u64::try_from(started.elapsed().as_nanos()).unwrap_or(u64::MAX);
-    let selected_path = format!("bch_generator_matrix_by_encoding/{}", case.code);
-    let samples = timed_windows(request.windows, request.window_target_ms, |_| {
-        // Fresh allocation is intentionally inside every timed call, matching
-        // M4RI's fresh matrix per call so no overwrite artifact can leak from
-        // one call to the next.  Allocation dominance is reported as an open
-        // comparison concern rather than hidden by methodology changes.
-        let mut out = BitMatrix::zeros(code.k(), code.n());
-        bch_generator_matrix_by_encoding(&code, &mut out).expect("generator matrix shape");
-        black_box(out);
-    })
-    .unwrap_or_else(|error| fail(error));
+    // Fresh allocation is intentionally inside every timed call, matching
+    // M4RI's fresh matrix per call so no overwrite artifact can leak from
+    // one call to the next.
+    let (selected_path, samples) = match case.route.as_str() {
+        "materialize" => (
+            format!("BchCode::generator_matrix/{}", case.code),
+            timed_windows(request.windows, request.window_target_ms, |_| {
+                black_box(code.generator_matrix().expect("generator matrix shape"));
+            }),
+        ),
+        "reference" => (
+            format!("bch_generator_matrix_by_encoding/{}", case.code),
+            timed_windows(request.windows, request.window_target_ms, |_| {
+                let mut out = BitMatrix::zeros(code.k(), code.n());
+                bch_generator_matrix_by_encoding(&code, &mut out).expect("generator matrix shape");
+                black_box(out);
+            }),
+        ),
+        other => fail(format!("unknown route {other:?}; expected materialize or reference")),
+    };
+    let samples = samples.unwrap_or_else(|error| fail(error));
     let cpus_observed = CpuAffinity::observe()
         .map(|affinity| affinity.cpus().to_vec())
         .unwrap_or_default();

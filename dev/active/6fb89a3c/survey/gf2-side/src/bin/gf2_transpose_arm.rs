@@ -42,6 +42,11 @@ struct TiledCase {
     rows: u64,
     cols: u64,
     seed: u64,
+    /// The runner forwards one case to both arms; `adapter` selects the
+    /// Bitshuffle geometry adapter and has no meaning for the gf2 route.
+    #[serde(default)]
+    #[allow(dead_code)]
+    adapter: Option<String>,
 }
 
 #[derive(Deserialize)]

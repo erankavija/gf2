@@ -23,6 +23,7 @@ CASES = [
     (GF2_TARGET / "gf2_logical_xor_arm", {"alignment_bytes": 32, "seed": 1, "words": 8}),
     (GF2_TARGET / "gf2_logical_xor_arm", {"alignment_bytes": 32, "seed": 1, "words": 64, "sources": 3}),
     (GF2_TARGET / "gf2_bch_genmatrix_arm", {"code": "B1", "seed": 1}),
+    (GF2_TARGET / "gf2_bch_genmatrix_arm", {"code": "B1", "seed": 1, "route": "reference"}),
 ]
 # A whole-consumer arm must report a conversion record; a kernel-isolated arm
 # must not.
