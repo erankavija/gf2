@@ -1,0 +1,41 @@
+# command: dev/bench_results/eda07788/run-nr-derate-baselines.sh confirmation 2026-09-10
+# started_utc: 2026-09-10T17:09:57Z
+# gf2 revision (informational): b1b897d778c9ade3bea8821cf88e2a1caa3618a6
+# mode: confirmation
+# addendum: dev/active/eda07788/addendum-nr-llr-derate-confirmation.json
+# addendum sha256: ca2c9c97daec55c46a6257d50a41ff1d8cfe9c83ef34dcf316a8c519db205133
+# campaign: nr-derate-confirmation-eda07788-20260910t170957z
+# stage: /tmp/gf2-nr-derate-confirmation-eda07788-20260910t170957z
+# external staging: /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3
+# aff3ct root: /home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct
+# aff3ct static library sha256: b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529
+# toolchain: rustc 1.97.0 (2d8144b78 2026-07-07)
+# c++: c++ (GCC) 16.2.1 20260810
+# arm digests:
+#   e998288939d9009b2dbcf380c3dde4cd22f96a1e81eb7dbd4193af7d896cb441  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-nr-native/release/gf2-nr-derate-arm
+#   5fe2c4745be27599f403a29b357ff7a6e41b320a11435a0284a9b061c6e3e383  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-nr-portable/release/gf2-nr-derate-arm
+#   b19b2103f185ede21c39c57c3a191c39ef8b9ad0339c0685cc21cbaab8950642  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-nr-native/release/aff3ct-nr-derate-arm
+# survey source digests:
+#   b5d4ace26b2465e11f29471beb151a16a60ecd11876ff54149a7155df555e0fe  dev/active/eda07788/survey/nr-derate-build.sh
+#   0a463a64b60d6bafef37bce2c389e3f52b628ede649ddac030ce5384164d9279  dev/active/eda07788/survey/nr-derate/cpp/aff3ct_depuncture_shim.cpp
+#   8e7505d200ccc9557e90b1be2ada4fe91053e202157e22347b106c6af2181f03  dev/active/eda07788/survey/nr-derate/src/lib.rs
+#   e9165e2ea478408db803987d780612504987f31669c490e0447adbfaabadb71a  dev/active/eda07788/survey/nr-derate/src/bin/gf2-nr-derate-arm.rs
+#   79ec8a8d266f29493e601a70725146fffa65761e6fb9b099d2a4803c3c365315  dev/active/eda07788/survey/nr-derate/src/bin/aff3ct-nr-derate-arm.rs
+#   087007a31571855363c9ffe9954aadcc5c1154eb28a8969d9256a656e3890d14  dev/active/eda07788/survey/nr-derate/src/bin/validate-nr-derate-equivalence.rs
+#   ad6639540f25436b05133a30791395d8967d9e16f768a13c4bdf66f0fd59e9d1  dev/active/eda07788/survey/nr-derate/Cargo.toml
+#   cee9c54d1d44fde5907b950ce6262b3a0114c4ef3c9eae55d75a209051038035  dev/active/eda07788/survey/nr-derate/Cargo.lock
+#   077942457fd4c20750b32b94ae3d97be709ee718da371a16f6b976ca5b410c47  dev/active/eda07788/survey/nr-derate/build.rs
+#   30da0a5c58d987f83342eacbfcfe950c2f3afb47cc865adeeffff934c71cd735  dev/bench_results/eda07788/run-nr-derate-baselines.sh
+# load_avg_start:  20:09:57 up 6 days, 21:38,  9 users,  load average: 0.30, 1.26, 2.12
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-nr-derate-confirmation-eda07788-20260910t170957z/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-nr-derate-confirmation-eda07788-20260910t170957z/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-nr-derate-confirmation-eda07788-20260910t170957z/execution.log
+# session 3 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions: 3
+# load_avg_end:  20:12:50 up 6 days, 21:41,  9 users,  load average: 2.32, 1.75, 2.16
+# finished_utc: 2026-09-10T17:12:50Z

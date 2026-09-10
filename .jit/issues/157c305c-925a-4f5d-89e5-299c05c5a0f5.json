@@ -20,7 +20,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Document the finite NR filler LLR that de-rate-matching writes",
-  "updated_at": "2026-09-10T16:46:49.085647874Z"
+  "updated_at": "2026-09-10T22:15:01.180656670Z"
 }

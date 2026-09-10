@@ -1,0 +1,44 @@
+# Standalone DVB-T2 interleaver comparison harness (jit:eda07788).
+#
+# This workspace keeps the survey's build graph separate from the production
+# workspace while consuming gf2-core and gf2-coding by path.
+
+[workspace]
+
+[package]
+name = "survey-gf2-side"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "xdsopl-dvb-t2-baseline"
+path = "src/bin/xdsopl-dvb-t2-baseline.rs"
+
+[[bin]]
+name = "gf2-dvb-t2-candidate"
+path = "src/bin/gf2-dvb-t2-candidate.rs"
+
+[[bin]]
+name = "validate-permutation-equivalence"
+path = "src/bin/validate-permutation-equivalence.rs"
+
+[dependencies]
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+gf2-core = { path = "../../../../../crates/gf2-core" }
+tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+
+[build-dependencies]
+cc = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

@@ -1,0 +1,39 @@
+# command: dev/bench_results/eda07788/run-dvb-t2-baselines.sh confirmation-v3 2026-09-08
+# started_utc: 2026-09-08T19:40:30Z
+# gf2 revision (informational): 142d0774a61005b384a87d2adf6abb808763e558
+# mode: confirmation-v3
+# addendum: dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json
+# addendum sha256: 42850bc46ce792bea49d2017158d8b500c35c30bb21d724dc767637899818281
+# campaign: confirmation-v3-eda07788-20260908t194030z
+# stage: /tmp/gf2-confirmation-v3-eda07788-20260908t194030z
+# external staging: /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3
+# toolchain: rustc 1.97.0 (2d8144b78 2026-07-07)
+# c++: g++ (GCC) 16.2.1 20260810
+# arm digests:
+#   9362a945b0fb482b54e11ee9c5501cb2e4792cb36c7ea75100e65af21cf60d07  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-native/release/gf2-dvb-t2-candidate
+#   8e002703d12452e6675c2b16980c47a19776368d25c2513f59931d0f7eb16296  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-portable/release/gf2-dvb-t2-candidate
+#   90ef7e8ca3c1c090e597be49842410b54264f071d97f6ba68fd30204111f7902  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-native/release/xdsopl-dvb-t2-baseline
+# survey source digests:
+#   2454bcf3e2b109a0fad8ae259b8c12297e5b54d2502af95a2ebae4857cafe511  dev/active/eda07788/survey/fetch-build.sh
+#   84c32fdc0eb1f96d05d34142a7d7fecfceb102738fb09cc2423e10b0a5159079  dev/active/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp
+#   e3bc94bc9ebc4b65eb9c31b5f5bd60086eb4708c68d9c5b4d5533c4cbf675073  dev/active/eda07788/survey/gf2-side/src/lib.rs
+#   75528c46cf75f85d4dbac2e6e5a55ec35a5b214220bf00a9ebadb22493b7e11b  dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs
+#   9f51038aa75514d9abb48158b715349ca27837eb96929c5cfb3075dc2555398e  dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs
+#   c248a2f7b0041eb56c5a14f2216199f2fc96d767bc27190734f6a5a9d4d55bec  dev/active/eda07788/survey/gf2-side/src/bin/validate-permutation-equivalence.rs
+#   3f1091a40c5a6ff7cf52b4a86ec77b62ffb37c2cf51887cf3f8943210362d085  dev/active/eda07788/survey/gf2-side/Cargo.toml
+#   49cece52c527e90e06d9a54249b81b3873a4c4246218a7fb424695cf0d9f003f  dev/active/eda07788/survey/gf2-side/Cargo.lock
+#   0a621ff2b76281b688fa548ff793de1a90b30eb892e02266209aa5237b48fc33  dev/active/eda07788/survey/gf2-side/build.rs
+#   d534da13b4b5f8b77bb909928968c8ef52b0870d25e3b00a4a2baf2c483f8b23  dev/bench_results/eda07788/run-dvb-t2-baselines.sh
+# load_avg_start:  22:40:30 up 5 days, 9 min,  7 users,  load average: 0.24, 1.31, 2.08
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-v3-eda07788-20260908t194030z/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-v3-eda07788-20260908t194030z/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-v3-eda07788-20260908t194030z/execution.log
+# session 3 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=6
+# acceptance exit: 0
+# sessions: 3
+# load_avg_end:  22:43:15 up 5 days, 12 min,  7 users,  load average: 2.41, 2.19, 2.32
+# finished_utc: 2026-09-08T19:43:15Z

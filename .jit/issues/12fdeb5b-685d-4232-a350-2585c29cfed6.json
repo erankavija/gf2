@@ -27,7 +27,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Establish 5G NR rate-matched encoder baselines",
-  "updated_at": "2026-09-10T16:53:08.518517119Z"
+  "updated_at": "2026-09-10T22:14:48.532440522Z"
 }
