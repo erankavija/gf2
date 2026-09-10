@@ -48,7 +48,7 @@ Committed commands produce every artifact:
 | `survey/analysis` `bootstrap-resolution` | NR resolution derivation `pilot-resolution-nr-derate.txt`; DVB-T2 endpoint stability `survey/dvb-t2-v3-endpoint-stability.txt` |
 | `survey/inspect-sources.py` | `survey/source-evidence.json`: every code claim below with project, commit, path, line, verbatim text and interpretation |
 | `../../bench_results/eda07788/run-dvb-t2-baselines.sh`, `run-nr-derate-baselines.sh` | bounded checkpointed campaigns under the CCX1 full-host lock |
-| `../../bench_results/eda07788/reevaluate-v3.sh` | independent re-evaluation of the DVB-T2 v3 receipts: `reevaluation-v3.log` |
+| `../../bench_results/eda07788/reevaluate-v3.sh` | independent re-evaluation of all five v3 receipts: `reevaluation-v3.log` |
 | `../../bench_results/eda07788/summarize-v3.py` | [DVB-T2 tables](../../bench_results/eda07788/tables-v3.md) and [NR tables](../../bench_results/eda07788/tables-nr-derate.md) |
 
 Code claims cite `source-evidence.json` claim IDs in backticks. Every number
@@ -392,7 +392,7 @@ the first is the retrospective v1 import, derived in
 `trial-ledger-v1-import.json`. `nr-llr-derate-matching-trial-ledger.jsonl`
 began empty and holds the NR pilot and confirmation. `producing-inputs.json`
 and `producing-inputs-nr-derate.json` name the producing closures that the
-receipts snapshot under `inputs/producing/`. The DVB-T2 v3 receipts
+receipts snapshot under `inputs/producing/`. All five v3 receipts
 re-evaluate as accepted with the evaluator merged from main
 (`reevaluation-v3.log`), and their receipt and summary bytes are unchanged.
 Each confirmation's execution log is byte-identical to the runner's canonical

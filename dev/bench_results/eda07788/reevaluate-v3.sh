@@ -19,6 +19,8 @@ RECEIPTS=(
   "$RESULTS/2026-09-08-eda07788-dvb-t2-v3-pilot"
   "$RESULTS/2026-09-08-eda07788-dvb-t2-v3-pilot-r2"
   "$RESULTS/2026-09-08-eda07788-dvb-t2-v3-confirmation"
+  "$RESULTS/2026-09-10-eda07788-nr-derate-pilot"
+  "$RESULTS/2026-09-10-eda07788-nr-derate-confirmation"
 )
 
 ./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
