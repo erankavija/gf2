@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # Protocol-v3 campaigns of jit:26465e6c.
 #
-# Usage: dev/bench_results/26465e6c/run-campaign.sh <popcount|and-popcnt> <pilot|confirmation> <prepare|run|finalize>
+# Usage: dev/bench_results/26465e6c/run-campaign.sh <popcount|and-popcnt> <pilot|pilot-r2|confirmation> <prepare|run|finalize>
+#
+# pilot-r2 is the AND-popcount family's second pilot trial: the same frozen
+# pilot addendum under its own campaign identity, within the addendum's
+# search budget of two pilot trials per cell. The first trial's receipt is
+# rejected because an external kill interrupted one cell mid-measurement and
+# the resumed session started that cell a second time.
 #
 # prepare   builds the runner, the acceptance tool and the survey binaries
 #           (release, Rust 1.95, offline), records their identities, runs the
@@ -27,12 +33,16 @@ FAMILY=${1:-}
 MODE=${2:-}
 ACTION=${3:-}
 case "$FAMILY:$MODE" in
-  popcount:pilot|popcount:confirmation|and-popcnt:pilot|and-popcnt:confirmation) ;;
-  *) echo "usage: $0 <popcount|and-popcnt> <pilot|confirmation> <prepare|run|finalize>" >&2; exit 2 ;;
+  popcount:pilot|popcount:confirmation|and-popcnt:pilot|and-popcnt:pilot-r2|and-popcnt:confirmation) ;;
+  *) echo "usage: $0 <popcount|and-popcnt> <pilot|pilot-r2|confirmation> <prepare|run|finalize>" >&2; exit 2 ;;
+esac
+case "$MODE" in
+  pilot-r2) LABEL=pilot ;;
+  *) LABEL=$MODE ;;
 esac
 ISSUE=26465e6c
 SURVEY=dev/active/$ISSUE/survey
-ADDENDUM=dev/active/$ISSUE/addendum-$FAMILY-v3-$MODE.json
+ADDENDUM=dev/active/$ISSUE/addendum-$FAMILY-v3-$LABEL.json
 LEDGER=dev/bench_results/$ISSUE/v3-$FAMILY-family-ledger.jsonl
 OUT=dev/bench_results/$ISSUE/v3-$FAMILY-$MODE
 CAMPAIGN=$ISSUE-v3-$FAMILY-$MODE
@@ -92,7 +102,7 @@ case "$ACTION" in
       echo "# acceptance sha256: $(sha256sum "$ACCEPTANCE" | cut -d' ' -f1)"
       echo "# external build: $("$ARM" --build-identity)"
     } > "$LAUNCH_LOG"
-    python3 "$SURVEY/build-plan.py" "$FAMILY" "$ADDENDUM" "$CAMPAIGN" "$MODE" "$ARM" "$LOCK" \
+    python3 "$SURVEY/build-plan.py" "$FAMILY" "$ADDENDUM" "$CAMPAIGN" "$LABEL" "$ARM" "$LOCK" \
       "$MAX_CELLS" "$PLAN" >> "$LAUNCH_LOG"
     "$CHECK_PLAN" "$PLAN" >> "$LAUNCH_LOG"
     log "# popcount-verify (generic matrix):"
@@ -139,5 +149,5 @@ case "$ACTION" in
     echo "# acceptance exit: $verdict" >> "$OUT/launcher.log"
     exit "$verdict"
     ;;
-  *) echo "usage: $0 <popcount|and-popcnt> <pilot|confirmation> <prepare|run|finalize>" >&2; exit 2 ;;
+  *) echo "usage: $0 <popcount|and-popcnt> <pilot|pilot-r2|confirmation> <prepare|run|finalize>" >&2; exit 2 ;;
 esac
