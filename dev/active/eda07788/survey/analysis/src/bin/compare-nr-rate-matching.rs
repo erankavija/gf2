@@ -43,7 +43,7 @@
 //! `target_n` channel LLRs onto the `full_n` mother-code positions using the
 //! same `transmitted_cols` the encoder applies. Tagging channel LLR `i` with
 //! the value `TAG_BASE + i` makes each transmitted position identifiable and
-//! keeps every tag clear of the `0` and `+20` sentinels `prepare_llrs` writes
+//! keeps every tag above the zero and filler LLR values `prepare_llrs` writes
 //! into untransmitted and filler positions.
 
 use gf2_coding::ldpc::nr_5g::{kb_for_z_selection, Nr5gRateMatchedCode};

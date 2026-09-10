@@ -1,4 +1,5 @@
-cargo-budget: 8 jobs (3 live, 24 cpus)
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
 warning: function `choose_k_block` is never used
    --> /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core/src/alg/m4rm.rs:532:4
     |
@@ -9,7 +10,7 @@ warning: function `choose_k_block` is never used
 
 warning: `gf2-core` (lib) generated 1 warning
    Compiling survey-analysis v0.0.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/dev/active/eda07788/survey/analysis)
-    Finished `release` profile [optimized] target(s) in 0.21s
+    Finished `release` profile [optimized] target(s) in 0.20s
 PASS zero-fill semantics: 148 shifts over lengths [0, 1, 63, 64, 65, 127, 128, 4096, 64800] match an independent zero-fill reference with canonical indexing and zero tail padding
 PASS wrap is a different operation: 88/88 nonzero offsets give a different result under wrap-around rotation than under gf2's zero-fill shift
 
