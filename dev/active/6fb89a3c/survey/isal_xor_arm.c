@@ -84,18 +84,20 @@ static void xor_body(void *opaque, uint64_t call_index)
 }
 
 /* Measures forming the pointer array alone, averaged over many repetitions
- * so a sub-nanosecond cost still rounds to an observed value. */
+ * so a sub-nanosecond cost still rounds to an observed value. The empty asm
+ * takes the array's address and clobbers memory, so every repetition must
+ * store all vects pointers; without it GCC deletes the loop and the probe
+ * times two adjacent clock reads (the protocol-v3 pilots reported 0 ns). */
 static uint64_t arrangement_probe_ns(xor_ctx *ctx)
 {
-    volatile void *sink = NULL; enum { REPS = 1000000 };
+    enum { REPS = 1000000 };
     uint64_t start = monotonic_ns();
     for (int i = 0; i < REPS; i++) {
         void *array[MAX_SOURCES + 1];
         for (size_t s = 0; s < ctx->sources; s++) array[s] = ctx->src[0][s];
         array[ctx->sources] = ctx->dest[0];
-        sink = array[(size_t)i % (ctx->sources + 1)];
+        __asm__ volatile("" : : "r"(array) : "memory");
     }
-    (void)sink;
     return (monotonic_ns() - start + REPS / 2) / REPS;
 }
 

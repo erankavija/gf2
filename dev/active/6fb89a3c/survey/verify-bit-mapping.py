@@ -293,6 +293,16 @@ def main() -> int:
             "issue": "6fb89a3c",
             "status": "pass",
             "canonical_reference": "naive bit arithmetic in verify-bit-mapping.py from the same SplitMix64 seeds",
+            "rng": {
+                "algorithm": "SplitMix64 [Steele2014]: state += 0x9E3779B97F4A7C15; z = state; z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9; z = (z ^ (z >> 27)) * 0x94D049BB133111EB; return z ^ (z >> 31)",
+                "implementations": {
+                    "gf2 arms": "tuning_campaign_support::abtest::SplitMix64 (dev/tools/tuning-campaign-support/src/abtest.rs, pinned by the producing snapshot of every receipt)",
+                    "C arms": "splitmix64_next in dev/active/6fb89a3c/survey/harness_common.h (pinned by the producing snapshot of every receipt)",
+                    "reference": "splitmix() in this script",
+                },
+                "draw_order": "fixed 64x64: one draw per row word; tiled matrices: one draw per bit in row-major order, low bit used; buffers: one draw per word, source s uses seed + s",
+                "seeds": "the workload seed of each addendum cell; the framing/mapping checks use the literal seeds in this script",
+            },
             "transpose": {
                 "m4ri": {
                     "validated_fixed_seeds": len(TRANSPOSE_FIXED),
@@ -320,7 +330,7 @@ def main() -> int:
                 "isa_l_parity_arity": "vects = sources + 1; two sources (vects 3) in the sized cells, three sources (vects 4) in the arity cell",
                 "alignment_bytes": 32,
                 "unaligned": "unavailable: raid.h requires source and destination pointers aligned to 32 bytes; the harness refuses other alignments",
-                "arrangement_cost": "the pointer array is formed inside every timed call and one formation is reported separately as dispatch_ns; the gf2 fresh-destination copy is inside every timed call and reported separately as pack_ns",
+                "arrangement_cost": "the pointer array is formed inside every timed call and its formation alone, averaged over one million repetitions outside the timed windows, is reported as dispatch_ns; the gf2 fresh-destination copy is inside every timed call and, averaged the same way, reported as pack_ns",
                 "aliasing": "unavailable: raid.h names distinct source pointers and one destination pointer; gf2's dst ^= src accumulate has no ISA-L equivalent",
             },
             "bch_genmatrix": {
