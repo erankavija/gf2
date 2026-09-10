@@ -537,6 +537,7 @@ version = "0.0.0"
 dependencies = [
  "gf2-coding",
  "gf2-core",
+ "serde_json",
  "tuning-campaign-support",
 ]
 
