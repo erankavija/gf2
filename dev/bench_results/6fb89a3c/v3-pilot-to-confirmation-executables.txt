@@ -1,0 +1,127 @@
+# Arm executables that differ between the v3 pilots and the v3 confirmations (jit:6fb89a3c)
+#
+# Old builds are the pilot executables; their digests equal the pilot receipts' arm digests
+# (v3-r2 transpose pilot: bitshuffle-transpose; v3-r1 logical pilot: gf2-logical, isal-base).
+# The gf2-logical pilot build was reproduced from the pilot source (the file at commit 1b6cec24)
+# with the fetch-build.sh command and matched the pilot digest byte for byte.
+# New builds are the confirmation executables named in dev/active/6fb89a3c/survey/build-evidence.json.
+# Every other arm executable is byte-identical between pilot and confirmation:
+#   651915b3cf3abef44e54bbecd8fd4a75560d2443960e75b9cc8344fbf7ba0b37  m4ri_transpose_arm
+#   416087ed59642180b0cea93e718514c3b6675e1ff05c4337b04deafa1205ca8b  m4ri_genmatrix_arm
+#   e41cfbfe431a9eed0fa9f0b9f16b2c71904706d0d0ace0c9fc6e075cfb954ca3  gf2_transpose_arm
+#   7e6c1d05a8365caa0a9561ee9eec3c08183b8a2a8febdae5d3065346376f7ce9  gf2_bch_genmatrix_arm
+# Command: dev/active/6fb89a3c/survey/compare-arm-code.py <pilot build> <confirmation build> [function ...]
+
+## gf2_logical_xor_arm (rustfmt-only source change)
+old sha256 c7b1d5823a11db4a3ae8fc19eb871a76c40b83d02a8348ab1c4df698a0fdd585 size 586024
+new sha256 496fe34911a44336eb0d941749def19d76151474e01e9bb864594a2cf34a8167 size 586024
+sections (name: identical|differs, old size -> new size):
+  .interp: identical, 28 -> 28
+  .note.ABI-tag: identical, 32 -> 32
+  .note.gnu.build-id: differs, 36 -> 36
+  .dynsym: identical, 1560 -> 1560
+  .gnu.version: identical, 130 -> 130
+  .gnu.version_r: identical, 256 -> 256
+  .gnu.hash: identical, 28 -> 28
+  .dynstr: identical, 940 -> 940
+  .rela.dyn: identical, 12576 -> 12576
+  .rela.plt: identical, 24 -> 24
+  .gcc_except_table: identical, 7676 -> 7676
+  .rodata: identical, 55600 -> 55600
+  .eh_frame_hdr: identical, 4788 -> 4788
+  .eh_frame: identical, 25888 -> 25888
+  .text: identical, 363182 -> 363182
+  .init: identical, 27 -> 27
+  .fini: identical, 13 -> 13
+  .plt: identical, 32 -> 32
+  .tbss: identical, 24 -> 24
+  .fini_array: identical, 8 -> 8
+  .init_array: identical, 16 -> 16
+  .data.rel.ro: differs, 9240 -> 9240
+  .dynamic: identical, 448 -> 448
+  .got: identical, 512 -> 512
+  .got.plt: identical, 32 -> 32
+  .relro_padding: identical, 3552 -> 3552
+  .tm_clone_table: identical, 0 -> 0
+  .data: identical, 2672 -> 2672
+differing bytes 26: .note.gnu.build-id 20, .data.rel.ro 6
+functions (name: identical|differs|absent, old address -> new address):
+  the other 605 functions: identical code at the same address
+
+## isal_xor_arm (arrangement probe repaired; timed call chain xor_body -> xor_gen_base)
+old sha256 21bf3c88463b9c5b039ea9e32b8661b0051c84989bb032c4e953d839eb9a80cb size 30456
+new sha256 e66fbbab6db40dd91006275a0e3cf4b0ad8d238a8326d73af987af76b971a53b size 30456
+sections (name: identical|differs, old size -> new size):
+  .note.gnu.build-id: differs, 36 -> 36
+  .interp: identical, 28 -> 28
+  .gnu.hash: identical, 48 -> 48
+  .dynsym: identical, 888 -> 888
+  .dynstr: identical, 451 -> 451
+  .gnu.version: identical, 74 -> 74
+  .gnu.version_r: identical, 128 -> 128
+  .rela.dyn: identical, 264 -> 264
+  .rela.plt: identical, 672 -> 672
+  .init: identical, 27 -> 27
+  .plt: identical, 464 -> 464
+  .text: differs, 12310 -> 12310
+  .fini: identical, 13 -> 13
+  .rodata: identical, 1840 -> 1840
+  .eh_frame_hdr: identical, 164 -> 164
+  .eh_frame: differs, 1060 -> 1060
+  .sframe: identical, 112 -> 112
+  .note.gnu.property: identical, 64 -> 64
+  .note.ABI-tag: identical, 32 -> 32
+  .init_array: identical, 8 -> 8
+  .fini_array: identical, 8 -> 8
+  .dynamic: identical, 480 -> 480
+  .got: identical, 40 -> 40
+  .got.plt: identical, 248 -> 248
+  .data: identical, 16 -> 16
+differing bytes 2364: .note.gnu.build-id 20, .text 2340, .eh_frame 3, .symtab 1
+functions (name: identical|differs|absent, old address -> new address):
+  xor_body: identical, 0x1bf0 -> 0x1bf0 (43 instructions)
+  xor_gen_base: identical, 0x4130 -> 0x4130 (29 instructions)
+  transport_case: differs, 0x1cb0 -> 0x1cb0 (529 instructions)
+  main: identical, 0x1200 -> 0x1200 (411 instructions)
+
+## bitshuffle_transpose_arm (adapter probes averaged over warm repetitions; timed call chains fixed_body -> bshuf_bitshuffle and consumer_body -> consumer_call -> bshuf_bitshuffle, unpack_planes)
+old sha256 3435c78accaae5e62cbe1da603a64af96b3de3a03d7ba58c7949be2fb5f6e3e7 size 66328
+new sha256 74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b size 66328
+sections (name: identical|differs, old size -> new size):
+  .note.gnu.build-id: differs, 36 -> 36
+  .interp: identical, 28 -> 28
+  .gnu.hash: identical, 48 -> 48
+  .dynsym: identical, 888 -> 888
+  .dynstr: identical, 444 -> 444
+  .gnu.version: identical, 74 -> 74
+  .gnu.version_r: identical, 128 -> 128
+  .rela.dyn: differs, 264 -> 264
+  .rela.plt: identical, 672 -> 672
+  .init: identical, 27 -> 27
+  .plt: identical, 464 -> 464
+  .text: differs, 43666 -> 43986
+  .fini: identical, 13 -> 13
+  .rodata: differs, 2832 -> 2832
+  .eh_frame_hdr: differs, 676 -> 676
+  .eh_frame: differs, 3476 -> 3508
+  .sframe: differs, 112 -> 112
+  .note.gnu.property: identical, 64 -> 64
+  .note.ABI-tag: identical, 32 -> 32
+  .init_array: differs, 8 -> 8
+  .fini_array: differs, 8 -> 8
+  .dynamic: differs, 480 -> 480
+  .got: identical, 40 -> 40
+  .got.plt: identical, 248 -> 248
+  .data: identical, 16 -> 16
+differing bytes 45005: <no section> 354, .note.gnu.build-id 20, .rela.dyn 4, .text 41591, .fini 13, .rodata 40, .eh_frame_hdr 240, .eh_frame 2450, .sframe 68, .note.gnu.property 31, .note.ABI-tag 12, .init_array 2, .fini_array 2, .dynamic 2, .symtab 176
+functions (name: identical|differs|absent, old address -> new address):
+  fixed_body: identical, 0x30a0 -> 0x31d0 (20 instructions)
+  consumer_body: identical, 0x3530 -> 0x3660 (9 instructions)
+  consumer_call: identical, 0x3350 -> 0x3480 (108 instructions)
+  unpack_planes: identical, 0x2e50 -> 0x2f80 (38 instructions)
+  bshuf_bitshuffle: identical, 0xbb30 -> 0xbc70 (11 instructions)
+  bshuf_trans_bit_elem: identical, 0xb6d0 -> 0xb810 (1 instructions)
+  bshuf_trans_bit_elem_AVX: identical, 0x9f80 -> 0xa0c0 (58 instructions)
+  bshuf_trans_byte_elem_SSE_64: identical, 0x72a0 -> 0x73e0 (72 instructions)
+  bshuf_trans_bit_byte_AVX: identical, 0x9e60 -> 0x9fa0 (74 instructions)
+  main: differs, 0x1200 -> 0x1200 (1018 instructions)

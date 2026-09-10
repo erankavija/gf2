@@ -24,7 +24,8 @@
  * Bitshuffle's (pack: `rows % 8 == 0 && cols % 64 == 0`; unpack:
  * `rows % 64 == 0 && cols % 8 == 0`), so the 64x64 consumer pays no copy and
  * 63x63 / 65x65 pay the copies inside every timed call. `pack_ns` and
- * `unpack_ns` report one separately measured pass of each copy.
+ * `unpack_ns` report each copy separately, averaged over warm repetitions
+ * outside the timed windows (the protocol-v3 pilots reported one cold pass).
  *
  * GF2_BITSHUFFLE_ADAPTER selects byte/bit-order permutations for the
  * `--dump-check` mapping search only; the direct mapping is what transport
@@ -123,6 +124,36 @@ static void unpack_planes(bit_ctx *ctx, uint64_t *out_words)
         memcpy(out_words + c * ctx->out_stride, ctx->planes + c * plane_bytes, copy_bytes);
 }
 
+/* Adapter-copy probes: one copy averaged over many warm repetitions, so a
+ * copy of a few hundred bytes rounds to an observed nanosecond value at the
+ * cache state of the warm timed calls. The empty asm takes the destination's
+ * address and clobbers memory, so every repetition's copy must happen. */
+enum { ADAPTER_PROBE_REPS = 100000 };
+
+static uint64_t pack_probe_ns(bit_ctx *ctx)
+{
+    uint64_t start;
+    pack_rows(ctx, ctx->in_words[0]);
+    start = monotonic_ns();
+    for (int i = 0; i < ADAPTER_PROBE_REPS; i++) {
+        pack_rows(ctx, ctx->in_words[0]);
+        __asm__ volatile("" : : "r"(ctx->pad) : "memory");
+    }
+    return (monotonic_ns() - start + ADAPTER_PROBE_REPS / 2) / ADAPTER_PROBE_REPS;
+}
+
+static uint64_t unpack_probe_ns(bit_ctx *ctx, uint64_t *out_words)
+{
+    uint64_t start;
+    unpack_planes(ctx, out_words);
+    start = monotonic_ns();
+    for (int i = 0; i < ADAPTER_PROBE_REPS; i++) {
+        unpack_planes(ctx, out_words);
+        __asm__ volatile("" : : "r"(out_words) : "memory");
+    }
+    return (monotonic_ns() - start + ADAPTER_PROBE_REPS / 2) / ADAPTER_PROBE_REPS;
+}
+
 /* One whole-consumer call: fresh canonical output, pack when the layouts
  * differ, one Bitshuffle block, unpack when the layouts differ. */
 static uint64_t *consumer_call(bit_ctx *ctx, const uint64_t *in_words)
@@ -213,7 +244,7 @@ static const char *backend_name(void)
 static int transport_case(const json_value *object, const char *cache, uint64_t windows, uint64_t target_ms)
 {
     bit_ctx ctx = {{0}, 0, 0, 0, 0, 1, 0, 0, 0, NULL, NULL, 0, 0, 0, NULL};
-    int fixed; size_t rows, cols; uint64_t seed, state, setup_start = monotonic_ns(), setup_ns, pack_ns = 0, unpack_ns = 0, start;
+    int fixed; size_t rows, cols; uint64_t seed, state, setup_start = monotonic_ns(), setup_ns, pack_ns = 0, unpack_ns = 0;
     harness_window *samples = NULL; char selected[160];
     const char *adapter = case_adapter(object);
     if (adapter == NULL || !read_geometry(object, &fixed, &rows, &cols, &seed)) { fprintf(stderr, "invalid Bitshuffle transpose case\n"); return 0; }
@@ -229,12 +260,12 @@ static int transport_case(const json_value *object, const char *cache, uint64_t 
     if (fixed) { ctx.fixed_out = (uint64_t *)calloc(64, sizeof(uint64_t)); if (ctx.fixed_out == NULL) return 0; }
     setup_ns = monotonic_ns() - setup_start;
     if (!fixed) {
-        /* One measured pass of each adapter copy, outside the timed loop. */
-        if (ctx.pack_needed) { start = monotonic_ns(); pack_rows(&ctx, ctx.in_words[0]); pack_ns = monotonic_ns() - start; }
+        /* Each adapter copy, measured outside the timed loop. */
+        if (ctx.pack_needed) pack_ns = pack_probe_ns(&ctx);
         if (ctx.unpack_needed) {
             uint64_t *probe = (uint64_t *)calloc(cols * ctx.out_stride, sizeof(uint64_t));
             if (probe == NULL) return 0;
-            start = monotonic_ns(); unpack_planes(&ctx, probe); unpack_ns = monotonic_ns() - start; free(probe);
+            unpack_ns = unpack_probe_ns(&ctx, probe); free(probe);
         }
     }
     if (!strcmp(cache, "warm")) for (size_t i = 0; i < ctx.banks; i++) { if (fixed) fixed_body(&ctx, i); else consumer_body(&ctx, i); }

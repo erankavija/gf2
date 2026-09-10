@@ -731,28 +731,28 @@
     ],
     "disassembly": {
       "file": "bitshuffle_transpose_arm",
-      "sha256": "3435c78accaae5e62cbe1da603a64af96b3de3a03d7ba58c7949be2fb5f6e3e7",
+      "sha256": "74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b",
       "whole_file": {
-        "instructions": 9333,
+        "instructions": 9381,
         "by_register_class": {
-          "general": 7529,
+          "general": 7577,
           "xmm": 608,
           "ymm": 1196
         },
         "cpuid": 0,
         "top_mnemonics": {
-          "mov": 2993,
-          "lea": 605,
-          "add": 426,
-          "cmp": 312,
-          "call": 298,
+          "mov": 3001,
+          "lea": 609,
+          "add": 430,
+          "cmp": 314,
+          "call": 300,
           "vmovdqu": 269,
-          "jmp": 262,
-          "test": 221,
-          "je": 208,
+          "jmp": 263,
+          "test": 218,
+          "je": 210,
+          "jne": 167,
           "sub": 165,
-          "jne": 164,
-          "xor": 151
+          "xor": 156
         }
       },
       "routes": {
@@ -1099,24 +1099,24 @@
     ],
     "disassembly": {
       "file": "isal_xor_arm",
-      "sha256": "21bf3c88463b9c5b039ea9e32b8661b0051c84989bb032c4e953d839eb9a80cb",
+      "sha256": "e66fbbab6db40dd91006275a0e3cf4b0ad8d238a8326d73af987af76b971a53b",
       "whole_file": {
-        "instructions": 2932,
+        "instructions": 2943,
         "by_register_class": {
-          "general": 2856,
+          "general": 2867,
           "xmm": 9,
           "ymm": 67
         },
         "cpuid": 0,
         "top_mnemonics": {
-          "mov": 872,
-          "lea": 208,
-          "call": 178,
-          "jmp": 165,
+          "mov": 871,
+          "lea": 206,
+          "call": 179,
+          "jmp": 168,
           "cmp": 156,
-          "je": 131,
-          "test": 121,
-          "xor": 113,
+          "je": 133,
+          "test": 122,
+          "xor": 114,
           "jne": 102,
           "push": 63,
           "sub": 57,
@@ -1163,12 +1163,12 @@
       "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=0245df828f163f736c9ccc267882cda49f655976, for GNU/Linux 4.4.0, not stripped"
     },
     "bitshuffle_transpose_arm": {
-      "sha256": "3435c78accaae5e62cbe1da603a64af96b3de3a03d7ba58c7949be2fb5f6e3e7",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=48f90168a2c7d0ca5232810009ace42549d06aba, for GNU/Linux 4.4.0, not stripped"
+      "sha256": "74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=9ea9178332b21ee5c82e8ebd655cb1a7adc78704, for GNU/Linux 4.4.0, not stripped"
     },
     "isal_xor_arm": {
-      "sha256": "21bf3c88463b9c5b039ea9e32b8661b0051c84989bb032c4e953d839eb9a80cb",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=cdb45e2494eaef399c4c9a7a2aa33f49a3ef4940, for GNU/Linux 4.4.0, not stripped"
+      "sha256": "e66fbbab6db40dd91006275a0e3cf4b0ad8d238a8326d73af987af76b971a53b",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=e5a94d3455859353f9647ae63b1b9beae4df7a21, for GNU/Linux 4.4.0, not stripped"
     }
   },
   "rust_harness_binaries": {
@@ -1177,8 +1177,8 @@
       "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=01ee72a0462867d88de08b65efd195eb8e43072c, not stripped"
     },
     "gf2_logical_xor_arm": {
-      "sha256": "c7b1d5823a11db4a3ae8fc19eb871a76c40b83d02a8348ab1c4df698a0fdd585",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=221d48b18e42a4778afbcd9fca5d4bfb90133000, not stripped"
+      "sha256": "496fe34911a44336eb0d941749def19d76151474e01e9bb864594a2cf34a8167",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=e9ad46bc7987497f681ab7e5f53da744cf22ce15, not stripped"
     },
     "gf2_bch_genmatrix_arm": {
       "sha256": "7e6c1d05a8365caa0a9561ee9eec3c08183b8a2a8febdae5d3065346376f7ce9",
@@ -1332,7 +1332,7 @@
     },
     "gf2_logical_xor_arm": {
       "file": "gf2_logical_xor_arm",
-      "sha256": "c7b1d5823a11db4a3ae8fc19eb871a76c40b83d02a8348ab1c4df698a0fdd585",
+      "sha256": "496fe34911a44336eb0d941749def19d76151474e01e9bb864594a2cf34a8167",
       "whole_file": {
         "instructions": 91929,
         "by_register_class": {
