@@ -24,8 +24,10 @@ qualifies for production selection, because each family contains a
 confirmed not-material cell and because this issue adopts nothing.
 
 1. **Layout.** The packed binary BCH batch entry point selects
-   `PolyRemainderScalar` for the DVB-T2 normal-frame mother code
-   ($m = 14$, $B = 256$) although its registered `ClmulFold` and
+   `PolyRemainderScalar` for the mother code of the DVB-T2 short frame
+   ($m = 14$, $B = 256$; the standard's short-frame BCH code is defined over
+   $\mathrm{GF}(2^{14})$ and its normal-frame code over $\mathrm{GF}(2^{16})$
+   [Etsi2015]) although its registered `ClmulFold` and
    `BitsliceInterleaved` families are confirmed 2.70x [2.688, 2.706] and
    2.49x [2.483, 2.493] faster as whole consumers. After the fold, 96% of
    the remaining time is the bit-serial `packed_write_codeword`, which costs
@@ -76,6 +78,13 @@ margins; its L3-resident 8192-word row set the resolution at 0.07, so the
 confirmation addendum raises both margins to 1.10 and records why. A cell
 between 1.05 and 1.10 records not-material under that rule and its interval
 is reported.
+
+Correction to both frozen layout addenda: their family question calls the
+$m = 14$ BCH row "the DVB-T2 normal-frame mother code". That row is the
+mother code of the DVB-T2 short frame; the normal frame's mother field is
+$\mathrm{GF}(2^{16})$ [Etsi2015]. The cells declare degree 14, so every layout
+BCH cell and its interval measure the short-frame mother code. The addenda,
+their receipts and the generator `survey/make-addenda.py` keep the frozen text.
 
 Each family's $m$ is the confirmatory cell count on its first and only
 attempt ($\alpha_t = 0.05/2 = 0.025$, Bonferroni over $m$). With $m \le 5$
@@ -160,7 +169,7 @@ reservation exists to import.
 | Any-nonzero | `LdpcCode::is_valid_codeword` computes the syndrome and tests `count_ones() == 0`; `find_first_one` reaches `avx2_find_first_one`, which can stop at the first nonzero vector (`ldpc-is-valid-count`, `find-first-one-simd`, `avx2-find-first-one`). | Both spellings bit-identical on zero, weight-one and random words. |
 | Block transpose | `transpose::detect` publishes `avx2-bit-twiddle` under AVX2; the PSHUFB lane exists behind `detect_pshufb` and is not selected (`transpose-detect-avx2`, `transpose-pshufb-alternative`). | `transpose-detected/avx2-bit-twiddle` against `transpose-scalar/portable`. |
 | Dense transpose | `BitMatrix::transpose` resolves the block kernel once, allocates the output, selects the outer loop through `transpose_route` and tiles through `transpose_inner_loop` with two 64-word local blocks (`dense-transpose-resolves-once`, `dense-transpose-output-alloc`, `dense-transpose-route`, `dense-transpose-tile-scratch`). | 4096-square `current/macro-tiled-8`, 654 us. |
-| Packed BCH batch | `encode_batch_into` selects the family once through `select_family` and calls `encode_batch_family_into`, which runs one partition over the caller's workspace. The reference family is always admitted; bitslice and fold need the active profile's minimum batch, which the conservative profile does not grant at $B = 256$. Every per-frame family ends in `packed_write_codeword`, which copies the message one bit at a time (`bch-batch-into-selects`, `bch-batch-into-delegates`, `bch-family-into-partition`, `bch-family-admission`, `bch-bitslice-admission`, `bch-fold-admission`, `bch-reference-serial-reduce`, `bch-reference-write`, `bch-write-bit-at-a-time`, `bch-fold-reduce`, `bch-bitslice-batch`). | `current/PolyRemainderScalar` at $m = 14$, $B = 256$; forced arms `family-pinned/BitsliceInterleaved`, `family-pinned/ClmulFold`. |
+| Packed BCH batch | `encode_batch_into` selects the family once through `select_family` and calls `encode_batch_family_into`, which runs one partition over the caller's workspace. The reference family is always admitted; bitslice and fold need the active profile's minimum batch, which the conservative profile does not grant at $B = 256$. Every per-frame family ends in `packed_write_codeword`, which copies the message one bit at a time (`bch-batch-into-selects`, `bch-batch-into-delegates`, `bch-family-into-partition`, `bch-family-admission`, `bch-bitslice-admission`, `bch-fold-admission`, `bch-reference-serial-reduce`, `bch-reference-write`, `bch-write-bit-at-a-time`, `bch-fold-reduce`, `bch-bitslice-batch`). | `current/PolyRemainderScalar` on the short-frame mother code ($m = 14$, $B = 256$); forced arms `family-pinned/BitsliceInterleaved`, `family-pinned/ClmulFold`. |
 | Allocating and parallel packed BCH | `encode_batch` allocates its output and reduces over thread-local scratch; `encode_batch_parallel_into` selects the family once and recurses through `rayon::join`, with no forced-family variant (`bch-allocating-entry`, `bch-allocating-scratch`, `bch-parallel-selects-once`, `bch-parallel-join`). | `current-allocating/PolyRemainderScalar` against `caller-buffer/PolyRemainderScalar`; parallel path in the sweep only. |
 | DVB-T2 compatibility BCH | `BchEncoder::encode_batch` maps `encode`, which expands the message into `Gf2mPoly` coefficients and divides by the generator (`dvb-bch-batch-maps-encode`, `dvb-bch-field-poly`, `dvb-bch-div-rem`). | Short frame $n = 7200$ `current/field-polynomial-div-rem`, 11.25 ms per codeword. |
 
@@ -170,16 +179,21 @@ Row widths 4, 8 and 64 words bracket the conservative eight-word cutover
 and one L1-resident row; 64 rows make each bank a whole number of 64x64
 blocks; 8192 words make a 4 MiB L3-resident bank where dispatch is expected
 to vanish into cache traffic. 507 words is the packed width of the DVB-T2
-rate-1/2 normal-frame syndrome; 65536 words (512 KiB) is one core's L2. The
+rate-1/2 normal-frame LDPC syndrome [Etsi2015]; 65536 words (512 KiB) is one
+core's L2. The
 1024-square RREF is the smallest square that selects the eight-wide table;
 1024x4096 gives 64-word rows so the fused matvec kernel runs whole 32-byte
 vectors on a 512 KiB matrix. The 4096-square transpose selects the
 macro-tiled loop on a 2 MiB matrix. Block counts 256 and 4096 are an
 L2-resident run and an L3-resident streaming run. $m = 14$, $B = 256$ is the
-mother code of the DVB-T2 normal frame at the L2-resident steady-state batch
-of `dev/active/4e732b56/workload-selection.md`; the sweep adds $m = 8$ and
-$m = 16$ and batches 1 to 1024. The LDPC rows are the DVB-T2 rate-1/2 frames,
-not synthetic matrices.
+mother code of the DVB-T2 short frame (row T2S of
+`dev/active/4e732b56/workload-selection.md`; DVB-T2 defines its short-frame
+BCH code over $\mathrm{GF}(2^{14})$ and its normal-frame code over
+$\mathrm{GF}(2^{16})$ [Etsi2015]) at that contract's steady-state batch; the
+sweep adds $m = 8$
+(row B3), $m = 16$ (the normal-frame mother field, row T2N) and batches 1 to
+1024. The LDPC rows are the standard's rate-1/2 short- and normal-frame
+parity-check matrices [Etsi2015].
 
 ## Measured ratios and intervals
 
@@ -201,9 +215,9 @@ every cell, pilots included, are in
 | count | LDPC validity $n = 64800$, count -> find-first-one | 272.2 -> 272.7 us | 0.9982 [0.9956, 1.0029] | not-material |
 | layout | 256 block transposes, scalar -> detected AVX2 | 22.02 -> 11.42 us | 1.9276 [1.9136, 1.9430] | pass |
 | layout | 4096 block transposes, six cores streaming | 365.1 -> 192.8 us | 1.8932 [1.8762, 1.9343] | pass |
-| layout | BCH $m = 14$, $B = 256$, current -> bitslice | 40.388 -> 16.229 ms | 2.4886 [2.4830, 2.4933] | pass |
-| layout | BCH $m = 14$, $B = 256$, current -> fold | 40.433 -> 14.984 ms | 2.6985 [2.6880, 2.7060] | pass |
-| layout | BCH $m = 14$, $B = 256$, allocating -> caller buffer | 40.520 -> 40.428 ms | 1.0023 [0.9985, 1.0080] | not-material |
+| layout | short-frame mother BCH ($m = 14$), $B = 256$, current -> bitslice | 40.388 -> 16.229 ms | 2.4886 [2.4830, 2.4933] | pass |
+| layout | short-frame mother BCH ($m = 14$), $B = 256$, current -> fold | 40.433 -> 14.984 ms | 2.6985 [2.6880, 2.7060] | pass |
+| layout | short-frame mother BCH ($m = 14$), $B = 256$, allocating -> caller buffer | 40.520 -> 40.428 ms | 1.0023 [0.9985, 1.0080] | not-material |
 
 Pilot-only identity controls record the pinned baseline latencies: RREF
 1024-square 819.0 us (1.0004 [0.9971, 1.0060]), LDPC syndrome 274.1 us
@@ -235,7 +249,7 @@ section explains where the time goes.
 | 65536-word popcount | SIMD 8.0 us (65 GB/s) at 512 KiB and 505 ns (65 GB/s) at 32 KiB; scalar 25.9 us (20 GB/s). | None. | Constant useful bandwidth across L1 and L2 with L1 misses 6.4% and 33.3%: a load-and-execute plateau, not dispatch. The scalar fallback has no `POPCNT`: the binary's only `POPCNT` instructions are inside `avx2_and_popcnt` (20) and `avx2_popcnt` (10), and the 0x5555/0x3333 bit-twiddle constants sit in the scalar paths of `Prepared::run`, `is_valid_codeword` and `matvec_scalar`. |
 | 256 block transposes | Scalar 24.9 us, AVX2 11.5 us; 1570 versus 543 instructions per block. | None. | AVX2 IPC 2.59 with 0.04% front-end stalls against scalar IPC 4.82: the lane is bounded by vector-unit throughput and its own dependency chain, not by dispatch or the front end. |
 | Dense transpose 4096 | 600 us; `BitMatrix::transpose` outer loop 64.7%, `transpose_64x64_avx2` 31.2%. | One 2 MiB output allocation per call; input and output traffic 4 MiB, about 7 GB/s. | IPC 2.89, L1 misses 18.9%, LLC misses 26.1% of references: tile assembly, the two intentional 64-word scratch blocks and cache traffic bound the whole consumer. |
-| Packed BCH $m = 14$, $B = 256$ | Current 40.0 ms: `encode_systematic_with` 62.8%, `packed_write_codeword` 37.0%. Fold 15.2 ms: `packed_write_codeword` 96.3%, `fold_block_pclmul` 3.2%. Bitslice 15.7 ms: batch body 91.9%, `bitslice_reduce_avx2` 7.6%. Table 16.3 ms. | 256 allocations of 56 bytes per call in `validate_batch` (0.011 ms per 1024 messages); batch fill 0.31 ms; workspace 6 us; dispatch 3 ns. | IPC 1.65, 1.38 and 1.44 with front-end stalls 8.1%, 12.0% and 8.8%, branch misses 5.4% to 8.0%, L1 misses under 0.12%: control and data dependencies, and above all the bit-serial codeword write of about 14.8 ms per batch, which is common to every family. |
+| Packed short-frame mother BCH ($m = 14$), $B = 256$ | Current 40.0 ms: `encode_systematic_with` 62.8%, `packed_write_codeword` 37.0%. Fold 15.2 ms: `packed_write_codeword` 96.3%, `fold_block_pclmul` 3.2%. Bitslice 15.7 ms: batch body 91.9%, `bitslice_reduce_avx2` 7.6%. Table 16.3 ms. | 256 allocations of 56 bytes per call in `validate_batch` (0.011 ms per 1024 messages); batch fill 0.31 ms; workspace 6 us; dispatch 3 ns. | IPC 1.65, 1.38 and 1.44 with front-end stalls 8.1%, 12.0% and 8.8%, branch misses 5.4% to 8.0%, L1 misses under 0.12%: control and data dependencies, and above all the bit-serial codeword write of about 14.8 ms per batch, which is common to every family. |
 | Allocating packed BCH | 40.2 ms allocating, 40.1 ms caller buffer. | 513 allocations and 561 KiB per call against 256 and 14 KiB. | Confirmed not material while the scalar recurrence and the bit-serial write dominate. |
 | Parallel packed BCH | 41.6, 7.21, 4.33 and 3.61 ms at 1, 6, 12 and 24 workers ($B = 256$); 161, 27.6, 25.0 and 12.5 ms ($B = 1024$). | Same per-message allocation. | Single-run scaling of the current family only; the entry point exposes no forced-family arm. |
 | DVB-T2 compatibility BCH | 11.25 ms per Short-frame codeword; `BchEncoder::encode` 86.9%, `Gf2mElement` multiplication 12.4%; 58.6 ms per Normal frame. | 272 allocations and 12.8 MiB per 16-frame call (message and shifted polynomials, division temporaries, fresh codeword). | IPC 1.20: a field-polynomial route. Recorded for its owner; not campaigned here. |
@@ -288,18 +302,22 @@ it could move and the downstream issue that tests it. Not-material findings
 stay listed so the downstream issues do not rediscover them.
 
 1. **Word-wise systematic codeword assembly for packed BCH (`1d4fd63d`).**
-   Consumer: `encode_batch_into` on the DVB-T2 mother codes. Hypothesis:
+   Consumer: `encode_batch_into` on the mother code of the DVB-T2 short
+   frame ($m = 14$, $B = 256$), the confirmed layout cells. Hypothesis:
    replacing the bit-serial `packed_write_codeword` with word copies and
    shifted parity placement removes most of the 14.8 ms per 256-message batch
    that every family pays. Share it could move: 96% of the fold consumer
    (15.0 ms) and 37% of the current one. This is a bit-layout packing change
    and belongs with the conversion costs `1d4fd63d` REQ-09 measures.
 2. **Packed BCH family selection (`1d4fd63d`).** Consumer: the same entry
-   point. Hypothesis: admitting `ClmulFold` or `BitsliceInterleaved` for
-   $m = 14$ at $B \ge 16$ (sweep: fold 0.95 ms against 2.50 ms at $B = 16$)
-   is a confirmed 2.70x and 2.49x whole-consumer gain at $B = 256$ under the
+   point on the short-frame mother code. Hypothesis: admitting `ClmulFold`
+   or `BitsliceInterleaved` at $m = 14$, $B = 256$ is a confirmed 2.70x
+   [2.688, 2.706] and 2.49x [2.483, 2.493] whole-consumer gain under the
    current admission rule; the tuning profile, not a kernel, is the change.
-   The bitslice family is the conversion consumer named in the issue.
+   The sweep suggests the same ordering at $B = 16$ (fold 0.95 ms against
+   2.50 ms) and on the normal-frame mother field ($m = 16$); no receipt
+   measures either, so neither is a confirmed gain. The bitslice family is
+   the conversion consumer named in the issue.
 3. **Fused AND-popcount in dense matvec (`5cbb6545`).** Consumer:
    `BitMatrix::matvec` on 64-word rows. Hypothesis: a Zen 3 fused reduction
    that beats the nibble-LUT `avx2_and_popcnt` moves up to 80% of a 15.9 us
