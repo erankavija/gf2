@@ -36,6 +36,39 @@ Immutable superseded v1 attempt: `2026-09-08-r3-c077a88b-ldpc-matched-algorithm-
 
 Immutable superseded v1 attempt: `2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/README.md`; see `superseded-v1-evidence.json`. It supplies no v3 resolution or confirmatory claim.
 
+Source: `v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json` and its independently recomputed acceptance summary.
+Label: **confirmation**; acceptance: **accepted**. This survey adopts no production implementation.
+Ledger-derived attempt alpha: 0.025; reserved comparisons: 2.
+
+| Cell | Pairs | Useful frames/call | Baseline median ms/call | Candidate median ms/call | Speedup [family interval] | Confidence | Outcome |
+|---|---|---|---|---|---|---|---|
+| dvb-t2-r12-matched-single-core | 24 | 1 | 254.096 | 1787.681 | 0.1421 [0.1404, 0.1449] | 0.9875 | fail |
+| nr-bg1-z384-matched-single-core | 24 | 1 | 264.863 | 275.409 | 0.9617 [0.9515, 0.9682] | 0.9875 | not-material |
+
+A `quality-incompatible` outcome means the frozen paired bound does not establish
+quality non-inferiority; it does not by itself establish worse decoder quality.
+
+Call latency includes recorded AList loading, matrix and decoder construction, conversion, output and destruction. The median
+columns are descriptive summaries of the recorded executions; the paired bootstrap
+interval estimates the implementation ratio. Throughput is useful frames per call
+divided by call latency. A native SIMD wave is not counted as one useful frame.
+
+Untimed setup/conversion diagnostics from the same receipt (median across pairs):
+
+| Cell | Arm | Matrix + decoder setup ms | Full-bundle preflight pack ms | Additional unpack / fill / dispatch ms |
+|---|---|---|---|---|
+| dvb-t2-r12-matched-single-core | baseline | 21.824 | 4.939 | 0.000 / 0.000 / 0.000 |
+| dvb-t2-r12-matched-single-core | candidate | 1761.495 | 0.000 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-matched-single-core | baseline | 15.460 | 1.028 | 0.000 / 0.000 / 0.000 |
+| nr-bg1-z384-matched-single-core | candidate | 264.087 | 0.000 | 0.000 / 0.000 / 0.000 |
+
+These diagnostics are outside the calibrated windows and are not additive
+components of the timed median. gf2 preflight packs the full input bundle;
+the timed body separately converts its declared batch. AFF3CT converts and
+reorders inside its decode call. Zero additional costs therefore mean no
+separate stage, not free conversion. All measured batches are already filled;
+arrival queueing delay is unmeasured.
+
 Source: `v3-r1-c077a88b-ldpc-matched-algorithm-pilot/receipt.json` and its independently recomputed acceptance summary.
 Label: **pilot**; acceptance: **accepted**. This survey adopts no production implementation.
 Ledger-derived attempt alpha: 0.025; reserved comparisons: 1.
