@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-07T18:42:23.547957752Z",
   "context": {},
   "created_at": "2026-09-06T19:58:38.222036816Z",
@@ -14,6 +14,190 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b4f01220454eaa5075adefaaa49812ba673ea95f0595ba6b7dd9a742d28a59b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c7113c5a/tables.md",
+          "resolved_path": "dev/bench_results/c7113c5a/tables.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "c7113c5a findings and criterion map",
+      "path": "dev/active/c7113c5a/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Polynomial survey tables (generated)",
+      "path": "dev/bench_results/c7113c5a/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Source claims with verbatim lines",
+      "path": "dev/active/c7113c5a/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "gf2x build, selection and instruction evidence",
+      "path": "dev/active/c7113c5a/survey/gf2x-build-evidence-v3.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Canonical-arithmetic validation of all builds",
+      "path": "dev/active/c7113c5a/survey/validation-v3.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Issue-owned producing-input manifest",
+      "path": "dev/active/c7113c5a/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v3 campaign launcher",
+      "path": "dev/bench_results/c7113c5a/run-polynomial-v3.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 baselines family ledger",
+      "path": "dev/bench_results/c7113c5a/v3-baselines-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 baselines ledger origin record",
+      "path": "dev/bench_results/c7113c5a/v3-baselines-ledger-origin.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 baselines pilot addendum",
+      "path": "dev/active/c7113c5a/addendum-v3-baselines-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 baselines frozen confirmation addendum",
+      "path": "dev/active/c7113c5a/addendum-v3-baselines-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 baselines pilot receipt",
+      "path": "dev/bench_results/c7113c5a/v3-r1-baselines-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 baselines pilot acceptance summary",
+      "path": "dev/bench_results/c7113c5a/v3-r1-baselines-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 baselines confirmation receipt",
+      "path": "dev/bench_results/c7113c5a/v3-r1-baselines-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 baselines confirmation acceptance summary",
+      "path": "dev/bench_results/c7113c5a/v3-r1-baselines-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 baselines confirmation execution log",
+      "path": "dev/bench_results/c7113c5a/v3-r1-baselines-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 host-targeting family ledger",
+      "path": "dev/bench_results/c7113c5a/v3-host-targeting-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 host-targeting ledger origin record",
+      "path": "dev/bench_results/c7113c5a/v3-host-targeting-ledger-origin.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 host-targeting pilot addendum",
+      "path": "dev/active/c7113c5a/addendum-v3-host-targeting-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 host-targeting frozen confirmation addendum",
+      "path": "dev/active/c7113c5a/addendum-v3-host-targeting-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 host-targeting pilot receipt",
+      "path": "dev/bench_results/c7113c5a/v3-r1-host-targeting-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 host-targeting pilot acceptance summary",
+      "path": "dev/bench_results/c7113c5a/v3-r1-host-targeting-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 host-targeting confirmation receipt",
+      "path": "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 host-targeting confirmation acceptance summary",
+      "path": "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 host-targeting confirmation execution log",
+      "path": "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/execution.log"
     }
   ],
   "first_ready_at": "2026-09-06T19:58:38.222036816Z",
@@ -23,7 +207,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-10T17:30:11.608897023Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c7113c5a-94da-462f-954e-3b7894bb95df",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -36,5 +226,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Establish equivalent polynomial multiplication baselines",
-  "updated_at": "2026-09-10T15:43:58.284462442Z"
+  "updated_at": "2026-09-10T17:30:38.081895604Z"
 }
