@@ -362,3 +362,8 @@ doi = "10.1145/3460772"
 key = "Steele2014"
 citation = "Steele, Lea, Flood — Fast Splittable Pseudorandom Number Generators. OOPSLA '14, 2014."
 doi = "10.1145/2660193.2660195"
+
+[[references]]
+key = "ThreeGpp2017"
+citation = "3GPP TS 38.212 V15.0.0 (2017-12) — 3rd Generation Partnership Project; Technical Specification Group Radio Access Network; NR; Multiplexing and channel coding (Release 15)."
+url = "https://www.3gpp.org/ftp/Specs/archive/38_series/38.212/"

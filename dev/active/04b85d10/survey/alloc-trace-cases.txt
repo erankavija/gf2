@@ -1,0 +1,11 @@
+# Allocation-site traces of the bit-storage consumer profile (jit:04b85d10).
+# Fields: label|case JSON|path|cache state|allocations to trace
+# One row per whole-consumer route whose timed call allocates; the trace turns
+# the counting allocator's per-call count into named allocation sites.
+dense-rref-1024|{"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102}|current|warm|6
+dense-matvec-1024x4096|{"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}|current|warm|2
+ldpc-syndrome-64800|{"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}|current|warm|2
+dense-transpose-4096|{"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302}|current|warm|2
+bch-m14-b256-current|{"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}|current|warm|3
+bch-m14-b256-alloc|{"workload":"bch-encode-batch-alloc","size":{"degree":14,"batch":256},"seed":304}|current|warm|4
+dvb-bch-7200-b1|{"workload":"dvb-bch-encode","size":{"n":7200,"batch":1},"seed":306}|current|warm|6

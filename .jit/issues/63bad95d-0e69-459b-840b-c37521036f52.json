@@ -4,6 +4,7 @@
   "created_at": "2026-09-06T19:17:39.477371101Z",
   "dependencies": [
     "19513245-7fb9-4490-8e41-d9c01405db01",
+    "1c602857-5e5b-4981-949a-09bb7639476b",
     "1d4fd63d-c522-47cb-9448-fe8f5220f0ed",
     "2037941f-852c-4d94-9d49-ad06a364dca8",
     "53c5a8c0-ad93-4fdb-8319-aea18c3c257c",
@@ -42,5 +43,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Calibrate production dispatch for the 5900X",
-  "updated_at": "2026-09-06T20:07:48.867193116Z"
+  "updated_at": "2026-09-10T16:46:03.806703393Z"
 }

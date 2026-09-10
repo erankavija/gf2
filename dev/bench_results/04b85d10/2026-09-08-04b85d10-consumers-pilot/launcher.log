@@ -1,0 +1,38 @@
+# command: dev/bench_results/04b85d10/run-consumer-profile.sh pilot 2026-09-08
+# started_utc: 2026-09-08T08:56:58Z
+# gf2 revision (informational): 1486a6d6a9ab8e0e0ef4edfef10a6a607064248f
+# mode: pilot
+# addendum: dev/active/04b85d10/addendum-bit-storage-consumers-pilot.json
+# campaign: pilot-04b85d10-20260908t085658z
+# stage: /tmp/gf2-pilot-04b85d10-20260908t085658z
+# arm sha256: e3a974088169d99174f36c5e920e4ae750d3550ebedaf0d221cf1488a0fbb378
+# rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
+# load_avg_start:  11:56:58 up 4 days, 13:25,  5 users,  load average: 17.11, 12.31, 8.27
+# consumer-verify:
+{"check":"row-xor-routes-agree","detail":"9 bit lengths agree","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"popcount-routes-agree","detail":"9 bit lengths agree","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"zero-test-spellings-agree","detail":"9 bit lengths agree over four bit patterns","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"transpose-lanes-agree","detail":"both lanes agree and the transpose is an involution","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"dense-transpose-round-trips","detail":"four shapes round-trip identically","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"dense-matvec-matches-reference","detail":"four shapes match the naive row-parity reference","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"ldpc-zero-syndrome-spellings-agree","detail":"the two spellings agree on the zero, weight-one and random words","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"bch-encoding-families-agree","detail":"three rows, five batch lengths, every available family bit-identical","passed":true,"schema":"consumer-verify-record-v1"}
+{"checks":8,"failed":0,"schema":"consumer-verify-summary-v1"}
+# consumer-verify exit: 0
+# session 1 start: 2026-09-08T08:57:00Z
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-pilot-04b85d10-20260908t085658z/execution.log
+# session 1 exit: 3
+# session 2 start: 2026-09-08T09:36:45Z
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-pilot-04b85d10-20260908t085658z/execution.log
+# session 2 exit: 3
+# session 3 start: 2026-09-08T09:39:51Z
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-pilot-04b85d10-20260908t085658z/execution.log
+# session 3 exit: 3
+# session 4 start: 2026-09-08T09:45:59Z
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-pilot-04b85d10-20260908t085658z/execution.log
+# session 4 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  12:48:14 up 4 days, 14:17,  5 users,  load average: 3.96, 2.45, 3.97
+# finished_utc: 2026-09-08T09:48:14Z

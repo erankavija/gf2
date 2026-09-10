@@ -1,0 +1,316 @@
+//! Characteristic polynomial / minimal polynomial / Frobenius form —
+//! Criterion benches.
+//!
+//! Issues `f01298db` (cubic baseline) and `1454ec2d` (sub-cubic
+//! Keller–Gehrig variant + dispatch crossover sweep).
+//!
+//! Measures the public entry points [`FieldMatrix::charpoly`],
+//! [`FieldMatrix::minpoly`], and [`FieldMatrix::frobenius_form`] at
+//! `n ∈ {32, 128, 512}` for `Fp<65521>` and a small `Gf2mWide<8>`
+//! configuration. Adds a `charpoly/dispatch/...` group at
+//! `n ∈ {64, 128, 256, 512, 1024}` on `Fp<MERSENNE_31>` that benches
+//! the cubic and Keller–Gehrig paths side-by-side; the empirical
+//! crossover for the `[aspirational]` success criterion of issue
+//! `1454ec2d` is read off this group.
+//!
+//! ```text
+//! charpoly/charpoly/Fp_65521/32
+//! charpoly/minpoly/Gf2m8/128
+//! charpoly/frobenius/Fp_65521/512
+//! charpoly/dispatch/cubic/256
+//! charpoly/dispatch/kg/256
+//! ```
+//!
+//! ## Usage
+//!
+//! ```bash
+//! cargo bench -p gf2-core --bench charpoly --features rand
+//! cargo bench -p gf2-core --bench charpoly --features rand -- --test
+//! cargo bench -p gf2-core --bench charpoly --features rand -- charpoly/charpoly/Fp_65521/32
+//! cargo bench -p gf2-core --bench charpoly --features rand -- charpoly/dispatch
+//! ```
+
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use gf2_core::field::matrix::FieldMatrix;
+use gf2_core::field::test_random_matrix::{random_fp, random_gf2m_wide_1};
+use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
+
+const PRIME_65521: u64 = 65521;
+const PRIME_251: u64 = 251;
+const PRIME_31: u64 = 31;
+const PRIME_7: u64 = 7;
+const MERSENNE_31: u64 = 2_147_483_647;
+
+/// GF(2^8) AES irreducible.
+struct CpBenchGf2m8Cfg;
+impl Gf2mWideConfig<1> for CpBenchGf2m8Cfg {
+    const M: usize = 8;
+    const MODULUS: [u64; 1] = [0x1B];
+    const NAME: &'static str = "CpBenchGf2m8Cfg";
+}
+type Gf2m8 = Gf2mWide<1, CpBenchGf2m8Cfg>;
+
+const SIZES: &[usize] = &[32, 128, 512];
+
+fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
+    random_gf2m_wide_1::<CpBenchGf2m8Cfg>(rows, cols, seed)
+}
+
+fn bench_charpoly(c: &mut Criterion) {
+    let mut group = c.benchmark_group("charpoly/charpoly");
+    for &n in SIZES {
+        let a_fp = random_fp::<PRIME_65521>(n, n, 0xCAFE);
+        let a_gf = random_gf2m8(n, n, 0xCAFE);
+        group.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a_fp).charpoly();
+                black_box(r);
+            });
+        });
+        group.bench_with_input(BenchmarkId::new("Gf2m8", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a_gf).charpoly();
+                black_box(r);
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_minpoly(c: &mut Criterion) {
+    let mut group = c.benchmark_group("charpoly/minpoly");
+    for &n in SIZES {
+        let a_fp = random_fp::<PRIME_65521>(n, n, 0xBEEF);
+        let a_gf = random_gf2m8(n, n, 0xBEEF);
+        group.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a_fp).minpoly();
+                black_box(r);
+            });
+        });
+        group.bench_with_input(BenchmarkId::new("Gf2m8", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a_gf).minpoly();
+                black_box(r);
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_frobenius(c: &mut Criterion) {
+    let mut group = c.benchmark_group("charpoly/frobenius");
+    for &n in SIZES {
+        let a_fp = random_fp::<PRIME_65521>(n, n, 0xC0DE);
+        let a_gf = random_gf2m8(n, n, 0xC0DE);
+        group.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a_fp).frobenius_form();
+                black_box(r);
+            });
+        });
+        group.bench_with_input(BenchmarkId::new("Gf2m8", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a_gf).frobenius_form();
+                black_box(r);
+            });
+        });
+    }
+    group.finish();
+}
+
+/// Minpoly reference sweep (issue `d1dd266c`): measures
+/// `FieldMatrix::minpoly` at `n ∈ {64, 256}` across the four reference
+/// primes {GF(7), GF(251), GF(65521), GF(2^31-1)} to compare against
+/// the fflas-ffpack baseline in
+/// `dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv`.
+///
+/// The sweep uses the same seeds as the reference CSV
+/// (`gf2_bench_derive_seed("minpoly", ...)` from the C++ harness).
+/// Post-d1dd266c+siblings dispatch (2026-05-07):
+///   GF(2^31-1)/GF(65521): scalar Wiedemann (`q > n`), `O(n³)`.
+///   GF(251)/n=256: extension-field Wiedemann (k=2 via `gfpn`), `O(n³)`.
+///   GF(251)/n=64: multi-seed Wiedemann + packed byte matvec, `O(n³)`
+///       (extension gate is `n ≥ q`, not engaged for `n=64 < 251`).
+///   GF(7)/n=256: extension-field Wiedemann (k=3 via `gfpn`), `O(n³)`.
+///   GF(7)/n=64: extension-field Wiedemann (k=3 via `gfpn`), `O(n³)`
+///       (extension gate `n ≥ 7` and `q^3 = 343 > 64`).
+fn bench_minpoly_reference_sweep(c: &mut Criterion) {
+    let mut group = c.benchmark_group("charpoly/minpoly_ref");
+    group.sample_size(10);
+    const SIZES: &[usize] = &[64, 256];
+    for &n in SIZES {
+        // GF(2^31-1)
+        let a = random_fp::<MERSENNE_31>(n, n, 0xBEEF_0001);
+        group.bench_with_input(BenchmarkId::new("Fp_M31", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
+        // GF(65521)
+        let a = random_fp::<PRIME_65521>(n, n, 0xBEEF_0002);
+        group.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
+        // GF(251)
+        let a = random_fp::<PRIME_251>(n, n, 0xBEEF_0003);
+        group.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
+        // GF(7) — extension-field Wiedemann engages for n ≥ 7 (q=7 ≤ n,
+        // q^3 = 343 > n for n ≤ 342); see issue `6c926de0`.
+        let a = random_fp::<PRIME_7>(n, n, 0xBEEF_0004);
+        group.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
+        // GF(31) — small byte-range prime; scalar Wiedemann path (q=31 ≤ n
+        // for n=64, q^2=961 > n for n ≤ 960).
+        let a = random_fp::<PRIME_31>(n, n, 0xBEEF_0031);
+        group.bench_with_input(BenchmarkId::new("Fp_31", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).minpoly()));
+        });
+    }
+    group.finish();
+}
+
+/// `charpoly/charpoly_ref` Criterion group (issue `d1dd266c`):
+///
+/// Mirrors `bench_minpoly_reference_sweep` for the public `charpoly`
+/// dispatch. Walks `n ∈ {64, 256}` × {GF(2^31-1), GF(65521), GF(251),
+/// GF(7)} and times `FieldMatrix::charpoly` directly. The reference
+/// timings live in `dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv`.
+///
+/// Both `charpoly_dispatch` and `minpoly_dispatch` route through
+/// `cyclic_decomposition`, which now uses the SIMD-cached matvec and
+/// the packed basis reducer for `Fp<P>` with `P ≤ 65521` — measuring
+/// charpoly here closes the verification loop on the shared kernel
+/// (issue `b87362a3` runs the same sweep against the charpoly
+/// reference numbers).
+fn bench_charpoly_reference_sweep(c: &mut Criterion) {
+    let mut group = c.benchmark_group("charpoly/charpoly_ref");
+    group.sample_size(10);
+    const SIZES: &[usize] = &[64, 256];
+    for &n in SIZES {
+        let a = random_fp::<MERSENNE_31>(n, n, 0xC4F0_0001);
+        group.bench_with_input(BenchmarkId::new("Fp_M31", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+        let a = random_fp::<PRIME_65521>(n, n, 0xC4F0_0002);
+        group.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+        let a = random_fp::<PRIME_251>(n, n, 0xC4F0_0003);
+        group.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+        let a = random_fp::<PRIME_7>(n, n, 0xC4F0_0004);
+        group.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+        // GF(31) — small byte-range prime, same path as GF(7).
+        let a = random_fp::<PRIME_31>(n, n, 0xC4F0_0031);
+        group.bench_with_input(BenchmarkId::new("Fp_31", n), &n, |b, _| {
+            b.iter(|| black_box(black_box(&a).charpoly()));
+        });
+    }
+    group.finish();
+}
+
+/// Shared helper for `charpoly/dispatch*` Criterion groups: registers
+/// `cubic` and `kg` arms (plus an optional `dispatch` arm) for each
+/// requested `n`, all timed against the same fixed seed matrix per
+/// size. Used by [`bench_dispatch_crossover`] and
+/// [`bench_dispatch_crossover_fp65521`] so the two groups stay in sync.
+fn bench_dispatch_arms<const P: u64>(
+    c: &mut Criterion,
+    group_name: &str,
+    sizes: &[usize],
+    include_dispatch: bool,
+    kg_panic_msg: &'static str,
+) {
+    let mut group = c.benchmark_group(group_name);
+    group.sample_size(10);
+    for &n in sizes {
+        let a = random_fp::<P>(n, n, 0xDEAD_BEEF);
+        group.bench_with_input(BenchmarkId::new("cubic", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a).charpoly_cubic();
+                black_box(r);
+            });
+        });
+        group.bench_with_input(BenchmarkId::new("kg", n), &n, |b, _| {
+            b.iter(|| {
+                let r = black_box(&a)
+                    .charpoly_keller_gehrig(0xC0FFEE)
+                    .expect(kg_panic_msg);
+                black_box(r);
+            });
+        });
+        if include_dispatch {
+            // Public dispatch — picks one of the two paths above based on
+            // the runtime decision tree.
+            group.bench_with_input(BenchmarkId::new("dispatch", n), &n, |b, _| {
+                b.iter(|| {
+                    let r = black_box(&a).charpoly();
+                    black_box(r);
+                });
+            });
+        }
+    }
+    group.finish();
+}
+
+/// Dispatch-crossover bench (issue `1454ec2d`, refreshed in `4a59d1f9`):
+/// runs the cubic and Keller–Gehrig paths side-by-side at
+/// `n ∈ {64, 128, 256, 512, 1024}` on `Fp<MERSENNE_31>`.
+///
+/// Post-Wave-9 measurement (2026-05-07): cubic is ~148x faster than KG
+/// at `n = 256` (37.1ms vs 5.51s) and the ratio grows monotonically
+/// with `n` (see `dev/bench_results/4a59d1f9/2026-05-07-4a59d1f9-keller-gehrig-crossover.md`
+/// and `crates/gf2-core/src/field/charpoly.rs` module docs); public
+/// [`FieldMatrix::charpoly`] therefore always selects cubic under
+/// default dispatch (`KG_DISPATCH_MIN_N == usize::MAX`). The
+/// `dispatch` arm of this bench measures the public surface (i.e. the
+/// cubic baseline today) and is kept alongside the explicit `cubic`
+/// and `kg` arms so a future tuning of `KG_DISPATCH_MIN_N` can be
+/// validated against the same fixtures.
+///
+/// Compiled and skip-runnable via `--test` so the bench harness stays
+/// healthy without paying the full `n = 1024` measurement cost.
+fn bench_dispatch_crossover(c: &mut Criterion) {
+    bench_dispatch_arms::<MERSENNE_31>(
+        c,
+        "charpoly/dispatch",
+        &[64, 128, 256, 512, 1024],
+        true,
+        "KG must converge on Fp<MERSENNE_31>",
+    );
+}
+
+/// Dispatch-crossover bench for `Fp<65521>` (issue `4a59d1f9`).
+///
+/// KG Las-Vegas validity requires `q > 2n^2`. For `Fp<65521>` (q = 65521):
+/// - n = 64: 2*64^2 = 8192 < 65521. KG valid.
+/// - n = 128: 2*128^2 = 32768 < 65521. KG valid.
+/// - n = 181: 2*181^2 = 65522 > 65521. KG invalid.
+///
+/// So this sweep covers n in {64, 128} only.
+fn bench_dispatch_crossover_fp65521(c: &mut Criterion) {
+    bench_dispatch_arms::<PRIME_65521>(
+        c,
+        "charpoly/dispatch_fp65521",
+        &[64, 128],
+        false,
+        "KG must converge on Fp<65521>",
+    );
+}
+
+criterion_group! {
+    name = charpoly_benches;
+    config = Criterion::default()
+        .sample_size(10)
+        .measurement_time(std::time::Duration::from_secs(5));
+    targets = bench_charpoly, bench_minpoly, bench_frobenius,
+        bench_minpoly_reference_sweep,
+        bench_charpoly_reference_sweep,
+        bench_dispatch_crossover, bench_dispatch_crossover_fp65521
+}
+criterion_main!(charpoly_benches);

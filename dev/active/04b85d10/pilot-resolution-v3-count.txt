@@ -1,0 +1,15 @@
+receipt dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/receipt.json
+receipt_sha256 e0d76094b61fde69d7e2ddf2bd5b1e37568935925c54d004c97eaf7278be06bb
+label pilot verdict accepted findings 0
+family bit-storage-count-consumers comparisons 1 family_alpha 0.025 per-comparison confidence 0.975
+
+cell_id                                               estimate     lower     upper  rel_half
+count-popcount-dispatch-4w-1core                        1.5445    1.5404    1.5473    0.0027
+count-popcount-threshold-8w-1core                       1.2010    1.1986    1.2017    0.0021
+count-popcount-bandwidth-65536w-1core                   3.1937    3.1732    3.2126    0.0064
+count-zero-test-507w-1core                              1.1187    1.1176    1.1194    0.0010
+count-ldpc-check-64800-1core                            1.0018    1.0000    1.0044    0.0026
+count-dense-matvec-1024x4096-control-1core              1.0014    0.9832    1.0223    0.0210
+
+largest relative half-width: 0.020966
+rounded up to two decimals:  0.03

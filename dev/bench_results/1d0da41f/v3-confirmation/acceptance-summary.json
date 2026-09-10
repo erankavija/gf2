@@ -1,0 +1,211 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "91f11a886f4635c24a99c8913bf9995860eacc38645f3ec8ea7ff267cada20b8",
+  "campaign_id": "1d0da41f-v3-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "ymm-clmul-dispatch",
+    "comparisons": 10,
+    "family_alpha": 0.008333333333333333,
+    "per_comparison_confidence": 0.9991666666666666,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 3,
+  "resumed": true,
+  "findings": [
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "raw-batch-small-8-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "raw-batch-odd-tail-65-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "raw-batch-l1-512-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "fieldvec-dot-1024-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "raw-batch-l1-512-streaming-6core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    }
+  ],
+  "cells": [
+    {
+      "cell_id": "raw-batch-small-8-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.787145359664762,
+        "lower": 0.7767361509114216,
+        "upper": 0.8018337115099649,
+        "confidence": 0.9991666666666666,
+        "alpha": 0.0008333333333333333,
+        "resamples": 10000,
+        "seed": 16397261047810422796,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "raw-batch-odd-tail-65-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.6039809743628053,
+        "lower": 0.6012139763061626,
+        "upper": 0.609060764784339,
+        "confidence": 0.9991666666666666,
+        "alpha": 0.0008333333333333333,
+        "resamples": 10000,
+        "seed": 14647261453854425098,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "raw-batch-l1-512-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.582122518967892,
+        "lower": 0.5791427839157209,
+        "upper": 0.5874624575910679,
+        "confidence": 0.9991666666666666,
+        "alpha": 0.0008333333333333333,
+        "resamples": 10000,
+        "seed": 17026480007551895980,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "fieldvec-dot-1024-1core",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.775579838156661,
+        "lower": 0.7682386485732962,
+        "upper": 0.7796419809283981,
+        "confidence": 0.9991666666666666,
+        "alpha": 0.0008333333333333333,
+        "resamples": 10000,
+        "seed": 3939033917835799044,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "raw-batch-l1-512-streaming-6core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "physical-cores-6",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.5849376757686539,
+        "lower": 0.5801334459005786,
+        "upper": 0.5888567022830034,
+        "confidence": 0.9991666666666666,
+        "alpha": 0.0008333333333333333,
+        "resamples": 10000,
+        "seed": 9038975200217216910,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

@@ -180,6 +180,7 @@
       "path": "dev/bench_results/c077a88b/v3-preparation/cargo-ci-after-acceptance-fix.log"
     }
   ],
+  "done_at": "2026-09-10T16:21:47.776765510Z",
   "first_ready_at": "2026-09-06T19:58:19.192165918Z",
   "gates_required": [
     "cargo-ci",
@@ -187,7 +188,28 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-10T16:08:55.638308462Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T16:11:11.481483649Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T16:14:00.121547186Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T16:20:50.361661481Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c077a88b-2d35-49ed-bfe0-6fbc7055cea1",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -201,7 +223,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Establish compatible LDPC decoder benchmark arms",
-  "updated_at": "2026-09-08T19:36:56.518916622Z"
+  "updated_at": "2026-09-10T16:21:47.776765510Z"
 }

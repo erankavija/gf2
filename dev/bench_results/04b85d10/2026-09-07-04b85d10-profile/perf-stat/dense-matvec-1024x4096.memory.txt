@@ -1,0 +1,19 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 1000
+# events: cycles,L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misses
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":53648,"conversion":{"batch_fill_ns":0,"dispatch_ns":0,"pack_ns":0,"setup_ns":343012,"unpack_ns":755},"elapsed_ns":"952411150","ns_per_call":17752.966559797198,"path":"current","prepare":{"allocated_bytes":1082015,"allocations":261,"freed_bytes":557056},"schema":"consumer-profile-record-v1","seed":103,"selected_path":"current/simd-and-popcnt","size":{"cols":4096,"rows":1024},"timed":{"allocated_bytes":6866944,"allocated_bytes_per_call":128.0,"allocations":53648,"allocations_per_call":1.0,"freed_bytes":6866944,"peak_live_bytes":128},"workers_observed":1,"workload":"dense-matvec"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile --case {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103} --path current --cache-state warm --target-ms 1000':
+
+     3,989,632,496      cycles:u                                                              
+     3,677,704,620      L1-dcache-loads:u                                                     
+       441,961,933      L1-dcache-load-misses:u                                               
+       767,049,726      cache-references:u                                                    
+        14,106,837      cache-misses:u                                                        
+
+       0.954273230 seconds time elapsed
+
+       0.885899000 seconds user
+       0.006881000 seconds sys
+
+

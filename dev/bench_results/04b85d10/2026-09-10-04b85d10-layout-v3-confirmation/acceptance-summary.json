@@ -1,0 +1,180 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "5e64f498e79ccd94eaa5f50096466a98e714ee551c2ab85244dddcfb4c1a9af3",
+  "campaign_id": "confirmation-v3-layout-04b85d10-20260910t163213z",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "bit-storage-layout-consumers",
+    "comparisons": 5,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.995,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "layout-transpose-block-256-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.927644146391907,
+        "lower": 1.9136164182978068,
+        "upper": 1.9430366821784333,
+        "confidence": 0.995,
+        "alpha": 0.005,
+        "resamples": 10000,
+        "seed": 7620293965186950309,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "layout-transpose-block-4096-6core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "physical-cores-6",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.893157630354568,
+        "lower": 1.8762344713165162,
+        "upper": 1.934261632595794,
+        "confidence": 0.995,
+        "alpha": 0.005,
+        "resamples": 10000,
+        "seed": 6744942671053375030,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "layout-bch-encode-bitslice-m14-b256-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 2.488561816451838,
+        "lower": 2.4829850400994555,
+        "upper": 2.4933187736624927,
+        "confidence": 0.995,
+        "alpha": 0.005,
+        "resamples": 10000,
+        "seed": 4232795483762132223,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "layout-bch-encode-fold-m14-b256-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 2.6984843630942335,
+        "lower": 2.6879573243516446,
+        "upper": 2.70598608048527,
+        "confidence": 0.995,
+        "alpha": 0.005,
+        "resamples": 10000,
+        "seed": 13770775396884010207,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "layout-bch-encode-caller-buffer-m14-b256-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-material",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.0022764894455338,
+        "lower": 0.998494916651503,
+        "upper": 1.007974018509941,
+        "confidence": 0.995,
+        "alpha": 0.005,
+        "resamples": 10000,
+        "seed": 5748837836231882338,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

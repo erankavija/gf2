@@ -1,0 +1,34 @@
+[package]
+name = "gf2-kernels-simd"
+version = "0.1.0"
+edition = "2021"
+description = "SIMD-accelerated kernels for gf2-core (unsafe, optional)"
+license = "MIT"
+
+[lib]
+name = "gf2_kernels_simd"
+crate-type = ["rlib"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(gf2_tuning_baked)'] }
+
+[features]
+default = []
+# Feature toggles for building specific backends; detection is runtime.
+avx2 = []
+avx512 = []
+
+[dev-dependencies]
+# Shared workspace deterministic LCG lives in gf2-core::test_rng so the
+# parity tests here can use the same SSOT helper as gf2-coding without a
+# dependency cycle.
+gf2-core = { path = "../gf2-core" }
+proptest = { workspace = true }
+# Standalone F_3 bipedal prototype — used as the SSOT scalar `Bipedal3`
+# reference for proptest cross-checks per b17bec62 success criterion 3.
+# Path-only dev-dep (the prototype is a non-workspace crate).
+f3-bipedal-prototype = { path = "../../dev/research/f3_bipedal" }
+# gf2-algebra provides the scalar Packed5 / Packed7 reference types used for
+# proptest cross-checks in src/bipedal/packed5.rs and packed7.rs
+# (issue 1f769232 success criterion 2).
+gf2-algebra = { path = "../gf2-algebra" }

@@ -1,0 +1,31 @@
+# Frame traffic per disassembled routine (jit:04b85d10)
+#
+# One instance of each routine is disassembled and bounded by its
+# own symbol size, so a count is the cost of one call rather than
+# of the copies link-time optimization emitted. `stores` counts
+# instructions writing a register into the routine's own frame and
+# `loads` those reading one back. The reason column separates the
+# two costs the counter cannot: a compiler spill of a value that
+# did not fit in a register, and a buffer the algorithm is defined
+# over. Its evidence is the source declaration that settles it.
+
+routine                   stores  loads  instr  reason
+avx2-and-into                  0      0    101  none: crates/gf2-kernels-simd/src/x86/avx2.rs declares no local buffer
+avx2-and-popcnt                0      0    225  none: crates/gf2-kernels-simd/src/x86/avx2.rs:316 accumulates in vector registers alone
+avx2-find-first-one            0      0     79  none: crates/gf2-kernels-simd/src/x86/avx2.rs:369 tests one vector at a time
+avx2-popcnt                    0      0    103  none: crates/gf2-kernels-simd/src/x86/avx2.rs:264 accumulates in vector registers alone
+avx2-xor-into                  0      0    101  none: crates/gf2-kernels-simd/src/x86/avx2.rs declares no local buffer
+bch-unpack-parity             18      4    139  intentional scratch: crates/gf2-kernels-simd/src/bch_encode.rs:290 reads the register back through the same 64-word block transpose
+bitslice-reduce-avx2           4      0    119  spill: crates/gf2-kernels-simd/src/bch_encode.rs:407 the AVX2 lane declares no local buffer
+bitslice-reduce-scalar         4      0     82  spill: crates/gf2-kernels-simd/src/bch_encode.rs:689 declares no local buffer, so its frame traffic is register pressure
+dense-matvec-scalar           15     27    249  spill: crates/gf2-core/src/matrix.rs:1517 holds four accumulators and two chunk iterators
+dense-matvec-simd              9     15    155  spill: crates/gf2-core/src/matrix.rs:1554 holds only the row slice and the accumulator
+dense-transpose               77    110    844  intentional scratch: crates/gf2-core/src/matrix.rs:1275 the tiled driver holds one 64-word block between the read and the write
+fold-block-pclmul             10      0    135  spill: crates/gf2-kernels-simd/src/bch_encode.rs:407 the PCLMULQDQ lane declares no local buffer
+fold-block-scalar              9      0    175  spill: crates/gf2-kernels-simd/src/bch_encode.rs:595 declares no local buffer
+packed-fold-reduce             4     10    170  spill: crates/gf2-coding/src/bch/encode.rs:1562 reduces over the caller's register slice and declares no local buffer
+packed-table-reduce           16     33    617  spill: crates/gf2-coding/src/bch/encode.rs:1548 reduces over the caller's register slice and declares no local buffer
+packed-write-codeword          0      0    158  none: crates/gf2-coding/src/bch/encode.rs:2023 writes the codeword one bit at a time and holds no buffer
+sparse-matvec                 13     24    236  spill: crates/gf2-core/src/sparse.rs:1367 holds one boolean accumulator and the index cursors
+transpose-64x64-avx2          40     19    543  intentional scratch: crates/gf2-kernels-simd/src/transpose.rs:113 the AVX2 lane holds the same 64-word block, of which sixteen ymm registers carry a part
+transpose-64x64-scalar       235    235   1570  intentional scratch: crates/gf2-kernels-simd/src/transpose.rs:194 copies the 64 input words into the local buf the stages mutate in place

@@ -1,0 +1,155 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "ymm-clmul-dispatch",
+    "issue": "1d0da41f",
+    "purpose": "kernel-family",
+    "description": "Protocol-v3 rerun of the preserved raw carry-less batch comparison. Both arms rebuild from the immutable source closure of the accepted v1 confirmation: the baseline requires AVX512VL and selects sequential PCLMULQDQ on Zen 3; the candidate selects the repaired YMM VPCLMULQDQ lane. The v1 evidence remains immutable and superseded."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-08T17:56:12Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The exploratory threshold reflects the hypothesis under test: a two-wide VPCLMULQDQ lane that replaces one PCLMULQDQ per product is worth its dispatch domain only when the raw batch gains at least a tenth of its time. The pilot exists to measure the resolution that must lie below it.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "The FieldVec dot product is called inside larger linear-algebra routines, where a regression up to five percent stays inside the noise those routines already carry. The pilot estimates whether the host resolves an effect that small.",
+    "material_gap_threshold": 1.5,
+    "material_gap_rationale": "Declared for completeness. No comparator-gap cell exists in this family because no external library exposes an independent raw carry-less batch product to compare against."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 80,
+    "maintenance_rationale": "The repair adds no kernel: it corrects the feature contract of an existing one and publishes the lane it selects. Sixty-five net production lines, most of them the safety and dispatch documentation the corrected contract requires, fit inside a budget of eighty."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/1d0da41f/v3-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "raw-batch-small-8-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "clmul-raw-batch",
+        "size": {
+          "elements": 8,
+          "degree": 64
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "raw-batch-odd-tail-65-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "clmul-raw-batch",
+        "size": {
+          "elements": 65,
+          "degree": 64
+        },
+        "seed": 102
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "raw-batch-l1-512-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "clmul-raw-batch",
+        "size": {
+          "elements": 512,
+          "degree": 64
+        },
+        "seed": 103
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "fieldvec-dot-1024-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "fieldvec-simd-dot-product",
+        "size": {
+          "elements": 1024,
+          "degree": 8
+        },
+        "seed": 104
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

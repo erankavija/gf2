@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-10T16:45:41.029543432Z",
+  "dependencies": [
+    "c7113c5a-94da-462f-954e-3b7894bb95df"
+  ],
+  "description": "The public wide carry-less multiplication functions in gf2-core run the portable scalar schoolbook for every operand width, bypassing the capability-dispatched kernels that gf2's own wide-field arithmetic already uses.\n\n## Background\n\n`gf2m::wide::clmul_wide` delegates to `clmul_wide_slice`, which multiplies every word pair through the portable bit-by-bit carry-less product. The dispatching helper that selects the PCLMULQDQ kernels for 4-word and 9-word operands is crate-private and serves wide-field multiplication and the wide Barrett reducer, so a caller of the documented public long-product API never reaches an accelerated path. An exploratory measurement at four words found the public path far slower than the dispatched kernel. The `Gf2mWide::mul_ref` rustdoc also names the public function as its mechanism, although its body uses the private helper.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n- [hard] REQ-02: The public wide carry-less product functions reach the same capability-dispatched kernels as gf2's internal wide-field multiplication on hosts that support them and keep the tested portable scalar fallback elsewhere, through one canonical dispatch path shared by public and internal callers.\n- [hard] REQ-03: The shared carry-less product conformance suite covers the public functions at dispatched and non-dispatched widths with random and adversarial operands, comparing complete double-width outputs against the portable oracle, including the scalar fallback.\n- [hard] REQ-04: A frozen before/after receipt measures the public path at dispatched and non-dispatched widths, including dispatch overhead at small widths, and production adoption follows the frozen non-regression rule.\n- [hard] REQ-05: The rustdoc of the public functions and of `Gf2mWide::mul_ref` states the mechanism and complexity each actually uses.\n\n## Notes\n\nSurfaced by the polynomial-multiplication baseline survey, whose source evidence records the call paths. No multiplication algorithm change is part of this task.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-10T16:45:41.029543432Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "1c602857-5e5b-4981-949a-09bb7639476b",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-core",
+    "satisfies:REQ-02",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Route the public wide carry-less product through capability dispatch",
+  "updated_at": "2026-09-10T16:45:52.450891666Z"
+}

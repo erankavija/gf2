@@ -68,7 +68,7 @@
     "cites:Cassagne2019"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-  "updated_at": "2026-09-06T20:07:48.616322832Z"
+  "updated_at": "2026-09-10T16:21:58.640620633Z"
 }

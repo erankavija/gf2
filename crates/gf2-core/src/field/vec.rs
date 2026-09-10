@@ -1025,9 +1025,10 @@ use crate::gf2m::Gf2mElement;
 impl FieldVec<Gf2mElement> {
     /// SIMD-accelerated dot product for GF(2^m) using PCLMULQDQ batch kernel.
     ///
-    /// Uses `clmul_batch` to perform all carry-less multiplications in a single
-    /// vectorised pass (VPCLMULQDQ when available, sequential PCLMULQDQ otherwise),
-    /// XORs all 128-bit products into one accumulator, then Barrett-reduces once.
+    /// Performs all carry-less multiplications in one pass through the raw batch
+    /// kernel of the default GF(2^m) SIMD bundle (`gf2_kernels_simd::gf2m::detect`,
+    /// which selects sequential PCLMULQDQ), XORs all 128-bit products into one
+    /// accumulator, then Barrett-reduces once.
     ///
     /// Falls back to the generic [`dot_product`](FieldVec::dot_product) when
     /// PCLMULQDQ is not available at runtime.
@@ -1118,7 +1119,7 @@ impl FieldVec<Gf2mElement> {
                 b_buf[i] = b.value();
             }
 
-            // Batch carry-less multiply (VPCLMULQDQ when available).
+            // Batch carry-less multiply through the default bundle's kernel.
             batch_fn(
                 &a_buf[..chunk_len],
                 &b_buf[..chunk_len],

@@ -1,0 +1,109 @@
+# label: avx2-and-into
+# pattern: x86::avx2::avx2_and_into
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile
+# binary sha256: 72be1c750584eeab639d99c13b1994da91f7a8dd4ace3f69bacf3c7d56114c64
+# symbols matching this pattern in the binary: 1
+
+## symbol at 000000000009a2a0, 0x000000000000019c bytes
+000000000009a2a0 <gf2_kernels_simd::x86::avx2::avx2_and_into>:
+   9a2a0:	cmp    %rsi,%rcx
+   9a2a3:	cmovb  %rcx,%rsi
+   9a2a7:	mov    %rsi,%rcx
+   9a2aa:	shr    $0x2,%rcx
+   9a2ae:	je     9a31c <gf2_kernels_simd::x86::avx2::avx2_and_into+0x7c>
+   9a2b0:	cmp    $0x1,%rcx
+   9a2b4:	jne    9a2ba <gf2_kernels_simd::x86::avx2::avx2_and_into+0x1a>
+   9a2b6:	xor    %eax,%eax
+   9a2b8:	jmp    9a309 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x69>
+   9a2ba:	movabs $0x3fffffffffffffe,%r8
+   9a2c4:	and    %rcx,%r8
+   9a2c7:	mov    $0x20,%r9d
+   9a2cd:	xor    %eax,%eax
+   9a2cf:	nop
+   9a2d0:	vmovups -0x20(%rdx,%r9,1),%ymm0
+   9a2d7:	vandps -0x20(%rdi,%r9,1),%ymm0,%ymm0
+   9a2de:	vmovups %ymm0,-0x20(%rdi,%r9,1)
+   9a2e5:	vmovups (%rdx,%r9,1),%ymm0
+   9a2eb:	vandps (%rdi,%r9,1),%ymm0,%ymm0
+   9a2f1:	vmovups %ymm0,(%rdi,%r9,1)
+   9a2f7:	add    $0x2,%rax
+   9a2fb:	add    $0x40,%r9
+   9a2ff:	cmp    %rax,%r8
+   9a302:	jne    9a2d0 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x30>
+   9a304:	test   $0x1,%cl
+   9a307:	je     9a31c <gf2_kernels_simd::x86::avx2::avx2_and_into+0x7c>
+   9a309:	shl    $0x5,%rax
+   9a30d:	vmovups (%rdx,%rax,1),%ymm0
+   9a312:	vandps (%rdi,%rax,1),%ymm0,%ymm0
+   9a317:	vmovups %ymm0,(%rdi,%rax,1)
+   9a31c:	movabs $0xffffffffffffffc,%r8
+   9a326:	and    %rsi,%r8
+   9a329:	cmp    %rsi,%r8
+   9a32c:	je     9a430 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x190>
+   9a332:	mov    %r8,%rcx
+   9a335:	or     $0x1,%rcx
+   9a339:	cmp    %rcx,%rsi
+   9a33c:	cmova  %rsi,%rcx
+   9a340:	mov    %rcx,%rax
+   9a343:	sub    %r8,%rax
+   9a346:	cmp    $0x4,%rax
+   9a34a:	jae    9a354 <gf2_kernels_simd::x86::avx2::avx2_and_into+0xb4>
+   9a34c:	mov    %r8,%rax
+   9a34f:	jmp    9a420 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x180>
+   9a354:	cmp    $0x10,%rax
+   9a358:	jae    9a362 <gf2_kernels_simd::x86::avx2::avx2_and_into+0xc2>
+   9a35a:	xor    %r9d,%r9d
+   9a35d:	jmp    9a3f4 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x154>
+   9a362:	push   %rbx
+   9a363:	mov    %rax,%r9
+   9a366:	and    $0xfffffffffffffff0,%r9
+   9a36a:	mov    %rsi,%r11
+   9a36d:	and    $0xfffffffffffffffc,%r11
+   9a371:	lea    (%rdi,%r11,8),%r10
+   9a375:	add    $0x60,%r10
+   9a379:	lea    (%rdx,%r11,8),%r11
+   9a37d:	add    $0x60,%r11
+   9a381:	xor    %ebx,%ebx
+   9a383:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   9a390:	vmovups -0x60(%r10,%rbx,8),%ymm0
+   9a397:	vmovups -0x40(%r10,%rbx,8),%ymm1
+   9a39e:	vmovups -0x20(%r10,%rbx,8),%ymm2
+   9a3a5:	vmovups (%r10,%rbx,8),%ymm3
+   9a3ab:	vandps -0x60(%r11,%rbx,8),%ymm0,%ymm0
+   9a3b2:	vandps -0x40(%r11,%rbx,8),%ymm1,%ymm1
+   9a3b9:	vandps -0x20(%r11,%rbx,8),%ymm2,%ymm2
+   9a3c0:	vandps (%r11,%rbx,8),%ymm3,%ymm3
+   9a3c6:	vmovups %ymm0,-0x60(%r10,%rbx,8)
+   9a3cd:	vmovups %ymm1,-0x40(%r10,%rbx,8)
+   9a3d4:	vmovups %ymm2,-0x20(%r10,%rbx,8)
+   9a3db:	vmovups %ymm3,(%r10,%rbx,8)
+   9a3e1:	add    $0x10,%rbx
+   9a3e5:	cmp    %rbx,%r9
+   9a3e8:	jne    9a390 <gf2_kernels_simd::x86::avx2::avx2_and_into+0xf0>
+   9a3ea:	cmp    %r9,%rax
+   9a3ed:	pop    %rbx
+   9a3ee:	je     9a430 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x190>
+   9a3f0:	test   $0xc,%al
+   9a3f2:	je     9a434 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x194>
+   9a3f4:	and    $0x3,%ecx
+   9a3f7:	sub    %rcx,%rax
+   9a3fa:	add    %r8,%rax
+   9a3fd:	add    %r8,%r9
+   9a400:	vmovups (%rdi,%r9,8),%ymm0
+   9a406:	vandps (%rdx,%r9,8),%ymm0,%ymm0
+   9a40c:	vmovups %ymm0,(%rdi,%r9,8)
+   9a412:	add    $0x4,%r9
+   9a416:	cmp    %r9,%rax
+   9a419:	jne    9a400 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x160>
+   9a41b:	test   %rcx,%rcx
+   9a41e:	je     9a430 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x190>
+   9a420:	mov    (%rdx,%rax,8),%rcx
+   9a424:	and    %rcx,(%rdi,%rax,8)
+   9a428:	inc    %rax
+   9a42b:	cmp    %rsi,%rax
+   9a42e:	jb     9a420 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x180>
+   9a430:	vzeroupper
+   9a433:	ret
+   9a434:	add    %r9,%r8
+   9a437:	mov    %r8,%rax
+   9a43a:	jmp    9a420 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x180>

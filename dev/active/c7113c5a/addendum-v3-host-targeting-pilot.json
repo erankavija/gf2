@@ -1,0 +1,155 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "polynomial-host-targeting",
+    "issue": "c7113c5a",
+    "purpose": "kernel-family",
+    "description": "Equivalent host-targeting opportunities for gf2 and pinned gf2x 1.3.0 below the native level: both sides built conservative (no RUSTFLAGS; CFLAGS -O2) or tuned (RUSTFLAGS -C target-cpu=x86-64-v3; CFLAGS -O3 -march=x86-64-v3), compared at a dispatched-kernel size (4 words) and a schoolbook-versus-Toom size (256 words) with operand fixtures identical to the native cells of polynomial-multiplication-baselines. Native-level hypotheses belong to that family and are not repeated here. Every cell is a comparator gap with gf2x as candidate, so a speedup below one means gf2 is faster. The survey adopts nothing, adds no gf2x production dependency and changes no gf2 multiplication algorithm."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-10T16:30:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "This family declares no improvement cell: every cell compares current gf2 with an external comparator and the issue excludes adoption, so no worthwhile-speedup threshold applies.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.15,
+    "equivalence_rationale": "Within fifteen percent a consumer choosing between the two libraries decides on portability and licensing (gf2x is GPL-3.0-or-later, gf2 is MIT) rather than on speed. The confirmation freezes a pilot-derived measurement resolution strictly below this margin.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A quarter of the runtime is the smallest gap that survives the adapter and conversion costs a consumer pays to reach an external library, so it is the smallest gap that would change an engineering decision about the gf2 path. The confirmation freezes a pilot-derived measurement resolution strictly below this threshold."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "The survey adopts no implementation and adds no gf2x production dependency, so its budget is zero by construction."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/c7113c5a/v3-host-targeting-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "poly-mul-4w-conservative-1core",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "poly-mul-4-words-unreduced",
+        "size": {
+          "words": 4,
+          "inner": 1
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-4w-tuned-1core",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "poly-mul-4-words-unreduced",
+        "size": {
+          "words": 4,
+          "inner": 1
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "tuned-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-256w-conservative-1core",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "poly-mul-256-words-unreduced",
+        "size": {
+          "words": 256,
+          "inner": 1
+        },
+        "seed": 204
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-256w-tuned-1core",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "poly-mul-256-words-unreduced",
+        "size": {
+          "words": 256,
+          "inner": 1
+        },
+        "seed": 204
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "tuned-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "bit-storage-layout-consumers",
+    "issue": "04b85d10",
+    "purpose": "consumer-family",
+    "description": "Confirmatory family of issue 04b85d10, protocol version 3. Question: Whether the current bit-layout transform routes leave a material whole-consumer gap against routes the library already registers: the detected AVX2 64x64 block transpose against the portable primitive, the packed binary BCH batch entry point's current family selection against its registered bitslice and carry-less-multiply fold families on the DVB-T2 normal-frame mother code, and the allocating batch entry point against the caller-buffer one. The dense 4096-square transpose and the DVB-T2 compatibility BCH encoder are recorded as pinned identity controls because production exposes no alternative route. Every cell is confirmatory on fresh samples; identity controls stay in the pilot. A pass records a material gap between two current production routes; the issue adopts nothing and names the downstream issue that tests the candidate."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-10T16:23:09Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "A transform-route or encoding-family change carries selector, workspace and conversion code; ten percent of the whole consumer, conversion and output included, is the smallest gain worth that maintenance, and the measured candidates are expected far above it or plainly below it. It strictly exceeds one plus the same-family pilot resolution of 0.03.",
+    "measurement_resolution": 0.03,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot/receipt.json",
+      "sha256": "8ed58e057d981184c1144a16f76aeeedebfda8c46d8265c36f05096dfaf4a891"
+    },
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "A route at most five percent slower than the current whole consumer is not worse; the allocation cell is expected to sit inside this margin, which records it as not material rather than as a regression. It strictly exceeds one plus the pilot resolution of 0.03.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell compares gf2 against an external comparator, so no comparator-gap objective is exercised and no threshold applies."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This issue is a profile: it selects experiments and adopts no implementation, so its budget for production change is zero unsafe kernels and zero added production lines. A passing improvement cell confirms a candidate's materiality for its downstream issue; it selects nothing here."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "layout-transpose-block-256-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "transpose-64x64",
+        "size": {
+          "blocks": 256
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-transpose-block-4096-6core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "transpose-64x64",
+        "size": {
+          "blocks": 4096
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-bch-encode-bitslice-m14-b256-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 303
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-bch-encode-fold-m14-b256-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 303
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "layout-bch-encode-caller-buffer-m14-b256-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch-alloc",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 304
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

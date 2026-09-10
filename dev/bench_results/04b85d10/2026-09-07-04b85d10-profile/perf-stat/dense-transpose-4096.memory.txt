@@ -1,0 +1,19 @@
+# case: {"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302}
+# path: current  cache_state: warm  target_ms: 1500
+# events: cycles,L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misses
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":2229,"conversion":{"batch_fill_ns":0,"dispatch_ns":4,"pack_ns":0,"setup_ns":1402458,"unpack_ns":0},"elapsed_ns":"1495603996","ns_per_call":670975.3234634366,"path":"current","prepare":{"allocated_bytes":4194392,"allocations":4,"freed_bytes":2097152},"schema":"consumer-profile-record-v1","seed":302,"selected_path":"current/macro-tiled-8","size":{"cols":4096,"rows":4096},"timed":{"allocated_bytes":4674551808,"allocated_bytes_per_call":2097152.0,"allocations":2229,"allocations_per_call":1.0,"freed_bytes":4674551808,"peak_live_bytes":2097152},"workers_observed":1,"workload":"dense-transpose"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile --case {"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302} --path current --cache-state warm --target-ms 1500':
+
+     6,243,908,030      cycles:u                                                              
+     5,712,082,815      L1-dcache-loads:u                                                     
+     1,032,440,591      L1-dcache-load-misses:u                                               
+     1,567,931,053      cache-references:u                                                    
+       269,444,852      cache-misses:u                                                        
+
+       1.501066779 seconds time elapsed
+
+       1.394077000 seconds user
+       0.011024000 seconds sys
+
+

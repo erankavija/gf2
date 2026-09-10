@@ -1,0 +1,164 @@
+# consumer profile host record - produced by run-profile.sh
+# generated_utc: 2026-09-10T16:22:24Z
+# gf2 revision (informational): 97b690936c6a32de13be386f518f2561a4c7b668
+
+## uname
+Linux fraktaali 7.2.2-arch1-1 #1 SMP PREEMPT_DYNAMIC Fri, 28 Aug 2026 16:09:39 +0000 x86_64 GNU/Linux
+
+## /etc/os-release
+NAME="Arch Linux"
+PRETTY_NAME="Arch Linux"
+ID=arch
+BUILD_ID=rolling
+ANSI_COLOR="38;2;23;147;209"
+HOME_URL="https://archlinux.org/"
+DOCUMENTATION_URL="https://wiki.archlinux.org/"
+SUPPORT_URL="https://bbs.archlinux.org/"
+BUG_REPORT_URL="https://gitlab.archlinux.org/groups/archlinux/-/issues"
+PRIVACY_POLICY_URL="https://terms.archlinux.org/docs/privacy-policy/"
+LOGO=archlinux-logo
+
+## rustc
+rustc 1.95.0 (59807616e 2026-04-14)
+binary: rustc
+commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860
+commit-date: 2026-04-14
+host: x86_64-unknown-linux-gnu
+release: 1.95.0
+LLVM version: 22.1.2
+
+## cargo
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+
+## RUSTFLAGS
+<unset>
+
+## perf
+perf version 7.2.4-1
+
+## lscpu
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  24
+On-line CPU(s) list:                     0-23
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 9 5900X 12-Core Processor
+CPU family:                              25
+Model:                                   33
+Thread(s) per core:                      2
+Core(s) per socket:                      12
+Socket(s):                               1
+Stepping:                                2
+Microcode version:                       0xa201211
+Frequency boost:                         enabled
+CPU(s) scaling MHz:                      86%
+CPU max MHz:                             4954.5649
+CPU min MHz:                             567.0890
+BogoMIPS:                                7399.51
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap
+L1d cache:                               384 KiB (12 instances)
+L1i cache:                               384 KiB (12 instances)
+L2 cache:                                6 MiB (12 instances)
+L3 cache:                                64 MiB (2 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-23
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Mitigation; Clear CPU buffers
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+## cache topology of cpu0
+index0 level=1 type=Data size=32K shared=0,12
+index1 level=1 type=Instruction size=32K shared=0,12
+index2 level=2 type=Unified size=512K shared=0,12
+index3 level=3 type=Unified size=32768K shared=0-5,12-17
+
+## governors
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu10/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu11/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu12/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu13/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu14/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu15/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu16/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu17/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu18/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu19/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu20/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu21/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu22/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu23/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu8/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu9/cpufreq/scaling_governor powersave
+
+## smt
+on
+
+## perf_event_paranoid
+2
+
+## load average at start
+ 19:22:24 up 6 days, 20:51,  9 users,  load average: 1.81, 1.79, 2.44
+
+## harness executables
+960bb280fdc1f5d02cd2bad3569a87a791d35ccee08f031411a2be3ec75f4dfa consumer-arm
+28f0fc82431f1396d61c6a6af7c3080038dbeae41e937a8c5ac643d1874745a6 consumer-profile
+2d325fcb0de2ab502773b6ae5715c072ab99a4c532b3e345aae28655c081a97e consumer-verify
+
+## harness sources
+696fb34e77e433bd1700ab856d2be74f8d9bc1e564fdf803cb5e869345c34e6e  dev/active/04b85d10/survey/alloc-trace-cases.txt
+821cf397fde05f1ad6449aaeab300d23364fe53666f58c4fde513e27e27b16f5  dev/active/04b85d10/survey/asm-frame-classification.txt
+14bb977a1d05a7cb2db0f6fb95ae9bb197cc4305366e822d51922d9db853463f  dev/active/04b85d10/survey/asm-symbols.txt
+c65674231a664328f7121ddfe10497ead4a303ba9a2ee8658adec581686be0c8  dev/active/04b85d10/survey/build-plan.py
+22cac84d8956b9243c72b4eea4cfade7574a8e2dabfadec7b7c5bafcb5b977ce  dev/active/04b85d10/survey/counter-cases.txt
+a6aaf764667a5433fafabf0b713675599446c33c8c1ad743ab6527a1b5e9d59e  dev/active/04b85d10/survey/disassemble.sh
+aa5e01b73f9d2e5e3015ce6a523bee330bfb170f703d431d1210d3eff631170f  dev/active/04b85d10/survey/frame-traffic.py
+a7738a5900df74942ebd47786d216f35147d6ca7bd6ec36dd590d614aa4fc807  dev/active/04b85d10/survey/gf2-side/Cargo.lock
+47402dbbb2ebced11a4bec84d407d5ef7add529bceaa01736b651f98d9691e66  dev/active/04b85d10/survey/gf2-side/Cargo.toml
+b4fe2ad19bfcc03804e588842a6278fd951a41b4c4135cdaad85adff3a372679  dev/active/04b85d10/survey/gf2-side/src/bin/consumer-arm.rs
+e0cf57b476208d7eac776dced2b9482d708f9f5ac951427e69f915be2dc36c62  dev/active/04b85d10/survey/gf2-side/src/bin/consumer-profile.rs
+2d9bb9b4aa505945b273cca11d86316956d31908a7e99bf470230cf6b9441acf  dev/active/04b85d10/survey/gf2-side/src/bin/consumer-verify.rs
+fc35a6a3cf5c9af23b5bb34bbcce6684a6ff7b5ec7f3b1bc00f5b6fd097a2b99  dev/active/04b85d10/survey/gf2-side/src/lib.rs
+58c6e48236fbabb828c3d2f8eec78b97f31092e3849d326a614c70230dc87ec7  dev/active/04b85d10/survey/import-v1-ledger.py
+8343ac0b3b59e2dbac8157a774317f891979ded50017c222ea245ff18de6ea5e  dev/active/04b85d10/survey/make-addenda.py
+b6944fc2c638791fe1fcae54884c1513fb492b25bd48dab56e7ae2672ab1f58b  dev/active/04b85d10/survey/make-producing-inputs.py
+0ff40f2e86c567a2c10bbf28e639beb2d05289526da88e474c416b3c4b8a57d0  dev/active/04b85d10/survey/make-source-evidence.py
+dd107eafea1321f25250b4bb0d37a9151b19fd1c872e11182352bc13e3c1ff90  dev/active/04b85d10/survey/pilot-resolution.py
+d957a2d0467758323b4168086a8519d3af0be262036854e352d7b9f067c68df8  dev/active/04b85d10/survey/profile-cases.py
+2eec4f842edb8791fe479c189c3746949d5cb5c5642f6c17ac70427105594bf6  dev/active/04b85d10/survey/report-cases.txt
+a4cfb15eab88e170c16914104d0200bd29695b2dfaceb41815db356b07ba9b29  dev/active/04b85d10/survey/run-profile.sh
+87624aab2a273916e7b533bbb93fbd4ad63dca36bf0135d2b080b5ea59efb94a  dev/active/04b85d10/survey/summarize-profile.py
+e6afd4874f1925509edc1de147dcfe955df892db0427e7a040042f44d77d4edf  dev/active/04b85d10/survey/summarize-receipts.py
+a37b3cda44887506d645bf9906775528bf0d3bf07a23f0626acf0138c27b1428  dev/active/04b85d10/survey/sweep.sh
+
+## production crate sources
+d33ab8b5e8e4856227d7901b61ba7463afb7a414c8081932d2f393173bf95ab5 (sha256 over the sorted per-file digest list)
+
+## load average at end
+ 19:26:51 up 6 days, 20:55,  9 users,  load average: 2.61, 2.64, 2.65
+# finished_utc: 2026-09-10T16:26:51Z

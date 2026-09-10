@@ -1,0 +1,295 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "nr-llr-derate-matching-baselines",
+    "issue": "eda07788",
+    "purpose": "consumer-family",
+    "description": "Exploratory pilot for 5G NR LDPC LLR de-rate-matching: target_n channel LLRs mapped onto the full_n mother-code positions, with the 2Z punctured prefix and untransmitted parity at zero and fillers at a known-zero LLR. gf2 Nr5gRateMatchedCode::prepare_llrs is the baseline arm; AFF3CT v4.7.0 Puncturer_5G::depuncture behind a whole-consumer adapter (float conversion, zeroed output, filler normalization, conversion back to Vec<Llr>) is the candidate. Every configuration passed the committed equivalence gate. The baseline arm is always gf2 and the candidate is the arm whose lead needs attribution, so a speedup above 1 in a `-gap-` cell means AFF3CT is ahead and above 1 in the `-control-` cell means the native gf2 build is ahead of the conservative-portable control. The `-null-` identity cell measures the noise floor. Cells cover both base graphs, filler and filler-free codes and lifting sizes 22 to 96. This pilot sizes the family's measurement resolution; no cell decides adoption."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-10T17:00:23Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This issue is a baseline survey: it proposes no production change, so no worthwhile-speedup threshold applies and none is declared.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A 10% equivalence margin, carried unchanged into the confirmatory addendum so the pilot's own decisions are computed under the rule the confirmation uses. Pilot cells never yield a pass; the margin exists here only to make the pilot's recorded decisions comparable.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A 20% whole-consumer wall-clock gap is the smallest gap between two arms of this operation worth attributing to a named cause (representation conversion, output initialization, per-call dispatch or scatter code generation) rather than host noise. The pilot checks that this threshold sits above the measured resolution before the confirmatory addendum freezes it."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "A survey adopts nothing. No production kernel changes, so the budget is zero by construction; the whole diff is under dev/."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/active/eda07788/nr-llr-derate-matching-trial-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "nr-bg2-n1024-k400-null-native-vs-native",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-llr-derate-bg2-n1024-k400",
+        "size": {
+          "base_graph": 2,
+          "target_n": 1024,
+          "target_k": 400,
+          "lifting": 52,
+          "full_n": 2704,
+          "fillers": 120
+        },
+        "seed": 302
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-bg2-n256-k121-gap-native-vs-aff3ct",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-llr-derate-bg2-n256-k121",
+        "size": {
+          "base_graph": 2,
+          "target_n": 256,
+          "target_k": 121,
+          "lifting": 22,
+          "full_n": 1144,
+          "fillers": 99
+        },
+        "seed": 301
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-bg2-n1024-k400-gap-native-vs-aff3ct",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-llr-derate-bg2-n1024-k400",
+        "size": {
+          "base_graph": 2,
+          "target_n": 1024,
+          "target_k": 400,
+          "lifting": 52,
+          "full_n": 2704,
+          "fillers": 120
+        },
+        "seed": 302
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-bg2-n1440-k720-gap-native-vs-aff3ct",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-llr-derate-bg2-n1440-k720",
+        "size": {
+          "base_graph": 2,
+          "target_n": 1440,
+          "target_k": 720,
+          "lifting": 72,
+          "full_n": 3744,
+          "fillers": 0
+        },
+        "seed": 303
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-bg1-n1200-k900-gap-native-vs-aff3ct",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-llr-derate-bg1-n1200-k900",
+        "size": {
+          "base_graph": 1,
+          "target_n": 1200,
+          "target_k": 900,
+          "lifting": 44,
+          "full_n": 2992,
+          "fillers": 68
+        },
+        "seed": 304
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-bg1-n1320-k1056-gap-native-vs-aff3ct",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-llr-derate-bg1-n1320-k1056",
+        "size": {
+          "base_graph": 1,
+          "target_n": 1320,
+          "target_k": 1056,
+          "lifting": 48,
+          "full_n": 3264,
+          "fillers": 0
+        },
+        "seed": 305
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-bg1-n2560-k2048-gap-native-vs-aff3ct",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-llr-derate-bg1-n2560-k2048",
+        "size": {
+          "base_graph": 1,
+          "target_n": 2560,
+          "target_k": 2048,
+          "lifting": 96,
+          "full_n": 6528,
+          "fillers": 64
+        },
+        "seed": 306
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-bg1-n2560-k2048-control-portable-vs-native",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-llr-derate-bg1-n2560-k2048",
+        "size": {
+          "base_graph": 1,
+          "target_n": 2560,
+          "target_k": 2048,
+          "lifting": 96,
+          "full_n": 6528,
+          "fillers": 64
+        },
+        "seed": 306
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

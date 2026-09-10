@@ -1,0 +1,109 @@
+# label: avx2-and-into
+# pattern: x86::avx2::avx2_and_into
+# binary: target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 28f0fc82431f1396d61c6a6af7c3080038dbeae41e937a8c5ac643d1874745a6
+# symbols matching this pattern in the binary: 1
+
+## symbol at 0000000000095410, 0x000000000000019c bytes
+0000000000095410 <gf2_kernels_simd::x86::avx2::avx2_and_into>:
+   95410:	cmp    %rsi,%rcx
+   95413:	cmovb  %rcx,%rsi
+   95417:	mov    %rsi,%rcx
+   9541a:	shr    $0x2,%rcx
+   9541e:	je     9548c <gf2_kernels_simd::x86::avx2::avx2_and_into+0x7c>
+   95420:	cmp    $0x1,%rcx
+   95424:	jne    9542a <gf2_kernels_simd::x86::avx2::avx2_and_into+0x1a>
+   95426:	xor    %eax,%eax
+   95428:	jmp    95479 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x69>
+   9542a:	movabs $0x3fffffffffffffe,%r8
+   95434:	and    %rcx,%r8
+   95437:	mov    $0x20,%r9d
+   9543d:	xor    %eax,%eax
+   9543f:	nop
+   95440:	vmovups -0x20(%rdx,%r9,1),%ymm0
+   95447:	vandps -0x20(%rdi,%r9,1),%ymm0,%ymm0
+   9544e:	vmovups %ymm0,-0x20(%rdi,%r9,1)
+   95455:	vmovups (%rdx,%r9,1),%ymm0
+   9545b:	vandps (%rdi,%r9,1),%ymm0,%ymm0
+   95461:	vmovups %ymm0,(%rdi,%r9,1)
+   95467:	add    $0x2,%rax
+   9546b:	add    $0x40,%r9
+   9546f:	cmp    %rax,%r8
+   95472:	jne    95440 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x30>
+   95474:	test   $0x1,%cl
+   95477:	je     9548c <gf2_kernels_simd::x86::avx2::avx2_and_into+0x7c>
+   95479:	shl    $0x5,%rax
+   9547d:	vmovups (%rdx,%rax,1),%ymm0
+   95482:	vandps (%rdi,%rax,1),%ymm0,%ymm0
+   95487:	vmovups %ymm0,(%rdi,%rax,1)
+   9548c:	movabs $0xffffffffffffffc,%r8
+   95496:	and    %rsi,%r8
+   95499:	cmp    %rsi,%r8
+   9549c:	je     955a0 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x190>
+   954a2:	mov    %r8,%rcx
+   954a5:	or     $0x1,%rcx
+   954a9:	cmp    %rcx,%rsi
+   954ac:	cmova  %rsi,%rcx
+   954b0:	mov    %rcx,%rax
+   954b3:	sub    %r8,%rax
+   954b6:	cmp    $0x4,%rax
+   954ba:	jae    954c4 <gf2_kernels_simd::x86::avx2::avx2_and_into+0xb4>
+   954bc:	mov    %r8,%rax
+   954bf:	jmp    95590 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x180>
+   954c4:	cmp    $0x10,%rax
+   954c8:	jae    954d2 <gf2_kernels_simd::x86::avx2::avx2_and_into+0xc2>
+   954ca:	xor    %r9d,%r9d
+   954cd:	jmp    95564 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x154>
+   954d2:	push   %rbx
+   954d3:	mov    %rax,%r9
+   954d6:	and    $0xfffffffffffffff0,%r9
+   954da:	mov    %rsi,%r11
+   954dd:	and    $0xfffffffffffffffc,%r11
+   954e1:	lea    (%rdi,%r11,8),%r10
+   954e5:	add    $0x60,%r10
+   954e9:	lea    (%rdx,%r11,8),%r11
+   954ed:	add    $0x60,%r11
+   954f1:	xor    %ebx,%ebx
+   954f3:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   95500:	vmovups -0x60(%r10,%rbx,8),%ymm0
+   95507:	vmovups -0x40(%r10,%rbx,8),%ymm1
+   9550e:	vmovups -0x20(%r10,%rbx,8),%ymm2
+   95515:	vmovups (%r10,%rbx,8),%ymm3
+   9551b:	vandps -0x60(%r11,%rbx,8),%ymm0,%ymm0
+   95522:	vandps -0x40(%r11,%rbx,8),%ymm1,%ymm1
+   95529:	vandps -0x20(%r11,%rbx,8),%ymm2,%ymm2
+   95530:	vandps (%r11,%rbx,8),%ymm3,%ymm3
+   95536:	vmovups %ymm0,-0x60(%r10,%rbx,8)
+   9553d:	vmovups %ymm1,-0x40(%r10,%rbx,8)
+   95544:	vmovups %ymm2,-0x20(%r10,%rbx,8)
+   9554b:	vmovups %ymm3,(%r10,%rbx,8)
+   95551:	add    $0x10,%rbx
+   95555:	cmp    %rbx,%r9
+   95558:	jne    95500 <gf2_kernels_simd::x86::avx2::avx2_and_into+0xf0>
+   9555a:	cmp    %r9,%rax
+   9555d:	pop    %rbx
+   9555e:	je     955a0 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x190>
+   95560:	test   $0xc,%al
+   95562:	je     955a4 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x194>
+   95564:	and    $0x3,%ecx
+   95567:	sub    %rcx,%rax
+   9556a:	add    %r8,%rax
+   9556d:	add    %r8,%r9
+   95570:	vmovups (%rdi,%r9,8),%ymm0
+   95576:	vandps (%rdx,%r9,8),%ymm0,%ymm0
+   9557c:	vmovups %ymm0,(%rdi,%r9,8)
+   95582:	add    $0x4,%r9
+   95586:	cmp    %r9,%rax
+   95589:	jne    95570 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x160>
+   9558b:	test   %rcx,%rcx
+   9558e:	je     955a0 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x190>
+   95590:	mov    (%rdx,%rax,8),%rcx
+   95594:	and    %rcx,(%rdi,%rax,8)
+   95598:	inc    %rax
+   9559b:	cmp    %rsi,%rax
+   9559e:	jb     95590 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x180>
+   955a0:	vzeroupper
+   955a3:	ret
+   955a4:	add    %r9,%r8
+   955a7:	mov    %r8,%rax
+   955aa:	jmp    95590 <gf2_kernels_simd::x86::avx2::avx2_and_into+0x180>
