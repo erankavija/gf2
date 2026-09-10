@@ -7,9 +7,10 @@ are the acceptance tool's; the script recomputes one interval per receipt
 bit-for-bit from the raw pairs before it writes anything, so its resampling
 port is checked against the tool. It adds, with the method printed in the
 output, the arm medians with bootstrap intervals, the fastest measured arm per
-population-count workload and each arm's alignment and bit-pattern contrasts
-as bootstrapped cross-cell ratios, and the conversion-cost probes of
-whole-consumer cells. The protocol-v1 confirmation follows as history.
+population-count workload and each arm's threshold, alignment and bit-pattern
+contrasts as bootstrapped cross-cell ratios, the conversion-cost probes of
+whole-consumer cells, and whether each confirmation estimate lies inside its
+pilot's interval. The protocol-v1 confirmation follows as history.
 
 Usage: summarize-receipts.py  (from the repository root)
 """
@@ -46,6 +47,10 @@ V1_COUNTERPARTS = {
 }
 # (variant workload, reference workload, what the variant changes).
 CONTRASTS = [
+    ("w8", "w4", "64 B instead of 32 B: gf2's SIMD threshold"),
+    ("w12", "w8", "96 B instead of 64 B: libpopcnt's AVX2 threshold"),
+    ("w64", "w60", "512 B instead of 480 B: Mula's carry-save loop"),
+    ("w128", "w64", "1 KiB instead of 512 B: libpopcnt's Harley-Seal loop"),
     ("w256-off24", "w256", "window 24 bytes past a vector boundary"),
     ("w64-ones", "w64", "every bit set"),
     ("w64-zeros", "w64", "every bit clear"),
@@ -334,7 +339,7 @@ def workload_contrasts(out, receipt, digest):
     by_cell = {cell["cell_id"]: cell for cell in receipt["cells"]}
     out.append(
         "Workload contrasts: each arm's median on the variant workload over its median on the "
-        "reference workload (above 1: the variant is slower), resampled independently; 95% "
+        "reference workload (above 1: the variant takes longer), resampled independently; 95% "
         "descriptive intervals."
     )
     out.append("")
@@ -423,6 +428,33 @@ def selected_paths(out, receipt):
     out.append("")
 
 
+def pilot_agreement(out):
+    """Whether each confirmation estimate lies inside its accepted pilot's interval."""
+    out.append("## Pilot and confirmation agreement")
+    out.append("")
+    out.append("Each confirmation point estimate against the interval of the accepted pilot that "
+               "froze its resolution, an independent earlier sample of the same cell.")
+    out.append("")
+    for family, pilot_mode in (("popcount", "pilot"), ("and-popcnt", "pilot-r2")):
+        pilot_dir = RESULTS / f"v3-{family}-{pilot_mode}"
+        confirmation_dir = RESULTS / f"v3-{family}-confirmation"
+        if not (confirmation_dir / "acceptance-summary.json").exists():
+            continue
+        pilot = {entry["cell_id"]: entry["interval"] for entry in load(pilot_dir)[1]["cells"]}
+        outside = []
+        cells = load(confirmation_dir)[1]["cells"]
+        for entry in cells:
+            estimate = entry["interval"]["estimate"]
+            bounds = pilot[entry["cell_id"]]
+            if not bounds["lower"] <= estimate <= bounds["upper"]:
+                outside.append(f"`{entry['cell_id']}` {estimate:.4f} outside "
+                               f"[{bounds['lower']:.4f}, {bounds['upper']:.4f}]")
+        out.append(f"- `{confirmation_dir.name}` against `{pilot_dir.name}`: "
+                   f"{len(cells) - len(outside)} of {len(cells)} inside"
+                   + (f"; {'; '.join(outside)}." if outside else "."))
+    out.append("")
+
+
 def v1_history(out, current):
     receipt, summary, digest = load(V1_CONFIRMATION)
     family = summary["family"]
@@ -500,6 +532,7 @@ def main():
         cell_table(out, receipt, summary, family, digest)
         probe_table(out, receipt, digest)
         selected_paths(out, receipt)
+    pilot_agreement(out)
     v1_history(out, current)
     OUTPUT.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
     print(f"{OUTPUT}: written")
