@@ -11,15 +11,15 @@
 //! code selects at run time.
 
 use gf2_core::field::FieldVec;
-use gf2_core::gf2m::barrett::{clmul, BarrettReducer};
 use gf2_core::gf2m::wide::clmul_wide_slice;
 use gf2_core::gf2m::{Gf2mElement, Gf2mField};
-use gf2_kernels_simd::gf2m::ClmulBatchFn;
+use gf2_kernels_simd::gf2m::{ClmulBatchFn, ClmulFn};
 use gf2_kernels_simd::gf2m_wide::{ClmulWide256Fn, ClmulWide571Fn};
 
 use crate::wide_field::reduction_probe_ns;
 use crate::{
-    amortised_probe_ns, probe_ns, Backend, Bank, Case, Conversion, DOT_FIELD_DEGREE, DOT_FIELD_POLY,
+    dot_reduction_probe_ns, probe_ns, Backend, Bank, Case, Conversion, DOT_FIELD_DEGREE,
+    DOT_FIELD_POLY,
 };
 
 /// Word counts the schoolbook long-product path is instantiated for.
@@ -102,6 +102,26 @@ impl PolyPath {
     }
 }
 
+/// The raw XOR of the `count` unreduced 128-bit products that
+/// `FieldVec::simd_dot_product` hands its single Barrett reduction.
+///
+/// gf2-core exposes neither that accumulator nor the batch kernel, reducer and
+/// carry-less multiply the dot product reads from its elements (their
+/// accessors are crate-private), so the harness rebuilds it from the same
+/// per-element products: the operands masked to field elements, multiplied by
+/// `batch`, the raw-batch kernel of the default `gf2m::detect` bundle that
+/// gf2-core caches and `simd_dot_product` calls, then XOR-accumulated.
+pub fn dot_accumulator(batch: ClmulBatchFn, count: usize, bank: &Bank) -> u128 {
+    let mask = (1u64 << DOT_FIELD_DEGREE) - 1;
+    let left: Vec<u64> = bank.a[..count].iter().map(|word| word & mask).collect();
+    let right: Vec<u64> = bank.b[..count].iter().map(|word| word & mask).collect();
+    let mut products = vec![0u128; count];
+    batch(&left, &right, &mut products);
+    products
+        .iter()
+        .fold(0, |accumulator, product| accumulator ^ product)
+}
+
 /// The two GF(2^8) vectors the whole-consumer dot-product cell multiplies.
 type DotVectors = (FieldVec<Gf2mElement>, FieldVec<Gf2mElement>);
 
@@ -112,6 +132,9 @@ pub struct Gf2Backend {
     wide256: Option<(ClmulWide256Fn, &'static str)>,
     wide571: Option<(ClmulWide571Fn, &'static str)>,
     batch: Option<ClmulBatchFn>,
+    /// The single carry-less multiply of the default `gf2m::detect` bundle,
+    /// which a `Gf2mField` stores and `simd_dot_product` passes its reduction.
+    clmul: Option<ClmulFn>,
     batch_name: String,
     products: Vec<u128>,
     dot: Option<DotVectors>,
@@ -145,6 +168,7 @@ impl Backend for Gf2Backend {
         let wide = gf2_kernels_simd::gf2m_wide::detect_wide();
         let gf2m = gf2_kernels_simd::gf2m::detect();
         let batch = gf2m.as_ref().and_then(|fns| fns.clmul_batch_fn);
+        let clmul = gf2m.as_ref().and_then(|fns| fns.clmul_fn);
         let batch_name = batch_path(gf2m.as_ref());
         let selected = match case {
             Case::PolyMul { words, .. } => match (path, words, wide.as_ref()) {
@@ -172,6 +196,7 @@ impl Backend for Gf2Backend {
                 .as_ref()
                 .map(|fns| (fns.wide571.clmul, fns.wide571.name)),
             batch,
+            clmul,
             batch_name,
             products,
             dot: None,
@@ -221,14 +246,21 @@ impl Backend for Gf2Backend {
             std::hint::black_box(gf2_kernels_simd::gf2m::detect());
         });
         match case {
+            // The long-product arm builds no state before its first call: its
+            // kernels come from the detection `dispatch_ns` times.
             Case::PolyMul { words, .. } => Conversion {
-                setup_ns: probe_ns(|| bank.out.fill(0)),
                 unpack_ns: reduction_probe_ns(*words, bank, |field| self.run(case, field)),
                 dispatch_ns,
                 ..Conversion::default()
             },
             Case::ClmulBatch { count, .. } => {
                 let count = *count;
+                let mut products = Vec::new();
+                let setup_ns = probe_ns(|| products = vec![0u128; count]);
+                std::hint::black_box(&products);
+                // One call first, so the timed copy moves products the kernel
+                // wrote into a destination already touched, as in a timed call.
+                self.run(case, bank);
                 let unpack_ns = probe_ns(|| {
                     for index in 0..count {
                         bank.out[2 * index] = self.products[index] as u64;
@@ -236,33 +268,25 @@ impl Backend for Gf2Backend {
                     }
                 });
                 Conversion {
-                    setup_ns: probe_ns(|| {
-                        std::hint::black_box(&self.products);
-                    }),
+                    setup_ns,
                     unpack_ns,
                     dispatch_ns,
                     ..Conversion::default()
                 }
             }
-            Case::Gf2mDot { .. } => {
+            Case::Gf2mDot { count, .. } => {
                 let mut vectors = None;
                 let pack_ns = probe_ns(|| vectors = Some(Self::build_dot_vectors(case, bank)));
                 let vectors = vectors.expect("the packing probe built both vectors");
-                let mut reduced = None;
-                let batch_fill_ns =
-                    probe_ns(|| reduced = Some(vectors.0.simd_dot_product(&vectors.1)));
-                let reduced = reduced.expect("the accumulation probe produced an element");
-                // The reduction stage on its own, with the identical reducer and
-                // clmul the gf2x arm composes, so the two arms' figures subtract
-                // the same quantity from their measured calls.
-                let reducer =
-                    BarrettReducer::new(u128::from(DOT_FIELD_POLY), DOT_FIELD_DEGREE as u32);
-                let accumulator = u128::from(reduced.value());
-                let unpack_ns = amortised_probe_ns(|| {
-                    std::hint::black_box(
-                        reducer.reduce_with_clmul(std::hint::black_box(accumulator), clmul),
-                    );
+                let batch_fill_ns = probe_ns(|| {
+                    std::hint::black_box(vectors.0.simd_dot_product(&vectors.1));
                 });
+                // The reduction `simd_dot_product` performs: its reducer and
+                // carry-less multiply applied to the raw accumulator, not to
+                // the reduced element the call returns.
+                let batch = self.batch.expect("the host resolved a batch clmul kernel");
+                let clmul = self.clmul.expect("the host resolved a single clmul");
+                let unpack_ns = dot_reduction_probe_ns(dot_accumulator(batch, *count, bank), clmul);
                 Conversion {
                     setup_ns: probe_ns(|| {
                         std::hint::black_box(Gf2mField::new(DOT_FIELD_DEGREE, DOT_FIELD_POLY));
@@ -281,5 +305,56 @@ impl Gf2Backend {
     /// The batch-kernel identity this instance resolved, for the validator.
     pub fn batch_name(&self) -> &str {
         &self.batch_name
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{banks, dot_reducer};
+    use gf2_core::gf2m::barrett::clmul;
+
+    /// The native confirmation's dot-product case, on the bank its single
+    /// worker times.
+    fn confirmation_dot_bank() -> (Case, Bank) {
+        let case = Case::Gf2mDot {
+            count: 1024,
+            inner: 1,
+            seed: 210,
+        };
+        let bank = banks(&case, 0, 1).pop().expect("one bank");
+        (case, bank)
+    }
+
+    #[test]
+    fn dot_accumulator_matches_the_definition_level_products() {
+        let (_, bank) = confirmation_dot_bank();
+        let batch = gf2_kernels_simd::gf2m::detect()
+            .and_then(|fns| fns.clmul_batch_fn)
+            .expect("the survey host has a PCLMULQDQ batch kernel");
+        let mask = (1u64 << DOT_FIELD_DEGREE) - 1;
+        let expected = (0..1024).fold(0u128, |accumulator, index| {
+            accumulator ^ clmul(bank.a[index] & mask, bank.b[index] & mask)
+        });
+        assert_eq!(dot_accumulator(batch, 1024, &bank), expected);
+    }
+
+    #[test]
+    fn dot_probe_input_is_unreduced_and_reduces_to_the_consumer_result() {
+        let (case, mut bank) = confirmation_dot_bank();
+        let mut backend = Gf2Backend::create(&case);
+        let batch = backend.batch.expect("batch kernel");
+        let accumulator = dot_accumulator(batch, 1024, &bank);
+        backend.run(&case, &mut bank);
+        let reduced = bank.out[0];
+        // The probe's input takes the full Barrett path; the consumer's output
+        // is below x^8, where `reduce_with_clmul` returns at its early exit.
+        assert_ne!(accumulator >> DOT_FIELD_DEGREE, 0);
+        assert_eq!(reduced >> DOT_FIELD_DEGREE, 0);
+        let clmul_fn = backend.clmul.expect("single clmul");
+        assert_eq!(
+            dot_reducer().reduce_with_clmul(accumulator, clmul_fn),
+            reduced
+        );
     }
 }
