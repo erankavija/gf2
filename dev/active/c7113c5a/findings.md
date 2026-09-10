@@ -216,7 +216,7 @@ equivalence_margin*; `addendum-v3-baselines-confirmation.json`, `effect`).
 
 ### Native baselines
 
-tables § Cells: `v3-r1-baselines-confirmation` holds every native cell's
+The tables' § Cells: `v3-r1-baselines-confirmation` holds every native cell's
 speedup, interval and outcome, and § Cells:
 `2026-09-07-c7113c5a-polynomial-confirmation` the v1 confirmation's. gf2 is
 faster at 4 and 9 words and in both `internal-` cells; gf2x is faster in every
@@ -226,7 +226,7 @@ counterpart.
 
 ### Host targeting
 
-tables § Cells: `v3-r1-host-targeting-confirmation` holds the family's
+The tables' § Cells: `v3-r1-host-targeting-confirmation` holds the family's
 confirmatory cells, and § Host-targeting ladder sets them beside the native
 legs. `fail` means gf2 is faster; `pass` means gf2x is faster by more than the
 family's material-gap threshold (`effect.material_gap_threshold` in
