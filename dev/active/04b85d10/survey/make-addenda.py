@@ -10,7 +10,12 @@ promotes the rest to `confirmatory`.
 
 Usage:
   make-addenda.py pilot <frozen-utc>
-  make-addenda.py confirmation <family> <frozen-utc> <pilot-receipt-dir> <resolution>
+  make-addenda.py confirmation <family> <frozen-utc> <pilot-receipt-dir> <resolution> \
+      [<worthwhile> <equivalence> "<why the margins moved>"]
+
+The optional margin arguments raise a family's confirmatory margins above the
+values its pilot carried when the pilot-measured resolution requires it; the
+reason is recorded verbatim in the addendum rationale.
 """
 
 import hashlib
@@ -255,9 +260,14 @@ def pilot(frozen_utc):
         write(OUT / f"addendum-bit-storage-{key}-v3-pilot.json", document)
 
 
-def confirmation(key, frozen_utc, pilot_dir, resolution):
-    spec = FAMILIES[key]
+def confirmation(key, frozen_utc, pilot_dir, resolution, worthwhile=None, equivalence=None, moved=""):
+    spec = dict(FAMILIES[key])
     resolution = float(resolution)
+    if worthwhile is not None:
+        spec["worthwhile"] = float(worthwhile)
+        spec["equivalence"] = float(equivalence)
+        spec["worthwhile_rationale"] += " " + moved
+        spec["equivalence_rationale"] += " " + moved
     pilot_receipt = pathlib.Path(pilot_dir) / "receipt.json"
     digest = hashlib.sha256(pilot_receipt.read_bytes()).hexdigest()
     for margin in (spec["worthwhile"], spec["equivalence"]):
@@ -309,7 +319,7 @@ def confirmation(key, frozen_utc, pilot_dir, resolution):
 def main():
     if len(sys.argv) >= 3 and sys.argv[1] == "pilot" and len(sys.argv) == 3:
         pilot(sys.argv[2])
-    elif len(sys.argv) == 6 and sys.argv[1] == "confirmation":
+    elif len(sys.argv) in (6, 9) and sys.argv[1] == "confirmation":
         confirmation(*sys.argv[2:])
     else:
         sys.exit(__doc__)
