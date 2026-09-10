@@ -6,15 +6,17 @@
 # the code the measured executable actually contains. Disassembly reads a file
 # and times nothing, so it runs outside the benchmark mutex.
 #
-# Usage: dev/active/04b85d10/survey/disassemble.sh <output-dir>
+# Usage: dev/active/04b85d10/survey/disassemble.sh <output-dir> <bin-dir>
+#
+# `<bin-dir>` is the release directory the profile was measured from, so the
+# disassembled bytes are the measured executable's bytes; its digest is
+# recorded in every output file.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
-ISSUE=04b85d10
-BIN="${REPO}/.agents/ext/${ISSUE}/target/release"
 
-OUT="${1:?usage: disassemble.sh <output-dir>}"
+OUT="${1:?usage: disassemble.sh <output-dir> <bin-dir>}"
+BIN="${2:?usage: disassemble.sh <output-dir> <bin-dir>}"
 mkdir -p "${OUT}/asm"
 
 BINARY="${BIN}/consumer-profile"

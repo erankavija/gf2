@@ -171,8 +171,8 @@ fn main() {
 
     let case: Case = serde_json::from_str(&case_text)
         .unwrap_or_else(|error| fail(format!("--case does not decode: {error}")));
-    let path =
-        ArmPath::parse(&path_text).unwrap_or_else(|error| fail(format!("--path is invalid: {error}")));
+    let path = ArmPath::parse(&path_text)
+        .unwrap_or_else(|error| fail(format!("--path is invalid: {error}")));
 
     let before_prepare = Counters::read();
     let mut prepared = prepare(&case, path, &cache_state, FIXTURE_BANKS)

@@ -67,7 +67,9 @@ fn check_row_xor() -> Check {
         ScalarBackend.xor(&mut scalar, &right);
 
         if dispatched != resolved || dispatched != scalar {
-            mismatches.push(format!("{bits} bits: dispatched, resolved and scalar differ"));
+            mismatches.push(format!(
+                "{bits} bits: dispatched, resolved and scalar differ"
+            ));
         }
         if let Some(backend) = simd {
             let mut simd_words = left.clone();
@@ -142,7 +144,10 @@ fn check_zero_test() -> Check {
     record(
         "zero-test-spellings-agree",
         if mismatches.is_empty() {
-            format!("{} bit lengths agree over four bit patterns", BIT_LENGTHS.len())
+            format!(
+                "{} bit lengths agree over four bit patterns",
+                BIT_LENGTHS.len()
+            )
         } else {
             mismatches.join("; ")
         },
@@ -166,7 +171,10 @@ fn check_transpose() -> Check {
             let mut detected_out = [0u64; 64];
             (fns.transpose_64x64)(&input, &mut detected_out);
             if detected_out != scalar_out {
-                mismatches.push(format!("the {} lane differs from the portable one", fns.name));
+                mismatches.push(format!(
+                    "the {} lane differs from the portable one",
+                    fns.name
+                ));
             }
         }
         None => mismatches.push("this host publishes no block-transpose bundle".to_owned()),
@@ -232,12 +240,16 @@ fn check_dense_matvec() -> Check {
                 .row_words(row)
                 .iter()
                 .zip(x.words())
-                .fold(0u64, |accumulator, (left, right)| accumulator ^ (left & right))
+                .fold(0u64, |accumulator, (left, right)| {
+                    accumulator ^ (left & right)
+                })
                 .count_ones()
                 & 1
                 == 1;
             if y.get(row) != parity {
-                mismatches.push(format!("{rows}x{cols}: row {row} differs from the reference"));
+                mismatches.push(format!(
+                    "{rows}x{cols}: row {row} differs from the reference"
+                ));
                 break;
             }
         }
@@ -357,12 +369,24 @@ fn check_bch_families() -> Check {
                     "m={degree} batch={batch}: the allocating entry point differs"
                 ));
             }
+
+            // The caller-buffer entry point is the candidate arm of the
+            // allocation cell; it selects the same family as `encode_batch`.
+            let mut selected = vec![BitVec::zeros(code.n()); batch];
+            let mut workspace = code.encode_workspace();
+            code.encode_batch_into(&messages, layout, &mut workspace, &mut selected)
+                .expect("the selected family encodes a validated batch");
+            if selected != reference {
+                mismatches.push(format!(
+                    "m={degree} batch={batch}: the caller-buffer entry point differs"
+                ));
+            }
         }
     }
     record(
         "bch-encoding-families-agree",
         if mismatches.is_empty() {
-            "three rows, five batch lengths, every available family bit-identical".to_owned()
+            "three rows, five batch lengths, every available family and both batch entry points bit-identical".to_owned()
         } else {
             mismatches.join("; ")
         },

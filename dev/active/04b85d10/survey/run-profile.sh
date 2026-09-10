@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Current-code consumer profile of bit-storage costs (jit:04b85d10).
 #
-# Builds the harness under --release, proves the compared routes agree, then
-# sweeps the case ladder and records hardware counters and call-graph profiles
-# for the routes the sweep identifies as the expensive ones. Every timed
-# process runs through the repository's CCX1 lock wrapper, one process per
-# lock acquisition, so the sweep serializes against sibling benchmark work
-# without holding the host mutex for its whole duration.
+# Builds the harness under --release with the repository MSRV toolchain,
+# proves the compared routes agree, then sweeps the case ladder and records
+# hardware counters, allocation-site traces and call-graph profiles for the
+# routes the sweep identifies as the expensive ones. The whole timed session
+# runs inside one invocation of the repository's CCX1 lock wrapper in its
+# --full-host mode, because the ladder includes twelve- and twenty-four-worker
+# rows the six-core pin cannot serve. Builds take the shared side of the mutex
+# through `scripts/cargo-budget.sh`, the only supported shared acquirer.
 #
 # Usage: dev/active/04b85d10/survey/run-profile.sh <output-dir>
 #
@@ -16,21 +18,20 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "${HERE}/../../../.." && pwd)"
 ISSUE=04b85d10
-EXT="${REPO}/target/consumer-profile-${ISSUE}"
 FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
 MANIFEST="${HERE}/gf2-side/Cargo.toml"
 
 OUT="${1:?usage: run-profile.sh <output-dir>}"
-mkdir -p "${OUT}/perf-stat" "${OUT}/perf-report"
+mkdir -p "${OUT}/perf-stat" "${OUT}/perf-report" "${OUT}/alloc-trace"
 
-export CARGO_TARGET_DIR="${EXT}/target"
+export RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
+export CARGO_TARGET_DIR="${REPO}/target/consumer-profile-${ISSUE}"
 BIN="${CARGO_TARGET_DIR}/release"
 
 # ------------------------------------------------------------------ build
-# Builds finish before any timed work, and they hold the shared side of the
-# benchmark mutex so they can never overlap a timed run.
-CARGO_CI_NO_SCCACHE=1 flock -s /tmp/gf2-ccx1.lock "${REPO}/scripts/cargo-budget.sh" \
-    cargo build --release --manifest-path "${MANIFEST}" >"${OUT}/build.log" 2>&1
+# Builds finish before any timed work.
+(cd "${REPO}" && ./scripts/cargo-budget.sh cargo build --release \
+    --manifest-path "${MANIFEST}") >"${OUT}/build.log" 2>&1
 
 # ------------------------------------------------------------- provenance
 {
@@ -49,6 +50,12 @@ CARGO_CI_NO_SCCACHE=1 flock -s /tmp/gf2-ccx1.lock "${REPO}/scripts/cargo-budget.
     echo
     echo "## cargo"
     cargo --version
+    echo
+    echo "## RUSTFLAGS"
+    echo "${RUSTFLAGS:-<unset>}"
+    echo
+    echo "## perf"
+    perf --version
     echo
     echo "## lscpu"
     lscpu
@@ -84,8 +91,12 @@ CARGO_CI_NO_SCCACHE=1 flock -s /tmp/gf2-ccx1.lock "${REPO}/scripts/cargo-budget.
     echo
     echo "## harness sources"
     (cd "${REPO}" && find "dev/active/${ISSUE}/survey" -type f \
-        \( -name '*.rs' -o -name '*.toml' -o -name '*.py' -o -name '*.sh' \) \
+        \( -name '*.rs' -o -name '*.toml' -o -name '*.lock' -o -name '*.py' -o -name '*.sh' -o -name '*.txt' \) \
         | sort | xargs sha256sum)
+    echo
+    echo "## production crate sources"
+    (cd "${REPO}" && find crates/gf2-core/src crates/gf2-coding/src crates/gf2-kernels-simd/src -type f \
+        | sort | xargs sha256sum | sha256sum | sed 's/ .*/ (sha256 over the sorted per-file digest list)/')
 } >"${OUT}/host.txt"
 
 # --------------------------------------------------------------- timed work
@@ -94,7 +105,7 @@ CARGO_CI_NO_SCCACHE=1 flock -s /tmp/gf2-ccx1.lock "${REPO}/scripts/cargo-budget.
 # than once per measured process.
 python3 "${HERE}/profile-cases.py" >"${OUT}/cases.jsonl"
 
-GF2_BENCH=1 "${FLOCK}" bash "${HERE}/sweep.sh" "${OUT}" "${BIN}" "${HERE}"
+GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "${FLOCK}" --full-host bash "${HERE}/sweep.sh" "${OUT}" "${BIN}" "${HERE}"
 
 {
     echo
@@ -105,7 +116,7 @@ GF2_BENCH=1 "${FLOCK}" bash "${HERE}/sweep.sh" "${OUT}" "${BIN}" "${HERE}"
 
 # Generated-code evidence reads a file and times nothing, so it runs after
 # the mutex is released.
-"${HERE}/disassemble.sh" "${OUT}"
+"${HERE}/disassemble.sh" "${OUT}" "${BIN}"
 
 python3 "${HERE}/summarize-profile.py" "${OUT}/profile.jsonl" \
     >"${OUT}/profile-summary.md"

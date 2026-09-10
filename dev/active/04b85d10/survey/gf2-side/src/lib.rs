@@ -139,6 +139,9 @@ pub enum ArmPath {
     FamilyBitsliceInterleaved,
     /// The carry-less-multiply fold family.
     FamilyClmulFold,
+    /// The caller-buffer batch entry point `encode_batch_into`, paired
+    /// against the allocating `encode_batch` on the same batch.
+    CallerBuffer,
     /// The portable 64x64 block transpose.
     TransposeScalar,
     /// The detected 64x64 block transpose lane.
@@ -165,6 +168,7 @@ impl ArmPath {
             "family-table-remainder" => Self::FamilyTableRemainder,
             "family-bitslice-interleaved" => Self::FamilyBitsliceInterleaved,
             "family-clmul-fold" => Self::FamilyClmulFold,
+            "caller-buffer" => Self::CallerBuffer,
             "transpose-scalar" => Self::TransposeScalar,
             "transpose-detected" => Self::TransposeDetected,
             other => return Err(format!("unknown arm path {other:?}")),
@@ -242,26 +246,18 @@ impl RowBank {
 /// The prepared state of one workload.
 enum State {
     /// Packed row XOR over independent rows.
-    RowXor {
-        banks: Vec<RowBank>,
-        xor: XorRoute,
-    },
+    RowXor { banks: Vec<RowBank>, xor: XorRoute },
     /// Population count over a packed buffer.
     Popcount {
         banks: Vec<Vec<u64>>,
         route: CountRoute,
     },
     /// Zero test over a packed buffer.
-    ZeroTest {
-        banks: Vec<BitVec>,
-        path: ArmPath,
-    },
+    ZeroTest { banks: Vec<BitVec>, path: ArmPath },
     /// Dense reduced row echelon form of a packed matrix.
     DenseRref { banks: Vec<BitMatrix> },
     /// Dense matrix-vector product over GF(2).
-    DenseMatvec {
-        banks: Vec<(BitMatrix, BitVec)>,
-    },
+    DenseMatvec { banks: Vec<(BitMatrix, BitVec)> },
     /// Dense transpose of a packed matrix.
     DenseTranspose { banks: Vec<BitMatrix> },
     /// The 64x64 block transpose primitive.
@@ -271,10 +267,7 @@ enum State {
         kernel: Transpose64x64Fn,
     },
     /// Sparse parity-check syndrome of a codeword.
-    LdpcSyndrome {
-        code: LdpcCode,
-        banks: Vec<BitVec>,
-    },
+    LdpcSyndrome { code: LdpcCode, banks: Vec<BitVec> },
     /// The whole zero-syndrome codeword check.
     LdpcCodewordCheck {
         code: LdpcCode,
@@ -480,7 +473,11 @@ impl State {
 /// constructs cyclic codes at the primitive length, so the shortened DVB-T2
 /// lengths are reached through [`BchCode`] instead and are measured by the
 /// `dvb-bch-encode` workload.
-fn binary_bch(degree: usize, modulus: u64, designed_distance: u64) -> Result<BinaryBchCode, String> {
+fn binary_bch(
+    degree: usize,
+    modulus: u64,
+    designed_distance: u64,
+) -> Result<BinaryBchCode, String> {
     let field = Gf2mField::new(degree, modulus);
     let extension = BinaryPrimeExt::new(field)
         .map_err(|error| format!("the declared primitive polynomial is rejected: {error:?}"))?;
@@ -501,7 +498,11 @@ fn bch_row(degree: usize) -> Result<(u64, u64), String> {
         8 => (0b1_0001_1101, 9),
         14 => (0b100_0000_0010_1011, 25),
         16 => (0b1_0000_0000_0010_1101, 25),
-        other => return Err(format!("no declared BCH row of mother-field degree {other}")),
+        other => {
+            return Err(format!(
+                "no declared BCH row of mother-field degree {other}"
+            ))
+        }
     })
 }
 
@@ -558,7 +559,10 @@ pub fn prepare(
                 ArmPath::ScalarBackend => (XorRoute::Scalar, "scalar-backend".to_owned()),
                 ArmPath::SimdBackend => {
                     let backend = simd.ok_or("this host publishes no SIMD backend")?;
-                    (XorRoute::Simd(backend), format!("simd-backend/{}", backend.name()))
+                    (
+                        XorRoute::Simd(backend),
+                        format!("simd-backend/{}", backend.name()),
+                    )
                 }
                 other => return Err(format!("row-xor does not serve {other:?}")),
             };
@@ -642,7 +646,10 @@ pub fn prepare(
                     black_box(select_backend_for_size(black_box(stride)));
                 }),
             });
-            (State::DenseRref { banks }, "current/blocked-m4ri".to_owned())
+            (
+                State::DenseRref { banks },
+                "current/blocked-m4ri".to_owned(),
+            )
         }
         "dense-matvec" => {
             let rows = case.size("rows")?;
@@ -741,7 +748,10 @@ pub fn prepare(
                 ArmPath::TransposeDetected | ArmPath::Current => {
                     let fns = transpose::detect()
                         .ok_or("this host publishes no block-transpose bundle")?;
-                    (fns.transpose_64x64, format!("transpose-detected/{}", fns.name))
+                    (
+                        fns.transpose_64x64,
+                        format!("transpose-detected/{}", fns.name),
+                    )
                 }
                 other => return Err(format!("transpose-64x64 does not serve {other:?}")),
             };
@@ -858,10 +868,29 @@ pub fn prepare(
                         name,
                     )
                 }
-                "bch-encode-batch-alloc" => (
-                    State::BchBatchAllocating { code, messages },
-                    format!("current-allocating/{selected:?}"),
-                ),
+                "bch-encode-batch-alloc" => match path {
+                    // The caller-buffer arm of the allocation cell: the same
+                    // selected family through `encode_batch_into`, with the
+                    // workspace and the output prepared here rather than
+                    // allocated inside the timed call.
+                    ArmPath::CallerBuffer => (
+                        State::BchBatchWorkspace {
+                            workspace: Box::new(code.encode_workspace()),
+                            codewords: vec![BitVec::zeros(code.n()); batch],
+                            code,
+                            messages,
+                            family: None,
+                        },
+                        format!("caller-buffer/{selected:?}"),
+                    ),
+                    ArmPath::Current => (
+                        State::BchBatchAllocating { code, messages },
+                        format!("current-allocating/{selected:?}"),
+                    ),
+                    other => {
+                        return Err(format!("bch-encode-batch-alloc does not serve {other:?}"))
+                    }
+                },
                 _ => {
                     let declared = case.size("workers")?;
                     let workers = NonZeroUsize::new(declared)

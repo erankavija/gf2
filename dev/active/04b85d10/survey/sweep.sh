@@ -45,7 +45,7 @@ PY
 while IFS=$'\t' read -r family path state target body env_pairs; do
     echo "# ${family} ${path} ${body} env=[${env_pairs}]" >>"${OUT}/sweep.log"
     # shellcheck disable=SC2086
-    if env ${env_pairs} GF2_BENCH=1 "${BIN}/consumer-profile" \
+    if env RAYON_NUM_THREADS=1 ${env_pairs} GF2_BENCH=1 "${BIN}/consumer-profile" \
         --case "${body}" --path "${path}" --cache-state "${state}" \
         --target-ms "${target}" >>"${OUT}/profile.jsonl" 2>>"${OUT}/sweep.log"; then
         echo "# ok" >>"${OUT}/sweep.log"
@@ -56,9 +56,10 @@ done <"${OUT}/cases.tsv"
 
 # ------------------------------------------------------------------ counters
 # Two event groups of at most six counters each, so neither group multiplexes
-# on this processor's six general-purpose counters.
-GROUP_CORE=cycles,instructions,branches,branch-misses,stalled-cycles-frontend
-GROUP_MEMORY=cycles,L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misses
+# on this processor's six general-purpose counters. User-space events only:
+# perf_event_paranoid is 2 on this host, which is recorded in host.txt.
+GROUP_CORE=cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+GROUP_MEMORY=cycles:u,L1-dcache-loads:u,L1-dcache-load-misses:u,cache-references:u,cache-misses:u
 
 while IFS='|' read -r label body path state target; do
     [[ -z "${label}" || "${label}" == \#* ]] && continue
@@ -73,7 +74,7 @@ while IFS='|' read -r label body path state target; do
             echo "# path: ${path}  cache_state: ${state}  target_ms: ${target}"
             echo "# events: ${events}"
         } >"${name}"
-        GF2_BENCH=1 perf stat -e "${events}" -- "${BIN}/consumer-profile" \
+        RAYON_NUM_THREADS=1 GF2_BENCH=1 perf stat -e "${events}" -- "${BIN}/consumer-profile" \
             --case "${body}" --path "${path}" --cache-state "${state}" \
             --target-ms "${target}" >>"${name}" 2>&1 || true
     done
@@ -83,7 +84,7 @@ done <"${HERE}/counter-cases.txt"
 while IFS='|' read -r label body path state target; do
     [[ -z "${label}" || "${label}" == \#* ]] && continue
     data="${OUT}/../perf-${label}.data"
-    GF2_BENCH=1 perf record -q --call-graph dwarf,4096 -F 999 -o "${data}" -- \
+    RAYON_NUM_THREADS=1 GF2_BENCH=1 perf record -q --call-graph dwarf,4096 -F 999 -o "${data}" -- \
         "${BIN}/consumer-profile" --case "${body}" --path "${path}" \
         --cache-state "${state}" --target-ms "${target}" \
         >"${OUT}/perf-report/${label}.run.txt" 2>&1 || true
@@ -94,3 +95,15 @@ while IFS='|' read -r label body path state target; do
     } >"${OUT}/perf-report/${label}.txt"
     rm -f "${data}"
 done <"${HERE}/report-cases.txt"
+
+# -------------------------------------------------------- allocation sites
+# The counting allocator says how many allocations a call makes; a backtrace of
+# the first few says where. One short run per whole-consumer route that
+# allocates inside its timed call.
+while IFS='|' read -r label body path state trace; do
+    [[ -z "${label}" || "${label}" == \#* ]] && continue
+    RAYON_NUM_THREADS=1 GF2_BENCH=1 GF2_PROFILE_ALLOC_TRACE="${trace}" \
+        "${BIN}/consumer-profile" --case "${body}" --path "${path}" \
+        --cache-state "${state}" --calls 2 \
+        >"${OUT}/alloc-trace/${label}.json" 2>"${OUT}/alloc-trace/${label}.txt" || true
+done <"${HERE}/alloc-trace-cases.txt"
