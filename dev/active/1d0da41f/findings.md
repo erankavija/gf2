@@ -24,6 +24,37 @@ wins**. No result here establishes an optimum or a performance rule for other
 microarchitectures. Sequential is the conservative default; YMM remains an
 explicit, capability-checked preference.
 
+## Protocol-v3 continuation
+
+The protocol-v3 continuation preserves the negative result and does not create
+a new confirmatory performance claim. Its first four-cell exploratory
+[pilot](../../bench_results/1d0da41f/v3-pilot/acceptance-summary.md) is accepted
+with zero findings, but a noisy six-pair odd-tail interval gives a conservative
+resolution of 0.1246014148. That resolution cannot support either frozen
+margin. A separately frozen, one-cell, 24-pair
+[resolution pilot](../../bench_results/1d0da41f/v3-pilot-r2/acceptance-summary.md)
+is accepted with zero findings. Its odd-tail estimate is 0.6054968089 with
+interval [0.6040122157, 0.6078261575], giving resolution 0.00388547393; the
+original margins remain admissible because 1.00388547393 is below both 1.05
+and 1.10.
+
+The resulting five-cell [v3 receipt](../../bench_results/1d0da41f/v3-confirmation/receipt.json)
+is structurally accepted, preserves all samples, and again estimates every YMM
+cell as slower. Its [acceptance summary](../../bench_results/1d0da41f/v3-confirmation/acceptance-summary.md)
+classifies all five cells as `not-confirmatory` under P-20. The retrospective
+v1 reservation and the fresh v3 reservation produce ten family comparisons;
+the second-attempt family alpha is 0.0083333333 and the per-comparison alpha is
+0.0008333333. Ten thousand bootstrap draws therefore provide only about 4.17
+expected draws in each tail, below the protocol's fixed minimum of twenty. This limit
+is independent of the observed interval widths. The one permitted v3 candidate
+attempt is spent, so no timing retry or post-hoc method change is made.
+
+The accepted v1 confirmation remains the governing negative evidence. The v3
+continuation independently agrees in direction but is retained as
+non-confirmatory evidence of a protocol-budget incompatibility. Neither body of
+evidence supports YMM default adoption, and the sequential default remains in
+place.
+
 ## Question and method
 
 Does correcting the AVX512VL requirement improve raw independent 64-by-64
@@ -35,7 +66,7 @@ All of those consumer operations are inside the timed call. Construction of
 fixture inputs is outside the timed call and reported as setup telemetry.
 
 The [shared measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md),
-[protocol v1](../f547c394/protocol.md) and
+[receipt-pinned protocol v1](../../bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/inputs/protocol.md) and
 [frozen family](addendum-ymm-clmul-dispatch.json) govern this result. The family
 bytes remain identical to commit `9e6ebad6`, SHA-256
 `23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36`.

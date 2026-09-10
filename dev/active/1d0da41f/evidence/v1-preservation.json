@@ -1,0 +1,15 @@
+{
+  "schema": "immutable-evidence-preservation-v1",
+  "scope": [
+    "dev/bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot",
+    "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation"
+  ],
+  "verification": "find the two directories with -type f -print0, sort -z, hash every file with sha256sum, then hash that stable manifest with sha256sum",
+  "aggregate_sha256": "4bf6ac95666282b6f6d6efff65a8ca18014bb8687bf897d32c44f3ce137415bc",
+  "frozen_inputs": {
+    "pilot_addendum_sha256": "93db518b75326096c9cc2ed599a3bf4cef531b1f1ed59d831d2b8be48649a639",
+    "confirmation_addendum_sha256": "23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36",
+    "launcher_sha256": "40e2223beca83b7f66904cbc1f443b05c52c94ca48e6215b5e7b8b0b83089282"
+  },
+  "result": "unchanged"
+}
