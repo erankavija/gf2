@@ -18,6 +18,7 @@
 //! canonical little-endian bit numbering, so bit `i` of word `j` is the
 //! coefficient of `x^(64j + i)`.
 
+use gf2_core::gf2m::barrett::BarrettReducer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::io;
@@ -129,26 +130,32 @@ pub fn banks(case: &Case, worker: usize, count: usize) -> Vec<Bank> {
 
 /// Costs an arm reports outside its timed windows.
 ///
-/// The protocol's five fields carry these meanings in this survey, identically
-/// on both arms of every cell:
+/// The protocol's five fields carry these meanings in this survey; a field an
+/// arm does not probe for a cell is zero:
 ///
-/// - `setup_ns`: one-time state the arm builds before any call, such as gf2x's
-///   scratch pool or the gf2 field and reducer.
+/// - `setup_ns`: one-time state the arm builds before its first call: gf2x's
+///   pool handle (gf2x allocates the scratch itself inside a multiplication),
+///   the gf2 field of the dot-product cell and the gf2 raw-batch product
+///   buffer. The gf2 long-product arm builds none.
 /// - `pack_ns`: converting the raw fixture words into the arm's own operand
-///   representation.
-/// - `batch_fill_ns`: one complete call of the cell's operation, so the figure
-///   is directly comparable with the timed window medians.
-/// - `dispatch_ns`: the runtime capability detection the arm performs.
-/// - `unpack_ns`: the field reduction a consumer applies after the unreduced
-///   stage, averaged over [`AMORTISED_PROBE_REPEATS`] repetitions and rounded
-///   up, because a single reduction is at or below timer resolution. For the
-///   whole-consumer dot-product cell it is one GF(2^8) Barrett reduction plus
-///   value extraction; for the 4-word and 9-word long products it is the
+///   representation, in the dot-product cell.
+/// - `batch_fill_ns`: one complete call of the dot-product cell's operation.
+/// - `dispatch_ns`: the runtime capability detection the gf2 arm performs;
+///   gf2x fixes its code at build time.
+/// - `unpack_ns`: for the 4-word and 9-word long products, the
 ///   [`wide_field::WideReducer`] reduction to GF(2^256) or GF(2^571) that
-///   `Gf2mWide::mul_ref` applies; every other cell has no field consumer and
-///   reports zero. Both arms run the identical gf2 reduction code on their own
-///   product, so the figure separates the reduction from the measured
-///   unreduced stage on each side.
+///   `Gf2mWide::mul_ref` applies, run on the arm's own unreduced product; for
+///   the dot-product cell, the GF(2^8) Barrett reduction of the raw XOR
+///   accumulator with the carry-less multiply the arm's own call passes (see
+///   [`dot_reduction_total_ns`]); for the gf2 raw-batch cell, the copy of the
+///   batch kernel's 128-bit products into the canonical two-word layout, which
+///   its timed call also performs.
+///
+/// The two reductions are averaged over [`AMORTISED_PROBE_REPEATS`]
+/// repetitions and rounded up, because a single reduction is at or below timer
+/// resolution. Every other probe is one pass, taken in a fresh process before
+/// the first timed window; all but the raw-batch copy, which follows one call,
+/// include first-touch and cold-code effects.
 #[derive(Clone, Copy, Debug, Default, Serialize)]
 pub struct Conversion {
     pub setup_ns: u64,
@@ -377,15 +384,45 @@ pub fn probe_ns(mut body: impl FnMut()) -> u64 {
 /// the mean over this many repetitions instead of one unresolvable reading.
 pub const AMORTISED_PROBE_REPEATS: u64 = 4096;
 
-/// Mean nanoseconds of one repetition of `body` over
-/// [`AMORTISED_PROBE_REPEATS`] runs, rounded up so the whole-nanosecond figure
-/// bounds the mean from above.
-pub fn amortised_probe_ns(mut body: impl FnMut()) -> u64 {
+/// Total wall nanoseconds of [`AMORTISED_PROBE_REPEATS`] runs of `body`.
+pub fn amortised_probe_total_ns(mut body: impl FnMut()) -> u64 {
     let start = Instant::now();
     for _ in 0..AMORTISED_PROBE_REPEATS {
         body();
     }
-    (start.elapsed().as_nanos() as u64).div_ceil(AMORTISED_PROBE_REPEATS)
+    start.elapsed().as_nanos() as u64
+}
+
+/// Mean nanoseconds of one repetition of `body` over
+/// [`AMORTISED_PROBE_REPEATS`] runs, rounded up so the whole-nanosecond figure
+/// bounds the mean from above.
+pub fn amortised_probe_ns(body: impl FnMut()) -> u64 {
+    amortised_probe_total_ns(body).div_ceil(AMORTISED_PROBE_REPEATS)
+}
+
+/// The Barrett reducer `Gf2mField::new(DOT_FIELD_DEGREE, DOT_FIELD_POLY)`
+/// builds for the dot-product cell's field, which both arms reduce with.
+pub fn dot_reducer() -> BarrettReducer {
+    BarrettReducer::new(u128::from(DOT_FIELD_POLY), DOT_FIELD_DEGREE as u32)
+}
+
+/// Total nanoseconds of [`AMORTISED_PROBE_REPEATS`] reductions of
+/// `accumulator` by [`dot_reducer`] with the carry-less multiply `clmul`.
+///
+/// `accumulator` is the raw XOR of the cell's unreduced 128-bit products, the
+/// value the dot product's single reduction receives. `reduce_with_clmul`
+/// returns an input below `x^8` unchanged, so feeding it the reduced dot
+/// product instead times only that early exit.
+pub fn dot_reduction_total_ns(accumulator: u128, clmul: fn(u64, u64) -> u128) -> u64 {
+    let reducer = dot_reducer();
+    amortised_probe_total_ns(|| {
+        std::hint::black_box(reducer.reduce_with_clmul(std::hint::black_box(accumulator), clmul));
+    })
+}
+
+/// [`dot_reduction_total_ns`] per reduction, rounded up to whole nanoseconds.
+pub fn dot_reduction_probe_ns(accumulator: u128, clmul: fn(u64, u64) -> u128) -> u64 {
+    dot_reduction_total_ns(accumulator, clmul).div_ceil(AMORTISED_PROBE_REPEATS)
 }
 
 pub mod gf2_backend;

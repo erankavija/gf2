@@ -1,6 +1,6 @@
 //! Points the gf2x arm at the pinned build variant selected by `GF2X_PREFIX`.
 //!
-//! Only the search path and the rpath of the two binaries that bind gf2x are
+//! Only the search path and the rpath of the three binaries that bind gf2x are
 //! emitted here; the `-lgf2x` request lives in their own `#[link]` attribute, so
 //! the gf2 arm links nothing external and keeps an independent executable
 //! identity. `--disable-new-dtags` makes the rpath take precedence over
@@ -13,7 +13,7 @@ fn main() {
     let prefix = std::env::var("GF2X_PREFIX")
         .expect("GF2X_PREFIX must name a prefix produced by survey/fetch-build.sh");
     println!("cargo:rustc-link-search=native={prefix}/lib");
-    for binary in ["gf2x-poly-arm", "poly-validate"] {
+    for binary in ["gf2x-poly-arm", "poly-validate", "dot-reduction-probe"] {
         println!("cargo:rustc-link-arg-bin={binary}=-Wl,-rpath,{prefix}/lib");
         println!("cargo:rustc-link-arg-bin={binary}=-Wl,--disable-new-dtags");
     }

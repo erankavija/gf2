@@ -8,19 +8,22 @@
 //! initialisation is reported as setup rather than hidden inside a window.
 //!
 //! gf2x supplies no field reduction, so the whole-consumer dot-product arm
-//! composes gf2x products with gf2's `BarrettReducer`. The reduction cost is
-//! reported separately, and both arms of that cell reduce with the same gf2
-//! code, so the cell compares the product-and-accumulate stage. The 4-word and
-//! 9-word long-product cells likewise report the gf2 `BarrettReducerWide`
-//! reduction of this arm's own product, the stage a GF(2^256) or GF(2^571)
-//! consumer composing gf2x would add.
+//! composes gf2x products with gf2's `BarrettReducer` for the same field.
+//! `FieldVec::simd_dot_product` passes that reducer the PCLMULQDQ carry-less
+//! multiply of gf2's default GF(2^m) bundle, while this arm passes the scalar
+//! `barrett::clmul`, so the cell compares the product-and-accumulate stages up
+//! to the difference between those two reductions, which each arm reports
+//! separately. The 4-word and 9-word long-product cells likewise report the
+//! gf2 `BarrettReducerWide` reduction of this arm's own product, the stage a
+//! GF(2^256) or GF(2^571) consumer composing gf2x would add.
 
 use gf2_core::gf2m::barrett::{clmul, BarrettReducer};
 use std::os::raw::c_int;
 
 use poly_baseline_arms::wide_field::reduction_probe_ns;
 use poly_baseline_arms::{
-    amortised_probe_ns, probe_ns, Backend, Bank, Case, Conversion, DOT_FIELD_DEGREE, DOT_FIELD_POLY,
+    dot_reducer, dot_reduction_probe_ns, probe_ns, Backend, Bank, Case, Conversion,
+    DOT_FIELD_DEGREE,
 };
 
 /// gf2x's reentrant scratch pool, `struct gf2x_mul_pool_s` in `gf2x.h`.
@@ -178,6 +181,22 @@ pub struct Gf2xBackend {
     scratch: Vec<u64>,
 }
 
+impl Gf2xBackend {
+    /// The raw XOR of the dot-product cell's `count` unreduced gf2x products
+    /// of the operands masked to field elements: the value this arm reduces.
+    pub fn dot_accumulator(&mut self, count: usize, bank: &Bank) -> u128 {
+        let mask = (1u64 << DOT_FIELD_DEGREE) - 1;
+        let mut accumulator: u128 = 0;
+        for index in 0..count {
+            let left = [bank.a[index] & mask];
+            let right = [bank.b[index] & mask];
+            mul(&mut self.pool, &left, &right, &mut self.scratch);
+            accumulator ^= u128::from(self.scratch[0]) | (u128::from(self.scratch[1]) << 64);
+        }
+        accumulator
+    }
+}
+
 impl Backend for Gf2xBackend {
     fn selected_path(&self) -> String {
         selected_path()
@@ -186,10 +205,7 @@ impl Backend for Gf2xBackend {
     fn create(case: &Case) -> Self {
         assert_pinned_library();
         let reducer = match case {
-            Case::Gf2mDot { .. } => Some(BarrettReducer::new(
-                u128::from(DOT_FIELD_POLY),
-                DOT_FIELD_DEGREE as u32,
-            )),
+            Case::Gf2mDot { .. } => Some(dot_reducer()),
             _ => None,
         };
         Self {
@@ -213,15 +229,7 @@ impl Backend for Gf2xBackend {
                 }
             }
             Case::Gf2mDot { count, .. } => {
-                let mask = (1u64 << DOT_FIELD_DEGREE) - 1;
-                let mut accumulator: u128 = 0;
-                for index in 0..*count {
-                    let left = [bank.a[index] & mask];
-                    let right = [bank.b[index] & mask];
-                    mul(&mut self.pool, &left, &right, &mut self.scratch);
-                    accumulator ^=
-                        u128::from(self.scratch[0]) | (u128::from(self.scratch[1]) << 64);
-                }
+                let accumulator = self.dot_accumulator(*count, bank);
                 let reducer = self.reducer.as_ref().expect("the dot case built a reducer");
                 bank.out[0] = reducer.reduce_with_clmul(accumulator, clmul);
             }
@@ -229,10 +237,9 @@ impl Backend for Gf2xBackend {
     }
 
     fn conversion(&mut self, case: &Case, bank: &mut Bank) -> Conversion {
-        let setup_ns = probe_ns(|| {
-            let pool = Gf2xPool::default();
-            std::hint::black_box(&pool);
-        });
+        let mut pool = None;
+        let setup_ns = probe_ns(|| pool = Some(Gf2xPool::default()));
+        drop(pool);
         match case {
             Case::PolyMul { words, .. } => Conversion {
                 setup_ns,
@@ -252,16 +259,11 @@ impl Backend for Gf2xBackend {
                 });
                 std::hint::black_box(&packed);
                 let batch_fill_ns = probe_ns(|| self.run(case, bank));
-                let reducer = self.reducer.as_ref().expect("the dot case built a reducer");
-                // The reduction stage on its own, with the identical reducer and
-                // clmul the gf2 arm applies, so the two arms' figures subtract
-                // the same quantity from their measured calls.
-                let accumulator = u128::from(bank.out[0]);
-                let unpack_ns = amortised_probe_ns(|| {
-                    std::hint::black_box(
-                        reducer.reduce_with_clmul(std::hint::black_box(accumulator), clmul),
-                    );
-                });
+                // The reduction `run` applies: the same reducer and scalar
+                // carry-less multiply, on the raw accumulator rather than on
+                // the reduced element `run` writes.
+                let accumulator = self.dot_accumulator(count, bank);
+                let unpack_ns = dot_reduction_probe_ns(accumulator, clmul);
                 Conversion {
                     setup_ns,
                     pack_ns,
