@@ -1,8 +1,8 @@
 {
-  "schema": "gf2-external-comparator-correctness-v1",
+  "schema": "gf2-external-comparator-correctness-v2",
   "issue": "6fb89a3c",
   "status": "pass",
-  "canonical_reference": "naive bit arithmetic in verify-bit-mapping.py",
+  "canonical_reference": "naive bit arithmetic in verify-bit-mapping.py from the same SplitMix64 seeds",
   "transpose": {
     "m4ri": {
       "validated_fixed_seeds": 3,
@@ -26,18 +26,31 @@
         [
           64,
           1
+        ],
+        [
+          100,
+          130
         ]
       ],
       "mapping": "output[c][r] = input[r][c]; row words use bit c = 1u64 << c",
-      "padding": "M4RI zeroes unused tail bits in partial words",
-      "aliasing": "distinct input/output; fixed output allocation is reused during kernel timing"
+      "padding": "M4RI keeps excess bits of a non-window matrix zero (mzd.h policy); the dumps read only valid bits",
+      "aliasing": "distinct input/output; the kernel-isolated cell reuses a preallocated output, whole-consumer calls allocate a fresh one"
     },
     "bitshuffle": {
       "validated_fixed_seeds": 3,
       "mapping": "direct",
-      "geometry": "size=64 elements, elem_size=8 bytes, block_size=64",
-      "adaptation_cost": "zero for 64x64 direct layout",
-      "unavailable_geometries": [
+      "mapping_search": {
+        "direct": "pass",
+        "input-byte-reverse": "fail",
+        "output-byte-reverse": "fail",
+        "both": "fail",
+        "element-byte-reverse": "fail",
+        "input-byte-reverse+element-byte-reverse": "fail",
+        "output-byte-reverse+element-byte-reverse": "fail",
+        "both+element-byte-reverse": "fail"
+      },
+      "fixed_geometry": "size=64 elements, elem_size=8 bytes, block_size=64",
+      "unavailable_without_adapter": [
         [
           63,
           63
@@ -49,9 +62,40 @@
         [
           1,
           64
+        ],
+        [
+          100,
+          130
         ]
       ],
-      "unavailable_reason": "element count is not a multiple of 8; no padding substitution is timed",
+      "unavailable_reason": "element count (rows) is not a multiple of 8",
+      "validated_with_padded_adapter": [
+        [
+          63,
+          63
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          65,
+          65
+        ],
+        [
+          1,
+          64
+        ],
+        [
+          64,
+          1
+        ],
+        [
+          100,
+          130
+        ]
+      ],
+      "adapter": "rows padded to a multiple of 8 and packed into ceil(cols/8)-byte elements; one block of size rows_padded; the first cols planes are unpacked into the canonical cols x rows output; pack/unpack copies skipped when the layouts coincide",
       "aliasing": "distinct input/output as required by the Bitshuffle interface"
     }
   },
@@ -67,15 +111,24 @@
       64,
       65
     ],
-    "mapping": "dest[w].bit[b] = src0[w].bit[b] XOR src1[w].bit[b], LSB-first",
-    "isa_l_parity_arity": {
-      "vects": 3,
-      "sources": 2,
-      "outputs": 1
-    },
+    "validated_parity_arities": [
+      {
+        "words": 64,
+        "sources": 3,
+        "vects": 4
+      },
+      {
+        "words": 9,
+        "sources": 4,
+        "vects": 5
+      }
+    ],
+    "mapping": "dest[w].bit[b] = XOR over sources of src[s][w].bit[b], LSB-first",
+    "isa_l_parity_arity": "vects = sources + 1; two sources (vects 3) in the sized cells, three sources (vects 4) in the arity cell",
     "alignment_bytes": 32,
-    "arrangement_cost": "the three-pointer array is formed inside every timed call",
-    "aliasing": "unavailable: ISA-L does not contractually permit destination/source aliasing"
+    "unaligned": "unavailable: raid.h requires source and destination pointers aligned to 32 bytes; the harness refuses other alignments",
+    "arrangement_cost": "the pointer array is formed inside every timed call and one formation is reported separately as dispatch_ns; the gf2 fresh-destination copy is inside every timed call and reported separately as pack_ns",
+    "aliasing": "unavailable: raid.h names distinct source pointers and one destination pointer; gf2's dst ^= src accumulate has no ISA-L equivalent"
   },
   "bch_genmatrix": {
     "validated_codes": [

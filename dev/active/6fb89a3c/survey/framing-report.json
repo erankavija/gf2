@@ -1,5 +1,5 @@
 {
-  "schema": "gf2-external-arm-framing-v1",
+  "schema": "gf2-external-arm-framing-v2",
   "issue": "6fb89a3c",
   "arms": [
     {
@@ -10,7 +10,7 @@
       },
       "status": "pass",
       "selected_path": "m4ri-mzd_transpose",
-      "conversion_reported": false
+      "conversion": null
     },
     {
       "binary": "m4ri_transpose_arm",
@@ -21,7 +21,13 @@
       },
       "status": "pass",
       "selected_path": "m4ri-mzd_transpose-tiled",
-      "conversion_reported": true
+      "conversion": {
+        "setup_ns": 22220,
+        "pack_ns": 0,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
     },
     {
       "binary": "bitshuffle_transpose_arm",
@@ -31,7 +37,43 @@
       },
       "status": "pass",
       "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
-      "conversion_reported": false
+      "conversion": null
+    },
+    {
+      "binary": "bitshuffle_transpose_arm",
+      "case": {
+        "cols": 64,
+        "rows": 64,
+        "seed": 1,
+        "adapter": "padded"
+      },
+      "status": "pass",
+      "selected_path": "bitshuffle-bshuf_bitshuffle-avx2-consumer",
+      "conversion": {
+        "setup_ns": 18191,
+        "pack_ns": 0,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
+    },
+    {
+      "binary": "bitshuffle_transpose_arm",
+      "case": {
+        "cols": 65,
+        "rows": 65,
+        "seed": 1,
+        "adapter": "padded"
+      },
+      "status": "pass",
+      "selected_path": "bitshuffle-bshuf_bitshuffle-avx2-consumer-pack-unpack",
+      "conversion": {
+        "setup_ns": 18980,
+        "pack_ns": 250,
+        "unpack_ns": 220,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
     },
     {
       "binary": "isal_xor_arm",
@@ -41,8 +83,32 @@
         "words": 8
       },
       "status": "pass",
-      "selected_path": "isa-l-xor_gen_base-arity3-aligned32",
-      "conversion_reported": true
+      "selected_path": "isa-l-xor_gen_base-vects3-aligned32",
+      "conversion": {
+        "setup_ns": 2230,
+        "pack_ns": 0,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
+    },
+    {
+      "binary": "isal_xor_arm",
+      "case": {
+        "alignment_bytes": 32,
+        "seed": 1,
+        "words": 64,
+        "sources": 3
+      },
+      "status": "pass",
+      "selected_path": "isa-l-xor_gen_base-vects4-aligned32",
+      "conversion": {
+        "setup_ns": 2040,
+        "pack_ns": 0,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
     },
     {
       "binary": "m4ri_genmatrix_arm",
@@ -52,7 +118,13 @@
       },
       "status": "pass",
       "selected_path": "m4ri-genmatrix-rref",
-      "conversion_reported": true
+      "conversion": {
+        "setup_ns": 3850,
+        "pack_ns": 110,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 560
+      }
     },
     {
       "binary": "gf2_transpose_arm",
@@ -62,7 +134,7 @@
       },
       "status": "pass",
       "selected_path": "avx2-bit-twiddle",
-      "conversion_reported": false
+      "conversion": null
     },
     {
       "binary": "gf2_transpose_arm",
@@ -73,7 +145,13 @@
       },
       "status": "pass",
       "selected_path": "BitMatrix::transpose",
-      "conversion_reported": true
+      "conversion": {
+        "setup_ns": 17991,
+        "pack_ns": 0,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
     },
     {
       "binary": "gf2_logical_xor_arm",
@@ -83,8 +161,32 @@
         "words": 8
       },
       "status": "pass",
-      "selected_path": "gf2-xor_inplace (simd)",
-      "conversion_reported": true
+      "selected_path": "gf2-xor_inplace (simd) sources=2",
+      "conversion": {
+        "setup_ns": 560,
+        "pack_ns": 2,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
+    },
+    {
+      "binary": "gf2_logical_xor_arm",
+      "case": {
+        "alignment_bytes": 32,
+        "seed": 1,
+        "words": 64,
+        "sources": 3
+      },
+      "status": "pass",
+      "selected_path": "gf2-xor_inplace (simd) sources=3",
+      "conversion": {
+        "setup_ns": 2330,
+        "pack_ns": 5,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
     },
     {
       "binary": "gf2_bch_genmatrix_arm",
@@ -94,7 +196,13 @@
       },
       "status": "pass",
       "selected_path": "bch_generator_matrix_by_encoding/B1",
-      "conversion_reported": true
+      "conversion": {
+        "setup_ns": 15440,
+        "pack_ns": 0,
+        "unpack_ns": 0,
+        "batch_fill_ns": 0,
+        "dispatch_ns": 0
+      }
     }
   ]
 }

@@ -103,11 +103,15 @@ int main(int argc, char **argv)
     char *input = NULL, *error = NULL; size_t length; json_value *root = NULL; const json_value *object; const char *cache; uint64_t windows, target_ms;
     int ok;
     if (argc == 2 && !strcmp(argv[1], "--backend")) {
-        puts("{\"library\":\"m4ri\",\"entrypoint\":\"mzd_transpose\",\"selected_backend\":\"word-swar-64x64\",\"runtime_dispatch\":false,\"compiled_sse2\":"
+        /* Compile-time facts of the linked library; the instruction-level
+         * observation of mzd_transpose and its absence of runtime dispatch
+         * come from the disassembly probe in record-build-evidence.py. */
+        printf("{\"library\":\"m4ri\",\"entrypoint\":\"mzd_transpose\",\"version\":\"%s\",\"compiled_sse2\":%s,\"observation\":\"m4ri_config.h macros of the linked build\"}\n",
+               M4RI_VERSION_STR,
 #if __M4RI_HAVE_SSE2
-             "true}"
+               "true"
 #else
-             "false}"
+               "false"
 #endif
         );
         return 0;

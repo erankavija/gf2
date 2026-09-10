@@ -1,10 +1,12 @@
 //! Conforming child-v2 Rust arm for the production logical-buffer XOR.
 //!
-//! The timed body copies `src0` and then calls `xor_inplace`, because the
-//! production API accumulates (`dst ^= src`) rather than writing a fresh
-//! destination.  The copy is deliberately inside every timed call: the
-//! comparator's `xor_gen` path also performs a fresh full-buffer write, so
-//! both arms pay the same destination-write cost.
+//! The timed body copies `src0` into the destination and then folds the
+//! remaining sources in with `xor_inplace`, because the production API
+//! accumulates (`dst ^= src`) while the comparator's `xor_gen` contract
+//! writes a fresh destination from `sources` inputs. The copy is
+//! deliberately inside every timed call so both arms pay the same fresh
+//! destination write; `pack_ns` reports one separately measured copy so the
+//! arrangement cost is visible on its own.
 
 use gf2_core::kernels::ops::xor_inplace;
 use gf2_core::kernels::select_backend_for_size;
@@ -12,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::hint::black_box;
 use std::io;
+use std::time::Instant;
 use survey_gf2_side_6fb89a3c::{splitmix_words, timed_windows};
 use tuning_campaign_support::host::CpuAffinity;
 use tuning_campaign_support::transport;
@@ -38,6 +41,12 @@ struct Case {
     words: u64,
     seed: u64,
     alignment_bytes: u64,
+    #[serde(default = "two")]
+    sources: u64,
+}
+
+fn two() -> u64 {
+    2
 }
 
 #[derive(Serialize)]
@@ -83,6 +92,18 @@ fn aligned_storage(words: &[u64], alignment: usize) -> (Vec<u64>, usize) {
     (storage, start)
 }
 
+/// One separately measured fresh-destination copy, averaged over many
+/// repetitions so a few-nanosecond cost rounds to an observed value.
+fn copy_probe_ns(dest: &mut [u64], src0: &[u64]) -> u64 {
+    const REPS: u32 = 1_000_000;
+    let started = Instant::now();
+    for _ in 0..REPS {
+        black_box(&mut *dest).copy_from_slice(black_box(src0));
+    }
+    let total = u64::try_from(started.elapsed().as_nanos()).unwrap_or(u64::MAX);
+    (total + u64::from(REPS) / 2) / u64::from(REPS)
+}
+
 fn main() {
     let sentinel = std::env::var(transport::FRESH_CASE_VAR).ok();
     let request: Request = transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock())
@@ -95,22 +116,31 @@ fn main() {
     if alignment != 32 {
         fail("the ISA-L operation-equivalent arm requires 32-byte alignment");
     }
-    let setup_started = std::time::Instant::now();
-    let (src0_storage, src0_start) = aligned_storage(&splitmix_words(words, case.seed), alignment);
-    let (src1_storage, src1_start) =
-        aligned_storage(&splitmix_words(words, case.seed.wrapping_add(1)), alignment);
+    let sources = usize::try_from(case.sources).unwrap_or_else(|_| fail("sources does not fit"));
+    if !(2..=8).contains(&sources) {
+        fail("sources must lie in 2..=8");
+    }
+    let setup_started = Instant::now();
+    let source_storage: Vec<(Vec<u64>, usize)> = (0..sources)
+        .map(|s| aligned_storage(&splitmix_words(words, case.seed.wrapping_add(s as u64)), alignment))
+        .collect();
     let (mut dest_storage, dest_start) = aligned_storage(&vec![0u64; words], alignment);
     let setup_ns = u64::try_from(setup_started.elapsed().as_nanos()).unwrap_or(u64::MAX);
-    let src0 = &src0_storage[src0_start..src0_start + words];
-    let src1 = &src1_storage[src1_start..src1_start + words];
+    let sources_view: Vec<&[u64]> = source_storage
+        .iter()
+        .map(|(storage, start)| &storage[*start..*start + words])
+        .collect();
     let selected_path = format!(
-        "gf2-xor_inplace ({})",
+        "gf2-xor_inplace ({}) sources={sources}",
         select_backend_for_size(words).name()
     );
     let dest = &mut dest_storage[dest_start..dest_start + words];
+    let pack_ns = copy_probe_ns(dest, sources_view[0]);
     let samples = timed_windows(request.windows, request.window_target_ms, |_| {
-        dest.copy_from_slice(&src0);
-        xor_inplace(black_box(&mut *dest), black_box(&src1));
+        dest.copy_from_slice(sources_view[0]);
+        for src in &sources_view[1..] {
+            xor_inplace(black_box(&mut *dest), black_box(src));
+        }
     })
     .unwrap_or_else(|error| fail(error));
     black_box(&dest);
@@ -132,7 +162,7 @@ fn main() {
         selected_path: Some(selected_path),
         conversion: Some(ConversionCosts {
             setup_ns,
-            pack_ns: 0,
+            pack_ns,
             unpack_ns: 0,
             batch_fill_ns: 0,
             dispatch_ns: 0,

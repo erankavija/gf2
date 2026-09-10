@@ -1,22 +1,49 @@
 /* Bitshuffle transpose comparison arm for jit:6fb89a3c.
  *
- * bshuf_bitshuffle(in, out, size, elem_size, block_size) with size=rows,
- * elem_size=ceil(cols/8), block_size=64 for the fixed 64x64 case (0,
- * library-default, otherwise) computes exactly gf2's 64x64 bit-block
- * transpose operation: bit `c` of input element `r` becomes bit `r` of
- * output "row" `c`, LSB-first, no adapter needed. This was confirmed by
- * probing the built library directly with single-bit inputs at element/bit
- * corners (0,0), (0,1), (1,0), (63,0), (0,63) and reading back which output
- * bit lit up, because raid.h's own doc comment does not spell out the
- * byte/bit packing order. The optional GF2_BITSHUFFLE_ADAPTER is dead
- * infrastructure kept for `--dump-check`'s adapter search in case a future
- * geometry ever needs one; the direct mapping is what both --dump-check and
- * the transport path use today.
+ * bshuf_bitshuffle(in, out, size, elem_size, block_size) transposes `size`
+ * elements of `elem_size` bytes into `8 * elem_size` bit-planes of `size / 8`
+ * bytes: bit `c` of element `r` becomes bit `r % 8` of byte `r / 8` in plane
+ * `c`, LSB-first. For 64 elements of 8 bytes this is exactly gf2's canonical
+ * 64x64 word transpose (row word `r`, bit `c` -> row word `c`, bit `r`) with
+ * no adapter; `verify-bit-mapping.py` checks that mapping against naive bit
+ * arithmetic before any timing.
+ *
+ * Fixed case `{n: 64, seed}`: the kernel-isolated 64x64 transform into a
+ * preallocated output.
+ *
+ * Tiled case `{rows, cols, seed}`: a whole-consumer transpose of a gf2
+ * `BitMatrix` (row stride `ceil(cols / 64)` words) into a fresh
+ * `cols x rows` matrix. Bitshuffle requires `size % 8 == 0`, so a row count
+ * that is not a multiple of eight is unavailable without padding and the
+ * arm exits with an unavailability message. With `"adapter": "padded"` the
+ * arm measures the geometry adapter instead: it packs the matrix into
+ * `round_up(rows, 8)` elements of `ceil(cols / 8)` bytes, runs
+ * `bshuf_bitshuffle` over that one block, and unpacks the first `cols`
+ * planes into the fresh canonical output. Pack and unpack are byte copies
+ * that are skipped when the canonical layout already coincides with
+ * Bitshuffle's (pack: `rows % 8 == 0 && cols % 64 == 0`; unpack:
+ * `rows % 64 == 0 && cols % 8 == 0`), so the 64x64 consumer pays no copy and
+ * 63x63 / 65x65 pay the copies inside every timed call. `pack_ns` and
+ * `unpack_ns` report one separately measured pass of each copy.
+ *
+ * GF2_BITSHUFFLE_ADAPTER selects byte/bit-order permutations for the
+ * `--dump-check` mapping search only; the direct mapping is what transport
+ * mode uses.
  */
 #include "harness_common.h"
 #include <bitshuffle_core.h>
 
-typedef struct { unsigned char *in[8], *out; size_t bytes, rows, cols, elem_size, block_size, banks; } bit_ctx;
+typedef struct {
+    /* Canonical gf2 layouts. */
+    uint64_t *in_words[8];
+    size_t rows, cols, in_stride, out_stride, banks;
+    /* Bitshuffle geometry. */
+    size_t rows_padded, elem, planes_bytes;
+    unsigned char *pad, *planes;
+    int pack_needed, unpack_needed, fixed;
+    /* Fixed-case preallocated output. */
+    uint64_t *fixed_out;
+} bit_ctx;
 
 static unsigned char reverse_byte(unsigned char x)
 {
@@ -48,97 +75,187 @@ static void apply_output_adapter(unsigned char *buffer, size_t bytes, const char
     if (adapter_has(adapter, "output-byte-reverse")) for (size_t i = 0; i < bytes; i++) buffer[i] = reverse_byte(buffer[i]);
 }
 
-static int build_input(const json_value *object, unsigned char **out, size_t *rows_out, size_t *cols_out, size_t *elem_out)
+static const char *case_adapter(const json_value *object)
 {
-    uint64_t seed, rows64, cols64; size_t rows, cols, elem; unsigned char *buffer; uint64_t state;
-    if (!json_get_u64(json_object_get(object, "seed"), &seed)) return 0;
-    if (json_get_u64(json_object_get(object, "rows"), &rows64) && json_get_u64(json_object_get(object, "cols"), &cols64)) { rows = (size_t)rows64; cols = (size_t)cols64; }
-    else { rows = cols = 64; }
-    if (rows == 0 || cols == 0 || rows64 > SIZE_MAX || cols64 > SIZE_MAX) return 0;
-    elem = (cols + 7) / 8;
-    if (elem == 0 || rows > SIZE_MAX / elem) return 0;
-    buffer = (unsigned char *)calloc(rows * elem, 1); if (buffer == NULL) return 0;
-    state = seed;
-    for (size_t r = 0; r < rows; r++) for (size_t c = 0; c < cols; c++) if (splitmix64_next(&state) & 1) buffer[r * elem + c / 8] |= (unsigned char)(1u << (c & 7));
-    *out = buffer; *rows_out = rows; *cols_out = cols; *elem_out = elem; return 1;
+    const char *adapter = NULL;
+    const json_value *value = json_object_get(object, "adapter");
+    if (value == NULL) return "";
+    if (!json_get_string(value, &adapter)) return NULL;
+    return adapter;
 }
 
-static int make_input_case(const json_value *object, unsigned char **out, size_t *rows, size_t *cols, size_t *elem)
+/* Reads the geometry: fixed `{n: 64}` or tiled `{rows, cols}`. */
+static int read_geometry(const json_value *object, int *fixed, size_t *rows, size_t *cols, uint64_t *seed)
 {
-    uint64_t seed; if (!json_get_u64(json_object_get(object, "seed"), &seed)) return 0;
-    if (json_object_get(object, "rows") == NULL) {
-        unsigned char *buffer = (unsigned char *)malloc(64 * 8); if (buffer == NULL) return 0;
-        for (size_t r = 0; r < 64; r++) { uint64_t word = splitmix64_next(&seed); for (size_t b = 0; b < 8; b++) buffer[r * 8 + b] = (unsigned char)(word >> (8 * b)); }
-        *out = buffer; *rows = 64; *cols = 64; *elem = 8; return 1;
+    uint64_t rows64, cols64, n;
+    if (!json_get_u64(json_object_get(object, "seed"), seed)) return 0;
+    if (json_get_u64(json_object_get(object, "rows"), &rows64) && json_get_u64(json_object_get(object, "cols"), &cols64)) {
+        if (rows64 == 0 || cols64 == 0 || rows64 > SIZE_MAX / 2 || cols64 > SIZE_MAX / 2) return 0;
+        *fixed = 0; *rows = (size_t)rows64; *cols = (size_t)cols64; return 1;
     }
-    return build_input(object, out, rows, cols, elem);
+    if (json_get_u64(json_object_get(object, "n"), &n) && n != 64) { fprintf(stderr, "fixed Bitshuffle transpose requires n=64\n"); return 0; }
+    *fixed = 1; *rows = *cols = 64; return 1;
 }
 
-static int bitshuffle_run(const unsigned char *input, unsigned char *output, size_t rows, size_t elem, size_t block_size, const char *adapter)
+/* Canonical gf2 BitMatrix fill: one SplitMix64 draw per bit in row-major
+ * order (tiled), or one draw per row word (fixed 64x64). */
+static uint64_t *make_canonical(int fixed, size_t rows, size_t cols, size_t stride, uint64_t *state)
 {
-    size_t bytes = rows * elem; unsigned char *working = (unsigned char *)malloc(bytes); int result;
-    if (working == NULL) return 0;
-    memcpy(working, input, bytes);
-    apply_input_adapter(working, bytes, elem, adapter);
-    result = bshuf_bitshuffle(working, output, rows, elem, block_size); free(working);
-    if (result < 0) { fprintf(stderr, "Bitshuffle cannot represent size=%zu elem_size=%zu block_size=%zu (error %d)\n", rows, elem, block_size, result); return 0; }
-    apply_output_adapter(output, bytes, adapter); return 1;
+    uint64_t *words = (uint64_t *)calloc(rows * stride, sizeof(uint64_t));
+    if (words == NULL) return NULL;
+    if (fixed) { for (size_t r = 0; r < 64; r++) words[r] = splitmix64_next(state); return words; }
+    for (size_t r = 0; r < rows; r++)
+        for (size_t c = 0; c < cols; c++)
+            if (splitmix64_next(state) & 1) words[r * stride + c / 64] |= UINT64_C(1) << (c % 64);
+    return words;
+}
+
+static void pack_rows(bit_ctx *ctx, const uint64_t *in_words)
+{
+    for (size_t r = 0; r < ctx->rows; r++)
+        memcpy(ctx->pad + r * ctx->elem, in_words + r * ctx->in_stride, ctx->elem);
+}
+
+static void unpack_planes(bit_ctx *ctx, uint64_t *out_words)
+{
+    size_t plane_bytes = ctx->rows_padded / 8, copy_bytes = (ctx->rows + 7) / 8;
+    for (size_t c = 0; c < ctx->cols; c++)
+        memcpy(out_words + c * ctx->out_stride, ctx->planes + c * plane_bytes, copy_bytes);
+}
+
+/* One whole-consumer call: fresh canonical output, pack when the layouts
+ * differ, one Bitshuffle block, unpack when the layouts differ. */
+static uint64_t *consumer_call(bit_ctx *ctx, const uint64_t *in_words)
+{
+    uint64_t *out = (uint64_t *)calloc(ctx->cols * ctx->out_stride, sizeof(uint64_t));
+    const void *in = in_words; void *planes = out; int64_t result;
+    if (out == NULL) { fprintf(stderr, "cannot allocate Bitshuffle consumer output\n"); abort(); }
+    if (ctx->pack_needed) { pack_rows(ctx, in_words); in = ctx->pad; }
+    if (ctx->unpack_needed) planes = ctx->planes;
+    result = bshuf_bitshuffle(in, planes, ctx->rows_padded, ctx->elem, ctx->rows_padded);
+    if (result < 0) { fprintf(stderr, "Bitshuffle call failed with error %lld\n", (long long)result); abort(); }
+    if (ctx->unpack_needed) unpack_planes(ctx, out);
+    return out;
+}
+
+static int geometry_available(size_t rows, const char *adapter)
+{
+    if (rows % 8 == 0 || !strcmp(adapter, "padded")) return 1;
+    fprintf(stderr, "Bitshuffle transpose requires size (rows) multiple of 8; rows=%zu is unavailable without padding\n", rows);
+    return 0;
+}
+
+static int init_geometry(bit_ctx *ctx, int fixed, size_t rows, size_t cols)
+{
+    ctx->fixed = fixed; ctx->rows = rows; ctx->cols = cols;
+    ctx->in_stride = (cols + 63) / 64; ctx->out_stride = (rows + 63) / 64;
+    ctx->rows_padded = (rows + 7) / 8 * 8; ctx->elem = (cols + 7) / 8;
+    ctx->planes_bytes = ctx->rows_padded * ctx->elem;
+    ctx->pack_needed = !(rows % 8 == 0 && cols % 64 == 0);
+    ctx->unpack_needed = !(rows % 64 == 0 && cols % 8 == 0);
+    ctx->pad = (unsigned char *)calloc(ctx->planes_bytes, 1);
+    ctx->planes = (unsigned char *)calloc(ctx->planes_bytes, 1);
+    return ctx->pad != NULL && ctx->planes != NULL;
 }
 
 static int dump_case(const json_value *object)
 {
-    unsigned char *input, *output; size_t rows, cols, elem; const char *adapter = getenv("GF2_BITSHUFFLE_ADAPTER");
-    if (!make_input_case(object, &input, &rows, &cols, &elem)) { fprintf(stderr, "invalid Bitshuffle transpose case\n"); return 0; }
-    /* Same restriction as transport_case: the plane byte-packing this
-     * decoder (and the library's own block tiling) relies on needs `rows`
-     * (the element count) a multiple of 8. A non-multiple size is unavailable
-     * for Bitshuffle without padding -- recorded as such, not compared. */
-    if (rows % 8 != 0) { fprintf(stderr, "Bitshuffle transpose requires rows/size multiple of 8; rows=%zu is unavailable without padding\n", rows); free(input); return 0; }
-    output = (unsigned char *)malloc(rows * elem); if (output == NULL) { free(input); return 0; }
-    if (!bitshuffle_run(input, output, rows, elem, rows == 64 && elem == 8 ? 64 : 0, adapter)) { free(input); free(output); return 0; }
-    /* bshuf_bitshuffle's output is `size` (== rows) bit-planes of `rows/8`
-     * bytes each, plane `c` holding bit `c` of every element, packed
-     * LSB-first with element r at byte r/8 bit r%8 -- confirmed empirically
-     * against the library (single-bit probes at element/bit corners) rather
-     * than assumed from documentation, since the doc comment does not spell
-     * out byte/bit packing order. This is exactly gf2's canonical
-     * little-endian convention with no adapter needed. */
-    for (size_t c = 0; c < cols; c++) { for (size_t r = 0; r < rows; r++) { unsigned char value = output[c * (rows / 8) + r / 8]; putchar((value >> (r & 7)) & 1 ? '1' : '0'); } putchar('\n'); }
-    free(input); free(output); return fflush(stdout) == 0;
+    bit_ctx ctx = {{0}, 0, 0, 0, 0, 1, 0, 0, 0, NULL, NULL, 0, 0, 0, NULL};
+    int fixed; size_t rows, cols; uint64_t seed, state; uint64_t *in_words, *out;
+    const char *adapter = case_adapter(object), *search = getenv("GF2_BITSHUFFLE_ADAPTER");
+    if (adapter == NULL || !read_geometry(object, &fixed, &rows, &cols, &seed)) { fprintf(stderr, "invalid Bitshuffle transpose case\n"); return 0; }
+    if (!geometry_available(rows, adapter)) return 0;
+    if (!init_geometry(&ctx, fixed, rows, cols)) return 0;
+    state = seed;
+    in_words = make_canonical(fixed, rows, cols, ctx.in_stride, &state);
+    if (in_words == NULL) return 0;
+    if (search != NULL && *search != '\0') {
+        /* Mapping search: apply the candidate byte/bit permutation to the
+         * packed element bytes and to the produced planes. */
+        unsigned char *bytes = (unsigned char *)calloc(ctx.planes_bytes, 1);
+        if (bytes == NULL) return 0;
+        ctx.pack_needed = 1; ctx.unpack_needed = 1;
+        pack_rows(&ctx, in_words);
+        memcpy(bytes, ctx.pad, ctx.planes_bytes);
+        apply_input_adapter(bytes, ctx.planes_bytes, ctx.elem, search);
+        if (bshuf_bitshuffle(bytes, ctx.planes, ctx.rows_padded, ctx.elem, ctx.rows_padded) < 0) { fprintf(stderr, "Bitshuffle cannot represent this geometry\n"); return 0; }
+        apply_output_adapter(ctx.planes, ctx.planes_bytes, search);
+        out = (uint64_t *)calloc(cols * ctx.out_stride, sizeof(uint64_t));
+        if (out == NULL) return 0;
+        unpack_planes(&ctx, out);
+        free(bytes);
+    } else {
+        out = consumer_call(&ctx, in_words);
+    }
+    for (size_t c = 0; c < cols; c++) { for (size_t r = 0; r < rows; r++) putchar((out[c * ctx.out_stride + r / 64] >> (r % 64)) & 1 ? '1' : '0'); putchar('\n'); }
+    free(out); free(in_words); free(ctx.pad); free(ctx.planes);
+    return fflush(stdout) == 0;
 }
 
-static void bitshuffle_body(void *opaque, uint64_t call_index)
+static void fixed_body(void *opaque, uint64_t call_index)
 {
-    bit_ctx *ctx = (bit_ctx *)opaque; int result = bshuf_bitshuffle(ctx->in[call_index % ctx->banks], ctx->out, ctx->rows, ctx->elem_size, ctx->block_size);
-    if (result < 0) { fprintf(stderr, "Bitshuffle timed call failed with error %d\n", result); abort(); }
+    bit_ctx *ctx = (bit_ctx *)opaque;
+    int64_t result = bshuf_bitshuffle(ctx->in_words[call_index % ctx->banks], ctx->fixed_out, 64, 8, 64);
+    if (result < 0) { fprintf(stderr, "Bitshuffle timed call failed with error %lld\n", (long long)result); abort(); }
+}
+
+static void consumer_body(void *opaque, uint64_t call_index)
+{
+    bit_ctx *ctx = (bit_ctx *)opaque;
+    free(consumer_call(ctx, ctx->in_words[call_index % ctx->banks]));
+}
+
+static const char *backend_name(void)
+{
+    return bshuf_using_AVX512() ? "avx512" : bshuf_using_AVX2() ? "avx2" : bshuf_using_SSE2() ? "sse2" : bshuf_using_NEON() ? "neon" : "scalar";
 }
 
 static int transport_case(const json_value *object, const char *cache, uint64_t windows, uint64_t target_ms)
 {
-    bit_ctx ctx = {{0}, NULL, 0, 0, 0, 0, 0, strcmp(cache, "streaming") == 0 ? 8u : 1u};
-    int fixed = json_object_get(object, "rows") == NULL;
-    uint64_t setup_start = monotonic_ns(), setup_ns; uint64_t seed; size_t rows, cols, elem; unsigned char *first = NULL; harness_window *samples = NULL;
-    if (!make_input_case(object, &first, &rows, &cols, &elem) || !json_get_u64(json_object_get(object, "seed"), &seed)) { fprintf(stderr, "invalid Bitshuffle transpose case\n"); return 0; }
-    if (rows % 8 != 0) { fprintf(stderr, "Bitshuffle transpose requires rows/size multiple of 8; rows=%zu is unavailable without padding\n", rows); free(first); return 0; }
-    ctx.rows = rows; ctx.cols = cols; ctx.elem_size = elem; ctx.bytes = rows * elem; ctx.block_size = fixed ? 64 : 0;
-    for (size_t i = 0; i < ctx.banks; i++) { ctx.in[i] = (unsigned char *)malloc(ctx.bytes); if (ctx.in[i] == NULL) { fprintf(stderr, "cannot allocate Bitshuffle input bank\n"); return 0; } if (i == 0) memcpy(ctx.in[i], first, ctx.bytes); else { uint64_t s = seed + i; for (size_t j = 0; j < ctx.bytes; j++) ctx.in[i][j] = (unsigned char)splitmix64_next(&s); } }
-    ctx.out = (unsigned char *)malloc(ctx.bytes); setup_ns = monotonic_ns() - setup_start; free(first);
-    if (ctx.out == NULL) { fprintf(stderr, "cannot allocate Bitshuffle output\n"); return 0; }
-    if (!strcmp(cache, "warm")) bitshuffle_body(&ctx, 0);
-    if (!run_windows(bitshuffle_body, &ctx, windows, target_ms, &samples, NULL)) { fprintf(stderr, "Bitshuffle timing failed\n"); return 0; }
-    const char *backend = bshuf_using_AVX512() ? "avx512" : bshuf_using_AVX2() ? "avx2" : bshuf_using_SSE2() ? "sse2" : bshuf_using_NEON() ? "neon" : "scalar";
-    char selected[128];
-    (void)snprintf(selected, sizeof(selected), "bitshuffle-bshuf_bitshuffle-%s%s", backend, fixed ? "" : "-tiled");
-    if (!emit_result(samples, windows, cache, selected, !fixed, setup_ns, 0, 0, 0, 0)) return 0;
-    free(samples); free(ctx.out); for (size_t i = 0; i < ctx.banks; i++) free(ctx.in[i]); return 1;
+    bit_ctx ctx = {{0}, 0, 0, 0, 0, 1, 0, 0, 0, NULL, NULL, 0, 0, 0, NULL};
+    int fixed; size_t rows, cols; uint64_t seed, state, setup_start = monotonic_ns(), setup_ns, pack_ns = 0, unpack_ns = 0, start;
+    harness_window *samples = NULL; char selected[160];
+    const char *adapter = case_adapter(object);
+    if (adapter == NULL || !read_geometry(object, &fixed, &rows, &cols, &seed)) { fprintf(stderr, "invalid Bitshuffle transpose case\n"); return 0; }
+    if (!geometry_available(rows, adapter)) return 0;
+    if (!init_geometry(&ctx, fixed, rows, cols)) { fprintf(stderr, "cannot allocate Bitshuffle adapter buffers\n"); return 0; }
+    ctx.banks = strcmp(cache, "streaming") == 0 ? 8u : 1u;
+    state = seed;
+    for (size_t i = 0; i < ctx.banks; i++) {
+        ctx.in_words[i] = make_canonical(fixed, rows, cols, ctx.in_stride, &state);
+        if (fixed) state = seed + i + 1;
+        if (ctx.in_words[i] == NULL) { fprintf(stderr, "cannot allocate Bitshuffle input bank\n"); return 0; }
+    }
+    if (fixed) { ctx.fixed_out = (uint64_t *)calloc(64, sizeof(uint64_t)); if (ctx.fixed_out == NULL) return 0; }
+    setup_ns = monotonic_ns() - setup_start;
+    if (!fixed) {
+        /* One measured pass of each adapter copy, outside the timed loop. */
+        if (ctx.pack_needed) { start = monotonic_ns(); pack_rows(&ctx, ctx.in_words[0]); pack_ns = monotonic_ns() - start; }
+        if (ctx.unpack_needed) {
+            uint64_t *probe = (uint64_t *)calloc(cols * ctx.out_stride, sizeof(uint64_t));
+            if (probe == NULL) return 0;
+            start = monotonic_ns(); unpack_planes(&ctx, probe); unpack_ns = monotonic_ns() - start; free(probe);
+        }
+    }
+    if (!strcmp(cache, "warm")) for (size_t i = 0; i < ctx.banks; i++) { if (fixed) fixed_body(&ctx, i); else consumer_body(&ctx, i); }
+    if (!run_windows(fixed ? fixed_body : consumer_body, &ctx, windows, target_ms, &samples, NULL)) { fprintf(stderr, "Bitshuffle timing failed\n"); return 0; }
+    (void)snprintf(selected, sizeof(selected), "bitshuffle-bshuf_bitshuffle-%s%s%s%s", backend_name(),
+                   fixed ? "" : "-consumer", (!fixed && ctx.pack_needed) ? "-pack" : "", (!fixed && ctx.unpack_needed) ? "-unpack" : "");
+    if (!emit_result(samples, windows, cache, selected, !fixed, setup_ns, pack_ns, unpack_ns, 0, 0)) return 0;
+    free(samples); free(ctx.fixed_out); free(ctx.pad); free(ctx.planes);
+    for (size_t i = 0; i < ctx.banks; i++) free(ctx.in_words[i]);
+    return 1;
 }
 
 int main(int argc, char **argv)
 {
     char *input = NULL, *error = NULL; size_t length; json_value *root = NULL; const json_value *object; const char *cache; uint64_t windows, target_ms; int ok;
     if (argc == 2 && !strcmp(argv[1], "--backend")) {
-        printf("{\"library\":\"bitshuffle\",\"entrypoint\":\"bshuf_bitshuffle\",\"selected_backend\":\"%s\",\"compiled\":{\"avx512\":%s,\"avx2\":%s,\"sse2\":%s,\"neon\":%s}}\n",
-               bshuf_using_AVX512() ? "avx512" : bshuf_using_AVX2() ? "avx2" : bshuf_using_SSE2() ? "sse2" : bshuf_using_NEON() ? "neon" : "scalar",
+        /* Compile-time backend selection as reported by the linked library's
+         * own predicates; the disassembly probe in record-build-evidence.py
+         * supplies the instruction-level observation. */
+        printf("{\"library\":\"bitshuffle\",\"entrypoint\":\"bshuf_bitshuffle\",\"library_reported_backend\":\"%s\",\"compiled\":{\"avx512\":%s,\"avx2\":%s,\"sse2\":%s,\"neon\":%s},\"observation\":\"bshuf_using_* predicates of the linked archive\"}\n",
+               backend_name(),
                bshuf_using_AVX512() ? "true" : "false", bshuf_using_AVX2() ? "true" : "false",
                bshuf_using_SSE2() ? "true" : "false", bshuf_using_NEON() ? "true" : "false");
         return 0;
