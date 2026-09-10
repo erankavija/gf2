@@ -1,0 +1,32 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-clmul-fold  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13641133234
+#
+# Overhead  Command          Shared Object         Symbol                                                  
+# ........  ...............  ....................  ........................................................
+#
+    96.25%  consumer-profil  consumer-profile      [.] gf2_coding::bch::encode::packed_write_codeword
+            |
+            ---gf2_coding::bch::encode::packed_write_codeword
+               |          
+               |--95.24%--0x558fa43a565f
+               |          
+                --1.02%--consumer_profile_gf2_side::prepare
+                          consumer_profile::main
+                          std::sys::backtrace::__rust_begin_short_backtrace
+
+     3.16%  consumer-profil  consumer-profile      [.] gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+            |
+            ---gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+
+
+
+#
+# (Tip: To adjust path to source files to local file system use perf report --prefix=... --prefix-strip=...)
+#

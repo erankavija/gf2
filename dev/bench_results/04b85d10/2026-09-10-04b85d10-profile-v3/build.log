@@ -1,0 +1,11 @@
+cargo-budget: 8 jobs (3 live, 24 cpus)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.08s

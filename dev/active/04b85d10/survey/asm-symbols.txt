@@ -15,11 +15,11 @@ bitslice-reduce-avx2|x86::bch_encode::bitslice_reduce_avx2
 bitslice-reduce-scalar|bch_encode::bitslice_reduce_scalar
 fold-block-pclmul|x86::bch_encode::fold_block_pclmul
 fold-block-scalar|bch_encode::fold_block_scalar
-bch-unpack-parity|BchEncodeFns>::unpack_parity
+bch-unpack-parity|BchEncodeFns::unpack_parity
 packed-write-codeword|encode::packed_write_codeword
 packed-table-reduce|encode::packed_table_reduce
 packed-fold-reduce|encode::packed_fold_reduce
-dense-matvec-simd|BitMatrix>::matvec_simd
-dense-matvec-scalar|BitMatrix>::matvec_scalar
-dense-transpose|BitMatrix>::transpose
-sparse-matvec|SpBitMatrix>::matvec
+dense-matvec-simd|BitMatrix::matvec_simd
+dense-matvec-scalar|BitMatrix::matvec_scalar
+dense-transpose|BitMatrix::transpose
+sparse-matvec|SpBitMatrix::matvec

@@ -47,7 +47,7 @@ def main():
     print(f"{'routine':<24}{'stores':>8}{'loads':>7}{'instr':>7}  reason")
     for path in sorted(asm_dir.glob("*.txt")):
         label = path.stem
-        if label in ("symbols", "frame-traffic"):
+        if label in ("symbols", "frame-traffic", "popcnt-attribution"):
             continue
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         stores = sum(1 for line in lines if STORE.match(line))

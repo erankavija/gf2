@@ -1,0 +1,9 @@
+{"check":"row-xor-routes-agree","detail":"9 bit lengths agree","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"popcount-routes-agree","detail":"9 bit lengths agree","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"zero-test-spellings-agree","detail":"9 bit lengths agree over four bit patterns","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"transpose-lanes-agree","detail":"both lanes agree and the transpose is an involution","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"dense-transpose-round-trips","detail":"four shapes round-trip identically","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"dense-matvec-matches-reference","detail":"four shapes match the naive row-parity reference","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"ldpc-zero-syndrome-spellings-agree","detail":"the two spellings agree on the zero, weight-one and random words","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"bch-encoding-families-agree","detail":"three rows, five batch lengths, every available family and both batch entry points bit-identical","passed":true,"schema":"consumer-verify-record-v1"}
+{"checks":8,"failed":0,"schema":"consumer-verify-summary-v1"}

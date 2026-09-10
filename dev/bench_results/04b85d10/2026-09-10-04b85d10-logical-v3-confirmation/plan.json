@@ -1,0 +1,109 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "confirmation-v3-logical-04b85d10-20260910t162730z",
+  "issue": "04b85d10",
+  "label": "confirmation",
+  "campaign_seed": 20260910,
+  "addendum": "dev/active/04b85d10/addendum-bit-storage-logical-v3-confirmation.json",
+  "producing_manifest": "dev/active/04b85d10/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "ops-dispatched": {
+      "build": "conservative-portable",
+      "description": "size-dispatched kernel entry point, re-selected per call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "ops-dispatched"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "ops-resolved": {
+      "build": "conservative-portable",
+      "description": "the same kernel with backend resolution hoisted out of the loop",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "ops-resolved"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "simd-backend": {
+      "build": "conservative-portable",
+      "description": "the detected SIMD backend called directly, detection hoisted",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "simd-backend"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "logical-row-xor-dispatch-64w-1core",
+      "baseline_arm": "ops-dispatched",
+      "candidate_arm": "ops-resolved",
+      "case": {
+        "workload": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 64
+        },
+        "seed": 101
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "logical-row-xor-dispatch-8w-1core",
+      "baseline_arm": "ops-dispatched",
+      "candidate_arm": "ops-resolved",
+      "case": {
+        "workload": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 8
+        },
+        "seed": 101
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "logical-row-xor-threshold-4w-1core",
+      "baseline_arm": "ops-dispatched",
+      "candidate_arm": "simd-backend",
+      "case": {
+        "workload": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 4
+        },
+        "seed": 101
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "logical-row-xor-dispatch-8192w-1core",
+      "baseline_arm": "ops-dispatched",
+      "candidate_arm": "ops-resolved",
+      "case": {
+        "workload": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 8192
+        },
+        "seed": 101
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 3
+}
