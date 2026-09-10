@@ -1,0 +1,38 @@
+# command: dev/bench_results/eda07788/pilot-resolution.py dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/acceptance-summary.json
+# The pilot's own corrected alpha (m = 1, t = 1): the P-03 floor.
+receipt_sha256 8843eeab9b4d95d2740658973c7e0c9b0dafadbbabe645b0743ec94c4797c713
+label pilot verdict accepted
+per-comparison confidence 0.975
+
+cell_id                                                   estimate     lower     upper  rel_half
+nr-bg2-n1024-k400-null-native-vs-native                     0.9975    0.9948    1.0019    0.0044
+nr-bg2-n256-k121-gap-native-vs-aff3ct                       0.3499    0.3486    0.3509    0.0038
+nr-bg2-n1024-k400-gap-native-vs-aff3ct                      0.3439    0.3428    0.3450    0.0033
+nr-bg2-n1440-k720-gap-native-vs-aff3ct                      0.3188    0.3179    0.3201    0.0040
+nr-bg1-n1200-k900-gap-native-vs-aff3ct                      0.3330    0.3327    0.3345    0.0044
+nr-bg1-n1320-k1056-gap-native-vs-aff3ct                     0.3266    0.3256    0.3271    0.0030
+nr-bg1-n2560-k2048-gap-native-vs-aff3ct                     0.3300    0.3295    0.3325    0.0078
+nr-bg1-n2560-k2048-control-portable-vs-native               0.9997    0.9966    1.0035    0.0039
+
+largest relative half-width: 0.007809
+rounded up to two decimals:  0.01
+
+# command: survey/analysis bootstrap-resolution dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/receipt.json 0.004166666666666667
+# The confirmation's corrected alpha, 0.05 / (1 * 2) / 6 for six confirmatory cells on attempt 1.
+receipt dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/receipt.json
+campaign nr-derate-pilot-eda07788-20260910t170155z seed 20260910
+alpha 0.004166666666666667 confidence 0.995833 resamples 10000
+
+cell                                                 estimate    lower    upper  rel_half     shift
+nr-bg2-n1024-k400-null-native-vs-native                0.9975   0.9931   1.0042    0.0067    0.0000
+nr-bg2-n256-k121-gap-native-vs-aff3ct                  0.3499   0.3482   0.3512    0.0050    0.0002
+nr-bg2-n1024-k400-gap-native-vs-aff3ct                 0.3439   0.3425   0.3456    0.0047    0.0003
+nr-bg2-n1440-k720-gap-native-vs-aff3ct                 0.3188   0.3178   0.3202    0.0045    0.0002
+nr-bg1-n1200-k900-gap-native-vs-aff3ct                 0.3330   0.3326   0.3349    0.0055    0.0004
+nr-bg1-n1320-k1056-gap-native-vs-aff3ct                0.3266   0.3254   0.3272    0.0039    0.0002
+nr-bg1-n2560-k2048-gap-native-vs-aff3ct                0.3300   0.3292   0.3383    0.0253    0.0177
+nr-bg1-n2560-k2048-control-portable-vs-native          0.9997   0.9942   1.0083    0.0086    0.0048
+
+widest relative half-width: 0.025312 (nr-bg1-n2560-k2048-gap-native-vs-aff3ct)
+largest endpoint shift:     0.017717 (nr-bg1-n2560-k2048-gap-native-vs-aff3ct)
+larger of the two rounded up to two decimals: 0.03

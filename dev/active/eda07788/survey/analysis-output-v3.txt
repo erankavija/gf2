@@ -1,0 +1,52 @@
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling survey-analysis v0.0.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/dev/active/eda07788/survey/analysis)
+    Finished `release` profile [optimized] target(s) in 0.20s
+PASS zero-fill semantics: 148 shifts over lengths [0, 1, 63, 64, 65, 127, 128, 4096, 64800] match an independent zero-fill reference with canonical indexing and zero tail padding
+PASS wrap is a different operation: 88/88 nonzero offsets give a different result under wrap-around rotation than under gf2's zero-fill shift
+
+BG2 target_n=256 target_k=121; gf2 derives BG2, lifting Kb=6, Z=22, K_LDPC=220, N_LDPC=1144
+  AGREE  AFF3CT derives the same parameters from (K, N); its selection equals gf2's 256 positions
+  AGREE  with the base graph fixed to BG2, AFF3CT's lifting rule derives the same parameters
+  AGREE  AFF3CT's selection rule on gf2's parameters selects the same 256 positions
+BG2 target_n=512 target_k=200; gf2 derives BG2, lifting Kb=8, Z=26, K_LDPC=260, N_LDPC=1352
+  AGREE  AFF3CT derives the same parameters from (K, N); its selection equals gf2's 512 positions
+  AGREE  with the base graph fixed to BG2, AFF3CT's lifting rule derives the same parameters
+  AGREE  AFF3CT's selection rule on gf2's parameters selects the same 512 positions
+BG2 target_n=1024 target_k=400; gf2 derives BG2, lifting Kb=8, Z=52, K_LDPC=520, N_LDPC=2704
+  AGREE  AFF3CT derives the same parameters from (K, N); its selection equals gf2's 1024 positions
+  AGREE  with the base graph fixed to BG2, AFF3CT's lifting rule derives the same parameters
+  AGREE  AFF3CT's selection rule on gf2's parameters selects the same 1024 positions
+BG1 target_n=1024 target_k=512; gf2 derives BG1, lifting Kb=22, Z=24, K_LDPC=528, N_LDPC=1632
+  DIFFER AFF3CT derives BG2, lifting Kb=8, Z=64, K_LDPC=640, N_LDPC=3328 from (K, N), a different mother code
+  AGREE  with the base graph fixed to BG1, AFF3CT's lifting rule derives the same parameters
+  AGREE  AFF3CT's selection rule on gf2's parameters selects the same 1024 positions
+BG1 target_n=2048 target_k=1024; gf2 derives BG1, lifting Kb=22, Z=48, K_LDPC=1056, N_LDPC=3264
+  DIFFER AFF3CT derives BG2, lifting Kb=10, Z=104, K_LDPC=1040, N_LDPC=5408 from (K, N), a different mother code
+  AGREE  with the base graph fixed to BG1, AFF3CT's lifting rule derives the same parameters
+  AGREE  AFF3CT's selection rule on gf2's parameters selects the same 2048 positions
+BG1 target_n=4096 target_k=2048; gf2 derives BG1, lifting Kb=22, Z=96, K_LDPC=2112, N_LDPC=6528
+  DIFFER AFF3CT derives BG2, lifting Kb=10, Z=208, K_LDPC=2080, N_LDPC=10816 from (K, N), a different mother code
+  AGREE  with the base graph fixed to BG1, AFF3CT's lifting rule derives the same parameters
+  AGREE  AFF3CT's selection rule on gf2's parameters selects the same 4096 positions
+BG1 target_n=1200 target_k=900; gf2 derives BG1, lifting Kb=22, Z=44, K_LDPC=968, N_LDPC=2992
+  AGREE  AFF3CT derives the same parameters from (K, N); its selection equals gf2's 1200 positions
+  AGREE  with the base graph fixed to BG1, AFF3CT's lifting rule derives the same parameters
+  AGREE  AFF3CT's selection rule on gf2's parameters selects the same 1200 positions
+BG2 target_n=1200 target_k=600; gf2 derives BG2, lifting Kb=9, Z=72, K_LDPC=720, N_LDPC=3744
+  DIFFER AFF3CT derives BG2, lifting Kb=8, Z=80, K_LDPC=800, N_LDPC=4160 from (K, N), a different mother code
+  DIFFER with the base graph fixed to BG2, AFF3CT's lifting rule derives BG2, lifting Kb=8, Z=80, K_LDPC=800, N_LDPC=4160
+  AGREE  AFF3CT's selection rule on gf2's parameters selects the same 1200 positions
+
+4/8 configurations: AFF3CT's own (K, N) derivation equals gf2's parameters
+7/8 configurations: AFF3CT's lifting rule on gf2's base graph equals gf2's parameters
+8/8 configurations: AFF3CT's selection rule on gf2's parameters selects gf2's positions

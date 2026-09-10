@@ -1,0 +1,1034 @@
+//! Reduced Row Echelon Form (RREF) computation over GF(2).
+//!
+//! This module implements row reduction (Gaussian elimination) to compute
+//! the reduced row echelon form of matrices over the binary field GF(2).
+//!
+//! [`rref`] pivots in a fixed direction and reports the pivot columns it
+//! reaches. [`ordered_column_elimination`] takes an explicit column preference
+//! instead, and additionally returns the invertible row transform that produced
+//! the reduced matrix, so a caller holding a right-hand side can move it into
+//! the same coordinates.
+
+use std::fmt;
+
+use crate::matrix::BitMatrix;
+use crate::BitVec;
+
+/// Result of reduced row echelon form computation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RrefResult {
+    /// Matrix in reduced row echelon form
+    pub reduced: BitMatrix,
+
+    /// Indices of pivot columns (in order found during reduction)
+    pub pivot_cols: Vec<usize>,
+
+    /// Row permutation applied: reduced_row\[i\] = input_row\[row_perm\[i\]\]
+    pub row_perm: Vec<usize>,
+
+    /// Rank of the matrix (number of linearly independent rows)
+    pub rank: usize,
+}
+
+/// Compute the reduced row echelon form (RREF) of a matrix over GF(2).
+///
+/// Performs row reduction with column pivoting to transform the input matrix
+/// into reduced row echelon form. This is the standard form produced by
+/// Gaussian elimination.
+///
+/// # Arguments
+///
+/// * `matrix` - Input matrix to reduce
+/// * `pivot_from_right` - If true, search for pivots from right to left;
+///   if false, search left to right
+///
+/// # Returns
+///
+/// Result containing:
+/// - The reduced matrix in RREF
+/// - Pivot column indices (in order found)
+/// - Row permutation applied
+/// - Matrix rank
+///
+/// # Algorithm
+///
+/// Uses an M4RI-style blocked schedule for left-to-right pivoting: pivot rows
+/// are collected in small blocks, a Gray table of row combinations is built,
+/// and each non-pivot row clears the whole block with at most one suffix XOR.
+/// This keeps the public API unchanged while reducing dense RREF row traffic by
+/// roughly the block width. Right-to-left pivoting uses the compatible
+/// unblocked path.
+///
+/// Complexity remains O(m² × n / 64) word operations for dense matrices, with a
+/// lower constant factor from Gray-table batching and suffix-only row updates.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::matrix::BitMatrix;
+/// use gf2_core::alg::rref::rref;
+///
+/// // Simple 2×3 matrix: [1 0 1]
+/// //                    [0 1 1]
+/// let mut m = BitMatrix::zeros(2, 3);
+/// m.set(0, 0, true);
+/// m.set(0, 2, true);
+/// m.set(1, 1, true);
+/// m.set(1, 2, true);
+///
+/// let result = rref(&m, false);
+/// assert_eq!(result.rank, 2);
+/// assert_eq!(result.pivot_cols, vec![0, 1]);
+/// ```
+pub fn rref(matrix: &BitMatrix, pivot_from_right: bool) -> RrefResult {
+    rref_with_block_size(matrix, pivot_from_right, default_block_size(matrix.cols()))
+}
+
+/// Test-support hook for benchmarking the same RREF implementation with a
+/// fixed M4RI block size. `block_size = 1` is the scalar baseline: it uses the
+/// same pivoting and suffix-XOR kernels as production, but disables Gray-table
+/// row-combination batching.
+#[doc(hidden)]
+#[cfg(any(test, feature = "test-support"))]
+pub fn rref_with_block_size_for_test(
+    matrix: &BitMatrix,
+    pivot_from_right: bool,
+    block_size: usize,
+) -> RrefResult {
+    rref_with_block_size(matrix, pivot_from_right, block_size)
+}
+
+/// Default M4RM block width for both RREF and matrix inversion over GF(2).
+///
+/// Mirrors the M4RI library's `m4ri_optk(n)` rule of thumb: 4-wide tables
+/// (16 entries) at small-to-mid sizes and 8-wide tables (256 entries) at
+/// large sizes. This gives a 256-entry table for n > 512, which is the same
+/// schedule M4RI uses at n=1024.
+///
+/// Used by `rref::rref` and `gauss::invert_m4ri` so that block-size policy
+/// lives in exactly one place.
+pub(crate) fn default_block_size(cols: usize) -> usize {
+    match cols {
+        0..=64 => 4,
+        65..=512 => 4,
+        _ => 8,
+    }
+}
+
+fn rref_with_block_size(
+    matrix: &BitMatrix,
+    pivot_from_right: bool,
+    block_size: usize,
+) -> RrefResult {
+    let m = matrix.rows();
+    let n = matrix.cols();
+
+    // Handle empty matrix
+    if m == 0 || n == 0 {
+        return RrefResult {
+            reduced: matrix.clone(),
+            pivot_cols: Vec::new(),
+            row_perm: Vec::new(),
+            rank: 0,
+        };
+    }
+
+    if pivot_from_right {
+        return rref_unblocked_right_to_left(matrix);
+    }
+
+    let block_size = block_size.clamp(1, 10);
+
+    // Create working copy
+    let mut work = matrix.clone();
+
+    // Track row permutation
+    let mut row_perm: Vec<usize> = (0..m).collect();
+
+    // Track pivot columns
+    let mut pivot_cols = Vec::new();
+
+    let xor = crate::kernels::ops::resolve_xor_inplace(work.stride_words());
+    let mut current_row = 0;
+    let mut col = 0;
+
+    while current_row < m && col < n {
+        let block_row_start = current_row;
+        let first_block_word = col / 64;
+        let mut block_pivots = Vec::with_capacity(block_size);
+
+        while current_row < m && col < n && block_pivots.len() < block_size {
+            if let Some(pivot_row) =
+                find_block_pivot(&mut work, block_row_start, current_row, col, &block_pivots)
+            {
+                if pivot_row != current_row {
+                    work.swap_rows(current_row, pivot_row);
+                    row_perm.swap(current_row, pivot_row);
+                }
+
+                for (offset, &pivot_col) in block_pivots.iter().enumerate() {
+                    let prev_row = block_row_start + offset;
+                    debug_assert!(
+                        !work.get_unchecked(current_row, pivot_col),
+                        "block pivot reduction left an earlier pivot set"
+                    );
+                    if work.get_unchecked(prev_row, col) {
+                        work.row_xor_from(prev_row, current_row, pivot_col / 64);
+                    }
+                }
+
+                block_pivots.push(col);
+                pivot_cols.push(col);
+                current_row += 1;
+            } else if current_row <= m.saturating_mul(3) / 4
+                && !tail_has_nonzero_from(&work, current_row, col + 1)
+            {
+                col = n;
+                break;
+            }
+            col += 1;
+        }
+
+        if !block_pivots.is_empty() {
+            eliminate_block(
+                &mut work,
+                m,
+                block_row_start,
+                &block_pivots,
+                first_block_word,
+                xor,
+            );
+        }
+    }
+
+    let rank = current_row;
+
+    RrefResult {
+        reduced: work,
+        pivot_cols,
+        row_perm,
+        rank,
+    }
+}
+
+fn tail_has_nonzero_from(work: &BitMatrix, start_row: usize, start_col: usize) -> bool {
+    if start_row >= work.rows() || start_col >= work.cols() {
+        return false;
+    }
+
+    let start_word = start_col / 64;
+    let start_mask = !0u64 << (start_col & 63);
+    for row in start_row..work.rows() {
+        let words = work.row_words(row);
+        if words[start_word] & start_mask != 0 {
+            return true;
+        }
+        if words[start_word + 1..].iter().any(|&word| word != 0) {
+            return true;
+        }
+    }
+    false
+}
+
+fn find_block_pivot(
+    work: &mut BitMatrix,
+    block_row_start: usize,
+    start_row: usize,
+    col: usize,
+    block_pivots: &[usize],
+) -> Option<usize> {
+    for row in start_row..work.rows() {
+        for (offset, &pivot_col) in block_pivots.iter().enumerate() {
+            if work.get_unchecked(row, pivot_col) {
+                work.row_xor_from(row, block_row_start + offset, pivot_col / 64);
+            }
+        }
+        if work.get_unchecked(row, col) {
+            return Some(row);
+        }
+    }
+    None
+}
+
+fn eliminate_block(
+    work: &mut BitMatrix,
+    rows: usize,
+    block_row_start: usize,
+    block_pivots: &[usize],
+    first_word: usize,
+    xor: crate::kernels::ops::XorInplaceFn,
+) {
+    let block_rows = block_pivots.len();
+    let suffix_words = work.stride_words() - first_word;
+    if suffix_words == 0 {
+        return;
+    }
+
+    let table_rows = 1usize << block_rows;
+    let mut table = vec![0u64; table_rows * suffix_words];
+    for idx in 1..table_rows {
+        let bit = idx.trailing_zeros() as usize;
+        let prev = idx & !(1usize << bit);
+
+        let (before, after) = table.split_at_mut(idx * suffix_words);
+        let prev_slice = &before[prev * suffix_words..prev * suffix_words + suffix_words];
+        let dst = &mut after[..suffix_words];
+        dst.copy_from_slice(prev_slice);
+        xor(
+            dst,
+            &work.row_words(block_row_start + bit)[first_word..first_word + suffix_words],
+        );
+    }
+
+    for row in 0..rows {
+        if (block_row_start..block_row_start + block_rows).contains(&row) {
+            continue;
+        }
+        let table_idx = block_table_index(work, row, block_pivots);
+        if table_idx != 0 {
+            let src_start = table_idx * suffix_words;
+            work.row_xor_slice_from(row, first_word, &table[src_start..src_start + suffix_words]);
+        }
+    }
+}
+
+fn block_table_index(work: &BitMatrix, row: usize, block_pivots: &[usize]) -> usize {
+    if let (Some(&first), Some(&last)) = (block_pivots.first(), block_pivots.last()) {
+        let width = block_pivots.len();
+        if last + 1 == first + width && first / 64 == last / 64 {
+            let mask = (1usize << width) - 1;
+            return ((work.row_words(row)[first / 64] >> (first & 63)) as usize) & mask;
+        }
+    }
+
+    let mut table_idx = 0usize;
+    for (bit, &pivot_col) in block_pivots.iter().enumerate() {
+        if work.get_unchecked(row, pivot_col) {
+            table_idx |= 1usize << bit;
+        }
+    }
+    table_idx
+}
+
+fn rref_unblocked_right_to_left(matrix: &BitMatrix) -> RrefResult {
+    let m = matrix.rows();
+    let n = matrix.cols();
+
+    let mut work = matrix.clone();
+    let mut row_perm: Vec<usize> = (0..m).collect();
+    let mut pivot_cols = Vec::new();
+    let mut current_row = 0;
+    for col in (0..n).rev() {
+        if current_row == m {
+            break;
+        }
+        if let Some(pivot_row) = work.find_pivot_row(col, current_row) {
+            if pivot_row != current_row {
+                work.swap_rows(current_row, pivot_row);
+                row_perm.swap(current_row, pivot_row);
+            }
+
+            pivot_cols.push(col);
+
+            for r in 0..m {
+                if r != current_row && work.get_unchecked(r, col) {
+                    work.row_xor(r, current_row);
+                }
+            }
+
+            current_row += 1;
+        }
+    }
+
+    let rank = current_row;
+
+    // When pivoting right-to-left, we need to reorder rows to maintain RREF invariant:
+    // pivot_cols must be in ascending order with pivot_cols[i] being the pivot for row i
+    if rank > 0 {
+        // Create mapping: (row_index, pivot_col) and sort by pivot_col
+        let mut col_to_row: Vec<(usize, usize)> = pivot_cols.iter().copied().enumerate().collect();
+        col_to_row.sort_unstable_by_key(|(_, col)| *col);
+
+        // Check if reordering is actually needed
+        let needs_reorder = col_to_row.iter().enumerate().any(|(i, &(row, _))| i != row);
+
+        if needs_reorder {
+            let new_row_order: Vec<usize> = col_to_row.iter().map(|(row, _)| *row).collect();
+            let sorted_pivot_cols: Vec<usize> = col_to_row.iter().map(|(_, col)| *col).collect();
+
+            // Build new matrix with reordered rows using word-level operations
+            let mut new_work = BitMatrix::zeros(m, n);
+
+            // Copy reordered pivot rows word-by-word for performance
+            for (new_row, &old_row) in new_row_order.iter().enumerate() {
+                let old_words = work.row_words(old_row);
+                let new_words = new_work.row_words_mut(new_row);
+                new_words.copy_from_slice(old_words);
+            }
+
+            // Zero rows are already zero in new_work (no need to copy)
+
+            work = new_work;
+
+            // Update row_perm to reflect reordering
+            let old_row_perm = row_perm.clone();
+            for (new_row, &old_row) in new_row_order.iter().enumerate() {
+                row_perm[new_row] = old_row_perm[old_row];
+            }
+
+            pivot_cols = sorted_pivot_cols;
+        } else {
+            // No reordering needed, just sort pivot_cols
+            pivot_cols.sort_unstable();
+        }
+    }
+
+    RrefResult {
+        reduced: work,
+        pivot_cols,
+        row_perm,
+        rank,
+    }
+}
+
+/// Errors reported by [`ordered_column_elimination`] and by the right-hand-side
+/// operations of [`OrderedEliminationResult`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OrderedEliminationError {
+    /// The column preference does not list one entry per matrix column.
+    PreferenceLength {
+        /// Number of columns in the matrix.
+        expected: usize,
+        /// Number of entries in the supplied preference.
+        actual: usize,
+    },
+
+    /// A preference entry names a column outside `0..cols`.
+    PreferenceColumnOutOfRange {
+        /// Position of the offending entry within the preference.
+        position: usize,
+        /// Column index the entry names.
+        column: usize,
+        /// Number of columns in the matrix.
+        cols: usize,
+    },
+
+    /// A preference entry repeats a column that an earlier entry already named.
+    PreferenceColumnRepeated {
+        /// Position of the repeating entry.
+        position: usize,
+        /// Column index named twice.
+        column: usize,
+        /// Position of the first entry naming this column.
+        first_position: usize,
+    },
+
+    /// A right-hand side does not carry one entry per matrix row.
+    RightHandSideLength {
+        /// Number of rows in the eliminated matrix.
+        expected: usize,
+        /// Number of entries in the supplied right-hand side.
+        actual: usize,
+    },
+}
+
+impl fmt::Display for OrderedEliminationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            OrderedEliminationError::PreferenceLength { expected, actual } => write!(
+                f,
+                "column preference has {actual} entries, expected one per column ({expected})"
+            ),
+            OrderedEliminationError::PreferenceColumnOutOfRange {
+                position,
+                column,
+                cols,
+            } => write!(
+                f,
+                "column preference entry {position} names column {column}, outside 0..{cols}"
+            ),
+            OrderedEliminationError::PreferenceColumnRepeated {
+                position,
+                column,
+                first_position,
+            } => write!(
+                f,
+                "column preference entry {position} repeats column {column}, \
+                 first named by entry {first_position}"
+            ),
+            OrderedEliminationError::RightHandSideLength { expected, actual } => write!(
+                f,
+                "right-hand side has {actual} entries, expected one per row ({expected})"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for OrderedEliminationError {}
+
+/// Result of an ordered-column elimination over GF(2).
+///
+/// The elimination applies invertible row operations `U` to the input matrix
+/// `A`, so `reduced = U · A`. The selected columns carry the identity:
+/// `reduced` has a set entry at row `i`, column `selected_cols[j]` exactly when
+/// `i == j`. Rows `rank..` of `reduced` are zero, so a transformed right-hand
+/// side is reachable precisely when its entries at those rows are zero.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OrderedEliminationResult {
+    /// Reduced matrix `U · A`, with the shape of the input.
+    pub reduced: BitMatrix,
+
+    /// Independent columns in preference order; `selected_cols[i]` is the
+    /// column that pivots on row `i`.
+    pub selected_cols: Vec<usize>,
+
+    /// Rank of the input matrix, equal to `selected_cols.len()`.
+    pub rank: usize,
+
+    /// Applied row transform `U`: an invertible `rows × rows` matrix over
+    /// GF(2).
+    pub transform: BitMatrix,
+}
+
+impl OrderedEliminationResult {
+    /// Moves a right-hand side into the coordinates of the reduced matrix.
+    ///
+    /// Returns `U · b`, so `A x = b` and `(U · A) x = U · b` have the same
+    /// solution set. Pass the result to [`is_consistent`](Self::is_consistent)
+    /// to learn whether that solution set is non-empty.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OrderedEliminationError::RightHandSideLength`] when `rhs` does
+    /// not carry one entry per row of the eliminated matrix.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows² / 64) word operations.
+    pub fn apply_transform(&self, rhs: &BitVec) -> Result<BitVec, OrderedEliminationError> {
+        self.check_untransformed_rhs(rhs)?;
+        Ok(self.transform.matvec(rhs))
+    }
+
+    /// Reports whether a transformed right-hand side lies in the image
+    /// (column space) of the eliminated matrix, that is, whether the system
+    /// has a solution.
+    ///
+    /// Takes the output of [`apply_transform`](Self::apply_transform). Rows
+    /// `rank..` of `reduced` are zero, so a set entry at any of those rows
+    /// demands `0 = 1` and marks the system inconsistent. An elimination of
+    /// full row rank is consistent for every right-hand side.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OrderedEliminationError::RightHandSideLength`] when
+    /// `transformed_rhs` does not carry one entry per row of the eliminated
+    /// matrix.
+    pub fn is_consistent(&self, transformed_rhs: &BitVec) -> Result<bool, OrderedEliminationError> {
+        self.check_transformed_rhs(transformed_rhs)?;
+        Ok((self.rank..self.reduced.rows()).all(|row| !transformed_rhs.get(row)))
+    }
+
+    // The dimension checks validate against the consuming operation's own
+    // requirements, not only the reduced matrix: the fields are public, so a
+    // caller-assembled or mutated result must error here rather than panic
+    // inside the multiplication or the zero-row scan.
+
+    /// `apply_transform` multiplies `transform · rhs`.
+    fn check_untransformed_rhs(&self, rhs: &BitVec) -> Result<(), OrderedEliminationError> {
+        let expected = self.transform.cols();
+        if rhs.len() == expected && self.transform.rows() == self.reduced.rows() {
+            Ok(())
+        } else {
+            Err(OrderedEliminationError::RightHandSideLength {
+                expected,
+                actual: rhs.len(),
+            })
+        }
+    }
+
+    /// `is_consistent` scans rows `rank..reduced.rows()` of `transformed_rhs`.
+    fn check_transformed_rhs(&self, rhs: &BitVec) -> Result<(), OrderedEliminationError> {
+        let expected = self.reduced.rows();
+        if rhs.len() == expected && self.rank <= expected {
+            Ok(())
+        } else {
+            Err(OrderedEliminationError::RightHandSideLength {
+                expected,
+                actual: rhs.len(),
+            })
+        }
+    }
+}
+
+/// Reduce a matrix over GF(2), preferring pivot columns in a caller-supplied
+/// order.
+///
+/// The preference is a complete permutation of the column indices. The
+/// elimination walks it from front to back and pivots on every column that is
+/// independent of the columns already selected, which makes the selected set
+/// the greedy independent basis under that order. Reduction is full: each
+/// selected column ends with a single set entry, in its own pivot row.
+///
+/// The operation carries no domain policy; a caller decides what the order
+/// means, for example by ranking columns by reliability.
+///
+/// # Arguments
+///
+/// * `matrix` — input matrix `A`
+/// * `preference` — every column index in `0..matrix.cols()`, exactly once, in
+///   decreasing order of preference
+///
+/// # Errors
+///
+/// Returns [`OrderedEliminationError::PreferenceLength`],
+/// [`OrderedEliminationError::PreferenceColumnOutOfRange`], or
+/// [`OrderedEliminationError::PreferenceColumnRepeated`] when `preference` is
+/// not a permutation of the column indices.
+///
+/// # Algorithm
+///
+/// Unblocked Gauss-Jordan elimination over the preference order, mirroring the
+/// row operations onto an identity matrix to accumulate the transform `U`.
+/// Rank-deficient, empty, and rectangular inputs are ordinary cases: a column
+/// that is dependent on the selected ones is skipped, and the rows below the
+/// rank end zero.
+///
+/// This loop is a tracked exception to `@/inv/convention-convergence` beside
+/// the blocked [`rref`] schedule, which requires ascending pivot columns;
+/// convergence onto a shared blocked kernel is `@/issue/c0bb2ab1`.
+///
+/// # Complexity
+///
+/// O(rank × rows × (cols + rows) / 64) word operations for the elimination
+/// itself, plus O(cols) preference validation and O(rows × cols) single-word
+/// pivot probes that are paid even when the rank is zero.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::alg::rref::ordered_column_elimination;
+/// use gf2_core::matrix::BitMatrix;
+/// use gf2_core::BitVec;
+///
+/// // Row 2 is the sum of rows 0 and 1, so A has rank 2.
+/// //     [1 1 0]
+/// //     [0 1 1]
+/// //     [1 0 1]
+/// let mut a = BitMatrix::zeros(3, 3);
+/// for (row, col) in [(0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 2)] {
+///     a.set(row, col, true);
+/// }
+///
+/// // Prefer the rightmost columns.
+/// let result = ordered_column_elimination(&a, &[2, 1, 0]).unwrap();
+/// assert_eq!(result.rank, 2);
+/// assert_eq!(result.selected_cols, vec![2, 1]);
+/// assert_eq!(&result.transform * &a, result.reduced);
+///
+/// // x solves A x = b, so it also solves (U A) x = U b.
+/// let mut x = BitVec::zeros(3);
+/// x.set(0, true);
+/// x.set(2, true);
+/// let b = a.matvec(&x);
+///
+/// let transformed = result.apply_transform(&b).unwrap();
+/// assert_eq!(result.reduced.matvec(&x), transformed);
+/// assert!(result.is_consistent(&transformed).unwrap());
+/// ```
+pub fn ordered_column_elimination(
+    matrix: &BitMatrix,
+    preference: &[usize],
+) -> Result<OrderedEliminationResult, OrderedEliminationError> {
+    validate_preference(preference, matrix.cols())?;
+
+    let rows = matrix.rows();
+    let mut reduced = matrix.clone();
+    let mut transform = BitMatrix::identity(rows);
+    let mut selected_cols = Vec::new();
+    let mut pivot_row = 0;
+
+    for &col in preference {
+        if pivot_row == rows {
+            break;
+        }
+
+        let Some(source_row) = reduced.find_pivot_row(col, pivot_row) else {
+            continue;
+        };
+
+        if source_row != pivot_row {
+            reduced.swap_rows(pivot_row, source_row);
+            transform.swap_rows(pivot_row, source_row);
+        }
+
+        for row in 0..rows {
+            if row != pivot_row && reduced.get_unchecked(row, col) {
+                reduced.row_xor(row, pivot_row);
+                transform.row_xor(row, pivot_row);
+            }
+        }
+
+        selected_cols.push(col);
+        pivot_row += 1;
+    }
+
+    let rank = selected_cols.len();
+
+    Ok(OrderedEliminationResult {
+        reduced,
+        selected_cols,
+        rank,
+        transform,
+    })
+}
+
+fn validate_preference(preference: &[usize], cols: usize) -> Result<(), OrderedEliminationError> {
+    if preference.len() != cols {
+        return Err(OrderedEliminationError::PreferenceLength {
+            expected: cols,
+            actual: preference.len(),
+        });
+    }
+
+    let mut seen_at: Vec<Option<usize>> = vec![None; cols];
+    for (position, &column) in preference.iter().enumerate() {
+        if column >= cols {
+            return Err(OrderedEliminationError::PreferenceColumnOutOfRange {
+                position,
+                column,
+                cols,
+            });
+        }
+        if let Some(first_position) = seen_at[column] {
+            return Err(OrderedEliminationError::PreferenceColumnRepeated {
+                position,
+                column,
+                first_position,
+            });
+        }
+        seen_at[column] = Some(position);
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    #[test]
+    fn test_rref_empty_matrix() {
+        let m = BitMatrix::zeros(0, 0);
+        let result = rref(&m, false);
+
+        assert_eq!(result.rank, 0);
+        assert_eq!(result.pivot_cols.len(), 0);
+        assert_eq!(result.reduced.rows(), 0);
+        assert_eq!(result.reduced.cols(), 0);
+    }
+
+    #[test]
+    fn test_rref_single_element_zero() {
+        let m = BitMatrix::zeros(1, 1);
+        let result = rref(&m, false);
+
+        assert_eq!(result.rank, 0);
+        assert!(result.pivot_cols.is_empty());
+    }
+
+    #[test]
+    fn test_rref_single_element_one() {
+        let mut m = BitMatrix::zeros(1, 1);
+        m.set(0, 0, true);
+        let result = rref(&m, false);
+
+        assert_eq!(result.rank, 1);
+        assert_eq!(result.pivot_cols, vec![0]);
+        assert!(result.reduced.get(0, 0));
+    }
+
+    #[test]
+    fn test_rref_identity_2x2() {
+        let m = BitMatrix::identity(2);
+        let result = rref(&m, false);
+
+        assert_eq!(result.rank, 2);
+        assert_eq!(result.pivot_cols, vec![0, 1]);
+
+        // Result should still be identity
+        assert!(result.reduced.get(0, 0));
+        assert!(!result.reduced.get(0, 1));
+        assert!(!result.reduced.get(1, 0));
+        assert!(result.reduced.get(1, 1));
+    }
+
+    #[test]
+    fn test_rref_simple_2x3() {
+        // Matrix: [1 0 1]
+        //         [0 1 1]
+        // Already in RREF
+        let mut m = BitMatrix::zeros(2, 3);
+        m.set(0, 0, true);
+        m.set(0, 2, true);
+        m.set(1, 1, true);
+        m.set(1, 2, true);
+
+        let result = rref(&m, false);
+
+        assert_eq!(result.rank, 2);
+        assert_eq!(result.pivot_cols, vec![0, 1]);
+    }
+
+    #[test]
+    fn test_rref_needs_elimination() {
+        // Matrix: [1 1 0]
+        //         [1 0 1]
+        // RREF should be: [1 0 1]
+        //                 [0 1 1]
+        let mut m = BitMatrix::zeros(2, 3);
+        m.set(0, 0, true);
+        m.set(0, 1, true);
+        m.set(1, 0, true);
+        m.set(1, 2, true);
+
+        let result = rref(&m, false);
+
+        assert_eq!(result.rank, 2);
+        assert_eq!(result.pivot_cols, vec![0, 1]);
+
+        // Check RREF form
+        assert!(result.reduced.get(0, 0));
+        assert!(!result.reduced.get(0, 1));
+        assert!(result.reduced.get(0, 2));
+        assert!(!result.reduced.get(1, 0));
+        assert!(result.reduced.get(1, 1));
+        assert!(result.reduced.get(1, 2));
+    }
+
+    #[test]
+    fn test_rref_rank_deficient() {
+        // Matrix: [1 0 1]
+        //         [1 0 1]  (duplicate row)
+        // RREF: [1 0 1]
+        //       [0 0 0]
+        let mut m = BitMatrix::zeros(2, 3);
+        m.set(0, 0, true);
+        m.set(0, 2, true);
+        m.set(1, 0, true);
+        m.set(1, 2, true);
+
+        let result = rref(&m, false);
+
+        assert_eq!(result.rank, 1);
+        assert_eq!(result.pivot_cols, vec![0]);
+
+        // First row should be [1 0 1]
+        assert!(result.reduced.get(0, 0));
+        assert!(!result.reduced.get(0, 1));
+        assert!(result.reduced.get(0, 2));
+
+        // Second row should be all zeros
+        assert!(!result.reduced.get(1, 0));
+        assert!(!result.reduced.get(1, 1));
+        assert!(!result.reduced.get(1, 2));
+    }
+
+    #[test]
+    fn test_rref_all_zeros() {
+        let m = BitMatrix::zeros(3, 4);
+        let result = rref(&m, false);
+
+        assert_eq!(result.rank, 0);
+        assert!(result.pivot_cols.is_empty());
+
+        // Should remain all zeros
+        for r in 0..3 {
+            for c in 0..4 {
+                assert!(!result.reduced.get(r, c));
+            }
+        }
+    }
+
+    #[test]
+    fn test_blocked_rref_boundary_full_rank_and_deficient() {
+        for n in [0usize, 1, 63, 64, 65, 128, 129] {
+            let full = boundary_full_rank(n);
+            let full_prod = rref(&full, false);
+            let full_baseline = rref_with_block_size_for_test(&full, false, 1);
+            assert_eq!(full_prod, full_baseline, "full-rank boundary n={n}");
+            assert_eq!(full_prod.rank, n, "full-rank boundary rank n={n}");
+
+            let deficient = boundary_rank_deficient(n);
+            let deficient_prod = rref(&deficient, false);
+            let deficient_baseline = rref_with_block_size_for_test(&deficient, false, 1);
+            assert_eq!(
+                deficient_prod, deficient_baseline,
+                "rank-deficient boundary n={n}"
+            );
+            assert_eq!(
+                deficient_prod.rank,
+                n.div_ceil(2),
+                "rank-deficient boundary rank n={n}"
+            );
+        }
+    }
+
+    /// Production-scale equivalence test for `block_size = 8`.
+    ///
+    /// `default_block_size` returns `8` only for `cols > 512`. The
+    /// boundary test above caps at `n=129` (block 4) and the proptests
+    /// cap at `cols < 20` (block 4), so neither exercises the
+    /// production `block_size = 8` path that ships at scale and that the
+    /// jit:8e305c21 / 366dbbcd target rows measure. This test covers
+    /// `n in {513, 1024}` so the `8`-wide block is asserted equal to
+    /// the unblocked baseline (`block_size = 1`) on both full-rank and
+    /// rank-deficient inputs.
+    #[test]
+    fn test_blocked_rref_block_size_8_equivalence() {
+        for n in [513usize, 1024] {
+            let full = boundary_full_rank(n);
+            let full_block_8 = rref_with_block_size_for_test(&full, false, 8);
+            let full_baseline = rref_with_block_size_for_test(&full, false, 1);
+            assert_eq!(
+                full_block_8, full_baseline,
+                "full-rank n={n} block=8 must match block=1 baseline"
+            );
+
+            let deficient = boundary_rank_deficient(n);
+            let deficient_block_8 = rref_with_block_size_for_test(&deficient, false, 8);
+            let deficient_baseline = rref_with_block_size_for_test(&deficient, false, 1);
+            assert_eq!(
+                deficient_block_8, deficient_baseline,
+                "rank-deficient n={n} block=8 must match block=1 baseline"
+            );
+        }
+    }
+
+    fn boundary_full_rank(n: usize) -> BitMatrix {
+        let mut matrix = BitMatrix::identity(n);
+        for r in 0..n {
+            let mut c = r + 1;
+            while c < n {
+                if ((r * 17 + c * 31 + n) & 3) == 0 {
+                    matrix.set(r, c, true);
+                }
+                c += 1;
+            }
+        }
+        matrix
+    }
+
+    fn boundary_rank_deficient(n: usize) -> BitMatrix {
+        let rank = n.div_ceil(2);
+        let mut matrix = BitMatrix::zeros(n, n);
+        for r in 0..rank {
+            matrix.set(r, r, true);
+            for c in rank..n {
+                if ((r * 13 + c * 7 + n) & 1) == 0 {
+                    matrix.set(r, c, true);
+                }
+            }
+        }
+        for r in rank..n {
+            for c in 0..n {
+                if matrix.get(r - rank, c) {
+                    matrix.set(r, c, true);
+                }
+            }
+        }
+        matrix
+    }
+
+    #[test]
+    fn test_rref_pivot_from_right() {
+        // Matrix: [1 1 0]
+        //         [0 1 1]
+        // When pivoting from right, should prefer rightmost pivots
+        let mut m = BitMatrix::zeros(2, 3);
+        m.set(0, 0, true);
+        m.set(0, 1, true);
+        m.set(1, 1, true);
+        m.set(1, 2, true);
+
+        let result = rref(&m, true);
+
+        assert_eq!(result.rank, 2);
+        // With right-to-left pivoting, should select columns 2, 1 (in that search order)
+        // But pivot_cols should still be ordered by when found
+    }
+
+    #[test]
+    fn test_rref_pivot_from_right_preserves_lower_columns_across_words() {
+        let mut m = BitMatrix::zeros(2, 65);
+        m.set(0, 0, true);
+        m.set(0, 64, true);
+        m.set(1, 1, true);
+        m.set(1, 64, true);
+
+        let result = rref(&m, true);
+
+        assert_eq!(result.rank, 2);
+        assert_eq!(result.pivot_cols, vec![1, 64]);
+        assert!(
+            result.reduced.get(0, 0),
+            "right-to-left row elimination must update lower columns in earlier words"
+        );
+        assert!(result.reduced.get(0, 1));
+        assert!(result.reduced.get(1, 0));
+        assert!(result.reduced.get(1, 64));
+    }
+
+    // Property-based tests
+    proptest! {
+        #[test]
+        fn prop_rref_rank_bounded(rows in 1..20usize, cols in 1..20usize, seed in any::<u64>()) {
+            use rand::rngs::StdRng;
+            use rand::{Rng, SeedableRng};
+
+            let mut rng = StdRng::seed_from_u64(seed);
+            let mut m = BitMatrix::zeros(rows, cols);
+
+            for r in 0..rows {
+                for c in 0..cols {
+                    if rng.gen_bool(0.5) {
+                        m.set(r, c, true);
+                    }
+                }
+            }
+
+            let result = rref(&m, false);
+
+            // Rank must be at most min(rows, cols)
+            prop_assert!(result.rank <= rows.min(cols));
+
+            // Number of pivot columns must equal rank
+            prop_assert_eq!(result.pivot_cols.len(), result.rank);
+        }
+
+        #[test]
+        fn prop_rref_idempotent(rows in 1..10usize, cols in 1..10usize, seed in any::<u64>()) {
+            use rand::rngs::StdRng;
+            use rand::{Rng, SeedableRng};
+
+            let mut rng = StdRng::seed_from_u64(seed);
+            let mut m = BitMatrix::zeros(rows, cols);
+
+            for r in 0..rows {
+                for c in 0..cols {
+                    if rng.gen_bool(0.5) {
+                        m.set(r, c, true);
+                    }
+                }
+            }
+
+            let result1 = rref(&m, false);
+            let result2 = rref(&result1.reduced, false);
+
+            // RREF of RREF should be the same (idempotent)
+            prop_assert_eq!(result1.reduced, result2.reduced);
+            prop_assert_eq!(result1.rank, result2.rank);
+        }
+    }
+}

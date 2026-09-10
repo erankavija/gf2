@@ -1,0 +1,53 @@
+# 5G NR LLR de-rate-matching comparison harness (jit:eda07788).
+#
+# A standalone workspace, like `../gf2-side`, so the survey adds no target,
+# feature or dependency to the production workspace. The AFF3CT adapter is
+# feature-gated because it links the pinned AFF3CT static library that
+# `../nr-derate-build.sh` verifies outside the repository; the gf2 arm builds
+# without it.
+
+[workspace]
+
+[package]
+name = "survey-nr-derate"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+build = "build.rs"
+
+[features]
+default = []
+# Links the pinned AFF3CT static library; needs GF2_AFF3CT_ROOT.
+aff3ct = []
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "gf2-nr-derate-arm"
+path = "src/bin/gf2-nr-derate-arm.rs"
+
+[[bin]]
+name = "aff3ct-nr-derate-arm"
+path = "src/bin/aff3ct-nr-derate-arm.rs"
+required-features = ["aff3ct"]
+
+[[bin]]
+name = "validate-nr-derate-equivalence"
+path = "src/bin/validate-nr-derate-equivalence.rs"
+required-features = ["aff3ct"]
+
+[dependencies]
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+
+[build-dependencies]
+cc = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
