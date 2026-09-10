@@ -1,0 +1,10 @@
+cargo-budget: 4 jobs (5 live, 24 cpus)
+cargo-budget: another test run holds the lock; waiting up to 600s
+    Blocking waiting for file lock on build directory
+    Finished `ci-test` profile [optimized] target(s) in 27.39s
+────────────
+ Nextest run ID 6fcace18-de55-4621-9907-b17d4b70f3f7 with nextest profile: ci
+    Starting 1 test across 87 binaries (2684 tests skipped)
+        PASS [   0.015s] (1/1) gf2-core field::axiom_tests::test_gf2_8_field_axioms
+────────────
+     Summary [   0.025s] 1 test run: 1 passed, 2684 skipped

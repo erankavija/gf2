@@ -1,0 +1,415 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 1
+  },
+  "family": {
+    "id": "byte-field-arms",
+    "issue": "6c6b09b1",
+    "purpose": "consumer-family",
+    "description": "Current baseline of gf2's GF(2^8) byte-field consumer entry points against operation-equivalent arms in M4RIE, GF-Complete and ISA-L. Both sides of a cell work in the same field: GF(2^8) modulo 0x11D everywhere except the one 0x11B cell, where ISA-L has no arm because it compiles 0x11D in. gf2 is the baseline arm and the external library is the candidate in every cell, so a speedup above one is a gap in the comparator's favour and a cell where gf2 wins records no material gap. Every cell is single-core because every operation measured here is single-threaded on both sides. The family selects nothing for production: it establishes the before measurement a later byte-region design would have to improve on."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-08T09:46:21Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.25,
+    "rationale": "A byte-region consumer changes implementation when the cost difference changes its algorithm choice, which a quarter of the runtime does and a few percent does not. The pilot's largest relative confidence-interval half-width was 0.0151 (axpy-isal-l2-1core 0.0030, matmul-m4rie-n128-1core 0.0119, pairwise-gfcomplete-l2-1core 0.0151), rounded up to 0.02, so this threshold lies far outside the measurement resolution while staying far below every gap the pilot observed.",
+    "measurement_resolution": 0.02,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/receipt.json",
+      "sha256": "b15308aad470be693d0f0afff09fd418c074fde58230fdb25ae8ef3fab928425"
+    },
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "Ten percent is the smallest band that exceeds the pilot-measured resolution of 0.02 on a quiet CCX1, so declaring two implementations equivalent within it is a statement about them rather than about this host's noise.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A comparator gap matters to this survey when it is large enough to justify a byte-region representation, and a quarter of the runtime is the smallest difference that would. A cell whose interval falls below the equivalence margin records that gf2 is at least as fast as the comparator for that operation, which is a result the family retains rather than an omission."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This survey is a feasibility study. It changes no production kernel and selects no candidate, so its adoption budget is zero by construction; a later issue that proposes a byte-region API declares its own budget."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "axpy-isal-l1-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256",
+        "size": {
+          "bytes": 4096
+        },
+        "seed": 21
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-isal-l2-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 22
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-isal-l3-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256",
+        "size": {
+          "bytes": 8388608
+        },
+        "seed": 23
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-isal-streaming-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256",
+        "size": {
+          "bytes": 2097152
+        },
+        "seed": 24
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-gfcomplete-l2-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 25
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-m4rie-l2-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 26
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-gfcomplete-11b-l2-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256-0x11b",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 27
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-isal-whole-consumer-l2-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 28
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-m4rie-n64-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dense-matmul-gf256",
+        "size": {
+          "n": 64
+        },
+        "seed": 29
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-m4rie-n128-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dense-matmul-gf256",
+        "size": {
+          "n": 128
+        },
+        "seed": 30
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-m4rie-n256-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dense-matmul-gf256",
+        "size": {
+          "n": 256
+        },
+        "seed": 31
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-m4rie-n128-whole-consumer-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dense-matmul-gf256",
+        "size": {
+          "n": 128
+        },
+        "seed": 32
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "encode-isal-k6r3-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "generator-encode-gf256",
+        "size": {
+          "bytes": 65536,
+          "k": 6,
+          "rows": 3
+        },
+        "seed": 33
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-gfcomplete-l2-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "pairwise-multiply-gf256",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 34
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
