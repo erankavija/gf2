@@ -305,6 +305,7 @@
       "path": "dev/active/eda07788/survey/analysis-output-v3.txt"
     }
   ],
+  "done_at": "2026-09-10T22:14:35.941839588Z",
   "first_ready_at": "2026-09-06T19:59:07.036587241Z",
   "gates_required": [
     "cargo-ci",
@@ -316,6 +317,21 @@
     "cargo-ci": {
       "status": "passed",
       "updated_at": "2026-09-10T22:01:50.245671321Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T22:13:03.935181636Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T22:12:00.392736250Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T22:14:08.375968046Z",
       "updated_by": "auto:executor"
     }
   },
@@ -330,7 +346,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Establish compatible shift and coding-permutation baselines",
-  "updated_at": "2026-09-10T22:02:48.798879587Z"
+  "updated_at": "2026-09-10T22:14:35.941839588Z"
 }

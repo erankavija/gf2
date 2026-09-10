@@ -39,7 +39,7 @@
     "type:story"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-06T20:07:48.995287728Z"
+  "updated_at": "2026-09-10T22:15:13.796024055Z"
 }
