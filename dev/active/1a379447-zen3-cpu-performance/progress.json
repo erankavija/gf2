@@ -141,7 +141,7 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "in flight on w-6fb89a3c (claude-fable, session 7): protocol-v3 migration on a fresh worktree from main 02c39ba6; old session-4 branch worktree-agent-6fb89a3c ported byte-identically as history.",
+          "status": "rework round 1. Merged at fbc88e61 (cargo-ci passed), 30 artifacts linked at fcb9bd70; both independent Terra xhigh reviews, doc-review and research-review pass; code-review F1 fails: the gf2 arms declare warm cells but skip the protocol-defined untimed pass over the working set before calibration (protocol.md:160), invalidating the cache-state basis of every comparison including BCH confirmatory outcomes. Rework: fix the arms, preserve the receipts as history with the defect stated, re-measure in the benchmark window.",
           "dispatch": {
             "model": "claude-fable (native subagent)",
             "worktree": ".agents/worktrees/agent-6fb89a3c-v3",
@@ -149,7 +149,8 @@
             "base": "02c39ba6",
             "attempt": 3,
             "session": 7
-          }
+          },
+          "merge_commit": "fbc88e61"
         },
         {
           "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
@@ -249,6 +250,20 @@
           "title": "Replace hand-copied numbers in closed survey reports with citations",
           "classification": "documentation",
           "status": "pending"
+        },
+        {
+          "id": "a387825e",
+          "short_id": "a387825e",
+          "title": "Close the host-lock leak into daemons started under the lock wrappers",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "3e59cb9a",
+          "short_id": "3e59cb9a",
+          "title": "Repair the DVB-T2 arms warm pass and re-measure the interleaving family",
+          "classification": "research",
+          "status": "pending"
         }
       ]
     },
@@ -338,6 +353,18 @@
       "type": "task",
       "in_epic": true,
       "reason": "invoker SSOT directive: the closed survey reports of c077a88b, 1d0da41f and eda07788 hand-copy numbers from generated tables and receipts; feeds 1362381c"
+    },
+    {
+      "id": "a387825e",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "a cargo-ci gate run under ccx1-bench-flock.sh --full-host started an sccache server that inherited the CCX1 lock descriptors and held the exclusive lock host-wide after the run (23:24-23:32Z); feeds 1362381c"
+    },
+    {
+      "id": "3e59cb9a",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "lead cross-survey audit after the 6fb89a3c code-review F1: eda07788 DVB-T2 arms warm with black_box(&buffers[0]) only, violating the protocol warm definition; feeds 1362381c and c04dd4ac"
     }
   ],
   "escalations": [
@@ -418,7 +445,8 @@
     "f547c394": 2,
     "1d0da41f": 1,
     "04b85d10": 1,
-    "c7113c5a": 2
+    "c7113c5a": 2,
+    "6fb89a3c": 1
   },
   "surfaced_pitfalls": [
     {
@@ -497,6 +525,20 @@
       "origin": "issue-impact",
       "disposition": "added to 04b85d10 rework round 1 as lead finding L1",
       "criterion_named_by": "04b85d10 REQ-03"
+    },
+    {
+      "issue": "6fb89a3c",
+      "subject": "cross-survey warm-pass audit: c077a88b, 1d0da41f, 04b85d10, 26465e6c, c7113c5a and the eda07788 NR arms run the timed body once before calibration; the 6fb89a3c gf2 arms skip it (code-review F1) and the eda07788 DVB-T2 arms only black_box a reference",
+      "origin": "issue-impact",
+      "disposition": "6fb89a3c rework round 1; eda07788 filed as 3e59cb9a",
+      "criterion_named_by": "REQ-01 of both issues (measurement contract); epic REQ-01"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "an sccache server spawned by a locked cargo run inherits the CCX1 lock descriptors and holds the lock after the run; the lead stopped it (23:32Z) and hardened the window runner to start a lock-free, non-idling server",
+      "origin": "pre-existing shared tooling",
+      "disposition": "filed as a387825e",
+      "criterion_named_by": "none directly; blocks benchmark windows"
     }
   ],
   "notes": [

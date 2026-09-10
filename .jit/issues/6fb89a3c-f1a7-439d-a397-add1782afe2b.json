@@ -258,6 +258,21 @@
       "status": "passed",
       "updated_at": "2026-09-10T23:24:44.508199738Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-10T23:35:03.271822914Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T23:31:07.964563641Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T23:33:14.771877406Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "6fb89a3c-f1a7-439d-a397-add1782afe2b",
@@ -274,5 +289,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Establish transpose and logical-buffer comparison arms",
-  "updated_at": "2026-09-10T23:25:07.608252678Z"
+  "updated_at": "2026-09-10T23:35:03.271822914Z"
 }
