@@ -1,0 +1,19 @@
+# case: {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}
+# path: current  cache_state: warm  target_ms: 1500
+# events: cycles,L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misses
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":5166,"conversion":{"batch_fill_ns":0,"dispatch_ns":0,"pack_ns":0,"setup_ns":790384,"unpack_ns":23675},"elapsed_ns":"1610259258","ns_per_call":311703.3019744483,"path":"current","prepare":{"allocated_bytes":25350704,"allocations":81506,"freed_bytes":20653200},"schema":"consumer-profile-record-v1","seed":104,"selected_path":"current/csr-bit-at-a-time-matvec","size":{"n":64800},"timed":{"allocated_bytes":20953296,"allocated_bytes_per_call":4056.0,"allocations":5166,"allocations_per_call":1.0,"freed_bytes":20953296,"peak_live_bytes":4056},"workers_observed":1,"workload":"ldpc-syndrome"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile --case {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104} --path current --cache-state warm --target-ms 1500':
+
+     6,704,064,048      cycles:u                                                              
+     8,715,221,038      L1-dcache-loads:u                                                     
+       175,124,230      L1-dcache-load-misses:u                                               
+       350,070,774      cache-references:u                                                    
+         5,378,456      cache-misses:u                                                        
+
+       1.626084112 seconds time elapsed
+
+       1.498023000 seconds user
+       0.009976000 seconds sys
+
+
