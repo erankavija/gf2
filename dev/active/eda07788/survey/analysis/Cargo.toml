@@ -1,7 +1,8 @@
 # Mapping-analysis tools for the eda07788 survey.
 #
-# These answer semantic questions about operations that reach no timed cell,
-# so they are deliberately separate from `../gf2-side`: they link no external
+# These answer semantic questions about operations that reach no timed cell
+# and derive bootstrap resolutions from committed receipts, so they are
+# deliberately separate from the timed harnesses: they link no external
 # comparator, need no fetched checkout, and their build cannot perturb the
 # timed arms' content identity.
 
@@ -22,10 +23,15 @@ path = "src/bin/validate-shift-semantics.rs"
 name = "compare-nr-rate-matching"
 path = "src/bin/compare-nr-rate-matching.rs"
 
+[[bin]]
+name = "bootstrap-resolution"
+path = "src/bin/bootstrap-resolution.rs"
+
 [dependencies]
 gf2-coding = { path = "../../../../../crates/gf2-coding" }
 gf2-core = { path = "../../../../../crates/gf2-core" }
 tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+serde_json = "1.0"
 
 [profile.release]
 opt-level = 3
