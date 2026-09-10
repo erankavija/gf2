@@ -34,6 +34,7 @@ NR = "crates/gf2-coding/src/ldpc/nr_5g/mod.rs"
 DVB = "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs"
 LDPC_CORE = "crates/gf2-coding/src/ldpc/core.rs"
 RM = "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp"
+SURVEY = "dev/active/eda07788/survey/"
 
 # claim, project, path, needle, interpretation[, after-line]
 CLAIMS = [
@@ -108,6 +109,10 @@ CLAIMS = [
     ("gf2-filler-llr", "gf2", NR, "const FILLER_LLR: f32 = 15.0;", "The filler LLR the code writes is 15.0."),
     ("gf2-encode-rate-matched-private", "gf2", NR, "fn encode_rate_matched(&self, message: &BitVec) -> BitVec {", "Rate-matched encoding is a private method."),
     ("gf2-parity-matvec", "gf2", NR, "let parity = enc.parity_matrix.matvec_transpose(&padded);", "gf2 computes parity with one dense matvec rather than per-block circulant shifts."),
+    ("gf2-rref-column-mapping", "gf2", NR, "// This correctly handles the case where RREF assigns some natural", "gf2 places message and parity bits through an RREF-derived column mapping."),
+    ("gf2-nr-block-encoder", "gf2", NR, "impl crate::traits::BlockEncoder for Nr5gRateMatchedCode {", "The rate-matched code's public encoder is the BlockEncoder implementation."),
+    ("gf2-nr-block-encoder-encode", "gf2", NR, "self.encode_rate_matched(message)", "BlockEncoder::encode runs the private rate-matched encoding."),
+    ("aff3ct-encoder-public-encode", "aff3ct", "include/Module/Encoder/Encoder.hpp", "void encode(const B* U_K, B* X_N,", "AFF3CT's encoder modules expose a public encode entry point."),
     ("gf2-transmitted-gather", "gf2", NR, "for &col in &enc.transmitted_cols {", "Bit selection is a gather fused into encoding."),
     ("gf2-prepare-llrs-public", "gf2", NR, "pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {", "The inverse LLR mapping is public."),
     ("gf2-prepare-llrs-zero-init", "gf2", NR, "let mut full_llrs = vec![Llr::zero(); p.full_n];", "Untransmitted and punctured positions start at zero."),
@@ -115,6 +120,13 @@ CLAIMS = [
     ("gf2-circulant-to-edges", "gf2", LDPC_CORE, "pub fn to_edges(&self, base_row: usize, base_col: usize) -> Vec<(usize, usize)> {", "gf2's only circulant primitive emits sparse coordinates for one block."),
     ("gf2-qc-to-edges-caller", "gf2", LDPC_CORE, "let block_edges = circ.to_edges(base_row, base_col);", "The QC code expands each block into coordinates when it builds its matrix."),
     ("gf2-ldpc-from-qc", "gf2", LDPC_CORE, "let edges = qc.to_edges();", "LDPC code construction consumes those coordinates once per code."),
+    ("survey-gf2-arm-setup", "gf2", SURVEY + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "let interleaver = DvbT2BitInterleaver::new(modcod_for_name(&case.modcod));", "The gf2 arm builds its table once, outside the timed body, and reports that time as setup."),
+    ("survey-gf2-arm-body", "gf2", SURVEY + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "let output = interleaver.interleave(&buffers[bank % banks]);", "The gf2 arm's timed body is one interleave of a packed BitVec."),
+    ("survey-external-unpack", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let input = unpack_words(packed, bits);", "The external arm's timed body unpacks the packed frame to one int32 per bit."),
+    ("survey-external-output", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let mut output = vec![0_i32; bits];", "It allocates an int32 output frame inside the timed body."),
+    ("survey-external-pack", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let packed_output = pack_bits(&output);", "It packs the permuted frame back inside the timed body."),
+    ("survey-shim-input-copy", "gf2", SURVEY + "xdsopl-shim/xdsopl_shim.cpp", "std::vector<int32_t> mutable_input(input, input + Interleaver::N);", "The shim copies the input because PCTITL::fwd overwrites it."),
+    ("survey-shift-offsets", "gf2", SURVEY + "analysis/src/bin/validate-shift-semantics.rs", "offsets.push(length + 1);", "The shift validation includes offsets past the vector length."),
     ("gf2-bitvec-shift-left", "gf2", "crates/gf2-core/src/bitvec.rs", "pub fn shift_left(&mut self, k: usize) {", "Arbitrary-offset zero-fill left shift."),
     ("gf2-bitvec-shift-right", "gf2", "crates/gf2-core/src/bitvec.rs", "pub fn shift_right(&mut self, k: usize) {", "Arbitrary-offset zero-fill right shift."),
     ("gf2-avx2-shift-left-words", "gf2", "crates/gf2-kernels-simd/src/x86/avx2.rs", "unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {", "AVX2 word-shift kernel behind the left shift."),

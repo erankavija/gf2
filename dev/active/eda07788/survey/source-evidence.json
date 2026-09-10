@@ -5,7 +5,7 @@
     "aff3ct-conf": "ecae10cd0375f12febe2f5513f8ca39f2540c640",
     "srsran": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
     "xdsopl-ldpc": "32357d8ad55a6a302c34e093759f0454e45cca56",
-    "gf2": "366243f4fbec9cabfdbe992ef045806f6642f771"
+    "gf2": "086a39fb379d917c10c6c0eec29262a2b97523ae"
   },
   "claims": [
     {
@@ -497,7 +497,7 @@
     {
       "claim": "gf2-dvb-t2-interleaver",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 292,
       "text": "pub struct DvbT2BitInterleaver {",
@@ -507,7 +507,7 @@
     {
       "claim": "gf2-dvb-t2-parity-perm",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 375,
       "text": "parity_perm[k + 360 * t + s] = k + q * s + t;",
@@ -517,7 +517,7 @@
     {
       "claim": "gf2-dvb-t2-twist-row",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 393,
       "text": "let src_row = (r + nr - config.twist[c] % nr) % nr;",
@@ -527,7 +527,7 @@
     {
       "claim": "gf2-dvb-t2-forward-table",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 297,
       "text": "forward: Vec<usize>,",
@@ -537,7 +537,7 @@
     {
       "claim": "gf2-dvb-t2-interleave",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 473,
       "text": "pub fn interleave(&self, bits: &BitVec) -> BitVec {",
@@ -547,7 +547,7 @@
     {
       "claim": "gf2-dvb-t2-scatter-loop",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 483,
       "text": "for (i, &out_idx) in self.forward.iter().enumerate() {",
@@ -557,7 +557,7 @@
     {
       "claim": "gf2-dvb-t2-scatter-branch",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 484,
       "text": "if bits.get(i) {",
@@ -567,7 +567,7 @@
     {
       "claim": "gf2-dvb-t2-twist-spec-test",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 942,
       "text": "fn test_twist_offsets_match_spec() {",
@@ -577,7 +577,7 @@
     {
       "claim": "gf2-dvb-t2-twist-example-test",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 1085,
       "text": "fn test_64qam_normal_col_twist_spec_example() {",
@@ -587,7 +587,7 @@
     {
       "claim": "gf2-kb-for-z-selection",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 218,
       "text": "pub fn kb_for_z_selection(base_graph: u8, target_k: usize) -> usize {",
@@ -597,7 +597,7 @@
     {
       "claim": "gf2-kb-560-640",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 228,
       "text": "} else if target_k > 560 {",
@@ -607,7 +607,7 @@
     {
       "claim": "gf2-z-selection",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 499,
       "text": "kb_for_z * z_us >= target_k && target_k + (nb - kb - 2) * z_us >= target_n",
@@ -617,7 +617,7 @@
     {
       "claim": "gf2-full-k",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 517,
       "text": "let full_k = kb * z;",
@@ -627,7 +627,7 @@
     {
       "claim": "gf2-rate-matched-doc-filler",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 419,
       "text": "/// punctured positions get LLR=0, filler positions get LLR=+inf.",
@@ -637,7 +637,7 @@
     {
       "claim": "gf2-filler-llr",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 697,
       "text": "const FILLER_LLR: f32 = 15.0;",
@@ -647,7 +647,7 @@
     {
       "claim": "gf2-encode-rate-matched-private",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1087,
       "text": "fn encode_rate_matched(&self, message: &BitVec) -> BitVec {",
@@ -657,7 +657,7 @@
     {
       "claim": "gf2-parity-matvec",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1106,
       "text": "let parity = enc.parity_matrix.matvec_transpose(&padded);",
@@ -665,9 +665,48 @@
       "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
     },
     {
+      "claim": "gf2-rref-column-mapping",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1118,
+      "text": "// This correctly handles the case where RREF assigns some natural",
+      "why": "gf2 places message and parity bits through an RREF-derived column mapping.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-nr-block-encoder",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1254,
+      "text": "impl crate::traits::BlockEncoder for Nr5gRateMatchedCode {",
+      "why": "The rate-matched code's public encoder is the BlockEncoder implementation.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-nr-block-encoder-encode",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1264,
+      "text": "self.encode_rate_matched(message)",
+      "why": "BlockEncoder::encode runs the private rate-matched encoding.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "aff3ct-encoder-public-encode",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Encoder/Encoder.hpp",
+      "line": 108,
+      "text": "void encode(const B* U_K, B* X_N, const int frame_id = -1, const bool managed_memory = true);",
+      "why": "AFF3CT's encoder modules expose a public encode entry point."
+    },
+    {
       "claim": "gf2-transmitted-gather",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1121,
       "text": "for &col in &enc.transmitted_cols {",
@@ -677,7 +716,7 @@
     {
       "claim": "gf2-prepare-llrs-public",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1172,
       "text": "pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {",
@@ -687,7 +726,7 @@
     {
       "claim": "gf2-prepare-llrs-zero-init",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1183,
       "text": "let mut full_llrs = vec![Llr::zero(); p.full_n];",
@@ -697,7 +736,7 @@
     {
       "claim": "gf2-prepare-llrs-filler",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1197,
       "text": "full_llrs[col] = Llr::new(FILLER_LLR);",
@@ -707,7 +746,7 @@
     {
       "claim": "gf2-circulant-to-edges",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 533,
       "text": "pub fn to_edges(&self, base_row: usize, base_col: usize) -> Vec<(usize, usize)> {",
@@ -717,7 +756,7 @@
     {
       "claim": "gf2-qc-to-edges-caller",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 718,
       "text": "let block_edges = circ.to_edges(base_row, base_col);",
@@ -727,7 +766,7 @@
     {
       "claim": "gf2-ldpc-from-qc",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 186,
       "text": "let edges = qc.to_edges();",
@@ -735,9 +774,79 @@
       "sha256": "2cca98abc11da2dcad729404b42c3bdab4a560842147fb42b5e6c0fbc0e491bc"
     },
     {
+      "claim": "survey-gf2-arm-setup",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs",
+      "line": 95,
+      "text": "let interleaver = DvbT2BitInterleaver::new(modcod_for_name(&case.modcod));",
+      "why": "The gf2 arm builds its table once, outside the timed body, and reports that time as setup.",
+      "sha256": "75528c46cf75f85d4dbac2e6e5a55ec35a5b214220bf00a9ebadb22493b7e11b"
+    },
+    {
+      "claim": "survey-gf2-arm-body",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs",
+      "line": 117,
+      "text": "let output = interleaver.interleave(&buffers[bank % banks]);",
+      "why": "The gf2 arm's timed body is one interleave of a packed BitVec.",
+      "sha256": "75528c46cf75f85d4dbac2e6e5a55ec35a5b214220bf00a9ebadb22493b7e11b"
+    },
+    {
+      "claim": "survey-external-unpack",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
+      "line": 111,
+      "text": "let input = unpack_words(packed, bits);",
+      "why": "The external arm's timed body unpacks the packed frame to one int32 per bit.",
+      "sha256": "9f51038aa75514d9abb48158b715349ca27837eb96929c5cfb3075dc2555398e"
+    },
+    {
+      "claim": "survey-external-output",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
+      "line": 115,
+      "text": "let mut output = vec![0_i32; bits];",
+      "why": "It allocates an int32 output frame inside the timed body.",
+      "sha256": "9f51038aa75514d9abb48158b715349ca27837eb96929c5cfb3075dc2555398e"
+    },
+    {
+      "claim": "survey-external-pack",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
+      "line": 118,
+      "text": "let packed_output = pack_bits(&output);",
+      "why": "It packs the permuted frame back inside the timed body.",
+      "sha256": "9f51038aa75514d9abb48158b715349ca27837eb96929c5cfb3075dc2555398e"
+    },
+    {
+      "claim": "survey-shim-input-copy",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "dev/active/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp",
+      "line": 35,
+      "text": "std::vector<int32_t> mutable_input(input, input + Interleaver::N);",
+      "why": "The shim copies the input because PCTITL::fwd overwrites it.",
+      "sha256": "84c32fdc0eb1f96d05d34142a7d7fecfceb102738fb09cc2423e10b0a5159079"
+    },
+    {
+      "claim": "survey-shift-offsets",
+      "project": "gf2",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "path": "dev/active/eda07788/survey/analysis/src/bin/validate-shift-semantics.rs",
+      "line": 97,
+      "text": "offsets.push(length + 1);",
+      "why": "The shift validation includes offsets past the vector length.",
+      "sha256": "9b249727879b428f6b4ebcf69584bede97348ba6c86e9fe9f99b9fdc9c43c0d3"
+    },
+    {
       "claim": "gf2-bitvec-shift-left",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 475,
       "text": "pub fn shift_left(&mut self, k: usize) {",
@@ -747,7 +856,7 @@
     {
       "claim": "gf2-bitvec-shift-right",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 536,
       "text": "pub fn shift_right(&mut self, k: usize) {",
@@ -757,7 +866,7 @@
     {
       "claim": "gf2-avx2-shift-left-words",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 460,
       "text": "unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {",
@@ -767,7 +876,7 @@
     {
       "claim": "gf2-avx2-shift-right-words",
       "project": "gf2",
-      "commit": "366243f4fbec9cabfdbe992ef045806f6642f771",
+      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 512,
       "text": "unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {",

@@ -83,6 +83,16 @@ Source: `2026-09-08-eda07788-dvb-t2-v3-confirmation/inputs/trial-ledger.jsonl`, 
 | `qam64-r12-normal-gap-native-vs-xdsopl` | 24 | 0 | 1.0398 | 1.0214-2.0457 |
 | `qam64-r12-normal-gap-portable-vs-xdsopl` | 24 | 0 | 1.0435 | 1.0012-2.2984 |
 
+### Sessions and host
+
+Source: `2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json` `session_hosts`, one runtime host observation per bounded session; toolchain `rustc 1.97.0 (2d8144b78 2026-07-07)`.
+
+| Session | Observed | Host | CPU | Kernel | Governors | SMT | CPUs in mask | Load average 1/5/15 min |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 2026-09-08T19:40:30Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 0.24 / 1.31 / 2.08 |
+| 2 | 2026-09-08T19:41:25Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 4.15 / 1.99 / 2.26 |
+| 3 | 2026-09-08T19:42:20Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 3.69 / 2.31 / 2.36 |
+
 ## Protocol-v3 exploratory pilots
 
 Source: `2026-09-08-eda07788-dvb-t2-v3-pilot/acceptance-summary.json` (receipt `d4d178248321fd148a4bb6966f84b7ae27d5967fc77ae061dc4145c7c7f28db5`), label **pilot**, verdict **accepted**, qualifies false, 0 findings. Family `dvb-t2-bit-interleave-baselines`: 6 comparisons, attempt alpha 0.025, per-comparison confidence 0.995833.
