@@ -1,0 +1,79 @@
+{
+  "schema": "gf2-survey-arm-provenance-v1",
+  "issue": "26465e6c",
+  "recorded_utc": "2026-09-08T10:34:23Z",
+  "host": {
+    "uname": "Linux 7.2.2-arch1-1 x86_64",
+    "cpu": "AMD Ryzen 9 5900X 12-Core Processor"
+  },
+  "toolchain": {
+    "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "cargo": "cargo 1.97.0 (c980f4866 2026-06-30)",
+    "cc": "gcc (GCC) 16.2.1 20260810",
+    "cxx": "g++ (GCC) 16.2.1 20260810"
+  },
+  "external_pins": {
+    "libpopcnt": {
+      "upstream": "https://github.com/kimwalisch/libpopcnt.git",
+      "commit": "923c43377278edc97de155ea70ac3ab20f397f3e",
+      "describe": "v4.2",
+      "header_sha256": "6bd9103591511c77a365867fd123b72adfd656233b92ced238e727a5c978fb23",
+      "license": "BSD 2-Clause License",
+      "selected_backend": "libpopcnt internal CPUID dispatch; this Zen 3 host selects its AVX2 vpshufb path and never reaches the AVX-512 entry point (see objdump-evidence.txt section 7)"
+    },
+    "mula_sse_popcount": {
+      "upstream": "https://github.com/WojciechMula/sse-popcount.git",
+      "commit": "138c91e21c3e6dab7875521b5d33b995e0e4c85e",
+      "license": "BSD 2-Clause License",
+      "selected_backend": "popcnt_AVX2_harley_seal from popcnt-avx2-harley-seal.cpp; the 16-vector carry-save network engages at 512-byte blocks and the loads are vmovdqa (see objdump-evidence.txt section 8)",
+      "vendored": {
+        "dev/active/26465e6c/survey/vendor/mula/popcnt-avx2-harley-seal.cpp": "3fe1679cfc8f4a0043b2e71347855be27bf952722099b576e788895f1c0b7f76",
+        "dev/active/26465e6c/survey/vendor/mula/popcnt-lookup.cpp": "4a9a0bd47abef119f37fb514c0fc6f68aaae8db62f0bb281b6cf22839e28d250",
+        "dev/active/26465e6c/survey/vendor/mula/LICENSE": "90daf1ece3fe693e3e71a5e7d07feaa343e8726d5b9f665fdb43061e200980cb"
+      }
+    }
+  },
+  "sources": {
+    "dev/active/26465e6c/survey/wire_common.h": "303c299fdf5dfba2b16aaa2309027e65d652289ff1de113a244245a8f5d7301c",
+    "dev/active/26465e6c/survey/splitmix64.h": "916b2a012840a152e6cb219c0992728c08052fcaa8fc0760c42d53e6c0dd0c86",
+    "dev/active/26465e6c/survey/libpopcnt_arm.c": "00ba11d41c3b21c6be1ca40bd6b55fc8b69851b446939f5ed592e5b26053f41d",
+    "dev/active/26465e6c/survey/mula_arm.cpp": "d672b340c2416c3aa79ba83dd244886b0065e6e1d030781e91df9a866cc72168",
+    "dev/active/26465e6c/survey/Makefile": "cdff98c9f2272accda829ff831241d46f2648af82275e86eb00c3cb0518c320c",
+    "dev/active/26465e6c/survey/fetch-build.sh": "2e9c220a6436453c14d3538348b1886fc79b21f93666e5773c3e4928cc3e18a0",
+    "dev/active/26465e6c/survey/cross-check.sh": "27e067b200fb806471d12ac3736d7e43f11b6508adc3ff00424abfd78227603e",
+    "dev/active/26465e6c/survey/observe-instructions.sh": "b4dc4fdb2b32dde83655721a28aa82b7f08fb4d9d229c4ac099a277b51e216fc",
+    "dev/active/26465e6c/survey/record-provenance.sh": "759ecc1fa25cba41f6d34a64b220d4562cea53a0c137e8a382f18ac4da41c3a6",
+    "dev/active/26465e6c/survey/run-campaign.sh": "e95f9b659ae73046e931f70863629b5d5ffee3b50eb0d126e9b071b10c7862fe",
+    "dev/active/26465e6c/survey/freeze-confirmatory.py": "fd0398a9e54abc9e1713d039260f1a1127b3494a226368476e022885d216df16",
+    "dev/active/26465e6c/survey/render-findings-results.sh": "aa6aa334c1bf1d9fdc50d2c6382eb67ad484bb418314ae3ae49cd91f39b5e4ff",
+    "dev/active/26465e6c/survey/recount-flagged-windows.sh": "99af79b38f06ca7167e5727ff653ce2de19d0d717fab0714d70dc73137d0e0a1",
+    "dev/active/26465e6c/survey/probe-dispatch.sh": "198635094c41e85972ccca2a5042583388fee720d2d86272991fc4866fd0cd55",
+    "dev/active/26465e6c/survey/gf2-side/Cargo.toml": "eb0a80c053234ec5038c554b9fec21259d32a2e5cff86f78c73840da7ff73d1b",
+    "dev/active/26465e6c/survey/gf2-side/Cargo.lock": "3ae1ead3c4d899f82232fa60ce87abcd4587544267326f4572ef4b20c07c6446",
+    "dev/active/26465e6c/survey/gf2-side/src/main.rs": "17ea4c5d8cfbfb29684f5acc445ef71f2c9bbbfb93157e481d4297934c3c4318",
+    "dev/active/26465e6c/survey/gf2-side/tests/correctness.rs": "e1a30aeb02d8ad45ac33f363e7a1f248a32410b78c6e291f8b88b223fb403def"
+  },
+  "arms": {
+    "gf2-side": {
+      "executable": "dev/active/26465e6c/survey/gf2-side/target/release/popcount-gf2-side",
+      "executable_sha256": "64701a2714695fb3b1fba23ad11242a5eb75b8e21b9808a2a0fc7e418b9c2966",
+      "build_command": "./scripts/cargo-budget.sh cargo build --release --manifest-path dev/active/26465e6c/survey/gf2-side/Cargo.toml",
+      "build_identity": "release profile with lto = true, codegen-units = 1, opt-level = 3; no RUSTFLAGS and no target-cpu, so the binary is baseline x86-64 and every vector path is reached through runtime detection",
+      "serves_arms": ["production-dispatch", "nibble-lut", "scalar-popcnt", "compiler-count-ones", "and-popcnt-fused", "and-popcnt-scalar-control", "and-popcnt-two-pass-consumer"]
+    },
+    "libpopcnt-arm": {
+      "executable": "dev/active/26465e6c/survey/libpopcnt-arm",
+      "executable_sha256": "a440931f81195ce08602cb9cc9bfa489badc5e4c51f23856ac77dee09e2c4c12",
+      "build_command": "cc -O3 -march=native -Wall -Wextra -std=c11 -I<libpopcnt> -o libpopcnt-arm libpopcnt_arm.c",
+      "build_identity": "external: -march=native, and libpopcnt performs its own CPUID dispatch at run time",
+      "serves_arms": ["libpopcnt"]
+    },
+    "mula-avx2-harleyseal-arm": {
+      "executable": "dev/active/26465e6c/survey/mula-avx2-harleyseal-arm",
+      "executable_sha256": "8381447747c5291da2b8a23d7d007176ffc497f916acdeb319ff61da621d7c72",
+      "build_command": "g++ -O3 -march=native -Wall -Wextra -std=c++17 -include cstdint -include immintrin.h -include vendor/mula/lookup-decl.h -I<mula> -Ivendor/mula -o mula-avx2-harleyseal-arm mula_arm.cpp vendor/mula/popcnt-lookup.cpp vendor/mula/popcnt-avx2-harley-seal.cpp",
+      "build_identity": "external: -march=native over the unmodified vendored reference implementation",
+      "serves_arms": ["mula-avx2-harleyseal"]
+    }
+  }
+}
