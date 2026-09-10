@@ -5,7 +5,7 @@
     "aff3ct-conf": "ecae10cd0375f12febe2f5513f8ca39f2540c640",
     "srsran": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
     "xdsopl-ldpc": "32357d8ad55a6a302c34e093759f0454e45cca56",
-    "gf2": "086a39fb379d917c10c6c0eec29262a2b97523ae"
+    "gf2": "f88bd137298d93f57f8867acc1f9207186ffbaca"
   },
   "claims": [
     {
@@ -250,6 +250,15 @@
       "line": 51,
       "text": "Puncturer_5G<B, Q>::_depuncture(const Q* Y_N1, Q* Y_N2, const size_t /*frame_id*/) const",
       "why": "The same module implements the inverse LLR mapping."
+    },
+    {
+      "claim": "aff3ct-depuncture-scatter",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 60,
+      "text": "Y_N2[j % (this->N_cw - 2 * this->base_graph.Zc) + 2 * this->base_graph.Zc] = Y_N1[k];",
+      "why": "De-puncturing visits circular-buffer positions one at a time and recomputes the modulo index for each."
     },
     {
       "claim": "aff3ct-depuncture-zero-prefix",
@@ -497,7 +506,7 @@
     {
       "claim": "gf2-dvb-t2-interleaver",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 292,
       "text": "pub struct DvbT2BitInterleaver {",
@@ -507,7 +516,7 @@
     {
       "claim": "gf2-dvb-t2-parity-perm",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 375,
       "text": "parity_perm[k + 360 * t + s] = k + q * s + t;",
@@ -517,7 +526,7 @@
     {
       "claim": "gf2-dvb-t2-twist-row",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 393,
       "text": "let src_row = (r + nr - config.twist[c] % nr) % nr;",
@@ -527,7 +536,7 @@
     {
       "claim": "gf2-dvb-t2-forward-table",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 297,
       "text": "forward: Vec<usize>,",
@@ -537,7 +546,7 @@
     {
       "claim": "gf2-dvb-t2-interleave",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 473,
       "text": "pub fn interleave(&self, bits: &BitVec) -> BitVec {",
@@ -547,7 +556,7 @@
     {
       "claim": "gf2-dvb-t2-scatter-loop",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 483,
       "text": "for (i, &out_idx) in self.forward.iter().enumerate() {",
@@ -557,7 +566,7 @@
     {
       "claim": "gf2-dvb-t2-scatter-branch",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 484,
       "text": "if bits.get(i) {",
@@ -567,7 +576,7 @@
     {
       "claim": "gf2-dvb-t2-twist-spec-test",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 942,
       "text": "fn test_twist_offsets_match_spec() {",
@@ -577,7 +586,7 @@
     {
       "claim": "gf2-dvb-t2-twist-example-test",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
       "line": 1085,
       "text": "fn test_64qam_normal_col_twist_spec_example() {",
@@ -587,7 +596,7 @@
     {
       "claim": "gf2-kb-for-z-selection",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 218,
       "text": "pub fn kb_for_z_selection(base_graph: u8, target_k: usize) -> usize {",
@@ -597,7 +606,7 @@
     {
       "claim": "gf2-kb-560-640",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 228,
       "text": "} else if target_k > 560 {",
@@ -607,7 +616,7 @@
     {
       "claim": "gf2-z-selection",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 499,
       "text": "kb_for_z * z_us >= target_k && target_k + (nb - kb - 2) * z_us >= target_n",
@@ -617,7 +626,7 @@
     {
       "claim": "gf2-full-k",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 517,
       "text": "let full_k = kb * z;",
@@ -627,7 +636,7 @@
     {
       "claim": "gf2-rate-matched-doc-filler",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 419,
       "text": "/// punctured positions get LLR=0, filler positions get LLR=+inf.",
@@ -637,7 +646,7 @@
     {
       "claim": "gf2-filler-llr",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 697,
       "text": "const FILLER_LLR: f32 = 15.0;",
@@ -647,7 +656,7 @@
     {
       "claim": "gf2-encode-rate-matched-private",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1087,
       "text": "fn encode_rate_matched(&self, message: &BitVec) -> BitVec {",
@@ -657,7 +666,7 @@
     {
       "claim": "gf2-parity-matvec",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1106,
       "text": "let parity = enc.parity_matrix.matvec_transpose(&padded);",
@@ -667,7 +676,7 @@
     {
       "claim": "gf2-rref-column-mapping",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1118,
       "text": "// This correctly handles the case where RREF assigns some natural",
@@ -677,7 +686,7 @@
     {
       "claim": "gf2-nr-block-encoder",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1254,
       "text": "impl crate::traits::BlockEncoder for Nr5gRateMatchedCode {",
@@ -687,7 +696,7 @@
     {
       "claim": "gf2-nr-block-encoder-encode",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1264,
       "text": "self.encode_rate_matched(message)",
@@ -706,7 +715,7 @@
     {
       "claim": "gf2-transmitted-gather",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1121,
       "text": "for &col in &enc.transmitted_cols {",
@@ -716,7 +725,7 @@
     {
       "claim": "gf2-prepare-llrs-public",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1172,
       "text": "pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {",
@@ -724,9 +733,19 @@
       "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
     },
     {
+      "claim": "gf2-prepare-llrs-scatter",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1189,
+      "text": "full_llrs[col] = channel_llrs[ch_idx];",
+      "why": "gf2 scatters channel LLRs through its precomputed transmitted-column table.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
       "claim": "gf2-prepare-llrs-zero-init",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1183,
       "text": "let mut full_llrs = vec![Llr::zero(); p.full_n];",
@@ -736,7 +755,7 @@
     {
       "claim": "gf2-prepare-llrs-filler",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 1197,
       "text": "full_llrs[col] = Llr::new(FILLER_LLR);",
@@ -746,7 +765,7 @@
     {
       "claim": "gf2-circulant-to-edges",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 533,
       "text": "pub fn to_edges(&self, base_row: usize, base_col: usize) -> Vec<(usize, usize)> {",
@@ -756,7 +775,7 @@
     {
       "claim": "gf2-qc-to-edges-caller",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 718,
       "text": "let block_edges = circ.to_edges(base_row, base_col);",
@@ -766,7 +785,7 @@
     {
       "claim": "gf2-ldpc-from-qc",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 186,
       "text": "let edges = qc.to_edges();",
@@ -776,7 +795,7 @@
     {
       "claim": "survey-gf2-arm-setup",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs",
       "line": 95,
       "text": "let interleaver = DvbT2BitInterleaver::new(modcod_for_name(&case.modcod));",
@@ -786,7 +805,7 @@
     {
       "claim": "survey-gf2-arm-body",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs",
       "line": 117,
       "text": "let output = interleaver.interleave(&buffers[bank % banks]);",
@@ -796,7 +815,7 @@
     {
       "claim": "survey-external-unpack",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
       "line": 111,
       "text": "let input = unpack_words(packed, bits);",
@@ -806,7 +825,7 @@
     {
       "claim": "survey-external-output",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
       "line": 115,
       "text": "let mut output = vec![0_i32; bits];",
@@ -816,7 +835,7 @@
     {
       "claim": "survey-external-pack",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
       "line": 118,
       "text": "let packed_output = pack_bits(&output);",
@@ -826,7 +845,7 @@
     {
       "claim": "survey-shim-input-copy",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "dev/active/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp",
       "line": 35,
       "text": "std::vector<int32_t> mutable_input(input, input + Interleaver::N);",
@@ -834,9 +853,115 @@
       "sha256": "84c32fdc0eb1f96d05d34142a7d7fecfceb102738fb09cc2423e10b0a5159079"
     },
     {
+      "claim": "survey-nr-gf2-arm-body",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/bin/gf2-nr-derate-arm.rs",
+      "line": 100,
+      "text": "black_box(code.prepare_llrs(&buffers[bank % banks]));",
+      "why": "The gf2 de-rate-matching arm times one public prepare_llrs call.",
+      "sha256": "e9165e2ea478408db803987d780612504987f31669c490e0447adbfaabadb71a"
+    },
+    {
+      "claim": "survey-nr-aff3ct-arm-body",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/bin/aff3ct-nr-derate-arm.rs",
+      "line": 134,
+      "text": "black_box(adapter.prepare_llrs(&buffers[bank % banks]));",
+      "why": "The AFF3CT arm times the whole adapter call.",
+      "sha256": "79ec8a8d266f29493e601a70725146fffa65761e6fb9b099d2a4803c3c365315"
+    },
+    {
+      "claim": "survey-nr-adapter-zeroed-output",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/lib.rs",
+      "line": 280,
+      "text": "(input, vec![0.0_f32; self.depuncturer.full_len()])",
+      "why": "The adapter converts the channel to float and allocates a zeroed N_LDPC output inside the call.",
+      "sha256": "8e7505d200ccc9557e90b1be2ada4fe91053e202157e22347b106c6af2181f03"
+    },
+    {
+      "claim": "survey-nr-adapter-depuncture",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/lib.rs",
+      "line": 296,
+      "text": "self.depuncturer.depuncture(&input, &mut full);",
+      "why": "The adapter runs AFF3CT's depuncture between its two conversion stages.",
+      "sha256": "8e7505d200ccc9557e90b1be2ada4fe91053e202157e22347b106c6af2181f03"
+    },
+    {
+      "claim": "survey-nr-adapter-filler",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/lib.rs",
+      "line": 288,
+      "text": "out[position] = self.filler;",
+      "why": "The adapter writes gf2's filler value over AFF3CT's filler range.",
+      "sha256": "8e7505d200ccc9557e90b1be2ada4fe91053e202157e22347b106c6af2181f03"
+    },
+    {
+      "claim": "survey-nr-shim-construct",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/cpp/aff3ct_depuncture_shim.cpp",
+      "line": 71,
+      "text": "return new Depuncturer(k, n, derived.N_LDPC, std::vector<bool>());",
+      "why": "The shim constructs Puncturer_5G with the N_cw AFF3CT's codec passes.",
+      "sha256": "0a463a64b60d6bafef37bce2c389e3f52b628ede649ddac030ce5384164d9279"
+    },
+    {
+      "claim": "survey-nr-shim-depuncture",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/cpp/aff3ct_depuncture_shim.cpp",
+      "line": 90,
+      "text": "static_cast<Depuncturer*>(handle)->depuncture(channel, full);",
+      "why": "The shim calls AFF3CT's public depuncture entry point.",
+      "sha256": "0a463a64b60d6bafef37bce2c389e3f52b628ede649ddac030ce5384164d9279"
+    },
+    {
+      "claim": "srsran-dematcher-entry",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher_impl.cpp",
+      "line": 46,
+      "text": "void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       output,",
+      "why": "srsRAN's rate dematcher takes and returns log_likelihood_ratio spans."
+    },
+    {
+      "claim": "srsran-dematcher-shortened",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher_impl.cpp",
+      "line": 98,
+      "text": "// Recall that 2 * lifting_size systematic bits are shortened out of the codeblock.",
+      "why": "Its output excludes the 2Z punctured systematic positions."
+    },
+    {
+      "claim": "srsran-dematcher-deinterleave",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher_impl.cpp",
+      "line": 111,
+      "text": "deinterleave_llrs(aux, input);",
+      "why": "For higher-order modulation it also de-interleaves bits."
+    },
+    {
+      "claim": "srsran-llr-int8",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "include/srsran/phy/upper/log_likelihood_ratio.h",
+      "line": 42,
+      "text": "/// Log-likelihood ratios are represented as \\c int8_t values between <tt>-LLR_MAX</tt> and \\c LLR_MAX. The values",
+      "why": "srsRAN LLRs are int8 values, not gf2's f32."
+    },
+    {
       "claim": "survey-shift-offsets",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "dev/active/eda07788/survey/analysis/src/bin/validate-shift-semantics.rs",
       "line": 97,
       "text": "offsets.push(length + 1);",
@@ -846,7 +971,7 @@
     {
       "claim": "gf2-bitvec-shift-left",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 475,
       "text": "pub fn shift_left(&mut self, k: usize) {",
@@ -856,7 +981,7 @@
     {
       "claim": "gf2-bitvec-shift-right",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 536,
       "text": "pub fn shift_right(&mut self, k: usize) {",
@@ -866,7 +991,7 @@
     {
       "claim": "gf2-avx2-shift-left-words",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 460,
       "text": "unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {",
@@ -876,7 +1001,7 @@
     {
       "claim": "gf2-avx2-shift-right-words",
       "project": "gf2",
-      "commit": "086a39fb379d917c10c6c0eec29262a2b97523ae",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 512,
       "text": "unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {",
