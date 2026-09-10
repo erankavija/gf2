@@ -1,0 +1,154 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "confirmation-c7113c5a-20260907t192110z",
+  "issue": "c7113c5a",
+  "label": "confirmation",
+  "campaign_seed": 20260907201,
+  "addendum": "dev/active/c7113c5a/addendum-polynomial-baselines.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-native": {
+      "build": "native",
+      "description": "gf2 native build: dispatched wide kernels and clmul_batch, gf2-core and gf2-kernels-simd by path, RUSTFLAGS=-C target-cpu=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-native/release/gf2-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2x-native": {
+      "build": "external",
+      "description": "gf2x 1.3.0 (commit 27ba588f03bf6e1e74763903bab25e6e8bb6d0f0, GPL-3.0-or-later) built with CFLAGS=-O3 -march=native; configure appended -msse2 -msse3 -mssse3 -msse4.1 -mpclmul and selected hwdir=x86_64_pclmul. Rust shell RUSTFLAGS=-C target-cpu=native; the arm asserts at run time that it mapped /home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-native/lib/libgf2x.so.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-native/release/gf2x-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "poly-mul-4w-1core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 4,
+        "inner": 1,
+        "seed": 201
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-9w-1core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 9,
+        "inner": 1,
+        "seed": 202
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-64w-1core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 64,
+        "inner": 1,
+        "seed": 203
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-256w-1core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 1,
+        "seed": 204
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-2048w-streaming-1core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 2048,
+        "inner": 1,
+        "seed": 205
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-256w-6core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 32,
+        "seed": 206
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-256w-12core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 32,
+        "seed": 207
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-256w-24smt",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 32,
+        "seed": 208
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "clmul-batch-1024-1core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "clmul-batch",
+        "count": 1024,
+        "inner": 1,
+        "seed": 209
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "gf2m-dot-1024-1core",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "gf2m-dot",
+        "count": 1024,
+        "inner": 1,
+        "seed": 210
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 4
+}

@@ -1,0 +1,89 @@
+{
+  "kind": "retrospective-v1-history",
+  "family": "polynomial-multiplication-baselines",
+  "ledger": "dev/bench_results/c7113c5a/v3-baselines-family-ledger.jsonl",
+  "genesis_sha256": "619a52e79fbbd30946f4576d07e4cc6894c68c5aa2ef003e42797391662376e7",
+  "derivation": {
+    "implementation": "dev/active/c7113c5a/survey/gf2-side/src/bin/v1-ledger-lines.rs",
+    "method": "Each line restates one completed protocol-v1 campaign as the reservation the v3 runner appends before measuring: receipt campaign ID and addendum digest, the count of non-exploratory addendum cells, and candidate identities from the shared tuning_campaign_support::trial_ledger::candidate_ids over the saved plan and the receipt's arm records, serialized with the shared Reservation encoding and decoded by trial_ledger::decode before publication. The family field names the canonical v3 question; each source keeps its original addendum family.",
+    "retrospective": "These lines are accounting, not premeasurement reservations: protocol v1 took none, and no lock acquisition is claimed for them.",
+    "command": "v1-ledger-lines polynomial-multiplication-baselines dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation"
+  },
+  "sources": [
+    {
+      "sequence": 0,
+      "line_sha256": "122c36551db12e9ae7d7ce4b801f3437ac52184a72de6841b66e6d035848537f",
+      "campaign": "pilot-c7113c5a-20260907t191644z",
+      "original_family": "polynomial-multiplication-baselines-pilot",
+      "receipt": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/receipt.json",
+      "receipt_sha256": "22d2663f89f32bc0cccbd6baebad6c1b054ac04f408311a97b79790af7ecaed1",
+      "plan": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/plan.json",
+      "plan_sha256": "7eea50e0b9e4609a8f9518259e06a0ad1e7c497e51c83d42f2a37f220bd2a11c",
+      "addendum": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "a8820525696d4b23318e889b34b8fc24ebdcbdf132e30ce84574054cf224b3ca",
+      "acceptance_summary": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/acceptance-summary.json",
+      "acceptance_summary_sha256": "759c13b750f0121bdd83d0ced7e2879f8bfb7f466b1e0cc7a1b6fd825cb569b5",
+      "non_exploratory_cells": 0,
+      "disposition": "completed v1 pilot; exploratory, zero comparisons"
+    },
+    {
+      "sequence": 1,
+      "line_sha256": "0db806d9ead256cc81a27201fafb3f83be3b86655c72db6012464053b15c182b",
+      "campaign": "confirmation-c7113c5a-20260907t194909z",
+      "original_family": "polynomial-multiplication-baselines",
+      "receipt": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation/receipt.json",
+      "receipt_sha256": "63eb171e787ec773e934ef1bcf205f4f2f68e88dcba77c84fcabf3530018277e",
+      "plan": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation/plan.json",
+      "plan_sha256": "fa0cda737b9320cdb891518a3d6f914a66767d58a89edc70ee7efbd7663027ed",
+      "addendum": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation/inputs/family-addendum.json",
+      "addendum_sha256": "8d1b77e849f9e3e67e43f015f70bf015743326ac57f26eac50f2cb90ed5d53ae",
+      "acceptance_summary": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation/acceptance-summary.json",
+      "acceptance_summary_sha256": "3703aa1d16ee55a05a4d30709f85e2452e266557c6fe7e73fd108fa3452a07b9",
+      "non_exploratory_cells": 10,
+      "disposition": "completed and accepted v1 confirmation; ten comparisons",
+      "candidate_ids_by_arm": {
+        "gf2x-native": "e7fcd4842a5c6047aa65bfd49db2b24595ac9f8b95807b579261e579cc446107"
+      }
+    }
+  ],
+  "interrupted_launches_without_line": [
+    {
+      "campaign": "confirmation-c7113c5a-20260907t192110z",
+      "evidence": [
+        {
+          "path": "dev/bench_results/c7113c5a/v1-launch-history/gf2-confirmation-c7113c5a-20260907t192110z.launcher.log",
+          "sha256": "cefdb1de00605d7e7dbea9cba2a01f384adbe7921565a911394d39776bf1cd63"
+        },
+        {
+          "path": "dev/bench_results/c7113c5a/v1-launch-history/gf2-confirmation-c7113c5a-20260907t192110z.plan.json",
+          "sha256": "d743b12b62c67344dab462688140df458cb7dbb375228c19c17ef00243c3bbdb"
+        }
+      ],
+      "observation": "The launcher log ends with session 1 exit 143 (SIGTERM). It holds no GF2_CAMPAIGN_EXECUTION_LOG announcement, which the runner prints and flushes as soon as it opens its execution log, and no stage directory survives under /tmp beside the stages of the two completed v1 campaigns.",
+      "accounting": "No line. A v3 runner appends its reservation only after it holds the exclusive lock and before the first measurement; no evidence shows this attempt reached the runner. A ten-comparison line would change no v3 outcome of this family, whose v3 confirmation is not confirmatory either way."
+    },
+    {
+      "campaign": "pilot-c7113c5a-20260907t193528z",
+      "evidence": [
+        {
+          "path": "dev/bench_results/c7113c5a/v1-launch-history/gf2-pilot-c7113c5a-20260907t193528z.launcher.log",
+          "sha256": "484c6173f00109912d4be7f4407a6e891f95ba88719affb11f40e53f119b92ea"
+        },
+        {
+          "path": "dev/bench_results/c7113c5a/v1-launch-history/gf2-pilot-c7113c5a-20260907t193528z.plan.json",
+          "sha256": "af447a92fe1676df49025d1afcfd5e6c28c8b4f91f4a64928cbb971c945e79d7"
+        }
+      ],
+      "observation": "The launcher log ends before any session exit line or execution-log announcement; no stage directory survives.",
+      "accounting": "No line: an exploratory attempt spends zero comparisons in any case."
+    }
+  ],
+  "frozen_addenda_never_run": [
+    {
+      "addendum": "dev/active/c7113c5a/addendum-polynomial-baselines-2.json",
+      "sha256": "38c97ceafcaa8fbf8bda0ef56a9a22990e071e45e3441c1c01eca80bd23fd344",
+      "observation": "Frozen under protocol v1 as a sixteen-cell campaign (the ten v1 cells plus a conservative/tuned/native ladder) and never measured: the guard in dev/active/c7113c5a/survey/run-baseline.sh exits 2 before any build or lock while the addendum declares protocol version 1, and no /tmp stage, plan, launcher log or receipt of a confirmation-2 campaign exists.",
+      "accounting": "No reservation was made, so no line."
+    }
+  ]
+}
