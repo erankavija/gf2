@@ -139,13 +139,16 @@ pub fn banks(case: &Case, worker: usize, count: usize) -> Vec<Bank> {
 /// - `batch_fill_ns`: one complete call of the cell's operation, so the figure
 ///   is directly comparable with the timed window medians.
 /// - `dispatch_ns`: the runtime capability detection the arm performs.
-/// - `unpack_ns`: everything after the unreduced accumulator, which for the
-///   whole-consumer dot-product cell is one Barrett reduction plus value
-///   extraction, averaged over [`AMORTISED_PROBE_REPEATS`] repetitions because
-///   a single reduction is below timer resolution. Both arms run the identical
-///   gf2 reduction code there, so subtracting this figure from the cell's
-///   measured call separates the reduction from the product-and-accumulate
-///   stage on each side.
+/// - `unpack_ns`: the field reduction a consumer applies after the unreduced
+///   stage, averaged over [`AMORTISED_PROBE_REPEATS`] repetitions and rounded
+///   up, because a single reduction is at or below timer resolution. For the
+///   whole-consumer dot-product cell it is one GF(2^8) Barrett reduction plus
+///   value extraction; for the 4-word and 9-word long products it is the
+///   [`wide_field::WideReducer`] reduction to GF(2^256) or GF(2^571) that
+///   `Gf2mWide::mul_ref` applies; every other cell has no field consumer and
+///   reports zero. Both arms run the identical gf2 reduction code on their own
+///   product, so the figure separates the reduction from the measured
+///   unreduced stage on each side.
 #[derive(Clone, Copy, Debug, Default, Serialize)]
 pub struct Conversion {
     pub setup_ns: u64,
@@ -208,6 +211,10 @@ struct ArmResult {
     selected_path: Option<String>,
     conversion: Option<Conversion>,
     quality: Option<Value>,
+    /// Every execution calibrates its call count; the survey declares no
+    /// fixed-call cold cell, and a request carrying `cold_calls` fails to
+    /// decode rather than being measured under the wrong policy.
+    calibrated: bool,
 }
 
 fn fail(message: impl std::fmt::Display) -> ! {
@@ -291,6 +298,7 @@ pub fn run_arm<B: Backend + 'static>(label: &str) {
         selected_path: Some(selected_path),
         conversion: Some(conversion),
         quality: None,
+        calibrated: true,
     };
     if let Err(error) = transport::write_result_line(io::stdout().lock(), &result) {
         fail(format!("{label}: {error}"));
@@ -369,14 +377,16 @@ pub fn probe_ns(mut body: impl FnMut()) -> u64 {
 /// the mean over this many repetitions instead of one unresolvable reading.
 pub const AMORTISED_PROBE_REPEATS: u64 = 4096;
 
-/// Mean nanoseconds of one repetition of `body`, averaged over
-/// [`AMORTISED_PROBE_REPEATS`] runs.
+/// Mean nanoseconds of one repetition of `body` over
+/// [`AMORTISED_PROBE_REPEATS`] runs, rounded up so the whole-nanosecond figure
+/// bounds the mean from above.
 pub fn amortised_probe_ns(mut body: impl FnMut()) -> u64 {
     let start = Instant::now();
     for _ in 0..AMORTISED_PROBE_REPEATS {
         body();
     }
-    start.elapsed().as_nanos() as u64 / AMORTISED_PROBE_REPEATS
+    (start.elapsed().as_nanos() as u64).div_ceil(AMORTISED_PROBE_REPEATS)
 }
 
 pub mod gf2_backend;
+pub mod wide_field;

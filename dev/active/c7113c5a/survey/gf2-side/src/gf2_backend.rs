@@ -2,11 +2,13 @@
 //!
 //! Each operation calls the production entry point a consumer reaches today:
 //! the dispatched fixed-size wide kernels of `gf2_kernels_simd::gf2m_wide` for
-//! 4-limb and 9-limb products, `gf2_core::gf2m::wide::clmul_wide_slice` for
-//! every other length, `gf2_kernels_simd::gf2m`'s dispatched batch kernel for
-//! independent 64x64 products, and `FieldVec::simd_dot_product` for the
-//! whole-consumer GF(2^8) dot product. Nothing in `crates/` changes; this arm
-//! only observes which path the current code selects at run time.
+//! 4-limb and 9-limb products (the kernels `Gf2mWide::mul_ref` reaches through
+//! gf2-core's cached detection), `gf2_core::gf2m::wide::clmul_wide_slice` for
+//! every other length and for the public-API path, the raw-batch lane
+//! `gf2_kernels_simd::gf2m::detect` publishes for independent 64x64 products,
+//! and `FieldVec::simd_dot_product` for the whole-consumer GF(2^8) dot product.
+//! Nothing in `crates/` changes; this arm only observes which path the current
+//! code selects at run time.
 
 use gf2_core::field::FieldVec;
 use gf2_core::gf2m::barrett::{clmul, BarrettReducer};
@@ -15,6 +17,7 @@ use gf2_core::gf2m::{Gf2mElement, Gf2mField};
 use gf2_kernels_simd::gf2m::ClmulBatchFn;
 use gf2_kernels_simd::gf2m_wide::{ClmulWide256Fn, ClmulWide571Fn};
 
+use crate::wide_field::reduction_probe_ns;
 use crate::{
     amortised_probe_ns, probe_ns, Backend, Bank, Case, Conversion, DOT_FIELD_DEGREE, DOT_FIELD_POLY,
 };
@@ -65,31 +68,16 @@ pub fn schoolbook(words: usize, a: &[u64], b: &[u64], out: &mut [u64]) {
     for_each_length!(words, call)
 }
 
-/// Evaluates, at run time, the predicate `clmul_batch` itself branches on.
+/// The raw-batch lane `gf2_kernels_simd::gf2m::detect` published on this host.
 ///
-/// `clmul_batch` selects its 256-bit VPCLMULQDQ body only when both
-/// `vpclmulqdq` and `avx512vl` are detected, and otherwise falls through to
-/// sequential PCLMULQDQ. Re-evaluating the same two detections here reports the
-/// branch the current code takes on this host instead of inferring it from the
-/// build configuration.
-pub fn batch_branch(available: bool) -> &'static str {
-    if !available {
-        return "clmul_batch:unavailable";
+/// The lane tag is the one the detection itself returns beside the function
+/// pointer, so the arm reports the selected lane rather than re-deriving it
+/// from CPU flags.
+pub fn batch_path(fns: Option<&gf2_kernels_simd::gf2m::Gf2mFns>) -> String {
+    match fns.and_then(|fns| fns.clmul_batch_path) {
+        Some(lane) => format!("clmul_batch:{lane}"),
+        None => "clmul_batch:unavailable".to_owned(),
     }
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    {
-        use std::arch::is_x86_feature_detected;
-        let vpclmulqdq = is_x86_feature_detected!("vpclmulqdq");
-        let avx512vl = is_x86_feature_detected!("avx512vl");
-        return match (vpclmulqdq, avx512vl) {
-            (true, true) => "clmul_batch:vpclmulqdq-ymm (vpclmulqdq=1 avx512vl=1)",
-            (true, false) => "clmul_batch:sequential-pclmulqdq (vpclmulqdq=1 avx512vl=0)",
-            (false, true) => "clmul_batch:sequential-pclmulqdq (vpclmulqdq=0 avx512vl=1)",
-            (false, false) => "clmul_batch:sequential-pclmulqdq (vpclmulqdq=0 avx512vl=0)",
-        };
-    }
-    #[allow(unreachable_code)]
-    "clmul_batch:non-x86"
 }
 
 /// Which long-product path this arm exercises.
@@ -124,7 +112,7 @@ pub struct Gf2Backend {
     wide256: Option<(ClmulWide256Fn, &'static str)>,
     wide571: Option<(ClmulWide571Fn, &'static str)>,
     batch: Option<ClmulBatchFn>,
-    batch_name: &'static str,
+    batch_name: String,
     products: Vec<u128>,
     dot: Option<DotVectors>,
     selected: String,
@@ -157,7 +145,7 @@ impl Backend for Gf2Backend {
         let wide = gf2_kernels_simd::gf2m_wide::detect_wide();
         let gf2m = gf2_kernels_simd::gf2m::detect();
         let batch = gf2m.as_ref().and_then(|fns| fns.clmul_batch_fn);
-        let batch_name = batch_branch(batch.is_some());
+        let batch_name = batch_path(gf2m.as_ref());
         let selected = match case {
             Case::PolyMul { words, .. } => match (path, words, wide.as_ref()) {
                 (PolyPath::Dispatched, 4, Some(fns)) => {
@@ -168,7 +156,7 @@ impl Backend for Gf2Backend {
                 }
                 _ => "clmul_wide_slice:schoolbook".to_owned(),
             },
-            Case::ClmulBatch { .. } => batch_name.to_owned(),
+            Case::ClmulBatch { .. } => batch_name.clone(),
             Case::Gf2mDot { .. } => "FieldVec::simd_dot_product".to_owned(),
         };
         let products = match case {
@@ -233,8 +221,9 @@ impl Backend for Gf2Backend {
             std::hint::black_box(gf2_kernels_simd::gf2m::detect());
         });
         match case {
-            Case::PolyMul { .. } => Conversion {
+            Case::PolyMul { words, .. } => Conversion {
                 setup_ns: probe_ns(|| bank.out.fill(0)),
+                unpack_ns: reduction_probe_ns(*words, bank, |field| self.run(case, field)),
                 dispatch_ns,
                 ..Conversion::default()
             },
@@ -290,7 +279,7 @@ impl Backend for Gf2Backend {
 
 impl Gf2Backend {
     /// The batch-kernel identity this instance resolved, for the validator.
-    pub fn batch_name(&self) -> &'static str {
-        self.batch_name
+    pub fn batch_name(&self) -> &str {
+        &self.batch_name
     }
 }

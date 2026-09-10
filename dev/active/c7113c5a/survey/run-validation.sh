@@ -8,8 +8,7 @@
 # receipt run. It executes `poly-validate` once per build variant, so each
 # variant's own binaries are the ones checked, and concatenates the machine
 # readable reports into one committed artifact. A nonzero exit means at least
-# one arm disagrees with the canonical bit-by-bit product and no timing may
-# proceed.
+# one arm disagrees with canonical arithmetic and no timing may proceed.
 #
 # The validator is compute-only and short, so it takes the shared side of the
 # CCX1 mutex like a build rather than the exclusive side. It acquires that side
@@ -18,23 +17,24 @@
 # `dev/scripts/ccx1-bench-flock.sh` and can enter ahead of a queued measurement
 # run, which is the starvation the turnstile exists to remove.
 #
-# The report also records the digest of every executable of every variant, so a
-# receipt's arm digests identify which validated binaries it measured. Without
-# that pin the report would assert a pass about binaries it does not name.
+# The report also records the digest of every executable and gf2x library of
+# every variant, so a receipt's arm digests and the library digests its gf2x
+# arms report identify which validated binaries it measured.
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 ISSUE=c7113c5a
-OUT="${1:-${HERE}/validation.json}"
-EXT="${2:-${GF2_SURVEY_EXT:-${REPO}/.agents/ext/${ISSUE}}}"
+OUT="${1:-${HERE}/validation-v3.json}"
+EXT="${2:-${GF2_SURVEY_EXT:-${REPO}/target/${ISSUE}-ext}}"
 BUDGET="${REPO}/scripts/cargo-budget.sh"
+LIB=lib/libgf2x.so.3.0.0
 
 status=0
 {
     echo '{'
-    echo '  "schema": "poly-baseline-validation-set-v1",'
+    echo '  "schema": "poly-baseline-validation-set-v2",'
     echo "  \"issue\": \"${ISSUE}\","
     echo '  "variants": {'
     separator=""
@@ -60,6 +60,8 @@ status=0
                 "${inner}" "${binary}" "$(sha256sum "${path}" | cut -d' ' -f1)"
             inner=$',\n'
         done
+        printf '%s      "libgf2x": "%s"' \
+            "${inner}" "$(sha256sum "${EXT}/prefix-${name}/${LIB}" | cut -d' ' -f1)"
         printf '\n    }'
         separator=$',\n'
     done

@@ -180,6 +180,7 @@ dependencies = [
  "gf2-kernels-simd",
  "serde",
  "serde_json",
+ "sha2",
  "tuning-campaign-support",
 ]
 

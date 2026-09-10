@@ -5,7 +5,8 @@
 //! before any timing. It checks coefficients, bit order, input lengths and
 //! complete outputs of the gf2 and gf2x long products against a canonical
 //! bit-by-bit definition of multiplication in GF(2)[x] that shares no code with
-//! either library, then checks that the two libraries agree word for word.
+//! either library, then checks that the two libraries agree word for word. The
+//! separated field-reduction stages are checked against long division.
 //!
 //! The canonical reference is the definition itself: the product of `a` and `b`
 //! is the XOR of `b` shifted left by every bit position set in `a`. It uses no
@@ -19,13 +20,29 @@ use serde::Serialize;
 use std::process::ExitCode;
 use tuning_campaign_support::abtest::SplitMix64;
 
+use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 use poly_baseline_arms::gf2_backend::{schoolbook, Gf2Backend};
+use poly_baseline_arms::wide_field::{WideReducer, GF2_256_MODULUS, GF2_571_MODULUS};
 use poly_baseline_arms::{Backend, Bank, Case, DOT_FIELD_DEGREE, DOT_FIELD_POLY};
 
 #[path = "../gf2x_backend.rs"]
 mod gf2x_backend;
 
-use gf2x_backend::{assert_pinned_library, loaded_library, mul as gf2x_mul, Gf2xPool};
+use gf2x_backend::{assert_pinned_library, mul as gf2x_mul, Gf2xPool};
+
+/// GF(2^256) with the modulus the wide-field reduction probe uses.
+struct Gf256;
+impl Gf2mWideConfig<4> for Gf256 {
+    const M: usize = 256;
+    const MODULUS: [u64; 4] = GF2_256_MODULUS;
+}
+
+/// GF(2^571) with the modulus the wide-field reduction probe uses.
+struct Gf571;
+impl Gf2mWideConfig<9> for Gf571 {
+    const M: usize = 571;
+    const MODULUS: [u64; 9] = GF2_571_MODULUS;
+}
 
 /// Word counts the arms are instantiated for and this validator covers.
 ///
@@ -264,6 +281,106 @@ fn check_clmul_batch(pool: &mut Gf2xPool) -> (Check, String) {
     (check, path)
 }
 
+/// Canonical reduction of an unreduced product modulo `x^m + low(x)`: long
+/// division clears every set coefficient at or above `m`, from the top down, by
+/// XOR-ing in the modulus shifted to it. Returns the low `ceil(m / 64)` words.
+fn canonical_reduce(product: &[u64], modulus_low: &[u64], m: usize) -> Vec<u64> {
+    let low_bits: Vec<usize> = (0..m)
+        .filter(|bit| (modulus_low[bit >> 6] >> (bit & 63)) & 1 == 1)
+        .collect();
+    let mut remainder = product.to_vec();
+    for bit in (m..remainder.len() * 64).rev() {
+        if (remainder[bit >> 6] >> (bit & 63)) & 1 == 0 {
+            continue;
+        }
+        remainder[bit >> 6] ^= 1u64 << (bit & 63);
+        for low in &low_bits {
+            let target = bit - m + low;
+            remainder[target >> 6] ^= 1u64 << (target & 63);
+        }
+    }
+    remainder.truncate(m.div_ceil(64));
+    remainder
+}
+
+/// The field product `Gf2mWide::mul_ref` returns for `words`-word elements.
+fn gf2_field_product(words: usize, a: &[u64], b: &[u64]) -> Vec<u64> {
+    match words {
+        4 => {
+            let a = Gf2mWide::<4, Gf256>::from_words(a.try_into().expect("4-word element"));
+            let b = Gf2mWide::<4, Gf256>::from_words(b.try_into().expect("4-word element"));
+            a.mul_ref(&b).words().to_vec()
+        }
+        9 => {
+            let a = Gf2mWide::<9, Gf571>::from_words(a.try_into().expect("9-word element"));
+            let b = Gf2mWide::<9, Gf571>::from_words(b.try_into().expect("9-word element"));
+            a.mul_ref(&b).words().to_vec()
+        }
+        other => panic!("no wide field of {other} words"),
+    }
+}
+
+/// The wide-field consumer split into its unreduced product and its
+/// reduction: `Gf2mWide::mul_ref`, the dispatched gf2 kernel followed by the
+/// probe's reducer, and gf2x followed by the same reducer must all equal the
+/// canonical product reduced by long division. This is the decomposition the
+/// 4-word and 9-word cells rely on when they time only the unreduced stage and
+/// report the reduction separately.
+fn check_wide_field_composition(pool: &mut Gf2xPool) -> Check {
+    let mut check = Check::new("wide-field-composition");
+    let mut mixer = SplitMix64::new(0x71DE_F1E1_D0C7_113C);
+    for &words in &[4usize, 9] {
+        let reducer = WideReducer::for_words(words).expect("a wide field of this width");
+        let m = reducer.degree();
+        let case = Case::PolyMul {
+            words,
+            inner: 1,
+            seed: 17,
+        };
+        let mut backend = Gf2Backend::create(&case);
+        let top = monomial(words, m - 1);
+        let mut one = vec![0u64; words];
+        one[0] = 1;
+        let ones = reducer.element(&vec![u64::MAX; words]);
+        let mut operand_pairs = vec![
+            (top.clone(), top.clone()),
+            (one, top.clone()),
+            (ones.clone(), ones),
+        ];
+        for _ in 0..64 {
+            let (a, b) = operands(&mut mixer, words);
+            operand_pairs.push((reducer.element(&a), reducer.element(&b)));
+        }
+        for (trial, (a, b)) in operand_pairs.into_iter().enumerate() {
+            let mut product = vec![0u64; 2 * words];
+            canonical_mul(&a, &b, &mut product);
+            let expected = canonical_reduce(&product, reducer.modulus(), m);
+
+            let field = gf2_field_product(words, &a, &b);
+            check.record(field == expected, || {
+                format!("Gf2mWide::mul_ref differs from the canonical field product at {words} words, trial {trial}")
+            });
+
+            let mut bank = Bank {
+                a: a.clone(),
+                b: b.clone(),
+                out: vec![0u64; 2 * words],
+            };
+            backend.run(&case, &mut bank);
+            check.record(reducer.reduce(&bank.out) == expected, || {
+                format!("dispatched gf2 product plus the probe reducer differs at {words} words, trial {trial}")
+            });
+
+            let mut gf2x = vec![0u64; 2 * words];
+            gf2x_mul(pool, &a, &b, &mut gf2x);
+            check.record(reducer.reduce(&gf2x) == expected, || {
+                format!("gf2x product plus the probe reducer differs at {words} words, trial {trial}")
+            });
+        }
+    }
+    check
+}
+
 fn check_dot_product(pool: &mut Gf2xPool) -> Check {
     let mut check = Check::new("whole-consumer-dot-product");
     let count = 1024usize;
@@ -330,19 +447,15 @@ fn main() -> ExitCode {
     let (batch, batch_path) = check_clmul_batch(&mut pool);
     checks.push(batch);
     paths.push(batch_path);
+    checks.push(check_wide_field_composition(&mut pool));
     checks.push(check_dot_product(&mut pool));
 
-    let gf2x_selected_path = format!(
-        "gf2x_mul_r library={} cflags={}",
-        loaded_library(),
-        env!("GF2X_CFLAGS_USED")
-    );
     let passed = checks.iter().all(Check::passed);
     let report = Report {
-        schema: "poly-baseline-validation-v1",
+        schema: "poly-baseline-validation-v2",
         issue: "c7113c5a",
         gf2_selected_paths: paths,
-        gf2x_selected_path,
+        gf2x_selected_path: gf2x_backend::selected_path(),
         checks,
         passed,
     };
