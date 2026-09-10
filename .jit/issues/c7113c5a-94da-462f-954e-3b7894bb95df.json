@@ -212,6 +212,21 @@
       "status": "passed",
       "updated_at": "2026-09-10T17:30:11.608897023Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-10T17:42:39.027404562Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T17:45:21.514652322Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-10T17:50:11.783900199Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "c7113c5a-94da-462f-954e-3b7894bb95df",
@@ -226,5 +241,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Establish equivalent polynomial multiplication baselines",
-  "updated_at": "2026-09-10T17:30:38.081895604Z"
+  "updated_at": "2026-09-10T17:50:11.783900199Z"
 }
