@@ -341,6 +341,7 @@
       "path": "dev/active/1d0da41f/evidence/v3-preflight-rejection.json"
     }
   ],
+  "done_at": "2026-09-10T17:10:33.383941955Z",
   "first_ready_at": "2026-09-06T19:16:15.026003250Z",
   "gates_required": [
     "cargo-ci",
@@ -362,17 +363,17 @@
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-10T16:40:51.531913092Z",
+      "updated_at": "2026-09-10T17:03:15.162599926Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-10T16:43:27.543118082Z",
+      "status": "passed",
+      "updated_at": "2026-09-10T17:06:55.709233810Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-09-10T16:49:00.213149738Z",
+      "updated_at": "2026-09-10T17:09:47.787559189Z",
       "updated_by": "auto:executor"
     }
   },
@@ -386,7 +387,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
-  "updated_at": "2026-09-10T16:49:00.213149738Z"
+  "updated_at": "2026-09-10T17:10:33.383941955Z"
 }

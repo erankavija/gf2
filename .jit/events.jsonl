@@ -11315,3 +11315,10 @@
 {"fields":["dependencies"],"id":"bb80f5cd-6fce-46a0-a2a2-cc93fd363ccf","issue_id":"157c305c-925a-4f5d-89e5-299c05c5a0f5","timestamp":"2026-09-10T16:46:49.085647874Z","type":"issue_updated","updated_by":"dependency-add"}
 {"gate_key":"research-review","id":"dc3d5028-9d3b-46c7-8037-721e6a0248d7","issue_id":"1d0da41f-f366-4a81-ab1a-016f8395db94","timestamp":"2026-09-10T16:49:00.213149738Z","type":"gate_passed","updated_by":"auto:executor"}
 {"fields":["description"],"id":"25a08e73-c732-4c8c-814c-e0e70d99ae28","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-10T16:53:08.518517119Z","type":"issue_updated","updated_by":"issue-update"}
+{"gate_key":"code-review","id":"e17c45dd-c5cf-4adc-88cf-e7b307a7601e","issue_id":"1d0da41f-f366-4a81-ab1a-016f8395db94","timestamp":"2026-09-10T17:03:15.162599926Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"89776696-3ed9-4fb2-b94c-a692b3daea41","issue_id":"1d0da41f-f366-4a81-ab1a-016f8395db94","timestamp":"2026-09-10T17:06:55.709233810Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"e083e1c2-e6cf-4fba-861c-9efae099e1ee","issue_id":"1d0da41f-f366-4a81-ab1a-016f8395db94","timestamp":"2026-09-10T17:09:47.787559189Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"5e1e4f4e-72fc-4c2e-bdd2-cbd8a97f8ff1","issue_id":"1d0da41f-f366-4a81-ab1a-016f8395db94","timestamp":"2026-09-10T17:10:33.383941955Z","to":"done","type":"issue_state_changed"}
+{"id":"306715d3-c487-4d91-a31a-f426d282dbc3","issue_id":"1d0da41f-f366-4a81-ab1a-016f8395db94","timestamp":"2026-09-10T17:10:33.383941955Z","type":"issue_completed"}
+{"from":"ready","id":"ae75c698-61f2-4b8f-954c-c28d040b34bc","issue_id":"26465e6c-6852-44b6-9183-ba2cb5a5fca5","timestamp":"2026-09-10T17:10:45.688143467Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"d132dea9-330a-48ac-a9e8-7bb3b22fedba","issue_id":"26465e6c-6852-44b6-9183-ba2cb5a5fca5","timestamp":"2026-09-10T17:10:45.688143467Z","type":"issue_claimed"}
