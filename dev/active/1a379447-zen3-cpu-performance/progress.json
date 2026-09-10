@@ -501,7 +501,9 @@
     "Session 7: independent research reviews run the unchanged research-review checker and prompt through scratchpad/indep-review.sh with a context built like jit's (issue, gate, latest run), REVIEWER_AGENT as configured (Terra xhigh).",
     "Session 7: w-c7113c5a and w-eda07788 hit a provider session limit; the invoker reset it and both were revived by message (no re-dispatch).",
     "Session 7 invoker instruction: start no new work in this session; finish the running issues (04b85d10 integration, eda07788, 6fb89a3c, c7113c5a, 26465e6c). 6c6b09b1 and wave 3 are not started.",
-    "Session 7: a harness hook refuses subagent Write of report-like files (findings.md). Policy: the worker sends the full text to the lead, the lead writes it, the worker reviews and commits; no Bash workaround. w-04b85d10 had already bypassed it with a Bash heredoc before the policy was set."
+    "Session 7: a harness hook refuses subagent Write of report-like files (findings.md). Policy: the worker sends the full text to the lead, the lead writes it, the worker reviews and commits; no Bash workaround. w-04b85d10 had already bypassed it with a Bash heredoc before the policy was set.",
+    "Invocation 2026-09-11 (session 8): drive epic 1a379447; subagent model by task difficulty, no Fable; parallel worktrees, four workers at a time; prefer worktree reuse over proliferation.",
+    "Session 8 start: all four session-7 workers (c7113c5a rework, 04b85d10 rework, 6fb89a3c, 26465e6c) had stopped at a provider session limit around 2026-09-10T17:53Z; none can be revived from this session. c7113c5a's rework had made no change (branch fast-forwarded to main 107849ef). Dirty trees of 04b85d10-v3, 6fb89a3c-v3 and 26465e6c-v3 are captured without touching the worktrees as refs/salvage/<id>-s7-wip (2cfb5f7c, 22067ccc, 38b977ad)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
