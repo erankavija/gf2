@@ -113,8 +113,10 @@ impl ComparisonCode {
     ///
     /// # Complexity
     ///
-    /// O(nnz(`H`)) — table-driven sparse `H` construction (no encoder cache
-    /// is built).
+    /// Construction follows the selected code-family constructor. The NR path
+    /// calls [`QuasiCyclicLdpc::nr_5g_rate_matched`], including its encoder-data
+    /// preparation, before retaining the mother code. Decoder-only input
+    /// adapters can construct a recorded graph with [`LdpcCode::from_edges`].
     #[must_use]
     pub fn build(self) -> LdpcCode {
         match self {

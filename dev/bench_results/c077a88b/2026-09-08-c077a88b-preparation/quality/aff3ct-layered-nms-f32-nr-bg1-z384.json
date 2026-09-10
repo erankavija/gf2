@@ -1,0 +1,39 @@
+{
+  "ber": 0.0,
+  "ber_interval": [
+    0.0,
+    3.5524728245739173e-06
+  ],
+  "bit_errors": 0,
+  "bits": 1081344,
+  "fer": 0.0,
+  "fer_interval": [
+    0.0,
+    0.029136956273508416
+  ],
+  "frame_errors": 0,
+  "frames": 128,
+  "interval_method": "wilson-95",
+  "iterations": {
+    "max": 50,
+    "mean": 20.203125,
+    "p50": 16,
+    "p90": 24
+  },
+  "latency_ns_p50": 7138691,
+  "memory_bytes": 19062784,
+  "settings": {
+    "batch_size": 1,
+    "iteration_cap": 50,
+    "normalization": {
+      "factor": 0.75,
+      "kind": "normalized-min-sum"
+    },
+    "precision": "f32",
+    "schedule": "layered",
+    "stopping": {
+      "crc": null,
+      "kind": "syndrome"
+    }
+  }
+}

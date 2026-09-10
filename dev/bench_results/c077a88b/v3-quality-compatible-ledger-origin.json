@@ -1,0 +1,28 @@
+{
+  "kind": "retrospective-v1-exploratory-history",
+  "family": "ldpc-quality-compatible-alist-v1",
+  "ledger": "dev/bench_results/c077a88b/v3-quality-compatible-family-ledger.jsonl",
+  "initial_sha256": "bb9617d0c6425aae5675a8cdfbf05144ca34bc04a88fb24f29461428415b505a",
+  "sources": [
+    {
+      "sequence": 0,
+      "line_sha256": "539adeb5e3a467cd8519756fab884294eb4e894ec0580e902bf6a9586730c74a",
+      "plan": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/plan.json",
+      "plan_sha256": "1c1a7a95e8511a3e60987f7ee35541c62d7291782ea41f1538de59466141fc02",
+      "addendum": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "8c350521fad20a92c9d3a1ec6f185aa202620eb838c26e1bc5cc229cdb50e2b3",
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "receipt_sha256": "e0f5921ad2f2ecd221a7773ddefd9bc419cd67859d63ced48554a91eca88893f"
+    },
+    {
+      "sequence": 1,
+      "line_sha256": "f995e1b9184b4b41f39e1f491da17e7057d2031fd3b8bbdb75cd9d8fb02b5c26",
+      "plan": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/plan.json",
+      "plan_sha256": "28d57c988ac4856725e77f037ad10110e5494342108e16cbec5dbda73fbd76eb",
+      "addendum": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "4f73d4d8359ad3860906a87c6d28c09d80f5c849340030d8d01815b7d79be5d7",
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "receipt_sha256": "647cecd904866c9be0598c72325e8d2732fd36b4f8756e2c49ef4549e50987ec"
+    }
+  ]
+}
