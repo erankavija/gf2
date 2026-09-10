@@ -195,6 +195,105 @@
       "why": "The dot product reduces its XOR-accumulated products with a Barrett reducer."
     },
     {
+      "claim": "dot-product-clmul",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 1092,
+      "text": "        let clmul_fn = sample.clmul_fn()?;",
+      "why": "The dot product reads its field's single carry-less multiply for that reduction."
+    },
+    {
+      "claim": "dot-product-xor-accumulates",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 1130,
+      "text": "                acc ^= p;",
+      "why": "The batch products are XOR-accumulated into one 128-bit value without reduction."
+    },
+    {
+      "claim": "dot-product-single-reduction",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 1140,
+      "text": "        let result = reducer.reduce_with_clmul(acc, clmul_fn);",
+      "why": "The sole reduction receives the raw accumulator and the field's carry-less multiply; the dot-reduction probe times this operation."
+    },
+    {
+      "claim": "dot-product-accessors-crate-private",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 906,
+      "text": "    pub(crate) fn barrett_reducer(&self) -> Option<&BarrettReducer> {",
+      "why": "The reducer the dot product reads is crate-private, like its batch-kernel and clmul accessors, so no public path exposes the accumulator; the harness rebuilds it."
+    },
+    {
+      "claim": "field-clmul-from-bundle",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 272,
+      "text": "                fns.and_then(|f| f.clmul_fn),",
+      "why": "A u64-backed Gf2mField stores the clmul_fn of gf2-core's cached GF(2^m) bundle."
+    },
+    {
+      "claim": "field-barrett-reducer",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 288,
+      "text": "            Some(BarrettReducer::new(",
+      "why": "The field's reducer is BarrettReducer::new on its defining polynomial and degree, as the probe's dot_reducer."
+    },
+    {
+      "claim": "cached-gf2m-detection",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/lib.rs",
+      "line": 148,
+      "text": "            .get_or_init(gf2_kernels_simd::gf2m::detect)",
+      "why": "gf2-core caches gf2_kernels_simd::gf2m::detect, the bundle the survey's gf2 arm and diagnostic read."
+    },
+    {
+      "claim": "bundle-clmul",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "line": 134,
+      "text": "            clmul_fn: Some(clmul_u64_safe),",
+      "why": "The bundle's single carry-less multiply is clmul_u64_safe."
+    },
+    {
+      "claim": "bundle-clmul-calls-x86",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "line": 147,
+      "text": "    unsafe { crate::x86::clmul::clmul_u64(a, b) }",
+      "why": "clmul_u64_safe calls the x86 clmul_u64."
+    },
+    {
+      "claim": "x86-clmul-pclmulqdq",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+      "line": 47,
+      "text": "    let product = _mm_clmulepi64_si128::<0x00>(a_reg, b_reg);",
+      "why": "clmul_u64 is one PCLMULQDQ."
+    },
+    {
+      "claim": "barrett-early-exit",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/barrett.rs",
+      "line": 343,
+      "text": "        if product >> m == 0 {",
+      "why": "reduce_with_clmul returns an input below x^m unchanged, so reducing the already reduced dot product times only this exit."
+    },
+    {
       "claim": "wide-bench-modulus-256",
       "project": "gf2",
       "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
@@ -220,6 +319,24 @@
       "line": 90,
       "text": "extern int GF2X_EXPORTED gf2x_mul_r(unsigned long *c,",
       "why": "gf2x_mul_r is gf2x's exported reentrant multiplication; the survey measures it."
+    },
+    {
+      "claim": "gf2x-pool-init-zeroes",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "gf2x.c",
+      "line": 92,
+      "text": "    memset(p, 0, sizeof(gf2x_mul_pool_t));",
+      "why": "gf2x_mul_pool_init only zeroes the pool handle; the gf2x arm's setup probe times this call."
+    },
+    {
+      "claim": "gf2x-pool-lazy-alloc",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "gf2x.c",
+      "line": 178,
+      "text": "        void * p = realloc(xpool->stk, sp * sizeof(unsigned long));",
+      "why": "gf2x_mul_r allocates the pool's scratch itself when the pool holds less than the call needs."
     },
     {
       "claim": "gf2x-basecase-branch",
