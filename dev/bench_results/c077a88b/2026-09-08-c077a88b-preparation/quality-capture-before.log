@@ -1,0 +1,32 @@
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 4 jobs (5 live, 24 cpus)
+   Compiling tuning-campaign-support v0.1.0 (./dev/tools/tuning-campaign-support)
+    Finished `ci-test` profile [optimized] target(s) in 5.39s
+────────────
+ Nextest run ID ee5c7252-ef7b-426f-9146-4357a96d680a with nextest profile: ci
+    Starting 1 test across 12 binaries (149 tests skipped)
+        FAIL [   0.972s] (1/1) tuning-campaign-support::protocol_contracts runner_announces_the_log_before_work_and_resumes_without_repeating
+  stdout ───
+
+    running 1 test
+    test runner_announces_the_log_before_work_and_resumes_without_repeating ... FAILED
+
+    failures:
+
+    failures:
+        runner_announces_the_log_before_work_and_resumes_without_repeating
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 24 filtered out; finished in 0.97s
+
+  stderr ───
+
+    thread 'runner_announces_the_log_before_work_and_resumes_without_repeating' (214) panicked at dev/tools/tuning-campaign-support/tests/protocol_contracts.rs:1973:5:
+    assertion `left == right` failed: [Finding { rule: "P-04", severity: Note, cell: None, message: "settings deviation declared: no cell is confirmatory" }, Finding { rule: "P-23", severity: Error, cell: None, message: "campaign-start freeze: saved plan arm \"baseline\" differs from its campaign-start descriptor" }, Finding { rule: "P-23", severity: Error, cell: None, message: "campaign-start freeze: saved plan arm \"candidate\" differs from its campaign-start descriptor" }, Finding { rule: "P-18", severity: Error, cell: Some("first"), message: "decoder cell reports no BER/FER evidence" }]
+      left: Rejected
+     right: Accepted
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+────────────
+     Summary [   0.973s] 1 test run: 0 passed, 1 failed, 149 skipped
+        FAIL [   0.972s] (1/1) tuning-campaign-support::protocol_contracts runner_announces_the_log_before_work_and_resumes_without_repeating
+error: test run failed

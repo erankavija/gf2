@@ -1,0 +1,448 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 1
+  },
+  "family": {
+    "id": "ldpc-quality-compatible-alist-v1-pilot",
+    "issue": "c077a88b",
+    "purpose": "decoder-family",
+    "description": "Exploratory pilot of screen-selected quality-compatible LDPC decoder cells: the gf2-coding f32 flooding normalized-min-sum decoder against the AFF3CT v4.7.0 configurations shortlisted by the bounded capability screen, on bit-identical parity-check matrices and bit-identical recorded LLRs. Precision, schedule and native SIMD wave size differ between the arms and stay labelled; the timed batch size is identical. Its only purpose is to observe the measurement resolution of these cells; it decides nothing. Each call includes decoder construction, conversion, output and destruction. The identical timed batch is processed by both arms; latency is per batch, and throughput is frames per batch divided by batch time. Prepared 128-frame quality evidence is reused without resampling. Warm timing uses fixed fixture bank zero: the first recorded frame for matched latency and the first sixteen recorded frames for quality-compatible batch throughput. The remaining recorded frames supply quality validation, not additional timed samples. Both arms load the same recorded AList and construct their native sparse matrix and decoder inside each call; no encoder is initialized. This is recorded-AList operation version 1; prior fixture-constructor attempts are excluded from this family's resolution evidence."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-08T11:42:19.977106+00:00"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "A pilot observes the resolution that later fixes this margin; declaring it here would defeat the observation.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "A pilot decides nothing, so it declares no equivalence margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The confirmatory family fixes the material-gap threshold from this pilot's observed resolution."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": null,
+    "maintenance_rationale": "A survey adopts nothing into production, so it budgets no new unsafe kernel and no production source."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-f32-scalar-pilot",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 16,
+          "timed_frames": 16,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "fastest-quality-compatible",
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 2.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-f32-inter-pilot",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 16,
+          "timed_frames": 16,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "fastest-quality-compatible",
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 8,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 2.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-i16-inter-pilot",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 16,
+          "timed_frames": 16,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "fastest-quality-compatible",
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        },
+        "precision": "i16",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 16,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 2.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-f32-scalar-pilot",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 16,
+          "timed_frames": 16,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "fastest-quality-compatible",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 2.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-f32-inter-pilot",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 16,
+          "timed_frames": 16,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "fastest-quality-compatible",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 8,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 2.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-i16-inter-pilot",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 16,
+          "timed_frames": 16,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "fastest-quality-compatible",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "i16",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 16,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 2.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    }
+  ]
+}

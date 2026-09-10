@@ -1,0 +1,10 @@
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 4 jobs (5 live, 24 cpus)
+   Compiling tuning-campaign-support v0.1.0 (./dev/tools/tuning-campaign-support)
+    Finished `ci-test` profile [optimized] target(s) in 6.19s
+────────────
+ Nextest run ID b5a5d8bd-ea93-4c4f-938c-807982a5ba5d with nextest profile: ci
+    Starting 1 test across 12 binaries (149 tests skipped)
+        PASS [   1.009s] (1/1) tuning-campaign-support::protocol_contracts runner_announces_the_log_before_work_and_resumes_without_repeating
+────────────
+     Summary [   1.010s] 1 test run: 1 passed, 149 skipped

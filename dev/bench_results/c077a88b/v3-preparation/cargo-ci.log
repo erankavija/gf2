@@ -1,0 +1,32 @@
+--- clippy diagnostics ---
+error: this `if` can be collapsed into the outer `match`
+error: could not compile `tuning-campaign-support` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `tuning-campaign-support` (lib test) due to 1 previous error
+warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
+  ✓ check: ok (23s)
+  ✓ tuning-core-no-default: ok (2s)
+  ✓ tuning-core-codec-only: ok (3s)
+  ✓ tuning-algebra-no-default: ok (3s)
+  ✓ tuning-algebra-codec-only: ok (2s)
+  ✓ tuning-coding-no-default: ok (2s)
+  ✓ tuning-coding-codec-only: ok (1s)
+  ✓ test-build: ok (192s)
+  ✓ test: 5978 passed, 0 failed, 248 skipped (27s)
+  ✓ tuning-profile-build: ok (19s)
+  ✓ tuning-profile-nextest: ok (5s)
+  ✓ tuning-algebra-calibration-build: ok (9s)
+  ✓ tuning-algebra-calibration-nextest: ok (14s)
+  ✓ tuning-campaign-support-build: ok (0s)
+  ✓ tuning-campaign-support-nextest: ok (1s)
+  ✓ tuning-campaign-validator: ok (0s)
+  ✓ tuning-campaign-launcher-syntax: ok (0s)
+  ✓ tuning-lifecycle-cargo: ok (3s)
+  ✗ clippy: FAILED (exit 101, 16s)
+  ✓ fmt: ok (2s)
+  ✓ baked-core: ok (163s)
+  ✓ tuning-core-artifact: ok (11s)
+  ✓ tuning-algebra-artifacts: ok (1s)
+  ✓ tuning-coding-codec: ok (8s)
+  ✓ tuning-composer: ok (7s)
+

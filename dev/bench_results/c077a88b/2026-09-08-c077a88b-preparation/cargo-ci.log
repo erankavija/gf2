@@ -1,0 +1,70 @@
+--- test failures ---
+        FAIL [   0.021s] (5265/5952) gf2-sim gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates
+        FAIL [   0.008s] (5927/5952) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::producing_input_manifest_rejects_authority_and_path_mutations
+        FAIL [   0.021s] (5265/5952) gf2-sim gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates
+        FAIL [   0.008s] (5927/5952) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::producing_input_manifest_rejects_authority_and_path_mutations
+--- tuning-campaign-support-nextest output ---
+        PASS [   0.090s] (135/150) tuning-campaign-support::protocol_contracts acceptance_rejects_a_receipt_with_missing_protocol_identity
+        PASS [   0.041s] (136/150) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::a_probe_streams_validates_and_commits_one_bound_checkpoint
+        PASS [   0.100s] (137/150) tuning-campaign-support::driver_launcher launcher_discovers_publisher_intent_before_selecting_identity_or_building
+        PASS [   0.103s] (138/150) tuning-campaign-support::driver_launcher launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_building
+        PASS [   0.099s] (139/150) tuning-campaign-support::protocol_contracts acceptance_rejects_missing_and_self_referential_resolution_evidence
+        PASS [   0.102s] (140/150) tuning-campaign-support::protocol_contracts acceptance_preserves_unavailable_and_not_material_cells
+        PASS [   0.053s] (141/150) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::progress_is_delivered_before_exit
+        PASS [   0.054s] (142/150) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::rejected_raw_streams_cannot_recover_after_completion_crash
+        PASS [   0.122s] (143/150) tuning-campaign-support::protocol_contracts acceptance_accepts_a_resumed_run_and_rejects_a_repeated_cell
+        PASS [   0.091s] (144/150) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::clean_completion_crashes_recover_without_fresh_child_replay
+        PASS [   0.088s] (145/150) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::timeout_kills_descendant_holding_pipes
+        PASS [   0.108s] (146/150) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::timeout_reaps_an_escaped_descendant
+        PASS [   0.139s] (147/150) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::kill_grace_handles_a_child_ignoring_term
+        PASS [   0.235s] (148/150) tuning-campaign-support::host_process_contracts run_process_drains_both_streams_and_times_out_cleanly
+        PASS [   0.272s] (149/150) tuning-campaign-support::protocol_contracts acceptance_rejects_every_self_consistent_frozen_fact_replacement
+        PASS [   0.617s] (150/150) tuning-campaign-support::protocol_contracts runner_announces_the_log_before_work_and_resumes_without_repeating
+────────────
+     Summary [   0.673s] 150 tests run: 149 passed, 1 failed, 0 skipped
+        FAIL [   0.007s] (121/150) tuning-campaign-support::bin/tuning-extent-campaign-driver tests::producing_input_manifest_rejects_authority_and_path_mutations
+error: test run failed
+--- tuning-campaign-validator output ---
+validate-tuning-extent-campaign: build_inputs source is absent or linked: dev/tools/tuning-profile-compose/Cargo.lock
+--- fmt diffs ---
+cargo-budget: a --full-host bench run holds /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+Diff in ./dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs:190:
+     // The captured manifest and bytes, rather than this locator, govern resume.
+     let manifest = env::var("GF2_BENCH_PRODUCING_MANIFEST")
+         .unwrap_or_else(|_| PRODUCING_MANIFEST_PATH.to_owned());
+-    let producing = ProducingInputs::capture_to(
+-        root,
+-        &manifest,
+-        &stage.join("inputs/producing"),
+-    )?;
++    let producing = ProducingInputs::capture_to(root, &manifest, &stage.join("inputs/producing"))?;
+     let source = source_identity(producing.clone());
+     let arms = arm_records(plan)?;
+     let (settings, settings_deviation) = plan.settings();
+  ✓ check: ok (22s)
+  ✓ tuning-core-no-default: ok (2s)
+  ✓ tuning-core-codec-only: ok (3s)
+  ✓ tuning-algebra-no-default: ok (3s)
+  ✓ tuning-algebra-codec-only: ok (1s)
+  ✓ tuning-coding-no-default: ok (3s)
+  ✓ tuning-coding-codec-only: ok (1s)
+  ✓ test-build: ok (208s)
+  ✗ test: FAILED (exit 100, 67s)
+  ✓ tuning-profile-build: ok (22s)
+  ✓ tuning-profile-nextest: ok (139s)
+  ✓ tuning-algebra-calibration-build: ok (8s)
+  ✓ tuning-algebra-calibration-nextest: ok (1s)
+  ✓ tuning-campaign-support-build: ok (20s)
+  ✗ tuning-campaign-support-nextest: FAILED (exit 100, 1s)
+  ✗ tuning-campaign-validator: FAILED (exit 2, 0s)
+  ✓ tuning-campaign-launcher-syntax: ok (0s)
+  ✓ tuning-lifecycle-cargo: ok (3s)
+  ✓ clippy: ok (34s)
+  ✗ fmt: FAILED (exit 1, 56s)
+  ✓ baked-core: ok (161s)
+  ✓ tuning-core-artifact: ok (8s)
+  ✓ tuning-algebra-artifacts: ok (1s)
+  ✓ tuning-coding-codec: ok (11s)
+  ✓ tuning-composer: ok (65s)
+

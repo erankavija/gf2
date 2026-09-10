@@ -1,0 +1,369 @@
+cargo-budget: 24 jobs (1 live, 24 cpus)
+error: for config file `/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/.config/nextest.toml`, failed to parse profile.slow.overrides at index 0
+  error: operator didn't match any packages
+   ╭─[1:14]
+ 1 │     (package(gf2-sim) and (
+   ·              ───┬───
+   ·                 ╰── no packages matched this
+ 2 │         binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[2:16]
+ 1 │     (package(gf2-sim) and (
+ 2 │         binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+   ·                ──────┬──────
+   ·                      ╰── no binary names matched this
+ 3 │         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[2:41]
+ 1 │     (package(gf2-sim) and (
+ 2 │         binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+   ·                                         ────────────┬────────────
+   ·                                                     ╰── no binary names matched this
+ 3 │         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[2:78]
+ 1 │     (package(gf2-sim) and (
+ 2 │         binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+   ·                                                                              ────────┬───────
+   ·                                                                                      ╰── no binary names matched this
+ 3 │         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[3:19]
+ 2 │         binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+ 3 │         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+   ·                   ─────────────┬────────────
+   ·                                ╰── no binary names matched this
+ 4 │         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[3:57]
+ 2 │         binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+ 3 │         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+   ·                                                         ────────┬────────
+   ·                                                                 ╰── no binary names matched this
+ 4 │         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[4:19]
+ 3 │         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+ 4 │         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+   ·                   ───────────┬──────────
+   ·                              ╰── no binary names matched this
+ 5 │         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[4:53]
+ 3 │         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+ 4 │         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+   ·                                                     ───────────┬───────────
+   ·                                                                ╰── no binary names matched this
+ 5 │         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[5:19]
+ 4 │         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+ 5 │         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+   ·                   ───────────┬───────────
+   ·                              ╰── no binary names matched this
+ 6 │         or binary(determinism) or binary(parallel_determinism)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[5:54]
+ 4 │         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+ 5 │         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+   ·                                                      ────────┬────────
+   ·                                                              ╰── no binary names matched this
+ 6 │         or binary(determinism) or binary(parallel_determinism)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[6:19]
+ 5 │         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+ 6 │         or binary(determinism) or binary(parallel_determinism)
+   ·                   ─────┬─────
+   ·                        ╰── no binary names matched this
+ 7 │         or binary(preset_vs_graph_byte_identity) or binary(campaign_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[6:42]
+ 5 │         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+ 6 │         or binary(determinism) or binary(parallel_determinism)
+   ·                                          ──────────┬─────────
+   ·                                                    ╰── no binary names matched this
+ 7 │         or binary(preset_vs_graph_byte_identity) or binary(campaign_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[7:19]
+ 6 │         or binary(determinism) or binary(parallel_determinism)
+ 7 │         or binary(preset_vs_graph_byte_identity) or binary(campaign_byte_identity)
+   ·                   ──────────────┬──────────────
+   ·                                 ╰── no binary names matched this
+ 8 │         or binary(campaign_cli_flags)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[7:60]
+ 6 │         or binary(determinism) or binary(parallel_determinism)
+ 7 │         or binary(preset_vs_graph_byte_identity) or binary(campaign_byte_identity)
+   ·                                                            ───────────┬──────────
+   ·                                                                       ╰── no binary names matched this
+ 8 │         or binary(campaign_cli_flags)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[8:19]
+ 7 │         or binary(preset_vs_graph_byte_identity) or binary(campaign_byte_identity)
+ 8 │         or binary(campaign_cli_flags)
+   ·                   ─────────┬────────
+   ·                            ╰── no binary names matched this
+ 9 │     ))
+   ╰────
+
+  error: operator didn't match any packages
+    ╭─[10:17]
+  9 │     ))
+ 10 │     or (package(gf2-algebra) and (
+    ·                 ─────┬─────
+    ·                      ╰── no packages matched this
+ 11 │         test(test_simd_vs_scalar_n32) or test(test_parallel_cross_check_n28)
+    ╰────
+
+error: for config file `/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/.config/nextest.toml`, failed to parse profile.ci.overrides at index 1
+  error: operator didn't match any packages
+   ╭────
+ 1 │ package(gf2-sim) and (binary(dvb_t2_regression) or binary(pipeline_run_cpu) or binary(preset_vs_graph_byte_identity) or binary(stage_driven_byte_identity))
+   ·         ───┬───
+   ·            ╰── no packages matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(dvb_t2_regression) or binary(pipeline_run_cpu) or binary(preset_vs_graph_byte_identity) or binary(stage_driven_byte_identity))
+   ·                              ────────┬────────
+   ·                                      ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(dvb_t2_regression) or binary(pipeline_run_cpu) or binary(preset_vs_graph_byte_identity) or binary(stage_driven_byte_identity))
+   ·                                                           ────────┬───────
+   ·                                                                   ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(dvb_t2_regression) or binary(pipeline_run_cpu) or binary(preset_vs_graph_byte_identity) or binary(stage_driven_byte_identity))
+   ·                                                                                       ──────────────┬──────────────
+   ·                                                                                                     ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(dvb_t2_regression) or binary(pipeline_run_cpu) or binary(preset_vs_graph_byte_identity) or binary(stage_driven_byte_identity))
+   ·                                                                                                                                ─────────────┬────────────
+   ·                                                                                                                                             ╰── no binary names matched this
+   ╰────
+
+error: for config file `/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/.config/nextest.toml`, failed to parse profile.ci.overrides at index 2
+  error: operator didn't match any packages
+   ╭─[1:13]
+ 1 │     package(gf2-sim) and (
+   ·             ───┬───
+   ·                ╰── no packages matched this
+ 2 │         binary(pipeline_run_cpu) or binary(preset_vs_graph)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[2:16]
+ 1 │     package(gf2-sim) and (
+ 2 │         binary(pipeline_run_cpu) or binary(preset_vs_graph)
+   ·                ────────┬───────
+   ·                        ╰── no binary names matched this
+ 3 │         or binary(preset_vs_graph_byte_identity) or binary(determinism)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[2:44]
+ 1 │     package(gf2-sim) and (
+ 2 │         binary(pipeline_run_cpu) or binary(preset_vs_graph)
+   ·                                            ───────┬───────
+   ·                                                   ╰── no binary names matched this
+ 3 │         or binary(preset_vs_graph_byte_identity) or binary(determinism)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[3:19]
+ 2 │         binary(pipeline_run_cpu) or binary(preset_vs_graph)
+ 3 │         or binary(preset_vs_graph_byte_identity) or binary(determinism)
+   ·                   ──────────────┬──────────────
+   ·                                 ╰── no binary names matched this
+ 4 │         or binary(parallel_determinism) or binary(channels_determinism)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[3:60]
+ 2 │         binary(pipeline_run_cpu) or binary(preset_vs_graph)
+ 3 │         or binary(preset_vs_graph_byte_identity) or binary(determinism)
+   ·                                                            ─────┬─────
+   ·                                                                 ╰── no binary names matched this
+ 4 │         or binary(parallel_determinism) or binary(channels_determinism)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[4:19]
+ 3 │         or binary(preset_vs_graph_byte_identity) or binary(determinism)
+ 4 │         or binary(parallel_determinism) or binary(channels_determinism)
+   ·                   ──────────┬─────────
+   ·                             ╰── no binary names matched this
+ 5 │         or binary(campaign_cli_flags) or binary(permanent_campaign_bin)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[4:51]
+ 3 │         or binary(preset_vs_graph_byte_identity) or binary(determinism)
+ 4 │         or binary(parallel_determinism) or binary(channels_determinism)
+   ·                                                   ──────────┬─────────
+   ·                                                             ╰── no binary names matched this
+ 5 │         or binary(campaign_cli_flags) or binary(permanent_campaign_bin)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[5:19]
+ 4 │         or binary(parallel_determinism) or binary(channels_determinism)
+ 5 │         or binary(campaign_cli_flags) or binary(permanent_campaign_bin)
+   ·                   ─────────┬────────
+   ·                            ╰── no binary names matched this
+ 6 │         or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[5:49]
+ 4 │         or binary(parallel_determinism) or binary(channels_determinism)
+ 5 │         or binary(campaign_cli_flags) or binary(permanent_campaign_bin)
+   ·                                                 ───────────┬──────────
+   ·                                                            ╰── no binary names matched this
+ 6 │         or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[6:19]
+ 5 │         or binary(campaign_cli_flags) or binary(permanent_campaign_bin)
+ 6 │         or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
+   ·                   ────────┬────────
+   ·                           ╰── no binary names matched this
+ 7 │         or binary(hybrid_scheduler) or binary(executor_oom_fallback_run)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[6:48]
+ 5 │         or binary(campaign_cli_flags) or binary(permanent_campaign_bin)
+ 6 │         or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
+   ·                                                ─────────────┬────────────
+   ·                                                             ╰── no binary names matched this
+ 7 │         or binary(hybrid_scheduler) or binary(executor_oom_fallback_run)
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[7:19]
+ 6 │         or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
+ 7 │         or binary(hybrid_scheduler) or binary(executor_oom_fallback_run)
+   ·                   ────────┬───────
+   ·                           ╰── no binary names matched this
+ 8 │     )
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭─[7:47]
+ 6 │         or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
+ 7 │         or binary(hybrid_scheduler) or binary(executor_oom_fallback_run)
+   ·                                               ────────────┬────────────
+   ·                                                           ╰── no binary names matched this
+ 8 │     )
+   ╰────
+
+error: for config file `/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/.config/nextest.toml`, failed to parse profile.ci.overrides at index 3
+  error: operator didn't match any packages
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·         ───┬───
+   ·            ╰── no packages matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                              ──────┬──────
+   ·                                    ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                                                       ────────────┬────────────
+   ·                                                                   ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                                                                                            ────────┬───────
+   ·                                                                                                    ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                                                                                                                        ─────────────┬────────────
+   ·                                                                                                                                     ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                                                                                                                                                              ────────┬────────
+   ·                                                                                                                                                                      ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                                                                                                                                                                                           ───────────┬──────────
+   ·                                                                                                                                                                                                      ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                                                                                                                                                                                                                             ───────────┬───────────
+   ·                                                                                                                                                                                                                                        ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                                                                                                                                                                                                                                                                ───────────┬───────────
+   ·                                                                                                                                                                                                                                                                           ╰── no binary names matched this
+   ╰────
+
+  error: operator didn't match any binary names
+   ╭────
+ 1 │ package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))
+   ·                                                                                                                                                                                                                                                                                                   ────────┬────────
+   ·                                                                                                                                                                                                                                                                                                           ╰── no binary names matched this
+   ╰────
+

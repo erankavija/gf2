@@ -1,0 +1,29 @@
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+   Compiling num-traits v0.2.19
+   Compiling gf2-kernels-hip v0.1.0 (./crates/gf2-kernels-hip)
+warning: function `choose_k_block` is never used
+   --> crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling num-integer v0.1.47
+   Compiling rand_distr v0.4.3
+   Compiling proptest v1.9.0
+   Compiling num-bigint v0.4.8
+   Compiling gf2-stats v0.1.0 (./crates/gf2-stats)
+warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on ./crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
+   Compiling gf2-algebra v0.1.0 (./crates/gf2-algebra)
+   Compiling gf2-coding v0.1.0 (./crates/gf2-coding)
+   Compiling gf2-sim v0.1.0 (./crates/gf2-sim)
+    Finished `ci-test` profile [optimized] target(s) in 44.95s
+────────────
+ Nextest run ID 6eff1971-abd9-465a-b8e7-513475413f8c with nextest profile: ci
+    Starting 1 test across 54 binaries (636 tests skipped)
+        PASS [   0.017s] (1/1) gf2-sim gpu::imp::tests::test_dispatcher_acquires_stream_and_allocates
+────────────
+     Summary [   0.019s] 1 test run: 1 passed, 636 skipped
