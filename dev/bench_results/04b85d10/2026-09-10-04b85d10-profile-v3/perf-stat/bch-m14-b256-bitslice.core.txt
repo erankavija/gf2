@@ -1,0 +1,19 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-bitslice-interleaved  cache_state: warm  target_ms: 1500
+# events: cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":96,"conversion":{"batch_fill_ns":307804,"dispatch_ns":3,"pack_ns":6282,"setup_ns":1604500,"unpack_ns":0},"elapsed_ns":"1506544432","ns_per_call":15693171.166666666,"path":"family-bitslice-interleaved","prepare":{"allocated_bytes":5296968,"allocations":6195,"freed_bytes":4175048},"schema":"consumer-profile-record-v1","seed":303,"selected_path":"family-pinned/BitsliceInterleaved","size":{"batch":256,"degree":14},"target_ms":1500,"timed":{"allocated_bytes":1376256,"allocated_bytes_per_call":14336.0,"allocations":24576,"allocations_per_call":256.0,"freed_bytes":1376256,"peak_live_bytes":56},"workers_observed":1,"workload":"bch-encode-batch"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303} --path family-bitslice-interleaved --cache-state warm --target-ms 1500':
+
+     7,361,984,865      cycles:u                                                              
+    10,603,753,652      instructions:u                                                        
+     2,586,297,174      branches:u                                                            
+       205,692,230      branch-misses:u                                                       
+       649,576,712      stalled-cycles-frontend:u                                             
+
+       1.543615418 seconds time elapsed
+
+       1.535675000 seconds user
+       0.002988000 seconds sys
+
+

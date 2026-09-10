@@ -1,0 +1,208 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "bit-storage-logical-consumers",
+    "issue": "04b85d10",
+    "purpose": "consumer-family",
+    "description": "Exploratory pilot of issue 04b85d10, protocol version 3. Question: Whether the current packed-row XOR dispatch and its eight-word SIMD cutover leave a material single-core gap against routes gf2-core already exposes (a hoisted resolved kernel, the detected SIMD backend), at the row widths dense elimination and row-operation consumers use, and what the pinned dense RREF and sparse LDPC syndrome consumers cost today. Every arm is current production code; `ops-dispatched` is the route `BitMatrix::row_xor` takes. Every cell is exploratory: the pilot sizes the family's measurement resolution at the confirmatory sample size, records the pinned pre-change baseline latencies, and decides nothing."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-10T16:05:30Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.05,
+    "rationale": "A dispatch-hoist or cutover change is a small selector edit whose benefit reaches a row-operation consumer nearly one-to-one, because elimination loops spend their time in the row kernel itself. Five percent of an L1-resident row XOR is the smallest gain such a change can claim to move in a consumer; the mid-range buffer story it feeds admits repeatable smaller gains under a frozen rule rather than a blanket hurdle. The pilot carries the margin so its recorded decisions are computed under the rule the confirmation uses; pilot cells never pass.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "A route at most five percent slower than the dispatched production route is not worse for a row consumer whose kernel share is below one; the margin equals the worthwhile threshold so a cell is either material, not material, or a regression.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell compares gf2 against an external comparator, so no comparator-gap objective is exercised and no threshold applies."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This issue is a profile: it selects experiments and adopts no implementation, so its budget for production change is zero unsafe kernels and zero added production lines. A passing improvement cell confirms a candidate's materiality for its downstream issue; it selects nothing here."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/04b85d10/v3-bit-storage-logical-consumers-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "logical-row-xor-dispatch-64w-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 64
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-row-xor-dispatch-8w-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 8
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-row-xor-threshold-4w-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 4
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-row-xor-dispatch-8192w-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 8192
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-dense-rref-1024-control-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dense-rref",
+        "size": {
+          "rows": 1024,
+          "cols": 1024
+        },
+        "seed": 102
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-ldpc-syndrome-64800-control-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "ldpc-syndrome",
+        "size": {
+          "n": 64800
+        },
+        "seed": 104
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

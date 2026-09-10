@@ -1,0 +1,25 @@
+# Routines whose generated code the profile cites.
+# Fields: label|demangled symbol substring
+# A kernel reached through a function pointer cannot be inlined into its
+# caller, so it survives as a symbol; a routine that does not appear was
+# inlined into its caller, and its file records that rather than leaving a
+# silent gap.
+avx2-popcnt|x86::avx2::avx2_popcnt
+avx2-and-popcnt|x86::avx2::avx2_and_popcnt
+avx2-find-first-one|x86::avx2::avx2_find_first_one
+avx2-xor-into|x86::avx2::avx2_xor_into
+avx2-and-into|x86::avx2::avx2_and_into
+transpose-64x64-avx2|x86::transpose::transpose_64x64_avx2
+transpose-64x64-scalar|transpose::transpose_64x64_scalar
+bitslice-reduce-avx2|x86::bch_encode::bitslice_reduce_avx2
+bitslice-reduce-scalar|bch_encode::bitslice_reduce_scalar
+fold-block-pclmul|x86::bch_encode::fold_block_pclmul
+fold-block-scalar|bch_encode::fold_block_scalar
+bch-unpack-parity|BchEncodeFns::unpack_parity
+packed-write-codeword|encode::packed_write_codeword
+packed-table-reduce|encode::packed_table_reduce
+packed-fold-reduce|encode::packed_fold_reduce
+dense-matvec-simd|BitMatrix::matvec_simd
+dense-matvec-scalar|BitMatrix::matvec_scalar
+dense-transpose|BitMatrix::transpose
+sparse-matvec|SpBitMatrix::matvec

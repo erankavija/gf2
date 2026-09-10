@@ -1,0 +1,426 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "pilot-04b85d10-20260908t085658z",
+  "issue": "04b85d10",
+  "label": "pilot",
+  "campaign_seed": 20260907,
+  "addendum": "dev/active/04b85d10/addendum-bit-storage-consumers-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "count-ones": {
+      "build": "conservative-portable",
+      "description": "zero test spelled as a full population count",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "count-ones"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-12-a": {
+      "build": "conservative-portable",
+      "description": "the production route across twelve rayon workers",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "12",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-12-b": {
+      "build": "conservative-portable",
+      "description": "the production route across twelve rayon workers",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "12",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-24-a": {
+      "build": "conservative-portable",
+      "description": "the production route across twenty-four rayon workers",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "24",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-24-b": {
+      "build": "conservative-portable",
+      "description": "the production route across twenty-four rayon workers",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "24",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-a": {
+      "build": "conservative-portable",
+      "description": "the route the production dispatcher selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-b": {
+      "build": "conservative-portable",
+      "description": "the route the production dispatcher selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-bitslice": {
+      "build": "conservative-portable",
+      "description": "bit-sliced interleaved encoding family",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-bitslice-interleaved"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-fold": {
+      "build": "conservative-portable",
+      "description": "carry-less-multiply fold encoding family",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-clmul-fold"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-reference": {
+      "build": "conservative-portable",
+      "description": "bit-serial reference encoding family",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-poly-remainder-scalar"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "find-first-one": {
+      "build": "conservative-portable",
+      "description": "zero test spelled as a first-set-bit search",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "find-first-one"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "ops-dispatched": {
+      "build": "conservative-portable",
+      "description": "size-dispatched kernel entry point, re-selected per call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "ops-dispatched"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "ops-resolved": {
+      "build": "conservative-portable",
+      "description": "the same kernel with backend resolution hoisted out of the loop",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "ops-resolved"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "scalar-backend": {
+      "build": "conservative-portable",
+      "description": "the portable scalar backend called directly",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "scalar-backend"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "simd-backend": {
+      "build": "conservative-portable",
+      "description": "the detected SIMD backend called directly, detection hoisted",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "simd-backend"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "transpose-detected": {
+      "build": "conservative-portable",
+      "description": "detected 64x64 block-transpose lane",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "transpose-detected"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "transpose-scalar": {
+      "build": "conservative-portable",
+      "description": "portable 64x64 block transpose",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "transpose-scalar"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "logical-row-xor-dispatch-1core",
+      "baseline_arm": "ops-dispatched",
+      "candidate_arm": "ops-resolved",
+      "case": {
+        "workload": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 64
+        },
+        "seed": 101
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "logical-row-xor-threshold-1core",
+      "baseline_arm": "ops-dispatched",
+      "candidate_arm": "simd-backend",
+      "case": {
+        "workload": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 4
+        },
+        "seed": 101
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "logical-dense-rref-1core",
+      "baseline_arm": "current-a",
+      "candidate_arm": "current-b",
+      "case": {
+        "workload": "dense-rref",
+        "size": {
+          "rows": 1024,
+          "cols": 1024
+        },
+        "seed": 102
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "logical-ldpc-syndrome-1core",
+      "baseline_arm": "current-a",
+      "candidate_arm": "current-b",
+      "case": {
+        "workload": "ldpc-syndrome",
+        "size": {
+          "n": 64800
+        },
+        "seed": 104
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "count-popcount-dispatch-1core",
+      "baseline_arm": "ops-dispatched",
+      "candidate_arm": "scalar-backend",
+      "case": {
+        "workload": "popcount",
+        "size": {
+          "words": 4
+        },
+        "seed": 201
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "count-popcount-threshold-1core",
+      "baseline_arm": "scalar-backend",
+      "candidate_arm": "simd-backend",
+      "case": {
+        "workload": "popcount",
+        "size": {
+          "words": 8
+        },
+        "seed": 201
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "count-zero-test-syndrome-1core",
+      "baseline_arm": "count-ones",
+      "candidate_arm": "find-first-one",
+      "case": {
+        "workload": "zero-test",
+        "size": {
+          "words": 507,
+          "set_bit": 32448
+        },
+        "seed": 202
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "count-ldpc-check-1core",
+      "baseline_arm": "count-ones",
+      "candidate_arm": "find-first-one",
+      "case": {
+        "workload": "ldpc-codeword-check",
+        "size": {
+          "n": 64800
+        },
+        "seed": 203
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "layout-transpose-block-1core",
+      "baseline_arm": "transpose-scalar",
+      "candidate_arm": "transpose-detected",
+      "case": {
+        "workload": "transpose-64x64",
+        "size": {
+          "blocks": 256
+        },
+        "seed": 301
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "layout-bch-encode-bitslice-1core",
+      "baseline_arm": "family-reference",
+      "candidate_arm": "family-bitslice",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 303
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "layout-bch-encode-fold-1core",
+      "baseline_arm": "family-reference",
+      "candidate_arm": "family-fold",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 303
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "layout-bch-encode-alloc-1core",
+      "baseline_arm": "current-a",
+      "candidate_arm": "current-b",
+      "case": {
+        "workload": "bch-encode-batch-alloc",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 304
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "layout-transpose-block-6core",
+      "baseline_arm": "transpose-scalar",
+      "candidate_arm": "transpose-detected",
+      "case": {
+        "workload": "transpose-64x64",
+        "size": {
+          "blocks": 4096
+        },
+        "seed": 301
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "layout-bch-encode-parallel-12core",
+      "baseline_arm": "current-12-a",
+      "candidate_arm": "current-12-b",
+      "case": {
+        "workload": "bch-encode-batch-parallel",
+        "size": {
+          "degree": 14,
+          "batch": 1024,
+          "workers": 12
+        },
+        "seed": 305
+      },
+      "pilot_pairs": 8
+    },
+    {
+      "cell_id": "layout-bch-encode-parallel-24logical",
+      "baseline_arm": "current-24-a",
+      "candidate_arm": "current-24-b",
+      "case": {
+        "workload": "bch-encode-batch-parallel",
+        "size": {
+          "degree": 14,
+          "batch": 1024,
+          "workers": 24
+        },
+        "seed": 305
+      },
+      "pilot_pairs": 8
+    }
+  ],
+  "max_cells_per_session": 4
+}

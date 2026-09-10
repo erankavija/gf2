@@ -1,0 +1,183 @@
+# label: fold-block-scalar
+# pattern: bch_encode::fold_block_scalar
+# binary: target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 28f0fc82431f1396d61c6a6af7c3080038dbeae41e937a8c5ac643d1874745a6
+# symbols matching this pattern in the binary: 1
+
+## symbol at 0000000000094470, 0x0000000000000292 bytes
+0000000000094470 <gf2_kernels_simd::bch_encode::fold_block_scalar>:
+   94470:	push   %r15
+   94472:	push   %r14
+   94474:	push   %r13
+   94476:	push   %r12
+   94478:	push   %rbx
+   94479:	sub    $0x50,%rsp
+   9447d:	mov    %rcx,%rax
+   94480:	mov    %r8,(%rsp)
+   94484:	mov    %r8,%r11
+   94487:	shr    $0x6,%r11
+   9448b:	xor    %ecx,%ecx
+   9448d:	mov    %r8,%r10
+   94490:	and    $0x3f,%r10
+   94494:	setne  %cl
+   94497:	add    %r11,%rcx
+   9449a:	mov    %rcx,0x8(%rsp)
+   9449f:	test   %r8,%r8
+   944a2:	je     946c8 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x258>
+   944a8:	mov    %rsi,0x10(%rsp)
+   944ad:	mov    %rax,0x18(%rsp)
+   944b2:	mov    %rcx,0x20(%rsp)
+   944b7:	mov    %rcx,0x28(%rsp)
+   944bc:	cmp    %rcx,%rsi
+   944bf:	jne    94680 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x210>
+   944c5:	cmp    %rcx,%rax
+   944c8:	jne    94680 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x210>
+   944ce:	cmp    $0x3f,%r8
+   944d2:	jbe    944fa <gf2_kernels_simd::bch_encode::fold_block_scalar+0x8a>
+   944d4:	add    $0xffffffffffffffc0,%r8
+   944d8:	shr    $0x6,%r8
+   944dc:	cmp    %rsi,%r8
+   944df:	jae    9452b <gf2_kernels_simd::bch_encode::fold_block_scalar+0xbb>
+   944e1:	mov    (%rdi,%r8,8),%r11
+   944e5:	test   %r10,%r10
+   944e8:	je     94533 <gf2_kernels_simd::bch_encode::fold_block_scalar+0xc3>
+   944ea:	lea    0x1(%r8),%rcx
+   944ee:	cmp    %rsi,%rcx
+   944f1:	jae    94538 <gf2_kernels_simd::bch_encode::fold_block_scalar+0xc8>
+   944f3:	mov    0x8(%rdi,%r8,8),%r8
+   944f8:	jmp    9453b <gf2_kernels_simd::bch_encode::fold_block_scalar+0xcb>
+   944fa:	test   %rsi,%rsi
+   944fd:	je     946f1 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x281>
+   94503:	mov    (%rdi),%r11
+   94506:	neg    %r8b
+   94509:	mov    %r8d,%ecx
+   9450c:	shl    %cl,%r11
+   9450f:	cmp    $0x2,%rax
+   94513:	jae    94552 <gf2_kernels_simd::bch_encode::fold_block_scalar+0xe2>
+   94515:	test   %rsi,%rsi
+   94518:	jne    94578 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x108>
+   9451a:	lea    0x609df(%rip),%rdx        # f4f00 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x60>
+   94521:	xor    %edi,%edi
+   94523:	xor    %esi,%esi
+   94525:	call   *0x63475(%rip)        # f79a0 <_DYNAMIC+0x208>
+   9452b:	xor    %r11d,%r11d
+   9452e:	test   %r10,%r10
+   94531:	jne    944ea <gf2_kernels_simd::bch_encode::fold_block_scalar+0x7a>
+   94533:	xor    %r8d,%r8d
+   94536:	jmp    94543 <gf2_kernels_simd::bch_encode::fold_block_scalar+0xd3>
+   94538:	xor    %r8d,%r8d
+   9453b:	mov    %r10d,%ecx
+   9453e:	neg    %cl
+   94540:	shl    %cl,%r8
+   94543:	mov    %r10d,%ecx
+   94546:	shr    %cl,%r11
+   94549:	or     %r8,%r11
+   9454c:	cmp    $0x2,%rax
+   94550:	jb     94515 <gf2_kernels_simd::bch_encode::fold_block_scalar+0xa5>
+   94552:	lea    -0x1(%rax),%rcx
+   94556:	cs nopw 0x0(%rax,%rax,1)
+   94560:	cmp    %rsi,%rcx
+   94563:	jae    946e1 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x271>
+   94569:	mov    -0x8(%rdi,%rcx,8),%r8
+   9456e:	mov    %r8,(%rdi,%rcx,8)
+   94572:	sub    $0x1,%rcx
+   94576:	ja     94560 <gf2_kernels_simd::bch_encode::fold_block_scalar+0xf0>
+   94578:	xor    0x80(%rsp),%r11
+   94580:	movq   $0x0,(%rdi)
+   94587:	test   %r9,%r9
+   9458a:	je     945d2 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x162>
+   9458c:	xor    %esi,%esi
+   9458e:	xor    %ebx,%ebx
+   94590:	xor    %r8d,%r8d
+   94593:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   945a0:	mov    %r9,%r14
+   945a3:	tzcnt  %r9,%rcx
+   945a8:	xor    %r9d,%r9d
+   945ab:	shld   %cl,%r11,%r9
+   945af:	mov    %r11,%r15
+   945b2:	shl    %cl,%r15
+   945b5:	test   $0x40,%cl
+   945b8:	cmovne %r15,%r9
+   945bc:	cmovne %rsi,%r15
+   945c0:	xor    %r9,%r8
+   945c3:	xor    %r15,%rbx
+   945c6:	lea    -0x1(%r14),%r9
+   945ca:	and    %r14,%r9
+   945cd:	jne    945a0 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x130>
+   945cf:	xor    %r8,%r11
+   945d2:	cmp    $0x1,%rax
+   945d6:	mov    %rax,%rsi
+   945d9:	adc    $0x0,%rsi
+   945dd:	xor    %r8d,%r8d
+   945e0:	xor    %r9d,%r9d
+   945e3:	jmp    945f5 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x185>
+   945e5:	data16 cs nopw 0x0(%rax,%rax,1)
+   945f0:	cmp    %rsi,%r9
+   945f3:	je     94651 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x1e1>
+   945f5:	mov    (%rdx,%r9,8),%rcx
+   945f9:	xor    %r14d,%r14d
+   945fc:	xor    %ebx,%ebx
+   945fe:	test   %rcx,%rcx
+   94601:	je     9463f <gf2_kernels_simd::bch_encode::fold_block_scalar+0x1cf>
+   94603:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   94610:	mov    %rcx,%r15
+   94613:	tzcnt  %rcx,%rcx
+   94618:	xor    %r12d,%r12d
+   9461b:	shld   %cl,%r11,%r12
+   9461f:	mov    %r11,%r13
+   94622:	shl    %cl,%r13
+   94625:	test   $0x40,%cl
+   94628:	cmovne %r13,%r12
+   9462c:	cmovne %r8,%r13
+   94630:	xor    %r12,%rbx
+   94633:	xor    %r13,%r14
+   94636:	lea    -0x1(%r15),%rcx
+   9463a:	and    %r15,%rcx
+   9463d:	jne    94610 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x1a0>
+   9463f:	xor    %r14,(%rdi,%r9,8)
+   94643:	inc    %r9
+   94646:	cmp    %rax,%r9
+   94649:	jae    945f0 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x180>
+   9464b:	xor    %rbx,(%rdi,%r9,8)
+   9464f:	jmp    945f0 <gf2_kernels_simd::bch_encode::fold_block_scalar+0x180>
+   94651:	mov    $0xffffffffffffffff,%rdx
+   94658:	mov    %r10d,%ecx
+   9465b:	shl    %cl,%rdx
+   9465e:	not    %rdx
+   94661:	xor    %ecx,%ecx
+   94663:	cmp    $0x1,%r10
+   94667:	sbb    %rcx,%rcx
+   9466a:	or     %rdx,%rcx
+   9466d:	and    %rcx,-0x8(%rdi,%rax,8)
+   94672:	add    $0x50,%rsp
+   94676:	pop    %rbx
+   94677:	pop    %r12
+   94679:	pop    %r13
+   9467b:	pop    %r14
+   9467d:	pop    %r15
+   9467f:	ret
+   94680:	lea    0x8(%rsp),%rax
+   94685:	mov    %rax,0x30(%rsp)
+   9468a:	mov    0x6338f(%rip),%rax        # f7a20 <_DYNAMIC+0x288>
+   94691:	mov    %rax,0x38(%rsp)
+   94696:	mov    %rsp,%rcx
+   94699:	mov    %rcx,0x40(%rsp)
+   9469e:	mov    %rax,0x48(%rsp)
+   946a3:	lea    -0x83f9a(%rip),%rcx        # 10710 <anon.eb89d4395b0ead844ef0b45b8b54da85.47.llvm.3643936799275306673+0x2d2>
+   946aa:	lea    0x6081f(%rip),%r9        # f4ed0 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x30>
+   946b1:	lea    0x10(%rsp),%rsi
+   946b6:	lea    0x20(%rsp),%rdx
+   946bb:	lea    0x30(%rsp),%r8
+   946c0:	xor    %edi,%edi
+   946c2:	call   *0x63a38(%rip)        # f8100 <_DYNAMIC+0x968>
+   946c8:	lea    -0x7521f(%rip),%rdi        # 1f4b0 <anon.685cef5deda74ba931c528c61804d176.14.llvm.17560408324297722412+0x41>
+   946cf:	lea    0x607e2(%rip),%rdx        # f4eb8 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x18>
+   946d6:	mov    $0x57,%esi
+   946db:	call   *0x6332f(%rip)        # f7a10 <_DYNAMIC+0x278>
+   946e1:	lea    0x60830(%rip),%rdx        # f4f18 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x78>
+   946e8:	mov    %rcx,%rdi
+   946eb:	call   *0x632af(%rip)        # f79a0 <_DYNAMIC+0x208>
+   946f1:	lea    0x607f0(%rip),%rdx        # f4ee8 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x48>
+   946f8:	xor    %edi,%edi
+   946fa:	xor    %esi,%esi
+   946fc:	call   *0x6329e(%rip)        # f79a0 <_DYNAMIC+0x208>

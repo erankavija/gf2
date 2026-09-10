@@ -1,0 +1,197 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "pilot-v3-layout-04b85d10-20260910t161732z",
+  "issue": "04b85d10",
+  "label": "pilot",
+  "campaign_seed": 20260910,
+  "addendum": "dev/active/04b85d10/addendum-bit-storage-layout-v3-pilot.json",
+  "producing_manifest": "dev/active/04b85d10/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "caller-buffer": {
+      "build": "conservative-portable",
+      "description": "caller-buffer batch entry point encode_batch_into",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "caller-buffer"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current": {
+      "build": "conservative-portable",
+      "description": "the route the production dispatcher selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-control": {
+      "build": "conservative-portable",
+      "description": "identity control: the production route launched as a second arm",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-bitslice": {
+      "build": "conservative-portable",
+      "description": "bit-sliced interleaved encoding family, forced",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-bitslice-interleaved"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-fold": {
+      "build": "conservative-portable",
+      "description": "carry-less-multiply fold encoding family, forced",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-clmul-fold"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "transpose-detected": {
+      "build": "conservative-portable",
+      "description": "detected 64x64 block-transpose lane",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "transpose-detected"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "transpose-scalar": {
+      "build": "conservative-portable",
+      "description": "portable 64x64 block transpose",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "transpose-scalar"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "layout-transpose-block-256-1core",
+      "baseline_arm": "transpose-scalar",
+      "candidate_arm": "transpose-detected",
+      "case": {
+        "workload": "transpose-64x64",
+        "size": {
+          "blocks": 256
+        },
+        "seed": 301
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "layout-transpose-block-4096-6core",
+      "baseline_arm": "transpose-scalar",
+      "candidate_arm": "transpose-detected",
+      "case": {
+        "workload": "transpose-64x64",
+        "size": {
+          "blocks": 4096
+        },
+        "seed": 301
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "layout-bch-encode-bitslice-m14-b256-1core",
+      "baseline_arm": "current",
+      "candidate_arm": "family-bitslice",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 303
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "layout-bch-encode-fold-m14-b256-1core",
+      "baseline_arm": "current",
+      "candidate_arm": "family-fold",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 303
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "layout-bch-encode-caller-buffer-m14-b256-1core",
+      "baseline_arm": "current",
+      "candidate_arm": "caller-buffer",
+      "case": {
+        "workload": "bch-encode-batch-alloc",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 304
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "layout-dense-transpose-4096-control-1core",
+      "baseline_arm": "current",
+      "candidate_arm": "current-control",
+      "case": {
+        "workload": "dense-transpose",
+        "size": {
+          "rows": 4096,
+          "cols": 4096
+        },
+        "seed": 302
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "layout-dvb-bch-encode-7200-control-1core",
+      "baseline_arm": "current",
+      "candidate_arm": "current-control",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 1
+        },
+        "seed": 306
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 3
+}
