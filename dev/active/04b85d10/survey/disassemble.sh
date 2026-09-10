@@ -80,7 +80,7 @@ done <"${HERE}/asm-symbols.txt"
     echo
     echo "## symbols containing a popcnt instruction (count, symbol)"
     objdump -d --no-show-raw-insn -C "${BINARY}" \
-        | awk '/^[0-9a-f]+ </ {fn=substr($0, index($0, "<"))} /\tpopcnt/ {c[fn]++} END {for (f in c) print c[f], f}' \
+        | awk '/^[0-9a-f]+ </ {fn=substr($0, index($0, "<"))} /popcnt/ {c[fn]++} END {for (f in c) print c[f], f}' \
         | sort -rn
     echo
     echo "## symbols containing the bit-twiddle popcount constants 0x5555... or 0x3333... (count, symbol)"
