@@ -11,8 +11,12 @@ intervals in its acceptance summary (the corrected alpha P-03 recomputes it
 at), rounded up to a hundredth. Each declared margin keeps its
 consumer-benefit value unless that value does not strictly exceed one plus the
 resolution; then it rises to the next hundredth that does, and its rationale
-says so. Margins are compared as decimals, never as binary floats. Both modes
-refuse to overwrite an existing addendum.
+says so. Margins are compared as decimals, never as binary floats. The
+confirmation's description states the family accounting the frozen ledger
+implies: the attempt number, the cumulative comparison count and the expected
+bootstrap draws per tail that P-20 requires to reach twenty. Every workload
+identity names its seeded generator. Both modes refuse to overwrite an
+existing addendum.
 
 Run from the repository root.
 """
@@ -30,6 +34,13 @@ import families  # noqa: E402
 HUNDREDTH = Decimal("0.01")
 MATERIAL_GAP = Decimal("1.10")
 EQUIVALENCE = Decimal("1.05")
+FAMILY_ALPHA = 0.05
+BOOTSTRAP_RESAMPLES = 10000
+MIN_TAIL_DRAWS = 20
+GENERATOR = (
+    "SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in "
+    "dev/tools/tuning-campaign-support/src/abtest.rs"
+)
 
 DESCRIPTIONS = {
     "popcount": (
@@ -72,14 +83,17 @@ def cell(family, cell_id, key, candidate, role):
     if family == "popcount":
         words, offset, pattern, cache, seed, why = families.POPCOUNT_WORKLOADS[key]
         size = {"words": words, "word_offset": offset}
-        identity = f"popcount-{pattern.replace('_', '')}-{key}: {why}"
+        data = (f"words from {GENERATOR}, seed {seed}" if pattern == "random"
+                else f"constant {pattern} words; the seed is unused")
+        identity = f"popcount-{pattern.replace('_', '')}-{key} ({data}): {why}"
         metric = "kernel-isolated"
         conversion = False
     else:
         words, cache, seed, why = families.AND_WORKLOADS[key]
         size = {"words": words, "word_offset": 0}
         metric, conversion = families.AND_CANDIDATES[candidate]
-        identity = f"and-popcnt-random-{key}: {why}"
+        identity = (f"and-popcnt-random-{key} (operands from {GENERATOR}, seeds {seed} and "
+                    f"{seed + families.AND_RHS_SEED_OFFSET}): {why}")
     baseline = families.FAMILIES[family]["baseline"]
     return {
         "cell_id": cell_id,
@@ -125,8 +139,36 @@ def effect(family, resolution=None, evidence=None, margins=None):
     }
 
 
+def accounting(spec, cells):
+    """P-20's family accounting for a confirmation appended to the current ledger."""
+    ledger = pathlib.Path(spec["ledger"]).read_text(encoding="utf-8").splitlines()
+    entries = [json.loads(line) for line in ledger if line.strip()]
+    prior_attempts = sum(1 for entry in entries if entry["comparisons"] > 0)
+    prior_m = sum(entry["comparisons"] for entry in entries)
+    attempt = prior_attempts + 1
+    m = prior_m + len(cells)
+    alpha = FAMILY_ALPHA / (attempt * (attempt + 1)) / m
+    tail = BOOTSTRAP_RESAMPLES * alpha / 2
+    verdict = (
+        f"meeting the {MIN_TAIL_DRAWS} P-20 requires; P-20's endpoint-stability check still "
+        "applies cell by cell" if tail >= MIN_TAIL_DRAWS else
+        f"fewer than the {MIN_TAIL_DRAWS} P-20 requires, so every cell is not-confirmatory by "
+        "construction and the attempt re-measures the question with fresh samples"
+    )
+    return (
+        f" The frozen ledger holds {prior_attempts} earlier non-exploratory reservation(s) "
+        f"spending {prior_m} comparisons, so this confirmation is attempt {attempt} with "
+        f"cumulative m = {m}: the corrected per-comparison alpha "
+        f"{FAMILY_ALPHA}/({attempt}*{attempt + 1})/{m} = {alpha:.4g} leaves {tail:.2f} expected "
+        f"bootstrap draws per tail, {verdict}."
+    )
+
+
 def addendum(family, mode, cells, effect_block):
     spec = families.FAMILIES[family]
+    description = f"Protocol-v3 {mode} of jit:{families.ISSUE}. " + DESCRIPTIONS[family]
+    if mode == "confirmation":
+        description += accounting(spec, cells)
     return {
         "schema": "zen3-benchmark-addendum-v3",
         "protocol": {"id": "zen3-benchmark-protocol", "version": 3},
@@ -134,7 +176,7 @@ def addendum(family, mode, cells, effect_block):
             "id": spec["id"],
             "issue": families.ISSUE,
             "purpose": "kernel-family",
-            "description": f"Protocol-v3 {mode} of jit:{families.ISSUE}. " + DESCRIPTIONS[family],
+            "description": description,
         },
         "frozen": {"frozen_utc": utc_now()},
         "effect": effect_block,
@@ -159,15 +201,20 @@ def addendum(family, mode, cells, effect_block):
 
 
 def widest_half_width(summary):
+    """P-03's quantity: the largest max(estimate - lower, upper - estimate) / estimate."""
     widest = Decimal(0)
     for entry in summary["cells"]:
         interval = entry.get("interval")
         if interval is None:
+            print(f"{entry['cell_id']:<52} unavailable")
             continue
         estimate = Decimal(repr(interval["estimate"]))
         lower = Decimal(repr(interval["lower"]))
         upper = Decimal(repr(interval["upper"]))
-        widest = max(widest, max(abs(estimate - lower), abs(upper - estimate)) / estimate)
+        half = max(abs(estimate - lower), abs(upper - estimate)) / estimate
+        print(f"{entry['cell_id']:<52}{float(estimate):>10.4f}{float(lower):>10.4f}"
+              f"{float(upper):>10.4f}{float(half):>10.4f}")
+        widest = max(widest, half)
     return widest
 
 
@@ -210,6 +257,13 @@ def main():
             sys.exit("the pilot summary does not accept this receipt")
         if summary["label"] != "pilot" or summary["family"]["family_id"] != spec["id"]:
             sys.exit("resolution evidence must be this family's pilot")
+        accounting = summary["family"]
+        print(f"pilot receipt {receipt} sha256 {digest}")
+        print(f"verdict {summary['verdict']}, findings {len(summary['findings'])}; family "
+              f"{accounting['family_id']}: m = {accounting['comparisons']}, attempt alpha "
+              f"{accounting['family_alpha']}, per-comparison confidence "
+              f"{accounting['per_comparison_confidence']}")
+        print(f"{'cell':<52}{'estimate':>10}{'lower':>10}{'upper':>10}{'rel_half':>10}")
         widest = widest_half_width(summary)
         resolution = widest.quantize(HUNDREDTH, rounding=ROUND_CEILING)
         if resolution <= widest:
