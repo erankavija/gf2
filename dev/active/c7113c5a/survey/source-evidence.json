@@ -1,0 +1,589 @@
+{
+  "schema": "c7113c5a-source-evidence-v1",
+  "commits": {
+    "gf2": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+    "gf2x": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0"
+  },
+  "claims": [
+    {
+      "claim": "public-clmul-wide",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 2006,
+      "text": "pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) -> [u64; M] {",
+      "why": "clmul_wide is the documented public long-product entry point."
+    },
+    {
+      "claim": "public-clmul-wide-delegates",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 2009,
+      "text": "    clmul_wide_slice::<N>(a, b, &mut out);",
+      "why": "clmul_wide's body delegates to clmul_wide_slice; it performs no capability dispatch."
+    },
+    {
+      "claim": "public-clmul-wide-slice",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 2052,
+      "text": "pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u64]) {",
+      "why": "clmul_wide_slice is public; the survey's public-API cell calls it."
+    },
+    {
+      "claim": "clmul-wide-slice-word-product",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 2056,
+      "text": "            let product: u128 = super::barrett::clmul(a[i], b[j]);",
+      "why": "Each of the N^2 word products of the public path calls barrett::clmul."
+    },
+    {
+      "claim": "barrett-clmul-is-scalar",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/barrett.rs",
+      "line": 99,
+      "text": "    gf2_kernels_simd::clmul_u64_scalar(a, b)",
+      "why": "barrett::clmul delegates to the scalar carry-less multiply."
+    },
+    {
+      "claim": "scalar-clmul-bit-loop",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/clmul_scalar.rs",
+      "line": 27,
+      "text": "    while b_remaining != 0 {",
+      "why": "The scalar product loops once per set bit of one operand; it issues no PCLMULQDQ."
+    },
+    {
+      "claim": "dispatch-helper-crate-private",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 2072,
+      "text": "pub(crate) fn clmul_wide_slice_product<const N: usize>(",
+      "why": "The dispatching long-product helper is crate-private, so external callers cannot reach it by name."
+    },
+    {
+      "claim": "dispatch-helper-n4",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 2082,
+      "text": "            if let Some(fns) = crate::simd::maybe_gf2m_wide256() {",
+      "why": "The helper dispatches N = 4 to the wide256 kernel."
+    },
+    {
+      "claim": "dispatch-helper-n9",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 2096,
+      "text": "            if let Some(fns) = crate::simd::maybe_gf2m_wide571() {",
+      "why": "The helper dispatches N = 9 to the wide571 kernel."
+    },
+    {
+      "claim": "dispatch-helper-fallback",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 2113,
+      "text": "    clmul_wide_slice::<N>(a, b, out);",
+      "why": "Every other N, and N = 4 or 9 without a kernel, falls back to the scalar schoolbook."
+    },
+    {
+      "claim": "mul-ref-uses-helper",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 917,
+      "text": "        clmul_wide_slice_product::<N>(&self.words, &rhs.words, &mut product);",
+      "why": "Gf2mWide::mul_ref computes its unreduced product through the dispatching helper."
+    },
+    {
+      "claim": "mul-ref-reduces",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 922,
+      "text": "        let reduced = reducer.reduce_slice(&product);",
+      "why": "Gf2mWide::mul_ref then applies BarrettReducerWide::reduce_slice; the survey times the product and reports this reduction separately."
+    },
+    {
+      "claim": "mul-ref-rustdoc-names-public-path",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 877,
+      "text": "    /// `O(N\u00b2)` carry-less multiplications (via `clmul_wide::<N, {2*N}>`) plus",
+      "why": "mul_ref's Complexity rustdoc names clmul_wide as its mechanism while its body uses the dispatching helper."
+    },
+    {
+      "claim": "barrett-wide-uses-helper",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/gf2m/barrett.rs",
+      "line": 970,
+      "text": "    super::wide::clmul_wide_slice_product::<N>(a, b_stored, out);",
+      "why": "The wide Barrett reducer's own products also use the dispatching helper."
+    },
+    {
+      "claim": "cached-wide-detection",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/lib.rs",
+      "line": 371,
+      "text": "            .get_or_init(gf2_kernels_simd::gf2m_wide::detect_wide)",
+      "why": "gf2-core caches gf2_kernels_simd::gf2m_wide::detect_wide, the detection the survey's gf2 arm calls, so both reach the same kernel."
+    },
+    {
+      "claim": "wide256-ymm-kernel",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+      "line": 119,
+      "text": "                clmul: clmul_wide4_ymm_safe,",
+      "why": "On an AVX2+VPCLMULQDQ host the detection publishes the YMM 4-limb kernel."
+    },
+    {
+      "claim": "wide571-ymm-kernel",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+      "line": 123,
+      "text": "                clmul: clmul_wide9_ymm_safe,",
+      "why": "On an AVX2+VPCLMULQDQ host the detection publishes the YMM 9-limb kernel."
+    },
+    {
+      "claim": "raw-batch-default-sequential",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "line": 96,
+      "text": "    detect_with_clmul_batch_preference(ClmulBatchLane::Sequential)",
+      "why": "The default detection selects the sequential PCLMULQDQ raw-batch lane."
+    },
+    {
+      "claim": "raw-batch-lane-tag",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+      "line": 112,
+      "text": "pub(crate) const CLMUL_BATCH_PATH_XMM: &str = \"pclmulqdq-scalar-xmm\";",
+      "why": "The lane tag the survey's gf2 arm reports for the sequential lane."
+    },
+    {
+      "claim": "dot-product-uses-raw-batch",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 1091,
+      "text": "        let batch_fn = sample.clmul_batch_fn()?;",
+      "why": "FieldVec::simd_dot_product consumes the raw carry-less batch."
+    },
+    {
+      "claim": "dot-product-reduces-once",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 1093,
+      "text": "        let reducer = sample.barrett_reducer()?;",
+      "why": "The dot product reduces its XOR-accumulated products with a Barrett reducer."
+    },
+    {
+      "claim": "wide-bench-modulus-256",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
+      "line": 40,
+      "text": "    const MODULUS: [u64; 4] = [0x425, 0, 0, 0];",
+      "why": "gf2's own wide-multiplication benchmark uses x^256 + x^10 + x^5 + x^2 + 1; the reduction probe uses the same modulus."
+    },
+    {
+      "claim": "wide-bench-modulus-571",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
+      "line": 49,
+      "text": "    const MODULUS: [u64; 9] = [0x425, 0, 0, 0, 0, 0, 0, 0, 0];",
+      "why": "gf2's own benchmark uses x^571 + x^10 + x^5 + x^2 + 1 for GF(2^571); the reduction probe uses the same modulus."
+    },
+    {
+      "claim": "gf2x-public-entry",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "gf2x.h.in.in",
+      "line": 90,
+      "text": "extern int GF2X_EXPORTED gf2x_mul_r(unsigned long *c,",
+      "why": "gf2x_mul_r is gf2x's exported reentrant multiplication; the survey measures it."
+    },
+    {
+      "claim": "gf2x-basecase-branch",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "gf2x.c",
+      "line": 124,
+      "text": "    if (sa < GF2X_MUL_KARA_THRESHOLD) {",
+      "why": "Operands below the Karatsuba threshold take the hand-written basecase."
+    },
+    {
+      "claim": "gf2x-basecase-4",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "gf2x.c",
+      "line": 57,
+      "text": "\tcase 4: gf2x_mul4(c, a, b); return;",
+      "why": "Four-word balanced operands run gf2x_mul4."
+    },
+    {
+      "claim": "gf2x-basecase-9",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "gf2x.c",
+      "line": 62,
+      "text": "\tcase 9: gf2x_mul9(c, a, b); return;",
+      "why": "Nine-word balanced operands run gf2x_mul9."
+    },
+    {
+      "claim": "gf2x-fft-gate",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "gf2x.c",
+      "line": 151,
+      "text": "    if (sc >= GF2X_TERNARY_FFT_MINIMUM_SIZE && K && K != 1) {",
+      "why": "The FFT runs only when the tuned table selects K other than 0 or 1."
+    },
+    {
+      "claim": "gf2x-balanced-toom",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "gf2x.c",
+      "line": 198,
+      "text": "        gf2x_mul_toom(dst, a, b, sa, xpool->stk);",
+      "why": "Balanced operands above the basecase go to gf2x_mul_toom."
+    },
+    {
+      "claim": "gf2x-toom-selector",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "toom.c",
+      "line": 186,
+      "text": "    switch (gf2x_best_toom(n)) {",
+      "why": "gf2x_mul_toom switches on gf2x_best_toom."
+    },
+    {
+      "claim": "gf2x-best-toom-table",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "toom.c",
+      "line": 81,
+      "text": "    return best_tab[n-1];\t// Return table entry",
+      "why": "Within the tuning limit the choice is the tuned GF2X_BEST_TOOM_TABLE entry, not a threshold comparison."
+    },
+    {
+      "claim": "gf2x-gpl-condition",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "configure.ac",
+      "line": 271,
+      "text": "AM_CONDITIONAL([GPL_CODE_PRESENT],[grep -q \"released under the GPL\" \"$srcdir/toom-gpl.c\"])",
+      "why": "GPL_CODE_PRESENT, and with it the GPL-3.0-or-later license and the Toom-Cook routines, follows from toom-gpl.c's contents."
+    },
+    {
+      "claim": "gf2x-kara-only-without-gpl",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "toom.c",
+      "line": 83,
+      "text": "    return GF2X_SELECT_KARA;",
+      "why": "Without GPL code gf2x_best_toom always returns Karatsuba."
+    },
+    {
+      "claim": "gf2x-appends-mpclmul",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "config/acinclude.m4",
+      "line": 503,
+      "text": "  CFLAGS=\"$CFLAGS -mpclmul\"",
+      "why": "configure appends -mpclmul to CFLAGS whenever the compiler accepts it, independent of the requested optimisation flags."
+    },
+    {
+      "claim": "gf2x-mul1-header-target",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "already_tuned/x86_64_pclmul/gf2x_mul1.h",
+      "line": 1,
+      "text": "../../lowlevel/mul1cl.c",
+      "why": "The x86_64_pclmul gf2x_mul1.h configure links is a symlink to lowlevel/mul1cl.c."
+    },
+    {
+      "claim": "gf2x-mul1-pclmul",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "lowlevel/mul1cl.c",
+      "line": 51,
+      "text": "    _mm_storeu_si128((__m128i*)c, _mm_clmulepi64_si128(aa, bb, 0));",
+      "why": "The selected word basecase multiplies with the 128-bit PCLMULQDQ intrinsic."
+    },
+    {
+      "claim": "gf2x-mul4-header-target",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "already_tuned/x86_64_pclmul/gf2x_mul4.h",
+      "line": 1,
+      "text": "../../lowlevel/mul4clk.c",
+      "why": "The selected gf2x_mul4 is lowlevel/mul4clk.c."
+    },
+    {
+      "claim": "gf2x-mul4-karatsuba",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "lowlevel/mul4clk.c",
+      "line": 60,
+      "text": "/* specialized Karatsuba with 3 calls to mul2, i.e., 9 multiplications */",
+      "why": "gf2x's four-word basecase uses 9 word multiplications against the 16 of gf2's schoolbook kernel."
+    },
+    {
+      "claim": "gf2x-mul9-header-target",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "already_tuned/x86_64_pclmul/gf2x_mul9.h",
+      "line": 1,
+      "text": "../../lowlevel/mul9cl.c",
+      "why": "The selected gf2x_mul9 is lowlevel/mul9cl.c."
+    },
+    {
+      "claim": "gf2x-mul9-thirty",
+      "project": "gf2x",
+      "commit": "27ba588f03bf6e1e74763903bab25e6e8bb6d0f0",
+      "path": "lowlevel/mul9cl.c",
+      "line": 52,
+      "text": "/* variant with 30 multiplications */",
+      "why": "gf2x's nine-word basecase uses 30 word multiplications against the 81 of gf2's schoolbook kernel."
+    },
+    {
+      "claim": "wide256-kernel-pairs-16-products",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+      "line": 78,
+      "text": "/// two 64\u00d764 carry-less products per instruction. We pair the 16 scalar",
+      "why": "gf2's 4-limb YMM kernel performs all 16 schoolbook word products, two per 256-bit VPCLMULQDQ."
+    },
+    {
+      "claim": "wide571-kernel-81-products",
+      "project": "gf2",
+      "commit": "02c39ba6212f0e0dea12c0836fdd154089c6cca6",
+      "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+      "line": 163,
+      "text": "/// The 81 scalar word-pair products are scheduled row-major two at a time.",
+      "why": "gf2's 9-limb YMM kernel performs all 81 schoolbook word products, two per 256-bit VPCLMULQDQ."
+    }
+  ],
+  "searches": [
+    {
+      "command": "git grep -n -E 'clmul_wide(_slice)?(::<|\\()' 02c39ba6212f0e0dea12c0836fdd154089c6cca6 -- crates/",
+      "matches": [
+        {
+          "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
+          "line": 5,
+          "text": "//! 1. **scalar-baseline** \u2014 the pure-Rust `clmul_wide_slice::<4>` + Barrett",
+          "kind": "benchmark"
+        },
+        {
+          "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
+          "line": 96,
+          "text": "            clmul_wide_slice::<4>(black_box(&a), black_box(&b), &mut product);",
+          "kind": "benchmark"
+        },
+        {
+          "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
+          "line": 142,
+          "text": "            clmul_wide_slice::<4>(black_box(&a), black_box(&b), &mut product);",
+          "kind": "benchmark"
+        },
+        {
+          "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
+          "line": 175,
+          "text": "            clmul_wide_slice::<9>(black_box(&a), black_box(&b), &mut product);",
+          "kind": "benchmark"
+        },
+        {
+          "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
+          "line": 207,
+          "text": "            clmul_wide_slice::<9>(black_box(&a), black_box(&b), &mut product);",
+          "kind": "benchmark"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/barrett.rs",
+          "line": 49,
+          "text": "//! This matches the pattern established by `clmul_wide::<N, {2*N}>` and keeps",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 58,
+          "text": "//! annotate the turbofish: `clmul_wide::<2, 4>(a, b)`. The ergonomic cost is",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 877,
+          "text": "    /// `O(N\u00b2)` carry-less multiplications (via `clmul_wide::<N, {2*N}>`) plus",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 1968,
+          "text": "/// the double manually: `clmul_wide::<N, {2 * N}>(a, b)`.",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 1996,
+          "text": "/// let out = clmul_wide::<1, 2>(&a, &b);",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 2002,
+          "text": "/// let out = clmul_wide::<1, 2>(&a, &b);",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 2009,
+          "text": "    clmul_wide_slice::<N>(a, b, &mut out);",
+          "kind": "code"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 2048,
+          "text": "/// clmul_wide_slice::<1>(&a, &b, &mut out);",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 2113,
+          "text": "    clmul_wide_slice::<N>(a, b, out);",
+          "kind": "code"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3012,
+          "text": "            let out = clmul_wide::<1, 2>(&[1u64], &[1u64]);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3022,
+          "text": "            let out = clmul_wide::<1, 2>(&[0b10u64], &[0b10u64]);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3033,
+          "text": "            let out = clmul_wide::<1, 2>(&[0b11u64], &[0b11u64]);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3049,
+          "text": "            let out = clmul_wide::<1, 2>(&a, &a);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3079,
+          "text": "            let out = clmul_wide::<2, 4>(&a, &a);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3092,
+          "text": "            /// Commutativity: `clmul_wide(a, b) == clmul_wide(b, a)` (N = 2).",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3100,
+          "text": "                prop_assert_eq!(clmul_wide::<2, 4>(&a, &b), clmul_wide::<2, 4>(&b, &a));",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3106,
+          "text": "                prop_assert_eq!(clmul_wide::<1, 2>(&[a], &[b]), clmul_wide::<1, 2>(&[b], &[a]));",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3122,
+          "text": "                prop_assert_eq!(clmul_wide::<4, 8>(&a, &b), clmul_wide::<4, 8>(&b, &a));",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3169,
+          "text": "                let got = clmul_wide::<2, 4>(&a, &b);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3286,
+          "text": "        clmul_wide_slice::<9>(a.words(), b.words(), &mut product);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3608,
+          "text": "            super::clmul_wide_slice::<4>(a.words(), b.words(), &mut product);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 3622,
+          "text": "            super::clmul_wide_slice::<9>(a.words(), b.words(), &mut product);",
+          "kind": "test module"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+          "line": 190,
+          "text": "    /// Scalar reference matching `gf2_core::gf2m::wide::clmul_wide_slice::<N>`:",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+          "line": 20,
+          "text": "//! `clmul_wide_slice::<N>` helper: partial product `a[i] \u00b7 b[j]` contributes",
+          "kind": "comment or rustdoc"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+          "line": 82,
+          "text": "/// The layout matches the scalar `clmul_wide_slice::<4>`: partial product",
+          "kind": "comment or rustdoc"
+        }
+      ],
+      "code_matches_outside_definitions": [
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 2009,
+          "text": "    clmul_wide_slice::<N>(a, b, &mut out);",
+          "kind": "code"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "line": 2113,
+          "text": "    clmul_wide_slice::<N>(a, b, out);",
+          "kind": "code"
+        }
+      ],
+      "purpose": "Every use of the public long-product entry points in the gf2 crates; a production caller would appear as kind 'code'."
+    }
+  ]
+}

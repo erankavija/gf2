@@ -1,0 +1,82 @@
+{
+  "schema": "bit-storage-v3-ledger-genesis-v1",
+  "issue": "04b85d10",
+  "purpose": "Retrospective accounting of the protocol-v1 exploratory pilot in the three protocol-v3 family ledgers. Each line is a zero-comparison reservation, not a premeasurement reservation; no confirmatory attempt was ever reserved under version 1, so nothing is imported as spent.",
+  "source": {
+    "receipt": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json",
+    "receipt_sha256": "df45ad5784a356701fda313221d072b1c2cc48433c090fc63c684cbc644b2060",
+    "addendum_snapshot": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/inputs/family-addendum.json",
+    "addendum_sha256": "8f1d6e0f9f58d8038d9cd61e6d616b95c6ca801fce4e48fbaba85e5d15fdfdae",
+    "v1_family": "bit-storage-consumers-pilot",
+    "v1_cells": 15,
+    "v1_non_exploratory_cells": 0
+  },
+  "family_split": {
+    "rationale": "The v1 pilot pooled three consumer groups in one exploratory family. Each group is a distinct scientific question answered for a distinct downstream issue, so version 3 keeps one ledger per group. The split escapes no history: the pooled family reserved zero comparisons, and its pilot line opens every v3 chain.",
+    "bit-storage-logical-consumers": [
+      "logical-row-xor-dispatch-1core",
+      "logical-row-xor-threshold-1core",
+      "logical-dense-rref-1core",
+      "logical-ldpc-syndrome-1core"
+    ],
+    "bit-storage-count-consumers": [
+      "count-popcount-dispatch-1core",
+      "count-popcount-threshold-1core",
+      "count-zero-test-syndrome-1core",
+      "count-ldpc-check-1core"
+    ],
+    "bit-storage-layout-consumers": [
+      "layout-transpose-block-1core",
+      "layout-bch-encode-bitslice-1core",
+      "layout-bch-encode-fold-1core",
+      "layout-bch-encode-alloc-1core",
+      "layout-transpose-block-6core",
+      "layout-bch-encode-parallel-12core",
+      "layout-bch-encode-parallel-24logical"
+    ]
+  },
+  "ledgers": {
+    "bit-storage-logical-consumers": {
+      "ledger_path": "dev/bench_results/04b85d10/v3-bit-storage-logical-consumers-family-ledger.jsonl",
+      "line_sha256": "97b0ca731a965ea30c10f061017959f03ca26a78794c7d1dac143871a292678e",
+      "entry": {
+        "sequence": 0,
+        "predecessor": "0000000000000000000000000000000000000000000000000000000000000000",
+        "family": "bit-storage-logical-consumers",
+        "campaign": "pilot-04b85d10-20260908t085658z",
+        "addendum_sha256": "8f1d6e0f9f58d8038d9cd61e6d616b95c6ca801fce4e48fbaba85e5d15fdfdae",
+        "comparisons": 0,
+        "protocol_version": 1,
+        "candidates": []
+      }
+    },
+    "bit-storage-count-consumers": {
+      "ledger_path": "dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl",
+      "line_sha256": "4b6bcd894acacda1473c148519f8561394fe79d8910b5bc8569456650191a4ec",
+      "entry": {
+        "sequence": 0,
+        "predecessor": "0000000000000000000000000000000000000000000000000000000000000000",
+        "family": "bit-storage-count-consumers",
+        "campaign": "pilot-04b85d10-20260908t085658z",
+        "addendum_sha256": "8f1d6e0f9f58d8038d9cd61e6d616b95c6ca801fce4e48fbaba85e5d15fdfdae",
+        "comparisons": 0,
+        "protocol_version": 1,
+        "candidates": []
+      }
+    },
+    "bit-storage-layout-consumers": {
+      "ledger_path": "dev/bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl",
+      "line_sha256": "f765a5004fd0045a6c6e246a6297ffcb999f2fae280df43521aa591469fdff9a",
+      "entry": {
+        "sequence": 0,
+        "predecessor": "0000000000000000000000000000000000000000000000000000000000000000",
+        "family": "bit-storage-layout-consumers",
+        "campaign": "pilot-04b85d10-20260908t085658z",
+        "addendum_sha256": "8f1d6e0f9f58d8038d9cd61e6d616b95c6ca801fce4e48fbaba85e5d15fdfdae",
+        "comparisons": 0,
+        "protocol_version": 1,
+        "candidates": []
+      }
+    }
+  }
+}

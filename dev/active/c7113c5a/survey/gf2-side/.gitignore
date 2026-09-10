@@ -1,0 +1,6 @@
+# The arm target directories live under the external staging area, never here.
+target/
+
+# The arm crate's lock file pins the dependency graph a receipt was taken
+# against, so it is committed despite the repository-wide rule.
+!Cargo.lock

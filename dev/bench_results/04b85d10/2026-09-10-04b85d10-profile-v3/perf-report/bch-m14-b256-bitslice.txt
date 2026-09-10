@@ -1,0 +1,35 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-bitslice-interleaved  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14467389122
+#
+# Overhead  Command          Shared Object     Symbol                                                                                                                    
+# ........  ...............  ................  ..........................................................................................................................
+#
+    91.90%  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_batch_family
+            |
+            ---<gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_batch_family
+               |          
+               |--22.89%--0xbc376b027cb9c1d2
+               |          
+               |--22.84%--0x7f6234d5494932b4
+               |          
+               |--22.76%--0x3872a316ffc3af29
+               |          
+                --22.73%--0x7e7d619d3071f2fc
+
+     7.57%  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2
+            |
+            ---gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2
+               0xa8
+
+
+
+#
+# (Tip: For parallelism histogram, try: perf report --hierarchy --sort latency,parallelism,comm,symbol)
+#

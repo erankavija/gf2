@@ -1,0 +1,19 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-clmul-fold  cache_state: warm  target_ms: 1500
+# events: cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":98,"conversion":{"batch_fill_ns":307169,"dispatch_ns":3,"pack_ns":6436,"setup_ns":1578159,"unpack_ns":0},"elapsed_ns":"1493148413","ns_per_call":15236208.295918368,"path":"family-clmul-fold","prepare":{"allocated_bytes":5296912,"allocations":6194,"freed_bytes":4175020},"schema":"consumer-profile-record-v1","seed":303,"selected_path":"family-pinned/ClmulFold","size":{"batch":256,"degree":14},"target_ms":1500,"timed":{"allocated_bytes":1404928,"allocated_bytes_per_call":14336.0,"allocations":25088,"allocations_per_call":256.0,"freed_bytes":1404928,"peak_live_bytes":56},"workers_observed":1,"workload":"bch-encode-batch"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303} --path family-clmul-fold --cache-state warm --target-ms 1500':
+
+     7,344,771,213      cycles:u                                                              
+    10,120,894,645      instructions:u                                                        
+     3,125,586,956      branches:u                                                            
+       210,008,085      branch-misses:u                                                       
+       880,245,538      stalled-cycles-frontend:u                                             
+
+       1.529639326 seconds time elapsed
+
+       1.524044000 seconds user
+       0.000986000 seconds sys
+
+
