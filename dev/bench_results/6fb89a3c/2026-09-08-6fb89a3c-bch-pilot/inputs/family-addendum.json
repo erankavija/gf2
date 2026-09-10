@@ -1,0 +1,48 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {"id": "zen3-benchmark-protocol", "version": 1},
+  "family": {
+    "id": "bch-genmatrix-consumer-pilot",
+    "issue": "6fb89a3c",
+    "purpose": "consumer-family",
+    "description": "Frozen exploratory contextual comparison reusing gf2-coding/benches/bch_genmatrix.rs and the established M4RI genmatrix-rref construction from issue 4e732b56. It measures current pinned gf2 code construction and generator-matrix-by-encoding against current pinned M4RI for B1, B2 and B3; it is not a separate encoder campaign."
+  },
+  "frozen": {"frozen_utc": "2026-09-08T09:12:10Z"},
+  "effect": {
+    "worthwhile_speedup": 1.5,
+    "rationale": "Unused by comparator-gap cells; no implementation is adopted by this survey.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A 10% equivalence margin is intentionally provisional until this pilot measures the whole-consumer resolution.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "The arms use encode-each-basis-vector and RREF-of-shifted-polynomial algorithms; a 20% gap is material contextual evidence, not an encoder adoption decision."
+  },
+  "complexity_budget": {"max_new_unsafe_kernels": 0, "max_added_source_lines": 0, "maintenance_rationale": "The family surveys existing harnesses and changes no production code."},
+  "family_wise": {"alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": []},
+  "search_budget": {"max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1},
+  "holdout": {"required": false, "cells": []},
+  "cells": [
+    {
+      "cell_id": "bch-genmatrix-b1-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 15, "k": 5}, "seed": 20260907201},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-b2-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 127, "k": 64}, "seed": 20260907202},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-b3-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 255, "k": 223}, "seed": 20260907203},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    }
+  ]
+}

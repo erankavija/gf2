@@ -1,0 +1,96 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "transpose-pilot-6fb89a3c-20260908t095211z",
+  "issue": "6fb89a3c",
+  "label": "pilot",
+  "campaign_seed": 20260908,
+  "addendum": "dev/active/6fb89a3c/addendum-transpose-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2-transpose": {
+      "build": "conservative-portable",
+      "description": "gf2 current pinned transpose; runtime selected path reported by child",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_transpose_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "m4ri-transpose": {
+      "build": "external",
+      "description": "M4RI 20260122 mzd_transpose; -O3 -march=native; word-SWAR path",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/dev/active/6fb89a3c/survey/m4ri_transpose_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "bitshuffle": {
+      "build": "external",
+      "description": "Bitshuffle 0.5.2 bshuf_bitshuffle; -O3 -march=native; compiled backend reported by child",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/dev/active/6fb89a3c/survey/bitshuffle_transpose_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "transpose-64-canonical-vs-m4ri",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "m4ri-transpose",
+      "case": {
+        "n": 64,
+        "seed": 20260907001
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "transpose-64-canonical-vs-bitshuffle",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "bitshuffle",
+      "case": {
+        "n": 64,
+        "seed": 20260907002
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "transpose-consumer-63-vs-m4ri",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "m4ri-transpose",
+      "case": {
+        "rows": 63,
+        "cols": 63,
+        "seed": 20260907003
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "transpose-consumer-64-vs-m4ri",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "m4ri-transpose",
+      "case": {
+        "rows": 64,
+        "cols": 64,
+        "seed": 20260907004
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "transpose-consumer-65-vs-m4ri",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "m4ri-transpose",
+      "case": {
+        "rows": 65,
+        "cols": 65,
+        "seed": 20260907005
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 2
+}

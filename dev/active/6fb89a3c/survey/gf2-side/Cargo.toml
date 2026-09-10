@@ -1,0 +1,23 @@
+# Standalone gf2-side arms for the transpose, logical-XOR, and BCH cells
+# (jit:6fb89a3c).  This project is deliberately isolated from the workspace.
+
+[workspace]
+
+[package]
+name = "survey-gf2-side-6fb89a3c"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+gf2-core = { path = "../../../../../crates/gf2-core" }
+gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+gf2-coding = { path = "../../../../../crates/gf2-coding", features = ["test-support"] }
+tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

@@ -1,0 +1,141 @@
+{
+  "schema": "gf2-external-comparator-build-evidence-v1",
+  "issue": "6fb89a3c",
+  "host": {
+    "kernel": "Linux 7.2.2-arch1-1 x86_64 GNU/Linux",
+    "compiler": "gcc (GCC) 16.2.1 20260810",
+    "rust_compiler": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "nasm": null,
+    "avx2_observed": true
+  },
+  "m4ri": {
+    "version": "20260122",
+    "source": {
+      "kind": "release-tarball",
+      "archive": "m4ri-20260122.tar.gz",
+      "sha256": "7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404"
+    },
+    "license": {
+      "spdx": "GPL-2.0-or-later",
+      "file_sha256": "98193898c663001eff2fdcfb676e210c13042bc1a05e8d570c363efa396f8e24"
+    },
+    "build": {
+      "configure": "CFLAGS='-O3 -march=native -fPIC' ./configure --prefix=<ext>/prefix --disable-static",
+      "library_path": "<ext>/prefix/lib/libm4ri.so.2",
+      "library_sha256": "1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+      "compiled_sse2": true
+    },
+    "binary_observation": {
+      "library": "m4ri",
+      "entrypoint": "mzd_transpose",
+      "selected_backend": "word-swar-64x64",
+      "runtime_dispatch": false,
+      "compiled_sse2": true
+    },
+    "consumer_binary_observation": {
+      "library": "m4ri",
+      "entrypoint": "mzd_echelonize_m4ri",
+      "selected_backend": "m4ri-rref",
+      "runtime_dispatch": false
+    },
+    "linked_symbols": [
+      "mzd_transpose"
+    ]
+  },
+  "bitshuffle": {
+    "version": "0.5.2",
+    "source": {
+      "commit": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "describe": "0.5.2",
+      "tree_status": ""
+    },
+    "license": {
+      "spdx": "MIT",
+      "file_sha256": "ef357c2061cf67db298f9f1565572ee229ad9263582a9f9d0ebff5094f5d10ac"
+    },
+    "build": {
+      "commands": [
+        "gcc -O3 -march=native -fPIC -Wall -Wextra -c -I bitshuffle/src bitshuffle/src/bitshuffle_core.c",
+        "gcc -O3 -march=native -fPIC -Wall -Wextra -c -I bitshuffle/src bitshuffle/src/iochain.c",
+        "ar rcs <ext>/prefix/lib/libbitshuffle_min.a bitshuffle_core.o iochain.o"
+      ],
+      "archive_sha256": "fd6532bf886ba8f82d115c78b6728bf88999cb466f47dab67707d3b416392165"
+    },
+    "binary_observation": {
+      "library": "bitshuffle",
+      "entrypoint": "bshuf_bitshuffle",
+      "selected_backend": "avx2",
+      "compiled": {
+        "avx512": false,
+        "avx2": true,
+        "sse2": true,
+        "neon": false
+      }
+    },
+    "linked_symbols": [
+      "bshuf_bitshuffle",
+      "bshuf_trans_bit_elem_AVX",
+      "bshuf_trans_bit_elem_AVX512",
+      "bshuf_trans_bit_elem_SSE"
+    ]
+  },
+  "isa_l": {
+    "version": "v2.32.1",
+    "source": {
+      "commit": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "describe": "v2.32.1",
+      "tree_status": ""
+    },
+    "license": {
+      "spdx": "BSD-3-Clause",
+      "file_sha256": "bc8fd4a3d031e65e05e9c9e2add2c3f336ce527fa85c1e31031c808b58216217"
+    },
+    "build": {
+      "command": "gcc -O3 -march=native -fPIC -Wall -Wextra -c isa-l/raid/raid_base.c; ar rcs <ext>/prefix/lib/libisal_base.a raid_base.o",
+      "archive_sha256": "991c83a4925373d8a64c98bd21dd2789a0756e69c9d1a3066235d9e6292da082"
+    },
+    "binary_observation": {
+      "library": "isa-l",
+      "entrypoint": "xor_gen_base",
+      "selected_backend": "scalar-base",
+      "runtime_dispatch": false,
+      "public_xor_gen_available": false,
+      "unavailable_reason": "NASM is absent; raid_multibinary.asm and SIMD xor_gen objects cannot be built"
+    },
+    "linked_symbols": [
+      "xor_gen_base"
+    ]
+  },
+  "harness_binaries": {
+    "m4ri_transpose_arm": {
+      "sha256": "2eebbedbac6f005ca60cbd7409b4623f7743c416f7bfd132bf93addb1de9c78c",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=3c96ac7679db01e44df7c31b151feaee8c621789, for GNU/Linux 4.4.0, not stripped"
+    },
+    "m4ri_genmatrix_arm": {
+      "sha256": "1494bdaaed8c8dae2762cf8df40114cb22d58bc453b64cc19dd5f1a7c4a05fb0",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=5e591adf164abcf36075e5f7ab3d8921739486d5, for GNU/Linux 4.4.0, not stripped"
+    },
+    "bitshuffle_transpose_arm": {
+      "sha256": "4999d1c5a757f9301a4c7a62272e39f061666d5e6e3f01f83ba2803375d1282f",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=0f9dc7d0fb797239f84c764cb87f2850575af063, for GNU/Linux 4.4.0, not stripped"
+    },
+    "isal_xor_arm": {
+      "sha256": "19947ab85997d52503fea010d59b1b3e727e4532dc174b1758f1fed6a4a9b40d",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=62da7323fb02ae6c838816828b37d81f85996a3f, for GNU/Linux 4.4.0, not stripped"
+    }
+  },
+  "rust_harness_binaries": {
+    "gf2_transpose_arm": {
+      "sha256": "a6f318d2e09da6df521fb073d6d79943999c4a4449c58ee3be7a2e0fc3fd3bfb",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=2e5867f11027bff632e1d87dffda575bd396ba3e, not stripped"
+    },
+    "gf2_logical_xor_arm": {
+      "sha256": "c216c7c342a83a22a660f178b7465ce38ce2c9445441fb11e05ce021d8a9ff2c",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=8df5c8bacfe3878c4a09a39b7b9ff1db1346e4fa, not stripped"
+    },
+    "gf2_bch_genmatrix_arm": {
+      "sha256": "7928f6d6ba0a15c936857a99e8de3caf20a085ffee31e701a4ebadc5f3c0e579",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=1ab44af74840a2af56dd8bb69946b02d1ca87027, not stripped"
+    }
+  }
+}

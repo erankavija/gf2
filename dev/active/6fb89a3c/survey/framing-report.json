@@ -1,0 +1,100 @@
+{
+  "schema": "gf2-external-arm-framing-v1",
+  "issue": "6fb89a3c",
+  "arms": [
+    {
+      "binary": "m4ri_transpose_arm",
+      "case": {
+        "n": 64,
+        "seed": 1
+      },
+      "status": "pass",
+      "selected_path": "m4ri-mzd_transpose",
+      "conversion_reported": false
+    },
+    {
+      "binary": "m4ri_transpose_arm",
+      "case": {
+        "cols": 63,
+        "rows": 63,
+        "seed": 1
+      },
+      "status": "pass",
+      "selected_path": "m4ri-mzd_transpose-tiled",
+      "conversion_reported": true
+    },
+    {
+      "binary": "bitshuffle_transpose_arm",
+      "case": {
+        "n": 64,
+        "seed": 1
+      },
+      "status": "pass",
+      "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+      "conversion_reported": false
+    },
+    {
+      "binary": "isal_xor_arm",
+      "case": {
+        "alignment_bytes": 32,
+        "seed": 1,
+        "words": 8
+      },
+      "status": "pass",
+      "selected_path": "isa-l-xor_gen_base-arity3-aligned32",
+      "conversion_reported": true
+    },
+    {
+      "binary": "m4ri_genmatrix_arm",
+      "case": {
+        "code": "B1",
+        "seed": 1
+      },
+      "status": "pass",
+      "selected_path": "m4ri-genmatrix-rref",
+      "conversion_reported": true
+    },
+    {
+      "binary": "gf2_transpose_arm",
+      "case": {
+        "n": 64,
+        "seed": 1
+      },
+      "status": "pass",
+      "selected_path": "avx2-bit-twiddle",
+      "conversion_reported": false
+    },
+    {
+      "binary": "gf2_transpose_arm",
+      "case": {
+        "cols": 63,
+        "rows": 63,
+        "seed": 1
+      },
+      "status": "pass",
+      "selected_path": "BitMatrix::transpose",
+      "conversion_reported": true
+    },
+    {
+      "binary": "gf2_logical_xor_arm",
+      "case": {
+        "alignment_bytes": 32,
+        "seed": 1,
+        "words": 8
+      },
+      "status": "pass",
+      "selected_path": "gf2-xor_inplace (simd)",
+      "conversion_reported": true
+    },
+    {
+      "binary": "gf2_bch_genmatrix_arm",
+      "case": {
+        "code": "B1",
+        "seed": 1
+      },
+      "status": "pass",
+      "selected_path": "bch_generator_matrix_by_encoding/B1",
+      "conversion_reported": true
+    }
+  ]
+}

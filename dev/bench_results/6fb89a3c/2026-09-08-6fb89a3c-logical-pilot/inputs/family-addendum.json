@@ -1,0 +1,69 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {"id": "zen3-benchmark-protocol", "version": 1},
+  "family": {
+    "id": "logical-buffer-vs-isal-pilot",
+    "issue": "6fb89a3c",
+    "purpose": "consumer-family",
+    "description": "Frozen exploratory comparison of gf2's dispatched xor_inplace route against ISA-L's operation-equivalent scalar xor_gen_base route. Each call produces a fresh aligned destination from two sources: gf2 pays copy-plus-in-place-XOR, while ISA-L pays its three-pointer, two-source/one-output arrangement inside the timed body. The public ISA-L multi-binary xor_gen arm is unavailable because NASM is absent and is not substituted silently."
+  },
+  "frozen": {"frozen_utc": "2026-09-08T09:12:10Z"},
+  "effect": {
+    "worthwhile_speedup": 1.5,
+    "rationale": "Unused by comparator-gap cells; no implementation is adopted by this survey.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A 10% equivalence margin is intentionally provisional until this pilot measures the host's resolution.",
+    "material_gap_threshold": 1.15,
+    "material_gap_rationale": "A 15% whole-operation gap is large enough to motivate attribution while retaining the production implementation because this survey makes no kernel change."
+  },
+  "complexity_budget": {"max_new_unsafe_kernels": 0, "max_added_source_lines": 0, "maintenance_rationale": "The family surveys an external comparator and changes no production code."},
+  "family_wise": {"alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": []},
+  "search_budget": {"max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1},
+  "holdout": {"required": false, "cells": []},
+  "cells": [
+    {
+      "cell_id": "logical-xor-7w-vs-isal-base", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 7, "alignment_bytes": 32}, "seed": 20260907100},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-8w-vs-isal-base", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 8, "alignment_bytes": 32}, "seed": 20260907101},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-9w-vs-isal-base", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 9, "alignment_bytes": 32}, "seed": 20260907102},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-63w-vs-isal-base", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 63, "alignment_bytes": 32}, "seed": 20260907103},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-64w-vs-isal-base", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 64, "alignment_bytes": 32}, "seed": 20260907104},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-65w-vs-isal-base", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 65, "alignment_bytes": 32}, "seed": 20260907105},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    }
+  ]
+}
