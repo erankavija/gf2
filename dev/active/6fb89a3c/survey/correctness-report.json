@@ -1,0 +1,156 @@
+{
+  "schema": "gf2-external-comparator-correctness-v2",
+  "issue": "6fb89a3c",
+  "status": "pass",
+  "canonical_reference": "naive bit arithmetic in verify-bit-mapping.py from the same SplitMix64 seeds",
+  "rng": {
+    "algorithm": "SplitMix64 [Steele2014]: state += 0x9E3779B97F4A7C15; z = state; z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9; z = (z ^ (z >> 27)) * 0x94D049BB133111EB; return z ^ (z >> 31)",
+    "implementations": {
+      "gf2 arms": "tuning_campaign_support::abtest::SplitMix64 (dev/tools/tuning-campaign-support/src/abtest.rs, pinned by the producing snapshot of every receipt)",
+      "C arms": "splitmix64_next in dev/active/6fb89a3c/survey/harness_common.h (pinned by the producing snapshot of every receipt)",
+      "reference": "splitmix() in this script"
+    },
+    "draw_order": "fixed 64x64: one draw per row word; tiled matrices: one draw per bit in row-major order, low bit used; buffers: one draw per word, source s uses seed + s",
+    "seeds": "the workload seed of each addendum cell; the framing/mapping checks use the literal seeds in this script"
+  },
+  "transpose": {
+    "m4ri": {
+      "validated_fixed_seeds": 3,
+      "validated_geometries": [
+        [
+          63,
+          63
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          65,
+          65
+        ],
+        [
+          1,
+          64
+        ],
+        [
+          64,
+          1
+        ],
+        [
+          100,
+          130
+        ]
+      ],
+      "mapping": "output[c][r] = input[r][c]; row words use bit c = 1u64 << c",
+      "padding": "M4RI keeps excess bits of a non-window matrix zero (mzd.h policy); the dumps read only valid bits",
+      "aliasing": "distinct input/output; the kernel-isolated cell reuses a preallocated output, whole-consumer calls allocate a fresh one"
+    },
+    "bitshuffle": {
+      "validated_fixed_seeds": 3,
+      "mapping": "direct",
+      "mapping_search": {
+        "direct": "pass",
+        "input-byte-reverse": "fail",
+        "output-byte-reverse": "fail",
+        "both": "fail",
+        "element-byte-reverse": "fail",
+        "input-byte-reverse+element-byte-reverse": "fail",
+        "output-byte-reverse+element-byte-reverse": "fail",
+        "both+element-byte-reverse": "fail"
+      },
+      "fixed_geometry": "size=64 elements, elem_size=8 bytes, block_size=64",
+      "unavailable_without_adapter": [
+        [
+          63,
+          63
+        ],
+        [
+          65,
+          65
+        ],
+        [
+          1,
+          64
+        ],
+        [
+          100,
+          130
+        ]
+      ],
+      "unavailable_reason": "element count (rows) is not a multiple of 8",
+      "validated_with_padded_adapter": [
+        [
+          63,
+          63
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          65,
+          65
+        ],
+        [
+          1,
+          64
+        ],
+        [
+          64,
+          1
+        ],
+        [
+          100,
+          130
+        ]
+      ],
+      "adapter": "rows padded to a multiple of 8 and packed into ceil(cols/8)-byte elements; one block of size rows_padded; the first cols planes are unpacked into the canonical cols x rows output; pack/unpack copies skipped when the layouts coincide",
+      "aliasing": "distinct input/output as required by the Bitshuffle interface"
+    }
+  },
+  "logical_xor": {
+    "validated_word_counts": [
+      1,
+      7,
+      8,
+      9,
+      16,
+      32,
+      63,
+      64,
+      65
+    ],
+    "validated_parity_arities": [
+      {
+        "words": 64,
+        "sources": 3,
+        "vects": 4
+      },
+      {
+        "words": 9,
+        "sources": 4,
+        "vects": 5
+      }
+    ],
+    "mapping": "dest[w].bit[b] = XOR over sources of src[s][w].bit[b], LSB-first",
+    "isa_l_parity_arity": "vects = sources + 1; two sources (vects 3) in the sized cells, three sources (vects 4) in the arity cell",
+    "alignment_bytes": 32,
+    "unaligned": "unavailable: raid.h requires source and destination pointers aligned to 32 bytes; the harness refuses other alignments",
+    "arrangement_cost": "the pointer array is formed inside every timed call and its formation alone, averaged over one million repetitions outside the timed windows, is reported as dispatch_ns; the gf2 fresh-destination copy is inside every timed call and, averaged the same way, reported as pack_ns",
+    "aliasing": "unavailable: raid.h names distinct source pointers and one destination pointer; gf2's dst ^= src accumulate has no ISA-L equivalent"
+  },
+  "bch_genmatrix": {
+    "validated_codes": [
+      "B1",
+      "B2",
+      "B3"
+    ],
+    "validated_gf2_routes": [
+      "materialize (BchCode::generator_matrix, production)",
+      "reference (bch_generator_matrix_by_encoding, test-support oracle)"
+    ],
+    "equivalence": "full-rank row-space equality after both documented layouts are reindexed to internal polynomial-degree order",
+    "raw_dump_identity": "falsified; bases and systematic column layouts differ"
+  }
+}

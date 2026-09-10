@@ -1,0 +1,133 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "6fb89a3c-v3-r1-transpose-pilot",
+  "issue": "6fb89a3c",
+  "label": "pilot",
+  "campaign_seed": 20260910,
+  "addendum": "dev/active/6fb89a3c/addendum-transpose-v3-pilot.json",
+  "producing_manifest": "dev/active/6fb89a3c/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-transpose": {
+      "build": "conservative-portable",
+      "description": "gf2 transpose: fixed cells call the runtime-dispatched 64x64 kernel (gf2_kernels_simd::transpose::detect), consumer cells call BitMatrix::transpose with a fresh output; x86-64 baseline build, kernel selected at run time and reported by the child",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_transpose_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64",
+      "tuning_profile": null
+    },
+    "m4ri-transpose": {
+      "build": "external",
+      "description": "M4RI 20260122 mzd_transpose (release tarball, GPL-2.0-or-later, gcc -O3 -march=native -fPIC, no runtime dispatch); fixed cells reuse a preallocated output, consumer cells allocate a fresh one",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/dev/active/6fb89a3c/survey/m4ri_transpose_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "bitshuffle-transpose": {
+      "build": "external",
+      "description": "Bitshuffle 0.5.2 bshuf_bitshuffle (commit 52aec3b80d05606c090956aecfe868489d96b95c, MIT, gcc -O3 -march=native -fPIC, compile-time AVX2 route); fixed cells transform 64 eight-byte elements into a preallocated output, adapter cells pad/pack/unpack around one block into a fresh canonical output",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/dev/active/6fb89a3c/survey/bitshuffle_transpose_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "transpose-64-canonical-vs-m4ri",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "m4ri-transpose",
+      "case": {
+        "n": 64,
+        "seed": 20260910001
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "transpose-64-canonical-vs-bitshuffle",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "bitshuffle-transpose",
+      "case": {
+        "n": 64,
+        "seed": 20260910002
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "transpose-consumer-63-vs-m4ri",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "m4ri-transpose",
+      "case": {
+        "rows": 63,
+        "cols": 63,
+        "seed": 20260910003
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "transpose-consumer-64-vs-m4ri",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "m4ri-transpose",
+      "case": {
+        "rows": 64,
+        "cols": 64,
+        "seed": 20260910004
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "transpose-consumer-65-vs-m4ri",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "m4ri-transpose",
+      "case": {
+        "rows": 65,
+        "cols": 65,
+        "seed": 20260910005
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "transpose-consumer-64-vs-bitshuffle-adapter",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "bitshuffle-transpose",
+      "case": {
+        "rows": 64,
+        "cols": 64,
+        "seed": 20260910006,
+        "adapter": "padded"
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "transpose-consumer-63-vs-bitshuffle-adapter",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "bitshuffle-transpose",
+      "case": {
+        "rows": 63,
+        "cols": 63,
+        "seed": 20260910007,
+        "adapter": "padded"
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "transpose-consumer-65-vs-bitshuffle-adapter",
+      "baseline_arm": "gf2-transpose",
+      "candidate_arm": "bitshuffle-transpose",
+      "case": {
+        "rows": 65,
+        "cols": 65,
+        "seed": 20260910008,
+        "adapter": "padded"
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}

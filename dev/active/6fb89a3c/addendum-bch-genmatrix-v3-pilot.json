@@ -1,0 +1,69 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {"id": "zen3-benchmark-protocol", "version": 3},
+  "family": {
+    "id": "bch-genmatrix-consumer",
+    "issue": "6fb89a3c",
+    "purpose": "consumer-family",
+    "description": "Exploratory pilot of the BCH contextual conversion family: gf2's production generator-matrix materialization BchCode::generator_matrix (the `materialize/fresh-alloc` row of crates/gf2-coding/benches/bch_genmatrix.rs, B1 (15,5), B2 (127,64), B3 (255,223)) against the established M4RI construction of issue 4e732b56 (fill the k shifted copies of the generator polynomial, then mzd_echelonize_m4ri). Three further exploratory cells measure the same bench's `reference/fresh-alloc` oracle bch_generator_matrix_by_encoding against M4RI, because the protocol-v1 pilot of this issue measured that oracle as if it were the gf2 route; they preserve that comparison under its correct name and do not enter confirmation. Each timed call constructs a fresh k x n generator matrix from an already-constructed code (gf2 allocates a BitMatrix; M4RI copies the prefilled matrix through its cached allocator and reduces the copy); the routes yield the same code in different systematic layouts, which the correctness gate checks by row-space equality. Code construction is setup outside the windows and is reported per execution. The baseline arm is always gf2 and the candidate is always M4RI, so a speedup above 1 means M4RI is ahead. These are current pinned measurements of both implementations, not a historical receipt and not an encoder throughput campaign; no cell here decides adoption."
+  },
+  "frozen": {"frozen_utc": "2026-09-10T16:40:00Z"},
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This survey adopts no production implementation, so no worthwhile-speedup threshold applies and none is declared.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A 10% one-sided non-inferiority margin, provisional until this pilot measures the family's resolution; it is carried into the confirmatory addendum only if it strictly exceeds one plus the pilot-derived resolution. Pilot cells never yield a pass.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "The arms use different algorithms (encode each basis vector versus reduce the shifted-polynomial matrix); a 20% whole-construction gap is the smallest difference worth attributing to a named cause (algorithmic operation count, allocation, word-level elimination) rather than to host noise; the pilot checks that it sits above the measured resolution before the confirmatory addendum freezes it."
+  },
+  "complexity_budget": {"max_new_unsafe_kernels": 0, "max_added_source_lines": 0, "maintenance_rationale": "The family reuses established harnesses and changes no production code; the whole diff is under dev/."},
+  "family_wise": {"alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": [], "ledger_path": "dev/bench_results/6fb89a3c/v3-bch-genmatrix-family-ledger.jsonl"},
+  "search_budget": {"max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1},
+  "holdout": {"required": false, "cells": []},
+  "cells": [
+    {
+      "cell_id": "bch-genmatrix-b1-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 15, "k": 5}, "seed": 20260910201},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-b2-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 127, "k": 64}, "seed": 20260910202},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-b3-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 255, "k": 223}, "seed": 20260910203},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-reference-b1-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix-reference-oracle", "size": {"n": 15, "k": 5}, "seed": 20260910211},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-reference-b2-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix-reference-oracle", "size": {"n": 127, "k": 64}, "seed": 20260910212},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-reference-b3-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bch-generator-matrix-reference-oracle", "size": {"n": 255, "k": 223}, "seed": 20260910213},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    }
+  ]
+}
