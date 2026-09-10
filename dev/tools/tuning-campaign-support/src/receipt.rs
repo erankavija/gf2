@@ -1034,10 +1034,10 @@ pub fn evaluate_version(
                             JournalEvent::CampaignStart | JournalEvent::SessionStart => {
                                 sessions += 1
                             }
-                            JournalEvent::OrchestrationStart if is_announcement(record) => {
-                                if !seen_cell {
-                                    announced_before_first_cell = true;
-                                }
+                            JournalEvent::OrchestrationStart
+                                if is_announcement(record) && !seen_cell =>
+                            {
+                                announced_before_first_cell = true;
                             }
                             JournalEvent::CellStart => {
                                 seen_cell = true;
@@ -2027,12 +2027,6 @@ fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f6
         if cell.pairs.is_empty() {
             continue;
         }
-        let claimed = cell.claimed.as_ref().ok_or_else(|| {
-            format!(
-                "pilot cell {} lacks a declared bootstrap alpha",
-                cell.cell_id
-            )
-        })?;
         let observations: Vec<_> = cell
             .pairs
             .iter()
@@ -2045,10 +2039,16 @@ fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f6
             &observations,
             pilot.settings.bootstrap_resamples,
             corrected_alpha,
-            claimed.interval.seed,
+            bootstrap_seed(pilot.campaign_seed, &cell.key),
         )
         .map_err(|error| format!("pilot cell {} bootstrap: {error}", cell.cell_id))?;
-        if !claim_matches_interval(claimed, &interval, true) {
+        // A pilot without decision margins has no CellClaim. Its raw pairs,
+        // canonical seed and verified ledger alpha still determine resolution.
+        if cell
+            .claimed
+            .as_ref()
+            .is_some_and(|claimed| !claim_matches_interval(claimed, &interval, true))
+        {
             return Err(format!(
                 "pilot interval for cell {} differs from the independently recomputed interval",
                 cell.cell_id
