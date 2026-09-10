@@ -1,0 +1,84 @@
+# command: dev/bench_results/26465e6c/run-campaign.sh popcount confirmation prepare
+# prepared_utc: 2026-09-10T22:11:50Z
+# gf2 revision (informational): 0c4a27f048b80a2d949d7376829eaf323c446cc5
+# campaign: 26465e6c-v3-popcount-confirmation
+# addendum: dev/active/26465e6c/addendum-popcount-v3-confirmation.json sha256=0bcca5fb531efb4afb8f93c6641b29b6cd728b9ee14509ebf1f45a065bf65ac1
+# ledger: dev/bench_results/26465e6c/v3-popcount-family-ledger.jsonl (2 lines before this campaign)
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# RUSTFLAGS: <unset>
+# arm sha256: a7eebf56a167050b8e1f5602ea0cdf10e90d26e1a829a4b2dae82d7477023741
+# runner sha256: 5ae06b9db120a6f8661bc78d36eb1aed03c75b346e71379790e0baa91d371e67
+# acceptance sha256: b6cc78c45e2568841db9363135c1356a2facd2f2051f2f59be60c01ab5bbf040
+# external build: {"units": [{"unit": "libpopcnt_kernels", "compiler": "gcc", "compiler_version": "gcc (GCC) 16.2.1 20260810", "arguments": ["-O3", "-I", "../vendor/libpopcnt", "-c", "csrc/libpopcnt_kernels.c", "-o", "$OUT_DIR/libpopcnt_kernels.o"]}, {"unit": "mula_kernels", "compiler": "g++", "compiler_version": "g++ (GCC) 16.2.1 20260810", "arguments": ["-std=c++17", "-O2", "-Wall", "-pedantic", "-Wextra", "-Wfatal-errors", "-mpopcnt", "-fabi-version=6", "-mavx2", "-DHAVE_AVX2_INSTRUCTIONS", "-I", "../vendor/mula", "-c", "csrc/mula_kernels.cpp", "-o", "$OUT_DIR/mula_kernels.o"]}]}
+/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json: 59 cells over 6 arms, seed 257840150998939192
+plan /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json: 59 cells over 6 arms validate against dev/active/26465e6c/addendum-popcount-v3-confirmation.json (family popcount-baselines); unresolved settings: none
+# popcount-verify (generic matrix):
+libpopcnt get_cpuid(): flags=0x800020 popcnt=true avx2=true avx512_vpopcntdq=false
+host: avx2=true popcnt=true avx512vpopcntdq=false
+gf2 dispatch words=1: scalar
+gf2 dispatch words=4: scalar
+gf2 dispatch words=7: scalar
+gf2 dispatch words=8: simd-avx2
+gf2 dispatch words=12: simd-avx2
+gf2 dispatch words=60: simd-avx2
+gf2 dispatch words=64: simd-avx2
+gf2 dispatch words=128: simd-avx2
+gf2 dispatch words=256: simd-avx2
+gf2 dispatch words=16384: simd-avx2
+gf2 dispatch words=1048576: simd-avx2
+word_offset=0: 0 bytes past a vector boundary; arms accepting it: production-dispatch nibble-lut scalar-popcnt compiler-count-ones libpopcnt mula-avx2-harley-seal
+word_offset=1: 8 bytes past a vector boundary; arms accepting it: production-dispatch nibble-lut scalar-popcnt compiler-count-ones libpopcnt
+word_offset=2: 16 bytes past a vector boundary; arms accepting it: production-dispatch nibble-lut scalar-popcnt compiler-count-ones libpopcnt
+word_offset=3: 24 bytes past a vector boundary; arms accepting it: production-dispatch nibble-lut scalar-popcnt compiler-count-ones libpopcnt
+popcount arms refused 570 misaligned windows (Mula at offsets 1-3)
+popcount arms over word windows: PASS 4020 cases
+external byte-length tails: PASS 512 cases
+bit-length tail semantics: PASS 260 cases
+fused AND arms: PASS 2295 cases
+# popcount-verify (planned cells):
+plan /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json: PASS 118 cases
+# instruction record: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.instruction-observation.txt sha256=77e65c14b8242e6d76b1db84f839d3d53d6bcf3aab1de12d1d34fd4016921a1f
+# session start: 2026-09-10T22:12:00Z load: 0.53 0.57 0.49
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation/execution.log
+# session exit: 3 at 2026-09-10T22:15:42Z
+# session start: 2026-09-10T22:15:47Z load: 1.90 1.22 0.78
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation/execution.log
+# session exit: 3 at 2026-09-10T22:19:31Z
+# session start: 2026-09-10T22:19:36Z load: 1.12 1.31 0.93
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation/execution.log
+# session exit: 3 at 2026-09-10T22:23:16Z
+# session start: 2026-09-10T22:23:21Z load: 1.99 1.40 1.05
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation/execution.log
+# session exit: 3 at 2026-09-10T22:27:05Z
+# session start: 2026-09-10T22:27:10Z load: 1.85 1.48 1.15
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation/execution.log
+# session exit: 3 at 2026-09-10T22:30:54Z
+# session start: 2026-09-10T22:30:59Z load: 1.43 1.36 1.16
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation/execution.log
+# session exit: 3 at 2026-09-10T22:34:41Z
+# session start: 2026-09-10T22:34:46Z load: 1.68 1.38 1.20
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation/execution.log
+# session exit: 3 at 2026-09-10T22:39:36Z
+# session start: 2026-09-10T22:39:41Z load: 1.51 1.33 1.21
+# command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/26465e6c-campaigns/26465e6c-v3-popcount-confirmation/execution.log
+# session exit: 0 at 2026-09-10T22:41:50Z
+GF2_BENCHMARK_RECEIPT=dev/bench_results/26465e6c/v3-popcount-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=59
+# acceptance exit: 0
