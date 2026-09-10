@@ -1,0 +1,158 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "bit-storage-logical-consumers",
+    "issue": "04b85d10",
+    "purpose": "consumer-family",
+    "description": "Confirmatory family of issue 04b85d10, protocol version 3. Question: Whether the current packed-row XOR dispatch and its eight-word SIMD cutover leave a material single-core gap against routes gf2-core already exposes (a hoisted resolved kernel, the detected SIMD backend), at the row widths dense elimination and row-operation consumers use, and what the pinned dense RREF and sparse LDPC syndrome consumers cost today. Every arm is current production code; `ops-dispatched` is the route `BitMatrix::row_xor` takes. Every cell is confirmatory on fresh samples; identity controls stay in the pilot. A pass records a material gap between two current production routes; the issue adopts nothing and names the downstream issue that tests the candidate."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-10T16:21:40Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "A dispatch-hoist or cutover change is a small selector edit whose benefit reaches a row-operation consumer nearly one-to-one, because elimination loops spend their time in the row kernel itself. Five percent of an L1-resident row XOR is the smallest gain such a change can claim to move in a consumer; the mid-range buffer story it feeds admits repeatable smaller gains under a frozen rule rather than a blanket hurdle. The same-family pilot carried 1.05 margins, but its L3-resident 8192-word row set the family resolution at 0.07 (widest relative half-width 0.065141 at the corrected 0.975 confidence), so both margins move to 1.10, the smallest round margin that strictly clears that resolution. A cell whose interval lies between 1.05 and 1.10 records not-material under this rule; its interval is reported so the downstream issue can declare a rule its own resolution supports. It strictly exceeds one plus the same-family pilot resolution of 0.07.",
+    "measurement_resolution": 0.07,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/receipt.json",
+      "sha256": "fe1c361bb4cb94a763c2f98acc3f9b1b5decea163d06106d730419770f279492"
+    },
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A route at most five percent slower than the dispatched production route is not worse for a row consumer whose kernel share is below one; the margin equals the worthwhile threshold so a cell is either material, not material, or a regression. The same-family pilot carried 1.05 margins, but its L3-resident 8192-word row set the family resolution at 0.07 (widest relative half-width 0.065141 at the corrected 0.975 confidence), so both margins move to 1.10, the smallest round margin that strictly clears that resolution. A cell whose interval lies between 1.05 and 1.10 records not-material under this rule; its interval is reported so the downstream issue can declare a rule its own resolution supports. It strictly exceeds one plus the pilot resolution of 0.07.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell compares gf2 against an external comparator, so no comparator-gap objective is exercised and no threshold applies."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This issue is a profile: it selects experiments and adopts no implementation, so its budget for production change is zero unsafe kernels and zero added production lines. A passing improvement cell confirms a candidate's materiality for its downstream issue; it selects nothing here."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/04b85d10/v3-bit-storage-logical-consumers-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "logical-row-xor-dispatch-64w-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 64
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-row-xor-dispatch-8w-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 8
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-row-xor-threshold-4w-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 4
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "logical-row-xor-dispatch-8192w-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "row-xor",
+        "size": {
+          "rows": 64,
+          "words": 8192
+        },
+        "seed": 101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
