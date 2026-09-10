@@ -1,0 +1,35 @@
+{
+  "schema": "ymm-clmul-v1-ledger-migration-v1",
+  "family": "ymm-clmul-dispatch",
+  "purpose": "Retrospective accounting of the accepted protocol-v1 confirmation in the protocol-v3 family ledger. This record reconstructs historical attempt spending; it is not a premeasurement reservation.",
+  "source": {
+    "receipt": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+    "receipt_sha256": "210ff5d6c7c07ac3a5bed2b713868f8f6a47375bbc6b2fd0a4d2f1ca660901c7",
+    "addendum": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json",
+    "addendum_sha256": "23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36",
+    "plan": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/plan.json",
+    "plan_sha256": "ece43576070ff75ed4aca8947543e5831cb86dafc0accbc826d301076309e824"
+  },
+  "derivation": {
+    "method": "Decode the pinned v1 addendum, plan, and receipt, then apply tuning_campaign_support::trial_ledger::candidate_ids to the receipt arm records selected by the five non-exploratory plan cells.",
+    "candidate_executable_sha256": "c89f97fd654158fb364625d43d7e375d49ef95b37f39270425e14eb544bc3116",
+    "candidate_id": "21e965ecb448eefcd8faafefeaaed528f6496e25608d9341b25dad2dc1954475",
+    "non_exploratory_comparisons": 5
+  },
+  "reservation": {
+    "sequence": 0,
+    "predecessor": "0000000000000000000000000000000000000000000000000000000000000000",
+    "family": "ymm-clmul-dispatch",
+    "campaign": "confirmation-1d0da41f-20260908t084330z",
+    "addendum_sha256": "23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36",
+    "comparisons": 5,
+    "protocol_version": 1,
+    "candidates": [
+      "21e965ecb448eefcd8faafefeaaed528f6496e25608d9341b25dad2dc1954475"
+    ]
+  },
+  "excluded_preflight": {
+    "campaign": "confirmation-1d0da41f-20260907t192052z",
+    "reason": "A launcher preamble and plan exist only in transient storage. No campaign stage, frozen inputs, execution log, checkpoint, receipt, terminal status, or measurement exists, so the runner never opened a campaign and this was not an attempted measurement reservation."
+  }
+}

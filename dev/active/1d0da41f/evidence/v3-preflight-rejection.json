@@ -1,0 +1,15 @@
+{
+  "schema": "benchmark-preflight-rejection-v1",
+  "campaign": "1d0da41f-v3-pilot",
+  "started_utc": "2026-09-08T17:56:51Z",
+  "terminal": "rejected-before-measurement",
+  "reason": "A stale target/release protocol-v1 runner rejected the v3 addendum's ledger_path field.",
+  "durable_state": {
+    "ledger_reservation_appended": false,
+    "execution_log_opened": false,
+    "checkpoint_created": false,
+    "timing_child_spawned": false,
+    "measurement_recorded": false
+  },
+  "disposition": "The partial temporary input-capture stage is quarantined outside committed evidence. The current runner path and SHA-256 are printed and recorded before every retained v3 session."
+}
