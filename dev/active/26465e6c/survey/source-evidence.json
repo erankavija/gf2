@@ -13,7 +13,7 @@
     }
   },
   "commits": {
-    "gf2": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+    "gf2": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
     "libpopcnt": "923c43377278edc97de155ea70ac3ab20f397f3e",
     "mula-sse-popcount": "138c91e21c3e6dab7875521b5d33b995e0e4c85e"
   },
@@ -269,7 +269,7 @@
     {
       "claim": "gf2-simd-threshold-default",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/kernels/backend.rs",
       "line": 83,
       "text": "pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;",
@@ -278,7 +278,7 @@
     {
       "claim": "gf2-simd-threshold-compare",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/kernels/backend.rs",
       "line": 115,
       "text": "if _size >= SIMD_MIN_WORDS {",
@@ -287,7 +287,7 @@
     {
       "claim": "gf2-baked-threshold",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/tuning/baked.rs",
       "line": 17,
       "text": "pub(crate) const SIMD_MIN_WORDS: usize = 4;",
@@ -296,7 +296,7 @@
     {
       "claim": "gf2-popcount-dispatcher",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/kernels/ops.rs",
       "line": 204,
       "text": "pub fn popcount(buf: &[u64]) -> u64 {",
@@ -305,7 +305,7 @@
     {
       "claim": "gf2-scalar-count-ones",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/kernels/scalar/logical.rs",
       "line": 105,
       "text": "buf.iter().map(|w| w.count_ones() as u64).sum()",
@@ -314,7 +314,7 @@
     {
       "claim": "gf2-simd-backend-lazylock",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/kernels/simd/mod.rs",
       "line": 64,
       "text": "pub static SIMD_BACKEND: LazyLock<Option<SimdBackend>> = LazyLock::new(SimdBackend::detect);",
@@ -323,7 +323,7 @@
     {
       "claim": "gf2-simd-popcount-indirect",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/kernels/simd/mod.rs",
       "line": 56,
       "text": "(self.fns.popcnt_fn)(buf)",
@@ -332,7 +332,7 @@
     {
       "claim": "gf2-simd-fns-private",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/kernels/simd/mod.rs",
       "line": 18,
       "text": "fns: gf2_kernels_simd::LogicalFns,",
@@ -341,7 +341,7 @@
     {
       "claim": "gf2-avx2-popcnt",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 264,
       "text": "unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {",
@@ -350,7 +350,7 @@
     {
       "claim": "gf2-avx2-nibble-lookup",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 286,
       "text": "let pc_lo = _mm256_shuffle_epi8(lut, lo);",
@@ -359,7 +359,7 @@
     {
       "claim": "gf2-avx2-byte-tail",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 308,
       "text": "total += (*tail_ptr.add(k)).count_ones() as u64;",
@@ -368,7 +368,7 @@
     {
       "claim": "gf2-avx2-and-popcnt",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 316,
       "text": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
@@ -377,7 +377,7 @@
     {
       "claim": "gf2-kernels-detect-public",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
       "line": 103,
       "text": "pub fn detect() -> Option<LogicalFns> {",
@@ -386,7 +386,7 @@
     {
       "claim": "gf2-matvec-uses-fused",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 1560,
       "text": "y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);",
@@ -395,7 +395,7 @@
     {
       "claim": "gf2-bitvec-count-ones",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 602,
       "text": "crate::kernels::ops::popcount(&self.data) as usize",
@@ -404,7 +404,7 @@
     {
       "claim": "gf2-bitvec-and",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 403,
       "text": "crate::kernels::ops::and_inplace(&mut self.data, &other.data);",
@@ -413,7 +413,7 @@
     {
       "claim": "gf2-from-words-precondition",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 186,
       "text": "/// The caller must ensure tail masking invariant: padding bits beyond",
@@ -422,7 +422,7 @@
     {
       "claim": "v1-harness-bank-modulo",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "dev/active/26465e6c/superseded/v1/survey/gf2-side/src/main.rs",
       "line": 448,
       "text": "let value = popcount_operation(arm, black_box(fixtures[bank % banks].words()))",
@@ -431,7 +431,7 @@
     {
       "claim": "v1-harness-string-dispatch",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "dev/active/26465e6c/superseded/v1/survey/gf2-side/src/main.rs",
       "line": 279,
       "text": "fn popcount_operation(arm: &str, buffer: &[u64]) -> Result<u64, String> {",
@@ -440,7 +440,7 @@
     {
       "claim": "v1-c-harness-bank",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "dev/active/26465e6c/superseded/v1/survey/wire_common.h",
       "line": 253,
       "text": "size_t bank = streaming ? (start + (size_t)i) & (SURVEY_BANKS - 1U) : 0U;",
@@ -449,7 +449,7 @@
     {
       "claim": "v1-external-march-native",
       "project": "gf2",
-      "commit": "0c4a27f048b80a2d949d7376829eaf323c446cc5",
+      "commit": "6f412cc4283c24870739c47b21d64cefc11ea2b8",
       "path": "dev/active/26465e6c/superseded/v1/survey/Makefile",
       "line": 16,
       "text": "OPT ?= -O3 -march=native",
