@@ -1,0 +1,101 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "6fb89a3c-v3-r1-bch-pilot",
+  "issue": "6fb89a3c",
+  "label": "pilot",
+  "campaign_seed": 20260910,
+  "addendum": "dev/active/6fb89a3c/addendum-bch-genmatrix-v3-pilot.json",
+  "producing_manifest": "dev/active/6fb89a3c/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-bch-genmatrix": {
+      "build": "conservative-portable",
+      "description": "gf2 generator-matrix construction on the established bch_genmatrix rows with a fresh BitMatrix per call: the production BchCode::generator_matrix materialization, or (reference cells) the test-support oracle bch_generator_matrix_by_encoding; x86-64 baseline build, route reported by the child",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_bch_genmatrix_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64",
+      "tuning_profile": null
+    },
+    "m4ri-bch-genmatrix": {
+      "build": "external",
+      "description": "M4RI 20260122 shifted-generator fill plus mzd_echelonize_m4ri, the established construction of issue 4e732b56; fresh mzd_copy per call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/dev/active/6fb89a3c/survey/m4ri_genmatrix_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "bch-genmatrix-b1-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B1",
+        "route": "materialize",
+        "seed": 20260910201
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "bch-genmatrix-b2-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B2",
+        "route": "materialize",
+        "seed": 20260910202
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "bch-genmatrix-b3-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B3",
+        "route": "materialize",
+        "seed": 20260910203
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "bch-genmatrix-reference-b1-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B1",
+        "route": "reference",
+        "seed": 20260910211
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "bch-genmatrix-reference-b2-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B2",
+        "route": "reference",
+        "seed": 20260910212
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "bch-genmatrix-reference-b3-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B3",
+        "route": "reference",
+        "seed": 20260910213
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}
