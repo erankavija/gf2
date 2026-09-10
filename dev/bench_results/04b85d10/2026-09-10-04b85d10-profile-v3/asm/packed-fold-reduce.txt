@@ -1,0 +1,178 @@
+# label: packed-fold-reduce
+# pattern: encode::packed_fold_reduce
+# binary: target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 28f0fc82431f1396d61c6a6af7c3080038dbeae41e937a8c5ac643d1874745a6
+# symbols matching this pattern in the binary: 1
+
+## symbol at 000000000007b920, 0x0000000000000274 bytes
+000000000007b920 <gf2_coding::bch::encode::packed_fold_reduce>:
+   7b920:	push   %rbp
+   7b921:	push   %r15
+   7b923:	push   %r14
+   7b925:	push   %r13
+   7b927:	push   %r12
+   7b929:	push   %rbx
+   7b92a:	sub    $0x28,%rsp
+   7b92e:	mov    %r9,0x20(%rsp)
+   7b933:	mov    %r8,0x18(%rsp)
+   7b938:	mov    %rdx,%r12
+   7b93b:	mov    %rdi,%rbp
+   7b93e:	mov    0x10(%rdi),%r13
+   7b942:	mov    0x18(%rdi),%r15
+   7b946:	mov    0x7de64(%rip),%eax        # f97b0 <gf2_coding::bch::encode::encode_kernels::DETECTED+0x28>
+   7b94c:	test   %eax,%eax
+   7b94e:	jne    7bb7e <gf2_coding::bch::encode::packed_fold_reduce+0x25e>
+   7b954:	mov    0x7de3d(%rip),%rax        # f9798 <gf2_coding::bch::encode::encode_kernels::DETECTED+0x10>
+   7b95b:	mov    %rax,0x10(%rsp)
+   7b960:	mov    0x8(%rsi),%rax
+   7b964:	mov    %rax,0x8(%rsp)
+   7b969:	mov    0x10(%rsi),%r14
+   7b96d:	mov    %rcx,%rbx
+   7b970:	lea    0x0(,%rcx,8),%rdx
+   7b978:	mov    %r12,%rdi
+   7b97b:	xor    %esi,%esi
+   7b97d:	call   *0x7c0cd(%rip)        # f7a50 <memset@GLIBC_2.2.5>
+   7b983:	test   %r15,%r15
+   7b986:	je     7bb6f <gf2_coding::bch::encode::packed_fold_reduce+0x24f>
+   7b98c:	sub    %r15,%r13
+   7b98f:	cmpb   $0x0,0x20(%rbp)
+   7b993:	je     7ba9e <gf2_coding::bch::encode::packed_fold_reduce+0x17e>
+   7b999:	mov    %r15,%rbp
+   7b99c:	jmp    7ba40 <gf2_coding::bch::encode::packed_fold_reduce+0x120>
+   7b9a1:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   7b9b0:	xor    %edi,%edi
+   7b9b2:	mov    %edx,%ecx
+   7b9b4:	shr    %cl,%rsi
+   7b9b7:	or     %rdi,%rsi
+   7b9ba:	bswap  %rsi
+   7b9bd:	mov    %rsi,%rcx
+   7b9c0:	shr    $0x4,%rcx
+   7b9c4:	movabs $0xf0f0f0f0f0f0f0f,%rdx
+   7b9ce:	and    %rdx,%rcx
+   7b9d1:	and    %rdx,%rsi
+   7b9d4:	shl    $0x4,%rsi
+   7b9d8:	or     %rcx,%rsi
+   7b9db:	mov    %rsi,%rcx
+   7b9de:	movabs $0x3333333333333333,%rdx
+   7b9e8:	and    %rdx,%rcx
+   7b9eb:	shr    $0x2,%rsi
+   7b9ef:	and    %rdx,%rsi
+   7b9f2:	lea    (%rsi,%rcx,4),%rcx
+   7b9f6:	mov    %rcx,%rdx
+   7b9f9:	movabs $0x5555555555555555,%rsi
+   7ba03:	and    %rsi,%rdx
+   7ba06:	shr    $1,%rcx
+   7ba09:	and    %rsi,%rcx
+   7ba0c:	lea    (%rcx,%rdx,2),%rdx
+   7ba10:	not    %al
+   7ba12:	mov    %eax,%ecx
+   7ba14:	shr    %cl,%rdx
+   7ba17:	mov    %rdx,(%rsp)
+   7ba1b:	mov    %r12,%rdi
+   7ba1e:	mov    %rbx,%rsi
+   7ba21:	mov    0x18(%rsp),%rdx
+   7ba26:	mov    0x20(%rsp),%rcx
+   7ba2b:	mov    %r13,%r8
+   7ba2e:	mov    0x60(%rsp),%r9
+   7ba33:	call   *0x10(%rsp)
+   7ba37:	test   %rbp,%rbp
+   7ba3a:	je     7bb6f <gf2_coding::bch::encode::packed_fold_reduce+0x24f>
+   7ba40:	mov    %r15,%rdx
+   7ba43:	sub    %rbp,%rdx
+   7ba46:	mov    %rdx,%rcx
+   7ba49:	shr    $0x6,%rcx
+   7ba4d:	cmp    %r14,%rcx
+   7ba50:	jae    7ba60 <gf2_coding::bch::encode::packed_fold_reduce+0x140>
+   7ba52:	mov    0x8(%rsp),%rax
+   7ba57:	mov    (%rax,%rcx,8),%rsi
+   7ba5b:	jmp    7ba62 <gf2_coding::bch::encode::packed_fold_reduce+0x142>
+   7ba5d:	nopl   (%rax)
+   7ba60:	xor    %esi,%esi
+   7ba62:	lea    -0x1(%rbp),%eax
+   7ba65:	and    $0x3f,%eax
+   7ba68:	mov    %rax,%rdi
+   7ba6b:	not    %rdi
+   7ba6e:	add    %rdi,%rbp
+   7ba71:	and    $0x3f,%edx
+   7ba74:	je     7b9b0 <gf2_coding::bch::encode::packed_fold_reduce+0x90>
+   7ba7a:	lea    0x1(%rcx),%rdi
+   7ba7e:	cmp    %r14,%rdi
+   7ba81:	jae    7ba90 <gf2_coding::bch::encode::packed_fold_reduce+0x170>
+   7ba83:	mov    0x8(%rsp),%rdi
+   7ba88:	mov    0x8(%rdi,%rcx,8),%rdi
+   7ba8d:	jmp    7ba92 <gf2_coding::bch::encode::packed_fold_reduce+0x172>
+   7ba8f:	nop
+   7ba90:	xor    %edi,%edi
+   7ba92:	mov    %edx,%ecx
+   7ba94:	neg    %cl
+   7ba96:	shl    %cl,%rdi
+   7ba99:	jmp    7b9b2 <gf2_coding::bch::encode::packed_fold_reduce+0x92>
+   7ba9e:	mov    $0xffffffffffffffff,%rbp
+   7baa5:	jmp    7baf9 <gf2_coding::bch::encode::packed_fold_reduce+0x1d9>
+   7baa7:	nopw   0x0(%rax,%rax,1)
+   7bab0:	xor    %r8d,%r8d
+   7bab3:	mov    %edx,%ecx
+   7bab5:	shr    %cl,%rdi
+   7bab8:	or     %r8,%rdi
+   7babb:	mov    $0xfffffffffffffffe,%rdx
+   7bac2:	mov    %eax,%ecx
+   7bac4:	shl    %cl,%rdx
+   7bac7:	cmp    $0x40,%esi
+   7baca:	not    %rdx
+   7bacd:	cmove  %rbp,%rdx
+   7bad1:	and    %rdi,%rdx
+   7bad4:	mov    %rdx,(%rsp)
+   7bad8:	mov    %r12,%rdi
+   7badb:	mov    %rbx,%rsi
+   7bade:	mov    0x18(%rsp),%rdx
+   7bae3:	mov    0x20(%rsp),%rcx
+   7bae8:	mov    %r13,%r8
+   7baeb:	mov    0x60(%rsp),%r9
+   7baf0:	call   *0x10(%rsp)
+   7baf4:	test   %r15,%r15
+   7baf7:	je     7bb6f <gf2_coding::bch::encode::packed_fold_reduce+0x24f>
+   7baf9:	lea    -0x1(%r15),%eax
+   7bafd:	and    $0x3f,%eax
+   7bb00:	lea    0x1(%rax),%rsi
+   7bb04:	sub    %rsi,%r15
+   7bb07:	mov    %r15,%rcx
+   7bb0a:	shr    $0x6,%rcx
+   7bb0e:	cmp    %r14,%rcx
+   7bb11:	jae    7bb30 <gf2_coding::bch::encode::packed_fold_reduce+0x210>
+   7bb13:	mov    0x8(%rsp),%rdx
+   7bb18:	mov    (%rdx,%rcx,8),%rdi
+   7bb1c:	mov    %r15d,%edx
+   7bb1f:	and    $0x3f,%edx
+   7bb22:	jne    7bb3e <gf2_coding::bch::encode::packed_fold_reduce+0x21e>
+   7bb24:	jmp    7bab0 <gf2_coding::bch::encode::packed_fold_reduce+0x190>
+   7bb26:	cs nopw 0x0(%rax,%rax,1)
+   7bb30:	xor    %edi,%edi
+   7bb32:	mov    %r15d,%edx
+   7bb35:	and    $0x3f,%edx
+   7bb38:	je     7bab0 <gf2_coding::bch::encode::packed_fold_reduce+0x190>
+   7bb3e:	lea    0x1(%rcx),%r8
+   7bb42:	cmp    %r14,%r8
+   7bb45:	jae    7bb60 <gf2_coding::bch::encode::packed_fold_reduce+0x240>
+   7bb47:	mov    0x8(%rsp),%r8
+   7bb4c:	mov    0x8(%r8,%rcx,8),%r8
+   7bb51:	jmp    7bb63 <gf2_coding::bch::encode::packed_fold_reduce+0x243>
+   7bb53:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   7bb60:	xor    %r8d,%r8d
+   7bb63:	mov    %edx,%ecx
+   7bb65:	neg    %cl
+   7bb67:	shl    %cl,%r8
+   7bb6a:	jmp    7bab3 <gf2_coding::bch::encode::packed_fold_reduce+0x193>
+   7bb6f:	add    $0x28,%rsp
+   7bb73:	pop    %rbx
+   7bb74:	pop    %r12
+   7bb76:	pop    %r13
+   7bb78:	pop    %r14
+   7bb7a:	pop    %r15
+   7bb7c:	pop    %rbp
+   7bb7d:	ret
+   7bb7e:	mov    %rcx,%rbx
+   7bb81:	mov    %rsi,%r14
+   7bb84:	call   817eb <std::sync::once_lock::OnceLock<T>::initialize>
+   7bb89:	mov    %r14,%rsi
+   7bb8c:	mov    %rbx,%rcx
+   7bb8f:	jmp    7b954 <gf2_coding::bch::encode::packed_fold_reduce+0x34>

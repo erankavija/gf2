@@ -1,0 +1,23 @@
+# POPCNT instructions per symbol (jit:04b85d10)
+# binary: target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 28f0fc82431f1396d61c6a6af7c3080038dbeae41e937a8c5ac643d1874745a6
+
+## symbols containing a popcnt instruction (count, symbol)
+20 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt>:
+10 <gf2_kernels_simd::x86::avx2::avx2_popcnt>:
+4 <std::sync::once::Once::call_once_force::{{closure}}>:
+4 <core::ops::function::FnOnce::call_once{{vtable.shim}}>:
+2 <gf2_kernels_simd::x86::avx2::fns::popcnt_fn>:
+2 <gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn>:
+2 <gf2_core::kernels::simd::SimdBackend::detect>:
+
+## symbols containing the bit-twiddle popcount constants 0x5555... or 0x3333... (count, symbol)
+10 <consumer_profile_gf2_side::Prepared::run>:
+4 <gf2_coding::ldpc::core::LdpcCode::is_valid_codeword>:
+3 <gf2_kernels_simd::transpose::transpose_64x64_scalar>:
+2 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt>:
+2 <gf2_core::matrix::BitMatrix::matvec_scalar>:
+2 <<gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_batch_family>:
+2 <gf2_coding::bch::encode::packed_fold_reduce>:
+1 <gf2_kernels_simd::transpose::transpose_64x64_scalar_safe>:
+1 <gf2_coding::bch::encode::packed_table_reduce>:

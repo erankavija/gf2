@@ -1,0 +1,841 @@
+# label: dense-transpose
+# pattern: BitMatrix::transpose
+# binary: target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 28f0fc82431f1396d61c6a6af7c3080038dbeae41e937a8c5ac643d1874745a6
+# symbols matching this pattern in the binary: 2
+
+## symbol at 0000000000091c00, 0x0000000000000fc5 bytes
+0000000000091c00 <gf2_core::matrix::BitMatrix::transpose>:
+   91c00:	push   %rbp
+   91c01:	push   %r15
+   91c03:	push   %r14
+   91c05:	push   %r13
+   91c07:	push   %r12
+   91c09:	push   %rbx
+   91c0a:	sub    $0x5d8,%rsp
+   91c11:	mov    0x18(%rsi),%r12
+   91c15:	mov    0x20(%rsi),%rbp
+   91c19:	test   %r12,%r12
+   91c1c:	mov    %r12,0xa8(%rsp)
+   91c24:	je     91cb6 <gf2_core::matrix::BitMatrix::transpose+0xb6>
+   91c2a:	test   %rbp,%rbp
+   91c2d:	je     91cb6 <gf2_core::matrix::BitMatrix::transpose+0xb6>
+   91c33:	mov    %rsi,%rbx
+   91c36:	mov    %rdi,0x68(%rsp)
+   91c3b:	mov    0x67b8f(%rip),%eax        # f97d0 <gf2_core::simd::TRANSPOSE_FNS+0x18>
+   91c41:	test   %eax,%eax
+   91c43:	jne    92b82 <gf2_core::matrix::BitMatrix::transpose+0xf82>
+   91c49:	mov    0x67b68(%rip),%rax        # f97b8 <gf2_core::simd::TRANSPOSE_FNS>
+   91c50:	test   %rax,%rax
+   91c53:	lea    -0xc43a(%rip),%r13        # 85820 <gf2_kernels_simd::transpose::transpose_64x64_scalar>
+   91c5a:	cmovne %rax,%r13
+   91c5e:	mov    %r12,%rdi
+   91c61:	shr    $0x6,%rdi
+   91c65:	xor    %r8d,%r8d
+   91c68:	mov    %r12,%r15
+   91c6b:	and    $0x3f,%r15
+   91c6f:	setne  %r8b
+   91c73:	lea    (%rdi,%r8,1),%rsi
+   91c77:	mov    %rsi,%r14
+   91c7a:	imul   %rbp,%r14
+   91c7e:	mov    %rbp,%rdx
+   91c81:	lea    0x0(,%r14,8),%rbp
+   91c89:	mov    %r14,%rax
+   91c8c:	shr    $0x3d,%rax
+   91c90:	setne  %al
+   91c93:	movabs $0x7ffffffffffffff8,%rcx
+   91c9d:	cmp    %rcx,%rbp
+   91ca0:	seta   %cl
+   91ca3:	or     %al,%cl
+   91ca5:	je     91cd2 <gf2_core::matrix::BitMatrix::transpose+0xd2>
+   91ca7:	xor    %r13d,%r13d
+   91caa:	mov    %r13,%rdi
+   91cad:	mov    %rbp,%rsi
+   91cb0:	call   *0x65cda(%rip)        # f7990 <_DYNAMIC+0x1f8>
+   91cb6:	test   %r12,%r12
+   91cb9:	je     91d2c <gf2_core::matrix::BitMatrix::transpose+0x12c>
+   91cbb:	mov    %r12,%r13
+   91cbe:	shr    $0x6,%r13
+   91cc2:	mov    %r12d,%eax
+   91cc5:	and    $0x3f,%eax
+   91cc8:	cmp    $0x1,%rax
+   91ccc:	sbb    $0xffffffffffffffff,%r13
+   91cd0:	jmp    91d2f <gf2_core::matrix::BitMatrix::transpose+0x12f>
+   91cd2:	mov    %r8,0x28(%rsp)
+   91cd7:	mov    %rdi,0x30(%rsp)
+   91cdc:	mov    %rsi,0xf0(%rsp)
+   91ce4:	mov    %rdx,0x20(%rsp)
+   91ce9:	test   %rbp,%rbp
+   91cec:	mov    %r13,0x70(%rsp)
+   91cf1:	je     91dc7 <gf2_core::matrix::BitMatrix::transpose+0x1c7>
+   91cf7:	mov    $0x8,%r13d
+   91cfd:	mov    $0x8,%edi
+   91d02:	mov    %rbp,%rsi
+   91d05:	call   4f6d0 <<consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc>
+   91d0a:	test   %rax,%rax
+   91d0d:	je     91caa <gf2_core::matrix::BitMatrix::transpose+0xaa>
+   91d0f:	mov    %rax,0x8(%rsp)
+   91d14:	mov    %rax,%rdi
+   91d17:	xor    %esi,%esi
+   91d19:	mov    %rbp,%rdx
+   91d1c:	call   *0x65d2e(%rip)        # f7a50 <memset@GLIBC_2.2.5>
+   91d22:	mov    %r14,0x60(%rsp)
+   91d27:	jmp    91dda <gf2_core::matrix::BitMatrix::transpose+0x1da>
+   91d2c:	xor    %r13d,%r13d
+   91d2f:	mov    %r13,%rsi
+   91d32:	imul   %rbp,%rsi
+   91d36:	lea    0x0(,%rsi,8),%rbx
+   91d3e:	mov    %rsi,%rax
+   91d41:	shr    $0x3d,%rax
+   91d45:	setne  %al
+   91d48:	movabs $0x7ffffffffffffff8,%rcx
+   91d52:	cmp    %rcx,%rbx
+   91d55:	seta   %cl
+   91d58:	or     %al,%cl
+   91d5a:	je     91d6b <gf2_core::matrix::BitMatrix::transpose+0x16b>
+   91d5c:	xor    %r14d,%r14d
+   91d5f:	mov    %r14,%rdi
+   91d62:	mov    %rbx,%rsi
+   91d65:	call   *0x65c25(%rip)        # f7990 <_DYNAMIC+0x1f8>
+   91d6b:	test   %rbx,%rbx
+   91d6e:	je     91db6 <gf2_core::matrix::BitMatrix::transpose+0x1b6>
+   91d70:	mov    %rdi,0x68(%rsp)
+   91d75:	mov    %rsi,%r12
+   91d78:	mov    $0x8,%r14d
+   91d7e:	mov    $0x8,%edi
+   91d83:	mov    %rbx,%rsi
+   91d86:	call   4f6d0 <<consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc>
+   91d8b:	test   %rax,%rax
+   91d8e:	je     91d5f <gf2_core::matrix::BitMatrix::transpose+0x15f>
+   91d90:	mov    %rax,%r15
+   91d93:	mov    %rax,%rdi
+   91d96:	xor    %esi,%esi
+   91d98:	mov    %rbx,%rdx
+   91d9b:	call   *0x65caf(%rip)        # f7a50 <memset@GLIBC_2.2.5>
+   91da1:	mov    %r12,%rsi
+   91da4:	mov    %r12,%r10
+   91da7:	mov    0x68(%rsp),%rdi
+   91dac:	mov    0xa8(%rsp),%r12
+   91db4:	jmp    91dbf <gf2_core::matrix::BitMatrix::transpose+0x1bf>
+   91db6:	mov    $0x8,%r15d
+   91dbc:	xor    %r10d,%r10d
+   91dbf:	mov    %r13,%r8
+   91dc2:	jmp    92a7a <gf2_core::matrix::BitMatrix::transpose+0xe7a>
+   91dc7:	mov    $0x8,%eax
+   91dcc:	mov    %rax,0x8(%rsp)
+   91dd1:	movq   $0x0,0x60(%rsp)
+   91dda:	mov    0x28(%rbx),%rax
+   91dde:	mov    %rax,0x40(%rsp)
+   91de3:	mov    0x20(%rsp),%rax
+   91de8:	mov    %rax,%rbp
+   91deb:	shr    $0x6,%rbp
+   91def:	and    $0x3f,%eax
+   91df2:	cmp    $0x1,%rax
+   91df6:	sbb    $0xffffffffffffffff,%rbp
+   91dfa:	lea    0x62bbf(%rip),%rsi        # f49c0 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.591.llvm.1436703937590314291>
+   91e01:	lea    0x1d8(%rsp),%rdi
+   91e09:	call   *0x65e41(%rip)        # f7c50 <_DYNAMIC+0x4b8>
+   91e0f:	mov    0x30(%rsp),%rdx
+   91e14:	mov    0x28(%rsp),%rsi
+   91e19:	mov    %r15,0x148(%rsp)
+   91e21:	mov    %r14,(%rsp)
+   91e25:	mov    0x218(%rsp),%rax
+   91e2d:	mov    0x50(%rax),%rcx
+   91e31:	lea    (%rdx,%rsi,1),%r14
+   91e35:	cmp    %rcx,%r14
+   91e38:	setbe  %dl
+   91e3b:	cmp    %rcx,%rbp
+   91e3e:	setbe  %cl
+   91e41:	mov    0x8(%rbx),%r15
+   91e45:	mov    0x10(%rbx),%rsi
+   91e49:	mov    %rsi,0x10(%rsp)
+   91e4e:	test   %cl,%dl
+   91e50:	mov    %rbp,0xb0(%rsp)
+   91e58:	mov    %r15,0x140(%rsp)
+   91e60:	jne    925a1 <gf2_core::matrix::BitMatrix::transpose+0x9a1>
+   91e66:	mov    0x58(%rax),%rdi
+   91e6a:	mov    0x40(%rsp),%rax
+   91e6f:	mov    %rax,%rcx
+   91e72:	shl    $0x6,%rcx
+   91e76:	mov    %rcx,0x108(%rsp)
+   91e7e:	lea    (%rax,%rax,1),%rcx
+   91e82:	mov    %rcx,0xd8(%rsp)
+   91e8a:	lea    0x0(,%rax,8),%rcx
+   91e92:	mov    %rcx,0x158(%rsp)
+   91e9a:	shl    $0x9,%rax
+   91e9e:	mov    %rax,0x150(%rsp)
+   91ea6:	mov    %r14,%rax
+   91ea9:	shl    $0x6,%rax
+   91ead:	mov    %rax,0x48(%rsp)
+   91eb2:	lea    (%r14,%r14,1),%rax
+   91eb6:	mov    %rax,0x78(%rsp)
+   91ebb:	lea    0x0(,%r14,8),%rax
+   91ec3:	mov    %rax,0x170(%rsp)
+   91ecb:	mov    %r14,%rax
+   91ece:	shl    $0x9,%rax
+   91ed2:	mov    %rax,0x168(%rsp)
+   91eda:	xor    %ecx,%ecx
+   91edc:	mov    0x8(%rsp),%r15
+   91ee1:	mov    %r14,%r8
+   91ee4:	mov    %rdi,0x1a0(%rsp)
+   91eec:	jmp    91f19 <gf2_core::matrix::BitMatrix::transpose+0x319>
+   91eee:	xchg   %ax,%ax
+   91ef0:	mov    0x110(%rsp),%rcx
+   91ef8:	mov    0x30(%rsp),%rdx
+   91efd:	mov    0x28(%rsp),%rsi
+   91f02:	lea    (%rdx,%rsi,1),%r8
+   91f06:	cmp    %r8,0x160(%rsp)
+   91f0e:	mov    0x8(%rsp),%r15
+   91f13:	jae    92a07 <gf2_core::matrix::BitMatrix::transpose+0xe07>
+   91f19:	lea    (%rcx,%rdi,1),%rax
+   91f1d:	cmp    %rax,%r8
+   91f20:	mov    %rax,0x160(%rsp)
+   91f28:	cmovb  %r8,%rax
+   91f2c:	mov    %rax,0x110(%rsp)
+   91f34:	cmp    %rax,%rcx
+   91f37:	jae    92580 <gf2_core::matrix::BitMatrix::transpose+0x980>
+   91f3d:	mov    %rcx,%rdx
+   91f40:	shl    $0x6,%rdx
+   91f44:	lea    0x40(%rdx),%rax
+   91f48:	mov    %rax,0x118(%rsp)
+   91f50:	lea    0x3f(%rdx),%rax
+   91f54:	mov    %rax,0x1b0(%rsp)
+   91f5c:	lea    0x1(%rdx),%rsi
+   91f60:	mov    0x40(%rsp),%rax
+   91f65:	imul   %rsi,%rax
+   91f69:	mov    %rax,0x100(%rsp)
+   91f71:	imul   0x158(%rsp),%rsi
+   91f7a:	mov    0x140(%rsp),%rax
+   91f82:	add    %rax,%rsi
+   91f85:	mov    %rsi,0x190(%rsp)
+   91f8d:	mov    0x108(%rsp),%rsi
+   91f95:	imul   %rcx,%rsi
+   91f99:	mov    %rsi,0x188(%rsp)
+   91fa1:	mov    0x150(%rsp),%rsi
+   91fa9:	imul   %rcx,%rsi
+   91fad:	add    %rax,%rsi
+   91fb0:	mov    %rsi,0x180(%rsp)
+   91fb8:	neg    %rdx
+   91fbb:	mov    %rdx,0x198(%rsp)
+   91fc3:	mov    %rcx,0x18(%rsp)
+   91fc8:	lea    (%r15,%rcx,8),%rax
+   91fcc:	mov    %rax,0x178(%rsp)
+   91fd4:	xor    %r13d,%r13d
+   91fd7:	jmp    92003 <gf2_core::matrix::BitMatrix::transpose+0x403>
+   91fd9:	nopl   0x0(%rax)
+   91fe0:	mov    0x50(%rsp),%r13
+   91fe5:	mov    0xb0(%rsp),%rbp
+   91fed:	cmp    %rbp,0x1a8(%rsp)
+   91ff5:	mov    0x1a0(%rsp),%rdi
+   91ffd:	jae    91ef0 <gf2_core::matrix::BitMatrix::transpose+0x2f0>
+   92003:	lea    (%rdi,%r13,1),%r14
+   92007:	cmp    %r14,%rbp
+   9200a:	mov    %r14,%rax
+   9200d:	cmovb  %rbp,%rax
+   92011:	mov    %rax,0x50(%rsp)
+   92016:	mov    $0x200,%edx
+   9201b:	lea    0x3d8(%rsp),%rdi
+   92023:	xor    %esi,%esi
+   92025:	mov    0x65a24(%rip),%rbx        # f7a50 <memset@GLIBC_2.2.5>
+   9202c:	call   *%rbx
+   9202e:	mov    $0x200,%edx
+   92033:	lea    0x1d8(%rsp),%rdi
+   9203b:	xor    %esi,%esi
+   9203d:	call   *%rbx
+   9203f:	mov    %r14,0x1a8(%rsp)
+   92047:	cmp    %r13,%r14
+   9204a:	jbe    91fe0 <gf2_core::matrix::BitMatrix::transpose+0x3e0>
+   9204c:	mov    0x100(%rsp),%rax
+   92054:	add    %r13,%rax
+   92057:	mov    %rax,0xa0(%rsp)
+   9205f:	mov    0x190(%rsp),%rax
+   92067:	lea    (%rax,%r13,8),%rax
+   9206b:	mov    %rax,0x98(%rsp)
+   92073:	mov    0x188(%rsp),%rax
+   9207b:	add    %r13,%rax
+   9207e:	mov    %rax,0xe8(%rsp)
+   92086:	mov    0x180(%rsp),%rax
+   9208e:	lea    (%rax,%r13,8),%rax
+   92092:	mov    %rax,0xe0(%rsp)
+   9209a:	mov    %r13,%rdx
+   9209d:	shl    $0x6,%rdx
+   920a1:	lea    0x40(%rdx),%rax
+   920a5:	mov    %rax,0x130(%rsp)
+   920ad:	mov    %rdx,%rax
+   920b0:	not    %rax
+   920b3:	mov    %rax,0x128(%rsp)
+   920bb:	inc    %rdx
+   920be:	mov    0x30(%rsp),%rax
+   920c3:	mov    0x28(%rsp),%rcx
+   920c8:	add    %rax,%rcx
+   920cb:	imul   %rdx,%rcx
+   920cf:	mov    0x18(%rsp),%rdi
+   920d4:	mov    %rcx,0xf8(%rsp)
+   920dc:	add    %rdi,%rcx
+   920df:	mov    %rcx,0x88(%rsp)
+   920e7:	imul   0x170(%rsp),%rdx
+   920f0:	mov    0x178(%rsp),%rcx
+   920f8:	add    %rcx,%rdx
+   920fb:	mov    %rdx,0x80(%rsp)
+   92103:	mov    0x48(%rsp),%rdx
+   92108:	imul   %r13,%rdx
+   9210c:	add    %rdi,%rdx
+   9210f:	mov    %rdx,0x58(%rsp)
+   92114:	mov    0x168(%rsp),%rdx
+   9211c:	imul   %r13,%rdx
+   92120:	add    %rcx,%rdx
+   92123:	mov    %rdx,0x90(%rsp)
+   9212b:	mov    0x198(%rsp),%rcx
+   92133:	mov    %rcx,0x120(%rsp)
+   9213b:	mov    0x118(%rsp),%rbp
+   92143:	movq   $0x0,0xb8(%rsp)
+   9214f:	xor    %ebx,%ebx
+   92151:	mov    %r13,0x38(%rsp)
+   92156:	jmp    921be <gf2_core::matrix::BitMatrix::transpose+0x5be>
+   92158:	nopl   0x0(%rax,%rax,1)
+   92160:	mov    0x1b8(%rsp),%rdi
+   92168:	inc    %rdi
+   9216b:	mov    0x138(%rsp),%rbx
+   92173:	inc    %rbx
+   92176:	mov    0xb8(%rsp),%rax
+   9217e:	add    0x108(%rsp),%rax
+   92186:	mov    %rax,0xb8(%rsp)
+   9218e:	mov    0x1c0(%rsp),%rbp
+   92196:	add    $0x40,%rbp
+   9219a:	addq   $0xffffffffffffffc0,0x120(%rsp)
+   921a3:	cmp    0x110(%rsp),%rdi
+   921ab:	mov    0xa8(%rsp),%r12
+   921b3:	mov    0x38(%rsp),%r13
+   921b8:	je     91fe0 <gf2_core::matrix::BitMatrix::transpose+0x3e0>
+   921be:	cmp    %rbp,%r12
+   921c1:	mov    %rbp,0x1c0(%rsp)
+   921c9:	cmovb  %r12,%rbp
+   921cd:	mov    %rbx,%rax
+   921d0:	shl    $0x6,%rax
+   921d4:	mov    0x118(%rsp),%rcx
+   921dc:	lea    (%rcx,%rax,1),%rdx
+   921e0:	cmp    %rdx,%r12
+   921e3:	cmovb  %r12,%rdx
+   921e7:	mov    0x18(%rsp),%rcx
+   921ec:	lea    (%rbx,%rcx,1),%rsi
+   921f0:	shl    $0x9,%rsi
+   921f4:	lea    0x0(,%rdx,8),%rcx
+   921fc:	sub    %rsi,%rcx
+   921ff:	mov    $0x1f8,%esi
+   92204:	sub    %rcx,%rsi
+   92207:	shr    $0x3,%rsi
+   9220b:	add    0x1b0(%rsp),%rax
+   92213:	sub    %rdx,%rax
+   92216:	cmp    %rax,%rsi
+   92219:	cmovb  %rsi,%rax
+   9221d:	mov    %rdi,0x1b8(%rsp)
+   92225:	mov    %rdi,%rdx
+   92228:	shl    $0x6,%rdx
+   9222c:	lea    0x40(%rdx),%rsi
+   92230:	cmp    %rsi,%r12
+   92233:	cmovb  %r12,%rsi
+   92237:	mov    %rbx,0x138(%rsp)
+   9223f:	mov    0x128(%rsp),%r14
+   92247:	mov    0x130(%rsp),%r15
+   9224f:	mov    %r13,%r12
+   92252:	sub    %rdx,%rsi
+   92255:	mov    %rsi,0xc0(%rsp)
+   9225d:	je     9249b <gf2_core::matrix::BitMatrix::transpose+0x89b>
+   92263:	add    0x120(%rsp),%rbp
+   9226b:	add    %rsp,%rcx
+   9226e:	add    $0x3d8,%rcx
+   92275:	mov    %rcx,0x1d0(%rsp)
+   9227d:	lea    0x8(,%rax,8),%rax
+   92285:	mov    %rax,0x1c8(%rsp)
+   9228d:	mov    0x138(%rsp),%r14
+   92295:	mov    0x128(%rsp),%r13
+   9229d:	mov    0x130(%rsp),%rbx
+   922a5:	mov    0xb8(%rsp),%r12
+   922ad:	mov    0x38(%rsp),%rax
+   922b2:	jmp    922e3 <gf2_core::matrix::BitMatrix::transpose+0x6e3>
+   922b4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   922c0:	inc    %r12
+   922c3:	add    $0x40,%rbx
+   922c7:	add    $0xffffffffffffffc0,%r13
+   922cb:	add    0x48(%rsp),%r14
+   922d0:	mov    0xc8(%rsp),%rax
+   922d8:	cmp    0x50(%rsp),%rax
+   922dd:	je     92160 <gf2_core::matrix::BitMatrix::transpose+0x560>
+   922e3:	mov    %r14,0xd0(%rsp)
+   922eb:	mov    0x20(%rsp),%rcx
+   922f0:	cmp    %rbx,%rcx
+   922f3:	mov    %rbx,%r15
+   922f6:	cmovb  %rcx,%r15
+   922fa:	add    %r13,%r15
+   922fd:	lea    0x1(%rax),%rdx
+   92301:	mov    %rdx,0xc8(%rsp)
+   92309:	shl    $0x6,%rax
+   9230d:	lea    0x40(%rax),%r14
+   92311:	cmp    %r14,%rcx
+   92314:	cmovb  %rcx,%r14
+   92318:	sub    %rax,%r14
+   9231b:	mov    $0x200,%ecx
+   92320:	mov    %r12,%rax
+   92323:	xor    %edx,%edx
+   92325:	data16 cs nopw 0x0(%rax,%rax,1)
+   92330:	test   %rcx,%rcx
+   92333:	je     923a7 <gf2_core::matrix::BitMatrix::transpose+0x7a7>
+   92335:	mov    0xe8(%rsp),%rsi
+   9233d:	add    %rax,%rsi
+   92340:	cmp    0x10(%rsp),%rsi
+   92345:	jae    92aa6 <gf2_core::matrix::BitMatrix::transpose+0xea6>
+   9234b:	mov    0xe0(%rsp),%rsi
+   92353:	mov    (%rsi,%rax,8),%rsi
+   92357:	mov    %rsi,0x3d8(%rsp,%rdx,8)
+   9235f:	lea    -0x1(%rbp),%rsi
+   92363:	cmp    %rdx,%rsi
+   92366:	je     923a7 <gf2_core::matrix::BitMatrix::transpose+0x7a7>
+   92368:	mov    0xa0(%rsp),%rsi
+   92370:	add    %rax,%rsi
+   92373:	cmp    0x10(%rsp),%rsi
+   92378:	jae    92abf <gf2_core::matrix::BitMatrix::transpose+0xebf>
+   9237e:	mov    0x98(%rsp),%rsi
+   92386:	mov    (%rsi,%rax,8),%rsi
+   9238a:	mov    %rsi,0x3e0(%rsp,%rdx,8)
+   92392:	add    $0x2,%rdx
+   92396:	add    $0xfffffffffffffff0,%rcx
+   9239a:	add    0xd8(%rsp),%rax
+   923a2:	cmp    %rdx,%rbp
+   923a5:	jne    92330 <gf2_core::matrix::BitMatrix::transpose+0x730>
+   923a7:	cmpq   $0x3f,0xc0(%rsp)
+   923b0:	ja     923ca <gf2_core::matrix::BitMatrix::transpose+0x7ca>
+   923b2:	mov    0x1d0(%rsp),%rdi
+   923ba:	xor    %esi,%esi
+   923bc:	mov    0x1c8(%rsp),%rdx
+   923c4:	call   *0x65686(%rip)        # f7a50 <memset@GLIBC_2.2.5>
+   923ca:	lea    0x3d8(%rsp),%rdi
+   923d2:	lea    0x1d8(%rsp),%rsi
+   923da:	call   *0x70(%rsp)
+   923de:	test   %r14,%r14
+   923e1:	mov    (%rsp),%rsi
+   923e5:	mov    0x78(%rsp),%rdi
+   923ea:	mov    0x80(%rsp),%r8
+   923f2:	mov    0x88(%rsp),%r9
+   923fa:	mov    0x58(%rsp),%r10
+   923ff:	mov    0x90(%rsp),%r11
+   92407:	mov    0xd0(%rsp),%r14
+   9240f:	je     922c0 <gf2_core::matrix::BitMatrix::transpose+0x6c0>
+   92415:	mov    %r14,%rax
+   92418:	xor    %ecx,%ecx
+   9241a:	nopw   0x0(%rax,%rax,1)
+   92420:	cmp    $0x200,%rcx
+   92427:	je     922c0 <gf2_core::matrix::BitMatrix::transpose+0x6c0>
+   9242d:	lea    (%r10,%rax,1),%rdx
+   92431:	cmp    %rsi,%rdx
+   92434:	jae    92ae0 <gf2_core::matrix::BitMatrix::transpose+0xee0>
+   9243a:	mov    0x1d8(%rsp,%rcx,1),%rdx
+   92442:	mov    %rdx,(%r11,%rax,8)
+   92446:	test   %r15,%r15
+   92449:	je     922c0 <gf2_core::matrix::BitMatrix::transpose+0x6c0>
+   9244f:	lea    (%r9,%rax,1),%rdx
+   92453:	cmp    %rsi,%rdx
+   92456:	jae    92b06 <gf2_core::matrix::BitMatrix::transpose+0xf06>
+   9245c:	mov    0x1e0(%rsp,%rcx,1),%rdx
+   92464:	add    $0x10,%rcx
+   92468:	mov    %rdx,(%r8,%rax,8)
+   9246c:	add    $0xfffffffffffffffe,%r15
+   92470:	add    %rdi,%rax
+   92473:	cmp    $0xffffffffffffffff,%r15
+   92477:	jne    92420 <gf2_core::matrix::BitMatrix::transpose+0x820>
+   92479:	jmp    922c0 <gf2_core::matrix::BitMatrix::transpose+0x6c0>
+   9247e:	xchg   %ax,%ax
+   92480:	inc    %r12
+   92483:	add    $0x40,%r15
+   92487:	add    $0xffffffffffffffc0,%r14
+   9248b:	add    0x48(%rsp),%rbx
+   92490:	cmp    0x50(%rsp),%r12
+   92495:	je     92160 <gf2_core::matrix::BitMatrix::transpose+0x560>
+   9249b:	mov    0x20(%rsp),%rbp
+   924a0:	cmp    %r15,%rbp
+   924a3:	mov    %r15,%r13
+   924a6:	cmovb  %rbp,%r13
+   924aa:	mov    $0x200,%edx
+   924af:	lea    0x3d8(%rsp),%rdi
+   924b7:	xor    %esi,%esi
+   924b9:	call   *0x65591(%rip)        # f7a50 <memset@GLIBC_2.2.5>
+   924bf:	lea    0x3d8(%rsp),%rdi
+   924c7:	lea    0x1d8(%rsp),%rsi
+   924cf:	call   *0x70(%rsp)
+   924d3:	mov    %r12,%rax
+   924d6:	shl    $0x6,%rax
+   924da:	lea    0x40(%rax),%rcx
+   924de:	cmp    %rcx,%rbp
+   924e1:	cmovb  %rbp,%rcx
+   924e5:	cmp    %rax,%rcx
+   924e8:	je     92480 <gf2_core::matrix::BitMatrix::transpose+0x880>
+   924ea:	add    %r14,%r13
+   924ed:	mov    %rbx,%rax
+   924f0:	xor    %ecx,%ecx
+   924f2:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   92500:	cmp    $0x200,%rcx
+   92507:	je     92480 <gf2_core::matrix::BitMatrix::transpose+0x880>
+   9250d:	mov    0x58(%rsp),%rdx
+   92512:	add    %rax,%rdx
+   92515:	cmp    (%rsp),%rdx
+   92519:	jae    92b1f <gf2_core::matrix::BitMatrix::transpose+0xf1f>
+   9251f:	mov    0x1d8(%rsp,%rcx,1),%rdx
+   92527:	mov    0x90(%rsp),%rsi
+   9252f:	mov    %rdx,(%rsi,%rax,8)
+   92533:	test   %r13,%r13
+   92536:	je     92480 <gf2_core::matrix::BitMatrix::transpose+0x880>
+   9253c:	mov    0x88(%rsp),%rdx
+   92544:	add    %rax,%rdx
+   92547:	cmp    (%rsp),%rdx
+   9254b:	jae    92b3e <gf2_core::matrix::BitMatrix::transpose+0xf3e>
+   92551:	mov    0x1e0(%rsp,%rcx,1),%rdx
+   92559:	add    $0x10,%rcx
+   9255d:	mov    0x80(%rsp),%rsi
+   92565:	mov    %rdx,(%rsi,%rax,8)
+   92569:	add    $0xfffffffffffffffe,%r13
+   9256d:	add    0x78(%rsp),%rax
+   92572:	cmp    $0xffffffffffffffff,%r13
+   92576:	jne    92500 <gf2_core::matrix::BitMatrix::transpose+0x900>
+   92578:	jmp    92480 <gf2_core::matrix::BitMatrix::transpose+0x880>
+   9257d:	nopl   (%rax)
+   92580:	xor    %eax,%eax
+   92582:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   92590:	add    %rdi,%rax
+   92593:	cmp    %rax,%rbp
+   92596:	cmovb  %rbp,%rax
+   9259a:	ja     92590 <gf2_core::matrix::BitMatrix::transpose+0x990>
+   9259c:	jmp    91ef0 <gf2_core::matrix::BitMatrix::transpose+0x2f0>
+   925a1:	lea    0x3d8(%rsp),%rdi
+   925a9:	xor    %r13d,%r13d
+   925ac:	mov    0x6549d(%rip),%rbx        # f7a50 <memset@GLIBC_2.2.5>
+   925b3:	mov    $0x200,%edx
+   925b8:	xor    %esi,%esi
+   925ba:	call   *%rbx
+   925bc:	lea    0x1d8(%rsp),%rdi
+   925c4:	mov    $0x200,%edx
+   925c9:	xor    %esi,%esi
+   925cb:	call   *%rbx
+   925cd:	mov    0x40(%rsp),%rax
+   925d2:	mov    %rax,%rcx
+   925d5:	shl    $0x6,%rcx
+   925d9:	mov    %rcx,0xc0(%rsp)
+   925e1:	lea    (%rax,%rax,1),%rcx
+   925e5:	mov    %rcx,0xe8(%rsp)
+   925ed:	lea    (%r15,%rax,8),%rax
+   925f1:	mov    %rax,0xe0(%rsp)
+   925f9:	mov    %r14,%rax
+   925fc:	shl    $0x6,%rax
+   92600:	mov    %rax,0x58(%rsp)
+   92605:	lea    (%r14,%r14,1),%rax
+   92609:	mov    %rax,0xa0(%rsp)
+   92611:	mov    0x8(%rsp),%rax
+   92616:	lea    (%rax,%r14,8),%rax
+   9261a:	mov    %rax,0x98(%rsp)
+   92622:	mov    $0x40,%eax
+   92627:	mov    $0xffffffffffffffff,%rdi
+   9262e:	xor    %r9d,%r9d
+   92631:	jmp    9268c <gf2_core::matrix::BitMatrix::transpose+0xa8c>
+   92633:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   92640:	mov    0x48(%rsp),%r9
+   92645:	inc    %r9
+   92648:	mov    0xd0(%rsp),%r13
+   92650:	add    0xc0(%rsp),%r13
+   92658:	mov    0xc8(%rsp),%rax
+   92660:	add    $0x40,%rax
+   92664:	mov    0x50(%rsp),%rdi
+   92669:	add    $0xffffffffffffffc0,%rdi
+   9266d:	mov    0x30(%rsp),%rdx
+   92672:	mov    0x28(%rsp),%rsi
+   92677:	lea    (%rdx,%rsi,1),%r8
+   9267b:	cmp    %r8,%r9
+   9267e:	mov    0xa8(%rsp),%r12
+   92686:	je     92a02 <gf2_core::matrix::BitMatrix::transpose+0xe02>
+   9268c:	cmp    %rax,%r12
+   9268f:	mov    %rax,0xc8(%rsp)
+   92697:	mov    %rax,%r8
+   9269a:	cmovb  %r12,%r8
+   9269e:	mov    %r9,%rdx
+   926a1:	shl    $0x6,%rdx
+   926a5:	lea    0x40(%rdx),%r10
+   926a9:	cmp    %r10,%r12
+   926ac:	cmovb  %r12,%r10
+   926b0:	mov    %r9,%rcx
+   926b3:	shl    $0x9,%rcx
+   926b7:	lea    0x0(,%r10,8),%rax
+   926bf:	sub    %rcx,%rax
+   926c2:	mov    $0x1f8,%esi
+   926c7:	sub    %rax,%rsi
+   926ca:	shr    $0x3,%rsi
+   926ce:	lea    0x3f(%rdx),%rcx
+   926d2:	sub    %r10,%rcx
+   926d5:	cmp    %rcx,%rsi
+   926d8:	cmovb  %rsi,%rcx
+   926dc:	sub    %rdx,%r10
+   926df:	mov    %r10,0x90(%rsp)
+   926e7:	mov    %r13,0xd0(%rsp)
+   926ef:	mov    %rdi,0x50(%rsp)
+   926f4:	mov    %r9,0x48(%rsp)
+   926f9:	je     928e0 <gf2_core::matrix::BitMatrix::transpose+0xce0>
+   926ff:	add    %rdi,%r8
+   92702:	mov    %r8,0x88(%rsp)
+   9270a:	add    %rsp,%rax
+   9270d:	add    $0x3d8,%rax
+   92713:	mov    %rax,0x80(%rsp)
+   9271b:	lea    0x8(,%rcx,8),%rax
+   92723:	mov    %rax,0x78(%rsp)
+   92728:	mov    $0x40,%ebp
+   9272d:	mov    $0xffffffffffffffff,%r15
+   92734:	mov    %r9,%r12
+   92737:	xor    %eax,%eax
+   92739:	jmp    92766 <gf2_core::matrix::BitMatrix::transpose+0xb66>
+   9273b:	nopl   0x0(%rax,%rax,1)
+   92740:	inc    %r13
+   92743:	add    $0x40,%rbp
+   92747:	add    $0xffffffffffffffc0,%r15
+   9274b:	add    0x58(%rsp),%r12
+   92750:	mov    0xd8(%rsp),%rax
+   92758:	cmp    0xb0(%rsp),%rax
+   92760:	je     92640 <gf2_core::matrix::BitMatrix::transpose+0xa40>
+   92766:	mov    0x20(%rsp),%rcx
+   9276b:	cmp    %rbp,%rcx
+   9276e:	mov    %rbp,%r14
+   92771:	cmovb  %rcx,%r14
+   92775:	add    %r15,%r14
+   92778:	lea    0x1(%rax),%rdx
+   9277c:	mov    %rdx,0xd8(%rsp)
+   92784:	shl    $0x6,%rax
+   92788:	lea    0x40(%rax),%rbx
+   9278c:	cmp    %rbx,%rcx
+   9278f:	cmovb  %rcx,%rbx
+   92793:	sub    %rax,%rbx
+   92796:	mov    $0x8,%eax
+   9279b:	mov    0x88(%rsp),%rdx
+   927a3:	mov    %r13,%rcx
+   927a6:	cs nopw 0x0(%rax,%rax,1)
+   927b0:	cmp    $0x208,%rax
+   927b6:	je     9281a <gf2_core::matrix::BitMatrix::transpose+0xc1a>
+   927b8:	cmp    0x10(%rsp),%rcx
+   927bd:	jae    92b71 <gf2_core::matrix::BitMatrix::transpose+0xf71>
+   927c3:	mov    0x140(%rsp),%rsi
+   927cb:	mov    (%rsi,%rcx,8),%rsi
+   927cf:	mov    %rsi,0x3d0(%rsp,%rax,1)
+   927d7:	test   %rdx,%rdx
+   927da:	je     9281a <gf2_core::matrix::BitMatrix::transpose+0xc1a>
+   927dc:	mov    0x40(%rsp),%rsi
+   927e1:	lea    (%rsi,%rcx,1),%rdi
+   927e5:	cmp    0x10(%rsp),%rdi
+   927ea:	jae    92b74 <gf2_core::matrix::BitMatrix::transpose+0xf74>
+   927f0:	mov    0xe0(%rsp),%rsi
+   927f8:	mov    (%rsi,%rcx,8),%rsi
+   927fc:	mov    %rsi,0x3d8(%rsp,%rax,1)
+   92804:	add    $0x10,%rax
+   92808:	add    0xe8(%rsp),%rcx
+   92810:	add    $0xfffffffffffffffe,%rdx
+   92814:	cmp    $0xffffffffffffffff,%rdx
+   92818:	jne    927b0 <gf2_core::matrix::BitMatrix::transpose+0xbb0>
+   9281a:	cmpq   $0x3f,0x90(%rsp)
+   92823:	ja     9283a <gf2_core::matrix::BitMatrix::transpose+0xc3a>
+   92825:	mov    0x80(%rsp),%rdi
+   9282d:	xor    %esi,%esi
+   9282f:	mov    0x78(%rsp),%rdx
+   92834:	call   *0x65216(%rip)        # f7a50 <memset@GLIBC_2.2.5>
+   9283a:	lea    0x3d8(%rsp),%rdi
+   92842:	lea    0x1d8(%rsp),%rsi
+   9284a:	call   *0x70(%rsp)
+   9284e:	test   %rbx,%rbx
+   92851:	mov    0x8(%rsp),%rsi
+   92856:	mov    0x30(%rsp),%rax
+   9285b:	mov    0x28(%rsp),%rcx
+   92860:	lea    (%rax,%rcx,1),%r8
+   92864:	mov    0xa0(%rsp),%r9
+   9286c:	mov    0x98(%rsp),%r10
+   92874:	je     92740 <gf2_core::matrix::BitMatrix::transpose+0xb40>
+   9287a:	mov    %r12,%rax
+   9287d:	xor    %ecx,%ecx
+   9287f:	nop
+   92880:	cmp    $0x200,%rcx
+   92887:	je     92740 <gf2_core::matrix::BitMatrix::transpose+0xb40>
+   9288d:	cmp    (%rsp),%rax
+   92891:	jae    92b61 <gf2_core::matrix::BitMatrix::transpose+0xf61>
+   92897:	mov    0x1d8(%rsp,%rcx,1),%rdx
+   9289f:	mov    %rdx,(%rsi,%rax,8)
+   928a3:	test   %r14,%r14
+   928a6:	je     92740 <gf2_core::matrix::BitMatrix::transpose+0xb40>
+   928ac:	lea    (%r8,%rax,1),%rdi
+   928b0:	cmp    (%rsp),%rdi
+   928b4:	jae    92b64 <gf2_core::matrix::BitMatrix::transpose+0xf64>
+   928ba:	mov    0x1e0(%rsp,%rcx,1),%rdx
+   928c2:	add    $0x10,%rcx
+   928c6:	mov    %rdx,(%r10,%rax,8)
+   928ca:	add    $0xfffffffffffffffe,%r14
+   928ce:	add    %r9,%rax
+   928d1:	cmp    $0xffffffffffffffff,%r14
+   928d5:	jne    92880 <gf2_core::matrix::BitMatrix::transpose+0xc80>
+   928d7:	jmp    92740 <gf2_core::matrix::BitMatrix::transpose+0xb40>
+   928dc:	nopl   0x0(%rax)
+   928e0:	mov    %r9,%r15
+   928e3:	mov    $0x40,%ebx
+   928e8:	mov    $0xffffffffffffffff,%r14
+   928ef:	xor    %r12d,%r12d
+   928f2:	jmp    92919 <gf2_core::matrix::BitMatrix::transpose+0xd19>
+   928f4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   92900:	inc    %r12
+   92903:	add    $0x40,%rbx
+   92907:	add    $0xffffffffffffffc0,%r14
+   9290b:	add    0x58(%rsp),%r15
+   92910:	cmp    %r9,%r12
+   92913:	je     92640 <gf2_core::matrix::BitMatrix::transpose+0xa40>
+   92919:	mov    0x20(%rsp),%rbp
+   9291e:	cmp    %rbx,%rbp
+   92921:	mov    %rbx,%r13
+   92924:	cmovb  %rbp,%r13
+   92928:	mov    $0x200,%edx
+   9292d:	lea    0x3d8(%rsp),%rdi
+   92935:	xor    %esi,%esi
+   92937:	call   *0x65113(%rip)        # f7a50 <memset@GLIBC_2.2.5>
+   9293d:	lea    0x3d8(%rsp),%rdi
+   92945:	lea    0x1d8(%rsp),%rsi
+   9294d:	call   *0x70(%rsp)
+   92951:	mov    %r12,%rax
+   92954:	shl    $0x6,%rax
+   92958:	lea    0x40(%rax),%rcx
+   9295c:	cmp    %rcx,%rbp
+   9295f:	cmovb  %rbp,%rcx
+   92963:	cmp    %rax,%rcx
+   92966:	mov    0x30(%rsp),%r10
+   9296b:	mov    0x28(%rsp),%r8
+   92970:	mov    0xb0(%rsp),%r9
+   92978:	je     92900 <gf2_core::matrix::BitMatrix::transpose+0xd00>
+   9297a:	add    %r14,%r13
+   9297d:	mov    %r15,%rax
+   92980:	xor    %ecx,%ecx
+   92982:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   92990:	cmp    $0x200,%rcx
+   92997:	je     92900 <gf2_core::matrix::BitMatrix::transpose+0xd00>
+   9299d:	cmp    (%rsp),%rax
+   929a1:	jae    92b61 <gf2_core::matrix::BitMatrix::transpose+0xf61>
+   929a7:	mov    0x1d8(%rsp,%rcx,1),%rdx
+   929af:	mov    0x8(%rsp),%rsi
+   929b4:	mov    %rdx,(%rsi,%rax,8)
+   929b8:	test   %r13,%r13
+   929bb:	je     92900 <gf2_core::matrix::BitMatrix::transpose+0xd00>
+   929c1:	lea    (%r10,%r8,1),%rdx
+   929c5:	lea    (%rdx,%rax,1),%rdi
+   929c9:	cmp    (%rsp),%rdi
+   929cd:	jae    92b64 <gf2_core::matrix::BitMatrix::transpose+0xf64>
+   929d3:	mov    0x1e0(%rsp,%rcx,1),%rdx
+   929db:	add    $0x10,%rcx
+   929df:	mov    0x98(%rsp),%rsi
+   929e7:	mov    %rdx,(%rsi,%rax,8)
+   929eb:	add    $0xfffffffffffffffe,%r13
+   929ef:	add    0xa0(%rsp),%rax
+   929f7:	cmp    $0xffffffffffffffff,%r13
+   929fb:	jne    92990 <gf2_core::matrix::BitMatrix::transpose+0xd90>
+   929fd:	jmp    92900 <gf2_core::matrix::BitMatrix::transpose+0xd00>
+   92a02:	mov    0x8(%rsp),%r15
+   92a07:	mov    0x148(%rsp),%rcx
+   92a0f:	test   %rcx,%rcx
+   92a12:	je     92a67 <gf2_core::matrix::BitMatrix::transpose+0xe67>
+   92a14:	mov    $0xffffffffffffffff,%rax
+   92a1b:	shl    %cl,%rax
+   92a1e:	not    %rax
+   92a21:	lea    (%rdx,%rsi,1),%r9
+   92a25:	dec    %r9
+   92a28:	lea    0x620b1(%rip),%rdx        # f4ae0 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.591.llvm.1436703937590314291+0x120>
+   92a2f:	mov    0x20(%rsp),%rbp
+   92a34:	mov    %rbp,%rcx
+   92a37:	mov    (%rsp),%rsi
+   92a3b:	mov    0x60(%rsp),%r10
+   92a40:	mov    0x68(%rsp),%rdi
+   92a45:	data16 cs nopw 0x0(%rax,%rax,1)
+   92a50:	cmp    %rsi,%r9
+   92a53:	jae    92b8c <gf2_core::matrix::BitMatrix::transpose+0xf8c>
+   92a59:	and    %rax,(%r15,%r9,8)
+   92a5d:	add    %r8,%r9
+   92a60:	dec    %rcx
+   92a63:	jne    92a50 <gf2_core::matrix::BitMatrix::transpose+0xe50>
+   92a65:	jmp    92a7a <gf2_core::matrix::BitMatrix::transpose+0xe7a>
+   92a67:	mov    (%rsp),%rsi
+   92a6b:	mov    0x60(%rsp),%r10
+   92a70:	mov    0x68(%rsp),%rdi
+   92a75:	mov    0x20(%rsp),%rbp
+   92a7a:	mov    %r10,(%rdi)
+   92a7d:	mov    %r15,0x8(%rdi)
+   92a81:	mov    %rsi,0x10(%rdi)
+   92a85:	mov    %rbp,0x18(%rdi)
+   92a89:	mov    %r12,0x20(%rdi)
+   92a8d:	mov    %r8,0x28(%rdi)
+   92a91:	mov    %rdi,%rax
+   92a94:	add    $0x5d8,%rsp
+   92a9b:	pop    %rbx
+   92a9c:	pop    %r12
+   92a9e:	pop    %r13
+   92aa0:	pop    %r14
+   92aa2:	pop    %r15
+   92aa4:	pop    %rbp
+   92aa5:	ret
+   92aa6:	mov    0x40(%rsp),%rcx
+   92aab:	imul   0x18(%rsp),%rcx
+   92ab1:	shl    $0x6,%rcx
+   92ab5:	mov    0x38(%rsp),%rdi
+   92aba:	add    %rax,%rdi
+   92abd:	jmp    92acf <gf2_core::matrix::BitMatrix::transpose+0xecf>
+   92abf:	mov    0x38(%rsp),%rcx
+   92ac4:	add    %rax,%rcx
+   92ac7:	mov    0x100(%rsp),%rdi
+   92acf:	add    %rcx,%rdi
+   92ad2:	lea    0x6204f(%rip),%rdx        # f4b28 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.591.llvm.1436703937590314291+0x168>
+   92ad9:	mov    0x10(%rsp),%rsi
+   92ade:	jmp    92b59 <gf2_core::matrix::BitMatrix::transpose+0xf59>
+   92ae0:	mov    0xf0(%rsp),%rcx
+   92ae8:	imul   0x38(%rsp),%rcx
+   92aee:	shl    $0x6,%rcx
+   92af2:	mov    0x18(%rsp),%rdi
+   92af7:	add    %rax,%rdi
+   92afa:	add    %rcx,%rdi
+   92afd:	lea    0x6200c(%rip),%rdx        # f4b10 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.591.llvm.1436703937590314291+0x150>
+   92b04:	jmp    92b59 <gf2_core::matrix::BitMatrix::transpose+0xf59>
+   92b06:	mov    0x18(%rsp),%rdi
+   92b0b:	add    %rax,%rdi
+   92b0e:	add    0xf8(%rsp),%rdi
+   92b16:	lea    0x61ff3(%rip),%rdx        # f4b10 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.591.llvm.1436703937590314291+0x150>
+   92b1d:	jmp    92b59 <gf2_core::matrix::BitMatrix::transpose+0xf59>
+   92b1f:	mov    0xf0(%rsp),%rcx
+   92b27:	imul   0x38(%rsp),%rcx
+   92b2d:	shl    $0x6,%rcx
+   92b31:	mov    0x18(%rsp),%rdi
+   92b36:	add    %rax,%rdi
+   92b39:	add    %rcx,%rdi
+   92b3c:	jmp    92b4e <gf2_core::matrix::BitMatrix::transpose+0xf4e>
+   92b3e:	mov    0x18(%rsp),%rdi
+   92b43:	add    %rax,%rdi
+   92b46:	add    0xf8(%rsp),%rdi
+   92b4e:	lea    0x61fbb(%rip),%rdx        # f4b10 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.591.llvm.1436703937590314291+0x150>
+   92b55:	mov    (%rsp),%rsi
+   92b59:	call   *0x64e41(%rip)        # f79a0 <_DYNAMIC+0x208>
+   92b5f:	ud2
+   92b61:	mov    %rax,%rdi
+   92b64:	mov    (%rsp),%rsi
+   92b68:	lea    0x61fa1(%rip),%rdx        # f4b10 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.591.llvm.1436703937590314291+0x150>
+   92b6f:	jmp    92b59 <gf2_core::matrix::BitMatrix::transpose+0xf59>
+   92b71:	mov    %rcx,%rdi
+   92b74:	mov    0x10(%rsp),%rsi
+   92b79:	lea    0x61fa8(%rip),%rdx        # f4b28 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.591.llvm.1436703937590314291+0x168>
+   92b80:	jmp    92b59 <gf2_core::matrix::BitMatrix::transpose+0xf59>
+   92b82:	call   878c8 <std::sync::once_lock::OnceLock<T>::initialize>
+   92b87:	jmp    91c49 <gf2_core::matrix::BitMatrix::transpose+0x49>
+   92b8c:	mov    %r9,%rdi
+   92b8f:	jmp    92b59 <gf2_core::matrix::BitMatrix::transpose+0xf59>
+   92b91:	jmp    92b99 <gf2_core::matrix::BitMatrix::transpose+0xf99>
+   92b93:	jmp    92b99 <gf2_core::matrix::BitMatrix::transpose+0xf99>
+   92b95:	jmp    92b99 <gf2_core::matrix::BitMatrix::transpose+0xf99>
+   92b97:	jmp    92b99 <gf2_core::matrix::BitMatrix::transpose+0xf99>
+   92b99:	mov    %rax,%rbx
+   92b9c:	mov    0x60(%rsp),%rax
+   92ba1:	test   %rax,%rax
+   92ba4:	je     92bbd <gf2_core::matrix::BitMatrix::transpose+0xfbd>
+   92ba6:	shl    $0x3,%rax
+   92baa:	lock add %rax,0x677a6(%rip)        # fa358 <consumer_profile::FREED_BYTES>
+   92bb2:	mov    0x8(%rsp),%rdi
+   92bb7:	call   *0x64e0b(%rip)        # f79c8 <free@GLIBC_2.2.5>
+   92bbd:	mov    %rbx,%rdi
+   92bc0:	call   ed700 <_Unwind_Resume@plt>

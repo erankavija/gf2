@@ -1,0 +1,244 @@
+# label: sparse-matvec
+# pattern: SpBitMatrix>::matvec
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile
+# binary sha256: 72be1c750584eeab639d99c13b1994da91f7a8dd4ace3f69bacf3c7d56114c64
+# symbols matching this pattern in the binary: 1
+
+## symbol at 000000000008a1d0, 0x000000000000040e bytes
+000000000008a1d0 <<gf2_core::sparse::SpBitMatrix>::matvec>:
+   8a1d0:	push   %rbp
+   8a1d1:	push   %r15
+   8a1d3:	push   %r14
+   8a1d5:	push   %r13
+   8a1d7:	push   %r12
+   8a1d9:	push   %rbx
+   8a1da:	sub    $0x98,%rsp
+   8a1e1:	mov    %rsi,%r13
+   8a1e4:	mov    0x18(%rdx),%rax
+   8a1e8:	mov    %rax,(%rsp)
+   8a1ec:	cmp    0x38(%rsi),%rax
+   8a1f0:	jne    8a4f8 <<gf2_core::sparse::SpBitMatrix>::matvec+0x328>
+   8a1f6:	mov    %rdi,0x68(%rsp)
+   8a1fb:	mov    0x30(%r13),%rcx
+   8a1ff:	mov    %rcx,%rbx
+   8a202:	shr    $0x6,%rbx
+   8a206:	mov    %ecx,%eax
+   8a208:	and    $0x3f,%eax
+   8a20b:	cmp    $0x1,%rax
+   8a20f:	sbb    $0xffffffffffffffff,%rbx
+   8a213:	mov    %rcx,0x90(%rsp)
+   8a21b:	test   %rcx,%rcx
+   8a21e:	je     8a438 <<gf2_core::sparse::SpBitMatrix>::matvec+0x268>
+   8a224:	mov    %rdx,%r14
+   8a227:	lea    0x0(,%rbx,8),%r15
+   8a22f:	lock incq 0x735c9(%rip)        # fd800 <consumer_profile::ALLOCATIONS>
+   8a237:	mov    %r15,%rax
+   8a23a:	lock xadd %rax,0x735d5(%rip)        # fd818 <consumer_profile::ALLOCATED_BYTES>
+   8a243:	add    %r15,%rax
+   8a246:	mov    0x735bb(%rip),%rdx        # fd808 <consumer_profile::FREED_BYTES>
+   8a24d:	xor    %ecx,%ecx
+   8a24f:	sub    %rdx,%rax
+   8a252:	cmovae %rax,%rcx
+   8a256:	mov    0x735b3(%rip),%rax        # fd810 <consumer_profile::PEAK_EXCESS>
+   8a25d:	nopl   (%rax)
+   8a260:	cmp    %rcx,%rax
+   8a263:	mov    %rcx,%rdx
+   8a266:	cmova  %rax,%rdx
+   8a26a:	lock cmpxchg %rdx,0x7359d(%rip)        # fd810 <consumer_profile::PEAK_EXCESS>
+   8a273:	jne    8a260 <<gf2_core::sparse::SpBitMatrix>::matvec+0x90>
+   8a275:	mov    %r15,%rdi
+   8a278:	call   *0x70c32(%rip)        # faeb0 <malloc@GLIBC_2.2.5>
+   8a27e:	test   %rax,%rax
+   8a281:	je     8a55c <<gf2_core::sparse::SpBitMatrix>::matvec+0x38c>
+   8a287:	mov    %rbx,(%rsp)
+   8a28b:	mov    %rax,0x8(%rsp)
+   8a290:	xorps  %xmm0,%xmm0
+   8a293:	movups %xmm0,0x10(%rsp)
+   8a298:	movq   $0x0,0x1d(%rsp)
+   8a2a1:	movq   $0xffffffffffffffff,0x28(%rsp)
+   8a2aa:	mov    0x8(%r13),%rax
+   8a2ae:	mov    %rax,0x80(%rsp)
+   8a2b6:	mov    0x10(%r13),%r9
+   8a2ba:	mov    0x28(%r13),%rax
+   8a2be:	mov    %rax,0x58(%rsp)
+   8a2c3:	mov    0x20(%r13),%rbx
+   8a2c7:	cmp    $0x1,%r9
+   8a2cb:	mov    %r9,%rax
+   8a2ce:	adc    $0x0,%rax
+   8a2d2:	mov    %rax,0x60(%rsp)
+   8a2d7:	dec    %rax
+   8a2da:	mov    %rax,0x88(%rsp)
+   8a2e2:	xor    %r13d,%r13d
+   8a2e5:	xor    %ebp,%ebp
+   8a2e7:	mov    %r9,0x78(%rsp)
+   8a2ec:	jmp    8a310 <<gf2_core::sparse::SpBitMatrix>::matvec+0x140>
+   8a2ee:	xchg   %ax,%ax
+   8a2f0:	mov    0x18(%rsp),%r13
+   8a2f5:	inc    %r13
+   8a2f8:	mov    %r13,0x18(%rsp)
+   8a2fd:	cmp    0x90(%rsp),%rbp
+   8a305:	mov    0x78(%rsp),%r9
+   8a30a:	je     8a463 <<gf2_core::sparse::SpBitMatrix>::matvec+0x293>
+   8a310:	cmp    %r9,%rbp
+   8a313:	je     8a544 <<gf2_core::sparse::SpBitMatrix>::matvec+0x374>
+   8a319:	cmp    0x88(%rsp),%rbp
+   8a321:	je     8a536 <<gf2_core::sparse::SpBitMatrix>::matvec+0x366>
+   8a327:	mov    0x80(%rsp),%rax
+   8a32f:	mov    (%rax,%rbp,8),%rdi
+   8a333:	inc    %rbp
+   8a336:	mov    (%rax,%rbp,8),%rsi
+   8a33a:	cmp    %rdi,%rsi
+   8a33d:	jb     8a4e4 <<gf2_core::sparse::SpBitMatrix>::matvec+0x314>
+   8a343:	cmp    0x58(%rsp),%rsi
+   8a348:	ja     8a4e4 <<gf2_core::sparse::SpBitMatrix>::matvec+0x314>
+   8a34e:	cmp    %rsi,%rdi
+   8a351:	jne    8a360 <<gf2_core::sparse::SpBitMatrix>::matvec+0x190>
+   8a353:	xor    %r12d,%r12d
+   8a356:	jmp    8a3ac <<gf2_core::sparse::SpBitMatrix>::matvec+0x1dc>
+   8a358:	nopl   0x0(%rax,%rax,1)
+   8a360:	mov    0x18(%r14),%rax
+   8a364:	shl    $0x3,%rsi
+   8a368:	shl    $0x3,%rdi
+   8a36c:	xor    %r12d,%r12d
+   8a36f:	nop
+   8a370:	mov    (%rbx,%rdi,1),%rcx
+   8a374:	cmp    %rax,%rcx
+   8a377:	jae    8a4c9 <<gf2_core::sparse::SpBitMatrix>::matvec+0x2f9>
+   8a37d:	mov    %rcx,%rdx
+   8a380:	shr    $0x6,%rdx
+   8a384:	mov    0x10(%r14),%r8
+   8a388:	cmp    %r8,%rdx
+   8a38b:	jae    8a51e <<gf2_core::sparse::SpBitMatrix>::matvec+0x34e>
+   8a391:	mov    0x8(%r14),%r8
+   8a395:	mov    (%r8,%rdx,8),%rdx
+   8a399:	bt     %rcx,%rdx
+   8a39d:	setb   %cl
+   8a3a0:	xor    %cl,%r12b
+   8a3a3:	add    $0x8,%rdi
+   8a3a7:	cmp    %rdi,%rsi
+   8a3aa:	jne    8a370 <<gf2_core::sparse::SpBitMatrix>::matvec+0x1a0>
+   8a3ac:	mov    %r13,%r15
+   8a3af:	and    $0x3f,%r15
+   8a3b3:	je     8a3d0 <<gf2_core::sparse::SpBitMatrix>::matvec+0x200>
+   8a3b5:	test   $0x1,%r12b
+   8a3b9:	je     8a2f0 <<gf2_core::sparse::SpBitMatrix>::matvec+0x120>
+   8a3bf:	jmp    8a40d <<gf2_core::sparse::SpBitMatrix>::matvec+0x23d>
+   8a3c1:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   8a3d0:	mov    0x10(%rsp),%rax
+   8a3d5:	mov    %rax,0x70(%rsp)
+   8a3da:	cmp    (%rsp),%rax
+   8a3de:	jne    8a3e9 <<gf2_core::sparse::SpBitMatrix>::matvec+0x219>
+   8a3e0:	mov    %rsp,%rdi
+   8a3e3:	call   *0x70c6f(%rip)        # fb058 <_DYNAMIC+0x3f0>
+   8a3e9:	mov    0x8(%rsp),%rax
+   8a3ee:	mov    0x70(%rsp),%rcx
+   8a3f3:	movq   $0x0,(%rax,%rcx,8)
+   8a3fb:	inc    %rcx
+   8a3fe:	mov    %rcx,0x10(%rsp)
+   8a403:	test   $0x1,%r12b
+   8a407:	je     8a2f0 <<gf2_core::sparse::SpBitMatrix>::matvec+0x120>
+   8a40d:	shr    $0x6,%r13
+   8a411:	mov    0x10(%rsp),%r9
+   8a416:	cmp    %r9,%r13
+   8a419:	jae    8a550 <<gf2_core::sparse::SpBitMatrix>::matvec+0x380>
+   8a41f:	mov    $0x1,%eax
+   8a424:	mov    %r15d,%ecx
+   8a427:	shl    %cl,%rax
+   8a42a:	mov    0x8(%rsp),%rcx
+   8a42f:	or     %rax,(%rcx,%r13,8)
+   8a433:	jmp    8a2f0 <<gf2_core::sparse::SpBitMatrix>::matvec+0x120>
+   8a438:	movq   $0x0,(%rsp)
+   8a440:	movq   $0x8,0x8(%rsp)
+   8a449:	xorps  %xmm0,%xmm0
+   8a44c:	movups %xmm0,0x10(%rsp)
+   8a451:	movq   $0x0,0x1d(%rsp)
+   8a45a:	movq   $0xffffffffffffffff,0x28(%rsp)
+   8a463:	mov    0x50(%rsp),%rcx
+   8a468:	mov    0x68(%rsp),%rax
+   8a46d:	mov    %rcx,0x50(%rax)
+   8a471:	movups 0x40(%rsp),%xmm0
+   8a476:	movups %xmm0,0x40(%rax)
+   8a47a:	mov    (%rsp),%r9
+   8a47e:	mov    0x8(%rsp),%rcx
+   8a483:	mov    0x10(%rsp),%rdx
+   8a488:	mov    0x18(%rsp),%rsi
+   8a48d:	mov    0x20(%rsp),%rdi
+   8a492:	mov    0x28(%rsp),%r8
+   8a497:	movups 0x30(%rsp),%xmm0
+   8a49c:	movups %xmm0,0x30(%rax)
+   8a4a0:	mov    %rdi,0x20(%rax)
+   8a4a4:	mov    %r8,0x28(%rax)
+   8a4a8:	mov    %rdx,0x10(%rax)
+   8a4ac:	mov    %rsi,0x18(%rax)
+   8a4b0:	mov    %r9,(%rax)
+   8a4b3:	mov    %rcx,0x8(%rax)
+   8a4b7:	add    $0x98,%rsp
+   8a4be:	pop    %rbx
+   8a4bf:	pop    %r12
+   8a4c1:	pop    %r13
+   8a4c3:	pop    %r14
+   8a4c5:	pop    %r15
+   8a4c7:	pop    %rbp
+   8a4c8:	ret
+   8a4c9:	lea    -0x6ac2a(%rip),%rdi        # 1f8a6 <anon.f09c39ab6a8325ec18e0aaeed8878866.196.llvm.17757164669745943705>
+   8a4d0:	lea    0x6d551(%rip),%rdx        # f7a28 <anon.f09c39ab6a8325ec18e0aaeed8878866.96.llvm.17757164669745943705+0x150>
+   8a4d7:	mov    $0x27,%esi
+   8a4dc:	call   *0x70a06(%rip)        # faee8 <_DYNAMIC+0x280>
+   8a4e2:	jmp    8a534 <<gf2_core::sparse::SpBitMatrix>::matvec+0x364>
+   8a4e4:	lea    0x6d44d(%rip),%rcx        # f7938 <anon.f09c39ab6a8325ec18e0aaeed8878866.96.llvm.17757164669745943705+0x60>
+   8a4eb:	mov    0x58(%rsp),%rdx
+   8a4f0:	call   *0x70aa2(%rip)        # faf98 <_DYNAMIC+0x330>
+   8a4f6:	jmp    8a534 <<gf2_core::sparse::SpBitMatrix>::matvec+0x364>
+   8a4f8:	add    $0x38,%r13
+   8a4fc:	lea    -0x6ac80(%rip),%rcx        # 1f883 <anon.f09c39ab6a8325ec18e0aaeed8878866.143.llvm.17757164669745943705>
+   8a503:	lea    0x6d3e6(%rip),%r9        # f78f0 <anon.f09c39ab6a8325ec18e0aaeed8878866.96.llvm.17757164669745943705+0x18>
+   8a50a:	mov    %rsp,%rsi
+   8a50d:	mov    $0x47,%r8d
+   8a513:	xor    %edi,%edi
+   8a515:	mov    %r13,%rdx
+   8a518:	call   *0x70d82(%rip)        # fb2a0 <_DYNAMIC+0x638>
+   8a51e:	mov    %rdx,%rdi
+   8a521:	mov    %r8,%r9
+   8a524:	lea    0x6d515(%rip),%rdx        # f7a40 <anon.f09c39ab6a8325ec18e0aaeed8878866.96.llvm.17757164669745943705+0x168>
+   8a52b:	mov    %r9,%rsi
+   8a52e:	call   *0x7093c(%rip)        # fae70 <_DYNAMIC+0x208>
+   8a534:	ud2
+   8a536:	lea    0x6d3e3(%rip),%rdx        # f7920 <anon.f09c39ab6a8325ec18e0aaeed8878866.96.llvm.17757164669745943705+0x48>
+   8a53d:	mov    0x60(%rsp),%rdi
+   8a542:	jmp    8a52b <<gf2_core::sparse::SpBitMatrix>::matvec+0x35b>
+   8a544:	mov    %r9,%rdi
+   8a547:	lea    0x6d3ba(%rip),%rdx        # f7908 <anon.f09c39ab6a8325ec18e0aaeed8878866.96.llvm.17757164669745943705+0x30>
+   8a54e:	jmp    8a52b <<gf2_core::sparse::SpBitMatrix>::matvec+0x35b>
+   8a550:	mov    %r13,%rdi
+   8a553:	lea    0x6d546(%rip),%rdx        # f7aa0 <anon.f09c39ab6a8325ec18e0aaeed8878866.211.llvm.17757164669745943705>
+   8a55a:	jmp    8a52b <<gf2_core::sparse::SpBitMatrix>::matvec+0x35b>
+   8a55c:	mov    $0x8,%edi
+   8a561:	mov    %r15,%rsi
+   8a564:	call   *0x708f6(%rip)        # fae60 <_DYNAMIC+0x1f8>
+   8a56a:	jmp    8a56c <<gf2_core::sparse::SpBitMatrix>::matvec+0x39c>
+   8a56c:	mov    %rax,%rbx
+   8a56f:	mov    (%rsp),%rax
+   8a573:	test   %rax,%rax
+   8a576:	je     8a58f <<gf2_core::sparse::SpBitMatrix>::matvec+0x3bf>
+   8a578:	mov    0x8(%rsp),%rdi
+   8a57d:	shl    $0x3,%rax
+   8a581:	lock add %rax,0x7327f(%rip)        # fd808 <consumer_profile::FREED_BYTES>
+   8a589:	call   *0x70909(%rip)        # fae98 <free@GLIBC_2.2.5>
+   8a58f:	mov    0x28(%rsp),%rax
+   8a594:	cmp    $0xffffffffffffffff,%rax
+   8a598:	je     8a5d6 <<gf2_core::sparse::SpBitMatrix>::matvec+0x406>
+   8a59a:	test   %rax,%rax
+   8a59d:	je     8a5b6 <<gf2_core::sparse::SpBitMatrix>::matvec+0x3e6>
+   8a59f:	mov    0x30(%rsp),%rdi
+   8a5a4:	shl    $0x3,%rax
+   8a5a8:	lock add %rax,0x73258(%rip)        # fd808 <consumer_profile::FREED_BYTES>
+   8a5b0:	call   *0x708e2(%rip)        # fae98 <free@GLIBC_2.2.5>
+   8a5b6:	mov    0x40(%rsp),%rax
+   8a5bb:	test   %rax,%rax
+   8a5be:	je     8a5d6 <<gf2_core::sparse::SpBitMatrix>::matvec+0x406>
+   8a5c0:	mov    0x48(%rsp),%rdi
+   8a5c5:	add    %rax,%rax
+   8a5c8:	lock add %rax,0x73238(%rip)        # fd808 <consumer_profile::FREED_BYTES>
+   8a5d0:	call   *0x708c2(%rip)        # fae98 <free@GLIBC_2.2.5>
+   8a5d6:	mov    %rbx,%rdi
+   8a5d9:	call   f0a90 <_Unwind_Resume@plt>

@@ -1,0 +1,31 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 11236629354
+#
+# Overhead  Command          Shared Object     Symbol                                             
+# ........  ...............  ................  ...................................................
+#
+    80.21%  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+            |          
+             --22.84%--gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+                       0xb
+
+    17.52%  consumer-profil  consumer-profile  [.] <gf2_core::matrix::BitMatrix>::matvec_simd
+            |          
+             --4.83%--<gf2_core::matrix::BitMatrix>::matvec_simd
+
+     1.67%  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+            |          
+             --0.59%--gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+
+
+
+#
+# (Tip: Use parent filter to see specific call path: perf report -p <regex>)
+#

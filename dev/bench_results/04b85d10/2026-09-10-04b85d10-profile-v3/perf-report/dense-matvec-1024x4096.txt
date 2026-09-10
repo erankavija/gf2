@@ -1,0 +1,59 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 371
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12097421920
+#
+# Overhead  Command          Shared Object         Symbol                                             
+# ........  ...............  ....................  ...................................................
+#
+    80.18%  consumer-profil  consumer-profile      [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+               |          
+               |--1.06%--0x2
+               |          
+               |--0.98%--0x7
+               |          
+               |--0.92%--0x6
+               |          
+               |--0.86%--0xd
+               |          
+               |--0.83%--0x5
+               |          
+               |--0.82%--0xb
+               |          
+               |--0.79%--0x8
+               |          
+               |--0.79%--0x4
+               |          
+               |--0.78%--gf2_core::matrix::BitMatrix::matvec_simd
+               |          
+               |--0.75%--0xe
+               |          
+               |--0.71%--0xf
+               |          
+               |--0.67%--0xa
+               |          
+               |--0.67%--0x1
+               |          
+                --0.64%--0xc
+
+    17.13%  consumer-profil  consumer-profile      [.] gf2_core::matrix::BitMatrix::matvec_simd
+            |
+            ---gf2_core::matrix::BitMatrix::matvec_simd
+
+     2.46%  consumer-profil  consumer-profile      [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+               gf2_core::matrix::BitMatrix::matvec_simd
+
+
+
+#
+# (Tip: Save output of perf stat using: perf stat record <target workload>)
+#

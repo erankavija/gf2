@@ -1,0 +1,141 @@
+# consumer profile host record - produced by run-profile.sh
+# generated_utc: 2026-09-07T19:47:14Z
+# gf2 revision (informational): aa8d67241b3b4dd2dac9b9c4a65e03194fc31595
+
+## uname
+Linux fraktaali 7.2.2-arch1-1 #1 SMP PREEMPT_DYNAMIC Fri, 28 Aug 2026 16:09:39 +0000 x86_64 GNU/Linux
+
+## /etc/os-release
+NAME="Arch Linux"
+PRETTY_NAME="Arch Linux"
+ID=arch
+BUILD_ID=rolling
+ANSI_COLOR="38;2;23;147;209"
+HOME_URL="https://archlinux.org/"
+DOCUMENTATION_URL="https://wiki.archlinux.org/"
+SUPPORT_URL="https://bbs.archlinux.org/"
+BUG_REPORT_URL="https://gitlab.archlinux.org/groups/archlinux/-/issues"
+PRIVACY_POLICY_URL="https://terms.archlinux.org/docs/privacy-policy/"
+LOGO=archlinux-logo
+
+## rustc
+rustc 1.97.0 (2d8144b78 2026-07-07)
+binary: rustc
+commit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3
+commit-date: 2026-07-07
+host: x86_64-unknown-linux-gnu
+release: 1.97.0
+LLVM version: 22.1.6
+
+## cargo
+cargo 1.97.0 (c980f4866 2026-06-30)
+
+## lscpu
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  24
+On-line CPU(s) list:                     0-23
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 9 5900X 12-Core Processor
+CPU family:                              25
+Model:                                   33
+Thread(s) per core:                      2
+Core(s) per socket:                      12
+Socket(s):                               1
+Stepping:                                2
+Microcode version:                       0xa201211
+Frequency boost:                         enabled
+CPU(s) scaling MHz:                      83%
+CPU max MHz:                             4954.5649
+CPU min MHz:                             567.0890
+BogoMIPS:                                7399.51
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap
+L1d cache:                               384 KiB (12 instances)
+L1i cache:                               384 KiB (12 instances)
+L2 cache:                                6 MiB (12 instances)
+L3 cache:                                64 MiB (2 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-23
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Mitigation; Clear CPU buffers
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+## cache topology of cpu0
+index0 level=1 type=Data size=32K shared=0,12
+index1 level=1 type=Instruction size=32K shared=0,12
+index2 level=2 type=Unified size=512K shared=0,12
+index3 level=3 type=Unified size=32768K shared=0-5,12-17
+
+## governors
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu10/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu11/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu12/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu13/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu14/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu15/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu16/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu17/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu18/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu19/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu20/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu21/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu22/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu23/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu8/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu9/cpufreq/scaling_governor powersave
+
+## smt
+on
+
+## perf_event_paranoid
+2
+
+## load average at start
+ 22:47:14 up 4 days, 16 min,  5 users,  load average: 16.62, 19.10, 16.85
+
+## harness executables
+72a9b55900b4277cab77a097ed35928e7e370874af700a11c10adec1937cd9bd consumer-arm
+72be1c750584eeab639d99c13b1994da91f7a8dd4ace3f69bacf3c7d56114c64 consumer-profile
+bb1a43212e88e70c4dabca8b0eed1a7ee3aa641f7ad7baceeaf5cd25c1846650 consumer-verify
+
+## harness sources
+9270edcbbfab25e99e19910fcb0c4de7538a82d64edb697aa71915c0b99c91af  dev/active/04b85d10/survey/build-plan.py
+47402dbbb2ebced11a4bec84d407d5ef7add529bceaa01736b651f98d9691e66  dev/active/04b85d10/survey/gf2-side/Cargo.toml
+b4fe2ad19bfcc03804e588842a6278fd951a41b4c4135cdaad85adff3a372679  dev/active/04b85d10/survey/gf2-side/src/bin/consumer-arm.rs
+735f745c3e86559659bda9c9ff44e8df9a865a867f139f648a0d48c6e528467b  dev/active/04b85d10/survey/gf2-side/src/bin/consumer-profile.rs
+b78c908c3e155560e6f3dd8d76cb79a1a2066c509907a5be35432b0295acc89b  dev/active/04b85d10/survey/gf2-side/src/bin/consumer-verify.rs
+3a2fb11e6939b565e0bc27270fcbebe036393a14dd5e40ad416744c1fa963309  dev/active/04b85d10/survey/gf2-side/src/lib.rs
+a5b9e034ae9cd6c7b7bd7ac72da4d6f83c897d8b698e5ede06aa1c413908ebd5  dev/active/04b85d10/survey/profile-cases.py
+a0ed5795cf1940b8bcf4958280bb7a85b9d83f8c2e0c42e3948501fa6b542373  dev/active/04b85d10/survey/run-profile.sh
+e3713d004c63e5691f3a47543b745700a52b5c092d21093919621a02fa6c872e  dev/active/04b85d10/survey/summarize-profile.py
+493e394b656b45a1d5947ce00df8ffb1d7384c74f829549de490c8374503b602  dev/active/04b85d10/survey/sweep.sh
+
+## load average at end
+ 22:56:11 up 4 days, 25 min,  5 users,  load average: 8.27, 12.19, 15.28
+# finished_utc: 2026-09-07T19:56:11Z

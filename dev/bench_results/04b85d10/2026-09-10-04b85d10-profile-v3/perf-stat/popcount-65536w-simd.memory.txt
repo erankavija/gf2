@@ -1,0 +1,19 @@
+# case: {"workload":"popcount","size":{"words":65536},"seed":201}
+# path: simd-backend  cache_state: warm  target_ms: 1000
+# events: cycles:u,L1-dcache-loads:u,L1-dcache-load-misses:u,cache-references:u,cache-misses:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":109086,"conversion":null,"elapsed_ns":"885289957","ns_per_call":8115.5231377078635,"path":"simd-backend","prepare":{"allocated_bytes":1048626,"allocations":4,"freed_bytes":524288},"schema":"consumer-profile-record-v1","seed":201,"selected_path":"simd-backend/avx2","size":{"words":65536},"target_ms":1000,"timed":{"allocated_bytes":0,"allocated_bytes_per_call":0.0,"allocations":0,"allocations_per_call":0.0,"freed_bytes":0,"peak_live_bytes":0},"workers_observed":1,"workload":"popcount"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"popcount","size":{"words":65536},"seed":201} --path simd-backend --cache-state warm --target-ms 1000':
+
+     4,222,263,353      cycles:u                                                              
+     2,695,481,496      L1-dcache-loads:u                                                     
+       897,293,025      L1-dcache-load-misses:u                                               
+     1,361,335,914      cache-references:u                                                    
+        25,076,581      cache-misses:u                                                        
+
+       0.889440881 seconds time elapsed
+
+       0.884756000 seconds user
+       0.000997000 seconds sys
+
+

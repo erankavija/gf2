@@ -1,0 +1,19 @@
+# case: {"workload":"zero-test","size":{"words":507,"set_bit":32448},"seed":202}
+# path: count-ones  cache_state: warm  target_ms: 1000
+# events: cycles,L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misses
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":4166666,"conversion":null,"elapsed_ns":"328815600","ns_per_call":78.91575662652106,"path":"count-ones","prepare":{"allocated_bytes":4166,"allocations":3,"freed_bytes":0},"schema":"consumer-profile-record-v1","seed":202,"selected_path":"count-ones/simd","size":{"set_bit":32448,"words":507},"timed":{"allocated_bytes":0,"allocated_bytes_per_call":0.0,"allocations":0,"allocations_per_call":0.0,"freed_bytes":0,"peak_live_bytes":0},"workers_observed":1,"workload":"zero-test"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile --case {"workload":"zero-test","size":{"words":507,"set_bit":32448},"seed":202} --path count-ones --cache-state warm --target-ms 1000':
+
+     1,381,582,126      cycles:u                                                              
+       954,349,758      L1-dcache-loads:u                                                     
+            58,252      L1-dcache-load-misses:u                                               
+           117,150      cache-references:u                                                    
+            22,737      cache-misses:u                                                        
+
+       0.329865456 seconds time elapsed
+
+       0.307578000 seconds user
+       0.000992000 seconds sys
+
+
