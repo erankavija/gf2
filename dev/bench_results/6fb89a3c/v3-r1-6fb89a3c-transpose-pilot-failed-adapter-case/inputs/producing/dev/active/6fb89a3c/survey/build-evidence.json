@@ -1,0 +1,1508 @@
+{
+  "schema": "gf2-external-comparator-build-evidence-v2",
+  "issue": "6fb89a3c",
+  "host": {
+    "kernel": "Linux 7.2.2-arch1-1 x86_64 GNU/Linux",
+    "compiler": "gcc (GCC) 16.2.1 20260810",
+    "rust_compiler": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "rust_rustflags": "-C target-cpu=x86-64",
+    "nasm": null,
+    "objdump": "GNU objdump (GNU Binutils) 2.47",
+    "avx2_observed": true
+  },
+  "m4ri": {
+    "version": "20260122",
+    "source": {
+      "kind": "release-tarball",
+      "archive": "m4ri-20260122.tar.gz",
+      "sha256": "7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404"
+    },
+    "license": {
+      "spdx": "GPL-2.0-or-later",
+      "evidence": "COPYING is the GNU GPL version 2 text; m4ri/mzd.h header: 'Distributed under the terms of the GNU General Public License (GPL) version 2 or higher'; README.md: 'available under the General Public License Version 2 or later (GPLv2+)'",
+      "file_sha256": "98193898c663001eff2fdcfb676e210c13042bc1a05e8d570c363efa396f8e24"
+    },
+    "build": {
+      "configure": "CFLAGS='-O3 -march=native -fPIC' ./configure --prefix=<ext>/prefix --disable-static",
+      "library_path": "<ext>/prefix/lib/libm4ri.so.2",
+      "library_sha256": "1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+      "compiled_sse2": true,
+      "enable_mmc": true
+    },
+    "binary_observation": {
+      "library": "m4ri",
+      "entrypoint": "mzd_transpose",
+      "version": "20260122",
+      "compiled_sse2": true,
+      "observation": "m4ri_config.h macros of the linked build"
+    },
+    "consumer_binary_observation": {
+      "library": "m4ri",
+      "entrypoint": "mzd_echelonize_m4ri",
+      "version": "20260122",
+      "algorithm": "Method of the Four Russians reduced row echelon form (full=1, k=0 auto)",
+      "observation": "linked symbol and call arguments"
+    },
+    "linked_symbols": [
+      "mzd_transpose",
+      "mzd_copy",
+      "mzd_echelonize_m4ri"
+    ],
+    "disassembly": {
+      "file": "libm4ri.so.2.0.1",
+      "sha256": "1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+      "whole_file": {
+        "instructions": 54247,
+        "by_register_class": {
+          "general": 48072,
+          "xmm": 3937,
+          "ymm": 2238
+        },
+        "cpuid": 0,
+        "top_mnemonics": {
+          "mov": 17399,
+          "lea": 3868,
+          "xor": 2881,
+          "cmp": 2076,
+          "and": 2015,
+          "add": 1934,
+          "jmp": 1526,
+          "vpxor": 1316,
+          "shr": 1165,
+          "call": 1096,
+          "je": 975,
+          "test": 898
+        }
+      },
+      "routes": {
+        "mzd_transpose": {
+          "pattern": "^(mzd_transpose|_mzd_transpose.*|_mzd_copy_transpose.*)$",
+          "functions": {
+            "_mzd_transpose_base@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "_mzd_copy_transpose_le64xle64": {
+              "instructions": 498,
+              "by_register_class": {
+                "general": 361,
+                "xmm": 19,
+                "ymm": 118
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 86,
+                "xor": 54,
+                "lea": 41,
+                "vpxor": 39,
+                "vmovdqa": 34,
+                "cmp": 27,
+                "and": 18,
+                "vmovdqu": 15,
+                "shl": 13,
+                "vpsrlq": 13,
+                "vpand": 13,
+                "vpsllq": 13
+              }
+            },
+            "_mzd_copy_transpose_64xlt64": {
+              "instructions": 1853,
+              "by_register_class": {
+                "general": 939,
+                "xmm": 484,
+                "ymm": 430
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 354,
+                "vmovq": 233,
+                "vpinsrq": 226,
+                "lea": 164,
+                "vinserti128": 111,
+                "vpsllq": 90,
+                "add": 71,
+                "vpxor": 69,
+                "vpor": 67,
+                "xor": 60,
+                "vmovdqa": 45,
+                "cmp": 42
+              }
+            },
+            "_mzd_copy_transpose_lt64x64": {
+              "instructions": 3218,
+              "by_register_class": {
+                "general": 3123,
+                "xmm": 22,
+                "ymm": 73
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 1335,
+                "and": 614,
+                "shr": 538,
+                "lea": 210,
+                "xor": 111,
+                "add": 66,
+                "cmp": 46,
+                "shl": 31,
+                "vmovdqu": 27,
+                "vpxor": 27,
+                "je": 19,
+                "shrx": 19
+              }
+            },
+            "_mzd_copy_transpose_small": {
+              "instructions": 1784,
+              "by_register_class": {
+                "general": 1618,
+                "xmm": 106,
+                "ymm": 60
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 417,
+                "cmp": 152,
+                "lea": 149,
+                "je": 100,
+                "or": 99,
+                "xor": 88,
+                "and": 84,
+                "add": 79,
+                "shr": 71,
+                "shlx": 59,
+                "movzwl": 54,
+                "vmovq": 36
+              }
+            },
+            "_mzd_transpose_base": {
+              "instructions": 1099,
+              "by_register_class": {
+                "general": 1099
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 465,
+                "xor": 145,
+                "lea": 84,
+                "add": 78,
+                "and": 40,
+                "shrx": 40,
+                "cmp": 37,
+                "shl": 35,
+                "shlx": 24,
+                "je": 23,
+                "jne": 19,
+                "jmp": 13
+              }
+            },
+            "_mzd_transpose_notsmall": {
+              "instructions": 99,
+              "by_register_class": {
+                "general": 99
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 34,
+                "cmp": 10,
+                "pop": 10,
+                "push": 8,
+                "sub": 6,
+                "lea": 4,
+                "cmovge": 4,
+                "jle": 3,
+                "jmp": 3,
+                "jg": 2,
+                "sar": 2,
+                "imul": 2
+              }
+            },
+            "mzd_transpose": {
+              "instructions": 118,
+              "by_register_class": {
+                "general": 118
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 53,
+                "call": 9,
+                "pop": 8,
+                "sub": 5,
+                "cmp": 5,
+                "jmp": 5,
+                "test": 4,
+                "je": 4,
+                "push": 4,
+                "add": 3,
+                "jne": 2,
+                "ret": 2
+              }
+            }
+          }
+        },
+        "mzd_echelonize_m4ri": {
+          "pattern": "^(mzd_echelonize_m4ri|_mzd_echelonize_m4ri|_mzd_gauss_submatrix.*|mzd_make_table.*|mzd_process_rows.*)$",
+          "functions": {
+            "mzd_make_table_ple@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_process_rows3@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_process_rows6@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_process_rows2@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_make_table_trtri@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_process_rows5@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_process_rows@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_process_rows4@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_make_table@plt": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 2,
+                "push": 1
+              }
+            },
+            "mzd_make_table_ple.cold": {
+              "instructions": 6,
+              "by_register_class": {
+                "general": 6
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 2,
+                "call": 1,
+                "jmp": 1,
+                "cs": 1,
+                "nop": 1
+              }
+            },
+            "mzd_make_table": {
+              "instructions": 280,
+              "by_register_class": {
+                "general": 274,
+                "ymm": 6
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 95,
+                "lea": 37,
+                "add": 21,
+                "xor": 19,
+                "cmp": 12,
+                "push": 6,
+                "and": 6,
+                "jmp": 6,
+                "data16": 6,
+                "pop": 6,
+                "movslq": 5,
+                "inc": 5
+              }
+            },
+            "mzd_process_rows": {
+              "instructions": 1620,
+              "by_register_class": {
+                "general": 1620
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 624,
+                "lea": 262,
+                "xor": 149,
+                "add": 104,
+                "jmp": 93,
+                "test": 46,
+                "imul": 38,
+                "movslq": 30,
+                "and": 28,
+                "je": 28,
+                "cmp": 27,
+                "jne": 22
+              }
+            },
+            "mzd_process_rows2": {
+              "instructions": 201,
+              "by_register_class": {
+                "general": 173,
+                "xmm": 28
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 54,
+                "lea": 17,
+                "add": 14,
+                "vmovdqa": 14,
+                "vpxor": 14,
+                "sub": 8,
+                "cmp": 8,
+                "and": 6,
+                "xor": 6,
+                "shrx": 5,
+                "jle": 5,
+                "sar": 4
+              }
+            },
+            "mzd_process_rows3": {
+              "instructions": 249,
+              "by_register_class": {
+                "general": 214,
+                "xmm": 35
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 68,
+                "lea": 22,
+                "vpxor": 21,
+                "add": 17,
+                "vmovdqa": 14,
+                "sub": 9,
+                "cmp": 9,
+                "xor": 9,
+                "movzbl": 7,
+                "shrx": 7,
+                "and": 7,
+                "movslq": 6
+              }
+            },
+            "mzd_process_rows4": {
+              "instructions": 291,
+              "by_register_class": {
+                "general": 249,
+                "xmm": 42
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 80,
+                "lea": 29,
+                "vpxor": 28,
+                "add": 19,
+                "vmovdqa": 14,
+                "xor": 12,
+                "cmp": 10,
+                "shrx": 9,
+                "sub": 8,
+                "and": 8,
+                "movzbl": 8,
+                "movslq": 6
+              }
+            },
+            "mzd_process_rows5": {
+              "instructions": 343,
+              "by_register_class": {
+                "general": 294,
+                "xmm": 49
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 108,
+                "vpxor": 35,
+                "lea": 34,
+                "add": 20,
+                "xor": 15,
+                "vmovdqa": 14,
+                "cmp": 11,
+                "shrx": 11,
+                "sub": 9,
+                "movzbl": 9,
+                "movslq": 8,
+                "and": 8
+              }
+            },
+            "mzd_process_rows6": {
+              "instructions": 351,
+              "by_register_class": {
+                "general": 295,
+                "xmm": 56
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 92,
+                "vpxor": 42,
+                "lea": 36,
+                "add": 21,
+                "xor": 19,
+                "vmovdqa": 14,
+                "shrx": 13,
+                "cmp": 12,
+                "movzbl": 10,
+                "sub": 9,
+                "movslq": 9,
+                "and": 9
+              }
+            },
+            "_mzd_echelonize_m4ri": {
+              "instructions": 2168,
+              "by_register_class": {
+                "general": 2120,
+                "xmm": 34,
+                "ymm": 14
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 828,
+                "lea": 175,
+                "cmp": 109,
+                "xor": 92,
+                "add": 90,
+                "call": 88,
+                "push": 80,
+                "test": 71,
+                "je": 61,
+                "jmp": 55,
+                "sub": 45,
+                "and": 35
+              }
+            },
+            "mzd_make_table_trtri": {
+              "instructions": 438,
+              "by_register_class": {
+                "general": 434,
+                "xmm": 4
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 187,
+                "lea": 47,
+                "add": 25,
+                "xor": 20,
+                "jmp": 16,
+                "sub": 12,
+                "movslq": 11,
+                "imul": 11,
+                "cmp": 10,
+                "shlx": 8,
+                "data16": 8,
+                "shrx": 8
+              }
+            },
+            "mzd_make_table_ple": {
+              "instructions": 1049,
+              "by_register_class": {
+                "general": 1045,
+                "xmm": 4
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 355,
+                "lea": 108,
+                "sub": 67,
+                "jmp": 67,
+                "xor": 66,
+                "add": 49,
+                "shlx": 41,
+                "and": 35,
+                "or": 33,
+                "movslq": 23,
+                "xchg": 19,
+                "data16": 19
+              }
+            },
+            "mzd_echelonize_m4ri": {
+              "instructions": 4,
+              "by_register_class": {
+                "general": 3,
+                "xmm": 1
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "vmovsd": 1,
+                "xor": 1,
+                "jmp": 1,
+                "nop": 1
+              }
+            }
+          }
+        },
+        "memory_cache": {
+          "pattern": "^(m4ri_mmc_malloc|m4ri_mmc_free|mzd_init|mzd_free)$",
+          "functions": {
+            "mzd_init": {
+              "instructions": 71,
+              "by_register_class": {
+                "general": 71
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 23,
+                "xor": 5,
+                "call": 4,
+                "pop": 4,
+                "test": 3,
+                "lea": 3,
+                "add": 3,
+                "push": 2,
+                "je": 2,
+                "ret": 2,
+                "data16": 2,
+                "jmp": 2
+              }
+            },
+            "mzd_free": {
+              "instructions": 52,
+              "by_register_class": {
+                "general": 52
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 17,
+                "je": 4,
+                "jmp": 4,
+                "nopl": 3,
+                "cmp": 3,
+                "add": 3,
+                "sub": 2,
+                "test": 2,
+                "jne": 2,
+                "testb": 1,
+                "lea": 1,
+                "jbe": 1
+              }
+            },
+            "m4ri_mmc_malloc": {
+              "instructions": 113,
+              "by_register_class": {
+                "general": 113
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "je": 18,
+                "cmp": 17,
+                "jmp": 17,
+                "mov": 15,
+                "add": 15,
+                "test": 6,
+                "call": 4,
+                "jne": 4,
+                "sub": 3,
+                "lea": 3,
+                "xor": 3,
+                "movq": 2
+              }
+            },
+            "m4ri_mmc_free": {
+              "instructions": 98,
+              "by_register_class": {
+                "general": 98
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "cmpq": 16,
+                "je": 16,
+                "add": 16,
+                "jmp": 15,
+                "mov": 13,
+                "sub": 3,
+                "push": 2,
+                "lea": 2,
+                "pop": 2,
+                "ret": 2,
+                "cmp": 1,
+                "ja": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "bitshuffle": {
+    "version": "0.5.2",
+    "source": {
+      "commit": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "describe": "0.5.2",
+      "tree_status": ""
+    },
+    "license": {
+      "spdx": "MIT",
+      "file_sha256": "ef357c2061cf67db298f9f1565572ee229ad9263582a9f9d0ebff5094f5d10ac"
+    },
+    "build": {
+      "commands": [
+        "gcc -O3 -march=native -fPIC -Wall -Wextra -c -I bitshuffle/src bitshuffle/src/bitshuffle_core.c",
+        "gcc -O3 -march=native -fPIC -Wall -Wextra -c -I bitshuffle/src bitshuffle/src/iochain.c",
+        "ar rcs <ext>/prefix/lib/libbitshuffle_min.a bitshuffle_core.o iochain.o"
+      ],
+      "archive_sha256": "fd6532bf886ba8f82d115c78b6728bf88999cb466f47dab67707d3b416392165"
+    },
+    "binary_observation": {
+      "library": "bitshuffle",
+      "entrypoint": "bshuf_bitshuffle",
+      "library_reported_backend": "avx2",
+      "compiled": {
+        "avx512": false,
+        "avx2": true,
+        "sse2": true,
+        "neon": false
+      },
+      "observation": "bshuf_using_* predicates of the linked archive"
+    },
+    "linked_symbols": [
+      "bshuf_bitshuffle",
+      "bshuf_trans_bit_elem",
+      "bshuf_trans_bit_elem_AVX",
+      "bshuf_trans_bit_elem_AVX512",
+      "bshuf_trans_bit_elem_SSE",
+      "bshuf_trans_bit_elem_scal"
+    ],
+    "disassembly": {
+      "file": "bitshuffle_transpose_arm",
+      "sha256": "3435c78accaae5e62cbe1da603a64af96b3de3a03d7ba58c7949be2fb5f6e3e7",
+      "whole_file": {
+        "instructions": 9333,
+        "by_register_class": {
+          "general": 7529,
+          "xmm": 608,
+          "ymm": 1196
+        },
+        "cpuid": 0,
+        "top_mnemonics": {
+          "mov": 2993,
+          "lea": 605,
+          "add": 426,
+          "cmp": 312,
+          "call": 298,
+          "vmovdqu": 269,
+          "jmp": 262,
+          "test": 221,
+          "je": 208,
+          "sub": 165,
+          "jne": 164,
+          "xor": 151
+        }
+      },
+      "routes": {
+        "bshuf_trans_bit_elem_dispatcher": {
+          "pattern": "^bshuf_trans_bit_elem$",
+          "functions": {
+            "bshuf_trans_bit_elem": {
+              "instructions": 2,
+              "by_register_class": {
+                "general": 2
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "jmp": 1,
+                "data16": 1
+              }
+            }
+          }
+        },
+        "avx2_route": {
+          "pattern": "^(bshuf_trans_bit_elem_AVX|bshuf_trans_bit_byte_AVX|bshuf_trans_byte_elem_SSE|bshuf_trans_bitrow_eight|bshuf_trans_byte_elem_SSE_(16|32|64)|bshuf_trans_byte_elem_remainder|bshuf_trans_bit_byte_remainder)$",
+          "functions": {
+            "bshuf_trans_byte_elem_remainder": {
+              "instructions": 736,
+              "by_register_class": {
+                "general": 484,
+                "xmm": 128,
+                "ymm": 124
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 193,
+                "lea": 57,
+                "add": 44,
+                "vmovq": 40,
+                "vpshufb": 32,
+                "cmp": 30,
+                "vpor": 24,
+                "vpextrq": 24,
+                "movzbl": 18,
+                "sub": 16,
+                "setb": 16,
+                "vmovdqu": 16
+              }
+            },
+            "bshuf_trans_bit_byte_remainder": {
+              "instructions": 88,
+              "by_register_class": {
+                "general": 88
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 36,
+                "shr": 11,
+                "xor": 9,
+                "lea": 6,
+                "and": 4,
+                "add": 3,
+                "shl": 3,
+                "jne": 2,
+                "cmp": 2,
+                "movabs": 2,
+                "inc": 2,
+                "ret": 2
+              }
+            },
+            "bshuf_trans_bitrow_eight": {
+              "instructions": 10,
+              "by_register_class": {
+                "general": 10
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 3,
+                "test": 1,
+                "jne": 1,
+                "shr": 1,
+                "jmp": 1,
+                "cs": 1,
+                "ret": 1,
+                "nopl": 1
+              }
+            },
+            "bshuf_trans_byte_elem_SSE_16": {
+              "instructions": 33,
+              "by_register_class": {
+                "general": 21,
+                "xmm": 12
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 5,
+                "data16": 4,
+                "vmovdqu": 4,
+                "vpunpcklbw": 4,
+                "vpunpckhbw": 4,
+                "cmp": 2,
+                "and": 2,
+                "jbe": 1,
+                "xor": 1,
+                "lea": 1,
+                "nopw": 1,
+                "add": 1
+              }
+            },
+            "bshuf_trans_byte_elem_SSE_32": {
+              "instructions": 45,
+              "by_register_class": {
+                "general": 21,
+                "xmm": 24
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "vmovdqu": 8,
+                "vpunpcklbw": 6,
+                "vpunpckhbw": 6,
+                "mov": 5,
+                "lea": 3,
+                "add": 3,
+                "cmp": 2,
+                "and": 2,
+                "nopl": 2,
+                "vpunpcklqdq": 2,
+                "vpunpckhqdq": 2,
+                "jbe": 1
+              }
+            },
+            "bshuf_trans_byte_elem_SSE_64": {
+              "instructions": 74,
+              "by_register_class": {
+                "general": 26,
+                "xmm": 48
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "vmovdqu": 16,
+                "mov": 11,
+                "vpunpcklbw": 8,
+                "vpunpckhbw": 8,
+                "vpunpckldq": 4,
+                "vpunpckhdq": 4,
+                "vpunpcklqdq": 4,
+                "vpunpckhqdq": 4,
+                "add": 3,
+                "cmp": 2,
+                "lea": 2,
+                "and": 2
+              }
+            },
+            "bshuf_trans_byte_elem_SSE": {
+              "instructions": 1011,
+              "by_register_class": {
+                "general": 859,
+                "xmm": 56,
+                "ymm": 96
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 380,
+                "lea": 93,
+                "add": 82,
+                "vmovdqu": 64,
+                "cmp": 57,
+                "setb": 32,
+                "vperm2i128": 32,
+                "and": 22,
+                "sub": 20,
+                "or": 16,
+                "je": 15,
+                "jmp": 14
+              }
+            },
+            "bshuf_trans_bit_byte_AVX": {
+              "instructions": 77,
+              "by_register_class": {
+                "general": 61,
+                "ymm": 16
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 22,
+                "shr": 8,
+                "vpmovmskb": 8,
+                "sub": 7,
+                "vpsllw": 7,
+                "push": 3,
+                "and": 3,
+                "pop": 3,
+                "cmp": 2,
+                "lea": 2,
+                "nopl": 2,
+                "jmp": 2
+              }
+            },
+            "bshuf_trans_bit_elem_AVX": {
+              "instructions": 60,
+              "by_register_class": {
+                "general": 60
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 39,
+                "call": 5,
+                "test": 4,
+                "js": 2,
+                "jmp": 2,
+                "sub": 1,
+                "jne": 1,
+                "imul": 1,
+                "je": 1,
+                "add": 1,
+                "ret": 1,
+                "nopw": 1
+              }
+            }
+          }
+        },
+        "sse2_route": {
+          "pattern": "^(bshuf_trans_bit_elem_SSE|bshuf_trans_bit_byte_SSE)$",
+          "functions": {
+            "bshuf_trans_bit_byte_SSE": {
+              "instructions": 77,
+              "by_register_class": {
+                "general": 61,
+                "xmm": 16
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 24,
+                "shr": 8,
+                "vpmovmskb": 8,
+                "sub": 7,
+                "vpsllw": 7,
+                "and": 4,
+                "jne": 2,
+                "cmp": 2,
+                "lea": 2,
+                "push": 2,
+                "pop": 2,
+                "jmp": 2
+              }
+            },
+            "bshuf_trans_bit_elem_SSE": {
+              "instructions": 60,
+              "by_register_class": {
+                "general": 60
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 39,
+                "call": 5,
+                "test": 4,
+                "js": 2,
+                "jmp": 2,
+                "sub": 1,
+                "jne": 1,
+                "imul": 1,
+                "je": 1,
+                "add": 1,
+                "ret": 1,
+                "nopw": 1
+              }
+            }
+          }
+        },
+        "scalar_route": {
+          "pattern": "^(bshuf_trans_bit_elem_scal|bshuf_trans_bit_byte_scal|bshuf_trans_byte_elem_scal)$",
+          "functions": {
+            "bshuf_trans_byte_elem_scal": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "xor": 1,
+                "jmp": 1,
+                "nopl": 1
+              }
+            },
+            "bshuf_trans_bit_byte_scal": {
+              "instructions": 3,
+              "by_register_class": {
+                "general": 3
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "xor": 1,
+                "jmp": 1,
+                "nopl": 1
+              }
+            },
+            "bshuf_trans_bit_elem_scal": {
+              "instructions": 60,
+              "by_register_class": {
+                "general": 60
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 39,
+                "call": 5,
+                "test": 4,
+                "js": 2,
+                "jmp": 2,
+                "sub": 1,
+                "jne": 1,
+                "imul": 1,
+                "je": 1,
+                "add": 1,
+                "ret": 1,
+                "nopw": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "isa_l": {
+    "version": "v2.32.1",
+    "source": {
+      "commit": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "describe": "v2.32.1",
+      "tree_status": ""
+    },
+    "license": {
+      "spdx": "BSD-3-Clause",
+      "file_sha256": "bc8fd4a3d031e65e05e9c9e2add2c3f336ce527fa85c1e31031c808b58216217"
+    },
+    "build": {
+      "command": "gcc -O3 -march=native -fPIC -Wall -Wextra -c isa-l/raid/raid_base.c; ar rcs <ext>/prefix/lib/libisal_base.a raid_base.o",
+      "archive_sha256": "991c83a4925373d8a64c98bd21dd2789a0756e69c9d1a3066235d9e6292da082"
+    },
+    "binary_observation": {
+      "library": "isa-l",
+      "entrypoint": "xor_gen_base",
+      "runtime_dispatch": false,
+      "public_xor_gen_available": false,
+      "unavailable_reason": "NASM is absent; raid_multibinary.asm and the SSE/AVX/AVX-512 xor_gen objects cannot be built",
+      "observation": "linked symbol; instruction mix recorded by the disassembly probe"
+    },
+    "linked_symbols": [
+      "xor_gen_base"
+    ],
+    "disassembly": {
+      "file": "isal_xor_arm",
+      "sha256": "21bf3c88463b9c5b039ea9e32b8661b0051c84989bb032c4e953d839eb9a80cb",
+      "whole_file": {
+        "instructions": 2932,
+        "by_register_class": {
+          "general": 2856,
+          "xmm": 9,
+          "ymm": 67
+        },
+        "cpuid": 0,
+        "top_mnemonics": {
+          "mov": 872,
+          "lea": 208,
+          "call": 178,
+          "jmp": 165,
+          "cmp": 156,
+          "je": 131,
+          "test": 121,
+          "xor": 113,
+          "jne": 102,
+          "push": 63,
+          "sub": 57,
+          "nopl": 57
+        }
+      },
+      "routes": {
+        "xor_gen_base": {
+          "pattern": "^xor_gen_base$",
+          "functions": {
+            "xor_gen_base": {
+              "instructions": 33,
+              "by_register_class": {
+                "general": 33
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 9,
+                "lea": 4,
+                "cmp": 3,
+                "xor": 3,
+                "jle": 2,
+                "nopl": 2,
+                "jne": 2,
+                "ret": 2,
+                "test": 1,
+                "movzbl": 1,
+                "nopw": 1,
+                "add": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "harness_binaries": {
+    "m4ri_transpose_arm": {
+      "sha256": "651915b3cf3abef44e54bbecd8fd4a75560d2443960e75b9cc8344fbf7ba0b37",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=46fcc0e2669154ee1711a8bff2a4f50dbde5b46a, for GNU/Linux 4.4.0, not stripped"
+    },
+    "m4ri_genmatrix_arm": {
+      "sha256": "416087ed59642180b0cea93e718514c3b6675e1ff05c4337b04deafa1205ca8b",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=0245df828f163f736c9ccc267882cda49f655976, for GNU/Linux 4.4.0, not stripped"
+    },
+    "bitshuffle_transpose_arm": {
+      "sha256": "3435c78accaae5e62cbe1da603a64af96b3de3a03d7ba58c7949be2fb5f6e3e7",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=48f90168a2c7d0ca5232810009ace42549d06aba, for GNU/Linux 4.4.0, not stripped"
+    },
+    "isal_xor_arm": {
+      "sha256": "21bf3c88463b9c5b039ea9e32b8661b0051c84989bb032c4e953d839eb9a80cb",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=cdb45e2494eaef399c4c9a7a2aa33f49a3ef4940, for GNU/Linux 4.4.0, not stripped"
+    }
+  },
+  "rust_harness_binaries": {
+    "gf2_transpose_arm": {
+      "sha256": "08bead21c650e8ba0236f900f9947782bb464a194251661d27d0374045d57300",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=84ebef70169b145d5523d5063a24fc99e93cdfcb, not stripped"
+    },
+    "gf2_logical_xor_arm": {
+      "sha256": "c7b1d5823a11db4a3ae8fc19eb871a76c40b83d02a8348ab1c4df698a0fdd585",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=221d48b18e42a4778afbcd9fca5d4bfb90133000, not stripped"
+    },
+    "gf2_bch_genmatrix_arm": {
+      "sha256": "2c051ecd16f0a167daa8e8b3146be02ec3f43ff62d34249bfc9b2675325966e6",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, BuildID[sha1]=6ed7242bd4262e520a47c29fb63e3243d773271c, not stripped"
+    }
+  },
+  "gf2_disassembly": {
+    "gf2_transpose_arm": {
+      "file": "gf2_transpose_arm",
+      "sha256": "08bead21c650e8ba0236f900f9947782bb464a194251661d27d0374045d57300",
+      "whole_file": {
+        "instructions": 95448,
+        "by_register_class": {
+          "general": 90665,
+          "xmm": 4157,
+          "ymm": 626
+        },
+        "cpuid": 10,
+        "top_mnemonics": {
+          "mov": 28888,
+          "lea": 5897,
+          "cmp": 4811,
+          "jmp": 4260,
+          "int3": 4049,
+          "call": 4048,
+          "je": 3761,
+          "add": 3238,
+          "test": 2858,
+          "xor": 2750,
+          "pop": 2499,
+          "jne": 2358
+        }
+      },
+      "routes": {
+        "avx2_transpose": {
+          "pattern": "transpose_64x64_avx2",
+          "functions": {
+            "gf2_kernels_simd::transpose::transpose_64x64_avx2_safe": {
+              "instructions": 12,
+              "by_register_class": {
+                "general": 12
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "int3": 11,
+                "jmp": 1
+              }
+            },
+            "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2": {
+              "instructions": 578,
+              "by_register_class": {
+                "general": 19,
+                "xmm": 58,
+                "ymm": 501
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "vpxor": 148,
+                "vmovdqu": 79,
+                "vpermq": 58,
+                "vpsrlq": 49,
+                "vpblendd": 34,
+                "vpand": 33,
+                "vpsllq": 28,
+                "vpunpcklqdq": 18,
+                "vmovups": 18,
+                "vpunpckhqdq": 13,
+                "vinserti128": 13,
+                "vmovq": 12
+              }
+            }
+          }
+        },
+        "scalar_transpose": {
+          "pattern": "transpose_64x64_scalar",
+          "functions": {
+            "gf2_kernels_simd::transpose::transpose_64x64_scalar": {
+              "instructions": 1409,
+              "by_register_class": {
+                "general": 1188,
+                "xmm": 221
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 556,
+                "xor": 294,
+                "movdqa": 119,
+                "shr": 98,
+                "and": 98,
+                "shl": 96,
+                "pxor": 51,
+                "psrlq": 17,
+                "pand": 17,
+                "psllq": 17,
+                "int3": 13,
+                "push": 6
+              }
+            },
+            "gf2_kernels_simd::transpose::transpose_64x64_scalar_safe": {
+              "instructions": 1409,
+              "by_register_class": {
+                "general": 1188,
+                "xmm": 221
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 556,
+                "xor": 294,
+                "movdqa": 119,
+                "shr": 98,
+                "and": 98,
+                "shl": 96,
+                "pxor": 51,
+                "psrlq": 17,
+                "pand": 17,
+                "psllq": 17,
+                "int3": 13,
+                "push": 6
+              }
+            }
+          }
+        },
+        "bitmatrix_transpose": {
+          "pattern": "BitMatrix.*transpose",
+          "functions": {
+            "gf2_core::matrix::BitMatrix::transpose": {
+              "instructions": 912,
+              "by_register_class": {
+                "general": 907,
+                "xmm": 5
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 344,
+                "add": 80,
+                "lea": 78,
+                "cmp": 64,
+                "je": 39,
+                "jmp": 34,
+                "test": 27,
+                "xor": 24,
+                "call": 24,
+                "shl": 21,
+                "cmovb": 18,
+                "jae": 16
+              }
+            }
+          }
+        }
+      }
+    },
+    "gf2_logical_xor_arm": {
+      "file": "gf2_logical_xor_arm",
+      "sha256": "c7b1d5823a11db4a3ae8fc19eb871a76c40b83d02a8348ab1c4df698a0fdd585",
+      "whole_file": {
+        "instructions": 91929,
+        "by_register_class": {
+          "general": 87821,
+          "xmm": 3636,
+          "ymm": 472
+        },
+        "cpuid": 10,
+        "top_mnemonics": {
+          "mov": 27305,
+          "lea": 5867,
+          "cmp": 4846,
+          "jmp": 4202,
+          "int3": 4091,
+          "call": 3943,
+          "je": 3729,
+          "add": 3222,
+          "test": 2836,
+          "pop": 2488,
+          "jne": 2403,
+          "xor": 2215
+        }
+      },
+      "routes": {
+        "avx2_xor": {
+          "pattern": "avx2_xor_into",
+          "functions": {
+            "gf2_kernels_simd::x86::avx2::avx2_xor_into": {
+              "instructions": 105,
+              "by_register_class": {
+                "general": 81,
+                "ymm": 24
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "vmovups": 16,
+                "cmp": 11,
+                "mov": 9,
+                "add": 9,
+                "vxorps": 8,
+                "je": 6,
+                "xor": 5,
+                "and": 5,
+                "jne": 4,
+                "jmp": 4,
+                "int3": 4,
+                "test": 3
+              }
+            }
+          }
+        },
+        "scalar_xor": {
+          "pattern": "scalar_xor_inplace",
+          "functions": {
+            "gf2_core::kernels::ops::scalar_xor_inplace": {
+              "instructions": 120,
+              "by_register_class": {
+                "general": 112,
+                "xmm": 8
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 23,
+                "cmp": 14,
+                "lea": 14,
+                "int3": 10,
+                "jae": 8,
+                "call": 8,
+                "xor": 7,
+                "movups": 6,
+                "add": 5,
+                "and": 2,
+                "je": 2,
+                "inc": 2
+              }
+            }
+          }
+        },
+        "xor_fn_wrapper": {
+          "pattern": "fns::xor_fn",
+          "functions": {
+            "gf2_kernels_simd::x86::avx2::fns::xor_fn": {
+              "instructions": 9,
+              "by_register_class": {
+                "general": 9
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "int3": 6,
+                "test": 1,
+                "jne": 1,
+                "ret": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "gf2_bch_genmatrix_arm": {
+      "file": "gf2_bch_genmatrix_arm",
+      "sha256": "2c051ecd16f0a167daa8e8b3146be02ec3f43ff62d34249bfc9b2675325966e6",
+      "whole_file": {
+        "instructions": 113534,
+        "by_register_class": {
+          "general": 109228,
+          "xmm": 4181,
+          "ymm": 125
+        },
+        "cpuid": 10,
+        "top_mnemonics": {
+          "mov": 34692,
+          "lea": 7426,
+          "cmp": 5528,
+          "call": 5389,
+          "jmp": 5157,
+          "int3": 5154,
+          "je": 4688,
+          "add": 3859,
+          "test": 3620,
+          "jne": 3205,
+          "pop": 3093,
+          "xor": 2615
+        }
+      },
+      "routes": {
+        "generator_by_encoding": {
+          "pattern": "write_generator_by_encoding|for_each_generator_row",
+          "functions": {}
+        },
+        "systematic_encode": {
+          "pattern": "bch::encode",
+          "functions": {
+            "core::ptr::drop_in_place<gf2_coding::bch::encode::ScratchRegisters>": {
+              "instructions": 39,
+              "by_register_class": {
+                "general": 39
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "int3": 14,
+                "mov": 7,
+                "cmpq": 5,
+                "je": 5,
+                "call": 5,
+                "push": 1,
+                "pop": 1,
+                "jmp": 1
+              }
+            },
+            "core::ptr::drop_in_place<gf2_coding::bch::encode::EncodeRegisters<u64>>": {
+              "instructions": 30,
+              "by_register_class": {
+                "general": 30
+              },
+              "cpuid": 0,
+              "top_mnemonics": {
+                "mov": 6,
+                "cmpq": 5,
+                "je": 5,
+                "int3": 5,
+                "call": 4,
+                "pop": 2,
+                "push": 1,
+                "jmp": 1,
+                "ret": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

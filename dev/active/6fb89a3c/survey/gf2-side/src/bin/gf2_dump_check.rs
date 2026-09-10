@@ -1,6 +1,7 @@
 //! Correctness-only dumps for cross-language comparison.
 
 use gf2_coding::test_support::bch_generator_matrix_by_encoding;
+use gf2_coding::traits::block::GeneratorMatrixAccess;
 use gf2_core::kernels::ops::xor_inplace;
 use gf2_core::BitMatrix;
 use gf2_kernels_simd::transpose;
@@ -75,11 +76,21 @@ fn main() {
             writer.write_all(b"\n").unwrap_or_else(|error| fail(error));
         }
         "bch-genmatrix" => {
+            // `materialize` is the production materialization; `reference`
+            // is the basis-vector oracle the established bench runs beside it.
             let name = args.next().unwrap_or_else(|| fail("missing code name"));
+            let route = args.next().unwrap_or_else(|| "materialize".to_owned());
             let code = build_bch(&name).unwrap_or_else(|error| fail(error));
-            let mut output = BitMatrix::zeros(code.k(), code.n());
-            bch_generator_matrix_by_encoding(&code, &mut output)
-                .unwrap_or_else(|error| fail(error));
+            let output = match route.as_str() {
+                "materialize" => code.generator_matrix().unwrap_or_else(|error| fail(error)),
+                "reference" => {
+                    let mut output = BitMatrix::zeros(code.k(), code.n());
+                    bch_generator_matrix_by_encoding(&code, &mut output)
+                        .unwrap_or_else(|error| fail(error));
+                    output
+                }
+                other => fail(format!("unknown route {other:?}")),
+            };
             write_matrix_bits(&mut writer, &output).unwrap_or_else(|error| fail(error));
         }
         _ => fail("usage: transpose64|transpose-tiled|logical-xor|bch-genmatrix ..."),

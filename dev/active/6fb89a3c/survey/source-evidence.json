@@ -1,0 +1,465 @@
+{
+  "schema": "comparator-source-evidence-v1",
+  "issue": "6fb89a3c",
+  "projects": {
+    "gf2": {
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision_kind": "git commit (informational navigation metadata; receipts pin these files by content digest)"
+    },
+    "m4ri": {
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "revision_kind": "release tarball digest; paths are relative to the staging root: m4ri-src/ is the unpacked tarball, prefix/ the configured install"
+    },
+    "bitshuffle": {
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "revision_kind": "git commit (tag 0.5.2)"
+    },
+    "isa-l": {
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "revision_kind": "git commit (tag v2.32.1)"
+    }
+  },
+  "claims": [
+    {
+      "claim": "gf2-transpose-detect",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 74,
+      "text": "pub fn detect() -> Option<TransposeFns> {",
+      "why": "The kernel-isolated gf2 arm calls this runtime dispatcher."
+    },
+    {
+      "claim": "gf2-transpose-avx2-runtime-check",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 94,
+      "text": "if is_x86_feature_detected!(\"avx2\") {",
+      "why": "The 64x64 kernel is selected at run time by CPU feature detection, so the conservative-portable build still runs the AVX2 lane on this host."
+    },
+    {
+      "claim": "gf2-transpose-avx2-name",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 97,
+      "text": "name: \"avx2-bit-twiddle\",",
+      "why": "The selected path name the receipts record for the fixed 64x64 cells."
+    },
+    {
+      "claim": "gf2-bitmatrix-transpose",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1240,
+      "text": "pub fn transpose(&self) -> Self {",
+      "why": "The whole-consumer gf2 arm calls this method."
+    },
+    {
+      "claim": "gf2-bitmatrix-transpose-fresh-output",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1276,
+      "text": "let mut out = Self::zeros(self.cols, self.rows);",
+      "why": "Every whole-consumer call allocates a fresh output, which the M4RI and Bitshuffle consumer arms match."
+    },
+    {
+      "claim": "gf2-bitmatrix-zeros-alloc",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 319,
+      "text": "data: vec![0u64; total_words],",
+      "why": "The fresh output is a zeroed heap vector; allocation is inside the timed call on the gf2 side."
+    },
+    {
+      "claim": "gf2-bitmatrix-transpose-route",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 176,
+      "text": "if n_row_blocks <= transpose_simple_max_blocks && n_col_blocks <= transpose_simple_max_blocks {",
+      "why": "63x63, 64x64 and 65x65 have at most two 64-bit blocks per side and take the simple block route."
+    },
+    {
+      "claim": "gf2-bitmatrix-tile-zero-pad",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1390,
+      "text": "for slot in tile_in.iter_mut().take(64).skip(block_rows) {",
+      "why": "Partial tiles (63 and 65) are zero-padded into a full 64x64 tile before the kernel runs; 65x65 therefore runs four tile transposes."
+    },
+    {
+      "claim": "gf2-xor-inplace",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 93,
+      "text": "pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {",
+      "why": "The production API accumulates into `dst`; the fresh-output arrangement copies source 0 into the destination first."
+    },
+    {
+      "claim": "gf2-xor-dispatch-threshold",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 83,
+      "text": "pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;",
+      "why": "Buffers of fewer than eight words take the scalar backend; 7, 8 and 9 words straddle this threshold."
+    },
+    {
+      "claim": "gf2-xor-dispatch-compare",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 115,
+      "text": "if _size >= SIMD_MIN_WORDS {",
+      "why": "The size comparison that selects the SIMD backend."
+    },
+    {
+      "claim": "gf2-avx2-xor-kernel",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 19,
+      "text": "unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {",
+      "why": "The SIMD backend's XOR kernel, four words per 256-bit vector with a scalar tail."
+    },
+    {
+      "claim": "gf2-avx2-xor-instruction",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 29,
+      "text": "let r = _mm256_xor_si256(a, b);",
+      "why": "The AVX2 instruction the disassembly probe counts as ymm operations in gf2_logical_xor_arm."
+    },
+    {
+      "claim": "gf2-simd-feature-default",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/Cargo.toml",
+      "line": 52,
+      "text": "default = [\"simd\", \"sim-observability\"]",
+      "why": "Production consumers in gf2-coding enable gf2-core's simd feature by default; the survey crate names it explicitly."
+    },
+    {
+      "claim": "gf2-bch-generator-matrix-trait",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/src/traits.rs",
+      "line": 455,
+      "text": "fn generator_matrix(&self) -> Result<Self::GeneratorMatrix, CodeError> {",
+      "why": "The production materialization entry point measured by the `materialize` cells."
+    },
+    {
+      "claim": "gf2-bch-generator-matrix-impl",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/src/bch/matrix.rs",
+      "line": 655,
+      "text": "fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {",
+      "why": "BchCode's materialization writes the generator through write_generator, which consults only the generator polynomial."
+    },
+    {
+      "claim": "gf2-bch-write-generator",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/src/bch/matrix.rs",
+      "line": 510,
+      "text": "fn write_generator<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>",
+      "why": "The production writer behind generator_matrix."
+    },
+    {
+      "claim": "gf2-bch-reference-oracle",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/src/bch/matrix.rs",
+      "line": 579,
+      "text": "pub(crate) fn write_generator_by_encoding<X, S, M>(",
+      "why": "The test-support oracle the protocol-v1 pilot measured as the gf2 arm; it encodes each of the k basis vectors."
+    },
+    {
+      "claim": "gf2-bch-reference-encodes-per-row",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/src/bch/matrix.rs",
+      "line": 558,
+      "text": "code.encode_into(&message, &mut codeword)?;",
+      "why": "One systematic encode per generator row: the O(k^2 r) cost the oracle's own documentation states."
+    },
+    {
+      "claim": "gf2-bch-reference-complexity",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/src/bch/matrix.rs",
+      "line": 568,
+      "text": "/// $O(k^2 r)$ base-field operations where the materialization walks the",
+      "why": "The oracle documents its own cost as O(k^2 r) against a materialization that walks the output once."
+    },
+    {
+      "claim": "gf2-bch-bench-materialize",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/benches/bch_genmatrix.rs",
+      "line": 117,
+      "text": "group.bench_function(BenchmarkId::new(\"materialize/fresh-alloc\", row.name), |b| {",
+      "why": "The established bench's production row, which the confirmatory BCH cells reproduce."
+    },
+    {
+      "claim": "gf2-bch-bench-reference",
+      "project": "gf2",
+      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "path": "crates/gf2-coding/benches/bch_genmatrix.rs",
+      "line": 120,
+      "text": "group.bench_function(BenchmarkId::new(\"reference/fresh-alloc\", row.name), |b| {",
+      "why": "The established bench's oracle row, which the exploratory reference cells reproduce."
+    },
+    {
+      "claim": "m4ri-license-header",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.h",
+      "line": 21,
+      "text": "*  Distributed under the terms of the GNU General Public License (GPL)",
+      "why": "Source headers license M4RI under the GPL, version 2 or higher (next line)."
+    },
+    {
+      "claim": "m4ri-license-header-version",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.h",
+      "line": 22,
+      "text": "*  version 2 or higher.",
+      "why": "Together with the previous line: GPL-2.0-or-later."
+    },
+    {
+      "claim": "m4ri-license-readme",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/README.md",
+      "line": 1,
+      "text": "M4RI is a library for fast arithmetic with dense matrices over F2. The name M4RI comes from the first implemented algorithm: The \u201cMethod of the Four Russians\u201d inversion algorithm published by Gregory Bard. This algorithm in turn is named after the \u201cMethod of the Four Russians\u201d multiplication algorithm which is probably better referred to as Kronrod's method. M4RI is available under the General Public License Version 2 or later (GPLv2+).",
+      "why": "The README states GPLv2+; COPYING carries the GPLv2 text."
+    },
+    {
+      "claim": "m4ri-transpose-entry",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 1118,
+      "text": "mzd_t *mzd_transpose(mzd_t *DST, mzd_t const *A) {",
+      "why": "The M4RI transpose entry point both M4RI transpose arms call."
+    },
+    {
+      "claim": "m4ri-transpose-fresh-output",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 1120,
+      "text": "DST = mzd_init(A->ncols, A->nrows);",
+      "why": "With DST == NULL the consumer cells allocate a fresh output inside every call, matching gf2's BitMatrix::transpose."
+    },
+    {
+      "claim": "m4ri-rowstride-even",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 148,
+      "text": "A->rowstride     = ((A->width & 1) == 0) ? A->width : A->width + 1;",
+      "why": "M4RI pads every row to an even word count, so a 64-column matrix has a 128-byte row stride (gf2: 64 bytes)."
+    },
+    {
+      "claim": "m4ri-mmc-calloc",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 152,
+      "text": "A->data = m4ri_mmc_calloc(r, sizeof(word) * A->rowstride);",
+      "why": "Matrix storage comes from M4RI's own memory cache, so per-call allocation is a cached block reuse rather than a malloc."
+    },
+    {
+      "claim": "m4ri-mmc-enabled",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "prefix/include/m4ri/m4ri_config.h",
+      "line": 30,
+      "text": "#define __M4RI_ENABLE_MMC               1",
+      "why": "The pinned build enables that cache."
+    },
+    {
+      "claim": "m4ri-mmc-cache-lookup",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mmc.c",
+      "line": 56,
+      "text": "if (mm[i].size == size) {",
+      "why": "The cache hands back a previously freed block of the same size; consecutive fresh-output calls of one geometry hit it."
+    },
+    {
+      "claim": "m4ri-excess-bits-policy",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.h",
+      "line": 119,
+      "text": "* if the matrix is not a window, the excess bits MUST be zero. In this case, they",
+      "why": "M4RI keeps padding bits zero, so 63- and 65-column outputs carry canonical zero tails."
+    },
+    {
+      "claim": "m4ri-echelonize-entry",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/echelonform.h",
+      "line": 79,
+      "text": "rci_t mzd_echelonize_m4ri(mzd_t *A, int full, int k);",
+      "why": "The RREF entry point of the M4RI generator-matrix arm (full = 1, k = 0 selects k automatically)."
+    },
+    {
+      "claim": "bitshuffle-compile-time-avx2",
+      "project": "bitshuffle",
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "path": "src/bitshuffle_core.c",
+      "line": 23,
+      "text": "#if defined(__AVX2__) && defined (__SSE2__)",
+      "why": "The AVX2 route is chosen at compile time from -march=native; there is no runtime dispatch (no cpuid in the archive)."
+    },
+    {
+      "claim": "bitshuffle-dispatcher",
+      "project": "bitshuffle",
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "path": "src/bitshuffle_core.c",
+      "line": 1805,
+      "text": "count = bshuf_trans_bit_elem_AVX(in, out, size, elem_size);",
+      "why": "bshuf_trans_bit_elem forwards to the AVX2 implementation in this build."
+    },
+    {
+      "claim": "bitshuffle-avx-entry",
+      "project": "bitshuffle",
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "path": "src/bitshuffle_core.c",
+      "line": 1431,
+      "text": "int64_t bshuf_trans_bit_elem_AVX(const void* in, void* out, const size_t size,",
+      "why": "The AVX2 bit-transpose routine."
+    },
+    {
+      "claim": "bitshuffle-avx-malloc-per-call",
+      "project": "bitshuffle",
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "path": "src/bitshuffle_core.c",
+      "line": 1080,
+      "text": "void* tmp_buf = malloc(size * elem_size);",
+      "why": "The AVX2 routine mallocs and frees a scratch buffer inside every call, a fixed per-call cost that the kernel-isolated comparison exposes."
+    },
+    {
+      "claim": "bitshuffle-multiple-of-eight",
+      "project": "bitshuffle",
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "path": "src/bitshuffle_core.c",
+      "line": 53,
+      "text": "#define CHECK_MULT_EIGHT(n) do { if ((n) % 8) return -80; } while (0)",
+      "why": "Element counts that are not multiples of eight are rejected, which makes unpadded 63- and 65-row transposes unavailable."
+    },
+    {
+      "claim": "bitshuffle-block-multiple",
+      "project": "bitshuffle",
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "path": "src/bitshuffle_core.c",
+      "line": 1860,
+      "text": "if (block_size % BSHUF_BLOCKED_MULT) return -81;",
+      "why": "Block sizes must be multiples of eight; the adapter uses one block of the padded row count."
+    },
+    {
+      "claim": "bitshuffle-blocked-mult",
+      "project": "bitshuffle",
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "path": "src/bitshuffle_internals.h",
+      "line": 35,
+      "text": "#define BSHUF_BLOCKED_MULT 8    // Block sizes must be multiple of this.",
+      "why": "The multiple the block and element counts must satisfy."
+    },
+    {
+      "claim": "bitshuffle-using-avx2",
+      "project": "bitshuffle",
+      "revision": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "path": "src/bitshuffle_core.h",
+      "line": 92,
+      "text": "int bshuf_using_AVX2(void);",
+      "why": "The library predicate the harness's --backend output reports."
+    },
+    {
+      "claim": "isal-xor-gen-arity",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/raid.h",
+      "line": 55,
+      "text": "* @param vects   Number of source+dest vectors in array. Must be > 2.",
+      "why": "xor_gen takes vects = sources + 1 with at least two sources; the sized cells use vects 3 and the parity cell vects 4."
+    },
+    {
+      "claim": "isal-xor-gen-dest-last",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/raid.h",
+      "line": 58,
+      "text": "*                the last pointer. ie array[vects-1]. Src and dest",
+      "why": "The destination is the last pointer of the array; the operation writes a fresh destination."
+    },
+    {
+      "claim": "isal-xor-gen-alignment",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/raid.h",
+      "line": 59,
+      "text": "*                pointers must be aligned to 32B.",
+      "why": "Source and destination pointers must be 32-byte aligned; other alignments are outside the contract and recorded unavailable."
+    },
+    {
+      "claim": "isal-xor-gen-declaration",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/raid.h",
+      "line": 65,
+      "text": "xor_gen(int vects, int len, void **array);",
+      "why": "The public multi-binary entry point, unavailable in this build."
+    },
+    {
+      "claim": "isal-xor-gen-base-declaration",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/raid.h",
+      "line": 294,
+      "text": "xor_gen_base(int vects, int len, void **array);",
+      "why": "The portable reference declared by the same header with the same contract."
+    },
+    {
+      "claim": "isal-xor-gen-base-definition",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "raid/raid_base.c",
+      "line": 100,
+      "text": "xor_gen_base(int vects, int len, void **array)",
+      "why": "The measured routine."
+    },
+    {
+      "claim": "isal-xor-gen-base-byte-loop",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "raid/raid_base.c",
+      "line": 114,
+      "text": "src[vects - 1][i] = parity; // last pointer is dest",
+      "why": "A byte-wise loop writing the destination last; the disassembly probe shows GCC did not vectorize it (33 general-purpose instructions)."
+    },
+    {
+      "claim": "isal-multibinary-dispatch",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "raid/raid_multibinary.asm",
+      "line": 61,
+      "text": "mbin_dispatch_init6 xor_gen, xor_gen_base, xor_gen_sse, xor_gen_avx, xor_gen_avx, xor_gen_avx512",
+      "why": "The public xor_gen dispatches to NASM-assembled SSE/AVX/AVX-512 kernels, none of which can be built without NASM on this host."
+    }
+  ]
+}
