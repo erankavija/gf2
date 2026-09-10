@@ -1,0 +1,143 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "confirmation-v3-count-04b85d10-20260910t162934z",
+  "issue": "04b85d10",
+  "label": "confirmation",
+  "campaign_seed": 20260910,
+  "addendum": "dev/active/04b85d10/addendum-bit-storage-count-v3-confirmation.json",
+  "producing_manifest": "dev/active/04b85d10/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "count-ones": {
+      "build": "conservative-portable",
+      "description": "zero test spelled as a full population count",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "count-ones"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "find-first-one": {
+      "build": "conservative-portable",
+      "description": "zero test spelled as a first-set-bit search",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "find-first-one"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "ops-dispatched": {
+      "build": "conservative-portable",
+      "description": "size-dispatched kernel entry point, re-selected per call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "ops-dispatched"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "scalar-backend": {
+      "build": "conservative-portable",
+      "description": "the portable scalar backend called directly",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "scalar-backend"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "simd-backend": {
+      "build": "conservative-portable",
+      "description": "the detected SIMD backend called directly, detection hoisted",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "simd-backend"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "count-popcount-dispatch-4w-1core",
+      "baseline_arm": "ops-dispatched",
+      "candidate_arm": "scalar-backend",
+      "case": {
+        "workload": "popcount",
+        "size": {
+          "words": 4
+        },
+        "seed": 201
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "count-popcount-threshold-8w-1core",
+      "baseline_arm": "scalar-backend",
+      "candidate_arm": "simd-backend",
+      "case": {
+        "workload": "popcount",
+        "size": {
+          "words": 8
+        },
+        "seed": 201
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "count-popcount-bandwidth-65536w-1core",
+      "baseline_arm": "scalar-backend",
+      "candidate_arm": "simd-backend",
+      "case": {
+        "workload": "popcount",
+        "size": {
+          "words": 65536
+        },
+        "seed": 201
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "count-zero-test-507w-1core",
+      "baseline_arm": "count-ones",
+      "candidate_arm": "find-first-one",
+      "case": {
+        "workload": "zero-test",
+        "size": {
+          "words": 507,
+          "set_bit": 32448
+        },
+        "seed": 202
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "count-ldpc-check-64800-1core",
+      "baseline_arm": "count-ones",
+      "candidate_arm": "find-first-one",
+      "case": {
+        "workload": "ldpc-codeword-check",
+        "size": {
+          "n": 64800
+        },
+        "seed": 203
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 3
+}
