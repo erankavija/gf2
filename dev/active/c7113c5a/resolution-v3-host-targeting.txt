@@ -1,0 +1,16 @@
+pilot receipt  dev/bench_results/c7113c5a/v3-r1-host-targeting-pilot/receipt.json
+receipt sha256 8b7fa85812f54188057c12b68a713a7fcba4537f2bf540be6305800fcdead4bb
+campaign       c7113c5a-v3-r1-host-targeting-pilot
+verdict        accepted (label pilot)
+family         polynomial-host-targeting: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+poly-mul-4w-conservative-1core          12     0.69121      0.6896     0.69766    0.0093
+poly-mul-4w-tuned-1core                 12     0.63116      0.6274     0.63272    0.0059
+poly-mul-256w-conservative-1core        12      287.42      286.07      288.13    0.0047
+poly-mul-256w-tuned-1core               12      304.89      303.14      305.95    0.0057
+
+widest relative half-width   0.009327
+frozen measurement resolution 0.01
+margins: equivalence 1.15, material gap 1.25
+confirmation addendum dev/active/c7113c5a/addendum-v3-host-targeting-confirmation.json
