@@ -1,0 +1,11 @@
+# command: dev/bench_results/c7113c5a/run-dot-reduction-diagnostic.sh run
+# started_utc: 2026-09-10T22:40:42Z
+# revision: da4d033748699342f5598ad4511d8aeb60a5a358
+# case from dev/bench_results/c7113c5a/v3-r1-baselines-confirmation/plan.json cell internal-gf2m-dot-1024-1core: {"kind": "gf2m-dot", "count": 1024, "inner": 1, "seed": 210}
+# processes 10, repetitions 200, cpu 0
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 1.35 1.32 1.21
+# producing: python3 dev/active/c7113c5a/survey/make-producing-inputs.py /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/diagnostic-native/producing-inputs.json (185 files, committed)
+# run: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host 'bash' '-c' 'for process in $(seq 1 "$1"); do taskset -c "$2" "$3" "$4" "$process" "$5" || exit; done' 'diagnostic' '10' '0' '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/diagnostic-native/release/dot-reduction-probe' '{"kind": "gf2m-dot", "count": 1024, "inner": 1, "seed": 210}' '200' >dev/bench_results/c7113c5a/v3-dot-reduction-diagnostic/diagnostic.jsonl
+nice: cannot set niceness: Permission denied
+# finished_utc: 2026-09-10T22:42:29Z load 1.15 1.25 1.20
