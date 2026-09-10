@@ -134,6 +134,6 @@ Pilot and confirmation probe values for Bitshuffle and ISA-L therefore measure d
 
 ## 8. Follow-ups
 
-1. An edge-strip route for partial tiles in `BitMatrix::transpose` should bring gf2's 65x65 to 64x64 cost ratio, 2.982 [2.956, 3.005], toward M4RI's 1.265 [1.257, 1.272] and close the 65x65 gap; re-running `transpose-consumer-65-vs-m4ri` falsifies it.
-2. ISA-L's SIMD `xor_gen` needs NASM on the host and a new pinned arm; only then can the logical family speak about ISA-L's fastest route.
+1. An edge-strip route for partial tiles in `BitMatrix::transpose` should bring gf2's 65x65 to 64x64 cost ratio, 2.982 [2.956, 3.005], toward M4RI's 1.265 [1.257, 1.272] and close the 65x65 gap; re-running `transpose-consumer-65-vs-m4ri` falsifies it. Tracked by `1d4fd63d` (bit transpose and bitslice conversion).
+2. ISA-L's SIMD `xor_gen` needs a new pinned arm, and NASM is a host prerequisite for building it; only then can the logical family speak about ISA-L's fastest route. Tracked by `2037941f` (mid-range buffers), whose REQ-03 compares against ISA-L.
 3. A confirmatory decision on the whole transpose or logical question needs a protocol amendment that raises `bootstrap_resamples` or relaxes the tail-support rule; until then this evidence stays non-confirmatory.
