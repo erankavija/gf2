@@ -1,336 +1,365 @@
 # Bit-storage costs in production consumers
 
+> **Diátaxis Type:** Explanation
+
+Survey for `04b85d10`. No production kernel, selector, encoder or decoder is
+changed and no independent BCH campaign is started. The
+[measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
+and [protocol version 3](../f547c394/protocol.md) govern the six receipts; the
+[generated receipt tables](../../bench_results/04b85d10/tables.md) are the
+numerical projection of every cell, and the
+[profile attribution summary](../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/attribution-summary.md)
+is the projection of every counter and call graph cited below.
+
 ## Question and outcome
 
 Which current production consumers spend enough time in packed logical
-operations, population/fused reductions, or transpose/bitslice conversions to
-justify a Zen 3 experiment, and which apparent kernel opportunities disappear
-inside the whole consumer?
+operations, population and fused reductions, or transpose and bitslice
+conversions to justify a Zen 3 kernel experiment, and which apparent kernel
+opportunities disappear inside the whole consumer?
 
-The survey selects three actionable experiment families and preserves four
-important negative results:
+Three protocol-v3 families answer it, one per consumer group and per
+downstream issue. All six receipts are accepted with zero findings; none
+qualifies for production selection, because each family contains a
+confirmed not-material cell and because this issue adopts nothing.
 
-1. The current packed binary BCH batch entry point selects
-   `PolyRemainderScalar` for the measured $m=14$, $B=256$ row even though its
-   already-registered `ClmulFold` and `BitsliceInterleaved` routes have a large
-   whole-consumer gap. This is the strongest consumer opportunity, but this
-   issue changes no selector or kernel.
-2. Dense matrix-vector multiplication spends 80.21% of sampled cycles in the
-   fused AVX2 AND-popcount kernel, so population-count experiments have a
-   direct production consumer. Mid-range row XOR has a smaller, separately
-   measurable dispatch/threshold opportunity.
-3. The detected AVX2 64x64 transpose is about twice as fast as the scalar
-   primitive, but it is only 32.26% of the sampled 4096x4096 dense-transpose
-   consumer. A replacement must include the outer tile assembly, output
-   allocation, and scratch traffic.
-4. Replacing a full syndrome population count with an early-exit nonzero test
-   is **not material** in the measured DVB-T2 LDPC whole-codeword check: sparse
-   syndrome construction consumes 99.63% of sampled cycles. The isolated
-   spelling matters only when a set bit occurs early. Likewise, row dispatch
-   is not material for large cache-resident rows, BCH output allocation is not
-   material beside the current scalar recurrence, and RREF is not primarily a
-   logical-kernel problem.
+1. **Layout.** The packed binary BCH batch entry point selects
+   `PolyRemainderScalar` for the DVB-T2 normal-frame mother code
+   ($m = 14$, $B = 256$) although its registered `ClmulFold` and
+   `BitsliceInterleaved` families are confirmed 2.70x [2.688, 2.706] and
+   2.49x [2.483, 2.493] faster as whole consumers. After the fold, 96% of
+   the remaining time is the bit-serial `packed_write_codeword`, which costs
+   about 14.8 ms per 256-message batch in every family. The detected AVX2
+   64x64 transpose is confirmed 1.93x [1.914, 1.943] faster than the portable
+   primitive in isolation and 1.89x [1.876, 1.934] on the six-core streaming
+   arm, but it is 31% of the sampled dense 4096-square transpose.
+2. **Count.** The fused AVX2 AND-popcount is 80% of the sampled dense
+   1024x4096 matvec. The conservative-portable scalar population count is a
+   bit-twiddle sequence with no `POPCNT` instruction; the AVX2 route is
+   confirmed 3.04x [2.916, 3.225] faster on a 512 KiB buffer and 1.20x at the
+   eight-word cutover, while re-dispatching per call costs 1.54x on four words.
+3. **Logical.** The four-word row XOR is confirmed 1.35x [1.348, 1.363] faster
+   through the detected SIMD backend than through the current scalar cutover,
+   and hoisting dispatch out of an eight-word row loop is confirmed 1.12x
+   [1.108, 1.122]. The same hoist is not material on 64-word rows under the
+   family's 1.10 rule (1.057 [1.051, 1.098]) and absent on L3-resident
+   8192-word rows (0.996 [0.943, 1.035]).
 
-These are profiling and experiment-selection findings only. No production
-kernel, selector, encoder, or decoder is changed, and no independent BCH
-campaign is started.
+Confirmed not-material findings, preserved for the downstream issues: the
+allocating BCH entry point against the caller-buffer one (1.002
+[0.999, 1.008]); the full population count against the early-exit spelling in
+the whole DVB-T2 LDPC validity check (0.998 [0.996, 1.003]); dispatch hoisting
+on 64- and 8192-word rows. Descriptive, not campaigned: the DVB-T2
+compatibility BCH encoder is a separate field-polynomial route at 11.25 ms per
+Short-frame codeword, and the BCH batch path allocates 56 bytes per message in
+its validation prologue at 0.011 ms per 1024 messages.
 
 ## Evidence and method
 
-Two complementary artifacts are used:
+### Receipts
 
-- The [diagnostic profile export](../../bench_results/04b85d10/2026-09-07-04b85d10-profile/profile-summary.md)
-  sweeps 168 current production routes. It records per-call wall time,
-  allocation counts/bytes, setup and conversion phases, hardware counters,
-  999 Hz sampled call graphs, correctness checks, and release disassembly.
-  Each sweep row is one exploratory run and deliberately has no inferential
-  interval. It locates and explains costs; it is not used for an adoption
-  decision.
-- The [protocol pilot](../../bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md)
-  contains 15 predeclared cells with eight paired executions per cell and five
-  fixed timing windows per arm execution. Its ratio-of-medians and percentile
-  bootstrap interval are recomputed from the raw pairs by the independent
-  acceptance tool. Every cell is exploratory, so every outcome remains
-  `pilot` and the receipt does not qualify a production selection.
+| Family (ledger) | Pilot receipt | Confirmation receipt | Widest pilot half-width; frozen resolution | Worthwhile / equivalence | $m$; per-comparison confidence |
+|---|---|---|---|---|---|
+| `bit-storage-logical-consumers` ([ledger](../../bench_results/04b85d10/v3-bit-storage-logical-consumers-family-ledger.jsonl)) | [`logical-v3-pilot`](../../bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/acceptance-summary.md) `fe1c361b…` | [`logical-v3-confirmation`](../../bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/acceptance-summary.md) `bade034c…` | 0.065141; 0.07 ([derivation](pilot-resolution-v3-logical.txt)) | 1.10 / 1.10 | 4; 0.99375 |
+| `bit-storage-count-consumers` ([ledger](../../bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl)) | [`count-v3-pilot`](../../bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/acceptance-summary.md) `e0d76094…` | [`count-v3-confirmation`](../../bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/acceptance-summary.md) `1b05b2d3…` | 0.020966; 0.03 ([derivation](pilot-resolution-v3-count.txt)) | 1.05 / 1.05 | 5; 0.995 |
+| `bit-storage-layout-consumers` ([ledger](../../bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl)) | [`layout-v3-pilot`](../../bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot/acceptance-summary.md) (digest in its summary) | [`layout-v3-confirmation`](../../bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/acceptance-summary.md) `5e64f498…` | 0.020127; 0.03 ([derivation](pilot-resolution-v3-layout.txt)) | 1.10 / 1.05 | 5; 0.995 |
 
-The diagnostic profiler export is not itself a Zen 3 protocol receipt. Running
-the current acceptance tool over it exits 2 with `No such file or directory`
-because the directory has no protocol `receipt.json`; the exact command and
-verdict are preserved in [acceptance-verdict.txt](../../bench_results/04b85d10/2026-09-07-04b85d10-profile/acceptance-verdict.txt).
+Every pilot cell and every confirmatory cell measured 24 pairs, five fixed
+100 ms windows per arm execution, zero flagged windows. Pilots run at the
+confirmatory sample size so the resolution they observe is the resolution the
+confirmation has. The frozen addenda are
+`addendum-bit-storage-{logical,count,layout}-v3-{pilot,confirmation}.json`
+beside this file; each confirmation names its pilot receipt by path and
+SHA-256 as resolution evidence, and P-03 recomputed the widest relative
+half-width from the raw pairs. The logical family's pilot carried 1.05
+margins; its L3-resident 8192-word row set the resolution at 0.07, so the
+confirmation addendum raises both margins to 1.10 and records why. A cell
+between 1.05 and 1.10 records not-material under that rule and its interval
+is reported.
 
-Before timing, `consumer-verify` checks row XOR and population-count backends
-over nine boundary-spanning lengths, both zero-test spellings over four
-patterns, scalar/detected transpose equivalence and involution, dense
-transpose round trips, dense matvec against a naive parity reference, LDPC
-syndrome spellings on zero/weight-one/random words, and all available BCH
-families over three code rows and five batch sizes. The committed
-[`verify.jsonl`](../../bench_results/04b85d10/2026-09-07-04b85d10-profile/verify.jsonl)
-records eight passed groups and zero failures. The protocol launcher repeats
-that verifier before its first timed cell.
+Each family's $m$ is the confirmatory cell count on its first and only
+attempt ($\alpha_t = 0.05/2 = 0.025$, Bonferroni over $m$). With $m \le 5$
+every cell keeps at least twenty expected bootstrap draws per tail, so P-20
+reports no `not-confirmatory` cell. Identity-control cells (RREF, LDPC
+syndrome, dense matvec, dense transpose, DVB BCH) are pilot-only: they size
+the resolution and record each pinned consumer's baseline latency, and their
+trivially passing non-regression would otherwise spend alpha.
+
+The launcher is
+[`run-consumer-campaigns.sh`](../../bench_results/04b85d10/run-consumer-campaigns.sh):
+builds through `scripts/cargo-budget.sh`, correctness through
+`consumer-verify` (eight checks, zero failures, recorded in every
+`launcher.log`), timed sessions of at most three cells under
+`dev/scripts/ccx1-bench-flock.sh --full-host`, checkpointed resume, and
+`benchmark-acceptance` at finalization. Re-running the current acceptance
+tool over all six receipts reproduces every summary byte for byte.
+
+### Diagnostic profile
+
+The [profile receipt](../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/profile-summary.md)
+(`2026-09-10-04b85d10-profile-v3`) sweeps 180 current production routes with
+per-call wall time and allocation counts and bytes from a counting global
+allocator, records user-space hardware counters for twenty routes, 999 Hz
+DWARF call graphs for twelve whole consumers, allocation-site backtraces for
+seven allocating consumers, and release disassembly of nineteen routines with
+[frame-traffic classification](../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/frame-traffic.txt)
+and [`POPCNT` attribution](../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/popcnt-attribution.txt).
+Each sweep row is one run without an interval; the sweep locates and explains
+costs, the receipts decide. Profiler availability was observed, not assumed:
+`perf_event_paranoid` is 2, so `perf stat` and `perf record` work on this
+process's own user-space events and the generic `stalled-cycles-backend`
+event is unsupported; `valgrind --tool=dhat` 3.25.1 is installed and was not
+needed because the counting allocator reports counts, bytes and sites. Its
+launcher [`run-profile.sh`](survey/run-profile.sh) runs the whole timed session
+inside one `--full-host` wrapper invocation.
 
 ### Pinned baseline
 
-The baseline is the current pre-change gf2 implementation, built as an external
-path consumer with `simd` and `parallel`, release ThinLTO, and one codegen unit.
-The diagnostic run used Rust 1.97.0/LLVM 22.1.6 on Linux 7.2.2 and a Ryzen 9
-5900X with AVX2, POPCNT and PCLMULQDQ, SMT on, and the `powersave` governor. Its
-three executable SHA-256 identities and every harness-source digest are in
-[`host.txt`](../../bench_results/04b85d10/2026-09-07-04b85d10-profile/host.txt).
-The production crate/build inputs are unchanged from its recorded revision
-`aa8d6724` through this branch's measured pilot. Source-control revision is
-navigation only; the accepted pilot pins the exact executable bytes, toolchain,
-producing-input closure, and receipt-local contract, protocol, schema and
-frozen addendum bytes.
+Every arm of every receipt is one executable, `consumer-arm` SHA-256
+`960bb280fdc1f5d02cd2bad3569a87a791d35ccee08f031411a2be3ec75f4dfa`, built
+with Rust 1.95.0 (the repository MSRV) without `RUSTFLAGS`: a
+conservative-portable build whose SIMD kernels are selected at run time. The
+producing closure is the issue-owned manifest
+[`survey/producing-inputs.json`](survey/producing-inputs.json) (290 build
+inputs: the three production crates the harness links, the harness and its
+lockfile, the plan derivation, the launcher, the lock wrapper and the protocol
+tooling), snapshotted into each receipt's `inputs/producing/`. Host: AMD Ryzen
+9 5900X, Linux 7.2.2, SMT on, `powersave` governor, AVX2, PCLMULQDQ and POPCNT
+present; the receipts pin protocol `1d42ac3c…`, contract `9f3c7563…` and
+schema `513f3762…`. Every code claim below is a row of
+[`survey/source-evidence.json`](survey/source-evidence.json) (71 claims, path,
+line and verbatim text verified at generation), named here by claim id.
 
-The frozen pilot addendum is
-[`addendum-bit-storage-consumers-pilot.json`](addendum-bit-storage-consumers-pilot.json),
-SHA-256 `8f1d6e0f9f58d8038d9cd61e6d616b95c6ca801fce4e48fbaba85e5d15fdfdae`.
-The release build completes before timing; timed children run only under
-`dev/scripts/ccx1-bench-flock.sh --full-host`. The launcher uses bounded
-four-cell sessions and the canonical append-only journal/checkpoint resume
-mechanism.
+### History
 
-Protocol version 1 governs this exploratory receipt. The announced version-2
-amendment is not present in this checkout, and no version-1 confirmation is
-claimed as final. This issue needs no confirmation because it adopts nothing;
-downstream candidate issues must freeze and run their own version-current
-confirmatory before/after campaigns.
+Protocol-v1 evidence is immutable: the
+[v1 pilot](../../bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md)
+(`df45ad57…`, fifteen exploratory cells at eight pairs, Rust 1.97) and the
+[v1 profile](../../bench_results/04b85d10/2026-09-07-04b85d10-profile/profile-summary.md).
+Its addendum and launcher are kept byte-identical under `superseded/`. Three
+things make it history rather than baseline: production sources changed
+after it (`crates/gf2-kernels-simd/src/x86/clmul.rs`, `gf2m.rs`,
+`crates/gf2-core/src/field/vec.rs`), its cell
+`layout-bch-encode-alloc-1core` paired the allocating entry point against
+itself while its report described a caller-buffer comparison, and several of
+its scratch-versus-spill citations named `detect()` or a call site instead of
+the routine they classified. The v3 families open their ledgers with the v1
+pilot as a zero-comparison genesis line
+([`ledger-genesis.json`](ledger-genesis.json)); no v1 confirmatory
+reservation exists to import.
 
 ## Actual production routes
 
-The route names below are observed routes, not intended designs.
-
-| Consumer class | Public entry point to executed kernel | Observed result |
+| Consumer | Public entry point to executed kernel (claim ids) | Observed in the receipts |
 |---|---|---|
-| Logical row | `gf2_core::kernels::ops::xor_inplace` calls `resolve_xor_inplace(len)` on every call, then `select_backend_for_size`; below eight words it returns `scalar_xor_inplace`, and at or above eight words on this host it reaches `SimdBackend::xor` then `avx2_xor_into`. The resolved comparison hoists the returned function pointer. `BitMatrix::row_xor` uses the same public operation. | Four words selects scalar; 8–8192 words select AVX2. |
-| Dense RREF | `gf2_core::alg::rref::rref(matrix, false)` selects block width 8 above 512 columns, clones the matrix, resolves one XOR function for Gray-table construction, builds one table per pivot block, and applies table rows through the inline `BitMatrix::row_xor_slice_from`. | 1024x1024 is `blocked-m4ri`; AVX2 XOR appears only in table construction, not every elimination row. |
-| Dense parity/matvec | `BitMatrix::matvec` calls `matvec_route(stride_words)`; the 4096-column row has 64 words, selects SIMD, resolves `maybe_simd`, and calls `matvec_simd`, whose per-row parity is `LogicalFns::and_popcnt_fn` -> `avx2_and_popcnt`. The output is appended to a fresh `BitVec`. | 1024x4096 is `simd-and-popcnt`; 80.21% of sampled cycles land in the fused kernel. |
-| Sparse LDPC parity | `LdpcCode::syndrome` calls its `SpBitMatrixDual` row-oriented `SpBitMatrix::matvec`, which walks CSR indices one bit at a time and appends the syndrome to a fresh `BitVec`. | Both DVB-T2 lengths take `csr-bit-at-a-time-matvec`; there is no logical word kernel below it. |
-| Population count | `BitVec::count_ones` -> `kernels::ops::popcount` -> `select_backend_for_size`; four words selects scalar, while eight words and above select `SimdBackend::popcount` -> `avx2_popcnt`. | The dispatch boundary is eight words in the conservative portable build. |
-| Any-nonzero | `LdpcCode::is_valid_codeword` constructs `syndrome`, then calls `syndrome.count_ones() == 0`. The comparison route constructs the same syndrome and calls `find_first_one().is_none()`, which reaches `avx2_find_first_one` and can stop after the first nonzero vector. | Full-count and first-set spellings are bit-identical; whole-consumer gain is negligible at $n=64800$. |
-| Block transpose | `gf2_kernels_simd::transpose::detect` observes AVX2 and returns `transpose_64x64_avx2`; the portable comparison calls `transpose_64x64_scalar`. | Production detects `avx2-bit-twiddle`, not the available PSHUFB alternative. |
-| Dense transpose | `BitMatrix::transpose` resolves `maybe_transpose` once, allocates the output matrix, calls `transpose_route`, and invokes the detected 64x64 primitive from `transpose_inner_loop`. | 1024x1024 takes the simple loop; 4096x4096 takes the macro-tiled loop with eight blocks per edge. |
-| Current packed BCH batch | `BinaryBchCode::encode_batch_into` builds the systematic plan, calls the one canonical `select_family`, then `encode_batch_family_into` -> `encode_partition`. For the current conservative profile and $m=14$, $B=256$, selection is `PolyRemainderScalar`; it reaches `BitVec::encode_systematic_with` once per message and `packed_write_codeword`. Forced family arms use the public `encode_batch_family_into`; bitslice reaches `packed_bitslice_batch`, detected transpose/absorb/unpack kernels, and `packed_write_codeword`, while fold reaches `packed_fold_reduce` and PCLMULQDQ. | The actual current route is scalar, not bitslice. Every forced family is correctness-equivalent before timing. |
-| Allocating/parallel packed BCH | `BinaryBchCode::encode_batch` allocates the output collection and uses thread-local scratch. `encode_batch_parallel_into` selects the same family once and recursively partitions across caller workspaces through `rayon::join`. | Current $m=14$ selection remains `PolyRemainderScalar` at one, six, twelve and twenty-four declared workers. |
-| DVB-T2 compatibility BCH | `BchEncoder::encode_batch` maps `BchEncoder::encode` over messages. `encode` expands message bits into `Gf2mPoly`, shifts, calls field-polynomial `div_rem`, adds the remainder, and bit-appends a new codeword. | This separate public route is `field-polynomial-div-rem`; it does not reach the packed batch selector or transpose/bitslice kernels. |
+| Logical row | `BitMatrix::row_xor` calls `kernels::ops::xor_inplace`, which calls `resolve_xor_inplace(len)` on every call; below eight words that is `scalar_xor_inplace`, at or above eight words the detected `LogicalFns::xor_fn`, `avx2_xor_into` on this host (`row-xor-public-entry`, `xor-inplace-resolves-per-call`, `resolve-xor-simd-fn`, `simd-min-words-default`, `avx2-xor-into`). The baked four-word cutover exists only under `--cfg gf2_tuning_baked` (`baked-simd-min-words`). | 4 words `ops-dispatched/scalar`; 8, 64 and 8192 words `ops-dispatched/simd`. |
+| Dense RREF | `alg::rref::rref` selects an eight-wide Gray table above 512 columns, clones the input, resolves one XOR kernel, allocates one table per pivot block and applies rows through the inline `row_xor_slice_from` (`rref-block-width`, `rref-clone`, `rref-resolves-xor-once`, `rref-table-per-block`, `rref-row-apply`). | 1024-square `current/blocked-m4ri`, 819 us. |
+| Dense matvec | `BitMatrix::matvec` dispatches on the stride; eight or more words reach `matvec_simd`, whose per-row parity is `LogicalFns::and_popcnt_fn` (`avx2_and_popcnt`) appended to a fresh `BitVec`; the scalar route is private (`matvec-route`, `matvec-simd-min-words`, `matvec-fused-kernel`, `matvec-output-alloc`, `matvec-scalar-private`). | 1024x4096 `current/simd-and-popcnt`, 16.2 us. |
+| Sparse LDPC parity | `LdpcCode::syndrome` is `SpBitMatrixDual::matvec`, which delegates to the CSR `SpBitMatrix::matvec`: one `x.get(c)` per stored index into a fresh `BitVec` (`ldpc-syndrome`, `ldpc-h-dual`, `ldpc-dual-matvec`, `ldpc-csr-bit-at-a-time`, `ldpc-syndrome-output-alloc`). | $n = 64800$ `current/csr-bit-at-a-time-matvec`, 274 us. |
+| Population count | `BitVec::count_ones` is `ops::popcount`, re-dispatched per call at the same eight-word cutover to `avx2_popcnt` or the scalar fallback (`count-ones-entry`, `popcount-dispatch`, `simd-backend-popcount`, `avx2-popcnt`). | 4 words scalar, 8 and 65536 words `simd-backend/avx2`. |
+| Any-nonzero | `LdpcCode::is_valid_codeword` computes the syndrome and tests `count_ones() == 0`; `find_first_one` reaches `avx2_find_first_one`, which can stop at the first nonzero vector (`ldpc-is-valid-count`, `find-first-one-simd`, `avx2-find-first-one`). | Both spellings bit-identical on zero, weight-one and random words. |
+| Block transpose | `transpose::detect` publishes `avx2-bit-twiddle` under AVX2; the PSHUFB lane exists behind `detect_pshufb` and is not selected (`transpose-detect-avx2`, `transpose-pshufb-alternative`). | `transpose-detected/avx2-bit-twiddle` against `transpose-scalar/portable`. |
+| Dense transpose | `BitMatrix::transpose` resolves the block kernel once, allocates the output, selects the outer loop through `transpose_route` and tiles through `transpose_inner_loop` with two 64-word local blocks (`dense-transpose-resolves-once`, `dense-transpose-output-alloc`, `dense-transpose-route`, `dense-transpose-tile-scratch`). | 4096-square `current/macro-tiled-8`, 654 us. |
+| Packed BCH batch | `encode_batch_into` selects the family once through `select_family` and calls `encode_batch_family_into`, which runs one partition over the caller's workspace. The reference family is always admitted; bitslice and fold need the active profile's minimum batch, which the conservative profile does not grant at $B = 256$. Every per-frame family ends in `packed_write_codeword`, which copies the message one bit at a time (`bch-batch-into-selects`, `bch-batch-into-delegates`, `bch-family-into-partition`, `bch-family-admission`, `bch-bitslice-admission`, `bch-fold-admission`, `bch-reference-serial-reduce`, `bch-reference-write`, `bch-write-bit-at-a-time`, `bch-fold-reduce`, `bch-bitslice-batch`). | `current/PolyRemainderScalar` at $m = 14$, $B = 256$; forced arms `family-pinned/BitsliceInterleaved`, `family-pinned/ClmulFold`. |
+| Allocating and parallel packed BCH | `encode_batch` allocates its output and reduces over thread-local scratch; `encode_batch_parallel_into` selects the family once and recurses through `rayon::join`, with no forced-family variant (`bch-allocating-entry`, `bch-allocating-scratch`, `bch-parallel-selects-once`, `bch-parallel-join`). | `current-allocating/PolyRemainderScalar` against `caller-buffer/PolyRemainderScalar`; parallel path in the sweep only. |
+| DVB-T2 compatibility BCH | `BchEncoder::encode_batch` maps `encode`, which expands the message into `Gf2mPoly` coefficients and divides by the generator (`dvb-bch-batch-maps-encode`, `dvb-bch-field-poly`, `dvb-bch-div-rem`). | Short frame $n = 7200$ `current/field-polynomial-div-rem`, 11.25 ms per codeword. |
 
 ## Why these sizes represent consumers
 
-The word ladder brackets the conservative eight-word SIMD cutover and spans
-cache regimes: 4, 8 and 16 words cover the cutover, 64 words are one L1-small
-row, 512 words make a 256 KiB 64-row bank, and 8192 words make a 4 MiB bank.
-Population count additionally uses 127 and 507 words (the packed widths of
-the two DVB-T2 rate-1/2 syndrome outputs), 4096 words (32 KiB), and 65536
-words (512 KiB). Every row bank has 64 rows so it is a whole number of 64x64
-blocks and makes per-row comparisons stable.
-
-Dense 256, 512, 1024 and 2048 squares move from L1-sized through L2 and L3;
-the 1024x4096 matvec gives 64-word rows and a 512 KiB matrix, exposing the
-fused parity kernel without exceeding one core's L2 by more than metadata.
-The 1024- and 4096-square transpose cells are 128 KiB and 2 MiB packed
-matrices and select the simple and macro-tiled outer loops respectively.
-Block counts 1, 16, 256 and 4096 bracket per-call overhead, L1, L2 and L3
-working sets.
-
-The LDPC rows are the DVB-T2 rate-1/2 short and normal frame lengths 16200 and
-64800, not synthetic sparse matrices. BCH degrees 8, 14 and 16 are benchmark
-row B3 and the mother fields of the DVB-T2 short/normal rows. Batch sizes 1,
-16, 64, 256 and 1024 bracket single-frame overhead, one bitslice wave,
-additional lane groups, cache-resident steady state, and parallel work. The
-ranked pilot uses $m=14$, $B=256$: its packed message plus codeword working set
-is about 445 KiB, the declared L2-resident steady-state row in
-`dev/active/4e732b56/workload-selection.md`. The parallel cells use $B=1024$
-so every declared worker receives useful work.
+Row widths 4, 8 and 64 words bracket the conservative eight-word cutover
+and one L1-resident row; 64 rows make each bank a whole number of 64x64
+blocks; 8192 words make a 4 MiB L3-resident bank where dispatch is expected
+to vanish into cache traffic. 507 words is the packed width of the DVB-T2
+rate-1/2 normal-frame syndrome; 65536 words (512 KiB) is one core's L2. The
+1024-square RREF is the smallest square that selects the eight-wide table;
+1024x4096 gives 64-word rows so the fused matvec kernel runs whole 32-byte
+vectors on a 512 KiB matrix. The 4096-square transpose selects the
+macro-tiled loop on a 2 MiB matrix. Block counts 256 and 4096 are an
+L2-resident run and an L3-resident streaming run. $m = 14$, $B = 256$ is the
+mother code of the DVB-T2 normal frame at the L2-resident steady-state batch
+of `dev/active/4e732b56/workload-selection.md`; the sweep adds $m = 8$ and
+$m = 16$ and batches 1 to 1024. The LDPC rows are the DVB-T2 rate-1/2 frames,
+not synthetic matrices.
 
 ## Measured ratios and intervals
 
-<!-- PILOT_RESULTS_BEGIN -->
-The finalized receipt
-[`2026-09-08-04b85d10-consumers-pilot`](../../bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md)
-is accepted with zero findings, does not qualify for production selection, and
-has receipt digest
-`df45ad5784a356701fda313221d072b1c2cc48433c090fc63c684cbc644b2060`.
-It completed in four bounded sessions with checkpoint/resume. The addendum
-snapshot and source addendum both hash to
-`8f1d6e0f9f58d8038d9cd61e6d616b95c6ca801fce4e48fbaba85e5d15fdfdae`.
+Speedups are baseline median over candidate median; values above one favour
+the candidate. Per-arm medians, observed routes and conversion phases for
+every cell, pilots included, are in
+[tables.md](../../bench_results/04b85d10/tables.md).
 
-| Cell (baseline -> candidate) | Candidate speedup | 95% paired-bootstrap interval | Samples | Result for experiment selection |
-|---|---:|---:|---:|---|
-| Row XOR, 64 words (`ops-dispatched` -> `ops-resolved`) | 1.0861x | [1.0652, 1.1088] | 8 pairs; 80 windows; 0 flagged | Mid-sized dispatch resolution is measurable. |
-| Row XOR, 4 words (`ops-dispatched` -> `simd-backend`) | 1.3360x | [1.3294, 1.3463] | 8 pairs; 80 windows; 0 flagged | The current cutover leaves a sizeable short-row SIMD opportunity. |
-| Dense RREF, 1024 square (`current-a` -> identical `current-b`) | 1.0051x | [1.0032, 1.0092] | 8 pairs; 80 windows; 0 flagged | Control pair resolves a sub-percent drift; it is not an optimization arm. |
-| LDPC syndrome, n=64800 (`current-a` -> identical `current-b`) | 0.9953x | [0.9864, 1.0099] | 8 pairs; 80 windows; 0 flagged | No material route-level drift; sparse matvec remains the baseline. |
-| Popcount, 4 words (`ops-dispatched` -> `scalar-backend`) | 1.5042x | [1.5028, 1.5092] | 8 pairs; 80 windows; 0 flagged | Dispatch plus the selected short-input route is material. |
-| Popcount, 8 words (`scalar-backend` -> `simd-backend`) | 1.1661x | [1.1601, 1.1689] | 8 pairs; 80 windows; 0 flagged | SIMD wins at the current boundary. |
-| Any-nonzero, 507 words with middle bit set (`count-ones` -> `find-first-one`) | 1.1241x | [1.1215, 1.1285] | 8 pairs; 80 windows; 0 flagged | Early exit helps an isolated representative syndrome. |
-| LDPC validity, n=64800 (`count-ones` -> `find-first-one`) | 1.0043x | [0.9935, 1.0097] | 8 pairs; 80 windows; 0 flagged | **Not material** in the whole consumer; syndrome construction dominates. |
-| 256 block transposes (`transpose-scalar` -> `transpose-detected`) | 1.9281x | [1.9071, 1.9441] | 8 pairs; 80 windows; 0 flagged | Detected AVX2 is materially faster in the isolated primitive. |
-| BCH m=14, B=256 (`family-reference` -> `family-bitslice`) | 2.4841x | [2.4814, 2.4930] | 8 pairs; 80 windows; 0 flagged | Bitslice is materially faster than the path current selection chooses. |
-| BCH m=14, B=256 (`family-reference` -> `family-fold`) | 2.7344x | [2.7297, 2.7377] | 8 pairs; 80 windows; 0 flagged | Fold has the largest measured whole-consumer single-core benefit. |
-| Allocating BCH m=14, B=256 (`current-a` -> caller-buffer `current-b`) | 1.0013x | [0.9987, 1.0019] | 8 pairs; 80 windows; 0 flagged | **Not material** while scalar recurrence dominates. |
-| 4096 block transposes on 6 cores (`transpose-scalar` -> `transpose-detected`) | 1.9583x | [1.9261, 2.0087] | 8 pairs; 80 windows; 0 flagged | Primitive benefit survives the six-core work distribution. |
-| Current BCH parallel path, 12 cores (`current-12-a` -> identical `current-12-b`) | 0.9790x | [0.8945, 1.1028] | 8 pairs; 80 windows; 0 flagged | **Not material / unresolved**; the control interval spans substantial noise. |
-| Current BCH parallel path, 24 logical CPUs (`current-24-a` -> identical `current-24-b`) | 1.0142x | [0.9221, 1.0639] | 8 pairs; 80 windows; 0 flagged | **Not material / unresolved**; SMT adds no supported current-path claim. |
-<!-- PILOT_RESULTS_END -->
+| Family | Cell (baseline -> candidate) | Baseline -> candidate median | Speedup [interval] | Outcome |
+|---|---|---|---|---|
+| logical | 64-word row XOR, dispatched -> resolved | 338.9 -> 320.6 ns | 1.0570 [1.0510, 1.0975] | not-material at 1.10 |
+| logical | 8-word row XOR, dispatched -> resolved | 110.4 -> 98.9 ns | 1.1161 [1.1082, 1.1218] | pass |
+| logical | 4-word row XOR, dispatched (scalar) -> SIMD backend | 109.3 -> 80.8 ns | 1.3532 [1.3477, 1.3626] | pass |
+| logical | 8192-word row XOR, dispatched -> resolved | 34.50 -> 34.65 us | 0.9956 [0.9426, 1.0353] | not-material |
+| count | 4-word popcount, dispatched -> scalar backend | 7.3 -> 4.7 ns | 1.5439 [1.5392, 1.5481] | pass |
+| count | 8-word popcount, scalar -> SIMD backend | 6.2 -> 5.1 ns | 1.2004 [1.1953, 1.2063] | pass |
+| count | 65536-word popcount, scalar -> SIMD backend | 25.29 -> 8.31 us | 3.0439 [2.9160, 3.2251] | pass |
+| count | 507-word all-zero test, count -> find-first-one | 69.0 -> 61.7 ns | 1.1174 [1.1111, 1.1207] | pass |
+| count | LDPC validity $n = 64800$, count -> find-first-one | 272.2 -> 272.7 us | 0.9982 [0.9956, 1.0029] | not-material |
+| layout | 256 block transposes, scalar -> detected AVX2 | 22.02 -> 11.42 us | 1.9276 [1.9136, 1.9430] | pass |
+| layout | 4096 block transposes, six cores streaming | 365.1 -> 192.8 us | 1.8932 [1.8762, 1.9343] | pass |
+| layout | BCH $m = 14$, $B = 256$, current -> bitslice | 40.388 -> 16.229 ms | 2.4886 [2.4830, 2.4933] | pass |
+| layout | BCH $m = 14$, $B = 256$, current -> fold | 40.433 -> 14.984 ms | 2.6985 [2.6880, 2.7060] | pass |
+| layout | BCH $m = 14$, $B = 256$, allocating -> caller buffer | 40.520 -> 40.428 ms | 1.0023 [0.9985, 1.0080] | not-material |
 
-All ratios above are candidate speedups (baseline median divided by candidate
-median); values above one favor the named candidate. Each interval is the
-protocol's whole-pair percentile bootstrap over $n=8$ paired executions, with
-five raw timing windows per arm execution. They are exploratory resolution
-evidence, not family-wise confirmatory intervals and not adoption decisions.
+Pilot-only identity controls record the pinned baseline latencies: RREF
+1024-square 819.0 us (1.0004 [0.9971, 1.0060]), LDPC syndrome 274.1 us
+(1.0025 [0.9993, 1.0072]), dense matvec 1024x4096 16.19 us (1.0014
+[0.9832, 1.0223]), dense transpose 4096-square 653.9 us (0.9993
+[0.9961, 1.0061]) and DVB-T2 Short-frame BCH 11.252 ms (1.0015
+[0.9978, 1.0033]); all at 24 pairs and 97.5% confidence. The 507-word zero
+test declares `set_bit` 32448, which equals the buffer length: the buffer is
+all zero, the valid-codeword case and the worst case for an early exit.
+Twelve- and twenty-four-CPU arms are meaningful here only for the parallel
+BCH entry point, whose only protocol-expressible cell is an identity control;
+v1 measured it (0.979 [0.895, 1.103] and 1.014 [0.922, 1.064] at eight pairs)
+and v3 records its scaling in the sweep instead.
 
 ## Attribution: time, allocation, traffic and limits
 
-The figures in this section are descriptive single-run diagnostics drawn from
-the raw JSONL/counter/profile files beside `profile-summary.md`. Call-graph
-shares come from one approximately three-second 999 Hz sampling session per
-route (`perf report` displays about 2K–3K retained samples); those correlated
-samples are not assigned an inferential confidence interval. All candidate
-ranking instead uses the paired bootstrap intervals above.
+Figures are single-run diagnostics from the profile receipt; derived ratios
+are in its attribution summary. A pass on a cell decides materiality; this
+section explains where the time goes.
 
-| Consumer | Diagnostic attribution | Allocation/conversion traffic | Limit evidenced |
+| Consumer | Sampled shares and per-call cost | Allocation and conversion traffic | Measured limit |
 |---|---|---|---|
-| 64-row x 64-word XOR | Dispatched 390.6 ns/call versus resolved 373.2 ns/call; 32 row-pair operations occur per call. | Zero timed allocations. Approximately 48 KiB of useful two-load/one-store row traffic per call gives about 126 GB/s from the measured elapsed time. | L1 traffic dominates; hoisting has only a small ceiling. Front-end stalled cycles are 0.47% of cycles. |
-| 64-row x 8192-word XOR | Dispatched 39.28 us/call and resolved 39.57 us/call in the sweep. | Zero allocations; about 6 MiB useful traffic per call, approximately 160 GB/s over the repeatedly resident 4 MiB bank. | Dispatch is below sweep noise; cache/bandwidth is the useful limit. L1-load miss rate is 25.0%, cache-miss/reference rate 1.68%, front-end stalls 1.58% of cycles. |
-| Dense RREF 1024x1024 | 0.915 ms/call. Sampled share: RREF body 73.17%, AVX2 XOR 13.37%, XOR wrapper 1.83%, allocator symbol 0.50% plus several libc memory symbols. | 267 allocations and 2,391,008 allocated bytes per call; peak live 172,608 bytes. One-shot input construction is 118 us and outside the consumer call. | 4.49 instructions/cycle and 0.96% front-end stalled cycles show no front-end/dependency-starved logical kernel. Rebuilt M4RI tables and matrix-copy traffic dominate the bit-storage cost; an XOR-only speedup has a 13.37% sampled-share ceiling. |
-| Dense matvec 1024x4096 | 17.66 us/call; `avx2_and_popcnt` is 80.21% and `matvec_simd` 17.52% of sampled cycles. | One 128-byte output allocation/call; output append proxy 0.900 us, selector proxy below the integer-nanosecond clock resolution, setup 368 us once. | 3.47 instructions/cycle, 2.05% front-end stalls, 12.0% L1-load misses and 1.84% last-level cache misses/reference. The fused reduction is the actionable dependency/instruction path; useful matrix reads are about 29 GB/s. |
-| DVB-T2 LDPC $n=64800$ | Syndrome 310.4 us; full validity check 311.0 us and early-exit spelling 310.1 us. Sparse matvec is 99.63% of sampled validity-check cycles. | One 4056-byte syndrome allocation/call; output-fill proxy about 24 us; no dispatch phase. | 3.69 instructions/cycle, 4.00% front-end stalls, 2.01% L1-load misses and 1.54% cache misses/reference. The count pass is not material; sparse gathers/branches and syndrome construction are the limit. |
-| 507-word any-nonzero | All-zero worst case: count 78.3 ns, find-first 69.6 ns. First-bit-set best case: count 78.7 ns, find-first 5.1 ns. | Zero allocations and conversions. | Early exit can be about 15.5x on the favorable pattern but only 1.13x when both spellings scan the buffer. The first-search path trades fewer instructions for data-dependent branches; the all-zero run records 1.05% front-end stalls versus 0.04% for count. |
-| 4096/65536-word SIMD popcount | 567 ns over 32 KiB and 9.22 us over 512 KiB. | Zero allocations. Useful read rates are about 58 and 57 GB/s. | Nearly identical useful bandwidth across the two sizes and less than 0.20% front-end stalls identify a load/execute-throughput plateau rather than dispatch. The 512 KiB row has 33.3% L1-load misses but only 1.68% cache misses/reference. |
-| 256 block transposes | Scalar 24.64 us; detected AVX2 12.81 us. | Zero heap allocations. | AVX2 retires 2.61 instructions/cycle with 0.04% front-end stalls; the scalar path retires 5.21 instructions/cycle but roughly 2.9x as many instructions per elapsed second. The primitive is instruction-work limited, not dispatch limited. |
-| Dense transpose 4096x4096 | 666 us/call; outer `BitMatrix::transpose` is 62.57% and AVX2 block transpose 32.26% of sampled cycles. | One 2 MiB output allocation/call, 2 MiB peak live; selector proxy 4 ns; one-shot input setup 1.33 ms. Minimum input+output useful traffic is 4 MiB/call, about 6.3 GB/s. | 2.91 instructions/cycle, 1.20% front-end stalls, 18.1% L1-load misses and 17.2% cache misses/reference. Tile assembly, intentional block scratch and output/cache traffic bound whole-consumer benefit. |
-| Packed BCH $m=14$, $B=256$ | Current/reference 45.7/45.4 ms; bitslice 18.8 ms; CLMUL fold 17.4 ms in the sweep. Reference sampled shares are 62.67% recurrence and 37.05% `packed_write_codeword`; bitslice is 92.13% batch family plus 6.99% isolated AVX2 reduce. | Workspace current still records 256 allocations and 14,336 bytes/call; batch fill about 0.31–0.43 ms, workspace construction about 6.4 us, dispatch 3 ns. | Reference, bitslice and fold retire 1.64, 1.37 and 1.38 instructions/cycle with 6.99%, 8.46% and 9.08% front-end stalls. L1 miss rates remain below 0.12% for all: arithmetic/control dependencies and bitwise codeword writing, not bandwidth, limit this L2-resident row. |
-| Allocating packed BCH $m=14$, $B=256$ | 45.68 ms/call, indistinguishable from workspace current in the sweep. | 513 allocations and 561,152 bytes/call versus 256 and 14,336 for the caller-buffer path; peak live 546,872 bytes. | The extra output allocation is **not material** while the scalar recurrence dominates. Preserve it as a negative result; retest only after a faster family makes allocation an appreciable share. |
-| Compatibility DVB BCH | $n=7200$, $B=16$: 204.9 ms/call, 272 allocations and 12.78 MiB allocated/call. $n=32400$, $B=1$: 66.8 ms, 21 allocations and 3.65 MiB/call. The $n=7200$, $B=1$ call graph assigns 86.49% to `BchEncoder::encode` and 12.53% to field multiplication. | Conversion to field-polynomial coefficients, division temporaries and fresh codeword storage occur inside every encode. | This is a separate field-polynomial route, not evidence for a transpose kernel. It is recorded for the existing migration owner; REQ-05 forbids turning it into an independent encoder campaign here. |
-
-The generic `stalled-cycles-backend` perf event is unavailable on this Zen 3
-host (`No supported events found`), so no backend-stall percentage is
-fabricated. The committed core groups quantify front-end stalled cycles, IPC,
-branch misses, and the cache groups above. Release disassembly then identifies
-the actual dependency shapes: serial scalar parity/remainder accumulators,
-four scalar matvec accumulators, one vector accumulator in AVX2 AND-popcount,
-and the staged mask/shift/XOR transpose. Downstream experiments should use
-supported Zen 3 IBS or named raw PMU events if they need a causal backend-stall
-breakdown.
+| 64-row x 64-word XOR | 344 ns dispatched, 322 ns resolved, 318 ns SIMD backend; 32 row pairs per call. | No allocation. About 49 KiB of load/load/store traffic per call, about 140 GB/s from L1. | IPC 2.65, front-end stalls 0.60%, L1 load misses 12.4%: an L1 store-bandwidth loop in which dispatch is a 6% term. |
+| 64-row x 8192-word XOR | 35.3 us dispatched, 36.5 us resolved, 34.6 us SIMD backend. | About 6 MiB per call, about 178 GB/s over the resident 4 MiB bank. | IPC 2.03, L1 misses 28.8%, LLC misses 1.6% of references: cache traffic, and the confirmed interval spans one. |
+| Dense RREF 1024 | 798 us; `rref` body 72.9%, `avx2_xor_into` 14.2%, `xor_fn` 1.7%, libc memory routines about 5%. | 267 allocations and 2.39 MiB per call (the working clone and one Gray table per pivot block), peak live 173 KiB; setup 106 us once. | IPC 4.62, front-end stalls 0.61%: a table-building and copying consumer whose XOR ceiling is the 14% kernel share. |
+| Dense matvec 1024x4096 | 15.9 us; `avx2_and_popcnt` 80.2%, `matvec_simd` 17.1%, `and_popcnt_fn` 2.5%. | One 128-byte output allocation and bit-append (unpack proxy 1.05 us); dispatch below clock resolution. | IPC 3.46, front-end stalls 1.75%, L1 misses 10.7%, LLC misses 2.1%; matrix reads about 33 GB/s: the fused reduction is the actionable path. |
+| LDPC syndrome $n = 64800$ | 269 us; `SpBitMatrix::matvec` 99.7% in the syndrome, the count spelling and the early-exit spelling alike. | One 4056-byte output allocation; output bit-append proxy 23 us. | IPC 3.73, front-end stalls 4.2%, branch misses 1.7%: bit gathers dominate; the count is below 0.5%. |
+| 507-word zero test | Count 69 ns, find-first 62 ns on the all-zero buffer; 4.9 ns when bit 0 is set. | None. | Early exit is 1.12x when both scan the buffer and 14x when the first bit is set; the search path trades 29% fewer instructions for 0.36% branch misses and 1.0% front-end stalls. |
+| 65536-word popcount | SIMD 8.0 us (65 GB/s) at 512 KiB and 505 ns (65 GB/s) at 32 KiB; scalar 25.9 us (20 GB/s). | None. | Constant useful bandwidth across L1 and L2 with L1 misses 6.4% and 33.3%: a load-and-execute plateau, not dispatch. The scalar fallback has no `POPCNT`: the binary's only `POPCNT` instructions are inside `avx2_and_popcnt` (20) and `avx2_popcnt` (10), and the 0x5555/0x3333 bit-twiddle constants sit in the scalar paths of `Prepared::run`, `is_valid_codeword` and `matvec_scalar`. |
+| 256 block transposes | Scalar 24.9 us, AVX2 11.5 us; 1570 versus 543 instructions per block. | None. | AVX2 IPC 2.59 with 0.04% front-end stalls against scalar IPC 4.82: the lane is bounded by vector-unit throughput and its own dependency chain, not by dispatch or the front end. |
+| Dense transpose 4096 | 600 us; `BitMatrix::transpose` outer loop 64.7%, `transpose_64x64_avx2` 31.2%. | One 2 MiB output allocation per call; input and output traffic 4 MiB, about 7 GB/s. | IPC 2.89, L1 misses 18.9%, LLC misses 26.1% of references: tile assembly, the two intentional 64-word scratch blocks and cache traffic bound the whole consumer. |
+| Packed BCH $m = 14$, $B = 256$ | Current 40.0 ms: `encode_systematic_with` 62.8%, `packed_write_codeword` 37.0%. Fold 15.2 ms: `packed_write_codeword` 96.3%, `fold_block_pclmul` 3.2%. Bitslice 15.7 ms: batch body 91.9%, `bitslice_reduce_avx2` 7.6%. Table 16.3 ms. | 256 allocations of 56 bytes per call in `validate_batch` (0.011 ms per 1024 messages); batch fill 0.31 ms; workspace 6 us; dispatch 3 ns. | IPC 1.65, 1.38 and 1.44 with front-end stalls 8.1%, 12.0% and 8.8%, branch misses 5.4% to 8.0%, L1 misses under 0.12%: control and data dependencies, and above all the bit-serial codeword write of about 14.8 ms per batch, which is common to every family. |
+| Allocating packed BCH | 40.2 ms allocating, 40.1 ms caller buffer. | 513 allocations and 561 KiB per call against 256 and 14 KiB. | Confirmed not material while the scalar recurrence and the bit-serial write dominate. |
+| Parallel packed BCH | 41.6, 7.21, 4.33 and 3.61 ms at 1, 6, 12 and 24 workers ($B = 256$); 161, 27.6, 25.0 and 12.5 ms ($B = 1024$). | Same per-message allocation. | Single-run scaling of the current family only; the entry point exposes no forced-family arm. |
+| DVB-T2 compatibility BCH | 11.25 ms per Short-frame codeword; `BchEncoder::encode` 86.9%, `Gf2mElement` multiplication 12.4%; 58.6 ms per Normal frame. | 272 allocations and 12.8 MiB per 16-frame call (message and shifted polynomials, division temporaries, fresh codeword). | IPC 1.20: a field-polynomial route. Recorded for its owner; not campaigned here. |
 
 ### Scratch buffers versus compiler spills
 
-[`asm/frame-traffic.txt`](../../bench_results/04b85d10/2026-09-07-04b85d10-profile/asm/frame-traffic.txt)
-classifies one bounded disassembly of every relevant routine against the source
-declaration that settles intent:
+[`frame-traffic.txt`](../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/frame-traffic.txt)
+counts frame stores and loads in one bounded Rust 1.95 disassembly of each
+routine and joins them with the declaration that settles intent:
 
-- `avx2_{and,popcnt,and_popcnt,xor,find_first_one}` have no frame traffic.
-- BCH parity unpack (18 frame stores/4 loads), dense transpose (77/110), and
-  both scalar and AVX2 64x64 transpose (235/235 and 40/19) use intentional
-  algorithmic scratch buffers.
-- Bitslice reduce scalar/AVX2 (4 stores each), scalar/PCLMUL fold (9/10),
-  packed table/fold reduce (16/33 and 4/10), dense matvec scalar/SIMD (15/27
-  and 9/15), and sparse matvec (13/24) declare no local buffer; their frame
-  traffic is compiler spill/register pressure.
-- `packed_write_codeword` has no frame traffic, so its 37.05% reference share
-  is bit-at-a-time input/output work rather than stack scratch.
+- No frame traffic: `avx2_xor_into`, `avx2_and_into`, `avx2_popcnt`,
+  `avx2_and_popcnt`, `avx2_find_first_one`, `packed_write_codeword`.
+- Intentional scratch: the portable 64x64 transpose (235 stores, 235 loads)
+  and the AVX2 lane (40, 19) copy the block into a local they mutate in place
+  (`transpose-scalar-scratch`, `transpose-avx2-scratch`); the tiled dense
+  transpose (75, 115) holds `tile_in` and `tile_out`
+  (`dense-transpose-tile-scratch`); `unpack_parity` (18, 4) transposes the
+  bit-sliced register back through a block (`bch-unpack-parity`).
+- Compiler spill or register pressure: `bitslice_reduce_{scalar,avx2}`
+  (4 stores each), `fold_block_{scalar,pclmul}` (9, 10),
+  `packed_table_reduce` (16, 33), `packed_fold_reduce` (4, 10),
+  `matvec_scalar` (17, 27), `matvec_simd` (10, 15) and `SpBitMatrix::matvec`
+  (22, 29) declare no local buffer.
 
 ## Any-nonzero opportunities
 
-The following production sites ask only whether a packed syndrome is zero and
-therefore can be measured with `find_first_one().is_none()` (or a canonical
-`any_nonzero` spelling) instead of completing a population count:
+Production sites that ask only whether a packed syndrome is zero and spell it
+as a full count, with the measured consequence where one exists:
 
-- `LdpcCode::is_valid_codeword` in `crates/gf2-coding/src/ldpc/core.rs` —
-  directly measured here and **not material** at DVB-T2 normal-frame size.
-- ORBGRAND's candidate loop in `crates/gf2-coding/src/grand/orbgrand.rs` —
-  potentially material because the loop tests many incrementally updated
-  syndromes and favorable candidates may exit early; measure pattern
-  position/distribution before changing it.
-- BP-OSD's corrected-word check in
-  `crates/gf2-coding/src/osd/bp_osd.rs` — one post-correction syndrome check;
-  likely bounded by the parity-check matvec, so it needs a whole-decoder cell.
-- Product-code row and column validity loops in
-  `crates/gf2-coding/src/product/mod.rs` — each syndrome can exit early and the
-  outer loops already stop at the first invalid component; measure invalid
-  word distributions and matrix extraction together.
+- `LdpcCode::is_valid_codeword` (`ldpc-is-valid-count`): confirmed not
+  material at $n = 64800$; the syndrome matvec is 99.7% of the check.
+- The LDPC BP decoder's per-iteration early-termination check and terminal
+  check (`ldpc-bp-early-termination`, `ldpc-bp-final-check`): the same
+  consumer repeated per iteration, bounded by the same matvec.
+- ORBGRAND's candidate loop (`orbgrand-count`): each candidate clones the
+  base syndrome, XORs a few columns and counts, so the count is a comparable
+  share of per-candidate work and the first nonzero bit's position varies;
+  this is the one site where the spelling may be material.
+- BP-OSD's post-correction check (`bp-osd-count`), product-code row and column
+  validity (`product-row-count`, `product-col-count`) and GLDPC component
+  checks (`gldpc-component-check`): one matvec per check, bounded by it.
 
-Count uses in conformance tests, assertions, weight/parity calculations, and
-APIs returning the exact Hamming weight are not candidates: they require the
-full count or do not affect production performance.
+Counts in conformance tests, assertions and APIs returning a Hamming weight
+are not candidates.
 
 ## Ranked candidate experiments
 
-1. **Packed BCH family selection and complete bitslice/fold consumer
-   (`1d4fd63d` as the conversion consumer).** Hypothesis: selecting an existing
-   non-reference family for the current $m=14$, $B=256$ packed entry point
-   materially reduces whole-consumer time because the exploratory gap is much
-   larger than dispatch/setup noise and the cell is arithmetic-bound. Measure
-   both `ClmulFold` and `BitsliceInterleaved`, including batch fill, workspace,
-   parity unpack/transposes, `packed_write_codeword`, allocations, and the
-   current selector. Do not infer the winner from the sweep; freeze a
-   version-current before/after family and preserve losing rows. This issue
-   does not change the selector.
-2. **Fused AND-popcount in dense matvec (`5cbb6545`).** Hypothesis: a Zen 3
-   population-count candidate that improves the existing nibble-LUT fused
-   kernel can materially improve 1024x4096 dense matvec because 80.21% of its
-   sampled cycles execute that kernel. Compare scalar POPCNT, current AVX2 and
-   CSA/Harley-Seal across the row-width/cache ladder, then require a
-   whole-matvec interval with output allocation included. Preserve small and
-   memory-throughput no-win regions.
-3. **Eight-to-64-word logical dispatch/threshold (`2037941f`).** Hypothesis:
-   hoisting dispatch or adjusting/unrolling the selected AVX2 row operation can
-   help repeated mid-range row consumers, while it cannot help 8192-word rows
-   whose dispatch disappears into cache traffic. Freeze neighboring 4/8/16/64
-   word cells and actual `BitMatrix::row_xor`/RREF consumers; require the
-   whole-consumer confidence bound, not an isolated AVX2 label.
-4. **Complete transpose consumer (`1d4fd63d`).** Hypothesis: PSHUFB or an
-   adapter-complete movemask geometry can improve the isolated detected block
-   transform, but whole dense transpose is capped by the current block's
-   32.26% sampled share unless it also reduces tile/scratch/cache traffic.
-   Compare the same little-endian 64x64 relation, tails and non-square shapes;
-   include tile assembly, packing/unpacking and the packed BCH consumer. A
-   faster isolated transform that loses after conversion is a retained
-   negative result.
-5. **Early-exit any-nonzero in repeated candidate checks (`5cbb6545`).** The
-   directly measured LDPC validity substitution is **not material** and should
-   not justify a library change alone. Hypothesis: ORBGRAND may benefit because
-   it performs the check repeatedly and the position of the first nonzero bit
-   varies. Profile that whole consumer first; include all-zero worst case and
-   early/middle/late nonzero distributions. BP-OSD and product-code checks are
-   secondary only if their whole-consumer attribution clears the frozen
-   materiality threshold.
-6. **RREF table/scratch reuse, not another XOR kernel (`2037941f` only if its
-   scope is amended by the lead).** Hypothesis: reducing the 267 allocations
-   and 2.39 MiB of per-call allocation traffic could help RREF; accelerating
-   XOR alone cannot exceed its 13.37% sampled share. This is lower priority and
-   outside the named mid-range kernel story unless tracked explicitly.
+Each entry names the consumer, the materiality hypothesis, the measured share
+it could move and the downstream issue that tests it. Not-material findings
+stay listed so the downstream issues do not rediscover them.
 
-The allocating packed BCH path, large-row dispatch, LDPC full-count spelling,
-and XOR-only RREF idea remain documented not-material/no-win findings. They
-must not disappear when downstream issues select only the top experiments.
+1. **Word-wise systematic codeword assembly for packed BCH (`1d4fd63d`).**
+   Consumer: `encode_batch_into` on the DVB-T2 mother codes. Hypothesis:
+   replacing the bit-serial `packed_write_codeword` with word copies and
+   shifted parity placement removes most of the 14.8 ms per 256-message batch
+   that every family pays. Share it could move: 96% of the fold consumer
+   (15.0 ms) and 37% of the current one. This is a bit-layout packing change
+   and belongs with the conversion costs `1d4fd63d` REQ-09 measures.
+2. **Packed BCH family selection (`1d4fd63d`).** Consumer: the same entry
+   point. Hypothesis: admitting `ClmulFold` or `BitsliceInterleaved` for
+   $m = 14$ at $B \ge 16$ (sweep: fold 0.95 ms against 2.50 ms at $B = 16$)
+   is a confirmed 2.70x and 2.49x whole-consumer gain at $B = 256$ under the
+   current admission rule; the tuning profile, not a kernel, is the change.
+   The bitslice family is the conversion consumer named in the issue.
+3. **Fused AND-popcount in dense matvec (`5cbb6545`).** Consumer:
+   `BitMatrix::matvec` on 64-word rows. Hypothesis: a Zen 3 fused reduction
+   that beats the nibble-LUT `avx2_and_popcnt` moves up to 80% of a 15.9 us
+   consumer at 33 GB/s and IPC 3.46; the whole-matvec cell must include the
+   128-byte output allocation and bit-append.
+4. **A `POPCNT`-enabled scalar arm and the four/eight-word popcount cutover
+   (`5cbb6545`).** Consumer: `BitVec::count_ones`. Hypothesis: the
+   conservative build's scalar fallback is a bit-twiddle sequence, so its
+   REQ-07 "scalar POPCNT" comparison needs a feature-detected `popcnt` arm;
+   against the current fallback the AVX2 route is 3.04x at 512 KiB and 1.20x
+   at eight words, and per-call dispatch costs 1.54x at four words.
+5. **Row-XOR cutover and dispatch hoisting at 4 to 8 words (`2037941f`).**
+   Consumer: `BitMatrix::row_xor` and elimination loops. Hypothesis: the
+   four-word row is confirmed 1.35x faster through the SIMD backend and the
+   eight-word loop 1.12x with dispatch hoisted; 64 words is 1.057
+   [1.051, 1.098], not material under a 1.10 rule and reportable under a rule
+   the mid-range story declares itself; 8192 words is not material.
+6. **Complete transpose consumer (`1d4fd63d`).** Consumer: `BitMatrix::transpose`
+   and the bitslice parity unpack. Hypothesis: a PSHUFB or movemask block
+   transform can improve the isolated primitive (detected AVX2 is already
+   1.93x over scalar) but the whole 4096-square transpose is bounded by the
+   64.7% outer loop, the 2 MiB output allocation and 7 GB/s traffic; tile
+   assembly and packing must be in the cell.
+7. **Early-exit any-nonzero in repeated candidate checks (`5cbb6545`).**
+   Consumer: ORBGRAND. Hypothesis: the isolated 1.12x (all-zero) to 14x
+   (first bit set) spread becomes material where the check is a large share
+   of per-candidate work; the LDPC validity check is confirmed not material
+   and must not justify a library change alone.
+8. **RREF table and copy traffic, not another XOR kernel (`2037941f` only if
+   its dense-matrix scope is amended).** Consumer: `alg::rref::rref`.
+   Hypothesis: 267 allocations and 2.39 MiB per call with a 14% XOR share cap
+   any XOR-only gain; reuse of the Gray table buffer is the lever.
+
+Preserved negative results: the caller-buffer BCH entry point (1.002), the
+LDPC full count (0.998), dispatch hoisting on 8192-word rows (0.996) and on
+64-word rows under 1.10 (1.057), the 56-byte per-message allocation in the BCH
+batch prologue (0.011 ms per 1024 messages), and the DVB-T2 compatibility
+encoder, which reaches no packed kernel and is not this issue's campaign.
 
 ## Criterion-by-criterion outcome
 
-- **REQ-01 — MET for profiling/selection.** The accepted exploratory release
-  receipt pins the frozen version-1 protocol, measurement contract, addendum,
-  exact executable and producing inputs; raw samples, host/lock evidence,
-  journal, checkpoints, correctness run and independent acceptance summary are
-  committed. No production change is adopted, so before/after confirmation is
-  neither claimed nor required here. Version 2 is absent and explicitly left
-  to downstream confirmatory work.
-- **REQ-02 — MET.** The 168-row diagnostic sweep and 15-cell accepted pilot
-  cover logical row/RREF/dense parity/sparse parity, count/fused reduction,
-  block/dense transpose, packed BCH family/bitslice/parallel/allocation routes,
-  and the separate current DVB BCH entry point. The tables above state the
-  actual public-entry-to-kernel routes and justify every ladder.
-- **REQ-03 — MET.** Paired intervals and sample counts quantify ranked gaps;
-  raw profiler shares, allocation bytes/counts, setup/pack/unpack/batch-fill/
-  dispatch phases, counter ratios, cache working sets/useful bandwidth and
-  generated code explain the limits. The unsupported generic backend-stall
-  event is reported rather than fabricated; front-end stalls and assembly
-  dependency chains are preserved. Scratch and spill traffic and all
-  production any-nonzero candidates are classified.
-- **REQ-04 — MET.** Both the diagnostic baseline export and accepted pilot are
-  committed, the ranked experiments carry family-specific consumer/materiality
-  hypotheses, and negative/not-material findings remain explicit. The baseline
-  is the pinned current pre-change executable rather than historical encoder
-  numbers.
-- **REQ-05 — MET.** Changes are limited to profile harness portability,
-  receipts and findings. There is no kernel optimization, tuning selection,
-  encoder/decoder implementation change, or independent BCH campaign.
+- **REQ-01 — MET.** Six accepted v3 receipts pin the contract, protocol,
+  schema and addenda by receipt-local digest, the issue-owned producing
+  closure, the executable and toolchain, host and lock observations, journals
+  and checkpoints; confirmations use fresh samples with resolution evidence
+  from distinct pilots; negative and not-material outcomes are retained. No
+  production change is adopted, so no before/after evidence is owed here.
+- **REQ-02 — MET.** Profiles cover logical row/RREF/matvec/LDPC, count and
+  fused-reduction, and transpose/bitslice consumers including the current
+  packed BCH path and the DVB-T2 compatibility encoder; routes are verified
+  citations and sizes are justified against the cache hierarchy and the
+  DVB-T2 frames.
+- **REQ-03 — MET.** Sampled shares, allocation counts and bytes with sites,
+  conversion and dispatch phases, hardware-counter ratios, useful bandwidth
+  and Rust 1.95 disassembly quantify each consumer; spills and intentional
+  scratch are classified with verified citations; any-nonzero sites are
+  enumerated with the one measured consumer.
+- **REQ-04 — MET.** Baseline receipts measure the pinned pre-change
+  executable; eight ranked experiments carry consumer, hypothesis, movable
+  share and downstream issue; not-material findings are preserved.
+- **REQ-05 — MET.** Changes are confined to `dev/active/04b85d10` and
+  `dev/bench_results/04b85d10`; the existing runner, acceptance tool and
+  wrapper are reused unchanged.
