@@ -50,10 +50,14 @@ Fastest measured arm per workload. Each arm's sample is its executions in the wo
 | 16384 w = 131072 B, SplitMix64 seed 310, warm | libpopcnt | 12 | 1.441 us [1.439 us, 1.446 us] | 90.97 [90.63, 91.10] | mula-avx2-harley-seal | 1.0666 [1.0614, 1.0693] | 1.3579 [1.3525, 1.3602] |
 | 1048576 w = 8388608 B, SplitMix64 seed 311, streaming | mula-avx2-harley-seal | 12 | 242.216 us [241.469 us, 246.969 us] | 34.63 [33.97, 34.74] | libpopcnt | 1.0097 [0.9895, 1.0267] | 1.0496 [1.0293, 1.0531] |
 
-Workload contrasts: each arm's median on the variant workload over its median on the reference workload (above 1: the variant is slower), resampled independently; 95% descriptive intervals.
+Workload contrasts: each arm's median on the variant workload over its median on the reference workload (above 1: the variant takes longer), resampled independently; 95% descriptive intervals.
 
 | Variant / reference | Change | production-dispatch | nibble-lut | scalar-popcnt | compiler-count-ones | libpopcnt | mula-avx2-harley-seal |
 |---|---|---|---|---|---|---|---|
+| w8 / w4 | 64 B instead of 32 B: gf2's SIMD threshold | 0.7109 [0.7058, 0.7152] | 1.2063 [1.1998, 1.2121] | 1.4325 [1.4074, 1.4385] | 1.4758 [1.4511, 1.4801] | 1.2371 [1.2301, 1.2514] | 1.1178 [1.1114, 1.1211] |
+| w12 / w8 | 96 B instead of 64 B: libpopcnt's AVX2 threshold | 1.0914 [1.0857, 1.0961] | 1.1689 [1.1634, 1.1729] | 1.3122 [1.3068, 1.3201] | 1.3971 [1.3923, 1.4013] | 1.0097 [0.9975, 1.0187] | 1.0891 [1.0877, 1.0926] |
+| w64 / w60 | 512 B instead of 480 B: Mula's carry-save loop | 1.0341 [1.0318, 1.0360] | 1.0344 [1.0325, 1.0358] | 1.0465 [1.0276, 1.0558] | 1.0630 [1.0600, 1.0661] | 1.0530 [1.0487, 1.0580] | 0.7484 [0.7450, 0.7507] |
+| w128 / w64 | 1 KiB instead of 512 B: libpopcnt's Harley-Seal loop | 1.6449 [1.6425, 1.6471] | 1.7038 [1.7019, 1.7065] | 1.7601 [1.7474, 1.7713] | 1.9278 [1.9231, 1.9329] | 1.6076 [1.5890, 1.6242] | 1.4627 [1.4567, 1.4696] |
 | w256-off24 / w256 | window 24 bytes past a vector boundary | 1.0030 [1.0011, 1.0062] | 1.0066 [1.0026, 1.0104] | 1.0001 [0.9977, 1.0036] | 0.9997 [0.9966, 1.0113] | 1.0217 [1.0134, 1.0264] | not declared |
 | w64-ones / w64 | every bit set | 1.0035 [1.0018, 1.0045] | 1.0037 [1.0014, 1.0083] | 0.9977 [0.9880, 1.0047] | 1.0013 [0.9989, 1.0066] | 1.0033 [0.9964, 1.0077] | 0.9994 [0.9948, 1.0038] |
 | w64-zeros / w64 | every bit clear | 0.9984 [0.9966, 1.0001] | 0.9981 [0.9970, 1.0005] | 0.9927 [0.9851, 1.0080] | 0.9974 [0.9949, 0.9999] | 0.9969 [0.9901, 1.0049] | 0.9921 [0.9889, 0.9970] |
@@ -163,10 +167,14 @@ Fastest measured arm per workload. Each arm's sample is its executions in the wo
 | 16384 w = 131072 B, SplitMix64 seed 310, warm | libpopcnt | 24 | 1.451 us [1.449 us, 1.456 us] | 90.34 [90.03, 90.48] | mula-avx2-harley-seal | 1.0580 [1.0544, 1.0622] | 1.3618 [1.3577, 1.3649] |
 | 1048576 w = 8388608 B, SplitMix64 seed 311, streaming | mula-avx2-harley-seal | 24 | 244.667 us [243.423 us, 247.812 us] | 34.29 [33.85, 34.46] | libpopcnt | 1.0177 [0.9990, 1.0252] | 1.0606 [1.0441, 1.0670] |
 
-Workload contrasts: each arm's median on the variant workload over its median on the reference workload (above 1: the variant is slower), resampled independently; 95% descriptive intervals.
+Workload contrasts: each arm's median on the variant workload over its median on the reference workload (above 1: the variant takes longer), resampled independently; 95% descriptive intervals.
 
 | Variant / reference | Change | production-dispatch | nibble-lut | scalar-popcnt | compiler-count-ones | libpopcnt | mula-avx2-harley-seal |
 |---|---|---|---|---|---|---|---|
+| w8 / w4 | 64 B instead of 32 B: gf2's SIMD threshold | 0.7166 [0.7133, 0.7226] | 1.2044 [1.1543, 1.2174] | 1.4499 [1.4068, 1.4643] | 1.4865 [1.4745, 1.4960] | 1.2378 [1.2342, 1.2395] | 1.1206 [1.1129, 1.1269] |
+| w12 / w8 | 96 B instead of 64 B: libpopcnt's AVX2 threshold | 1.0795 [1.0704, 1.0856] | 1.1702 [1.1574, 1.1774] | 1.2924 [1.2833, 1.3016] | 1.3855 [1.3779, 1.3904] | 1.0094 [1.0045, 1.0149] | 1.0788 [1.0737, 1.0859] |
+| w64 / w60 | 512 B instead of 480 B: Mula's carry-save loop | 1.0423 [1.0404, 1.0438] | 1.0342 [1.0315, 1.0358] | 1.0484 [1.0394, 1.0540] | 1.0695 [1.0669, 1.0724] | 1.0542 [1.0515, 1.0569] | 0.7501 [0.7478, 0.7512] |
+| w128 / w64 | 1 KiB instead of 512 B: libpopcnt's Harley-Seal loop | 1.6438 [1.6415, 1.6481] | 1.7132 [1.7063, 1.7185] | 1.7573 [1.7472, 1.7719] | 1.9296 [1.9204, 1.9444] | 1.5938 [1.5859, 1.6015] | 1.4698 [1.4653, 1.4772] |
 | w256-off24 / w256 | window 24 bytes past a vector boundary | 1.0029 [1.0013, 1.0044] | 0.9897 [0.9881, 0.9959] | 0.9996 [0.9964, 1.0019] | 1.0011 [0.9997, 1.0027] | 1.0235 [1.0193, 1.0280] | not declared |
 | w64-ones / w64 | every bit set | 1.0006 [0.9988, 1.0031] | 1.0029 [1.0019, 1.0055] | 0.9983 [0.9911, 1.0080] | 0.9987 [0.9958, 1.0009] | 1.0020 [0.9988, 1.0065] | 1.0045 [1.0028, 1.0108] |
 | w64-zeros / w64 | every bit clear | 0.9960 [0.9940, 0.9979] | 1.0024 [1.0001, 1.0054] | 0.9930 [0.9855, 1.0026] | 0.9977 [0.9929, 1.0008] | 0.9971 [0.9936, 1.0009] | 0.9991 [0.9974, 1.0028] |
@@ -319,6 +327,13 @@ Conversion-cost probes of whole-consumer cells: one value per execution, measure
 | `and-popcnt-w512k-streaming-vs-two-pass` | and-two-pass | 24 | 1.180 us [1.140 us, 1.230 us] | 67.687 us [67.032 us, 68.421 us] | 1.000 ns [1.000 ns, 1.000 ns] |
 
 Observed selected paths per arm: and-fused: gf2-kernels-simd:avx2-and-popcnt; and-scalar-control: portable-and-count-ones-loop; and-two-pass: gf2-ops-and-inplace+popcount:scalar, gf2-ops-and-inplace+popcount:simd-avx2.
+
+## Pilot and confirmation agreement
+
+Each confirmation point estimate against the interval of the accepted pilot that froze its resolution, an independent earlier sample of the same cell.
+
+- `v3-popcount-confirmation` against `v3-popcount-pilot`: 55 of 59 inside; `popcount-w128-vs-nibble-lut` 1.0400 outside [1.0412, 1.0476]; `popcount-w128-vs-compiler-count-ones` 0.3704 outside [0.3670, 0.3699]; `popcount-w16384-vs-nibble-lut` 0.9883 outside [0.9883, 0.9994]; `popcount-w1m-streaming-vs-compiler-count-ones` 0.6065 outside [0.5912, 0.5999].
+- `v3-and-popcnt-confirmation` against `v3-and-popcnt-pilot-r2`: 5 of 6 inside; `and-popcnt-w4096-vs-scalar-control` 0.3270 outside [0.3273, 0.3286].
 
 ## History: protocol-v1 confirmation `2026-09-08-26465e6c-popcount`
 
