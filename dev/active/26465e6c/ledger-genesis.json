@@ -1,0 +1,67 @@
+{
+  "and_popcnt_baselines": {
+    "genesis": "empty",
+    "ledger_path": "dev/bench_results/26465e6c/v3-and-popcnt-family-ledger.jsonl",
+    "reason": "The protocol-v1 confirmatory addendum was frozen but never run: no receipt directory, execution log or checkpoint exists for it, so it reserved nothing. The v1 pilot 2026-09-08-26465e6c-and-popcnt-pilot is exploratory and spends zero comparisons.",
+    "unrun_v1_confirmation_addendum": {
+      "path": "dev/active/26465e6c/superseded/v1/addendum-and-popcnt.json",
+      "sha256": "3ad4bc4304759f7a373c44d252570d157e4308d45342ff4c1b8d36af8391e523"
+    }
+  },
+  "issue": "26465e6c",
+  "popcount_baselines": {
+    "candidate_ids_by_arm": {
+      "compiler-count-ones": "94657d05b62c16c850b2f36abed3df6818269c853fe48130eac2704554cd0cb0",
+      "libpopcnt": "7a22f21566b671da38b8ad7c263d5fccd9551620983f93d49611e0af22725806",
+      "mula-avx2-harleyseal": "61c28b034c9f28e75f3b3a6e64af21ccfad3a1a830ad3c692b42dbbd0ccf6efc",
+      "nibble-lut": "368159d2ec1f6e681c9f760d6b0a27020f0748d27635603c1e17b8a3c23983d8",
+      "scalar-popcnt": "dbdbef89ea1156a023a8f0ba608e147c2e569b0b0c2df6166f15337e4bc3af0d"
+    },
+    "entry": {
+      "addendum_sha256": "5ff212e57d0e7cd23b40d6007668cb7a51a1e96aa1a1d4d389e1b66f3d2290c3",
+      "campaign": "popcount-26465e6c-20260908",
+      "candidates": [
+        "368159d2ec1f6e681c9f760d6b0a27020f0748d27635603c1e17b8a3c23983d8",
+        "61c28b034c9f28e75f3b3a6e64af21ccfad3a1a830ad3c692b42dbbd0ccf6efc",
+        "7a22f21566b671da38b8ad7c263d5fccd9551620983f93d49611e0af22725806",
+        "94657d05b62c16c850b2f36abed3df6818269c853fe48130eac2704554cd0cb0",
+        "dbdbef89ea1156a023a8f0ba608e147c2e569b0b0c2df6166f15337e4bc3af0d"
+      ],
+      "comparisons": 9,
+      "family": "popcount-baselines",
+      "predecessor": "0000000000000000000000000000000000000000000000000000000000000000",
+      "protocol_version": 1,
+      "sequence": 0
+    },
+    "ledger_path": "dev/bench_results/26465e6c/v3-popcount-family-ledger.jsonl",
+    "line_sha256": "fcf4694ae96972764055e82134da8271b1c10021f06d8a9120b7bf6f8ddd4364",
+    "source": {
+      "addendum_sha256": "5ff212e57d0e7cd23b40d6007668cb7a51a1e96aa1a1d4d389e1b66f3d2290c3",
+      "addendum_snapshot": "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount/inputs/family-addendum.json",
+      "plan": "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount/plan.json",
+      "plan_sha256": "651567b9da6931edd136cd08f7349c008fd10490d9a7bc62b5cbc46781992559",
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount/receipt.json",
+      "receipt_sha256": "ff2eba5f722beefea55e9216f1dc4f6f13f779644c38c54ac6370c544a3cd1e8"
+    },
+    "source_fields": {
+      "campaign": "receipt.campaign_id",
+      "candidates": "tuning_campaign_support::trial_ledger::candidate_ids over the addendum, saved plan and receipt.arms",
+      "comparisons": "count of decoded addendum cells whose role is not exploratory",
+      "family": "decoded receipt-local addendum family.id",
+      "protocol_version": "decoded receipt-local addendum protocol.version"
+    }
+  },
+  "prior_campaign_search": {
+    "confirmations": [
+      "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount"
+    ],
+    "receipt_directories": [
+      "2026-09-07-26465e6c-popcount-pilot",
+      "2026-09-08-26465e6c-and-popcnt-pilot",
+      "2026-09-08-26465e6c-popcount",
+      "2026-09-08-26465e6c-popcount-pilot"
+    ]
+  },
+  "purpose": "Carry the protocol-v1 confirmatory reservation of the popcount-baselines question into its v3 ledger, and open the never-confirmed and-popcnt-baselines ledger empty. The imported line is retrospective accounting, not a premeasurement reservation.",
+  "schema": "popcount-v3-ledger-genesis-v1"
+}

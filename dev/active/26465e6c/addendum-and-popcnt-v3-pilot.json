@@ -1,0 +1,209 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "and-popcnt-baselines",
+    "issue": "26465e6c",
+    "purpose": "kernel-family",
+    "description": "Protocol-v3 pilot of jit:26465e6c. Question: how does gf2's fused AVX2 AND-popcount kernel (and_popcnt_fn, which BitMatrix::matvec_simd calls per row) compare with a single-pass portable control and with the two-pass public gf2-core route a consumer takes today (copy into a temporary, kernels::ops::and_inplace, kernels::ops::popcount) at a small, an L2-resident and a streaming size? The fused kernel is the baseline of every cell, so a speedup below 1 means the fused kernel is faster. Two-pass cells are whole-consumer: the temporary buffer and the extra pass lie inside every timed call. Neither pinned external library exposes a fused AND or XOR reduction, so no external arm exists. Every arm is single-threaded, so every cell is single-core. The protocol-v1 confirmation of this question was frozen but never run."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-10T17:40:31Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Unused: every cell is comparator-gap and decides against the material-gap threshold.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "An alternative within 5% of the fused kernel is not a materially different implementation for a consumer of these leaf kernels, so an interval whose lower bound clears 1/margin records not-worse rather than a gap.",
+    "material_gap_threshold": 1.1,
+    "material_gap_rationale": "An alternative must run at least 10% faster than the fused kernel before replacing the fused kernel, or moving a dispatch threshold toward the alternative, could repay its maintenance and dependency cost for a consumer; smaller gaps leave the established route in place."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "A baseline survey: it authorizes no production change. Adoption belongs to the optimization issue that consumes this baseline, with its own before/after evidence."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/26465e6c/v3-and-popcnt-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "and-popcnt-w4-vs-scalar-control",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-random-w4: 32 B per operand: below gf2-core's 8-word threshold, so the public route runs scalar",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 401
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-w4096-vs-scalar-control",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-random-w4096: 32 KiB per operand, 64 KiB pair: L2-resident",
+        "size": {
+          "words": 4096,
+          "word_offset": 0
+        },
+        "seed": 402
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-w512k-streaming-vs-scalar-control",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-random-w512k-streaming: 4 MiB per operand, 64 MiB rotated over eight banks of pairs",
+        "size": {
+          "words": 524288,
+          "word_offset": 0
+        },
+        "seed": 403
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-w4-vs-two-pass",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-random-w4: 32 B per operand: below gf2-core's 8-word threshold, so the public route runs scalar",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 401
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-w4096-vs-two-pass",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-random-w4096: 32 KiB per operand, 64 KiB pair: L2-resident",
+        "size": {
+          "words": 4096,
+          "word_offset": 0
+        },
+        "seed": 402
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-w512k-streaming-vs-two-pass",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-random-w512k-streaming: 4 MiB per operand, 64 MiB rotated over eight banks of pairs",
+        "size": {
+          "words": 524288,
+          "word_offset": 0
+        },
+        "seed": 403
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

@@ -1,9 +1,3 @@
-# Built artifacts of the survey harness; the sources and pins are committed,
-# the binaries are rebuilt by fetch-build.sh.
-libpopcnt-arm
-mula-avx2-harleyseal-arm
-gf2-side/target/
-
 # The harness crate's lock file pins the dependency graph a receipt was
 # taken against, so it is committed despite the repository-wide rule.
 !gf2-side/Cargo.lock
