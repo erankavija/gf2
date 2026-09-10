@@ -1,0 +1,51 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {"id": "zen3-benchmark-protocol", "version": 3},
+  "family": {
+    "id": "bch-genmatrix-consumer",
+    "issue": "6fb89a3c",
+    "purpose": "consumer-family",
+    "description": "Confirmatory comparison of the BCH contextual conversion family: gf2's production generator-matrix materialization BchCode::generator_matrix (the `materialize/fresh-alloc` row of crates/gf2-coding/benches/bch_genmatrix.rs, B1 (15,5), B2 (127,64), B3 (255,223)) against the established M4RI construction of issue 4e732b56 (fill the k shifted copies of the generator polynomial, then mzd_echelonize_m4ri). Each timed call constructs a fresh k x n generator matrix from an already-constructed code (gf2 allocates a BitMatrix and fills it from the generator polynomial; M4RI copies the prefilled matrix through its cached allocator and reduces the copy); the routes yield the same code in different systematic layouts, which the correctness gate checks by row-space equality. Code construction is setup outside the windows and is reported per execution. The baseline arm is always gf2 and the candidate is always M4RI, so a speedup above 1 means M4RI is ahead. These are current pinned measurements of both implementations, not a historical receipt and not an encoder throughput campaign. The pilot's three reference-oracle cells (bch_generator_matrix_by_encoding, the test-support oracle the protocol-v1 pilot measured as the gf2 route) do not enter confirmation, as the pilot addendum declared, because they do not measure the production route this question is about. With m = 3 reservations on the family's first confirmatory attempt the corrected per-comparison alpha is 0.025/3 and each bootstrap tail expects 41.7 of 10000 draws, so P-20 can yield confirmatory outcomes. The workload seed is carried for schema uniformity and no generator consumes it: the generator matrix is a deterministic function of the code. Both executables are byte-identical to the pilot's. Resolution evidence is the accepted pilot receipt dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-pilot/receipt.json (SHA-256 e680c1d1c7a1482afa19a62f83154293e54ebdda8f5763239185321504edc1a7); its widest relative bootstrap half-width over all 6 pilot cells at the ledger-derived pilot alpha 0.025 is 0.0188 (bch-genmatrix-b2-vs-m4ri), frozen as 0.02. This survey adopts no production implementation; the outcomes are comparator-gap decisions and the receipt is not expected to qualify."
+  },
+  "frozen": {"frozen_utc": "2026-09-10T22:30:10Z"},
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This survey adopts no production implementation, so no worthwhile-speedup threshold applies and none is declared.",
+    "measurement_resolution": 0.02,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-pilot/receipt.json",
+      "sha256": "e680c1d1c7a1482afa19a62f83154293e54ebdda8f5763239185321504edc1a7"
+    },
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "One-sided non-inferiority margin 1.1: the pilot's widest relative half-width over all its cells is 0.0188 (frozen resolution 0.02), so the margin lies strictly outside the measured resolution as protocol v3 requires. It is the pilot's provisional value, kept because the resolution permits it.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "Material-gap threshold 1.2: the arms use different algorithms (gf2 fills the systematic generator column by column from a recurrence on the generator polynomial; M4RI reduces the matrix of shifted polynomial copies), so a 20% whole-construction gap is the smallest difference worth attributing to a named cause (operation count, allocation, word-level elimination) rather than to host noise; it exceeds one plus the frozen resolution 0.02."
+  },
+  "complexity_budget": {"max_new_unsafe_kernels": 0, "max_added_source_lines": 0, "maintenance_rationale": "The family reuses established harnesses and changes no production code; the whole diff is under dev/."},
+  "family_wise": {"alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": [], "ledger_path": "dev/bench_results/6fb89a3c/v3-bch-genmatrix-family-ledger.jsonl"},
+  "search_budget": {"max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1},
+  "holdout": {"required": false, "cells": []},
+  "cells": [
+    {
+      "cell_id": "bch-genmatrix-b1-vs-m4ri", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 15, "k": 5}, "seed": 20260910201},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-b2-vs-m4ri", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 127, "k": 64}, "seed": 20260910202},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "bch-genmatrix-b3-vs-m4ri", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bch-generator-matrix", "size": {"n": 255, "k": 223}, "seed": 20260910203},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    }
+  ]
+}

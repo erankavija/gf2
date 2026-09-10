@@ -1,0 +1,21 @@
+pilot dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-pilot
+receipt_sha256 e680c1d1c7a1482afa19a62f83154293e54ebdda8f5763239185321504edc1a7
+family bch-genmatrix-consumer
+ledger-derived per-comparison confidence 0.975
+
+bch-genmatrix-b1-vs-m4ri                                0.0107
+bch-genmatrix-b2-vs-m4ri                                0.0188
+bch-genmatrix-b3-vs-m4ri                                0.0156
+bch-genmatrix-reference-b1-vs-m4ri                      0.0130
+bch-genmatrix-reference-b2-vs-m4ri                      0.0127
+bch-genmatrix-reference-b3-vs-m4ri                      0.0120
+
+widest relative half-width 0.018826 (bch-genmatrix-b2-vs-m4ri)
+frozen measurement_resolution 0.02
+equivalence_margin 1.1
+material_gap_threshold 1.2
+raised: none
+confirmatory cells m=3: bch-genmatrix-b1-vs-m4ri, bch-genmatrix-b2-vs-m4ri, bch-genmatrix-b3-vs-m4ri
+expected draws per bootstrap tail at attempt 1: 41.67 (P-20 requires 20)
+max_pilot_trials_per_cell 1
+output dev/active/6fb89a3c/addendum-bch-genmatrix-v3-confirmation.json
