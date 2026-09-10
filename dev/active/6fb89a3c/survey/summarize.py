@@ -18,6 +18,7 @@ from the evaluator.
 """
 from __future__ import annotations
 
+import collections
 import json
 import math
 import pathlib
@@ -150,6 +151,8 @@ def render(directory: pathlib.Path, family: str) -> list[str]:
         f"ledger comparisons m = {fam.get('comparisons')}; attempt alpha {fam.get('family_alpha')}; "
         f"per-comparison confidence {fam.get('per_comparison_confidence')}; findings {len(summary['findings'])}.",
         "",
+        "**Cells.**",
+        "",
         "| Cell | Role | Pairs | Flagged | gf2 median ns/call [95%] | External median ns/call [95%] | Speedup [interval] | Decision | Outcome | Note | gf2 path | External path |",
         "|---|---|---:|---:|---:|---:|---|---|---|---|---|---|",
     ]
@@ -194,20 +197,20 @@ def render(directory: pathlib.Path, family: str) -> list[str]:
                 if any(ratios):
                     share_rows.append(f"| `{cell['cell_id']}` | {share[1]} | {len(ratios)} | {fmt_interval(median_interval(ratios))} |")
     if probe_rows:
-        lines += ["", "Probes outside the timed windows, in nanoseconds (whole-ns integers as the arms report them): median over "
+        lines += ["", "**Probes.** Probes outside the timed windows, in nanoseconds (whole-ns integers as the arms report them): median over "
                   "the cell's executions with its bootstrap 95% interval. The work each probe isolates is also inside every "
                   "timed call. Bitshuffle adapter copies are skipped, and not probed, where the layouts coincide (64x64). "
                   "Single-pass probes include timer overhead and first-use effects and can exceed the warm per-call median, "
                   "so they are not shares of the timed call. "
                   + " ".join(notes), "", "| Cell | Arm | Probe (field) | n | Median [95% interval] |", "|---|---|---|---:|---|"] + probe_rows
     if share_rows:
-        lines += ["", "Within-execution shares: the probe divided by the same execution's ns per call, median over executions "
+        lines += ["", "**Shares.** Within-execution shares: the probe divided by the same execution's ns per call, median over executions "
                   "with its bootstrap 95% interval. Integer-ns probes of a few nanoseconds carry up to half a nanosecond of "
                   "rounding in the numerator.", "", "| Cell | Share | n | Median [95% interval] |", "|---|---|---:|---|"] + share_rows
     cross = [row for row in CROSS_CELL.get(family, [])]
     if cross:
         cells = {cell["cell_id"]: cell for cell in receipt["cells"]}
-        lines += ["", "Cross-cell ratios of medians: per-execution ns per call of one arm in two cells, each cell's executions "
+        lines += ["", "**Cross-cell ratios.** Ratios of medians: per-execution ns per call of one arm in two cells, each cell's executions "
                   "resampled independently (the cells are not paired), bootstrap 95% interval.", "",
                   "| Ratio | n (numerator, denominator) | Ratio [95% interval] |", "|---|---|---|"]
         for label, side, top, bottom in cross:
@@ -215,10 +218,69 @@ def render(directory: pathlib.Path, family: str) -> list[str]:
             denominator = [p[side]["ns_per_call"] for p in cells[bottom]["pairs"]]
             lines.append(f"| {label} | {len(numerator)}, {len(denominator)} | {fmt_interval(ratio_interval(numerator, denominator))} |")
     if summary["findings"]:
-        lines += ["", "Acceptance findings:", ""]
+        lines += ["", "**Acceptance findings.**", ""]
     for finding in summary["findings"]:
         lines.append(f"- `{finding['rule']}` ({finding['severity']}) {finding.get('cell') or ''}: {finding['message']}")
     return lines
+
+
+def overview() -> list[str]:
+    """Per-family confirmation outcomes, resolution derivation and arm identity."""
+    outcomes, resolutions, arms = [], [], []
+    for _, family in FAMILIES:
+        for directory in sorted(RESULTS.glob(f"v3-*-6fb89a3c-{family}-confirmation")):
+            receipt = json.loads((directory / "receipt.json").read_text())
+            summary = json.loads((directory / "acceptance-summary.json").read_text())
+            fam = summary["family"]
+            draws = fam["bootstrap_resamples"] * (1.0 - fam["per_comparison_confidence"]) / 2
+            counts = collections.Counter(cell["outcome"] for cell in summary["cells"])
+            leads = [f"`{cell['cell_id']}` ({cell['decision']})" for cell in summary["cells"]
+                     if cell.get("interval") and cell["interval"]["estimate"] > 1]
+            outcomes.append(
+                f"| `{fam['family_id']}` | `{directory.name}` | {fam['comparisons']} | {fam['per_comparison_confidence']:.6g} | "
+                f"{draws:.1f} | {', '.join(f'{outcome} x{count}' for outcome, count in sorted(counts.items()))} | "
+                f"{'; '.join(leads) or 'none'} |")
+            effect = json.loads((directory / receipt["addendum"]["snapshot"]).read_text())["effect"]
+            pilot = pathlib.Path(effect["resolution_evidence"]["receipt"]).parent
+            pilot_summary = json.loads((pilot / "acceptance-summary.json").read_text())
+            widths = {cell["cell_id"]: max(abs(cell["interval"]["estimate"] - cell["interval"]["lower"]),
+                                           abs(cell["interval"]["upper"] - cell["interval"]["estimate"])) / cell["interval"]["estimate"]
+                      for cell in pilot_summary["cells"] if cell.get("interval")}
+            widest = max(widths, key=widths.get)
+            resolutions.append(
+                f"| `{fam['family_id']}` | `{pilot.name}` | {1.0 - pilot_summary['family']['per_comparison_confidence']:.4g} | "
+                f"{widths[widest]:.4f} (`{widest}`) | {effect['measurement_resolution']} | {effect['material_gap_threshold']} | "
+                f"{effect['equivalence_margin']} |")
+            pilot_arms = json.loads((pilot / "receipt.json").read_text())["arms"]
+            for arm, described in receipt["arms"].items():
+                before = pilot_arms.get(arm, {}).get("executable_sha256")
+                after = described["executable_sha256"]
+                arms.append(f"| `{fam['family_id']}` | {arm} | `{before}` | `{after}` | {'yes' if before == after else 'no'} |")
+    return [
+        "## Overview",
+        "",
+        "**Confirmation outcomes.** Per family: the ledger comparison count $m$, the per-comparison confidence, the expected "
+        "draws in each bootstrap tail at that confidence (P-20 requires twenty), the evaluator's outcome counts, and the cells "
+        "whose speedup estimate exceeds 1 (the external arm ahead) with their decisions.",
+        "",
+        "| Family | Confirmation | $m$ | Confidence | Tail draws | Outcomes | External arm ahead |",
+        "|---|---|---:|---:|---:|---|---|",
+        *outcomes,
+        "",
+        "**Resolution.** The widest relative half-width of the resolution pilot's intervals (as P-03 recomputes it) and the "
+        "settings the confirmation addendum froze from it.",
+        "",
+        "| Family | Resolution pilot | Pilot alpha | Widest relative half-width | Frozen resolution | Material gap | Equivalence |",
+        "|---|---|---:|---:|---:|---:|---:|",
+        *resolutions,
+        "",
+        "**Arm executables.** Each arm's executable digest in the resolution pilot and in the confirmation receipt.",
+        "",
+        "| Family | Arm | Pilot SHA-256 | Confirmation SHA-256 | Same bytes |",
+        "|---|---|---|---|---|",
+        *arms,
+        "",
+    ]
 
 
 def main() -> None:
@@ -235,7 +297,7 @@ def main() -> None:
         "[Efron1979] of the committed per-execution values (10000 resamples, 95% nearest-rank quantiles, SplitMix64 "
         "[Steele2014] index draws implemented in the generator, seed 0x6FB89A3C); they are descriptive.",
         "",
-    ]
+    ] + overview()
     for title, family in FAMILIES:
         out += [f"## {title}", ""]
         for mode in ("pilot", "confirmation"):
