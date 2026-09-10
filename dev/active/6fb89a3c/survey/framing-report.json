@@ -22,7 +22,7 @@
       "status": "pass",
       "selected_path": "m4ri-mzd_transpose-tiled",
       "conversion": {
-        "setup_ns": 21770,
+        "setup_ns": 21320,
         "pack_ns": 0,
         "unpack_ns": 0,
         "batch_fill_ns": 0,
@@ -50,7 +50,7 @@
       "status": "pass",
       "selected_path": "bitshuffle-bshuf_bitshuffle-avx2-consumer",
       "conversion": {
-        "setup_ns": 23311,
+        "setup_ns": 18380,
         "pack_ns": 0,
         "unpack_ns": 0,
         "batch_fill_ns": 0,
@@ -68,9 +68,9 @@
       "status": "pass",
       "selected_path": "bitshuffle-bshuf_bitshuffle-avx2-consumer-pack-unpack",
       "conversion": {
-        "setup_ns": 22991,
-        "pack_ns": 193,
-        "unpack_ns": 153,
+        "setup_ns": 22751,
+        "pack_ns": 187,
+        "unpack_ns": 151,
         "batch_fill_ns": 0,
         "dispatch_ns": 0
       }
@@ -85,7 +85,7 @@
       "status": "pass",
       "selected_path": "isa-l-xor_gen_base-vects3-aligned32",
       "conversion": {
-        "setup_ns": 1450,
+        "setup_ns": 1500,
         "pack_ns": 0,
         "unpack_ns": 0,
         "batch_fill_ns": 0,
@@ -103,7 +103,7 @@
       "status": "pass",
       "selected_path": "isa-l-xor_gen_base-vects4-aligned32",
       "conversion": {
-        "setup_ns": 1710,
+        "setup_ns": 2030,
         "pack_ns": 0,
         "unpack_ns": 0,
         "batch_fill_ns": 0,
@@ -119,11 +119,11 @@
       "status": "pass",
       "selected_path": "m4ri-genmatrix-rref",
       "conversion": {
-        "setup_ns": 5210,
+        "setup_ns": 3120,
         "pack_ns": 110,
         "unpack_ns": 0,
         "batch_fill_ns": 0,
-        "dispatch_ns": 590
+        "dispatch_ns": 560
       }
     },
     {
@@ -146,7 +146,7 @@
       "status": "pass",
       "selected_path": "BitMatrix::transpose",
       "conversion": {
-        "setup_ns": 21320,
+        "setup_ns": 42590,
         "pack_ns": 0,
         "unpack_ns": 0,
         "batch_fill_ns": 0,
@@ -163,8 +163,8 @@
       "status": "pass",
       "selected_path": "gf2-xor_inplace (simd) sources=2",
       "conversion": {
-        "setup_ns": 490,
-        "pack_ns": 3,
+        "setup_ns": 460,
+        "pack_ns": 2,
         "unpack_ns": 0,
         "batch_fill_ns": 0,
         "dispatch_ns": 0
@@ -197,7 +197,7 @@
       "status": "pass",
       "selected_path": "BchCode::generator_matrix/B1",
       "conversion": {
-        "setup_ns": 15410,
+        "setup_ns": 17710,
         "pack_ns": 0,
         "unpack_ns": 0,
         "batch_fill_ns": 0,
@@ -214,7 +214,7 @@
       "status": "pass",
       "selected_path": "bch_generator_matrix_by_encoding/B1",
       "conversion": {
-        "setup_ns": 20631,
+        "setup_ns": 17380,
         "pack_ns": 0,
         "unpack_ns": 0,
         "batch_fill_ns": 0,

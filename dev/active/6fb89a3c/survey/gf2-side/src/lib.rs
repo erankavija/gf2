@@ -31,13 +31,27 @@ pub fn seeded_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
     matrix
 }
 
-/// Runs the canonical calibrated timing loop and normalizes its samples for
-/// the child-v2 result shape.
+/// Applies the request's cache-state policy, then runs the canonical
+/// calibrated timing loop and normalizes its samples for the child-v2 result
+/// shape.
+///
+/// A `warm` cell makes one untimed pass of the timed body over its working
+/// set before calibration, as the protocol defines `warm`. The arms implement
+/// no other policy, so `cold` and `streaming` requests are refused before
+/// the body runs rather than reported as applied.
 pub fn timed_windows(
+    cache_state: &str,
     windows: u32,
     window_target_ms: u32,
     mut body: impl FnMut(usize),
 ) -> io::Result<Vec<TimingSample>> {
+    if cache_state != "warm" {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("cache state {cache_state:?} is not implemented; the survey arms measure warm cells"),
+        ));
+    }
+    body(0);
     // `execution_windows_configured` rotates through this fixed bank count;
     // each arm has one deterministic workload, so the bank is only a protocol
     // index here rather than a second input-generation dimension.
@@ -199,6 +213,27 @@ mod tests {
                 }
             }
             assert_eq!(actual, expected, "words={words}");
+        }
+    }
+
+    #[test]
+    fn warm_request_runs_one_untimed_pass_before_calibration() {
+        // Zero windows makes the timing loop reject the protocol before its
+        // first call, so every body call observed here is the warm pass.
+        let mut calls = Vec::new();
+        assert!(timed_windows("warm", 0, 100, |bank| calls.push(bank)).is_err());
+        assert_eq!(calls, vec![0]);
+    }
+
+    #[test]
+    fn unimplemented_cache_states_are_refused_without_running_the_body() {
+        for state in ["cold", "streaming"] {
+            let mut calls = 0;
+            assert!(
+                timed_windows(state, 5, 100, |_| calls += 1).is_err(),
+                "{state}"
+            );
+            assert_eq!(calls, 0, "{state}");
         }
     }
 

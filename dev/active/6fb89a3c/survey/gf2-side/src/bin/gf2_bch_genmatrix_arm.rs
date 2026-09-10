@@ -136,17 +136,28 @@ fn main() {
     let (selected_path, samples) = match case.route.as_str() {
         "materialize" => (
             format!("BchCode::generator_matrix/{}", case.code),
-            timed_windows(request.windows, request.window_target_ms, |_| {
-                black_box(code.generator_matrix().expect("generator matrix shape"));
-            }),
+            timed_windows(
+                &request.cache_state,
+                request.windows,
+                request.window_target_ms,
+                |_| {
+                    black_box(code.generator_matrix().expect("generator matrix shape"));
+                },
+            ),
         ),
         "reference" => (
             format!("bch_generator_matrix_by_encoding/{}", case.code),
-            timed_windows(request.windows, request.window_target_ms, |_| {
-                let mut out = BitMatrix::zeros(code.k(), code.n());
-                bch_generator_matrix_by_encoding(&code, &mut out).expect("generator matrix shape");
-                black_box(out);
-            }),
+            timed_windows(
+                &request.cache_state,
+                request.windows,
+                request.window_target_ms,
+                |_| {
+                    let mut out = BitMatrix::zeros(code.k(), code.n());
+                    bch_generator_matrix_by_encoding(&code, &mut out)
+                        .expect("generator matrix shape");
+                    black_box(out);
+                },
+            ),
         ),
         other => fail(format!(
             "unknown route {other:?}; expected materialize or reference"

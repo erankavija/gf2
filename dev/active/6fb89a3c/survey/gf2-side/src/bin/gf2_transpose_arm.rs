@@ -118,9 +118,14 @@ fn main() {
                 name: "scalar-bit-twiddle",
             });
             let mut output = [0u64; 64];
-            let samples = timed_windows(request.windows, request.window_target_ms, |_| {
-                (fns.transpose_64x64)(black_box(&input), black_box(&mut output));
-            })
+            let samples = timed_windows(
+                &request.cache_state,
+                request.windows,
+                request.window_target_ms,
+                |_| {
+                    (fns.transpose_64x64)(black_box(&input), black_box(&mut output));
+                },
+            )
             .unwrap_or_else(|error| fail(error));
             black_box(output);
             (fns.name.to_owned(), None, samples)
@@ -135,9 +140,14 @@ fn main() {
             let started = std::time::Instant::now();
             let matrix = seeded_matrix(rows, cols, case.seed);
             let setup_ns = u64::try_from(started.elapsed().as_nanos()).unwrap_or(u64::MAX);
-            let samples = timed_windows(request.windows, request.window_target_ms, |_| {
-                black_box(matrix.transpose());
-            })
+            let samples = timed_windows(
+                &request.cache_state,
+                request.windows,
+                request.window_target_ms,
+                |_| {
+                    black_box(matrix.transpose());
+                },
+            )
             .unwrap_or_else(|error| fail(error));
             (
                 "BitMatrix::transpose".to_owned(),
