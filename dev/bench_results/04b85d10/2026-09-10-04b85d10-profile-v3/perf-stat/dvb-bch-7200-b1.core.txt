@@ -1,0 +1,19 @@
+# case: {"workload":"dvb-bch-encode","size":{"n":7200,"batch":1},"seed":306}
+# path: current  cache_state: warm  target_ms: 2000
+# events: cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":166,"conversion":{"batch_fill_ns":357,"dispatch_ns":0,"pack_ns":0,"setup_ns":1131457,"unpack_ns":0},"elapsed_ns":"1833029737","ns_per_call":11042347.813253012,"path":"current","prepare":{"allocated_bytes":177316,"allocations":66,"freed_bytes":107838},"schema":"consumer-profile-record-v1","seed":306,"selected_path":"current/field-polynomial-div-rem","size":{"batch":1,"n":7200},"target_ms":2000,"timed":{"allocated_bytes":132579552,"allocated_bytes_per_call":798672.0,"allocations":2822,"allocations_per_call":17.0,"freed_bytes":132579552,"peak_live_bytes":516384},"workers_observed":1,"workload":"dvb-bch-encode"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"dvb-bch-encode","size":{"n":7200,"batch":1},"seed":306} --path current --cache-state warm --target-ms 2000':
+
+     9,000,541,057      cycles:u                                                              
+    10,804,054,541      instructions:u                                                        
+     2,294,231,662      branches:u                                                            
+         1,693,189      branch-misses:u                                                       
+         8,885,394      stalled-cycles-frontend:u                                             
+
+       1.860782008 seconds time elapsed
+
+       1.853108000 seconds user
+       0.001995000 seconds sys
+
+

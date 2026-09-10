@@ -1,0 +1,147 @@
+# label: bch-unpack-parity
+# pattern: BchEncodeFns>::unpack_parity
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile
+# binary sha256: 72be1c750584eeab639d99c13b1994da91f7a8dd4ace3f69bacf3c7d56114c64
+# symbols matching this pattern in the binary: 1
+
+## symbol at 0000000000096d10, 0x0000000000000274 bytes
+0000000000096d10 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity>:
+   96d10:	push   %rbp
+   96d11:	push   %r15
+   96d13:	push   %r14
+   96d15:	push   %r13
+   96d17:	push   %r12
+   96d19:	push   %rbx
+   96d1a:	sub    $0x458,%rsp
+   96d21:	mov    %rsi,0x20(%rsp)
+   96d26:	mov    %rcx,0x38(%rsp)
+   96d2b:	mov    %rcx,%r12
+   96d2e:	shr    $0x6,%r12
+   96d32:	mov    %ecx,%eax
+   96d34:	and    $0x3f,%eax
+   96d37:	cmp    $0x1,%rax
+   96d3b:	sbb    $0xffffffffffffffff,%r12
+   96d3f:	mov    %r12,0x40(%rsp)
+   96d44:	mov    %rdx,0x48(%rsp)
+   96d49:	mov    %rcx,0x10(%rsp)
+   96d4e:	lea    0x1(%rcx),%rax
+   96d52:	mov    %rax,0x258(%rsp)
+   96d5a:	mov    %rdx,0x8(%rsp)
+   96d5f:	cmp    %rax,%rdx
+   96d62:	jne    96ef7 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0x1e7>
+   96d68:	mov    %r9,%rbx
+   96d6b:	mov    %r9,0x50(%rsp)
+   96d70:	mov    %r12,%rax
+   96d73:	shl    $0x6,%rax
+   96d77:	mov    %rax,0x258(%rsp)
+   96d7f:	cmp    %rax,%r9
+   96d82:	jne    96f35 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0x225>
+   96d88:	mov    %r8,%r15
+   96d8b:	mov    %rdi,%rbp
+   96d8e:	lea    0x258(%rsp),%rdi
+   96d96:	mov    0x64283(%rip),%r14        # fb020 <memset@GLIBC_2.2.5>
+   96d9d:	mov    $0x200,%edx
+   96da2:	xor    %esi,%esi
+   96da4:	call   *%r14
+   96da7:	lea    0x58(%rsp),%rdi
+   96dac:	mov    $0x200,%edx
+   96db1:	xor    %esi,%esi
+   96db3:	call   *%r14
+   96db6:	cmpq   $0x0,0x10(%rsp)
+   96dbc:	je     96ec0 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0x1b0>
+   96dc2:	mov    0x0(%rbp),%rax
+   96dc6:	mov    %rax,0x18(%rsp)
+   96dcb:	lea    (%r12,%r12,1),%rbp
+   96dcf:	xor    %r13d,%r13d
+   96dd2:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   96de0:	mov    %r13,%rax
+   96de3:	shl    $0x6,%rax
+   96de7:	mov    0x10(%rsp),%r14
+   96dec:	sub    %rax,%r14
+   96def:	cmp    $0x40,%r14
+   96df3:	mov    $0x40,%ecx
+   96df8:	cmovae %rcx,%r14
+   96dfc:	lea    0x1(%rax),%rdi
+   96e00:	lea    (%r14,%rax,1),%rsi
+   96e04:	inc    %rsi
+   96e07:	cmp    %rax,%rsi
+   96e0a:	jbe    96ed2 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0x1c2>
+   96e10:	cmp    0x8(%rsp),%rsi
+   96e15:	ja     96ed2 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0x1c2>
+   96e1b:	lea    0x1(%r13),%rax
+   96e1f:	mov    %rax,0x28(%rsp)
+   96e24:	mov    0x20(%rsp),%rax
+   96e29:	lea    (%rax,%rdi,8),%rsi
+   96e2d:	lea    0x0(,%r14,8),%rdx
+   96e35:	mov    %rdx,0x30(%rsp)
+   96e3a:	lea    0x258(%rsp),%rdi
+   96e42:	call   *0x64038(%rip)        # fae80 <memcpy@GLIBC_2.14>
+   96e48:	lea    (%rsp,%r14,8),%rdi
+   96e4c:	add    $0x258,%rdi
+   96e53:	mov    $0x200,%edx
+   96e58:	sub    0x30(%rsp),%rdx
+   96e5d:	xor    %esi,%esi
+   96e5f:	call   *0x641bb(%rip)        # fb020 <memset@GLIBC_2.2.5>
+   96e65:	lea    0x258(%rsp),%rdi
+   96e6d:	lea    0x58(%rsp),%rsi
+   96e72:	call   *0x18(%rsp)
+   96e76:	lea    (%r15,%r12,8),%rdx
+   96e7a:	xor    %eax,%eax
+   96e7c:	nopl   0x0(%rax)
+   96e80:	cmp    %rbx,%r13
+   96e83:	jae    96ee4 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0x1d4>
+   96e85:	mov    0x58(%rsp,%rax,1),%rcx
+   96e8a:	mov    %rcx,(%r15,%r13,8)
+   96e8e:	lea    (%r12,%r13,1),%rdi
+   96e92:	cmp    %rbx,%rdi
+   96e95:	jae    96ee7 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0x1d7>
+   96e97:	mov    0x60(%rsp,%rax,1),%rcx
+   96e9c:	add    $0x10,%rax
+   96ea0:	mov    %rcx,(%rdx,%r13,8)
+   96ea4:	add    %rbp,%r13
+   96ea7:	cmp    $0x200,%rax
+   96ead:	jne    96e80 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0x170>
+   96eaf:	mov    0x28(%rsp),%rax
+   96eb4:	mov    %rax,%r13
+   96eb7:	cmp    %r12,%rax
+   96eba:	jne    96de0 <<gf2_kernels_simd::bch_encode::BchEncodeFns>::unpack_parity+0xd0>
+   96ec0:	add    $0x458,%rsp
+   96ec7:	pop    %rbx
+   96ec8:	pop    %r12
+   96eca:	pop    %r13
+   96ecc:	pop    %r14
+   96ece:	pop    %r15
+   96ed0:	pop    %rbp
+   96ed1:	ret
+   96ed2:	lea    0x613a7(%rip),%rcx        # f8280 <anon.5168fff85ca8528ddc0811ab8cae3bf4.55.llvm.1594372131456583489>
+   96ed9:	mov    0x8(%rsp),%rdx
+   96ede:	call   *0x640b4(%rip)        # faf98 <_DYNAMIC+0x330>
+   96ee4:	mov    %r13,%rdi
+   96ee7:	lea    0x6137a(%rip),%rdx        # f8268 <anon.5168fff85ca8528ddc0811ab8cae3bf4.54.llvm.1594372131456583489>
+   96eee:	mov    %rbx,%rsi
+   96ef1:	call   *0x63f79(%rip)        # fae70 <_DYNAMIC+0x208>
+   96ef7:	lea    0x38(%rsp),%rax
+   96efc:	mov    %rax,0x58(%rsp)
+   96f01:	mov    0x63ff0(%rip),%rax        # faef8 <_DYNAMIC+0x290>
+   96f08:	mov    %rax,0x60(%rsp)
+   96f0d:	lea    -0x857f1(%rip),%rcx        # 11723 <anon.5168fff85ca8528ddc0811ab8cae3bf4.50.llvm.1594372131456583489>
+   96f14:	lea    0x6131d(%rip),%r9        # f8238 <anon.5168fff85ca8528ddc0811ab8cae3bf4.51.llvm.1594372131456583489>
+   96f1b:	lea    0x48(%rsp),%rsi
+   96f20:	lea    0x258(%rsp),%rdx
+   96f28:	lea    0x58(%rsp),%r8
+   96f2d:	xor    %edi,%edi
+   96f2f:	call   *0x6436b(%rip)        # fb2a0 <_DYNAMIC+0x638>
+   96f35:	lea    -0x833dc(%rip),%rax        # 13b60 <anon.5168fff85ca8528ddc0811ab8cae3bf4.47.llvm.1594372131456583489>
+   96f3c:	mov    %rax,0x58(%rsp)
+   96f41:	mov    0x63fb0(%rip),%rax        # faef8 <_DYNAMIC+0x290>
+   96f48:	mov    %rax,0x60(%rsp)
+   96f4d:	lea    0x40(%rsp),%rcx
+   96f52:	mov    %rcx,0x68(%rsp)
+   96f57:	mov    %rax,0x70(%rsp)
+   96f5c:	lea    -0x85ec7(%rip),%rcx        # 1109c <anon.5168fff85ca8528ddc0811ab8cae3bf4.52.llvm.1594372131456583489>
+   96f63:	lea    0x612e6(%rip),%r9        # f8250 <anon.5168fff85ca8528ddc0811ab8cae3bf4.53.llvm.1594372131456583489>
+   96f6a:	lea    0x50(%rsp),%rsi
+   96f6f:	lea    0x258(%rsp),%rdx
+   96f77:	lea    0x58(%rsp),%r8
+   96f7c:	xor    %edi,%edi
+   96f7e:	call   *0x6431c(%rip)        # fb2a0 <_DYNAMIC+0x638>

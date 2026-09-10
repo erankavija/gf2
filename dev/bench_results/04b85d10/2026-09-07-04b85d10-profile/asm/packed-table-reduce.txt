@@ -1,0 +1,625 @@
+# label: packed-table-reduce
+# pattern: encode::packed_table_reduce
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile
+# binary sha256: 72be1c750584eeab639d99c13b1994da91f7a8dd4ace3f69bacf3c7d56114c64
+# symbols matching this pattern in the binary: 1
+
+## symbol at 0000000000082180, 0x00000000000009b8 bytes
+0000000000082180 <gf2_coding::bch::encode::packed_table_reduce>:
+   82180:	push   %rbp
+   82181:	push   %r15
+   82183:	push   %r14
+   82185:	push   %r13
+   82187:	push   %r12
+   82189:	push   %rbx
+   8218a:	sub    $0x58,%rsp
+   8218e:	mov    %r9,0x50(%rsp)
+   82193:	mov    %r8,%r13
+   82196:	mov    %rcx,%rbx
+   82199:	mov    %rdx,%r14
+   8219c:	mov    0x10(%rdi),%r12
+   821a0:	mov    %rdi,0x48(%rsp)
+   821a5:	mov    0x18(%rdi),%r15
+   821a9:	mov    %r12,0x8(%rsp)
+   821ae:	sub    %r15,%r12
+   821b1:	mov    %r12d,%ecx
+   821b4:	and    $0x3f,%ecx
+   821b7:	mov    $0xffffffffffffffff,%rax
+   821be:	shl    %cl,%rax
+   821c1:	mov    %rsi,%rbp
+   821c4:	not    %rax
+   821c7:	xor    %edx,%edx
+   821c9:	cmp    $0x1,%rcx
+   821cd:	sbb    %rdx,%rdx
+   821d0:	or     %rax,%rdx
+   821d3:	mov    %rdx,0x30(%rsp)
+   821d8:	lea    0x0(,%rbx,8),%rdx
+   821e0:	mov    %r14,%rdi
+   821e3:	xor    %esi,%esi
+   821e5:	call   *0x78e35(%rip)        # fb020 <memset@GLIBC_2.2.5>
+   821eb:	mov    %r15,%r8
+   821ee:	and    $0xffffffffffffffe0,%r8
+   821f2:	mov    %r15,0x10(%rsp)
+   821f7:	cmp    %r15,%r8
+   821fa:	mov    %r12,0x38(%rsp)
+   821ff:	jne    8277e <gf2_coding::bch::encode::packed_table_reduce+0x5fe>
+   82205:	mov    0x10(%rbp),%rsi
+   82209:	mov    0x10(%rsp),%r9
+   8220e:	shr    $0x5,%r9
+   82212:	mov    0x38(%rsp),%rdx
+   82217:	je     8276f <gf2_coding::bch::encode::packed_table_reduce+0x5ef>
+   8221d:	mov    0x98(%rsp),%rax
+   82225:	mov    0x90(%rsp),%r10
+   8222d:	mov    0x8(%rbp),%rcx
+   82231:	mov    %rcx,0x18(%rsp)
+   82236:	add    $0xffffffffffffffe0,%rdx
+   8223a:	mov    %rdx,%rdi
+   8223d:	shr    $0x6,%rdi
+   82241:	and    $0x3f,%edx
+   82244:	lea    0x1(%rdi),%rcx
+   82248:	mov    %rcx,0x8(%rsp)
+   8224d:	mov    $0x40,%ecx
+   82252:	sub    %rdx,%rcx
+   82255:	mov    %rcx,0x40(%rsp)
+   8225a:	mov    0x48(%rsp),%rcx
+   8225f:	movzbl 0x20(%rcx),%ecx
+   82263:	mov    %cl,0x20(%rsp)
+   82267:	addq   $0xffffffffffffffe0,0x10(%rsp)
+   8226d:	lea    0x0(,%rbx,8),%rcx
+   82275:	lea    (%r14,%rcx,1),%r13
+   82279:	lea    -0x8(%rcx),%rbp
+   8227d:	shr    $0x3,%rbp
+   82281:	xor    %r11d,%r11d
+   82284:	mov    %rdx,0x38(%rsp)
+   82289:	mov    %rdi,0x28(%rsp)
+   8228e:	xchg   %ax,%ax
+   82290:	cmp    %rbx,%rdi
+   82293:	jae    822b0 <gf2_coding::bch::encode::packed_table_reduce+0x130>
+   82295:	mov    (%r14,%rdi,8),%r15
+   82299:	test   %rdx,%rdx
+   8229c:	je     822b8 <gf2_coding::bch::encode::packed_table_reduce+0x138>
+   8229e:	cmp    %rbx,0x8(%rsp)
+   822a3:	jae    822c0 <gf2_coding::bch::encode::packed_table_reduce+0x140>
+   822a5:	mov    0x8(%r14,%rdi,8),%r12
+   822aa:	jmp    822c3 <gf2_coding::bch::encode::packed_table_reduce+0x143>
+   822ac:	nopl   0x0(%rax)
+   822b0:	xor    %r15d,%r15d
+   822b3:	test   %rdx,%rdx
+   822b6:	jne    8229e <gf2_coding::bch::encode::packed_table_reduce+0x11e>
+   822b8:	xor    %r12d,%r12d
+   822bb:	jmp    822cb <gf2_coding::bch::encode::packed_table_reduce+0x14b>
+   822bd:	nopl   (%rax)
+   822c0:	xor    %r12d,%r12d
+   822c3:	mov    0x40(%rsp),%rcx
+   822c8:	shl    %cl,%r12
+   822cb:	dec    %r9
+   822ce:	mov    %r9,%rdi
+   822d1:	shl    $0x5,%rdi
+   822d5:	mov    %edx,%ecx
+   822d7:	shr    %cl,%r15
+   822da:	cmpb   $0x0,0x20(%rsp)
+   822df:	je     82320 <gf2_coding::bch::encode::packed_table_reduce+0x1a0>
+   822e1:	mov    0x10(%rsp),%r8
+   822e6:	sub    %rdi,%r8
+   822e9:	mov    %r8,%rcx
+   822ec:	shr    $0x6,%rcx
+   822f0:	cmp    %rsi,%rcx
+   822f3:	jae    82360 <gf2_coding::bch::encode::packed_table_reduce+0x1e0>
+   822f5:	mov    0x18(%rsp),%rdx
+   822fa:	mov    (%rdx,%rcx,8),%rdx
+   822fe:	and    $0x3f,%r8d
+   82302:	je     82368 <gf2_coding::bch::encode::packed_table_reduce+0x1e8>
+   82304:	lea    0x1(%rcx),%rdi
+   82308:	cmp    %rsi,%rdi
+   8230b:	jae    8237f <gf2_coding::bch::encode::packed_table_reduce+0x1ff>
+   8230d:	mov    0x18(%rsp),%rdi
+   82312:	mov    0x8(%rdi,%rcx,8),%rdi
+   82317:	jmp    82381 <gf2_coding::bch::encode::packed_table_reduce+0x201>
+   82319:	nopl   0x0(%rax)
+   82320:	mov    %r9,%rcx
+   82323:	shr    $1,%rcx
+   82326:	cmp    %rsi,%rcx
+   82329:	jae    82370 <gf2_coding::bch::encode::packed_table_reduce+0x1f0>
+   8232b:	mov    0x18(%rsp),%rdx
+   82330:	mov    (%rdx,%rcx,8),%rdx
+   82334:	and    $0x20,%edi
+   82337:	je     82377 <gf2_coding::bch::encode::packed_table_reduce+0x1f7>
+   82339:	lea    0x1(%rcx),%r8
+   8233d:	cmp    %rsi,%r8
+   82340:	jae    823ff <gf2_coding::bch::encode::packed_table_reduce+0x27f>
+   82346:	mov    0x18(%rsp),%r8
+   8234b:	mov    0x8(%r8,%rcx,8),%r8
+   82350:	jmp    82402 <gf2_coding::bch::encode::packed_table_reduce+0x282>
+   82355:	data16 cs nopw 0x0(%rax,%rax,1)
+   82360:	xor    %edx,%edx
+   82362:	and    $0x3f,%r8d
+   82366:	jne    82304 <gf2_coding::bch::encode::packed_table_reduce+0x184>
+   82368:	xor    %edi,%edi
+   8236a:	jmp    82389 <gf2_coding::bch::encode::packed_table_reduce+0x209>
+   8236c:	nopl   0x0(%rax)
+   82370:	xor    %edx,%edx
+   82372:	and    $0x20,%edi
+   82375:	jne    82339 <gf2_coding::bch::encode::packed_table_reduce+0x1b9>
+   82377:	xor    %r8d,%r8d
+   8237a:	jmp    82409 <gf2_coding::bch::encode::packed_table_reduce+0x289>
+   8237f:	xor    %edi,%edi
+   82381:	mov    %r8d,%ecx
+   82384:	neg    %cl
+   82386:	shl    %cl,%rdi
+   82389:	mov    %r8d,%ecx
+   8238c:	shr    %cl,%rdx
+   8238f:	or     %edx,%edi
+   82391:	bswap  %rdi
+   82394:	mov    %rdi,%rcx
+   82397:	shr    $0x4,%rcx
+   8239b:	movabs $0xf0f0f0f0f0f0f0f,%rdx
+   823a5:	and    %rdx,%rcx
+   823a8:	and    %rdx,%rdi
+   823ab:	shl    $0x4,%rdi
+   823af:	or     %rcx,%rdi
+   823b2:	mov    %rdi,%rcx
+   823b5:	movabs $0x3333333333333333,%rdx
+   823bf:	and    %rdx,%rcx
+   823c2:	shr    $0x2,%rdi
+   823c6:	and    %rdx,%rdi
+   823c9:	lea    (%rdi,%rcx,4),%rcx
+   823cd:	mov    %rcx,%rdx
+   823d0:	movabs $0x5555555500000000,%rdi
+   823da:	and    %rdi,%rdx
+   823dd:	shr    $1,%rcx
+   823e0:	and    %rdi,%rcx
+   823e3:	lea    (%rcx,%rdx,2),%rdx
+   823e7:	shr    $0x20,%rdx
+   823eb:	lea    -0x1(%rbx),%rdi
+   823ef:	cmp    $0x2,%rbx
+   823f3:	jae    82420 <gf2_coding::bch::encode::packed_table_reduce+0x2a0>
+   823f5:	test   %rbx,%rbx
+   823f8:	jne    82438 <gf2_coding::bch::encode::packed_table_reduce+0x2b8>
+   823fa:	jmp    82ab6 <gf2_coding::bch::encode::packed_table_reduce+0x936>
+   823ff:	xor    %r8d,%r8d
+   82402:	mov    %edi,%ecx
+   82404:	neg    %cl
+   82406:	shl    %cl,%r8
+   82409:	mov    %edi,%ecx
+   8240b:	shr    %cl,%rdx
+   8240e:	or     %r8,%rdx
+   82411:	lea    -0x1(%rbx),%rdi
+   82415:	cmp    $0x2,%rbx
+   82419:	jb     823f5 <gf2_coding::bch::encode::packed_table_reduce+0x275>
+   8241b:	nopl   0x0(%rax,%rax,1)
+   82420:	cmp    %rbx,%rdi
+   82423:	jae    82a93 <gf2_coding::bch::encode::packed_table_reduce+0x913>
+   82429:	mov    -0x4(%r14,%rdi,8),%rcx
+   8242e:	mov    %rcx,(%r14,%rdi,8)
+   82432:	sub    $0x1,%rdi
+   82436:	ja     82420 <gf2_coding::bch::encode::packed_table_reduce+0x2a0>
+   82438:	shlq   $0x20,(%r14)
+   8243c:	or     %r15,%r12
+   8243f:	mov    0x30(%rsp),%rcx
+   82444:	and    %rcx,-0x8(%r14,%rbx,8)
+   82449:	xor    %r12,%rdx
+   8244c:	movzbl %dl,%r15d
+   82450:	mov    %r15,%rcx
+   82453:	imul   %rbx,%rcx
+   82457:	mov    %rax,%r12
+   8245a:	sub    %rcx,%r12
+   8245d:	cmovb  %r11,%r12
+   82461:	cmp    %r12,%rbp
+   82464:	cmovb  %rbp,%r12
+   82468:	mov    %r14,%r8
+   8246b:	mov    $0x0,%edi
+   82470:	cmp    $0x3,%r12
+   82474:	jbe    824e0 <gf2_coding::bch::encode::packed_table_reduce+0x360>
+   82476:	inc    %r12
+   82479:	mov    %r12d,%r8d
+   8247c:	and    $0x3,%r8d
+   82480:	mov    $0x4,%edi
+   82485:	cmove  %rdi,%r8
+   82489:	mov    %r12,%rdi
+   8248c:	sub    %r8,%rdi
+   8248f:	lea    (%r14,%rdi,8),%r8
+   82493:	lea    0x0(,%rbx,8),%r12
+   8249b:	imul   %r12,%r15
+   8249f:	lea    0x10(%r10),%r12
+   824a3:	add    %r12,%r15
+   824a6:	xor    %r12d,%r12d
+   824a9:	nopl   0x0(%rax)
+   824b0:	movups -0x10(%r15,%r12,8),%xmm0
+   824b6:	movups (%r15,%r12,8),%xmm1
+   824bb:	movups (%r14,%r12,8),%xmm2
+   824c0:	xorps  %xmm0,%xmm2
+   824c3:	movups 0x10(%r14,%r12,8),%xmm0
+   824c9:	xorps  %xmm1,%xmm0
+   824cc:	movups %xmm2,(%r14,%r12,8)
+   824d1:	movups %xmm0,0x10(%r14,%r12,8)
+   824d7:	add    $0x4,%r12
+   824db:	cmp    %r12,%rdi
+   824de:	jne    824b0 <gf2_coding::bch::encode::packed_table_reduce+0x330>
+   824e0:	add    %rcx,%rdi
+   824e3:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   824f0:	cmp    %rax,%rdi
+   824f3:	jae    82a83 <gf2_coding::bch::encode::packed_table_reduce+0x903>
+   824f9:	mov    (%r10,%rdi,8),%rcx
+   824fd:	xor    %rcx,(%r8)
+   82500:	add    $0x8,%r8
+   82504:	inc    %rdi
+   82507:	cmp    %r13,%r8
+   8250a:	jne    824f0 <gf2_coding::bch::encode::packed_table_reduce+0x370>
+   8250c:	movzbl %dh,%ecx
+   8250f:	or     $0x100,%rcx
+   82516:	mov    %rcx,%r15
+   82519:	imul   %rbx,%r15
+   8251d:	mov    %rax,%r12
+   82520:	sub    %r15,%r12
+   82523:	cmovb  %r11,%r12
+   82527:	cmp    %r12,%rbp
+   8252a:	cmovb  %rbp,%r12
+   8252e:	mov    %r14,%r8
+   82531:	mov    $0x0,%edi
+   82536:	cmp    $0x4,%r12
+   8253a:	jb     825a0 <gf2_coding::bch::encode::packed_table_reduce+0x420>
+   8253c:	inc    %r12
+   8253f:	mov    %r12d,%r8d
+   82542:	and    $0x3,%r8d
+   82546:	mov    $0x4,%edi
+   8254b:	cmove  %rdi,%r8
+   8254f:	mov    %r12,%rdi
+   82552:	sub    %r8,%rdi
+   82555:	lea    (%r14,%rdi,8),%r8
+   82559:	lea    0x0(,%rbx,8),%r12
+   82561:	imul   %r12,%rcx
+   82565:	lea    0x10(%r10),%r12
+   82569:	add    %r12,%rcx
+   8256c:	xor    %r12d,%r12d
+   8256f:	nop
+   82570:	movups -0x10(%rcx,%r12,8),%xmm0
+   82576:	movups (%rcx,%r12,8),%xmm1
+   8257b:	movups (%r14,%r12,8),%xmm2
+   82580:	xorps  %xmm0,%xmm2
+   82583:	movups 0x10(%r14,%r12,8),%xmm0
+   82589:	xorps  %xmm1,%xmm0
+   8258c:	movups %xmm2,(%r14,%r12,8)
+   82591:	movups %xmm0,0x10(%r14,%r12,8)
+   82597:	add    $0x4,%r12
+   8259b:	cmp    %r12,%rdi
+   8259e:	jne    82570 <gf2_coding::bch::encode::packed_table_reduce+0x3f0>
+   825a0:	add    %r15,%rdi
+   825a3:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   825b0:	cmp    %rax,%rdi
+   825b3:	jae    82a83 <gf2_coding::bch::encode::packed_table_reduce+0x903>
+   825b9:	mov    (%r10,%rdi,8),%rcx
+   825bd:	xor    %rcx,(%r8)
+   825c0:	add    $0x8,%r8
+   825c4:	inc    %rdi
+   825c7:	cmp    %r13,%r8
+   825ca:	jne    825b0 <gf2_coding::bch::encode::packed_table_reduce+0x430>
+   825cc:	mov    %edx,%ecx
+   825ce:	shr    $0x10,%ecx
+   825d1:	movzbl %cl,%r15d
+   825d5:	or     $0x200,%r15
+   825dc:	mov    %r15,%rcx
+   825df:	imul   %rbx,%rcx
+   825e3:	mov    %rax,%r12
+   825e6:	sub    %rcx,%r12
+   825e9:	cmovb  %r11,%r12
+   825ed:	cmp    %r12,%rbp
+   825f0:	cmovb  %rbp,%r12
+   825f4:	mov    %r14,%r8
+   825f7:	mov    $0x0,%edi
+   825fc:	cmp    $0x4,%r12
+   82600:	jb     82670 <gf2_coding::bch::encode::packed_table_reduce+0x4f0>
+   82602:	inc    %r12
+   82605:	mov    %r12d,%r8d
+   82608:	and    $0x3,%r8d
+   8260c:	mov    $0x4,%edi
+   82611:	cmove  %rdi,%r8
+   82615:	mov    %r12,%rdi
+   82618:	sub    %r8,%rdi
+   8261b:	lea    (%r14,%rdi,8),%r8
+   8261f:	lea    0x0(,%rbx,8),%r12
+   82627:	imul   %r12,%r15
+   8262b:	lea    0x10(%r10),%r12
+   8262f:	add    %r12,%r15
+   82632:	xor    %r12d,%r12d
+   82635:	data16 cs nopw 0x0(%rax,%rax,1)
+   82640:	movups -0x10(%r15,%r12,8),%xmm0
+   82646:	movups (%r15,%r12,8),%xmm1
+   8264b:	movups (%r14,%r12,8),%xmm2
+   82650:	xorps  %xmm0,%xmm2
+   82653:	movups 0x10(%r14,%r12,8),%xmm0
+   82659:	xorps  %xmm1,%xmm0
+   8265c:	movups %xmm2,(%r14,%r12,8)
+   82661:	movups %xmm0,0x10(%r14,%r12,8)
+   82667:	add    $0x4,%r12
+   8266b:	cmp    %r12,%rdi
+   8266e:	jne    82640 <gf2_coding::bch::encode::packed_table_reduce+0x4c0>
+   82670:	add    %rcx,%rdi
+   82673:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   82680:	cmp    %rax,%rdi
+   82683:	jae    82a83 <gf2_coding::bch::encode::packed_table_reduce+0x903>
+   82689:	mov    (%r10,%rdi,8),%rcx
+   8268d:	xor    %rcx,(%r8)
+   82690:	add    $0x8,%r8
+   82694:	inc    %rdi
+   82697:	cmp    %r13,%r8
+   8269a:	jne    82680 <gf2_coding::bch::encode::packed_table_reduce+0x500>
+   8269c:	shr    $0x18,%edx
+   8269f:	or     $0x300,%rdx
+   826a6:	mov    %rdx,%rcx
+   826a9:	imul   %rbx,%rcx
+   826ad:	mov    %rax,%r15
+   826b0:	sub    %rcx,%r15
+   826b3:	cmovb  %r11,%r15
+   826b7:	cmp    %r15,%rbp
+   826ba:	cmovb  %rbp,%r15
+   826be:	mov    %r14,%r8
+   826c1:	mov    $0x0,%edi
+   826c6:	cmp    $0x4,%r15
+   826ca:	jb     82730 <gf2_coding::bch::encode::packed_table_reduce+0x5b0>
+   826cc:	inc    %r15
+   826cf:	mov    %r15d,%r8d
+   826d2:	and    $0x3,%r8d
+   826d6:	mov    $0x4,%edi
+   826db:	cmove  %rdi,%r8
+   826df:	mov    %r15,%rdi
+   826e2:	sub    %r8,%rdi
+   826e5:	lea    (%r14,%rdi,8),%r8
+   826e9:	lea    0x0(,%rbx,8),%r15
+   826f1:	imul   %r15,%rdx
+   826f5:	lea    0x10(%r10),%r15
+   826f9:	add    %r15,%rdx
+   826fc:	xor    %r15d,%r15d
+   826ff:	nop
+   82700:	movups -0x10(%rdx,%r15,8),%xmm0
+   82706:	movups (%rdx,%r15,8),%xmm1
+   8270b:	movups (%r14,%r15,8),%xmm2
+   82710:	xorps  %xmm0,%xmm2
+   82713:	movups 0x10(%r14,%r15,8),%xmm0
+   82719:	xorps  %xmm1,%xmm0
+   8271c:	movups %xmm2,(%r14,%r15,8)
+   82721:	movups %xmm0,0x10(%r14,%r15,8)
+   82727:	add    $0x4,%r15
+   8272b:	cmp    %r15,%rdi
+   8272e:	jne    82700 <gf2_coding::bch::encode::packed_table_reduce+0x580>
+   82730:	add    %rcx,%rdi
+   82733:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   82740:	cmp    %rax,%rdi
+   82743:	jae    82a83 <gf2_coding::bch::encode::packed_table_reduce+0x903>
+   82749:	mov    (%r10,%rdi,8),%rcx
+   8274d:	xor    %rcx,(%r8)
+   82750:	add    $0x8,%r8
+   82754:	inc    %rdi
+   82757:	cmp    %r13,%r8
+   8275a:	jne    82740 <gf2_coding::bch::encode::packed_table_reduce+0x5c0>
+   8275c:	test   %r9,%r9
+   8275f:	mov    0x38(%rsp),%rdx
+   82764:	mov    0x28(%rsp),%rdi
+   82769:	jne    82290 <gf2_coding::bch::encode::packed_table_reduce+0x110>
+   8276f:	add    $0x58,%rsp
+   82773:	pop    %rbx
+   82774:	pop    %r12
+   82776:	pop    %r13
+   82778:	pop    %r14
+   8277a:	pop    %r15
+   8277c:	pop    %rbp
+   8277d:	ret
+   8277e:	lea    -0x1(%r12),%rcx
+   82783:	mov    0x48(%rsp),%rax
+   82788:	movzbl 0x20(%rax),%eax
+   8278c:	mov    %al,0x28(%rsp)
+   82790:	mov    0x18(%rbp),%rax
+   82794:	mov    %rax,0x20(%rsp)
+   82799:	mov    %rcx,%rax
+   8279c:	shr    $0x6,%rax
+   827a0:	mov    $0x1,%edi
+   827a5:	shl    %cl,%rdi
+   827a8:	mov    0x50(%rsp),%r10
+   827ad:	cmp    %rbx,%r10
+   827b0:	mov    %rbx,%r11
+   827b3:	cmovb  %r10,%r11
+   827b7:	mov    %rax,0x18(%rsp)
+   827bc:	cmp    %rbx,%rax
+   827bf:	jae    82ac7 <gf2_coding::bch::encode::packed_table_reduce+0x947>
+   827c5:	cmp    $0x2,%rbx
+   827c9:	jb     82936 <gf2_coding::bch::encode::packed_table_reduce+0x7b6>
+   827cf:	movabs $0x7fffffffffffffc,%rax
+   827d9:	and    %r11,%rax
+   827dc:	mov    %rax,0x40(%rsp)
+   827e1:	lea    0x0(,%r11,8),%r15
+   827e9:	and    $0xffffffffffffffe0,%r15
+   827ed:	mov    0x10(%rsp),%r12
+   827f2:	jmp    82809 <gf2_coding::bch::encode::packed_table_reduce+0x689>
+   827f4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   82800:	cmp    %r12,%r8
+   82803:	jae    82209 <gf2_coding::bch::encode::packed_table_reduce+0x89>
+   82809:	dec    %r12
+   8280c:	cmpb   $0x0,0x28(%rsp)
+   82811:	je     82830 <gf2_coding::bch::encode::packed_table_reduce+0x6b0>
+   82813:	mov    0x38(%rsp),%rax
+   82818:	lea    (%r12,%rax,1),%rcx
+   8281c:	not    %rcx
+   8281f:	add    0x8(%rsp),%rcx
+   82824:	jmp    8283c <gf2_coding::bch::encode::packed_table_reduce+0x6bc>
+   82826:	cs nopw 0x0(%rax,%rax,1)
+   82830:	mov    %r12,%rcx
+   82833:	add    0x8(%rsp),%rcx
+   82838:	cmovae %r12,%rcx
+   8283c:	cmp    0x20(%rsp),%rcx
+   82841:	jae    82b0f <gf2_coding::bch::encode::packed_table_reduce+0x98f>
+   82847:	mov    %rcx,%rax
+   8284a:	shr    $0x6,%rax
+   8284e:	mov    0x10(%rbp),%rsi
+   82852:	cmp    %rsi,%rax
+   82855:	jae    82b28 <gf2_coding::bch::encode::packed_table_reduce+0x9a8>
+   8285b:	mov    0x8(%rbp),%r9
+   8285f:	mov    $0x1,%edx
+   82864:	shl    %cl,%rdx
+   82867:	and    (%r9,%rax,8),%rdx
+   8286b:	mov    0x18(%rsp),%rax
+   82870:	mov    (%r14,%rax,8),%rcx
+   82874:	lea    -0x1(%rbx),%rax
+   82878:	nopl   0x0(%rax,%rax,1)
+   82880:	cmp    %rbx,%rax
+   82883:	jae    82aa3 <gf2_coding::bch::encode::packed_table_reduce+0x923>
+   82889:	mov    -0x8(%r14,%rax,8),%r9
+   8288e:	shld   $0x1,%r9,(%r14,%rax,8)
+   82894:	sub    $0x1,%rax
+   82898:	ja     82880 <gf2_coding::bch::encode::packed_table_reduce+0x700>
+   8289a:	test   %rdx,%rdx
+   8289d:	setne  %al
+   828a0:	shlq   $1,(%r14)
+   828a3:	mov    0x30(%rsp),%rdx
+   828a8:	and    %rdx,-0x8(%r14,%rbx,8)
+   828ad:	test   %rdi,%rcx
+   828b0:	sete   %cl
+   828b3:	test   %r10,%r10
+   828b6:	je     82800 <gf2_coding::bch::encode::packed_table_reduce+0x680>
+   828bc:	xor    %cl,%al
+   828be:	jne    82800 <gf2_coding::bch::encode::packed_table_reduce+0x680>
+   828c4:	xor    %eax,%eax
+   828c6:	cmp    $0x4,%r11
+   828ca:	jb     82920 <gf2_coding::bch::encode::packed_table_reduce+0x7a0>
+   828cc:	nopl   0x0(%rax)
+   828d0:	movups 0x0(%r13,%rax,1),%xmm0
+   828d6:	movups 0x10(%r13,%rax,1),%xmm1
+   828dc:	movups (%r14,%rax,1),%xmm2
+   828e1:	xorps  %xmm0,%xmm2
+   828e4:	movups 0x10(%r14,%rax,1),%xmm0
+   828ea:	xorps  %xmm1,%xmm0
+   828ed:	movups %xmm2,(%r14,%rax,1)
+   828f2:	movups %xmm0,0x10(%r14,%rax,1)
+   828f8:	add    $0x20,%rax
+   828fc:	cmp    %rax,%r15
+   828ff:	jne    828d0 <gf2_coding::bch::encode::packed_table_reduce+0x750>
+   82901:	mov    0x40(%rsp),%rcx
+   82906:	mov    %rcx,%rax
+   82909:	cmp    %rcx,%r11
+   8290c:	je     82800 <gf2_coding::bch::encode::packed_table_reduce+0x680>
+   82912:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   82920:	mov    0x0(%r13,%rax,8),%rcx
+   82925:	xor    %rcx,(%r14,%rax,8)
+   82929:	inc    %rax
+   8292c:	cmp    %rax,%r11
+   8292f:	jne    82920 <gf2_coding::bch::encode::packed_table_reduce+0x7a0>
+   82931:	jmp    82800 <gf2_coding::bch::encode::packed_table_reduce+0x680>
+   82936:	test   %r10,%r10
+   82939:	je     829e0 <gf2_coding::bch::encode::packed_table_reduce+0x860>
+   8293f:	mov    0x8(%rsp),%rax
+   82944:	lea    -0x1(%rax),%rcx
+   82948:	xor    %r11d,%r11d
+   8294b:	mov    0x10(%rsp),%rax
+   82950:	jmp    8296f <gf2_coding::bch::encode::packed_table_reduce+0x7ef>
+   82952:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   82960:	inc    %r11
+   82963:	mov    %r15,%rax
+   82966:	cmp    %r15,%r8
+   82969:	jae    82209 <gf2_coding::bch::encode::packed_table_reduce+0x89>
+   8296f:	lea    -0x1(%rax),%r15
+   82973:	mov    %r11,%rdx
+   82976:	cmpb   $0x0,0x28(%rsp)
+   8297b:	jne    8298c <gf2_coding::bch::encode::packed_table_reduce+0x80c>
+   8297d:	add    %rcx,%rax
+   82980:	cmp    0x8(%rsp),%rax
+   82985:	cmovae %r15,%rax
+   82989:	mov    %rax,%rdx
+   8298c:	cmp    0x20(%rsp),%rdx
+   82991:	jae    82b0f <gf2_coding::bch::encode::packed_table_reduce+0x98f>
+   82997:	mov    %rdx,%rax
+   8299a:	shr    $0x6,%rax
+   8299e:	mov    0x10(%rbp),%rsi
+   829a2:	cmp    %rsi,%rax
+   829a5:	jae    82b28 <gf2_coding::bch::encode::packed_table_reduce+0x9a8>
+   829ab:	mov    0x8(%rbp),%r9
+   829af:	mov    (%r9,%rax,8),%rax
+   829b3:	bt     %rdx,%rax
+   829b7:	setb   %al
+   829ba:	mov    0x18(%rsp),%rdx
+   829bf:	test   %rdi,(%r14,%rdx,8)
+   829c3:	setne  %dl
+   829c6:	shlq   $1,(%r14)
+   829c9:	mov    0x30(%rsp),%r9
+   829ce:	and    %r9,-0x8(%r14,%rbx,8)
+   829d3:	cmp    %dl,%al
+   829d5:	je     82960 <gf2_coding::bch::encode::packed_table_reduce+0x7e0>
+   829d7:	mov    0x0(%r13),%rax
+   829db:	xor    %rax,(%r14)
+   829de:	jmp    82960 <gf2_coding::bch::encode::packed_table_reduce+0x7e0>
+   829e0:	cmpb   $0x0,0x28(%rsp)
+   829e5:	je     82a2c <gf2_coding::bch::encode::packed_table_reduce+0x8ac>
+   829e7:	xor    %ecx,%ecx
+   829e9:	mov    0x10(%rsp),%rdi
+   829ee:	xchg   %ax,%ax
+   829f0:	cmp    0x20(%rsp),%rcx
+   829f5:	jae    82b0f <gf2_coding::bch::encode::packed_table_reduce+0x98f>
+   829fb:	mov    %rcx,%rax
+   829fe:	shr    $0x6,%rax
+   82a02:	mov    0x10(%rbp),%rsi
+   82a06:	cmp    %rsi,%rax
+   82a09:	jae    82b28 <gf2_coding::bch::encode::packed_table_reduce+0x9a8>
+   82a0f:	shlq   $1,(%r14)
+   82a12:	mov    0x30(%rsp),%rax
+   82a17:	and    %rax,-0x8(%r14,%rbx,8)
+   82a1c:	dec    %rdi
+   82a1f:	inc    %rcx
+   82a22:	cmp    %rdi,%r8
+   82a25:	jb     829f0 <gf2_coding::bch::encode::packed_table_reduce+0x870>
+   82a27:	jmp    82209 <gf2_coding::bch::encode::packed_table_reduce+0x89>
+   82a2c:	mov    0x8(%rsp),%rax
+   82a31:	lea    -0x1(%rax),%rcx
+   82a35:	mov    0x10(%rsp),%rdi
+   82a3a:	nopw   0x0(%rax,%rax,1)
+   82a40:	lea    (%rcx,%rdi,1),%rax
+   82a44:	dec    %rdi
+   82a47:	cmp    0x8(%rsp),%rax
+   82a4c:	cmovae %rdi,%rax
+   82a50:	cmp    0x20(%rsp),%rax
+   82a55:	jae    82b0f <gf2_coding::bch::encode::packed_table_reduce+0x98f>
+   82a5b:	shr    $0x6,%rax
+   82a5f:	mov    0x10(%rbp),%rsi
+   82a63:	cmp    %rsi,%rax
+   82a66:	jae    82b28 <gf2_coding::bch::encode::packed_table_reduce+0x9a8>
+   82a6c:	shlq   $1,(%r14)
+   82a6f:	mov    0x30(%rsp),%rax
+   82a74:	and    %rax,-0x8(%r14,%rbx,8)
+   82a79:	cmp    %rdi,%r8
+   82a7c:	jb     82a40 <gf2_coding::bch::encode::packed_table_reduce+0x8c0>
+   82a7e:	jmp    82209 <gf2_coding::bch::encode::packed_table_reduce+0x89>
+   82a83:	lea    0x74a46(%rip),%rdx        # f74d0 <anon.34a8d4775a7dca9c3c52993c971704dd.1652.llvm.15906374718993454709+0x1e0>
+   82a8a:	mov    %rax,%rsi
+   82a8d:	call   *0x783dd(%rip)        # fae70 <_DYNAMIC+0x208>
+   82a93:	lea    0x7495e(%rip),%rdx        # f73f8 <anon.34a8d4775a7dca9c3c52993c971704dd.1652.llvm.15906374718993454709+0x108>
+   82a9a:	mov    %rbx,%rsi
+   82a9d:	call   *0x783cd(%rip)        # fae70 <_DYNAMIC+0x208>
+   82aa3:	lea    0x7491e(%rip),%rdx        # f73c8 <anon.34a8d4775a7dca9c3c52993c971704dd.1652.llvm.15906374718993454709+0xd8>
+   82aaa:	mov    %rax,%rdi
+   82aad:	mov    %rbx,%rsi
+   82ab0:	call   *0x783ba(%rip)        # fae70 <_DYNAMIC+0x208>
+   82ab6:	lea    0x74923(%rip),%rdx        # f73e0 <anon.34a8d4775a7dca9c3c52993c971704dd.1652.llvm.15906374718993454709+0xf0>
+   82abd:	xor    %edi,%edi
+   82abf:	xor    %esi,%esi
+   82ac1:	call   *0x783a9(%rip)        # fae70 <_DYNAMIC+0x208>
+   82ac7:	mov    0x10(%rsp),%rax
+   82acc:	dec    %rax
+   82acf:	mov    0x8(%rsp),%rcx
+   82ad4:	add    %rax,%rcx
+   82ad7:	cmovae %rax,%rcx
+   82adb:	xor    %eax,%eax
+   82add:	cmpb   $0x0,0x28(%rsp)
+   82ae2:	cmove  %rcx,%rax
+   82ae6:	cmp    0x20(%rsp),%rax
+   82aeb:	jae    82b0f <gf2_coding::bch::encode::packed_table_reduce+0x98f>
+   82aed:	shr    $0x6,%rax
+   82af1:	mov    0x10(%rbp),%rsi
+   82af5:	cmp    %rsi,%rax
+   82af8:	jae    82b28 <gf2_coding::bch::encode::packed_table_reduce+0x9a8>
+   82afa:	lea    0x748af(%rip),%rdx        # f73b0 <anon.34a8d4775a7dca9c3c52993c971704dd.1652.llvm.15906374718993454709+0xc0>
+   82b01:	mov    0x18(%rsp),%rdi
+   82b06:	mov    %rbx,%rsi
+   82b09:	call   *0x78361(%rip)        # fae70 <_DYNAMIC+0x208>
+   82b0f:	lea    -0x63752(%rip),%rdi        # 1f3c4 <anon.34a8d4775a7dca9c3c52993c971704dd.1503.llvm.15906374718993454709+0x64>
+   82b16:	lea    0x747bb(%rip),%rdx        # f72d8 <anon.34a8d4775a7dca9c3c52993c971704dd.1504.llvm.15906374718993454709+0xd8>
+   82b1d:	mov    $0x27,%esi
+   82b22:	call   *0x783c0(%rip)        # faee8 <_DYNAMIC+0x280>
+   82b28:	lea    0x747c1(%rip),%rdx        # f72f0 <anon.34a8d4775a7dca9c3c52993c971704dd.1652.llvm.15906374718993454709>
+   82b2f:	mov    %rax,%rdi
+   82b32:	call   *0x78338(%rip)        # fae70 <_DYNAMIC+0x208>

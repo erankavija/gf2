@@ -1,0 +1,127 @@
+# label: bitslice-reduce-avx2
+# pattern: x86::bch_encode::bitslice_reduce_avx2
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile
+# binary sha256: 72be1c750584eeab639d99c13b1994da91f7a8dd4ace3f69bacf3c7d56114c64
+# symbols matching this pattern in the binary: 1
+
+## symbol at 0000000000099d10, 0x0000000000000220 bytes
+0000000000099d10 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2>:
+   99d10:	push   %r14
+   99d12:	push   %rbx
+   99d13:	sub    $0x28,%rsp
+   99d17:	mov    %rcx,(%rsp)
+   99d1b:	mov    %rsi,0x8(%rsp)
+   99d20:	lea    0x1(%rcx),%rax
+   99d24:	mov    %rax,0x10(%rsp)
+   99d29:	cmp    %rax,%rsi
+   99d2c:	jne    99ef7 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x1e7>
+   99d32:	test   %rcx,%rcx
+   99d35:	je     99eec <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x1dc>
+   99d3b:	test   %r9,%r9
+   99d3e:	je     99eec <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x1dc>
+   99d44:	cmp    $0x3,%rcx
+   99d48:	jbe    99e4b <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x13b>
+   99d4e:	lea    (%r8,%r9,8),%rax
+   99d52:	lea    -0x4(%rcx),%rsi
+   99d56:	mov    %esi,%r9d
+   99d59:	shr    $0x2,%r9d
+   99d5d:	inc    %r9d
+   99d60:	and    $0x3,%r9d
+   99d64:	mov    %esi,%r10d
+   99d67:	and    $0xc,%r10d
+   99d6b:	jmp    99d7d <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x6d>
+   99d6d:	nopl   (%rax)
+   99d70:	add    $0xfffffffffffffff8,%rax
+   99d74:	cmp    %rax,%r8
+   99d77:	je     99eec <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x1dc>
+   99d7d:	mov    (%rdi,%rcx,8),%r11
+   99d81:	xor    -0x8(%rax),%r11
+   99d85:	vmovq  %r11,%xmm0
+   99d8a:	vpbroadcastq %xmm0,%ymm0
+   99d8f:	mov    %rcx,%rbx
+   99d92:	cmp    $0xc,%r10d
+   99d96:	je     99dbb <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0xab>
+   99d98:	mov    %r9,%r14
+   99d9b:	mov    %rcx,%rbx
+   99d9e:	xchg   %ax,%ax
+   99da0:	vpand  -0x20(%rdx,%rbx,8),%ymm0,%ymm1
+   99da6:	vpxor  -0x20(%rdi,%rbx,8),%ymm1,%ymm1
+   99dac:	vmovdqu %ymm1,-0x18(%rdi,%rbx,8)
+   99db2:	add    $0xfffffffffffffffc,%rbx
+   99db6:	dec    %r14
+   99db9:	jne    99da0 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x90>
+   99dbb:	cmp    $0xc,%rsi
+   99dbf:	jb     99e22 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x112>
+   99dc1:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   99dd0:	vpand  -0x20(%rdx,%rbx,8),%ymm0,%ymm1
+   99dd6:	vpxor  -0x20(%rdi,%rbx,8),%ymm1,%ymm1
+   99ddc:	vmovdqu %ymm1,-0x18(%rdi,%rbx,8)
+   99de2:	vpand  -0x40(%rdx,%rbx,8),%ymm0,%ymm1
+   99de8:	vpxor  -0x40(%rdi,%rbx,8),%ymm1,%ymm1
+   99dee:	vpand  -0x60(%rdx,%rbx,8),%ymm0,%ymm2
+   99df4:	vmovdqu %ymm1,-0x38(%rdi,%rbx,8)
+   99dfa:	vpxor  -0x60(%rdi,%rbx,8),%ymm2,%ymm1
+   99e00:	vmovdqu %ymm1,-0x58(%rdi,%rbx,8)
+   99e06:	vpand  -0x80(%rdx,%rbx,8),%ymm0,%ymm1
+   99e0c:	vpxor  -0x80(%rdi,%rbx,8),%ymm1,%ymm1
+   99e12:	vmovdqu %ymm1,-0x78(%rdi,%rbx,8)
+   99e18:	add    $0xfffffffffffffff0,%rbx
+   99e1c:	cmp    $0x3,%rbx
+   99e20:	ja     99dd0 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0xc0>
+   99e22:	test   %rbx,%rbx
+   99e25:	je     99d70 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x60>
+   99e2b:	nopl   0x0(%rax,%rax,1)
+   99e30:	mov    -0x8(%rdx,%rbx,8),%r14
+   99e35:	and    %r11,%r14
+   99e38:	xor    -0x8(%rdi,%rbx,8),%r14
+   99e3d:	mov    %r14,(%rdi,%rbx,8)
+   99e41:	dec    %rbx
+   99e44:	jne    99e30 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x120>
+   99e46:	jmp    99d70 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x60>
+   99e4b:	shl    $0x3,%r9
+   99e4f:	lea    -0x1(%rcx),%rax
+   99e53:	vmovq  %rax,%xmm0
+   99e58:	vpbroadcastq %xmm0,%ymm0
+   99e5d:	vpbroadcastq -0x8637e(%rip),%ymm1        # 13ae8 <anon.91a0cb0676d70bbb60d721a980762f11.746.llvm.14638686124532110308+0x8>
+   99e66:	vpxor  %ymm1,%ymm0,%ymm0
+   99e6a:	vmovdqa -0x85532(%rip),%ymm1        # 14940 <anon.5168fff85ca8528ddc0811ab8cae3bf4.47.llvm.1594372131456583489+0xde0>
+   99e72:	vpcmpgtq %ymm0,%ymm1,%ymm0
+   99e77:	vpcmpeqd %ymm1,%ymm1,%ymm1
+   99e7b:	vpxor  %ymm1,%ymm0,%ymm0
+   99e7f:	vextracti128 $0x1,%ymm0,%xmm1
+   99e85:	vpackssdw %xmm1,%xmm0,%xmm0
+   99e89:	vpshufd $0x1b,%xmm0,%xmm1
+   99e8e:	vpmovsxdq %xmm1,%ymm0
+   99e93:	vpmaskmovq -0x20(%rdx,%rcx,8),%ymm0,%ymm0
+   99e9a:	lea    (%rdi,%rcx,8),%rax
+   99e9e:	add    $0xffffffffffffffe0,%rax
+   99ea2:	vpslld $0x1f,%xmm1,%xmm1
+   99ea7:	vpsrad $0x1f,%xmm1,%xmm1
+   99eac:	vpmovsxdq %xmm1,%ymm1
+   99eb1:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   99ec0:	mov    (%rdi,%rcx,8),%rdx
+   99ec4:	xor    -0x8(%r8,%r9,1),%rdx
+   99ec9:	vpmaskmovq (%rax),%ymm1,%ymm2
+   99ece:	vmovq  %rdx,%xmm3
+   99ed3:	vpbroadcastq %xmm3,%ymm3
+   99ed8:	vpand  %ymm3,%ymm0,%ymm3
+   99edc:	vpxor  %ymm2,%ymm3,%ymm2
+   99ee0:	vpmaskmovq %ymm2,%ymm1,0x8(%rax)
+   99ee6:	add    $0xfffffffffffffff8,%r9
+   99eea:	jne    99ec0 <gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2+0x1b0>
+   99eec:	add    $0x28,%rsp
+   99ef0:	pop    %rbx
+   99ef1:	pop    %r14
+   99ef3:	vzeroupper
+   99ef6:	ret
+   99ef7:	mov    %rsp,%rax
+   99efa:	mov    %rax,0x18(%rsp)
+   99eff:	mov    0x60ff2(%rip),%rax        # faef8 <_DYNAMIC+0x290>
+   99f06:	mov    %rax,0x20(%rsp)
+   99f0b:	lea    -0x887ef(%rip),%rcx        # 11723 <anon.5168fff85ca8528ddc0811ab8cae3bf4.50.llvm.1594372131456583489>
+   99f12:	lea    0x5e46f(%rip),%r9        # f8388 <anon.5168fff85ca8528ddc0811ab8cae3bf4.64.llvm.1594372131456583489+0x90>
+   99f19:	lea    0x8(%rsp),%rsi
+   99f1e:	lea    0x10(%rsp),%rdx
+   99f23:	lea    0x18(%rsp),%r8
+   99f28:	xor    %edi,%edi
+   99f2a:	call   *0x61370(%rip)        # fb2a0 <_DYNAMIC+0x638>

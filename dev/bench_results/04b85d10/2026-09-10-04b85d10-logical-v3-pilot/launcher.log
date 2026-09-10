@@ -1,0 +1,39 @@
+# command: dev/bench_results/04b85d10/run-consumer-campaigns.sh logical pilot 2026-09-10
+# started_utc: 2026-09-10T16:11:46Z
+# gf2 revision (informational): ae8b23a8048ee87f6523a0fe67b82380090fcd04
+# family: logical  mode: pilot
+# addendum: dev/active/04b85d10/addendum-bit-storage-logical-v3-pilot.json
+# addendum sha256: 64258008d13d9be759da50597e1edf4c11b2ecb94411770b89bdfc22f4210bd3
+# ledger: dev/bench_results/04b85d10/v3-bit-storage-logical-consumers-family-ledger.jsonl (1 lines before this campaign)
+# campaign: pilot-v3-logical-04b85d10-20260910t161146z
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-campaigns/pilot-v3-logical-04b85d10-20260910t161146z
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# RUSTFLAGS: <unset>
+# arm sha256: 960bb280fdc1f5d02cd2bad3569a87a791d35ccee08f031411a2be3ec75f4dfa
+# verify sha256: 2d325fcb0de2ab502773b6ae5715c072ab99a4c532b3e345aae28655c081a97e
+# runner sha256: 5ae06b9db120a6f8661bc78d36eb1aed03c75b346e71379790e0baa91d371e67
+# acceptance sha256: b6cc78c45e2568841db9363135c1356a2facd2f2051f2f59be60c01ab5bbf040
+# load_avg_start:  19:11:46 up 6 days, 20:40,  9 users,  load average: 1.63, 3.65, 3.34
+# consumer-verify:
+{"check":"row-xor-routes-agree","detail":"9 bit lengths agree","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"popcount-routes-agree","detail":"9 bit lengths agree","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"zero-test-spellings-agree","detail":"9 bit lengths agree over four bit patterns","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"transpose-lanes-agree","detail":"both lanes agree and the transpose is an involution","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"dense-transpose-round-trips","detail":"four shapes round-trip identically","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"dense-matvec-matches-reference","detail":"four shapes match the naive row-parity reference","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"ldpc-zero-syndrome-spellings-agree","detail":"the two spellings agree on the zero, weight-one and random words","passed":true,"schema":"consumer-verify-record-v1"}
+{"check":"bch-encoding-families-agree","detail":"three rows, five batch lengths, every available family and both batch entry points bit-identical","passed":true,"schema":"consumer-verify-record-v1"}
+{"checks":8,"failed":0,"schema":"consumer-verify-summary-v1"}
+# consumer-verify exit: 0
+# session 1 start: 2026-09-10T16:11:48Z
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-campaigns/pilot-v3-logical-04b85d10-20260910t161146z/execution.log
+# session 1 exit: 3
+# session 2 start: 2026-09-10T16:13:14Z
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-campaigns/pilot-v3-logical-04b85d10-20260910t161146z/execution.log
+# session 2 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions: 2
+# load_avg_end:  19:14:40 up 6 days, 20:43,  9 users,  load average: 2.66, 3.05, 3.14
+# finished_utc: 2026-09-10T16:14:40Z

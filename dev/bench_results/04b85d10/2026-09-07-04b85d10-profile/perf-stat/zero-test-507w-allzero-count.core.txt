@@ -1,0 +1,19 @@
+# case: {"workload":"zero-test","size":{"words":507,"set_bit":32448},"seed":202}
+# path: count-ones  cache_state: warm  target_ms: 1000
+# events: cycles,instructions,branches,branch-misses,stalled-cycles-frontend
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":5000000,"conversion":null,"elapsed_ns":"397270532","ns_per_call":79.4541064,"path":"count-ones","prepare":{"allocated_bytes":4166,"allocations":3,"freed_bytes":0},"schema":"consumer-profile-record-v1","seed":202,"selected_path":"count-ones/simd","size":{"set_bit":32448,"words":507},"timed":{"allocated_bytes":0,"allocated_bytes_per_call":0.0,"allocations":0,"allocations_per_call":0.0,"freed_bytes":0,"peak_live_bytes":0},"workers_observed":1,"workload":"zero-test"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10/.agents/ext/04b85d10/target/release/consumer-profile --case {"workload":"zero-test","size":{"words":507,"set_bit":32448},"seed":202} --path count-ones --cache-state warm --target-ms 1000':
+
+     1,656,915,846      cycles:u                                                              
+     7,775,384,086      instructions:u                                                        
+       430,078,845      branches:u                                                            
+             9,045      branch-misses:u                                                       
+           512,903      stalled-cycles-frontend:u                                             
+
+       0.398367029 seconds time elapsed
+
+       0.366365000 seconds user
+       0.003003000 seconds sys
+
+

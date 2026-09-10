@@ -4,7 +4,9 @@
   "created_at": "2026-09-06T19:17:49.310113307Z",
   "dependencies": [
     "12fdeb5b-685d-4232-a350-2585c29cfed6",
+    "428f2f6b-4cfa-4c78-b93c-a576e443594d",
     "63bad95d-0e69-459b-840b-c37521036f52",
+    "bdc507a3-b1e8-4d76-bdb0-37410c6ea339",
     "ed3d490e-8cd9-4564-a763-72a2fa641425",
     "fd9d5416-d529-427d-a273-10e6468b9a19"
   ],
@@ -55,5 +57,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Publish end-to-end competitive results and remaining limits",
-  "updated_at": "2026-09-10T16:00:49.154567685Z"
+  "updated_at": "2026-09-10T23:16:09.104065088Z"
 }

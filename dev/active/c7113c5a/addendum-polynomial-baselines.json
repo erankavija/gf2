@@ -1,0 +1,319 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 1
+  },
+  "family": {
+    "id": "polynomial-multiplication-baselines",
+    "issue": "c7113c5a",
+    "purpose": "kernel-family",
+    "description": "Current-code gf2 baselines against pinned gf2x 1.3.0 for the three gf2 operations that have an equivalent gf2x form: the unreduced long product in GF(2)[x], the batch of independent unreduced 64-by-64 products, and the whole-consumer GF(2^8) dot product whose unreduced stage is composed from gf2x products and reduced by gf2's own Barrett reducer on both arms. Sizes span the small fixed-width field operands, the crossover region of gf2x's Karatsuba and Toom thresholds, a cache-resident size and a streaming size, with single-core latency and six-, twelve- and twenty-four-way throughput arms. Every cell is a comparator gap: this survey adopts nothing, adds no gf2x production dependency and changes no gf2 multiplication algorithm, so a measured gap is an attribution task rather than a selection."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-07T19:25:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "This family declares no improvement cell. Every cell compares gf2 against an external library under a material-gap threshold, and the issue excludes adoption, so no worthwhile-speedup threshold applies and none is invented.",
+    "measurement_resolution": 0.08,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/receipt.json",
+      "sha256": "22d2663f89f32bc0cccbd6baebad6c1b054ac04f408311a97b79790af7ecaed1"
+    },
+    "equivalence_margin": 1.15,
+    "equivalence_rationale": "A fifteen-percent band sits above the 0.08 resolution the pilot measured, so a not-worse verdict is a statement the host can support rather than an artefact of the interval width. It is also the scale below which a consumer choosing between the two libraries would decide on portability and licensing rather than on speed, given that gf2x is GPL-3.0-or-later and gf2 is MIT.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A quarter of the runtime is the smallest gap that survives the adapter and conversion costs a real consumer pays to reach an external library, so it is the smallest gap that would change an engineering decision. It is more than three times the 0.08 resolution the pilot measured, so a material-gap verdict is not a resolution artefact."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "The survey adopts no implementation and adds no gf2x production dependency, so its budget is zero by construction."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "poly-mul-4w-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-4-words-unreduced",
+        "size": {
+          "words": 4,
+          "inner": 1
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-9w-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-9-words-unreduced",
+        "size": {
+          "words": 9,
+          "inner": 1
+        },
+        "seed": 202
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-64w-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-64-words-unreduced",
+        "size": {
+          "words": 64,
+          "inner": 1
+        },
+        "seed": 203
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-256w-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-256-words-unreduced",
+        "size": {
+          "words": 256,
+          "inner": 1
+        },
+        "seed": 204
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-2048w-streaming-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-2048-words-unreduced",
+        "size": {
+          "words": 2048,
+          "inner": 1
+        },
+        "seed": 205
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-256w-6core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-256-words-unreduced",
+        "size": {
+          "words": 256,
+          "inner": 32
+        },
+        "seed": 206
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 6,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-256w-12core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-256-words-unreduced",
+        "size": {
+          "words": 256,
+          "inner": 32
+        },
+        "seed": 207
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-mul-256w-24smt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-256-words-unreduced",
+        "size": {
+          "words": 256,
+          "inner": 32
+        },
+        "seed": 208
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "multicore-throughput",
+      "core_arm": "logical-cpus-24",
+      "workers": {
+        "declared": 24,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "clmul-batch-1024-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "clmul-batch-1024-independent-products",
+        "size": {
+          "count": 1024,
+          "inner": 1
+        },
+        "seed": 209
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "gf2m-dot-1024-1core",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf2m-dot-1024-gf256",
+        "size": {
+          "count": 1024,
+          "inner": 1
+        },
+        "seed": 210
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

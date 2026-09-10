@@ -1,0 +1,20 @@
+# command: dev/active/c7113c5a/survey/run-baseline.sh pilot
+# started_utc: 2026-09-07T19:16:44Z
+# gf2 revision (informational): c641c2e58709aad86b353691f63c0bd35391934f
+# mode: pilot
+# addendum: dev/active/c7113c5a/addendum-polynomial-baselines-pilot.json
+# campaign: pilot-c7113c5a-20260907t191644z
+# stage: /tmp/gf2-pilot-c7113c5a-20260907t191644z
+# staging: /home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a/target/release/benchmark-acceptance
+# load_avg_start:  22:16:44 up 3 days, 23:45,  4 users,  load average: 12.09, 14.32, 10.18
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-pilot-c7113c5a-20260907t191644z/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-pilot-c7113c5a-20260907t191644z/execution.log
+# session 2 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  22:18:23 up 3 days, 23:47,  5 users,  load average: 11.19, 13.03, 10.11
+# finished_utc: 2026-09-07T19:18:23Z

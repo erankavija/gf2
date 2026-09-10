@@ -1,0 +1,646 @@
+{
+  "schema": "bit-storage-source-evidence-v1",
+  "issue": "04b85d10",
+  "note": "Line numbers and verbatim text are read from the checkout at the recorded commit; regenerate after any change to a cited file. The commit is navigation metadata; the producing-input snapshot in each receipt is the content identity.",
+  "claims": [
+    {
+      "claim": "row-xor-public-entry",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1054,
+      "text": "use crate::kernels::ops::xor_inplace;",
+      "why": "BitMatrix::row_xor takes the size-dispatched xor_inplace route, so the `ops-dispatched` arm is the production row route."
+    },
+    {
+      "claim": "xor-inplace-resolves-per-call",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 100,
+      "text": "let xor = resolve_xor_inplace(dst.len());",
+      "why": "xor_inplace re-selects the backend on every call; hoisting it is the `ops-resolved` arm."
+    },
+    {
+      "claim": "resolve-xor-simd-fn",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 61,
+      "text": ".map(|backend| backend.xor_fn)",
+      "why": "Above the cutover the resolved kernel is the detected LogicalFns::xor_fn."
+    },
+    {
+      "claim": "simd-min-words-default",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 83,
+      "text": "pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;",
+      "why": "The conservative build's scalar/SIMD cutover is eight words; four-word rows take scalar."
+    },
+    {
+      "claim": "select-backend-threshold",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 115,
+      "text": "if _size >= SIMD_MIN_WORDS {",
+      "why": "select_backend_for_size compares the word count against the cutover."
+    },
+    {
+      "claim": "baked-simd-min-words",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/tuning/baked.rs",
+      "line": 17,
+      "text": "pub(crate) const SIMD_MIN_WORDS: usize = 4;",
+      "why": "The baked profile's four-word cutover is selected only under `--cfg gf2_tuning_baked`, which the measured build does not set."
+    },
+    {
+      "claim": "simd-backend-xor",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/kernels/simd/mod.rs",
+      "line": 48,
+      "text": "(self.fns.xor_fn)(dst, src)",
+      "why": "The `simd-backend` arm calls the same detected xor_fn with detection hoisted."
+    },
+    {
+      "claim": "avx2-xor-into",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 19,
+      "text": "unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {",
+      "why": "The AVX2 row XOR kernel the detected LogicalFns publishes on this host."
+    },
+    {
+      "claim": "rref-block-width",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/alg/rref.rs",
+      "line": 114,
+      "text": "_ => 8,",
+      "why": "rref selects an eight-wide Gray table above 512 columns, so the 1024-square row is blocked M4RI."
+    },
+    {
+      "claim": "rref-clone",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/alg/rref.rs",
+      "line": 143,
+      "text": "let mut work = matrix.clone();",
+      "why": "RREF clones the input matrix once per call; that copy is part of the consumer's allocation traffic."
+    },
+    {
+      "claim": "rref-resolves-xor-once",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/alg/rref.rs",
+      "line": 151,
+      "text": "let xor = crate::kernels::ops::resolve_xor_inplace(work.stride_words());",
+      "why": "RREF resolves the XOR kernel once per call for table construction."
+    },
+    {
+      "claim": "rref-table-per-block",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/alg/rref.rs",
+      "line": 268,
+      "text": "let mut table = vec![0u64; table_rows * suffix_words];",
+      "why": "One Gray table is allocated per pivot block, which is where RREF's per-call allocations come from."
+    },
+    {
+      "claim": "rref-row-apply",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/alg/rref.rs",
+      "line": 290,
+      "text": "work.row_xor_slice_from(row, first_word, &table[src_start..src_start + suffix_words]);",
+      "why": "Elimination rows are applied through the inline suffix XOR, not through the dispatched xor_inplace."
+    },
+    {
+      "claim": "matvec-route",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1501,
+      "text": "match matvec_route(self.stride_words) {",
+      "why": "BitMatrix::matvec dispatches on the row stride in words."
+    },
+    {
+      "claim": "matvec-simd-min-words",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 18,
+      "text": "pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;",
+      "why": "Rows of eight or more words take the SIMD matvec; the 4096-column row has 64 words."
+    },
+    {
+      "claim": "matvec-fused-kernel",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1560,
+      "text": "y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);",
+      "why": "The SIMD matvec computes each output bit with the fused AND-popcount kernel and bit-appends it."
+    },
+    {
+      "claim": "matvec-output-alloc",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1557,
+      "text": "let mut y = crate::BitVec::with_capacity(self.rows);",
+      "why": "The matvec output is a fresh BitVec per call: the one allocation the profile counts."
+    },
+    {
+      "claim": "matvec-scalar-private",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1514,
+      "text": "fn matvec_scalar(&self, x: &crate::BitVec) -> crate::BitVec {",
+      "why": "The scalar matvec is private, so production exposes no alternative route and the matvec cell is an identity control."
+    },
+    {
+      "claim": "avx2-and-popcnt",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 316,
+      "text": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
+      "why": "The fused AND-popcount kernel the matvec profile attributes most cycles to."
+    },
+    {
+      "claim": "ldpc-syndrome",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 136,
+      "text": "self.h.matvec(codeword)",
+      "why": "LdpcCode::syndrome is the parity-check matvec."
+    },
+    {
+      "claim": "ldpc-h-dual",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 62,
+      "text": "h: SpBitMatrixDual,",
+      "why": "The parity-check matrix is the CSR/CSC dual."
+    },
+    {
+      "claim": "ldpc-dual-matvec",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/sparse.rs",
+      "line": 1722,
+      "text": "self.csr.matvec(x)",
+      "why": "The dual's matvec delegates to the CSR side."
+    },
+    {
+      "claim": "ldpc-csr-bit-at-a-time",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/sparse.rs",
+      "line": 1375,
+      "text": "acc ^= x.get(c);",
+      "why": "The CSR matvec gathers one bit per stored index; no packed word kernel sits below it."
+    },
+    {
+      "claim": "ldpc-syndrome-output-alloc",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/sparse.rs",
+      "line": 1369,
+      "text": "let mut y = BitVec::with_capacity(self.rows);",
+      "why": "The syndrome is a fresh BitVec per call."
+    },
+    {
+      "claim": "count-ones-entry",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 602,
+      "text": "crate::kernels::ops::popcount(&self.data) as usize",
+      "why": "BitVec::count_ones is the size-dispatched popcount."
+    },
+    {
+      "claim": "popcount-dispatch",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 207,
+      "text": "match select_backend_for_size(buf.len()) {",
+      "why": "popcount re-selects the backend per call at the same eight-word cutover."
+    },
+    {
+      "claim": "simd-backend-popcount",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/kernels/simd/mod.rs",
+      "line": 56,
+      "text": "(self.fns.popcnt_fn)(buf)",
+      "why": "The `simd-backend` popcount arm calls the detected popcnt_fn directly."
+    },
+    {
+      "claim": "avx2-popcnt",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 264,
+      "text": "unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {",
+      "why": "The AVX2 population-count kernel."
+    },
+    {
+      "claim": "find-first-one-simd",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 911,
+      "text": "return (fns.find_first_one_fn)(&self.data).filter(|&pos| pos < self.len_bits);",
+      "why": "BitVec::find_first_one reaches the detected early-exit kernel."
+    },
+    {
+      "claim": "avx2-find-first-one",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 369,
+      "text": "unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {",
+      "why": "The AVX2 first-set-bit kernel that can stop at the first nonzero vector."
+    },
+    {
+      "claim": "ldpc-is-valid-count",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 142,
+      "text": "syndrome.count_ones() == 0",
+      "why": "LdpcCode::is_valid_codeword spells its zero test as a full population count."
+    },
+    {
+      "claim": "ldpc-bp-early-termination",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1353,
+      "text": "if self.code.is_valid_codeword(&decoded) {",
+      "why": "The LDPC BP decoder repeats the full-count validity check every iteration under early termination."
+    },
+    {
+      "claim": "ldpc-bp-final-check",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1362,
+      "text": "let syndrome_passed = self.code.is_valid_codeword(&decoded_codeword);",
+      "why": "The decoder's terminal syndrome check uses the same spelling."
+    },
+    {
+      "claim": "orbgrand-count",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/grand/orbgrand.rs",
+      "line": 731,
+      "text": "let is_zero = syndrome.count_ones() == 0;",
+      "why": "ORBGRAND tests each incrementally updated candidate syndrome with a full count."
+    },
+    {
+      "claim": "bp-osd-count",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/osd/bp_osd.rs",
+      "line": 311,
+      "text": ".is_some_and(|word| self.corrector.parity_check().matvec(word).count_ones() == 0);",
+      "why": "BP-OSD's post-correction check spells the zero test as a full count."
+    },
+    {
+      "claim": "product-row-count",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/product/mod.rs",
+      "line": 642,
+      "text": "if syn.count_ones() > 0 {",
+      "why": "Product-code row validity tests a full count per component row."
+    },
+    {
+      "claim": "product-col-count",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/product/mod.rs",
+      "line": 654,
+      "text": "if syn.count_ones() > 0 {",
+      "why": "Product-code column validity tests a full count per component column."
+    },
+    {
+      "claim": "gldpc-component-check",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/gldpc/mod.rs",
+      "line": 762,
+      "text": "if !self.component.is_valid_codeword(&local) {",
+      "why": "GLDPC validity checks every component through the counted spelling."
+    },
+    {
+      "claim": "transpose-detect-avx2",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 97,
+      "text": "name: \"avx2-bit-twiddle\",",
+      "why": "transpose::detect publishes the AVX2 bit-twiddle lane when AVX2 is present."
+    },
+    {
+      "claim": "transpose-pshufb-alternative",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 113,
+      "text": "pub fn detect_pshufb() -> Option<Transpose64x64Fn> {",
+      "why": "The PSHUFB lane exists but is not what production detection returns."
+    },
+    {
+      "claim": "dense-transpose-resolves-once",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1249,
+      "text": "let transpose_64x64: fn(&[u64; 64], &mut [u64; 64]) = match crate::simd::maybe_transpose() {",
+      "why": "BitMatrix::transpose resolves the block kernel once per call."
+    },
+    {
+      "claim": "dense-transpose-output-alloc",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1276,
+      "text": "let mut out = Self::zeros(self.cols, self.rows);",
+      "why": "The dense transpose allocates its output matrix per call."
+    },
+    {
+      "claim": "dense-transpose-route",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1283,
+      "text": "let route = transpose_route(n_row_blocks, n_col_blocks);",
+      "why": "The outer-loop strategy is the profile-selected simple or macro-tiled loop."
+    },
+    {
+      "claim": "dense-transpose-tile-scratch",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1371,
+      "text": "let mut tile_in = [0u64; 64];",
+      "why": "The tiled driver holds one 64-word input block and one output block: intentional scratch, not a spill."
+    },
+    {
+      "claim": "transpose-scalar-scratch",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 194,
+      "text": "let mut buf: [u64; 64] = *input;",
+      "why": "The portable 64x64 transpose copies the block into a local it mutates in place: intentional scratch."
+    },
+    {
+      "claim": "transpose-avx2-scratch",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+      "line": 36,
+      "text": "let mut buf: [u64; 64] = *input;",
+      "why": "The AVX2 64x64 transpose holds the same local block: intentional scratch."
+    },
+    {
+      "claim": "bch-batch-into-selects",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2231,
+      "text": "let family = select_family::<X::Base, S>(&plan, messages.len());",
+      "why": "encode_batch_into selects the family once per batch through the canonical selector."
+    },
+    {
+      "claim": "bch-batch-into-delegates",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2232,
+      "text": "self.encode_batch_family_into(family, messages, layout, workspace, codewords)",
+      "why": "The current route and the forced-family arms share encode_batch_family_into."
+    },
+    {
+      "claim": "bch-family-into-partition",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2269,
+      "text": "encode_partition(family, &plan, messages, &mut workspace.registers, codewords);",
+      "why": "encode_batch_family_into runs one partition over the caller's workspace."
+    },
+    {
+      "claim": "bch-family-admission",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 748,
+      "text": "EncodeFamily::PolyRemainderScalar => true,",
+      "why": "The reference family is always admitted; the others need the profile's minimum batch."
+    },
+    {
+      "claim": "bch-bitslice-admission",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 754,
+      "text": "batch_len >= selectors.bitslice_interleaved_min_batch()",
+      "why": "Bitslice is admitted only above the active profile's minimum batch."
+    },
+    {
+      "claim": "bch-fold-admission",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 756,
+      "text": "EncodeFamily::ClmulFold => batch_len >= selectors.clmul_fold_min_batch(),",
+      "why": "Fold is admitted only above the active profile's minimum batch."
+    },
+    {
+      "claim": "bch-reference-serial-reduce",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 1432,
+      "text": "packed_serial_reduce(plan, message, register, low);",
+      "why": "The reference family's per-message recurrence."
+    },
+    {
+      "claim": "bch-reference-write",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 1434,
+      "text": "packed_write_codeword(plan, message, register, codeword);",
+      "why": "Every per-frame family writes the codeword through packed_write_codeword."
+    },
+    {
+      "claim": "bch-write-bit-at-a-time",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2030,
+      "text": "codeword.set(user, message.get(user));",
+      "why": "packed_write_codeword copies the message one bit at a time."
+    },
+    {
+      "claim": "bch-fold-reduce",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 1562,
+      "text": "packed_fold_reduce(plan, message, register, low, fold[0]);",
+      "why": "The fold family reduces through packed_fold_reduce before the shared write."
+    },
+    {
+      "claim": "bch-bitslice-batch",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 1614,
+      "text": "packed_bitslice_batch(plan, messages, &mut registers.lanes, codewords);",
+      "why": "The bitslice family reduces whole lane groups through packed_bitslice_batch."
+    },
+    {
+      "claim": "bch-allocating-entry",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2326,
+      "text": "let mut codewords = vec![S::zeroed(plan.length(), plan.symbol_zero()); messages.len()];",
+      "why": "encode_batch allocates the output collection per call."
+    },
+    {
+      "claim": "bch-allocating-scratch",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2329,
+      "text": "with_encode_scratch(|registers: &mut EncodeRegisters<S::Word>| {",
+      "why": "encode_batch reduces over thread-local scratch instead of a caller workspace."
+    },
+    {
+      "claim": "bch-parallel-selects-once",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2389,
+      "text": "let family = select_family::<X::Base, S>(&plan, messages.len());",
+      "why": "encode_batch_parallel_into selects the family once and offers no forced-family variant."
+    },
+    {
+      "claim": "bch-parallel-join",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2647,
+      "text": "rayon::join(",
+      "why": "Partitions recurse through rayon::join under the parallel feature."
+    },
+    {
+      "claim": "bch-unpack-parity",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "line": 290,
+      "text": "pub fn unpack_parity(&self, register: &[u64], redundancy: usize, parity: &mut [u64]) {",
+      "why": "The bitslice family reads parity back through a 64x64 block transpose per parity word."
+    },
+    {
+      "claim": "bitslice-reduce-avx2",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+      "line": 69,
+      "text": "pub(crate) unsafe fn bitslice_reduce_avx2(register: &mut [u64], masks: &[u64], slices: &[u64]) {",
+      "why": "The AVX2 bitslice reduction declares no local buffer: its frame traffic is register pressure."
+    },
+    {
+      "claim": "fold-block-pclmul",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+      "line": 139,
+      "text": "pub(crate) unsafe fn fold_block_pclmul(",
+      "why": "The PCLMULQDQ fold block declares no local buffer: its frame traffic is register pressure."
+    },
+    {
+      "claim": "bitslice-reduce-scalar",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "line": 689,
+      "text": "pub fn bitslice_reduce_scalar(register: &mut [u64], masks: &[u64], slices: &[u64]) {",
+      "why": "The scalar bitslice reduction declares no local buffer."
+    },
+    {
+      "claim": "fold-block-scalar",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "line": 595,
+      "text": "pub fn fold_block_scalar(",
+      "why": "The scalar fold block declares no local buffer."
+    },
+    {
+      "claim": "packed-table-reduce-def",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 1771,
+      "text": "fn packed_table_reduce(",
+      "why": "packed_table_reduce reduces over the caller's register slice and declares no local buffer."
+    },
+    {
+      "claim": "packed-fold-reduce-def",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 1901,
+      "text": "fn packed_fold_reduce(",
+      "why": "packed_fold_reduce reduces over the caller's register slice and declares no local buffer."
+    },
+    {
+      "claim": "dvb-bch-batch-maps-encode",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/core.rs",
+      "line": 455,
+      "text": "messages.iter().map(|msg| self.encode(msg)).collect()",
+      "why": "BchEncoder::encode_batch maps encode over messages; it does not reach the packed batch selector."
+    },
+    {
+      "claim": "dvb-bch-field-poly",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/core.rs",
+      "line": 499,
+      "text": "let m = Gf2mPoly::new(m_coeffs);",
+      "why": "BchEncoder::encode expands the message into field-polynomial coefficients per call."
+    },
+    {
+      "claim": "dvb-bch-div-rem",
+      "project": "gf2",
+      "commit": "ae8b23a8048ee87f6523a0fe67b82380090fcd04",
+      "path": "crates/gf2-coding/src/bch/core.rs",
+      "line": 513,
+      "text": "let (_, parity) = m_shifted.div_rem(&self.code.generator);",
+      "why": "The compatibility encoder computes parity by field-polynomial division."
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# case: {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12718297900
+#
+# Overhead  Command          Shared Object     Symbol                                      
+# ........  ...............  ................  ............................................
+#
+    99.69%  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+
+
+#
+# (Tip: To see callchains in a more compact form: perf report -g folded)
+#

@@ -1,0 +1,18 @@
+# Acceptance probe of the profiler export (2026-09-08)
+
+Command (after a current release build of `benchmark-acceptance`):
+
+    target/release/benchmark-acceptance dev/bench_results/04b85d10/2026-09-07-04b85d10-profile
+
+Exit status: 2
+
+Standard error:
+
+    benchmark-acceptance: No such file or directory (os error 2)
+
+Verdict: rejected/incomplete. This directory is a profiler export rather than a
+Zen 3 protocol receipt: it has no `receipt.json`, saved plan, frozen input
+snapshots, execution journal, checkpoint store, or acceptance summaries. Its raw
+profiles remain diagnostic evidence. The separately frozen exploratory addendum
+governs the rerun published as
+`dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/`.

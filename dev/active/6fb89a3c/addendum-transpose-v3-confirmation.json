@@ -1,0 +1,86 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {"id": "zen3-benchmark-protocol", "version": 3},
+  "family": {
+    "id": "transpose-vs-external",
+    "issue": "6fb89a3c",
+    "purpose": "kernel-family",
+    "description": "Confirmatory comparison of the transpose/conversion family: gf2's canonical 64x64 word transpose against M4RI mzd_transpose and Bitshuffle bshuf_bitshuffle (kernel-isolated, preallocated output), and the whole-consumer BitMatrix::transpose at 63x63, 64x64 and 65x65 against M4RI's fresh-output mzd_transpose and against Bitshuffle through a measured geometry adapter (row padding to a multiple of eight, byte packing, plane unpacking; the copies are skipped where the canonical and Bitshuffle layouts coincide, so the 64x64 consumer pays no copy). The baseline arm is always the established gf2 route and the candidate is always the external arm, so the speedup of medians is median(gf2)/median(external) and a value above 1 means the external arm is ahead; `improved` in a comparator-gap cell is a material gap in the external arm's favour that needs attribution and `regressed` means gf2 is materially ahead. Unpadded Bitshuffle at 63 and 65 rows is unavailable (element count must be a multiple of eight) and is not substituted. All eight pilot cells enter confirmation: the question covers the canonical kernel, the 63/64/65 consumer boundary against both comparators and the Bitshuffle geometry adaptation, which only the 63x63 and 65x65 adapter cells pay. With m = 8 reservations on the family's first confirmatory attempt the corrected per-comparison alpha is 0.025/8 and each bootstrap tail expects 15.6 of 10000 draws, below the twenty P-20 requires, so every cell is reported not-confirmatory; the question is run whole rather than trimmed to fit that bound, and its intervals are fresh-sample evidence without a confirmatory decision. Workload seeds expand through SplitMix64 [Steele2014], implemented as tuning_campaign_support::abtest::SplitMix64 (dev/tools/tuning-campaign-support/src/abtest.rs) in the gf2 arms and as splitmix64_next (dev/active/6fb89a3c/survey/harness_common.h) in the C arms; both are pinned by the producing snapshot. Fixed cells draw one word per row; consumer cells draw one bit per matrix element in row-major order. The failed v3-r1 pilot measured five of these cells before a gf2 arm defect stopped it and the accepted v3-r2 pilot re-measured all eight, so the family used up to two pilot trials per cell where its pilot addendum declared one; this addendum's search budget records two. Between the v3-r2 pilot and this confirmation only the Bitshuffle arm was rebuilt: its adapter pack/unpack probes, outside the timed windows, now average 100000 warm repetitions where the pilot reported one cold pass, and the timed calls are unchanged; the gf2 and M4RI transpose executables are byte-identical to the pilot's. Resolution evidence is the accepted pilot receipt dev/bench_results/6fb89a3c/v3-r2-6fb89a3c-transpose-pilot/receipt.json (SHA-256 43bc7e386fde8d1c65915d1e9347e60094ff4924d8f202e621186c3a0ec42858); its widest relative bootstrap half-width over all 8 pilot cells at the ledger-derived pilot alpha 0.025 is 0.0125 (transpose-consumer-65-vs-bitshuffle-adapter), frozen as 0.02. This survey adopts no production implementation; the outcomes are comparator-gap decisions and the receipt is not expected to qualify."
+  },
+  "frozen": {"frozen_utc": "2026-09-10T22:30:10Z"},
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This survey adopts no production implementation, so no worthwhile-speedup threshold applies and none is declared.",
+    "measurement_resolution": 0.02,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r2-6fb89a3c-transpose-pilot/receipt.json",
+      "sha256": "43bc7e386fde8d1c65915d1e9347e60094ff4924d8f202e621186c3a0ec42858"
+    },
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "One-sided non-inferiority margin 1.1: the pilot's widest relative half-width over all its cells is 0.0125 (frozen resolution 0.02), so the margin lies strictly outside the measured resolution as protocol v3 requires. It is the pilot's provisional value, kept because the resolution permits it.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "Material-gap threshold 1.2: a 20% gap in a nanosecond-scale transpose is the smallest difference worth attributing to a named cause (tile kernel, allocation, partial-word handling, geometry conversion) rather than to host noise; it exceeds one plus the frozen resolution 0.02."
+  },
+  "complexity_budget": {"max_new_unsafe_kernels": 0, "max_added_source_lines": 0, "maintenance_rationale": "The family surveys external comparators and changes no production code; the whole diff is under dev/."},
+  "family_wise": {"alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": [], "ledger_path": "dev/bench_results/6fb89a3c/v3-transpose-family-ledger.jsonl"},
+  "search_budget": {"max_pilot_trials_per_cell": 2, "max_confirmatory_attempts_per_candidate": 1},
+  "holdout": {"required": false, "cells": []},
+  "cells": [
+    {
+      "cell_id": "transpose-64-canonical-vs-m4ri", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "transpose-64-word-kernel", "size": {"n": 64}, "seed": 20260910001},
+      "metric_kind": "kernel-isolated", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": false, "decoder": null
+    },
+    {
+      "cell_id": "transpose-64-canonical-vs-bitshuffle", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "transpose-64-word-kernel", "size": {"n": 64}, "seed": 20260910002},
+      "metric_kind": "kernel-isolated", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": false, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-63-vs-m4ri", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 63, "cols": 63}, "seed": 20260910003},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-64-vs-m4ri", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 64, "cols": 64}, "seed": 20260910004},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-65-vs-m4ri", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 65, "cols": 65}, "seed": 20260910005},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-64-vs-bitshuffle-adapter", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 64, "cols": 64}, "seed": 20260910006},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-63-vs-bitshuffle-adapter", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 63, "cols": 63}, "seed": 20260910007},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-65-vs-bitshuffle-adapter", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 65, "cols": 65}, "seed": 20260910008},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+# label: packed-write-codeword
+# pattern: encode::packed_write_codeword
+# binary: target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 28f0fc82431f1396d61c6a6af7c3080038dbeae41e937a8c5ac643d1874745a6
+# symbols matching this pattern in the binary: 1
+
+## symbol at 000000000007c560, 0x0000000000000267 bytes
+000000000007c560 <gf2_coding::bch::encode::packed_write_codeword>:
+   7c560:	push   %r15
+   7c562:	push   %r14
+   7c564:	push   %r13
+   7c566:	push   %r12
+   7c568:	push   %rbx
+   7c569:	mov    %rcx,%rax
+   7c56c:	mov    0x18(%rdi),%rbx
+   7c570:	test   %rbx,%rbx
+   7c573:	je     7c602 <gf2_coding::bch::encode::packed_write_codeword+0xa2>
+   7c579:	mov    0x18(%r8),%r14
+   7c57d:	mov    0x8(%r8),%r15
+   7c581:	mov    0x10(%r8),%r9
+   7c585:	xor    %ecx,%ecx
+   7c587:	jmp    7c598 <gf2_coding::bch::encode::packed_write_codeword+0x38>
+   7c589:	nopl   0x0(%rax)
+   7c590:	inc    %rcx
+   7c593:	cmp    %rcx,%rbx
+   7c596:	je     7c602 <gf2_coding::bch::encode::packed_write_codeword+0xa2>
+   7c598:	cmp    0x18(%rsi),%rcx
+   7c59c:	jae    7c74b <gf2_coding::bch::encode::packed_write_codeword+0x1eb>
+   7c5a2:	mov    %rcx,%r10
+   7c5a5:	shr    $0x6,%r10
+   7c5a9:	mov    0x10(%rsi),%r11
+   7c5ad:	cmp    %r11,%r10
+   7c5b0:	jae    7c764 <gf2_coding::bch::encode::packed_write_codeword+0x204>
+   7c5b6:	mov    $0x1,%r11d
+   7c5bc:	shl    %cl,%r11
+   7c5bf:	cmp    %rcx,%r14
+   7c5c2:	je     7c732 <gf2_coding::bch::encode::packed_write_codeword+0x1d2>
+   7c5c8:	mov    0x8(%rsi),%r12
+   7c5cc:	test   %r11,(%r12,%r10,8)
+   7c5d0:	je     7c5f0 <gf2_coding::bch::encode::packed_write_codeword+0x90>
+   7c5d2:	cmp    %r9,%r10
+   7c5d5:	jae    7c787 <gf2_coding::bch::encode::packed_write_codeword+0x227>
+   7c5db:	or     %r11,(%r15,%r10,8)
+   7c5df:	jmp    7c590 <gf2_coding::bch::encode::packed_write_codeword+0x30>
+   7c5e1:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   7c5f0:	cmp    %r9,%r10
+   7c5f3:	jae    7c7a7 <gf2_coding::bch::encode::packed_write_codeword+0x247>
+   7c5f9:	not    %r11
+   7c5fc:	and    %r11,(%r15,%r10,8)
+   7c600:	jmp    7c590 <gf2_coding::bch::encode::packed_write_codeword+0x30>
+   7c602:	mov    0x10(%rdi),%r9
+   7c606:	cmp    %r9,%rbx
+   7c609:	jae    7c728 <gf2_coding::bch::encode::packed_write_codeword+0x1c8>
+   7c60f:	mov    0x18(%r8),%r10
+   7c613:	mov    0x8(%r8),%r11
+   7c617:	mov    0x10(%r8),%rsi
+   7c61b:	cmpb   $0x0,0x20(%rdi)
+   7c61f:	je     7c6a0 <gf2_coding::bch::encode::packed_write_codeword+0x140>
+   7c621:	mov    %rbx,%r8
+   7c624:	not    %r8
+   7c627:	add    %r9,%r8
+   7c62a:	neg    %r9
+   7c62d:	jmp    7c658 <gf2_coding::bch::encode::packed_write_codeword+0xf8>
+   7c62f:	nop
+   7c630:	cmp    %rsi,%rdi
+   7c633:	jae    7c79a <gf2_coding::bch::encode::packed_write_codeword+0x23a>
+   7c639:	mov    $0x1,%r14d
+   7c63f:	shl    %cl,%r14
+   7c642:	or     %r14,(%r11,%rdi,8)
+   7c646:	inc    %rbx
+   7c649:	dec    %r8
+   7c64c:	mov    %r9,%rcx
+   7c64f:	add    %rbx,%rcx
+   7c652:	je     7c728 <gf2_coding::bch::encode::packed_write_codeword+0x1c8>
+   7c658:	mov    %r8,%rdi
+   7c65b:	shr    $0x6,%rdi
+   7c65f:	cmp    %rax,%rdi
+   7c662:	jae    7c777 <gf2_coding::bch::encode::packed_write_codeword+0x217>
+   7c668:	cmp    %r10,%rbx
+   7c66b:	jae    7c732 <gf2_coding::bch::encode::packed_write_codeword+0x1d2>
+   7c671:	mov    (%rdx,%rdi,8),%r14
+   7c675:	mov    %rbx,%rdi
+   7c678:	shr    $0x6,%rdi
+   7c67c:	mov    %ebx,%ecx
+   7c67e:	and    $0x3f,%ecx
+   7c681:	bt     %r8,%r14
+   7c685:	jb     7c630 <gf2_coding::bch::encode::packed_write_codeword+0xd0>
+   7c687:	cmp    %rsi,%rdi
+   7c68a:	jae    7c7ba <gf2_coding::bch::encode::packed_write_codeword+0x25a>
+   7c690:	mov    $0xfffffffffffffffe,%r14
+   7c697:	rol    %cl,%r14
+   7c69a:	and    %r14,(%r11,%rdi,8)
+   7c69e:	jmp    7c646 <gf2_coding::bch::encode::packed_write_codeword+0xe6>
+   7c6a0:	mov    %r9,%r8
+   7c6a3:	neg    %r8
+   7c6a6:	xor    %r14d,%r14d
+   7c6a9:	mov    %r9,%r15
+   7c6ac:	jmp    7c6d4 <gf2_coding::bch::encode::packed_write_codeword+0x174>
+   7c6ae:	xchg   %ax,%ax
+   7c6b0:	cmp    %rsi,%rdi
+   7c6b3:	jae    7c79a <gf2_coding::bch::encode::packed_write_codeword+0x23a>
+   7c6b9:	mov    $0x1,%r12d
+   7c6bf:	shl    %cl,%r12
+   7c6c2:	or     %r12,(%r11,%rdi,8)
+   7c6c6:	inc    %rbx
+   7c6c9:	inc    %r15
+   7c6cc:	mov    %r8,%rcx
+   7c6cf:	add    %rbx,%rcx
+   7c6d2:	je     7c728 <gf2_coding::bch::encode::packed_write_codeword+0x1c8>
+   7c6d4:	cmp    %r9,%r15
+   7c6d7:	mov    %r9,%rcx
+   7c6da:	cmovb  %r14,%rcx
+   7c6de:	mov    %r15,%r12
+   7c6e1:	sub    %rcx,%r12
+   7c6e4:	mov    %r12,%rdi
+   7c6e7:	shr    $0x6,%rdi
+   7c6eb:	cmp    %rax,%rdi
+   7c6ee:	jae    7c777 <gf2_coding::bch::encode::packed_write_codeword+0x217>
+   7c6f4:	cmp    %r10,%rbx
+   7c6f7:	jae    7c732 <gf2_coding::bch::encode::packed_write_codeword+0x1d2>
+   7c6f9:	mov    (%rdx,%rdi,8),%r13
+   7c6fd:	mov    %rbx,%rdi
+   7c700:	shr    $0x6,%rdi
+   7c704:	mov    %ebx,%ecx
+   7c706:	and    $0x3f,%ecx
+   7c709:	bt     %r12,%r13
+   7c70d:	jb     7c6b0 <gf2_coding::bch::encode::packed_write_codeword+0x150>
+   7c70f:	cmp    %rsi,%rdi
+   7c712:	jae    7c7ba <gf2_coding::bch::encode::packed_write_codeword+0x25a>
+   7c718:	mov    $0xfffffffffffffffe,%r12
+   7c71f:	rol    %cl,%r12
+   7c722:	and    %r12,(%r11,%rdi,8)
+   7c726:	jmp    7c6c6 <gf2_coding::bch::encode::packed_write_codeword+0x166>
+   7c728:	pop    %rbx
+   7c729:	pop    %r12
+   7c72b:	pop    %r13
+   7c72d:	pop    %r14
+   7c72f:	pop    %r15
+   7c731:	ret
+   7c732:	lea    -0x5d46c(%rip),%rdi        # 1f2cd <anon.7dd461c7d25ba1d0bc6225a41ad0a286.575.llvm.1436703937590314291>
+   7c739:	lea    0x78220(%rip),%rdx        # f4960 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.578.llvm.1436703937590314291>
+   7c740:	mov    $0x27,%esi
+   7c745:	call   *0x7b2c5(%rip)        # f7a10 <_DYNAMIC+0x278>
+   7c74b:	lea    -0x5db04(%rip),%rdi        # 1ec4e <anon.865abf03f1c290c8fa0dbd78e6b7b574.1380.llvm.6724946562970917023+0x116>
+   7c752:	lea    0x77aa7(%rip),%rdx        # f4200 <anon.865abf03f1c290c8fa0dbd78e6b7b574.1381.llvm.6724946562970917023+0x390>
+   7c759:	mov    $0x27,%esi
+   7c75e:	call   *0x7b2ac(%rip)        # f7a10 <_DYNAMIC+0x278>
+   7c764:	lea    0x77aad(%rip),%rdx        # f4218 <anon.865abf03f1c290c8fa0dbd78e6b7b574.2469.llvm.6724946562970917023>
+   7c76b:	mov    %r10,%rdi
+   7c76e:	mov    %r11,%rsi
+   7c771:	call   *0x7b229(%rip)        # f79a0 <_DYNAMIC+0x208>
+   7c777:	lea    0x73cca(%rip),%rdx        # f0448 <anon.865abf03f1c290c8fa0dbd78e6b7b574.251.llvm.6724946562970917023+0x270>
+   7c77e:	mov    %rax,%rsi
+   7c781:	call   *0x7b219(%rip)        # f79a0 <_DYNAMIC+0x208>
+   7c787:	lea    0x78202(%rip),%rdx        # f4990 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.580.llvm.1436703937590314291>
+   7c78e:	mov    %r10,%rdi
+   7c791:	mov    %r9,%rsi
+   7c794:	call   *0x7b206(%rip)        # f79a0 <_DYNAMIC+0x208>
+   7c79a:	lea    0x781ef(%rip),%rdx        # f4990 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.580.llvm.1436703937590314291>
+   7c7a1:	call   *0x7b1f9(%rip)        # f79a0 <_DYNAMIC+0x208>
+   7c7a7:	lea    0x781ca(%rip),%rdx        # f4978 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.579.llvm.1436703937590314291>
+   7c7ae:	mov    %r10,%rdi
+   7c7b1:	mov    %r9,%rsi
+   7c7b4:	call   *0x7b1e6(%rip)        # f79a0 <_DYNAMIC+0x208>
+   7c7ba:	lea    0x781b7(%rip),%rdx        # f4978 <anon.7dd461c7d25ba1d0bc6225a41ad0a286.579.llvm.1436703937590314291>
+   7c7c1:	call   *0x7b1d9(%rip)        # f79a0 <_DYNAMIC+0x208>
