@@ -1,0 +1,195 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "popcount-26465e6c-20260908",
+  "issue": "26465e6c",
+  "label": "confirmation",
+  "campaign_seed": 20260908,
+  "addendum": "dev/active/26465e6c/addendum-popcount.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "baseline": {
+      "build": "native",
+      "description": "gf2 production popcount dispatcher, kernels::ops::popcount",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "production-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "compiler-count-ones": {
+      "build": "conservative-portable",
+      "description": "internal control: portable u64::count_ones loop, no target feature",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "compiler-count-ones"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "libpopcnt": {
+      "build": "external",
+      "description": "libpopcnt v4.2 with its own CPUID dispatch",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/libpopcnt-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "mula-avx2-harleyseal": {
+      "build": "external",
+      "description": "Mula AVX2 Harley-Seal carry-save reference",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/mula-avx2-harleyseal-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "nibble-lut": {
+      "build": "native",
+      "description": "gf2 AVX2 nibble-LUT kernel called directly, bypassing the size threshold",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "nibble-lut"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "scalar-popcnt": {
+      "build": "tuned-portable",
+      "description": "internal control: forced POPCNT-instruction scalar loop",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "scalar-popcnt"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-small-vs-nibble-lut",
+      "baseline_arm": "baseline",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "words": 4,
+        "seed": 201,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-boundary-vs-scalar-popcnt",
+      "baseline_arm": "baseline",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "words": 8,
+        "seed": 202,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-alignment-vs-compiler-count-ones",
+      "baseline_arm": "baseline",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "words": 256,
+        "seed": 203,
+        "pattern": "random",
+        "word_offset": 3
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-bitpattern-allones-vs-libpopcnt",
+      "baseline_arm": "baseline",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "words": 64,
+        "seed": 204,
+        "pattern": "all_one",
+        "word_offset": 0
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-bitpattern-allzero-vs-mula",
+      "baseline_arm": "baseline",
+      "candidate_arm": "mula-avx2-harleyseal",
+      "case": {
+        "op": "popcount",
+        "words": 64,
+        "seed": 205,
+        "pattern": "all_zero",
+        "word_offset": 0
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-csa-boundary-below-vs-mula",
+      "baseline_arm": "baseline",
+      "candidate_arm": "mula-avx2-harleyseal",
+      "case": {
+        "op": "popcount",
+        "words": 63,
+        "seed": 208,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-csa-boundary-at-vs-mula",
+      "baseline_arm": "baseline",
+      "candidate_arm": "mula-avx2-harleyseal",
+      "case": {
+        "op": "popcount",
+        "words": 64,
+        "seed": 209,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-cache-resident-vs-libpopcnt",
+      "baseline_arm": "baseline",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "words": 16384,
+        "seed": 206,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-streaming-vs-mula",
+      "baseline_arm": "baseline",
+      "candidate_arm": "mula-avx2-harleyseal",
+      "case": {
+        "op": "popcount",
+        "words": 524288,
+        "seed": 207,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": null
+}

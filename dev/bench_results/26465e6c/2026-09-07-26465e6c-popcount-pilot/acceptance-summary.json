@@ -1,0 +1,82 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "5bc5ac429c5ce8866a491f5fec5fdba63ea8ced63f05b3b10e5e3419da42e4e4",
+  "campaign_id": "popcount-pilot-26465e6c-20260907t194956z",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "popcount-baselines-pilot",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.95,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "popcount-pilot-small-vs-nibble-lut",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.5959423104603352,
+        "lower": 1.5409307398100542,
+        "upper": 1.6050544439853185,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 4881856622046175542,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-pilot-streaming-vs-mula",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.0811961236181056,
+        "lower": 1.070623413637124,
+        "upper": 1.0856375275131915,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 12536363915688116662,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    }
+  ]
+}

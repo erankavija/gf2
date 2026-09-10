@@ -1,0 +1,23 @@
+# command: ./dev/active/26465e6c/survey/run-campaign.sh and-popcnt-pilot
+# started_utc: 2026-09-08T09:36:39Z
+# gf2 revision (informational): cfec0f75b043f33176d0257b3b1d883cc1c8b31f
+# addendum: dev/active/26465e6c/addendum-and-popcnt-pilot.json sha256=898ca5cc23b0ce3759884cfbe9d869ea052df3e4a6b261209c88f34d732c7288
+# campaign: and-popcnt-pilot-26465e6c-20260908
+# stage: /tmp/gf2-and-popcnt-pilot-26465e6c-20260908
+# arm executables:
+#   popcount-gf2-side sha256=f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e
+#   libpopcnt-arm sha256=a440931f81195ce08602cb9cc9bfa489badc5e4c51f23856ac77dee09e2c4c12
+#   mula-avx2-harleyseal-arm sha256=8381447747c5291da2b8a23d7d007176ffc497f916acdeb319ff61da621d7c72
+# load_avg_start:  12:36:39 up 4 days, 14:05,  5 users,  load average: 2.41, 4.90, 6.16
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-and-popcnt-pilot-26465e6c-20260908/execution.log
+# session exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# arm provenance:
+#   and-fused: f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e -> gf2-side
+#   and-scalar-control: f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e -> gf2-side
+#   and-two-pass: f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e -> gf2-side
+#   every receipt arm executable is pinned in arm-provenance.json
+# load_avg_end:  12:39:15 up 4 days, 14:08,  5 users,  load average: 1.51, 3.41, 5.39
+# finished_utc: 2026-09-08T09:39:15Z

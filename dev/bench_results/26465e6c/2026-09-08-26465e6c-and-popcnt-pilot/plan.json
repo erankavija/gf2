@@ -1,0 +1,91 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "and-popcnt-pilot-26465e6c-20260908",
+  "issue": "26465e6c",
+  "label": "pilot",
+  "campaign_seed": 20260908,
+  "addendum": "dev/active/26465e6c/addendum-and-popcnt-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "and-fused": {
+      "build": "native",
+      "description": "gf2 fused AVX2 AND+popcount kernel, called directly",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-popcnt-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-scalar-control": {
+      "build": "conservative-portable",
+      "description": "internal control: single-pass scalar AND+popcount loop",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-popcnt-scalar-control"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-two-pass": {
+      "build": "native",
+      "description": "public-API two-pass model: and_inplace into a fresh buffer, then popcount",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-popcnt-two-pass-consumer"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "and-popcnt-pilot-cache-resident",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-scalar-control",
+      "case": {
+        "op": "and_popcnt",
+        "words": 4096,
+        "seed_lhs": 301,
+        "seed_rhs": 1301,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "and-popcnt-pilot-streaming",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-scalar-control",
+      "case": {
+        "op": "and_popcnt",
+        "words": 524288,
+        "seed_lhs": 302,
+        "seed_rhs": 1302,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "and-popcnt-pilot-two-pass-consumer",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-two-pass",
+      "case": {
+        "op": "and_popcnt_two_pass",
+        "words": 4096,
+        "seed_lhs": 303,
+        "seed_rhs": 1303,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": null
+}

@@ -1,0 +1,113 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "f28291bd365cd9ee4104c45e8692a13e1436c78bfafcfc4509d149190c3c718d",
+  "campaign_id": "popcount-pilot-26465e6c-20260908",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "popcount-baselines-pilot",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.95,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "popcount-pilot-small-vs-nibble-lut",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.5755361219412916,
+        "lower": 1.526360931288661,
+        "upper": 1.5874445830723851,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 1743307944272388531,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-pilot-alignment-vs-compiler-count-ones",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.34796987256531015,
+        "lower": 0.3470112429574369,
+        "upper": 0.35313217034827143,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 8866428781247525340,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-pilot-streaming-vs-mula",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.1122667401511377,
+        "lower": 1.051676634202275,
+        "upper": 1.1407904803080793,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 13080060564849919797,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    }
+  ]
+}

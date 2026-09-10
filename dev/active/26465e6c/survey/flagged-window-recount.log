@@ -1,0 +1,26 @@
+per-arm flagged windows at factor 2.0 (protocol limit 10% of a confirmatory cell's windows)
+
+dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot  (pilot)
+  popcount-pilot-small-vs-nibble-lut: pooled 0/60 (0.0%); per arm baseline 0/30 (0.0%), candidate 0/30 (0.0%); arm ratio 1.5970x; worst per-arm fraction within the limit
+  popcount-pilot-streaming-vs-mula: pooled 0/60 (0.0%); per arm baseline 0/30 (0.0%), candidate 0/30 (0.0%); arm ratio 1.0789x; worst per-arm fraction within the limit
+
+dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot  (pilot)
+  and-popcnt-pilot-cache-resident: pooled 0/60 (0.0%); per arm baseline 0/30 (0.0%), candidate 0/30 (0.0%); arm ratio 0.3253x; worst per-arm fraction within the limit
+  and-popcnt-pilot-streaming: pooled 0/60 (0.0%); per arm baseline 0/30 (0.0%), candidate 0/30 (0.0%); arm ratio 0.6601x; worst per-arm fraction within the limit
+  and-popcnt-pilot-two-pass-consumer: pooled 0/60 (0.0%); per arm baseline 0/30 (0.0%), candidate 0/30 (0.0%); arm ratio 0.3871x; worst per-arm fraction within the limit
+
+dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount  (confirmation)
+  popcount-small-vs-nibble-lut: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 1.5741x; worst per-arm fraction within the limit
+  popcount-boundary-vs-scalar-popcnt: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 1.0879x; worst per-arm fraction within the limit
+  popcount-alignment-vs-compiler-count-ones: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 0.3483x; worst per-arm fraction within the limit
+  popcount-bitpattern-allones-vs-libpopcnt: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 1.4770x; worst per-arm fraction within the limit
+  popcount-bitpattern-allzero-vs-mula: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 1.2018x; worst per-arm fraction within the limit
+  popcount-csa-boundary-below-vs-mula: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 0.7769x; worst per-arm fraction within the limit
+  popcount-csa-boundary-at-vs-mula: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 1.2004x; worst per-arm fraction within the limit
+  popcount-cache-resident-vs-libpopcnt: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 1.3284x; worst per-arm fraction within the limit
+  popcount-streaming-vs-mula: pooled 0/240 (0.0%); per arm baseline 0/120 (0.0%), candidate 0/120 (0.0%); arm ratio 1.1065x; worst per-arm fraction within the limit
+
+dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount-pilot  (pilot)
+  popcount-pilot-small-vs-nibble-lut: pooled 0/60 (0.0%); per arm baseline 0/30 (0.0%), candidate 0/30 (0.0%); arm ratio 1.5755x; worst per-arm fraction within the limit
+  popcount-pilot-alignment-vs-compiler-count-ones: pooled 0/60 (0.0%); per arm baseline 0/30 (0.0%), candidate 0/30 (0.0%); arm ratio 0.3479x; worst per-arm fraction within the limit
+  popcount-pilot-streaming-vs-mula: pooled 0/60 (0.0%); per arm baseline 0/30 (0.0%), candidate 0/30 (0.0%); arm ratio 1.1001x; worst per-arm fraction within the limit

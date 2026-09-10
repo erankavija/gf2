@@ -1,0 +1,24 @@
+# command: ./dev/active/26465e6c/survey/run-campaign.sh popcount-pilot
+# started_utc: 2026-09-08T08:55:58Z
+# gf2 revision (informational): 019ad1d2d2201aaeee2fad7ba651df11b3278ef2
+# addendum: dev/active/26465e6c/addendum-popcount-pilot.json sha256=2b357d1e69d4584425c4ac190f8c1acfa040ebf0afdb327ea99d74c066072af9
+# campaign: popcount-pilot-26465e6c-20260908
+# stage: /tmp/gf2-popcount-pilot-26465e6c-20260908
+# arm executables:
+#   popcount-gf2-side sha256=f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e
+#   libpopcnt-arm sha256=a440931f81195ce08602cb9cc9bfa489badc5e4c51f23856ac77dee09e2c4c12
+#   mula-avx2-harleyseal-arm sha256=8381447747c5291da2b8a23d7d007176ffc497f916acdeb319ff61da621d7c72
+# load_avg_start:  11:55:58 up 4 days, 13:24,  5 users,  load average: 11.25, 10.67, 7.52
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-popcount-pilot-26465e6c-20260908/execution.log
+# session exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# arm provenance:
+#   baseline: f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e -> gf2-side
+#   compiler-count-ones: f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e -> gf2-side
+#   mula-avx2-harleyseal: 8381447747c5291da2b8a23d7d007176ffc497f916acdeb319ff61da621d7c72 -> mula-avx2-harleyseal-arm
+#   nibble-lut: f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e -> gf2-side
+#   every receipt arm executable is pinned in arm-provenance.json
+# load_avg_end:  12:36:10 up 4 days, 14:05,  5 users,  load average: 3.33, 5.32, 6.33
+# finished_utc: 2026-09-08T09:36:10Z

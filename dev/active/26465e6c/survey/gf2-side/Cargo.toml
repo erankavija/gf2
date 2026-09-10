@@ -1,0 +1,18 @@
+[workspace]
+[package]
+name = "popcount-gf2-side"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
