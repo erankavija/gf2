@@ -110,7 +110,7 @@
           "short_id": "c7113c5a",
           "title": "Establish equivalent polynomial multiplication baselines",
           "classification": "research",
-          "status": "rework round 1 on w-c7113c5a (claude-opus). Merged 4edbadf1, linked 9aa6c8db; cargo-ci and doc-review pass; both independent reviews pass; code-review F1 (dot-product reduction probe reduces an already reduced value, REQ-03) and research-review F1 (tables.md cost/derived estimates without intervals) fail.",
+          "status": "rework round 2 (lead SSOT finding). Round 1 merged at 3ec7e22c (cargo-ci passed), evidence linked at 2671e7ab; both independent Terra xhigh reviews and code-review, doc-review and research-review pass on 2671e7ab, closing code-review F1 and research-review F1. Lead review FAIL: findings.md hand-copies figures from the generated tables.md and receipts (77 numeric lines), which the invoker SSOT directive and @/inv/single-source-prose forbid.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c7113c5a-v3",
@@ -235,6 +235,20 @@
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
           "status": "pending"
+        },
+        {
+          "id": "bdc507a3",
+          "short_id": "bdc507a3",
+          "title": "Accept resumed campaigns whose interrupted cell restarts",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "428f2f6b",
+          "short_id": "428f2f6b",
+          "title": "Replace hand-copied numbers in closed survey reports with citations",
+          "classification": "documentation",
+          "status": "pending"
         }
       ]
     },
@@ -312,6 +326,18 @@
       "type": "bug",
       "in_epic": false,
       "reason": "eda07788 found NR rate-matched rustdoc documents +inf filler LLRs while de-rate-matching writes 15.0; depends on eda07788"
+    },
+    {
+      "id": "bdc507a3",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "26465e6c showed that a mid-cell interruption makes the runner restart the cell and acceptance reject the stage under P-11 (cell started twice), contradicting campaign-resumability; feeds 1362381c"
+    },
+    {
+      "id": "428f2f6b",
+      "type": "task",
+      "in_epic": true,
+      "reason": "invoker SSOT directive: the closed survey reports of c077a88b, 1d0da41f and eda07788 hand-copy numbers from generated tables and receipts; feeds 1362381c"
     }
   ],
   "escalations": [
@@ -392,7 +418,7 @@
     "f547c394": 2,
     "1d0da41f": 1,
     "04b85d10": 1,
-    "c7113c5a": 1
+    "c7113c5a": 2
   },
   "surfaced_pitfalls": [
     {
@@ -516,7 +542,9 @@
     "Invoker policy 2026-09-11 (session 8): benchmark runs during a working session may last only about as long as cargo-ci; longer runs need separate time windows outside the session. Lead calibration: cold cargo-ci passes take about 400-500 s (max 807 s), so an in-session timed launch may hold the CCX1 lock for at most about 8 minutes in total. Longer campaigns are prepared and frozen in-session, stopped cleanly at a session boundary if already running (they stay resumable under the same identity), and queued as window jobs. All four running workers were told; future briefs carry the rule.",
     "Session 8: invoker scheduled the first benchmark window overnight at 04:00 Europe/Helsinki. systemd user timer gf2-bench-window-20260911 (transient, linger enabled) runs dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh, which executes queue.tsv jobs sequentially from their worker worktrees; runtime log and done markers in .agents/bench-window/ (locally excluded from git). The unit environment was smoke-tested (cargo 1.97 default, cargo +1.95.0, python3, flock). Jobs must be committed to queue.tsv before 04:00.",
     "Session 8, ~22:55Z: on the invoker order to stop the long run now, the lead stopped 6fb89a3c run-confirmations-s8.sh (transpose confirmation complete; logical confirmation stopped after 3 sessions before its fourth acquired the lock; BCH never started) and the 04b85d10 repeated profile (9 repetitions x ~5 min in one launch; rep-01 complete, rep-02 interrupted and re-run whole on resume). Both are deferred to the 04:00 window. The 26465e6c AND-popcount pilot, launched without a slot, was stopped after 1 of 6 cells and, at about 1.5 minutes total, given the free slot to resume. A one-timed-run-at-a-time slot rule (ask the lead first) now applies to all workers.",
-    "Invoker instruction 2026-09-11 ~23:00Z (session 8): include ALL benchmarking in the 04:00 window; no timed runs of any kind during a working session. Workers prepare, freeze and commit each run and send the lead its queue line; steps that need a run result wait for the next session unless fully mechanical. The instruction also says to proceed at full speed with the remaining work. All four workers were told; future briefs carry the rule. The 26465e6c AND-popcount pilot slot granted minutes earlier was revoked before it resumed."
+    "Invoker instruction 2026-09-11 ~23:00Z (session 8): include ALL benchmarking in the 04:00 window; no timed runs of any kind during a working session. Workers prepare, freeze and commit each run and send the lead its queue line; steps that need a run result wait for the next session unless fully mechanical. The instruction also says to proceed at full speed with the remaining work. All four workers were told; future briefs carry the rule. The 26465e6c AND-popcount pilot slot granted minutes earlier was revoked before it resumed.",
+    "Invoker directive 2026-09-11 (session 8): copies that go stale are the worst; SSOT applies (@/inv/single-source-prose). Survey reports carry the argument and cite each number at its authoritative location (generated tables file section and cell, or receipt field); numbers appear only in generated artifacts. Applied to all open surveys (6fb89a3c, 26465e6c, 04b85d10, 6c6b09b1 and the c7113c5a rework) and filed as 428f2f6b for the closed surveys c077a88b, 1d0da41f and eda07788.",
+    "Invoker instruction 2026-09-11 (session 8): write the session handoff once the current workers finish, each issue either complete or blocked only by a pending 04:00-window run. No new dispatches beyond the current workers (6c6b09b1 is the last)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
