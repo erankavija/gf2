@@ -134,17 +134,25 @@ def cases():
                     seed=303,
                 )
 
+    # The allocating entry point beside the caller-buffer one on the same batch,
+    # which is the comparison the layout family's allocation cell makes.
     for degree in (8, 14):
         for batch in (16, 256):
-            yield case(
-                "layout",
-                "bch-encode-batch-alloc",
-                "current",
-                {"degree": degree, "batch": batch},
-                seed=304,
-            )
+            for path in ("current", "caller-buffer"):
+                yield case(
+                    "layout",
+                    "bch-encode-batch-alloc",
+                    path,
+                    {"degree": degree, "batch": batch},
+                    seed=304,
+                )
 
-    for workers in (1, 6):
+    # The parallel entry point across the contract's core arms: one worker, the
+    # six-core complex, the twelve physical cores and the twenty-four logical
+    # CPUs. It selects the same family as the serial entry point, so only the
+    # worker count varies; the sweep runs under the full-host wrapper so every
+    # declared worker has a CPU.
+    for workers in (1, 6, 12, 24):
         for batch in (256, 1024):
             yield case(
                 "layout",

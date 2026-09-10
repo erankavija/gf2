@@ -4,24 +4,26 @@
 # A counter over the disassembly sees one kind of instruction where there are
 # two costs: a compiler spill of a value that did not fit in a register, and an
 # intentional buffer the algorithm is defined over. The two are separated by
-# reading the source, so each row cites the declaration that settles it.
+# reading the source, so each row cites the declaration that settles it. Every
+# citation names the routine's own definition or the local buffer it declares;
+# the verbatim cited lines are recorded in survey/source-evidence.json.
 # `none` records a routine that touches no frame slot at all.
-avx2-popcnt|none|crates/gf2-kernels-simd/src/x86/avx2.rs:264 accumulates in vector registers alone
-avx2-and-popcnt|none|crates/gf2-kernels-simd/src/x86/avx2.rs:316 accumulates in vector registers alone
-avx2-find-first-one|none|crates/gf2-kernels-simd/src/x86/avx2.rs:369 tests one vector at a time
-avx2-xor-into|none|crates/gf2-kernels-simd/src/x86/avx2.rs declares no local buffer
-avx2-and-into|none|crates/gf2-kernels-simd/src/x86/avx2.rs declares no local buffer
-transpose-64x64-scalar|intentional scratch|crates/gf2-kernels-simd/src/transpose.rs:194 copies the 64 input words into the local buf the stages mutate in place
-transpose-64x64-avx2|intentional scratch|crates/gf2-kernels-simd/src/transpose.rs:113 the AVX2 lane holds the same 64-word block, of which sixteen ymm registers carry a part
-bitslice-reduce-scalar|spill|crates/gf2-kernels-simd/src/bch_encode.rs:689 declares no local buffer, so its frame traffic is register pressure
-bitslice-reduce-avx2|spill|crates/gf2-kernels-simd/src/bch_encode.rs:407 the AVX2 lane declares no local buffer
-fold-block-scalar|spill|crates/gf2-kernels-simd/src/bch_encode.rs:595 declares no local buffer
-fold-block-pclmul|spill|crates/gf2-kernels-simd/src/bch_encode.rs:407 the PCLMULQDQ lane declares no local buffer
-bch-unpack-parity|intentional scratch|crates/gf2-kernels-simd/src/bch_encode.rs:290 reads the register back through the same 64-word block transpose
-packed-write-codeword|none|crates/gf2-coding/src/bch/encode.rs:2023 writes the codeword one bit at a time and holds no buffer
-packed-table-reduce|spill|crates/gf2-coding/src/bch/encode.rs:1548 reduces over the caller's register slice and declares no local buffer
-packed-fold-reduce|spill|crates/gf2-coding/src/bch/encode.rs:1562 reduces over the caller's register slice and declares no local buffer
-dense-matvec-simd|spill|crates/gf2-core/src/matrix.rs:1554 holds only the row slice and the accumulator
-dense-matvec-scalar|spill|crates/gf2-core/src/matrix.rs:1517 holds four accumulators and two chunk iterators
-dense-transpose|intentional scratch|crates/gf2-core/src/matrix.rs:1275 the tiled driver holds one 64-word block between the read and the write
-sparse-matvec|spill|crates/gf2-core/src/sparse.rs:1367 holds one boolean accumulator and the index cursors
+avx2-popcnt|none|crates/gf2-kernels-simd/src/x86/avx2.rs:264 `unsafe fn avx2_popcnt` accumulates in vector registers and declares no local buffer
+avx2-and-popcnt|none|crates/gf2-kernels-simd/src/x86/avx2.rs:316 `unsafe fn avx2_and_popcnt` accumulates in vector registers and declares no local buffer
+avx2-find-first-one|none|crates/gf2-kernels-simd/src/x86/avx2.rs:369 `unsafe fn avx2_find_first_one` tests one vector at a time and declares no local buffer
+avx2-xor-into|none|crates/gf2-kernels-simd/src/x86/avx2.rs:19 `unsafe fn avx2_xor_into` streams dst/src and declares no local buffer
+avx2-and-into|none|crates/gf2-kernels-simd/src/x86/avx2.rs:202 `unsafe fn avx2_and_into` streams dst/src and declares no local buffer
+transpose-64x64-scalar|intentional scratch|crates/gf2-kernels-simd/src/transpose.rs:194 `let mut buf: [u64; 64] = *input;` is the block the stages mutate in place
+transpose-64x64-avx2|intentional scratch|crates/gf2-kernels-simd/src/x86/transpose.rs:36 `let mut buf: [u64; 64] = *input;` is the same block, of which sixteen ymm registers carry a part
+bitslice-reduce-scalar|spill|crates/gf2-kernels-simd/src/bch_encode.rs:689 `pub fn bitslice_reduce_scalar(register, masks, slices)` reduces over caller slices and declares no local buffer
+bitslice-reduce-avx2|spill|crates/gf2-kernels-simd/src/x86/bch_encode.rs:69 `unsafe fn bitslice_reduce_avx2(register, masks, slices)` reduces over caller slices and declares no local buffer
+fold-block-scalar|spill|crates/gf2-kernels-simd/src/bch_encode.rs:595 `pub fn fold_block_scalar` folds over caller slices and declares no local buffer
+fold-block-pclmul|spill|crates/gf2-kernels-simd/src/x86/bch_encode.rs:139 `unsafe fn fold_block_pclmul` folds over caller slices and declares no local buffer
+bch-unpack-parity|intentional scratch|crates/gf2-kernels-simd/src/bch_encode.rs:290 `pub fn unpack_parity` reads the bit-sliced register back through one 64x64 block transpose per parity word
+packed-write-codeword|none|crates/gf2-coding/src/bch/encode.rs:2023 `fn packed_write_codeword` writes the codeword one bit at a time and holds no buffer
+packed-table-reduce|spill|crates/gf2-coding/src/bch/encode.rs:1771 `fn packed_table_reduce` reduces over the caller's register slice and declares no local buffer
+packed-fold-reduce|spill|crates/gf2-coding/src/bch/encode.rs:1901 `fn packed_fold_reduce` reduces over the caller's register slice and declares no local buffer
+dense-matvec-simd|spill|crates/gf2-core/src/matrix.rs:1553 `fn matvec_simd` holds only the row slice, the fused-kernel pointer and the output vector
+dense-matvec-scalar|spill|crates/gf2-core/src/matrix.rs:1514 `fn matvec_scalar` and the four accumulators of `row_dot_parity_scalar` at matrix.rs:1527
+dense-transpose|intentional scratch|crates/gf2-core/src/matrix.rs:1371 `let mut tile_in = [0u64; 64];` and `tile_out` are the block the tiled driver holds between read and write
+sparse-matvec|spill|crates/gf2-core/src/sparse.rs:1367 `pub fn matvec` holds one boolean accumulator and the index cursors and declares no local buffer
