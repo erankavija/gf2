@@ -7,8 +7,9 @@ acceptance summaries and receipt-local snapshots named in each table. Speedup is
 `median(baseline) / median(candidate)`; below 1 in a `-gap-` cell means gf2 is faster.
 Relative half-width is `max(estimate - lower, upper - estimate) / estimate`.
 Per-arm medians and conversion spans are descriptive: they carry no interval and
-decide nothing. `unpack` and `pack` are the external arm's mean per-call conversion
-time inside the measured windows; `setup` is one untimed construction.
+decide nothing. `setup` is one untimed construction.
+`unpack` and `pack` are the external arm's mean per-call conversion time inside
+the measured windows.
 
 ## Protocol-v3 confirmation
 
