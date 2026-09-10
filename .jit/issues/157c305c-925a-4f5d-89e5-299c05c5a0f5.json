@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-10T16:35:04.688466291Z",
+  "dependencies": [
+    "eda07788-23a0-4852-939b-2cfcda36f9d1"
+  ],
+  "description": "The rate-matched 5G NR LDPC code documents filler-position LLR initialization as $+\\infty$, while de-rate-matching writes a finite prior.\n\n## Background\n\nThe rustdoc of the NR rate-matched code constructor in `crates/gf2-coding/src/ldpc/nr_5g/mod.rs` states that punctured positions get LLR 0 and filler positions get LLR $+\\infty$. The de-rate-matching path writes the private constant `FILLER_LLR`, which is 15.0 and is documented at its definition as chosen to avoid `tanh` saturation in f32. A caller comparing gf2 with another implementation's filler convention reads the wrong contract from the public documentation.\n\n## Success Criteria\n\n- [hard] REQ-01: The public documentation of NR rate-matched LLR preparation states the filler-position LLR value that the implementation writes, and the reason it is finite.\n- [hard] REQ-02: The documented filler value and the value de-rate-matching writes derive from one source, so they cannot diverge silently.\n\n## Notes\n\nSurfaced by the protocol-v3 shift and coding-permutation baseline survey while mapping gf2 de-rate-matching onto an external implementation's filler convention.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-10T16:35:04.688466291Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "157c305c-925a-4f5d-89e5-299c05c5a0f5",
+  "labels": [
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Document the finite NR filler LLR that de-rate-matching writes",
+  "updated_at": "2026-09-10T16:46:49.085647874Z"
+}

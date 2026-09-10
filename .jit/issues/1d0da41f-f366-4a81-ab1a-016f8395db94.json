@@ -359,6 +359,21 @@
       "status": "passed",
       "updated_at": "2026-09-10T16:27:29.752734291Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T16:40:51.531913092Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-10T16:43:27.543118082Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-10T16:49:00.213149738Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
@@ -373,5 +388,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
-  "updated_at": "2026-09-10T16:28:25.097691613Z"
+  "updated_at": "2026-09-10T16:49:00.213149738Z"
 }
