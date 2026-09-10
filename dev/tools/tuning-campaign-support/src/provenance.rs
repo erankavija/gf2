@@ -20,36 +20,6 @@ const SNAPSHOT_COMPLETE: &str = "producing-snapshot.json";
 /// Schema shared by producing-input manifests.
 pub const PRODUCING_INPUTS_SCHEMA: &str = "tuning-campaign-producing-inputs-v1";
 
-/// Repository-relative producing-input manifest selected by a runner plan.
-///
-/// Construction rejects absolute paths, traversal and glob patterns. The manifest
-/// is read and its selected files validated by [`ProducingInputs`] at capture time.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(try_from = "String", into = "String")]
-pub struct ProducingManifestPath(String);
-
-impl TryFrom<String> for ProducingManifestPath {
-    type Error = io::Error;
-
-    fn try_from(path: String) -> io::Result<Self> {
-        validate_relative(&path, "producing-input manifest")?;
-        Ok(Self(path))
-    }
-}
-
-impl From<ProducingManifestPath> for String {
-    fn from(path: ProducingManifestPath) -> Self {
-        path.0
-    }
-}
-
-impl ProducingManifestPath {
-    /// Returns the validated repository-relative path.
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
 /// Declarative closure of files that produce measurement evidence.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

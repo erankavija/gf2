@@ -46,6 +46,7 @@ const ARM_REQUEST_SCHEMA: &str = "zen3-benchmark-arm-request-v1";
 /// Schema of the one result line each arm child writes.
 const ARM_RESULT_SCHEMA: &str = "zen3-benchmark-arm-result-v1";
 const CHILD_KILL_GRACE: Duration = Duration::from_secs(5);
+const PRODUCING_MANIFEST_PATH: &str = "dev/active/f547c394/producing-inputs.json";
 static ALL_REAPED: AtomicBool = AtomicBool::new(true);
 
 fn invalid(message: impl ToString) -> io::Error {
@@ -193,7 +194,7 @@ fn facts(
         ArtifactPin::capture(root, stage, &plan.addendum, "inputs/family-addendum.json")?;
     let producing = ProducingInputs::capture_to(
         root,
-        plan.producing_manifest_path(),
+        PRODUCING_MANIFEST_PATH,
         &stage.join("inputs/producing"),
     )?;
     let source = source_identity(producing.clone());
@@ -708,14 +709,11 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                                 .clone()
                                 .ok_or_else(|| invalid("candidate decoder omitted quality"))?,
                         };
-                        if record.decoder_quality.as_ref().is_some_and(|prior| {
-                            if session.addendum.protocol.version >= 3 {
-                                !prior.baseline.same_decoder_evidence(&quality.baseline)
-                                    || !prior.candidate.same_decoder_evidence(&quality.candidate)
-                            } else {
-                                prior != &quality
-                            }
-                        }) {
+                        if record
+                            .decoder_quality
+                            .as_ref()
+                            .is_some_and(|prior| prior != &quality)
+                        {
                             return Err(invalid("decoder quality changed across repeated timing executions on the same frozen frames"));
                         }
                         record.decoder_quality = Some(quality);
