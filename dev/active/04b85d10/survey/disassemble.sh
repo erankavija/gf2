@@ -67,6 +67,28 @@ while IFS='|' read -r label pattern; do
     done
 done <"${HERE}/asm-symbols.txt"
 
+# Where the POPCNT instruction and the portable bit-twiddle population count
+# actually live in the measured executable. The conservative-portable build
+# enables no `popcnt` target feature, so a scalar `u64::count_ones` compiles
+# to the mask-and-shift sequence identified by its 0x5555.../0x3333...
+# constants; POPCNT can appear only inside kernels compiled under an enabled
+# target feature. The attribution is per symbol, from the whole binary.
+{
+    echo "# POPCNT instructions per symbol (jit:04b85d10)"
+    echo "# binary: ${BINARY}"
+    echo "# binary sha256: $(sha256sum "${BINARY}" | cut -d' ' -f1)"
+    echo
+    echo "## symbols containing a popcnt instruction (count, symbol)"
+    objdump -d --no-show-raw-insn -C "${BINARY}" \
+        | awk '/^[0-9a-f]+ </ {fn=substr($0, index($0, "<"))} /\tpopcnt/ {c[fn]++} END {for (f in c) print c[f], f}' \
+        | sort -rn
+    echo
+    echo "## symbols containing the bit-twiddle popcount constants 0x5555... or 0x3333... (count, symbol)"
+    objdump -d --no-show-raw-insn -C "${BINARY}" \
+        | awk '/^[0-9a-f]+ </ {fn=substr($0, index($0, "<"))} /0x3333333333333333|0x5555555555555555/ {c[fn]++} END {for (f in c) print c[f], f}' \
+        | sort -rn
+} >"${OUT}/asm/popcnt-attribution.txt"
+
 # Frame traffic per routine, joined with the source-derived reason the
 # routine has it. The counter cannot separate a compiler spill from a buffer
 # the algorithm is defined over; the classification table cites the source
