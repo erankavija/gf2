@@ -188,7 +188,7 @@ sequential XMM `pclmulqdq`, the YMM function's XMM tail, the detect-time selecto
 and the scalar bit-scan/shift/XOR loop. No AVX512 instruction or ZMM register
 is required. [Assembly and scope audit](evidence/assembly-audit.json) pins the
 command, source/assembly digests and unchanged arithmetic bodies. The assembly
-must be committed together with the final SIMD source change.
+is committed together with the final SIMD source change.
 
 The YMM loop still builds and extracts its two lanes and retains its indexed
 bounds checks. That instruction mix is consistent with the regression; it does
@@ -236,17 +236,15 @@ No GPU allocation or kernel execution is verified in this sandbox.
 
 ## Criterion outcomes
 
-| Criterion | Working-tree outcome | Evidence |
+| Criterion | Outcome | Evidence |
 |---|---|---|
 | REQ-01 | MET; negative confirmation accepted and baseline retained | Frozen receipt, input snapshots, acceptance summary and this interpretation |
 | REQ-07 | MET; available YMM explicitly selectable without AVX512VL | Original failing evidence; `gf2m.rs`; repaired target-feature predicate |
 | REQ-08 | MET | Shared raw-batch suites, FieldVec consumer suites and test logs |
 | REQ-09 | MET; all declared cells regress | Confirmatory raw samples, three-session execution log and checkpoints |
-| REQ-10 | MET in files; lead must commit source and assembly together | Rust 1.95 assembly and scope audit; no arithmetic-body changes |
+| REQ-10 | MET; assembly committed with the final SIMD source change (`c9e498b6`) | Rust 1.95 assembly and scope audit; no arithmetic-body changes |
 
-Commits, formal gate evaluation and tracker/document linking belong to the lead.
-The full repository CI contract passes with exit 0; its main test tier reports
-5959 passed, 0 failed and 248 skipped. Every configured CI step passes. The
-verbatim verdict is recorded in [evidence/cargo-ci.txt](evidence/cargo-ci.txt).
-The temporary lead checkpoint passes the assembly pairing gate, as recorded in
-[evidence/asm-gate.txt](evidence/asm-gate.txt); the final merge requires its own gate run.
+The repository CI contract passes with exit 0; the recorded run's main test
+tier reports 5959 passed, 0 failed and 248 skipped, and every configured CI
+step passes ([evidence/cargo-ci.txt](evidence/cargo-ci.txt)). The assembly
+pairing check is recorded in [evidence/asm-gate.txt](evidence/asm-gate.txt).
