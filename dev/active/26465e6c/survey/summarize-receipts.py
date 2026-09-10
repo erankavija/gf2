@@ -29,6 +29,7 @@ V3 = [
     ("popcount", "pilot"),
     ("popcount", "confirmation"),
     ("and-popcnt", "pilot"),
+    ("and-popcnt", "pilot-r2"),
     ("and-popcnt", "confirmation"),
 ]
 V1_CONFIRMATION = RESULTS / "2026-09-08-26465e6c-popcount"
@@ -254,6 +255,17 @@ def header(out, directory, receipt, summary, digest, checked):
         f"arm runs executable sha256 {', '.join(f'`{d}`' for d in digests)}. The port reproduces "
         f"the tool's interval of `{checked}` exactly."
     )
+    groups = {}
+    for finding in summary["findings"]:
+        groups.setdefault((finding["rule"], finding["severity"]), []).append(finding)
+    for (rule, severity), found in sorted(groups.items()):
+        cells = sorted({finding["cell"] for finding in found if finding["cell"]})
+        messages = sorted({finding["message"] for finding in found})
+        out.append(
+            f"Findings {rule} {severity} x{len(found)} on {len(cells)} cell(s)"
+            + (f" (`{'`, `'.join(cells)}`)" if len(cells) <= 2 else "")
+            + ": " + "; ".join(messages) + "."
+        )
     out.append("")
 
 
@@ -387,9 +399,12 @@ def probe_table(out, receipt, digest):
         return
     out.append(
         "Conversion-cost probes of whole-consumer cells: one value per execution, measured "
-        "after its timed windows; medians over executions with 95% descriptive intervals. "
-        "`setup_ns` times the arm's one-time route resolution, `pack_ns` one temporary copy of "
-        "the left operand, `dispatch_ns` one call's two backend selections; integer nanoseconds."
+        "after its timed windows, which already contain these costs; medians over executions "
+        "with 95% descriptive intervals, rounded to integer nanoseconds. `setup_ns` times the "
+        "arm's one-time route resolution (single shot); `pack_ns` the mean of repeated temporary "
+        "copies of bank 0's left operand, so cache-warm even in a streaming cell; `dispatch_ns` "
+        "the mean of repeated two-selection calls of the two-pass route; 0 where the arm has "
+        "no such step."
     )
     out.append("")
     out.append("| Cell | Arm | Executions | setup_ns | pack_ns | dispatch_ns |")
