@@ -216,6 +216,30 @@ def resolution(lines, pilot_directory, confirmation_directory, confirmation_summ
     ])
 
 
+def sessions(lines, directory):
+    receipt = load(directory, "receipt.json")
+    lines.append(
+        f"Source: `{directory}/receipt.json` `session_hosts`, one runtime host observation per "
+        f"bounded session; toolchain `{receipt['toolchain']}`."
+    )
+    lines.append("")
+    rows = []
+    for index, host in enumerate(receipt["session_hosts"], 1):
+        rows.append([
+            index,
+            host["observed_utc"][:19] + "Z",
+            host["hostname"],
+            host["cpu_model"],
+            host["os_kernel"],
+            ", ".join(sorted(set(host["governors"].values()))),
+            "active" if host["smt_active"] else "inactive",
+            len(host["affinity"]),
+            " / ".join(f"{value:.2f}" for value in host["load_average"]),
+        ])
+    table(lines, ["Session", "Observed", "Host", "CPU", "Kernel", "Governors", "SMT",
+                  "CPUs in mask", "Load average 1/5/15 min"], rows)
+
+
 def executables(lines):
     rows = []
     for directory in (V1_PILOT, V1_CONFIRMATION, V3_PILOT, V3_PILOT_R2, V3_CONFIRMATION):
@@ -252,6 +276,8 @@ def main():
     receipt = arm_medians(lines, V3_CONFIRMATION)
     lines += ["### Paired conversion attribution", ""]
     paired_attribution(lines, receipt)
+    lines += ["### Sessions and host", ""]
+    sessions(lines, V3_CONFIRMATION)
     lines += ["## Protocol-v3 exploratory pilots", ""]
     summary_cells(lines, V3_PILOT)
     arm_medians(lines, V3_PILOT)
