@@ -8,12 +8,20 @@ projection of the quality reports and finalized campaign receipts. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
 and [frozen protocol](../f547c394/protocol.md) govern both families.
 
+The matched confirmation is independently accepted: AFF3CT flooding f32 is
+slower in the DVB whole-call comparison, while NR has no material gap under
+the frozen margins. The accepted quality pilot retains every predeclared
+candidate and its P-19 admission failure. No candidate is eligible for quality
+confirmation or fastest-arm selection. The numerical estimates and uncertainty
+are projected in the linked tables; no production implementation is adopted.
+
 ## Question and method
 
 The survey compares the gf2 f32 flooding normalized-min-sum decoder with
 openly accessible implementations on the DVB-T2 normal rate-1/2 code and
 NR BG1 lifting-384 **mother code**. Matched-algorithm and quality-compatible
-comparisons have separate addenda, pilots, confirmations and tables.
+comparisons have separate addenda, pilots and tables. Matched confirmation uses
+its accepted pilot; the quality family stops at its accepted negative pilot.
 
 The input manifests pin the parity-check matrices, recorded little-endian
 f32 LLRs and transmitted codewords by SHA-256. The input generator is
@@ -63,8 +71,8 @@ version v4.7.0. The actual compile record contains `-std=gnu++11`, `-O3`,
 The shim compiles against these definitions and obtains its backend name
 from `mipp::InstructionFullType`. Every validation row records the decoder
 class, observed backend and native wave size; these are not inferred from
-CMake's requested flags. The Rust release arms use the toolchain and native
-flags in the build record; a separate Rust 1.95 release check passes.
+CMake's requested flags. The Rust release arms use Rust 1.95 and the native flags recorded with their
+exact executable identities.
 
 [The capability screen](../../bench_results/c077a88b/2026-09-08-c077a88b-preparation/capabilities-nr.json)
 retains the command, output and outcome for each schedule, update rule,
@@ -141,8 +149,8 @@ fully filled from already recorded frames. No arrival process is modelled:
 batch queueing delay is therefore unmeasured, not declared zero for a live link.
 
 Quality is a single deterministic replay of each full recorded bundle,
-prepared under the CPU budget on one CPU without either side of the timing
-mutex. Timed children read those exact quality objects. Fresh timing processes
+prepared under the CPU budget on one CPU with the shared host-budget lock.
+Timed measurement uses the exclusive full-host lock. Timed children read those exact quality objects. Fresh timing processes
 do not constitute new BER/FER samples. Counts, iteration distributions and process RSS appear in the generated quality
 table. FER uses Wilson intervals. BER uses the protocol's Hoeffding interval on
 independent frame error fractions, allowing arbitrary bit dependence within a
@@ -192,9 +200,10 @@ before measurement and freeze receipt-local ledger prefixes.
 serialized full-host sessions, finalization and independent acceptance. The
 freeze script derives the conservative widest pilot relative interval half-width
 from the independently accepted v3 pilot and pins its exact receipt, addendum and
-ledger snapshots. Confirmations retain the frozen corpus, tolerance and all six
-quality candidates. A P-19 note does not structurally prohibit measuring them;
-it prevents a quality-admissible performance conclusion.
+ledger snapshots. The matched confirmation retains its frozen two-cell design. The accepted
+quality pilot preserves all six P-19 notes and every predeclared candidate; no
+candidate satisfies the quality admission rule, so the eligible shortlist is
+empty and no quality confirmation or fastest-candidate selection is made.
 
 ## Criterion status
 
@@ -206,17 +215,33 @@ all candidates have worse FER. The DVB fixed-point excess failures remain a
 separate observed negative result. No tolerance or corpus change masks either
 finding.
 
-V3 pilot and confirmation publication is in progress. The generated tables
-project finalized receipts only; no unmeasured confirmation is claimed.
+Both v3 pilots and the matched confirmation are independently accepted. The
+quality pilot closes the bounded survey with no admissible candidate; its timing
+intervals remain exploratory, including the broad NR scalar interval. The
+matched confirmation uses fresh samples and the exact published pilot-derived
+addendum. Its ledger-derived confidence and outcomes appear in the generated
+tables: the DVB candidate regresses, and NR has no material comparator gap.
+Receipt acceptance establishes valid evidence; these outcomes authorize no
+production adoption.
+
+The [initial matched-confirmation rejection](../../bench_results/c077a88b/v3-r1-matched-confirmation-rejection/acceptance-summary.json)
+remains intact. P-03 incorrectly required an optional decision claim from a
+pilot without decision margins. The shared evaluator now derives resolution
+from raw pairs, the canonical seed and the verified ledger alpha, checking a
+claim when present. The [reevaluation audit](../../bench_results/c077a88b/v3-r1-matched-confirmation-reevaluation.log)
+records identical receipt hashes before and after acceptance and identifies both
+the corrected evaluator and its source. No timing was repeated and no raw
+measurement, addendum or protocol bytes were edited. The focused red test,
+complete shared suite and lint evidence reside in the v3 preparation directory.
 
 | Criterion | Status | Evidence or remaining work |
 |---|---|---|
-| REQ-01 | PARTIAL | Rust 1.95 release arms, immutable source/input pins and tested v3 contracts; v3 timing and publication pending. No production kernel change requires before/after measurement. |
-| REQ-02 | PARTIAL | Matched f32 NMS and supported layered f32 SIMD arms validated; v3 confirmation pending. Matched NMS SIMD remains unavailable in the pinned C++11 build. |
-| REQ-03 | PARTIAL | Capability screen and full-corpus per-frame quality evidence retained. V3 cannot certify quality admission on this corpus; predeclared candidate timing remains pending. |
+| REQ-01 | MET | Accepted protocol-v3 pilots and matched confirmation with exact contract, addendum, source and ledger snapshots; Rust 1.95 release arms and serialized full-host timing. Negative outcomes remain visible; no production kernel change requires before/after measurement. |
+| REQ-02 | MET | Pinned matched f32 flooding NMS confirmation and supported layered f32 SIMD pilot arms use identical recorded inputs with labeled settings and observed backends. Matched NMS SIMD remains unavailable in the pinned C++11 build. |
+| REQ-03 | MET — negative result | Completed capability screen, six-candidate timed pilot and full-corpus per-frame quality accounting. All six P-19 admission failures remain visible. The eligible shortlist is empty; no fastest quality-compatible arm is asserted or confirmed. |
 | REQ-04 | MET | Pinned sources, maintained-upstream observations, xdsopl matrix identity and preserved OAI/srsRAN build failures. |
 | REQ-05 | MET | Validated mother-code and information-window adapters; explicit unexpressible or unverified puncturing, filler, rate-matching and stopping contracts. |
-| REQ-06 | PARTIAL | Adapter evidence and immutable v1 history published in the worker changes; fresh v3 pilots and confirmation remain pending. |
+| REQ-06 | MET | Frozen baseline and adapter evidence, accepted v3 pilots and matched confirmation, rejected acceptance evidence, unavailable arms and immutable superseded v1 history are preserved. The negative quality result supplies no eligible confirmation shortlist. |
 
 ## Limits and follow-up
 
