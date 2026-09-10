@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-07T18:42:23.836140462Z",
   "context": {},
   "created_at": "2026-09-06T19:58:57.724502744Z",
@@ -14,6 +14,236 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c8e3749799a4a27d07efb4adb964f2e1b2da1428b9f98fd90d94b46fe6cfb5c2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/6fb89a3c/tables.md",
+          "resolved_path": "dev/bench_results/6fb89a3c/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2857b9ddadcc8aa579aeaa047c16ee7a40c0d76e514e9779c4df7090de1b8069",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8eda01ca1a342efd6c78e419ef488345cce19b6afbba2929e4ef04c77784bc74",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b76650da89dc9c611bba91e34524157e3f8e844437282d838de90875f2c5e80c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation/receipt.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "6fb89a3c findings and criterion map",
+      "path": "dev/active/6fb89a3c/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Transpose, logical and BCH survey tables (generated)",
+      "path": "dev/bench_results/6fb89a3c/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol v3 transpose confirmation receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol v3 transpose confirmation acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol v3 logical confirmation receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol v3 logical confirmation acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol v3 bch confirmation receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol v3 bch confirmation acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Transpose resolution pilot receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r2-6fb89a3c-transpose-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Logical-buffer resolution pilot receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "BCH resolution pilot receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen transpose confirmation addendum",
+      "path": "dev/active/6fb89a3c/addendum-transpose-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen logical-buffer confirmation addendum",
+      "path": "dev/active/6fb89a3c/addendum-logical-buffer-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen BCH confirmation addendum",
+      "path": "dev/active/6fb89a3c/addendum-bch-genmatrix-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "transpose resolution derivation",
+      "path": "dev/active/6fb89a3c/pilot-resolution-v3-transpose.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "logical resolution derivation",
+      "path": "dev/active/6fb89a3c/pilot-resolution-v3-logical.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "bch resolution derivation",
+      "path": "dev/active/6fb89a3c/pilot-resolution-v3-bch.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Transpose family ledger",
+      "path": "dev/bench_results/6fb89a3c/v3-transpose-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Logical-buffer family ledger",
+      "path": "dev/bench_results/6fb89a3c/v3-logical-buffer-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "BCH generator-matrix family ledger",
+      "path": "dev/bench_results/6fb89a3c/v3-bch-genmatrix-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Family ledger origin record",
+      "path": "dev/bench_results/6fb89a3c/v3-ledger-origin.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Pilot-to-confirmation executable comparison",
+      "path": "dev/bench_results/6fb89a3c/v3-pilot-to-confirmation-executables.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "External pins, builds and observed backends",
+      "path": "dev/active/6fb89a3c/survey/build-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Bit-mapping and row-space validation",
+      "path": "dev/active/6fb89a3c/survey/correctness-report.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Arm framing validation",
+      "path": "dev/active/6fb89a3c/survey/framing-report.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Bitshuffle bit-mapping search",
+      "path": "dev/active/6fb89a3c/survey/bitshuffle-bit-mapping.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Survey code-claim evidence ledger",
+      "path": "dev/active/6fb89a3c/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Producing-input manifest",
+      "path": "dev/active/6fb89a3c/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Campaign launcher",
+      "path": "dev/bench_results/6fb89a3c/run-campaign.sh"
     }
   ],
   "first_ready_at": "2026-09-06T19:58:57.724502744Z",
@@ -23,7 +253,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-10T23:24:44.508199738Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6fb89a3c-f1a7-439d-a397-add1782afe2b",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -38,5 +274,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Establish transpose and logical-buffer comparison arms",
-  "updated_at": "2026-09-10T15:43:47.157630230Z"
+  "updated_at": "2026-09-10T23:25:07.608252678Z"
 }
