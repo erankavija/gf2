@@ -11278,3 +11278,10 @@
 {"from":"ready","id":"ed3e3c0c-38b8-4387-b9dc-6daff456d50a","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-10T16:00:37.992712647Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"ac3a7678-e0c9-41ad-be71-738c5ef37044","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-10T16:00:37.992712647Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["dependencies"],"id":"4c3eeb67-8dd5-47e0-b0a1-881d175fa9e8","issue_id":"1362381c-78c0-42eb-bdc9-4327f20bc343","timestamp":"2026-09-10T16:00:49.154567685Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"122c8bbe-3c11-4372-abb4-468a9ce36df3","issue_id":"c077a88b-2d35-49ed-bfe0-6fbc7055cea1","timestamp":"2026-09-10T16:08:55.638308462Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"a26018bc-9c43-4ec0-a58b-6ad56d95f1c5","issue_id":"c077a88b-2d35-49ed-bfe0-6fbc7055cea1","timestamp":"2026-09-10T16:11:11.481483649Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"4ca96e26-df92-4f2c-aaa9-ab4aaba19260","issue_id":"c077a88b-2d35-49ed-bfe0-6fbc7055cea1","timestamp":"2026-09-10T16:14:00.121547186Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"455a2389-9abe-4cc7-9f75-7d71c845a3bf","issue_id":"c077a88b-2d35-49ed-bfe0-6fbc7055cea1","timestamp":"2026-09-10T16:20:50.361661481Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"aa436f21-7d78-4791-8499-daa7067c68b6","issue_id":"c077a88b-2d35-49ed-bfe0-6fbc7055cea1","timestamp":"2026-09-10T16:21:47.776765510Z","to":"done","type":"issue_state_changed"}
+{"id":"b2db77e9-7bd1-436c-b3e6-222fe735f0b0","issue_id":"c077a88b-2d35-49ed-bfe0-6fbc7055cea1","timestamp":"2026-09-10T16:21:47.776765510Z","type":"issue_completed"}
+{"from":"backlog","id":"b2d17cd3-4960-4d28-b1af-cd38b6de8eb9","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-10T16:21:58.640620633Z","to":"ready","type":"issue_state_changed"}
