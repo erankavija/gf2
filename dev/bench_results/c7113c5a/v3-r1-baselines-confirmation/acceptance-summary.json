@@ -1,0 +1,467 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "14a6a55d8c71f0555c1dc37b2958a588d867e327ac73b38eb9244cbd3a40f225",
+  "campaign_id": "c7113c5a-v3-r1-baselines-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "polynomial-multiplication-baselines",
+    "comparisons": 21,
+    "family_alpha": 0.008333333333333333,
+    "per_comparison_confidence": 0.9996031746031746,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 4,
+  "resumed": true,
+  "findings": [
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-4w-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-9w-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-64w-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-256w-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-2048w-streaming-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-256w-6core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-256w-12core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-256w-24smt",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "poly-mul-4w-public-api-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "internal-clmul-batch-1024-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "internal-gf2m-dot-1024-1core",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    }
+  ],
+  "cells": [
+    {
+      "cell_id": "poly-mul-4w-1core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.6104274285899589,
+        "lower": 0.6081349732198497,
+        "upper": 0.6158708928499326,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 3365182003567823449,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "poly-mul-9w-1core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.6546311128281924,
+        "lower": 0.6518332630106352,
+        "upper": 0.657845348150076,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 9660913425803890847,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "poly-mul-64w-1core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 166.49781295017232,
+        "lower": 164.87346666906572,
+        "upper": 167.41403684815276,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 7504255973298409113,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "poly-mul-256w-1core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 299.9931194361177,
+        "lower": 299.0450859978586,
+        "upper": 301.33145435658906,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 5929104245254411988,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "poly-mul-2048w-streaming-1core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 866.3558786126092,
+        "lower": 860.5067290002403,
+        "upper": 871.8338976977373,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 7949841372350250181,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "poly-mul-256w-6core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "physical-cores-6",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 173.73018756426922,
+        "lower": 158.36471869281587,
+        "upper": 181.29184763447276,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 4782259794740813020,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "poly-mul-256w-12core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "physical-cores-12",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 166.45938324672846,
+        "lower": 138.791745444165,
+        "upper": 190.04466601343358,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 18258992234520477061,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "poly-mul-256w-24smt",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "logical-cpus-24",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 167.31085787027402,
+        "lower": 159.5582692235065,
+        "upper": 171.45047616083767,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 13742884646469668767,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "poly-mul-4w-public-api-1core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 45.853869729269725,
+        "lower": 45.667004347242006,
+        "upper": 46.126506333502405,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 4393860790449450520,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "internal-clmul-batch-1024-1core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.15379448507265514,
+        "lower": 0.15317816974755932,
+        "upper": 0.1566602140157117,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 17070034062472576774,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "internal-gf2m-dot-1024-1core",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.15679944421823844,
+        "lower": 0.15315421590003336,
+        "upper": 0.15890588601842132,
+        "confidence": 0.9996031746031746,
+        "alpha": 0.0003968253968253968,
+        "resamples": 10000,
+        "seed": 13905068970704254111,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.25
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

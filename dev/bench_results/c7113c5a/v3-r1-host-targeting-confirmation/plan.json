@@ -1,0 +1,101 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "c7113c5a-v3-r1-host-targeting-confirmation",
+  "issue": "c7113c5a",
+  "label": "confirmation",
+  "campaign_seed": 20260910411,
+  "addendum": "dev/active/c7113c5a/addendum-v3-host-targeting-confirmation.json",
+  "producing_manifest": "dev/active/c7113c5a/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-conservative": {
+      "build": "conservative-portable",
+      "description": "gf2 conservative build of poly-baseline-arms: dispatched wide kernels, the scalar schoolbook beyond them, the detected raw-batch lane and FieldVec::simd_dot_product; gf2-core and gf2-kernels-simd by path, RUSTFLAGS=(none)",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/arms-conservative/release/gf2-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "gf2-tuned": {
+      "build": "tuned-portable",
+      "description": "gf2 tuned build of poly-baseline-arms: dispatched wide kernels, the scalar schoolbook beyond them, the detected raw-batch lane and FieldVec::simd_dot_product; gf2-core and gf2-kernels-simd by path, RUSTFLAGS=-C target-cpu=x86-64-v3",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/arms-tuned/release/gf2-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64-v3",
+      "tuning_profile": null
+    },
+    "gf2x-conservative": {
+      "build": "external",
+      "description": "gf2x 1.3.0 (tag gf2x-1.3.0, commit 27ba588f03bf6e1e74763903bab25e6e8bb6d0f0, GPL-3.0-or-later), gf2x_mul_r built with CFLAGS=-O2 (configure appends -msse2 -msse3 -mssse3 -msse4.1 -mpclmul; hwdir x86_64_pclmul); Rust shell RUSTFLAGS=(none); the arm asserts it mapped /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/prefix-conservative/lib/libgf2x.so and reports that file's SHA-256",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/arms-conservative/release/gf2x-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "gf2x-tuned": {
+      "build": "external",
+      "description": "gf2x 1.3.0 (tag gf2x-1.3.0, commit 27ba588f03bf6e1e74763903bab25e6e8bb6d0f0, GPL-3.0-or-later), gf2x_mul_r built with CFLAGS=-O3 -march=x86-64-v3 (configure appends -msse2 -msse3 -mssse3 -msse4.1 -mpclmul; hwdir x86_64_pclmul); Rust shell RUSTFLAGS=-C target-cpu=x86-64-v3; the arm asserts it mapped /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/prefix-tuned/lib/libgf2x.so and reports that file's SHA-256",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/arms-tuned/release/gf2x-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64-v3",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "poly-mul-4w-conservative-1core",
+      "baseline_arm": "gf2-conservative",
+      "candidate_arm": "gf2x-conservative",
+      "case": {
+        "kind": "poly-mul",
+        "words": 4,
+        "inner": 1,
+        "seed": 201
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-4w-tuned-1core",
+      "baseline_arm": "gf2-tuned",
+      "candidate_arm": "gf2x-tuned",
+      "case": {
+        "kind": "poly-mul",
+        "words": 4,
+        "inner": 1,
+        "seed": 201
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-256w-conservative-1core",
+      "baseline_arm": "gf2-conservative",
+      "candidate_arm": "gf2x-conservative",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 1,
+        "seed": 204
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-mul-256w-tuned-1core",
+      "baseline_arm": "gf2-tuned",
+      "candidate_arm": "gf2x-tuned",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 1,
+        "seed": 204
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 2
+}
