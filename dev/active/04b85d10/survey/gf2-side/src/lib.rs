@@ -74,18 +74,55 @@ impl Case {
     }
 }
 
+/// The generator behind every seeded fixture this harness builds.
+///
+/// Fixtures come from `BitVec::random_seeded` and `BitMatrix::random_seeded`
+/// in `gf2-core`, which seed `rand::rngs::StdRng` through
+/// `SeedableRng::seed_from_u64` and fill whole words. The versions are the
+/// ones the harness lockfile resolves; `tests/arm_paths.rs` reads the
+/// lockfile and fails when it resolves anything else.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+pub struct FixtureRng {
+    /// The calls that turn a case seed into fixture words.
+    pub generator: &'static str,
+    /// The algorithm those calls run at the resolved versions.
+    pub algorithm: &'static str,
+    /// Resolved `rand` version.
+    pub rand: &'static str,
+    /// Resolved `rand_chacha` version.
+    pub rand_chacha: &'static str,
+    /// Resolved `rand_core` version.
+    pub rand_core: &'static str,
+}
+
+/// The fixture generator of this build.
+pub const FIXTURE_RNG: FixtureRng = FixtureRng {
+    generator: "gf2_core BitVec::random_seeded and BitMatrix::random_seeded: \
+                rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; \
+                per-row, per-block and per-bank seeds are the case-seed offsets `prepare` \
+                defines",
+    algorithm: "ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 \
+                expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)",
+    rand: "0.8.8",
+    rand_chacha: "0.3.1",
+    rand_core: "0.6.4",
+};
+
 /// Setup and conversion costs an arm reports beside its timing windows.
 ///
 /// The five fields are the ones the receipt schema carries. A phase a
 /// workload does not have reports zero, which is the honest statement that
 /// the route performs no such work; it is never a stand-in for a phase that
-/// exists and was not measured.
+/// exists and was not measured. A measured phase below one nanosecond per
+/// call also reports zero, because [`per_call_ns`] rounds down.
 #[derive(Clone, Copy, Debug, Default, Serialize)]
 pub struct Conversion {
     /// One-shot preparation the timed body does not repeat: code
     /// construction, table build, matrix materialization.
     pub setup_ns: u64,
-    /// Caller representation to the route's packed input, per timed call.
+    /// Caller representation to the route's packed input, per timed call. A
+    /// route that packs inside its timed call reports here the caller-side
+    /// preparation it borrows instead, and says so where it sets the field.
     pub pack_ns: u64,
     /// Route output back to the caller representation, per timed call.
     pub unpack_ns: u64,
@@ -196,6 +233,9 @@ pub struct Prepared {
     pub conversion: Option<Conversion>,
     /// Worker count the arm observed for itself at run time.
     pub workers_observed: u32,
+    /// Generator of the seeded fixture, absent where the fixture is
+    /// deterministic and the seed is unused.
+    pub fixture_rng: Option<FixtureRng>,
     state: State,
     sink: u64,
 }
@@ -539,6 +579,7 @@ pub fn prepare(
     let simd = gf2_core::kernels::simd::maybe_simd();
     let mut conversion = None;
     let mut workers_observed = 1u32;
+    let mut fixture_rng = Some(FIXTURE_RNG);
 
     let (state, selected_path) = match case.workload.as_str() {
         "row-xor" => {
@@ -597,6 +638,8 @@ pub fn prepare(
         "zero-test" => {
             let words = case.size("words")?;
             let set_bit = case.size("set_bit")?;
+            // An all-zero buffer with at most one set bit: nothing is drawn.
+            fixture_rng = None;
             let banks = (0..bank_count)
                 .map(|_| {
                     let mut vector = BitVec::zeros(words * 64);
@@ -642,8 +685,10 @@ pub fn prepare(
                 pack_ns: 0,
                 unpack_ns: 0,
                 batch_fill_ns: 0,
+                // `rref` resolves its XOR kernel once per call through this
+                // function.
                 dispatch_ns: per_call_ns(4096, || {
-                    black_box(select_backend_for_size(black_box(stride)));
+                    black_box(resolve_xor_inplace(black_box(stride)));
                 }),
             });
             (
@@ -679,6 +724,8 @@ pub fn prepare(
                     black_box(y);
                 }),
                 batch_fill_ns: 0,
+                // The stride route `matvec` selects per call; the kernel-table
+                // read that follows it is crate-private and is not timed.
                 dispatch_ns: per_call_ns(4096, || {
                     black_box(matvec_route(black_box(stride)));
                 }),
@@ -711,6 +758,8 @@ pub fn prepare(
                 pack_ns: 0,
                 unpack_ns: 0,
                 batch_fill_ns: 0,
+                // The outer-loop route `transpose` selects per call; its
+                // block-kernel lookup is crate-private and is not timed.
                 dispatch_ns: per_call_ns(4096, || {
                     black_box(gf2_core::matrix::transpose_route(
                         black_box(rows.div_ceil(64)),
@@ -776,16 +825,22 @@ pub fn prepare(
                     BitVec::random_seeded(code.n(), case.seed.wrapping_add(bank as u64 * 0x9E37))
                 })
                 .collect();
-            let words = code.m().div_ceil(64);
+            let checks = code.m();
             conversion = Some(Conversion {
+                // The construction of the code this case measures.
                 setup_ns: per_call_ns(1, || {
-                    black_box(LdpcCode::dvb_t2_short(CodeRate::Rate1_2));
+                    black_box(if n == 16200 {
+                        LdpcCode::dvb_t2_short(CodeRate::Rate1_2)
+                    } else {
+                        LdpcCode::dvb_t2_normal(CodeRate::Rate1_2)
+                    });
                 }),
                 pack_ns: 0,
-                // The syndrome route allocates and bit-appends its output.
+                // The syndrome route allocates its output with one bit of
+                // capacity per check and appends one bit per check.
                 unpack_ns: per_call_ns(64, || {
-                    let mut y = BitVec::with_capacity(words * 64);
-                    for _ in 0..words * 64 {
+                    let mut y = BitVec::with_capacity(checks);
+                    for _ in 0..checks {
                         y.push_bit(true);
                     }
                     black_box(y);
@@ -823,6 +878,8 @@ pub fn prepare(
                     BitVec::random_seeded(code.k(), case.seed.wrapping_add(index as u64 + 1))
                 })
                 .collect();
+            // Regenerating the batch: allocation plus the fixture generator's
+            // fill, which a consumer replaces with a copy of its own data.
             let batch_fill_ns = per_call_ns(4, || {
                 let filled: Vec<BitVec> = (0..batch)
                     .map(|index| {
@@ -835,6 +892,9 @@ pub fn prepare(
             let dispatch_ns = per_call_ns(1024, || {
                 black_box(code.selected_encode_family(layout, black_box(batch)));
             });
+            // The families pack messages inside the timed call, so this field
+            // carries the one caller-side preparation the route takes instead:
+            // building the workspace `encode_batch_into` borrows.
             let pack_ns = per_call_ns(16, || {
                 black_box(code.encode_workspace());
             });
@@ -926,6 +986,7 @@ pub fn prepare(
             let messages: Vec<BitVec> = (0..batch)
                 .map(|index| BitVec::random_seeded(k, case.seed.wrapping_add(index as u64 + 1)))
                 .collect();
+            // Regenerating the batch, as in the packed BCH workloads.
             let batch_fill_ns = per_call_ns(4, || {
                 let filled: Vec<BitVec> = (0..batch)
                     .map(|index| BitVec::random_seeded(k, case.seed.wrapping_add(index as u64 + 1)))
@@ -947,6 +1008,8 @@ pub fn prepare(
         }
         "field-id-hint" => {
             let calls = case.size("calls")?;
+            // The body checks a constant field identity and reads no buffer.
+            fixture_rng = None;
             (
                 State::FieldIdHint { calls },
                 "current/arc-allocating-field-identity".to_owned(),
@@ -959,6 +1022,7 @@ pub fn prepare(
         selected_path,
         conversion,
         workers_observed,
+        fixture_rng,
         state,
         sink: 0,
     })
