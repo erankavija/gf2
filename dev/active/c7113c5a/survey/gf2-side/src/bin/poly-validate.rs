@@ -374,7 +374,9 @@ fn check_wide_field_composition(pool: &mut Gf2xPool) -> Check {
             let mut gf2x = vec![0u64; 2 * words];
             gf2x_mul(pool, &a, &b, &mut gf2x);
             check.record(reducer.reduce(&gf2x) == expected, || {
-                format!("gf2x product plus the probe reducer differs at {words} words, trial {trial}")
+                format!(
+                    "gf2x product plus the probe reducer differs at {words} words, trial {trial}"
+                )
             });
         }
     }

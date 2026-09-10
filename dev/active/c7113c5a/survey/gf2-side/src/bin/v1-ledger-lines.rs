@@ -34,11 +34,17 @@ fn reservation(
     let plan = RunnerPlan::decode(&read(dir, "plan.json")?)?;
     let addendum_bytes = read(dir, "inputs/family-addendum.json")?;
     if sha256_hex(&addendum_bytes) != receipt.addendum.sha256 {
-        return Err(format!("{}: addendum snapshot differs from the receipt pin", dir.display()));
+        return Err(format!(
+            "{}: addendum snapshot differs from the receipt pin",
+            dir.display()
+        ));
     }
     let addendum = FamilyAddendum::decode(&addendum_bytes)?;
     if plan.campaign_id != receipt.campaign_id {
-        return Err(format!("{}: plan and receipt name different campaigns", dir.display()));
+        return Err(format!(
+            "{}: plan and receipt name different campaigns",
+            dir.display()
+        ));
     }
     let comparisons = addendum
         .cells
@@ -88,6 +94,9 @@ fn main() -> ExitCode {
         eprintln!("v1-ledger-lines: derived chain does not decode: {error}");
         return ExitCode::FAILURE;
     }
-    print!("{}", String::from_utf8(ledger).expect("JSON lines are UTF-8"));
+    print!(
+        "{}",
+        String::from_utf8(ledger).expect("JSON lines are UTF-8")
+    );
     ExitCode::SUCCESS
 }
