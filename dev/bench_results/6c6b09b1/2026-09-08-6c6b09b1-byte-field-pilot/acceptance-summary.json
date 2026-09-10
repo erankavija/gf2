@@ -1,0 +1,110 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "b15308aad470be693d0f0afff09fd418c074fde58230fdb25ae8ef3fab928425",
+  "campaign_id": "pilot-6c6b09b1-20260908t092546z",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "byte-field-arms-pilot",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.95,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "axpy-isal-l2-1core",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 19,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 469.4536922270868,
+        "lower": 468.66904295841636,
+        "upper": 471.486065656625,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 6373091719338271724,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "matmul-m4rie-n128-1core",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 16.764435120449253,
+        "lower": 16.64334565789743,
+        "upper": 17.04167730706181,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 13002169769297133437,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "pairwise-gfcomplete-l2-1core",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.6026130727601722,
+        "lower": 0.5965965703520165,
+        "upper": 0.614742175545722,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 6026231977297002926,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold"
+      ],
+      "reason": null
+    }
+  ]
+}

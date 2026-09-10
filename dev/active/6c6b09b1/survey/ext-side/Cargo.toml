@@ -1,0 +1,27 @@
+# External candidate arm for the byte-field survey (jit:6c6b09b1).
+#
+# Standalone workspace holding the arm that links the pinned externals
+# through the C shim in the parent directory. It is a separate crate from the
+# gf2 arm so the gf2 baseline executable links no external library and the
+# two arms have genuinely distinct build identities.
+
+[workspace]
+
+[package]
+name = "byte-field-ext-side"
+version = "0.0.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[dependencies]
+byte-field-arm-common = { path = "../arm-common" }
+
+[[bin]]
+name = "ext-arm"
+path = "src/ext_arm.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
