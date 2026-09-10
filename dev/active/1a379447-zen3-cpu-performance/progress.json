@@ -94,15 +94,16 @@
           "short_id": "eda07788",
           "title": "Establish compatible shift and coding-permutation baselines",
           "classification": "research",
-          "status": "worker finished (w-eda07788, claude-opus): branch at b2abf17a; DVB-T2 v3 confirmation accepted, all six cells not-confirmatory (m=12, t=2); new NR LLR de-rate-matching family confirmatory (m=6, t=1), gf2 2.87-3.13x faster than AFF3CT depuncture; 4 of 12 NR configurations non-equivalent and untimed. findings.md written via Bash heredoc before the hook policy reached the worker (disclosed). Integration pending.",
+          "status": "done. Merged at 3e1ae250 (cargo-ci passed, 5979 tests), 33 artifacts linked at e52c02fb. Two independent Terra xhigh research reviews and the code-review, doc-review and research-review gates all pass on e52c02fb with zero findings. Lead review PASS: REQ-01..04 met; stale-narrative sweep clean; the one follow-up (profile the DVB-T2 per-bit scatter) belongs to c04dd4ac. The branch carries the untagged session-6 commit 1829a1b0 (shared-runner edits), whose content main already owned, so the merge adds no shared-tooling change.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
-            "worktree": ".worktrees-local/agent-eda07788-v3",
+            "worktree": ".worktrees-local/agent-eda07788-v3 (kept for reuse by 12fdeb5b in wave 3)",
             "branch": "worktree-agent-eda07788-v3w",
             "base": "5203ae88 (main merged at 8c4e724e)",
             "attempt": 3,
             "session": 7
-          }
+          },
+          "merge_commit": "3e1ae250"
         },
         {
           "id": "c7113c5a-94da-462f-954e-3b7894bb95df",
@@ -503,7 +504,8 @@
     "Session 7 invoker instruction: start no new work in this session; finish the running issues (04b85d10 integration, eda07788, 6fb89a3c, c7113c5a, 26465e6c). 6c6b09b1 and wave 3 are not started.",
     "Session 7: a harness hook refuses subagent Write of report-like files (findings.md). Policy: the worker sends the full text to the lead, the lead writes it, the worker reviews and commits; no Bash workaround. w-04b85d10 had already bypassed it with a Bash heredoc before the policy was set.",
     "Invocation 2026-09-11 (session 8): drive epic 1a379447; subagent model by task difficulty, no Fable; parallel worktrees, four workers at a time; prefer worktree reuse over proliferation.",
-    "Session 8 start: all four session-7 workers (c7113c5a rework, 04b85d10 rework, 6fb89a3c, 26465e6c) had stopped at a provider session limit around 2026-09-10T17:53Z; none can be revived from this session. c7113c5a's rework had made no change (branch fast-forwarded to main 107849ef). Dirty trees of 04b85d10-v3, 6fb89a3c-v3 and 26465e6c-v3 are captured without touching the worktrees as refs/salvage/<id>-s7-wip (2cfb5f7c, 22067ccc, 38b977ad)."
+    "Session 8 start: all four session-7 workers (c7113c5a rework, 04b85d10 rework, 6fb89a3c, 26465e6c) had stopped at a provider session limit around 2026-09-10T17:53Z; none can be revived from this session. c7113c5a's rework had made no change (branch fast-forwarded to main 107849ef). Dirty trees of 04b85d10-v3, 6fb89a3c-v3 and 26465e6c-v3 are captured without touching the worktrees as refs/salvage/<id>-s7-wip (2cfb5f7c, 22067ccc, 38b977ad).",
+    "Session 8: invoker ordered the obsolete worktrees removed; reclaimed the superseded pre-v3 worktrees of 04b85d10, 26465e6c, 6fb89a3c, c7113c5a and eda07788 without cache harvest (stale builds; branches kept). Free disk rose from 26 GB to 50 GB."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
