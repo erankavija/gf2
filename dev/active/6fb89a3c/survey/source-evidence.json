@@ -3,7 +3,7 @@
   "issue": "6fb89a3c",
   "projects": {
     "gf2": {
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "revision_kind": "git commit (informational navigation metadata; receipts pin these files by content digest)"
     },
     "m4ri": {
@@ -23,7 +23,7 @@
     {
       "claim": "gf2-transpose-detect",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-kernels-simd/src/transpose.rs",
       "line": 74,
       "text": "pub fn detect() -> Option<TransposeFns> {",
@@ -32,7 +32,7 @@
     {
       "claim": "gf2-transpose-avx2-runtime-check",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-kernels-simd/src/transpose.rs",
       "line": 94,
       "text": "if is_x86_feature_detected!(\"avx2\") {",
@@ -41,7 +41,7 @@
     {
       "claim": "gf2-transpose-avx2-name",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-kernels-simd/src/transpose.rs",
       "line": 97,
       "text": "name: \"avx2-bit-twiddle\",",
@@ -50,7 +50,7 @@
     {
       "claim": "gf2-bitmatrix-transpose",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 1240,
       "text": "pub fn transpose(&self) -> Self {",
@@ -59,7 +59,7 @@
     {
       "claim": "gf2-bitmatrix-transpose-fresh-output",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 1276,
       "text": "let mut out = Self::zeros(self.cols, self.rows);",
@@ -68,7 +68,7 @@
     {
       "claim": "gf2-bitmatrix-zeros-alloc",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 319,
       "text": "data: vec![0u64; total_words],",
@@ -77,7 +77,7 @@
     {
       "claim": "gf2-bitmatrix-transpose-route",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 176,
       "text": "if n_row_blocks <= transpose_simple_max_blocks && n_col_blocks <= transpose_simple_max_blocks {",
@@ -86,16 +86,34 @@
     {
       "claim": "gf2-bitmatrix-tile-zero-pad",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 1390,
       "text": "for slot in tile_in.iter_mut().take(64).skip(block_rows) {",
       "why": "Partial tiles (63 and 65) are zero-padded into a full 64x64 tile before the kernel runs; 65x65 therefore runs four tile transposes."
     },
     {
+      "claim": "gf2-bitmatrix-tile-kernel-call",
+      "project": "gf2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1394,
+      "text": "transpose_64x64(&tile_in, &mut tile_out);",
+      "why": "Every block of the tile grid costs one full 64x64 kernel call plus its tile load and store, so the 2x2 grid of 65x65 pays four although three of its tiles carry one row or one column of data."
+    },
+    {
+      "claim": "gf2-bitmatrix-transpose-simple-threshold",
+      "project": "gf2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1350,
+      "text": "pub(crate) const TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS: usize = 16;",
+      "why": "The simple block route holds up to 16 blocks per side in the conservative profile, so every surveyed geometry takes it."
+    },
+    {
       "claim": "gf2-xor-inplace",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-core/src/kernels/ops.rs",
       "line": 93,
       "text": "pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {",
@@ -104,7 +122,7 @@
     {
       "claim": "gf2-xor-dispatch-threshold",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-core/src/kernels/backend.rs",
       "line": 83,
       "text": "pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;",
@@ -113,7 +131,7 @@
     {
       "claim": "gf2-xor-dispatch-compare",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-core/src/kernels/backend.rs",
       "line": 115,
       "text": "if _size >= SIMD_MIN_WORDS {",
@@ -122,7 +140,7 @@
     {
       "claim": "gf2-avx2-xor-kernel",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 19,
       "text": "unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {",
@@ -131,7 +149,7 @@
     {
       "claim": "gf2-avx2-xor-instruction",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 29,
       "text": "let r = _mm256_xor_si256(a, b);",
@@ -140,7 +158,7 @@
     {
       "claim": "gf2-simd-feature-default",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/Cargo.toml",
       "line": 52,
       "text": "default = [\"simd\", \"sim-observability\"]",
@@ -149,7 +167,7 @@
     {
       "claim": "gf2-bch-generator-matrix-trait",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/src/traits.rs",
       "line": 455,
       "text": "fn generator_matrix(&self) -> Result<Self::GeneratorMatrix, CodeError> {",
@@ -158,7 +176,7 @@
     {
       "claim": "gf2-bch-generator-matrix-impl",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/src/bch/matrix.rs",
       "line": 655,
       "text": "fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {",
@@ -167,7 +185,7 @@
     {
       "claim": "gf2-bch-write-generator",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/src/bch/matrix.rs",
       "line": 510,
       "text": "fn write_generator<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>",
@@ -176,7 +194,7 @@
     {
       "claim": "gf2-bch-reference-oracle",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/src/bch/matrix.rs",
       "line": 579,
       "text": "pub(crate) fn write_generator_by_encoding<X, S, M>(",
@@ -185,7 +203,7 @@
     {
       "claim": "gf2-bch-reference-encodes-per-row",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/src/bch/matrix.rs",
       "line": 558,
       "text": "code.encode_into(&message, &mut codeword)?;",
@@ -194,7 +212,7 @@
     {
       "claim": "gf2-bch-reference-complexity",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/src/bch/matrix.rs",
       "line": 568,
       "text": "/// $O(k^2 r)$ base-field operations where the materialization walks the",
@@ -203,7 +221,7 @@
     {
       "claim": "gf2-bch-bench-materialize",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/benches/bch_genmatrix.rs",
       "line": 117,
       "text": "group.bench_function(BenchmarkId::new(\"materialize/fresh-alloc\", row.name), |b| {",
@@ -212,7 +230,7 @@
     {
       "claim": "gf2-bch-bench-reference",
       "project": "gf2",
-      "revision": "02411e65cb43b68c97f1115d9274401599f630a2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
       "path": "crates/gf2-coding/benches/bch_genmatrix.rs",
       "line": 120,
       "text": "group.bench_function(BenchmarkId::new(\"reference/fresh-alloc\", row.name), |b| {",
@@ -262,6 +280,51 @@
       "line": 1120,
       "text": "DST = mzd_init(A->ncols, A->nrows);",
       "why": "With DST == NULL the consumer cells allocate a fresh output inside every call, matching gf2's BitMatrix::transpose."
+    },
+    {
+      "claim": "m4ri-transpose-odd-whole-block",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 979,
+      "text": "int js = ncols & nrows & 64;  // True if the total number of whole 64x64 matrices is odd.",
+      "why": "At 64x64 and 65x65 the single whole 64x64 block is transposed on its own by _mzd_copy_transpose_64x64."
+    },
+    {
+      "claim": "m4ri-transpose-64xlt64-strip",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 1013,
+      "text": "_mzd_copy_transpose_64xlt64(fwd + whole_64cols * rowstride_64_dst, fws + whole_64cols,",
+      "why": "The column remainder of a 65-column matrix (a 64x1 strip) goes to a routine sized to the remaining columns, not to a full 64x64 tile."
+    },
+    {
+      "claim": "m4ri-transpose-lt64x64-strip",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 1051,
+      "text": "_mzd_copy_transpose_lt64x64(fwd, fws, rowstride_dst, rowstride_src, nrows);",
+      "why": "The row remainder of a 65-row matrix (a 1x64 strip) goes to a routine sized to the remaining rows."
+    },
+    {
+      "claim": "m4ri-transpose-small-corner",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 1064,
+      "text": "_mzd_copy_transpose_small(fwd, fws, rowstride_dst, rowstride_src, nrows, ncols, maxsize);",
+      "why": "The remaining corner (1x1 at 65x65) takes the small-matrix routines."
+    },
+    {
+      "claim": "m4ri-transpose-small-path",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.c",
+      "line": 1109,
+      "text": "if (maxsize < 64) {  // super-fast path for very small matrices",
+      "why": "Every matrix below 64x64, such as 63x63, goes to the small-matrix routines instead of a padded 64x64 tile."
     },
     {
       "claim": "m4ri-rowstride-even",
@@ -460,6 +523,51 @@
       "line": 61,
       "text": "mbin_dispatch_init6 xor_gen, xor_gen_base, xor_gen_sse, xor_gen_avx, xor_gen_avx, xor_gen_avx512",
       "why": "The public xor_gen dispatches to NASM-assembled SSE/AVX/AVX-512 kernels, none of which can be built without NASM on this host."
+    },
+    {
+      "claim": "survey-gf2-copy-probe",
+      "project": "gf2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/src/bin/gf2_logical_xor_arm.rs",
+      "line": 101,
+      "text": "black_box(&mut *dest).copy_from_slice(black_box(src0));",
+      "why": "gf2's arrangement probe (pack_ns) repeats the destination copy of the fresh-output call one million times behind black_box, so every repetition copies."
+    },
+    {
+      "claim": "survey-isal-arrangement-probe-barrier",
+      "project": "gf2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
+      "path": "dev/active/6fb89a3c/survey/isal_xor_arm.c",
+      "line": 99,
+      "text": "__asm__ volatile(\"\" : : \"r\"(array) : \"memory\");",
+      "why": "ISA-L's arrangement probe (dispatch_ns) must store the whole pointer array in every repetition; without this barrier GCC deleted the pilot's probe loop, which then reported 0 ns."
+    },
+    {
+      "claim": "survey-isal-timed-arrangement",
+      "project": "gf2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
+      "path": "dev/active/6fb89a3c/survey/isal_xor_arm.c",
+      "line": 61,
+      "text": "for (size_t s = 0; s < sources; s++) array[s] = src[s];",
+      "why": "The timed ISA-L call forms the same pointer array before xor_gen_base; the probe times that formation alone."
+    },
+    {
+      "claim": "survey-bitshuffle-pack-probe",
+      "project": "gf2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
+      "path": "dev/active/6fb89a3c/survey/bitshuffle_transpose_arm.c",
+      "line": 133,
+      "text": "static uint64_t pack_probe_ns(bit_ctx *ctx)",
+      "why": "The Bitshuffle adapter's pack probe averages 100000 warm repetitions of the pack copy the consumer call performs; the unpack probe follows it."
+    },
+    {
+      "claim": "survey-m4ri-genmatrix-reduction-probe",
+      "project": "gf2",
+      "revision": "66173f2de5cd00deb050c33bec198cd8c4a3c3c6",
+      "path": "dev/active/6fb89a3c/survey/m4ri_genmatrix_arm.c",
+      "line": 89,
+      "text": "start = monotonic_ns(); mzd_echelonize_m4ri(probe, 1, 0); dispatch_ns = monotonic_ns() - start; mzd_free(probe);",
+      "why": "The M4RI generator-matrix arm reports one reduction of a fresh unreduced copy in the dispatch_ns field and one mzd_copy in pack_ns; the tables label them as the reduction and the copy."
     }
   ]
 }
