@@ -1,8 +1,0 @@
-started=2026-09-08T19:25:12.033334+00:00
-receipt_sha256_before=37fda99e6f956ec92bf3a4525577ef825258308dfc2fac7e4ca558cf8a8683b9
-evaluator_sha256=b6cc78c45e2568841db9363135c1356a2facd2f2051f2f59be60c01ab5bbf040
-evaluator_source_sha256=94d18bfb7000ea105e0de713d8e0dab9295511dec4cb07833fd07defe7d4dc77
-command=['target/release/benchmark-acceptance', 'dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation']
-GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
-receipt_sha256_after=37fda99e6f956ec92bf3a4525577ef825258308dfc2fac7e4ca558cf8a8683b9
-terminal=0

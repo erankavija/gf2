@@ -1,9 +1,0 @@
-cargo-budget: 6 jobs (4 live, 24 cpus)
-   Compiling tuning-campaign-support v0.1.0 (./dev/tools/tuning-campaign-support)
-    Finished `ci-test` profile [optimized] target(s) in 7.60s
-────────────
- Nextest run ID fcb52a73-1b20-41bf-bd5c-ba0d2270b738 with nextest profile: ci
-    Starting 1 test across 12 binaries (149 tests skipped)
-        PASS [   0.595s] (1/1) tuning-campaign-support::protocol_contracts runner_announces_the_log_before_work_and_resumes_without_repeating
-────────────
-     Summary [   0.595s] 1 test run: 1 passed, 149 skipped

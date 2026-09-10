@@ -1,4 +1,0 @@
-cargo-budget: 12 jobs (2 live, 24 cpus)
-   Compiling rustix v1.1.2
-    Checking tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-c077a88b-v3/dev/tools/tuning-campaign-support)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.51s

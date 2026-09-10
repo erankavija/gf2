@@ -1070,10 +1070,6 @@ pub struct RunnerPlan {
     pub campaign_seed: u64,
     /// Repository-relative addendum path.
     pub addendum: String,
-    /// Family producing-input closure. Omission retains the historical shared
-    /// runner manifest for plans published before family selection was supported.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub producing_manifest: Option<crate::provenance::ProducingManifestPath>,
     /// Absolute canonical lock path the wrapper holds.
     pub lock_path: String,
     /// Repository-relative wrapper script.
@@ -1086,14 +1082,6 @@ pub struct RunnerPlan {
 }
 
 impl RunnerPlan {
-    /// Manifest captured into this campaign's existing producing-input snapshot.
-    pub fn producing_manifest_path(&self) -> &str {
-        self.producing_manifest.as_ref().map_or(
-            "dev/active/f547c394/producing-inputs.json",
-            crate::provenance::ProducingManifestPath::as_str,
-        )
-    }
-
     /// Decodes a plan strictly.
     pub fn decode(bytes: &[u8]) -> Result<Self, String> {
         serde_json::from_slice(bytes).map_err(|error| format!("plan does not decode: {error}"))
