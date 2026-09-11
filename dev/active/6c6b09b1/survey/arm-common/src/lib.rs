@@ -15,7 +15,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::io;
 use std::time::{Duration, Instant};
+pub use tuning_campaign_support::abtest::SplitMix64;
 use tuning_campaign_support::host::CpuAffinity;
+use tuning_campaign_support::protocol::{CacheState, CellRole};
 use tuning_campaign_support::timing::{execution_windows_fixed_or_calibrated, FIXTURE_BANKS};
 use tuning_campaign_support::transport;
 
@@ -26,10 +28,10 @@ pub struct Request {
     pub schema: String,
     pub cell_id: String,
     pub arm: String,
-    pub role: String,
+    pub role: CellRole,
     pub pair: u32,
     pub case: Value,
-    pub cache_state: String,
+    pub cache_state: CacheState,
     /// Frozen call count of a `cold` cell; absent cells calibrate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cold_calls: Option<u64>,
@@ -94,7 +96,7 @@ pub struct Case {
     /// Full reduction polynomial of the field, for example 285 for 0x11D.
     pub poly: u32,
     pub metric: Metric,
-    /// Seed of the in-harness [`SplitMix64`] operand stream.
+    /// Seed of the [`OperandStream`] over the shared [`SplitMix64`].
     pub seed: u64,
     pub workers: u32,
 }
@@ -131,7 +133,7 @@ struct Window {
 struct ArmResult {
     schema: String,
     windows: Vec<Window>,
-    cache_state_applied: String,
+    cache_state_applied: CacheState,
     workers_observed: u32,
     cpus_observed: Vec<u32>,
     selected_path: Option<String>,
@@ -151,42 +153,32 @@ pub struct Workload<'a> {
     pub body: Box<dyn FnMut(usize) + 'a>,
 }
 
-/// Deterministic operand fill, shared by both arms so the two see the same
-/// bytes for the same seed.
-///
-/// SplitMix64 [Steele2014]; each byte is the low eight bits of one output.
-pub struct SplitMix64(u64);
+/// Deterministic operands over the shared [`SplitMix64`] [Steele2014]
+/// (`tuning_campaign_support::abtest`), so both arms see the same bytes for
+/// the same seed.
+pub trait OperandStream {
+    /// Fills a byte region with the low eight bits of successive outputs.
+    fn fill(&mut self, bytes: &mut [u8]);
+    /// The fixed coefficient every region cell reuses: the low byte of the
+    /// next output with its low bit set, so it is never zero.
+    fn coefficient(&mut self) -> u8;
+}
 
-impl SplitMix64 {
-    pub fn new(seed: u64) -> Self {
-        SplitMix64(seed)
-    }
-
-    pub fn next_u64(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        let mut z = self.0;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    }
-
-    /// Fills a byte region, so both arms start from identical operands.
-    pub fn fill(&mut self, bytes: &mut [u8]) {
+impl OperandStream for SplitMix64 {
+    fn fill(&mut self, bytes: &mut [u8]) {
         for byte in bytes.iter_mut() {
             *byte = (self.next_u64() & 0xFF) as u8;
         }
     }
 
-    /// The fixed coefficient every region cell reuses: one odd byte, so it
-    /// is never zero.
-    pub fn coefficient(&mut self) -> u8 {
+    fn coefficient(&mut self) -> u8 {
         (self.next_u64() | 1) as u8
     }
 }
 
 /// Number of fixture banks a cell rotates through under `streaming`.
-pub fn banks(cache_state: &str) -> usize {
-    if cache_state == "streaming" {
+pub fn banks(cache_state: CacheState) -> usize {
+    if cache_state == CacheState::Streaming {
         FIXTURE_BANKS
     } else {
         1
@@ -251,8 +243,7 @@ where
         Ok(case) => case,
         Err(error) => fatal(&format!("case does not decode: {error}")),
     };
-    let cold = request.cache_state == "cold";
-    if cold && request.cold_calls.is_none() {
+    if request.cache_state == CacheState::Cold && request.cold_calls.is_none() {
         fatal("a cold cell requires frozen calls; calibration would pre-run the workload");
     }
     let workload = match build(&request, &case) {
@@ -268,7 +259,7 @@ where
     // `warm` gives the working set one untimed pass before calibration;
     // `cold` runs the frozen call count on first use; `streaming` rotates
     // the fixture banks through the bank index the timing protocol passes.
-    if request.cache_state == "warm" {
+    if request.cache_state == CacheState::Warm {
         body(0);
     }
     let samples = match execution_windows_fixed_or_calibrated(
@@ -300,7 +291,7 @@ where
                 elapsed_ns: sample.elapsed_ns,
             })
             .collect(),
-        cache_state_applied: request.cache_state.clone(),
+        cache_state_applied: request.cache_state,
         workers_observed,
         cpus_observed,
         selected_path: Some(selected_path),

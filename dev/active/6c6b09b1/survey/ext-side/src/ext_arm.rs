@@ -16,7 +16,7 @@
 mod shim;
 
 use byte_field_arm_common::{
-    banks, probe_ns, Case, Conversion, Metric, Operation, SplitMix64, Workload,
+    banks, probe_ns, Case, Conversion, Metric, OperandStream, Operation, SplitMix64, Workload,
 };
 use shim::{Context, Matrix};
 use std::hint::black_box;
@@ -46,7 +46,7 @@ fn main() -> ! {
             "m4rie" => shim::BACKEND_M4RIE,
             other => return Err(format!("unknown backend {other:?}")),
         };
-        let bank_count = banks(&request.cache_state);
+        let bank_count = banks(request.cache_state);
         let context = Context::open(backend, case.poly, &variant)?;
         let setup_ns = probe_ns(|| {
             drop(black_box(Context::open(backend, case.poly, &variant)));
