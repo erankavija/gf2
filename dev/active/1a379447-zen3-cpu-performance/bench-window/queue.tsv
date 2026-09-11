@@ -10,3 +10,4 @@
 3be770d5	.agents/worktrees/agent-3be770d5	8	dev/bench_results/3be770d5/run-campaign.sh single-worker pilot v3-r1 window
 3be770d5	.agents/worktrees/agent-3be770d5	30	dev/bench_results/3be770d5/run-campaign.sh multicore pilot v3-r1 window
 3be770d5	.agents/worktrees/agent-3be770d5	22	dev/bench_results/3be770d5/run-campaign.sh fastest-compatible pilot v3-r1 window
+3be770d5	.agents/worktrees/agent-3be770d5	45	dev/active/3be770d5/survey/run-profile.sh dev/bench_results/3be770d5/v3-r1-steady-profile
