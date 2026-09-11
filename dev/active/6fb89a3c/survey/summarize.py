@@ -298,7 +298,8 @@ def main() -> None:
         "[Steele2014] index draws implemented in the generator, seed 0x6FB89A3C); they are descriptive.",
         "",
         "**Withdrawn.** The gf2 arms of every receipt tabulated here declared `warm` without the protocol's untimed pass "
-        "over the working set before calibration, while the external arms made one, so every comparison of gf2 with an "
+        "over the working set before calibration, while the external arms made one (M4RI's transpose arm left its kernel "
+        "cell's preallocated output outside it), so every comparison of gf2 with an "
         "external arm in these tables is withdrawn ([findings](../../active/6fb89a3c/findings.md) §4 and §5). The "
         "external arms' own probes and shares do not depend on the gf2 arms.",
         "",
