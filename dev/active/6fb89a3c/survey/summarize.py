@@ -297,6 +297,11 @@ def main() -> None:
         "[Efron1979] of the committed per-execution values (10000 resamples, 95% nearest-rank quantiles, SplitMix64 "
         "[Steele2014] index draws implemented in the generator, seed 0x6FB89A3C); they are descriptive.",
         "",
+        "**Withdrawn.** The gf2 arms of every receipt tabulated here declared `warm` without the protocol's untimed pass "
+        "over the working set before calibration, while the external arms made one, so every comparison of gf2 with an "
+        "external arm in these tables is withdrawn ([findings](../../active/6fb89a3c/findings.md) §4 and §5). The "
+        "external arms' own probes and shares do not depend on the gf2 arms.",
+        "",
     ] + overview()
     for title, family in FAMILIES:
         out += [f"## {title}", ""]
