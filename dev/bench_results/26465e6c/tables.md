@@ -50,7 +50,7 @@ Speedup of each alternative over gf2's dispatcher with the corrected interval (a
 
 ### Fastest arm: `v3-popcount-pilot`
 
-Fastest measured arm per workload. Each arm's sample is its executions in the workload's cells (the dispatcher pools every cell of the workload); ratios divide the slower arm's median by the fastest arm's, resampled independently; GB/s is buffer bytes over the median time. Intervals are 95% and descriptive.
+Fastest measured arm per workload. Each arm's sample is its executions in the workload's cells: an alternative's are the pairs of its one cell, the dispatcher's the pairs of every cell of the workload (§ Cells, column *Pairs*); n is the fastest arm's. Ratios divide the slower arm's median by the fastest arm's, resampled independently; GB/s is buffer bytes over the median time. Intervals are 95% and descriptive.
 
 | Row | Workload | Fastest arm | n | ns/call | GB/s | Runner-up | Runner-up / fastest | Dispatcher / fastest |
 |---|---|---|---:|---|---|---|---|---|
@@ -184,7 +184,7 @@ Speedup of each alternative over gf2's dispatcher with the corrected interval (a
 
 ### Fastest arm: `v3-popcount-confirmation`
 
-Fastest measured arm per workload. Each arm's sample is its executions in the workload's cells (the dispatcher pools every cell of the workload); ratios divide the slower arm's median by the fastest arm's, resampled independently; GB/s is buffer bytes over the median time. Intervals are 95% and descriptive.
+Fastest measured arm per workload. Each arm's sample is its executions in the workload's cells: an alternative's are the pairs of its one cell, the dispatcher's the pairs of every cell of the workload (§ Cells, column *Pairs*); n is the fastest arm's. Ratios divide the slower arm's median by the fastest arm's, resampled independently; GB/s is buffer bytes over the median time. Intervals are 95% and descriptive.
 
 | Row | Workload | Fastest arm | n | ns/call | GB/s | Runner-up | Runner-up / fastest | Dispatcher / fastest |
 |---|---|---|---:|---|---|---|---|---|
