@@ -47,7 +47,7 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "rework round 1 continuing on w9-04b85d10 (opus, session 9) from 546cc275 plus uncommitted findings edits; repeated profile (rep-01 done, rep-02 interrupted) goes to the 2026-09-12 04:00 window; lead finding L1 (POPCNT substring counts) added.",
+          "status": "rework round 1: in-session work done at 69a3480e (L1 exact POPCNT attribution, RNG provenance, frame relabel, intervals wired). Repeated profile rep-02..rep-09 queued for the 2026-09-12 window (pinned c7de48e9). After the window: commit reps and summaries, check findings against the generated rows, REQ-03/REQ-04 to MET, merge main, then reviews and gates. See reports/04b85d10-s9 in handoff-7.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10-v3",
@@ -63,7 +63,7 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "v3 migration continuing on w9-6c6b09b1 (opus, session 9) from d9e3f518 (port) plus uncommitted migration edits; pilots go to a window.",
+          "status": "v3 migration done up to the pilots at b2ac9e7c; three exploratory pilots queued for the 2026-09-12 window (pinned 7346b5e5). After the window: commit receipts, derive resolutions, freeze and queue confirmations (at most six confirmatory cells per family), merge main after the last run.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
@@ -126,22 +126,23 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "continuation w9-26465e6c (opus, session 9): all campaigns finished and committed on b1da85a6; the lead wrote the predecessor's findings text into the worktree; worker reviews, commits, final checks, report. Invoker kept the AND-popcount pilot-r2 and confirmation evidence (run after the no-timed-runs order the worker had not received).",
+          "status": "rework round 1 pending (doc-review F1). Merged 85cd6415 (cargo-ci pass, 5979 tests), linked at cd6e69d1; two independent Terra xhigh reviews, code-review and research-review pass on cd6e69d1; doc-review F1 fails: dev/bench_results/26465e6c/run-campaign.sh:20 promises a resume that never repeats a cell, while a mid-cell interruption restarts the cell and v3 acceptance rejects it (P-11, bdc507a3). The fix is a comment plus a sweep. Blocked in session 9 because its worktree directory was reused for a387825e; the next session gives it a worktree on branch worktree-agent-26465e6c-v3 (b7c0283d).",
           "dispatch": {
             "model": "claude-opus (native subagent)",
-            "worktree": ".agents/worktrees/agent-26465e6c-v3",
+            "worktree": "none (branch worktree-agent-26465e6c-v3 at b7c0283d is checked out nowhere)",
             "branch": "worktree-agent-26465e6c-v3",
             "base": "b1da85a6",
             "attempt": 4,
             "session": 9
-          }
+          },
+          "merge_commit": "85cd6415"
         },
         {
           "id": "6fb89a3c-f1a7-439d-a397-add1782afe2b",
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "rework round 1 continuing on w9-6fb89a3c (opus, session 9) from 77f86b17 (warm-pass fix, frozen exploratory re-measurement addenda); re-measurements go to the 2026-09-12 04:00 window; findings withdrawal pending.",
+          "status": "rework round 1: in-session work done at f64cfa8e (gf2 arm warm pass, M4RI transpose kernel warm pass fixed under a new identity, findings withdrawal). Three exploratory re-measurements queued for the 2026-09-12 window (transpose pins f64cfa8e content, logical and BCH unchanged since 4204248d). After the window: commit receipts, extend summarize.py, write results, merge, then reviews and gates.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6fb89a3c-v3",
@@ -174,7 +175,15 @@
           "short_id": "bdc507a3",
           "title": "Accept resumed campaigns whose interrupted cell restarts",
           "classification": "implementation",
-          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
+          "status": "in flight at session end on w9-bdc507a3 (worktree .agents/worktrees/agent-c7113c5a-v3, branch worktree-agent-bdc507a3); see handoff-7 for its last report.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-c7113c5a-v3",
+            "branch": "worktree-agent-bdc507a3",
+            "base": "3aa2920b",
+            "attempt": 1,
+            "session": 9
+          }
         },
         {
           "id": "428f2f6b",
@@ -188,27 +197,51 @@
           "short_id": "a387825e",
           "title": "Close the host-lock leak into daemons started under the lock wrappers",
           "classification": "implementation",
-          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
+          "status": "in-session work complete at 7cf03070 (w9-a387825e, worktree .agents/worktrees/agent-26465e6c-v3, branch worktree-agent-a387825e). REQ-01 reworded to lock level with invoker approval; REQ-01..03 met per worker (test dev/scripts/ccx1-bench-flock.test.sh section 3). Not yet merged: merge after the window, then cargo-ci, reviews, gates; afterwards update run-window.sh comments (lines 33-38, 49).",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-26465e6c-v3",
+            "branch": "worktree-agent-a387825e",
+            "base": "bf762c43",
+            "attempt": 1,
+            "session": 9
+          }
         },
         {
           "id": "3e59cb9a",
           "short_id": "3e59cb9a",
           "title": "Repair the DVB-T2 arms warm pass and re-measure the interleaving family",
           "classification": "research",
-          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
+          "status": "in-session work done at d23c0de1 (w9-3e59cb9a, worktree .worktrees-local/agent-eda07788-v3, branch worktree-agent-3e59cb9a). REQ-01 and REQ-02 met; REQ-03 reworded with invoker approval; exploratory re-measurement queued for the 2026-09-12 window (pinned fc527d62). After the window: commit receipt and ledger line 4, regenerate tables-v3.md, write outcomes, then merge, reviews and gates.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".worktrees-local/agent-eda07788-v3",
+            "branch": "worktree-agent-3e59cb9a",
+            "base": "cea30281",
+            "attempt": 1,
+            "session": 9
+          }
+        },
+        {
+          "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
+          "short_id": "3be770d5",
+          "title": "Profile the CPU LDPC throughput gap against compatible decoders",
+          "classification": "research",
+          "status": "moved from wave 3 into the current wave in session 9 (both dependencies done); in flight at session end on w9-3be770d5 (worktree .agents/worktrees/agent-3be770d5, branch worktree-agent-3be770d5); see handoff-7.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-3be770d5",
+            "branch": "worktree-agent-3be770d5",
+            "base": "cd6e69d1",
+            "attempt": 1,
+            "session": 9
+          }
         }
       ]
     },
     {
       "wave_number": 3,
       "issues": [
-        {
-          "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
-          "short_id": "3be770d5",
-          "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-          "classification": "research",
-          "status": "pending"
-        },
         {
           "id": "53c5a8c0-ad93-4fdb-8319-aea18c3c257c",
           "short_id": "53c5a8c0",
@@ -472,6 +505,24 @@
       "status": "resolved",
       "raised_at": "2026-09-11T16:30Z",
       "resolution": "Invoker kept the evidence."
+    },
+    {
+      "category": "issue scope change (criterion wording)",
+      "issue": "a387825e",
+      "question": "REQ-01 descriptor-level wording conflicts with protocol P-07 (runners must inherit the held CCX1 lock descriptor)",
+      "recommendation": "lock-level wording",
+      "status": "resolved",
+      "raised_at": "2026-09-11T17:20Z",
+      "resolution": "Invoker approved: REQ-01 now reads \"holds the CCX1 lock, or any turnstile descriptor, after the wrapped command exits\"; applied in session 9."
+    },
+    {
+      "category": "issue scope change (criterion wording)",
+      "issue": "3e59cb9a",
+      "question": "REQ-03 \"counted in its family ledger as a further attempt\" versus an exploratory re-measurement (attempt 3 cannot pass P-20)",
+      "recommendation": "exploratory, reword",
+      "status": "resolved",
+      "raised_at": "2026-09-11T17:30Z",
+      "resolution": "Invoker approved: REQ-03 now reads \"recorded in its family ledger\"; applied in session 9."
     }
   ],
   "rework_counts": {
@@ -479,7 +530,8 @@
     "1d0da41f": 1,
     "04b85d10": 1,
     "c7113c5a": 2,
-    "6fb89a3c": 1
+    "6fb89a3c": 1,
+    "26465e6c": 1
   },
   "surfaced_pitfalls": [
     {
@@ -586,6 +638,20 @@
       "origin": "harness behaviour",
       "disposition": "session-9 briefs require polling in calls of at most about two minutes",
       "criterion_named_by": "none"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "reusing a worktree directory for a new issue before the previous issue closes: 26465e6c failed doc-review after its directory had been switched to a387825e, leaving its rework without a worktree",
+      "origin": "process (session 9)",
+      "disposition": "reuse a worktree only after its issue is done; handoff-7 trap",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "26465e6c",
+      "subject": "survey launchers promise a resume that never repeats a cell, which is false for a mid-cell interruption under protocol v3 (P-11); doc-review F1 on 26465e6c; other surveys' launchers may carry the same sentence",
+      "origin": "issue-impact",
+      "disposition": "26465e6c rework round 1; bdc507a3 changes the rule",
+      "criterion_named_by": "26465e6c REQ-01"
     }
   ],
   "notes": [
@@ -637,7 +703,9 @@
     "Session 8 ended at a provider session limit at about 23:50Z on 2026-09-10 (lead and all four workers) without a handoff; the 04:00 window ran at 01:00Z with an empty queue. Session 9 reconstructed state from branches and the session-8 transcripts under ~/.claude/projects/-home-vkaskivuo-Projects-gf2/4dd2dc73-68da-4918-ba03-2653c6d62e7b/subagents/.",
     "Invocation 2026-09-11 (session 9): drive epic 1a379447; subagent model by task difficulty, no Fable; parallel worktrees, four workers at a time; prefer worktree reuse over proliferation.",
     "Session 9: bdc507a3, a387825e, 428f2f6b and 3e59cb9a have no sibling dependencies and moved from wave 3 to wave 2 (reordering, autonomous per escalation policy).",
-    "Session 9: benchmark window 2026-09-12 04:00 Europe/Helsinki armed as transient user timer gf2-bench-window-20260912 running bench-window/run-window.sh; queue cutoff 03:40."
+    "Session 9: benchmark window 2026-09-12 04:00 Europe/Helsinki armed as transient user timer gf2-bench-window-20260912 running bench-window/run-window.sh; queue cutoff 03:40.",
+    "Session 9: the session-8 workers still appear as idle teammates (w8-*) in ListAgents; never message them, since a message revives them against current worktrees.",
+    "Session 9 end (invoker: \"time for handoff\"): window queue committed with eight jobs (6fb89a3c x3, 04b85d10, 6c6b09b1 x3, 3e59cb9a); bdc507a3 and 3be770d5 told to commit and report; 26465e6c rework deferred."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -646,6 +714,7 @@
     "handoff-3.md",
     "handoff-4.md",
     "handoff-5.md",
-    "handoff-6.md"
+    "handoff-6.md",
+    "handoff-7.md"
   ]
 }
