@@ -175,7 +175,7 @@
           "short_id": "bdc507a3",
           "title": "Accept resumed campaigns whose interrupted cell restarts",
           "classification": "implementation",
-          "status": "in flight at session end on w9-bdc507a3 (worktree .agents/worktrees/agent-c7113c5a-v3, branch worktree-agent-bdc507a3); see handoff-7 for its last report.",
+          "status": "in-session work complete at 8dbc6406 (w9-bdc507a3): REQ-01..04 met per worker; protocol v4 (cell-abandoned record, P-11 v4 rules, amendment-v4.md, schema v4); verdict-preservation.json shows identical verdicts and summaries for all 59 committed receipts between 3aa2920b and head. Not merged. Merging makes main's runner refuse new campaigns from v3 addenda: v3 families finish on their own worktrees, and a family's next campaign needs a v4 addendum. Crate suite 174/174, workspace clippy and fmt clean; full cargo-ci not run.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c7113c5a-v3",
@@ -236,6 +236,13 @@
             "attempt": 1,
             "session": 9
           }
+        },
+        {
+          "id": "a203a23c",
+          "short_id": "a203a23c",
+          "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
+          "classification": "research",
+          "status": "pending (filed in session 9 from bdc507a3's verdict comparison; depends on bdc507a3)"
         }
       ]
     },
@@ -404,6 +411,12 @@
       "type": "bug",
       "in_epic": false,
       "reason": "6c6b09b1 found that Gf2mField::gf256() rustdoc names the AES polynomial 0x11B while the code builds 0x11D, and primitive_polys.rs calls the five-term 0x11D a trinomial; depends on 6c6b09b1"
+    },
+    {
+      "id": "a203a23c",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "bdc507a3 verdict comparison: 14 committed receipts are rejected on a fresh checkout (missing gitignored snapshot Cargo.lock files; 1d0da41f v1 dispatch confirmation P-23) although their committed summaries say accepted; depends on bdc507a3, feeds 1362381c"
     }
   ],
   "escalations": [
