@@ -17,6 +17,12 @@
 # checkpoints and releases, so a queued sibling gets the host between sessions
 # and a killed session resumes without repeating a completed cell.
 #
+# Re-running the same command resumes the same campaign identity: it
+# re-projects the plan, refuses to continue unless the projection equals the
+# staged plan byte for byte, and appends to the launcher log. A campaign whose
+# execution log already ends `complete` is only finalized, and a finalized one
+# is only re-evaluated by the acceptance tool, so no cell is measured twice.
+#
 # Every numeric setting comes from the addendum and the protocol's frozen
 # shared settings; this script adds none. The cell-to-arm wiring is derived
 # from the cell identifiers, which name the external arm they compare against.
@@ -25,6 +31,9 @@
 # committed exploratory re-measurement addendum (receipt label `pilot`), which
 # repeats the pilot cells with the gf2 arms that make the protocol's warm pass.
 set -euo pipefail
+# The benchmark window starts this from a non-interactive shell; rustup's
+# cargo and rustc proxies live in ~/.cargo/bin.
+command -v cargo >/dev/null 2>&1 || PATH="$HOME/.cargo/bin:$PATH"
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 ISSUE=6fb89a3c
@@ -62,7 +71,7 @@ ADDENDUM=dev/active/$ISSUE/$ADDENDUM_STEM-v3-$MODE.json
 OUT=dev/bench_results/$ISSUE/$RUN_ID-$ISSUE-$FAMILY-$MODE
 LAUNCH_LOG=dev/bench_results/$ISSUE/$RUN_ID-$FAMILY-$MODE-launcher.log
 [[ -f "$ADDENDUM" ]] || { echo "missing frozen addendum $ADDENDUM" >&2; exit 2; }
-[[ ! -e "$OUT" ]] || { echo "receipt directory $OUT already exists" >&2; exit 2; }
+[[ ! -e "$OUT" || -f "$OUT/receipt.json" ]] || { echo "receipt directory $OUT exists without a receipt; inspect it" >&2; exit 2; }
 if [[ "$MODE" != pilot ]]; then
   # Publication precedes measurement: the addendum is committed bytes.
   git ls-files --error-unmatch "$ADDENDUM" >/dev/null
@@ -97,18 +106,35 @@ PY_CHECK
 
 RUNNER=$(realpath target/release/benchmark-ab-runner)
 ACCEPTANCE=$(realpath target/release/benchmark-acceptance)
+
+evaluate() {
+  set +e
+  "$ACCEPTANCE" "$OUT" | tee -a "$LAUNCH_LOG"
+  verdict=${PIPESTATUS[0]}
+  set -e
+}
+
+if [[ -e "$OUT" ]]; then
+  # Finalized by an earlier invocation: evaluate again, measure nothing.
+  LAUNCH_LOG="$OUT/launcher.log"
+  echo "# re-evaluation_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)  command: $0 $*" >>"$LAUNCH_LOG"
+  evaluate
+  echo "# acceptance exit: $verdict" >>"$LAUNCH_LOG"
+  echo "$FAMILY $MODE receipt: $OUT" >&2
+  exit "$verdict"
+fi
+
 CAMPAIGN="$ISSUE-$RUN_ID-$FAMILY-$MODE"
 STAGE=$repo/target/$ISSUE-campaigns/$CAMPAIGN
 PLAN=$STAGE.plan.json
 mkdir -p "$(dirname "$STAGE")"
-[[ ! -e "$PLAN" ]] || { echo "plan $PLAN already exists; resume the existing campaign identity" >&2; exit 2; }
 LOCK=${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}
 touch "$LOCK"
 LOCK=$(realpath "$LOCK")
 export GF2_CCX1_LOCK="$LOCK"
 export RAYON_NUM_THREADS=1
 
-python3 - "$PLAN" "$CAMPAIGN" "$MODE" "$LABEL" "$ADDENDUM" "$LOCK" "$FAMILY" "$SURVEY" "$repo" <<'PY_PLAN'
+python3 - "$PLAN.projected" "$CAMPAIGN" "$MODE" "$LABEL" "$ADDENDUM" "$LOCK" "$FAMILY" "$SURVEY" "$repo" <<'PY_PLAN'
 import json, sys
 plan_path, campaign, mode, label, addendum_path, lock, family, survey, repo = sys.argv[1:]
 addendum = json.load(open(addendum_path))
@@ -185,9 +211,31 @@ with open(plan_path, "w") as output:
     output.write("\n")
 print(f"plan: {len(cells)} cells, {len(plan['arms'])} arms -> {plan_path}")
 PY_PLAN
+if [[ -e "$PLAN" ]]; then
+  if ! cmp -s "$PLAN.projected" "$PLAN"; then
+    rm -f "$PLAN.projected"
+    echo "plan $PLAN differs from the projection of the current inputs; a resume needs the identical plan" >&2
+    exit 2
+  fi
+  rm -f "$PLAN.projected"
+  INVOCATION=resume
+else
+  mv "$PLAN.projected" "$PLAN"
+  INVOCATION=new
+fi
+
+stage_complete() {
+  [[ -f "$STAGE/execution.log" ]] && python3 - "$STAGE/execution.log" <<'PY_TERMINAL'
+import json, sys
+events = [json.loads(line)["event"] for line in open(sys.argv[1])]
+terminal = [e for e in events if e in ("complete", "failed", "paused", "budget-exhausted")]
+sys.exit(0 if terminal and terminal[-1] == "complete" else 1)
+PY_TERMINAL
+}
 
 {
   echo "# command: $0 $*"
+  echo "# invocation: $INVOCATION"
   echo "# started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "# gf2 revision (informational): $(git rev-parse HEAD)"
   echo "# family: $FAMILY  mode: $MODE  run-id: $RUN_ID"
@@ -205,14 +253,14 @@ PY_PLAN
   done
   echo "# session command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 RAYON_NUM_THREADS=1 dev/scripts/ccx1-bench-flock.sh --full-host $RUNNER run $STAGE $PLAN"
   echo "# load_avg_start: $(uptime)"
-} >"$LAUNCH_LOG"
+} >>"$LAUNCH_LOG"
 
 # Bounded checkpointed sessions: exit 3 means the session paused at the cell
 # budget and the campaign resumes; exit 0 means the campaign is complete.
 # CARGO_CI_NO_LOCK=1 is required because this process holds the exclusive side
 # of the mutex that scripts/cargo-budget.sh takes shared.
 session=0
-while :; do
+while ! stage_complete; do
   session=$((session + 1))
   set +e
   GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host \
@@ -230,13 +278,10 @@ done
 "$RUNNER" finalize "$STAGE" "$OUT" | tee -a "$LAUNCH_LOG"
 cp "$LAUNCH_LOG" "$OUT/launcher.log"
 LAUNCH_LOG="$OUT/launcher.log"
-set +e
-"$ACCEPTANCE" "$OUT" | tee -a "$LAUNCH_LOG"
-verdict=${PIPESTATUS[0]}
-set -e
+evaluate
 {
   echo "# acceptance exit: $verdict"
-  echo "# sessions: $session"
+  echo "# sessions this invocation: $session"
   echo "# load_avg_end: $(uptime)"
   echo "# finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >>"$LAUNCH_LOG"
