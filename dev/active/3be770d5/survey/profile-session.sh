@@ -13,8 +13,8 @@
 # record cases: fixed-period user-cycle samples. A fixed period makes every
 #   sample stand for the same number of cycles, so a symbol's or source line's
 #   share of the samples estimates its share of the cycles. Reports list self
-#   samples by DSO and symbol for every object, and by source line for the
-#   harness executable, with the session's sample total.
+#   samples by DSO and symbol, samples per code address for inline-chain
+#   attribution, and the session's sample total.
 # The first session also records the allocation census (deterministic counts)
 # and one DWARF call-graph profile whose callers attribute the allocations.
 #
@@ -77,10 +77,15 @@ while IFS=$'\t' read -r kind label arm bundle code core_arm batch passes quality
                 perf record -q -e cycles:u -c "${SAMPLE_PERIOD}" -o "${data}"
             perf report -i "${data}" --stats 2>/dev/null | grep -m1 'SAMPLE events:' \
                 >"${stem}.total.txt" || true
+            # Samples per code address: `count<TAB>symbol+offset (dso+offset)`,
+            # the DSO offsets that summarize-profile.py resolves to inline
+            # chains with addr2line.
+            perf script -i "${data}" -F ip,sym,symoff,dsoff 2>/dev/null \
+                | awk '{ $1 = ""; sub(/^ /, ""); count[$0]++ }
+                    END { for (key in count) printf "%d\t%s\n", count[key], key }' \
+                | sort -t "$(printf '\t')" -k1,1nr >"${stem}.addresses.tsv" || true
             perf report -i "${data}" --stdio --no-children -n -g none --percent-limit 0 \
                 --sort dso,sym >"${stem}.symbols.txt" 2>/dev/null || true
-            perf report -i "${data}" --stdio --no-children -n -g none --percent-limit 0 \
-                --dsos ldpc-profile --sort srcline >"${stem}.srclines.txt" 2>/dev/null || true
             rm -f "${data}" "${data}.old"
             ;;
         *)
@@ -97,7 +102,8 @@ mkdir -p "${OUT}/callgraph"
 while IFS=$'\t' read -r kind label arm bundle code core_arm batch passes quality envpairs; do
     [[ "${kind}" == record && "${arm}" == gf2 && "${core_arm}" == single-core ]] || continue
     RAYON_NUM_THREADS=1 "${BIN}/ldpc-alloc-census" --bundle "${bundle}" --code "${code}" \
-        --batch "${batch}" >>"${OUT}/census.jsonl" 2>>"${OUT}/census.err"
+        --batch "${batch}" >>"${OUT}/census.jsonl" 2>>"${OUT}/census.err" \
+        || echo "census of ${label} exited $?" >>"${OUT}/census.err"
     stem="${OUT}/callgraph/${label}"
     data="${OUT}/.perf.data"
     profiled "${stem}" "${arm}" "${bundle}" "${code}" "${core_arm}" "${batch}" \

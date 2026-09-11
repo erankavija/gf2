@@ -137,6 +137,7 @@ grep -q '^series done ' "${LOG}" || echo "series done $(date -u +%Y-%m-%dT%H:%M:
 { echo; echo "## load average at end"; uptime; echo "# finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"; } >>"${OUT}/host.txt"
 
 # Summaries read files and time nothing, so they run after the mutex.
-python3 -B "${HERE}/summarize-profile.py" "${OUT}" >"${OUT}/profile-summary.json" \
+python3 -B "${HERE}/summarize-profile.py" "${OUT}" --json "${OUT}/profile-summary.json" \
+    --markdown "${OUT}/profile.md" \
     || echo "summary failed; the session data is complete and the summary can be rerun" >&2
 echo "profile written to ${OUT}" >&2
