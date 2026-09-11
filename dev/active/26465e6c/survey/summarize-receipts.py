@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
 """Projects the survey's receipts into `dev/bench_results/26465e6c/tables.md`.
 
-Every number comes from a committed receipt and the acceptance summary the
-current `benchmark-acceptance` wrote beside it. Speedups and their intervals
-are the acceptance tool's; the script recomputes one interval per receipt
-bit-for-bit from the raw pairs before it writes anything, so its resampling
-port is checked against the tool. It adds, with the method printed in the
-output, the arm medians with bootstrap intervals, the fastest measured arm per
-population-count workload and each arm's threshold, alignment and bit-pattern
-contrasts as bootstrapped cross-cell ratios, the conversion-cost probes of
-whole-consumer cells, and whether each confirmation estimate lies inside its
-pilot's interval. The protocol-v1 confirmation follows as history.
+Every number comes from a committed receipt, the frozen addendum it snapshots
+and the acceptance summary the current `benchmark-acceptance` wrote beside it.
+Speedups, their intervals and the cell decisions are the acceptance tool's;
+the script recomputes one interval per receipt bit-for-bit from the raw pairs
+before it writes anything, so its resampling port is checked against the tool.
+An overview gives each campaign's family accounting, the pilot's widest
+relative half-width and the resolution and margins each confirmation froze.
+Each receipt section then adds, under its own heading and with the method
+printed in the output, the arm medians with bootstrap intervals, the fastest
+measured arm per population-count workload and each arm's threshold,
+alignment and bit-pattern contrasts as bootstrapped cross-cell ratios, the
+cells grouped by decision, and the conversion-cost probes of whole-consumer
+cells. Whether each confirmation estimate lies inside its pilot's interval and
+the protocol-v1 confirmation as history follow. Workload rows carry the
+workload key and cell rows the cell ID, so prose can cite a row.
 
 Usage: summarize-receipts.py  (from the repository root)
 """
 
+import collections
 import hashlib
 import json
 import math
@@ -58,6 +64,7 @@ CONTRASTS = [
 RESAMPLES = 10000
 DESCRIPTIVE_ALPHA = 0.05
 PROBES = ("setup_ns", "pack_ns", "dispatch_ns")
+DECISIONS = ("improved", "not-worse", "inconclusive", "regressed", None)
 MASK = (1 << 64) - 1
 
 
@@ -235,6 +242,69 @@ def workload_text(family, key):
             f"{seed + families.AND_RHS_SEED_OFFSET}, {cache}")
 
 
+def widest_half_width(summary):
+    """P-03's quantity, as make-addenda.py derives it from a pilot summary."""
+    return max(max(entry["interval"]["estimate"] - entry["interval"]["lower"],
+                   entry["interval"]["upper"] - entry["interval"]["estimate"])
+               / entry["interval"]["estimate"]
+               for entry in summary["cells"] if entry.get("interval"))
+
+
+def tally(counts):
+    return ", ".join(f"{count} {name}" for name, count in sorted(counts.items())) or "none"
+
+
+def overview(out, loaded):
+    """One row per v3 campaign: family accounting, resolution and margins, outcomes."""
+    out.append("## Campaigns")
+    out.append("")
+    out.append(
+        "One row per v3 receipt. m and the attempt alpha are the acceptance tool's: m sums the "
+        "comparisons the family ledger reserves up to and including the campaign's own line, "
+        "imported protocol-v1 reservations included (at least 1), and a confirmation's attempt t "
+        "counts the ledger lines that reserve comparisons, giving the attempt alpha "
+        "0.05/(t(t+1)). A pilot reserves nothing and is no attempt, so its correction is "
+        "informational. Expected draws per tail are the resamples times the per-comparison alpha "
+        "over two, which P-20 requires to reach twenty. A pilot's widest relative half-width is "
+        "P-03's quantity over its intervals; a confirmation's frozen resolution comes from the "
+        "addendum snapshot in its receipt and names the pilot receipt it was derived from; "
+        "margins are the summary's."
+    )
+    out.append("")
+    out.append("| Receipt | Family | Label | Verdict | Cells x pairs | Sessions | Attempt | m "
+               "| Per-comparison alpha | Draws per tail | Widest relative half-width "
+               "| Frozen resolution | Material gap / equivalence | Outcomes | Findings "
+               "| Arm executable |")
+    out.append("|---|---|---|---|---|---:|---|---:|---|---:|---|---|---|---|---|---|")
+    for directory, receipt, summary, _ in loaded:
+        family = summary["family"]
+        alpha = 1 - family["per_comparison_confidence"]
+        pilot = summary["label"] == "pilot"
+        attempt = round((math.sqrt(1 + 4 * 0.05 / family["family_alpha"]) - 1) / 2)
+        addendum = json.loads((directory / "inputs" / "family-addendum.json")
+                              .read_text(encoding="utf-8"))["effect"]
+        resolution = ("—" if addendum["measurement_resolution"] is None else
+                      f"{addendum['measurement_resolution']} from "
+                      f"`{pathlib.Path(addendum['resolution_evidence']['receipt']).parent.name}`")
+        pairs = sorted({len(cell["pairs"]) for cell in receipt["cells"]})
+        margins = summary["cells"][0]["margins"]
+        findings = collections.Counter(f"{finding['rule']} {finding['severity']}"
+                                       for finding in summary["findings"])
+        digests = sorted({arm["executable_sha256"][:8] for arm in receipt["arms"].values()})
+        out.append(
+            f"| `{directory.name}` | `{family['family_id']}` | {summary['label']} "
+            f"| **{summary['verdict']}** | {len(receipt['cells'])} x "
+            f"{', '.join(str(count) for count in pairs)} | {summary['sessions']} "
+            f"| {'—' if pilot else attempt} | {family['comparisons']} | {alpha:.4g} "
+            f"| {family['bootstrap_resamples'] * alpha / 2:.2f} "
+            f"| {f'{widest_half_width(summary):.4f}' if pilot else '—'} | {resolution} "
+            f"| {margins['improvement']:.2f} / {margins['equivalence']:.2f} "
+            f"| {tally(collections.Counter(entry['outcome'] for entry in summary['cells']))} "
+            f"| {tally(findings)} | {', '.join(f'`{digest}…`' for digest in digests)} |"
+        )
+    out.append("")
+
+
 def header(out, directory, receipt, summary, digest, checked):
     family = summary["family"]
     alpha = 1 - family["per_comparison_confidence"]
@@ -274,40 +344,60 @@ def header(out, directory, receipt, summary, digest, checked):
     out.append("")
 
 
-def cell_table(out, receipt, summary, family, digest):
+def cell_table(out, directory, receipt, summary, family, digest):
     verdicts = {entry["cell_id"]: entry for entry in summary["cells"]}
+    out.append(f"### Cells: `{directory.name}`")
+    out.append("")
+    out.append(
+        "Per cell: paired executions, each arm's median with its 95% descriptive interval, the "
+        "tool's speedup with the corrected interval, its decision against the margins in "
+        "§ Campaigns, the cell outcome and the flagged windows."
+    )
+    out.append("")
     out.append(
         "| Cell | Workload | Pairs | Baseline ns/call | Candidate ns/call | Speedup [corrected interval] "
-        "| Outcome | Flagged |"
+        "| Decision | Outcome | Flagged |"
     )
-    out.append("|---|---|---:|---|---|---|---|---:|")
+    out.append("|---|---|---:|---|---|---|---|---|---:|")
     for cell in receipt["cells"]:
         entry = verdicts[cell["cell_id"]]
         key = workload_key(family, cell["cell_id"])
+        decision = entry.get("decision") or "—"
         if not cell["pairs"]:
             out.append(f"| `{cell['cell_id']}` | {workload_text(family, key)} | 0 | — | — | — "
-                       f"| **{entry['outcome']}** | — |")
+                       f"| {decision} | **{entry['outcome']}** | — |")
             continue
         base = median_interval(values(cell, "baseline"), f"{digest}:{cell['cell_id']}:baseline")
         cand = median_interval(values(cell, "candidate"), f"{digest}:{cell['cell_id']}:candidate")
         out.append(
             f"| `{cell['cell_id']}` | {workload_text(family, key)} | {len(cell['pairs'])} "
             f"| {ns_interval(base)} | {ns_interval(cand)} | {speedup_text(entry)} "
-            f"| **{entry['outcome']}** | {entry['flagged_windows']}/{entry['total_windows']} |"
+            f"| {decision} | **{entry['outcome']}** "
+            f"| {entry['flagged_windows']}/{entry['total_windows']} |"
         )
+    out.append("")
+    grouped = {}
+    for entry in summary["cells"]:
+        grouped.setdefault(entry.get("decision"), []).append(f"`{entry['cell_id']}`")
+    for decision in DECISIONS:
+        if decision in grouped:
+            out.append(f"- Decision {decision or 'none'} ({len(grouped[decision])}): "
+                       + ", ".join(grouped[decision]) + ".")
     out.append("")
 
 
-def popcount_matrix(out, receipt, summary):
+def popcount_matrix(out, directory, receipt, summary):
     verdicts = {entry["cell_id"]: entry for entry in summary["cells"]}
     candidates = families.POPCOUNT_CANDIDATES
+    out.append(f"### Speedups by workload: `{directory.name}`")
+    out.append("")
     out.append(
         "Speedup of each alternative over gf2's dispatcher with the corrected interval (above 1: "
         "the alternative is faster), and the dispatcher's observed route."
     )
     out.append("")
-    out.append("| Workload | Dispatcher route | " + " | ".join(candidates) + " |")
-    out.append("|---|---|" + "---|" * len(candidates))
+    out.append("| Row | Workload | Dispatcher route | " + " | ".join(candidates) + " |")
+    out.append("|---|---|---|" + "---|" * len(candidates))
     by_cell = {cell["cell_id"]: cell for cell in receipt["cells"]}
     for key in families.POPCOUNT_WORKLOADS:
         routes, row = set(), []
@@ -318,7 +408,7 @@ def popcount_matrix(out, receipt, summary):
                 continue
             row.append(speedup_text(verdicts[cell["cell_id"]]))
             routes.update(path.split(":", 1)[1] for path in paths(cell, "baseline"))
-        out.append(f"| {workload_text('popcount', key)} | {', '.join(sorted(routes))} | "
+        out.append(f"| `{key}` | {workload_text('popcount', key)} | {', '.join(sorted(routes))} | "
                    + " | ".join(row) + " |")
     out.append("")
 
@@ -335,12 +425,14 @@ def arm_samples(by_cell, key):
     return samples
 
 
-def workload_contrasts(out, receipt, digest):
+def workload_contrasts(out, directory, receipt, digest):
     by_cell = {cell["cell_id"]: cell for cell in receipt["cells"]}
+    out.append(f"### Workload contrasts: `{directory.name}`")
+    out.append("")
     out.append(
-        "Workload contrasts: each arm's median on the variant workload over its median on the "
-        "reference workload (above 1: the variant takes longer), resampled independently; 95% "
-        "descriptive intervals."
+        "Each arm's median on the variant workload over its median on the reference workload "
+        "(above 1: the variant takes longer), resampled independently; 95% descriptive "
+        "intervals. Each arm's sample is as in § Fastest arm."
     )
     out.append("")
     arms = [families.POPCOUNT_BASELINE] + families.POPCOUNT_CANDIDATES
@@ -351,12 +443,14 @@ def workload_contrasts(out, receipt, digest):
         row = [ratio_text(ratio_interval(top[arm], bottom[arm],
                                          f"{digest}:{variant}/{reference}:{arm}"))
                if arm in top and arm in bottom else "not declared" for arm in arms]
-        out.append(f"| {variant} / {reference} | {change} | " + " | ".join(row) + " |")
+        out.append(f"| `{variant} / {reference}` | {change} | " + " | ".join(row) + " |")
     out.append("")
 
 
-def fastest_arms(out, receipt, digest):
+def fastest_arms(out, directory, receipt, digest):
     by_cell = {cell["cell_id"]: cell for cell in receipt["cells"]}
+    out.append(f"### Fastest arm: `{directory.name}`")
+    out.append("")
     out.append(
         "Fastest measured arm per workload. Each arm's sample is its executions in the workload's "
         "cells (the dispatcher pools every cell of the workload); ratios divide the slower arm's "
@@ -364,9 +458,9 @@ def fastest_arms(out, receipt, digest):
         "median time. Intervals are 95% and descriptive."
     )
     out.append("")
-    out.append("| Workload | Fastest arm | n | ns/call | GB/s | Runner-up | Runner-up / fastest "
-               "| Dispatcher / fastest |")
-    out.append("|---|---|---:|---|---|---|---|---|")
+    out.append("| Row | Workload | Fastest arm | n | ns/call | GB/s | Runner-up "
+               "| Runner-up / fastest | Dispatcher / fastest |")
+    out.append("|---|---|---|---:|---|---|---|---|---|")
     for key in families.POPCOUNT_WORKLOADS:
         words = families.POPCOUNT_WORKLOADS[key][0]
         samples = arm_samples(by_cell, key)
@@ -380,14 +474,14 @@ def fastest_arms(out, receipt, digest):
         versus = ("it is the dispatcher" if fastest == dispatcher else ratio_text(ratio_interval(
             samples[dispatcher], samples[fastest], f"{digest}:{key}:{dispatcher}/{fastest}")))
         out.append(
-            f"| {workload_text('popcount', key)} | {fastest} | {len(samples[fastest])} "
+            f"| `{key}` | {workload_text('popcount', key)} | {fastest} | {len(samples[fastest])} "
             f"| {ns_interval(found)} | {rate[0]:.2f} [{rate[1]:.2f}, {rate[2]:.2f}] "
             f"| {runner_up} | {ratio_text(second)} | {versus} |"
         )
     out.append("")
 
 
-def probe_table(out, receipt, digest):
+def probe_table(out, directory, receipt, digest):
     rows = []
     for cell in receipt["cells"]:
         for side in ("baseline", "candidate"):
@@ -402,6 +496,8 @@ def probe_table(out, receipt, digest):
                         + " | ".join(ns_interval(entry) for entry in found) + " |")
     if not rows:
         return
+    out.append(f"### Conversion-cost probes: `{directory.name}`")
+    out.append("")
     out.append(
         "Conversion-cost probes of whole-consumer cells: one value per execution, measured "
         "after its timed windows, which already contain these costs; medians over executions "
@@ -418,11 +514,13 @@ def probe_table(out, receipt, digest):
     out.append("")
 
 
-def selected_paths(out, receipt):
+def selected_paths(out, directory, receipt):
     seen = {}
     for cell in receipt["cells"]:
         for side in ("baseline", "candidate"):
             seen.setdefault(cell[f"{side}_arm"], set()).update(paths(cell, side))
+    out.append(f"### Selected paths: `{directory.name}`")
+    out.append("")
     out.append("Observed selected paths per arm: " + "; ".join(
         f"{arm}: {', '.join(sorted(found))}" for arm, found in sorted(seen.items())) + ".")
     out.append("")
@@ -470,8 +568,8 @@ def v1_history(out, current):
     )
     out.append("")
     out.append("| v1 cell | Candidate | Pairs | v1 speedup [interval] | v1 outcome | v3 counterpart "
-               "| v3 speedup [corrected interval] | v3 outcome |")
-    out.append("|---|---|---:|---|---|---|---|---|")
+               "| v3 speedup [corrected interval] | v3 decision | v3 outcome |")
+    out.append("|---|---|---:|---|---|---|---|---|---|")
     by_cell = {cell["cell_id"]: cell for cell in receipt["cells"]}
     later = {entry["cell_id"]: entry for entry in current[1]["cells"]} if current else {}
     for entry in summary["cells"]:
@@ -482,7 +580,8 @@ def v1_history(out, current):
             f"| `{entry['cell_id']}` | {cell['candidate_arm']} | {len(cell['pairs'])} "
             f"| {speedup_text(entry)} | **{entry['outcome']}** "
             f"| {f'`{counterpart}`' if counterpart else 'none'} "
-            f"| {speedup_text(match) if match else '—'} | {match['outcome'] if match else '—'} |"
+            f"| {speedup_text(match) if match else '—'} | {match['decision'] if match else '—'} "
+            f"| {match['outcome'] if match else '—'} |"
         )
     out.append("")
 
@@ -513,25 +612,33 @@ def main():
         "per cell as listed (`Fixture::new` in the survey crate's `src/fixture.rs`); the AND "
         "family's right operand uses the left seed plus "
         f"{families.AND_RHS_SEED_OFFSET}. Constant patterns ignore the seed.",
+        "- Each table has its own heading; a workload row is named by its workload key, a cell "
+        "row by its cell ID and a contrast by `variant / reference`.",
         "",
     ]
+    measured = {}
+    for family, mode in V3:
+        directory = RESULTS / f"v3-{family}-{mode}"
+        if (directory / "acceptance-summary.json").exists():
+            measured[directory] = load(directory)
+    overview(out, [(directory, *found) for directory, found in measured.items()])
     current = None
     for family, mode in V3:
         directory = RESULTS / f"v3-{family}-{mode}"
-        if not (directory / "acceptance-summary.json").exists():
+        if directory not in measured:
             out.append(f"## `{directory.name}`\n\nNot yet measured.\n")
             continue
-        receipt, summary, digest = load(directory)
+        receipt, summary, digest = measured[directory]
         header(out, directory, receipt, summary, digest, self_check(directory, receipt, summary))
         if family == "popcount":
-            popcount_matrix(out, receipt, summary)
-            fastest_arms(out, receipt, digest)
-            workload_contrasts(out, receipt, digest)
+            popcount_matrix(out, directory, receipt, summary)
+            fastest_arms(out, directory, receipt, digest)
+            workload_contrasts(out, directory, receipt, digest)
             if mode == "confirmation":
                 current = (directory.name, summary)
-        cell_table(out, receipt, summary, family, digest)
-        probe_table(out, receipt, digest)
-        selected_paths(out, receipt)
+        cell_table(out, directory, receipt, summary, family, digest)
+        probe_table(out, directory, receipt, digest)
+        selected_paths(out, directory, receipt)
     pilot_agreement(out)
     v1_history(out, current)
     OUTPUT.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
