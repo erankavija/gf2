@@ -1155,8 +1155,8 @@
   },
   "harness_binaries": {
     "m4ri_transpose_arm": {
-      "sha256": "651915b3cf3abef44e54bbecd8fd4a75560d2443960e75b9cc8344fbf7ba0b37",
-      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=46fcc0e2669154ee1711a8bff2a4f50dbde5b46a, for GNU/Linux 4.4.0, not stripped"
+      "sha256": "5cdd572ebf07455d13bd3c627af447a8d75654e69012b37f1a8e10ea38ab84f0",
+      "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=722290405cfb096e94b5c909b9baa24175e77d5e, for GNU/Linux 4.4.0, not stripped"
     },
     "m4ri_genmatrix_arm": {
       "sha256": "416087ed59642180b0cea93e718514c3b6675e1ff05c4337b04deafa1205ca8b",
