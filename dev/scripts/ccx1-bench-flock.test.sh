@@ -127,13 +127,17 @@ test "$got" = "build-1 bench build-2 " || {
 #
 # The wrapped command records the locks as it sees them, then starts a daemon
 # the way the sccache server starts: in its own session with its standard
-# streams detached, so that it outlives the command. Every lock must be free
-# once the wrapper returns, while the daemon still runs.
+# streams detached, so that it outlives the command. Under each wrapper every
+# lock must be free once the wrapper returns, while the daemon still runs and
+# holds no turnstile descriptor.
 #
-# Under the benchmark wrapper the command and so the daemon do hold the mutex
-# descriptor: the benchmark runner refuses to measure without an inherited
-# descriptor for the held lock (`host::inherited_lock`). The lock must be free
-# all the same.
+# cargo-budget.sh passes because it never gives the command a lock
+# descriptor: it closes its CCX1 and slot descriptors in the child with the
+# `{SLOT_FD}>&- {CCX1_FD}>&-` redirections and takes the test lock with
+# `flock -o`. Under the benchmark wrapper the command and so the daemon do
+# hold the mutex descriptor, because the benchmark runner refuses to measure
+# without an inherited descriptor for the held lock (`host::inherited_lock`);
+# the wrapper's unlock after the command must free the lock all the same.
 
 # Prints the state of every lock, then which of them process $1 has open.
 cat >"$TMP/observe" <<'EOF'

@@ -56,7 +56,10 @@
 #
 # HUP, INT and TERM are caught so that the wrapper outlives the command and
 # the unlock runs; the command still receives any signal sent to it or to its
-# process group. A SIGKILL of the wrapper alone skips the unlock.
+# process group. SIGKILL cannot be caught: if the wrapper is killed with it,
+# the unlock cannot run, the turnstile is released at once, and the mutex
+# stays held until the command and every process holding a copy of its
+# descriptor, a daemon included, have exited.
 #
 # A run that already holds this mutex MUST set CARGO_CI_NO_LOCK=1 for its own
 # cargo work. That was already required to avoid taking the shared side
