@@ -3,18 +3,20 @@
 //! fixtures, the protocol document's frozen settings, and the shared runner.
 
 use serde_json::{json, Value};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
+use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
 use tuning_campaign_support::abtest::{
-    bonferroni_confidence, bootstrap_seed, decide, pair_orders, paired_bootstrap_speedup,
+    bonferroni_confidence, bootstrap_seed, decide, median, pair_orders, paired_bootstrap_speedup,
     wilson_interval_95, ArmOrder, BootstrapInterval, Decision, Margins, PairedObservation,
     SplitMix64,
 };
 use tuning_campaign_support::host::{CoreArm, HostObservation};
 use tuning_campaign_support::journal::{
-    CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity, TerminalState,
+    CheckpointStore, ExecutionLog, JournalEvent, JournalRecord, ResumeIdentity, TerminalState,
 };
 use tuning_campaign_support::protocol::{
     sha256_hex, ArmBuilds, ArtifactPin, Batching, BuildIdentity, CacheState, CellDeclaration,
@@ -444,8 +446,14 @@ fn build_receipt_with_history(
     let repo = root.join("repo");
     stage_repo(&repo);
     if addendum.protocol.version >= 2 {
-        if addendum.protocol.version == 2 {
-            let source = repo_root().join("dev/bench_results/f547c394/v2-pilot/inputs");
+        // An earlier version uses the documents its published smoke receipts pin.
+        let pinned = match addendum.protocol.version {
+            2 => Some("dev/bench_results/f547c394/v2-pilot/inputs"),
+            3 => Some("dev/bench_results/f547c394/v3-r2-pilot/inputs"),
+            _ => None,
+        };
+        if let Some(inputs) = pinned {
+            let source = repo_root().join(inputs);
             fs::copy(source.join("protocol.md"), repo.join(PROTOCOL_PATH)).unwrap();
             fs::copy(
                 source.join("addendum.schema.json"),
@@ -2080,38 +2088,40 @@ fn protocol_document_pins_the_frozen_shared_settings() {
 
 #[test]
 fn declared_margins_must_clear_resolution_at_all_three_boundaries() {
-    let mut family = addendum(Vec::new());
-    family.protocol.version = 3;
-    family.schema = ADDENDUM_SCHEMA_ID.into();
-    family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
-    let resolution = family.effect.measurement_resolution.unwrap();
-    for margin in [
-        &mut family.effect.worthwhile_speedup,
-        &mut family.effect.equivalence_margin,
-        &mut family.effect.material_gap_threshold,
-    ] {
-        *margin = Some(1.0 + resolution);
-    }
-    let errors = family.validate().unwrap_err();
-    for name in [
-        "worthwhile_speedup",
-        "equivalence_margin",
-        "material_gap_threshold",
-    ] {
-        assert!(
-            errors.iter().any(|error| error.contains(name)),
-            "exact-resolution boundary must reject {name}: {errors:?}"
-        );
-    }
+    for version in [3, PROTOCOL_VERSION] {
+        let mut family = addendum(Vec::new());
+        family.protocol.version = version;
+        family.schema = format!("zen3-benchmark-addendum-v{version}");
+        family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+        let resolution = family.effect.measurement_resolution.unwrap();
+        for margin in [
+            &mut family.effect.worthwhile_speedup,
+            &mut family.effect.equivalence_margin,
+            &mut family.effect.material_gap_threshold,
+        ] {
+            *margin = Some(1.0 + resolution);
+        }
+        let errors = family.validate().unwrap_err();
+        for name in [
+            "worthwhile_speedup",
+            "equivalence_margin",
+            "material_gap_threshold",
+        ] {
+            assert!(
+                errors.iter().any(|error| error.contains(name)),
+                "v{version} exact-resolution boundary must reject {name}: {errors:?}"
+            );
+        }
 
-    for margin in [
-        &mut family.effect.worthwhile_speedup,
-        &mut family.effect.equivalence_margin,
-        &mut family.effect.material_gap_threshold,
-    ] {
-        *margin = Some((1.0 + resolution) * 1.01);
+        for margin in [
+            &mut family.effect.worthwhile_speedup,
+            &mut family.effect.equivalence_margin,
+            &mut family.effect.material_gap_threshold,
+        ] {
+            *margin = Some((1.0 + resolution) * 1.01);
+        }
+        family.validate().unwrap();
     }
-    family.validate().unwrap();
 }
 
 #[test]
@@ -2288,7 +2298,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
             CoreArm::PhysicalCores6,
         ),
     ]);
-    family.protocol.version = 3;
+    family.protocol.version = PROTOCOL_VERSION;
     family.schema = ADDENDUM_SCHEMA_ID.into();
     family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
@@ -2439,7 +2449,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
     let summary = evaluate(&out).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(
-        tuning_campaign_support::receipt::evaluate_version(&out, Some(3))
+        tuning_campaign_support::receipt::evaluate_version(&out, Some(PROTOCOL_VERSION))
             .unwrap()
             .verdict,
         Verdict::Accepted
@@ -2590,7 +2600,7 @@ fn v2_family() -> FamilyAddendum {
 fn v3_family() -> FamilyAddendum {
     let mut family = v2_family();
     family.protocol.version = 3;
-    family.schema = ADDENDUM_SCHEMA_ID.into();
+    family.schema = "zen3-benchmark-addendum-v3".into();
     family
 }
 
@@ -3168,4 +3178,451 @@ fn v3_decoder_quality_preserves_exact_vectors_but_allows_process_diagnostics() {
             summary.findings
         );
     }
+}
+
+const INTERRUPTED_CAMPAIGN: &str = "interrupted-campaign";
+
+/// Candidate arm of the interrupted campaign. It counts candidate executions
+/// and, while `$STALL` exists, blocks the ninth one: pair 2 of cell `second`,
+/// after that cell's first two pairs completed. Every other execution runs the
+/// smoke workload.
+const STALLING_CANDIDATE: &str = r#"n=$(( $(cat "$COUNTER" 2>/dev/null || echo 0) + 1 ))
+echo "$n" > "$COUNTER"
+if [ "$n" -eq 9 ] && [ -e "$STALL" ]; then
+  echo "$$" > "$STALLED.tmp" && mv "$STALLED.tmp" "$STALLED"
+  exec sleep 600
+fi
+exec "$WORKLOAD""#;
+
+/// A finalized receipt directory and its execution log.
+struct InterruptedCampaign {
+    out: PathBuf,
+    records: Vec<JournalRecord>,
+}
+
+fn record_key(record: &JournalRecord) -> Option<&str> {
+    record.case.as_ref()?.get("key")?.as_str()
+}
+
+fn kill_group(group: u32) {
+    let _ = rustix::process::kill_process_group(
+        rustix::process::Pid::from_raw(group as i32).unwrap(),
+        rustix::process::Signal::KILL,
+    );
+}
+
+/// Runs a three-cell pilot through the runner, kills its first session inside
+/// cell `second` as an operator stop would, resumes it under the same plan and
+/// stage, and finalizes the receipt.
+fn interrupted_campaign(name: &str) -> InterruptedCampaign {
+    let root = scratch(name);
+    let repo = root.join("repo");
+    stage_repo(&repo);
+    stage_runner_producing(&repo);
+    let ids = ["first", "second", "third"];
+    let mut family = addendum(
+        ids.iter()
+            .map(|id| {
+                cell(
+                    id,
+                    CellObjective::Improvement,
+                    CellRole::Exploratory,
+                    CoreArm::SingleCore,
+                )
+            })
+            .collect(),
+    );
+    family.protocol.version = PROTOCOL_VERSION;
+    family.schema = ADDENDUM_SCHEMA_ID.into();
+    family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+    // Without margins the pilot cells carry no claim, so an edited sample is
+    // judged by its journal provenance alone.
+    family.effect.equivalence_margin = None;
+    family.effect.measurement_resolution = None;
+    family.effect.resolution_evidence = None;
+    fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
+    for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
+        fs::copy(repo_root().join(relative), repo.join(relative)).unwrap();
+    }
+    write_addendum(&repo, &family);
+    git(&repo, &["init", "-q"]);
+    let lock = root.join("bench.lock");
+    fs::write(&lock, b"").unwrap();
+    let stall = root.join("stall");
+    let stalled = root.join("stalled");
+    fs::write(&stall, b"").unwrap();
+    let workload = env!("CARGO_BIN_EXE_ab-smoke-workload");
+    let plan = json!({
+        "schema": "zen3-benchmark-plan-v1",
+        "campaign_id": INTERRUPTED_CAMPAIGN,
+        "producing_manifest": "producing-inputs.json",
+        "issue": "f547c394",
+        "label": "pilot",
+        "campaign_seed": 11,
+        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "lock_path": lock,
+        "wrapper": "flock",
+        "timing_override": {"windows_per_execution": 2, "window_target_ms": 3},
+        "arms": {
+            "baseline": {
+                "build": "conservative-portable",
+                "description": "xor-fold 2 pass",
+                "executable": workload,
+                "arguments": [],
+                "environment": {"GF2_SMOKE_PASSES": "2"},
+                "rustflags": null,
+                "tuning_profile": null
+            },
+            "candidate": {
+                "build": "conservative-portable",
+                "description": "xor-fold 1 pass behind a stall switch",
+                "executable": "/bin/sh",
+                "arguments": ["-c", STALLING_CANDIDATE],
+                "environment": {
+                    "GF2_SMOKE_PASSES": "1",
+                    "WORKLOAD": workload,
+                    "COUNTER": root.join("candidate-executions"),
+                    "STALL": stall,
+                    "STALLED": stalled
+                },
+                "rustflags": null,
+                "tuning_profile": null
+            }
+        },
+        "cells": ids.iter().enumerate().map(|(index, id)| json!({
+            "cell_id": id,
+            "baseline_arm": "baseline",
+            "candidate_arm": "candidate",
+            "case": {"words": 4096, "seed": index + 1},
+            "pilot_pairs": 6
+        })).collect::<Vec<_>>(),
+        "max_cells_per_session": null
+    });
+    let plan_path = root.join("plan.json");
+    fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
+    let stage = root.join("stage");
+    let runner = env!("CARGO_BIN_EXE_benchmark-ab-runner");
+    let session = || {
+        let mut command = Command::new("flock");
+        command
+            .arg("-x")
+            .arg(&lock)
+            .args(["taskset", "-c", "0-2", runner, "run"])
+            .arg(&stage)
+            .arg(&plan_path)
+            .current_dir(&repo);
+        command
+    };
+    // The first session gets its own process group, so killing that group
+    // stops the lock wrapper and the runner together, mid-cell.
+    let mut first = session()
+        .process_group(0)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(6);
+    let stalled_child = loop {
+        if let Some(pid) = fs::read_to_string(&stalled)
+            .ok()
+            .and_then(|text| text.trim().parse::<u32>().ok())
+        {
+            break pid;
+        }
+        assert!(
+            first.try_wait().unwrap().is_none(),
+            "the first session ended before the candidate stalled"
+        );
+        assert!(Instant::now() < deadline, "the candidate never stalled");
+        std::thread::sleep(Duration::from_millis(5));
+    };
+    kill_group(first.id());
+    // The runner starts every arm in its own process group.
+    kill_group(stalled_child);
+    first.wait().unwrap();
+    fs::remove_file(&stall).unwrap();
+    let resumed = session().output().unwrap();
+    assert_eq!(
+        resumed.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&resumed.stderr)
+    );
+    let out = repo.join("dev/bench_results/f547c394/interrupted");
+    let finalize = Command::new(runner)
+        .arg("finalize")
+        .arg(&stage)
+        .arg(&out)
+        .current_dir(&repo)
+        .output()
+        .unwrap();
+    assert!(
+        finalize.status.success(),
+        "{}",
+        String::from_utf8_lossy(&finalize.stderr)
+    );
+    let records =
+        ExecutionLog::validate_prefix(&fs::read(out.join(LOG_FILE)).unwrap(), INTERRUPTED_CAMPAIGN)
+            .unwrap();
+    InterruptedCampaign { out, records }
+}
+
+/// Sequences of the `cell-start` records of one cell.
+fn cell_starts(records: &[JournalRecord], key: &str) -> Vec<u64> {
+    records
+        .iter()
+        .filter(|record| record.event == JournalEvent::CellStart && record_key(record) == Some(key))
+        .map(|record| record.sequence)
+        .collect()
+}
+
+#[test]
+fn runner_restarts_an_interrupted_cell_and_acceptance_accepts_the_receipt() {
+    let campaign = interrupted_campaign("interrupted-accepted");
+    let summary = evaluate(&campaign.out).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(
+        tuning_campaign_support::receipt::evaluate_version(&campaign.out, Some(PROTOCOL_VERSION))
+            .unwrap()
+            .verdict,
+        Verdict::Accepted
+    );
+    assert_eq!(summary.sessions, 2);
+    assert!(summary.resumed);
+    for id in ["first", "second", "third"] {
+        assert_eq!(outcome(&summary, id), CellOutcome::Pilot);
+    }
+    let records = &campaign.records;
+    assert_eq!(cell_starts(records, "first").len(), 1);
+    assert_eq!(cell_starts(records, "third").len(), 1);
+    let second = cell_starts(records, "second");
+    assert_eq!(second.len(), 2, "only the interrupted cell starts again");
+    // The resumed session closes the stopped session, then gives up the
+    // unfinished attempt before it starts the cell again.
+    let interrupted = records
+        .iter()
+        .find(|record| record.event == JournalEvent::Interrupted)
+        .unwrap();
+    assert_eq!(interrupted.details["cause"], "missing-terminal-record");
+    let abandoned: Vec<_> = records
+        .iter()
+        .filter(|record| record.event == JournalEvent::CellAbandoned)
+        .collect();
+    assert_eq!(abandoned.len(), 1);
+    assert_eq!(record_key(abandoned[0]), Some("second"));
+    assert_eq!(abandoned[0].details, json!({"attempt_start": second[0]}));
+    assert!(interrupted.sequence < abandoned[0].sequence && abandoned[0].sequence < second[1]);
+    // The abandoned attempt journaled samples; the receipt holds only the
+    // executions of the restarted attempt.
+    let spawned = |attempt: std::ops::Range<u64>| {
+        records
+            .iter()
+            .filter(|record| {
+                record.event == JournalEvent::ChildSpawn
+                    && record_key(record) == Some("second")
+                    && attempt.contains(&record.sequence)
+            })
+            .map(|record| record.details["pid"].as_u64().unwrap() as u32)
+            .collect::<BTreeSet<_>>()
+    };
+    let abandoned_samples = records
+        .iter()
+        .filter(|record| {
+            record.event == JournalEvent::ExecutionProgress
+                && record_key(record) == Some("second")
+                && (second[0]..second[1]).contains(&record.sequence)
+        })
+        .count();
+    assert!(
+        abandoned_samples >= 4,
+        "two pairs completed before the stop"
+    );
+    let receipt =
+        BenchmarkReceipt::decode(&fs::read(campaign.out.join(RECEIPT_FILE)).unwrap()).unwrap();
+    let accepted: BTreeSet<u32> = receipt
+        .cells
+        .iter()
+        .find(|cell| cell.cell_id == "second")
+        .unwrap()
+        .pairs
+        .iter()
+        .flat_map(|pair| [pair.baseline.pid, pair.candidate.pid])
+        .collect();
+    assert_eq!(accepted, spawned(second[1]..u64::MAX));
+    assert!(accepted.is_disjoint(&spawned(second[0]..second[1])));
+}
+
+fn copy_dir(source: &Path, target: &Path) {
+    fs::create_dir_all(target).unwrap();
+    for entry in fs::read_dir(source).unwrap() {
+        let entry = entry.unwrap();
+        let destination = target.join(entry.file_name());
+        if entry.file_type().unwrap().is_dir() {
+            copy_dir(&entry.path(), &destination);
+        } else {
+            fs::copy(entry.path(), destination).unwrap();
+        }
+    }
+}
+
+/// Edits the journal as a whole, renumbers it into a valid journal and pins
+/// the new digest in the receipt.
+fn rewrite_log(dir: &Path, edit: impl FnOnce(&mut Vec<JournalRecord>)) {
+    let path = dir.join(LOG_FILE);
+    let mut records =
+        ExecutionLog::validate_prefix(&fs::read(&path).unwrap(), INTERRUPTED_CAMPAIGN).unwrap();
+    edit(&mut records);
+    let mut bytes = Vec::new();
+    for (sequence, record) in records.iter_mut().enumerate() {
+        record.sequence = sequence as u64;
+        bytes.extend(serde_json::to_vec(record).unwrap());
+        bytes.push(b'\n');
+    }
+    ExecutionLog::validate_prefix(&bytes, INTERRUPTED_CAMPAIGN).unwrap();
+    fs::write(&path, &bytes).unwrap();
+    let receipt_path = dir.join(RECEIPT_FILE);
+    let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
+    receipt.execution_log.sha256 = sha256_hex(&bytes);
+    fs::write(receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+}
+
+/// Edits one receipt cell and republishes a consistent checkpoint store.
+fn rewrite_cell(dir: &Path, cell_id: &str, edit: impl FnOnce(&mut CellRecord)) {
+    let receipt_path = dir.join(RECEIPT_FILE);
+    let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
+    edit(
+        receipt
+            .cells
+            .iter_mut()
+            .find(|cell| cell.cell_id == cell_id)
+            .unwrap(),
+    );
+    let plan = RunnerPlan::decode(&fs::read(dir.join(PLAN_FILE)).unwrap()).unwrap();
+    let root = dir.join(CHECKPOINT_DIR);
+    let identity = CheckpointStore::inspect(&root).unwrap().identity().clone();
+    fs::remove_dir_all(&root).unwrap();
+    let mut store = CheckpointStore::create_new(&root, &receipt.campaign_id, identity).unwrap();
+    for cell in &mut receipt.cells {
+        let planned = plan
+            .cells
+            .iter()
+            .find(|planned| planned.cell_id == cell.cell_id)
+            .unwrap();
+        let case = json!({"key": cell.key, "cell_id": cell.cell_id, "case": planned.case});
+        cell.checkpoint_sha256 = None;
+        cell.checkpoint_sha256 = Some(store.accept(&cell.key, &case, cell).unwrap().sha256);
+    }
+    receipt.checkpoints.manifest_sha256 =
+        sha256_hex(&fs::read(root.join("manifest.json")).unwrap());
+    fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+}
+
+/// Asserts that P-11 alone rejects the receipt, naming cell `second`.
+fn assert_rejected_by_p11(dir: &Path, expected: &str) {
+    let summary = evaluate(dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected, "{expected}");
+    let errors: Vec<_> = summary
+        .findings
+        .iter()
+        .filter(|finding| finding.severity == Severity::Error)
+        .collect();
+    assert!(
+        errors.iter().all(|finding| finding.rule == "P-11"),
+        "{expected}: {errors:?}"
+    );
+    assert!(
+        errors.iter().any(|finding| {
+            finding.cell.as_deref() == Some("second") && finding.message.contains(expected)
+        }),
+        "{expected}: {errors:?}"
+    );
+}
+
+#[test]
+fn acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_samples() {
+    let campaign = interrupted_campaign("interrupted-rejected");
+    let records = &campaign.records;
+    let second = cell_starts(records, "second");
+    let variant = |name: &str| {
+        let dir = campaign.out.with_file_name(name);
+        copy_dir(&campaign.out, &dir);
+        dir
+    };
+
+    let unrecorded = variant("unrecorded-restart");
+    rewrite_log(&unrecorded, |records| {
+        records.retain(|record| record.event != JournalEvent::CellAbandoned);
+    });
+    assert_rejected_by_p11(&unrecorded, "without an abandonment record");
+
+    let completed_twice = variant("completed-twice");
+    rewrite_log(&completed_twice, |records| {
+        let index = records
+            .iter()
+            .position(|record| {
+                record.event == JournalEvent::CellComplete && record_key(record) == Some("second")
+            })
+            .unwrap();
+        let duplicate = records[index].clone();
+        records.insert(index + 1, duplicate);
+    });
+    assert_rejected_by_p11(&completed_twice, "completed 2 times");
+
+    // Pair 0 of the candidate, as the abandoned attempt journaled it.
+    let journaled = |event: JournalEvent| {
+        records
+            .iter()
+            .find(|record| {
+                record.event == event
+                    && record_key(record) == Some("second")
+                    && (second[0]..second[1]).contains(&record.sequence)
+                    && record.case.as_ref().unwrap()["arm"] == "candidate"
+                    && record.case.as_ref().unwrap()["pair"] == 0
+            })
+            .unwrap()
+    };
+    let pid = journaled(JournalEvent::ChildSpawn).details["pid"]
+        .as_u64()
+        .unwrap() as u32;
+    let progress = journaled(JournalEvent::ExecutionProgress);
+    let windows: Vec<WindowRecord> =
+        serde_json::from_value(progress.details["windows"].clone()).unwrap();
+    let ns_per_call = progress.details["ns_per_call"].as_f64().unwrap();
+    let abandoned_sample = variant("abandoned-sample");
+    rewrite_cell(&abandoned_sample, "second", |cell| {
+        let execution = &mut cell.pairs[0].candidate;
+        execution.pid = pid;
+        execution.windows = windows;
+        execution.ns_per_call = ns_per_call;
+    });
+    assert_rejected_by_p11(&abandoned_sample, "abandoned attempt");
+
+    let unjournaled_sample = variant("unjournaled-sample");
+    rewrite_cell(&unjournaled_sample, "second", |cell| {
+        let execution = &mut cell.pairs[1].baseline;
+        execution.windows[0].elapsed_ns += 1;
+        let mut values: Vec<f64> = execution
+            .windows
+            .iter()
+            .map(|window| window.ns_per_call())
+            .collect();
+        execution.ns_per_call = median(&mut values).unwrap();
+    });
+    assert_rejected_by_p11(&unjournaled_sample, "differ from the executions");
+}
+
+#[test]
+fn v3_receipts_keep_rejecting_a_restarted_cell_and_refuse_later_rules() {
+    let dir = repo_root().join("dev/bench_results/26465e6c/v3-and-popcnt-pilot");
+    let summary = tuning_campaign_support::receipt::evaluate_version(&dir, Some(3)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|finding| {
+        finding.rule == "P-11"
+            && finding.cell.as_deref() == Some("and-popcnt-w4096-vs-scalar-control")
+            && finding.message.contains("started 2 times")
+    }));
+    let later =
+        tuning_campaign_support::receipt::evaluate_version(&dir, Some(PROTOCOL_VERSION)).unwrap();
+    assert_eq!(later.verdict, Verdict::Rejected);
+    assert!(later.findings.iter().any(|finding| finding.rule == "P-01"));
 }
