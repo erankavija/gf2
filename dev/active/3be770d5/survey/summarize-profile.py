@@ -232,19 +232,19 @@ def scaling_summary(cases, per_session):
     for (arm, code, core_arm), label in sorted(labels.items()):
         base = labels.get((arm, code, "single-core"))
         values = per_session[label].get("ns_per_frame_per_worker", [])
-        if base and base != label and len(values) >= 2:
+        base_values = per_session[base].get("ns_per_frame_per_worker", []) if base else []
+        if base and base != label and len(values) >= 2 and len(base_values) >= 2:
             identifier = f"slowdown:{label}"
-            estimate, lower, upper = bootstrap_ratio(values, per_session[base]["ns_per_frame_per_worker"],
-                                                     seed_of(identifier))
+            estimate, lower, upper = bootstrap_ratio(values, base_values, seed_of(identifier))
             ratios.append({"id": identifier, "kind": "per-worker slowdown against one worker",
                            "numerator": label, "denominator": base, "estimate": estimate,
                            "lower": lower, "upper": upper, "seed": seed_of(identifier)})
         if arm == "gf2":
             other = labels.get(("aff3ct", code, core_arm))
-            if other and len(values) >= 2:
+            other_values = per_session[other].get("ns_per_frame_per_worker", []) if other else []
+            if other and len(values) >= 2 and len(other_values) >= 2:
                 identifier = f"gap:{label}"
-                estimate, lower, upper = bootstrap_ratio(values, per_session[other]["ns_per_frame_per_worker"],
-                                                         seed_of(identifier))
+                estimate, lower, upper = bootstrap_ratio(values, other_values, seed_of(identifier))
                 ratios.append({"id": identifier, "kind": "gf2 over AFF3CT flooding time per frame",
                                "numerator": label, "denominator": other, "estimate": estimate,
                                "lower": lower, "upper": upper, "seed": seed_of(identifier)})
