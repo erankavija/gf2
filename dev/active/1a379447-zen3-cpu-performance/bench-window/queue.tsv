@@ -6,3 +6,4 @@
 6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window region-axpy-pilot
 6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window matrix-product-pilot
 6c6b09b1	.agents/worktrees/agent-6c6b09b1	6	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window pairwise-control-pilot
+3e59cb9a	.worktrees-local/agent-eda07788-v3	8	GF2_EDA07788_EXT=.agents/ext/eda07788-v3 dev/bench_results/eda07788/run-dvb-t2-baselines.sh remeasure-v3
