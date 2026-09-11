@@ -38,7 +38,8 @@ typedef struct bfx_mat bfx_mat;
 
 /*
  * Creates a backend context for the full reduction polynomial `poly`
- * (0x11D and 0x11B are the two this survey uses). `variant` names the
+ * (every cell uses 0x11D; the conformance run also opens 0x11B to record
+ * which backends accept it). `variant` names the
  * arithmetic backend within the library, or is NULL for that library's
  * default; unknown variants fail rather than falling back silently.
  * Returns NULL and sets *why to a static reason on failure.
@@ -70,12 +71,19 @@ int bfx_mul_region_apply(bfx_ctx *ctx, const unsigned char *src, unsigned char *
 /*
  * Arbitrary pairwise multiplication dest[i] = x[i] * y[i]: every element
  * pair is distinct, so no coefficient table can be reused across the
- * region. A backend whose whole region API assumes a fixed coefficient
- * returns BFX_ERR_UNSUPPORTED here instead of substituting a different
- * operation.
+ * region. No backend has a region kernel for it; each applies its public
+ * single-element multiply per byte.
  */
 int bfx_mul_pairwise(bfx_ctx *ctx, const unsigned char *x, const unsigned char *y,
                      unsigned char *dest, size_t len);
+
+/*
+ * Nonzero when bfx_prepare performs a table preparation separate from the
+ * region call (ISA-L's ec_init_tables). GF-Complete expands the coefficient
+ * inside each region call and M4RIE takes it as an argument, so for them
+ * bfx_prepare only records the coefficient.
+ */
+int bfx_has_separate_prepare(const bfx_ctx *ctx);
 
 /* Single-element multiply, used to validate the region paths. */
 unsigned char bfx_mul_scalar(bfx_ctx *ctx, unsigned char a, unsigned char b);

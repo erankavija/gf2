@@ -3,14 +3,17 @@
 #
 # Usage:
 #   ./fetch-build.sh [destination]
-#   ./fetch-build.sh --print-pins        # report the pins below and stop
+#   ./fetch-build.sh --print-pins             # report the pins below and stop
+#   ./fetch-build.sh --verify-sources [dir]   # check the staged sources and stop
 #
-# Destination defaults to <repo>/.agents/ext/6c6b09b1, which the agent-local
-# git excludes keep out of the working tree; nothing this script downloads or
-# builds is committed. The pins below are the contract: a version plus sha256
-# for the tarball sources, and a branch or tag plus the commit it resolves to
-# for the git sources. Every pin is re-verified on each run, so a mutated
-# upstream fails the build instead of silently changing the measured baseline.
+# Destination defaults to the primary checkout's .agents/ext/6c6b09b1, which
+# the agent-local git excludes keep out of the working tree; nothing this
+# script downloads or builds is committed. The pins below are the contract: a
+# version plus sha256 for the tarball sources, and a branch or tag plus the
+# commit it resolves to for the git sources. Every pin is re-verified on each
+# run, so a mutated upstream fails the build instead of silently changing the
+# measured baseline. `--verify-sources` performs only that verification, for
+# `stage-externals.sh`, which copies an already built prefix into a worktree.
 #
 # Host discipline: every compile step runs under the shared side of the CCX1
 # benchmark mutex so it can never overlap a timed run, with at most 12 jobs.
@@ -21,8 +24,12 @@
 set -euo pipefail
 
 PRINT_PINS=0
+VERIFY_ONLY=0
 if [[ "${1:-}" == "--print-pins" ]]; then
     PRINT_PINS=1
+    shift
+elif [[ "${1:-}" == "--verify-sources" ]]; then
+    VERIFY_ONLY=1
     shift
 fi
 
@@ -84,6 +91,30 @@ if [[ "${PRINT_PINS}" == "1" ]]; then
     exit 0
 fi
 
+require_commit() {
+    local dir="$1" want="$2" name="$3" got
+    got="$(git -C "${dir}" rev-parse HEAD)"
+    if [[ "${got}" != "${want}" ]]; then
+        echo "${name}: expected ${want}, got ${got}" >&2
+        exit 1
+    fi
+}
+
+if [[ "${VERIFY_ONLY}" == "1" ]]; then
+    for entry in "nasm-${NASM_VERSION}.tar.xz ${NASM_SHA256}" \
+                 "m4ri-${M4RI_VERSION}.tar.gz ${M4RI_SHA256}" \
+                 "m4rie-${M4RIE_VERSION}.tar.gz ${M4RIE_SHA256}"; do
+        set -- ${entry}
+        echo "$2  ${EXT}/$1" | sha256sum -c - >/dev/null
+        echo "verified $1 sha256=$2"
+    done
+    require_commit "${EXT}/gf-complete" "${GFCOMPLETE_COMMIT}" gf-complete
+    echo "verified gf-complete commit=${GFCOMPLETE_COMMIT}"
+    require_commit "${EXT}/isa-l" "${ISAL_COMMIT}" isa-l
+    echo "verified isa-l tag=${ISAL_TAG} commit=${ISAL_COMMIT}"
+    exit 0
+fi
+
 mkdir -p "${EXT}" "${PREFIX}"
 cd "${EXT}"
 
@@ -94,15 +125,6 @@ cd "${EXT}"
 touch "${LOCK}"
 shared() {
     "${REPO}/scripts/cargo-budget.sh" "$@"
-}
-
-require_commit() {
-    local dir="$1" want="$2" name="$3" got
-    got="$(git -C "${dir}" rev-parse HEAD)"
-    if [[ "${got}" != "${want}" ]]; then
-        echo "${name}: expected ${want}, got ${got}" >&2
-        exit 1
-    fi
 }
 
 fetch_tarball() {
@@ -191,16 +213,7 @@ if [[ ! -f "${PREFIX}/lib/libisal.so" ]]; then
     )
 fi
 
-# ------------------------------------------------------------------ harness
-# Set GF2_SURVEY_LIBS_ONLY=1 to stop after the pinned libraries, before the
-# adapters that consume them.
-if [[ "${GF2_SURVEY_LIBS_ONLY:-0}" == "1" ]]; then
-    echo "pinned libraries ready under ${PREFIX}"
-    exit 0
-fi
-shared make -C "${HERE}" EXT="${EXT}"
-CARGO_TARGET_DIR="${EXT}/survey-target" \
-    "${REPO}/scripts/cargo-budget.sh" cargo build --release \
-        --manifest-path "${HERE}/gf2-side/Cargo.toml"
-
-echo "byte-field baselines ready under ${EXT}"
+# The survey harness (shim, conformance binaries and arms) is built by the
+# campaign launcher's build step from a worktree copy of this prefix, which
+# `stage-externals.sh` verifies against the committed digests.
+echo "pinned libraries ready under ${PREFIX}"

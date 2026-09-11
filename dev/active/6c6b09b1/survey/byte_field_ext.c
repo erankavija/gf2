@@ -155,7 +155,7 @@ bfx_ctx *bfx_init(int backend, unsigned int poly, const char *variant, const cha
             free(ctx);
             return NULL;
         }
-        describe(ctx, "m4rie/newton-john", M4RIE_VERSION_STR);
+        describe(ctx, "m4rie/mzed", M4RIE_VERSION_STR);
         return ctx;
     }
 
@@ -247,26 +247,38 @@ int bfx_mul_region_apply(bfx_ctx *ctx, const unsigned char *src, unsigned char *
 int bfx_mul_pairwise(bfx_ctx *ctx, const unsigned char *x, const unsigned char *y,
                      unsigned char *dest, size_t len)
 {
+    /* None of the three libraries has a region kernel for distinct pairs:
+       every region entry point expands one fixed coefficient. Each one's
+       only pairwise form is its public single-element multiply applied per
+       byte, which is what this loop is and what the survey labels it. */
     switch (ctx->backend) {
     case BFX_ISAL:
-        /* ISA-L's region API is built entirely around one expanded
-           coefficient; it offers no vectorised elementwise product of two
-           regions. gf_mul is a scalar helper, not a region kernel, so
-           reporting it as a region arm would compare a different
-           operation. */
-        return BFX_ERR_UNSUPPORTED;
+        /* gf_mul: an exported log/antilog-table function, one call each. */
+        for (size_t i = 0; i < len; ++i) {
+            dest[i] = gf_mul(x[i], y[i]);
+        }
+        return BFX_OK;
     case BFX_GFCOMPLETE:
+        /* multiply.w32: the selected gf_t function pointer, one indirect
+           call each. */
         for (size_t i = 0; i < len; ++i) {
             dest[i] = (unsigned char)ctx->gf.multiply.w32(&ctx->gf, x[i], y[i]);
         }
         return BFX_OK;
     case BFX_M4RIE:
-        /* M4RIE's element accessors are scalar and its region kernels are
-           all fixed-coefficient or matrix shaped. */
-        return BFX_ERR_UNSUPPORTED;
+        /* gf2e_mul: an inline lookup in the field's 256x256 product table. */
+        for (size_t i = 0; i < len; ++i) {
+            dest[i] = (unsigned char)gf2e_mul(ctx->ff, (word)x[i], (word)y[i]);
+        }
+        return BFX_OK;
     default:
         return BFX_ERR_INVALID;
     }
+}
+
+int bfx_has_separate_prepare(const bfx_ctx *ctx)
+{
+    return ctx->backend == BFX_ISAL;
 }
 
 unsigned char bfx_mul_scalar(bfx_ctx *ctx, unsigned char a, unsigned char b)

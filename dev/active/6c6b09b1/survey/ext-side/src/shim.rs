@@ -49,6 +49,7 @@ extern "C" {
         dest: *mut c_uchar,
         len: usize,
     ) -> c_int;
+    fn bfx_has_separate_prepare(ctx: *const CtxOpaque) -> c_int;
     fn bfx_ref_mul(a: c_uchar, b: c_uchar, poly: c_uint) -> c_uchar;
     fn bfx_mat_new(ctx: *mut CtxOpaque, rows: usize, cols: usize) -> *mut MatOpaque;
     fn bfx_mat_free(mat: *mut MatOpaque);
@@ -99,7 +100,9 @@ impl Context {
             } else {
                 // SAFETY: non-NULL `why` points at a static NUL-terminated
                 // string owned by the shim.
-                unsafe { CStr::from_ptr(why) }.to_string_lossy().into_owned()
+                unsafe { CStr::from_ptr(why) }
+                    .to_string_lossy()
+                    .into_owned()
             };
             return Err(reason);
         }
@@ -107,8 +110,12 @@ impl Context {
         // storage inside it.
         let (name, version) = unsafe {
             (
-                CStr::from_ptr(bfx_backend_name(ptr)).to_string_lossy().into_owned(),
-                CStr::from_ptr(bfx_library_version(ptr)).to_string_lossy().into_owned(),
+                CStr::from_ptr(bfx_backend_name(ptr))
+                    .to_string_lossy()
+                    .into_owned(),
+                CStr::from_ptr(bfx_library_version(ptr))
+                    .to_string_lossy()
+                    .into_owned(),
             )
         };
         Ok(Context { ptr, name, version })
@@ -122,6 +129,13 @@ impl Context {
     /// Version of the library actually linked.
     pub fn version(&self) -> &str {
         &self.version
+    }
+
+    /// Whether [`Context::prepare`] is a table preparation separate from the
+    /// region call; otherwise it only records the coefficient.
+    pub fn has_separate_prepare(&self) -> bool {
+        // SAFETY: `self.ptr` is a live context.
+        unsafe { bfx_has_separate_prepare(self.ptr) != 0 }
     }
 
     /// Performs the table preparation one coefficient needs.
@@ -147,15 +161,18 @@ impl Context {
         let len = x.len().min(y.len()).min(dest.len());
         // SAFETY: three distinct borrows, each valid for `len` bytes.
         check(
-            unsafe {
-                bfx_mul_pairwise(self.ptr, x.as_ptr(), y.as_ptr(), dest.as_mut_ptr(), len)
-            },
+            unsafe { bfx_mul_pairwise(self.ptr, x.as_ptr(), y.as_ptr(), dest.as_mut_ptr(), len) },
             "arbitrary pairwise multiply",
         )
     }
 
     /// Prepares the generator tables for a `rows x k` coefficient matrix.
-    pub fn encode_prepare(&mut self, generator: &[u8], k: usize, rows: usize) -> Result<(), String> {
+    pub fn encode_prepare(
+        &mut self,
+        generator: &[u8],
+        k: usize,
+        rows: usize,
+    ) -> Result<(), String> {
         // SAFETY: `generator` is valid for `k * rows` bytes, which the shim
         // reads and does not retain.
         check(
@@ -226,7 +243,10 @@ impl Matrix {
         }
         // SAFETY: `bytes` is valid for at least `rows * cols` elements,
         // which is exactly what the shim reads.
-        check(unsafe { bfx_mat_pack(self.ptr, bytes.as_ptr()) }, "matrix pack")
+        check(
+            unsafe { bfx_mat_pack(self.ptr, bytes.as_ptr()) },
+            "matrix pack",
+        )
     }
 
     /// Converts the backend's layout back into row-major bytes.
@@ -236,14 +256,20 @@ impl Matrix {
         }
         // SAFETY: `bytes` is valid for at least `rows * cols` elements,
         // which is exactly what the shim writes.
-        check(unsafe { bfx_mat_unpack(self.ptr, bytes.as_mut_ptr()) }, "matrix unpack")
+        check(
+            unsafe { bfx_mat_unpack(self.ptr, bytes.as_mut_ptr()) },
+            "matrix unpack",
+        )
     }
 
     /// Computes `self = a * b`.
     pub fn mul(&mut self, a: &Matrix, b: &Matrix) -> Result<(), String> {
         // SAFETY: three live matrices from the same context; the shim
         // rejects mismatched shapes itself.
-        check(unsafe { bfx_mat_mul(self.ptr, a.ptr, b.ptr) }, "matrix multiply")
+        check(
+            unsafe { bfx_mat_mul(self.ptr, a.ptr, b.ptr) },
+            "matrix multiply",
+        )
     }
 
     /// Accumulates `self[dest_row] ^= a * src[src_row]`.

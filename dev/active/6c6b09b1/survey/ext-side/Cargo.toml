@@ -11,6 +11,7 @@
 name = "byte-field-ext-side"
 version = "0.0.0"
 edition = "2021"
+rust-version = "1.95"
 publish = false
 build = "build.rs"
 

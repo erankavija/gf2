@@ -12,15 +12,18 @@
  *   2. Region multiply-XOR against a scalar accumulate loop, over the byte
  *      boundary lengths and several coefficients including 0 and 1.
  *   3. Region multiply-assign against a scalar loop.
- *   4. Arbitrary pairwise multiplication where a backend offers it.
- *   5. M4RIE dense matmul against an independent scalar triple loop.
- *   6. ISA-L generator encode against an independent scalar triple loop.
+ *   4. Arbitrary pairwise multiplication: each backend's single-element
+ *      multiply applied per byte.
+ *   5. M4RIE dense matmul at the square dimensions and the generator shape
+ *      the cells measure, against a triple loop over the reference's product
+ *      table.
+ *   6. ISA-L generator encode at the cells' shape, against the same loop.
  *   7. Field distinctness: 0x11B and 0x11D disagree, so an adapter pinned to
  *      one polynomial is never compared against an adapter pinned to the
  *      other.
  *
- * Exit status is 0 when every check passes and 1 on the first mismatch, with
- * the mismatch printed to stderr. Every check that a backend does not offer
+ * Exit status is 0 when every check passes and 1 after any mismatch, with
+ * each mismatch printed to stderr. Every check that a backend does not offer
  * is printed as an explicit `unsupported` line rather than skipped silently.
  *
  * Usage: ./byte_field_conformance
@@ -87,13 +90,14 @@ static int check_table(bfx_ctx *ctx, const char *label, unsigned int poly)
 
 static int check_axpy(bfx_ctx *ctx, const char *label, unsigned int poly)
 {
-    /* Byte-region analogues of the word boundary cases, plus the smallest
-       lengths ISA-L's region kernels accept. */
-    static const size_t lengths[] = { 0, 1, 31, 32, 63, 64, 65, 127, 128, 4096 };
+    /* Byte-region analogues of the word boundary cases, the smallest
+       lengths ISA-L's region kernels accept, and the 4 KiB and 128 KiB
+       region lengths the cells measure. */
+    static const size_t lengths[] = { 0, 1, 31, 32, 63, 64, 65, 127, 128, 4096, 131072 };
     static const unsigned char coefficients[] = { 0, 1, 2, 3, 0x53, 0xFF };
-    unsigned char *src = malloc(4096);
-    unsigned char *dest = malloc(4096);
-    unsigned char *want = malloc(4096);
+    unsigned char *src = malloc(131072);
+    unsigned char *dest = malloc(131072);
+    unsigned char *want = malloc(131072);
     char detail[200];
     int reported_short = 0;
     if (src == NULL || dest == NULL || want == NULL) {
@@ -303,16 +307,37 @@ static int check_pairwise(bfx_ctx *ctx, const char *label, unsigned int poly)
     return 0;
 }
 
-static int check_matmul(bfx_ctx *ctx, const char *label, unsigned int poly, size_t n)
+/* Product table of the independent reference, so the large matrix checks
+   below cost one lookup per multiply-accumulate. */
+static unsigned char ref_table[256][256];
+static unsigned int ref_table_poly = 0;
+
+static void build_ref_table(unsigned int poly)
 {
-    unsigned char *a = malloc(n * n);
-    unsigned char *b = malloc(n * n);
-    unsigned char *c = malloc(n * n);
-    unsigned char *want = malloc(n * n);
+    if (ref_table_poly == poly) {
+        return;
+    }
+    for (unsigned a = 0; a < 256; ++a) {
+        for (unsigned b = 0; b < 256; ++b) {
+            ref_table[a][b] = bfx_ref_mul((unsigned char)a, (unsigned char)b, poly);
+        }
+    }
+    ref_table_poly = poly;
+}
+
+/* Dense product c = a * b with a of shape rows x inner and b of shape
+   inner x cols, at the square and generator-encode shapes the cells use. */
+static int check_matmul(bfx_ctx *ctx, const char *label, unsigned int poly, size_t rows,
+                        size_t inner, size_t cols)
+{
+    unsigned char *a = malloc(rows * inner);
+    unsigned char *b = malloc(inner * cols);
+    unsigned char *c = malloc(rows * cols);
+    unsigned char *want = calloc(rows * cols, 1);
     char detail[200];
-    bfx_mat *ma = bfx_mat_new(ctx, n, n);
-    bfx_mat *mb = bfx_mat_new(ctx, n, n);
-    bfx_mat *mc = bfx_mat_new(ctx, n, n);
+    bfx_mat *ma = bfx_mat_new(ctx, rows, inner);
+    bfx_mat *mb = bfx_mat_new(ctx, inner, cols);
+    bfx_mat *mc = bfx_mat_new(ctx, rows, cols);
     if (ma == NULL || mb == NULL || mc == NULL) {
         unsupported(label, "the backend carries no dense GF(2^8) matrix type");
         goto cleanup;
@@ -321,17 +346,19 @@ static int check_matmul(bfx_ctx *ctx, const char *label, unsigned int poly, size
         fail(label, "allocation");
         goto cleanup;
     }
-    for (size_t i = 0; i < n * n; ++i) {
+    for (size_t i = 0; i < rows * inner; ++i) {
         a[i] = next_byte();
+    }
+    for (size_t i = 0; i < inner * cols; ++i) {
         b[i] = next_byte();
     }
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-            unsigned char acc = 0;
-            for (size_t k = 0; k < n; ++k) {
-                acc ^= bfx_ref_mul(a[i * n + k], b[k * n + j], poly);
+    build_ref_table(poly);
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t k = 0; k < inner; ++k) {
+            const unsigned char *row = ref_table[a[i * inner + k]];
+            for (size_t j = 0; j < cols; ++j) {
+                want[i * cols + j] ^= row[b[k * cols + j]];
             }
-            want[i * n + j] = acc;
         }
     }
     bfx_mat_pack(ma, a);
@@ -341,7 +368,7 @@ static int check_matmul(bfx_ctx *ctx, const char *label, unsigned int poly, size
         goto cleanup;
     }
     bfx_mat_unpack(mc, c);
-    for (size_t i = 0; i < n * n; ++i) {
+    for (size_t i = 0; i < rows * cols; ++i) {
         if (c[i] != want[i]) {
             snprintf(detail, sizeof detail, "entry %zu: got %u, reference %u", i, c[i], want[i]);
             fail(label, detail);
@@ -350,8 +377,15 @@ static int check_matmul(bfx_ctx *ctx, const char *label, unsigned int poly, size
     }
     /* Round-tripping the packed layout must preserve every element, so a
        conversion cost is a pure representation change and nothing else. */
-    bfx_mat_unpack(ma, c);
-    if (memcmp(a, c, n * n) != 0) {
+    unsigned char *back = malloc(rows * inner);
+    if (back == NULL) {
+        fail(label, "allocation");
+        goto cleanup;
+    }
+    bfx_mat_unpack(ma, back);
+    int same = memcmp(a, back, rows * inner) == 0;
+    free(back);
+    if (!same) {
         fail(label, "pack/unpack round trip changed the matrix");
         goto cleanup;
     }
@@ -394,11 +428,12 @@ static int check_encode(bfx_ctx *ctx, const char *label, unsigned int poly, int 
     for (int r = 0; r < rows; ++r) {
         coding[r] = out + (size_t)r * (size_t)len;
     }
+    build_ref_table(poly);
     for (int r = 0; r < rows; ++r) {
         for (int i = 0; i < len; ++i) {
             unsigned char acc = 0;
             for (int j = 0; j < k; ++j) {
-                acc ^= bfx_ref_mul(g[r * k + j], data[j][i], poly);
+                acc ^= ref_table[g[r * k + j]][data[j][i]];
             }
             want[(size_t)r * (size_t)len + (size_t)i] = acc;
         }
@@ -492,22 +527,40 @@ int main(void)
         check_table(ctx, label, POLY_11D);
         snprintf(label, sizeof label, "%s region multiply-XOR under 0x11D", cases[i].label);
         check_axpy(ctx, label, POLY_11D);
-        snprintf(label, sizeof label, "%s row region multiply-XOR under 0x11D", cases[i].label);
+        snprintf(label, sizeof label, "%s row region multiply-XOR len=4096 under 0x11D",
+                 cases[i].label);
         check_row_axpy(ctx, label, POLY_11D, 4096);
+        snprintf(label, sizeof label, "%s row region multiply-XOR len=131072 under 0x11D",
+                 cases[i].label);
+        check_row_axpy(ctx, label, POLY_11D, 131072);
         snprintf(label, sizeof label, "%s region multiply-assign under 0x11D", cases[i].label);
         check_mul_region(ctx, label, POLY_11D);
         snprintf(label, sizeof label, "%s arbitrary pairwise multiply under 0x11D",
                  cases[i].label);
         check_pairwise(ctx, label, POLY_11D);
-        snprintf(label, sizeof label, "%s dense matmul under 0x11D", cases[i].label);
-        check_matmul(ctx, label, POLY_11D, 16);
-        snprintf(label, sizeof label, "%s generator encode under 0x11D", cases[i].label);
+        /* The square dimensions and the generator shape the cells measure,
+           plus a small and an odd dimension. */
+        static const size_t squares[] = { 16, 63, 64, 256, 512 };
+        for (size_t s = 0; s < sizeof squares / sizeof squares[0]; ++s) {
+            snprintf(label, sizeof label, "%s dense matmul n=%zu under 0x11D", cases[i].label,
+                     squares[s]);
+            check_matmul(ctx, label, POLY_11D, squares[s], squares[s], squares[s]);
+        }
+        snprintf(label, sizeof label, "%s dense matmul 4x10 by 10x65536 under 0x11D",
+                 cases[i].label);
+        check_matmul(ctx, label, POLY_11D, 4, 10, 65536);
+        snprintf(label, sizeof label, "%s generator encode k=6 rows=3 len=512 under 0x11D",
+                 cases[i].label);
         check_encode(ctx, label, POLY_11D, 6, 3, 512);
+        snprintf(label, sizeof label, "%s generator encode k=10 rows=4 len=65536 under 0x11D",
+                 cases[i].label);
+        check_encode(ctx, label, POLY_11D, 10, 4, 65536);
         bfx_free(ctx);
     }
 
-    /* ISA-L must refuse the AES polynomial rather than quietly using its
-       own; the other two must accept it and then disagree with 0x11D. */
+    /* ISA-L must refuse 0x11B rather than quietly using its own
+       polynomial; the other two must accept it and then disagree with
+       0x11D. */
     bfx_ctx *isal_11b = open_backend(BFX_ISAL, POLY_11B, "default", "isa-l under 0x11B");
     if (isal_11b != NULL) {
         fail("isa-l under 0x11B", "ISA-L accepted a polynomial it does not implement");
