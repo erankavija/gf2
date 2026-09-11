@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-11T16:57:08.837087978Z",
   "context": {},
   "created_at": "2026-09-10T23:37:54.718485518Z",
   "dependencies": [],
@@ -19,7 +20,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Close the host-lock leak into daemons started under the lock wrappers",
-  "updated_at": "2026-09-10T23:37:54.718485518Z"
+  "updated_at": "2026-09-11T16:57:08.837087978Z"
 }
