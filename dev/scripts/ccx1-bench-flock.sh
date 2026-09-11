@@ -38,7 +38,8 @@
 #
 # ## Lock lifetime
 #
-# Both locks end when the command exits, even if it left a daemon running.
+# Both locks are released when the command exits, even if it left a daemon
+# running.
 #
 # The command inherits the mutex descriptor, and so does every process it
 # starts: the benchmark runner and the calibration harness refuse to measure
