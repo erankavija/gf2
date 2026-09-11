@@ -112,7 +112,7 @@ allocations and syndrome work. They are exact derived counts, not timings. Per
 edge, the NR graph costs gf2's loops more search comparisons and gathers than
 the DVB graph, while AFF3CT's indexed passes stay proportional to the edges.
 The [allocation census](../../bench_results/3be770d5/preparation/alloc-census.jsonl)
-records every heap request of each decoded frame by size. Every recorded
+records every heap request of each frame it decodes by size. Every census
 frame allocates exactly one vector per edge per iteration plus two syndrome
 vectors per syndrome check, and frees all of them; the
 [tables](../../bench_results/3be770d5/tables.md) "Allocation census" section
