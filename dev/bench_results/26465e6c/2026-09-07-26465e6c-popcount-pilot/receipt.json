@@ -1,0 +1,1834 @@
+{
+  "schema": "zen3-benchmark-receipt-v1",
+  "campaign_id": "popcount-pilot-26465e6c-20260907t194956z",
+  "issue": "26465e6c",
+  "receipt_path": "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/receipt.json",
+  "label": "pilot",
+  "campaign_seed": 20260907,
+  "settings": {
+    "family_alpha": 0.05,
+    "bootstrap_resamples": 10000,
+    "confirmatory_pairs": 24,
+    "pilot_min_pairs": 6,
+    "pilot_max_pairs": 24,
+    "windows_per_execution": 5,
+    "window_target_ms": 100,
+    "flagged_window_factor": 2.0,
+    "max_flagged_fraction": 0.1,
+    "max_pilot_trials_per_cell": 8,
+    "max_confirmatory_attempts_per_candidate": 1,
+    "child_timeout_seconds": 120,
+    "quality_confidence": 0.95
+  },
+  "settings_deviation": false,
+  "protocol": {
+    "path": "dev/active/f547c394/protocol.md",
+    "snapshot": "inputs/protocol.md",
+    "sha256": "4cc897ed267e40a8bfa1fbc18950e6539c4456d0e22a6b84d42d9dab43132117"
+  },
+  "contract": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+    "snapshot": "inputs/measurement-contract.md",
+    "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3"
+  },
+  "addendum_schema": {
+    "path": "dev/active/f547c394/addendum.schema.json",
+    "snapshot": "inputs/addendum.schema.json",
+    "sha256": "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1"
+  },
+  "addendum": {
+    "path": "dev/active/26465e6c/addendum-popcount-pilot.json",
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "ae93e32036f1f3f43fac15e7704bba43687f63892e868b2d6d9c7cf17d799d34"
+  },
+  "source": {
+    "producing": {
+      "manifest_path": "dev/active/f547c394/producing-inputs.json",
+      "manifest_sha256": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+      "behavior_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      },
+      "lifecycle_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554"
+      },
+      "build_inputs_sha256": {
+        ".cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      }
+    }
+  },
+  "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "host": {
+    "observed_utc": "2026-09-07T19:58:43.157970165Z",
+    "hostname": "fraktaali",
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "cpu_flags": [
+      "3dnowprefetch",
+      "abm",
+      "adx",
+      "aes",
+      "aperfmperf",
+      "apic",
+      "arat",
+      "avic",
+      "avx",
+      "avx2",
+      "bmi1",
+      "bmi2",
+      "bpext",
+      "cat_l3",
+      "cdp_l3",
+      "clflush",
+      "clflushopt",
+      "clwb",
+      "clzero",
+      "cmov",
+      "cmp_legacy",
+      "constant_tsc",
+      "cpb",
+      "cpuid",
+      "cqm",
+      "cqm_llc",
+      "cqm_mbm_local",
+      "cqm_mbm_total",
+      "cqm_occup_llc",
+      "cr8_legacy",
+      "cx16",
+      "cx8",
+      "de",
+      "debug_swap",
+      "decodeassists",
+      "erms",
+      "extapic",
+      "extd_apicid",
+      "f16c",
+      "flushbyasid",
+      "fma",
+      "fpu",
+      "fsgsbase",
+      "fsrm",
+      "fxsr",
+      "fxsr_opt",
+      "ht",
+      "hw_pstate",
+      "ibpb",
+      "ibrs",
+      "ibs",
+      "invpcid",
+      "irperf",
+      "lahf_lm",
+      "lbrv",
+      "lm",
+      "mba",
+      "mca",
+      "mce",
+      "misalignsse",
+      "mmx",
+      "mmxext",
+      "monitor",
+      "movbe",
+      "msr",
+      "mtrr",
+      "mwaitx",
+      "nonstop_tsc",
+      "nopl",
+      "npt",
+      "nrip_save",
+      "nx",
+      "ospke",
+      "osvw",
+      "overflow_recov",
+      "pae",
+      "pat",
+      "pausefilter",
+      "pclmulqdq",
+      "pdpe1gb",
+      "perfctr_core",
+      "perfctr_llc",
+      "perfctr_nb",
+      "pfthreshold",
+      "pge",
+      "pku",
+      "pni",
+      "popcnt",
+      "pse",
+      "pse36",
+      "rapl",
+      "rdpid",
+      "rdpru",
+      "rdrand",
+      "rdseed",
+      "rdt_a",
+      "rdtscp",
+      "rep_good",
+      "sep",
+      "sha_ni",
+      "skinit",
+      "smap",
+      "smca",
+      "smep",
+      "ssbd",
+      "sse",
+      "sse2",
+      "sse4_1",
+      "sse4_2",
+      "sse4a",
+      "ssse3",
+      "stibp",
+      "succor",
+      "svm_lock",
+      "syscall",
+      "tce",
+      "topoext",
+      "tsc",
+      "tsc_scale",
+      "umip",
+      "user_shstk",
+      "v_spec_ctrl",
+      "v_vmsave_vmload",
+      "vaes",
+      "vgif",
+      "vmcb_clean",
+      "vme",
+      "vmmcall",
+      "vpclmulqdq",
+      "wbnoinvd",
+      "wdt",
+      "x2apic",
+      "xgetbv1",
+      "xsave",
+      "xsavec",
+      "xsaveerptr",
+      "xsaveopt",
+      "xsaves",
+      "xtopology"
+    ],
+    "os_kernel": "Linux 7.2.2-arch1-1",
+    "governors": {
+      "cpu0": "powersave",
+      "cpu1": "powersave",
+      "cpu10": "powersave",
+      "cpu11": "powersave",
+      "cpu12": "powersave",
+      "cpu13": "powersave",
+      "cpu14": "powersave",
+      "cpu15": "powersave",
+      "cpu16": "powersave",
+      "cpu17": "powersave",
+      "cpu18": "powersave",
+      "cpu19": "powersave",
+      "cpu2": "powersave",
+      "cpu20": "powersave",
+      "cpu21": "powersave",
+      "cpu22": "powersave",
+      "cpu23": "powersave",
+      "cpu3": "powersave",
+      "cpu4": "powersave",
+      "cpu5": "powersave",
+      "cpu6": "powersave",
+      "cpu7": "powersave",
+      "cpu8": "powersave",
+      "cpu9": "powersave"
+    },
+    "smt_active": true,
+    "affinity": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "topology": {
+      "cpus": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 6,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 7,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 8,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 9,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 10,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 11,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 12,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 13,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 14,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 15,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 16,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 17,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 18,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 19,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 20,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 21,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 22,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 23,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        }
+      ],
+      "smt_active": true
+    },
+    "load_average": [
+      7.82,
+      10.19,
+      14.04
+    ],
+    "available_memory_kib": 49143844
+  },
+  "lock": {
+    "lock_path": "/tmp/gf2-ccx1.lock",
+    "holder_pid": 1468574,
+    "observation": "inherited-fd-and-independent-flock-conflict",
+    "wrapper": "dev/scripts/ccx1-bench-flock.sh"
+  },
+  "workers": {
+    "environment_rayon_threads": null,
+    "runner_threads": 1
+  },
+  "execution_log": {
+    "path": "execution.log",
+    "sha256": "b9ffb5b8983f1c9653deb0c3db745d4cc74d62368ae9447f44892931dbdf0856",
+    "sessions": 1,
+    "resumed": false
+  },
+  "checkpoints": {
+    "manifest_path": "checkpoints/manifest.json",
+    "manifest_sha256": "f743bfd8ccd8b873f343df8a87e5dc36b1419303375d25aa26ef7b62a137c74e"
+  },
+  "arms": {
+    "baseline": {
+      "build": "native",
+      "description": "gf2 production popcount dispatcher",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c/dev/active/26465e6c/survey/gf2-side/target/release/popcount-gf2-side",
+      "executable_sha256": "99ff74c4a2c5ccb4e43c6c981022e8a640e4196a1c921d4365c4033e94f81672",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "production-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "mula-avx2-harleyseal": {
+      "build": "external",
+      "description": "Mula AVX2 Harley-Seal reference",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c/dev/active/26465e6c/survey/mula-avx2-harleyseal-arm",
+      "executable_sha256": "9bfe5b6ab3902247db9d2cdf43b75b8e6610fa79f5d70112ab9827c66f71faef",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "nibble-lut": {
+      "build": "native",
+      "description": "AVX2 nibble-LUT kernel called directly",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c/dev/active/26465e6c/survey/gf2-side/target/release/popcount-gf2-side",
+      "executable_sha256": "99ff74c4a2c5ccb4e43c6c981022e8a640e4196a1c921d4365c4033e94f81672",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "nibble-lut"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-pilot-small-vs-nibble-lut",
+      "key": "popcount-pilot-small-vs-nibble-lut",
+      "role": "exploratory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "nibble-lut",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468589,
+            "windows": [
+              {
+                "calls": 12955951,
+                "elapsed_ns": 100985721
+              },
+              {
+                "calls": 12955951,
+                "elapsed_ns": 100738610
+              },
+              {
+                "calls": 12955951,
+                "elapsed_ns": 101706756
+              },
+              {
+                "calls": 12955951,
+                "elapsed_ns": 101669536
+              },
+              {
+                "calls": 12955951,
+                "elapsed_ns": 104094980
+              }
+            ],
+            "ns_per_call": 7.8473232879624195,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 593916250
+          },
+          "candidate": {
+            "arm": "nibble-lut",
+            "pid": 1468633,
+            "windows": [
+              {
+                "calls": 20228720,
+                "elapsed_ns": 104838055
+              },
+              {
+                "calls": 20228720,
+                "elapsed_ns": 102463910
+              },
+              {
+                "calls": 20228720,
+                "elapsed_ns": 102079398
+              },
+              {
+                "calls": 20228720,
+                "elapsed_ns": 101831607
+              },
+              {
+                "calls": 20228720,
+                "elapsed_ns": 101532285
+              }
+            ],
+            "ns_per_call": 5.046260860795938,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-avx2-nibble-lut-direct",
+            "conversion": null,
+            "elapsed_ns": 573460150
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468650,
+            "windows": [
+              {
+                "calls": 12595933,
+                "elapsed_ns": 100281258
+              },
+              {
+                "calls": 12595933,
+                "elapsed_ns": 100219247
+              },
+              {
+                "calls": 12595933,
+                "elapsed_ns": 100427728
+              },
+              {
+                "calls": 12595933,
+                "elapsed_ns": 100610300
+              },
+              {
+                "calls": 12595933,
+                "elapsed_ns": 100281247
+              }
+            ],
+            "ns_per_call": 7.961399762923477,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 588252657
+          },
+          "candidate": {
+            "arm": "nibble-lut",
+            "pid": 1468642,
+            "windows": [
+              {
+                "calls": 20095668,
+                "elapsed_ns": 98786259
+              },
+              {
+                "calls": 20095668,
+                "elapsed_ns": 98383836
+              },
+              {
+                "calls": 20095668,
+                "elapsed_ns": 100377248
+              },
+              {
+                "calls": 20095668,
+                "elapsed_ns": 99358783
+              },
+              {
+                "calls": 20095668,
+                "elapsed_ns": 98964509
+              }
+            ],
+            "ns_per_call": 4.924668789313199,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-avx2-nibble-lut-direct",
+            "conversion": null,
+            "elapsed_ns": 556460120
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468654,
+            "windows": [
+              {
+                "calls": 13073190,
+                "elapsed_ns": 100445989
+              },
+              {
+                "calls": 13073190,
+                "elapsed_ns": 100754180
+              },
+              {
+                "calls": 13073190,
+                "elapsed_ns": 102350230
+              },
+              {
+                "calls": 13073190,
+                "elapsed_ns": 108367815
+              },
+              {
+                "calls": 13073190,
+                "elapsed_ns": 103018833
+              }
+            ],
+            "ns_per_call": 7.829017248276817,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 598066505
+          },
+          "candidate": {
+            "arm": "nibble-lut",
+            "pid": 1468661,
+            "windows": [
+              {
+                "calls": 20452476,
+                "elapsed_ns": 100097206
+              },
+              {
+                "calls": 20452476,
+                "elapsed_ns": 98518207
+              },
+              {
+                "calls": 20452476,
+                "elapsed_ns": 99659284
+              },
+              {
+                "calls": 20452476,
+                "elapsed_ns": 100362758
+              },
+              {
+                "calls": 20452476,
+                "elapsed_ns": 99907246
+              }
+            ],
+            "ns_per_call": 4.8848484652909505,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-avx2-nibble-lut-direct",
+            "conversion": null,
+            "elapsed_ns": 557454386
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468679,
+            "windows": [
+              {
+                "calls": 13186323,
+                "elapsed_ns": 100973232
+              },
+              {
+                "calls": 13186323,
+                "elapsed_ns": 102745451
+              },
+              {
+                "calls": 13186323,
+                "elapsed_ns": 102791523
+              },
+              {
+                "calls": 13186323,
+                "elapsed_ns": 103154214
+              },
+              {
+                "calls": 13186323,
+                "elapsed_ns": 103506586
+              }
+            ],
+            "ns_per_call": 7.795313598794751,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 595544710
+          },
+          "candidate": {
+            "arm": "nibble-lut",
+            "pid": 1468672,
+            "windows": [
+              {
+                "calls": 20518994,
+                "elapsed_ns": 99021770
+              },
+              {
+                "calls": 20518994,
+                "elapsed_ns": 99667654
+              },
+              {
+                "calls": 20518994,
+                "elapsed_ns": 98363216
+              },
+              {
+                "calls": 20518994,
+                "elapsed_ns": 100314488
+              },
+              {
+                "calls": 20518994,
+                "elapsed_ns": 100312448
+              }
+            ],
+            "ns_per_call": 4.8573362807162965,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-avx2-nibble-lut-direct",
+            "conversion": null,
+            "elapsed_ns": 554570279
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468706,
+            "windows": [
+              {
+                "calls": 12714206,
+                "elapsed_ns": 98558667
+              },
+              {
+                "calls": 12714206,
+                "elapsed_ns": 98409367
+              },
+              {
+                "calls": 12714206,
+                "elapsed_ns": 100582189
+              },
+              {
+                "calls": 12714206,
+                "elapsed_ns": 99506543
+              },
+              {
+                "calls": 12714206,
+                "elapsed_ns": 99571214
+              }
+            ],
+            "ns_per_call": 7.826406383536652,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 580041738
+          },
+          "candidate": {
+            "arm": "nibble-lut",
+            "pid": 1468712,
+            "windows": [
+              {
+                "calls": 18916037,
+                "elapsed_ns": 95824971
+              },
+              {
+                "calls": 18916037,
+                "elapsed_ns": 98283566
+              },
+              {
+                "calls": 18916037,
+                "elapsed_ns": 95512770
+              },
+              {
+                "calls": 18916037,
+                "elapsed_ns": 96694317
+              },
+              {
+                "calls": 18916037,
+                "elapsed_ns": 98311895
+              }
+            ],
+            "ns_per_call": 5.111764002153305,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-avx2-nibble-lut-direct",
+            "conversion": null,
+            "elapsed_ns": 546903794
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468747,
+            "windows": [
+              {
+                "calls": 12951730,
+                "elapsed_ns": 101038832
+              },
+              {
+                "calls": 12951730,
+                "elapsed_ns": 100470409
+              },
+              {
+                "calls": 12951730,
+                "elapsed_ns": 101483854
+              },
+              {
+                "calls": 12951730,
+                "elapsed_ns": 99836005
+              },
+              {
+                "calls": 12951730,
+                "elapsed_ns": 100144097
+              }
+            ],
+            "ns_per_call": 7.757296438390856,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 583433068
+          },
+          "candidate": {
+            "arm": "nibble-lut",
+            "pid": 1468743,
+            "windows": [
+              {
+                "calls": 20697384,
+                "elapsed_ns": 101023632
+              },
+              {
+                "calls": 20697384,
+                "elapsed_ns": 101091672
+              },
+              {
+                "calls": 20697384,
+                "elapsed_ns": 99973676
+              },
+              {
+                "calls": 20697384,
+                "elapsed_ns": 98931660
+              },
+              {
+                "calls": 20697384,
+                "elapsed_ns": 101282253
+              }
+            ],
+            "ns_per_call": 4.880985539042036,
+            "cache_state_applied": "cold",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-avx2-nibble-lut-direct",
+            "conversion": null,
+            "elapsed_ns": 558384152
+          }
+        }
+      ],
+      "claimed": null,
+      "decoder_quality": null,
+      "checkpoint_sha256": "bbeaf205dd678cf6703c889482fe67d6cbc073fa2770104bc6d1b5a3f621c11c"
+    },
+    {
+      "cell_id": "popcount-pilot-streaming-vs-mula",
+      "key": "popcount-pilot-streaming-vs-mula",
+      "role": "exploratory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "mula-avx2-harleyseal",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468760,
+            "windows": [
+              {
+                "calls": 725,
+                "elapsed_ns": 99337152
+              },
+              {
+                "calls": 725,
+                "elapsed_ns": 96227424
+              },
+              {
+                "calls": 725,
+                "elapsed_ns": 94036161
+              },
+              {
+                "calls": 725,
+                "elapsed_ns": 97867004
+              },
+              {
+                "calls": 725,
+                "elapsed_ns": 97027868
+              }
+            ],
+            "ns_per_call": 133831.54206896553,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 587112920
+          },
+          "candidate": {
+            "arm": "mula-avx2-harleyseal",
+            "pid": 1468754,
+            "windows": [
+              {
+                "calls": 794,
+                "elapsed_ns": 100333478
+              },
+              {
+                "calls": 794,
+                "elapsed_ns": 98105085
+              },
+              {
+                "calls": 794,
+                "elapsed_ns": 98250726
+              },
+              {
+                "calls": 794,
+                "elapsed_ns": 99132620
+              },
+              {
+                "calls": 794,
+                "elapsed_ns": 97824464
+              }
+            ],
+            "ns_per_call": 123741.4685138539,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "mula-avx2-harley-seal-csa",
+            "conversion": null,
+            "elapsed_ns": 588483688
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468764,
+            "windows": [
+              {
+                "calls": 733,
+                "elapsed_ns": 96929358
+              },
+              {
+                "calls": 733,
+                "elapsed_ns": 98805289
+              },
+              {
+                "calls": 733,
+                "elapsed_ns": 98698648
+              },
+              {
+                "calls": 733,
+                "elapsed_ns": 95354709
+              },
+              {
+                "calls": 733,
+                "elapsed_ns": 97483531
+              }
+            ],
+            "ns_per_call": 132992.53888130968,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 588606309
+          },
+          "candidate": {
+            "arm": "mula-avx2-harleyseal",
+            "pid": 1468769,
+            "windows": [
+              {
+                "calls": 799,
+                "elapsed_ns": 97902293
+              },
+              {
+                "calls": 799,
+                "elapsed_ns": 96514996
+              },
+              {
+                "calls": 799,
+                "elapsed_ns": 96390814
+              },
+              {
+                "calls": 799,
+                "elapsed_ns": 97651553
+              },
+              {
+                "calls": 799,
+                "elapsed_ns": 98251065
+              }
+            ],
+            "ns_per_call": 122217.21276595745,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "mula-avx2-harley-seal-csa",
+            "conversion": null,
+            "elapsed_ns": 582770565
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468777,
+            "windows": [
+              {
+                "calls": 736,
+                "elapsed_ns": 97110819
+              },
+              {
+                "calls": 736,
+                "elapsed_ns": 98794439
+              },
+              {
+                "calls": 736,
+                "elapsed_ns": 98850999
+              },
+              {
+                "calls": 736,
+                "elapsed_ns": 98876510
+              },
+              {
+                "calls": 736,
+                "elapsed_ns": 97185969
+              }
+            ],
+            "ns_per_call": 134231.57472826086,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 595631209
+          },
+          "candidate": {
+            "arm": "mula-avx2-harleyseal",
+            "pid": 1468789,
+            "windows": [
+              {
+                "calls": 788,
+                "elapsed_ns": 101378244
+              },
+              {
+                "calls": 788,
+                "elapsed_ns": 96166573
+              },
+              {
+                "calls": 788,
+                "elapsed_ns": 97967614
+              },
+              {
+                "calls": 788,
+                "elapsed_ns": 96936378
+              },
+              {
+                "calls": 788,
+                "elapsed_ns": 98105865
+              }
+            ],
+            "ns_per_call": 124324.38324873097,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "mula-avx2-harley-seal-csa",
+            "conversion": null,
+            "elapsed_ns": 582977565
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468802,
+            "windows": [
+              {
+                "calls": 754,
+                "elapsed_ns": 102064558
+              },
+              {
+                "calls": 754,
+                "elapsed_ns": 99780515
+              },
+              {
+                "calls": 754,
+                "elapsed_ns": 100955741
+              },
+              {
+                "calls": 754,
+                "elapsed_ns": 101018102
+              },
+              {
+                "calls": 754,
+                "elapsed_ns": 102478651
+              }
+            ],
+            "ns_per_call": 133976.26259946948,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 608332755
+          },
+          "candidate": {
+            "arm": "mula-avx2-harleyseal",
+            "pid": 1468793,
+            "windows": [
+              {
+                "calls": 833,
+                "elapsed_ns": 102542031
+              },
+              {
+                "calls": 833,
+                "elapsed_ns": 103781068
+              },
+              {
+                "calls": 833,
+                "elapsed_ns": 101612795
+              },
+              {
+                "calls": 833,
+                "elapsed_ns": 103035844
+              },
+              {
+                "calls": 833,
+                "elapsed_ns": 106942437
+              }
+            ],
+            "ns_per_call": 123692.48979591837,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "mula-avx2-harley-seal-csa",
+            "conversion": null,
+            "elapsed_ns": 612750640
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468808,
+            "windows": [
+              {
+                "calls": 741,
+                "elapsed_ns": 97066079
+              },
+              {
+                "calls": 741,
+                "elapsed_ns": 98048844
+              },
+              {
+                "calls": 741,
+                "elapsed_ns": 99618324
+              },
+              {
+                "calls": 741,
+                "elapsed_ns": 103772568
+              },
+              {
+                "calls": 741,
+                "elapsed_ns": 99651323
+              }
+            ],
+            "ns_per_call": 134437.68421052632,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 600460878
+          },
+          "candidate": {
+            "arm": "mula-avx2-harleyseal",
+            "pid": 1468837,
+            "windows": [
+              {
+                "calls": 800,
+                "elapsed_ns": 100098966
+              },
+              {
+                "calls": 800,
+                "elapsed_ns": 99613524
+              },
+              {
+                "calls": 800,
+                "elapsed_ns": 101402514
+              },
+              {
+                "calls": 800,
+                "elapsed_ns": 100455628
+              },
+              {
+                "calls": 800,
+                "elapsed_ns": 100605570
+              }
+            ],
+            "ns_per_call": 125569.535,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "mula-avx2-harley-seal-csa",
+            "conversion": null,
+            "elapsed_ns": 599577883
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 1468865,
+            "windows": [
+              {
+                "calls": 756,
+                "elapsed_ns": 103200164
+              },
+              {
+                "calls": 756,
+                "elapsed_ns": 103123384
+              },
+              {
+                "calls": 756,
+                "elapsed_ns": 103483227
+              },
+              {
+                "calls": 756,
+                "elapsed_ns": 103851338
+              },
+              {
+                "calls": 756,
+                "elapsed_ns": 104840864
+              }
+            ],
+            "ns_per_call": 136882.57539682538,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "gf2-production-popcount-dispatch",
+            "conversion": null,
+            "elapsed_ns": 620781307
+          },
+          "candidate": {
+            "arm": "mula-avx2-harleyseal",
+            "pid": 1468859,
+            "windows": [
+              {
+                "calls": 785,
+                "elapsed_ns": 100126467
+              },
+              {
+                "calls": 785,
+                "elapsed_ns": 99294692
+              },
+              {
+                "calls": 785,
+                "elapsed_ns": 100691969
+              },
+              {
+                "calls": 785,
+                "elapsed_ns": 97920354
+              },
+              {
+                "calls": 785,
+                "elapsed_ns": 97735473
+              }
+            ],
+            "ns_per_call": 126490.05350318471,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "mula-avx2-harley-seal-csa",
+            "conversion": null,
+            "elapsed_ns": 590904782
+          }
+        }
+      ],
+      "claimed": null,
+      "decoder_quality": null,
+      "checkpoint_sha256": "707d6ddd67044a278d9a1f8ecbea68d1b45e8a9ba6a3bbf61b9e120ea8a6c044"
+    }
+  ]
+}
