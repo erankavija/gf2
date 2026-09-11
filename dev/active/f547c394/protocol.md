@@ -1,6 +1,6 @@
 # Zen 3 benchmark protocol
 
-Protocol `zen3-benchmark-protocol` version 3. This document is the executable
+Protocol `zen3-benchmark-protocol` version 4. This document is the executable
 shared protocol required by the
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
 of epic `1a379447`. Every rule below is enforced by a check the acceptance tool
@@ -14,7 +14,7 @@ crate is the canonical home.
 
 ## Identity and versioning
 
-- The protocol identity is the pair `zen3-benchmark-protocol` version 3, the
+- The protocol identity is the pair `zen3-benchmark-protocol` version 4, the
   constants `PROTOCOL_ID` and `PROTOCOL_VERSION` in `src/protocol.rs`.
 - The content identity of this document, the addendum schema, the measurement
   contract and every addendum is an `ArtifactPin`: its original path, its
@@ -24,12 +24,14 @@ crate is the canonical home.
   rejects a missing snapshot or digest mismatch (P-02, P-03). Git revisions,
   commit ancestry and whole-tree state are optional navigation metadata and do
   not decide acceptance or resume compatibility.
-- This is version 3. [The amendment record](amendment-v3.md) identifies the
-  superseded v1/v2 rules and evidence. Their receipts, snapshots and negative
-  results remain immutable. Confirmation under v3 uses fresh samples. The
-  evaluator refuses an explicit version different from the receipt pin
-  (P-01, P-22, P-13).
-- The addendum schema identity is `zen3-benchmark-addendum-v3`; receipts carry
+- This is version 4. The amendment records of [version 2](amendment-v2.md),
+  [version 3](amendment-v3.md) and [version 4](amendment-v4.md) state what
+  each version changed and which rules and evidence it superseded. Receipts,
+  snapshots and negative results of earlier versions remain immutable, and
+  each receipt is evaluated under the version it pins. Confirmation under v4
+  uses fresh samples. The evaluator refuses an explicit version different from
+  the receipt pin (P-01, P-22, P-13).
+- The addendum schema identity is `zen3-benchmark-addendum-v4`; receipts carry
   `zen3-benchmark-receipt-v1`; acceptance summaries carry
   `zen3-benchmark-acceptance-v1`; runner plans carry `zen3-benchmark-plan-v1`.
 
@@ -46,7 +48,7 @@ crate is the canonical home.
 | Worthwhile-effect thresholds and complexity budgets by family with rationale; no blanket 15% or 1.5x | Addenda | P-03 |
 | Record negative, inconclusive, unavailable and not-material cells; retain the established implementation | Outcomes; Completeness | P-14, P-21 |
 | Host and execution: release builds finished before timing, exclusive lock, runtime-observed topology, affinity, workers, SMT, governor, capabilities; 1/6/12/24 arms with runtime CPU IDs; inapplicable arms carry a reason | Host and execution | P-05 to P-09, P-14, P-17 |
-| Bounded resumable runs, execution log announced before the first bounded run, checkpoints not repeated | Execution log and checkpoints | P-10, P-11, P-12 |
+| Bounded resumable runs, execution log announced before the first bounded run, checkpoints not repeated, a cell interrupted mid-run abandoned explicitly and measured again without its abandoned samples | Execution log and checkpoints | P-10, P-11, P-12 |
 | Comparable operations and costs: setup, conversion, batch fill, dispatch in whole-consumer cells; isolated kernels separate | Cell schema | P-17 (conversion costs) |
 | Decoder comparisons: matched-algorithm and fastest quality-compatible arms, quality tolerances, BER/FER intervals, stopping contracts | Decoder cells | P-18, P-19 |
 | Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `dev/bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
@@ -76,7 +78,7 @@ improvement and non-regression cells, `material_gap_threshold` and
 `equivalence_margin` for comparator-gap cells) and
 `complexity_budget.max_added_source_lines` for adoptable cells.
 
-V3 `frozen_utc` is a validated whole-second UTC calendar time and must not
+`frozen_utc` is a validated whole-second UTC calendar time and must not
 follow the opening record. The opening `campaign-start` record freezes `receipt::CampaignFacts` before
 any cell measurement. Acceptance projects the receipt and saved plan into that
 same typed representation and uses the runner's semantic comparison (P-23).
@@ -84,8 +86,8 @@ The projection binds the exact plan bytes, protocol, contract, schema and
 addendum pins, producing-input closure, toolchain, numerical settings and
 deviation flag, arm descriptors and executable identities. Checkpoint identity
 also binds ordered work, process descriptors, lifecycle, features, threads and
-host affinity. V3 also binds hostname, kernel, model, CPU flags, governors,
-SMT and the complete observed topology. Each session retains its own timestamp,
+host affinity. The facts also bind hostname, kernel, model, CPU flags,
+governors, SMT and the complete observed topology. Each session retains its own timestamp,
 load and available memory in `session_hosts` and the journal; those three
 informational fields can vary. All material fields must match the first session
 before measurements resume. Git revision strings remain informational.
@@ -102,7 +104,7 @@ and all settings derived from it are frozen before confirmation begins. A run wi
 records `settings_deviation: true`; the tool then reports every cell as
 `not-confirmatory` (P-04).
 
-Failed confirmations stay. V3 uses `family_wise.ledger_path`, the independently
+Failed confirmations stay. `family_wise.ledger_path` names the independently
 maintained append-only JSONL family ledger. Create the empty genesis file once
 before the family's first campaign and retain it with all stages and receipts.
 The runner requires the file to exist, locks it, and appends a reservation before
@@ -124,7 +126,7 @@ every link, terminal campaign/addendum/cell count, and recomputes the comparison
 count from that prefix (P-22). Removing an interior failed attempt breaks its
 successor's link; truncating a prefix removes the required terminal reservation.
 The premeasurement pin anchors the prefix against later rewriting. V1's
-`prior_trials` and supplied count are empty in v3 and do not control correction.
+`prior_trials` and supplied count stay empty and do not control correction.
 A renamed family is a different scientific question, not a way to retry the same
 question without its history. The contract trusts contributors to retain the
 canonical family file, as it trusts their raw measurements; it is not a defense
@@ -195,8 +197,8 @@ seed (P-20).
 The family is the canonical question named by the ledger. Let $m$ be the sum
 of all confirmatory/holdout cell reservations through this campaign (at least
 one for exploratory summaries), recomputed by `trial_ledger::verify`. Let $t$
-be the number of non-exploratory reservations through this campaign. V3 spends
-$\alpha_t=\alpha/[t(t+1)]$ on attempt $t$; exploratory summaries use $t=1$.
+be the number of non-exploratory reservations through this campaign. Attempt
+$t$ spends $\alpha_t=\alpha/[t(t+1)]$; exploratory summaries use $t=1$.
 The sum of these attempt budgets over any finite or infinite sequence is at
 most $\alpha$. Within an attempt, Bonferroni [Dunn1961] uses
 $\alpha_c=\alpha_t/m$. This additionally counts all previously spent cells,
@@ -265,7 +267,7 @@ the code.
 ### Bootstrap numerical resolution
 
 Ten thousand draws do not guarantee any arbitrary endpoint resolution. For each
-v3 non-exploratory cell, P-20 recomputes an independent deterministic seed stream
+non-exploratory cell, P-20 recomputes an independent deterministic seed stream
 (the cell seed XOR `0xd1b54a32d192ed03`). Both endpoint shifts, relative to the
 point estimate, must fit the frozen pilot-derived measurement resolution.
 Each tail must also contain at least twenty expected draws at the corrected
@@ -410,16 +412,29 @@ selects the frozen `pilot_min_pairs`; confirmation uses `confirmatory_pairs`.
 Each completed cell is accepted into the immutable
 checkpoint store (`journal::CheckpointStore`) under the campaign's resume
 identity; a resumed session journals an omission for every completed cell and
-never starts it again, so the log holds exactly one `cell-start` and one
-`cell-complete` per cell across all sessions (P-11). The receipt pins the log
-and checkpoint manifest digests and every cell's checkpoint unit digest
-(P-12). Acceptance uses `CheckpointStore::inspect` and typed `load` to validate
-canonical checkpoint encoding, manifest and unit identity, keys, case/result
-digests and receipt results. Inspection performs no recovery and changes no
-files; pending evidence rejects. Unavailable cells require the same durable
-checkpoint evidence as measured cells. A campaign is finalized only from a `complete` terminal record;
-`paused`, `budget-exhausted` and `failed` sessions resume under the same stage
-and identity.
+never starts it again. A session that stops inside a cell (an operator signal,
+a crash, a power loss) leaves that cell's attempt without a checkpoint and its
+own session without a terminal record. The next session first closes the
+stopped session with an `interrupted` record. Before it measures the cell
+again, it journals one `cell-abandoned` record (`receipt::CellAbandonment`)
+naming the unfinished attempt's `cell-start` sequence, then measures the cell
+from its first pair. The abandoned attempt's executions stay in the log and
+never enter a checkpoint or receipt. A stop after the cell's checkpoint was
+accepted leaves a complete cell, which the next session omits. Across all
+sessions every cell therefore completes at most once; every attempt before a
+cell's last is abandoned exactly once, by a later session, after an
+`interrupted` record closed its own session; and the receipt's samples are
+exactly the executions the last attempt journaled, compared by pair, arm,
+`child-spawn` PID and `execution-progress` windows (P-11). The receipt pins
+the log and checkpoint manifest digests and every cell's checkpoint unit
+digest (P-12). Acceptance uses `CheckpointStore::inspect` and typed `load` to
+validate canonical checkpoint encoding, manifest and unit identity, keys,
+case/result digests and receipt results. Inspection performs no recovery and
+changes no files; pending evidence rejects. Unavailable cells require the same
+durable checkpoint evidence as measured cells. A campaign is finalized only
+from a `complete` terminal record; `paused`, `budget-exhausted` and
+`interrupted` sessions resume under the same stage and identity, and a
+`failed` session ends the campaign.
 
 ## Outcomes and completeness
 
@@ -467,7 +482,7 @@ receipt. Neither is a performance result about gf2.
 | P-08 | The worker report carries the runner thread count. |
 | P-09 | Every arm named by a cell is described with an executable digest. |
 | P-10 | The execution log matches its digest, replays under the journal rules, opens with `campaign-start`, and was announced before the first cell. |
-| P-11 | Session count and resumed flag match the log, the terminal state is `complete`, and no cell starts or completes more than once. |
+| P-11 | Session count and resumed flag match the log, the terminal state is `complete`, no cell completes more than once, every restarted attempt carries one `cell-abandoned` record from a later session after its own session was interrupted, and the accepted samples are exactly the executions of the cell's last attempt. |
 | P-12 | The canonical checkpoint manifest and every cell's unit match their identities, digests, keys, planned input and receipt result, including unavailable cells; read-only inspection rejects pending evidence. |
 | P-13 | Cells are unique, declared, and match the declared role and core arm. |
 | P-14 | Measured cells resolved CPUs; unavailable cells carry a reason and no samples. |

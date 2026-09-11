@@ -3223,12 +3223,17 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
     let mut family = addendum(
         ids.iter()
             .map(|id| {
-                cell(
-                    id,
-                    CellObjective::Improvement,
-                    CellRole::Exploratory,
-                    CoreArm::SingleCore,
-                )
+                // Fixed-call cold windows skip calibration and keep the test short.
+                CellDeclaration {
+                    cache_state: CacheState::Cold,
+                    cold_calls: Some(100),
+                    ..cell(
+                        id,
+                        CellObjective::Improvement,
+                        CellRole::Exploratory,
+                        CoreArm::SingleCore,
+                    )
+                }
             })
             .collect(),
     );
@@ -3321,11 +3326,24 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
         .stderr(Stdio::null())
         .spawn()
         .unwrap();
+    // Wait until the runner has journaled the stalled child's spawn: from then
+    // on it only waits for that child, so the kill lands between records.
+    let spawn_journaled = |pid: u32| {
+        fs::read_to_string(stage.join(LOG_FILE))
+            .unwrap_or_default()
+            .lines()
+            .filter_map(|line| serde_json::from_str::<JournalRecord>(line).ok())
+            .any(|record| {
+                record.event == JournalEvent::ChildSpawn
+                    && record.details["pid"].as_u64() == Some(u64::from(pid))
+            })
+    };
     let deadline = Instant::now() + Duration::from_secs(6);
     let stalled_child = loop {
         if let Some(pid) = fs::read_to_string(&stalled)
             .ok()
             .and_then(|text| text.trim().parse::<u32>().ok())
+            .filter(|pid| spawn_journaled(*pid))
         {
             break pid;
         }

@@ -326,7 +326,7 @@ pub struct BenchmarkReceipt {
     pub trial_ledger: Option<ArtifactPin>,
     pub schema: String,
     pub campaign_id: String,
-    /// Canonical family identity, recorded in v3 pilot bytes for derivation.
+    /// Canonical family identity; version 3 and later bind resolution evidence to it.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub family_id: String,
     pub issue: String,
@@ -589,6 +589,262 @@ impl CampaignFacts {
         }
         errors
     }
+}
+
+/// Details of a `cell-abandoned` journal record.
+///
+/// From protocol version 4 a resumed session journals one before it measures
+/// a cell whose latest attempt neither completed nor was abandoned.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct CellAbandonment {
+    /// Sequence of the abandoned attempt's `cell-start` record.
+    pub attempt_start: u64,
+}
+
+/// One arm execution as a cell attempt journaled it: the PID of its
+/// `child-spawn` record and the windows of its `execution-progress` record.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct JournaledExecution {
+    pub pair: u32,
+    pub arm: String,
+    /// `None` when no `child-spawn` record of the same execution precedes it.
+    pub pid: Option<u32>,
+    pub windows: Vec<WindowRecord>,
+}
+
+impl JournaledExecution {
+    /// A receipt cell's executions in the order the runner journals them.
+    pub fn accepted(cell: &CellRecord) -> Vec<Self> {
+        cell.pairs
+            .iter()
+            .flat_map(|pair| {
+                let order = match pair.order {
+                    ArmOrder::BaselineFirst => [&pair.baseline, &pair.candidate],
+                    ArmOrder::CandidateFirst => [&pair.candidate, &pair.baseline],
+                };
+                order.map(|execution| Self {
+                    pair: pair.index,
+                    arm: execution.arm.clone(),
+                    pid: Some(execution.pid),
+                    windows: execution.windows.clone(),
+                })
+            })
+            .collect()
+    }
+
+    fn journaled(record: &JournalRecord, pid: Option<u32>) -> Option<Self> {
+        let case = record.case.as_ref()?;
+        Some(Self {
+            pair: u32::try_from(case.get("pair")?.as_u64()?).ok()?,
+            arm: case.get("arm")?.as_str()?.to_owned(),
+            pid,
+            windows: serde_json::from_value(record.details.get("windows")?.clone()).ok()?,
+        })
+    }
+}
+
+/// One `cell-start` record and the cell evidence journaled for it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CellAttempt {
+    /// Sequence of the attempt's `cell-start` record.
+    pub start: u64,
+    /// Session that started the attempt.
+    pub session: String,
+    /// Case of the `cell-start` record.
+    pub case: Option<Value>,
+    /// Whether an `interrupted` record closed the attempt's session.
+    pub interrupted: bool,
+    /// Sequences of the attempt's `cell-complete` records.
+    pub completions: Vec<u64>,
+    /// Sequence and session of every `cell-abandoned` record naming the attempt.
+    pub abandonments: Vec<(u64, String)>,
+    /// Executions the attempt journaled, in journal order.
+    pub executions: Vec<JournaledExecution>,
+}
+
+impl CellAttempt {
+    /// True when the attempt neither completed nor was abandoned.
+    pub fn is_unfinished(&self) -> bool {
+        self.completions.is_empty() && self.abandonments.is_empty()
+    }
+}
+
+/// Cell attempts of one execution log, keyed by checkpoint key.
+///
+/// The runner uses them to find the attempt a resumed session abandons; the
+/// evaluator checks the version-4 attempt rules of P-11 against them. A
+/// completion or execution belongs to the latest attempt of its cell when both
+/// lie in one session; a record that belongs to no attempt is kept as a
+/// finding message.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct CellAttempts {
+    attempts: BTreeMap<String, Vec<CellAttempt>>,
+    stray: Vec<String>,
+}
+
+impl CellAttempts {
+    /// Groups the cell records of a validated journal into attempts.
+    /// Cost is linear in the number of records.
+    pub fn from_journal(records: &[JournalRecord]) -> Self {
+        let interrupted: BTreeSet<&str> = records
+            .iter()
+            .filter(|record| record.event == JournalEvent::Interrupted)
+            .map(|record| record.session_id.as_str())
+            .collect();
+        let mut result = Self::default();
+        let mut spawned: Option<(&Value, u32)> = None;
+        for record in records {
+            let key = record_key(record);
+            match record.event {
+                JournalEvent::CellStart => {
+                    spawned = None;
+                    result.attempts.entry(key).or_default().push(CellAttempt {
+                        start: record.sequence,
+                        session: record.session_id.clone(),
+                        case: record.case.clone(),
+                        interrupted: interrupted.contains(record.session_id.as_str()),
+                        completions: Vec::new(),
+                        abandonments: Vec::new(),
+                        executions: Vec::new(),
+                    });
+                }
+                JournalEvent::CellComplete => match result.current(&key, record) {
+                    Some(attempt) => attempt.completions.push(record.sequence),
+                    None => result.stray(record, &key),
+                },
+                JournalEvent::CellAbandoned => {
+                    let named = serde_json::from_value::<CellAbandonment>(record.details.clone())
+                        .ok()
+                        .and_then(|abandonment| {
+                            result
+                                .attempts
+                                .get_mut(&key)?
+                                .iter_mut()
+                                .find(|attempt| attempt.start == abandonment.attempt_start)
+                        });
+                    match named {
+                        Some(attempt) => attempt
+                            .abandonments
+                            .push((record.sequence, record.session_id.clone())),
+                        None => result.stray(record, &key),
+                    }
+                }
+                JournalEvent::ChildSpawn => {
+                    spawned = record
+                        .case
+                        .as_ref()
+                        .zip(record.details.get("pid").and_then(Value::as_u64))
+                        .and_then(|(case, pid)| Some((case, u32::try_from(pid).ok()?)));
+                }
+                JournalEvent::ExecutionProgress => {
+                    let pid = spawned
+                        .filter(|(case, _)| record.case.as_ref() == Some(*case))
+                        .map(|(_, pid)| pid);
+                    let Some(execution) = JournaledExecution::journaled(record, pid) else {
+                        result.stray(record, &key);
+                        continue;
+                    };
+                    match result.current(&key, record) {
+                        Some(attempt) => attempt.executions.push(execution),
+                        None => result.stray(record, &key),
+                    }
+                }
+                _ => {}
+            }
+        }
+        result
+    }
+
+    fn current(&mut self, key: &str, record: &JournalRecord) -> Option<&mut CellAttempt> {
+        self.attempts
+            .get_mut(key)?
+            .last_mut()
+            .filter(|attempt| attempt.session == record.session_id)
+    }
+
+    fn stray(&mut self, record: &JournalRecord, key: &str) {
+        self.stray.push(format!(
+            "{:?} record {} of cell {key:?} belongs to no attempt",
+            record.event, record.sequence
+        ));
+    }
+
+    /// Attempts of one cell in journal order.
+    pub fn of(&self, key: &str) -> &[CellAttempt] {
+        self.attempts.get(key).map_or(&[], Vec::as_slice)
+    }
+
+    /// The latest attempt of `key` when it is unfinished.
+    pub fn unfinished(&self, key: &str) -> Option<&CellAttempt> {
+        self.of(key)
+            .last()
+            .filter(|attempt| attempt.is_unfinished())
+    }
+
+    /// Every cell with at least one attempt, in key order.
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &[CellAttempt])> {
+        self.attempts
+            .iter()
+            .map(|(key, attempts)| (key.as_str(), attempts.as_slice()))
+    }
+
+    /// Messages for cell records that belong to no attempt.
+    pub fn stray_records(&self) -> &[String] {
+        &self.stray
+    }
+}
+
+/// Version-4 P-11 attempt rules for one cell: it completes at most once, and
+/// every attempt before the last was abandoned exactly once, by a later
+/// session, before the restart, after an `interrupted` record closed its own
+/// session.
+fn attempt_violations(attempts: &[CellAttempt]) -> Vec<String> {
+    let mut violations = Vec::new();
+    let completions: usize = attempts
+        .iter()
+        .map(|attempt| attempt.completions.len())
+        .sum();
+    if completions > 1 {
+        violations.push(format!("cell completed {completions} times"));
+    }
+    for (index, attempt) in attempts.iter().enumerate() {
+        let start = attempt.start;
+        let Some(next) = attempts.get(index + 1) else {
+            if !attempt.abandonments.is_empty() {
+                violations.push(format!(
+                    "the final attempt started at sequence {start} is abandoned"
+                ));
+            }
+            continue;
+        };
+        if !attempt.completions.is_empty() {
+            violations.push(format!(
+                "the attempt started at sequence {start} completed and was started again; completed cells must not repeat"
+            ));
+        }
+        let timely = attempt
+            .abandonments
+            .iter()
+            .filter(|(sequence, session)| *sequence < next.start && *session != attempt.session)
+            .count();
+        if attempt.abandonments.len() > 1 {
+            violations.push(format!(
+                "the attempt started at sequence {start} is abandoned {} times",
+                attempt.abandonments.len()
+            ));
+        } else if timely == 0 {
+            violations.push(format!(
+                "the attempt started at sequence {start} was restarted without an abandonment record"
+            ));
+        }
+        if !attempt.interrupted {
+            violations.push(format!(
+                "the attempt started at sequence {start} was restarted although its session was not interrupted"
+            ));
+        }
+    }
+    violations
 }
 
 /// Severity of a finding.
@@ -940,6 +1196,7 @@ pub fn evaluate_version(
     let mut cell_starts: BTreeMap<String, usize> = BTreeMap::new();
     let mut cell_start_cases: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut cell_completes: BTreeMap<String, usize> = BTreeMap::new();
+    let mut cell_attempts = CellAttempts::default();
     let mut campaign_facts = None;
     let log_path = receipt_dir.join(&receipt.execution_log.path);
     match fs::read(&log_path) {
@@ -1057,6 +1314,7 @@ pub fn evaluate_version(
                             _ => {}
                         }
                     }
+                    cell_attempts = CellAttempts::from_journal(&records);
                     if records.first().map(|record| record.event)
                         != Some(JournalEvent::CampaignStart)
                     {
@@ -1103,18 +1361,33 @@ pub fn evaluate_version(
             format!("execution log terminal state is {terminal:?}, not complete"),
         );
     }
-    for (key, count) in &cell_starts {
-        if *count != 1 {
-            e.error(
-                "P-11",
-                Some(key),
-                format!("cell started {count} times; completed cells must not repeat"),
-            );
+    // Version 4 restarts a cell after an explicit abandonment of its
+    // interrupted attempt; earlier versions allow one start per cell.
+    let mut broken_attempts = BTreeSet::new();
+    if version >= 4 {
+        for message in cell_attempts.stray_records() {
+            e.error("P-11", None, message.clone());
         }
-    }
-    for (key, count) in &cell_completes {
-        if *count != 1 {
-            e.error("P-11", Some(key), format!("cell completed {count} times"));
+        for (key, attempts) in cell_attempts.iter() {
+            for message in attempt_violations(attempts) {
+                e.error("P-11", Some(key), message);
+                broken_attempts.insert(key.to_owned());
+            }
+        }
+    } else {
+        for (key, count) in &cell_starts {
+            if *count != 1 {
+                e.error(
+                    "P-11",
+                    Some(key),
+                    format!("cell started {count} times; completed cells must not repeat"),
+                );
+            }
+        }
+        for (key, count) in &cell_completes {
+            if *count != 1 {
+                e.error("P-11", Some(key), format!("cell completed {count} times"));
+            }
         }
     }
 
@@ -1295,13 +1568,20 @@ pub fn evaluate_version(
                 invalid = true;
             }
         }
-        if let Some(planned) = planned {
-            let expected_case = serde_json::json!({
+        let expected_case = planned.map(|planned| {
+            serde_json::json!({
                 "key": cell.key,
                 "cell_id": cell.cell_id,
                 "case": planned.case,
-            });
-            if cell_start_cases.get(&cell.key) != Some(&vec![expected_case]) {
+            })
+        });
+        if version >= 4 {
+            let attempts = cell_attempts.of(&cell.key);
+            if expected_case.as_ref().is_some_and(|expected| {
+                attempts
+                    .iter()
+                    .any(|attempt| attempt.case.as_ref() != Some(expected))
+            }) {
                 e.error(
                     "P-11",
                     Some(id),
@@ -1309,10 +1589,41 @@ pub fn evaluate_version(
                 );
                 invalid = true;
             }
-        }
-        if cell_starts.get(&cell.key).copied().unwrap_or(0) != 1 {
-            e.error("P-11", Some(id), "cell has no single cell-start record");
-            invalid = true;
+            if let Some((last, abandoned)) = attempts.split_last() {
+                let accepted = JournaledExecution::accepted(cell);
+                if accepted != last.executions {
+                    let message = if accepted.iter().any(|execution| {
+                        abandoned
+                            .iter()
+                            .any(|attempt| attempt.executions.contains(execution))
+                    }) {
+                        "accepted samples include executions of an abandoned attempt"
+                    } else {
+                        "accepted samples differ from the executions the final attempt journaled"
+                    };
+                    e.error("P-11", Some(id), message);
+                    invalid = true;
+                }
+            } else {
+                e.error("P-11", Some(id), "cell has no cell-start record");
+                invalid = true;
+            }
+            invalid |= broken_attempts.contains(&cell.key);
+        } else {
+            if let Some(expected_case) = expected_case {
+                if cell_start_cases.get(&cell.key) != Some(&vec![expected_case]) {
+                    e.error(
+                        "P-11",
+                        Some(id),
+                        "cell-start input differs from the saved plan",
+                    );
+                    invalid = true;
+                }
+            }
+            if cell_starts.get(&cell.key).copied().unwrap_or(0) != 1 {
+                e.error("P-11", Some(id), "cell has no single cell-start record");
+                invalid = true;
+            }
         }
         // Every planned cell, including an unavailable one, is accepted into
         // the checkpoint store before the runner records cell completion.
@@ -2020,7 +2331,7 @@ fn verify_resolution_evidence(
 }
 
 /// Recomputes the conservative widest relative interval half-width from a
-/// verified v3 pilot receipt's raw paired observations.
+/// verified version-3-or-later pilot receipt's raw paired observations.
 fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f64, String> {
     let mut widest: Option<f64> = None;
     for cell in &pilot.cells {
@@ -2069,8 +2380,8 @@ fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f6
     widest.ok_or_else(|| "pilot receipt contains no measured paired cells".into())
 }
 
-/// Derives the v3 pilot's family-corrected bootstrap alpha from its frozen
-/// addendum and ledger snapshots, never from a receipt claim.
+/// Derives a version-3-or-later pilot's family-corrected bootstrap alpha from
+/// its frozen addendum and ledger snapshots, never from a receipt claim.
 fn verified_pilot_alpha(pilot: &BenchmarkReceipt, receipt_dir: &Path) -> Result<f64, String> {
     let addendum_pin = ArtifactPin {
         path: pilot.addendum.path.clone(),
@@ -2083,16 +2394,16 @@ fn verified_pilot_alpha(pilot: &BenchmarkReceipt, receipt_dir: &Path) -> Result<
             .map_err(|error| format!("pilot addendum is not verified: {error}"))?,
     )
     .map_err(|error| format!("pilot addendum does not decode: {error}"))?;
-    if addendum.protocol.version != 3
+    if addendum.protocol.version < 3
         || addendum.family.id != pilot.family_id
         || addendum.family.issue != pilot.issue
     {
-        return Err("pilot addendum does not match the v3 pilot identity".into());
+        return Err("pilot addendum does not match the versioned pilot identity".into());
     }
     let ledger = pilot
         .trial_ledger
         .as_ref()
-        .ok_or_else(|| "v3 pilot lacks a frozen trial ledger".to_owned())?;
+        .ok_or_else(|| "versioned pilot lacks a frozen trial ledger".to_owned())?;
     if addendum.family_wise.ledger_path.as_deref() != Some(&ledger.path) {
         return Err("pilot ledger path differs from its frozen addendum".into());
     }
@@ -2136,7 +2447,7 @@ fn close(left: f64, right: f64) -> bool {
 }
 
 /// Preserves the strict v1/v2 boundary while their frozen receipts remain
-/// reproducibly evaluable. Version 3 uses `abtest::flagged_windows`.
+/// reproducibly evaluable. Version 3 and later use `abtest::flagged_windows`.
 fn flagged_windows_legacy(
     ns_per_call: &[f64],
     factor: f64,
