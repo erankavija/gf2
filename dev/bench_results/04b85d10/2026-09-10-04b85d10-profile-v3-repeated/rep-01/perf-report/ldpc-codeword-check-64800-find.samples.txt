@@ -1,0 +1,36 @@
+# case: {"workload":"ldpc-codeword-check","size":{"n":64800},"seed":203}
+# path: find-first-one  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3607  (96.3%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14428133459
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                      
+# ........  ............  ...............  ................  ............................................
+#
+    99.45%          3587  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+     0.08%             3  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::from_coo
+     0.06%             2  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::prepare
+     0.06%             2  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::Prepared::run
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::row_iter
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a61a4
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a6294
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a75d4
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a75f8
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4015f4
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad892392
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad896494
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb10fb3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae98856c
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae99e46b
+
+
+#
+# (Tip: Add -I to perf record to sample register values, which will be visible in perf report sample context.)
+#
