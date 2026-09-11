@@ -14,16 +14,26 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# --- 1. Command composition, against a stubbed flock -------------------------
+# --- 1. Command composition, against stubbed flock, taskset and nice ---------
 #
-# The stub prints its arguments instead of locking, so this asserts the exact
-# nesting: the outer flock takes the turnstile and would exec the inner flock,
-# which takes the mutex and execs the command.
+# The stubs print what they are asked to do instead of doing it, so this
+# asserts the exact sequence: take the turnstile, take the mutex, run the
+# command, then unlock the mutex and the turnstile. The flock stub names the
+# file behind the descriptor it is given.
 
 mkdir "$TMP/bin"
-printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$@"\n' >"$TMP/bin/flock"
-chmod +x "$TMP/bin/flock"
+cat >"$TMP/bin/flock" <<'EOF'
+#!/usr/bin/env bash
+echo "flock $1 $(readlink "/proc/self/fd/$2")"
+EOF
+cat >"$TMP/bin/taskset" <<'EOF'
+#!/usr/bin/env bash
+echo "$(basename "$0") $*"
+EOF
+cp "$TMP/bin/taskset" "$TMP/bin/nice"
+chmod +x "$TMP/bin/flock" "$TMP/bin/taskset" "$TMP/bin/nice"
 touch "$TMP/lock" "$TMP/lock.turnstile"
+lock=$(readlink -f "$TMP/lock")
 
 default=$(
   PATH="$TMP/bin:$PATH" GF2_CCX1_LOCK="$TMP/lock" \
@@ -34,10 +44,10 @@ full_host=$(
     "$ROOT/dev/scripts/ccx1-bench-flock.sh" --full-host probe arg
 )
 
-expected_default=$(printf '%s\n' \
-  -x "$TMP/lock.turnstile" flock -x "$TMP/lock" taskset -c 6-11 nice -n -5 probe arg)
-expected_full_host=$(printf '%s\n' \
-  -x "$TMP/lock.turnstile" flock -x "$TMP/lock" nice -n -5 probe arg)
+expected_default=$(printf '%s\n' "flock -x $lock.turnstile" "flock -x $lock" \
+  "taskset -c 6-11 nice -n -5 probe arg" "flock -u $lock" "flock -u $lock.turnstile")
+expected_full_host=$(printf '%s\n' "flock -x $lock.turnstile" "flock -x $lock" \
+  "nice -n -5 probe arg" "flock -u $lock" "flock -u $lock.turnstile")
 
 test "$default" = "$expected_default"
 test "$full_host" = "$expected_full_host"
@@ -48,7 +58,9 @@ custom=$(
   PATH="$TMP/bin:$PATH" GF2_CCX1_LOCK="$TMP/lock" GF2_CCX1_TURNSTILE="$TMP/ts" \
     "$ROOT/dev/scripts/ccx1-bench-flock.sh" --full-host probe
 )
-test "$custom" = "$(printf '%s\n' -x "$TMP/ts" flock -x "$TMP/lock" nice -n -5 probe)"
+ts=$(readlink -f "$TMP/ts")
+test "$custom" = "$(printf '%s\n' "flock -x $ts" "flock -x $lock" \
+  "nice -n -5 probe" "flock -u $lock" "flock -u $ts")"
 
 # --- 2. Writer preference, against the real flock ----------------------------
 #
