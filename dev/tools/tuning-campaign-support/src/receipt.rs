@@ -2295,13 +2295,14 @@ fn verify_resolution_evidence(
                     );
                     return;
                 }
-                let corrected_alpha = match verified_pilot_alpha(&pilot, receipt_dir) {
-                    Ok(alpha) => alpha,
-                    Err(message) => {
-                        evaluation.error("P-03", None, message);
-                        return;
-                    }
-                };
+                let corrected_alpha =
+                    match verified_pilot_alpha(&pilot, receipt_dir, addendum.protocol.version) {
+                        Ok(alpha) => alpha,
+                        Err(message) => {
+                            evaluation.error("P-03", None, message);
+                            return;
+                        }
+                    };
                 match pilot_resolution(&pilot, corrected_alpha) {
                     Ok(derived) if addendum.effect.measurement_resolution.unwrap() < derived => {
                         evaluation.error(
@@ -2380,9 +2381,14 @@ fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f6
     widest.ok_or_else(|| "pilot receipt contains no measured paired cells".into())
 }
 
-/// Derives a version-3-or-later pilot's family-corrected bootstrap alpha from
-/// its frozen addendum and ledger snapshots, never from a receipt claim.
-fn verified_pilot_alpha(pilot: &BenchmarkReceipt, receipt_dir: &Path) -> Result<f64, String> {
+/// Derives the family-corrected bootstrap alpha of a pilot from version 3 up
+/// to the citing receipt's `version` from its frozen addendum and ledger
+/// snapshots, never from a receipt claim.
+fn verified_pilot_alpha(
+    pilot: &BenchmarkReceipt,
+    receipt_dir: &Path,
+    version: u32,
+) -> Result<f64, String> {
     let addendum_pin = ArtifactPin {
         path: pilot.addendum.path.clone(),
         snapshot: "inputs/resolution-evidence/family-addendum.json".into(),
@@ -2394,7 +2400,7 @@ fn verified_pilot_alpha(pilot: &BenchmarkReceipt, receipt_dir: &Path) -> Result<
             .map_err(|error| format!("pilot addendum is not verified: {error}"))?,
     )
     .map_err(|error| format!("pilot addendum does not decode: {error}"))?;
-    if addendum.protocol.version < 3
+    if !(3..=version).contains(&addendum.protocol.version)
         || addendum.family.id != pilot.family_id
         || addendum.family.issue != pilot.issue
     {
