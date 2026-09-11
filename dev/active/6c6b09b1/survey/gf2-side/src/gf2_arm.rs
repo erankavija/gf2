@@ -12,7 +12,7 @@
 //! `FieldMatrix` the consumer keeps and converts the result back.
 
 use byte_field_arm_common::{
-    banks, probe_ns, Case, Conversion, Metric, Operation, SplitMix64, Workload,
+    banks, probe_ns, Case, Conversion, Metric, OperandStream, Operation, SplitMix64, Workload,
 };
 use byte_field_gf2_side::workload::{
     self, batch_kernel_available, ByteField, RuntimeGf256, WideGf256,
@@ -30,7 +30,7 @@ fn main() -> ! {
         }
         let representation = std::env::var("GF2_SURVEY_GF2_REPR")
             .map_err(|_| "GF2_SURVEY_GF2_REPR is unset".to_owned())?;
-        let bank_count = banks(&request.cache_state);
+        let bank_count = banks(request.cache_state);
         match representation.as_str() {
             "element" => {
                 let setup_ns = probe_ns(|| {

@@ -27,10 +27,11 @@ KIB = 1024
 MIB = 1024 * KIB
 
 RNG = (
-    "Operands come from the in-harness SplitMix64 [Steele2014] of "
-    "dev/active/6c6b09b1/survey/arm-common/src/lib.rs (SplitMix64::fill: the low byte of "
-    "each output), seeded with the cell's workload seed; the coefficient of a region cell is "
-    "the next output with its low bit set."
+    "Operands come from SplitMix64 [Steele2014] as implemented in tuning-campaign-support "
+    "0.1.0 (dev/tools/tuning-campaign-support/src/abtest.rs), seeded with the cell's workload "
+    "seed and read through OperandStream in dev/active/6c6b09b1/survey/arm-common/src/lib.rs: "
+    "each operand byte is the low byte of one output, and the coefficient of a region cell is "
+    "the next output's low byte with its low bit set."
 )
 SCOPE = (
     "Every cell is single-core: none of the measured gf2 entry points (FieldVec::axpy, "

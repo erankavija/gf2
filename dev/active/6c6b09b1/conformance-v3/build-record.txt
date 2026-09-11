@@ -3,8 +3,8 @@
 # arm RUSTFLAGS: -C target-cpu=native
 # c compiler: cc (GCC) 16.2.1 20260810
 # executables the plans name (sha256, path relative to the repository root):
-370aa1d53e21ab356e8ceded5d687687a697616b401c8d2f6265c95c4e20ce01  target/6c6b09b1-survey/release/gf2-arm
-0e51ecf1f90db213722718c26e530ac3ef45c275676b064afa10cf40cfcca29b  target/6c6b09b1-survey/release/ext-arm
+becca74b1c9316d154672cbea65b45ce10d78b6349baa50de5d591aec0bf05b6  target/6c6b09b1-survey/release/gf2-arm
+f338917d99734588d78e8f9dd368f85d8ceb925c97fd767418c7386b1a5cd7d4  target/6c6b09b1-survey/release/ext-arm
 ec35eb969c3128be492da39137393ddaa8c23709d08986d9a4ea777c938e3d34  target/6c6b09b1-survey/c/byte_field_conformance
 e7c384ddd581e1d156dc938fe2c530c9d2ee04a97bd84169d219a6715f68ce74  target/6c6b09b1-survey/c/backend_provenance
 5ae06b9db120a6f8661bc78d36eb1aed03c75b346e71379790e0baa91d371e67  target/release/benchmark-ab-runner

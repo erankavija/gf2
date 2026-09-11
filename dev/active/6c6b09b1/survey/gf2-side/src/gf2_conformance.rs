@@ -8,11 +8,11 @@
 //!
 //! The oracle is a shift-and-reduce scalar multiply written here, sharing no
 //! code with gf2-core, so an entry point and its reference are independent.
-//! Operands come from the in-harness SplitMix64 of `byte-field-arm-common`.
+//! Operands come from the shared SplitMix64 through `byte-field-arm-common`.
 //!
 //! Exit status is 0 when every check passes and 1 after any mismatch.
 
-use byte_field_arm_common::SplitMix64;
+use byte_field_arm_common::{OperandStream, SplitMix64};
 use byte_field_gf2_side::workload::{self, ByteField, RuntimeGf256, WideGf256};
 use gf2_core::gf2m::Gf2mField;
 
