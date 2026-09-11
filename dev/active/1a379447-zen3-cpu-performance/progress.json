@@ -126,10 +126,10 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "rework round 1 pending (doc-review F1). Merged 85cd6415 (cargo-ci pass, 5979 tests), linked at cd6e69d1; two independent Terra xhigh reviews, code-review and research-review pass on cd6e69d1; doc-review F1 fails: dev/bench_results/26465e6c/run-campaign.sh:20 promises a resume that never repeats a cell, while a mid-cell interruption restarts the cell and v3 acceptance rejects it (P-11, bdc507a3). The fix is a comment plus a sweep. Blocked in session 9 because its worktree directory was reused for a387825e; the next session gives it a worktree on branch worktree-agent-26465e6c-v3 (b7c0283d).",
+          "status": "rework round 1 committed at 5cb229df (doc-review F1: launcher resume comment, findings passage) in worktree .agents/worktrees/agent-26465e6c-r1 on branch worktree-agent-26465e6c-v3. Earlier on cd6e69d1: cargo-ci, two independent reviews, code-review and research-review passed. Next: merge, cargo-ci, two independent reviews and three AI gates on one commit, close.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
-            "worktree": "none (branch worktree-agent-26465e6c-v3 at b7c0283d is checked out nowhere)",
+            "worktree": ".agents/worktrees/agent-26465e6c-r1",
             "branch": "worktree-agent-26465e6c-v3",
             "base": "b1da85a6",
             "attempt": 4,
@@ -227,7 +227,7 @@
           "short_id": "3be770d5",
           "title": "Profile the CPU LDPC throughput gap against compatible decoders",
           "classification": "research",
-          "status": "moved from wave 3 into the current wave in session 9 (both dependencies done); in flight at session end on w9-3be770d5 (worktree .agents/worktrees/agent-3be770d5, branch worktree-agent-3be770d5); see handoff-7.",
+          "status": "in-session work done at 0e8a0a17: steady-state harness, three frozen pilot families, nine-session profile series, untimed replay and 28/28 arm validation, structural costs, allocation census, tables generator, freeze script, findings skeleton. Four window jobs queued for 2026-09-12 (pilots pinned cbacdf99, profile 3507fd4d). After the window: commit receipts and profile, freeze and queue the two matched confirmations, summarize, rank, write results.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-3be770d5",
@@ -417,6 +417,12 @@
       "type": "bug",
       "in_epic": true,
       "reason": "bdc507a3 verdict comparison: 14 committed receipts are rejected on a fresh checkout (missing gitignored snapshot Cargo.lock files; 1d0da41f v1 dispatch confirmation P-23) although their committed summaries say accepted; depends on bdc507a3, feeds 1362381c"
+    },
+    {
+      "id": "39cbde20",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "3be770d5 source evidence: the AVX2 min-sum reduction (gf2-kernels-simd llr.rs) counts -0.0 as negative in vector lanes and positive in the scalar tail; depends on 3be770d5"
     }
   ],
   "escalations": [
