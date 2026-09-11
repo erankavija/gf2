@@ -262,8 +262,9 @@ def overview(out, loaded):
         "One row per v3 receipt. m and the attempt alpha are the acceptance tool's: m sums the "
         "comparisons the family ledger reserves up to and including the campaign's own line, "
         "imported protocol-v1 reservations included (at least 1), and a confirmation's attempt t "
-        "counts the ledger lines that reserve comparisons, giving the attempt alpha "
-        "0.05/(t(t+1)). A pilot reserves nothing and is no attempt, so its correction is "
+        "counts the ledger lines that reserve comparisons, giving the attempt alpha: the "
+        "addendum's family alpha over t(t+1). A pilot reserves nothing and is no attempt, so its "
+        "correction is "
         "informational. Expected draws per tail are the resamples times the per-comparison alpha "
         "over two, which P-20 requires to reach twenty. A pilot's widest relative half-width is "
         "P-03's quantity over its intervals; a confirmation's frozen resolution comes from the "
@@ -280,12 +281,14 @@ def overview(out, loaded):
         family = summary["family"]
         alpha = 1 - family["per_comparison_confidence"]
         pilot = summary["label"] == "pilot"
-        attempt = round((math.sqrt(1 + 4 * 0.05 / family["family_alpha"]) - 1) / 2)
         addendum = json.loads((directory / "inputs" / "family-addendum.json")
-                              .read_text(encoding="utf-8"))["effect"]
-        resolution = ("—" if addendum["measurement_resolution"] is None else
-                      f"{addendum['measurement_resolution']} from "
-                      f"`{pathlib.Path(addendum['resolution_evidence']['receipt']).parent.name}`")
+                              .read_text(encoding="utf-8"))
+        ratio = addendum["family_wise"]["alpha"] / family["family_alpha"]
+        attempt = round((math.sqrt(1 + 4 * ratio) - 1) / 2)
+        effect = addendum["effect"]
+        resolution = ("—" if effect["measurement_resolution"] is None else
+                      f"{effect['measurement_resolution']} from "
+                      f"`{pathlib.Path(effect['resolution_evidence']['receipt']).parent.name}`")
         pairs = sorted({len(cell["pairs"]) for cell in receipt["cells"]})
         margins = summary["cells"][0]["margins"]
         findings = collections.Counter(f"{finding['rule']} {finding['severity']}"
