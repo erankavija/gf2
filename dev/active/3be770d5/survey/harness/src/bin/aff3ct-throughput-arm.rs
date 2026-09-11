@@ -76,7 +76,7 @@ fn run() -> Result<(), String> {
             },
             selection.precision,
             cell.workers_observed,
-            cell.threads_ready
+            cell.threads.ready
         )),
         conversion: Some(cell.conversion),
         quality: Some(quality),

@@ -21,11 +21,14 @@ use serde_json::json;
 use std::process::ExitCode;
 use tuning_campaign_support::host::CpuAffinity;
 
+/// One decoded chunk: its first frame, decisions, and iterations when the
+/// arm observes them.
+type Chunk = (usize, Vec<u8>, Vec<u32>);
+
 /// A worker's decoder plus the chunks it decoded.
 struct Chunked<W> {
     worker: W,
-    /// (first frame, decisions, iterations when observed) per chunk.
-    chunks: Vec<(usize, Vec<u8>, Vec<u32>)>,
+    chunks: Vec<Chunk>,
     next: usize,
 }
 
@@ -41,7 +44,9 @@ fn run() -> Result<(), String> {
             "--code" => code = value,
             "--workers" => workers = value.parse().map_err(|_| format!("{flag}: not a number"))?,
             "--batch" => batch = value.parse().map_err(|_| format!("{flag}: not a number"))?,
-            "--iteration-cap" => cap = value.parse().map_err(|_| format!("{flag}: not a number"))?,
+            "--iteration-cap" => {
+                cap = value.parse().map_err(|_| format!("{flag}: not a number"))?
+            }
             "--norm" => norm = value.parse().map_err(|_| format!("{flag}: not a number"))?,
             other => return Err(format!("unknown argument {other}")),
         }
@@ -60,7 +65,7 @@ fn run() -> Result<(), String> {
     let workload = Workload::load(&case)?;
     let frames = workload.manifest.frames;
     let k = workload.manifest.k;
-    if batch == 0 || frames % (batch * workers) != 0 {
+    if batch == 0 || !frames.is_multiple_of(batch * workers) {
         return Err(format!(
             "{workers} workers of {batch}-frame chunks must tile {frames} frames"
         ));
@@ -82,67 +87,66 @@ fn run() -> Result<(), String> {
             dispatch.call();
         }
     };
-    let (selected, finished_chunks): (String, Vec<Vec<(usize, Vec<u8>, Vec<u32>)>>) =
-        match arm_name.as_str() {
-            "gf2" => {
-                let decoder_code = ldpc_survey::read_alist_code(&workload.alist())
-                    .map_err(|e| e.to_string())?;
-                let decoder_config = config(norm, true);
-                let (_, finished) = pool::run(
-                    &cpus,
-                    |_| {
-                        Ok(Chunked {
-                            worker: Gf2Worker::new(&decoder_code, decoder_config, batch, cap as usize),
-                            chunks: Vec::new(),
-                            next: 0,
-                        })
-                    },
-                    |index, state: &mut Chunked<Gf2Worker>| {
-                        let first = chunk_start(index, state.next);
-                        state.worker.decode_batch(workload.frames(first, batch));
-                        let decided = state.worker.decisions.clone();
-                        let iterations = state.worker.iterations.clone();
-                        state.chunks.push((first, decided, iterations));
-                        state.next += 1;
-                    },
-                    dispatch_rounds,
-                )?;
-                ("gf2".to_owned(), collect(finished))
-            }
-            "aff3ct" => {
-                let selection = Selection::from_environment()?;
-                let prototype = Handle::build(
-                    &workload.alist(),
-                    k,
-                    workload.manifest.n,
-                    cap,
-                    norm,
-                    true,
-                    &selection,
-                )?;
-                let name = prototype.name();
-                let (_, finished) = pool::run(
-                    &cpus,
-                    |_| {
-                        Ok(Chunked {
-                            worker: Aff3ctWorker::new(&prototype, batch, k)?,
-                            chunks: Vec::new(),
-                            next: 0,
-                        })
-                    },
-                    |index, state: &mut Chunked<Aff3ctWorker>| {
-                        let first = chunk_start(index, state.next);
-                        state.worker.decode_batch(workload.frames(first, batch));
-                        let decided = state.worker.decisions.clone();
-                        state.chunks.push((first, decided, Vec::new()));
-                        state.next += 1;
-                    },
-                    dispatch_rounds,
-                )?;
-                (format!("{name} {selection:?}"), collect(finished))
-            }
-            other => return Err(format!("--arm {other} is not gf2 or aff3ct")),
-        };
+    let (selected, finished_chunks): (String, Vec<Vec<Chunk>>) = match arm_name.as_str() {
+        "gf2" => {
+            let decoder_code =
+                ldpc_survey::read_alist_code(&workload.alist()).map_err(|e| e.to_string())?;
+            let decoder_config = config(norm, true);
+            let (_, finished) = pool::run(
+                &cpus,
+                |_| {
+                    Ok(Chunked {
+                        worker: Gf2Worker::new(&decoder_code, decoder_config, batch, cap as usize),
+                        chunks: Vec::new(),
+                        next: 0,
+                    })
+                },
+                |index, state: &mut Chunked<Gf2Worker>| {
+                    let first = chunk_start(index, state.next);
+                    state.worker.decode_batch(workload.frames(first, batch));
+                    let decided = state.worker.decisions.clone();
+                    let iterations = state.worker.iterations.clone();
+                    state.chunks.push((first, decided, iterations));
+                    state.next += 1;
+                },
+                dispatch_rounds,
+            )?;
+            ("gf2".to_owned(), collect(finished))
+        }
+        "aff3ct" => {
+            let selection = Selection::from_environment()?;
+            let prototype = Handle::build(
+                &workload.alist(),
+                k,
+                workload.manifest.n,
+                cap,
+                norm,
+                true,
+                &selection,
+            )?;
+            let name = prototype.name();
+            let (_, finished) = pool::run(
+                &cpus,
+                |_| {
+                    Ok(Chunked {
+                        worker: Aff3ctWorker::new(&prototype, batch, k)?,
+                        chunks: Vec::new(),
+                        next: 0,
+                    })
+                },
+                |index, state: &mut Chunked<Aff3ctWorker>| {
+                    let first = chunk_start(index, state.next);
+                    state.worker.decode_batch(workload.frames(first, batch));
+                    let decided = state.worker.decisions.clone();
+                    state.chunks.push((first, decided, Vec::new()));
+                    state.next += 1;
+                },
+                dispatch_rounds,
+            )?;
+            (format!("{name} {selection:?}"), collect(finished))
+        }
+        other => return Err(format!("--arm {other} is not gf2 or aff3ct")),
+    };
     let mut decisions = vec![0u8; frames * k];
     let mut iterations = vec![None; frames];
     for (first, decided, counted) in finished_chunks.into_iter().flatten() {
@@ -194,7 +198,7 @@ fn run() -> Result<(), String> {
     }
 }
 
-fn collect<W>(finished: Vec<Finished<Chunked<W>>>) -> Vec<Vec<(usize, Vec<u8>, Vec<u32>)>> {
+fn collect<W>(finished: Vec<Finished<Chunked<W>>>) -> Vec<Vec<Chunk>> {
     finished.into_iter().map(|done| done.state.chunks).collect()
 }
 

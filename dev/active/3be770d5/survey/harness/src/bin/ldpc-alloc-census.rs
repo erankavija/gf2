@@ -101,7 +101,9 @@ fn run() -> Result<(), String> {
             "--bundle" => bundle = value,
             "--code" => code = value,
             "--batch" => batch = value.parse().map_err(|_| format!("{flag}: not a number"))?,
-            "--iteration-cap" => cap = value.parse().map_err(|_| format!("{flag}: not a number"))?,
+            "--iteration-cap" => {
+                cap = value.parse().map_err(|_| format!("{flag}: not a number"))?
+            }
             "--norm" => norm = value.parse().map_err(|_| format!("{flag}: not a number"))?,
             other => return Err(format!("unknown argument {other}")),
         }
@@ -118,7 +120,10 @@ fn run() -> Result<(), String> {
     };
     let workload = Workload::load(&case)?;
     if batch == 0 || batch > workload.manifest.frames {
-        return Err(format!("--batch must lie in 1..={}", workload.manifest.frames));
+        return Err(format!(
+            "--batch must lie in 1..={}",
+            workload.manifest.frames
+        ));
     }
     let decoder_code =
         ldpc_survey::read_alist_code(&workload.alist()).map_err(|e| e.to_string())?;

@@ -258,8 +258,11 @@ impl Handle {
     /// Panics when the buffers do not hold whole waves or AFF3CT fails.
     pub fn decode(&mut self, llrs: &[f32], decisions: &mut [u8], frames: usize) {
         let wave = self.wave();
-        assert!(wave > 0 && frames % wave == 0, "whole native waves");
-        assert!(llrs.len() % frames == 0 && decisions.len() % frames == 0);
+        assert!(
+            wave > 0 && frames.is_multiple_of(wave),
+            "whole native waves"
+        );
+        assert!(llrs.len().is_multiple_of(frames) && decisions.len().is_multiple_of(frames));
         // SAFETY: both buffers hold `frames` whole frames, checked above.
         let status = unsafe {
             a3_decode(
@@ -290,7 +293,7 @@ impl Aff3ctWorker {
     pub fn new(prototype: &Handle, frames: usize, k: usize) -> Result<Self, String> {
         let handle = prototype.replicate()?;
         let wave = handle.wave();
-        if wave == 0 || frames % wave != 0 {
+        if wave == 0 || !frames.is_multiple_of(wave) {
             return Err(format!(
                 "a {frames}-frame batch is not whole {wave}-frame waves"
             ));

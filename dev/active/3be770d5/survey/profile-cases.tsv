@@ -1,0 +1,28 @@
+# Cases of one profile session (jit:3be770d5), consumed by profile-session.sh.
+# kind: stat (two perf stat counter groups) or record (fixed-period samples).
+# arm names an entry of arms.json; code names a code of arms.json; core_arm is
+# resolved by ldpc-profile with the protocol resolver. batch is frames per
+# worker per pass; passes is dispatches inside the perf-controlled region.
+# kind	label	arm	code	core_arm	batch	passes
+stat	gf2-dvb-w1	gf2-nms-f32	dvb-t2-r12	single-core	8	1
+stat	gf2-dvb-p6	gf2-nms-f32	dvb-t2-r12	physical-cores-6	8	1
+stat	gf2-dvb-p12	gf2-nms-f32	dvb-t2-r12	physical-cores-12	8	1
+stat	gf2-dvb-l24	gf2-nms-f32	dvb-t2-r12	logical-cpus-24	8	1
+stat	gf2-nr-w1	gf2-nms-f32	nr-bg1-z384	single-core	8	1
+stat	gf2-nr-p6	gf2-nms-f32	nr-bg1-z384	physical-cores-6	8	1
+stat	gf2-nr-p12	gf2-nms-f32	nr-bg1-z384	physical-cores-12	8	1
+stat	gf2-nr-l24	gf2-nms-f32	nr-bg1-z384	logical-cpus-24	8	1
+stat	aff3ct-dvb-w1	aff3ct-flooding-nms-f32	dvb-t2-r12	single-core	8	8
+stat	aff3ct-dvb-p6	aff3ct-flooding-nms-f32	dvb-t2-r12	physical-cores-6	8	8
+stat	aff3ct-dvb-p12	aff3ct-flooding-nms-f32	dvb-t2-r12	physical-cores-12	8	8
+stat	aff3ct-dvb-l24	aff3ct-flooding-nms-f32	dvb-t2-r12	logical-cpus-24	8	8
+stat	aff3ct-nr-w1	aff3ct-flooding-nms-f32	nr-bg1-z384	single-core	8	8
+stat	aff3ct-nr-p6	aff3ct-flooding-nms-f32	nr-bg1-z384	physical-cores-6	8	8
+stat	aff3ct-nr-p12	aff3ct-flooding-nms-f32	nr-bg1-z384	physical-cores-12	8	8
+stat	aff3ct-nr-l24	aff3ct-flooding-nms-f32	nr-bg1-z384	logical-cpus-24	8	8
+record	gf2-dvb-w1	gf2-nms-f32	dvb-t2-r12	single-core	8	1
+record	gf2-nr-w1	gf2-nms-f32	nr-bg1-z384	single-core	8	1
+record	gf2-dvb-l24	gf2-nms-f32	dvb-t2-r12	logical-cpus-24	8	1
+record	gf2-nr-l24	gf2-nms-f32	nr-bg1-z384	logical-cpus-24	8	1
+record	aff3ct-dvb-w1	aff3ct-flooding-nms-f32	dvb-t2-r12	single-core	8	8
+record	aff3ct-nr-w1	aff3ct-flooding-nms-f32	nr-bg1-z384	single-core	8	8
