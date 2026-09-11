@@ -9,7 +9,7 @@
 - Epic: `1a379447`, backlog (dependency-blocked container; assignee `agent:jit-execution-lead`).
 - Wave in progress: wave 2 of 7. It now also holds `bdc507a3`, `a387825e`, `428f2f6b`, `3e59cb9a` (no sibling dependencies) and `3be770d5` (both dependencies done).
 - Children: 5 done, 7 in progress, 5 ready, 10 backlog, 0 rejected; `jit issue status` and [progress.json](progress.json) are authoritative.
-- Active claims: no leases. Worker assignments on `3e59cb9a`, `bdc507a3`, `a387825e`, `3be770d5` (`agent:worker`); lead assignment on `04b85d10`, `26465e6c`, `6fb89a3c`.
+- Active claims: no leases. Worker assignments on `3e59cb9a`, `bdc507a3`, `a387825e`, `3be770d5`, `6c6b09b1` (`agent:worker`); lead assignment on `04b85d10`, `26465e6c`, `6fb89a3c`. Every session-9 worker has stopped; revive by name (`w9-<id>`) for continuations.
 - Open escalations: none. Five invoker decisions this session are recorded in progress.json.
 - **Benchmark window armed:** transient user timer `gf2-bench-window-20260912` runs [run-window.sh](bench-window/run-window.sh) at 2026-09-12 04:00 Europe/Helsinki over [queue.tsv](bench-window/queue.tsv) (twelve jobs: 6fb89a3c ×3, 04b85d10, 6c6b09b1 ×3, 3e59cb9a, 3be770d5 ×4). Runtime log and per-job output: `.agents/bench-window/` (untracked).
 
@@ -18,14 +18,15 @@
 | Issue | Branch (worktree) | State and next step |
 |---|---|---|
 | `c7113c5a` | merged | Done this session (`19097475`). |
-| `26465e6c` | `worktree-agent-26465e6c-v3` at `b7c0283d`, checked out nowhere | Merged `85cd6415`, cargo-ci pass, linked `cd6e69d1`. Two independent reviews, code-review, research-review pass on `cd6e69d1`; **doc-review F1 fails**: `dev/bench_results/26465e6c/run-campaign.sh:20` promises a resume that never repeats a cell, false for a mid-cell interruption (P-11, `bdc507a3`). Rework round 1 = comment fix plus sweep; the worker drafted it read-only. |
+| `26465e6c` | `worktree-agent-26465e6c-v3` at `5cb229df` in `.agents/worktrees/agent-26465e6c-r1` | Merged `85cd6415`, cargo-ci pass, linked `cd6e69d1`. Two independent reviews, code-review, research-review pass on `cd6e69d1`; **doc-review F1 failed**: `run-campaign.sh:20` promised a resume that never repeats a cell, false for a mid-cell interruption (P-11, `bdc507a3`). Rework round 1 is committed at `5cb229df` (launcher comments and one findings passage only; tables and `reevaluation.txt` unchanged; raw sweep in the session scratchpad `26465e6c-rework/`). Next: merge, cargo-ci, two independent reviews, all three AI gates on one commit, close. |
 | `04b85d10` | `worktree-agent-04b85d10-v3` at `69a3480e` | Rework round 1 done except the repeated profile (window job, pinned `c7de48e9`). |
 | `6fb89a3c` | `worktree-agent-6fb89a3c-v3` at `f64cfa8e` | Rework round 1 done except three exploratory re-measurements (window jobs). |
 | `6c6b09b1` | `worktree-agent-6c6b09b1-v3` at `b2ac9e7c` | v3 migration done up to three exploratory pilots (window jobs, pinned `7346b5e5`). Confirmations follow the pilots. |
 | `3e59cb9a` | `worktree-agent-3e59cb9a` at `d23c0de1` in `.worktrees-local/agent-eda07788-v3` | REQ-01, REQ-02 met; exploratory re-measurement queued (pinned `fc527d62`). |
 | `a387825e` | `worktree-agent-a387825e` at `7cf03070` in `.agents/worktrees/agent-26465e6c-v3` | Complete per worker; not merged. |
-| `bdc507a3` | `worktree-agent-bdc507a3` in `.agents/worktrees/agent-c7113c5a-v3` | In flight at handoff; see the update log below. |
-| `3be770d5` | `worktree-agent-3be770d5` in `.agents/worktrees/agent-3be770d5` | In flight at handoff; see the update log below. |
+| `bdc507a3` | `worktree-agent-bdc507a3` at `8dbc6406` in `.agents/worktrees/agent-c7113c5a-v3` | Complete per worker (protocol v4); not merged. Merge sequencing matters: see the update log. |
+| `3be770d5` | `worktree-agent-3be770d5` at `0e8a0a17` in `.agents/worktrees/agent-3be770d5` | Pilots and profile queued; everything else waits on the window (update log). |
+| `a203a23c` | none | New in-epic bug: 14 committed receipts fail re-evaluation on a fresh checkout. Depends on `bdc507a3`. |
 
 ## What just happened
 
@@ -44,7 +45,7 @@
   - `6fb89a3c`: commit the three re-measurement receipts, extend `survey/summarize.py`, write results under SSOT, merge, reviews (Tier 1.5: code-review F1 and the lead's M4RI finding), gates.
   - `3e59cb9a`: commit receipt `dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/` (force-add nested `Cargo.lock` snapshots) and ledger line 4, add it to `summarize-v3.py`, regenerate `tables-v3.md`, write outcomes in eda07788 findings §1. Link the eight artifacts it listed (re-measurement addendum and producing manifest, `survey/validation-output-v3-remeasure.txt`, `survey/freeze-remeasure.py`, the launcher, findings, source evidence, family ledger) to `3e59cb9a`.
   - `6c6b09b1`: commit the three pilot receipts and ledger lines, regenerate `tables.md`, derive each family's resolution (`survey-analysis resolution`), freeze confirmations (at most six confirmatory cells per family), queue them for the next window.
-- [ ] `26465e6c` rework round 1: give it a worktree with `worktree-agent-26465e6c-v3` checked out (new worktree, or wait until `a387825e` merges and switch that directory back). Revive `w9-26465e6c` with the doc-review F1 text (it drafted the fix read-only). Then merge, run two independent reviews and all three AI gates on one commit, and close.
+- [ ] `26465e6c` rework round 1 is committed at `5cb229df` (worktree `.agents/worktrees/agent-26465e6c-r1`). This one needs no window, so it can go first: leak check, merge, cargo-ci, two independent reviews and all three AI gates on one commit (Tier 1.5 on doc-review F1), then close. Reclaim `agent-26465e6c-r1` afterwards.
 - [ ] Integrate `a387825e` after the window. Once it is on main, update the stale comment and log text in `run-window.sh` (lines 33-38 and 49). Warn every later window: worktrees keep their old wrapper copy until they merge main, and `ccx1-bench-flock.sh` is a producing input of nine survey manifests (04b85d10, 1d0da41f, 26465e6c, 6fb89a3c, a83583e0, c077a88b, c7113c5a, eda07788, f547c394).
 - [ ] Collect `bdc507a3` and `3be770d5` from their branches (update log below). Queue any `3be770d5` window job for the next window.
 - [ ] Remaining ready work, four workers at a time: `428f2f6b` (after `3e59cb9a` closes, since both edit eda07788 findings), `12fdeb5b`, `53c5a8c0`, `1c602857` (their dependencies are done; move them into the current wave as `3be770d5` was).
@@ -85,3 +86,6 @@
 - 17:57Z Filed `a203a23c` (in-epic bug, depends on `bdc507a3`, feeds `1362381c`): 14 committed receipts are rejected on a fresh checkout although their committed summaries say accepted. Most lack gitignored snapshot `Cargo.lock` files. They include 1d0da41f's governing v3 receipts and c077a88b's r3/r4 pilots. Restoring bytes needs the invoker's approval (same harness block as the 26465e6c v1 pilot).
 - 18:00Z Queued three `3be770d5` exploratory pilots (single-worker, multicore, fastest-compatible), pinned `cbacdf99` on `worktree-agent-3be770d5`. The queue now totals about 160 estimated minutes from 04:00. The worker's repeated profile series (about 40 min) was not ready and goes to the next window.
 - 18:05Z The `3be770d5` repeated steady-state profile (nine sessions, about 45 min) was committed at `3507fd4d` before the cutoff and is queued after the pilots; the three pilot lines are unchanged by that commit. The queue totals about 205 estimated minutes from 04:00.
+- 18:20Z `3be770d5` stopped at `0e8a0a17` on `worktree-agent-3be770d5`, clean. Design: steady-state decoders (built once per worker, outside timing), pinned workers, three families (matched single-worker, matched multicore, exploratory fastest-compatible). Untimed replay and 28/28 arm validation pass; allocation census and structural counts recorded; findings skeleton with the lever-ranking rule committed. Per the worker, the jobs pin inputs unchanged since `0f0c8b39`; later commits touch only findings, source evidence, tables, summarizers and a mechanical `freeze-addendum.py`. All results criteria are WAITING-ON-WINDOW. After the window: commit the pilot receipts and the profile series, then `survey/freeze-addendum.py <family> v3-r1` for the two matched confirmations (next window), then `summarize.py` / `summarize-profile.py`, the ranking and the findings.
+- 18:25Z Filed `39cbde20` (outside the epic, depends on `3be770d5`): the AVX2 min-sum reduction counts `-0.0` as negative in its vector lanes and positive in its scalar tail (`crates/gf2-kernels-simd/src/llr.rs`); a shared min/second-min/sign reduction (`07ca8585`) must settle the signed-zero rule.
+- 18:30Z Session closed. Every worker has stopped; main is clean; the window timer is armed.
