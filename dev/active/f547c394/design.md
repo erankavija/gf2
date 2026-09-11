@@ -43,11 +43,16 @@ connections and the derived checkpoint identities.
 
 ## Decisions worth knowing
 
-- **Versioned acceptance.** [Protocol v3](protocol.md) and its
-  [amendment record](amendment-v3.md) specify current measurement behavior.
+- **Versioned acceptance.** [Protocol v4](protocol.md) and its
+  [amendment record](amendment-v4.md) specify current measurement behavior.
   The shared evaluator keeps the named v1 evidence boundary while committed
   v1 receipts require reproducible evaluation. Producing new evidence requires
   the current document version to match the addendum before measurement.
+- **Interrupted cells.** `receipt::CellAttempts` reads cell attempts, their
+  completions, abandonments and journaled executions from the execution log.
+  The runner uses it to find the attempt a resumed session abandons and the
+  evaluator uses it for P-11, so producer and verifier share one reading of
+  the journal.
 - **Family reservations.** `trial_ledger` owns append-only attempt accounting;
   it is a library consumer of the shared atomic publisher. Each reservation
   binds its predecessor and exists before measurement, including attempts
