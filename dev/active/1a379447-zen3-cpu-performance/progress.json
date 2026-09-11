@@ -47,14 +47,14 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "rework round 1 on w-04b85d10-r1 (claude-opus). Merged at f1a1c975 (cargo-ci passed), linked at 16cfcf35; both independent Terra xhigh reviews FAIL: A-F1 single-run profile shares/times without intervals support rankings; A-F2 seeded profile inputs lack RNG implementation/version; B-F1 m=14 BCH cells mislabelled as DVB-T2 normal frame (m=14 is the short frame) and no [Etsi2015] citation.",
+          "status": "rework round 1 continuing on w9-04b85d10 (opus, session 9) from 546cc275 plus uncommitted findings edits; repeated profile (rep-01 done, rep-02 interrupted) goes to the 2026-09-12 04:00 window; lead finding L1 (POPCNT substring counts) added.",
           "dispatch": {
-            "model": "claude-fable (native subagent)",
+            "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10-v3",
             "branch": "worktree-agent-04b85d10-v3",
             "base": "02c39ba6",
-            "attempt": 3,
-            "session": 7
+            "attempt": 4,
+            "session": 9
           },
           "merge_commit": "f1a1c975"
         },
@@ -63,14 +63,14 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "not dispatched in session 7: the invoker stopped new work before a slot freed. Protocol-v3 migration from old branch worktree-agent-6c6b09b1 remains; carry the 0x11B framing correction.",
+          "status": "v3 migration continuing on w9-6c6b09b1 (opus, session 9) from d9e3f518 (port) plus uncommitted migration edits; pilots go to a window.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
-            "branch": "worktree-agent-6c6b09b1",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "branch": "worktree-agent-6c6b09b1-v3",
+            "base": "3ec7e22c",
+            "attempt": 3,
+            "session": 9
           }
         },
         {
@@ -110,7 +110,7 @@
           "short_id": "c7113c5a",
           "title": "Establish equivalent polynomial multiplication baselines",
           "classification": "research",
-          "status": "rework round 2 (lead SSOT finding). Round 1 merged at 3ec7e22c (cargo-ci passed), evidence linked at 2671e7ab; both independent Terra xhigh reviews and code-review, doc-review and research-review pass on 2671e7ab, closing code-review F1 and research-review F1. Lead review FAIL: findings.md hand-copies figures from the generated tables.md and receipts (77 numeric lines), which the invoker SSOT directive and @/inv/single-source-prose forbid.",
+          "status": "done. Round 2 (lead SSOT finding) merged at aaac73ef with cargo-ci pass; two independent Terra xhigh reviews and code-review, doc-review, research-review pass on 1757b2a7 with zero findings; tables.md regenerates byte for byte. Closed at 19097475. Worktree free for reuse.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c7113c5a-v3",
@@ -126,14 +126,14 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "in flight on w-26465e6c (claude-opus, session 7): protocol-v3 migration on .agents/worktrees/agent-26465e6c-v3 from main dda44c25.",
+          "status": "continuation w9-26465e6c (opus, session 9): all campaigns finished and committed on b1da85a6; the lead wrote the predecessor's findings text into the worktree; worker reviews, commits, final checks, report. Invoker kept the AND-popcount pilot-r2 and confirmation evidence (run after the no-timed-runs order the worker had not received).",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c-v3",
             "branch": "worktree-agent-26465e6c-v3",
-            "base": "dda44c25",
-            "attempt": 3,
-            "session": 7
+            "base": "b1da85a6",
+            "attempt": 4,
+            "session": 9
           }
         },
         {
@@ -141,14 +141,14 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "rework round 1. Merged at fbc88e61 (cargo-ci passed), 30 artifacts linked at fcb9bd70; both independent Terra xhigh reviews, doc-review and research-review pass; code-review F1 fails: the gf2 arms declare warm cells but skip the protocol-defined untimed pass over the working set before calibration (protocol.md:160), invalidating the cache-state basis of every comparison including BCH confirmatory outcomes. Rework: fix the arms, preserve the receipts as history with the defect stated, re-measure in the benchmark window.",
+          "status": "rework round 1 continuing on w9-6fb89a3c (opus, session 9) from 77f86b17 (warm-pass fix, frozen exploratory re-measurement addenda); re-measurements go to the 2026-09-12 04:00 window; findings withdrawal pending.",
           "dispatch": {
-            "model": "claude-fable (native subagent)",
+            "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6fb89a3c-v3",
             "branch": "worktree-agent-6fb89a3c-v3",
-            "base": "02c39ba6",
-            "attempt": 3,
-            "session": 7
+            "base": "1757b2a7",
+            "attempt": 4,
+            "session": 9
           },
           "merge_commit": "fbc88e61"
         },
@@ -168,6 +168,34 @@
           },
           "merge_commit": "e36ad350",
           "note": "F14 biases toward declaring improvement and this receipt declined to, so the negative result holds a fortiori: the known defect works against the conclusion reached, not for it."
+        },
+        {
+          "id": "bdc507a3",
+          "short_id": "bdc507a3",
+          "title": "Accept resumed campaigns whose interrupted cell restarts",
+          "classification": "implementation",
+          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
+        },
+        {
+          "id": "428f2f6b",
+          "short_id": "428f2f6b",
+          "title": "Replace hand-copied numbers in closed survey reports with citations",
+          "classification": "documentation",
+          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
+        },
+        {
+          "id": "a387825e",
+          "short_id": "a387825e",
+          "title": "Close the host-lock leak into daemons started under the lock wrappers",
+          "classification": "implementation",
+          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
+        },
+        {
+          "id": "3e59cb9a",
+          "short_id": "3e59cb9a",
+          "title": "Repair the DVB-T2 arms warm pass and re-measure the interleaving family",
+          "classification": "research",
+          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
         }
       ]
     },
@@ -235,34 +263,6 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "bdc507a3",
-          "short_id": "bdc507a3",
-          "title": "Accept resumed campaigns whose interrupted cell restarts",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "428f2f6b",
-          "short_id": "428f2f6b",
-          "title": "Replace hand-copied numbers in closed survey reports with citations",
-          "classification": "documentation",
-          "status": "pending"
-        },
-        {
-          "id": "a387825e",
-          "short_id": "a387825e",
-          "title": "Close the host-lock leak into daemons started under the lock wrappers",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "3e59cb9a",
-          "short_id": "3e59cb9a",
-          "title": "Repair the DVB-T2 arms warm pass and re-measure the interleaving family",
-          "classification": "research",
           "status": "pending"
         }
       ]
@@ -439,6 +439,33 @@
       "status": "resolved",
       "raised_at": "2026-09-10",
       "resolution": "Invoker approved; applied in dda44c25."
+    },
+    {
+      "category": "scheduling (benchmark window)",
+      "issue": "none",
+      "question": "when to run the next benchmark window",
+      "recommendation": "tonight 04:00 Europe/Helsinki",
+      "status": "resolved",
+      "raised_at": "2026-09-11T16:30Z",
+      "resolution": "Invoker chose 2026-09-12 04:00 Europe/Helsinki; transient timer gf2-bench-window-20260912 armed; queue cutoff 03:40."
+    },
+    {
+      "category": "shared infrastructure (policy item 8)",
+      "issue": "a387825e",
+      "question": "implement the lock-descriptor leak fix in scripts/cargo-budget.sh and dev/scripts/ccx1-bench-flock.sh",
+      "recommendation": "authorize",
+      "status": "resolved",
+      "raised_at": "2026-09-11T16:30Z",
+      "resolution": "Invoker authorized implementation this session."
+    },
+    {
+      "category": "process deviation",
+      "issue": "26465e6c",
+      "question": "keep AND-popcount pilot-r2 and confirmation receipts measured 23:18-23:24Z after the no-timed-runs order the worker had not yet received",
+      "recommendation": "keep",
+      "status": "resolved",
+      "raised_at": "2026-09-11T16:30Z",
+      "resolution": "Invoker kept the evidence."
     }
   ],
   "rework_counts": {
@@ -539,6 +566,20 @@
       "origin": "pre-existing shared tooling",
       "disposition": "filed as a387825e",
       "criterion_named_by": "none directly; blocks benchmark windows"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "stopping a native worker's background or monitor tasks kills every process its tool calls spawned, setsid or not (26465e6c, 04b85d10 and 6fb89a3c campaign launchers died at the moments the session-8 lead stopped their tasks)",
+      "origin": "harness behaviour",
+      "disposition": "lead never stops worker tasks while campaigns run; timed runs happen only in the window runner, outside worker processes",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "lead messages reach a native worker only between its tool calls; workers blocked in 5-8 minute sleep loops received the session-8 timed-run orders 20-50 minutes late",
+      "origin": "harness behaviour",
+      "disposition": "session-9 briefs require polling in calls of at most about two minutes",
+      "criterion_named_by": "none"
     }
   ],
   "notes": [
@@ -586,7 +627,11 @@
     "Session 8, ~22:55Z: on the invoker order to stop the long run now, the lead stopped 6fb89a3c run-confirmations-s8.sh (transpose confirmation complete; logical confirmation stopped after 3 sessions before its fourth acquired the lock; BCH never started) and the 04b85d10 repeated profile (9 repetitions x ~5 min in one launch; rep-01 complete, rep-02 interrupted and re-run whole on resume). Both are deferred to the 04:00 window. The 26465e6c AND-popcount pilot, launched without a slot, was stopped after 1 of 6 cells and, at about 1.5 minutes total, given the free slot to resume. A one-timed-run-at-a-time slot rule (ask the lead first) now applies to all workers.",
     "Invoker instruction 2026-09-11 ~23:00Z (session 8): include ALL benchmarking in the 04:00 window; no timed runs of any kind during a working session. Workers prepare, freeze and commit each run and send the lead its queue line; steps that need a run result wait for the next session unless fully mechanical. The instruction also says to proceed at full speed with the remaining work. All four workers were told; future briefs carry the rule. The 26465e6c AND-popcount pilot slot granted minutes earlier was revoked before it resumed.",
     "Invoker directive 2026-09-11 (session 8): copies that go stale are the worst; SSOT applies (@/inv/single-source-prose). Survey reports carry the argument and cite each number at its authoritative location (generated tables file section and cell, or receipt field); numbers appear only in generated artifacts. Applied to all open surveys (6fb89a3c, 26465e6c, 04b85d10, 6c6b09b1 and the c7113c5a rework) and filed as 428f2f6b for the closed surveys c077a88b, 1d0da41f and eda07788.",
-    "Invoker instruction 2026-09-11 (session 8): write the session handoff once the current workers finish, each issue either complete or blocked only by a pending 04:00-window run. No new dispatches beyond the current workers (6c6b09b1 is the last)."
+    "Invoker instruction 2026-09-11 (session 8): write the session handoff once the current workers finish, each issue either complete or blocked only by a pending 04:00-window run. No new dispatches beyond the current workers (6c6b09b1 is the last).",
+    "Session 8 ended at a provider session limit at about 23:50Z on 2026-09-10 (lead and all four workers) without a handoff; the 04:00 window ran at 01:00Z with an empty queue. Session 9 reconstructed state from branches and the session-8 transcripts under ~/.claude/projects/-home-vkaskivuo-Projects-gf2/4dd2dc73-68da-4918-ba03-2653c6d62e7b/subagents/.",
+    "Invocation 2026-09-11 (session 9): drive epic 1a379447; subagent model by task difficulty, no Fable; parallel worktrees, four workers at a time; prefer worktree reuse over proliferation.",
+    "Session 9: bdc507a3, a387825e, 428f2f6b and 3e59cb9a have no sibling dependencies and moved from wave 3 to wave 2 (reordering, autonomous per escalation policy).",
+    "Session 9: benchmark window 2026-09-12 04:00 Europe/Helsinki armed as transient user timer gf2-bench-window-20260912 running bench-window/run-window.sh; queue cutoff 03:40."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
