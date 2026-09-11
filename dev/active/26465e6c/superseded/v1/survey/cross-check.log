@@ -1,0 +1,279 @@
+== alignment parity ==
+words=4 word_offset=0 address_mod_32=0
+words=4 word_offset=1 address_mod_32=8
+words=4 word_offset=2 address_mod_32=16
+words=4 word_offset=3 address_mod_32=24
+words=8 word_offset=0 address_mod_32=0
+words=8 word_offset=1 address_mod_32=8
+words=8 word_offset=2 address_mod_32=16
+words=8 word_offset=3 address_mod_32=24
+words=64 word_offset=0 address_mod_32=0
+words=64 word_offset=1 address_mod_32=8
+words=64 word_offset=2 address_mod_32=16
+words=64 word_offset=3 address_mod_32=24
+words=256 word_offset=0 address_mod_32=0
+words=256 word_offset=1 address_mod_32=8
+words=256 word_offset=2 address_mod_32=16
+words=256 word_offset=3 address_mod_32=24
+alignment libpopcnt: identical to gf2-side
+alignment mula: identical to gf2-side
+== independent-reference self-tests ==
+libpopcnt selftest: PASS 220 cases
+mula-arm: word_offset 1 is unaligned for this AVX2 Harley-Seal reference (requires 0)
+mula-arm: word_offset 2 is unaligned for this AVX2 Harley-Seal reference (requires 0)
+mula-arm: word_offset 3 is unaligned for this AVX2 Harley-Seal reference (requires 0)
+mula selftest: PASS 58 cases
+== returned-count parity ==
+popcount words=4 seed=201 pattern=random offset=0 gf2-side:production-dispatch=126
+popcount words=4 seed=201 pattern=random offset=0 gf2-side:nibble-lut=126
+popcount words=4 seed=201 pattern=random offset=0 gf2-side:scalar-popcnt=126
+popcount words=4 seed=201 pattern=random offset=0 gf2-side:compiler-count-ones=126
+popcount words=4 seed=201 pattern=random offset=0 libpopcnt=126
+popcount words=4 seed=201 pattern=random offset=0 mula-avx2-harleyseal=126
+popcount words=8 seed=202 pattern=random offset=0 gf2-side:production-dispatch=252
+popcount words=8 seed=202 pattern=random offset=0 gf2-side:nibble-lut=252
+popcount words=8 seed=202 pattern=random offset=0 gf2-side:scalar-popcnt=252
+popcount words=8 seed=202 pattern=random offset=0 gf2-side:compiler-count-ones=252
+popcount words=8 seed=202 pattern=random offset=0 libpopcnt=252
+popcount words=8 seed=202 pattern=random offset=0 mula-avx2-harleyseal=252
+popcount words=256 seed=203 pattern=random offset=3 gf2-side:production-dispatch=8051
+popcount words=256 seed=203 pattern=random offset=3 gf2-side:nibble-lut=8051
+popcount words=256 seed=203 pattern=random offset=3 gf2-side:scalar-popcnt=8051
+popcount words=256 seed=203 pattern=random offset=3 gf2-side:compiler-count-ones=8051
+popcount words=256 seed=203 pattern=random offset=3 libpopcnt=8051
+popcount words=64 seed=204 pattern=all_one offset=0 gf2-side:production-dispatch=4096
+popcount words=64 seed=204 pattern=all_one offset=0 gf2-side:nibble-lut=4096
+popcount words=64 seed=204 pattern=all_one offset=0 gf2-side:scalar-popcnt=4096
+popcount words=64 seed=204 pattern=all_one offset=0 gf2-side:compiler-count-ones=4096
+popcount words=64 seed=204 pattern=all_one offset=0 libpopcnt=4096
+popcount words=64 seed=204 pattern=all_one offset=0 mula-avx2-harleyseal=4096
+popcount words=63 seed=205 pattern=random offset=0 gf2-side:production-dispatch=2038
+popcount words=63 seed=205 pattern=random offset=0 gf2-side:nibble-lut=2038
+popcount words=63 seed=205 pattern=random offset=0 gf2-side:scalar-popcnt=2038
+popcount words=63 seed=205 pattern=random offset=0 gf2-side:compiler-count-ones=2038
+popcount words=63 seed=205 pattern=random offset=0 libpopcnt=2038
+popcount words=63 seed=205 pattern=random offset=0 mula-avx2-harleyseal=2038
+popcount words=64 seed=206 pattern=all_zero offset=0 gf2-side:production-dispatch=0
+popcount words=64 seed=206 pattern=all_zero offset=0 gf2-side:nibble-lut=0
+popcount words=64 seed=206 pattern=all_zero offset=0 gf2-side:scalar-popcnt=0
+popcount words=64 seed=206 pattern=all_zero offset=0 gf2-side:compiler-count-ones=0
+popcount words=64 seed=206 pattern=all_zero offset=0 libpopcnt=0
+popcount words=64 seed=206 pattern=all_zero offset=0 mula-avx2-harleyseal=0
+popcount words=16384 seed=207 pattern=random offset=0 gf2-side:production-dispatch=524251
+popcount words=16384 seed=207 pattern=random offset=0 gf2-side:nibble-lut=524251
+popcount words=16384 seed=207 pattern=random offset=0 gf2-side:scalar-popcnt=524251
+popcount words=16384 seed=207 pattern=random offset=0 gf2-side:compiler-count-ones=524251
+popcount words=16384 seed=207 pattern=random offset=0 libpopcnt=524251
+popcount words=16384 seed=207 pattern=random offset=0 mula-avx2-harleyseal=524251
+popcount words=524288 seed=208 pattern=random offset=0 gf2-side:production-dispatch=16775444
+popcount words=524288 seed=208 pattern=random offset=0 gf2-side:nibble-lut=16775444
+popcount words=524288 seed=208 pattern=random offset=0 gf2-side:scalar-popcnt=16775444
+popcount words=524288 seed=208 pattern=random offset=0 gf2-side:compiler-count-ones=16775444
+popcount words=524288 seed=208 pattern=random offset=0 libpopcnt=16775444
+popcount words=524288 seed=208 pattern=random offset=0 mula-avx2-harleyseal=16775444
+popcount words=0 seed=11 pattern=random offset=0 gf2-side:production-dispatch=0
+popcount words=0 seed=11 pattern=random offset=0 gf2-side:nibble-lut=0
+popcount words=0 seed=11 pattern=random offset=0 gf2-side:scalar-popcnt=0
+popcount words=0 seed=11 pattern=random offset=0 gf2-side:compiler-count-ones=0
+popcount words=0 seed=11 pattern=random offset=0 libpopcnt=0
+popcount words=0 seed=11 pattern=random offset=0 mula-avx2-harleyseal=0
+popcount words=0 seed=11 pattern=random offset=1 gf2-side:production-dispatch=0
+popcount words=0 seed=11 pattern=random offset=1 gf2-side:nibble-lut=0
+popcount words=0 seed=11 pattern=random offset=1 gf2-side:scalar-popcnt=0
+popcount words=0 seed=11 pattern=random offset=1 gf2-side:compiler-count-ones=0
+popcount words=0 seed=11 pattern=random offset=1 libpopcnt=0
+popcount words=0 seed=11 pattern=random offset=2 gf2-side:production-dispatch=0
+popcount words=0 seed=11 pattern=random offset=2 gf2-side:nibble-lut=0
+popcount words=0 seed=11 pattern=random offset=2 gf2-side:scalar-popcnt=0
+popcount words=0 seed=11 pattern=random offset=2 gf2-side:compiler-count-ones=0
+popcount words=0 seed=11 pattern=random offset=2 libpopcnt=0
+popcount words=0 seed=11 pattern=random offset=3 gf2-side:production-dispatch=0
+popcount words=0 seed=11 pattern=random offset=3 gf2-side:nibble-lut=0
+popcount words=0 seed=11 pattern=random offset=3 gf2-side:scalar-popcnt=0
+popcount words=0 seed=11 pattern=random offset=3 gf2-side:compiler-count-ones=0
+popcount words=0 seed=11 pattern=random offset=3 libpopcnt=0
+popcount words=1 seed=11 pattern=random offset=0 gf2-side:production-dispatch=28
+popcount words=1 seed=11 pattern=random offset=0 gf2-side:nibble-lut=28
+popcount words=1 seed=11 pattern=random offset=0 gf2-side:scalar-popcnt=28
+popcount words=1 seed=11 pattern=random offset=0 gf2-side:compiler-count-ones=28
+popcount words=1 seed=11 pattern=random offset=0 libpopcnt=28
+popcount words=1 seed=11 pattern=random offset=0 mula-avx2-harleyseal=28
+popcount words=1 seed=11 pattern=random offset=1 gf2-side:production-dispatch=30
+popcount words=1 seed=11 pattern=random offset=1 gf2-side:nibble-lut=30
+popcount words=1 seed=11 pattern=random offset=1 gf2-side:scalar-popcnt=30
+popcount words=1 seed=11 pattern=random offset=1 gf2-side:compiler-count-ones=30
+popcount words=1 seed=11 pattern=random offset=1 libpopcnt=30
+popcount words=1 seed=11 pattern=random offset=2 gf2-side:production-dispatch=33
+popcount words=1 seed=11 pattern=random offset=2 gf2-side:nibble-lut=33
+popcount words=1 seed=11 pattern=random offset=2 gf2-side:scalar-popcnt=33
+popcount words=1 seed=11 pattern=random offset=2 gf2-side:compiler-count-ones=33
+popcount words=1 seed=11 pattern=random offset=2 libpopcnt=33
+popcount words=1 seed=11 pattern=random offset=3 gf2-side:production-dispatch=30
+popcount words=1 seed=11 pattern=random offset=3 gf2-side:nibble-lut=30
+popcount words=1 seed=11 pattern=random offset=3 gf2-side:scalar-popcnt=30
+popcount words=1 seed=11 pattern=random offset=3 gf2-side:compiler-count-ones=30
+popcount words=1 seed=11 pattern=random offset=3 libpopcnt=30
+popcount words=63 seed=11 pattern=random offset=0 gf2-side:production-dispatch=2020
+popcount words=63 seed=11 pattern=random offset=0 gf2-side:nibble-lut=2020
+popcount words=63 seed=11 pattern=random offset=0 gf2-side:scalar-popcnt=2020
+popcount words=63 seed=11 pattern=random offset=0 gf2-side:compiler-count-ones=2020
+popcount words=63 seed=11 pattern=random offset=0 libpopcnt=2020
+popcount words=63 seed=11 pattern=random offset=0 mula-avx2-harleyseal=2020
+popcount words=63 seed=11 pattern=random offset=1 gf2-side:production-dispatch=2023
+popcount words=63 seed=11 pattern=random offset=1 gf2-side:nibble-lut=2023
+popcount words=63 seed=11 pattern=random offset=1 gf2-side:scalar-popcnt=2023
+popcount words=63 seed=11 pattern=random offset=1 gf2-side:compiler-count-ones=2023
+popcount words=63 seed=11 pattern=random offset=1 libpopcnt=2023
+popcount words=63 seed=11 pattern=random offset=2 gf2-side:production-dispatch=2022
+popcount words=63 seed=11 pattern=random offset=2 gf2-side:nibble-lut=2022
+popcount words=63 seed=11 pattern=random offset=2 gf2-side:scalar-popcnt=2022
+popcount words=63 seed=11 pattern=random offset=2 gf2-side:compiler-count-ones=2022
+popcount words=63 seed=11 pattern=random offset=2 libpopcnt=2022
+popcount words=63 seed=11 pattern=random offset=3 gf2-side:production-dispatch=2023
+popcount words=63 seed=11 pattern=random offset=3 gf2-side:nibble-lut=2023
+popcount words=63 seed=11 pattern=random offset=3 gf2-side:scalar-popcnt=2023
+popcount words=63 seed=11 pattern=random offset=3 gf2-side:compiler-count-ones=2023
+popcount words=63 seed=11 pattern=random offset=3 libpopcnt=2023
+popcount words=64 seed=11 pattern=random offset=0 gf2-side:production-dispatch=2051
+popcount words=64 seed=11 pattern=random offset=0 gf2-side:nibble-lut=2051
+popcount words=64 seed=11 pattern=random offset=0 gf2-side:scalar-popcnt=2051
+popcount words=64 seed=11 pattern=random offset=0 gf2-side:compiler-count-ones=2051
+popcount words=64 seed=11 pattern=random offset=0 libpopcnt=2051
+popcount words=64 seed=11 pattern=random offset=0 mula-avx2-harleyseal=2051
+popcount words=64 seed=11 pattern=random offset=1 gf2-side:production-dispatch=2052
+popcount words=64 seed=11 pattern=random offset=1 gf2-side:nibble-lut=2052
+popcount words=64 seed=11 pattern=random offset=1 gf2-side:scalar-popcnt=2052
+popcount words=64 seed=11 pattern=random offset=1 gf2-side:compiler-count-ones=2052
+popcount words=64 seed=11 pattern=random offset=1 libpopcnt=2052
+popcount words=64 seed=11 pattern=random offset=2 gf2-side:production-dispatch=2056
+popcount words=64 seed=11 pattern=random offset=2 gf2-side:nibble-lut=2056
+popcount words=64 seed=11 pattern=random offset=2 gf2-side:scalar-popcnt=2056
+popcount words=64 seed=11 pattern=random offset=2 gf2-side:compiler-count-ones=2056
+popcount words=64 seed=11 pattern=random offset=2 libpopcnt=2056
+popcount words=64 seed=11 pattern=random offset=3 gf2-side:production-dispatch=2051
+popcount words=64 seed=11 pattern=random offset=3 gf2-side:nibble-lut=2051
+popcount words=64 seed=11 pattern=random offset=3 gf2-side:scalar-popcnt=2051
+popcount words=64 seed=11 pattern=random offset=3 gf2-side:compiler-count-ones=2051
+popcount words=64 seed=11 pattern=random offset=3 libpopcnt=2051
+popcount words=65 seed=11 pattern=random offset=0 gf2-side:production-dispatch=2080
+popcount words=65 seed=11 pattern=random offset=0 gf2-side:nibble-lut=2080
+popcount words=65 seed=11 pattern=random offset=0 gf2-side:scalar-popcnt=2080
+popcount words=65 seed=11 pattern=random offset=0 gf2-side:compiler-count-ones=2080
+popcount words=65 seed=11 pattern=random offset=0 libpopcnt=2080
+popcount words=65 seed=11 pattern=random offset=0 mula-avx2-harleyseal=2080
+popcount words=65 seed=11 pattern=random offset=1 gf2-side:production-dispatch=2086
+popcount words=65 seed=11 pattern=random offset=1 gf2-side:nibble-lut=2086
+popcount words=65 seed=11 pattern=random offset=1 gf2-side:scalar-popcnt=2086
+popcount words=65 seed=11 pattern=random offset=1 gf2-side:compiler-count-ones=2086
+popcount words=65 seed=11 pattern=random offset=1 libpopcnt=2086
+popcount words=65 seed=11 pattern=random offset=2 gf2-side:production-dispatch=2084
+popcount words=65 seed=11 pattern=random offset=2 gf2-side:nibble-lut=2084
+popcount words=65 seed=11 pattern=random offset=2 gf2-side:scalar-popcnt=2084
+popcount words=65 seed=11 pattern=random offset=2 gf2-side:compiler-count-ones=2084
+popcount words=65 seed=11 pattern=random offset=2 libpopcnt=2084
+popcount words=65 seed=11 pattern=random offset=3 gf2-side:production-dispatch=2084
+popcount words=65 seed=11 pattern=random offset=3 gf2-side:nibble-lut=2084
+popcount words=65 seed=11 pattern=random offset=3 gf2-side:scalar-popcnt=2084
+popcount words=65 seed=11 pattern=random offset=3 gf2-side:compiler-count-ones=2084
+popcount words=65 seed=11 pattern=random offset=3 libpopcnt=2084
+and_popcnt words=4096 seed_lhs=401 seed_rhs=1401 pattern=random offset=0 gf2-side:and-popcnt-fused=65379
+and_popcnt words=4096 seed_lhs=401 seed_rhs=1401 pattern=random offset=0 gf2-side:and-popcnt-scalar-control=65379
+and_popcnt words=4096 seed_lhs=401 seed_rhs=1401 pattern=random offset=0 gf2-side:and-popcnt-two-pass-consumer=65379
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=524288 seed_lhs=402 seed_rhs=1402 pattern=random offset=0 gf2-side:and-popcnt-fused=8392181
+and_popcnt words=524288 seed_lhs=402 seed_rhs=1402 pattern=random offset=0 gf2-side:and-popcnt-scalar-control=8392181
+and_popcnt words=524288 seed_lhs=402 seed_rhs=1402 pattern=random offset=0 gf2-side:and-popcnt-two-pass-consumer=8392181
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=4096 seed_lhs=403 seed_rhs=1403 pattern=random offset=0 gf2-side:and-popcnt-fused=65694
+and_popcnt words=4096 seed_lhs=403 seed_rhs=1403 pattern=random offset=0 gf2-side:and-popcnt-scalar-control=65694
+and_popcnt words=4096 seed_lhs=403 seed_rhs=1403 pattern=random offset=0 gf2-side:and-popcnt-two-pass-consumer=65694
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-fused=0
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-scalar-control=0
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-two-pass-consumer=0
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-fused=0
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-scalar-control=0
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-two-pass-consumer=0
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-fused=0
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-scalar-control=0
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-two-pass-consumer=0
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-fused=0
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-scalar-control=0
+and_popcnt words=0 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-two-pass-consumer=0
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-fused=19
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-scalar-control=19
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-two-pass-consumer=19
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-fused=20
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-scalar-control=20
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-two-pass-consumer=20
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-fused=9
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-scalar-control=9
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-two-pass-consumer=9
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-fused=17
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-scalar-control=17
+and_popcnt words=1 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-two-pass-consumer=17
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-fused=956
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-scalar-control=956
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-two-pass-consumer=956
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-fused=955
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-scalar-control=955
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-two-pass-consumer=955
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-fused=948
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-scalar-control=948
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-two-pass-consumer=948
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-fused=955
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-scalar-control=955
+and_popcnt words=63 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-two-pass-consumer=955
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-fused=974
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-scalar-control=974
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-two-pass-consumer=974
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-fused=968
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-scalar-control=968
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-two-pass-consumer=968
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-fused=964
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-scalar-control=964
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-two-pass-consumer=964
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-fused=973
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-scalar-control=973
+and_popcnt words=64 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-two-pass-consumer=973
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-fused=987
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-scalar-control=987
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=0 gf2-side:and-popcnt-two-pass-consumer=987
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-fused=984
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-scalar-control=984
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=1 gf2-side:and-popcnt-two-pass-consumer=984
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-fused=982
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-scalar-control=982
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=2 gf2-side:and-popcnt-two-pass-consumer=982
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-fused=984
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-scalar-control=984
+and_popcnt words=65 seed_lhs=13 seed_rhs=17 pattern=random offset=3 gf2-side:and-popcnt-two-pass-consumer=984
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=64 seed_lhs=3 seed_rhs=4 pattern=all_one offset=0 gf2-side:and-popcnt-fused=4096
+and_popcnt words=64 seed_lhs=3 seed_rhs=4 pattern=all_one offset=0 gf2-side:and-popcnt-scalar-control=4096
+and_popcnt words=64 seed_lhs=3 seed_rhs=4 pattern=all_one offset=0 gf2-side:and-popcnt-two-pass-consumer=4096
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+and_popcnt words=64 seed_lhs=5 seed_rhs=6 pattern=all_zero offset=0 gf2-side:and-popcnt-fused=0
+and_popcnt words=64 seed_lhs=5 seed_rhs=6 pattern=all_zero offset=0 gf2-side:and-popcnt-scalar-control=0
+and_popcnt words=64 seed_lhs=5 seed_rhs=6 pattern=all_zero offset=0 gf2-side:and-popcnt-two-pass-consumer=0
+no external candidate: neither libpopcnt nor Mula's sse-popcount exposes a fused AND-then-popcount operation (see findings.md)
+cross-check PASSED: identical fixture alignment on every side, and every arm returned an identical count on every identical buffer

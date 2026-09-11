@@ -1,0 +1,14 @@
+# command: ./dev/active/26465e6c/survey/run-popcount-pilot.sh 
+# started_utc: 2026-09-07T19:49:56Z
+# gf2 revision (informational): 0152643dcfa6b36380dfa80bfa95a81251bbb247
+# addendum: dev/active/26465e6c/addendum-popcount-pilot.json
+# campaign: popcount-pilot-26465e6c-20260907t194956z
+# stage: /tmp/gf2-popcount-pilot-26465e6c-20260907t194956z
+# load_avg_start:  22:49:56 up 4 days, 18 min,  5 users,  load average: 25.12, 23.65, 19.06
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-popcount-pilot-26465e6c-20260907t194956z/execution.log
+# session exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  22:58:57 up 4 days, 27 min,  5 users,  load average: 7.29, 9.95, 13.90
+# finished_utc: 2026-09-07T19:58:57Z

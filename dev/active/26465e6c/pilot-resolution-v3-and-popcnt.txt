@@ -1,0 +1,11 @@
+pilot receipt dev/bench_results/26465e6c/v3-and-popcnt-pilot-r2/receipt.json sha256 8148ca916fcf48ea004b2ec54ecbfe69302b3da3a149cd64ed1aa61bc982043b
+verdict accepted, findings 0; family and-popcnt-baselines: m = 1, attempt alpha 0.025, per-comparison confidence 0.975
+cell                                                  estimate     lower     upper  rel_half
+and-popcnt-w4-vs-scalar-control                         0.8381    0.8356    0.8408    0.0032
+and-popcnt-w4096-vs-scalar-control                      0.3277    0.3273    0.3286    0.0026
+and-popcnt-w512k-streaming-vs-scalar-control            0.6608    0.6294    0.6714    0.0475
+and-popcnt-w4-vs-two-pass                               0.2028    0.2023    0.2034    0.0030
+and-popcnt-w4096-vs-two-pass                            0.4230    0.4213    0.4244    0.0038
+and-popcnt-w512k-streaming-vs-two-pass                  0.5753    0.5521    0.6006    0.0440
+dev/active/26465e6c/addendum-and-popcnt-v3-confirmation.json: sha256 720c16fdf9394c105df5311f3e375a7bb0e22f64a803fa5ed4c0663b73b7ff4a
+widest pilot relative half-width 0.04751922565773214648584924644; declared resolution 0.05; material gap 1.10; equivalence 1.06
