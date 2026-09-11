@@ -1,0 +1,68 @@
+# Steady-state LDPC decoder throughput harness (jit:3be770d5).
+#
+# A standalone workspace, like the `c077a88b` survey harness it extends: it
+# adds no target, feature or dependency to the production workspace. It reuses
+# that harness's library (bundle contract, AList reader, child framing, timing
+# windows, prepared quality) by path and compiles one C++ translation unit
+# that includes its AFF3CT shim unchanged and adds a clone entry.
+#
+# Release builds keep line tables so the timed arms and the profiled binaries
+# carry source-line attribution; line tables do not change generated code.
+
+[workspace]
+
+[package]
+name = "ldpc-throughput-harness"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[features]
+default = []
+# Links the pinned AFF3CT static library; needs GF2_AFF3CT_ROOT.
+aff3ct = []
+
+[dependencies]
+ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+gf2-core = { path = "../../../../../crates/gf2-core" }
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+rustix = { version = "1.1", features = ["process", "thread"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[build-dependencies]
+cc = "1"
+
+[lib]
+name = "ldpc_throughput"
+path = "src/lib.rs"
+
+[[bin]]
+name = "gf2-throughput-arm"
+path = "src/bin/gf2-throughput-arm.rs"
+
+[[bin]]
+name = "aff3ct-throughput-arm"
+path = "src/bin/aff3ct-throughput-arm.rs"
+required-features = ["aff3ct"]
+
+[[bin]]
+name = "ldpc-profile"
+path = "src/bin/ldpc-profile.rs"
+required-features = ["aff3ct"]
+
+[[bin]]
+name = "ldpc-alloc-census"
+path = "src/bin/ldpc-alloc-census.rs"
+
+[[bin]]
+name = "ldpc-throughput-validate"
+path = "src/bin/ldpc-throughput-validate.rs"
+required-features = ["aff3ct"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = "line-tables-only"
