@@ -121,7 +121,7 @@ and the v3 design has no such cell.
 The rustdoc of `gf256()` names x^8+x^4+x^3+x+1 and calls the field the one
 "used in AES" (`gf2-gf256-doc-polynomial`, `gf2-gf256-doc-aes`) while the code
 builds 0x11D, and the catalogue comment calls the five-term polynomial a
-trinomial. Both are documentation defects in gf2-core, reported for tracking;
+trinomial. Both are documentation defects in gf2-core, tracked as `835f34f0`;
 this issue changes no production file.
 
 ## Operation mapping
@@ -280,11 +280,10 @@ The v1 pilot `pilot-6c6b09b1-20260908t092546z` is immutable, superseded
 evidence and decides nothing (tables § `pilot-6c6b09b1-20260908t092546z`). It
 measured only the `Gf2mElement` representation, one kernel-isolated cell per
 operation, built with a Rust newer than the MSRV. Within those limits it points
-where the v3 design looks: ISA-L's region multiply-accumulate was ahead of
-`FieldVec::axpy` by more than two orders of magnitude (`axpy-isal-l2-1core`),
-M4RIE's product by about an order of magnitude (`matmul-m4rie-n128-1core`), and
-gf2's `batch_mul` was ahead of GF-Complete's per-element loop
-(`pairwise-gfcomplete-l2-1core`). Its flagged-window counts follow v1's pooled
+where the v3 design looks: ISA-L's region multiply-accumulate was far ahead of
+`FieldVec::axpy` (`axpy-isal-l2-1core`), M4RIE's product was well ahead
+(`matmul-m4rie-n128-1core`), and gf2's `batch_mul` was ahead of GF-Complete's
+per-element loop (`pairwise-gfcomplete-l2-1core`). Its flagged-window counts follow v1's pooled
 rule, which version 3 replaced by an execution-local rule
 ([amendment](../f547c394/amendment-v3.md)).
 
