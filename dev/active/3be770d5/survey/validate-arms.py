@@ -24,6 +24,7 @@ ACTIVE = HERE.parent
 CATALOGUE = json.loads((HERE / "arms.json").read_text())
 FRESH_CASE_VAR, FRESH_CASE_VALUE = "GF2_TUNING_FRESH_CASE", "child-v2"
 RESULT_PREFIX = "GF2_TUNING_RESULT="
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(HERE))
 candidate_of = __import__("make-plan").candidate_of
 
