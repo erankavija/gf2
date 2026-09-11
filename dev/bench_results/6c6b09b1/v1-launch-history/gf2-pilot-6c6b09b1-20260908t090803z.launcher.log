@@ -1,0 +1,17 @@
+# command: dev/bench_results/6c6b09b1/run-byte-field.sh pilot
+# started_utc: 2026-09-08T09:08:03Z
+# gf2 revision (informational): 0de1fcb44cd069377ecbf2f9867db5e1b9d78195
+# mode: pilot
+# addendum: dev/active/6c6b09b1/addendum-byte-field-arms-pilot.json
+# campaign: pilot-6c6b09b1-20260908t090803z
+# stage: /tmp/gf2-pilot-6c6b09b1-20260908t090803z
+# external staging: /home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1
+# gf2 arm rustflags: -C target-cpu=native
+# external compiler flags: -std=c11 -O3 -march=native -fPIC -Wall -Wextra -I/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/prefix/include -DM4RIE_VERSION_STR='20250128' -DM4RI_VERSION_STR='20260122' -DGFCOMPLETE_VERSION_STR='ceph/gf-complete@a6862d10c9db'
+# external identity: m4ri=20260122
+# external identity: m4rie=20250128
+# external identity: isa-l=2.32.1
+# external identity: gf-complete=ceph/gf-complete@a6862d10c9db
+# external identity: cc=cc (GCC) 16.2.1 20260810
+# external identity: cflags=-std=c11 -O3 -march=native -fPIC -Wall -Wextra -I/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/prefix/include -DM4RIE_VERSION_STR='20250128' -DM4RI_VERSION_STR='20260122' -DGFCOMPLETE_VERSION_STR='ceph/gf-complete@a6862d10c9db'
+# load_avg_start:  12:08:03 up 4 days, 13:37,  5 users,  load average: 5.28, 6.69, 7.62
