@@ -1,0 +1,572 @@
+{
+  "schema": "6c6b09b1-source-evidence-v1",
+  "projects": {
+    "gf2": {
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "revision_kind": "git commit (navigation only; receipts pin these files by content)"
+    },
+    "isa-l": {
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "revision_kind": "git commit (tag v2.32.1)"
+    },
+    "gf-complete": {
+      "revision": "a6862d10c9db467148f20eef2c6445ac9afd94d8",
+      "revision_kind": "git commit (ceph/gf-complete master)"
+    },
+    "m4rie": {
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "revision_kind": "release tarball digest; m4rie-src/ is the unpacked tarball"
+    },
+    "m4ri": {
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "revision_kind": "release tarball digest; m4ri-src/ is the unpacked tarball, prefix/ the configured install"
+    }
+  },
+  "claims": [
+    {
+      "claim": "gf2-gf256-constructor",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 849,
+      "text": "    pub fn gf256() -> Self {",
+      "why": "The runtime GF(2^8) field every Gf2mElement cell measures."
+    },
+    {
+      "claim": "gf2-gf256-polynomial",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 850,
+      "text": "        Gf2mField::new(8, 0b100011101)",
+      "why": "gf256() builds GF(2^8) modulo 0x11D = x^8+x^4+x^3+x^2+1, the polynomial ISA-L compiles in, so the Gf2mElement cells and ISA-L share one field."
+    },
+    {
+      "claim": "gf2-gf256-doc-polynomial",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 837,
+      "text": "    /// Creates a GF(2^8) field with standard primitive polynomial x^8 + x^4 + x^3 + x + 1.",
+      "why": "The rustdoc of gf256() names x^8+x^4+x^3+x+1 (0x11B), which is not the polynomial the next lines build: a documentation defect reported to the lead, not a second field."
+    },
+    {
+      "claim": "gf2-gf256-doc-aes",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 839,
+      "text": "    /// This is the standard field used in AES and many error-correcting codes.",
+      "why": "The same rustdoc attributes the 0x11D field to a use of 0x11B; part of the same documentation defect."
+    },
+    {
+      "claim": "gf2-catalogue-degree-8",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/primitive_polys.rs",
+      "line": 139,
+      "text": "            8 => Some(0b100011101),          // x^8 + x^4 + x^3 + x^2 + 1 (primitive trinomial)",
+      "why": "The primitive-polynomial catalogue's GF(2^8) entry is 0x11D as well. Its comment calls the five-term polynomial a trinomial, a second documentation defect."
+    },
+    {
+      "claim": "gf2-wide-config-trait",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/wide_config.rs",
+      "line": 96,
+      "text": "pub trait Gf2mWideConfig<const N: usize>: 'static {",
+      "why": "A Gf2mWide consumer supplies its own polynomial through this trait; the survey's Gf256x11d supplies 0x11D (gf2-side/src/workload.rs)."
+    },
+    {
+      "claim": "gf2-wide-test-config-0x11b",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 4893,
+      "text": "        const MODULUS: [u64; 1] = [0x1B];",
+      "why": "gf2's own GF(2^8) Gf2mWide test configurations use 0x11B (see the scan entry for all of them); none is part of the library API."
+    },
+    {
+      "claim": "gf2-wide-bench-config-0x11b",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/benches/field_matrix_gemm.rs",
+      "line": 37,
+      "text": "    const MODULUS: [u64; 1] = [0x1B];",
+      "why": "gf2's GF(2^8) Gf2mWide gemm benchmark also uses 0x11B; the survey's 0x11D configuration runs the same code with a different reduction constant."
+    },
+    {
+      "claim": "gf2-element-value",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 207,
+      "text": "    value: V,",
+      "why": "A Gf2mElement stores its value in a u64 (V = u64) ..."
+    },
+    {
+      "claim": "gf2-element-params",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 208,
+      "text": "    params: Arc<FieldParams_<V>>,",
+      "why": "... beside a reference-counted handle on its field, so FieldVec<Gf2mElement> spends 16 bytes per GF(2^8) element and clones an Arc per element it creates."
+    },
+    {
+      "claim": "gf2-element-alias",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 212,
+      "text": "pub type Gf2mElement = Gf2mElement_<u64>;",
+      "why": "The element type the survey names Gf2mElement."
+    },
+    {
+      "claim": "gf2-wide-words",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 115,
+      "text": "    words: [u64; N],",
+      "why": "Gf2mWide<1, _> stores one u64 per element: 8 bytes per GF(2^8) element."
+    },
+    {
+      "claim": "gf2-axpy-simd-hook",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 675,
+      "text": "        if F::try_simd_axpy(self.data.as_mut_slice(), a, rhs.data.as_slice()) {",
+      "why": "FieldVec::axpy tries a field-specific kernel first ..."
+    },
+    {
+      "claim": "gf2-axpy-default-false",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/field/traits.rs",
+      "line": 610,
+      "text": "    fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {",
+      "why": "... whose default implementation returns false; only Fp<P> overrides it (next claim), so both GF(2^8) representations take the element loop."
+    },
+    {
+      "claim": "gf2-axpy-fp-override",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gfp/mod.rs",
+      "line": 811,
+      "text": "    fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {",
+      "why": "The only override of try_simd_axpy in gf2-core."
+    },
+    {
+      "claim": "gf2-axpy-element-loop",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 679,
+      "text": "            *y += a.clone() * x.clone();",
+      "why": "The element loop FieldVec::axpy runs for Gf2mElement and Gf2mWide: one field multiply and one add per element, with the coefficient reused across the region."
+    },
+    {
+      "claim": "gf2-gemm-entry",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 2948,
+      "text": "pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {",
+      "why": "The public dense product both square and generator-encode gf2 cells call."
+    },
+    {
+      "claim": "gf2-gemm-transpose",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 3032,
+      "text": "    let b_t = b.transpose();",
+      "why": "Every gemm call transposes B into a fresh matrix before multiplying."
+    },
+    {
+      "claim": "gf2-gemm-whole-hook",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 3040,
+      "text": "    if F::try_simd_gemm_classical(",
+      "why": "gemm first offers the whole product to a field-specific kernel ..."
+    },
+    {
+      "claim": "gf2-gemm-per-cell-hook",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 3082,
+      "text": "                    if let Some(value) = F::try_gf2m_u64_batch_dot_product(",
+      "why": "... and otherwise computes each output cell as a batched dot product."
+    },
+    {
+      "claim": "gf2-wide-gemm-kernel",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 1667,
+      "text": "            if let Some(fns) = crate::simd::maybe_gf2m_gemm() {",
+      "why": "Gf2mWide<1, _> with m = 8 takes the whole product through the dispatched GEMM kernel when the host has it (the gf2 arm records the route it observes) ..."
+    },
+    {
+      "claim": "gf2-wide-gemm-fallback",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 1718,
+      "text": "            Self::scalar_panelized_gemm_fallback_inline(a, b_t, m, k, n, out);",
+      "why": "... and its scalar panelized GEMM otherwise, never the per-cell path."
+    },
+    {
+      "claim": "gf2-element-batch-dot",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 1436,
+      "text": "        crate::gf2m::batch::batch_mul_raw(",
+      "why": "Gf2mElement answers the per-cell hook by widening the row and column into u64 scratch and calling the batch multiply, then XOR-folding the products."
+    },
+    {
+      "claim": "gf2-batch-mul-entry",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/batch.rs",
+      "line": 94,
+      "text": "pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {",
+      "why": "The pairwise gf2 arm: distinct operand pairs on u64 lanes, one element per lane."
+    },
+    {
+      "claim": "gf2-batch-mul-dispatch",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/src/gf2m/batch.rs",
+      "line": 115,
+      "text": "            if let Some(fns) = crate::simd::maybe_gf2m_batch() {",
+      "why": "batch_mul reaches the dispatched batch kernel for m = 8 when the host has it."
+    },
+    {
+      "claim": "gf2-simd-feature",
+      "project": "gf2",
+      "revision": "8c625d8a93eeb1ddbe0165d00bee97ff5be54d86",
+      "path": "crates/gf2-core/Cargo.toml",
+      "line": 50,
+      "text": "simd = []",
+      "why": "The gf2 arm enables this feature, which gates the runtime kernel dispatch above."
+    },
+    {
+      "claim": "isal-polynomial",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "erasure_code/ec_base.c",
+      "line": 178,
+      "text": "        unsigned char c2 = (c << 1) ^ ((c & 0x80) ? 0x1d : 0);   // Mult by GF{2}",
+      "why": "ISA-L's table preparation reduces with 0x1D, i.e. GF(2^8) modulo 0x11D, compiled in; the shim refuses any other polynomial for ISA-L."
+    },
+    {
+      "claim": "isal-init-tables",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/erasure_code.h",
+      "line": 75,
+      "text": "ec_init_tables(int k, int rows, unsigned char *a, unsigned char *gftbls);",
+      "why": "The separate table preparation every ISA-L region and encode call consumes."
+    },
+    {
+      "claim": "isal-vect-mad",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/erasure_code.h",
+      "line": 234,
+      "text": "gf_vect_mad(int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,",
+      "why": "The region multiply-accumulate mapped to FieldVec::axpy (vec = 1, vec_i = 0)."
+    },
+    {
+      "claim": "isal-vect-mad-length",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/erasure_code.h",
+      "line": 222,
+      "text": " * @param len    Length of each vector in bytes. Must be >= 64.",
+      "why": "gf_vect_mad requires regions of at least 64 bytes; every region cell is 4 KiB or more."
+    },
+    {
+      "claim": "isal-dot-prod-doc",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/erasure_code.h",
+      "line": 188,
+      "text": " * Does a GF(2^8) dot product across each byte of the input array and a constant",
+      "why": "gf_vect_dot_prod produces a region (one dot product per byte position across source regions), not the single field element FieldVec::dot_product returns."
+    },
+    {
+      "claim": "isal-encode",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/erasure_code.h",
+      "line": 109,
+      "text": "ec_encode_data(int len, int k, int rows, unsigned char *gftbls, unsigned char **data,",
+      "why": "The generator-matrix region encode mapped to gemm at the encode shape."
+    },
+    {
+      "claim": "isal-gf-mul",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "include/erasure_code.h",
+      "line": 1065,
+      "text": "gf_mul(unsigned char a, unsigned char b);",
+      "why": "ISA-L's only arbitrary-pair multiply is this exported single-element function."
+    },
+    {
+      "claim": "isal-gf-mul-tables",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "erasure_code/ec_base.c",
+      "line": 59,
+      "text": "        return gff_base[(i = gflog_base[a] + gflog_base[b]) > 254 ? i - 255 : i];",
+      "why": "gf_mul is a log/antilog table lookup unless GF_LARGE_TABLES is defined, which the pinned build does not do."
+    },
+    {
+      "claim": "isal-license-clause-3",
+      "project": "isa-l",
+      "revision": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "LICENSE",
+      "line": 12,
+      "text": "    * Neither the name of Intel Corporation nor the names of its",
+      "why": "The third clause of the BSD-3-Clause licence ISA-L carries."
+    },
+    {
+      "claim": "gfcomplete-default-polynomial",
+      "project": "gf-complete",
+      "revision": "a6862d10c9db467148f20eef2c6445ac9afd94d8",
+      "path": "src/gf_w8.c",
+      "line": 2306,
+      "text": "      h->prim_poly = 0x11d;",
+      "why": "GF-Complete's default w = 8 polynomial is 0x11D; the shim passes the cell's polynomial to gf_init_hard explicitly."
+    },
+    {
+      "claim": "gfcomplete-init-hard",
+      "project": "gf-complete",
+      "revision": "a6862d10c9db467148f20eef2c6445ac9afd94d8",
+      "path": "include/gf_complete.h",
+      "line": 150,
+      "text": "extern int gf_init_hard(GFP gf, ",
+      "why": "The configuration entry point the shim calls with the polynomial and backend."
+    },
+    {
+      "claim": "gfcomplete-region",
+      "project": "gf-complete",
+      "revision": "a6862d10c9db467148f20eef2c6445ac9afd94d8",
+      "path": "include/gf_complete.h",
+      "line": 130,
+      "text": "  gf_region      multiply_region;",
+      "why": "The region multiply(-accumulate) mapped to FieldVec::axpy (add = 1)."
+    },
+    {
+      "claim": "gfcomplete-default-ssse3",
+      "project": "gf-complete",
+      "revision": "a6862d10c9db467148f20eef2c6445ac9afd94d8",
+      "path": "src/gf_w8.c",
+      "line": 1145,
+      "text": "      (gf_cpu_supports_intel_ssse3 || gf_cpu_supports_arm_neon)) {",
+      "why": "The default configuration selects its SSSE3 region tables when the CPU reports SSSE3."
+    },
+    {
+      "claim": "gfcomplete-license-clause-3",
+      "project": "gf-complete",
+      "revision": "a6862d10c9db467148f20eef2c6445ac9afd94d8",
+      "path": "License.txt",
+      "line": 17,
+      "text": " - Neither the name of the University of Tennessee nor the names of its",
+      "why": "The third clause of the BSD-3-Clause licence GF-Complete carries."
+    },
+    {
+      "claim": "m4rie-init",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/m4rie/gf2e.h",
+      "line": 80,
+      "text": "gf2e *gf2e_init(const word minpoly);",
+      "why": "M4RIE takes the field polynomial as a parameter, so 0x11D (and 0x11B) are available."
+    },
+    {
+      "claim": "m4rie-mul-table",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/m4rie/gf2e.c",
+      "line": 42,
+      "text": "      ff->_mul[i] = (word *)m4ri_mm_calloc(order, sizeof(word));",
+      "why": "For degree <= 8 gf2e_init builds a full product table of 64-bit words: 256 x 256 x 8 bytes for GF(2^8), the table M4RIE's pairwise arm walks."
+    },
+    {
+      "claim": "m4rie-word",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "prefix/include/m4ri/misc.h",
+      "line": 87,
+      "text": "typedef uint64_t word;",
+      "why": "The table entry type."
+    },
+    {
+      "claim": "m4rie-scalar-mul",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/m4rie/gf2e.h",
+      "line": 119,
+      "text": "static inline word gf2e_mul(const gf2e *ff, const word a, const word b) {",
+      "why": "M4RIE's only arbitrary-pair multiply: an inline function of its public header."
+    },
+    {
+      "claim": "m4rie-mzed-mul",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/m4rie/mzed.h",
+      "line": 271,
+      "text": "mzed_t *mzed_mul(mzed_t *C, const mzed_t *A, const mzed_t *B);",
+      "why": "The dense product mapped to gemm at the square and encode shapes."
+    },
+    {
+      "claim": "m4rie-row-axpy",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/m4rie/mzed.h",
+      "line": 501,
+      "text": "void mzed_add_multiple_of_row(mzed_t *A, rci_t ar, const mzed_t *B, rci_t br, word x, rci_t start_col);",
+      "why": "M4RIE's region multiply-accumulate exists only on matrix rows; the axpy arm uses one-row matrices and pays their pack and unpack."
+    },
+    {
+      "claim": "m4rie-conversion-scope",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/m4rie/conversion.h",
+      "line": 4,
+      "text": " * \\brief Conversion between mzed_t and mzd_slice_t",
+      "why": "M4RIE's conversion module changes the storage layout (packed to bitsliced) within one field; it offers no change of polynomial basis."
+    },
+    {
+      "claim": "m4rie-license-header",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/m4rie/gf2e.h",
+      "line": 18,
+      "text": "*  Distributed under the terms of the GNU General Public License (GPL)",
+      "why": "M4RIE's headers license it under the GPL ..."
+    },
+    {
+      "claim": "m4rie-license-version",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/m4rie/gf2e.h",
+      "line": 19,
+      "text": "*  version 2 or higher.",
+      "why": "... version 2 or higher: GPL-2.0-or-later."
+    },
+    {
+      "claim": "m4rie-license-readme",
+      "project": "m4rie",
+      "revision": "release tarball m4rie-20250128.tar.gz sha256 96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7",
+      "path": "m4rie-src/README.md",
+      "line": 1,
+      "text": "M4RIE is a library for fast arithmetic with dense matrices over GF(2^e) for 2 \u2264 e \u2264 16. The name stems from the fact that is relies heavily on M4RI. M4RIE is part of the Sage mathematics software. M4RIE is available under the General Public License Version 2 or later (GPLv2+).",
+      "why": "The README states GPLv2+; COPYING carries the GPLv2 text."
+    },
+    {
+      "claim": "m4ri-license-header",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.h",
+      "line": 21,
+      "text": " *  Distributed under the terms of the GNU General Public License (GPL)",
+      "why": "M4RI's headers license it under the GPL ..."
+    },
+    {
+      "claim": "m4ri-license-version",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "m4ri-src/m4ri/mzd.h",
+      "line": 22,
+      "text": " *  version 2 or higher.",
+      "why": "... version 2 or higher: GPL-2.0-or-later, the label sibling survey 6fb89a3c records for the same M4RI release."
+    },
+    {
+      "claim": "m4ri-no-openmp",
+      "project": "m4ri",
+      "revision": "release tarball m4ri-20260122.tar.gz sha256 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404",
+      "path": "prefix/include/m4ri/m4ri_config.h",
+      "line": 12,
+      "text": "#define __M4RI_HAVE_OPENMP\t\t0",
+      "why": "The pinned M4RI build has no OpenMP, so M4RIE's products run on one thread."
+    }
+  ],
+  "gf2_gf256_wide_config_scan": {
+    "method": "every line `const M: usize = 8;` under crates/*/src, with the `#[cfg(test)]` attribute and `mod` line of the nearest enclosing test module above it; the generator fails on any implementation outside one",
+    "found": [
+      {
+        "path": "crates/gf2-core/src/field/charpoly.rs",
+        "line": 2803,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 2790,
+        "test_module_text": "mod tests {"
+      },
+      {
+        "path": "crates/gf2-core/src/field/expr.rs",
+        "line": 2510,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 2493,
+        "test_module_text": "mod tests {"
+      },
+      {
+        "path": "crates/gf2-core/src/field/inverse.rs",
+        "line": 804,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 787,
+        "test_module_text": "mod tests {"
+      },
+      {
+        "path": "crates/gf2-core/src/field/matrix.rs",
+        "line": 4892,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 3958,
+        "test_module_text": "mod tests {"
+      },
+      {
+        "path": "crates/gf2-core/src/field/ple.rs",
+        "line": 2227,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 2210,
+        "test_module_text": "mod tests {"
+      },
+      {
+        "path": "crates/gf2-core/src/field/sparse_matrix.rs",
+        "line": 1943,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 1929,
+        "test_module_text": "mod tests {"
+      },
+      {
+        "path": "crates/gf2-core/src/field/triangular.rs",
+        "line": 1879,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 1868,
+        "test_module_text": "mod tests {"
+      },
+      {
+        "path": "crates/gf2-core/src/field/winograd.rs",
+        "line": 734,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 724,
+        "test_module_text": "mod tests {"
+      },
+      {
+        "path": "crates/gf2-core/src/gf2m/wide.rs",
+        "line": 2184,
+        "text": "        const M: usize = 8;",
+        "test_module_line": 2122,
+        "test_module_text": "mod tests {"
+      }
+    ]
+  }
+}
