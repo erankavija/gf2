@@ -365,6 +365,12 @@
       "type": "bug",
       "in_epic": true,
       "reason": "lead cross-survey audit after the 6fb89a3c code-review F1: eda07788 DVB-T2 arms warm with black_box(&buffers[0]) only, violating the protocol warm definition; feeds 1362381c and c04dd4ac"
+    },
+    {
+      "id": "835f34f0",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "6c6b09b1 found that Gf2mField::gf256() rustdoc names the AES polynomial 0x11B while the code builds 0x11D, and primitive_polys.rs calls the five-term 0x11D a trinomial; depends on 6c6b09b1"
     }
   ],
   "escalations": [
