@@ -164,7 +164,9 @@ byte for byte.
 
 The repeated profile
 ([`2026-09-10-04b85d10-profile-v3-repeated`](../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/))
-runs one profile session repeatedly, each under its own
+runs one profile session the number of times the launcher declares before
+any session (`REPETITIONS` in [`run-profile.sh`](survey/run-profile.sh), with
+its rationale), each under its own
 `dev/scripts/ccx1-bench-flock.sh --full-host` invocation, with one
 `consumer-profile` executable throughout. Its
 [`repetitions.log`](../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/repetitions.log)
