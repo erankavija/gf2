@@ -2,8 +2,9 @@
 #
 # Standalone workspace so the survey adds no target, feature, or dependency
 # to the production workspace; it consumes `gf2-core` by path exactly as an
-# external user would. It links no external library, so its executable
-# identity is the gf2 side alone.
+# external user would, with the `simd` feature that gates runtime kernel
+# dispatch. It links no external library, so its executable identity is the
+# gf2 side alone.
 
 [workspace]
 
@@ -11,11 +12,15 @@
 name = "byte-field-gf2-side"
 version = "0.0.0"
 edition = "2021"
+rust-version = "1.95"
 publish = false
 
 [dependencies]
 byte-field-arm-common = { path = "../arm-common" }
 gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+
+[lib]
+path = "src/lib.rs"
 
 [[bin]]
 name = "gf2-arm"

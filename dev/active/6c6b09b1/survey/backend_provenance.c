@@ -116,6 +116,31 @@ static void *isal_dispatched(const char *name)
 static unsigned long strassen_calls;
 static unsigned long newton_john_calls;
 static unsigned long naive_calls;
+/* At or above 512 in every dimension `_mzed_mul` takes the inline bitsliced
+   Karatsuba path, which no PLT entry names; its conversions into and out of
+   the bitsliced representation are exported, so they mark the path. */
+static unsigned long slice_calls;
+static unsigned long cling_calls;
+
+mzd_slice_t *mzed_slice(mzd_slice_t *A, const mzed_t *Z)
+{
+    static mzd_slice_t *(*real)(mzd_slice_t *, const mzed_t *);
+    if (real == NULL) {
+        real = dlsym(RTLD_NEXT, "mzed_slice");
+    }
+    slice_calls++;
+    return real(A, Z);
+}
+
+mzed_t *mzed_cling(mzed_t *A, const mzd_slice_t *Z)
+{
+    static mzed_t *(*real)(mzed_t *, const mzd_slice_t *);
+    if (real == NULL) {
+        real = dlsym(RTLD_NEXT, "mzed_cling");
+    }
+    cling_calls++;
+    return real(A, Z);
+}
 
 mzed_t *_mzed_mul_strassen(mzed_t *C, const mzed_t *A, const mzed_t *B, int cutoff)
 {
@@ -196,6 +221,9 @@ static void isal(void)
     report_pointer("isa-l/gf_vect_mul", isal_dispatched("gf_vect_mul"));
     report_pointer("isa-l/gf_vect_dot_prod", isal_dispatched("gf_vect_dot_prod"));
     report_pointer("isa-l/ec_encode_data", isal_dispatched("ec_encode_data"));
+    /* The pairwise control's per-byte multiply: a plain exported function
+       with no dispatch slot. */
+    report_pointer("isa-l/gf_mul", dlsym(RTLD_DEFAULT, "gf_mul"));
 
     free(pool);
     free(gftbls);
@@ -242,18 +270,24 @@ static void gfcomplete(void)
 
 /* ------------------------------------------------------------------ M4RIE */
 
-static void m4rie_sizes(gf2e *ff, int n)
+/* Counts the recursion one product of shape rows x inner by inner x cols
+   takes, at the shapes the survey's cells measure. */
+static void m4rie_sizes(gf2e *ff, int rows, int inner, int cols)
 {
-    mzed_t *a = mzed_init(ff, n, n);
-    mzed_t *b = mzed_init(ff, n, n);
+    mzed_t *a = mzed_init(ff, rows, inner);
+    mzed_t *b = mzed_init(ff, inner, cols);
     mzed_randomize(a);
     mzed_randomize(b);
     strassen_calls = 0;
     newton_john_calls = 0;
     naive_calls = 0;
+    slice_calls = 0;
+    cling_calls = 0;
     mzed_t *c = mzed_mul(NULL, a, b);
-    printf("m4rie    mzed_mul n=%d strassen=%lu newton-john=%lu naive=%lu\n", n, strassen_calls,
-           newton_john_calls, naive_calls);
+    printf("m4rie    mzed_mul %dx%d by %dx%d strassen=%lu newton-john=%lu naive=%lu "
+           "bitslice-karatsuba(slice=%lu cling=%lu)\n",
+           rows, inner, inner, cols, strassen_calls, newton_john_calls, naive_calls, slice_calls,
+           cling_calls);
     mzed_free(c);
     mzed_free(b);
     mzed_free(a);
@@ -292,9 +326,10 @@ static void m4rie(void)
     mzed_free(probe_b);
     mzed_free(probe_a);
 
-    for (int n = 64; n <= 256; n *= 2) {
-        m4rie_sizes(ff, n);
+    for (int n = 64; n <= 1024; n *= 2) {
+        m4rie_sizes(ff, n, n, n);
     }
+    m4rie_sizes(ff, 4, 10, 65536);
     gf2e_free(ff);
 }
 

@@ -9,17 +9,24 @@
 # `backend_provenance`, whose pointer offsets this script resolves against
 # each library's symbol table.
 #
-# Usage: dev/active/6c6b09b1/survey/arm-provenance.sh > dev/active/6c6b09b1/arm-provenance.txt
+# Usage: dev/active/6c6b09b1/survey/arm-provenance.sh > <record>
+#
+# Reads the pinned sources from the primary checkout's external staging
+# (GF2_SURVEY_SRC), the verified prefix copy the harness links
+# (GF2_SURVEY_EXT), the C build (GF2_SURVEY_BUILD) and the Rust arms
+# (GF2_SURVEY_TARGET); the launcher's build step sets all four.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
-PRIMARY="$(cd "$(dirname "$(cd "${REPO}" && git rev-parse --git-common-dir)")" && pwd)"
-EXT="${GF2_SURVEY_EXT:-${PRIMARY}/.agents/ext/6c6b09b1}"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
+PRIMARY="$(cd "$(dirname "$(git -C "${REPO}" rev-parse --path-format=absolute --git-common-dir)")" && pwd)"
+SRC="${GF2_SURVEY_SRC:-${PRIMARY}/.agents/ext/6c6b09b1}"
+EXT="${GF2_SURVEY_EXT:-${REPO}/target/6c6b09b1-ext}"
+BUILD="${GF2_SURVEY_BUILD:-${REPO}/target/6c6b09b1-survey/c}"
+SURVEY_TARGET="${GF2_SURVEY_TARGET:-${REPO}/target/6c6b09b1-survey}"
 PREFIX="${EXT}/prefix"
-SURVEY_TARGET="${EXT}/survey-target"
 
-if [[ ! -x "${HERE}/backend_provenance" ]]; then
+if [[ ! -x "${BUILD}/backend_provenance" ]]; then
     echo "run make -C ${HERE} first" >&2
     exit 2
 fi
@@ -53,14 +60,14 @@ echo
 
 echo "## Source pins"
 echo "# projected from fetch-build.sh, which re-verifies each pin on every run."
-bash "${HERE}/fetch-build.sh" --print-pins
+bash "${HERE}/fetch-build.sh" --print-pins "${SRC}"
 echo
 
 echo "## Pinned sources as staged on this host"
 for project in gf-complete isa-l; do
-    printf '%s head=%s\n' "${project}" "$(git -C "${EXT}/${project}" rev-parse HEAD)"
+    printf '%s head=%s\n' "${project}" "$(git -C "${SRC}/${project}" rev-parse HEAD)"
 done
-for tarball in "${EXT}"/*.tar.gz "${EXT}"/*.tar.xz; do
+for tarball in "${SRC}"/*.tar.gz "${SRC}"/*.tar.xz; do
     [[ -e "${tarball}" ]] || continue
     printf '%s sha256=%s\n' "$(basename "${tarball}")" "$(sha256sum "${tarball}" | cut -d' ' -f1)"
 done
@@ -68,11 +75,11 @@ echo
 
 echo "## Licenses"
 for entry in \
-    "nasm ${EXT}/nasm-src/LICENSE" \
-    "m4ri ${EXT}/m4ri-src/COPYING" \
-    "m4rie ${EXT}/m4rie-src/COPYING" \
-    "gf-complete ${EXT}/gf-complete/License.txt" \
-    "isa-l ${EXT}/isa-l/LICENSE"; do
+    "nasm ${SRC}/nasm-src/LICENSE" \
+    "m4ri ${SRC}/m4ri-src/COPYING" \
+    "m4rie ${SRC}/m4rie-src/COPYING" \
+    "gf-complete ${SRC}/gf-complete/License.txt" \
+    "isa-l ${SRC}/isa-l/LICENSE"; do
     set -- ${entry}
     project="$1"
     path="$2"
@@ -90,8 +97,8 @@ echo "## Compiler targeting"
 make -s -C "${HERE}" identities
 echo "gcc-march-native=$(gcc -march=native -Q --help=target 2>/dev/null | sed -n 's/^[[:space:]]*-march=[[:space:]]*//p' | head -1)"
 echo "rustc=$(rustc --version)"
-echo "gf2-arm-rustflags=-C target-cpu=native"
-echo "gf2-arm-profile=release opt-level=3 lto=true codegen-units=1"
+echo "rust-arm-rustflags=${RUSTFLAGS:-}"
+echo "rust-arm-profile=release opt-level=3 lto=true codegen-units=1"
 echo
 
 echo "## Linked libraries of the external arm"
@@ -109,7 +116,7 @@ fi
 echo
 
 echo "## Selected arithmetic backends, observed at run time"
-"${HERE}/backend_provenance" | while read -r kind rest; do
+"${BUILD}/backend_provenance" | while read -r kind rest; do
     if [[ "${kind}" != "ptr" ]]; then
         printf '%s %s\n' "${kind}" "${rest}"
         continue

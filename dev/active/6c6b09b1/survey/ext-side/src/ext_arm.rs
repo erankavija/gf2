@@ -15,7 +15,9 @@
 
 mod shim;
 
-use byte_field_arm_common::{banks, timed, Case, Metric, Operation, SplitMix64, Workload};
+use byte_field_arm_common::{
+    banks, probe_ns, Case, Conversion, Metric, Operation, SplitMix64, Workload,
+};
 use shim::{Context, Matrix};
 use std::hint::black_box;
 
@@ -30,15 +32,14 @@ fn main() -> ! {
     byte_field_arm_common::run(|request, case| {
         if case.workers != 1 {
             return Err(format!(
-                "every external region and matrix API measured here is single-threaded; \
-                 cell declares {} workers",
+                "every external region, pairwise and matrix API measured here is \
+                 single-threaded; cell declares {} workers",
                 case.workers
             ));
         }
         let backend_name = std::env::var("GF2_SURVEY_BACKEND")
             .map_err(|_| "GF2_SURVEY_BACKEND is unset".to_owned())?;
-        let variant =
-            std::env::var("GF2_SURVEY_VARIANT").unwrap_or_else(|_| "default".to_owned());
+        let variant = std::env::var("GF2_SURVEY_VARIANT").unwrap_or_else(|_| "default".to_owned());
         let backend = match backend_name.as_str() {
             "isa-l" => shim::BACKEND_ISAL,
             "gf-complete" => shim::BACKEND_GFCOMPLETE,
@@ -46,8 +47,10 @@ fn main() -> ! {
             other => return Err(format!("unknown backend {other:?}")),
         };
         let bank_count = banks(&request.cache_state);
-        let (context, setup_ns) = timed(|| Context::open(backend, case.poly, &variant));
-        let context = context?;
+        let context = Context::open(backend, case.poly, &variant)?;
+        let setup_ns = probe_ns(|| {
+            drop(black_box(Context::open(backend, case.poly, &variant)));
+        });
         match case.operation {
             Operation::Axpy => build_axpy(case, bank_count, context, setup_ns),
             Operation::Pairwise => build_pairwise(case, bank_count, context, setup_ns),
@@ -55,6 +58,13 @@ fn main() -> ! {
             Operation::Encode => build_encode(case, context, setup_ns),
         }
     })
+}
+
+fn suffix(metric: Metric) -> &'static str {
+    match metric {
+        Metric::KernelIsolated => "",
+        Metric::WholeConsumer => "/whole-consumer",
+    }
 }
 
 /// Region multiply-accumulate `dest[i] ^= a * src[i]`.
@@ -80,10 +90,16 @@ fn build_axpy(
         sources.push(source);
         targets.push(target);
     }
-    let coefficient = (rng.next_u64() | 1) as u8;
-    let (prepared, batch_fill_ns) = timed(|| context.prepare(coefficient));
-    prepared?;
-
+    let coefficient = rng.coefficient();
+    context.prepare(coefficient)?;
+    // Only ISA-L's ec_init_tables is a preparation separate from the region
+    // call; GF-Complete expands the coefficient inside every region call and
+    // M4RIE takes it as an argument.
+    let batch_fill_ns = if context.has_separate_prepare() {
+        probe_ns(|| context.prepare(coefficient).expect("prepare"))
+    } else {
+        0
+    };
     let path = format!(
         "{}/{}/poly=0x{:X}",
         context.name(),
@@ -100,23 +116,23 @@ fn build_axpy(
     if context.axpy(&probe_source, &mut probe_target).is_err() {
         let mut source_rows: Vec<Matrix> = Vec::with_capacity(bank_count);
         let mut target_rows: Vec<Matrix> = Vec::with_capacity(bank_count);
-        let mut pack_ns = 0;
         for bank in 0..bank_count {
             let mut source = context.matrix(1, case.bytes)?;
             let mut target = context.matrix(1, case.bytes)?;
-            let (packed, ns) = timed(|| source.pack(&sources[bank]));
-            packed?;
+            source.pack(&sources[bank])?;
             target.pack(&targets[bank])?;
-            pack_ns += ns;
             source_rows.push(source);
             target_rows.push(target);
         }
+        let pack_ns = probe_ns(|| {
+            source_rows[0].pack(&sources[0]).expect("pack source");
+            target_rows[0].pack(&targets[0]).expect("pack target");
+        });
         let mut out = vec![0u8; case.bytes];
-        let (unpacked, unpack_ns) = timed(|| target_rows[0].unpack(&mut out));
-        unpacked?;
-        let mut conversion = byte_field_arm_common::Conversion {
+        let unpack_ns = probe_ns(|| target_rows[0].unpack(&mut out).expect("unpack"));
+        let conversion = Conversion {
             setup_ns,
-            pack_ns: pack_ns / bank_count.max(1) as u64,
+            pack_ns,
             unpack_ns,
             batch_fill_ns,
             dispatch_ns: 0,
@@ -126,85 +142,71 @@ fn build_axpy(
             targets: target_rows,
             context,
         };
-        return match case.metric {
-            Metric::KernelIsolated => {
-                conversion.pack_ns = 0;
-                conversion.unpack_ns = 0;
-                Ok(Workload {
-                    selected_path: format!("{path}/mzed_add_multiple_of_row"),
-                    conversion,
-                    body: Box::new(move |bank| {
-                        let index = bank % bank_count;
-                        let (source, target) =
-                            split_rows(&mut state.sources, &mut state.targets, index);
-                        target
-                            .row_axpy(0, &*source, 0, coefficient)
-                            .expect("row axpy on a validated adapter");
-                    }),
-                })
-            }
-            Metric::WholeConsumer => Ok(Workload {
-                selected_path: format!("{path}/mzed_add_multiple_of_row/whole-consumer"),
-                conversion,
-                body: Box::new(move |bank| {
-                    let index = bank % bank_count;
-                    state.context.prepare(coefficient).expect("prepare");
-                    {
-                        let (source, target) =
-                            split_rows(&mut state.sources, &mut state.targets, index);
-                        source.pack(black_box(&sources[index])).expect("pack source");
-                        target.pack(black_box(&targets[index])).expect("pack target");
-                        target
-                            .row_axpy(0, &*source, 0, coefficient)
-                            .expect("row axpy on a validated adapter");
-                        target.unpack(&mut out).expect("unpack");
-                    }
-                    black_box(&out);
-                }),
+        let selected_path = format!("{path}/mzed_add_multiple_of_row{}", suffix(case.metric));
+        let body: Box<dyn FnMut(usize)> = match case.metric {
+            Metric::KernelIsolated => Box::new(move |bank| {
+                let index = bank % bank_count;
+                let (source, target) = split_rows(&mut state.sources, &mut state.targets, index);
+                target
+                    .row_axpy(0, &*source, 0, coefficient)
+                    .expect("row axpy on a validated adapter");
+            }),
+            Metric::WholeConsumer => Box::new(move |bank| {
+                let index = bank % bank_count;
+                let (source, target) = split_rows(&mut state.sources, &mut state.targets, index);
+                source
+                    .pack(black_box(&sources[index]))
+                    .expect("pack source");
+                target
+                    .pack(black_box(&targets[index]))
+                    .expect("pack target");
+                target
+                    .row_axpy(0, &*source, 0, coefficient)
+                    .expect("row axpy on a validated adapter");
+                target.unpack(&mut targets[index]).expect("unpack");
+                black_box(&targets[index]);
             }),
         };
+        return Ok(Workload {
+            selected_path,
+            conversion,
+            body,
+        });
     }
 
     // ISA-L and GF-Complete operate on the byte region directly, so packing
     // and unpacking are genuinely absent rather than merely cheap.
-    let conversion = byte_field_arm_common::Conversion {
+    let conversion = Conversion {
         setup_ns,
         pack_ns: 0,
         unpack_ns: 0,
         batch_fill_ns,
         dispatch_ns: 0,
     };
-    match case.metric {
-        Metric::KernelIsolated => Ok(Workload {
-            selected_path: path,
-            conversion,
-            body: Box::new(move |bank| {
-                let index = bank % bank_count;
-                context
-                    .axpy(black_box(&sources[index]), &mut targets[index])
-                    .expect("region multiply-XOR on a validated adapter");
-                black_box(&targets[index]);
-            }),
-        }),
-        Metric::WholeConsumer => Ok(Workload {
-            selected_path: format!("{path}/whole-consumer"),
-            conversion,
-            body: Box::new(move |bank| {
-                let index = bank % bank_count;
-                // A whole consumer applying a fresh coefficient pays the
-                // table preparation on every call; the byte region needs no
-                // conversion, which is the asymmetry the cell measures.
+    let selected_path = format!("{path}{}", suffix(case.metric));
+    let whole = case.metric == Metric::WholeConsumer;
+    Ok(Workload {
+        selected_path,
+        conversion,
+        body: Box::new(move |bank| {
+            let index = bank % bank_count;
+            // A whole consumer applying a fresh coefficient pays the table
+            // preparation on every call, as `FieldVec::axpy` takes its
+            // coefficient on every call.
+            if whole {
                 context.prepare(coefficient).expect("prepare");
-                context
-                    .axpy(black_box(&sources[index]), &mut targets[index])
-                    .expect("region multiply-XOR on a validated adapter");
-                black_box(&targets[index]);
-            }),
+            }
+            context
+                .axpy(black_box(&sources[index]), &mut targets[index])
+                .expect("region multiply-XOR on a validated adapter");
+            black_box(&targets[index]);
         }),
-    }
+    })
 }
 
-/// Arbitrary pairwise product `dest[i] = x[i] * y[i]`.
+/// Arbitrary pairwise product `dest[i] = x[i] * y[i]`: each library's
+/// single-element multiply applied per byte, the only pairwise form any of
+/// the three offers.
 fn build_pairwise(
     case: &Case,
     bank_count: usize,
@@ -225,29 +227,30 @@ fn build_pairwise(
     let mut out = vec![0u8; case.bytes];
     // Surface an unsupported operation before any timing happens.
     context.pairwise(&lefts[0], &rights[0], &mut out)?;
-    let path = format!(
-        "{}/{}/poly=0x{:X}/pairwise",
+    let selected_path = format!(
+        "{}/{}/poly=0x{:X}/element-multiply-per-byte{}",
         context.name(),
         context.version(),
-        case.poly
+        case.poly,
+        suffix(case.metric)
     );
-    let conversion = byte_field_arm_common::Conversion {
+    // The byte region is every library's native layout and the operation
+    // has no coefficient to prepare, so only the context setup is nonzero.
+    let conversion = Conversion {
         setup_ns,
-        pack_ns: 0,
-        unpack_ns: 0,
-        batch_fill_ns: 0,
-        dispatch_ns: 0,
+        ..Conversion::default()
     };
     Ok(Workload {
-        selected_path: match case.metric {
-            Metric::KernelIsolated => path,
-            Metric::WholeConsumer => format!("{path}/whole-consumer"),
-        },
+        selected_path,
         conversion,
         body: Box::new(move |bank| {
             let index = bank % bank_count;
             context
-                .pairwise(black_box(&lefts[index]), black_box(&rights[index]), &mut out)
+                .pairwise(
+                    black_box(&lefts[index]),
+                    black_box(&rights[index]),
+                    &mut out,
+                )
                 .expect("pairwise multiply on a validated adapter");
             black_box(&out);
         }),
@@ -255,39 +258,66 @@ fn build_pairwise(
 }
 
 /// Dense square product `C = A * B`.
-fn build_matmul(
+fn build_matmul(case: &Case, context: Context, setup_ns: u64) -> Result<Workload<'static>, String> {
+    build_product(case, context, setup_ns, case.n, case.n, case.n)
+}
+
+/// Dense product `C = A * B` in the backend's matrix type, with `A` of
+/// shape `rows x inner` and `B` of shape `inner x cols`. For an encode cell
+/// `A` is the generator, whose conversion is reported as the table
+/// preparation, as on the gf2 side.
+fn build_product(
     case: &Case,
     mut context: Context,
     setup_ns: u64,
+    rows: usize,
+    inner: usize,
+    cols: usize,
 ) -> Result<Workload<'static>, String> {
-    let n = case.n;
+    let encode = case.operation == Operation::Encode;
     let mut rng = SplitMix64::new(case.seed);
-    let mut left_bytes = vec![0u8; n * n];
-    let mut right_bytes = vec![0u8; n * n];
+    let mut left_bytes = vec![0u8; rows * inner];
+    let mut right_bytes = vec![0u8; inner * cols];
     rng.fill(&mut left_bytes);
     rng.fill(&mut right_bytes);
-    let mut left = context.matrix(n, n)?;
-    let mut right = context.matrix(n, n)?;
-    let mut product = context.matrix(n, n)?;
-    let (packed, pack_ns) = timed(|| left.pack(&left_bytes));
-    packed?;
+    let mut left = context.matrix(rows, inner)?;
+    let mut right = context.matrix(inner, cols)?;
+    let mut product = context.matrix(rows, cols)?;
+    left.pack(&left_bytes)?;
     right.pack(&right_bytes)?;
     product.mul(&left, &right)?;
-    let mut out = vec![0u8; n * n];
-    let (unpacked, unpack_ns) = timed(|| product.unpack(&mut out));
-    unpacked?;
-    let conversion = byte_field_arm_common::Conversion {
-        setup_ns,
-        pack_ns,
-        unpack_ns,
-        batch_fill_ns: 0,
-        dispatch_ns: 0,
+    let mut out = vec![0u8; rows * cols];
+    let left_pack_ns = probe_ns(|| left.pack(&left_bytes).expect("pack left"));
+    let right_pack_ns = probe_ns(|| right.pack(&right_bytes).expect("pack right"));
+    let unpack_ns = probe_ns(|| product.unpack(&mut out).expect("unpack"));
+    let conversion = if encode {
+        Conversion {
+            setup_ns,
+            pack_ns: right_pack_ns,
+            unpack_ns,
+            batch_fill_ns: left_pack_ns,
+            dispatch_ns: 0,
+        }
+    } else {
+        Conversion {
+            setup_ns,
+            pack_ns: left_pack_ns.saturating_add(right_pack_ns),
+            unpack_ns,
+            batch_fill_ns: 0,
+            dispatch_ns: 0,
+        }
     };
-    let path = format!(
-        "{}/{}/poly=0x{:X}/mzed_mul",
+    let shape = if encode {
+        format!("generator-{rows}x{inner}-by-{inner}x{cols}")
+    } else {
+        format!("square-{rows}")
+    };
+    let selected_path = format!(
+        "{}/{}/poly=0x{:X}/mzed_mul/{shape}{}",
         context.name(),
         context.version(),
-        case.poly
+        case.poly,
+        suffix(case.metric)
     );
     let mut state = MatmulState {
         product,
@@ -295,43 +325,43 @@ fn build_matmul(
         right,
         context,
     };
-    match case.metric {
-        Metric::KernelIsolated => Ok(Workload {
-            selected_path: path,
-            conversion,
-            body: Box::new(move |_| {
-                let MatmulState {
-                    product,
-                    left,
-                    right,
-                    ..
-                } = &mut state;
-                product
-                    .mul(black_box(&*left), black_box(&*right))
-                    .expect("matmul on a validated adapter");
-            }),
+    let body: Box<dyn FnMut(usize)> = match case.metric {
+        Metric::KernelIsolated => Box::new(move |_| {
+            let MatmulState {
+                product,
+                left,
+                right,
+                ..
+            } = &mut state;
+            product
+                .mul(black_box(&*left), black_box(&*right))
+                .expect("matmul on a validated adapter");
         }),
-        Metric::WholeConsumer => Ok(Workload {
-            selected_path: format!("{path}/whole-consumer"),
-            conversion,
-            body: Box::new(move |_| {
-                let MatmulState {
-                    product,
-                    left,
-                    right,
-                    ..
-                } = &mut state;
-                left.pack(black_box(&left_bytes)).expect("pack left");
-                right.pack(black_box(&right_bytes)).expect("pack right");
-                product.mul(&*left, &*right).expect("matmul");
-                product.unpack(&mut out).expect("unpack");
-                black_box(&out);
-            }),
+        Metric::WholeConsumer => Box::new(move |_| {
+            let MatmulState {
+                product,
+                left,
+                right,
+                ..
+            } = &mut state;
+            left.pack(black_box(&left_bytes)).expect("pack left");
+            right.pack(black_box(&right_bytes)).expect("pack right");
+            product.mul(&*left, &*right).expect("matmul");
+            product.unpack(&mut out).expect("unpack");
+            black_box(&out);
         }),
-    }
+    };
+    Ok(Workload {
+        selected_path,
+        conversion,
+        body,
+    })
 }
 
 /// Generator-matrix region encode `C[r][i] = sum_j G[r][j] * D[j][i]`.
+///
+/// ISA-L spells it `ec_encode_data` over prepared generator tables; M4RIE
+/// spells it as a dense product at that shape; GF-Complete has neither.
 fn build_encode(
     case: &Case,
     mut context: Context,
@@ -341,51 +371,62 @@ fn build_encode(
     let mut rng = SplitMix64::new(case.seed);
     let mut generator = vec![0u8; rows * k];
     let mut data = vec![0u8; k * len];
-    let mut coding = vec![0u8; rows * len];
     rng.fill(&mut generator);
     rng.fill(&mut data);
-    let (prepared, batch_fill_ns) = timed(|| context.encode_prepare(&generator, k, rows));
-    prepared?;
-    let path = format!(
-        "{}/{}/poly=0x{:X}/ec_encode_data",
+    if context.encode_prepare(&generator, k, rows).is_err() {
+        return build_product(case, context, setup_ns, rows, k, len);
+    }
+    let mut coding = vec![0u8; rows * len];
+    let batch_fill_ns = probe_ns(|| {
+        context
+            .encode_prepare(&generator, k, rows)
+            .expect("generator table preparation")
+    });
+    let selected_path = format!(
+        "{}/{}/poly=0x{:X}/ec_encode_data/generator-{rows}x{k}-by-{k}x{len}{}",
         context.name(),
         context.version(),
-        case.poly
+        case.poly,
+        suffix(case.metric)
     );
-    let conversion = byte_field_arm_common::Conversion {
+    let conversion = Conversion {
         setup_ns,
         pack_ns: 0,
         unpack_ns: 0,
         batch_fill_ns,
         dispatch_ns: 0,
     };
-    let whole = matches!(case.metric, Metric::WholeConsumer);
+    let whole = case.metric == Metric::WholeConsumer;
+    // The region pointer arrays are built once, outside the timed calls. The
+    // closure owns both buffers, and moving a `Vec` leaves its heap
+    // allocation in place, so the pointers stay valid for its lifetime.
+    // SAFETY: `data` holds `k * len` bytes and `coding` holds `rows * len`,
+    // so every offset below stays inside its allocation, and the two buffers
+    // are distinct.
+    let mut sources: Vec<*mut u8> = (0..k)
+        .map(|index| unsafe { data.as_mut_ptr().add(index * len) })
+        .collect();
+    let mut outputs: Vec<*mut u8> = (0..rows)
+        .map(|index| unsafe { coding.as_mut_ptr().add(index * len) })
+        .collect();
     Ok(Workload {
-        selected_path: if whole {
-            format!("{path}/whole-consumer")
-        } else {
-            path
-        },
+        selected_path,
         conversion,
         body: Box::new(move |_| {
+            // Keep both buffers owned by the closure.
+            let (_, _) = (&data, &coding);
+            // A whole consumer applying a fresh coefficient set pays the
+            // generator table preparation on every call, as `gemm` takes
+            // its generator on every call.
             if whole {
                 context
                     .encode_prepare(&generator, k, rows)
                     .expect("generator table preparation");
             }
-            // SAFETY: `data` holds `k * len` bytes and `coding` holds
-            // `rows * len`, so every offset below stays inside its
-            // allocation, and the two buffers are distinct.
-            let mut sources: Vec<*mut u8> = (0..k)
-                .map(|index| unsafe { data.as_mut_ptr().add(index * len) })
-                .collect();
-            let mut outputs: Vec<*mut u8> = (0..rows)
-                .map(|index| unsafe { coding.as_mut_ptr().add(index * len) })
-                .collect();
             context
                 .encode(len, &mut sources, &mut outputs)
                 .expect("generator encode on a validated adapter");
-            black_box(&coding);
+            black_box(outputs[0]);
         }),
     })
 }
@@ -400,10 +441,12 @@ fn build_encode(
 struct RowState {
     sources: Vec<Matrix>,
     targets: Vec<Matrix>,
+    /// Held only so the field outlives the matrices that point into it.
+    #[allow(dead_code)]
     context: Context,
 }
 
-/// Square-matrix operands and the context they came from, ordered so the
+/// Product operands and the context they came from, ordered so the
 /// matrices are released before the field they point into.
 struct MatmulState {
     product: Matrix,
@@ -442,8 +485,13 @@ fn validate() -> i32 {
                 continue;
             }
         };
-        println!("backend   {label}/{variant} -> {} ({})", context.name(), context.version());
+        println!(
+            "backend   {label}/{variant} -> {} ({})",
+            context.name(),
+            context.version()
+        );
         failures += validate_region(&mut context, label, variant);
+        failures += validate_pairwise(&mut context, label, variant);
         failures += validate_matrix(&mut context, label, variant);
         failures += validate_encode(&mut context, label, variant);
     }
@@ -482,36 +530,71 @@ fn validate_region(context: &mut Context, label: &str, variant: &str) -> u32 {
                 1
             }
         }
-        Err(_) => match context.matrix(1, length) {
-            Ok(mut source_row) => {
-                let mut target_row = context.matrix(1, length).expect("target row");
-                source_row.pack(&source).expect("pack source");
-                target_row.pack(&target).expect("pack target");
-                target_row
-                    .row_axpy(0, &source_row, 0, coefficient)
-                    .expect("row axpy");
-                let mut got = vec![0u8; length];
-                target_row.unpack(&mut got).expect("unpack");
-                if got == want {
-                    println!("ok        {label}/{variant} row region multiply-XOR through the wrapper");
+        Err(_) => {
+            match context.matrix(1, length) {
+                Ok(mut source_row) => {
+                    let mut target_row = context.matrix(1, length).expect("target row");
+                    source_row.pack(&source).expect("pack source");
+                    target_row.pack(&target).expect("pack target");
+                    target_row
+                        .row_axpy(0, &source_row, 0, coefficient)
+                        .expect("row axpy");
+                    let mut got = vec![0u8; length];
+                    target_row.unpack(&mut got).expect("unpack");
+                    if got == want {
+                        println!("ok        {label}/{variant} row region multiply-XOR through the wrapper");
+                        0
+                    } else {
+                        eprintln!("FAIL {label}/{variant} row region multiply-XOR disagrees");
+                        1
+                    }
+                }
+                Err(reason) => {
+                    println!("unsupported {label}/{variant} region multiply-XOR: {reason}");
                     0
-                } else {
-                    eprintln!("FAIL {label}/{variant} row region multiply-XOR disagrees");
-                    1
                 }
             }
-            Err(reason) => {
-                println!("unsupported {label}/{variant} region multiply-XOR: {reason}");
-                0
-            }
-        },
+        }
     }
 }
 
-fn validate_matrix(context: &mut Context, label: &str, variant: &str) -> u32 {
+fn validate_pairwise(context: &mut Context, label: &str, variant: &str) -> u32 {
     const POLY: u32 = 0x11D;
-    let n = 16usize;
-    let mut rng = SplitMix64::new(0x4D_4154);
+    let mut rng = SplitMix64::new(0x9A11);
+    for length in [1usize, 63, 64, 65, 4096] {
+        let mut left = vec![0u8; length];
+        let mut right = vec![0u8; length];
+        rng.fill(&mut left);
+        rng.fill(&mut right);
+        let mut got = vec![0u8; length];
+        if let Err(reason) = context.pairwise(&left, &right, &mut got) {
+            eprintln!("FAIL {label}/{variant} pairwise multiply: {reason}");
+            return 1;
+        }
+        let want: Vec<u8> = left
+            .iter()
+            .zip(&right)
+            .map(|(x, y)| shim::reference_mul(*x, *y, POLY))
+            .collect();
+        if got != want {
+            eprintln!("FAIL {label}/{variant} pairwise multiply disagrees at length {length}");
+            return 1;
+        }
+    }
+    println!("ok        {label}/{variant} pairwise multiply through the wrapper");
+    0
+}
+
+fn validate_matrix(context: &mut Context, label: &str, variant: &str) -> u32 {
+    [16usize, 64]
+        .into_iter()
+        .map(|n| validate_square(context, label, variant, n))
+        .sum()
+}
+
+fn validate_square(context: &mut Context, label: &str, variant: &str, n: usize) -> u32 {
+    const POLY: u32 = 0x11D;
+    let mut rng = SplitMix64::new(0x004D_4154 + n as u64);
     let mut left = vec![0u8; n * n];
     let mut right = vec![0u8; n * n];
     rng.fill(&mut left);
@@ -519,7 +602,7 @@ fn validate_matrix(context: &mut Context, label: &str, variant: &str) -> u32 {
     let mut a = match context.matrix(n, n) {
         Ok(matrix) => matrix,
         Err(reason) => {
-            println!("unsupported {label}/{variant} dense matmul: {reason}");
+            println!("unsupported {label}/{variant} dense matmul n={n}: {reason}");
             return 0;
         }
     };
@@ -541,25 +624,41 @@ fn validate_matrix(context: &mut Context, label: &str, variant: &str) -> u32 {
         }
     }
     if got == want {
-        println!("ok        {label}/{variant} dense matmul through the wrapper");
+        println!("ok        {label}/{variant} dense matmul n={n} through the wrapper");
         0
     } else {
-        eprintln!("FAIL {label}/{variant} dense matmul disagrees");
+        eprintln!("FAIL {label}/{variant} dense matmul n={n} disagrees");
         1
     }
 }
 
+/// Generator encode at a small shape and at the encode cells' shape.
 fn validate_encode(context: &mut Context, label: &str, variant: &str) -> u32 {
+    [(6usize, 3usize, 512usize), (10, 4, 65536)]
+        .into_iter()
+        .map(|(k, rows, len)| validate_encode_shape(context, label, variant, k, rows, len))
+        .sum()
+}
+
+fn validate_encode_shape(
+    context: &mut Context,
+    label: &str,
+    variant: &str,
+    k: usize,
+    rows: usize,
+    len: usize,
+) -> u32 {
     const POLY: u32 = 0x11D;
-    let (k, rows, len) = (6usize, 3usize, 512usize);
-    let mut rng = SplitMix64::new(0x454E_43);
+    let mut rng = SplitMix64::new(0x0045_4E43 + len as u64);
     let mut generator = vec![0u8; rows * k];
     let mut data = vec![0u8; k * len];
     let mut coding = vec![0u8; rows * len];
     rng.fill(&mut generator);
     rng.fill(&mut data);
     if let Err(reason) = context.encode_prepare(&generator, k, rows) {
-        println!("unsupported {label}/{variant} generator encode: {reason}");
+        println!(
+            "unsupported {label}/{variant} generator encode k={k} rows={rows} len={len}: {reason}"
+        );
         return 0;
     }
     let mut want = vec![0u8; rows * len];
@@ -584,12 +683,14 @@ fn validate_encode(context: &mut Context, label: &str, variant: &str) -> u32 {
     let mut outputs: Vec<*mut u8> = (0..rows)
         .map(|index| unsafe { coding.as_mut_ptr().add(index * len) })
         .collect();
-    context.encode(len, &mut sources, &mut outputs).expect("encode");
+    context
+        .encode(len, &mut sources, &mut outputs)
+        .expect("encode");
     if coding == want {
-        println!("ok        {label}/{variant} generator encode through the wrapper");
+        println!("ok        {label}/{variant} generator encode k={k} rows={rows} len={len} through the wrapper");
         0
     } else {
-        eprintln!("FAIL {label}/{variant} generator encode disagrees");
+        eprintln!("FAIL {label}/{variant} generator encode k={k} rows={rows} len={len} disagrees");
         1
     }
 }
