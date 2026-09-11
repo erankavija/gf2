@@ -6,6 +6,8 @@
 //! survey-analysis ledger-genesis FAMILY LEDGER V1_RECEIPT_DIR
 //! survey-analysis ledger-check FAMILY LEDGER
 //! survey-analysis plan-check ADDENDUM [PLAN]
+//! survey-analysis tables OUTPUT RECEIPT_DIR...
+//! survey-analysis resolution PILOT_RECEIPT_DIR [STRICTER_ALPHA]
 //! ```
 //!
 //! `ledger-genesis` creates a protocol-v3 family ledger whose only line
@@ -24,6 +26,14 @@
 //! against that addendum when one is given, so a frozen addendum or a
 //! projected plan that the runner would refuse fails here, before anything
 //! is queued for a benchmark window.
+//!
+//! `tables` writes the generated tables of the given receipt directories
+//! (see [`tables`] for what they contain and how every interval is formed).
+//! `resolution` prints the relative bootstrap half-width of every cell of a
+//! pilot receipt and the widest one, the input of a confirmation's frozen
+//! measurement resolution.
+
+mod tables;
 
 use std::fs;
 use std::path::Path;
@@ -46,9 +56,18 @@ fn main() -> ExitCode {
         ["ledger-check", family, ledger] => ledger_check(family, ledger),
         ["plan-check", addendum] => plan_check(addendum, None),
         ["plan-check", addendum, plan] => plan_check(addendum, Some(plan)),
+        ["tables", output, receipts @ ..] if !receipts.is_empty() => {
+            tables::tables(output, receipts)
+        }
+        ["resolution", pilot] => tables::resolution(pilot, None),
+        ["resolution", pilot, alpha] => alpha
+            .parse::<f64>()
+            .map_err(|e| format!("alpha {alpha}: {e}"))
+            .and_then(|alpha| tables::resolution(pilot, Some(alpha))),
         _ => Err(
             "usage: survey-analysis ledger-genesis FAMILY LEDGER V1_RECEIPT_DIR | \
-                  ledger-check FAMILY LEDGER | plan-check ADDENDUM [PLAN]"
+                  ledger-check FAMILY LEDGER | plan-check ADDENDUM [PLAN] | \
+                  tables OUTPUT RECEIPT_DIR... | resolution PILOT_RECEIPT_DIR [ALPHA]"
                 .to_owned(),
         ),
     };
