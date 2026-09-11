@@ -144,6 +144,18 @@ traversal), `f63a2464` (quantized, layered, QC-aware) and `ed3d490e`
 | Degree structure | search and gather cost grow with check and variable degree | per-code shares | The NR gap exceeds the DVB gap in the single-worker cells; refuted otherwise. |
 | Dispatch | lazy kernel table and indirect call per edge; pool barriers per call | `min-sum-dispatch`, `dispatch` | Direct inlined reduction; pool dispatch probe stays negligible against the call. |
 
+## Reproduction
+
+From the worktree root: build the harness with the command the build identity
+records, extract the `c077a88b` recorded-input archive into
+`target/ldpc-inputs`, record the preparation with
+[record-preparation.py](survey/record-preparation.py), then run
+`dev/bench_results/3be770d5/run-campaign.sh FAMILY pilot RUN_ID prepare`
+followed by `window` for each family, and
+`dev/active/3be770d5/survey/run-profile.sh DIR` for the profile series. Each
+command resumes under its own identity; the script headers state their
+contracts.
+
 ## Results
 
 WAITING-ON-WINDOW: the three pilot receipts, the profile summary
