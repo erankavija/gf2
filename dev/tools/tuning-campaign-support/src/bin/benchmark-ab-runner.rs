@@ -604,7 +604,8 @@ fn run_arm(
     Ok(execution)
 }
 
-/// Journal case of every cell-level record; the cell ID is its checkpoint key.
+/// Journal case of a cell's start, abandonment, checkpoint and completion
+/// records; the cell ID is its checkpoint key.
 fn cell_case(cell: &PlanCell) -> Value {
     json!({"key": cell.cell_id, "cell_id": cell.cell_id, "case": cell.case})
 }
