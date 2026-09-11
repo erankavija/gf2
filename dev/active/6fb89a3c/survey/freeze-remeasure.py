@@ -8,10 +8,13 @@ without the protocol's untimed pass before calibration. The re-measurement
 repeats every cell of the family's committed v3 pilot addendum with the fixed
 arms, and it is exploratory for a reason this script checks before writing:
 the withdrawn confirmation's ledger reservation holds the identity of every
-external candidate the repeated cells use, and each candidate executable is
-still the byte-identical one, so `trial_ledger::reserve` would refuse a
-second confirmatory reservation (one attempt per candidate identity and
-protocol version). The script also counts, per cell, the committed campaigns
+external candidate the repeated cells use. A candidate whose executable is
+still the byte-identical one would be refused a second confirmatory
+reservation by `trial_ledger::reserve` (one attempt per candidate identity and
+protocol version). A candidate listed in REBUILT was rebuilt to fix its own
+warm pass; its new executable, which must match the committed build evidence,
+is a new identity for the same comparator, and the addendum states that the
+family opens no confirmatory attempt with it. The script also counts, per cell, the committed campaigns
 that started a pilot of the same question under protocol v1 or v3 and
 declares the most-sampled cell's count, this campaign included, as the search
 budget, refusing a count above the schema's cap. The addendum keeps the
@@ -39,6 +42,13 @@ SEEDS = {
     "bch": ("The workload seed is carried for schema uniformity and no generator consumes it: the generator matrix is a "
             "deterministic function of the code."),
 }
+# External candidates rebuilt after their withdrawn confirmation, with the defect
+# the rebuild fixes. `survey/verify-warm-pass.py` observes each fix.
+REBUILT = {
+    "m4ri-transpose": ("warm pass in the committed receipts transposed each input into a fresh output, leaving the kernel "
+                       "cell's preallocated output outside the pass; the fixed arm's warm pass runs the timed call on every "
+                       "bank (dev/active/6fb89a3c/survey/m4ri_transpose_arm.c)"),
+}
 
 
 def records(log: pathlib.Path) -> list[dict]:
@@ -52,23 +62,32 @@ def candidate_identity(arm: dict) -> str:
     return hashlib.sha256(json.dumps(record, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
 
 
-def spent_candidates(family_id: str, ledger_path: str, pilot_receipt: dict, confirmation_dir: pathlib.Path) -> list[str]:
+def spent_candidates(family_id: str, ledger_path: str, pilot_receipt: dict,
+                     confirmation_dir: pathlib.Path) -> tuple[list[str], dict[str, tuple[str, str]]]:
     """Checks that every candidate arm of the repeated cells is reserved by the
-    confirmation and unchanged; returns the arm names."""
+    confirmation and either unchanged or rebuilt as REBUILT records; returns the
+    arm names and, per rebuilt arm, its confirmation and current digests."""
     receipt = json.loads((confirmation_dir / "receipt.json").read_text())
     reservation = [e for e in map(json.loads, pathlib.Path(ledger_path).read_text().splitlines())
                    if e["campaign"] == receipt["campaign_id"]]
     if receipt["family_id"] != family_id or len(reservation) != 1 or reservation[0]["comparisons"] == 0:
         raise SystemExit(f"{confirmation_dir}: no confirmatory reservation for {family_id}")
+    evidence = json.loads((ISSUE / "survey/build-evidence.json").read_text())["harness_binaries"]
     names = sorted({cell["candidate_arm"] for cell in pilot_receipt["cells"]})
+    rebuilt = {}
     for name in names:
         arm = receipt["arms"].get(name)
         if arm is None or candidate_identity(arm) not in reservation[0]["candidates"]:
             raise SystemExit(f"candidate {name} holds no confirmatory reservation; review the re-measurement role")
-        current = ISSUE / "survey" / pathlib.Path(arm["executable_path"]).name
-        if hashlib.sha256(current.read_bytes()).hexdigest() != arm["executable_sha256"]:
-            raise SystemExit(f"candidate {name} executable changed since the confirmation; review the re-measurement role")
-    return names
+        binary = pathlib.Path(arm["executable_path"]).name
+        current = hashlib.sha256((ISSUE / "survey" / binary).read_bytes()).hexdigest()
+        if current == arm["executable_sha256"] and name not in REBUILT:
+            continue
+        if name not in REBUILT or current == arm["executable_sha256"] or current != evidence[binary]["sha256"]:
+            raise SystemExit(f"candidate {name} executable differs from the confirmation's without a matching REBUILT "
+                             "record and build evidence; review the re-measurement role")
+        rebuilt[name] = (arm["executable_sha256"], current)
+    return names, rebuilt
 
 
 def pilot_history(family_ids: set[str]) -> dict[str, list[str]]:
@@ -103,8 +122,23 @@ def main() -> int:
     if hashlib.sha256(pilot_bytes).hexdigest() != evidence["sha256"]:
         raise SystemExit(f"{evidence['receipt']} differs from the confirmation's resolution evidence")
     pilot_receipt = json.loads(pilot_bytes)
-    candidates = spent_candidates(family_id, ledger_path, pilot_receipt,
-                                  RESULTS / f"v3-r1-6fb89a3c-{family}-confirmation")
+    candidates, rebuilt = spent_candidates(family_id, ledger_path, pilot_receipt,
+                                           RESULTS / f"v3-r1-6fb89a3c-{family}-confirmation")
+    reserved = ("per candidate identity and version; the withdrawn confirmation's ledger reservation holds the identity of "
+                f"every external candidate these cells use ({', '.join(candidates)})")
+    if not rebuilt:
+        role = (reserved + ", whose executables are unchanged, so every cell here is exploratory and no interval carries "
+                "a confirmatory decision.")
+    else:
+        unchanged = [name for name in candidates if name not in rebuilt]
+        role = reserved + "."
+        if unchanged:
+            role += f" The executable{'s' if len(unchanged) > 1 else ''} of {', '.join(unchanged)} {'are' if len(unchanged) > 1 else 'is'} unchanged."
+        for name, (old, new) in rebuilt.items():
+            role += (f" {name}'s {REBUILT[name]}. Its executable changed from sha256 {old} to {new}: a new candidate identity "
+                     "for the same comparator whose confirmatory attempt the withdrawn confirmation spent, and this family "
+                     "opens no confirmatory attempt with it.")
+        role += " Every cell here is therefore exploratory and no interval carries a confirmatory decision."
 
     origin = json.loads((RESULTS / "v3-ledger-origin.json").read_text())
     predecessor = next(f["predecessor_question"] for f in origin["families"] if f["family"] == family_id)
@@ -129,9 +163,7 @@ def main() -> int:
         "over the working set before calibration, so their gf2 `warm` declarations are false and their comparisons are "
         "withdrawn. This campaign re-measures every cell of the v3 pilot addendum with fixed gf2 arms that make that pass "
         "(timed_windows in dev/active/6fb89a3c/survey/gf2-side/src/lib.rs). Protocol v3 allows one confirmatory attempt "
-        f"per candidate identity and version; the withdrawn confirmation's ledger reservation holds the identity of every "
-        f"external candidate these cells use ({', '.join(candidates)}), whose executables are unchanged, so every cell here "
-        "is exploratory and no interval carries a confirmatory decision. Pilot trials per cell, counting every committed "
+        + role + " Pilot trials per cell, counting every committed "
         f"campaign that started a pilot of this question under protocol v1 (family {predecessor_id}) or v3 and this "
         "campaign: " + ", ".join(f"{cell} {n}" for cell, n in trials.items())
         + f". The search budget declares the maximum, within the protocol cap of {cap}; the earlier v3 addenda counted v3 "

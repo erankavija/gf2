@@ -166,6 +166,19 @@ CLAIMS = [
      "The Bitshuffle adapter's pack probe averages 100000 warm repetitions of the pack copy the consumer call performs; the unpack probe follows it."),
     ("survey-m4ri-genmatrix-reduction-probe", "gf2", "dev/active/6fb89a3c/survey/m4ri_genmatrix_arm.c", "start = monotonic_ns(); mzd_echelonize_m4ri(probe, 1, 0); dispatch_ns = monotonic_ns() - start; mzd_free(probe);", 0,
      "The M4RI generator-matrix arm reports one reduction of a fresh unreduced copy in the dispatch_ns field and one mzd_copy in pack_ns; the tables label them as the reduction and the copy."),
+    # Warm passes (protocol v3: one untimed pass over the working set before calibration)
+    ("survey-gf2-warm-pass", "gf2", "dev/active/6fb89a3c/survey/gf2-side/src/lib.rs", "    body(0);", 0,
+     "timed_windows runs the timed body once, on the arms' single workload, before execution_windows_configured calibrates; it refuses every cache state but warm."),
+    ("survey-m4ri-transpose-timed-call", "gf2", "dev/active/6fb89a3c/survey/m4ri_transpose_arm.c", "mzd_t *out = mzd_transpose(ctx->include_allocation ? NULL : ctx->out[bank], ctx->a[bank]);", 0,
+     "The timed M4RI transpose writes the preallocated output in the kernel cell and a fresh output in consumer cells."),
+    ("survey-m4ri-transpose-warm-pass", "gf2", "dev/active/6fb89a3c/survey/m4ri_transpose_arm.c", 'if (!strcmp(cache, "warm")) for (uint64_t i = 0; i < ctx.banks; i++) transpose_body(&ctx, i);', 0,
+     "The M4RI transpose warm pass runs the timed body on every bank, so the kernel cell's pass also writes the preallocated output."),
+    ("survey-bitshuffle-warm-pass", "gf2", "dev/active/6fb89a3c/survey/bitshuffle_transpose_arm.c", 'if (!strcmp(cache, "warm")) for (size_t i = 0; i < ctx.banks; i++) { if (fixed) fixed_body(&ctx, i); else consumer_body(&ctx, i); }', 0,
+     "The Bitshuffle warm pass runs the timed body of the cell's kind on every bank."),
+    ("survey-isal-warm-pass", "gf2", "dev/active/6fb89a3c/survey/isal_xor_arm.c", 'if (!strcmp(cache, "warm")) for (size_t i = 0; i < ctx.banks; i++) xor_body(&ctx, i);', 0,
+     "The ISA-L warm pass runs the timed body on every bank."),
+    ("survey-m4ri-genmatrix-warm-pass", "gf2", "dev/active/6fb89a3c/survey/m4ri_genmatrix_arm.c", 'if (!strcmp(cache, "warm")) for (uint64_t i = 0; i < ctx.banks; i++) gen_body(&ctx, i);', 0,
+     "The M4RI generator-matrix warm pass runs the timed body on every bank."),
 ]
 
 
