@@ -321,6 +321,8 @@ struct PilotFixture<'a> {
     family_id: Option<&'a str>,
     claim_alpha: Option<f64>,
     omit_claim: bool,
+    /// Protocol version of the pilot's addendum; the family's by default.
+    protocol_version: Option<u32>,
 }
 
 fn fixture_pilot_receipt(repo: &Path, addendum: ArtifactPin) -> BenchmarkReceipt {
@@ -479,6 +481,10 @@ fn build_receipt_with_history(
     pilot_addendum.effect.resolution_evidence = None;
     for cell in &mut pilot_addendum.cells {
         cell.role = CellRole::Exploratory;
+    }
+    if let Some(version) = pilot_fixture.protocol_version {
+        pilot_addendum.protocol.version = version;
+        pilot_addendum.schema = format!("zen3-benchmark-addendum-v{version}");
     }
     let mut pilot_addendum_bytes = serde_json::to_vec_pretty(&pilot_addendum).unwrap();
     pilot_addendum_bytes.push(b'\n');
@@ -884,6 +890,42 @@ fn build_receipt_with_history(
                             }
                         }
                     }
+                }
+            }
+            // Journal every execution in run order, as the runner does.
+            for pair in &record.pairs {
+                let run_order = match pair.order {
+                    ArmOrder::BaselineFirst => {
+                        [("baseline", &pair.baseline), ("candidate", &pair.candidate)]
+                    }
+                    ArmOrder::CandidateFirst => {
+                        [("candidate", &pair.candidate), ("baseline", &pair.baseline)]
+                    }
+                };
+                for (role, execution) in run_order {
+                    let execution_case = json!({
+                        "key": key,
+                        "cell_id": spec.id,
+                        "arm": execution.arm,
+                        "role": role,
+                        "pair": pair.index
+                    });
+                    log.append(
+                        JournalEvent::ChildSpawn,
+                        Some(execution_case.clone()),
+                        json!({"pid": execution.pid}),
+                    )
+                    .unwrap();
+                    log.append(
+                        JournalEvent::ExecutionProgress,
+                        Some(execution_case),
+                        json!({
+                            "ns_per_call": execution.ns_per_call,
+                            "windows": execution.windows,
+                            "quality": execution.quality
+                        }),
+                    )
+                    .unwrap();
                 }
             }
             if spec.claim {
@@ -3627,6 +3669,42 @@ fn acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_sampl
         execution.ns_per_call = median(&mut values).unwrap();
     });
     assert_rejected_by_p11(&unjournaled_sample, "differ from the executions");
+}
+
+#[test]
+fn resolution_evidence_accepts_pilots_from_version_3_to_the_citing_version() {
+    for (family_version, pilot_version, expected) in [
+        (PROTOCOL_VERSION, 3, Verdict::Accepted),
+        (PROTOCOL_VERSION, PROTOCOL_VERSION, Verdict::Accepted),
+        (3, PROTOCOL_VERSION, Verdict::Rejected),
+    ] {
+        let mut family = v3_family();
+        family.protocol.version = family_version;
+        family.schema = format!("zen3-benchmark-addendum-v{family_version}");
+        let built = build_receipt_with_history(
+            &format!("v{pilot_version}-pilot-for-v{family_version}"),
+            &family,
+            &[spec("quality", 2.0)],
+            None,
+            &[],
+            PilotFixture {
+                protocol_version: Some(pilot_version),
+                ..PilotFixture::default()
+            },
+            |_| {},
+        );
+        let summary = evaluate(&built.dir).unwrap();
+        assert_eq!(
+            summary.verdict, expected,
+            "v{pilot_version} pilot for v{family_version}: {:?}",
+            summary.findings
+        );
+        if expected == Verdict::Rejected {
+            assert!(summary.findings.iter().any(|finding| {
+                finding.rule == "P-03" && finding.message.contains("versioned pilot identity")
+            }));
+        }
+    }
 }
 
 #[test]
