@@ -134,7 +134,7 @@ test "$got" = "build-1 bench build-2 " || {
 # cargo-budget.sh passes because it never gives the command a lock
 # descriptor: it closes its CCX1 and slot descriptors in the child with the
 # `{SLOT_FD}>&- {CCX1_FD}>&-` redirections and takes the test lock with
-# `flock -o`. Under the benchmark wrapper the command and so the daemon do
+# `flock -o` (commit d343807c). Under the benchmark wrapper the command and so the daemon do
 # hold the mutex descriptor, because the benchmark runner refuses to measure
 # without an inherited descriptor for the held lock (`host::inherited_lock`);
 # the wrapper's unlock after the command must free the lock all the same.
