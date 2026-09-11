@@ -13,7 +13,7 @@ and [protocol v3](../f547c394/protocol.md) govern every timed cell.
 | REQ-01 | Topology, SMT and affinity observation for one pinned worker per arm; source/build identities of both arms. No worker-count normalization: every cell is a single-instance, single-worker call. | [findings](../c077a88b/findings.md) "Limits and follow-up"; [build identity](../../bench_results/c077a88b/v3-preparation/build-identity.json) |
 | REQ-02 | No profile. Setup/conversion diagnostics only. | [tables](../../bench_results/c077a88b/tables.md) "Matched-algorithm timing" |
 | REQ-03 | Names the follow-up issues; ranks nothing. | findings "Limits and follow-up" |
-| REQ-04 | Identical digested AList and recorded LLR bundles, NMS 0.75, flooding, cap 50, syndrome stopping; fastest-compatible AFF3CT modes with precision, schedule and wave size; 128-frame BER/FER counts, intervals and iteration distributions. | [tables](../../bench_results/c077a88b/tables.md) "Quality on identical recorded inputs"; [validation](../../bench_results/c077a88b/v3-preparation/validation.json) |
+| REQ-04 | Identical digested AList and recorded LLR bundles, NMS 0.75, flooding, cap 50, syndrome stopping; fastest-compatible AFF3CT modes with precision, schedule and wave size; recorded-corpus BER/FER counts, intervals and iteration distributions. | [tables](../../bench_results/c077a88b/tables.md) "Quality on identical recorded inputs"; [validation](../../bench_results/c077a88b/v3-preparation/validation.json) |
 | REQ-05 | Protocol-v3 receipts with pinned contract, protocol and addenda for **whole-call** cells, where AList parsing and decoder construction are inside every timed call. | [matched confirmation](../../bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json) |
 
 The whole-call cells answer a consumer-latency question in which AFF3CT's
@@ -38,7 +38,7 @@ unmeasured there; this issue measures it.
      (6 and 12 physical cores, 24 logical CPUs).
    - `ldpc-steady-fastest-compatible-v1`: gf2 against AFF3CT layered f32,
      layered f32 INTER and layered i16 INTER at one worker. Exploratory only:
-     under v3 the 128-frame corpus cannot certify quality admission (P-19),
+     under v3 the recorded corpus cannot certify quality admission (P-19),
      so no confirmation is planned; its cells characterize the layered,
      quantized and inter-frame levers.
 
@@ -62,7 +62,7 @@ unmeasured there; this issue measures it.
 5. **Correctness before timing.** Every timed child checks each worker's
    decisions for the batch against the prepared per-frame error vector and
    fails on any difference. An untimed validation replays the full
-   128-frame bundles through the reused-decoder and multi-worker paths.
+   recorded bundles through the reused-decoder and multi-worker paths.
 
 ## Lever ranking method
 
