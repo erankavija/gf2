@@ -9,8 +9,8 @@ record carries that line's verbatim text. External projects must be clean
 checkouts at their pinned commits. gf2 claims are read from this repository's
 committed HEAD; the file must equal its HEAD blob, and the record adds the
 file's SHA-256. A claim on the arm sources that the v3 DVB-T2 receipts
-snapshot also requires every DVB-T2 launcher log to list that SHA-256, and the
-record names those logs.
+snapshot also requires the launcher log of every DVB-T2 receipt that ran them
+(`WITHDRAWN_DVB_T2`) to list that SHA-256, and the record names those logs.
 """
 
 import argparse
@@ -38,8 +38,15 @@ LDPC_CORE = "crates/gf2-coding/src/ldpc/core.rs"
 RM = "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp"
 SURVEY = "dev/active/eda07788/survey/"
 # The arm sources the v3 DVB-T2 receipts ran, as the confirmation's producing
-# snapshot holds them.
+# snapshot holds them, and every DVB-T2 receipt that ran those sources.
 V3_ARMS = "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/inputs/producing/" + SURVEY
+WITHDRAWN_DVB_T2 = [
+    "2026-09-08-eda07788-dvb-t2-pilot",
+    "2026-09-08-eda07788-dvb-t2-confirmation",
+    "2026-09-08-eda07788-dvb-t2-v3-pilot",
+    "2026-09-08-eda07788-dvb-t2-v3-pilot-r2",
+    "2026-09-08-eda07788-dvb-t2-v3-confirmation",
+]
 
 # claim, project, path, needle, interpretation[, after-line]
 CLAIMS = [
@@ -133,8 +140,8 @@ CLAIMS = [
     ("survey-external-output", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let mut output = vec![0_i32; bits];", "It allocates an int32 output frame inside the timed body."),
     ("survey-external-pack", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let packed_output = pack_bits(&output);", "It packs the permuted frame back inside the timed body."),
     ("survey-shim-input-copy", "gf2", SURVEY + "xdsopl-shim/xdsopl_shim.cpp", "std::vector<int32_t> mutable_input(input, input + Interleaver::N);", "The shim copies the input because PCTITL::fwd overwrites it."),
-    ("survey-v3-gf2-arm-warm-defect", "gf2", V3_ARMS + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "black_box(&buffers[0]);", "In the gf2 arm source the v3 receipts snapshot, the warm branch only passes a reference to the input bank through black_box: no interleave and no output allocation run before calibration. All five DVB-T2 launcher logs list this file's SHA-256 under their survey source digests."),
-    ("survey-v3-external-arm-warm-defect", "gf2", V3_ARMS + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "black_box(&buffers[0]);", "The external arm's warm branch in that snapshot is the same reference pass: no unpack, PCTITL call or pack runs before calibration. All five DVB-T2 launcher logs list this file's SHA-256."),
+    ("survey-v3-gf2-arm-warm-defect", "gf2", V3_ARMS + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "black_box(&buffers[0]);", "In the gf2 arm source the v3 receipts snapshot, the warm branch only passes a reference to the input bank through black_box: no interleave and no output allocation run before calibration. The launcher log of every withdrawn DVB-T2 receipt lists this file's SHA-256 under its survey source digests."),
+    ("survey-v3-external-arm-warm-defect", "gf2", V3_ARMS + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "black_box(&buffers[0]);", "The external arm's warm branch in that snapshot is the same reference pass: no unpack, PCTITL call or pack runs before calibration. The launcher log of every withdrawn DVB-T2 receipt lists this file's SHA-256."),
     ("survey-arm-cache-refusal", "gf2", SURVEY + "gf2-side/src/lib.rs", "is not implemented; the arms apply warm and streaming", "The repaired arms decode the request's cache state into a policy and refuse every state other than warm and streaming."),
     ("survey-arm-warm-pass", "gf2", SURVEY + "gf2-side/src/lib.rs", "body(0);", "The repaired timing helper runs the timed body once on bank 0, untimed, before calibration when the policy is warm."),
     ("survey-arm-warm-pass-test", "gf2", SURVEY + "gf2-side/src/lib.rs", "fn warm_request_runs_one_untimed_pass_before_calibration()", "A zero-window warm request observes exactly one body call, on bank 0, before the timing loop rejects the request."),
@@ -215,11 +222,9 @@ def main():
             record["sha256"] = hashlib.sha256(content).hexdigest()
         records.append(record)
 
-    # Each DVB-T2 receipt's launcher log must list the snapshot's digest for the
-    # arm source, so the snapshot is the source every DVB-T2 campaign ran.
-    results = os.path.join(repo, "dev/bench_results/eda07788")
-    logs = sorted(os.path.join(results, name, "launcher.log") for name in os.listdir(results)
-                  if "-dvb-t2-" in name and os.path.isfile(os.path.join(results, name, "launcher.log")))
+    # Each withdrawn DVB-T2 receipt's launcher log must list the snapshot's
+    # digest for the arm source, so the snapshot is the source they all ran.
+    logs = [os.path.join(repo, "dev/bench_results/eda07788", name, "launcher.log") for name in WITHDRAWN_DVB_T2]
     for record in records:
         if record["path"].startswith(V3_ARMS):
             listed = record["sha256"] + "  " + record["path"][len(V3_ARMS) - len(SURVEY):]
