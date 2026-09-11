@@ -1,0 +1,31 @@
+field     Gf2mElement = GF(2^8) modulo 0x11D
+ok        Gf2mElement multiplication table under 0x11D
+ok        Gf2mElement byte round trip at the boundary lengths
+ok        Gf2mElement FieldVec::axpy against the independent reference
+ok        Gf2mElement field::matrix::gemm 1x1 by 1x1 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        Gf2mElement field::matrix::gemm 16x16 by 16x16 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        Gf2mElement field::matrix::gemm 63x63 by 63x63 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        Gf2mElement field::matrix::gemm 64x64 by 64x64 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        Gf2mElement field::matrix::gemm 65x65 by 65x65 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        Gf2mElement field::matrix::gemm 256x256 by 256x256 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        Gf2mElement field::matrix::gemm 512x512 by 512x512 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        Gf2mElement field::matrix::gemm 3x6 by 6x512 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        Gf2mElement field::matrix::gemm 4x10 by 10x65536 (per-cell-batch-dot/vpclmulqdq-batch)
+ok        gf2m::batch::batch_mul against the independent reference
+field     Gf2mWide<1,Gf256x11d> = GF(2^8) modulo 0x11D
+ok        Gf2mWide<1,Gf256x11d> multiplication table under 0x11D
+ok        Gf2mWide<1,Gf256x11d> byte round trip at the boundary lengths
+ok        Gf2mWide<1,Gf256x11d> FieldVec::axpy against the independent reference
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 1x1 by 1x1 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 16x16 by 16x16 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 63x63 by 63x63 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 64x64 by 64x64 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 65x65 by 65x65 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 256x256 by 256x256 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 512x512 by 512x512 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 3x6 by 6x512 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mWide<1,Gf256x11d> field::matrix::gemm 4x10 by 10x65536 (whole-gemm/vpclmulqdq-gemm)
+ok        Gf2mField::new(8, 0x11B) multiplication table under 0x11B
+ok        0x11B and 0x11D are distinct fields: 2 * 128 is 29 under 0x11D and 27 under 0x11B
+
+27 checks, 0 failures
