@@ -1,0 +1,1041 @@
+{
+  "schema": "bdc507a3-verdict-preservation-v1",
+  "purpose": "Acceptance verdicts of every committed benchmark receipt under the evaluator before and after protocol version 4 changed the P-11 rule for interrupted cells.",
+  "committed_verdict": "Verdict of the acceptance summary committed beside the receipt, which an earlier evaluator wrote from the files present where it ran.",
+  "generator": "dev/active/bdc507a3/compare-acceptance-verdicts.sh",
+  "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "base": {
+    "revision": "3aa2920b893ea43ce01003188ebe424df3ddf88e",
+    "benchmark_acceptance_sha256": "efd4553dc37c683b742df0227f1f4f9432d3f6479409656bed01899b38c945ea"
+  },
+  "head": {
+    "revision": "a176b8fc589cb8dbe529f3e46c194391cb6c246d",
+    "benchmark_acceptance_sha256": "146f30a8b06741f12a635b5662dbb22c812bb5f94e67daf96ee89f91d5b00906"
+  },
+  "receipts": [
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "84ae5257681e41cc299ef91074529c4183628dd0e7d970dc81f567f7b5dc6b45"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "84ae5257681e41cc299ef91074529c4183628dd0e7d970dc81f567f7b5dc6b45"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "e03e8b84d6f67f13d278b7d89c1befa03d7ec5b62853af38cdb49b7ebb284125"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "e03e8b84d6f67f13d278b7d89c1befa03d7ec5b62853af38cdb49b7ebb284125"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "646dfcd258578dc9d673dfe9360cc734186774a2ec6058c6ea6ed733d3a6dc9c"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "646dfcd258578dc9d673dfe9360cc734186774a2ec6058c6ea6ed733d3a6dc9c"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "aeffc5d1afaef1c582993cb81768c709295afb6284fca586d499ffcb7ddd0491"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "aeffc5d1afaef1c582993cb81768c709295afb6284fca586d499ffcb7ddd0491"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "11c8ba051863b4c86fead03b97dcd92ce79f29f6228871511a041f47bf442fe5"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "11c8ba051863b4c86fead03b97dcd92ce79f29f6228871511a041f47bf442fe5"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "253d3de74842197e26b1a74dd10b2bdcdef128feb712c4be0b2e210645a9e1f3"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "253d3de74842197e26b1a74dd10b2bdcdef128feb712c4be0b2e210645a9e1f3"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "7b52bd101a77c8adc407d8f54bc80f6e6e08871f4f71a7571a7c12967c19489c"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "7b52bd101a77c8adc407d8f54bc80f6e6e08871f4f71a7571a7c12967c19489c"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "c3bb9ca75761f7ac78ce318986fff4ad01be8dac06e93e956895446388d21fc1"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "c3bb9ca75761f7ac78ce318986fff4ad01be8dac06e93e956895446388d21fc1"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "26e883b8f248a260ebbb9a74ec9ea2edb2920fe9cc7ea7b94165702aa29d5238"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "26e883b8f248a260ebbb9a74ec9ea2edb2920fe9cc7ea7b94165702aa29d5238"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "45337fc0350ba73a0ac932a5333c97135a7fe738cf63ee7d2cafc1119bc283bc"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "45337fc0350ba73a0ac932a5333c97135a7fe738cf63ee7d2cafc1119bc283bc"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "1c7d2d012d37887d0544557897b70af3696083d75eeec286bb2ce536f1e8338b"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "1c7d2d012d37887d0544557897b70af3696083d75eeec286bb2ce536f1e8338b"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "489182ee31c613e39fc28535baa3fda388390b34a5ff2093fdb1a2df37b1d90e"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "489182ee31c613e39fc28535baa3fda388390b34a5ff2093fdb1a2df37b1d90e"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "bb1df694dca8fe0f6558e39b57451da5c16b117668e5a7b7bfc1cf27b3e20e27"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "bb1df694dca8fe0f6558e39b57451da5c16b117668e5a7b7bfc1cf27b3e20e27"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "0c817aaeb70d10979df505db446d4100e60444a757fb11aab2516aeb4681a016"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "0c817aaeb70d10979df505db446d4100e60444a757fb11aab2516aeb4681a016"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "3299a6a15c5cadde3b9d5e3a200ae09886b504fbb2d30a8e317dfb2a146383ea"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "3299a6a15c5cadde3b9d5e3a200ae09886b504fbb2d30a8e317dfb2a146383ea"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "dffef87e8b48734e0b7174689cc27382aba8798c21dedb6283cc743c3a93a9de"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "dffef87e8b48734e0b7174689cc27382aba8798c21dedb6283cc743c3a93a9de"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-and-popcnt-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "fdcd805f9b246879590f301da9fded8c0d22aae2e955d159efb06503f2a14bf2"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "fdcd805f9b246879590f301da9fded8c0d22aae2e955d159efb06503f2a14bf2"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-and-popcnt-pilot-r2/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "6c7d3fb6e09a50fc17e6cfd9cd45c66bd07b0a9af8247860bd4726f1c258e9a5"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "6c7d3fb6e09a50fc17e6cfd9cd45c66bd07b0a9af8247860bd4726f1c258e9a5"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-and-popcnt-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "rejected",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "35ad62a406200c5a6d2bd073ca79721f1532a20478f06077e0b790fa7fe63a02"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "35ad62a406200c5a6d2bd073ca79721f1532a20478f06077e0b790fa7fe63a02"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-popcount-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "90763f5059a881afbbad42e44781bd17bd286f894748800aabcaa7e2d79c928a"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "90763f5059a881afbbad42e44781bd17bd286f894748800aabcaa7e2d79c928a"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-popcount-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "9b994613ea026e623cde89b4e266698a76f4b2316e534e0c521b1b00494db2f6"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "9b994613ea026e623cde89b4e266698a76f4b2316e534e0c521b1b00494db2f6"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "ebc0bc95f93fc555e86ec6714acd50ee69b608c32d9227cf367cc5f9ecb8b9ca"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "ebc0bc95f93fc555e86ec6714acd50ee69b608c32d9227cf367cc5f9ecb8b9ca"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "293f3b879411599c76f5bb4d811634b772228aef70b238cea55b419e85ee3d2c"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "293f3b879411599c76f5bb4d811634b772228aef70b238cea55b419e85ee3d2c"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "88226deb2bf9b872bb547ea317073401274ac049e6a5f14da469dbeebeba310d"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "88226deb2bf9b872bb547ea317073401274ac049e6a5f14da469dbeebeba310d"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "16c1bbbe2e1194473e7d153b9c7e1f90875812807e90010266edd9b9da5e5221"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "16c1bbbe2e1194473e7d153b9c7e1f90875812807e90010266edd9b9da5e5221"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "947a4a78240792defed7524cceabd4f4f19cff599fcdd6680890f123555f0ba9"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "947a4a78240792defed7524cceabd4f4f19cff599fcdd6680890f123555f0ba9"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "c7458ed06ec36e781a560c6414b750b5a26b08d7910e1ffffae5a9431c325ebb"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "c7458ed06ec36e781a560c6414b750b5a26b08d7910e1ffffae5a9431c325ebb"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "ddae79a5062aa8d39132c905bba7507f8ac22c6661e69fa7647fd41e2e661b52"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "ddae79a5062aa8d39132c905bba7507f8ac22c6661e69fa7647fd41e2e661b52"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "e67417ac4b37aa21bda3e3f1af5c4536442d36388024f9a5d4888358011f56e5"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "e67417ac4b37aa21bda3e3f1af5c4536442d36388024f9a5d4888358011f56e5"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r2-6fb89a3c-transpose-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "89f09e0414dca703c8a79f202f1cce9d45e72cc19713a2a5101b25352c348bd0"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "89f09e0414dca703c8a79f202f1cce9d45e72cc19713a2a5101b25352c348bd0"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "rejected",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "5be3feae323d62bef7f0ebc34011e547219949e93c9189c8d8af8b8cd947edf0"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "5be3feae323d62bef7f0ebc34011e547219949e93c9189c8d8af8b8cd947edf0"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "fafb61a8f3b2520cc9cc85e8e2a3d86a10c5ee3b6b84038d30550880881d7858"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "fafb61a8f3b2520cc9cc85e8e2a3d86a10c5ee3b6b84038d30550880881d7858"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "c86cf2cf66a705a6d50d130d760f2470a49a2a66e7f036416d379fabe7e55d54"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "c86cf2cf66a705a6d50d130d760f2470a49a2a66e7f036416d379fabe7e55d54"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "e853a6cc84d7d9c1d17e542578312f61a390d24837a6fd429a8b38db3447e2e2"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "e853a6cc84d7d9c1d17e542578312f61a390d24837a6fd429a8b38db3447e2e2"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "0083104a7f6c2c2136b679fbeea8be1ed72765e6caffa19ecc10ea3aaacd8864"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "0083104a7f6c2c2136b679fbeea8be1ed72765e6caffa19ecc10ea3aaacd8864"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "626ee1d8a0c1f29071158d23e01fada377bf01e82429cca1a5d05a628eae07d9"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "626ee1d8a0c1f29071158d23e01fada377bf01e82429cca1a5d05a628eae07d9"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "3ce7c90fcbc17d2f3ff1b6e18e7f248217876d89e0f7315dc89722338d8dad5f"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "3ce7c90fcbc17d2f3ff1b6e18e7f248217876d89e0f7315dc89722338d8dad5f"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "beaf5affd62d45163446cf7809b4d2d8eb3d4d0e8da94b037900259459172aa1"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "beaf5affd62d45163446cf7809b4d2d8eb3d4d0e8da94b037900259459172aa1"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "8381b840e2f92764ac0a906ca0ea91b76426b564a59818d19089eb426c2bbd94"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "8381b840e2f92764ac0a906ca0ea91b76426b564a59818d19089eb426c2bbd94"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "144365b816f52aa4212e72f440cd47bad5eed5b48b072fc415cf6298e29b6d2b"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "144365b816f52aa4212e72f440cd47bad5eed5b48b072fc415cf6298e29b6d2b"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/v3-r1-baselines-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "01d847d7abf668274f15631f3f56a330825ecb389171ba0160b70e17a4920d98"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "01d847d7abf668274f15631f3f56a330825ecb389171ba0160b70e17a4920d98"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/v3-r1-baselines-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "8515ecb4bb377137e123b999f5948c4c032d6866c0e67297397f14463c66cec4"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "8515ecb4bb377137e123b999f5948c4c032d6866c0e67297397f14463c66cec4"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "27532756682bffdd7d91aa7e00fa2134de3e6fe3be52a9fed73bf0cd322711c2"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "27532756682bffdd7d91aa7e00fa2134de3e6fe3be52a9fed73bf0cd322711c2"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/v3-r1-host-targeting-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "c75338deb10c58db8fa54b9a6c0127cdb319dc1c648233848a9d96826da1c077"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "c75338deb10c58db8fa54b9a6c0127cdb319dc1c648233848a9d96826da1c077"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "975dd0fb90047ed5ddc9aed2a9fafab8e48b380bd17e960f914fcf545694da39"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "975dd0fb90047ed5ddc9aed2a9fafab8e48b380bd17e960f914fcf545694da39"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "5508cb459b75b952169ee6cba62762df123cf01a9833784e1d2898111aafeccf"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "5508cb459b75b952169ee6cba62762df123cf01a9833784e1d2898111aafeccf"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "39865d15cbc40e2cfdbf97fc659254af2ea2db3f4607e3aadb7be65a2b83f4ed"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "39865d15cbc40e2cfdbf97fc659254af2ea2db3f4607e3aadb7be65a2b83f4ed"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot-r2/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "a1215acfb1a3277ebe3da2b45518876a87060950434f4e65fae9122d745b3cbe"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "a1215acfb1a3277ebe3da2b45518876a87060950434f4e65fae9122d745b3cbe"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "a1a4e181826142484aed27887a22e02a391f784a12041d3ed1b33252766815e8"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "a1a4e181826142484aed27887a22e02a391f784a12041d3ed1b33252766815e8"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "189afc54f3be11a1f8c7f3be5f9cfe688ce9724b79913c258e60794f7a66657f"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "189afc54f3be11a1f8c7f3be5f9cfe688ce9724b79913c258e60794f7a66657f"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "a1fb789a83d0c08e1a6d5912a4e598aad9a3ee109392d9d82575eb3e74427ea3"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "a1fb789a83d0c08e1a6d5912a4e598aad9a3ee109392d9d82575eb3e74427ea3"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "59118aa18d3845ef5bb8b33ee544627bdd351efe160de9b8376762bda5371960"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "59118aa18d3845ef5bb8b33ee544627bdd351efe160de9b8376762bda5371960"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "eeec9de897a7f6746aa170ecb622de8753f91977b7c90471f73e072b8be9efef"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "eeec9de897a7f6746aa170ecb622de8753f91977b7c90471f73e072b8be9efef"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v2-confirmation/receipt.json",
+      "protocol_version": 2,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "f273665844d4054bd2452030e5229703abed5417a0a616b32af7c2f4a88b3b86"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "f273665844d4054bd2452030e5229703abed5417a0a616b32af7c2f4a88b3b86"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v2-pilot/receipt.json",
+      "protocol_version": 2,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "18ac61a3cf4aad73848f380664722025bdb8b031bdc72d47301e909e76d180b0"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "18ac61a3cf4aad73848f380664722025bdb8b031bdc72d47301e909e76d180b0"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "ed19ad6c5e46149ab589ae0006b98ea68fe01a7aa81a5e826370befb9d4271d2"
+      },
+      "head": {
+        "exit": 1,
+        "verdict": "rejected",
+        "summary_sha256": "ed19ad6c5e46149ab589ae0006b98ea68fe01a7aa81a5e826370befb9d4271d2"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "82f61b74a137373a86049bbab0fb37d11e9640151121eeb266c47ad719b9d766"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "82f61b74a137373a86049bbab0fb37d11e9640151121eeb266c47ad719b9d766"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-r2-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "d0be753487cbc9686b1799aca92c0dc7f720515c1024798667fdd128d37b28b9"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "d0be753487cbc9686b1799aca92c0dc7f720515c1024798667fdd128d37b28b9"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-r2-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "base": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "792bedcd2d80b8637d52d1eb6bb48ad7fd75cebaa7a68889ca0f8627e6b92c82"
+      },
+      "head": {
+        "exit": 0,
+        "verdict": "accepted",
+        "summary_sha256": "792bedcd2d80b8637d52d1eb6bb48ad7fd75cebaa7a68889ca0f8627e6b92c82"
+      },
+      "identical_verdict": true,
+      "identical_summary": true
+    }
+  ],
+  "result": {
+    "receipts": 59,
+    "identical_verdicts": 59,
+    "identical_summaries": 59,
+    "committed_verdict_differs_from_both": [
+      "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json",
+      "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+      "dev/bench_results/1d0da41f/v3-confirmation/receipt.json",
+      "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json",
+      "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
+      "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/receipt.json",
+      "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/receipt.json",
+      "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/receipt.json",
+      "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/receipt.json",
+      "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "dev/bench_results/f547c394/v3-confirmation/receipt.json"
+    ]
+  }
+}
