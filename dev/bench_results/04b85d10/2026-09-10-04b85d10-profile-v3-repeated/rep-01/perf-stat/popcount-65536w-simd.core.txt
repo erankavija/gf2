@@ -1,0 +1,19 @@
+# case: {"workload":"popcount","size":{"words":65536},"seed":201}
+# path: simd-backend  cache_state: warm  target_ms: 1000
+# events: cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":108542,"conversion":null,"elapsed_ns":"909712944","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"ns_per_call":8381.206758674061,"path":"simd-backend","prepare":{"allocated_bytes":1048626,"allocations":4,"freed_bytes":524288},"schema":"consumer-profile-record-v2","seed":201,"selected_path":"simd-backend/avx2","size":{"words":65536},"target_ms":1000,"timed":{"allocated_bytes":0,"allocated_bytes_per_call":0.0,"allocations":0,"allocations_per_call":0.0,"freed_bytes":0,"peak_live_bytes":0},"workers_observed":1,"workload":"popcount"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"popcount","size":{"words":65536},"seed":201} --path simd-backend --cache-state warm --target-ms 1000':
+
+     4,390,207,931      cycles:u                                                              
+    19,619,761,867      instructions:u                                                        
+       893,263,767      branches:u                                                            
+           117,391      branch-misses:u                                                       
+        59,934,969      stalled-cycles-frontend:u                                             
+
+       0.913695319 seconds time elapsed
+
+       0.909385000 seconds user
+       0.000995000 seconds sys
+
+
