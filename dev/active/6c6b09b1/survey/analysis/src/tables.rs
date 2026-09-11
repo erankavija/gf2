@@ -217,6 +217,22 @@ fn render_receipt(dir: &Path, out: &mut String) -> Result<(), String> {
         summary["findings"].as_array().map_or(0, Vec::len),
         summary["sessions"]
     );
+    let addendum: Value = serde_json::from_slice(
+        &fs::read(dir.join(&receipt.addendum.snapshot))
+            .map_err(|e| format!("{}: addendum snapshot: {e}", dir.display()))?,
+    )
+    .map_err(|e| format!("addendum snapshot: {e}"))?;
+    let version = addendum["protocol"]["version"].as_u64().unwrap_or(0);
+    let _ = writeln!(
+        out,
+        "- Protocol version {version} (addendum snapshot `{}`){}.",
+        receipt.addendum.snapshot,
+        if version < 3 {
+            ": superseded, immutable history that decides nothing under version 3"
+        } else {
+            ""
+        }
+    );
     let family = &summary["family"];
     let _ = writeln!(
         out,
