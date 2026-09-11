@@ -98,6 +98,10 @@ CLAIMS = [
     ("gf2-wide-words", "gf2", f"{G}/gf2m/wide.rs", "    words: [u64; N],", 0,
      "Gf2mWide<1, _> stores one u64 per element: 8 bytes per GF(2^8) element."),
     # FieldVec::axpy.
+    ("gf2-axpy-signature", "gf2", f"{G}/field/vec.rs",
+     "pub fn axpy(&mut self, a: &F, rhs: &Self) {", 0,
+     "One coefficient for the whole region; the destination is borrowed mutably and the source "
+     "shared, so the two cannot alias."),
     ("gf2-axpy-simd-hook", "gf2", f"{G}/field/vec.rs",
      "if F::try_simd_axpy(self.data.as_mut_slice(), a, rhs.data.as_slice()) {", 0,
      "FieldVec::axpy tries a field-specific kernel first ..."),
@@ -116,6 +120,10 @@ CLAIMS = [
     ("gf2-gemm-entry", "gf2", f"{G}/field/matrix.rs",
      "pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {", 0,
      "The public dense product both square and generator-encode gf2 cells call."),
+    ("gf2-gemm-fresh-output", "gf2", f"{G}/field/matrix.rs",
+     "data: FieldVec::zeros_from(a.rows * b.cols, &zero),", 0,
+     "gemm returns a freshly allocated product in every call; M4RIE's arm multiplies into a "
+     "preallocated matrix, as its API allows."),
     ("gf2-gemm-transpose", "gf2", f"{G}/field/matrix.rs", "let b_t = b.transpose();", 0,
      "Every gemm call transposes B into a fresh matrix before multiplying."),
     ("gf2-gemm-whole-hook", "gf2", f"{G}/field/matrix.rs", "if F::try_simd_gemm_classical(", 0,
