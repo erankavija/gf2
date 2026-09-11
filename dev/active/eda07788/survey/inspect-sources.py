@@ -8,7 +8,9 @@ first line containing the needle after the optional `after` line, and the
 record carries that line's verbatim text. External projects must be clean
 checkouts at their pinned commits. gf2 claims are read from this repository's
 committed HEAD; the file must equal its HEAD blob, and the record adds the
-file's SHA-256.
+file's SHA-256. A claim on the arm sources that the v3 DVB-T2 receipts
+snapshot also requires every DVB-T2 launcher log to list that SHA-256, and the
+record names those logs.
 """
 
 import argparse
@@ -35,6 +37,9 @@ DVB = "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs"
 LDPC_CORE = "crates/gf2-coding/src/ldpc/core.rs"
 RM = "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp"
 SURVEY = "dev/active/eda07788/survey/"
+# The arm sources the v3 DVB-T2 receipts ran, as the confirmation's producing
+# snapshot holds them.
+V3_ARMS = "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/inputs/producing/" + SURVEY
 
 # claim, project, path, needle, interpretation[, after-line]
 CLAIMS = [
@@ -123,11 +128,18 @@ CLAIMS = [
     ("gf2-qc-to-edges-caller", "gf2", LDPC_CORE, "let block_edges = circ.to_edges(base_row, base_col);", "The QC code expands each block into coordinates when it builds its matrix."),
     ("gf2-ldpc-from-qc", "gf2", LDPC_CORE, "let edges = qc.to_edges();", "LDPC code construction consumes those coordinates once per code."),
     ("survey-gf2-arm-setup", "gf2", SURVEY + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "let interleaver = DvbT2BitInterleaver::new(modcod_for_name(&case.modcod));", "The gf2 arm builds its table once, outside the timed body, and reports that time as setup."),
-    ("survey-gf2-arm-body", "gf2", SURVEY + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "let output = interleaver.interleave(&buffers[bank % banks]);", "The gf2 arm's timed body is one interleave of a packed BitVec."),
+    ("survey-gf2-arm-body", "gf2", SURVEY + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "let output = interleaver.interleave(&buffers[bank]);", "The gf2 arm's timed body is one interleave of a packed BitVec."),
     ("survey-external-unpack", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let input = unpack_words(packed, bits);", "The external arm's timed body unpacks the packed frame to one int32 per bit."),
     ("survey-external-output", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let mut output = vec![0_i32; bits];", "It allocates an int32 output frame inside the timed body."),
     ("survey-external-pack", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let packed_output = pack_bits(&output);", "It packs the permuted frame back inside the timed body."),
     ("survey-shim-input-copy", "gf2", SURVEY + "xdsopl-shim/xdsopl_shim.cpp", "std::vector<int32_t> mutable_input(input, input + Interleaver::N);", "The shim copies the input because PCTITL::fwd overwrites it."),
+    ("survey-v3-gf2-arm-warm-defect", "gf2", V3_ARMS + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "black_box(&buffers[0]);", "In the gf2 arm source the v3 receipts snapshot, the warm branch only passes a reference to the input bank through black_box: no interleave and no output allocation run before calibration. All five DVB-T2 launcher logs list this file's SHA-256 under their survey source digests."),
+    ("survey-v3-external-arm-warm-defect", "gf2", V3_ARMS + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "black_box(&buffers[0]);", "The external arm's warm branch in that snapshot is the same reference pass: no unpack, PCTITL call or pack runs before calibration. All five DVB-T2 launcher logs list this file's SHA-256."),
+    ("survey-arm-cache-refusal", "gf2", SURVEY + "gf2-side/src/lib.rs", "is not implemented; the arms apply warm and streaming", "The repaired arms decode the request's cache state into a policy and refuse every state other than warm and streaming."),
+    ("survey-arm-warm-pass", "gf2", SURVEY + "gf2-side/src/lib.rs", "body(0);", "The repaired timing helper runs the timed body once on bank 0, untimed, before calibration when the policy is warm."),
+    ("survey-arm-warm-pass-test", "gf2", SURVEY + "gf2-side/src/lib.rs", "fn warm_request_runs_one_untimed_pass_before_calibration()", "A zero-window warm request observes exactly one body call, on bank 0, before the timing loop rejects the request."),
+    ("survey-gf2-arm-timed-windows", "gf2", SURVEY + "gf2-side/src/bin/gf2-dvb-t2-candidate.rs", "let samples = match timed_windows(", "The gf2 arm times its body through the shared helper under the request's policy."),
+    ("survey-external-timed-windows", "gf2", SURVEY + "gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs", "let samples = match timed_windows(", "The external arm times its body through the shared helper under the request's policy."),
     ("survey-nr-gf2-arm-body", "gf2", SURVEY + "nr-derate/src/bin/gf2-nr-derate-arm.rs", "black_box(code.prepare_llrs(&buffers[bank % banks]));", "The gf2 de-rate-matching arm times one public prepare_llrs call."),
     ("survey-nr-aff3ct-arm-body", "gf2", SURVEY + "nr-derate/src/bin/aff3ct-nr-derate-arm.rs", "black_box(adapter.prepare_llrs(&buffers[bank % banks]));", "The AFF3CT arm times the whole adapter call."),
     ("survey-nr-adapter-zeroed-output", "gf2", SURVEY + "nr-derate/src/lib.rs", "(input, vec![0.0_f32; self.depuncturer.full_len()])", "The adapter converts the channel to float and allocates a zeroed N_LDPC output inside the call."),
@@ -202,6 +214,19 @@ def main():
                 errors.append(f"{claim}: {path} differs from its HEAD blob")
             record["sha256"] = hashlib.sha256(content).hexdigest()
         records.append(record)
+
+    # Each DVB-T2 receipt's launcher log must list the snapshot's digest for the
+    # arm source, so the snapshot is the source every DVB-T2 campaign ran.
+    results = os.path.join(repo, "dev/bench_results/eda07788")
+    logs = sorted(os.path.join(results, name, "launcher.log") for name in os.listdir(results)
+                  if "-dvb-t2-" in name and os.path.isfile(os.path.join(results, name, "launcher.log")))
+    for record in records:
+        if record["path"].startswith(V3_ARMS):
+            listed = record["sha256"] + "  " + record["path"][len(V3_ARMS) - len(SURVEY):]
+            for log in logs:
+                if not any(line.strip().lstrip("#").strip() == listed for line in open(log, encoding="utf-8")):
+                    errors.append(f"{record['claim']}: {os.path.relpath(log, repo)} lists another digest")
+            record["launcher_logs"] = [os.path.relpath(log, repo) for log in logs]
 
     matrix_root = os.path.join(roots["aff3ct-conf"], "enc", "LDPC", "5G")
     matrices = sorted(name for name in os.listdir(matrix_root) if name.startswith("NR_") and name.endswith(".txt"))

@@ -7,22 +7,28 @@
 //!
 //! `pack_ns` and `unpack_ns` are mean nanoseconds per timed call, computed by
 //! dividing the conversion wall time accumulated during the measured windows
-//! (the accumulators are reset to zero when `execution_windows_configured`
-//! reports `CalibrationComplete`, so pre-calibration calls do not inflate the
-//! average) by the total calls in all returned windows. `setup_ns` is zero
+//! (the accumulators are reset to zero when the timing loop reports
+//! `CalibrationComplete`, so the warm pass and calibration calls do not inflate
+//! the average) by the total calls in all returned windows. `setup_ns` is zero
 //! because the external PCTITL templates are stateless.
+//!
+//! The request's cache state selects the policy `survey_gf2_side::timed_windows`
+//! applies: a `warm` cell runs the whole timed call on its one bank once,
+//! untimed, before calibration; a `streaming` cell rotates through the fixture
+//! banks. Any other state is refused before the frame is built.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::cell::Cell;
 use std::hint::black_box;
 use std::io;
-use std::time::{Duration, Instant};
-use survey_gf2_side::{frame_bits, pack_bits, seeded_word_banks, unpack_words, xdsopl_forward};
-use tuning_campaign_support::host::CpuAffinity;
-use tuning_campaign_support::timing::{
-    execution_windows_configured, TimingProgress, FIXTURE_BANKS,
+use std::time::Instant;
+use survey_gf2_side::{
+    frame_bits, pack_bits, seeded_word_banks, timed_windows, unpack_words, xdsopl_forward,
+    CachePolicy,
 };
+use tuning_campaign_support::host::CpuAffinity;
+use tuning_campaign_support::timing::TimingProgress;
 use tuning_campaign_support::transport;
 
 #[derive(Deserialize, Serialize)]
@@ -92,21 +98,20 @@ fn main() {
             std::process::exit(2);
         }
     };
-    let bits = frame_bits(&case.modcod);
-    let banks = if request.cache_state == "streaming" {
-        FIXTURE_BANKS
-    } else {
-        1
+    let policy = match CachePolicy::from_request(&request.cache_state) {
+        Ok(policy) => policy,
+        Err(error) => {
+            eprintln!("xdsopl-dvb-t2-baseline: {error}");
+            std::process::exit(2);
+        }
     };
-    let buffers = seeded_word_banks(case.seed, banks, bits);
-    if request.cache_state == "warm" {
-        black_box(&buffers[0]);
-    }
+    let bits = frame_bits(&case.modcod);
+    let buffers = seeded_word_banks(case.seed, policy.banks(), bits);
 
     let pack_ns_total = Cell::new(0_u64);
     let unpack_ns_total = Cell::new(0_u64);
-    let mut body = |bank: usize| {
-        let packed = &buffers[bank % banks];
+    let body = |bank: usize| {
+        let packed = &buffers[bank];
         let unpack_start = Instant::now();
         let input = unpack_words(packed, bits);
         unpack_ns_total.set(unpack_ns_total.get().saturating_add(
@@ -121,15 +126,16 @@ fn main() {
         ));
         black_box(packed_output);
     };
-    let samples = match execution_windows_configured(
-        0,
-        u64::from(request.windows),
-        Duration::from_millis(u64::from(request.window_target_ms)),
-        &mut body,
+    let samples = match timed_windows(
+        policy,
+        request.windows,
+        request.window_target_ms,
+        body,
         |progress| {
             if let TimingProgress::CalibrationComplete { .. } = progress {
-                // Discard conversion time accumulated during calibration calls
-                // so the reported average covers only the measured windows.
+                // Discard conversion time accumulated by the warm pass and the
+                // calibration calls so the reported average covers only the
+                // measured windows.
                 pack_ns_total.set(0);
                 unpack_ns_total.set(0);
             }
@@ -156,7 +162,7 @@ fn main() {
                 elapsed_ns: sample.elapsed_ns,
             })
             .collect(),
-        cache_state_applied: request.cache_state,
+        cache_state_applied: policy.name().into(),
         workers_observed: 1,
         cpus_observed,
         selected_path: Some(format!("xdsopl-pctitl-{}", case.modcod)),
