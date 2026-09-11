@@ -55,7 +55,9 @@ impl Gf2Worker {
             for (packed, value) in self.packed.iter_mut().zip(recorded) {
                 *packed = Llr::new(*value);
             }
-            let result = self.decoder.decode_to_codeword(black_box(&self.packed), self.cap);
+            let result = self
+                .decoder
+                .decode_to_codeword(black_box(&self.packed), self.cap);
             let decided = &mut self.decisions[frame * self.k..(frame + 1) * self.k];
             for (position, bit) in decided.iter_mut().enumerate() {
                 *bit = u8::from(result.decoded_bits.get(position));

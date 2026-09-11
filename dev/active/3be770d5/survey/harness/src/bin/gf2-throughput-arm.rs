@@ -7,6 +7,7 @@
 //! quality evidence only after checking that every worker decoded the batch
 //! with exactly its frozen per-frame error counts.
 
+use gf2_coding::llr::Llr;
 use ldpc_survey::arm::{
     self, ArmResult, DecoderCase, Normalization, NormalizationKind, Precision, Schedule, Stopping,
     StoppingKind, ARM_RESULT_SCHEMA,
@@ -14,7 +15,6 @@ use ldpc_survey::arm::{
 use ldpc_throughput::driver::run_cell;
 use ldpc_throughput::gf2::{config, Gf2Worker};
 use ldpc_throughput::workload::{check_request, median_u64, Workload};
-use gf2_coding::llr::Llr;
 use std::hint::black_box;
 use std::process::ExitCode;
 use std::time::Instant;
@@ -104,7 +104,7 @@ fn run() -> Result<(), String> {
         selected_path: Some(format!(
             "gf2-coding LdpcDecoder f32 flooding normalized min-sum, reused decoder per worker; \
              {} pinned workers, {} process threads",
-            cell.workers_observed, cell.threads_ready
+            cell.workers_observed, cell.threads.ready
         )),
         conversion: Some(cell.conversion),
         quality: Some(quality),

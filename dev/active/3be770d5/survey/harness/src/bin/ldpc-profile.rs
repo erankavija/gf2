@@ -22,7 +22,7 @@ use ldpc_survey::arm::{self, DecoderCase};
 use ldpc_throughput::aff3ct::{Aff3ctWorker, Handle, Selection};
 use ldpc_throughput::gf2::{config, Gf2Worker};
 use ldpc_throughput::pool::{self, process_threads, Finished};
-use ldpc_throughput::workload::{verify_workers, Workload};
+use ldpc_throughput::workload::{verify_workers, Threads, Workload};
 use serde_json::json;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
@@ -74,9 +74,7 @@ fn parse() -> Result<Options, String> {
             "--norm" => options.norm = number(value()?, &flag)?,
             "--perf-control" => {
                 let text = value()?;
-                let (ctl, ack) = text
-                    .split_once(',')
-                    .ok_or("--perf-control takes CTL,ACK")?;
+                let (ctl, ack) = text.split_once(',').ok_or("--perf-control takes CTL,ACK")?;
                 options.perf_control = Some((ctl.to_owned(), ack.to_owned()));
             }
             other => return Err(format!("unknown argument {other}")),
@@ -123,7 +121,7 @@ impl PerfControl {
 struct Region {
     setup_ns: u64,
     decode_ns: u64,
-    threads_ready: u32,
+    threads: Threads,
     calls: u64,
 }
 
@@ -143,7 +141,7 @@ where
         |_, state| body(state),
         |dispatch| -> Result<Region, String> {
             let setup_ns = setup_start.elapsed().as_nanos() as u64;
-            let threads_ready = process_threads();
+            let ready = process_threads();
             dispatch.call();
             let mut control = match &options.perf_control {
                 Some((ctl, ack)) => Some(PerfControl::open(ctl, ack)?),
@@ -163,7 +161,10 @@ where
             Ok(Region {
                 setup_ns,
                 decode_ns,
-                threads_ready,
+                threads: Threads {
+                    ready,
+                    after: process_threads(),
+                },
                 calls: options.passes + 1,
             })
         },
@@ -173,8 +174,9 @@ where
 
 fn run() -> Result<(), String> {
     let options = parse()?;
-    let quality = arm::prepared_quality()?
-        .ok_or("the profile checks decisions against prepared quality; GF2_LDPC_QUALITY is unset")?;
+    let quality = arm::prepared_quality()?.ok_or(
+        "the profile checks decisions against prepared quality; GF2_LDPC_QUALITY is unset",
+    )?;
     let case = DecoderCase {
         bundle: options.bundle.clone(),
         code: options.code.clone(),
@@ -186,14 +188,17 @@ fn run() -> Result<(), String> {
         decisions_out: None,
     };
     let workload = Workload::load(&case)?;
-    let core_arm: CoreArm = serde_json::from_value(json!(options.core_arm))
-        .map_err(|e| format!("--core-arm: {e}"))?;
+    let core_arm: CoreArm =
+        serde_json::from_value(json!(options.core_arm)).map_err(|e| format!("--core-arm: {e}"))?;
     let topology = CpuTopology::observe().map_err(|e| e.to_string())?;
     let affinity = CpuAffinity::observe().map_err(|e| e.to_string())?;
     let cpus = resolve_core_arm(core_arm, &topology, &affinity)?;
     let batch = options.batch as usize;
     if batch == 0 || batch > workload.manifest.frames {
-        return Err(format!("--batch must lie in 1..={}", workload.manifest.frames));
+        return Err(format!(
+            "--batch must lie in 1..={}",
+            workload.manifest.frames
+        ));
     }
     let llrs = workload.frames(0, batch);
     let (n, k) = (workload.manifest.n, workload.manifest.k);
@@ -216,12 +221,17 @@ fn run() -> Result<(), String> {
                 "gf2",
                 &finished,
                 region.calls,
-                region.threads_ready,
+                region.threads,
                 |worker: &Gf2Worker| &worker.decisions,
                 &workload,
                 &quality,
             )?;
-            (region, workers, "gf2-coding LdpcDecoder f32 flooding NMS".to_owned(), Some(iterations))
+            (
+                region,
+                workers,
+                "gf2-coding LdpcDecoder f32 flooding NMS".to_owned(),
+                Some(iterations),
+            )
         }
         "aff3ct" => {
             let selection = Selection::from_environment()?;
@@ -246,12 +256,15 @@ fn run() -> Result<(), String> {
                 "aff3ct",
                 &finished,
                 region.calls,
-                region.threads_ready,
+                region.threads,
                 |worker: &Aff3ctWorker| &worker.decisions,
                 &workload,
                 &quality,
             )?;
-            let selected = format!("{name} simd={:?} precision={}", selection.simd, selection.precision);
+            let selected = format!(
+                "{name} simd={:?} precision={}",
+                selection.simd, selection.precision
+            );
             (region, workers, selected, None)
         }
         other => return Err(format!("--arm {other} is not gf2 or aff3ct")),
@@ -267,7 +280,7 @@ fn run() -> Result<(), String> {
         "core_arm": options.core_arm,
         "cpus": cpus,
         "workers": workers,
-        "threads_ready": region.threads_ready,
+        "threads": region.threads,
         "batch": batch,
         "passes": options.passes,
         "frames_per_worker": frames_per_worker,

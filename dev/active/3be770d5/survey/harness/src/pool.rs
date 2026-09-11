@@ -280,6 +280,9 @@ mod tests {
                 dispatch.call();
             },
         );
-        assert!(outcome.err().expect("reported").contains("worker 0 panicked"));
+        assert!(outcome
+            .err()
+            .expect("reported")
+            .contains("worker 0 panicked"));
     }
 }
