@@ -3,6 +3,6 @@
 #HOLD 6fb89a3c	.agents/worktrees/agent-6fb89a3c-v3	7	dev/bench_results/6fb89a3c/run-campaign.sh logical remeasure v3-r1
 #HOLD 6fb89a3c	.agents/worktrees/agent-6fb89a3c-v3	5	dev/bench_results/6fb89a3c/run-campaign.sh bch remeasure v3-r1
 04b85d10	.agents/worktrees/agent-04b85d10-v3	45	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/04b85d10/survey/run-profile.sh dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated >> target/04b85d10-window-profile.log 2>&1
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window region-axpy-pilot
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window matrix-product-pilot
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	6	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window pairwise-control-pilot
+#HOLD 6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window region-axpy-pilot
+#HOLD 6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window matrix-product-pilot
+#HOLD 6c6b09b1	.agents/worktrees/agent-6c6b09b1	6	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window pairwise-control-pilot
