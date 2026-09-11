@@ -82,7 +82,9 @@ adopts nothing.
    directly on four words (tables § `count-v3-confirmation`, rows
    `count-popcount-bandwidth-65536w-1core`,
    `count-popcount-threshold-8w-1core` and
-   `count-popcount-dispatch-4w-1core`).
+   `count-popcount-dispatch-4w-1core`). On an all-zero 507-word buffer the
+   early-exit search is confirmed faster than the full count (row
+   `count-zero-test-507w-1core`).
 3. **Logical.** The four-word row XOR is confirmed faster through the detected
    SIMD backend than through the current scalar cutover, and hoisting dispatch
    out of an eight-word row loop is confirmed faster (tables §
