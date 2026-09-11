@@ -14,9 +14,12 @@
 #
 # The repetitions are what give every profile figure an interval: the
 # summaries report the median over the sessions with its order-statistic
-# interval. `repetitions.log` records each session's start, executable digest
-# and completion; a re-run with the same output directory resumes after the
-# last completed session and refuses a changed executable.
+# interval. `repetitions.log` is the series' append-only execution log: each
+# session's start with the executable digest, its completion, and the discard
+# of a session that did not finish. A re-run with the same output directory
+# resumes after the last completed session, re-runs an unfinished one whole,
+# and refuses to resume when an executable a session runs or a file that
+# defines its cases differs from the first session's record in `host.txt`.
 #
 # Usage: dev/active/04b85d10/survey/run-profile.sh <output-dir>
 #
@@ -39,20 +42,51 @@ OUT="$(cd "${OUT}" && pwd)"
 export RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
 export CARGO_TARGET_DIR="${REPO}/target/consumer-profile-${ISSUE}"
 BIN="${CARGO_TARGET_DIR}/release"
+LOG="${OUT}/repetitions.log"
+# The harness files that define what a session measures, besides the two
+# executables it runs.
+SESSION_FILES=(sweep.sh profile-cases.py counter-cases.txt report-cases.txt alloc-trace-cases.txt)
 
 # ------------------------------------------------------------------ build
 # Builds finish before any timed work.
 (cd "${REPO}" && ./scripts/cargo-budget.sh cargo build --release \
     --manifest-path "${MANIFEST}") >>"${OUT}/build.log" 2>&1
 
+# ---------------------------------------------------------------- identity
+# A resumed series measures what its first session measured: the same
+# `consumer-profile`, as the log's first start line records it, and the same
+# `consumer-verify` and session files, as the first session's host record
+# lists them.
+touch "${LOG}"
+DIGEST="$(sha256sum "${BIN}/consumer-profile" | cut -d' ' -f1)"
+FIRST="$(sed -n 's/^rep-[0-9]* start .* consumer-profile=\([0-9a-f]*\).*/\1/p' "${LOG}" | head -n 1)"
+if [[ -n "${FIRST}" && "${FIRST}" != "${DIGEST}" ]]; then
+    echo "consumer-profile changed since the first session (${FIRST} -> ${DIGEST})" >&2
+    exit 2
+fi
+unchanged() {
+    local recorded current
+    recorded="$(awk -v name="$1" '$2 == name {print $1; exit}' "${OUT}/host.txt")"
+    current="$(sha256sum "$2" | cut -d' ' -f1)"
+    if [[ "${recorded}" != "${current}" ]]; then
+        echo "$1 changed since the first session (${recorded:-unrecorded} -> ${current})" >&2
+        exit 2
+    fi
+}
+
 # ------------------------------------------------------------- provenance
 # Written once; a resumed run appends to it instead.
 if [[ -e "${OUT}/host.txt" ]]; then
+    unchanged consumer-verify "${BIN}/consumer-verify"
+    for file in "${SESSION_FILES[@]}"; do
+        unchanged "dev/active/${ISSUE}/survey/${file}" "${HERE}/${file}"
+    done
     {
         echo
         echo "## resumed"
         echo "# resumed_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
         echo "# gf2 revision (informational): $(git -C "${REPO}" rev-parse HEAD)"
+        echo "# unchanged since the first session: consumer-profile, consumer-verify, ${SESSION_FILES[*]}"
         uptime
     } >>"${OUT}/host.txt"
 else
@@ -134,22 +168,24 @@ fi
 # than once per measured process.
 python3 "${HERE}/profile-cases.py" >"${OUT}/cases.jsonl"
 
-LOG="${OUT}/repetitions.log"
-touch "${LOG}"
-DIGEST="$(sha256sum "${BIN}/consumer-profile" | cut -d' ' -f1)"
-FIRST="$(sed -n 's/^rep-[0-9]* start .* consumer-profile=\([0-9a-f]*\).*/\1/p' "${LOG}" | head -n 1)"
-if [[ -n "${FIRST}" && "${FIRST}" != "${DIGEST}" ]]; then
-    echo "consumer-profile changed since the first session (${FIRST} -> ${DIGEST})" >&2
-    exit 2
-fi
-
+echo "profile execution log: ${LOG}" >&2
 for index in $(seq 1 "${REPETITIONS}"); do
     rep="rep-$(printf '%02d' "${index}")"
     if grep -q "^${rep} done " "${LOG}"; then
         continue
     fi
-    # A session that did not finish leaves partial output; it is re-run whole.
+    # A session that did not finish leaves partial output, including the
+    # call-graph data file it was recording beside the session directory. The
+    # log records the discard of every start since the session's last discard,
+    # and the session is re-run whole.
+    starts="$(awk -v rep="${rep}" '$1 == rep && $2 == "discarded" {list = ""}
+        $1 == rep && $2 == "start" {list = list (list == "" ? "" : " ") $3}
+        END {print list}' "${LOG}")"
+    if [[ -n "${starts}" ]]; then
+        echo "${rep} discarded $(date -u +%Y-%m-%dT%H:%M:%SZ) unfinished start(s) ${starts}; partial output removed, the session re-runs whole" >>"${LOG}"
+    fi
     rm -rf "${OUT:?}/${rep}"
+    rm -f "${OUT}"/perf-*.data "${OUT}"/perf-*.data.old
     mkdir -p "${OUT}/${rep}"
     trace=no
     if [[ "${index}" == 1 ]]; then
@@ -160,6 +196,9 @@ for index in $(seq 1 "${REPETITIONS}"); do
         bash "${HERE}/sweep.sh" "${OUT}/${rep}" "${BIN}" "${HERE}" "${OUT}/cases.jsonl" "${trace}"
     echo "${rep} done $(date -u +%Y-%m-%dT%H:%M:%SZ) load=[$(uptime)]" >>"${LOG}"
 done
+if ! grep -q '^series done ' "${LOG}"; then
+    echo "series done $(date -u +%Y-%m-%dT%H:%M:%SZ) sessions=${REPETITIONS}" >>"${LOG}"
+fi
 
 {
     echo
