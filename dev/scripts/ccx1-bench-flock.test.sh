@@ -3,7 +3,16 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"' EXIT
+
+# Section 3 starts daemons that record their PIDs in $TMP/*.pid.
+cleanup() {
+  local pidfile
+  for pidfile in "$TMP"/*.pid; do
+    [ -e "$pidfile" ] && kill "$(cat "$pidfile")" 2>/dev/null || true
+  done
+  rm -rf "$TMP"
+}
+trap cleanup EXIT
 
 # --- 1. Command composition, against a stubbed flock -------------------------
 #
@@ -53,7 +62,7 @@ test "$custom" = "$(printf '%s\n' -x "$TMP/ts" flock -x "$TMP/lock" nice -n -5 p
 # second build must land after the measurement run, not slip in ahead of it.
 
 if ! command -v flock >/dev/null 2>&1; then
-  echo "ccx1-bench-flock.test: flock unavailable, skipping the ordering test" >&2
+  echo "ccx1-bench-flock.test: flock unavailable, skipping the ordering and release tests" >&2
   exit 0
 fi
 
@@ -94,5 +103,99 @@ test "$got" = "build-1 bench build-2 " || {
   echo "expected 'build-1 bench build-2 ', got '$got'" >&2
   exit 1
 }
+
+# --- 3. No lock outlives the wrapped command ---------------------------------
+#
+# The regression this guards: a daemon the wrapped command starts inherits its
+# descriptors, and a flock lock lasts until every copy of its descriptor is
+# closed or one of them unlocks it. Observed 2026-09-10: an sccache server that
+# a cargo-ci run under `ccx1-bench-flock.sh --full-host` started held the mutex
+# and the turnstile after the run, and every build on the host waited until
+# the server was stopped.
+#
+# The wrapped command records the locks as it sees them, then starts a daemon
+# the way the sccache server starts: in its own session with its standard
+# streams detached, so that it outlives the command. Every lock must be free
+# once the wrapper returns, while the daemon still runs.
+#
+# Under the benchmark wrapper the command and so the daemon do hold the mutex
+# descriptor: the benchmark runner refuses to measure without an inherited
+# descriptor for the held lock (`host::inherited_lock`). The lock must be free
+# all the same.
+
+# Prints the state of every lock, then which of them process $1 has open.
+cat >"$TMP/observe" <<'EOF'
+#!/usr/bin/env bash
+set -eu
+shopt -s nullglob
+probe() { if flock -n "$@" true 2>/dev/null; then echo free; else echo held; fi; }
+slot=free
+for path in "$CARGO_CI_LOCK_DIR"/slot.*; do
+  [ "$(probe -x "$path")" = free ] || slot=held
+done
+open=$(for fd in /proc/"$1"/fd/*; do readlink "$fd" || true; done)
+has() { grep -qxF "$(readlink -f "$1")" <<<"$open"; }
+descriptors=
+if has "$GF2_CCX1_LOCK"; then descriptors+=mutex,; fi
+if has "$GF2_CCX1_TURNSTILE"; then descriptors+=turnstile,; fi
+if has "$CARGO_CI_BUILD_LOCK"; then descriptors+=test,; fi
+for path in "$CARGO_CI_LOCK_DIR"/slot.*; do
+  if has "$path"; then descriptors+=slot,; fi
+done
+descriptors=${descriptors%,}
+echo "exclusive=$(probe -x "$GF2_CCX1_LOCK") shared=$(probe -s "$GF2_CCX1_LOCK")" \
+  "turnstile=$(probe -x "$GF2_CCX1_TURNSTILE") slot=$slot" \
+  "test=$(probe -x "$CARGO_CI_BUILD_LOCK") descriptors=${descriptors:-none}"
+EOF
+
+# The wrapped command: $1 receives its observation, $2 its daemon's PID.
+cat >"$TMP/wrapped" <<'EOF'
+#!/usr/bin/env bash
+set -eu
+"$(dirname "$0")/observe" $$ >"$1"
+setsid bash -c 'echo $$ >"$1"; exec sleep 60' _ "$2" </dev/null >/dev/null 2>&1 &
+for _ in $(seq 1 50); do
+  [ -s "$2" ] && exit 0
+  sleep 0.1
+done
+exit 1
+EOF
+chmod +x "$TMP/observe" "$TMP/wrapped"
+
+# Runs one wrapper invocation, then checks the locks after it returned and as
+# the command saw them while it ran.
+check_release() {
+  local name=$1 during=$2 after=$3 pid got
+  shift 3
+  "$@" "$TMP/wrapped" "$TMP/$name.during" "$TMP/$name.pid"
+  pid=$(cat "$TMP/$name.pid")
+  kill -0 "$pid" || { echo "$name: the daemon exited with the command" >&2; exit 1; }
+  got=$("$TMP/observe" "$pid")
+  test "$got" = "$after" || {
+    echo "$name: after the command exited, expected '$after', got '$got'" >&2
+    exit 1
+  }
+  got=$(cat "$TMP/$name.during")
+  test "$got" = "$during" || {
+    echo "$name: while the command ran, expected '$during', got '$got'" >&2
+    exit 1
+  }
+  kill "$pid"
+}
+
+free="exclusive=free shared=free turnstile=free slot=free test=free"
+
+check_release build \
+  "exclusive=held shared=free turnstile=free slot=held test=free descriptors=none" \
+  "$free descriptors=none" \
+  "$ROOT/scripts/cargo-budget.sh"
+check_release test \
+  "exclusive=held shared=free turnstile=free slot=held test=held descriptors=none" \
+  "$free descriptors=none" \
+  "$ROOT/scripts/cargo-budget.sh" --test
+check_release bench \
+  "exclusive=held shared=held turnstile=held slot=free test=free descriptors=mutex" \
+  "$free descriptors=mutex" \
+  "$ROOT/dev/scripts/ccx1-bench-flock.sh" --full-host
 
 echo "ccx1-bench-flock.test: ok"
