@@ -11491,3 +11491,5 @@
 {"id":"6b764022-5afa-4fee-8a46-8c8c214d8897","issue_id":"835f34f0-9d99-4d92-a17a-3b3f91db1ee9","priority":"low","timestamp":"2026-09-11T16:38:19.350107534Z","title":"Document the GF(2^8) polynomial that gf256() builds","type":"issue_created"}
 {"from":"ready","id":"ec816890-ee1e-484c-a397-aaf85aa4e369","issue_id":"835f34f0-9d99-4d92-a17a-3b3f91db1ee9","timestamp":"2026-09-11T16:38:49.286928863Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"bed0a5d4-e8a8-45ca-81c3-2c3c45ecd2e4","issue_id":"835f34f0-9d99-4d92-a17a-3b3f91db1ee9","timestamp":"2026-09-11T16:38:49.286928863Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"46102bb5-2150-414b-819e-c1d7ac0d8c10","issue_id":"3e59cb9a-54d4-4838-83f9-ad4750caeb55","timestamp":"2026-09-11T16:48:51.392621868Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"19628972-45fa-4e2d-a297-ec67424c5b0c","issue_id":"3e59cb9a-54d4-4838-83f9-ad4750caeb55","timestamp":"2026-09-11T16:48:51.392621868Z","type":"issue_claimed"}
