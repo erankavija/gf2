@@ -1,0 +1,292 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 1
+  },
+  "family": {
+    "id": "popcount-baselines",
+    "issue": "26465e6c",
+    "purpose": "kernel-family",
+    "description": "Confirmatory family comparing gf2's production population-count dispatcher (crates/gf2-core/src/kernels/ops.rs popcount()) against libpopcnt, the Mula AVX2 Harley-Seal reference, and three labelled internal controls: the AVX2 nibble-LUT kernel called directly, a forced scalar POPCNT-instruction loop, and the portable compiler-optimized count_ones loop. gf2's dispatcher is the baseline in every cell; each cell asks whether one alternative reaches a material throughput gap against it. Cells cover small inputs, the dispatcher's scalar/vector selection boundary observed at 8 words in the emitted cmp $0x7, buffer alignment 24 bytes off a vector boundary, all-ones and all-zero bit patterns, the Mula carry-save network's 512-byte engagement threshold bracketed at 63 and 64 words, a cache-resident size and a streaming size. See dev/active/26465e6c/survey/objdump-evidence.txt for the observed thresholds."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-08T09:37:42Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Unused: every cell in this family has objective comparator-gap, which decides against the material-gap threshold, not against a worthwhile speedup.",
+    "measurement_resolution": 0.05,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount-pilot/receipt.json",
+      "sha256": "f28291bd365cd9ee4104c45e8692a13e1436c78bfafcfc4509d149190c3c718d"
+    },
+    "equivalence_margin": 1.06,
+    "equivalence_rationale": "An arm within a factor 1.06 of gf2's own implementation is not a materially different implementation for any consumer of these leaf kernels, so a cell whose interval lower bound stays above 1/1.06 is reported as not materially different rather than as a gap. The intended margin is 1.05, chosen on consumer benefit. The declared 1.05 lies inside the pilot-measured resolution 0.05, so it is widened to 1.06, the next whole percent outside that resolution; the operative margin is 1.06.",
+    "material_gap_threshold": 1.1,
+    "material_gap_rationale": "A comparator arm has to run at least 10% faster than gf2's own implementation before replacing that implementation, or moving its dispatch threshold, could repay the maintenance and dependency cost; below that the survey's conclusion is that gf2's existing kernel is retained. The threshold is tied to consumer benefit, not to the noise floor. The pilot receipt dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount-pilot/receipt.json observed a widest relative confidence-interval half-width of 0.0401 in cell popcount-pilot-streaming-vs-mula, which rounds up to a measurement resolution of 0.05. The declared threshold lies outside that resolution."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This family is a baseline survey: it authorizes no production code change under crates/. It records comparative evidence only; any adoption decision is a separate, future issue."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-small-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-small",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 201
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-boundary-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-boundary",
+        "size": {
+          "words": 8,
+          "word_offset": 0
+        },
+        "seed": 202
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "builds": {
+        "baseline": "native",
+        "candidate": "tuned-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-alignment-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-unaligned",
+        "size": {
+          "words": 256,
+          "word_offset": 3
+        },
+        "seed": 203
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "builds": {
+        "baseline": "native",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-bitpattern-allones-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allones-small",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 204
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-bitpattern-allzero-vs-mula",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allzero-small",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 205
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-csa-boundary-below-vs-mula",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-csa-boundary-below",
+        "size": {
+          "words": 63,
+          "word_offset": 0
+        },
+        "seed": 208
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-csa-boundary-at-vs-mula",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-csa-boundary-at",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 209
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-cache-resident-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-cache-resident",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 206
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-streaming-vs-mula",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-streaming",
+        "size": {
+          "words": 524288,
+          "word_offset": 0
+        },
+        "seed": 207
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
