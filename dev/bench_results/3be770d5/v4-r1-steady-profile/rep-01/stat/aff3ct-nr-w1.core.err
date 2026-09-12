@@ -1,0 +1,4 @@
+Events disabled
+Events enabled
+Events disabled
+{"kind":"worker-placement","arm":"aff3ct","threads":{"ready":2,"after":2},"workers":[{"worker":0,"cpu":0,"affinity":[0],"cpus_seen":[0],"calls":9}]}
