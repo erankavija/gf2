@@ -118,12 +118,12 @@ test "$got" = "build-1 bench build-2 " || {
 
 # --- 3. No lock outlives the wrapped command ---------------------------------
 #
-# The regression this guards: a daemon the wrapped command starts inherits its
+# What this guards: a daemon the wrapped command starts inherits its
 # descriptors, and a flock lock lasts until every copy of its descriptor is
-# closed or one of them unlocks it. Observed 2026-09-10: an sccache server that
-# a cargo-ci run under `ccx1-bench-flock.sh --full-host` started held the mutex
-# and the turnstile after the run, and every build on the host waited until
-# the server was stopped.
+# closed or one of them unlocks it. A compiler-cache server started by a
+# cargo-ci run under `ccx1-bench-flock.sh --full-host` is the case that arises
+# in practice: without the wrapper's unlock it holds the mutex and the
+# turnstile after the run, and every build on the host waits for it.
 #
 # The wrapped command records the locks as it sees them, then starts a daemon
 # the way the sccache server starts: in its own session with its standard
@@ -134,7 +134,7 @@ test "$got" = "build-1 bench build-2 " || {
 # cargo-budget.sh passes because it never gives the command a lock
 # descriptor: it closes its CCX1 and slot descriptors in the child with the
 # `{SLOT_FD}>&- {CCX1_FD}>&-` redirections and takes the test lock with
-# `flock -o` (commit d343807c). Under the benchmark wrapper the command and so the daemon do
+# `flock -o`. Under the benchmark wrapper the command and so the daemon do
 # hold the mutex descriptor, because the benchmark runner refuses to measure
 # without an inherited descriptor for the held lock (`host::inherited_lock`);
 # the wrapper's unlock after the command must free the lock all the same.
