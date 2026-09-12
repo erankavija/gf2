@@ -19,7 +19,7 @@
 //!
 //! # Carry-less product dispatch
 //!
-//! [`clmul_wide_dispatch`] is the one place a wide carry-less product selects
+//! `clmul_wide_dispatch` is the one place a wide carry-less product selects
 //! its kernel. The public long-product API ([`clmul_wide`],
 //! [`clmul_wide_slice`]), [`Gf2mWide::mul_ref`] and the wide Barrett reducer
 //! all reach it, so a host with PCLMULQDQ computes the `GF(2^256)` and
@@ -876,7 +876,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// # Mechanism
     ///
     /// The unreduced product and the two products inside Barrett reduction all
-    /// run through [`clmul_wide_dispatch`], the canonical carry-less product
+    /// run through `clmul_wide_dispatch`, the canonical carry-less product
     /// selection this crate shares with its public long-product API, so a host
     /// with PCLMULQDQ reaches the `gf2-kernels-simd` kernels at `N == 4` and
     /// `N == 9` and every other case runs
@@ -922,7 +922,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         // Stable-Rust caveat: `[u64; 2 * N]` is rejected as an array-length
         // expression on stable because `N` is a const generic parameter.
         // We therefore use a `Vec<u64>` buffer and the slice-based helpers
-        // [`clmul_wide_dispatch`] (the canonical carry-less product) and
+        // `clmul_wide_dispatch` (the canonical carry-less product) and
         // [`BarrettReducerWide::reduce_slice`] (Barrett reduction) that were
         // introduced exactly for this callsite. Both share implementations
         // with the array-typed `clmul_wide` / `BarrettReducerWide::reduce`,
@@ -2178,7 +2178,7 @@ fn xor_into(out: &mut [u64], scratch: &[u64]) {
 ///
 /// # Mechanism
 ///
-/// The product runs through [`clmul_wide_dispatch`], the canonical selection
+/// The product runs through `clmul_wide_dispatch`, the canonical selection
 /// this crate's wide arithmetic shares, so a host with PCLMULQDQ computes the
 /// 4-word and 9-word products in the vector kernels of `gf2-kernels-simd` and
 /// every other width, and every host without the capability, runs
@@ -2245,7 +2245,7 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 ///
 /// # Mechanism
 ///
-/// The product runs through [`clmul_wide_dispatch`] exactly as [`clmul_wide`]
+/// The product runs through `clmul_wide_dispatch` exactly as [`clmul_wide`]
 /// does, so it reaches the same kernels. Accumulating into a caller's buffer
 /// costs a scratch product and one XOR pass on a dispatched width, which
 /// [`clmul_wide`] avoids; a caller that wants the plain product of a 4- or
@@ -2285,7 +2285,7 @@ pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u
 }
 
 /// The portable bit-by-bit schoolbook carry-less product: the fallback
-/// [`clmul_wide_dispatch`] takes on a host or a width without a kernel, and
+/// `clmul_wide_dispatch` takes on a host or a width without a kernel, and
 /// the reference every dispatched lane is checked against.
 ///
 /// XOR-accumulates `a * b` into `out`, which must have length exactly
