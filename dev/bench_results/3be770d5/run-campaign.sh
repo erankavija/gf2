@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Steady-state LDPC throughput campaigns under protocol v3 (jit:3be770d5).
+# Steady-state LDPC throughput campaigns (jit:3be770d5).
+#
+# Each campaign runs under the protocol version its addendum pins: the pilots
+# under version 3, the confirmations under version 4.
 #
 # Usage (from the worktree root):
 #   run-campaign.sh FAMILY MODE RUN_ID ACTION

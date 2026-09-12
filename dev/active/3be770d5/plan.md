@@ -4,7 +4,8 @@
 
 Plan for `3be770d5`. The issue measures and ranks; it changes no production
 decoder. The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol v3](../f547c394/protocol.md) govern every timed cell.
+and the [benchmark protocol](../f547c394/protocol.md) govern every timed cell:
+the pilots pin version 3 and the confirmations version 4.
 
 ## What `c077a88b` already establishes
 
