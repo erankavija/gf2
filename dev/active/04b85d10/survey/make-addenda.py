@@ -131,6 +131,10 @@ FAMILIES = {
     },
     "layout": {
         "id": "bit-storage-layout-consumers",
+        # "Normal-frame" below is wrong: the degree-14 BCH cells measure the
+        # mother code of the DVB-T2 short frame (normal frame: GF(2^16)). The
+        # text stays as both frozen layout addenda carry it, so this generator
+        # still reproduces them; findings.md states the correction.
         "question": (
             "Whether the current bit-layout transform routes leave a material "
             "whole-consumer gap against routes the library already registers: the "

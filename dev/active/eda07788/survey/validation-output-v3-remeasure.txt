@@ -1,0 +1,49 @@
+xdsopl-ldpc: pinned commit 32357d8ad55a6a302c34e093759f0454e45cca56 verified
+building native: RUSTFLAGS=-C target-cpu=native -march=native
+cargo-budget: 24 jobs (1 live, 24 cpus)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core)
+   Compiling tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/dev/tools/tuning-campaign-support)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling gf2-coding v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-coding)
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling survey-gf2-side v0.0.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/dev/active/eda07788/survey/gf2-side)
+    Finished `release` profile [optimized] target(s) in 26.72s
+building portable: RUSTFLAGS=-C target-cpu=x86-64 -march=x86-64
+cargo-budget: 24 jobs (1 live, 24 cpus)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core)
+   Compiling tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/dev/tools/tuning-campaign-support)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling gf2-coding v0.1.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-coding)
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling survey-gf2-side v0.0.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/dev/active/eda07788/survey/gf2-side)
+    Finished `release` profile [optimized] target(s) in 26.49s
+PASS canonical bit order: 128/128 bits round-trip, lengths 0/1/63/64/65/127/128 preserved with zero tail padding
+PASS qam16-r12-normal: 64800/64800 positions match
+PASS qam64-r12-normal: 64800/64800 positions match
+PASS qam16-r12-short: 16200/16200 positions match
+PASS qam64-r12-short: 16200/16200 positions match
+PASS qam16-r12-normal: 2 banks of 64800 bits, both timed arms agree bit-for-bit
+PASS qam64-r12-normal: 2 banks of 64800 bits, both timed arms agree bit-for-bit
+PASS qam16-r12-short: 2 banks of 16200 bits, both timed arms agree bit-for-bit
+PASS qam64-r12-short: 2 banks of 16200 bits, both timed arms agree bit-for-bit
+
+arm executables and digests:
+40e9c0bd5868863d086d763f59346b3dd3a7b6d6c28469711360cb5ac4923d6d  target-native/release/gf2-dvb-t2-candidate
+63026844b7c07df568839478a19ada37253e074910ae45d9094b9ffff4716a86  target-native/release/xdsopl-dvb-t2-baseline
+08a443827455d6076b4006f0a8cde1f7b16b798a7e779ad3f2e393373db6ec72  target-portable/release/gf2-dvb-t2-candidate
+
+baselines ready under /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3

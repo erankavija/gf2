@@ -11,16 +11,22 @@
 //! `setup_ns` is the wall time of one `DvbT2BitInterleaver::new` construction,
 //! recorded once and not amortized over calls: the permutation table is built
 //! per MODCOD and reused, matching real usage.
+//!
+//! The request's cache state selects the policy `survey_gf2_side::timed_windows`
+//! applies: a `warm` cell interleaves its one bank once, untimed, before
+//! calibration; a `streaming` cell rotates through the fixture banks. Any
+//! other state is refused before setup.
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::hint::black_box;
 use std::io;
-use std::time::{Duration, Instant};
-use survey_gf2_side::{bitvec_from_words, frame_bits, modcod_for_name, seeded_word_banks};
+use std::time::Instant;
+use survey_gf2_side::{
+    bitvec_from_words, frame_bits, modcod_for_name, seeded_word_banks, timed_windows, CachePolicy,
+};
 use tuning_campaign_support::host::CpuAffinity;
-use tuning_campaign_support::timing::{execution_windows_configured, FIXTURE_BANKS};
 use tuning_campaign_support::transport;
 
 #[derive(Deserialize, Serialize)]
@@ -90,6 +96,13 @@ fn main() {
             std::process::exit(2);
         }
     };
+    let policy = match CachePolicy::from_request(&request.cache_state) {
+        Ok(policy) => policy,
+        Err(error) => {
+            eprintln!("gf2-dvb-t2-candidate: {error}");
+            std::process::exit(2);
+        }
+    };
     let bits = frame_bits(&case.modcod);
     let setup_start = Instant::now();
     let interleaver = DvbT2BitInterleaver::new(modcod_for_name(&case.modcod));
@@ -99,29 +112,21 @@ fn main() {
         bits,
         "gf2 frame length disagrees with the survey table"
     );
-    let banks = if request.cache_state == "streaming" {
-        FIXTURE_BANKS
-    } else {
-        1
-    };
-    let word_buffers = seeded_word_banks(case.seed, banks, bits);
+    let word_buffers = seeded_word_banks(case.seed, policy.banks(), bits);
     let buffers: Vec<_> = word_buffers
         .iter()
         .map(|words| bitvec_from_words(words, bits))
         .collect();
-    if request.cache_state == "warm" {
-        black_box(&buffers[0]);
-    }
 
-    let mut body = |bank: usize| {
-        let output = interleaver.interleave(&buffers[bank % banks]);
+    let body = |bank: usize| {
+        let output = interleaver.interleave(&buffers[bank]);
         black_box(output);
     };
-    let samples = match execution_windows_configured(
-        0,
-        u64::from(request.windows),
-        Duration::from_millis(u64::from(request.window_target_ms)),
-        &mut body,
+    let samples = match timed_windows(
+        policy,
+        request.windows,
+        request.window_target_ms,
+        body,
         |_| Ok(()),
     ) {
         Ok(samples) => samples,
@@ -142,7 +147,7 @@ fn main() {
                 elapsed_ns: sample.elapsed_ns,
             })
             .collect(),
-        cache_state_applied: request.cache_state,
+        cache_state_applied: policy.name().into(),
         workers_observed: 1,
         cpus_observed,
         selected_path: Some(format!("gf2-dvb-t2-interleave-{}", case.modcod)),

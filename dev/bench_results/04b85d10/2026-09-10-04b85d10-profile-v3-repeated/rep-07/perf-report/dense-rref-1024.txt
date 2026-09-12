@@ -1,0 +1,81 @@
+# case: {"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14144130832
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    71.86%          2541  consumer-profil  consumer-profile  [.] gf2_core::alg::rref::rref
+            |
+            ---gf2_core::alg::rref::rref
+               |          
+               |--66.52%--consumer_profile_gf2_side::Prepared::run
+               |          0xef
+               |          
+                --1.84%--0x3ff
+
+    14.06%           497  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_xor_into
+
+     2.12%            75  consumer-profil  libc.so.6         [.] 0x0000000000176497
+            |
+            ---0x7fc989d76497
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     2.09%            74  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::xor_fn
+
+     1.33%            47  consumer-profil  libc.so.6         [.] 0x0000000000176400
+            |
+            ---0x7fc989d76400
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     1.13%            40  consumer-profil  libc.so.6         [.] 0x0000000000176421
+            |
+            ---0x7fc989d76421
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     0.90%            32  consumer-profil  libc.so.6         [.] 0x0000000000176404
+            |
+            ---0x7fc989d76404
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     0.76%            27  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::swap_rows
+            |
+            ---gf2_core::matrix::BitMatrix::swap_rows
+
+     0.62%            22  consumer-profil  libc.so.6         [.] 0x0000000000176466
+            |
+            ---0x7fc989d76466
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     0.54%            19  consumer-profil  libc.so.6         [.] 0x0000000000176e84
+            |
+            ---0x7fc989d76e84
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+
+
+#
+# (Tip: To see callchains in a more compact form: perf report -g folded)
+#

@@ -90,7 +90,9 @@ static int transport_case(const json_value *object, const char *cache, uint64_t 
         }
     }
     setup_ns = monotonic_ns() - setup_start;
-    if (!strcmp(cache, "warm")) for (uint64_t i = 0; i < ctx.banks; i++) { mzd_t *out = mzd_transpose(NULL, ctx.a[i]); if (out == NULL) { fprintf(stderr, "warm-up transpose failed\n"); return 0; } mzd_free(out); }
+    /* The warm pass is the timed call itself on every bank, so fixed cells
+     * also write the preallocated output the timed call writes. */
+    if (!strcmp(cache, "warm")) for (uint64_t i = 0; i < ctx.banks; i++) transpose_body(&ctx, i);
     if (!run_windows(transpose_body, &ctx, windows, target_ms, &samples, NULL)) { fprintf(stderr, "transpose timing failed\n"); return 0; }
     if (!emit_result(samples, windows, cache, tiled ? "m4ri-mzd_transpose-tiled" : "m4ri-mzd_transpose", tiled, setup_ns, 0, 0, 0, 0)) return 0;
     free(samples);

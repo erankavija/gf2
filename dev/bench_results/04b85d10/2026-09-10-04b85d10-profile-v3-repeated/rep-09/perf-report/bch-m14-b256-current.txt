@@ -1,0 +1,28 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14144130832
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                       
+# ........  ............  ...............  ................  .............................................................................................................................
+#
+    63.83%          2257  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+            |
+            ---<gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+               |          
+                --25.17%--0x8000000000000008
+
+    36.00%          1273  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+            |
+            ---gf2_coding::bch::encode::packed_write_codeword
+
+
+
+#
+# (Tip: To measure approximate function latency with Processor Trace use perf record -e intel_pt// ... ; perf script --call-ret-trace)
+#

@@ -1,0 +1,63 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 11664107892
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                             
+# ........  ............  ...............  ................  ...................................................
+#
+    78.81%          2298  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+               |          
+               |--0.96%--0xb
+               |          
+               |--0.93%--gf2_core::matrix::BitMatrix::matvec_simd
+               |          
+               |--0.89%--0xf
+               |          
+               |--0.89%--0xd
+               |          
+               |--0.89%--0xc
+               |          
+               |--0.89%--0x8
+               |          
+               |--0.86%--0xe
+               |          
+               |--0.86%--0x7
+               |          
+               |--0.82%--0xa
+               |          
+               |--0.82%--0x1
+               |          
+               |--0.69%--0x2
+               |          
+               |--0.65%--0x3
+               |          
+               |--0.58%--0x9
+               |          
+               |--0.58%--0x6
+               |          
+               |--0.58%--0x5
+               |          
+                --0.58%--0x4
+
+    18.48%           539  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::matvec_simd
+            |
+            ---gf2_core::matrix::BitMatrix::matvec_simd
+
+     2.40%            70  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+               gf2_core::matrix::BitMatrix::matvec_simd
+
+
+
+#
+# (Tip: When collecting LBR backtraces use --stitch-lbr to handle more than 32 deep entries: perf record --call-graph lbr ; perf report --stitch-lbr)
+#

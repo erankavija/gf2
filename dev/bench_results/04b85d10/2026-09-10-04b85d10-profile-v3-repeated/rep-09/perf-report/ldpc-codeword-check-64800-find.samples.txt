@@ -1,0 +1,30 @@
+# case: {"workload":"ldpc-codeword-check","size":{"n":64800},"seed":203}
+# path: find-first-one  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3400  (96.2%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13600125800
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    99.56%          3385  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+     0.06%             2  consumer-profil  consumer-profile  [.] alloc::raw_vec::RawVecInner<A>::finish_grow
+     0.06%             2  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::prepare
+     0.06%             2  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::from_coo
+     0.06%             2  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.06%             2  consumer-profil  [unknown]         [k] 0xffffffffad892f0f
+     0.03%             1  consumer-profil  consumer-profile  [.] <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+     0.03%             1  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::Prepared::run
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad81a4e6
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadae4700
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae98e344
+
+
+#
+# (Tip: To show information about system the samples were collected on use perf report --header)
+#

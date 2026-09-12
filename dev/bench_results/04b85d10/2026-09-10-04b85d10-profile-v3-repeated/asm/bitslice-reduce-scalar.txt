@@ -1,0 +1,90 @@
+# label: bitslice-reduce-scalar
+# pattern: bch_encode::bitslice_reduce_scalar
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 779018beddb7a24c7d2e14f21df4006b7da83afcb4ae96ae35a2f973d07c812f
+# symbols matching this pattern in the binary: 1
+
+## symbol at 0000000000095250, 0x0000000000000150 bytes
+0000000000095250 <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar>:
+   95250:	push   %r15
+   95252:	push   %r14
+   95254:	push   %r12
+   95256:	push   %rbx
+   95257:	sub    $0x28,%rsp
+   9525b:	mov    %rcx,(%rsp)
+   9525f:	mov    %rsi,0x8(%rsp)
+   95264:	lea    0x1(%rcx),%rax
+   95268:	mov    %rax,0x10(%rsp)
+   9526d:	cmp    %rax,%rsi
+   95270:	jne    95367 <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0x117>
+   95276:	test   %rcx,%rcx
+   95279:	je     9535b <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0x10b>
+   9527f:	test   %r9,%r9
+   95282:	je     9535b <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0x10b>
+   95288:	lea    (%r8,%r9,8),%rax
+   9528c:	movabs $0xffffffffffffffc,%rsi
+   95296:	and    %rcx,%rsi
+   95299:	mov    %ecx,%r9d
+   9529c:	and    $0x3,%r9d
+   952a0:	mov    %rcx,%r10
+   952a3:	and    $0xfffffffffffffffc,%r10
+   952a7:	neg    %r10
+   952aa:	lea    (%rdi,%rcx,8),%r11
+   952ae:	add    $0xfffffffffffffff8,%r11
+   952b2:	lea    (%rdx,%rcx,8),%rbx
+   952b6:	add    $0xfffffffffffffff0,%rbx
+   952ba:	jmp    952cd <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0x7d>
+   952bc:	nopl   0x0(%rax)
+   952c0:	add    $0xfffffffffffffff8,%rax
+   952c4:	cmp    %rax,%r8
+   952c7:	je     9535b <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0x10b>
+   952cd:	mov    (%rdi,%rcx,8),%r14
+   952d1:	xor    -0x8(%rax),%r14
+   952d5:	mov    %rcx,%r15
+   952d8:	cmp    $0x4,%rcx
+   952dc:	jb     95340 <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0xf0>
+   952de:	movq   %r14,%xmm0
+   952e3:	pshufd $0x44,%xmm0,%xmm0
+   952e8:	xor    %r15d,%r15d
+   952eb:	nopl   0x0(%rax,%rax,1)
+   952f0:	movdqu -0x18(%r11,%r15,8),%xmm1
+   952f7:	movdqu -0x8(%r11,%r15,8),%xmm2
+   952fe:	movdqu -0x10(%rbx,%r15,8),%xmm3
+   95305:	movdqu (%rbx,%r15,8),%xmm4
+   9530b:	pand   %xmm0,%xmm4
+   9530f:	pxor   %xmm2,%xmm4
+   95313:	pand   %xmm0,%xmm3
+   95317:	pxor   %xmm1,%xmm3
+   9531b:	movdqu %xmm4,(%r11,%r15,8)
+   95321:	movdqu %xmm3,-0x10(%r11,%r15,8)
+   95328:	add    $0xfffffffffffffffc,%r15
+   9532c:	cmp    %r15,%r10
+   9532f:	jne    952f0 <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0xa0>
+   95331:	mov    %r9,%r15
+   95334:	cmp    %rsi,%rcx
+   95337:	je     952c0 <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0x70>
+   95339:	nopl   0x0(%rax)
+   95340:	mov    -0x8(%rdx,%r15,8),%r12
+   95345:	and    %r14,%r12
+   95348:	xor    -0x8(%rdi,%r15,8),%r12
+   9534d:	mov    %r12,(%rdi,%r15,8)
+   95351:	dec    %r15
+   95354:	jne    95340 <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0xf0>
+   95356:	jmp    952c0 <gf2_kernels_simd::bch_encode::bitslice_reduce_scalar+0x70>
+   9535b:	add    $0x28,%rsp
+   9535f:	pop    %rbx
+   95360:	pop    %r12
+   95362:	pop    %r14
+   95364:	pop    %r15
+   95366:	ret
+   95367:	mov    %rsp,%rax
+   9536a:	mov    %rax,0x18(%rsp)
+   9536f:	mov    0x62f5a(%rip),%rax        # f82d0 <_DYNAMIC+0x288>
+   95376:	mov    %rax,0x20(%rsp)
+   9537b:	lea    -0x840ec(%rip),%rcx        # 11296 <anon.685cef5deda74ba931c528c61804d176.5.llvm.17560408324297722412>
+   95382:	lea    0x604b7(%rip),%r9        # f5840 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0xf0>
+   95389:	lea    0x8(%rsp),%rsi
+   9538e:	lea    0x10(%rsp),%rdx
+   95393:	lea    0x18(%rsp),%r8
+   95398:	xor    %edi,%edi
+   9539a:	call   *0x63190(%rip)        # f8530 <_DYNAMIC+0x4e8>

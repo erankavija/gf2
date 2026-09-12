@@ -1,0 +1,33 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-clmul-fold  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3678  (96.6%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14712136086
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                         
+# ........  ............  ...............  ................  ...............................................................................................................................
+#
+    96.47%          3548  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+     2.94%           108  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+     0.30%            11  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_fold_reduce
+     0.03%             1  consumer-profil  consumer-profile  [.] <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+     0.03%             1  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_family
+     0.03%             1  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_family
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::<impl gf2_coding::bch::spec::BchCode<X,S,M>>::encode_stamp
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_kernels_simd::bch_encode::fold_block_pclmul_safe
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad70818c
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad89242a
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8968b2
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8a8b7e
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#

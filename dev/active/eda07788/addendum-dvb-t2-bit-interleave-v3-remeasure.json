@@ -1,0 +1,347 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "dvb-t2-bit-interleave-baselines",
+    "issue": "eda07788",
+    "purpose": "consumer-family",
+    "description": "Exploratory re-measurement of the DVB-T2 ETSI EN 302 755 v1.4.1 SS6.1.3 bit interleaver [Etsi2015] (parity interleaving composed with column twisting) with arms that apply the declared cache state. Every cell is a whole-consumer comparison of two arms of the same operation on the same seeded frame. The baseline arm is always the established gf2 implementation and the candidate arm is always the arm whose lead needs attribution, so a speedup above 1 means the candidate is ahead: above 1 in a `-gap-` cell means the xdsopl/LDPC comparator is ahead of gf2, above 1 in a `-control-` cell means the `-C target-cpu=native` gf2 build is ahead of the conservative-portable gf2 control. Every earlier campaign of this question (the v1 pilot and confirmation, the v3 pilot, pilot r2 and confirmation) ran arms whose `warm` branch skipped the protocol's untimed pass over the working set before calibration (claims survey-v3-gf2-arm-warm-defect and survey-v3-external-arm-warm-defect in dev/active/eda07788/survey/source-evidence.json), so their `warm` declarations are false and every warm cell's comparison is withdrawn; the `streaming` cells applied the rotation they declared. This campaign repeats every cell of addendum-dvb-t2-bit-interleave-v3-pilot.json with the repaired arms (timed_windows in dev/active/eda07788/survey/gf2-side/src/lib.rs), whose executable digests dev/active/eda07788/survey/validation-output-v3-remeasure.txt records, at the pilot maximum of 24 pairs per cell. Every cell is exploratory. The withdrawn v3 confirmation spent the one confirmatory attempt per candidate identity and protocol version for gf2-native and xdsopl-external, whose identities its ledger reservation holds; the repaired executables are new identities for the same comparators, and this family opens no confirmatory attempt with them. The committed ledger holds 2 non-exploratory reservations and 12 comparisons, so a further confirmatory attempt would be attempt 3 with attempt alpha 0.05/(3*4) over at least 13 comparisons: even one confirmatory cell would expect 1.60 draws per bootstrap tail at 10000 resamples, against the 20 that P-20 requires. This campaign sizes no measurement resolution and feeds no confirmation. Pilot trials per cell, counting every committed campaign that started the cell as an exploratory cell under family id dvb-t2-bit-interleave-pilot or dvb-t2-bit-interleave-baselines, and this campaign: dvb-t2-qam16-r12-normal-null-native-vs-native 3, dvb-t2-qam16-r12-normal-gap-native-vs-xdsopl 3, dvb-t2-qam16-r12-normal-gap-portable-vs-xdsopl 3, dvb-t2-qam16-r12-normal-control-portable-vs-native 3, dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl 3, dvb-t2-qam64-r12-normal-gap-portable-vs-xdsopl 3, dvb-t2-qam64-r12-normal-control-portable-vs-native 3, dvb-t2-qam16-r12-short-gap-native-vs-xdsopl 4, dvb-t2-qam64-r12-short-gap-native-vs-xdsopl 3, dvb-t2-qam16-r12-normal-streaming-gap-native-vs-xdsopl 3. The search budget declares the maximum, within the protocol cap of 8; the earlier v3 addenda counted v3 trials only. Workload seeds expand through SplitMix64 [Steele2014], implemented as tuning_campaign_support::abtest::SplitMix64 (dev/tools/tuning-campaign-support/src/abtest.rs) and consumed by seeded_word_banks in dev/active/eda07788/survey/gf2-side/src/lib.rs; the producing snapshot pins both. This survey adopts no production implementation; no cell here decides adoption."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-11T17:17:52Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This issue is a baseline survey: it proposes no production change, so no worthwhile-speedup threshold applies and none is declared.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "The one-sided non-inferiority margin the withdrawn v3 confirmation froze; exploratory cells record decisions under it and never pass.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A 20% whole-consumer wall-clock gap is the smallest gap between two arms of this operation worth attributing to representation conversion, permutation-table traffic or codegen level rather than host noise; it is the threshold the withdrawn v3 confirmation froze."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "A survey adopts nothing. No production kernel changes, so the budget is zero by construction; the whole diff is under dev/."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/active/eda07788/dvb-t2-bit-interleave-baselines-trial-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 4,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-null-native-vs-native",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam16-r12-normal",
+        "size": {
+          "n_ldpc": 64800,
+          "k_ldpc": 32400,
+          "q_ldpc": 90,
+          "nc": 8,
+          "nr": 8100
+        },
+        "seed": 101
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-gap-native-vs-xdsopl",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam16-r12-normal",
+        "size": {
+          "n_ldpc": 64800,
+          "k_ldpc": 32400,
+          "q_ldpc": 90,
+          "nc": 8,
+          "nr": 8100
+        },
+        "seed": 101
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-gap-portable-vs-xdsopl",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam16-r12-normal",
+        "size": {
+          "n_ldpc": 64800,
+          "k_ldpc": 32400,
+          "q_ldpc": 90,
+          "nc": 8,
+          "nr": 8100
+        },
+        "seed": 101
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-control-portable-vs-native",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam16-r12-normal",
+        "size": {
+          "n_ldpc": 64800,
+          "k_ldpc": 32400,
+          "q_ldpc": 90,
+          "nc": 8,
+          "nr": 8100
+        },
+        "seed": 101
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam64-r12-normal",
+        "size": {
+          "n_ldpc": 64800,
+          "k_ldpc": 32400,
+          "q_ldpc": 90,
+          "nc": 12,
+          "nr": 5400
+        },
+        "seed": 102
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-gap-portable-vs-xdsopl",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam64-r12-normal",
+        "size": {
+          "n_ldpc": 64800,
+          "k_ldpc": 32400,
+          "q_ldpc": 90,
+          "nc": 12,
+          "nr": 5400
+        },
+        "seed": 102
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-control-portable-vs-native",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam64-r12-normal",
+        "size": {
+          "n_ldpc": 64800,
+          "k_ldpc": 32400,
+          "q_ldpc": 90,
+          "nc": 12,
+          "nr": 5400
+        },
+        "seed": 102
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-short-gap-native-vs-xdsopl",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam16-r12-short",
+        "size": {
+          "n_ldpc": 16200,
+          "k_ldpc": 7200,
+          "q_ldpc": 25,
+          "nc": 8,
+          "nr": 2025
+        },
+        "seed": 103
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-short-gap-native-vs-xdsopl",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam64-r12-short",
+        "size": {
+          "n_ldpc": 16200,
+          "k_ldpc": 7200,
+          "q_ldpc": 25,
+          "nc": 12,
+          "nr": 1350
+        },
+        "seed": 104
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-streaming-gap-native-vs-xdsopl",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-bit-interleave-qam16-r12-normal",
+        "size": {
+          "n_ldpc": 64800,
+          "k_ldpc": 32400,
+          "q_ldpc": 90,
+          "nc": 8,
+          "nr": 8100
+        },
+        "seed": 101
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
