@@ -3,7 +3,7 @@
   "purpose": "Acceptance verdict of every committed benchmark receipt when the evaluator reads committed content alone, beside the verdict of the acceptance summary committed with it.",
   "generator": "dev/active/a203a23c/reevaluate-receipts.sh",
   "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
-  "evidence_revision": "a46b56747e85ebb23d4929e88e64186da6967b28",
+  "evidence_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267",
   "evaluator_revision": "a46b56747e85ebb23d4929e88e64186da6967b28",
   "benchmark_acceptance_sha256": "146f30a8b06741f12a635b5662dbb22c812bb5f94e67daf96ee89f91d5b00906",
   "receipts": [
@@ -12,11 +12,23 @@
       "protocol_version": 1,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/inputs/producing/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/f547c394/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/receipt.json",
@@ -121,44 +133,95 @@
       "protocol_version": 3,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/1d0da41f/v3-confirmation/inputs/producing/Cargo.lock",
+          "dev/bench_results/1d0da41f/v3-confirmation/inputs/producing/dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": "dev/active/1d0da41f/producing-inputs.json",
+          "receipt": "dev/active/1d0da41f/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json",
       "protocol_version": 3,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/1d0da41f/v3-pilot-r2/inputs/producing/Cargo.lock",
+          "dev/bench_results/1d0da41f/v3-pilot-r2/inputs/producing/dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": "dev/active/1d0da41f/producing-inputs.json",
+          "receipt": "dev/active/1d0da41f/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
       "protocol_version": 3,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/1d0da41f/v3-pilot/inputs/producing/Cargo.lock",
+          "dev/bench_results/1d0da41f/v3-pilot/inputs/producing/dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": "dev/active/1d0da41f/producing-inputs.json",
+          "receipt": "dev/active/1d0da41f/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/receipt.json",
       "protocol_version": 1,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/inputs/producing/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/f547c394/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot/receipt.json",
@@ -257,33 +320,69 @@
       "protocol_version": 1,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/inputs/producing/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/f547c394/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/receipt.json",
       "protocol_version": 1,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/inputs/producing/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/f547c394/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/receipt.json",
       "protocol_version": 1,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/inputs/producing/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/f547c394/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/receipt.json",
@@ -414,6 +513,7 @@
       "reproduces": false,
       "cause": {
         "pinned_inputs_absent": [
+          "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/Cargo.lock",
           "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock"
         ],
         "producing_manifest": {
@@ -438,6 +538,7 @@
       "reproduces": false,
       "cause": {
         "pinned_inputs_absent": [
+          "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/Cargo.lock",
           "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock"
         ],
         "producing_manifest": {
@@ -462,6 +563,7 @@
       "reproduces": false,
       "cause": {
         "pinned_inputs_absent": [
+          "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/Cargo.lock",
           "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock"
         ],
         "producing_manifest": {
@@ -486,6 +588,7 @@
       "reproduces": false,
       "cause": {
         "pinned_inputs_absent": [
+          "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/Cargo.lock",
           "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock"
         ],
         "producing_manifest": {
@@ -720,11 +823,24 @@
       "protocol_version": 3,
       "committed_verdict": "accepted",
       "fresh_checkout": {
-        "exit": 0,
-        "verdict": "accepted",
-        "errors": []
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-03: pilot addendum is not verified: cannot read pinned content snapshot inputs/resolution-evidence/family-addendum.json: No such file or directory (os error 2)"
+        ]
       },
-      "reproduces": true
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/f547c394/v3-confirmation/inputs/resolution-evidence/family-addendum.json",
+          "dev/bench_results/f547c394/v3-confirmation/inputs/resolution-evidence/trial-ledger.jsonl"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/f547c394/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
     },
     {
       "receipt": "dev/bench_results/f547c394/v3-pilot/receipt.json",
@@ -762,13 +878,22 @@
   ],
   "result": {
     "receipts": 62,
-    "reproduces": 57,
+    "reproduces": 48,
     "differs": [
+      "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json",
       "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+      "dev/bench_results/1d0da41f/v3-confirmation/receipt.json",
+      "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json",
+      "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
+      "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/receipt.json",
+      "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/receipt.json",
+      "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/receipt.json",
+      "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/receipt.json",
       "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
       "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
       "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
-      "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json"
+      "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "dev/bench_results/f547c394/v3-confirmation/receipt.json"
     ]
   }
 }
