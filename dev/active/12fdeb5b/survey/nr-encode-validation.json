@@ -1,0 +1,780 @@
+{
+  "message_seed": 20260912,
+  "messages_per_configuration": 10,
+  "modulation_order": 1,
+  "rows": [
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 256,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 220,
+            "lifting_factor": 22,
+            "n_mother": 1144
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 256,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 256,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 220,
+            "lifting_factor": 22,
+            "n_mother": 1144
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 256,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n256-k121",
+      "filler_bits": 99,
+      "lifting_factor": 22,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 44,
+      "redundancy_version": 0,
+      "target_k": 121,
+      "target_n": 256
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 512,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 260,
+            "lifting_factor": 26,
+            "n_mother": 1352
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 512,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 512,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 260,
+            "lifting_factor": 26,
+            "n_mother": 1352
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 512,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n512-k200",
+      "filler_bits": 60,
+      "lifting_factor": 26,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 52,
+      "redundancy_version": 0,
+      "target_k": 200,
+      "target_n": 512
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 1024,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 520,
+            "lifting_factor": 52,
+            "n_mother": 2704
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1024,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 1024,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 520,
+            "lifting_factor": 52,
+            "n_mother": 2704
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1024,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n1024-k400",
+      "filler_bits": 120,
+      "lifting_factor": 52,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 104,
+      "redundancy_version": 0,
+      "target_k": 400,
+      "target_n": 1024
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 1200,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 720,
+            "lifting_factor": 72,
+            "n_mother": 3744
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1200,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 1200,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 800,
+            "lifting_factor": 80,
+            "n_mother": 4160
+          },
+          "detail": "AFF3CT derives BG2 Z=80 K_LDPC=800 N=4160 from (K=600, N=1200); gf2 uses BG2 Z=72 K_LDPC=720 N=3744",
+          "differing_parameter": "lifting_factor",
+          "messages_compared": 0,
+          "messages_identical": 0,
+          "min_identical_positions": 0,
+          "status": "non-equivalent"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n1200-k600",
+      "filler_bits": 120,
+      "lifting_factor": 72,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 144,
+      "redundancy_version": 0,
+      "target_k": 600,
+      "target_n": 1200
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 1440,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 720,
+            "lifting_factor": 72,
+            "n_mother": 3744
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1440,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 1440,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 720,
+            "lifting_factor": 72,
+            "n_mother": 3744
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1440,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n1440-k720",
+      "filler_bits": 0,
+      "lifting_factor": 72,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 144,
+      "redundancy_version": 0,
+      "target_k": 720,
+      "target_n": 1440
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 3840,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 1280,
+            "lifting_factor": 128,
+            "n_mother": 6656
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 3840,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 3840,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 1280,
+            "lifting_factor": 128,
+            "n_mother": 6656
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 3840,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n3840-k1280",
+      "filler_bits": 0,
+      "lifting_factor": 128,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 256,
+      "redundancy_version": 0,
+      "target_k": 1280,
+      "target_n": 3840
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 100,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 70,
+            "lifting_factor": 7,
+            "n_mother": 364
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 100,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 100,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 70,
+            "lifting_factor": 7,
+            "n_mother": 364
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 100,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n100-k40",
+      "filler_bits": 30,
+      "lifting_factor": 7,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 14,
+      "redundancy_version": 0,
+      "target_k": 40,
+      "target_n": 100
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 5000,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 2560,
+            "lifting_factor": 256,
+            "n_mother": 13312
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 5000,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 5000,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 2560,
+            "lifting_factor": 256,
+            "n_mother": 13312
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 5000,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n5000-k2500",
+      "filler_bits": 60,
+      "lifting_factor": 256,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 512,
+      "redundancy_version": 0,
+      "target_k": 2500,
+      "target_n": 5000
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 1024,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 528,
+            "lifting_factor": 24,
+            "n_mother": 1632
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1024,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 1024,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 640,
+            "lifting_factor": 64,
+            "n_mother": 3328
+          },
+          "detail": "AFF3CT derives BG2 Z=64 K_LDPC=640 N=3328 from (K=512, N=1024); gf2 uses BG1 Z=24 K_LDPC=528 N=1632",
+          "differing_parameter": "base_graph",
+          "messages_compared": 0,
+          "messages_identical": 0,
+          "min_identical_positions": 0,
+          "status": "non-equivalent"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n1024-k512",
+      "filler_bits": 16,
+      "lifting_factor": 24,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 48,
+      "redundancy_version": 0,
+      "target_k": 512,
+      "target_n": 1024
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 2048,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 1056,
+            "lifting_factor": 48,
+            "n_mother": 3264
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 2048,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 2048,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 1040,
+            "lifting_factor": 104,
+            "n_mother": 5408
+          },
+          "detail": "AFF3CT derives BG2 Z=104 K_LDPC=1040 N=5408 from (K=1024, N=2048); gf2 uses BG1 Z=48 K_LDPC=1056 N=3264",
+          "differing_parameter": "base_graph",
+          "messages_compared": 0,
+          "messages_identical": 0,
+          "min_identical_positions": 0,
+          "status": "non-equivalent"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n2048-k1024",
+      "filler_bits": 32,
+      "lifting_factor": 48,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 96,
+      "redundancy_version": 0,
+      "target_k": 1024,
+      "target_n": 2048
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 4096,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 2112,
+            "lifting_factor": 96,
+            "n_mother": 6528
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 4096,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 4096,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 2080,
+            "lifting_factor": 208,
+            "n_mother": 10816
+          },
+          "detail": "AFF3CT derives BG2 Z=208 K_LDPC=2080 N=10816 from (K=2048, N=4096); gf2 uses BG1 Z=96 K_LDPC=2112 N=6528",
+          "differing_parameter": "base_graph",
+          "messages_compared": 0,
+          "messages_identical": 0,
+          "min_identical_positions": 0,
+          "status": "non-equivalent"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n4096-k2048",
+      "filler_bits": 64,
+      "lifting_factor": 96,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 192,
+      "redundancy_version": 0,
+      "target_k": 2048,
+      "target_n": 4096
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 1200,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 968,
+            "lifting_factor": 44,
+            "n_mother": 2992
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1200,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 1200,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 968,
+            "lifting_factor": 44,
+            "n_mother": 2992
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1200,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n1200-k900",
+      "filler_bits": 68,
+      "lifting_factor": 44,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 88,
+      "redundancy_version": 0,
+      "target_k": 900,
+      "target_n": 1200
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 400,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 308,
+            "lifting_factor": 14,
+            "n_mother": 952
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 400,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 400,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 308,
+            "lifting_factor": 14,
+            "n_mother": 952
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 400,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n400-k308",
+      "filler_bits": 0,
+      "lifting_factor": 14,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 28,
+      "redundancy_version": 0,
+      "target_k": 308,
+      "target_n": 400
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 1320,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 1056,
+            "lifting_factor": 48,
+            "n_mother": 3264
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1320,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 1320,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 1056,
+            "lifting_factor": 48,
+            "n_mother": 3264
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 1320,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n1320-k1056",
+      "filler_bits": 0,
+      "lifting_factor": 48,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 96,
+      "redundancy_version": 0,
+      "target_k": 1056,
+      "target_n": 1320
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 2560,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 2112,
+            "lifting_factor": 96,
+            "n_mother": 6528
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 2560,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 2560,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 2112,
+            "lifting_factor": 96,
+            "n_mother": 6528
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 2560,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n2560-k2048",
+      "filler_bits": 64,
+      "lifting_factor": 96,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 192,
+      "redundancy_version": 0,
+      "target_k": 2048,
+      "target_n": 2560
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 8448,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 4224,
+            "lifting_factor": 192,
+            "n_mother": 13056
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 8448,
+          "selected_backend": "avx2",
+          "status": "matched"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 8448,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 4224,
+            "lifting_factor": 192,
+            "n_mother": 13056
+          },
+          "messages_compared": 10,
+          "messages_identical": 10,
+          "min_identical_positions": 8448,
+          "selected_backend": "scalar",
+          "status": "matched"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n8448-k4224",
+      "filler_bits": 0,
+      "lifting_factor": 192,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 384,
+      "redundancy_version": 0,
+      "target_k": 4224,
+      "target_n": 8448
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 2560,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 2112,
+            "lifting_factor": 96,
+            "n_mother": 6528
+          },
+          "detail": "srsRAN selects from the redundancy-version 1 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z",
+          "differing_parameter": "redundancy_version",
+          "messages_compared": 10,
+          "messages_identical": 1,
+          "min_identical_positions": 1197,
+          "selected_backend": "avx2",
+          "status": "non-equivalent"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 2560,
+          "detail": "AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 1",
+          "differing_parameter": "redundancy_version",
+          "messages_compared": 0,
+          "messages_identical": 0,
+          "min_identical_positions": 0,
+          "status": "unavailable"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n2560-k2048-rv1",
+      "filler_bits": 64,
+      "lifting_factor": 96,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 192,
+      "redundancy_version": 1,
+      "target_k": 2048,
+      "target_n": 2560
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 1024,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 520,
+            "lifting_factor": 52,
+            "n_mother": 2704
+          },
+          "detail": "srsRAN selects from the redundancy-version 2 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z",
+          "differing_parameter": "redundancy_version",
+          "messages_compared": 10,
+          "messages_identical": 1,
+          "min_identical_positions": 436,
+          "selected_backend": "avx2",
+          "status": "non-equivalent"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 1024,
+          "detail": "AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 2",
+          "differing_parameter": "redundancy_version",
+          "messages_compared": 0,
+          "messages_identical": 0,
+          "min_identical_positions": 0,
+          "status": "unavailable"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n1024-k400-rv2",
+      "filler_bits": 120,
+      "lifting_factor": 52,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 104,
+      "redundancy_version": 2,
+      "target_k": 400,
+      "target_n": 1024
+    }
+  ],
+  "schema": "nr-encode-validation-v1"
+}
