@@ -1,8 +1,8 @@
 # issue	worktree	est_minutes	command
-3be770d5	.agents/worktrees/agent-3be770d5	45	dev/active/3be770d5/survey/run-profile.sh dev/bench_results/3be770d5/v4-r1-steady-profile
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	15	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window region-axpy-pilot
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window matrix-product-pilot
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	8	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window pairwise-control-pilot
-3be770d5	.agents/worktrees/agent-3be770d5	20	dev/bench_results/3be770d5/run-campaign.sh single-worker confirmation v4-r1 window
-3be770d5	.agents/worktrees/agent-3be770d5	95	dev/bench_results/3be770d5/run-campaign.sh multicore confirmation v4-r1 window
-1c602857	.agents/worktrees/agent-1c602857	20	dev/active/1c602857/run-public-clmul.sh pilot
+1c602857	.agents/worktrees/agent-1c602857	5	dev/active/1c602857/run-public-clmul.sh pilot
+04b85d10	.agents/worktrees/agent-04b85d10-v3	10	dev/bench_results/04b85d10/run-consumer-campaigns.sh count pilot 4
+04b85d10	.agents/worktrees/agent-04b85d10-v3	15	dev/bench_results/04b85d10/run-consumer-campaigns.sh layout pilot 4
+6c6b09b1	.agents/worktrees/agent-6c6b09b1	7	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window region-axpy-confirmation
+6c6b09b1	.agents/worktrees/agent-6c6b09b1	7	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window matrix-product-confirmation
+6c6b09b1	.agents/worktrees/agent-6c6b09b1	7	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window pairwise-control-confirmation
+12fdeb5b	.worktrees-local/agent-eda07788-v3	20	dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh pilot
