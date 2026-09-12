@@ -1,0 +1,59 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": { "id": "zen3-benchmark-protocol", "version": 1 },
+  "family": {
+    "id": "popcount-baselines-pilot",
+    "issue": "26465e6c",
+    "purpose": "kernel-family",
+    "description": "Exploratory pilot establishing measurement resolution for the population-count kernel family (gf2 production dispatcher vs. libpopcnt, Mula AVX2 Harley-Seal, and three labeled internal controls: AVX2 nibble-LUT, forced scalar POPCNT, and the compiler-optimized count_ones loop). Pilot samples are excluded from confirmation."
+  },
+  "frozen": { "frozen_utc": null },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Pilot addendum; no adoption decision is made here.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "Pilot addendum; resolved in the confirmatory addendum from this pilot's receipt.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "Pilot addendum; resolved in the confirmatory addendum from this pilot's receipt."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This family is a baseline survey: it authorizes no production code change under crates/. It records comparative evidence only."
+  },
+  "family_wise": { "alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": [] },
+  "search_budget": { "max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1 },
+  "holdout": { "required": false, "cells": [] },
+  "cells": [
+    {
+      "cell_id": "popcount-pilot-small-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": { "identity": "popcount-random-small", "size": { "words": 4 }, "seed": 101 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "cold",
+      "builds": { "baseline": "native", "candidate": "native" },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-pilot-streaming-vs-mula",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": { "identity": "popcount-random-streaming", "size": { "words": 524288 }, "seed": 107 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "streaming",
+      "builds": { "baseline": "native", "candidate": "external" },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

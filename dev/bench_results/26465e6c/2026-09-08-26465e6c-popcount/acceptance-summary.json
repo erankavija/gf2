@@ -1,0 +1,290 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "ff2eba5f722beefea55e9216f1dc4f6f13f779644c38c54ac6370c544a3cd1e8",
+  "campaign_id": "popcount-26465e6c-20260908",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "popcount-baselines",
+    "comparisons": 9,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.9944444444444445,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "popcount-small-vs-nibble-lut",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.573766448915578,
+        "lower": 1.5700212054351756,
+        "upper": 1.5826020220497987,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 10798992134603808977,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-boundary-vs-scalar-popcnt",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-material",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.0882037309191221,
+        "lower": 1.0839430168609807,
+        "upper": 1.0932015703107874,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 7332457165757084629,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-alignment-vs-compiler-count-ones",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.3478864199334872,
+        "lower": 0.346391420015237,
+        "upper": 0.3515721382937886,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 1191161832226693202,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-bitpattern-allones-vs-libpopcnt",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.4774615195179954,
+        "lower": 1.4668006351397935,
+        "upper": 1.484029498420437,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 12558353331583007519,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-bitpattern-allzero-vs-mula",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.2019001044778892,
+        "lower": 1.196378158242461,
+        "upper": 1.2144396640019026,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 7024107890188398470,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-csa-boundary-below-vs-mula",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.7766468987701162,
+        "lower": 0.7721023333419703,
+        "upper": 0.7821875822938287,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 4042256352594767327,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-csa-boundary-at-vs-mula",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.201505856530295,
+        "lower": 1.1947039654795544,
+        "upper": 1.2074097044181704,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 11339270667479924172,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-cache-resident-vs-libpopcnt",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.3274193650043131,
+        "lower": 1.324421131470831,
+        "upper": 1.3338309727316797,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 1834717751233788995,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "popcount-streaming-vs-mula",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-material",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.1047005001315466,
+        "lower": 1.086038617047866,
+        "upper": 1.1251660049666636,
+        "confidence": 0.9944444444444445,
+        "resamples": 10000,
+        "seed": 3163570736831746184,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}
