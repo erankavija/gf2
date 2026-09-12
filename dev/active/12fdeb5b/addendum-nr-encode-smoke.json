@@ -1,0 +1,202 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "nr-rate-matched-encode-baselines-v1",
+    "issue": "12fdeb5b",
+    "purpose": "consumer-family",
+    "description": "End-to-end smoke for the NR rate-matched encoder family. It reaches a result line from every arm the pilot names and sizes the pilot's wall clock on the largest and smallest configurations of the grid. It is not a performance result about gf2 and decides nothing. 5G NR rate-matched LDPC encoding as the whole consumer: target_k information bits in, target_n rate-matched codeword bits out, in gf2's BitVec representation. The baseline arm is gf2's BlockEncoder::encode on Nr5gRateMatchedCode, which fuses TS 38.212 Section 5.4.2.1 bit selection into the encode. The candidate arms are srsRAN Project 25.10's ldpc_encoder::encode plus ldpc_rate_matcher::rate_match and AFF3CT v4.7.0's Encoder_LDPC_QC_fast encode plus Puncturer_5G puncture, each behind a whole-consumer adapter that converts into the project's representation and back inside the timed call. Modulation is one bit per symbol, where TS 38.212 Section 5.4.2.2 interleaving is the identity, and the redundancy version is 0, the only offset gf2 and AFF3CT implement. Every timed configuration passed the committed bit-exact equivalence gate in dev/active/12fdeb5b/survey/nr-encode-validation.json. The baseline is always gf2 and the candidate is the arm whose lead needs attribution, so a speedup above 1 in a -gap- cell means the comparator is ahead and above 1 in the -control- cell means the native gf2 build is ahead of the conservative-portable control. The -null- identity cell measures the noise floor. Comparator revisions, licences, compiled units, flags and selected backends are recorded in dev/active/12fdeb5b/survey/build-evidence.json."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-12T17:13:26Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This issue is a baseline survey: it proposes no production change, so no worthwhile-speedup threshold applies and none is declared.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A 10% equivalence margin, carried unchanged into the confirmatory addendum so this stage's recorded decisions are computed under the rule the confirmation uses. Exploratory cells never yield a pass.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A 20% whole-consumer wall-clock gap is the smallest gap between two arms of this operation worth attributing to a named cause (representation conversion, parity solve, selection gather or per-call dispatch) rather than host noise. This stage checks that the threshold sits above the measured resolution before the confirmatory addendum freezes it."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "A survey adopts nothing. No production kernel changes, so the budget is zero by construction; the whole diff is under dev/."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/active/12fdeb5b/nr-rate-matched-encode-trial-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "nr-enc-bg2-n1024-k400-null-native-vs-native",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-encode-bg2-n1024-k400",
+        "size": {
+          "base_graph": 2,
+          "target_n": 1024,
+          "target_k": 400,
+          "lifting": 52,
+          "full_n": 2704,
+          "fillers": 120
+        },
+        "seed": 401
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-enc-bg2-n256-k121-gap-native-vs-srsran",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-encode-bg2-n256-k121",
+        "size": {
+          "base_graph": 2,
+          "target_n": 256,
+          "target_k": 121,
+          "lifting": 22,
+          "full_n": 1144,
+          "fillers": 99
+        },
+        "seed": 402
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n8448-k4224-gap-native-vs-srsran",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-encode-bg1-n8448-k4224",
+        "size": {
+          "base_graph": 1,
+          "target_n": 8448,
+          "target_k": 4224,
+          "lifting": 192,
+          "full_n": 13056,
+          "fillers": 0
+        },
+        "seed": 403
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-encode-bg1-n2560-k2048",
+        "size": {
+          "base_graph": 1,
+          "target_n": 2560,
+          "target_k": 2048,
+          "lifting": 96,
+          "full_n": 6528,
+          "fillers": 64
+        },
+        "seed": 404
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n2560-k2048-control-portable-vs-native",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-encode-bg1-n2560-k2048",
+        "size": {
+          "base_graph": 1,
+          "target_n": 2560,
+          "target_k": 2048,
+          "lifting": 96,
+          "full_n": 6528,
+          "fillers": 64
+        },
+        "seed": 404
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
