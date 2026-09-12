@@ -13,10 +13,16 @@ Usage (from the worktree root): summarize.py
 import json
 import pathlib
 import statistics
+import sys
 from collections import defaultdict
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from intervals import wilson_interval  # noqa: E402
 
 BASE = pathlib.Path("dev/bench_results/3be770d5")
 PREPARATION = BASE / "preparation"
+SURVEY = pathlib.Path("dev/active/3be770d5/survey")
 
 
 def structural(lines):
@@ -180,6 +186,167 @@ def receipts(lines):
         lines.append("")
 
 
+def saturation(lines):
+    """Apply the survey's predeclared single-core against saturation test."""
+    spec = json.loads((SURVEY / "levers.json").read_text())
+    profile = json.loads((BASE / spec["profile"] / "profile-summary.json").read_text())
+    records, stats = profile["records"], profile["stats"]
+    ratios = {row["id"]: row for row in profile["ratios"]}
+
+    lines += ["## Single-core work against multicore saturation", "",
+              f"Source: `{spec['profile']}/profile-summary.json`. The survey declares, before measuring, "
+              "that a bottleneck counts as single-core when its share at 24 workers stays inside its "
+              "one-worker Wilson interval and gf2's per-worker slowdown interval overlaps AFF3CT's, and as "
+              "multicore saturation when gf2's slowdown interval lies above AFF3CT's and the L1d or cache "
+              "miss ratio rises with the worker count. Both halves are evaluated here from the committed "
+              "summary; neither is a judgement of this document.", "",
+              "Per-worker slowdown against the same arm at one worker, with the ratio of medians over 9 "
+              "sessions and a percentile bootstrap interval:", "",
+              "| Code | Arm | gf2 slowdown | AFF3CT slowdown | Relation | gf2 L1d miss/load at 1 | "
+              "gf2 L1d miss/load here | gf2 cache-miss ratio at 1 | gf2 cache-miss ratio here | "
+              "Saturation branch |",
+              "|---|---|---|---|---|---:|---:|---:|---:|---|"]
+    for code in ("dvb", "nr"):
+        for arm in ("p6", "p12", "l24"):
+            gf2, aff = ratios[f"slowdown:gf2-{code}-{arm}"], ratios[f"slowdown:aff3ct-{code}-{arm}"]
+            if gf2["lower"] > aff["upper"]:
+                relation = "gf2 above"
+            elif gf2["upper"] < aff["lower"]:
+                relation = "gf2 below"
+            else:
+                relation = "overlapping"
+            base, here = stats[f"gf2-{code}-w1"]["metrics"], stats[f"gf2-{code}-{arm}"]["metrics"]
+
+            def rises(name):
+                return here[name]["lower"] > base[name]["upper"]
+            branch = ("saturation" if relation == "gf2 above"
+                      and (rises("l1d_miss_fraction") or rises("cache_miss_fraction")) else "not met")
+            lines.append(
+                f"| {code} | {arm} | {gf2['estimate']:.3f} [{gf2['lower']:.3f}, {gf2['upper']:.3f}] | "
+                f"{aff['estimate']:.3f} [{aff['lower']:.3f}, {aff['upper']:.3f}] | {relation} | "
+                f"{base['l1d_miss_fraction']['median']:.4f} | {here['l1d_miss_fraction']['median']:.4f} | "
+                f"{base['cache_miss_fraction']['median']:.4f} | {here['cache_miss_fraction']['median']:.4f} | "
+                f"{branch} |")
+    lines += ["", "A branch reads `saturation` only when gf2's slowdown interval lies wholly above "
+              "AFF3CT's and one miss ratio's interval at that arm lies wholly above its one-worker "
+              "interval. Medians carry the 9-session order-statistic intervals of the counter table.", "",
+              "Share stability between one and twenty-four workers, the other half of the test:", "",
+              "| Code | Category | Share at 1 worker [Wilson 95%] | Share at 24 workers | Inside the "
+              "one-worker interval |", "|---|---|---|---:|---|"]
+    for code in ("dvb", "nr"):
+        single = {row["category"]: row for row in records[f"gf2-{code}-w1"]["categories"]}
+        many = {row["category"]: row for row in records[f"gf2-{code}-l24"]["categories"]}
+        for name, row in sorted(single.items(), key=lambda item: -item[1]["samples"])[:8]:
+            wide = many.get(name, {"share": 0.0})["share"]
+            inside = row["wilson_lower"] <= wide <= row["wilson_upper"]
+            lines.append(f"| {code} | `{name}` | {100 * row['share']:.2f}% ({row['samples']}/"
+                         f"{records[f'gf2-{code}-w1']['total_samples']}) [{100 * row['wilson_lower']:.2f}%, "
+                         f"{100 * row['wilson_upper']:.2f}%] | {100 * wide:.2f}% | {inside} |")
+    lines.append("")
+
+
+def levers(lines):
+    """Rank the REQ-03 levers by what the single-worker profile measures."""
+    spec = json.loads((SURVEY / "levers.json").read_text())
+    profile = json.loads((BASE / spec["profile"] / "profile-summary.json").read_text())
+    records, stats = profile["records"], profile["stats"]
+    structure = json.loads((PREPARATION / "structural-costs.json").read_text())["codes"]
+    cases = spec["cases"]
+
+    def samples(case, categories):
+        rows = {row["category"]: row["samples"] for row in records[case]["categories"]}
+        return sum(rows.get(name, 0) for name in categories)
+
+    def gathers_per_edge(case):
+        code = {"dvb-t2-r12": "dvb-t2-r12", "nr-bg1-r12": "nr-bg1-z384"}[records[case]["code"]]
+        counts = structure[code]
+        return counts["gf2_per_iteration"]["check_inputs_gathered"] / counts["edges"]
+
+    ranked, unranked = [], []
+    for lever in spec["levers"]:
+        row = dict(lever, figures={})
+        if lever["basis"] == "measured":
+            for case in cases:
+                total = records[case]["total_samples"]
+                count = samples(case, lever["removed"])
+                low, high = wilson_interval(count, total)
+                row["figures"][case] = {"samples": count, "total": total, "share": count / total,
+                                        "lower": low, "upper": high, "speedup_at_least": 1 / (1 - low)}
+            row["rank_key"] = min(row["figures"][case]["lower"] for case in cases)
+            ranked.append(row)
+        else:
+            unranked.append(row)
+            if lever["basis"] == "bounded":
+                for case in cases:
+                    total = records[case]["total_samples"]
+                    count = samples(case, lever["bounded_by"])
+                    low, high = wilson_interval(count, total)
+                    keep = 2 / gathers_per_edge(case)
+                    row["figures"][case] = {"samples": count, "total": total, "share": count / total,
+                                            "lower": low, "upper": high, "keep": keep,
+                                            "removed_at_most": (1 - keep) * high}
+    ranked.sort(key=lambda row: -row["rank_key"])
+
+    lines += ["## Lever ranking", "",
+              f"Source: `dev/active/3be770d5/survey/levers.json` and `{spec['profile']}/profile-summary.json`. "
+              "A lever's removed share is the pooled samples of the categories it removes over the pooled "
+              "samples of the case, with a Wilson 95% interval; the rule ranks by the smaller of the two "
+              "codes' lower bounds, and predicts a single-worker speedup of at least 1/(1 - lower). A later "
+              "confirmed speedup whose upper bound falls below that value refutes the attribution.", ""]
+    header = "| Rank | Lever | Removed categories |"
+    divider = "|---:|---|---|"
+    for case in cases:
+        header += f" {case} share [Wilson 95%] | {case} speedup at least |"
+        divider += "---|---:|"
+    lines += [header, divider]
+    for index, row in enumerate(ranked, start=1):
+        line = f"| {index} | {row['name']} | {', '.join('`' + c + '`' for c in row['removed'])} |"
+        for case in cases:
+            figure = row["figures"][case]
+            line += (f" {100 * figure['share']:.2f}% ({figure['samples']}/{figure['total']}) "
+                     f"[{100 * figure['lower']:.2f}%, {100 * figure['upper']:.2f}%] |"
+                     f" {figure['speedup_at_least']:.3f} |")
+        lines.append(line)
+    lines += ["", "Levers no category isolates carry a labelled estimate and take no rank:", "",
+              "| Lever | Basis | Figure |", "|---|---|---|"]
+    for row in unranked:
+        if row["basis"] == "bounded":
+            parts = []
+            for case in cases:
+                figure = row["figures"][case]
+                parts.append(f"{case}: containing categories {100 * figure['share']:.2f}% "
+                             f"({figure['samples']}/{figure['total']}) "
+                             f"[{100 * figure['lower']:.2f}%, {100 * figure['upper']:.2f}%]; two passes keep "
+                             f"{100 * figure['keep']:.1f}% of the gathers, so at most "
+                             f"{100 * figure['removed_at_most']:.2f}% is removed")
+            figure_text = "; ".join(parts)
+            basis = "upper bound from the containing categories and the structural gathers per edge"
+        elif row["basis"] == "counters":
+            parts = []
+            for case in cases + spec["saturation_cases"]:
+                value = stats[case]["metrics"][row["counter"]]
+                parts.append(f"{case}: {value['median']:.4f} [{value['lower']:.4f}, {value['upper']:.4f}] "
+                             f"over {value['n']} sessions")
+            figure_text = f"{row['counter']} " + "; ".join(parts)
+            basis = "counter evidence, no category isolated"
+        elif row["basis"] in ("per-code", "structural-estimate"):
+            parts = []
+            for case in cases:
+                counts = structure[{"dvb-t2-r12": "dvb-t2-r12",
+                                    "nr-bg1-r12": "nr-bg1-z384"}[records[case]["code"]]]
+                per_edge = ((counts["gf2_per_iteration"]["check_position_search_comparisons"]
+                             + counts["gf2_per_iteration"]["variable_position_search_comparisons"])
+                            / counts["edges"])
+                parts.append(f"{case}: {per_edge:.3f} position-search comparisons per edge")
+            figure_text = "; ".join(parts)
+            basis = "derived structural counts, exact, not timings"
+        else:
+            figure_text = row["comparator"] + ", in the fastest-compatible pilot cells"
+            basis = "comparator estimate, no gf2 mechanism today"
+        lines.append(f"| {row['name']} | {basis} | {figure_text} |")
+    lines.append("")
+
+
 def main():
     lines = ["# Steady-state LDPC survey tables", "", "> **Diátaxis Type:** Reference", "",
              "Generated by `dev/active/3be770d5/survey/summarize.py` from committed evidence; each table "
@@ -188,6 +355,8 @@ def main():
     census(lines)
     validations(lines)
     receipts(lines)
+    saturation(lines)
+    levers(lines)
     (BASE / "tables.md").write_text("\n".join(lines).rstrip("\n") + "\n")
 
 

@@ -264,3 +264,64 @@ Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson
 | dvb-t2-r12-matched-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
 | nr-bg1-z384-matched-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
 | nr-bg1-z384-matched-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+
+## Single-core work against multicore saturation
+
+Source: `v4-r1-steady-profile/profile-summary.json`. The survey declares, before measuring, that a bottleneck counts as single-core when its share at 24 workers stays inside its one-worker Wilson interval and gf2's per-worker slowdown interval overlaps AFF3CT's, and as multicore saturation when gf2's slowdown interval lies above AFF3CT's and the L1d or cache miss ratio rises with the worker count. Both halves are evaluated here from the committed summary; neither is a judgement of this document.
+
+Per-worker slowdown against the same arm at one worker, with the ratio of medians over 9 sessions and a percentile bootstrap interval:
+
+| Code | Arm | gf2 slowdown | AFF3CT slowdown | Relation | gf2 L1d miss/load at 1 | gf2 L1d miss/load here | gf2 cache-miss ratio at 1 | gf2 cache-miss ratio here | Saturation branch |
+|---|---|---|---|---|---:|---:|---:|---:|---|
+| dvb | p6 | 1.296 [1.280, 1.301] | 1.098 [1.078, 1.101] | gf2 above | 0.0399 | 0.0398 | 0.2893 | 0.2988 | saturation |
+| dvb | p12 | 1.497 [1.489, 1.625] | 1.288 [1.265, 1.299] | gf2 above | 0.0399 | 0.0398 | 0.2893 | 0.3024 | saturation |
+| dvb | l24 | 3.799 [3.748, 3.822] | 4.131 [4.056, 4.149] | gf2 below | 0.0399 | 0.0426 | 0.2893 | 0.4202 | not met |
+| nr | p6 | 1.185 [1.147, 1.194] | 1.099 [1.072, 1.112] | gf2 above | 0.0279 | 0.0279 | 0.2212 | 0.2236 | saturation |
+| nr | p12 | 1.304 [1.277, 1.368] | 1.341 [1.301, 1.363] | overlapping | 0.0279 | 0.0279 | 0.2212 | 0.2231 | not met |
+| nr | l24 | 2.505 [2.492, 2.529] | 2.727 [2.648, 2.748] | gf2 below | 0.0279 | 0.0324 | 0.2212 | 0.2152 | not met |
+
+A branch reads `saturation` only when gf2's slowdown interval lies wholly above AFF3CT's and one miss ratio's interval at that arm lies wholly above its one-worker interval. Medians carry the 9-session order-statistic intervals of the counter table.
+
+Share stability between one and twenty-four workers, the other half of the test:
+
+| Code | Category | Share at 1 worker [Wilson 95%] | Share at 24 workers | Inside the one-worker interval |
+|---|---|---|---:|---|
+| dvb | `edge-position-search` | 33.93% (9790/28853) [33.39%, 34.48%] | 52.16% | False |
+| dvb | `check-node-loop` | 23.62% (6816/28853) [23.14%, 24.12%] | 17.37% | False |
+| dvb | `allocator` | 16.48% (4755/28853) [16.06%, 16.91%] | 10.29% | False |
+| dvb | `min-sum-reduction` | 8.42% (2428/28853) [8.10%, 8.74%] | 4.56% | False |
+| dvb | `other:libc.so.6` | 6.33% (1827/28853) [6.06%, 6.62%] | 1.25% | False |
+| dvb | `syndrome-termination` | 4.22% (1218/28853) [4.00%, 4.46%] | 1.82% | False |
+| dvb | `min-sum-dispatch` | 3.30% (952/28853) [3.10%, 3.51%] | 1.15% | False |
+| dvb | `variable-node-update` | 3.16% (911/28853) [2.96%, 3.37%] | 10.98% | False |
+| nr | `edge-position-search` | 28.09% (5574/19840) [27.47%, 28.72%] | 37.53% | False |
+| nr | `allocator` | 20.95% (4157/19840) [20.39%, 21.52%] | 17.28% | False |
+| nr | `check-node-loop` | 20.17% (4001/19840) [19.61%, 20.73%] | 25.41% | False |
+| nr | `min-sum-reduction` | 14.99% (2975/19840) [14.50%, 15.50%] | 9.14% | False |
+| nr | `other:libc.so.6` | 4.93% (978/19840) [4.64%, 5.24%] | 1.59% | False |
+| nr | `min-sum-dispatch` | 4.73% (938/19840) [4.44%, 5.03%] | 2.49% | False |
+| nr | `syndrome-termination` | 3.24% (643/19840) [3.00%, 3.50%] | 2.21% | False |
+| nr | `variable-node-update` | 2.47% (491/19840) [2.27%, 2.70%] | 3.86% | False |
+
+## Lever ranking
+
+Source: `dev/active/3be770d5/survey/levers.json` and `v4-r1-steady-profile/profile-summary.json`. A lever's removed share is the pooled samples of the categories it removes over the pooled samples of the case, with a Wilson 95% interval; the rule ranks by the smaller of the two codes' lower bounds, and predicts a single-worker speedup of at least 1/(1 - lower). A later confirmed speedup whose upper bound falls below that value refutes the attribution.
+
+| Rank | Lever | Removed categories | gf2-dvb-w1 share [Wilson 95%] | gf2-dvb-w1 speedup at least | gf2-nr-w1 share [Wilson 95%] | gf2-nr-w1 speedup at least |
+|---:|---|---|---|---:|---|---:|
+| 1 | Canonical edge indexing | `edge-position-search` | 33.93% (9790/28853) [33.39%, 34.48%] | 1.501 | 28.09% (5574/19840) [27.47%, 28.72%] | 1.379 |
+| 2 | Allocation removal | `allocator`, `min-sum-input-vec` | 16.63% (4799/28853) [16.21%, 17.07%] | 1.193 | 21.06% (4178/19840) [20.50%, 21.63%] | 1.258 |
+| 3 | Dispatch | `min-sum-dispatch`, `dispatch` | 3.30% (952/28853) [3.10%, 3.51%] | 1.032 | 4.73% (938/19840) [4.44%, 5.03%] | 1.046 |
+| 4 | Syndrome and termination | `syndrome-termination` | 4.22% (1218/28853) [4.00%, 4.46%] | 1.042 | 3.24% (643/19840) [3.00%, 3.50%] | 1.031 |
+| 5 | Batch conversion | `conversion-output` | 0.03% (10/28853) [0.02%, 0.06%] | 1.000 | 0.05% (9/19840) [0.02%, 0.09%] | 1.000 |
+
+Levers no category isolates carry a labelled estimate and take no rank:
+
+| Lever | Basis | Figure |
+|---|---|---|
+| Shared min/second-min/sign | upper bound from the containing categories and the structural gathers per edge | gf2-dvb-w1: containing categories 35.34% (10196/28853) [34.79%, 35.89%]; two passes keep 33.3% of the gathers, so at most 23.93% is removed; gf2-nr-w1: containing categories 39.89% (7914/19840) [39.21%, 40.57%]; two passes keep 24.4% of the gathers, so at most 30.67% is removed |
+| Flat check/variable-major layout | counter evidence, no category isolated | l1d_miss_fraction gf2-dvb-w1: 0.0399 [0.0398, 0.0399] over 9 sessions; gf2-nr-w1: 0.0279 [0.0278, 0.0281] over 9 sessions; gf2-dvb-l24: 0.0426 [0.0425, 0.0428] over 9 sessions; gf2-nr-l24: 0.0324 [0.0323, 0.0326] over 9 sessions |
+| Degree structure | derived structural counts, exact, not timings | gf2-dvb-w1: 26.000 position-search comparisons per edge; gf2-nr-w1: 47.421 position-search comparisons per edge |
+| QC-aware intra-frame work | derived structural counts, exact, not timings | gf2-dvb-w1: 26.000 position-search comparisons per edge; gf2-nr-w1: 47.421 position-search comparisons per edge |
+| Inter-frame SIMD | comparator estimate, no gf2 mechanism today | AFF3CT layered f32 scalar against layered f32 INTER, in the fastest-compatible pilot cells |
+| Quantized/layered decoding | comparator estimate, no gf2 mechanism today | AFF3CT layered f32 and layered i16 INTER, in the fastest-compatible pilot cells |
