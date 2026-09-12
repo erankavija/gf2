@@ -1,7 +1,7 @@
 # issue	worktree	est_minutes	command
 1c602857	.agents/worktrees/agent-1c602857	5	dev/active/1c602857/run-public-clmul.sh pilot
-04b85d10	.agents/worktrees/agent-04b85d10-v3	10	dev/bench_results/04b85d10/run-consumer-campaigns.sh count pilot 4
-04b85d10	.agents/worktrees/agent-04b85d10-v3	15	dev/bench_results/04b85d10/run-consumer-campaigns.sh layout pilot 4
+04b85d10	.agents/worktrees/agent-04b85d10-v3	10	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/bench_results/04b85d10/run-consumer-campaigns.sh count pilot 4
+04b85d10	.agents/worktrees/agent-04b85d10-v3	15	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/bench_results/04b85d10/run-consumer-campaigns.sh layout pilot 4
 6c6b09b1	.agents/worktrees/agent-6c6b09b1	7	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window region-axpy-confirmation
 6c6b09b1	.agents/worktrees/agent-6c6b09b1	7	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window matrix-product-confirmation
 6c6b09b1	.agents/worktrees/agent-6c6b09b1	7	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window pairwise-control-confirmation
