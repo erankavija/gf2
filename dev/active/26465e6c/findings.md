@@ -5,7 +5,9 @@
 Survey for `26465e6c` on the Ryzen 9 5900X. It changes no production kernel or
 library. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol version 3](../f547c394/protocol.md) govern every receipt.
+and the [shared protocol](../f547c394/protocol.md) at
+[version 3](../f547c394/amendment-v3.md) — the version every receipt pins,
+snapshots and is evaluated under — govern every receipt.
 
 This report states no measured value. Each conclusion points to its source: a
 section of the generated [receipt tables](../../bench_results/26465e6c/tables.md),
@@ -328,11 +330,14 @@ Re-evaluated with the current acceptance tool on scratch copies, every v3
 summary reproduces byte for byte and every v1 receipt but one reproduces every
 verdict, decision and outcome
 ([`reevaluation.txt`](../../bench_results/26465e6c/reevaluation.txt), written by
-`survey/reevaluate.sh`). The exception is the 2026-09-07 v1 pilot, which v1
-had already superseded: the tool now rejects it on P-05 because its snapshot
-lacks the `Cargo.lock` its receipt pins, a file the v1 branch never committed.
-The other v1 snapshots hold a `Cargo.lock` with the pinned digest; no result
-here rests on that pilot.
+`survey/reevaluate.sh`). The exception is the 2026-09-07 v1 pilot, which v1 had
+already superseded: that record was written while its snapshot lacked the
+`Cargo.lock` its receipt pins, a file the v1 branch never committed, so the tool
+rejected it on P-05. The lockfile is committed now from a byte-identical source
+([restoration record](../a203a23c/restored-inputs.json)) and the pilot
+re-evaluates to the verdict its summary states
+([re-evaluation record](../a203a23c/receipt-reevaluation.json)). No result here
+rests on that pilot.
 
 ## Baseline for 5cbb6545
 

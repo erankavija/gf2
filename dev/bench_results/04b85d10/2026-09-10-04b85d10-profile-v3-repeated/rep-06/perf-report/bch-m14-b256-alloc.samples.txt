@@ -1,0 +1,32 @@
+# case: {"workload":"bch-encode-batch-alloc","size":{"degree":14,"batch":256},"seed":304}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3670  (91.3%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14680135790
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                       
+# ........  ............  ...............  ................  .............................................................................................................................
+#
+    63.00%          2312  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+    36.70%          1347  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+     0.03%             1  consumer-profil  consumer-profile  [.] <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  consumer-profile  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176538
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000001765a4
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad7f9da8
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb92694
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae189b81
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae96e56c
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae9898f8
+
+
+#
+# (Tip: List events using substring match: perf list <keyword>)
+#

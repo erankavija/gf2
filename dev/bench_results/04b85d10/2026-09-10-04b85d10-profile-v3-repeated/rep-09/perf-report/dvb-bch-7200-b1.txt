@@ -1,0 +1,26 @@
+# case: {"workload":"dvb-bch-encode","size":{"n":7200,"batch":1},"seed":306}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14728136234
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                
+# ........  ............  ...............  ................  ......................................................................................................
+#
+    85.90%          3163  consumer-profil  consumer-profile  [.] <gf2_coding::bch::core::BchEncoder as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+            |
+            ---<gf2_coding::bch::core::BchEncoder as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+
+    13.04%           480  consumer-profil  consumer-profile  [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+            |
+            ---<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+
+
+
+#
+# (Tip: Show individual samples with: perf script)
+#

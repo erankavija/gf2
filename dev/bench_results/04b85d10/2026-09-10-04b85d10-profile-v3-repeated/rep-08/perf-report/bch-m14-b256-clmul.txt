@@ -1,0 +1,30 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-clmul-fold  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14644135457
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                         
+# ........  ............  ...............  ................  ...............................................................................................................................
+#
+    96.23%          3523  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+            |
+            ---gf2_coding::bch::encode::packed_write_codeword
+               |          
+               |--95.41%--0x55b96d719ebf
+               |          
+                --0.82%--0x1b
+
+     3.00%           110  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+            |
+            ---gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+
+
+
+#
+# (Tip: To see call chains by final symbol taking CPU time (bottom up) use perf report -G)
+#

@@ -1,0 +1,61 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 11288104414
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                             
+# ........  ............  ...............  ................  ...................................................
+#
+    79.31%          2238  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+               |          
+               |--1.03%--0xb
+               |          
+               |--0.99%--0xa
+               |          
+               |--0.96%--0x7
+               |          
+               |--0.92%--0xd
+               |          
+               |--0.92%--0x8
+               |          
+               |--0.92%--0x3
+               |          
+               |--0.89%--gf2_core::matrix::BitMatrix::matvec_simd
+               |          
+               |--0.85%--0x6
+               |          
+               |--0.78%--0x2
+               |          
+               |--0.74%--0xc
+               |          
+               |--0.71%--0xe
+               |          
+               |--0.67%--0xf
+               |          
+               |--0.64%--0x9
+               |          
+               |--0.64%--0x1
+               |          
+                --0.60%--0x5
+
+    18.07%           510  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::matvec_simd
+            |
+            ---gf2_core::matrix::BitMatrix::matvec_simd
+
+     2.37%            67  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+               gf2_core::matrix::BitMatrix::matvec_simd
+
+
+
+#
+# (Tip: Use parent filter to see specific call path: perf report -p <regex>)
+#

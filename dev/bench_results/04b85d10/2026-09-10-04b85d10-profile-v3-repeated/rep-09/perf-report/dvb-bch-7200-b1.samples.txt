@@ -1,0 +1,28 @@
+# case: {"workload":"dvb-bch-encode","size":{"n":7200,"batch":1},"seed":306}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3682  (97.2%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14728136234
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                
+# ........  ............  ...............  ................  ......................................................................................................
+#
+    85.90%          3163  consumer-profil  consumer-profile  [.] <gf2_coding::bch::core::BchEncoder as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+    13.04%           480  consumer-profil  consumer-profile  [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+     0.46%            17  consumer-profil  consumer-profile  [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>
+     0.22%             8  consumer-profil  consumer-profile  [.] gf2_core::field::poly::add_impl
+     0.19%             7  consumer-profil  consumer-profile  [.] alloc::vec::Vec<T,A>::extend_with
+     0.08%             3  consumer-profil  consumer-profile  [.] gf2_core::gf2m::field::Gf2mElement_<V>::inverse
+     0.05%             2  consumer-profil  consumer-profile  [.] gf2_core::gf2m::field::Gf2mField_<V>::with_tables
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000001765d1
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad7ca2d0
+
+
+#
+# (Tip: Show individual samples with: perf script)
+#

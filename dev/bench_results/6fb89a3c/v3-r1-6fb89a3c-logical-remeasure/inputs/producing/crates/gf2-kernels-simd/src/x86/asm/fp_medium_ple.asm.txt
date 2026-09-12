@@ -1,0 +1,429 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::fp_medium_ple::ple_panel_base_canonical_u16
+; output        : crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : d71bd80a
+; regenerated   : 2026-05-27T12:43:40Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::fp_medium_ple::ple_panel_base_canonical_u16
+;==========================================================
+
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-68db401b/crates/gf2-kernels-simd)
+    Finished `release` profile [optimized] target(s) in 4.19s
+
+gf2_kernels_simd::x86::fp_medium_ple::ple_panel_base_canonical_u16:
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 744
+	mov qword ptr [rsp + 96], r9
+	xor eax, eax
+	mov qword ptr [rsp + 8], rdx
+	test rdx, rdx
+	je .LBB40_36
+	test rcx, rcx
+	je .LBB40_36
+	test r8w, r8w
+	je .LBB40_6
+	mov r14, rdi
+	mov r9, qword ptr [rsp + 808]
+	movzx ebp, r8w
+	vmovd xmm0, ebp
+	vpbroadcastd ymm4, xmm0
+	xor edi, edi
+	movabs rax, 4294967296
+	xor edx, edx
+	div rbp
+	mov eax, eax
+	vmovq xmm0, rax
+	vpbroadcastq ymm5, xmm0
+	lea rax, [r9 - 8]
+	mov qword ptr [rsp + 56], rax
+	lea rax, [rcx + rcx]
+	mov r13, r14
+	mov qword ptr [rsp + 24], rax
+	sub r13, rax
+	mov rax, rcx
+	neg rax
+	mov qword ptr [rsp + 88], rax
+	lea r8, [r14 + 2*rcx]
+	add r8, 2
+	lea r10, [rcx + 9]
+	lea rbx, [rcx + 1]
+	mov rax, qword ptr [rsp + 8]
+	dec rax
+	mov qword ptr [rsp + 72], rax
+	mov edx, 1
+	vxorps xmm6, xmm6, xmm6
+	mov rsi, rcx
+	mov qword ptr [rsp + 32], r14
+	xor r9d, r9d
+	mov r12, rcx
+	mov r11d, 1
+	mov qword ptr [rsp + 64], r11
+	mov qword ptr [rsp + 16], 0
+.LBB40_4:
+	cmp rdi, qword ptr [rsp + 8]
+	je .LBB40_5
+	mov qword ptr [rsp + 104], r12
+	mov qword ptr [rsp + 112], r9
+	mov r15, qword ptr [rsp + 16]
+	add r9, r15
+	mov qword ptr [rsp + 128], rdx
+	lea rdx, [r15 + rdx]
+	mov qword ptr [rsp + 152], r8
+	lea r8, [r8 + 2*r15]
+	mov qword ptr [rsp + 144], r10
+	add r10, r15
+	lea r11, [r14 + 2*r10]
+	mov qword ptr [rsp + 136], rbx
+	lea rax, [r15 + rbx]
+	mov qword ptr [rsp + 120], rsi
+	lea r12, [r15 + rsi]
+	mov rsi, rax
+	mov rax, r15
+	mov qword ptr [rsp + 80], r13
+.LBB40_10:
+	mov qword ptr [rsp + 48], rax
+	inc rax
+	mov qword ptr [rsp + 16], rax
+	mov rax, r9
+	xor r15d, r15d
+.LBB40_11:
+	lea rbx, [rdi + r15]
+	cmp rbx, qword ptr [rsp + 8]
+	jae .LBB40_7
+	inc r15
+	add r13, qword ptr [rsp + 24]
+	cmp word ptr [r14 + 2*rax], 0
+	lea rax, [rax + rcx]
+	je .LBB40_11
+	jmp .LBB40_13
+.LBB40_7:
+	inc r9
+	inc rdx
+	add r8, 2
+	add r11, 2
+	inc r10
+	inc rsi
+	inc r12
+	mov rax, qword ptr [rsp + 16]
+	cmp rcx, rax
+	mov r13, qword ptr [rsp + 80]
+	ja .LBB40_10
+	jmp .LBB40_8
+.LBB40_13:
+	cmp r15, 1
+	mov rsi, qword ptr [rsp + 824]
+	je .LBB40_25
+	xor eax, eax
+	cmp rcx, 16
+	jae .LBB40_21
+	mov rsi, qword ptr [rsp + 32]
+	jmp .LBB40_17
+.LBB40_21:
+	mov rsi, qword ptr [rsp + 32]
+.LBB40_22:
+	mov r9, rax
+	vmovdqu ymm0, ymmword ptr [rsi + 2*rax]
+	vmovdqu ymm1, ymmword ptr [r13 + 2*rax]
+	vmovdqu ymmword ptr [rsi + 2*rax], ymm1
+	vmovdqu ymmword ptr [r13 + 2*rax], ymm0
+	add rax, 16
+	add r9, 32
+	cmp r9, rcx
+	jbe .LBB40_22
+	cmp rax, rcx
+	jae .LBB40_18
+.LBB40_17:
+	movzx r9d, word ptr [rsi + 2*rax]
+	movzx ebx, word ptr [r13 + 2*rax]
+	mov word ptr [rsi + 2*rax], bx
+	mov word ptr [r13 + 2*rax], r9w
+	inc rax
+	cmp rcx, rax
+	jne .LBB40_17
+.LBB40_18:
+	mov rsi, qword ptr [rsp + 816]
+	cmp rdi, rsi
+	jae .LBB40_23
+	mov rax, r15
+	sub rax, qword ptr [rsp + 64]
+	cmp rax, rsi
+	jae .LBB40_20
+	mov rsi, qword ptr [rsp + 808]
+	mov rax, qword ptr [rsi + 8*rdi]
+	mov rbx, qword ptr [rsp + 56]
+	mov r9, qword ptr [rbx + 8*r15]
+	mov qword ptr [rsi + 8*rdi], r9
+	mov qword ptr [rbx + 8*r15], rax
+	mov rsi, qword ptr [rsp + 824]
+.LBB40_25:
+	lea rax, [rdi + 1]
+	mov qword ptr [rsp + 40], rax
+	cmp rax, qword ptr [rsp + 8]
+	jae .LBB40_33
+	imul rdi, rcx
+	mov rax, qword ptr [rsp + 48]
+	add rdi, rax
+	movzx esi, word ptr [r14 + 2*rdi]
+	mov rdi, rax
+	mov rax, qword ptr [rsp + 96]
+	movzx ebx, word ptr [rax + 2*rsi]
+	mov r13, rcx
+	vmovups ymmword ptr [rsp + 704], ymm6
+	vmovups ymmword ptr [rsp + 672], ymm6
+	vmovups ymmword ptr [rsp + 640], ymm6
+	vmovups ymmword ptr [rsp + 608], ymm6
+	vmovups ymmword ptr [rsp + 576], ymm6
+	vmovups ymmword ptr [rsp + 544], ymm6
+	vmovups ymmword ptr [rsp + 512], ymm6
+	vmovups ymmword ptr [rsp + 480], ymm6
+	vmovups ymmword ptr [rsp + 448], ymm6
+	vmovups ymmword ptr [rsp + 416], ymm6
+	vmovups ymmword ptr [rsp + 384], ymm6
+	vmovups ymmword ptr [rsp + 352], ymm6
+	vmovups ymmword ptr [rsp + 320], ymm6
+	vmovups ymmword ptr [rsp + 288], ymm6
+	vmovups ymmword ptr [rsp + 256], ymm6
+	vmovups ymmword ptr [rsp + 224], ymm6
+	mov rsi, qword ptr [rsp + 72]
+	lea rax, [rdi + 1]
+	sub r13, rax
+	jne .LBB40_42
+.LBB40_27:
+	movzx eax, word ptr [r14 + 2*r12]
+	imul eax, ebx
+	xor edx, edx
+	div ebp
+	mov word ptr [r14 + 2*r12], dx
+	add r12, rcx
+	dec rsi
+	jne .LBB40_27
+.LBB40_32:
+	mov rsi, qword ptr [rsp + 824]
+.LBB40_33:
+	mov r15, qword ptr [rsi + 16]
+	cmp r15, qword ptr [rsi]
+	mov r12, qword ptr [rsp + 104]
+	je .LBB40_34
+.LBB40_35:
+	mov rax, qword ptr [rsi + 8]
+	mov rdx, qword ptr [rsp + 48]
+	mov qword ptr [rax + 8*r15], rdx
+	inc r15
+	mov qword ptr [rsi + 16], r15
+	dec qword ptr [rsp + 64]
+	add qword ptr [rsp + 56], 8
+	mov rax, qword ptr [rsp + 24]
+	mov r13, qword ptr [rsp + 80]
+	add r13, rax
+	sub r12, rcx
+	mov r9, qword ptr [rsp + 112]
+	add r9, rcx
+	add qword ptr [rsp + 32], rax
+	mov rdx, qword ptr [rsp + 128]
+	add rdx, rcx
+	mov r8, qword ptr [rsp + 152]
+	add r8, rax
+	mov r10, qword ptr [rsp + 144]
+	add r10, rcx
+	mov rbx, qword ptr [rsp + 136]
+	add rbx, rcx
+	dec qword ptr [rsp + 72]
+	mov rsi, qword ptr [rsp + 120]
+	add rsi, rcx
+	mov rax, qword ptr [rsp + 40]
+	mov rdi, rax
+	cmp rcx, qword ptr [rsp + 16]
+	ja .LBB40_4
+	jmp .LBB40_36
+.LBB40_42:
+	mov rax, qword ptr [rsp + 88]
+	lea r12, [rax + rdi]
+	xor eax, eax
+.LBB40_43:
+	cmp rax, 256
+	je .LBB40_49
+	movzx esi, word ptr [r14 + 2*rdx]
+	mov word ptr [rsp + 2*rax + 224], si
+	lea rsi, [r12 + rax]
+	inc rsi
+	inc rax
+	inc rdx
+	inc rsi
+	jne .LBB40_43
+	cmp r13, 8
+	jae .LBB40_29
+	mov r9, qword ptr [rsp + 40]
+	jmp .LBB40_38
+.LBB40_41:
+	inc r9
+	add r8, qword ptr [rsp + 24]
+	cmp r9, qword ptr [rsp + 8]
+	je .LBB40_32
+.LBB40_38:
+	mov r10, r9
+	imul r10, rcx
+	add r10, rdi
+	movzx eax, word ptr [r14 + 2*r10]
+	imul eax, ebx
+	xor edx, edx
+	div ebp
+	mov esi, edx
+	mov word ptr [r14 + 2*r10], si
+	test edx, edx
+	je .LBB40_41
+	xor r10d, r10d
+.LBB40_40:
+	movzx r11d, word ptr [r8 + 2*r10]
+	movzx eax, word ptr [rsp + 2*r10 + 224]
+	imul eax, esi
+	xor edx, edx
+	div ebp
+	sub r11d, edx
+	mov eax, 0
+	cmovb eax, ebp
+	add eax, r11d
+	mov word ptr [r8 + 2*r10], ax
+	lea rax, [r12 + r10]
+	inc rax
+	inc r10
+	inc rax
+	jne .LBB40_40
+	jmp .LBB40_41
+.LBB40_29:
+	mov r12, qword ptr [rsp + 40]
+	jmp .LBB40_30
+.LBB40_31:
+	inc r12
+	mov rax, qword ptr [rsp + 24]
+	add r8, rax
+	add r11, rax
+	add r10, rcx
+	cmp r12, qword ptr [rsp + 8]
+	mov ebx, edi
+	mov rdi, qword ptr [rsp + 48]
+	je .LBB40_32
+.LBB40_30:
+	mov r9, r12
+	imul r9, rcx
+	add r9, rdi
+	movzx eax, word ptr [r14 + 2*r9]
+	mov edi, ebx
+	imul eax, ebx
+	xor edx, edx
+	div ebp
+	mov esi, edx
+	mov word ptr [r14 + 2*r9], si
+	test edx, edx
+	je .LBB40_31
+	vmovd xmm0, esi
+	vpbroadcastd ymm0, xmm0
+	mov rax, r10
+	mov rdx, r11
+	xor r15d, r15d
+.LBB40_46:
+	mov rbx, r15
+	mov r9, rdx
+	vpmovzxwd ymm1, xmmword ptr [rsp + 2*r15 + 224]
+	vpmulld ymm1, ymm0, ymm1
+	vpsrlq ymm2, ymm1, 32
+	vpmuludq ymm3, ymm1, ymm5
+	vpmuludq ymm2, ymm2, ymm5
+	vpsrlq ymm3, ymm3, 32
+	vpblendd ymm2, ymm3, ymm2, 170
+	vpmulld ymm2, ymm2, ymm4
+	vpsubd ymm1, ymm1, ymm2
+	vpsubd ymm2, ymm1, ymm4
+	vpminud ymm1, ymm1, ymm2
+	vpmovzxwd ymm2, xmmword ptr [r8 + 2*r15]
+	vpaddd ymm2, ymm4, ymm2
+	vpsubd ymm1, ymm2, ymm1
+	vpsubd ymm2, ymm1, ymm4
+	vpminud ymm1, ymm1, ymm2
+	vextracti128 xmm2, ymm1, 1
+	vpackusdw xmm1, xmm1, xmm2
+	vmovdqu xmmword ptr [r8 + 2*r15], xmm1
+	add r15, 8
+	add rbx, 16
+	add rdx, 16
+	add rax, 8
+	cmp rbx, r13
+	jbe .LBB40_46
+	jmp .LBB40_47
+.LBB40_48:
+	movzx ebx, word ptr [r9]
+	movzx eax, word ptr [rsp + 2*r15 + 224]
+	imul eax, esi
+	xor edx, edx
+	div ebp
+	sub ebx, edx
+	mov eax, 0
+	cmovb eax, ebp
+	add eax, ebx
+	mov word ptr [r9], ax
+	inc r15
+	add r9, 2
+.LBB40_47:
+	cmp r15, r13
+	jb .LBB40_48
+	jmp .LBB40_31
+.LBB40_34:
+	mov rdi, rsi
+	mov r13, rcx
+	vmovdqu ymmword ptr [rsp + 192], ymm4
+	vmovdqu ymmword ptr [rsp + 160], ymm5
+	vzeroupper
+	call qword ptr [rip + alloc::raw_vec::RawVec<T,A>::grow_one@GOTPCREL]
+	vxorps xmm6, xmm6, xmm6
+	vmovdqu ymm5, ymmword ptr [rsp + 160]
+	vmovdqu ymm4, ymmword ptr [rsp + 192]
+	mov rsi, qword ptr [rsp + 824]
+	mov rcx, r13
+	jmp .LBB40_35
+.LBB40_5:
+	mov rax, qword ptr [rsp + 8]
+	jmp .LBB40_36
+.LBB40_8:
+	mov rax, rdi
+.LBB40_36:
+	add rsp, 744
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	vzeroupper
+	ret
+.LBB40_49:
+	lea rdx, [rip + .Lanon.6ce5bafad929d20272652bd34a7569ad.63]
+	mov edi, 256
+	mov esi, 256
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB40_23:
+	lea rdx, [rip + .Lanon.6ce5bafad929d20272652bd34a7569ad.65]
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB40_20:
+	lea rdx, [rip + .Lanon.6ce5bafad929d20272652bd34a7569ad.65]
+	mov rdi, rax
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB40_6:
+	lea rdi, [rip + .Lanon.6ce5bafad929d20272652bd34a7569ad.64]
+	call qword ptr [rip + core::panicking::panic_const::panic_const_div_by_zero@GOTPCREL]
