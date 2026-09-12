@@ -1,0 +1,19 @@
+# case: {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}
+# path: current  cache_state: warm  target_ms: 1500
+# events: cycles:u,L1-dcache-loads:u,L1-dcache-load-misses:u,cache-references:u,cache-misses:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":5711,"conversion":{"batch_fill_ns":0,"dispatch_ns":0,"pack_ns":0,"setup_ns":6339085,"unpack_ns":23450},"elapsed_ns":"1488249420","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"ns_per_call":260593.48975661004,"path":"current","prepare":{"allocated_bytes":40467312,"allocations":129751,"freed_bytes":35769808},"schema":"consumer-profile-record-v2","seed":104,"selected_path":"current/csr-bit-at-a-time-matvec","size":{"n":64800},"target_ms":1500,"timed":{"allocated_bytes":23163816,"allocated_bytes_per_call":4056.0,"allocations":5711,"allocations_per_call":1.0,"freed_bytes":23163816,"peak_live_bytes":4056},"workers_observed":1,"workload":"ldpc-syndrome"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104} --path current --cache-state warm --target-ms 1500':
+
+     7,235,221,146      cycles:u                                                              
+     9,553,798,143      L1-dcache-loads:u                                                     
+       193,976,754      L1-dcache-load-misses:u                                               
+       389,552,107      cache-references:u                                                    
+         6,390,577      cache-misses:u                                                        
+
+       1.508993283 seconds time elapsed
+
+       1.495932000 seconds user
+       0.007956000 seconds sys
+
+

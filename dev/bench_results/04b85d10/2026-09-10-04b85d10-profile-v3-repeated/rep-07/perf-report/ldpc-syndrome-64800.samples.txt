@@ -1,0 +1,31 @@
+# case: {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3665  (96.3%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14660135605
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    99.65%          3652  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+     0.05%             2  consumer-profil  consumer-profile  [.] <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+     0.05%             2  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.03%             1  consumer-profil  consumer-profile  [.] alloc::raw_vec::RawVecInner<A>::finish_grow
+     0.03%             1  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::prepare
+     0.03%             1  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  libc.so.6         [.] malloc
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a75ce
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176646
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad401280
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad6f7a97
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae9898f8
+
+
+#
+# (Tip: To count events every 1000 msec: perf stat -I 1000)
+#

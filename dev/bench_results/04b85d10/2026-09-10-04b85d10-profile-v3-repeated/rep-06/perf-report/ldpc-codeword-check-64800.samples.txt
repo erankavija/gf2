@@ -1,0 +1,36 @@
+# case: {"workload":"ldpc-codeword-check","size":{"n":64800},"seed":203}
+# path: count-ones  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3582  (96.3%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14328132534
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                 
+# ........  ............  ...............  ................  .......................................................
+#
+    99.50%          3564  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+     0.06%             2  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::prepare
+     0.06%             2  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::from_coo
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a702c
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a71f8
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a7631
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad732984
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad73298d
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad891cd6
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad892ee3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb10fb3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb924d0
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb92617
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae98c015
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae99e46b
+
+
+#
+# (Tip: System-wide collection from all CPUs: perf record -a)
+#

@@ -1,0 +1,65 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12852118881
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    79.49%          2554  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+               |          
+               |--1.00%--gf2_core::matrix::BitMatrix::matvec_simd
+               |          
+               |--0.96%--0x1
+               |          
+               |--0.93%--0x4
+               |          
+               |--0.90%--0xd
+               |          
+               |--0.84%--0x2
+               |          
+               |--0.81%--0x1ff
+               |          
+               |--0.81%--0x9
+               |          
+               |--0.78%--0xe
+               |          
+               |--0.78%--0x8
+               |          
+               |--0.75%--0x7
+               |          
+               |--0.75%--0x6
+               |          
+               |--0.72%--0x3
+               |          
+               |--0.68%--0xc
+               |          
+               |--0.65%--0xf
+               |          
+               |--0.65%--0xb
+               |          
+               |--0.65%--0xa
+               |          
+                --0.65%--0x5
+
+    18.05%           580  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::matvec_simd
+            |
+            ---gf2_core::matrix::BitMatrix::matvec_simd
+
+     2.09%            67  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+               gf2_core::matrix::BitMatrix::matvec_simd
+
+
+
+#
+# (Tip: System-wide collection from all CPUs: perf record -a)
+#

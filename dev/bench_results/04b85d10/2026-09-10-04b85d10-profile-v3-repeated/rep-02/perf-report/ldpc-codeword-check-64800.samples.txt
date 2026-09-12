@@ -1,0 +1,35 @@
+# case: {"workload":"ldpc-codeword-check","size":{"n":64800},"seed":203}
+# path: count-ones  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3589  (96.3%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14356132793
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    99.55%          3573  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+     0.06%             2  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.03%             1  consumer-profil  consumer-profile  [.] <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+     0.03%             1  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::prepare
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::from_coo
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a5000
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a5098
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a6294
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a6e87
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x000000000017662a
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad88fd6c
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad892ee3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb1cd63
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae96e1af
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae99de34
+
+
+#
+# (Tip: Skip collecting build-id when recording: perf record -B)
+#
