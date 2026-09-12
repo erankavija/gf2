@@ -1,0 +1,30 @@
+start=2026-09-12T01:51:26Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot/execution.log
+terminal=3 end=2026-09-12T01:54:19Z
+start=2026-09-12T01:54:19Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot/execution.log
+terminal=3 end=2026-09-12T01:57:30Z
+start=2026-09-12T01:57:30Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot/execution.log
+terminal=3 end=2026-09-12T02:05:25Z
+start=2026-09-12T02:05:25Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot/execution.log
+terminal=3 end=2026-09-12T02:07:01Z
+start=2026-09-12T02:07:01Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot/execution.log
+terminal=3 end=2026-09-12T02:08:48Z
+start=2026-09-12T02:08:48Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-multicore-pilot/execution.log
+terminal=0 end=2026-09-12T02:12:15Z
