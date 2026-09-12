@@ -1,18 +1,12 @@
-cargo-budget: 12 jobs (2 live, 24 cpus)
-cargo-budget: another test run holds the lock; waiting up to 600s
-    Blocking waiting for file lock on package cache
-    Blocking waiting for file lock on package cache
-    Blocking waiting for file lock on build directory
-   Compiling proptest v1.9.0
-   Compiling serial_test v3.4.0
+cargo-budget: 24 jobs (1 live, 24 cpus)
    Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/crates/gf2-core)
-    Finished `ci-test` profile [optimized] target(s) in 5.60s
+    Finished `ci-test` profile [optimized] target(s) in 0.79s
 ────────────
- Nextest run ID a54a9e2e-962f-4af2-b794-8f8b741d6655 with nextest profile: ci
+ Nextest run ID 04c41439-81a4-4dde-a36f-c8ecd1170a37 with nextest profile: ci
     Starting 4 tests across 1 binary
-        PASS [   0.004s] (1/4) gf2-core::clmul_wide_conformance public_product_reaches_capability_dispatch
-        PASS [   0.004s] (2/4) gf2-core::clmul_wide_conformance field_multiplication_shares_the_canonical_dispatch
-        PASS [   0.006s] (3/4) gf2-core::clmul_wide_conformance portable_fallback_matches_the_oracle_at_every_width
-        PASS [   0.008s] (4/4) gf2-core::clmul_wide_conformance public_product_matches_the_oracle_at_every_width
+        PASS [   0.004s] (1/4) gf2-core::clmul_wide_conformance field_multiplication_shares_the_canonical_dispatch
+        PASS [   0.004s] (2/4) gf2-core::clmul_wide_conformance public_product_reaches_capability_dispatch
+        PASS [   0.007s] (3/4) gf2-core::clmul_wide_conformance portable_fallback_matches_the_oracle_at_every_width
+        PASS [   0.007s] (4/4) gf2-core::clmul_wide_conformance public_product_matches_the_oracle_at_every_width
 ────────────
      Summary [   0.008s] 4 tests run: 4 passed, 0 skipped
