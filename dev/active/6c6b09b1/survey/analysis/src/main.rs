@@ -8,6 +8,7 @@
 //! survey-analysis plan-check ADDENDUM [PLAN]
 //! survey-analysis tables OUTPUT RECEIPT_DIR...
 //! survey-analysis resolution PILOT_RECEIPT_DIR [STRICTER_ALPHA]
+//! survey-analysis resolution-freeze PILOT_RECEIPT_DIR
 //! ```
 //!
 //! `ledger-genesis` creates a protocol-v3 family ledger whose only line
@@ -31,7 +32,9 @@
 //! (see [`tables`] for what they contain and how every interval is formed).
 //! `resolution` prints the relative bootstrap half-width of every cell of a
 //! pilot receipt and the widest one, the input of a confirmation's frozen
-//! measurement resolution.
+//! measurement resolution. `resolution-freeze` prints that widest half-width
+//! alone, rounded up to six decimal places, which is the literal a
+//! confirmation addendum freezes; `make-confirmation-addenda.py` reads it.
 
 mod tables;
 
@@ -60,6 +63,7 @@ fn main() -> ExitCode {
             tables::tables(output, receipts)
         }
         ["resolution", pilot] => tables::resolution(pilot, None),
+        ["resolution-freeze", pilot] => tables::resolution_freeze(pilot),
         ["resolution", pilot, alpha] => alpha
             .parse::<f64>()
             .map_err(|e| format!("alpha {alpha}: {e}"))
@@ -67,7 +71,8 @@ fn main() -> ExitCode {
         _ => Err(
             "usage: survey-analysis ledger-genesis FAMILY LEDGER V1_RECEIPT_DIR | \
                   ledger-check FAMILY LEDGER | plan-check ADDENDUM [PLAN] | \
-                  tables OUTPUT RECEIPT_DIR... | resolution PILOT_RECEIPT_DIR [ALPHA]"
+                  tables OUTPUT RECEIPT_DIR... | resolution PILOT_RECEIPT_DIR [ALPHA] | \
+                  resolution-freeze PILOT_RECEIPT_DIR"
                 .to_owned(),
         ),
     };

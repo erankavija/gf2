@@ -1,0 +1,206 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "byte-field-pairwise-control",
+    "issue": "6c6b09b1",
+    "purpose": "consumer-family",
+    "description": "Confirmation of issue 6c6b09b1, protocol version 4, frozen from the pilot receipt dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot before any confirmatory trial. Question: how does gf2's arbitrary pairwise GF(2^8) product z[i] = x[i]*y[i] (gf2m::batch::batch_mul on u64 lanes, no coefficient reuse) compare with the only pairwise form each pinned library offers, its single-element multiply applied per byte (ISA-L gf_mul, GF-Complete multiply.w32, M4RIE gf2e_mul), at 4 KiB and 128 KiB byte regions, kernel-isolated and as a whole byte-region consumer that widens to lanes and narrows back? No library has a pairwise region kernel; this family is the control that keeps pairwise multiplication apart from the fixed-coefficient reuse the region family measures. The six confirmed cells are the two fastest external per-byte multiplies this family's pilot measured, M4RIE and GF-Complete, each at 4 KiB and 128 KiB kernel-isolated and at 128 KiB as a whole byte-region consumer. ISA-L's per-byte multiply, the slowest of the three in the pilot, keeps its exploratory evidence and is not confirmed here. Every cell works in GF(2^8) modulo 0x11D (x^8+x^4+x^3+x^2+1), the one field all compared arms share: ISA-L implements no other, and the gf2 arms use Gf2mField::gf256() or the survey's Gf2mWideConfig with the same polynomial. gf2 ships no GF(2^8) field modulo 0x11B, so no cell uses it. Arm names in a cell identifier: element = FieldVec/FieldMatrix<Gf2mElement>; wide = FieldVec/FieldMatrix<Gf2mWide<1,Gf256x11d>>; batch = gf2m::batch::batch_mul on u64 lanes; isal, gfcomplete, m4rie = the pinned libraries [IsaL2026] [GfComplete2026] [Mfourrie2026] through the survey's C shim. In a cell <x>-vs-<y> the baseline is x and the candidate y, so a speedup above one favours y; with gf2 as baseline, a value below one means gf2 is faster. Operands come from SplitMix64 [Steele2014] as implemented in tuning-campaign-support 0.1.0 (dev/tools/tuning-campaign-support/src/abtest.rs), seeded with the cell's workload seed and read through OperandStream in dev/active/6c6b09b1/survey/arm-common/src/lib.rs: each operand byte is the low byte of one output, and the coefficient of a region cell is the next output's low byte with its low bit set. Every cell is single-core: none of the measured gf2 entry points (FieldVec::axpy, field::matrix::gemm, gf2m::batch::batch_mul) and none of the external region, element or matrix calls has a parallel form in these builds (M4RI is configured without OpenMP), so a 6-, 12- or 24-CPU arm would time a harness thread pool rather than either library, and none is declared."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-12T13:20:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "No cell is an improvement cell: the survey compares current gf2 consumer paths with pinned external libraries and adopts nothing, so no worthwhile-speedup threshold applies.",
+    "measurement_resolution": 0.03864,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/receipt.json",
+      "sha256": "b09e362338cd043a8eaa8dbbe234dfd1d43ca71af814bd38543af061ec0f5ebe"
+    },
+    "equivalence_margin": 1.15,
+    "equivalence_rationale": "Within fifteen percent a consumer choosing between gf2 and an external byte-field library decides on licensing, portability and the conversion it must add, not on the kernel speed. The confirmation freezes a pilot-derived resolution strictly below this margin.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A quarter of the runtime is the smallest gap that survives the byte conversion a gf2 consumer would add to reach an external library, so it is the smallest gap that would change a decision about the gf2 path for the downstream feasibility work. The confirmation freezes a pilot-derived resolution strictly below it."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "The survey establishes comparison arms and baselines and changes no production kernel or library, so its budget for production change is zero by construction."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/6c6b09b1/v3-pairwise-control-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "pairwise-4k-batch-vs-m4rie",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-4096-bytes",
+        "size": {
+          "bytes": 4096
+        },
+        "seed": 501
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch-vs-m4rie",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 502
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch-vs-m4rie",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 502
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-4k-batch-vs-gfcomplete",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-4096-bytes",
+        "size": {
+          "bytes": 4096
+        },
+        "seed": 501
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch-vs-gfcomplete",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 502
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch-vs-gfcomplete",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 502
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

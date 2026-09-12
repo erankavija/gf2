@@ -529,6 +529,65 @@ pub fn tables(output: &str, receipts: &[&str]) -> Result<(), String> {
     fs::write(output, out).map_err(|e| format!("{output}: {e}"))
 }
 
+/// The widest relative bootstrap half-width over a receipt's measured cells,
+/// at `alpha`, with the cell that carries it.
+///
+/// This is the quantity P-03 recomputes from a pilot's raw pairs: it reads the
+/// same canonical bootstrap, the same campaign-derived cell seed and the same
+/// resample count the evaluator reads.
+fn widest_half_width(
+    receipt: &BenchmarkReceipt,
+    alpha: f64,
+    mut report: impl FnMut(&str, f64),
+) -> Result<(f64, String), String> {
+    let mut widest: Option<(f64, &str)> = None;
+    for cell in receipt.cells.iter().filter(|c| !c.pairs.is_empty()) {
+        let pairs: Vec<PairedObservation> = cell
+            .pairs
+            .iter()
+            .map(|pair| PairedObservation {
+                baseline_ns_per_call: pair.baseline.ns_per_call,
+                candidate_ns_per_call: pair.candidate.ns_per_call,
+            })
+            .collect();
+        let interval = paired_bootstrap_speedup(
+            &pairs,
+            receipt.settings.bootstrap_resamples,
+            alpha,
+            bootstrap_seed(receipt.campaign_seed, &cell.key),
+        )
+        .map_err(|e| format!("cell {}: {e}", cell.cell_id))?;
+        let half_width = (interval.estimate - interval.lower)
+            .abs()
+            .max((interval.upper - interval.estimate).abs())
+            / interval.estimate;
+        report(&cell.cell_id, half_width);
+        if widest.is_none_or(|(current, _)| half_width > current) {
+            widest = Some((half_width, cell.cell_id.as_str()));
+        }
+    }
+    widest
+        .map(|(width, cell)| (width, cell.to_owned()))
+        .ok_or_else(|| "no measured cell".to_owned())
+}
+
+/// Reads a pilot receipt and the corrected alpha of its acceptance summary.
+fn pilot_at_its_alpha(dir: &str) -> Result<(BenchmarkReceipt, f64), String> {
+    let receipt = BenchmarkReceipt::decode(
+        &fs::read(Path::new(dir).join("receipt.json")).map_err(|e| format!("{dir}: {e}"))?,
+    )?;
+    let summary: Value = serde_json::from_slice(
+        &fs::read(Path::new(dir).join("acceptance-summary.json"))
+            .map_err(|e| format!("{dir}: {e}"))?,
+    )
+    .map_err(|e| format!("summary: {e}"))?;
+    let alpha = 1.0
+        - summary["family"]["per_comparison_confidence"]
+            .as_f64()
+            .ok_or("summary lacks the per-comparison confidence")?;
+    Ok((receipt, alpha))
+}
+
 /// Prints each measured cell's relative bootstrap half-width and the widest
 /// one, at the corrected alpha of the pilot's acceptance summary and, when
 /// given, at a stricter per-comparison alpha such as a planned
@@ -538,55 +597,40 @@ pub fn tables(output: &str, receipts: &[&str]) -> Result<(), String> {
 /// `effect.measurement_resolution` must be at least the widest half-width,
 /// and every margin must strictly exceed one plus the resolution.
 pub fn resolution(dir: &str, stricter_alpha: Option<f64>) -> Result<(), String> {
-    let receipt = BenchmarkReceipt::decode(
-        &fs::read(Path::new(dir).join("receipt.json")).map_err(|e| format!("{dir}: {e}"))?,
-    )?;
-    let summary: Value = serde_json::from_slice(
-        &fs::read(Path::new(dir).join("acceptance-summary.json"))
-            .map_err(|e| format!("{dir}: {e}"))?,
-    )
-    .map_err(|e| format!("summary: {e}"))?;
-    let pilot_alpha = 1.0
-        - summary["family"]["per_comparison_confidence"]
-            .as_f64()
-            .ok_or("summary lacks the per-comparison confidence")?;
+    let (receipt, pilot_alpha) = pilot_at_its_alpha(dir)?;
     let mut alphas = vec![("pilot", pilot_alpha)];
     if let Some(alpha) = stricter_alpha {
         alphas.push(("stricter", alpha));
     }
     for (label, alpha) in alphas {
-        let mut widest: Option<(f64, &str)> = None;
-        for cell in receipt.cells.iter().filter(|c| !c.pairs.is_empty()) {
-            let pairs: Vec<PairedObservation> = cell
-                .pairs
-                .iter()
-                .map(|pair| PairedObservation {
-                    baseline_ns_per_call: pair.baseline.ns_per_call,
-                    candidate_ns_per_call: pair.candidate.ns_per_call,
-                })
-                .collect();
-            let interval = paired_bootstrap_speedup(
-                &pairs,
-                receipt.settings.bootstrap_resamples,
-                alpha,
-                bootstrap_seed(receipt.campaign_seed, &cell.key),
-            )
-            .map_err(|e| format!("cell {}: {e}", cell.cell_id))?;
-            let half_width = (interval.estimate - interval.lower)
-                .abs()
-                .max((interval.upper - interval.estimate).abs())
-                / interval.estimate;
-            println!(
-                "{label:8} alpha {alpha:.6} {:<44} {half_width:.6}",
-                cell.cell_id
-            );
-            if widest.is_none_or(|(current, _)| half_width > current) {
-                widest = Some((half_width, cell.cell_id.as_str()));
-            }
-        }
-        let (width, cell) = widest.ok_or("no measured cell")?;
+        let (width, cell) = widest_half_width(&receipt, alpha, |cell_id, half_width| {
+            println!("{label:8} alpha {alpha:.6} {cell_id:<44} {half_width:.6}");
+        })?;
         println!("{label:8} alpha {alpha:.6} widest {width:.6} in {cell}");
     }
+    Ok(())
+}
+
+/// Prints the one number a confirmation addendum freezes as its
+/// `effect.measurement_resolution`: the pilot's widest relative bootstrap
+/// half-width, rounded up to six decimal places.
+///
+/// P-03 rejects a declared resolution below the value it recomputes, so the
+/// frozen number is rounded away from the pilot, never towards it. The
+/// rounding also keeps the frozen literal short and identical on every rerun,
+/// which is what makes a freeze reproducible byte for byte. Nothing else is
+/// printed, so a generator reads this output directly.
+pub fn resolution_freeze(dir: &str) -> Result<(), String> {
+    let (receipt, alpha) = pilot_at_its_alpha(dir)?;
+    let (width, _) = widest_half_width(&receipt, alpha, |_, _| {})?;
+    // The multiplication is correctly rounded but can still land on the
+    // integer below the exact product, so the ceiling is raised until the
+    // quotient itself is at or above the half-width it must cover.
+    let mut micros = (width * 1e6).ceil();
+    while micros / 1e6 < width {
+        micros += 1.0;
+    }
+    println!("{}", micros / 1e6);
     Ok(())
 }
 
