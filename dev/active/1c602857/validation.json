@@ -1,0 +1,10 @@
+{
+  "schema": "public-clmul-validation-v1",
+  "issue": "1c602857",
+  "recorded_utc": "2026-09-12T07:26:02Z",
+  "command": "./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features simd,test-support --test clmul_wide_conformance",
+  "raw_output": "dev/active/1c602857/validation-raw.txt",
+  "suite": "crates/gf2-core/tests/clmul_wide_conformance.rs",
+  "exit_status": 0,
+  "passed": true
+}
