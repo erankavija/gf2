@@ -275,23 +275,38 @@ INSTRUCTION_RATES = [
     ("instructions per call, 507-word all-zero test as a search", "zero-test-507w-allzero-find", 1),
 ]
 
+# Mother-field rows of `code-rows.json`, which `gf2-side/tests/declared_codes.rs`
+# checks against the code the harness builds. A BCH ratio names its row from
+# here rather than in free text, so a label cannot describe a field the case
+# does not reach.
+BCH_ROWS = {
+    row["degree"]: row
+    for row in json.loads(
+        (pathlib.Path(__file__).resolve().parent / "code-rows.json").read_text(encoding="utf-8")
+    )["packed_bch_mother_codes"]
+}
+
+
+def bch_ratio(degree, batch, family, spelling):
+    """One BCH ratio row: (identifier, label, numerator row, denominator row)."""
+    return (
+        f"bch-m{degree}-b{batch}-{spelling}",
+        f"BCH {BCH_ROWS[degree]['field_label']} (m = {degree}), B = {batch}: "
+        f"current / {spelling} family",
+        ("bch-encode-batch", {"degree": degree, "batch": batch}, "current"),
+        ("bch-encode-batch", {"degree": degree, "batch": batch}, family),
+    )
+
+
 # Ratios of two sweep rows: (identifier, label, numerator row, denominator row).
 RATIOS = [
     ("zero-first-bit-507w", "507-word zero test, first bit set: count / find-first-one",
      ("zero-test", {"words": 507, "set_bit": 0}, "count-ones"),
      ("zero-test", {"words": 507, "set_bit": 0}, "find-first-one")),
-    ("bch-m14-b16-fold", "BCH short-frame mother field (m = 14), B = 16: current / fold family",
-     ("bch-encode-batch", {"degree": 14, "batch": 16}, "current"),
-     ("bch-encode-batch", {"degree": 14, "batch": 16}, "family-clmul-fold")),
-    ("bch-m14-b16-bitslice", "BCH short-frame mother field (m = 14), B = 16: current / bitslice family",
-     ("bch-encode-batch", {"degree": 14, "batch": 16}, "current"),
-     ("bch-encode-batch", {"degree": 14, "batch": 16}, "family-bitslice-interleaved")),
-    ("bch-m16-b256-fold", "BCH normal-frame mother field (m = 16), B = 256: current / fold family",
-     ("bch-encode-batch", {"degree": 16, "batch": 256}, "current"),
-     ("bch-encode-batch", {"degree": 16, "batch": 256}, "family-clmul-fold")),
-    ("bch-m16-b256-bitslice", "BCH normal-frame mother field (m = 16), B = 256: current / bitslice family",
-     ("bch-encode-batch", {"degree": 16, "batch": 256}, "current"),
-     ("bch-encode-batch", {"degree": 16, "batch": 256}, "family-bitslice-interleaved")),
+    bch_ratio(14, 16, "family-clmul-fold", "fold"),
+    bch_ratio(14, 16, "family-bitslice-interleaved", "bitslice"),
+    bch_ratio(16, 256, "family-clmul-fold", "fold"),
+    bch_ratio(16, 256, "family-bitslice-interleaved", "bitslice"),
 ]
 
 
