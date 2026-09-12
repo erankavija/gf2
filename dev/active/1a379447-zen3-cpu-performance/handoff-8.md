@@ -8,7 +8,7 @@
 
 - Epic: `1a379447`, backlog (dependency-blocked container; assignee `agent:jit-execution-lead`).
 - Wave in progress: wave 2 of 7.
-- Children: 5 done, 1 in_progress, 5 ready, 7 backlog, 0 rejected. Plus four
+- Children: 5 done, 3 in_progress, 4 ready, 6 backlog, 0 rejected. Plus four
   non-child in-flight issues (`04b85d10`, `6fb89a3c`, `3e59cb9a` done, `3be770d5`).
   `jit issue status` and [progress.json](progress.json) are authoritative.
 - Active claims: no leases. Lead assignment on `04b85d10`, `6fb89a3c`,
@@ -16,9 +16,13 @@
   session-10 worker has stopped; revive by name (`w10-<id>`).
 - Open escalations: none. Four invoker decisions this session, recorded in
   progress.json.
-- **No benchmark window is armed.** The invoker deferred it to after this
-  session and will set the time. [queue.tsv](bench-window/queue.tsv) holds
-  seven jobs, about 215 estimated minutes.
+- **The benchmark window is RUNNING.** The invoker directed it to start
+  immediately, independent of the session. It runs as the systemd user unit
+  `gf2-bench-window-20260912b` (started 2026-09-12T08:36:34Z, queue sha256
+  `fe2d43c9…`), seven jobs, about 215 estimated minutes, so expect it to finish
+  around 12:10Z. Follow it with
+  [follow-window.sh](bench-window/follow-window.sh); state and per-job output
+  are under `.agents/bench-window/`. **First thing next session: collect it.**
 
 ### Closed this session
 
@@ -57,8 +61,8 @@
 - [ ] **Rework `04b85d10` (round 2 of 2 — a third failure escalates).** code-review returned three issue-impact blocking findings, two of them measurement-validity rather than wording. F1: `dev/active/04b85d10/addendum-bit-storage-layout-v3-confirmation.json:11` labels degree-14 short-frame BCH measurements as normal-frame, so the frozen addendum's declared workload does not match the receipt. F2: the n=64800 whole-consumer receipt reports conversion costs from a short-code setup and a 32448-bit proxy rather than the declared normal-frame consumer (`survey/gf2-side/src/lib.rs:781` in the count-v3-confirmation producing snapshot). F3 (medium): `survey/summarize-receipts.py:93` hard-codes receipt-specific provenance and correction prose instead of deriving it from structured receipt evidence. Full verdict in `.jit/gate-runs/`; it cites REQ-01, REQ-02, REQ-03 and `@/invariant/benchmark-backed-performance`.
 - [ ] **Rework `a203a23c` (round 1).** research-review F1, high, blocking: tagged commit `76812a4e` reports the checker's 23.1 s to 2.59 s and the restoration generator's 60.2 s to 10.1 s reductions with no committed benchmark artifact, invocation, hardware or provenance. References `@/invariant/claims-trace-to-artifacts` and `@/invariant/benchmark-backed-performance`. The lead caused this by asking for the cost measurement without saying where the artifact recording it would live. Fix by committing an artifact that carries the invocation, host and timings, and pointing the claim at it. Its other three gates pass.
 - [ ] `428f2f6b` is now unblocked: `3e59cb9a` closed, so the eda07788 findings are free for its citation pass.
-- [ ] Ask the invoker for the window time, then arm the timer over the committed queue.
-- [ ] After the window: `3be770d5` (profile re-run first), `6c6b09b1` (three pilots), `1c602857` (pilot, then freeze, then a second window for the confirmation).
+- [ ] **Collect the window first.** `bash dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh` for the state, then per job: a `.done` marker without a nonzero `rc` in `.agents/bench-window/window.log` means it ran, **not** that it measured anything. Verify each campaign from its own execution log and receipt — terminal record `complete`, `cell-start` = `cell-complete` = the addendum's cell count, expected pairs per cell, acceptance verdict — before any worker writes a result. Then revive each owner (`w10-<id>`) or dispatch a continuation: `3be770d5` (profile re-run, then its two confirmations), `6c6b09b1` (three v4 pilots), `1c602857` (pilot, then freeze from the committed receipt, then a **second** window for the confirmation).
+- [ ] If `systemd-run --user` is needed again, export `XDG_RUNTIME_DIR=/run/user/1000` and `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus` first; both are unset in the agent environment and it fails without them.
 - [ ] Remaining ready work, not started: `428f2f6b` (after `3e59cb9a` closes — both edit the eda07788 findings), `12fdeb5b`, `53c5a8c0`. Briefs for all three are written; recreate from this handoff if the scratchpad is gone.
 - [ ] File the jit asset-scanner bug (see Traps).
 
@@ -73,6 +77,7 @@
 - **Do NOT expect `jit doc add` to accept a `.txt` containing a demangled Rust symbol.** The asset scanner reads `memchr::arch::x86_64::memchr::count_raw::find_avx2` as a relative path and refuses it as "not lexically confined", for every doc type. Affects committed disassembly and profiler dumps.
 - **Do NOT send a worker report over about 6000 characters.** The drain drops it whole rather than truncating; `3be770d5`'s first final report was lost entirely. Brief workers to split.
 - **Do NOT run two independent cross-reviews per issue without watching the budget.** Four gate suites plus four independent Terra xhigh reviews exhausted the account's weekly Codex limit mid-session, failing two gate suites with "Agent produced no output" — which records as a gate FAILURE indistinguishable from a finding.
+- **Do NOT read `nice: cannot set niceness: Permission denied` as a failure.** It appears in every job of every window and in 146 committed evidence files since 2026-05-27. `nice` warns and still runs the command; the wrapper calls the pin best-effort; isolation comes from the full-host CCX1 mutex, which works.
 - **Do NOT ask a worker for a performance number without saying where the artifact recording it will live.** The lead asked `a203a23c` what its new CI steps cost; the worker measured, improved them tenfold, and put the before/after timings in a commit message. research-review then failed the issue on an unsupported performance claim. The measurement was right and the request was right; what was missing was the artifact the claim had to point at.
 - **Do NOT trust a worktree's pre-seeded `target/` without suspicion when the compiler contradicts cargo.** A pool-seeded tree reported `can't find crate for sha2` and `serde_json` from rustc while both `.rlib` and `.rmeta` were present, readable and correct-length and cargo reported them Fresh. `cargo clean --release` over the affected crate's dependencies fixed it in 40 s. The dispatch script hardlinks pool entries, so a stale pool entry propagates to every worktree seeded after it.
 - **Do NOT re-freeze finished work to satisfy a tool that a protocol bump broke.** When protocol v4 made a frozen v3 addendum unvalidatable, the fix was to validate against the version-3 snapshot the receipt pins and assert that snapshot's digest against `receipt.addendum_schema.sha256` — not to regenerate the frozen artifact.
@@ -80,10 +85,10 @@
 
 ## Open questions needing invoker input
 
-- Question: when should the next benchmark window run?
-  - Context: seven jobs, about 215 minutes, are committed in queue.tsv; the invoker deferred the window to after session 10.
-  - Options: A) a 04:00 Europe/Helsinki slot as in prior sessions; B) another time.
-  - Recommendation: A, and run it before the next session so its results are ready to collect.
+- Question: record the achieved scheduling priority in each receipt's host observation?
+  - Context: the CCX1 wrapper's `nice -n -5` always fails on this host (`RLIMIT_NICE` max nice priority is 0), so every campaign runs at `NI=0`. GNU `nice` warns and still runs the command, the wrapper already documents the pin as best-effort, and 146 committed evidence files carry the same warning back to 2026-05-27 — so all evidence is mutually comparable and nothing is invalid. The host observation records governor, SMT and load but not priority, so on a host where the pin succeeded the results would shift silently.
+  - Options: A) file a small issue to add the field; B) leave it recorded in `surfaced_pitfalls` only.
+  - Recommendation: A. It is one field, and it is the same class of silent-comparability risk the epic already guards with governor and SMT.
 
 ## Reference artefacts
 
