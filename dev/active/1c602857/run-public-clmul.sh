@@ -3,10 +3,11 @@
 #
 # Usage:
 #   ./run-public-clmul.sh pilot|confirmation [date-utc] [suffix]
+#   ./run-public-clmul.sh build
 #
-# Both modes measure the same six cells with the same two arms: the baseline
-# runs `clmul_wide_slice_portable`, which is the public path this issue
-# replaced, word for word; the candidate runs `clmul_wide` and
+# Both timed modes measure the same six cells with the same two arms: the
+# baseline runs `clmul_wide_slice_portable`, which is the public path this
+# issue replaced, word for word; the candidate runs `clmul_wide` and
 # `clmul_wide_slice` as the issue leaves them. One executable serves both and
 # selects its entry point from GF2_CLMUL_PATH, so the arms share a build.
 #
@@ -19,6 +20,11 @@
 # a margin the pilot's resolution invalidates, so a pilot resolution at or
 # above five percent means the equivalence margin is replaced, with its own
 # rationale, before the confirmation runs.
+#
+# `build` checks the conformance evidence and builds the runner, the
+# acceptance tool and the arm executable, then stops: it proves the launcher's
+# pre-timing pipeline runs to completion under a minimal environment without
+# starting a campaign or writing a receipt.
 #
 # The launcher builds everything before timed work, then runs bounded resumable
 # sessions under the canonical exclusive wrapper. Re-invoking the same mode
@@ -33,6 +39,11 @@
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
+# A minimal environment (a systemd unit with no login shell) carries no
+# ~/.cargo/bin and no pinned toolchain; every other tool this launcher or its
+# helpers call resolves from /usr/bin. Exported before any cargo or tool
+# invocation, mirroring dev/bench_results/3be770d5/run-campaign.sh.
+export PATH="$HOME/.cargo/bin:$PATH" RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
 ISSUE=1c602857
 ACTIVE="dev/active/$ISSUE"
 MODE=${1:-}
@@ -54,8 +65,12 @@ case "$MODE" in
     OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-public-clmul-confirmation${SUFFIX}"
     SEED=20260912201
     ;;
+  build)
+    # No addendum, receipt directory or seed applies: `build` stops before a
+    # campaign is staged.
+    ;;
   *)
-    echo "usage: $0 pilot|confirmation [date-utc] [suffix]" >&2
+    echo "usage: $0 pilot|confirmation [date-utc] [suffix] | build" >&2
     exit 2
     ;;
 esac
@@ -76,7 +91,7 @@ if [[ "$MODE" == confirmation ]]; then
     exit 2
   fi
 fi
-if [[ -e "$OUT" ]]; then
+if [[ "$MODE" != build && -e "$OUT" ]]; then
   echo "receipt directory $OUT already exists; remove it to re-run" >&2
   exit 2
 fi
@@ -94,6 +109,14 @@ fi
 RUNNER=$(realpath target/release/benchmark-ab-runner)
 ACCEPTANCE=$(realpath target/release/benchmark-acceptance)
 ARM=$(realpath "$ACTIVE/arms/target/release/clmul-wide-arm")
+
+if [[ "$MODE" == build ]]; then
+  echo "# build complete; no campaign staged" >&2
+  echo "# runner: $RUNNER" >&2
+  echo "# acceptance: $ACCEPTANCE" >&2
+  echo "# arm: $ARM" >&2
+  exit 0
+fi
 
 STAGE=$(realpath -m "target/bench-stage/$ISSUE-$MODE")
 PLAN="$STAGE.plan.json"
