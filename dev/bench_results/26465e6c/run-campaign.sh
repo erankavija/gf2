@@ -6,8 +6,9 @@
 # pilot-r2 is the AND-popcount family's second pilot trial: the same frozen
 # pilot addendum under its own campaign identity, within the addendum's
 # search budget of two pilot trials per cell. The first trial's receipt is
-# rejected because an external kill interrupted one cell mid-measurement and
-# the resumed session started that cell a second time.
+# rejected under P-11 because an external kill interrupted one cell
+# mid-measurement and the resumed session started that cell a second time
+# (see `run` below).
 #
 # prepare   builds the runner, the acceptance tool and the survey binaries
 #           (release, Rust 1.95, offline), records their identities, runs the
@@ -17,8 +18,17 @@
 # run       measures the plan as bounded sessions under the canonical CCX1
 #           mutex until the campaign completes. A session exits 3 when it
 #           pauses at the plan's cell budget; the loop then releases the mutex,
-#           yields briefly and resumes. Re-invoking `run` after an interruption
-#           resumes the same campaign identity without repeating a cell.
+#           yields briefly and starts the next session. Under protocol v3 a
+#           campaign stopped at a cell boundary (a cell-budget pause, or a
+#           stop between sessions) resumes under the same identity when `run`
+#           is re-invoked and repeats no completed cell. A session interrupted
+#           inside a cell leaves that cell started but unfinished: on resume
+#           the runner starts it again, and v3 acceptance rejects the stage
+#           under P-11, which is what rejected the first AND-popcount pilot.
+#           Protocol v4 lifts that restriction by journalling the abandoned
+#           attempt (dev/active/f547c394/amendment-v4.md), and a v4 runner
+#           refuses these v3 addenda outright. These campaigns are complete,
+#           so this launcher reproduces them rather than extending them.
 # finalize  assembles the receipt directory, copies the launcher log and the
 #           instruction record into it, and evaluates acceptance.
 #
@@ -133,6 +143,8 @@ case "$ACTION" in
       case "$code" in
         0) break ;;
         3) sleep 5 ;;
+        # Any other exit may have cut a cell; resuming then restarts it, which
+        # P-11 rejects (see `run` above).
         *) echo "session failed with $code; re-invoke run to resume" >&2; exit "$code" ;;
       esac
     done
