@@ -173,7 +173,11 @@ its rationale), each under its own
 records every session's start with the executable digest, every completion
 and every discarded unfinished start; its
 [`host.txt`](../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/host.txt)
-records the host, toolchain, executables and source digests. A session first
+records the host, toolchain, executables and source digests. The series
+resumes after an interrupted session, so its sessions span more than one host
+window; a resumed run re-runs an unfinished session whole and refuses to
+resume when the executables it runs or the files that define its cases differ
+from the first session's record. A session first
 proves the compared routes agree (`rep-*/verify.jsonl`), then sweeps the
 current production routes of `survey/profile-cases.py` with per-call wall
 time and allocation counts and bytes from a counting global allocator,
