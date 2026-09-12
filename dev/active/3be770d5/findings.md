@@ -266,10 +266,11 @@ and its iterations run to the cap.
 ### What the window still owes
 
 The profile shares (REQ-02) and the share-ranked levers (REQ-03) need the
-re-run series, and the two matched confirmations need their own window job.
-The lever table's mechanisms, removed categories and falsifiable experiments
-are committed; what no evidence supports yet is the rank order, because the
-rule ranks by a measured lower bound.
+re-run series. The lever table's mechanisms, removed categories and
+falsifiable experiments are committed; what no evidence supports yet is the
+rank order, because the rule ranks by a measured lower bound. Both matched
+confirmations are frozen and queued; until they run, every matched cell stands
+as an exploratory estimate and decides nothing.
 
 | Criterion | Status | Evidence or remaining work |
 |---|---|---|
