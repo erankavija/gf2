@@ -36,7 +36,7 @@ NOT_BEHAVIOR = {"make-addenda.py", "record-preparation.py", "summarize-profile.p
                 "summarize.py", "edge-costs.py", "executable-identity.py",
                 "freeze-addendum.py", "validate.py",
                 "validate-arms.py", "intervals.py", "make-source-evidence.py",
-                "source-evidence.json",
+                "session-conditions.py", "source-evidence.json",
                 "run-profile.sh", "profile-session.sh", "profile-cases.tsv"}
 
 
