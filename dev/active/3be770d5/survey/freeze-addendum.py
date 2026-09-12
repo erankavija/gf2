@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Freeze a matched confirmation addendum from its accepted pilot (jit:3be770d5).
 
-Protocol v3 requires a confirmatory family to declare its margins against a
+The protocol requires a confirmatory family to declare its margins against a
 resolution an accepted pilot of the same family observed, and to pin that
-pilot by path and digest. This script performs the derivation mechanically:
+pilot by path and digest. The confirmations run under protocol v4, which
+derives the pilot resolution exactly as v3 does and admits a v3 pilot as the
+resolution evidence of a v4 receipt (`amendment-v4.md`), so the pilots stay
+v3 and this script raises the addendum's protocol version. It performs the
+derivation mechanically:
 it verifies that the independent acceptance summary accepts the exact pilot
 receipt bytes, takes the widest conservative relative half-width of the pilot
 cells' bootstrap intervals (the larger endpoint distance over the estimate),
@@ -27,6 +31,9 @@ import sys
 ACTIVE = pathlib.Path("dev/active/3be770d5")
 RESULTS = pathlib.Path("dev/bench_results/3be770d5")
 IDENTITY = RESULTS / "preparation/build-identity.json"
+# The protocol version the confirmations run under; the pilots they derive
+# from stay at the version they were measured under.
+PROTOCOL_VERSION = 4
 
 
 def sha(data):
@@ -72,6 +79,9 @@ def main():
     document = json.loads(pilot_path.read_text())
     if document["family"]["id"] != family:
         sys.exit("the pilot addendum belongs to another family")
+    pilot_version = document["protocol"]["version"]
+    document["schema"] = f"zen3-benchmark-addendum-v{PROTOCOL_VERSION}"
+    document["protocol"]["version"] = PROTOCOL_VERSION
     description = document["family"]["description"].replace("Exploratory pilot of", "Confirmatory comparison of", 1)
     description = description.replace(
         "It observes the measurement resolution that the confirmatory addendum of this family freezes; "
@@ -107,6 +117,8 @@ def main():
         "cell_relative_half_widths": widths,
         "observed_resolution": observed, "frozen_resolution": resolution,
         "rule": "ceil(widest relative half-width x 200) / 200; equivalence 1 + 2r; material gap 1 + 4r",
+        "pilot_protocol_version": pilot_version,
+        "confirmation_protocol_version": PROTOCOL_VERSION,
     }
     output.with_name(output.stem + "-derivation.json").write_text(json.dumps(derivation, indent=2) + "\n")
     output.write_text(json.dumps(document, indent=2) + "\n")
