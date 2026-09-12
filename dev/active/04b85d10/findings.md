@@ -565,8 +565,8 @@ bytes beside the record that states what each one measured.
   waits for the layout v4 pilot and its confirmation, because the v3 cells
   that carried it are withdrawn.
 - **REQ-03 — MET.** The repeated profile, whose harness builds each declared
-  code and whose probes time what they name, quantifies each consumer (sweep and
-  attribution summaries): sampled shares with their sample counts and Wilson
+  code and whose probes time what they name, quantifies each consumer (sweep
+  and attribution summaries): sampled shares with their sample counts and Wilson
   intervals; per-call times, conversion and dispatch probes, counter ratios
   and useful bandwidth as medians with order-statistic intervals; exact
   allocation counts and bytes with sites; and Rust 1.95 disassembly with
