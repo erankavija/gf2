@@ -1,0 +1,106 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 110K of event 'cycles:u'
+# Event count (approx.): 442552093569
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    78.70%         87070  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    11.52%         12745  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.45%          3816  libc.so.6         [.] cfree
+     3.12%          3449  libc.so.6         [.] malloc
+     1.52%          1680  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     0.51%           562  libc.so.6         [.] 0x0000000000176400
+     0.27%           297  libc.so.6         [.] 0x0000000000176404
+     0.19%           211  libc.so.6         [.] 0x000000000017646c
+     0.15%           161  libc.so.6         [.] 0x0000000000176466
+     0.10%           116  libc.so.6         [.] 0x0000000000176476
+     0.07%            74  libc.so.6         [.] 0x00000000001764db
+     0.06%            61  libc.so.6         [.] 0x0000000000176470
+     0.04%            49  libc.so.6         [.] 0x00000000001764b5
+     0.04%            45  libc.so.6         [.] 0x0000000000176485
+     0.03%            34  [unknown]         [k] 0xffffffffad4015f0
+     0.03%            32  libc.so.6         [.] 0x0000000000176497
+     0.02%            25  libc.so.6         [.] 0x0000000000176411
+     0.02%            25  libc.so.6         [.] 0x00000000001764b2
+     0.02%            23  libc.so.6         [.] 0x000000000017642e
+     0.01%            14  libc.so.6         [.] 0x00000000001764ac
+     0.01%             9  libc.so.6         [.] 0x000000000017642b
+     0.01%             8  libc.so.6         [.] 0x0000000000176421
+     0.01%             8  libc.so.6         [.] 0x0000000000176490
+     0.01%             8  libc.so.6         [.] 0x00000000001764a1
+     0.01%             7  libc.so.6         [.] 0x0000000000176425
+     0.01%             7  [unknown]         [k] 0xffffffffad81a4e6
+     0.01%             7  [unknown]         [k] 0xffffffffae98856c
+     0.00%             4  libc.so.6         [.] 0x0000000000176e00
+     0.00%             4  [unknown]         [k] 0xffffffffad4015f4
+     0.00%             4  [unknown]         [k] 0xffffffffad890be8
+     0.00%             4  [unknown]         [k] 0xffffffffad896892
+     0.00%             4  [unknown]         [k] 0xffffffffae988595
+     0.00%             4  [unknown]         [k] 0xffffffffae98ce93
+     0.00%             3  [unknown]         [k] 0xffffffffad401d22
+     0.00%             3  [unknown]         [k] 0xffffffffad729b1c
+     0.00%             3  [unknown]         [k] 0xffffffffad7f9db2
+     0.00%             3  [unknown]         [k] 0xffffffffae98ce54
+     0.00%             2  ldpc-profile      [.] gf2_kernels_simd::x86::avx2::fns::popcnt_fn
+     0.00%             2  libc.so.6         [.] 0x00000000000a7640
+     0.00%             2  libc.so.6         [.] 0x00000000001764c7
+     0.00%             2  [unknown]         [k] 0xffffffffad88fdb3
+     0.00%             2  [unknown]         [k] 0xffffffffae9885b4
+     0.00%             1  libc.so.6         [.] 0x00000000000a6e8b
+     0.00%             1  libc.so.6         [.] 0x00000000000a75d4
+     0.00%             1  libc.so.6         [.] 0x00000000000a79dd
+     0.00%             1  libc.so.6         [.] 0x000000000017649d
+     0.00%             1  libc.so.6         [.] 0x00000000001764a6
+     0.00%             1  libc.so.6         [.] 0x00000000001765ae
+     0.00%             1  libc.so.6         [.] 0x0000000000176e24
+     0.00%             1  libc.so.6         [.] 0x0000000000176e2a
+     0.00%             1  libc.so.6         [.] 0x0000000000176e35
+     0.00%             1  libc.so.6         [.] 0x0000000000176e3a
+     0.00%             1  libc.so.6         [.] 0x0000000000176e52
+     0.00%             1  libc.so.6         [.] 0x0000000000176f04
+     0.00%             1  libc.so.6         [.] 0x0000000000176f0a
+     0.00%             1  [unknown]         [k] 0xffffffffad400000
+     0.00%             1  [unknown]         [k] 0xffffffffad400002
+     0.00%             1  [unknown]         [k] 0xffffffffad4015f7
+     0.00%             1  [unknown]         [k] 0xffffffffad4015f8
+     0.00%             1  [unknown]         [k] 0xffffffffad4015fa
+     0.00%             1  [unknown]         [k] 0xffffffffad4015ff
+     0.00%             1  [unknown]         [k] 0xffffffffad401602
+     0.00%             1  [unknown]         [k] 0xffffffffad401cac
+     0.00%             1  [unknown]         [k] 0xffffffffad401d30
+     0.00%             1  [unknown]         [k] 0xffffffffad729ae4
+     0.00%             1  [unknown]         [k] 0xffffffffad729af6
+     0.00%             1  [unknown]         [k] 0xffffffffad732980
+     0.00%             1  [unknown]         [k] 0xffffffffad779494
+     0.00%             1  [unknown]         [k] 0xffffffffad7794b3
+     0.00%             1  [unknown]         [k] 0xffffffffad7794d0
+     0.00%             1  [unknown]         [k] 0xffffffffad7794d5
+     0.00%             1  [unknown]         [k] 0xffffffffad7f9d74
+     0.00%             1  [unknown]         [k] 0xffffffffad7f9dc5
+     0.00%             1  [unknown]         [k] 0xffffffffad88fd81
+     0.00%             1  [unknown]         [k] 0xffffffffad88fe14
+     0.00%             1  [unknown]         [k] 0xffffffffad88fe41
+     0.00%             1  [unknown]         [k] 0xffffffffad890bd4
+     0.00%             1  [unknown]         [k] 0xffffffffad8968b2
+     0.00%             1  [unknown]         [k] 0xffffffffad8968da
+     0.00%             1  [unknown]         [k] 0xffffffffad8a8b44
+     0.00%             1  [unknown]         [k] 0xffffffffae9898f8
+     0.00%             1  [unknown]         [k] 0xffffffffae989906
+     0.00%             1  [unknown]         [k] 0xffffffffae98993d
+     0.00%             1  [unknown]         [k] 0xffffffffae989941
+     0.00%             1  [unknown]         [k] 0xffffffffae98c014
+     0.00%             1  [unknown]         [k] 0xffffffffae98c015
+     0.00%             1  [unknown]         [k] 0xffffffffae98c016
+     0.00%             1  [unknown]         [k] 0xffffffffae98ce5b
+     0.00%             1  [unknown]         [k] 0xffffffffae99dd74
+     0.00%             1  [unknown]         [k] 0xffffffffae99dd7c
+
+
+#
+# (Tip: To not record events from perf itself add --exclude-perf)
+#

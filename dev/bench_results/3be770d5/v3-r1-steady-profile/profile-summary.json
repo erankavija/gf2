@@ -1,0 +1,356 @@
+{
+  "schema": "ldpc-steady-profile-summary-v1",
+  "source": "dev/bench_results/3be770d5/v3-r1-steady-profile",
+  "sessions": 9,
+  "resolution": {
+    "resolved": true,
+    "offset_convention": "file-offset",
+    "symbol_agreement": {
+      "offset-is-address": 0,
+      "file-offset": 0
+    },
+    "addresses": 0,
+    "executable": "target/ldpc-throughput/release/ldpc-profile"
+  },
+  "records": {
+    "gf2-dvb-w1": {
+      "kind": "record",
+      "label": "gf2-dvb-w1",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 0,
+      "total_samples": 0,
+      "session_totals": [],
+      "categories": [],
+      "top_innermost": []
+    },
+    "gf2-nr-w1": {
+      "kind": "record",
+      "label": "gf2-nr-w1",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 0,
+      "total_samples": 0,
+      "session_totals": [],
+      "categories": [],
+      "top_innermost": []
+    },
+    "gf2-dvb-l24": {
+      "kind": "record",
+      "label": "gf2-dvb-l24",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 0,
+      "total_samples": 0,
+      "session_totals": [],
+      "categories": [],
+      "top_innermost": []
+    },
+    "gf2-nr-l24": {
+      "kind": "record",
+      "label": "gf2-nr-l24",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 0,
+      "total_samples": 0,
+      "session_totals": [],
+      "categories": [],
+      "top_innermost": []
+    },
+    "aff3ct-dvb-w1": {
+      "kind": "record",
+      "label": "aff3ct-dvb-w1",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "sessions": 0,
+      "total_samples": 0,
+      "session_totals": [],
+      "categories": [],
+      "top_innermost": []
+    },
+    "aff3ct-nr-w1": {
+      "kind": "record",
+      "label": "aff3ct-nr-w1",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "sessions": 0,
+      "total_samples": 0,
+      "session_totals": [],
+      "categories": [],
+      "top_innermost": []
+    }
+  },
+  "stats": {
+    "gf2-dvb-w1": {
+      "kind": "stat",
+      "label": "gf2-dvb-w1",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "gf2-dvb-p6": {
+      "kind": "stat",
+      "label": "gf2-dvb-p6",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "gf2-dvb-p12": {
+      "kind": "stat",
+      "label": "gf2-dvb-p12",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "gf2-dvb-l24": {
+      "kind": "stat",
+      "label": "gf2-dvb-l24",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "gf2-nr-w1": {
+      "kind": "stat",
+      "label": "gf2-nr-w1",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "gf2-nr-p6": {
+      "kind": "stat",
+      "label": "gf2-nr-p6",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "gf2-nr-p12": {
+      "kind": "stat",
+      "label": "gf2-nr-p12",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "gf2-nr-l24": {
+      "kind": "stat",
+      "label": "gf2-nr-l24",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "aff3ct-dvb-w1": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-w1",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "aff3ct-dvb-p6": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-p6",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "aff3ct-dvb-p12": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-p12",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "aff3ct-dvb-l24": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-l24",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "aff3ct-nr-w1": {
+      "kind": "stat",
+      "label": "aff3ct-nr-w1",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "aff3ct-nr-p6": {
+      "kind": "stat",
+      "label": "aff3ct-nr-p6",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "aff3ct-nr-p12": {
+      "kind": "stat",
+      "label": "aff3ct-nr-p12",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {},
+      "workers_observed": []
+    },
+    "aff3ct-nr-l24": {
+      "kind": "stat",
+      "label": "aff3ct-nr-l24",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {},
+      "workers_observed": []
+    }
+  },
+  "ratios": [],
+  "census": {
+    "dvb-t2-r12": {
+      "frames": 8,
+      "iterations": [
+        23,
+        39,
+        25,
+        50,
+        27,
+        50,
+        25,
+        21
+      ],
+      "allocations": [
+        5216425,
+        8845241,
+        5670027,
+        11340052,
+        6123629,
+        11340052,
+        5670027,
+        4762823
+      ],
+      "predicted_allocations": [
+        5216425,
+        8845241,
+        5670027,
+        11340052,
+        6123629,
+        11340052,
+        5670027,
+        4762823
+      ],
+      "matches_edges_per_iteration_plus_two_syndrome_vectors": true,
+      "allocations_equal_deallocations": true,
+      "reallocations": 0,
+      "bytes_requested": 1418478400
+    },
+    "nr-bg1-r12": {
+      "frames": 8,
+      "iterations": [
+        41,
+        45,
+        30,
+        26,
+        44,
+        33,
+        28,
+        36
+      ],
+      "allocations": [
+        4975188,
+        5460572,
+        3640382,
+        3154998,
+        5339226,
+        4004420,
+        3397690,
+        4368458
+      ],
+      "predicted_allocations": [
+        4975188,
+        5460572,
+        3640382,
+        3154998,
+        5339226,
+        4004420,
+        3397690,
+        4368458
+      ],
+      "matches_edges_per_iteration_plus_two_syndrome_vectors": true,
+      "allocations_equal_deallocations": true,
+      "reallocations": 0,
+      "bytes_requested": 1127434272
+    }
+  }
+}

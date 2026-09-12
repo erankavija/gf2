@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-12T15:43:23.888296383Z",
+  "dependencies": [],
+  "description": "Every campaign receipt records the host governor, SMT state and load, but not the scheduling priority the timed processes achieved, so a change in that priority shifts measurements without any record flagging it.\n\n## Background\n\nThe CCX1 lock wrapper requests `nice -n -5` as a best-effort pin. On the benchmark host the process nice limit is 0, so the request is refused, GNU `nice` warns and runs the command anyway, and every committed campaign since 2026-05-27 ran at niceness 0. The measurements are mutually comparable, and the gap is one of provenance: on a host where the pin succeeds, or after a limit change, timed work runs at a different priority and the receipt's host observation records nothing about it.\n\n## Success Criteria\n\n- [hard] REQ-01: Each session host observation in a receipt records the achieved scheduling priority of the timed process, read at run time from the process itself rather than from the requested value.\n- [hard] REQ-02: The acceptance evaluator treats sessions of one campaign whose achieved priority differs as a recorded finding, and campaigns with a uniform priority evaluate to the verdict they evaluate to before this change.\n- [hard] REQ-03: Every existing committed receipt evaluates to its committed verdict after the change, shown by a committed re-evaluation record.\n\n## Notes\n\nThe wrapper's own comment already calls the pin best-effort; that stays. No frozen addendum or committed receipt changes.",
+  "documents": [],
+  "first_ready_at": "2026-09-12T15:43:23.888296383Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "706a8f93-d571-4228-bfaa-0c6d0b3ef709",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Record the achieved scheduling priority in receipt host observations",
+  "updated_at": "2026-09-12T15:43:23.888296383Z"
+}

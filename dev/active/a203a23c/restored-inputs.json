@@ -1,0 +1,194 @@
+{
+  "schema": "a203a23c-restored-receipt-inputs-v1",
+  "purpose": "Files added to committed receipt input snapshots so a fresh checkout reproduces the acceptance verdict, with the committed source of each.",
+  "generator": "dev/active/a203a23c/restore-receipt-inputs.py",
+  "check": "dev/scripts/check-receipt-input-snapshots.py",
+  "base_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267",
+  "restored": [
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json",
+      "path": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-confirmation/receipt.json",
+      "path": "dev/bench_results/1d0da41f/v3-confirmation/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-confirmation/receipt.json",
+      "path": "dev/bench_results/1d0da41f/v3-confirmation/inputs/producing/dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "8042698bb4130daa18aeea64d7a255967367c3d096fc33a4f1385ce8d8014f00",
+      "source": "dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json",
+      "path": "dev/bench_results/1d0da41f/v3-pilot-r2/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json",
+      "path": "dev/bench_results/1d0da41f/v3-pilot-r2/inputs/producing/dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "8042698bb4130daa18aeea64d7a255967367c3d096fc33a4f1385ce8d8014f00",
+      "source": "dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
+      "path": "dev/bench_results/1d0da41f/v3-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
+      "path": "dev/bench_results/1d0da41f/v3-pilot/inputs/producing/dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "8042698bb4130daa18aeea64d7a255967367c3d096fc33a4f1385ce8d8014f00",
+      "source": "dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/receipt.json",
+      "path": "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/receipt.json",
+      "path": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/receipt.json",
+      "path": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/receipt.json",
+      "path": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+      "source": "Cargo.lock",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-confirmation/receipt.json",
+      "path": "dev/bench_results/f547c394/v3-confirmation/inputs/resolution-evidence/family-addendum.json",
+      "origin": "resolution evidence",
+      "sha256": "c2b832fd9592151053f93928c1d775e83d83d0c587f30720ec1f3f3892a59b8f",
+      "source": "dev/active/f547c394/addendum-smoke-v3-pilot-r1.json",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-confirmation/receipt.json",
+      "path": "dev/bench_results/f547c394/v3-confirmation/inputs/resolution-evidence/trial-ledger.jsonl",
+      "origin": "resolution evidence",
+      "sha256": "ed76f83396a5d54d9b9a092ec107a8545d96689d574d4d5bb5667659955eab39",
+      "source": "dev/bench_results/f547c394/v3-pilot/inputs/trial-ledger.jsonl",
+      "source_revision": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+    }
+  ],
+  "unrestored": [
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "reason": "no file of the base revision carries this digest"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "reason": "no file of the base revision carries this digest"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "reason": "no file of the base revision carries this digest"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "reason": "no file of the base revision carries this digest"
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "origin": "producing snapshot",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "reason": "no file of the base revision carries this digest"
+    }
+  ],
+  "result": {
+    "restored": 18,
+    "unrestored": 5
+  }
+}

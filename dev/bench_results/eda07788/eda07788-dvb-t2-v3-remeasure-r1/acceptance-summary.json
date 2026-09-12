@@ -1,0 +1,350 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "54455f903a55a2264154a48a7d7dfcaed5fa0b769580983a6d82c594e4475760",
+  "campaign_id": "remeasure-v3-eda07788-r1",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "dvb-t2-bit-interleave-baselines",
+    "comparisons": 12,
+    "family_alpha": 0.008333333333333333,
+    "per_comparison_confidence": 0.9993055555555556,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 5,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-null-native-vs-native",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.9996681646637009,
+        "lower": 0.9974461421690399,
+        "upper": 1.0007338471512466,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 6391976618060387727,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-gap-native-vs-xdsopl",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.45560854502280995,
+        "lower": 0.4548484841307035,
+        "upper": 0.45697760472173216,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 17284854883212029888,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-gap-portable-vs-xdsopl",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.45232466874923977,
+        "lower": 0.45158138823055455,
+        "upper": 0.4534423958551053,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 17945759639047906161,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-control-portable-vs-native",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.9930225696117592,
+        "lower": 0.9908700962318088,
+        "upper": 0.9953142450867838,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 14587550424923472091,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.4274222178562952,
+        "lower": 0.4267116491276736,
+        "upper": 0.428238389094761,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 13507758500462559627,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-gap-portable-vs-xdsopl",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.42739012670668575,
+        "lower": 0.42643744117707394,
+        "upper": 0.42838749911608065,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 475476762545838150,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-control-portable-vs-native",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.000799511934659,
+        "lower": 0.9983633263138129,
+        "upper": 1.0029190901943736,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 6698333129989771017,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-short-gap-native-vs-xdsopl",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.19056412348421573,
+        "lower": 0.18988105001085898,
+        "upper": 0.19196824655148959,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 6848107402262565819,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-short-gap-native-vs-xdsopl",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.18476043982682108,
+        "lower": 0.1836468256868004,
+        "upper": 0.18550390786772064,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 7775380522843942891,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-streaming-gap-native-vs-xdsopl",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.5212932742501544,
+        "lower": 0.5195653621835135,
+        "upper": 0.5223963917939111,
+        "confidence": 0.9993055555555556,
+        "alpha": 0.0006944444444444445,
+        "resamples": 10000,
+        "seed": 8074974859517938382,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}

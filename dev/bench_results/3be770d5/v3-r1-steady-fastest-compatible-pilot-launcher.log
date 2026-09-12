@@ -1,0 +1,30 @@
+start=2026-09-12T02:12:15Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot/execution.log
+terminal=3 end=2026-09-12T02:16:18Z
+start=2026-09-12T02:16:18Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot/execution.log
+terminal=3 end=2026-09-12T02:20:09Z
+start=2026-09-12T02:20:09Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot/execution.log
+terminal=3 end=2026-09-12T02:23:57Z
+start=2026-09-12T02:23:57Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot/execution.log
+terminal=3 end=2026-09-12T02:26:35Z
+start=2026-09-12T02:26:35Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot/execution.log
+terminal=3 end=2026-09-12T02:29:10Z
+start=2026-09-12T02:29:10Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v3-r1-fastest-compatible-pilot/execution.log
+terminal=0 end=2026-09-12T02:31:45Z
