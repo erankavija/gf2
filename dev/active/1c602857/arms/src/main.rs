@@ -386,11 +386,7 @@ fn main() {
         cache_state_applied: request.cache_state.clone(),
         workers_observed: 1,
         cpus_observed,
-        selected_path: Some(format!(
-            "{}:{}",
-            path.as_str(),
-            lane(case.words(), path)
-        )),
+        selected_path: Some(format!("{}:{}", path.as_str(), lane(case.words(), path))),
         conversion: Some(conversion),
         quality: None,
         calibrated: true,

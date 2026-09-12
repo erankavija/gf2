@@ -28,7 +28,7 @@
 //! which landed as Task 3 of story `6fb4abad`. [`BarrettReducerWide`] handles
 //! arbitrary `N`-word fields (e.g. `m = 127` with `N = 2`, `m = 256` with
 //! `N = 4`) using multi-word carry-less multiplication through
-//! [`super::wide::clmul_wide_dispatch`], the canonical selection this crate's
+//! `wide::clmul_wide_dispatch`, the canonical selection this crate's
 //! wide products share.
 //!
 //! # Multi-word Barrett reduction — [`BarrettReducerWide`]
@@ -64,7 +64,7 @@
 //! ## Internal arithmetic
 //!
 //! All multi-word carry-less multiplications go through
-//! [`super::wide::clmul_wide_dispatch`], so a host with PCLMULQDQ reduces
+//! `wide::clmul_wide_dispatch`, so a host with PCLMULQDQ reduces
 //! `GF(2^256)` and `GF(2^571)` in the kernels of `gf2-kernels-simd` and every
 //! other field runs the portable schoolbook. Internal helpers operate on
 //! `&[u64]` slices
@@ -140,7 +140,7 @@ fn clmul128_trunc(a: u128, b: u128) -> u128 {
 /// Barrett is only wired in when the backing type is `u64`. For wider
 /// fields (`m = 64..=127`, `m = 128..=255`, etc.) use
 /// [`BarrettReducerWide`], which handles arbitrary `N`-word fields by
-/// operating through [`super::wide::clmul_wide_dispatch`] and explicit
+/// operating through `wide::clmul_wide_dispatch` and explicit
 /// multi-word shift helpers. For u128-backed fields at `m >= 64`,
 /// `Gf2mField_<u128>` transparently falls back to the generic schoolbook
 /// primitive, so correctness is preserved — only the PCLMULQDQ + Barrett
