@@ -1,0 +1,52 @@
+aff3ct: pinned commit e8a65c5047262d97a15563b9edc961f69b2792cc verified
+aff3ct: static library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529 verified
+srsran: pkg-config module mbedtls missing; srsRAN's CMake configuration stops, so no srsRAN arm is built
+building native: RUSTFLAGS=-C target-cpu=native --features aff3ct
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling survey-nr-derate v0.0.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/dev/active/eda07788/survey/nr-derate)
+    Finished `release` profile [optimized] target(s) in 4.43s
+building portable: RUSTFLAGS=-C target-cpu=x86-64 --bin gf2-nr-derate-arm
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+   Compiling survey-nr-derate v0.0.0 (/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/dev/active/eda07788/survey/nr-derate)
+    Finished `release` profile [optimized] target(s) in 3.84s
+PASS bg2-n256-k121 (gf2: BG2, Z=22, full_k=220, full_n=1144, fillers=99): 2 frames, adapter output identical at 1144/1144 positions; raw AFF3CT writes 256 channel LLRs, 44 prefix zeros and 99 +inf fillers, leaves 745 positions unwritten, all gf2 untransmitted zeros; gf2 filler value 15
+PASS bg2-n512-k200 (gf2: BG2, Z=26, full_k=260, full_n=1352, fillers=60): 2 frames, adapter output identical at 1352/1352 positions; raw AFF3CT writes 512 channel LLRs, 52 prefix zeros and 60 +inf fillers, leaves 728 positions unwritten, all gf2 untransmitted zeros; gf2 filler value 15
+PASS bg2-n1024-k400 (gf2: BG2, Z=52, full_k=520, full_n=2704, fillers=120): 2 frames, adapter output identical at 2704/2704 positions; raw AFF3CT writes 1024 channel LLRs, 104 prefix zeros and 120 +inf fillers, leaves 1456 positions unwritten, all gf2 untransmitted zeros; gf2 filler value 15
+NON-EQUIVALENT bg1-n1024-k512 (gf2: BG1, Z=24, full_k=528, full_n=1632, fillers=16): AFF3CT derives BG2, Z=64, K_LDPC=640, N_LDPC=3328; not timed
+NON-EQUIVALENT bg1-n2048-k1024 (gf2: BG1, Z=48, full_k=1056, full_n=3264, fillers=32): AFF3CT derives BG2, Z=104, K_LDPC=1040, N_LDPC=5408; not timed
+NON-EQUIVALENT bg1-n4096-k2048 (gf2: BG1, Z=96, full_k=2112, full_n=6528, fillers=64): AFF3CT derives BG2, Z=208, K_LDPC=2080, N_LDPC=10816; not timed
+PASS bg1-n1200-k900 (gf2: BG1, Z=44, full_k=968, full_n=2992, fillers=68): 2 frames, adapter output identical at 2992/2992 positions; raw AFF3CT writes 1200 channel LLRs, 88 prefix zeros and 68 +inf fillers, leaves 1636 positions unwritten, all gf2 untransmitted zeros; gf2 filler value 15
+NON-EQUIVALENT bg2-n1200-k600 (gf2: BG2, Z=72, full_k=720, full_n=3744, fillers=120): AFF3CT derives BG2, Z=80, K_LDPC=800, N_LDPC=4160; not timed
+PASS bg2-n1440-k720 (gf2: BG2, Z=72, full_k=720, full_n=3744, fillers=0): 2 frames, adapter output identical at 3744/3744 positions; raw AFF3CT writes 1440 channel LLRs, 144 prefix zeros and 0 +inf fillers, leaves 2160 positions unwritten, all gf2 untransmitted zeros; gf2 filler value none
+PASS bg1-n400-k308 (gf2: BG1, Z=14, full_k=308, full_n=952, fillers=0): 2 frames, adapter output identical at 952/952 positions; raw AFF3CT writes 400 channel LLRs, 28 prefix zeros and 0 +inf fillers, leaves 524 positions unwritten, all gf2 untransmitted zeros; gf2 filler value none
+PASS bg1-n1320-k1056 (gf2: BG1, Z=48, full_k=1056, full_n=3264, fillers=0): 2 frames, adapter output identical at 3264/3264 positions; raw AFF3CT writes 1320 channel LLRs, 96 prefix zeros and 0 +inf fillers, leaves 1848 positions unwritten, all gf2 untransmitted zeros; gf2 filler value none
+PASS bg1-n2560-k2048 (gf2: BG1, Z=96, full_k=2112, full_n=6528, fillers=64): 2 frames, adapter output identical at 6528/6528 positions; raw AFF3CT writes 2560 channel LLRs, 192 prefix zeros and 64 +inf fillers, leaves 3712 positions unwritten, all gf2 untransmitted zeros; gf2 filler value 15
+
+8 equivalent and passing, 4 non-equivalent (not timed), 0 failing, out of 12
+
+arm executables and digests:
+e998288939d9009b2dbcf380c3dde4cd22f96a1e81eb7dbd4193af7d896cb441  target-nr-native/release/gf2-nr-derate-arm
+b19b2103f185ede21c39c57c3a191c39ef8b9ad0339c0685cc21cbaab8950642  target-nr-native/release/aff3ct-nr-derate-arm
+5fe2c4745be27599f403a29b357ff7a6e41b320a11435a0284a9b061c6e3e383  target-nr-portable/release/gf2-nr-derate-arm
+
+NR de-rate-matching arms ready under /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3

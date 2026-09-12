@@ -1,0 +1,153 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "pilot-c7113c5a-20260907t193528z",
+  "issue": "c7113c5a",
+  "label": "pilot",
+  "campaign_seed": 20260907101,
+  "addendum": "dev/active/c7113c5a/addendum-polynomial-baselines-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-conservative": {
+      "build": "conservative-portable",
+      "description": "gf2 conservative build: dispatched wide kernels and clmul_batch, gf2-core and gf2-kernels-simd by path, RUSTFLAGS=(none)",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-conservative/release/gf2-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "gf2-tuned": {
+      "build": "tuned-portable",
+      "description": "gf2 tuned build: dispatched wide kernels and clmul_batch, gf2-core and gf2-kernels-simd by path, RUSTFLAGS=-C target-cpu=x86-64-v3",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-tuned/release/gf2-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64-v3",
+      "tuning_profile": null
+    },
+    "gf2-native": {
+      "build": "native",
+      "description": "gf2 native build: dispatched wide kernels and clmul_batch, gf2-core and gf2-kernels-simd by path, RUSTFLAGS=-C target-cpu=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-native/release/gf2-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-native-schoolbook": {
+      "build": "native",
+      "description": "gf2 native build: clmul_wide_slice public long-product API, gf2-core and gf2-kernels-simd by path, RUSTFLAGS=-C target-cpu=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-native/release/gf2-poly-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POLY_PATH": "schoolbook"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2x-conservative": {
+      "build": "external",
+      "description": "gf2x 1.3.0 (commit 27ba588f03bf6e1e74763903bab25e6e8bb6d0f0, GPL-3.0-or-later) built with CFLAGS=-O2; configure appended -msse2 -msse3 -mssse3 -msse4.1 -mpclmul and selected hwdir=x86_64_pclmul. Rust shell RUSTFLAGS=(none); the arm asserts at run time that it mapped /home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-conservative/lib/libgf2x.so.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-conservative/release/gf2x-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "gf2x-tuned": {
+      "build": "external",
+      "description": "gf2x 1.3.0 (commit 27ba588f03bf6e1e74763903bab25e6e8bb6d0f0, GPL-3.0-or-later) built with CFLAGS=-O3 -march=x86-64-v3; configure appended -msse2 -msse3 -mssse3 -msse4.1 -mpclmul and selected hwdir=x86_64_pclmul. Rust shell RUSTFLAGS=-C target-cpu=x86-64-v3; the arm asserts at run time that it mapped /home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-tuned/lib/libgf2x.so.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-tuned/release/gf2x-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64-v3",
+      "tuning_profile": null
+    },
+    "gf2x-native": {
+      "build": "external",
+      "description": "gf2x 1.3.0 (commit 27ba588f03bf6e1e74763903bab25e6e8bb6d0f0, GPL-3.0-or-later) built with CFLAGS=-O3 -march=native; configure appended -msse2 -msse3 -mssse3 -msse4.1 -mpclmul and selected hwdir=x86_64_pclmul. Rust shell RUSTFLAGS=-C target-cpu=native; the arm asserts at run time that it mapped /home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-native/lib/libgf2x.so.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/arms-native/release/gf2x-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "poly-mul-4w-native-pilot",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 4,
+        "inner": 1,
+        "seed": 101
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "poly-mul-256w-native-pilot",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 1,
+        "seed": 102
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "poly-mul-256w-conservative-pilot",
+      "baseline_arm": "gf2-conservative",
+      "candidate_arm": "gf2x-conservative",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 1,
+        "seed": 103
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "poly-mul-256w-tuned-pilot",
+      "baseline_arm": "gf2-tuned",
+      "candidate_arm": "gf2x-tuned",
+      "case": {
+        "kind": "poly-mul",
+        "words": 256,
+        "inner": 1,
+        "seed": 104
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "poly-mul-4w-public-api-pilot",
+      "baseline_arm": "gf2-native-schoolbook",
+      "candidate_arm": "gf2-native",
+      "case": {
+        "kind": "poly-mul",
+        "words": 4,
+        "inner": 1,
+        "seed": 105
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "clmul-batch-1024-native-pilot",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "gf2x-native",
+      "case": {
+        "kind": "clmul-batch",
+        "count": 1024,
+        "inner": 1,
+        "seed": 106
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 3
+}

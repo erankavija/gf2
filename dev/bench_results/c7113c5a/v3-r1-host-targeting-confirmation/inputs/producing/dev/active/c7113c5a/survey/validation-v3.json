@@ -1,0 +1,158 @@
+{
+  "schema": "poly-baseline-validation-set-v2",
+  "issue": "c7113c5a",
+  "variants": {
+    "conservative": {
+  "schema": "poly-baseline-validation-v2",
+  "issue": "c7113c5a",
+  "gf2_selected_paths": [
+    "wide256:avx2+vpclmulqdq-ymm",
+    "wide571:avx2+vpclmulqdq-ymm",
+    "clmul_batch:pclmulqdq-scalar-xmm"
+  ],
+  "gf2x_selected_path": "gf2x_mul_r library=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/prefix-conservative/lib/libgf2x.so.3.0.0 sha256=1f7a9a20c91fa3cae8d4c6959f86aa29631e83f771038a5ab95d44d733f1a1a8 cflags=-O2",
+  "checks": [
+    {
+      "name": "bit-order-and-coefficients",
+      "cases": 242,
+      "failures": []
+    },
+    {
+      "name": "lengths-and-complete-outputs",
+      "cases": 232,
+      "failures": []
+    },
+    {
+      "name": "dispatched-wide-kernels",
+      "cases": 256,
+      "failures": []
+    },
+    {
+      "name": "independent-64x64-products",
+      "cases": 8192,
+      "failures": []
+    },
+    {
+      "name": "wide-field-composition",
+      "cases": 402,
+      "failures": []
+    },
+    {
+      "name": "whole-consumer-dot-product",
+      "cases": 8,
+      "failures": []
+    }
+  ],
+  "passed": true
+}
+,
+    "tuned": {
+  "schema": "poly-baseline-validation-v2",
+  "issue": "c7113c5a",
+  "gf2_selected_paths": [
+    "wide256:avx2+vpclmulqdq-ymm",
+    "wide571:avx2+vpclmulqdq-ymm",
+    "clmul_batch:pclmulqdq-scalar-xmm"
+  ],
+  "gf2x_selected_path": "gf2x_mul_r library=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/prefix-tuned/lib/libgf2x.so.3.0.0 sha256=4874ff458b71d35a93dc3f60b02ea992b9ea52fa73553470e0698f964d8202a6 cflags=-O3 -march=x86-64-v3",
+  "checks": [
+    {
+      "name": "bit-order-and-coefficients",
+      "cases": 242,
+      "failures": []
+    },
+    {
+      "name": "lengths-and-complete-outputs",
+      "cases": 232,
+      "failures": []
+    },
+    {
+      "name": "dispatched-wide-kernels",
+      "cases": 256,
+      "failures": []
+    },
+    {
+      "name": "independent-64x64-products",
+      "cases": 8192,
+      "failures": []
+    },
+    {
+      "name": "wide-field-composition",
+      "cases": 402,
+      "failures": []
+    },
+    {
+      "name": "whole-consumer-dot-product",
+      "cases": 8,
+      "failures": []
+    }
+  ],
+  "passed": true
+}
+,
+    "native": {
+  "schema": "poly-baseline-validation-v2",
+  "issue": "c7113c5a",
+  "gf2_selected_paths": [
+    "wide256:avx2+vpclmulqdq-ymm",
+    "wide571:avx2+vpclmulqdq-ymm",
+    "clmul_batch:pclmulqdq-scalar-xmm"
+  ],
+  "gf2x_selected_path": "gf2x_mul_r library=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/prefix-native/lib/libgf2x.so.3.0.0 sha256=cf0d4019de247987c75169483d0782ff6c42b788a3250cfcc30d45ebd8e75a8d cflags=-O3 -march=native",
+  "checks": [
+    {
+      "name": "bit-order-and-coefficients",
+      "cases": 242,
+      "failures": []
+    },
+    {
+      "name": "lengths-and-complete-outputs",
+      "cases": 232,
+      "failures": []
+    },
+    {
+      "name": "dispatched-wide-kernels",
+      "cases": 256,
+      "failures": []
+    },
+    {
+      "name": "independent-64x64-products",
+      "cases": 8192,
+      "failures": []
+    },
+    {
+      "name": "wide-field-composition",
+      "cases": 402,
+      "failures": []
+    },
+    {
+      "name": "whole-consumer-dot-product",
+      "cases": 8,
+      "failures": []
+    }
+  ],
+  "passed": true
+}
+
+  },
+  "executables": {
+    "conservative": {
+      "poly-validate": "9f9cc95de6e6f1c7c5944a35b3c511dced6be55972dd50ddc8faf15f80eb2ba4",
+      "gf2-poly-arm": "259240d180a81390b4d7b3befaa5af304ecb08732963eb7a29391e88d7533ae7",
+      "gf2x-poly-arm": "f90c0077d24f2a5eda5cfafe815e16c3b5f35fa0ea20f31c5cd8c1269c1c0849",
+      "libgf2x": "1f7a9a20c91fa3cae8d4c6959f86aa29631e83f771038a5ab95d44d733f1a1a8"
+    },
+    "tuned": {
+      "poly-validate": "81d8a025bf6b53788d9f4e86f53d1420645c25882afbcf2b959a8a6f9d370be1",
+      "gf2-poly-arm": "433764a9ca8f86afc2f95fd847234e4b5c0c897f4e6af65f8fc183ef00810e53",
+      "gf2x-poly-arm": "528075423cfc476e7cd06285f9e9b54c53f815419122e700bbaae39dba61d784",
+      "libgf2x": "4874ff458b71d35a93dc3f60b02ea992b9ea52fa73553470e0698f964d8202a6"
+    },
+    "native": {
+      "poly-validate": "d68b6ccb9eafcf0c1e31c2f07b702a8b1da93d12a84f9e0b76c290646149931d",
+      "gf2-poly-arm": "e46970dab86a8084fbf3ab0daf052b948507089c4eddc4100e660fc8351493b2",
+      "gf2x-poly-arm": "508dffc3ff1af05ff42d36ce0019db8c5731d0b57f05c472f1f85414bf3457ec",
+      "libgf2x": "cf0d4019de247987c75169483d0782ff6c42b788a3250cfcc30d45ebd8e75a8d"
+    }
+  }
+}

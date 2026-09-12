@@ -1,0 +1,47 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "1d0da41f-v3-pilot-r2",
+  "issue": "1d0da41f",
+  "label": "pilot",
+  "campaign_seed": 20260907,
+  "addendum": "dev/active/1d0da41f/addendum-ymm-clmul-v3-pilot-r2.json",
+  "producing_manifest": "dev/active/1d0da41f/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "baseline": {
+      "build": "conservative-portable",
+      "description": "immutable v1 baseline source: AVX512VL-gated dispatch",
+      "executable": "/tmp/gf2-1d0da41f-v3-arms/target-baseline/release/ymm-clmul-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "candidate": {
+      "build": "conservative-portable",
+      "description": "immutable v1 candidate source: AVX2+VPCLMULQDQ YMM dispatch",
+      "executable": "/tmp/gf2-1d0da41f-v3-arms/target-candidate/release/ymm-clmul-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "raw-batch-odd-tail-65-1core",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "case": {
+        "degree": 64,
+        "elements": 65,
+        "seed": 102,
+        "workload": "raw-batch"
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}

@@ -1,0 +1,104 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "confirmation-v3-eda07788-20260908t194030z",
+  "issue": "eda07788",
+  "label": "confirmation",
+  "campaign_seed": 20260908,
+  "addendum": "dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json",
+  "producing_manifest": "dev/active/eda07788/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-native": {
+      "build": "native",
+      "description": "gf2 DvbT2BitInterleaver::interleave on a packed BitVec, built with -C target-cpu=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-native/release/gf2-dvb-t2-candidate",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-portable": {
+      "build": "conservative-portable",
+      "description": "scalar/compiler control: gf2 DvbT2BitInterleaver::interleave built with -C target-cpu=x86-64 (baseline x86-64, no target feature beyond SSE2)",
+      "executable": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-portable/release/gf2-dvb-t2-candidate",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=x86-64",
+      "tuning_profile": null
+    },
+    "xdsopl-external": {
+      "build": "external",
+      "description": "xdsopl/LDPC PCTITL template at commit 32357d8ad55a6a302c34e093759f0454e45cca56, C++ shim built with g++ -O3 -march=native -std=c++17; the timed call unpacks the packed frame to one int32 per bit, applies PCTITL::fwd and packs the result back",
+      "executable": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-native/release/xdsopl-dvb-t2-baseline",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-gap-native-vs-xdsopl",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "xdsopl-external",
+      "case": {
+        "modcod": "qam16-r12-normal",
+        "seed": 101
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-gap-portable-vs-xdsopl",
+      "baseline_arm": "gf2-portable",
+      "candidate_arm": "xdsopl-external",
+      "case": {
+        "modcod": "qam16-r12-normal",
+        "seed": 101
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-control-portable-vs-native",
+      "baseline_arm": "gf2-portable",
+      "candidate_arm": "gf2-native",
+      "case": {
+        "modcod": "qam16-r12-normal",
+        "seed": 101
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl",
+      "baseline_arm": "gf2-native",
+      "candidate_arm": "xdsopl-external",
+      "case": {
+        "modcod": "qam64-r12-normal",
+        "seed": 102
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-gap-portable-vs-xdsopl",
+      "baseline_arm": "gf2-portable",
+      "candidate_arm": "xdsopl-external",
+      "case": {
+        "modcod": "qam64-r12-normal",
+        "seed": 102
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-control-portable-vs-native",
+      "baseline_arm": "gf2-portable",
+      "candidate_arm": "gf2-native",
+      "case": {
+        "modcod": "qam64-r12-normal",
+        "seed": 102
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 2
+}

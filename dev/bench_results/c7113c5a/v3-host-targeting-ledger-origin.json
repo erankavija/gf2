@@ -1,0 +1,38 @@
+{
+  "kind": "retrospective-v1-history",
+  "family": "polynomial-host-targeting",
+  "ledger": "dev/bench_results/c7113c5a/v3-host-targeting-family-ledger.jsonl",
+  "genesis_sha256": "2eaa96018fb3f56dc96f6b246c2c2fd9e561bdd3a29595ed65605e0c957aac0d",
+  "derivation": {
+    "implementation": "dev/active/c7113c5a/survey/gf2-side/src/bin/v1-ledger-lines.rs",
+    "method": "Each line restates one completed protocol-v1 campaign as the reservation the v3 runner appends before measuring: receipt campaign ID and addendum digest, the count of non-exploratory addendum cells, and candidate identities from the shared tuning_campaign_support::trial_ledger::candidate_ids over the saved plan and the receipt's arm records, serialized with the shared Reservation encoding and decoded by trial_ledger::decode before publication. The family field names the canonical v3 question; each source keeps its original addendum family.",
+    "retrospective": "These lines are accounting, not premeasurement reservations: protocol v1 took none, and no lock acquisition is claimed for them.",
+    "command": "v1-ledger-lines polynomial-host-targeting dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot"
+  },
+  "sources": [
+    {
+      "sequence": 0,
+      "line_sha256": "2eaa96018fb3f56dc96f6b246c2c2fd9e561bdd3a29595ed65605e0c957aac0d",
+      "campaign": "pilot-c7113c5a-20260907t191644z",
+      "original_family": "polynomial-multiplication-baselines-pilot",
+      "receipt": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/receipt.json",
+      "receipt_sha256": "22d2663f89f32bc0cccbd6baebad6c1b054ac04f408311a97b79790af7ecaed1",
+      "plan": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/plan.json",
+      "plan_sha256": "7eea50e0b9e4609a8f9518259e06a0ad1e7c497e51c83d42f2a37f220bd2a11c",
+      "addendum": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "a8820525696d4b23318e889b34b8fc24ebdcbdf132e30ce84574054cf224b3ca",
+      "acceptance_summary": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/acceptance-summary.json",
+      "acceptance_summary_sha256": "759c13b750f0121bdd83d0ced7e2879f8bfb7f466b1e0cc7a1b6fd825cb569b5",
+      "non_exploratory_cells": 0,
+      "disposition": "completed v1 pilot; its exploratory 256-word conservative and tuned cells are this question's only earlier measurement; zero comparisons"
+    }
+  ],
+  "frozen_addenda_never_run": [
+    {
+      "addendum": "dev/active/c7113c5a/addendum-polynomial-baselines-2.json",
+      "sha256": "38c97ceafcaa8fbf8bda0ef56a9a22990e071e45e3441c1c01eca80bd23fd344",
+      "observation": "Frozen under protocol v1 as a sixteen-cell campaign (the ten v1 cells plus a conservative/tuned/native ladder) and never measured: the guard in dev/active/c7113c5a/survey/run-baseline.sh exits 2 before any build or lock while the addendum declares protocol version 1, and no /tmp stage, plan, launcher log or receipt of a confirmation-2 campaign exists. Its six ladder cells bundled this question with a re-run of the native family; no reservation of this question exists before the v3 campaigns.",
+      "accounting": "No reservation was made, so no line."
+    }
+  ]
+}

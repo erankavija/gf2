@@ -1,0 +1,354 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "2857b9ddadcc8aa579aeaa047c16ee7a40c0d76e514e9779c4df7090de1b8069",
+  "campaign_id": "6fb89a3c-v3-r1-logical-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "logical-buffer-vs-isal",
+    "comparisons": 9,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.9972222222222222,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 5,
+  "resumed": true,
+  "findings": [
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-xor-7w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-xor-8w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-xor-9w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-xor-63w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-xor-64w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-xor-65w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-xor-16w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-xor-32w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    },
+    {
+      "rule": "P-20",
+      "severity": "note",
+      "cell": "logical-parity-3src-64w-vs-isal-base",
+      "message": "bootstrap endpoints lack declared numerical resolution or twenty tail replicates"
+    }
+  ],
+  "cells": [
+    {
+      "cell_id": "logical-xor-7w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.19507308449249874,
+        "lower": 0.19381551102405792,
+        "upper": 0.19645535211076756,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 11810798254584567623,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "logical-xor-8w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.13683083328194068,
+        "lower": 0.13543008621401742,
+        "upper": 0.13753328287770702,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 11508190405119254732,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "logical-xor-9w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.15805923872268335,
+        "lower": 0.1568267399777898,
+        "upper": 0.15886360280193,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 15205806159780875259,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "logical-xor-63w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.046557374278486205,
+        "lower": 0.046293147776113194,
+        "upper": 0.047585760473840416,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 17042861443410359607,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "logical-xor-64w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.04071309301322075,
+        "lower": 0.04055335131323765,
+        "upper": 0.04127767356918257,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 8771812647089170101,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "logical-xor-65w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.04327262461954445,
+        "lower": 0.042944970183777936,
+        "upper": 0.043910384970530514,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 483065891861880344,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "logical-xor-16w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.07585235002250973,
+        "lower": 0.07551859613025137,
+        "upper": 0.07639645724819724,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 868799550278868326,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "logical-xor-32w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.0513029740526275,
+        "lower": 0.05103221441229297,
+        "upper": 0.05386275478455517,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 1597946355301605776,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "logical-parity-3src-64w-vs-isal-base",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-confirmatory",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.04240331676650256,
+        "lower": 0.0422820062874403,
+        "upper": 0.04275992816492575,
+        "confidence": 0.9972222222222222,
+        "alpha": 0.002777777777777778,
+        "resamples": 10000,
+        "seed": 9156586328520690422,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

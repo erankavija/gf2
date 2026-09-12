@@ -1,0 +1,34 @@
+[package]
+name = "ymm-clmul-arm"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "Benchmark arm for the YMM raw carry-less batch dispatch repair (jit:1d0da41f). Standalone: not part of the gf2 workspace."
+
+# Own workspace root so the gf2 workspace never absorbs this project.
+[workspace]
+
+# Mirrors the gf2 workspace release profile so both arms compile the kernels
+# the way production ships them.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[[bin]]
+name = "ymm-clmul-arm"
+path = "src/main.rs"
+
+[features]
+default = []
+# Selects the pre-change lane-tag probe. The pre-change tree publishes no
+# lane tag, so the baseline arm evaluates the frozen pre-change dispatch
+# expression against the same runtime feature detection its kernel uses.
+frozen-baseline = []
+
+[dependencies]
+gf2-core = { path = "../../../../../crates/gf2-core", default-features = false, features = ["simd"] }
+gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"

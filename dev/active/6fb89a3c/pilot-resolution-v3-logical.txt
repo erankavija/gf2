@@ -1,0 +1,24 @@
+pilot dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-pilot
+receipt_sha256 0d72a72e300963fd2061d618ef5197153a121ea5b3109c3568ccaba8ca21fb2e
+family logical-buffer-vs-isal
+ledger-derived per-comparison confidence 0.975
+
+logical-xor-7w-vs-isal-base                             0.0052
+logical-xor-8w-vs-isal-base                             0.0084
+logical-xor-9w-vs-isal-base                             0.0068
+logical-xor-63w-vs-isal-base                            0.0213
+logical-xor-64w-vs-isal-base                            0.0127
+logical-xor-65w-vs-isal-base                            0.0085
+logical-xor-16w-vs-isal-base                            0.0072
+logical-xor-32w-vs-isal-base                            0.0063
+logical-parity-3src-64w-vs-isal-base                    0.0056
+
+widest relative half-width 0.021345 (logical-xor-63w-vs-isal-base)
+frozen measurement_resolution 0.03
+equivalence_margin 1.1
+material_gap_threshold 1.2
+raised: none
+confirmatory cells m=9: logical-xor-7w-vs-isal-base, logical-xor-8w-vs-isal-base, logical-xor-9w-vs-isal-base, logical-xor-63w-vs-isal-base, logical-xor-64w-vs-isal-base, logical-xor-65w-vs-isal-base, logical-xor-16w-vs-isal-base, logical-xor-32w-vs-isal-base, logical-parity-3src-64w-vs-isal-base
+expected draws per bootstrap tail at attempt 1: 13.89 (P-20 requires 20)
+max_pilot_trials_per_cell 1
+output dev/active/6fb89a3c/addendum-logical-buffer-v3-confirmation.json

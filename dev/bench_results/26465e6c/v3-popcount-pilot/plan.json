@@ -1,0 +1,850 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "26465e6c-v3-popcount-pilot",
+  "issue": "26465e6c",
+  "label": "pilot",
+  "campaign_seed": 473470903547865352,
+  "addendum": "dev/active/26465e6c/addendum-popcount-v3-pilot.json",
+  "producing_manifest": "dev/active/26465e6c/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "compiler-count-ones": {
+      "build": "conservative-portable",
+      "description": "internal control: compiler-optimized portable u64::count_ones loop, the lowering gf2's scalar backend runs",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "compiler-count-ones"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "libpopcnt": {
+      "build": "external",
+      "description": "libpopcnt v4.2 popcnt() compiled -O3 as its README recommends, with its own CPUID dispatch",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "libpopcnt"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "mula-avx2-harley-seal": {
+      "build": "external",
+      "description": "Mula sse-popcount popcnt_AVX2_harley_seal compiled with the upstream Makefile's AVX2 flags; requires 32-byte aligned input",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "mula-avx2-harley-seal"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "nibble-lut": {
+      "build": "conservative-portable",
+      "description": "internal control: gf2's AVX2 nibble-lookup kernel popcnt_fn called directly, without the dispatcher's size threshold",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "nibble-lut"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "production-dispatch": {
+      "build": "conservative-portable",
+      "description": "gf2 production dispatcher gf2_core::kernels::ops::popcount: portable scalar count_ones below 8 words, AVX2 nibble lookup from 8 words, chosen at run time",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "production-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "scalar-popcnt": {
+      "build": "conservative-portable",
+      "description": "internal control: scalar loop forced onto the POPCNT instruction by a runtime-checked target_feature function",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "scalar-popcnt"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-w4-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 301,
+        "word_offset": 0,
+        "words": 4
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w4-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 301,
+        "word_offset": 0,
+        "words": 4
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w4-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 301,
+        "word_offset": 0,
+        "words": 4
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w4-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 301,
+        "word_offset": 0,
+        "words": 4
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w4-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 301,
+        "word_offset": 0,
+        "words": 4
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w8-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 302,
+        "word_offset": 0,
+        "words": 8
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w8-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 302,
+        "word_offset": 0,
+        "words": 8
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w8-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 302,
+        "word_offset": 0,
+        "words": 8
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w8-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 302,
+        "word_offset": 0,
+        "words": 8
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w8-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 302,
+        "word_offset": 0,
+        "words": 8
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w12-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 303,
+        "word_offset": 0,
+        "words": 12
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w12-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 303,
+        "word_offset": 0,
+        "words": 12
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w12-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 303,
+        "word_offset": 0,
+        "words": 12
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w12-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 303,
+        "word_offset": 0,
+        "words": 12
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w12-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 303,
+        "word_offset": 0,
+        "words": 12
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w60-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 304,
+        "word_offset": 0,
+        "words": 60
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w60-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 304,
+        "word_offset": 0,
+        "words": 60
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w60-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 304,
+        "word_offset": 0,
+        "words": 60
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w60-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 304,
+        "word_offset": 0,
+        "words": 60
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w60-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 304,
+        "word_offset": 0,
+        "words": 60
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 305,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 305,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 305,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 305,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 305,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w128-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 306,
+        "word_offset": 0,
+        "words": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w128-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 306,
+        "word_offset": 0,
+        "words": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w128-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 306,
+        "word_offset": 0,
+        "words": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w128-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 306,
+        "word_offset": 0,
+        "words": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w128-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 306,
+        "word_offset": 0,
+        "words": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 0,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 0,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 0,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 0,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 0,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-off24-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 3,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-off24-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 3,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-off24-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 3,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w256-off24-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 307,
+        "word_offset": 3,
+        "words": 256
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_one",
+        "seed": 308,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_one",
+        "seed": 308,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_one",
+        "seed": 308,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_one",
+        "seed": 308,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_one",
+        "seed": 308,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_zero",
+        "seed": 309,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_zero",
+        "seed": 309,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_zero",
+        "seed": 309,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_zero",
+        "seed": 309,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "all_zero",
+        "seed": 309,
+        "word_offset": 0,
+        "words": 64
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w16384-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 310,
+        "word_offset": 0,
+        "words": 16384
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w16384-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 310,
+        "word_offset": 0,
+        "words": 16384
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w16384-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 310,
+        "word_offset": 0,
+        "words": 16384
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w16384-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 310,
+        "word_offset": 0,
+        "words": 16384
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w16384-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 310,
+        "word_offset": 0,
+        "words": 16384
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-nibble-lut",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 311,
+        "word_offset": 0,
+        "words": 1048576
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-scalar-popcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 311,
+        "word_offset": 0,
+        "words": 1048576
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-compiler-count-ones",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 311,
+        "word_offset": 0,
+        "words": 1048576
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-libpopcnt",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 311,
+        "word_offset": 0,
+        "words": 1048576
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-mula-avx2-harley-seal",
+      "baseline_arm": "production-dispatch",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "pattern": "random",
+        "seed": 311,
+        "word_offset": 0,
+        "words": 1048576
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 8
+}

@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-07T19:27:25.194987940Z",
   "context": {},
   "created_at": "2026-09-06T19:58:48.008692176Z",
@@ -14,6 +14,295 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9abb3c07fbb7c192abef363c86a97aeb991bc8397f1a7cf05ba32c7dda7cedd0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/26465e6c/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3b5e0f31d40ff4bd5f1288402cea60d45cf67d9d4a730660f4b6cc18c83a508b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/26465e6c/v3-popcount-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/26465e6c/v3-popcount-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4ee08bd66cf2f71dd885edfe14b65b39a784bc49ec9c34b2e8e45df96f91ffda",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "ledger-genesis.json",
+          "resolved_path": "dev/active/26465e6c/ledger-genesis.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cb3a118d34369a8dd67f6763b6c0b800f2e6a6ab7f925fd2be19159c2c1cb0fe",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/producing-inputs.json",
+          "resolved_path": "dev/active/26465e6c/survey/producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a8c3fe1e126c7984278618dd69598a4c613447e7b56e1fddeb79a7777140e99a",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/26465e6c/v3-and-popcnt-confirmation/instruction-observation.txt",
+          "resolved_path": "dev/bench_results/26465e6c/v3-and-popcnt-confirmation/instruction-observation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "516d98d4f051712886b10fe07706c236467e035e2d530147041e8ff3ad2df11b",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/26465e6c/reevaluation.txt",
+          "resolved_path": "dev/bench_results/26465e6c/reevaluation.txt"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "superseded/v1/",
+          "resolved_path": "dev/active/26465e6c/superseded/v1"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "37fc5ed3fde79030103e4f4910270359de535cb73274ad50fe05f7f5df84eecd",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-v3-and-popcnt.txt",
+          "resolved_path": "dev/active/26465e6c/pilot-resolution-v3-and-popcnt.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef88eae4483121059539d8580499f4698f335fc9845d80be890e04ce7115a5e7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-v3-popcount.txt",
+          "resolved_path": "dev/active/26465e6c/pilot-resolution-v3-popcount.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a9605a401c554ba3117fe1d22a97fd87446244f69dffbeeb4dabc442ec0f4f88",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/26465e6c/v3-and-popcnt-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/26465e6c/v3-and-popcnt-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "09e63130f7cb0e0a270e19cc97702b6fa9f5bd7390d4a29f0e708faebef93a7a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/26465e6c/run-campaign.sh",
+          "resolved_path": "dev/bench_results/26465e6c/run-campaign.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "03470319d49601c23868fe40659662ca4855043f04a74a524ba4ddb55119b6fc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/26465e6c/tables.md",
+          "resolved_path": "dev/bench_results/26465e6c/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "77e65c14b8242e6d76b1db84f839d3d53d6bcf3aab1de12d1d34fd4016921a1f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/26465e6c/v3-popcount-confirmation/instruction-observation.txt",
+          "resolved_path": "dev/bench_results/26465e6c/v3-popcount-confirmation/instruction-observation.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "26465e6c findings and criterion map",
+      "path": "dev/active/26465e6c/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Population-count survey tables (generated)",
+      "path": "dev/bench_results/26465e6c/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Re-evaluation of every receipt with current acceptance",
+      "path": "dev/bench_results/26465e6c/reevaluation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Source claims with verbatim lines",
+      "path": "dev/active/26465e6c/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Issue-owned producing-input manifest",
+      "path": "dev/active/26465e6c/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v3 campaign launcher",
+      "path": "dev/bench_results/26465e6c/run-campaign.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Ledger genesis and v1 reservation import",
+      "path": "dev/active/26465e6c/ledger-genesis.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 popcount family ledger",
+      "path": "dev/bench_results/26465e6c/v3-popcount-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 AND-popcount family ledger",
+      "path": "dev/bench_results/26465e6c/v3-and-popcnt-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 popcount pilot addendum",
+      "path": "dev/active/26465e6c/addendum-popcount-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 popcount frozen confirmation addendum",
+      "path": "dev/active/26465e6c/addendum-popcount-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 AND-popcount pilot addendum",
+      "path": "dev/active/26465e6c/addendum-and-popcnt-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 AND-popcount frozen confirmation addendum",
+      "path": "dev/active/26465e6c/addendum-and-popcnt-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Popcount resolution derivation",
+      "path": "dev/active/26465e6c/pilot-resolution-v3-popcount.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "AND-popcount resolution derivation",
+      "path": "dev/active/26465e6c/pilot-resolution-v3-and-popcnt.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 popcount pilot receipt",
+      "path": "dev/bench_results/26465e6c/v3-popcount-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 popcount pilot acceptance summary",
+      "path": "dev/bench_results/26465e6c/v3-popcount-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 popcount confirmation receipt",
+      "path": "dev/bench_results/26465e6c/v3-popcount-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 popcount confirmation acceptance summary",
+      "path": "dev/bench_results/26465e6c/v3-popcount-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Popcount-family instruction record",
+      "path": "dev/bench_results/26465e6c/v3-popcount-confirmation/instruction-observation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Rejected first AND-popcount pilot (P-11)",
+      "path": "dev/bench_results/26465e6c/v3-and-popcnt-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 AND-popcount pilot receipt",
+      "path": "dev/bench_results/26465e6c/v3-and-popcnt-pilot-r2/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 AND-popcount pilot acceptance summary",
+      "path": "dev/bench_results/26465e6c/v3-and-popcnt-pilot-r2/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v3 AND-popcount confirmation receipt",
+      "path": "dev/bench_results/26465e6c/v3-and-popcnt-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v3 AND-popcount confirmation acceptance summary",
+      "path": "dev/bench_results/26465e6c/v3-and-popcnt-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "AND-family instruction record (both POPCNT counts)",
+      "path": "dev/bench_results/26465e6c/v3-and-popcnt-confirmation/instruction-observation.txt"
     }
   ],
   "first_ready_at": "2026-09-06T19:58:48.008692176Z",
@@ -23,7 +312,28 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-11T16:55:24.461055720Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-11T17:41:00.810578765Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-11T17:41:58.831799818Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-11T17:42:52.168351313Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "26465e6c-6852-44b6-9183-ba2cb5a5fca5",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -35,7 +345,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Establish population-count and fused-reduction baselines",
-  "updated_at": "2026-09-08T17:32:22.764770102Z"
+  "updated_at": "2026-09-11T17:42:52.168351313Z"
 }

@@ -1,0 +1,26 @@
+{
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-11T16:56:18.694466416Z",
+  "context": {},
+  "created_at": "2026-09-10T23:15:28.708744191Z",
+  "dependencies": [],
+  "description": "A benchmark campaign interrupted in the middle of a cell can never produce an acceptable receipt: the runner restarts the unfinished cell on resume, and acceptance rejects any cell with more than one start record.\n\n## Background\n\nThe shared benchmark protocol (`dev/active/f547c394/protocol.md`, rule P-11) states that a resumed session journals an omission for every completed cell and never starts it again, so the execution log holds exactly one `cell-start` and one `cell-complete` per cell. That holds when a session pauses at its cell budget. When a session dies mid-cell (an operator signal, a crash, a power loss), the unfinished cell has a `cell-start` and no checkpoint. `benchmark-ab-runner run` then re-measures that cell under a second `cell-start`, and `benchmark-acceptance` rejects the stage with \"cell started 2 times; completed cells must not repeat\" (`dev/tools/tuning-campaign-support/src/receipt.rs`, P-11 checks), although no cell completed twice. The project invariant campaign-resumability requires an interrupted run to continue without repeating completed work, and the protocol's own coverage table lists bounded resumable runs under P-10 to P-12.\n\nObserved on 2026-09-10 in campaign `26465e6c-v3-and-popcnt-pilot` (issue 26465e6c) after an operator stop at 22:54Z that cut cell `and-popcnt-w4096-vs-scalar-control`; the resumed session re-measured it.\n\n## Success Criteria\n\n- [hard] REQ-01: A campaign whose session is interrupted mid-cell resumes under the same identity, re-measures only the unfinished cell, and yields a receipt that acceptance accepts when every other rule holds.\n- [hard] REQ-02: The execution log records every abandoned cell attempt explicitly, and acceptance rejects a cell that completes more than once, a cell whose accepted samples include an abandoned attempt's samples, and a restarted cell without an abandonment record.\n- [hard] REQ-03: The protocol text of P-11 and its coverage table state the rule for interrupted cells, and a regression test covers a mid-cell interruption followed by a resume through acceptance.\n- [hard] REQ-04: Receipts accepted under the current rule keep their verdicts, and the change is versioned the way the protocol versions other acceptance-behaviour changes.\n\n## Notes\n\nUntil this is fixed, scheduled benchmark windows must let every session reach a cell boundary; a stop between sessions is safe.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-10T23:15:28.708744191Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "bdc507a3-b1e8-4d76-bdb0-37410c6ea339",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:bug"
+  ],
+  "priority": "high",
+  "state": "in_progress",
+  "title": "Accept resumed campaigns whose interrupted cell restarts",
+  "updated_at": "2026-09-11T16:56:18.694466416Z"
+}

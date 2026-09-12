@@ -1,0 +1,445 @@
+//! SIMD-accelerated GF(2^m) field multiplication kernels.
+//!
+//! This module provides carry-less multiplication using PCLMULQDQ (x86_64)
+//! for efficient polynomial multiplication over GF(2), which is the core
+//! operation in GF(2^m) field arithmetic.
+
+/// GF(2^m) field multiplication function.
+///
+/// Multiplies two field elements and reduces modulo the primitive polynomial.
+///
+/// # Arguments
+/// * `a` - First field element
+/// * `b` - Second field element
+/// * `m` - Field size (element is in GF(2^m))
+/// * `primitive_poly` - Primitive polynomial for reduction
+///
+/// # Returns
+/// Product a * b reduced modulo primitive_poly
+pub type Gf2mMulFn = fn(u64, u64, usize, u64) -> u64;
+
+/// Raw carry-less multiplication function (no reduction).
+///
+/// Computes the full 128-bit carry-less product of two 64-bit polynomials.
+///
+/// # Arguments
+/// * `a` - First polynomial (up to 64 bits)
+/// * `b` - Second polynomial (up to 64 bits)
+///
+/// # Returns
+/// The 128-bit carry-less product `a(x) * b(x)`.
+pub type ClmulFn = fn(u64, u64) -> u128;
+
+/// Batch carry-less multiplication function (no reduction).
+///
+/// Computes `out[i] = a[i] * b[i]` (carry-less, no reduction) for each index.
+///
+/// # Arguments
+/// * `a` - First operand slice
+/// * `b` - Second operand slice (same length as `a`)
+/// * `out` - Output slice (same length as `a`)
+///
+/// # Panics
+/// Panics if slices have different lengths.
+pub type ClmulBatchFn = fn(&[u64], &[u64], &mut [u128]);
+
+/// All-in-one carry-less multiply + Barrett reduce function.
+///
+/// Performs `a * b mod P(x)` using three PCLMULQDQ instructions in a single
+/// `#[target_feature]` scope, avoiding function-pointer call overhead.
+///
+/// # Arguments
+/// * `a` - First field element (m bits)
+/// * `b` - Second field element (m bits)
+/// * `mu` - Barrett constant `x^(2m) / P(x)`, fits in `u64` for `m <= 63`
+/// * `modulus` - Irreducible polynomial `P(x)`, fits in `u64` for `m <= 63`
+/// * `degree` - Field degree m
+///
+/// # Returns
+/// The reduced product, fitting in m bits.
+pub type ClmulBarrettFn = fn(u64, u64, u64, u64, u32) -> u64;
+
+/// Preferred raw carry-less batch implementation, subject to CPU support.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ClmulBatchLane {
+    /// One 128-bit PCLMULQDQ product at a time.
+    Sequential,
+    /// Two products per YMM VPCLMULQDQ instruction.
+    Ymm,
+}
+
+/// Bundle of GF(2^m) multiplication functions for different field sizes.
+pub struct Gf2mFns {
+    /// General multiplication for any m ≤ 64 (PCLMULQDQ + shift-and-XOR reduction)
+    pub mul_fn: Gf2mMulFn,
+    /// Raw carry-less multiply (no reduction). Available when PCLMULQDQ is present.
+    pub clmul_fn: Option<ClmulFn>,
+    /// Batch carry-less multiply (no reduction), selected at detection time.
+    /// The default is sequential PCLMULQDQ. `None` if no PCLMULQDQ.
+    pub clmul_batch_fn: Option<ClmulBatchFn>,
+    /// Runtime-observed lane tag of [`Gf2mFns::clmul_batch_fn`], one of
+    /// `"avx2+vpclmulqdq-ymm"` or `"pclmulqdq-scalar-xmm"`. `Some` exactly
+    /// when `clmul_batch_fn` is `Some`.
+    pub clmul_batch_path: Option<&'static str>,
+    /// All-in-one carry-less multiply + Barrett reduce. Uses three PCLMULQDQ
+    /// instructions in one `#[target_feature]` scope, eliminating function-pointer
+    /// call overhead. `None` if no PCLMULQDQ.
+    pub clmul_barrett_fn: Option<ClmulBarrettFn>,
+}
+
+/// Detect the default GF(2^m) function bundle.
+///
+/// The raw batch retains sequential PCLMULQDQ: the frozen Zen 3 confirmation
+/// for jit:1d0da41f rejects YMM adoption (see `dev/active/1d0da41f/findings.md`).
+/// Returns `None` without PCLMULQDQ and SSE4.1; callers use their scalar path.
+pub fn detect() -> Option<Gf2mFns> {
+    detect_with_clmul_batch_preference(ClmulBatchLane::Sequential)
+}
+
+/// Detect a GF(2^m) bundle with a preferred raw-batch lane.
+///
+/// YMM requires AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1, without AVX512VL.
+/// An unsupported preference falls back to sequential PCLMULQDQ; without
+/// PCLMULQDQ and SSE4.1 this returns `None`. Selection happens once here,
+/// and the returned safe function pointer needs no per-call feature check.
+/// Other functions in the bundle have the same selection as [`detect`].
+pub fn detect_with_clmul_batch_preference(preference: ClmulBatchLane) -> Option<Gf2mFns> {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        return detect_x86(preference);
+    }
+    #[allow(unreachable_code)]
+    {
+        let _ = preference;
+        None
+    }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn detect_x86(preference: ClmulBatchLane) -> Option<Gf2mFns> {
+    use std::arch::is_x86_feature_detected;
+
+    if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
+        let (batch, path): (ClmulBatchFn, _) =
+            if preference == ClmulBatchLane::Ymm && crate::x86::clmul::ymm_batch_lane_supported() {
+                (
+                    clmul_batch_ymm_safe,
+                    crate::x86::clmul::CLMUL_BATCH_PATH_YMM,
+                )
+            } else {
+                (clmul_batch_safe, crate::x86::clmul::CLMUL_BATCH_PATH_XMM)
+            };
+        Some(Gf2mFns {
+            mul_fn: gf2m_mul_pclmul_safe,
+            clmul_fn: Some(clmul_u64_safe),
+            clmul_batch_fn: Some(batch),
+            clmul_batch_path: Some(path),
+            clmul_barrett_fn: Some(clmul_barrett_reduce_safe),
+        })
+    } else {
+        None
+    }
+}
+
+/// Safe wrapper for raw carry-less multiplication.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_u64_safe(a: u64, b: u64) -> u128 {
+    unsafe { crate::x86::clmul::clmul_u64(a, b) }
+}
+
+/// Safe wrapper for batch carry-less multiplication.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_batch_safe(a: &[u64], b: &[u64], out: &mut [u128]) {
+    // SAFETY: detect_x86 publishes this pointer only with PCLMULQDQ + SSE4.1.
+    unsafe { crate::x86::clmul::clmul_batch(a, b, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_batch_ymm_safe(a: &[u64], b: &[u64], out: &mut [u128]) {
+    crate::x86::clmul::assert_batch_lengths(a, b, out);
+    // SAFETY: detect_x86 checks all four features via ymm_batch_lane_supported.
+    unsafe { crate::x86::clmul::clmul_batch_vpclmul(a, b, out) }
+}
+
+/// Safe wrapper for all-in-one carry-less multiply + Barrett reduce.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_barrett_reduce_safe(a: u64, b: u64, mu: u64, modulus: u64, degree: u32) -> u64 {
+    unsafe { crate::x86::clmul::clmul_barrett_reduce(a, b, mu, modulus, degree) }
+}
+
+/// Safe wrapper for PCLMULQDQ multiplication
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn gf2m_mul_pclmul_safe(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
+    unsafe { gf2m_mul_pclmul(a, b, m, primitive_poly) }
+}
+
+/// Multiply two GF(2^m) elements using PCLMULQDQ.
+///
+/// # Safety
+/// Requires PCLMULQDQ CPU feature.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[target_feature(enable = "pclmulqdq")]
+unsafe fn gf2m_mul_pclmul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
+    #[cfg(target_arch = "x86")]
+    use std::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+
+    if a == 0 || b == 0 {
+        return 0;
+    }
+
+    // Carry-less multiplication
+    let a_reg = _mm_set_epi64x(0, a as i64);
+    let b_reg = _mm_set_epi64x(0, b as i64);
+    let product = _mm_clmulepi64_si128::<0x00>(a_reg, b_reg);
+
+    let lo = _mm_extract_epi64::<0>(product) as u64;
+    let hi = _mm_extract_epi64::<1>(product) as u64;
+
+    // Fast reduction for common field sizes
+    match m {
+        8 => reduce_gf256(lo, hi, primitive_poly),
+        16 => reduce_gf65536(lo, hi, primitive_poly),
+        _ => reduce_generic(lo, hi, m, primitive_poly),
+    }
+}
+
+/// Fast reduction for GF(2^8)
+#[inline(always)]
+unsafe fn reduce_gf256(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
+    // Product is at most 14 bits (degree 7 + degree 7 = degree 14)
+    // We need to reduce modulo primitive_poly (degree 8)
+
+    let mut result = lo;
+
+    // Reduce bits 8-14 from lo, and any bits from hi
+    for bit_idx in (8..15).rev() {
+        if (result >> bit_idx) & 1 == 1 {
+            result ^= primitive_poly << (bit_idx - 8);
+        }
+    }
+
+    // Handle any contribution from hi (bits 64+)
+    if hi != 0 {
+        for i in 0..7 {
+            if (hi >> i) & 1 == 1 {
+                result ^= primitive_poly << (64 + i - 8);
+            }
+        }
+    }
+
+    result & 0xFF
+}
+
+/// Fast reduction for GF(2^16)
+#[inline(always)]
+unsafe fn reduce_gf65536(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
+    // Product is at most 30 bits
+    let mut result = lo;
+
+    // Reduce bits 16-30 from lo
+    for bit_idx in (16..31).rev() {
+        if (result >> bit_idx) & 1 == 1 {
+            result ^= primitive_poly << (bit_idx - 16);
+        }
+    }
+
+    // Handle contribution from hi
+    if hi != 0 {
+        for i in 0..15 {
+            if (hi >> i) & 1 == 1 {
+                result ^= primitive_poly << (64 + i - 16);
+            }
+        }
+    }
+
+    result & 0xFFFF
+}
+
+/// Generic reduction for arbitrary m
+#[inline(always)]
+unsafe fn reduce_generic(mut lo: u64, hi: u64, m: usize, primitive_poly: u64) -> u64 {
+    // Reduce high part first
+    if hi != 0 {
+        for i in (0..64).rev() {
+            if (hi >> i) & 1 == 1 {
+                let bit_pos = i + 64;
+                if bit_pos >= m {
+                    let shift = bit_pos - m;
+                    if shift < 64 {
+                        lo ^= primitive_poly << shift;
+                    }
+                }
+            }
+        }
+    }
+
+    // Reduce lo to < m bits
+    for i in (m..64).rev() {
+        if (lo >> i) & 1 == 1 {
+            lo ^= primitive_poly << (i - m);
+        }
+    }
+
+    lo & ((1u64 << m) - 1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clmul_batch_default_retains_sequential_lane() {
+        if let Some(fns) = detect() {
+            assert_eq!(fns.clmul_batch_path, Some("pclmulqdq-scalar-xmm"));
+        }
+    }
+
+    #[test]
+    fn clmul_batch_preferences_preserve_length_contract() {
+        for preference in [ClmulBatchLane::Sequential, ClmulBatchLane::Ymm] {
+            let Some(fns) = detect_with_clmul_batch_preference(preference) else {
+                continue;
+            };
+            let batch = fns.clmul_batch_fn.unwrap();
+            assert!(std::panic::catch_unwind(|| batch(&[1], &[], &mut [0])).is_err());
+            assert!(std::panic::catch_unwind(|| batch(&[1], &[1], &mut [])).is_err());
+        }
+    }
+
+    /// An AVX2 + VPCLMULQDQ host can select the 256-bit raw-batch lane.
+    ///
+    /// VPCLMULQDQ at 256 bits is VEX-encodable, so AVX512VL is not part of the
+    /// lane's feature contract. Zen 3 publishes AVX2 and VPCLMULQDQ without
+    /// AVX512VL, and this assertion pins that such a host reaches the YMM lane.
+    #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host() {
+        use std::arch::is_x86_feature_detected;
+
+        if !(is_x86_feature_detected!("avx2")
+            && is_x86_feature_detected!("vpclmulqdq")
+            && is_x86_feature_detected!("pclmulqdq")
+            && is_x86_feature_detected!("sse4.1"))
+        {
+            eprintln!("Skipping: host lacks AVX2+VPCLMULQDQ+PCLMULQDQ+SSE4.1");
+            return;
+        }
+
+        let fns = detect_with_clmul_batch_preference(ClmulBatchLane::Ymm)
+            .expect("a PCLMULQDQ host publishes a GF(2^m) bundle");
+        assert_eq!(
+            fns.clmul_batch_path,
+            Some("avx2+vpclmulqdq-ymm"),
+            "AVX2+VPCLMULQDQ host must select the YMM raw-batch lane \
+             (avx512vl on this host: {})",
+            is_x86_feature_detected!("avx512vl")
+        );
+    }
+
+    /// The published lane tag accompanies the published batch kernel.
+    #[test]
+    fn clmul_batch_path_accompanies_clmul_batch_fn() {
+        let Some(fns) = detect() else {
+            return; // no PCLMULQDQ on this host
+        };
+        assert_eq!(
+            fns.clmul_batch_fn.is_some(),
+            fns.clmul_batch_path.is_some(),
+            "clmul_batch_path must be published exactly when clmul_batch_fn is"
+        );
+        if let Some(path) = fns.clmul_batch_path {
+            assert!(
+                path == "avx2+vpclmulqdq-ymm" || path == "pclmulqdq-scalar-xmm",
+                "unexpected raw-batch lane tag: {path}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_detection() {
+        let fns = detect();
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        {
+            use std::arch::is_x86_feature_detected;
+            if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
+                assert!(fns.is_some());
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn test_gf256_mul() {
+        use std::arch::is_x86_feature_detected;
+
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
+            return;
+        }
+
+        let fns = detect().unwrap();
+
+        // GF(2^8) with x^8 + x^4 + x^3 + x + 1
+        let m = 8;
+        let p = 0x11B;
+
+        // Test identity
+        assert_eq!((fns.mul_fn)(1, 5, m, p), 5);
+        assert_eq!((fns.mul_fn)(5, 1, m, p), 5);
+
+        // Test zero
+        assert_eq!((fns.mul_fn)(0, 5, m, p), 0);
+        assert_eq!((fns.mul_fn)(5, 0, m, p), 0);
+
+        // Test known value
+        let a = 0x53;
+        let b = 0xCA;
+        let result = (fns.mul_fn)(a, b, m, p);
+        let expected = scalar_mul(a, b, m, p);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn test_gf16_mul() {
+        use std::arch::is_x86_feature_detected;
+
+        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
+            return;
+        }
+
+        let fns = detect().unwrap();
+        let m = 4;
+        let p = 0x13; // x^4 + x + 1
+
+        // (x^2 + 1) * (x^3 + x) in GF(16)
+        let a = 0b0101;
+        let b = 0b1010;
+        let result = (fns.mul_fn)(a, b, m, p);
+        let expected = scalar_mul(a, b, m, p);
+        assert_eq!(result, expected);
+    }
+
+    // Reference scalar implementation
+    fn scalar_mul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
+        let mut result = 0u64;
+        let mut temp = a;
+
+        for i in 0..m {
+            if (b >> i) & 1 == 1 {
+                result ^= temp;
+            }
+
+            let will_overflow = (temp & (1u64 << (m - 1))) != 0;
+            temp <<= 1;
+
+            if will_overflow {
+                temp ^= primitive_poly;
+            }
+        }
+
+        result & ((1u64 << m) - 1)
+    }
+}

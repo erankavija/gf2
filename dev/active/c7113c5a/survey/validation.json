@@ -1,0 +1,140 @@
+{
+  "schema": "poly-baseline-validation-set-v1",
+  "issue": "c7113c5a",
+  "variants": {
+    "conservative": {
+  "schema": "poly-baseline-validation-v1",
+  "issue": "c7113c5a",
+  "gf2_selected_paths": [
+    "wide256:avx2+vpclmulqdq-ymm",
+    "wide571:avx2+vpclmulqdq-ymm",
+    "clmul_batch:sequential-pclmulqdq (vpclmulqdq=1 avx512vl=0)"
+  ],
+  "gf2x_selected_path": "gf2x_mul_r library=/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-conservative/lib/libgf2x.so.3.0.0 cflags=-O2",
+  "checks": [
+    {
+      "name": "bit-order-and-coefficients",
+      "cases": 242,
+      "failures": []
+    },
+    {
+      "name": "lengths-and-complete-outputs",
+      "cases": 232,
+      "failures": []
+    },
+    {
+      "name": "dispatched-wide-kernels",
+      "cases": 256,
+      "failures": []
+    },
+    {
+      "name": "independent-64x64-products",
+      "cases": 8192,
+      "failures": []
+    },
+    {
+      "name": "whole-consumer-dot-product",
+      "cases": 8,
+      "failures": []
+    }
+  ],
+  "passed": true
+}
+,
+    "tuned": {
+  "schema": "poly-baseline-validation-v1",
+  "issue": "c7113c5a",
+  "gf2_selected_paths": [
+    "wide256:avx2+vpclmulqdq-ymm",
+    "wide571:avx2+vpclmulqdq-ymm",
+    "clmul_batch:sequential-pclmulqdq (vpclmulqdq=1 avx512vl=0)"
+  ],
+  "gf2x_selected_path": "gf2x_mul_r library=/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-tuned/lib/libgf2x.so.3.0.0 cflags=-O3 -march=x86-64-v3",
+  "checks": [
+    {
+      "name": "bit-order-and-coefficients",
+      "cases": 242,
+      "failures": []
+    },
+    {
+      "name": "lengths-and-complete-outputs",
+      "cases": 232,
+      "failures": []
+    },
+    {
+      "name": "dispatched-wide-kernels",
+      "cases": 256,
+      "failures": []
+    },
+    {
+      "name": "independent-64x64-products",
+      "cases": 8192,
+      "failures": []
+    },
+    {
+      "name": "whole-consumer-dot-product",
+      "cases": 8,
+      "failures": []
+    }
+  ],
+  "passed": true
+}
+,
+    "native": {
+  "schema": "poly-baseline-validation-v1",
+  "issue": "c7113c5a",
+  "gf2_selected_paths": [
+    "wide256:avx2+vpclmulqdq-ymm",
+    "wide571:avx2+vpclmulqdq-ymm",
+    "clmul_batch:sequential-pclmulqdq (vpclmulqdq=1 avx512vl=0)"
+  ],
+  "gf2x_selected_path": "gf2x_mul_r library=/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-native/lib/libgf2x.so.3.0.0 cflags=-O3 -march=native",
+  "checks": [
+    {
+      "name": "bit-order-and-coefficients",
+      "cases": 242,
+      "failures": []
+    },
+    {
+      "name": "lengths-and-complete-outputs",
+      "cases": 232,
+      "failures": []
+    },
+    {
+      "name": "dispatched-wide-kernels",
+      "cases": 256,
+      "failures": []
+    },
+    {
+      "name": "independent-64x64-products",
+      "cases": 8192,
+      "failures": []
+    },
+    {
+      "name": "whole-consumer-dot-product",
+      "cases": 8,
+      "failures": []
+    }
+  ],
+  "passed": true
+}
+
+  },
+  "executables": {
+    "conservative": {
+      "poly-validate": "1996f9b388a1a6255da29606d8144ba54c09f6a6011c0c8cde6d5d63a96762b3",
+      "gf2-poly-arm": "75b100a351c037bc8f57313b003c685ab2a779187cc1cc1eb40c8b26734662af",
+      "gf2x-poly-arm": "b886f97472aa5bdd44e4b82432bb3565939972cef339d87d3f5eebefd02e8928"
+    },
+    "tuned": {
+      "poly-validate": "040f1d74740a66cfbdc780b5c6e41c17912b1c9d77b002b9305cc3c91c2a2443",
+      "gf2-poly-arm": "40c67905c3f01de3e743180b5f1b7b531e89af0067eda356cb088f41e29cb68b",
+      "gf2x-poly-arm": "bd2f8eeb62cbd60bdac2e06e1d81351f891fc29c55dafb5990b98a4d4b043d72"
+    },
+    "native": {
+      "poly-validate": "18a10592c4dcfc203a0598502181093afd9c0f3941e64946d11d65c122e46d46",
+      "gf2-poly-arm": "183024383e3011e192b29b1c5e19e18745ef23468d7c36004fba6524aff5de11",
+      "gf2x-poly-arm": "b048523fa6b903d6e7537ac740d9d220014e07e6f5ff336bf6666a1b5b8fd84b"
+    }
+  }
+}

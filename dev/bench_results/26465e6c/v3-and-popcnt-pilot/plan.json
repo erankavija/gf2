@@ -1,0 +1,140 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "26465e6c-v3-and-popcnt-pilot",
+  "issue": "26465e6c",
+  "label": "pilot",
+  "campaign_seed": 659905816235165872,
+  "addendum": "dev/active/26465e6c/addendum-and-popcnt-v3-pilot.json",
+  "producing_manifest": "dev/active/26465e6c/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "and-fused": {
+      "build": "conservative-portable",
+      "description": "gf2 fused AVX2 AND-popcount kernel and_popcnt_fn from the gf2_kernels_simd::detect() bundle, resolved once as BitMatrix::matvec_simd uses it",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-scalar-control": {
+      "build": "conservative-portable",
+      "description": "internal control: single-pass portable (a & b).count_ones() loop",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-scalar-control"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-two-pass": {
+      "build": "conservative-portable",
+      "description": "gf2-core public route: copy into a fresh temporary, kernels::ops::and_inplace, then kernels::ops::popcount, inside every call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-26465e6c-v3/target/popcount-survey-26465e6c/release/popcount-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-two-pass"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "and-popcnt-w4-vs-scalar-control",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-scalar-control",
+      "case": {
+        "op": "and_popcnt",
+        "pattern": "random",
+        "seed_lhs": 401,
+        "seed_rhs": 1401,
+        "whole_consumer": false,
+        "word_offset": 0,
+        "words": 4
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "and-popcnt-w4096-vs-scalar-control",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-scalar-control",
+      "case": {
+        "op": "and_popcnt",
+        "pattern": "random",
+        "seed_lhs": 402,
+        "seed_rhs": 1402,
+        "whole_consumer": false,
+        "word_offset": 0,
+        "words": 4096
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "and-popcnt-w512k-streaming-vs-scalar-control",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-scalar-control",
+      "case": {
+        "op": "and_popcnt",
+        "pattern": "random",
+        "seed_lhs": 403,
+        "seed_rhs": 1403,
+        "whole_consumer": false,
+        "word_offset": 0,
+        "words": 524288
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "and-popcnt-w4-vs-two-pass",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-two-pass",
+      "case": {
+        "op": "and_popcnt",
+        "pattern": "random",
+        "seed_lhs": 401,
+        "seed_rhs": 1401,
+        "whole_consumer": true,
+        "word_offset": 0,
+        "words": 4
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "and-popcnt-w4096-vs-two-pass",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-two-pass",
+      "case": {
+        "op": "and_popcnt",
+        "pattern": "random",
+        "seed_lhs": 402,
+        "seed_rhs": 1402,
+        "whole_consumer": true,
+        "word_offset": 0,
+        "words": 4096
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "and-popcnt-w512k-streaming-vs-two-pass",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-two-pass",
+      "case": {
+        "op": "and_popcnt",
+        "pattern": "random",
+        "seed_lhs": 403,
+        "seed_rhs": 1403,
+        "whole_consumer": true,
+        "word_offset": 0,
+        "words": 524288
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 3
+}
