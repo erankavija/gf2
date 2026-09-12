@@ -62,6 +62,9 @@ PAIRING = {
     "layout-bch-encode-bitslice-m14-b256-1core": ("current", "family-bitslice"),
     "layout-bch-encode-fold-m14-b256-1core": ("current", "family-fold"),
     "layout-bch-encode-caller-buffer-m14-b256-1core": ("current", "caller-buffer"),
+    "layout-bch-encode-bitslice-m16-b256-1core": ("current", "family-bitslice"),
+    "layout-bch-encode-fold-m16-b256-1core": ("current", "family-fold"),
+    "layout-bch-encode-caller-buffer-m16-b256-1core": ("current", "caller-buffer"),
     "layout-dense-transpose-4096-control-1core": ("current", "current-control"),
     "layout-dvb-bch-encode-7200-control-1core": ("current", "current-control"),
 }
