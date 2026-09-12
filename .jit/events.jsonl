@@ -11715,3 +11715,8 @@
 {"id":"8b383c7a-a256-4c20-8a4e-e973b66669dc","issue_id":"94ab019f-cc91-4081-b787-39037d14fc86","priority":"low","timestamp":"2026-09-12T16:53:18.188190684Z","title":"Gate the conservative tuning test on every feature it needs","type":"issue_created"}
 {"from":"ready","id":"873cd29e-b05a-4fca-ab27-db06bdbdaac7","issue_id":"94ab019f-cc91-4081-b787-39037d14fc86","timestamp":"2026-09-12T16:53:33.978784228Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"3c5f72cc-ddf7-4e3b-8bcd-3eaa0f2f9a26","issue_id":"94ab019f-cc91-4081-b787-39037d14fc86","timestamp":"2026-09-12T16:53:33.978784228Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"research-review","id":"6ec9f37b-ba2e-40a9-8490-c9c981092d74","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:11:53.420376952Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"1bd92d6b-bb27-4755-94cf-c2d723c4f524","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:13:36.881072795Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"5f3be824-4dec-41f6-8da2-3e5d4ad5554b","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:16:04.422226903Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"064510db-255d-49ae-a292-71b1365a53db","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:16:28.037756699Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["description"],"id":"42f27a15-0083-43c4-a0f5-cb8228ed0ea2","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:28:04.384929363Z","type":"issue_updated","updated_by":"issue-update"}
