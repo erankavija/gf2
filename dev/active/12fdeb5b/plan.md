@@ -1,5 +1,7 @@
 # 5G NR rate-matched encoder baselines: plan
 
+> **Diátaxis Type:** Explanation
+
 This plan fixes the operation, the configuration grid, the comparator arms and
 the campaign order for JIT issue `12fdeb5b`. It changes no production kernel.
 The normative rules are the
