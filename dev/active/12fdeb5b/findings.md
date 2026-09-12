@@ -134,13 +134,22 @@ The [smoke](../../bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/rec
 is an accepted five-cell exploratory campaign that reaches a result line from
 every arm the pilot names, on the largest and smallest configurations of the
 grid. It is a functional check, not a performance result about gf2, and it
-decides nothing. The superseded smoke campaigns of the same addendum are
-retained beside it under `-r1` to `-r4`, each one run before a harness change
-that altered the arm executables or the launcher: the build directory the
-launcher resolves, the semantic type the srsRAN adapter's parameters carry, the
-configuration grid, and the comparator trees the launcher defaults to. Every
-one of them is accepted and every one holds its zero-comparison reservation in
-the family ledger, so the accounting shows every attempt.
+decides nothing.
+
+Four earlier smoke campaigns of the same addendum stay committed beside it,
+under `2026-09-12-12fdeb5b-nr-encode-smoke-r1` through `-r4`. Each is a
+superseded functional check and none is a measurement of gf2 or of a
+comparator: no figure in this survey or in the
+[tables](../../bench_results/12fdeb5b/tables.md) comes from any of them, and
+their exploratory cells decide nothing, exactly as the current smoke's do. Each
+ran before a harness change that altered the arm executables or the launcher:
+the build directory the launcher resolves, the semantic type the srsRAN
+adapter's parameters carry, the configuration grid, and the comparator trees
+the launcher defaults to. A superseded receipt stays committed under its own
+directory rather than being replaced, so every family-ledger reservation names
+a campaign whose receipt is present. All five are accepted with zero findings
+and all five spend zero comparisons, so the accounting shows every attempt
+without touching the family's error budget.
 
 The [pilot](addendum-nr-encode-pilot.json) is frozen: eight exploratory cells
 over both base graphs, both comparators, the build control and the identity
@@ -186,10 +195,10 @@ checkout through the common git directory, so any worktree of this repository
 runs it with no path of its own; `GF2_AFF3CT_ROOT` and `GF2_SRSRAN_ROOT`
 override that default. Its own build output stays in the git-ignored
 `.agents/ext/12fdeb5b` of the invoking checkout, which `GF2_12FDEB5B_EXT`
-overrides, so two worktrees never write the same target directory. It verifies the pins, builds the four arms, regenerates the source and
-build evidence, runs the equivalence gate, projects the plan from the frozen
-addendum and measures it as bounded checkpointed sessions under the CCX1
-exclusive mutex. `dev/bench_results/12fdeb5b/summarize.py` regenerates the
+overrides, so two worktrees never write the same target directory. It verifies
+the pins, builds the four arms, regenerates the source and build evidence, runs
+the equivalence gate, projects the plan from the frozen addendum and measures
+it as bounded checkpointed sessions under the CCX1 exclusive mutex. `dev/bench_results/12fdeb5b/summarize.py` regenerates the
 tables from the committed records and receipts.
 
 ## Criterion outcomes
