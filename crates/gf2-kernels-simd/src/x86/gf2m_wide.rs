@@ -17,7 +17,7 @@
 //!   _mm_clmulepi64_si128 per scalar product. Universal x86_64 fallback.
 //!
 //! Every function writes the same little-endian limb layout as the scalar
-//! `clmul_wide_slice::<N>` helper: partial product `a[i] · b[j]` contributes
+//! `clmul_wide_slice_portable::<N>` helper: partial product `a[i] · b[j]` contributes
 //! its low/high halves to `out[i + j]` / `out[i + j + 1]`.
 //!
 //! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
@@ -79,7 +79,7 @@ pub unsafe fn clmul_wide4_xmm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
 /// products of the 4×4 schoolbook into 8 YMM multiplies, pairing `(i, j)` with
 /// `(i, j+1)` so each pair shares the same `a[i]` operand in both lanes.
 ///
-/// The layout matches the scalar `clmul_wide_slice::<4>`: partial product
+/// The layout matches the scalar `clmul_wide_slice_portable::<4>`: partial product
 /// `a[i] · b[j]` XOR-accumulates into `out[i + j]` (lo) and `out[i + j + 1]`
 /// (hi).
 ///

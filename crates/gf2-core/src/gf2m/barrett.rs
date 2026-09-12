@@ -27,7 +27,9 @@
 //! This widening is provided by [`BarrettReducerWide`] (JIT issue `9dd11973`),
 //! which landed as Task 3 of story `6fb4abad`. [`BarrettReducerWide`] handles
 //! arbitrary `N`-word fields (e.g. `m = 127` with `N = 2`, `m = 256` with
-//! `N = 4`) using multi-word carry-less multiplication via [`super::wide::clmul_wide`].
+//! `N = 4`) using multi-word carry-less multiplication through
+//! [`super::wide::clmul_wide_dispatch`], the canonical selection this crate's
+//! wide products share.
 //!
 //! # Multi-word Barrett reduction — [`BarrettReducerWide`]
 //!
@@ -61,8 +63,11 @@
 //!
 //! ## Internal arithmetic
 //!
-//! All multi-word carry-less multiplications use `clmul_wide` with the
-//! double-const-parameter pattern. Internal helpers operate on `&[u64]` slices
+//! All multi-word carry-less multiplications go through
+//! [`super::wide::clmul_wide_dispatch`], so a host with PCLMULQDQ reduces
+//! `GF(2^256)` and `GF(2^571)` in the kernels of `gf2-kernels-simd` and every
+//! other field runs the portable schoolbook. Internal helpers operate on
+//! `&[u64]` slices
 //! with `debug_assert!` bounds checks when the output size cannot be expressed
 //! as a compile-time constant directly in that context.
 
@@ -135,7 +140,7 @@ fn clmul128_trunc(a: u128, b: u128) -> u128 {
 /// Barrett is only wired in when the backing type is `u64`. For wider
 /// fields (`m = 64..=127`, `m = 128..=255`, etc.) use
 /// [`BarrettReducerWide`], which handles arbitrary `N`-word fields by
-/// operating through [`super::wide::clmul_wide`] and explicit
+/// operating through [`super::wide::clmul_wide_dispatch`] and explicit
 /// multi-word shift helpers. For u128-backed fields at `m >= 64`,
 /// `Gf2mField_<u128>` transparently falls back to the generic schoolbook
 /// primitive, so correctness is preserved — only the PCLMULQDQ + Barrett
@@ -726,8 +731,8 @@ impl<const N: usize> BarrettReducerWide<N> {
     ///
     /// # Complexity
     ///
-    /// O(N²) carry-less word multiplications; two `clmul_wide` calls of cost
-    /// O(N²) each, plus O(N) shift and XOR operations.
+    /// O(N²) carry-less word multiplications: two dispatched products of
+    /// cost O(N²) each, plus O(N) shift and XOR operations.
     ///
     /// # Examples
     ///
@@ -967,7 +972,7 @@ fn slice_clmul_wide_with_implicit_high<const N: usize>(
     // fixed-size SIMD clmul kernels (currently N = 4 and N = 9) to accelerate
     // the two reduction multiplications as well as the caller's initial
     // product.
-    super::wide::clmul_wide_slice_product::<N>(a, b_stored, out);
+    super::wide::clmul_wide_dispatch::<N>(a, b_stored, out, super::wide::ProductWrite::Overwrite);
     // Add contribution from implicit leading bit: a * x^b_implicit_bit.
     let word_shift = (b_implicit_bit / 64) as usize;
     let bit_shift = b_implicit_bit % 64;

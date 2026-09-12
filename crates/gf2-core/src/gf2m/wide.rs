@@ -15,10 +15,20 @@
 //! carry-less multiply, Barrett reduction via
 //! [`crate::gf2m::barrett::BarrettReducerWide`], Fermat-based
 //! [`Gf2mWide::inverse`], and full [`crate::field::FiniteField`] /
-//! [`crate::field::ConstField`] trait implementations. The
-//! `GF(2^256)` and `GF(2^571)` variants additionally dispatch to
-//! AVX2+VPCLMULQDQ SIMD kernels in [`gf2_kernels_simd::gf2m_wide`] when the
-//! host supports them (tasks `afac2262` and `7c954fb5`).
+//! [`crate::field::ConstField`] trait implementations.
+//!
+//! # Carry-less product dispatch
+//!
+//! [`clmul_wide_dispatch`] is the one place a wide carry-less product selects
+//! its kernel. The public long-product API ([`clmul_wide`],
+//! [`clmul_wide_slice`]), [`Gf2mWide::mul_ref`] and the wide Barrett reducer
+//! all reach it, so a host with PCLMULQDQ computes the `GF(2^256)` and
+//! `GF(2^571)` products in the AVX2+VPCLMULQDQ or PCLMULQDQ kernels of
+//! [`gf2_kernels_simd::gf2m_wide`] whichever caller asked, and every other
+//! width, and every host without the capability, runs
+//! [`clmul_wide_slice_portable`]. Callers that want the portable schoolbook
+//! whatever the host offers — a benchmark baseline, a conformance oracle —
+//! call that function directly.
 //!
 //! Historically this file grew through five tasks of story `bdf95060`
 //! (nee `6fb4abad`): Task 1 landed the type shell and XOR operators
@@ -863,6 +873,15 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// Multiplies two field elements using carry-less multiplication and
     /// Barrett reduction.
     ///
+    /// # Mechanism
+    ///
+    /// The unreduced product and the two products inside Barrett reduction all
+    /// run through [`clmul_wide_dispatch`], the canonical carry-less product
+    /// selection this crate shares with its public long-product API, so a host
+    /// with PCLMULQDQ reaches the `gf2-kernels-simd` kernels at `N == 4` and
+    /// `N == 9` and every other case runs
+    /// [`clmul_wide_slice_portable`].
+    ///
     /// # Arguments
     ///
     /// * `rhs` - The right-hand operand.
@@ -874,9 +893,11 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// # Complexity
     ///
-    /// `O(N²)` carry-less multiplications (via `clmul_wide::<N, {2*N}>`) plus
-    /// `O(N²)` work for Barrett reduction (two `clmul_wide` calls on N-word
-    /// operands).
+    /// `O(N²)` word products for the unreduced product plus `O(N²)` for
+    /// Barrett reduction, which performs two more dispatched products on
+    /// N-word operands. A dispatched width computes each product in the
+    /// kernel's vector lanes; every other width performs the bit-by-bit
+    /// `clmul` schoolbook.
     ///
     /// # Examples
     ///
@@ -901,7 +922,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         // Stable-Rust caveat: `[u64; 2 * N]` is rejected as an array-length
         // expression on stable because `N` is a const generic parameter.
         // We therefore use a `Vec<u64>` buffer and the slice-based helpers
-        // [`clmul_wide_slice`] (schoolbook clmul) and
+        // [`clmul_wide_dispatch`] (the canonical carry-less product) and
         // [`BarrettReducerWide::reduce_slice`] (Barrett reduction) that were
         // introduced exactly for this callsite. Both share implementations
         // with the array-typed `clmul_wide` / `BarrettReducerWide::reduce`,
@@ -909,12 +930,16 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         // heap-allocated scratch buffer that MSRV forces on us.
         let mut product = vec![0u64; 2 * N];
 
-        // SIMD fast-path: for N == 4 (GF(2^256)) and N == 9 (GF(2^571)),
-        // delegate the schoolbook carry-less product to the dispatched
-        // kernels in `gf2-kernels-simd` when the host supports PCLMULQDQ.
-        // The helper also falls back to the scalar schoolbook and keeps all
-        // unsafe intrinsics isolated in the kernels crate.
-        clmul_wide_slice_product::<N>(&self.words, &rhs.words, &mut product);
+        // Step 1: the canonical dispatch selects the `gf2-kernels-simd`
+        // kernel for N == 4 (GF(2^256)) and N == 9 (GF(2^571)) on a host with
+        // PCLMULQDQ and the portable schoolbook otherwise, so all unsafe
+        // intrinsics stay isolated in the kernels crate.
+        clmul_wide_dispatch::<N>(
+            &self.words,
+            &rhs.words,
+            &mut product,
+            ProductWrite::Overwrite,
+        );
 
         // Step 2: Barrett-reduce the 2N-word product back to N words, via the
         // shared `BarrettReducerWide::reduce_slice` primitive.
@@ -2020,6 +2045,124 @@ fn clmul_wide_dispatch_enabled() -> bool {
     true
 }
 
+/// How a carry-less product reaches the caller's destination.
+///
+/// The dispatched kernels write a complete `2N`-word product, so they can fill
+/// the destination directly for [`Self::Overwrite`]; [`Self::Accumulate`]
+/// serves the callers that XOR a product into a running total and costs a
+/// scratch buffer plus one XOR pass on a dispatched width.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ProductWrite {
+    /// Replace the destination with the product.
+    Overwrite,
+    /// XOR the product into the destination.
+    Accumulate,
+}
+
+/// Largest destination the dispatched kernels write, in words: `2 * 9` for the
+/// GF(2^571) kernel, which bounds the accumulate scratch.
+const MAX_DISPATCHED_PRODUCT_WORDS: usize = 18;
+
+/// The canonical carry-less product dispatch: every wide product in the crate,
+/// public or internal, selects its kernel here.
+///
+/// Selects the PCLMULQDQ kernels `gf2-kernels-simd` publishes for the widths
+/// that have one — 4 words (GF(2^256)) and 9 words (GF(2^571)) — and otherwise
+/// runs [`clmul_wide_slice_portable`]. The selection is a runtime capability
+/// question at those two widths and a compile-time one everywhere else, since
+/// `N` is a const parameter.
+///
+/// # Arguments
+///
+/// * `a`, `b` — N-word operands.
+/// * `out` — the `2 * N`-word destination.
+/// * `write` — whether `out` is replaced or accumulated into.
+///
+/// # Panics
+///
+/// Debug-asserts that `out.len() == 2 * N`.
+///
+/// # Complexity
+///
+/// `O(N²)` word products. A dispatched width performs them in the kernel's
+/// vector lanes; every other width performs `N²` bit-by-bit `clmul` calls.
+#[inline]
+pub(crate) fn clmul_wide_dispatch<const N: usize>(
+    a: &[u64; N],
+    b: &[u64; N],
+    out: &mut [u64],
+    write: ProductWrite,
+) {
+    debug_assert_eq!(out.len(), 2 * N);
+
+    #[cfg(feature = "simd")]
+    if clmul_wide_dispatch_enabled() {
+        if N == 4 {
+            if let Some(fns) = crate::simd::maybe_gf2m_wide256() {
+                let a_arr: &[u64; 4] = (&a[..])
+                    .try_into()
+                    .expect("N == 4 guarantees a 4-limb slice");
+                let b_arr: &[u64; 4] = (&b[..])
+                    .try_into()
+                    .expect("N == 4 guarantees a 4-limb slice");
+                record_clmul_wide_lane(fns.name);
+                match write {
+                    ProductWrite::Overwrite => {
+                        let out_arr: &mut [u64; 8] = out
+                            .try_into()
+                            .expect("2 * N == 8 guarantees an 8-limb slice");
+                        (fns.clmul)(a_arr, b_arr, out_arr);
+                    }
+                    ProductWrite::Accumulate => {
+                        let mut scratch = [0u64; 8];
+                        (fns.clmul)(a_arr, b_arr, &mut scratch);
+                        xor_into(out, &scratch);
+                    }
+                }
+                return;
+            }
+        } else if N == 9 {
+            if let Some(fns) = crate::simd::maybe_gf2m_wide571() {
+                let a_arr: &[u64; 9] = (&a[..])
+                    .try_into()
+                    .expect("N == 9 guarantees a 9-limb slice");
+                let b_arr: &[u64; 9] = (&b[..])
+                    .try_into()
+                    .expect("N == 9 guarantees a 9-limb slice");
+                record_clmul_wide_lane(fns.name);
+                match write {
+                    ProductWrite::Overwrite => {
+                        let out_arr: &mut [u64; 18] = out
+                            .try_into()
+                            .expect("2 * N == 18 guarantees an 18-limb slice");
+                        (fns.clmul)(a_arr, b_arr, out_arr);
+                    }
+                    ProductWrite::Accumulate => {
+                        let mut scratch = [0u64; MAX_DISPATCHED_PRODUCT_WORDS];
+                        (fns.clmul)(a_arr, b_arr, &mut scratch);
+                        xor_into(out, &scratch);
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    if write == ProductWrite::Overwrite {
+        out.fill(0);
+    }
+    clmul_wide_slice_portable::<N>(a, b, out);
+}
+
+/// XOR-folds a kernel's scratch product into the caller's destination.
+#[inline]
+#[cfg_attr(not(feature = "simd"), allow(dead_code))]
+fn xor_into(out: &mut [u64], scratch: &[u64]) {
+    for (destination, word) in out.iter_mut().zip(scratch) {
+        *destination ^= word;
+    }
+}
+
 /// Carry-less multiplication of two `N`-word GF(2)-polynomial operands,
 /// producing an unreduced `M`-word result where `M == 2 * N`.
 ///
@@ -2032,6 +2175,14 @@ fn clmul_wide_dispatch_enabled() -> bool {
 /// irreducible polynomial is applied. Reduction back to `N` words is
 /// performed by [`crate::gf2m::barrett::BarrettReducerWide::reduce_slice`];
 /// see [`Gf2mWide::mul_ref`] for the combined clmul + Barrett path.
+///
+/// # Mechanism
+///
+/// The product runs through [`clmul_wide_dispatch`], the canonical selection
+/// this crate's wide arithmetic shares, so a host with PCLMULQDQ computes the
+/// 4-word and 9-word products in the vector kernels of `gf2-kernels-simd` and
+/// every other width, and every host without the capability, runs
+/// [`clmul_wide_slice_portable`].
 ///
 /// # Stable-Rust caveat: why two const parameters?
 ///
@@ -2055,8 +2206,10 @@ fn clmul_wide_dispatch_enabled() -> bool {
 ///
 /// # Complexity
 ///
-/// `O(N²)` carry-less word multiplications (`clmul` calls), each producing a
-/// `u128`. For `N` words the inner loop performs `N²` calls.
+/// `O(N²)` word products. On a dispatched width the kernel computes them in
+/// vector lanes — eight VPCLMULQDQ instructions for the sixteen products of
+/// `N = 4`, one PCLMULQDQ per product on the XMM lane — and on every other
+/// width the portable schoolbook performs `N²` bit-by-bit `clmul` calls.
 ///
 /// # Examples
 ///
@@ -2079,7 +2232,7 @@ fn clmul_wide_dispatch_enabled() -> bool {
 pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) -> [u64; M] {
     const { assert!(M == 2 * N, "clmul_wide: M must equal 2 * N") }
     let mut out = [0u64; M];
-    clmul_wide_slice::<N>(a, b, &mut out);
+    clmul_wide_dispatch::<N>(a, b, &mut out, ProductWrite::Overwrite);
     out
 }
 
@@ -2087,12 +2240,16 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 /// `[u64; 2 * N]` output array under stable-Rust generics.
 ///
 /// `out` must have length exactly `2 * N`. The function XOR-accumulates the
-/// schoolbook carry-less product `a * b` into `out`; callers are responsible
-/// for zero-initialising `out` before the call if they want the raw product.
+/// carry-less product `a * b` into `out`; callers are responsible for
+/// zero-initialising `out` before the call if they want the raw product.
 ///
-/// This is the shared implementation used by both [`clmul_wide`] (which owns
-/// the output array) and [`Gf2mWide::mul`] (which needs an N-parameterised
-/// product buffer without writing `{2 * N}` in a generic context).
+/// # Mechanism
+///
+/// The product runs through [`clmul_wide_dispatch`] exactly as [`clmul_wide`]
+/// does, so it reaches the same kernels. Accumulating into a caller's buffer
+/// costs a scratch product and one XOR pass on a dispatched width, which
+/// [`clmul_wide`] avoids; a caller that wants the plain product of a 4- or
+/// 9-word operand pair is better served by [`clmul_wide`].
 ///
 /// # Arguments
 ///
@@ -2108,7 +2265,8 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 ///
 /// # Complexity
 ///
-/// `O(N²)` carry-less-multiply-plus-XOR operations.
+/// `O(N²)` word products, as [`clmul_wide`] describes, plus the `O(N)` XOR
+/// pass on a dispatched width.
 ///
 /// # Examples
 ///
@@ -2123,6 +2281,46 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 /// ```
 #[inline]
 pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u64]) {
+    clmul_wide_dispatch::<N>(a, b, out, ProductWrite::Accumulate);
+}
+
+/// The portable bit-by-bit schoolbook carry-less product: the fallback
+/// [`clmul_wide_dispatch`] takes on a host or a width without a kernel, and
+/// the reference every dispatched lane is checked against.
+///
+/// XOR-accumulates `a * b` into `out`, which must have length exactly
+/// `2 * N`. It reaches no capability dispatch, so a caller that wants the
+/// portable path whatever the host offers — a benchmark baseline, a
+/// conformance oracle — calls it directly.
+///
+/// # Arguments
+///
+/// * `a`, `b` — N-word input operands.
+/// * `out` — 2N-word accumulator; products are XOR-ed in. Zero-initialise
+///   beforehand to obtain the plain product.
+///
+/// # Panics
+///
+/// Debug-asserts that `out.len() == 2 * N`.
+///
+/// # Complexity
+///
+/// `O(N²)` carry-less-multiply-plus-XOR operations, each `clmul` walking the
+/// set bits of its operand.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::gf2m::wide::clmul_wide_slice_portable;
+///
+/// let a = [0b10u64];              // polynomial x
+/// let b = [0b10u64];              // polynomial x
+/// let mut out = [0u64; 2];
+/// clmul_wide_slice_portable::<1>(&a, &b, &mut out);
+/// assert_eq!(out[0], 0b100);      // x * x == x²
+/// ```
+#[inline]
+pub fn clmul_wide_slice_portable<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u64]) {
     debug_assert_eq!(out.len(), 2 * N);
     record_clmul_wide_lane(PORTABLE_LANE);
     for i in 0..N {
@@ -2132,61 +2330,6 @@ pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u
             out[i + j + 1] ^= (product >> 64) as u64;
         }
     }
-}
-
-/// Computes a fresh 2N-limb carry-less product, using SIMD for supported
-/// fixed-size wide fields and falling back to [`clmul_wide_slice`].
-///
-/// Unlike [`clmul_wide_slice`], this helper overwrites `out` with the product
-/// rather than XOR-accumulating into a caller-supplied accumulator. It is used
-/// by `Gf2mWide::mul_ref` and the wide Barrett reducer, both of which need a
-/// fresh product buffer and can therefore safely use kernels that clear their
-/// output before writing.
-#[inline]
-pub(crate) fn clmul_wide_slice_product<const N: usize>(
-    a: &[u64; N],
-    b: &[u64; N],
-    out: &mut [u64],
-) {
-    debug_assert_eq!(out.len(), 2 * N);
-
-    #[cfg(feature = "simd")]
-    if clmul_wide_dispatch_enabled() {
-        if N == 4 {
-            if let Some(fns) = crate::simd::maybe_gf2m_wide256() {
-                let a_arr: &[u64; 4] = (&a[..])
-                    .try_into()
-                    .expect("N == 4 guarantees a 4-limb slice");
-                let b_arr: &[u64; 4] = (&b[..])
-                    .try_into()
-                    .expect("N == 4 guarantees a 4-limb slice");
-                let out_arr: &mut [u64; 8] = out
-                    .try_into()
-                    .expect("2 * N == 8 guarantees an 8-limb slice");
-                record_clmul_wide_lane(fns.name);
-                (fns.clmul)(a_arr, b_arr, out_arr);
-                return;
-            }
-        } else if N == 9 {
-            if let Some(fns) = crate::simd::maybe_gf2m_wide571() {
-                let a_arr: &[u64; 9] = (&a[..])
-                    .try_into()
-                    .expect("N == 9 guarantees a 9-limb slice");
-                let b_arr: &[u64; 9] = (&b[..])
-                    .try_into()
-                    .expect("N == 9 guarantees a 9-limb slice");
-                let out_arr: &mut [u64; 18] = out
-                    .try_into()
-                    .expect("2 * N == 18 guarantees an 18-limb slice");
-                record_clmul_wide_lane(fns.name);
-                (fns.clmul)(a_arr, b_arr, out_arr);
-                return;
-            }
-        }
-    }
-
-    out.fill(0);
-    clmul_wide_slice::<N>(a, b, out);
 }
 
 // ---------------------------------------------------------------------------
@@ -3359,7 +3502,7 @@ mod tests {
         ]);
         let got = a * b;
         let mut product = [0u64; 18];
-        clmul_wide_slice::<9>(a.words(), b.words(), &mut product);
+        clmul_wide_slice_portable::<9>(a.words(), b.words(), &mut product);
         let reduced = crate::gf2m::barrett::reference_reduce_wide::<9, 18>(
             &product,
             &Gf2m571TestConfig::MODULUS,
@@ -3678,10 +3821,11 @@ mod tests {
             b: &Gf2mWide<4, Gf2m256TestConfig>,
         ) -> Gf2mWide<4, Gf2m256TestConfig> {
             let mut product = [0u64; 8];
-            // `clmul_wide_slice` has no SIMD path of its own; it always runs
-            // the scalar bit-by-bit clmul. The test-only reference reducer is
-            // the independent shift-and-XOR oracle.
-            super::clmul_wide_slice::<4>(a.words(), b.words(), &mut product);
+            // `clmul_wide_slice_portable` reaches no capability dispatch, so
+            // it runs the scalar bit-by-bit clmul whatever the host offers.
+            // The test-only reference reducer is the independent
+            // shift-and-XOR oracle.
+            super::clmul_wide_slice_portable::<4>(a.words(), b.words(), &mut product);
             let reduced = crate::gf2m::barrett::reference_reduce_wide::<4, 8>(
                 &product,
                 &Gf2m256TestConfig::MODULUS,
@@ -3695,7 +3839,7 @@ mod tests {
             b: &Gf2mWide<9, Gf2m571TestConfig>,
         ) -> Gf2mWide<9, Gf2m571TestConfig> {
             let mut product = [0u64; 18];
-            super::clmul_wide_slice::<9>(a.words(), b.words(), &mut product);
+            super::clmul_wide_slice_portable::<9>(a.words(), b.words(), &mut product);
             let reduced = crate::gf2m::barrett::reference_reduce_wide::<9, 18>(
                 &product,
                 &Gf2m571TestConfig::MODULUS,
