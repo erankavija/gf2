@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-# Protocol-v3 receipts for the bit-storage consumer families (jit:04b85d10).
+# Receipts for the bit-storage consumer families (jit:04b85d10).
 #
-# Usage: dev/bench_results/04b85d10/run-consumer-campaigns.sh <family> pilot|confirmation [date-utc]
+# Usage: dev/bench_results/04b85d10/run-consumer-campaigns.sh \
+#          <family> pilot|confirmation [protocol-version] [date-utc]
 #   family: logical | count | layout
+#   protocol-version: the version of the frozen addendum to measure (default 4)
+#
+# The family ledger is one file per family across protocol versions, because
+# the family question is the same question; the protocol's sequential attempt
+# budget counts every reservation in it.
 #
 # Builds the protocol runner, the acceptance tool and the consumer harness
 # under `--release` with the repository MSRV toolchain, proves the compared
@@ -28,23 +34,25 @@ cd "$repo"
 ISSUE=04b85d10
 FAMILY=${1:-}
 MODE=${2:-}
-DATE_UTC=${3:-$(date -u +%Y-%m-%d)}
+VERSION=${3:-4}
+DATE_UTC=${4:-$(date -u +%Y-%m-%d)}
+usage="usage: $0 logical|count|layout pilot|confirmation [protocol-version] [date-utc]"
 case "$FAMILY" in
   logical|count|layout) ;;
-  *) echo "usage: $0 logical|count|layout pilot|confirmation [date-utc]" >&2; exit 2 ;;
+  *) echo "$usage" >&2; exit 2 ;;
 esac
 case "$MODE" in
-  pilot)
-    LABEL=pilot
-    ADDENDUM=dev/active/$ISSUE/addendum-bit-storage-$FAMILY-v3-pilot.json
-    ;;
-  confirmation)
-    LABEL=confirmation
-    ADDENDUM=dev/active/$ISSUE/addendum-bit-storage-$FAMILY-v3-confirmation.json
-    ;;
-  *) echo "usage: $0 logical|count|layout pilot|confirmation [date-utc]" >&2; exit 2 ;;
+  pilot) LABEL=pilot ;;
+  confirmation) LABEL=confirmation ;;
+  *) echo "$usage" >&2; exit 2 ;;
 esac
-OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-$FAMILY-v3-$MODE"
+case "$VERSION" in
+  3|4) ;;
+  *) echo "$usage" >&2; exit 2 ;;
+esac
+ADDENDUM=dev/active/$ISSUE/addendum-bit-storage-$FAMILY-v$VERSION-$MODE.json
+[[ -f "$ADDENDUM" ]] || { echo "no frozen addendum $ADDENDUM" >&2; exit 2; }
+OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-$FAMILY-v$VERSION-$MODE"
 LEDGER="dev/bench_results/$ISSUE/v3-bit-storage-$FAMILY-consumers-family-ledger.jsonl"
 MAX_CELLS=3
 
@@ -74,7 +82,7 @@ ACCEPTANCE=$(realpath target/release/benchmark-acceptance)
 ARM=$(realpath "$HARNESS_TARGET/release/consumer-arm")
 VERIFY=$(realpath "$HARNESS_TARGET/release/consumer-verify")
 
-CAMPAIGN="$MODE-v3-$FAMILY-$ISSUE-$(date -u +%Y%m%dt%H%M%Sz)"
+CAMPAIGN="$MODE-v$VERSION-$FAMILY-$ISSUE-$(date -u +%Y%m%dt%H%M%Sz)"
 STAGE="$repo/target/consumer-campaigns/$CAMPAIGN"
 PLAN="$STAGE.plan.json"
 mkdir -p "$(dirname "$STAGE")"
@@ -91,7 +99,7 @@ LAUNCH_LOG="$STAGE.launcher.log"
   echo "# command: $0 $*"
   echo "# started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "# gf2 revision (informational): $(git rev-parse HEAD 2>/dev/null || true)"
-  echo "# family: $FAMILY  mode: $MODE"
+  echo "# family: $FAMILY  mode: $MODE  protocol version: $VERSION"
   echo "# addendum: $ADDENDUM"
   echo "# addendum sha256: $(sha256sum "$ADDENDUM" | cut -d' ' -f1)"
   echo "# ledger: $LEDGER ($(grep -c . "$LEDGER") lines before this campaign)"
