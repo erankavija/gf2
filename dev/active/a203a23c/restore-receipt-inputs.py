@@ -41,10 +41,15 @@ def load_checker(root: Path):
 
 def sources_by_digest(checker, root: Path, revision: str) -> dict[str, list[str]]:
     """Maps the sha256 of every file of `revision` to the paths carrying it."""
+    oids = checker.committed_oids(root, revision)
+    read = checker.committed_reader(root, oids)
     sources: dict[str, list[str]] = {}
-    for path, oid in checker.committed_oids(root, revision).items():
-        content = checker.git(root, "cat-file", "blob", oid)
-        sources.setdefault(hashlib.sha256(content).hexdigest(), []).append(path)
+    try:
+        for path in oids:
+            digest = hashlib.sha256(read(path)).hexdigest()
+            sources.setdefault(digest, []).append(path)
+    finally:
+        read.close()
     return {digest: sorted(paths) for digest, paths in sources.items()}
 
 
@@ -75,6 +80,7 @@ def main() -> int:
             str(Path(receipt).parent), json.loads(read(receipt)), read
         )[0]
     }
+    read.close()
 
     restored, unrestored = [], []
     for finding in findings:
