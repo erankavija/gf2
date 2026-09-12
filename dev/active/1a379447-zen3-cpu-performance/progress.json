@@ -227,7 +227,7 @@
           "short_id": "3be770d5",
           "title": "Profile the CPU LDPC throughput gap against compatible decoders",
           "classification": "research",
-          "status": "session 11: window collected and verified; branch merged at 6055e0c7, 56 artifacts linked at ad76be4a, cargo-ci passed. Independent Terra xhigh review FAIL on one blocking finding (lever table presents 1/(1-s_lo) as a realized 'speedup at least' and refutes attribution on it; must be an Amdahl ceiling labelled as an estimate with a share-based refutation rule). Rework round 1 dispatched to w11-3be770d5; review gates run on the reworked commit.",
+          "status": "done. Window collected and verified; merged at 6055e0c7 and 5ac7d50c (rework round 1: Amdahl ceiling labelled, share-based refutation rule); 56 artifacts linked; all four gates pass (cargo-ci and code-review at 5ac7d50c, doc-review and research-review at c034bbd8 after the invoker-approved citation append). Closed session 11.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-3be770d5",
@@ -239,7 +239,13 @@
           "merge_commit": "6055e0c7",
           "reviews": [
             "reviews/3be770d5-r1.md"
-          ]
+          ],
+          "gates": {
+            "cargo-ci": "passed 5ac7d50c",
+            "code-review": "passed 5ac7d50c",
+            "doc-review": "passed c034bbd8",
+            "research-review": "passed c034bbd8"
+          }
         },
         {
           "id": "a203a23c",
@@ -599,6 +605,15 @@
       "status": "resolved",
       "raised_at": "2026-09-12T06:00Z",
       "resolution": "Invoker: 'We cannot get stuck with git hashes and such for provenance. We do HPC and we trust the caller in general. Provenance is informative.' Restoration authorized; a missing gitignored snapshot file is a bug to fix by committing the file, not a reason to invalidate a receipt. Does not relax the measurement contract, the statistical rules, the single-source-of-truth rule, or citation requirements. The 26465e6c v1 popcount pilot is left to a203a23c, which already lists it, rather than reopening a nearly-closed 26465e6c."
+    },
+    {
+      "category": "issue scope change (description)",
+      "issue": "3be770d5",
+      "question": "cites:Cassagne2019 label without [Cassagne2019] in the text failed doc-review and research-review at tier 1",
+      "recommendation": "append the key to the Notes",
+      "status": "resolved",
+      "raised_at": "2026-09-12T17:20Z",
+      "resolution": "Invoker chose to append 'Source references: [Cassagne2019].' (c034bbd8)."
     }
   ],
   "rework_counts": {
