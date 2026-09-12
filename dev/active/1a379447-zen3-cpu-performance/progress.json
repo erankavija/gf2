@@ -199,7 +199,7 @@
           "short_id": "428f2f6b",
           "title": "Replace hand-copied numbers in closed survey reports with citations",
           "classification": "documentation",
-          "status": "session 11: dispatched (w11-428f2f6b, opus) in the reused worktree .agents/worktrees/agent-26465e6c-v3 on branch worktree-agent-428f2f6b (anchored ad76be4a); still running at handoff time (last observed head ff4409ea). Deliverables: inventories under dev/active/428f2f6b, generators/tables for c077a88b, 1d0da41f, eda07788, corrections.md. Review, merge, gates next session.",
+          "status": "session 11: delivered at ff4409ea on worktree-agent-428f2f6b (.agents/worktrees/agent-26465e6c-v3), tree clean. Worker reports REQ-01..03 MET: unit/interval/count/digest sweeps empty on the three reports; generators regenerate byte for byte; no receipt, ledger or addendum changed (lead confirmed: 9 files, none evidence). corrections.md records zero corrections, one scope clarification, one preserved falsification number. Not merged. Next: lead review (regenerate the three table sets on the merged tree and git diff --exit-code), merge, code/doc/research gates, link pending-links/428f2f6b-links.tsv.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c-v3",
@@ -269,7 +269,7 @@
           "short_id": "a203a23c",
           "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
           "classification": "research",
-          "status": "session 11: rework round 1 delivered (e00195fc: dev/active/a203a23c/timing/{measure.py,timing.json,README.md}, header citations in both tools), merged at b6fa4719, three artifacts linked at f9640aaa. Gates at f9640aaa: doc-review passed; cargo-ci FAILED on five gf2-sim permanent_rare_event_artifacts timeouts at the 15 s cap under host contention (three codex reviews plus a worker build running) — a re-run on a quiet host is owed; code-review and research-review were running at handoff time (check .jit/gate-runs).",
+          "status": "session 11: rework round 1 merged at b6fa4719, links at f9640aaa. Gates at f9640aaa: cargo-ci passed on re-run (first run lost five gf2-sim rare-event tests to host contention), code-review passed, doc-review passed, research-review FAILED round 2: F1 restoration timing is a proxy excluding restore-receipt-inputs.py work so 76812a4e's restoration claim stays unverified; F2 timing.json lacks an RNG implementation/version or explicit no-RNG declaration; F3 (advisory) no committed pre-results sampling plan. Rework round 2 (counter 2 of 2) was dispatched to w11-a203a23c and then halted on the invoker's 'no new rework this session'; any partial work sits on worktree-agent-a203a23c. Next session: finish round 2 per the dispatched brief (time the whole tool end to end, declare no RNG, declare the sampling plan), merge, re-run all four gates; a third failure escalates.",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-a203a23c",
@@ -649,7 +649,7 @@
     "c7113c5a": 2,
     "6fb89a3c": 1,
     "26465e6c": 1,
-    "a203a23c": 1,
+    "a203a23c": 2,
     "3be770d5": 1
   },
   "surfaced_pitfalls": [
