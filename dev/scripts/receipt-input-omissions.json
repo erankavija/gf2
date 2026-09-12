@@ -1,0 +1,57 @@
+{
+  "schema": "receipt-input-omissions-v1",
+  "purpose": "Files a committed receipt pins by digest that no content in this repository can restore. Each entry keeps the omission visible and names the documents that state which conclusions it affects.",
+  "check": "dev/scripts/check-receipt-input-snapshots.py",
+  "omissions": [
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
+      "recorded_in": [
+        "dev/active/c077a88b/findings.md",
+        "dev/active/a203a23c/receipt-reevaluation.json"
+      ]
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
+      "recorded_in": [
+        "dev/active/c077a88b/findings.md",
+        "dev/active/a203a23c/receipt-reevaluation.json"
+      ]
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
+      "recorded_in": [
+        "dev/active/c077a88b/findings.md",
+        "dev/active/a203a23c/receipt-reevaluation.json"
+      ]
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
+      "recorded_in": [
+        "dev/active/c077a88b/findings.md",
+        "dev/active/a203a23c/receipt-reevaluation.json"
+      ]
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock",
+      "sha256": "9d5a244e0e6a2e9285b4ff775fbf6cd38f43023e1fb94a2efad2df9820bde2b9",
+      "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
+      "recorded_in": [
+        "dev/active/c077a88b/findings.md",
+        "dev/active/a203a23c/receipt-reevaluation.json"
+      ]
+    }
+  ]
+}
