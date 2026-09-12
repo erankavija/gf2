@@ -2,11 +2,13 @@
 # 5G NR rate-matched encoder external-baseline campaign (jit:12fdeb5b).
 #
 # Usage (from the worktree root):
-#   GF2_AFF3CT_ROOT=<aff3ct-tree> GF2_SRSRAN_ROOT=<srsran-tree> \
-#     dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh smoke|pilot|confirmation [date-utc]
+#   dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh smoke|pilot|confirmation [date-utc]
 #
 # GF2_AFF3CT_ROOT names the AFF3CT v4.7.0 tree and GF2_SRSRAN_ROOT the srsRAN
-# Project tree that `dev/active/c077a88b/survey/fetch-build.sh` stages.
+# Project tree that `dev/active/c077a88b/survey/fetch-build.sh` stages. Both
+# default to that script's staging location under the primary checkout, which a
+# linked worktree reaches through the common git directory, so an invocation
+# from any worktree needs no path of its own.
 # `dev/active/12fdeb5b/survey/nr-encode-build.sh` verifies their commits and
 # the AFF3CT static-library digest, builds the four arm executables, records
 # the source and build evidence, and runs the bit-exact equivalence gate. This
@@ -28,6 +30,13 @@
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
+
+# External comparator trees and builds live under the primary checkout, which a
+# linked worktree reaches through the common git directory, so every worktree of
+# this repository shares one staged tree and one staged build.
+primary=$(dirname "$(realpath "$(git rev-parse --git-common-dir)")")
+: "${GF2_AFF3CT_ROOT:=$primary/.agents/ext/c077a88b/aff3ct}"
+: "${GF2_SRSRAN_ROOT:=$primary/.agents/ext/c077a88b/srsran}"
 
 # The arms and the tooling are release executables the campaign digests; pin
 # the MSRV toolchain so every stage builds the same bytes.
@@ -72,14 +81,11 @@ if [[ -e "$OUT" ]]; then
   echo "receipt directory $OUT already exists; remove it to re-run" >&2
   exit 2
 fi
-: "${GF2_AFF3CT_ROOT:?GF2_AFF3CT_ROOT must name the staged AFF3CT v4.7.0 tree}"
-: "${GF2_SRSRAN_ROOT:?GF2_SRSRAN_ROOT must name the staged srsRAN Project tree}"
+for tree in "$GF2_AFF3CT_ROOT" "$GF2_SRSRAN_ROOT"; do
+  [[ -d "$tree" ]] || { echo "comparator tree $tree is not staged" >&2; exit 2; }
+done
 
 # Builds, evidence and the equivalence gate finish before any timed work.
-# External comparator builds live under the primary checkout, which a linked
-# worktree reaches through the common git directory, so every worktree of this
-# repository shares one staged build.
-primary=$(dirname "$(realpath "$(git rev-parse --git-common-dir)")")
 EXT=${GF2_12FDEB5B_EXT:-$primary/.agents/ext/12fdeb5b}
 dev/active/12fdeb5b/survey/nr-encode-build.sh "$GF2_AFF3CT_ROOT" "$GF2_SRSRAN_ROOT" "$EXT"
 EXT=$(realpath "$EXT")

@@ -46,12 +46,14 @@ parameters are `survey/nr-encode-parameters.json`, produced by
 `derive-nr-encode-parameters`. It spans:
 
 - both base graphs, with the rates TS 38.212 Section 7.2.2 assigns them;
-- lifting sizes 7 to 256 drawn from seven of the eight lifting sets, including
-  the smallest and largest a configuration in this grid reaches;
+- at least one lifting size from each of the eight lifting sets of TS 38.212
+  Table 5.3.2-1;
 - codes with filler bits and codes whose message exactly fills the systematic
   block, for both base graphs;
-- the base-graph-2 message lengths on both sides of the `560 < K <= 640`
-  boundary;
+- two pairs of message lengths one bit apart that cross a lifting-size
+  boundary: a base-graph-1 pair at a rate where AFF3CT also selects base graph
+  1, which also crosses from a filler-free code to one with fillers, and a
+  base-graph-2 pair across the `560 < K <= 640` lifting constant;
 - redundancy versions 1 and 2 alongside the version-0 default.
 
 Modulation is fixed at one bit per symbol. TS 38.212 Section 5.4.2.2
@@ -158,9 +160,9 @@ confirmatory addendum, after the pilot receipt is committed.
 
 - Redundancy versions other than 0 have no gf2 counterpart. They are recorded
   as non-equivalent with the differing parameter and carry no cell.
-- The four configurations where AFF3CT's own derivation differs from gf2's
-  are recorded, not timed, on the AFF3CT arm; srsRAN serves them because it
-  takes the parameters from the caller.
+- The configurations where AFF3CT's own derivation differs from gf2's are
+  recorded, not timed, on the AFF3CT arm; srsRAN serves them because it takes
+  the parameters from the caller.
 - Bit selection alone is not a cell. gf2 exposes no forward selection entry
   point, so timing a harness re-implementation would time the harness.
 - The survey proposes no production change, so it declares no worthwhile
