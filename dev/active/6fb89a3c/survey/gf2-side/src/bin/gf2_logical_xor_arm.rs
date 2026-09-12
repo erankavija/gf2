@@ -141,12 +141,17 @@ fn main() {
     );
     let dest = &mut dest_storage[dest_start..dest_start + words];
     let pack_ns = copy_probe_ns(dest, sources_view[0]);
-    let samples = timed_windows(request.windows, request.window_target_ms, |_| {
-        dest.copy_from_slice(sources_view[0]);
-        for src in &sources_view[1..] {
-            xor_inplace(black_box(&mut *dest), black_box(src));
-        }
-    })
+    let samples = timed_windows(
+        &request.cache_state,
+        request.windows,
+        request.window_target_ms,
+        |_| {
+            dest.copy_from_slice(sources_view[0]);
+            for src in &sources_view[1..] {
+                xor_inplace(black_box(&mut *dest), black_box(src));
+            }
+        },
+    )
     .unwrap_or_else(|error| fail(error));
     black_box(&dest);
     let cpus_observed = CpuAffinity::observe()
