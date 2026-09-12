@@ -10,8 +10,102 @@ Per-arm medians and conversion spans are descriptive: they carry no interval and
 decide nothing. `setup` is one untimed construction.
 `unpack` and `pack` are the external arm's mean per-call conversion time inside
 the measured windows.
+A section marked withdrawn holds cells whose arms declared `warm` without running
+the protocol's untimed pass, so their applied cache state is unknown.
 
-## Protocol-v3 confirmation
+## Protocol-v3 re-measurement with the repaired warm pass
+
+Source: `eda07788-dvb-t2-v3-remeasure-r1/acceptance-summary.json` (receipt `54455f903a55a2264154a48a7d7dfcaed5fa0b769580983a6d82c594e4475760`), label **pilot**, verdict **accepted**, qualifies false, 0 findings. Family `dvb-t2-bit-interleave-baselines`: 12 comparisons, attempt alpha 0.00833333, per-comparison confidence 0.999306.
+
+| Cell | Role | Pairs | Flagged windows | Speedup [interval] | gf2 faster by (gap cells) | Relative half-width | Decision | Outcome |
+|---|---|---|---|---|---|---|---|---|
+| `qam16-r12-normal-null-native-vs-native` | exploratory | 24 | 0/240 | 0.9997 [0.9974, 1.0007] | - | 0.0022 | not-worse | pilot |
+| `qam16-r12-normal-gap-native-vs-xdsopl` | exploratory | 24 | 0/240 | 0.4556 [0.4548, 0.4570] | 2.195 [2.188, 2.199] | 0.0030 | regressed | pilot |
+| `qam16-r12-normal-gap-portable-vs-xdsopl` | exploratory | 24 | 0/240 | 0.4523 [0.4516, 0.4534] | 2.211 [2.205, 2.214] | 0.0025 | regressed | pilot |
+| `qam16-r12-normal-control-portable-vs-native` | exploratory | 24 | 0/240 | 0.9930 [0.9909, 0.9953] | - | 0.0023 | not-worse | pilot |
+| `qam64-r12-normal-gap-native-vs-xdsopl` | exploratory | 24 | 0/240 | 0.4274 [0.4267, 0.4282] | 2.340 [2.335, 2.344] | 0.0019 | regressed | pilot |
+| `qam64-r12-normal-gap-portable-vs-xdsopl` | exploratory | 24 | 0/240 | 0.4274 [0.4264, 0.4284] | 2.340 [2.334, 2.345] | 0.0023 | regressed | pilot |
+| `qam64-r12-normal-control-portable-vs-native` | exploratory | 24 | 0/240 | 1.0008 [0.9984, 1.0029] | - | 0.0024 | not-worse | pilot |
+| `qam16-r12-short-gap-native-vs-xdsopl` | exploratory | 24 | 0/240 | 0.1906 [0.1899, 0.1920] | 5.248 [5.209, 5.266] | 0.0074 | regressed | pilot |
+| `qam64-r12-short-gap-native-vs-xdsopl` | exploratory | 24 | 0/240 | 0.1848 [0.1836, 0.1855] | 5.412 [5.391, 5.445] | 0.0060 | regressed | pilot |
+| `qam16-r12-normal-streaming-gap-native-vs-xdsopl` | exploratory | 24 | 0/240 | 0.5213 [0.5196, 0.5224] | 1.918 [1.914, 1.925] | 0.0033 | regressed | pilot |
+
+### Family accounting (P-20)
+
+Source: `eda07788-dvb-t2-v3-remeasure-r1/inputs/trial-ledger.jsonl`, the receipt-local ledger prefix pinned by `receipt.trial_ledger.sha256` = `925a18a99e03e64f5fe17b087ca086e8003ef07e66e39ded9c092bc7682f05c2`.
+
+| Sequence | Campaign | Protocol | Comparisons | Candidate identities |
+|---|---|---|---|---|
+| 0 | `confirmation-eda07788-20260908t094903z` | 1 | 6 | 2 |
+| 1 | `pilot-v3-eda07788-20260908t192701z` | 3 | 0 | 0 |
+| 2 | `pilot-v3-r2-eda07788-20260908t193634z` | 3 | 0 | 0 |
+| 3 | `confirmation-v3-eda07788-20260908t194030z` | 3 | 6 | 2 |
+| 4 | `remeasure-v3-eda07788-r1` | 3 | 0 | 0 |
+
+| Quantity | Value | Derivation |
+|---|---|---|
+| family alpha | 0.05 | frozen addendum `family_wise.alpha` |
+| m (reserved comparisons) | 12 | sum of ledger `comparisons` |
+| t (non-exploratory attempts) | 2 | ledger entries with `comparisons` > 0 |
+| attempt alpha | 0.008333 | alpha / (t (t + 1)) |
+| corrected alpha | 0.0006944 | attempt alpha / m |
+| confidence | 0.999306 | 1 - corrected alpha |
+| bootstrap resamples | 10000 | frozen shared setting |
+| expected draws per tail | 3.47 | resamples x corrected alpha / 2 |
+| required draws per tail | 20 | protocol P-20 |
+| tail condition | fails |  |
+| summary agrees | yes | `family` block of the acceptance summary |
+
+### Per-arm call time and conversion spans
+
+| Cell | Side | Arm | Executions | Median call µs | Call range µs | Median unpack µs | Median pack µs | Median call - unpack - pack µs | Median setup µs (once, untimed) |
+|---|---|---|---|---|---|---|---|---|---|
+| `qam16-r12-normal-null-native-vs-native` | baseline | `gf2-native` | 24 | 184.0 | 183.6-184.8 | 0.0 | 0.0 | 184.0 | 1007.5 |
+| `qam16-r12-normal-null-native-vs-native` | candidate | `gf2-native-control` | 24 | 184.1 | 183.7-185.0 | 0.0 | 0.0 | 184.1 | 983.0 |
+| `qam16-r12-normal-gap-native-vs-xdsopl` | baseline | `gf2-native` | 24 | 184.2 | 183.9-185.4 | 0.0 | 0.0 | 184.2 | 972.8 |
+| `qam16-r12-normal-gap-native-vs-xdsopl` | candidate | `xdsopl-external` | 24 | 404.3 | 401.9-405.3 | 27.0 | 206.8 | 170.4 | 0.0 |
+| `qam16-r12-normal-gap-portable-vs-xdsopl` | baseline | `gf2-portable` | 24 | 182.9 | 182.6-185.0 | 0.0 | 0.0 | 182.9 | 992.0 |
+| `qam16-r12-normal-gap-portable-vs-xdsopl` | candidate | `xdsopl-external` | 24 | 404.4 | 403.3-405.9 | 27.0 | 206.9 | 170.5 | 0.0 |
+| `qam16-r12-normal-control-portable-vs-native` | baseline | `gf2-portable` | 24 | 182.9 | 182.5-183.7 | 0.0 | 0.0 | 182.9 | 993.1 |
+| `qam16-r12-normal-control-portable-vs-native` | candidate | `gf2-native` | 24 | 184.2 | 184.0-185.0 | 0.0 | 0.0 | 184.2 | 962.1 |
+| `qam64-r12-normal-gap-native-vs-xdsopl` | baseline | `gf2-native` | 24 | 185.0 | 184.7-185.5 | 0.0 | 0.0 | 185.0 | 972.9 |
+| `qam64-r12-normal-gap-native-vs-xdsopl` | candidate | `xdsopl-external` | 24 | 432.7 | 431.6-434.5 | 26.9 | 205.2 | 200.5 | 0.0 |
+| `qam64-r12-normal-gap-portable-vs-xdsopl` | baseline | `gf2-portable` | 24 | 185.1 | 184.7-185.6 | 0.0 | 0.0 | 185.1 | 971.3 |
+| `qam64-r12-normal-gap-portable-vs-xdsopl` | candidate | `xdsopl-external` | 24 | 433.0 | 431.3-435.0 | 27.0 | 205.2 | 200.5 | 0.0 |
+| `qam64-r12-normal-control-portable-vs-native` | baseline | `gf2-portable` | 24 | 185.2 | 184.9-189.0 | 0.0 | 0.0 | 185.2 | 979.8 |
+| `qam64-r12-normal-control-portable-vs-native` | candidate | `gf2-native` | 24 | 185.0 | 184.5-186.2 | 0.0 | 0.0 | 185.0 | 964.0 |
+| `qam16-r12-short-gap-native-vs-xdsopl` | baseline | `gf2-native` | 24 | 12.1 | 12.0-13.6 | 0.0 | 0.0 | 12.1 | 257.4 |
+| `qam16-r12-short-gap-native-vs-xdsopl` | candidate | `xdsopl-external` | 24 | 63.2 | 58.4-64.7 | 6.8 | 15.5 | 41.0 | 0.0 |
+| `qam64-r12-short-gap-native-vs-xdsopl` | baseline | `gf2-native` | 24 | 12.2 | 12.1-12.2 | 0.0 | 0.0 | 12.2 | 264.2 |
+| `qam64-r12-short-gap-native-vs-xdsopl` | candidate | `xdsopl-external` | 24 | 65.9 | 61.3-76.8 | 6.8 | 15.6 | 43.5 | 0.0 |
+| `qam16-r12-normal-streaming-gap-native-vs-xdsopl` | baseline | `gf2-native` | 24 | 214.3 | 214.1-215.0 | 0.0 | 0.0 | 214.3 | 968.6 |
+| `qam16-r12-normal-streaming-gap-native-vs-xdsopl` | candidate | `xdsopl-external` | 24 | 411.1 | 409.2-416.7 | 27.0 | 213.3 | 170.8 | 0.0 |
+
+### Paired conversion attribution
+
+| Cell | Pairs | Pairs where external conversion > paired call gap | Median external (call - unpack - pack) / paired gf2 call | Range |
+|---|---|---|---|---|
+| `qam16-r12-normal-gap-native-vs-xdsopl` | 24 | 24 | 0.9244 | 0.9196-0.9311 |
+| `qam16-r12-normal-gap-portable-vs-xdsopl` | 24 | 24 | 0.9308 | 0.9237-0.9385 |
+| `qam64-r12-normal-gap-native-vs-xdsopl` | 24 | 0 | 1.0840 | 1.0770-1.0897 |
+| `qam64-r12-normal-gap-portable-vs-xdsopl` | 24 | 0 | 1.0833 | 1.0748-1.0916 |
+| `qam16-r12-short-gap-native-vs-xdsopl` | 24 | 0 | 3.3932 | 2.9854-3.5111 |
+| `qam64-r12-short-gap-native-vs-xdsopl` | 24 | 0 | 3.5753 | 3.2105-3.6242 |
+| `qam16-r12-normal-streaming-gap-native-vs-xdsopl` | 24 | 24 | 0.7970 | 0.7898-0.8048 |
+
+### Sessions and host
+
+Source: `eda07788-dvb-t2-v3-remeasure-r1/receipt.json` `session_hosts`, one runtime host observation per bounded session; toolchain `rustc 1.97.0 (2d8144b78 2026-07-07)`.
+
+| Session | Observed | Host | CPU | Kernel | Governors | SMT | CPUs in mask | Load average 1/5/15 min |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 2026-09-12T01:43:17Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 1.67 / 1.56 / 1.36 |
+| 2 | 2026-09-12T01:44:11Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 1.42 / 1.52 / 1.36 |
+| 3 | 2026-09-12T01:45:05Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 1.27 / 1.46 / 1.35 |
+| 4 | 2026-09-12T01:46:00Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 1.21 / 1.41 / 1.34 |
+| 5 | 2026-09-12T01:46:55Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 1.20 / 1.37 / 1.33 |
+
+## Protocol-v3 confirmation (withdrawn)
 
 Source: `2026-09-08-eda07788-dvb-t2-v3-confirmation/acceptance-summary.json` (receipt `ab94fa3fcb4b9f54d4d236b1e80494767f8cc3e1141b063acc1d4342eeded52d`), label **confirmation**, verdict **accepted**, qualifies false, 6 findings. Family `dvb-t2-bit-interleave-baselines`: 12 comparisons, attempt alpha 0.00833333, per-comparison confidence 0.999306.
 
@@ -94,7 +188,7 @@ Source: `2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json` `session_hosts
 | 2 | 2026-09-08T19:41:25Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 4.15 / 1.99 / 2.26 |
 | 3 | 2026-09-08T19:42:20Z | fraktaali | AMD Ryzen 9 5900X 12-Core Processor | Linux 7.2.2-arch1-1 | powersave | active | 24 | 3.69 / 2.31 / 2.36 |
 
-## Protocol-v3 exploratory pilots
+## Protocol-v3 exploratory pilots (warm cells withdrawn)
 
 Source: `2026-09-08-eda07788-dvb-t2-v3-pilot/acceptance-summary.json` (receipt `d4d178248321fd148a4bb6966f84b7ae27d5967fc77ae061dc4145c7c7f28db5`), label **pilot**, verdict **accepted**, qualifies false, 0 findings. Family `dvb-t2-bit-interleave-baselines`: 6 comparisons, attempt alpha 0.025, per-comparison confidence 0.995833.
 
@@ -140,7 +234,7 @@ Source: `2026-09-08-eda07788-dvb-t2-v3-pilot-r2/acceptance-summary.json` (receip
 |---|---|---|---|---|---|---|---|---|
 | `qam16-r12-short-gap-native-vs-xdsopl` | exploratory | 24 | 0/240 | 0.2289 [0.2215, 0.2327] | 4.368 [4.297, 4.515] | 0.0326 | regressed | pilot |
 
-## Protocol-v1 history (immutable, superseded)
+## Protocol-v1 history (immutable, superseded, warm cells withdrawn)
 
 Source: `2026-09-08-eda07788-dvb-t2-confirmation/acceptance-summary.json` (receipt `7aa2efe0979c6482ec340a9966df3e80eb1406e773188c279ae793a7e6364073`), label **confirmation**, verdict **accepted**, qualifies false, 0 findings. Family `dvb-t2-bit-interleave-baselines`: 6 comparisons, attempt alpha 0.05, per-comparison confidence 0.991667.
 
@@ -203,3 +297,7 @@ Source: `2026-09-08-eda07788-dvb-t2-pilot/acceptance-summary.json` (receipt `ca8
 | `2026-09-08-eda07788-dvb-t2-v3-confirmation` | `gf2-native` | native | `9362a945b0fb482b54e11ee9c5501cb2e4792cb36c7ea75100e65af21cf60d07` |
 | `2026-09-08-eda07788-dvb-t2-v3-confirmation` | `gf2-portable` | conservative-portable | `8e002703d12452e6675c2b16980c47a19776368d25c2513f59931d0f7eb16296` |
 | `2026-09-08-eda07788-dvb-t2-v3-confirmation` | `xdsopl-external` | external | `90ef7e8ca3c1c090e597be49842410b54264f071d97f6ba68fd30204111f7902` |
+| `eda07788-dvb-t2-v3-remeasure-r1` | `gf2-native` | native | `40e9c0bd5868863d086d763f59346b3dd3a7b6d6c28469711360cb5ac4923d6d` |
+| `eda07788-dvb-t2-v3-remeasure-r1` | `gf2-native-control` | native | `40e9c0bd5868863d086d763f59346b3dd3a7b6d6c28469711360cb5ac4923d6d` |
+| `eda07788-dvb-t2-v3-remeasure-r1` | `gf2-portable` | conservative-portable | `08a443827455d6076b4006f0a8cde1f7b16b798a7e779ad3f2e393373db6ec72` |
+| `eda07788-dvb-t2-v3-remeasure-r1` | `xdsopl-external` | external | `63026844b7c07df568839478a19ada37253e074910ae45d9094b9ffff4716a86` |

@@ -4,11 +4,92 @@
 //! [`DvbT2BitInterleaver`] configuration and the matching xdsopl `PCTITL`
 //! template instantiation in `../xdsopl-shim/xdsopl_shim.cpp`. Keeping the
 //! mapping here means the validator and both timed arms agree by construction.
+//! The cache-state policy and the timing loop live here for the same reason:
+//! both timed arms apply one [`CachePolicy`] through [`timed_windows`].
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{DvbT2Modcod, DvbT2Modulation};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
+use std::io;
+use std::time::Duration;
+use tuning_campaign_support::timing::{
+    execution_windows_configured, TimingProgress, TimingSample, FIXTURE_BANKS,
+};
+
+/// Cache-state policy a timed arm applies, decoded from its request.
+///
+/// The arms implement the protocol's `warm` and `streaming` states. A `cold`
+/// cell needs a frozen fixed call count that the arms' requests do not carry,
+/// so `cold` is refused with every other state instead of being reported as
+/// applied.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CachePolicy {
+    /// One fixture bank, passed over once, untimed, before calibration.
+    Warm,
+    /// The working set rotates through the canonical fixture banks.
+    Streaming,
+}
+
+impl CachePolicy {
+    /// Decodes a request's declared cache state.
+    pub fn from_request(cache_state: &str) -> io::Result<Self> {
+        match cache_state {
+            "warm" => Ok(Self::Warm),
+            "streaming" => Ok(Self::Streaming),
+            other => Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!(
+                    "cache state {other:?} is not implemented; the arms apply warm and streaming"
+                ),
+            )),
+        }
+    }
+
+    /// The protocol's name for this state, reported as `cache_state_applied`.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Warm => "warm",
+            Self::Streaming => "streaming",
+        }
+    }
+
+    /// Fixture banks in the working set.
+    pub fn banks(self) -> usize {
+        match self {
+            Self::Warm => 1,
+            Self::Streaming => FIXTURE_BANKS,
+        }
+    }
+}
+
+/// Runs the canonical calibrated timing loop under `policy`.
+///
+/// `body(bank)` is the timed operation on fixture bank `bank`, always below
+/// `policy.banks()`. A warm policy first runs `body(0)` once, untimed, over
+/// its one-bank working set: the protocol defines `warm` as one untimed pass
+/// over the working set before calibration. The streaming policy runs nothing
+/// before calibration. `progress` receives the timing loop's progress reports.
+pub fn timed_windows(
+    policy: CachePolicy,
+    windows: u32,
+    window_target_ms: u32,
+    mut body: impl FnMut(usize),
+    progress: impl FnMut(TimingProgress) -> io::Result<()>,
+) -> io::Result<Vec<TimingSample>> {
+    if policy == CachePolicy::Warm {
+        body(0);
+    }
+    let banks = policy.banks();
+    let mut rotated = |bank: usize| body(bank % banks);
+    execution_windows_configured(
+        0,
+        u64::from(windows),
+        Duration::from_millis(u64::from(window_target_ms)),
+        &mut rotated,
+        progress,
+    )
+}
 
 /// MODCOD names this survey measures, in the order the addenda declare them.
 pub const MODCODS: [&str; 4] = [
@@ -112,4 +193,44 @@ unsafe extern "C" {
     fn xdsopl_pctitl_qam64_r12_normal_fwd(input: *const i32, output: *mut i32);
     fn xdsopl_pctitl_qam16_r12_short_fwd(input: *const i32, output: *mut i32);
     fn xdsopl_pctitl_qam64_r12_short_fwd(input: *const i32, output: *mut i32);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{timed_windows, CachePolicy};
+    use tuning_campaign_support::timing::FIXTURE_BANKS;
+
+    #[test]
+    fn warm_request_runs_one_untimed_pass_before_calibration() {
+        // Zero windows makes the timing loop reject the protocol before its
+        // first call, so every body call observed here precedes calibration.
+        let policy = CachePolicy::from_request("warm").expect("warm is implemented");
+        let mut calls = Vec::new();
+        assert!(timed_windows(policy, 0, 100, |bank| calls.push(bank), |_| Ok(())).is_err());
+        assert_eq!(calls, vec![0]);
+    }
+
+    #[test]
+    fn streaming_request_rotates_banks_without_a_pass() {
+        let policy = CachePolicy::from_request("streaming").expect("streaming is implemented");
+        assert_eq!(policy.banks(), FIXTURE_BANKS);
+        let mut calls = 0;
+        assert!(timed_windows(policy, 0, 100, |_| calls += 1, |_| Ok(())).is_err());
+        assert_eq!(calls, 0);
+    }
+
+    #[test]
+    fn unimplemented_cache_states_are_refused() {
+        for state in ["cold", "Warm", ""] {
+            assert!(CachePolicy::from_request(state).is_err(), "{state:?}");
+        }
+    }
+
+    #[test]
+    fn applied_names_round_trip() {
+        for policy in [CachePolicy::Warm, CachePolicy::Streaming] {
+            assert_eq!(CachePolicy::from_request(policy.name()).unwrap(), policy);
+        }
+        assert_eq!(CachePolicy::Warm.banks(), 1);
+    }
 }
