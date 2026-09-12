@@ -26,8 +26,10 @@
 # a campaign is queued; `window` builds nothing.
 #
 # `run` and `finalize` check what the campaign wrote rather than trusting an
-# exit code: a journal that completes having measured no cell, or a receipt
-# with no paired execution, fails the job instead of passing as a clean run.
+# exit code: a journal or receipt holding no cell with paired executions fails
+# the job instead of passing as a clean run. Exit 4 marks a campaign that
+# completed and still measured nothing, which is a plan that does not fit this
+# host rather than a broken run; exit 1 marks a campaign that did not complete.
 #
 # Every step that measures or builds takes the CCX1 mutex only through
 # `dev/scripts/ccx1-bench-flock.sh --full-host` (timed sessions) and
@@ -129,37 +131,60 @@ verify_build() {
 # whose every cell failed can still leave a session that exits cleanly. These
 # two checks read what the campaign actually wrote and stop the job when it
 # holds no usable cell, so a window slot spent on nothing fails loudly.
+#
+# They distinguish three outcomes, because a window operator has to act
+# differently on each:
+#
+#   exit 0  at least one cell carries paired executions. Cells the host made
+#           inapplicable are named and are not a failure: an unresolvable core
+#           arm is a protocol outcome the receipt is meant to record.
+#   exit 4  the campaign reached its own terminal `complete` record and still
+#           holds no paired cell. Nothing is wrong with the run; every cell it
+#           declared was inapplicable on this host, so the plan and the host
+#           disagree and the plan is what needs changing.
+#   exit 1  the campaign did not complete. The journal names the cause.
+#
+# `measured_cells` in the terminal record counts the cells the final session
+# attempted, not the cells that hold data: the runner increments it for an
+# inapplicable cell too, and a resumed session that finds every cell already
+# checkpointed completes with zero. Neither check reads it as a data count.
+# The `cell-complete` records do carry the outcome, and the journal keeps
+# every session's, so they are counted over the whole log.
 
-# The journal ends in `complete` and that record counts measured cells.
 require_measured_journal() {
   python3 - "$STAGE/execution.log" <<'PY'
 import json, sys
 events = [json.loads(line) for line in open(sys.argv[1])]
 last = events[-1]
 if last["event"] != "complete":
-    sys.exit(f"campaign ended in {last['event']!r}, not 'complete': {last['details']}")
-measured = last["details"].get("measured_cells", 0)
-completed = sum(1 for e in events if e["event"] == "cell-complete")
-if measured == 0 or completed == 0:
-    sys.exit(f"campaign completed having measured {measured} cells "
-             f"and journalled {completed} cell-complete records")
-print(f"journal: {measured} measured cells, {completed} completed")
+    print(f"campaign ended in {last['event']!r}, not 'complete': {last['details']}",
+          file=sys.stderr)
+    sys.exit(1)
+completed = [e["details"] for e in events if e["event"] == "cell-complete"]
+paired = [d for d in completed if d.get("pairs")]
+unpaired = len(completed) - len(paired)
+if not paired:
+    print(f"campaign completed holding no paired cell: {len(completed)} cells "
+          f"completed, all without pairs; the session attempted "
+          f"{last['details'].get('measured_cells')}", file=sys.stderr)
+    sys.exit(4)
+print(f"journal: {len(paired)} cells with pairs"
+      + (f", {unpaired} without" if unpaired else ""))
 PY
 }
 
-# The receipt carries cells with paired executions. Cells the host made
-# unavailable are a legitimate protocol outcome and are reported, not failed;
-# a receipt with no paired cell at all is the failure this guards.
 require_measured_receipt() {
   python3 - "$1/receipt.json" <<'PY'
 import json, sys
 cells = json.load(open(sys.argv[1]))["cells"]
 paired = [c for c in cells if c.get("pairs")]
-unavailable = [c["cell_id"] for c in cells if c.get("status") != "measured"]
+unpaired = [c["cell_id"] for c in cells if not c.get("pairs")]
 if not paired:
-    sys.exit(f"receipt carries {len(cells)} cells and no paired execution")
+    print(f"receipt carries {len(cells)} cells and no paired execution: "
+          + ", ".join(unpaired), file=sys.stderr)
+    sys.exit(4)
 print(f"receipt: {len(paired)} paired cells of {len(cells)}"
-      + (f"; not measured: {', '.join(unavailable)}" if unavailable else ""))
+      + (f"; no pairs: {', '.join(unpaired)}" if unpaired else ""))
 PY
 }
 
