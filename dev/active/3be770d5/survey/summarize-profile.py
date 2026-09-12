@@ -19,6 +19,17 @@ the variation between sessions and is descriptive. `attribution.tsv` lists
 every resolved address with its chain and category, so each rule can be
 checked.
 
+Every sample the case recorded reaches a category: the pooled total of a case
+equals the SAMPLE count `perf report --stats` reports for it, and a case whose
+listing and total disagree stops the summary rather than reporting a share
+over an incomplete denominator. Samples whose instruction pointer perf
+resolved to no object carry the `unmapped-ip` category; on this host they are
+the kernel-space addresses its own report lists as `[k]`, which `cycles:u`
+still samples through interrupt skid and an unprivileged session cannot map.
+
+Usage: summarize-profile.py --self-test checks the parsing and the total rule
+against synthesized listings and writes nothing.
+
 Counters and throughput. Each stat case records two counter groups in two
 runs per session. A session's per-worker time per frame is the mean of its
 two runs; counter ratios come from the run that counted them. Per-session
@@ -41,6 +52,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import tempfile
 from collections import defaultdict
 
 sys.dont_write_bytecode = True
@@ -59,7 +71,11 @@ IDENTITY = REPO / "dev/bench_results/3be770d5/preparation/build-identity.json"
 STRUCTURE = REPO / "dev/bench_results/3be770d5/preparation/structural-costs.json"
 CODE_KEYS = {"dvb-t2-r12": "dvb-t2-r12", "nr-bg1-r12": "nr-bg1-z384"}
 HARNESS_DSO = "/ldpc-profile"
-ADDRESS_LINE = re.compile(r"^(\d+)\t(.*?)(?:\+0x([0-9a-f]+))? \((.*)\+0x([0-9a-f]+)\)$")
+# perf prints `symbol+0xoff (object+0xoff)` per sample, and `[unknown]
+# ([unknown])` for an instruction pointer it has no map for, so both
+# offsets are optional. UNMAPPED names the second shape's category.
+ADDRESS_LINE = re.compile(r"^(\d+)\t(.*?)(?:\+0x([0-9a-f]+))? \((.*?)(?:\+0x([0-9a-f]+))?\)$")
+UNMAPPED = "unmapped-ip"
 TOTAL_LINE = re.compile(r"SAMPLE events:\s+(\d+)")
 RUST_HASH = re.compile(r"::h[0-9a-f]{16}$")
 
@@ -370,10 +386,11 @@ def record_summary(root, sessions, cases):
                 if not match:
                     continue
                 samples, symbol, _, dso, offset = match.groups()
-                key = (dso, int(offset, 16), symbol)
+                address = int(offset, 16) if offset is not None else None
+                key = (dso, address, symbol)
                 counts[key] += int(samples)
-                if dso.endswith(HARNESS_DSO):
-                    harness_offsets[int(offset, 16)] = symbol
+                if address is not None and dso.endswith(HARNESS_DSO):
+                    harness_offsets[address] = symbol
             listed = sum(counts.values())
             if int(total.group(1)) != listed:
                 sys.exit(f"{stem}: {listed} listed samples against {total.group(1)} recorded")
@@ -390,6 +407,13 @@ def record_summary(root, sessions, cases):
                                      "chains": {str(k): v for k, v in chains.items()}}) + "\n")
 
     def category_of(dso, offset, symbol):
+        if offset is None:
+            # An instruction pointer perf resolved to no object: on this host
+            # the kernel-space addresses its own report lists as `[k]`, which
+            # `cycles:u` still samples through interrupt skid and an
+            # unprivileged session cannot map. They are recorded samples and
+            # count toward the case total.
+            return UNMAPPED
         if dso.endswith(HARNESS_DSO):
             chain = (chains or {}).get(offset, [])
             category = categorize(chain)
@@ -415,7 +439,7 @@ def record_summary(root, sessions, cases):
                 by_category[category] += samples
                 session_categories[category] += samples
                 rows[(dso, offset, symbol, category)] += samples
-                chain = (chains or {}).get(offset) if dso.endswith(HARNESS_DSO) else None
+                chain = (chains or {}).get(offset) if offset is not None and dso.endswith(HARNESS_DSO) else None
                 inner = (f"{pathlib.Path(chain[0][1]).name}:{chain[0][2]} in {short(chain[1][0] if len(chain) > 1 else chain[0][0])}"
                          if chain else f"{symbol} ({pathlib.Path(dso).name})")
                 lines[inner] += samples
@@ -438,9 +462,10 @@ def record_summary(root, sessions, cases):
     with (root / "attribution.tsv").open("w", encoding="utf-8") as output:
         output.write("samples\tdso\toffset\tsymbol\tcategory\tinline chain (innermost first)\n")
         for (dso, offset, symbol, category), samples in sorted(rows.items(), key=lambda item: -item[1]):
-            chain = (chains or {}).get(offset, []) if dso.endswith(HARNESS_DSO) else []
+            chain = (chains or {}).get(offset, []) if offset is not None and dso.endswith(HARNESS_DSO) else []
             text = " <- ".join(f"{short(f)} {pathlib.Path(p).name}:{n}".strip() for f, p, n in chain)
-            output.write(f"{samples}\t{pathlib.Path(dso).name}\t{offset:#x}\t{symbol}\t{category}\t{text}\n")
+            where = f"{offset:#x}" if offset is not None else "unmapped"
+            output.write(f"{samples}\t{pathlib.Path(dso).name}\t{where}\t{symbol}\t{category}\t{text}\n")
     return summary, resolution
 
 
@@ -538,12 +563,81 @@ def markdown(summary):
     return "\n".join(out) + "\n"
 
 
+# ------------------------------------------------------------------ self-test
+
+SHAPES = [
+    ("12\tsome::symbol+0x1a (/opt/ldpc-profile+0x7bb26)",
+     ("12", "some::symbol", "1a", "/opt/ldpc-profile", "7bb26")),
+    ("3\t[unknown] (/usr/lib/libc.so.6+0x176470)",
+     ("3", "[unknown]", None, "/usr/lib/libc.so.6", "176470")),
+    ("7\t[unknown] ([unknown])",
+     ("7", "[unknown]", None, "[unknown]", None)),
+]
+
+
+def write_case(root, label, listing, recorded):
+    """A one-session profile directory carrying one record case."""
+    (root / "repetitions.log").write_text("rep-01 start 0 x\nrep-01 done 0 x\nseries done 0 sessions=1\n")
+    (root / "cases.expanded.tsv").write_text(
+        "\t".join(["record", label, "gf2", "bundle", "dvb-t2-r12", "single-core", "8", "1", "quality"]) + "\n")
+    stem = root / "rep-01" / "record" / label
+    stem.parent.mkdir(parents=True, exist_ok=True)
+    stem.with_suffix(".status").write_text("0\n")
+    stem.with_suffix(".total.txt").write_text(f"              SAMPLE events:{recorded:>11}  (99.4%)\n")
+    stem.with_suffix(".addresses.tsv").write_text("".join(line + "\n" for line in listing))
+
+
+def self_test():
+    """Parsing shapes and the total rule, against synthesized listings."""
+    global BINARY
+    for line, expected in SHAPES:
+        groups = ADDRESS_LINE.match(line)
+        groups = groups.groups() if groups else None
+        if groups != expected:
+            sys.exit(f"self-test: {line!r} parsed as {groups}, expected {expected}")
+    listing = [line for line, _ in SHAPES]
+    label = "gf2-dvb-w1"
+    with tempfile.TemporaryDirectory() as directory:
+        root = pathlib.Path(directory)
+        # An executable that does not exist leaves every chain unresolved, so
+        # the check runs on the listing alone.
+        BINARY = root / "absent-executable"
+        write_case(root, label, listing, 22)
+        cases = read_cases(root)
+        summary, _ = record_summary(root, completed_sessions(root), cases)
+        case = summary[label]
+        shares = {row["category"]: row["samples"] for row in case["categories"]}
+        if case["total_samples"] != 22 or sum(shares.values()) != 22:
+            sys.exit(f"self-test: pooled {case['total_samples']} samples over categories {shares}")
+        if shares.get(UNMAPPED) != 7:
+            sys.exit(f"self-test: the unmapped shape contributed {shares.get(UNMAPPED)} samples, expected 7")
+    with tempfile.TemporaryDirectory() as directory:
+        root = pathlib.Path(directory)
+        BINARY = root / "absent-executable"
+        # One sample of the listing withheld: the rule is equality, so this
+        # stops the summary rather than reporting shares over 22 of 23.
+        write_case(root, label, listing, 23)
+        try:
+            record_summary(root, completed_sessions(root), read_cases(root))
+        except SystemExit as stop:
+            print(f"self-test: the total rule rejects an incomplete listing ({stop})")
+        else:
+            sys.exit("self-test: a listing short of its recorded total was accepted")
+    print("self-test: ok")
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("root", type=pathlib.Path)
-    parser.add_argument("--json", required=True, type=pathlib.Path)
-    parser.add_argument("--markdown", required=True, type=pathlib.Path)
+    parser.add_argument("root", nargs="?", type=pathlib.Path)
+    parser.add_argument("--json", type=pathlib.Path)
+    parser.add_argument("--markdown", type=pathlib.Path)
+    parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
+    if args.self_test:
+        self_test()
+        return
+    if args.root is None or args.json is None or args.markdown is None:
+        parser.error("root, --json and --markdown are required")
     root = args.root.resolve()
     sessions = completed_sessions(root)
     cases = read_cases(root)
