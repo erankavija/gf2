@@ -120,10 +120,14 @@ test "$got" = "build-1 bench build-2 " || {
 #
 # What this guards: a daemon the wrapped command starts inherits its
 # descriptors, and a flock lock lasts until every copy of its descriptor is
-# closed or one of them unlocks it. A compiler-cache server started by a
-# cargo-ci run under `ccx1-bench-flock.sh --full-host` is the case that arises
-# in practice: without the wrapper's unlock it holds the mutex and the
-# turnstile after the run, and every build on the host waits for it.
+# closed or one of them unlocks it. Under `ccx1-bench-flock.sh --full-host` the
+# command holds the mutex descriptor by design, so an inherited copy in a
+# daemon it leaves running — a compiler-cache server started by a cargo-ci run
+# is the case that arises in practice — would hold the mutex past the run and
+# every acquirer on the host would wait for it. The wrapper's unlock is what
+# prevents that, and this test is what holds it to it. The turnstile is not
+# exposed the same way, because the wrapper closes that descriptor in the
+# command; the test asserts the daemon holds none.
 #
 # The wrapped command records the locks as it sees them, then starts a daemon
 # the way the sccache server starts: in its own session with its standard
