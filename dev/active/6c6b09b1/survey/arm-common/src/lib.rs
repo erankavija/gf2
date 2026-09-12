@@ -17,18 +17,38 @@ use std::io;
 use std::time::{Duration, Instant};
 pub use tuning_campaign_support::abtest::SplitMix64;
 use tuning_campaign_support::host::CpuAffinity;
-use tuning_campaign_support::protocol::{CacheState, CellRole};
+use tuning_campaign_support::protocol::CacheState;
 use tuning_campaign_support::timing::{execution_windows_fixed_or_calibrated, FIXTURE_BANKS};
 use tuning_campaign_support::transport;
 
+/// Which side of the A/B pair this execution is.
+///
+/// The runner's `role` request field carries the arm's position in the pair,
+/// not the cell's sampling classification: `benchmark-ab-runner` builds the
+/// request with the literal `"baseline"` or `"candidate"` taken from the
+/// counterbalanced pair order. The cell's sampling role
+/// (`tuning_campaign_support::protocol::CellRole`) never reaches an arm.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum PairPosition {
+    /// The pair's baseline arm.
+    Baseline,
+    /// The pair's candidate arm.
+    Candidate,
+}
+
 /// Request the runner writes on the arm's stdin.
-#[derive(Deserialize, Serialize)]
+///
+/// The field names, their order and their wire spellings mirror the runner's
+/// `ArmRequest`, because the shared transport rejects any request whose
+/// re-encoding differs from the bytes it read. The `wire` tests pin both.
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Request {
     pub schema: String,
     pub cell_id: String,
     pub arm: String,
-    pub role: CellRole,
+    pub role: PairPosition,
     pub pair: u32,
     pub case: Value,
     pub cache_state: CacheState,
@@ -321,4 +341,170 @@ fn observed_threads() -> io::Result<u32> {
 fn fatal(message: &str) -> ! {
     eprintln!("byte-field arm: {message}");
     std::process::exit(2)
+}
+
+/// The request wire contract with `benchmark-ab-runner`.
+///
+/// The runner's `ArmRequest` is private to its binary, so these tests pin the
+/// contract from both ends: `request_round_trips_the_runners_bytes` fixes
+/// the bytes the runner writes, and `runner_request_fields_are_unchanged`
+/// fails when the runner's struct gains, loses or reorders a field. The 2026-09-12 window lost three
+/// campaigns to a `role` field this survey had typed as the protocol's
+/// sampling `CellRole`; a decode failure now surfaces here instead.
+#[cfg(test)]
+mod wire {
+    use super::{Case, Metric, Operation, PairPosition, Request};
+    use tuning_campaign_support::protocol::CacheState;
+    use tuning_campaign_support::transport;
+
+    /// One request exactly as `benchmark-ab-runner` encodes it for a
+    /// single-core `axpy` cell under the protocol's shared settings.
+    const BASELINE_REQUEST: &str = concat!(
+        r#"{"schema":"zen3-benchmark-arm-request-v1","cell_id":"axpy-4k-element-vs-isal","#,
+        r#""arm":"gf2-element","role":"baseline","pair":0,"#,
+        r#""case":{"bytes":4096,"k":0,"metric":"kernel-isolated","n":0,"operation":"axpy","#,
+        r#""poly":285,"rows":0,"seed":301,"workers":1},"#,
+        r#""cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"#,
+        r#""workers_declared":1}"#,
+    );
+
+    /// The same cell's candidate execution; the runner varies only `role`
+    /// and `arm` between the two halves of a pair.
+    const CANDIDATE_REQUEST: &str = concat!(
+        r#"{"schema":"zen3-benchmark-arm-request-v1","cell_id":"axpy-4k-element-vs-isal","#,
+        r#""arm":"isal","role":"candidate","pair":0,"#,
+        r#""case":{"bytes":4096,"k":0,"metric":"kernel-isolated","n":0,"operation":"axpy","#,
+        r#""poly":285,"rows":0,"seed":301,"workers":1},"#,
+        r#""cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"#,
+        r#""workers_declared":1}"#,
+    );
+
+    /// Field names of the runner's `ArmRequest`, in declaration order.
+    ///
+    /// Serialization order is part of the contract: the shared transport
+    /// rejects a request whose re-encoding differs from the bytes it read.
+    const RUNNER_FIELDS: [&str; 13] = [
+        "schema",
+        "cell_id",
+        "arm",
+        "role",
+        "pair",
+        "case",
+        "cache_state",
+        "cold_calls",
+        "decoder",
+        "windows",
+        "window_target_ms",
+        "cpus",
+        "workers_declared",
+    ];
+
+    /// Every field of the runner's struct that this survey deliberately
+    /// declares with a different Rust type, and why the wire form still
+    /// agrees.
+    const INTENDED_TYPE_DIFFERENCES: [(&str, &str); 2] = [
+        // The runner sends the pair position as a bare `String`; naming the
+        // two legal values is stricter and costs nothing on the wire.
+        ("role", "PairPosition rather than String"),
+        // No cell in this survey carries a decoder, and `run` rejects a
+        // request that does, so the arms need not depend on `DecoderCell`.
+        ("decoder", "Option<Value> rather than Option<DecoderCell>"),
+    ];
+
+    fn decode(line: &str) -> Request {
+        transport::decode_case::<Request>(line).expect("the runner's request decodes")
+    }
+
+    #[test]
+    fn request_round_trips_the_runners_bytes() {
+        // `decode_case` re-encodes and compares, so a successful decode is
+        // already proof that this struct reproduces the runner's bytes.
+        let baseline = decode(BASELINE_REQUEST);
+        assert_eq!(baseline.role, PairPosition::Baseline);
+        assert_eq!(baseline.arm, "gf2-element");
+        assert_eq!(baseline.cache_state, CacheState::Warm);
+        assert_eq!(baseline.windows, 5);
+        assert!(baseline.cold_calls.is_none());
+        assert!(baseline.decoder.is_none());
+        assert_eq!(
+            transport::encode_case(&baseline).expect("re-encodes"),
+            BASELINE_REQUEST
+        );
+
+        let candidate = decode(CANDIDATE_REQUEST);
+        assert_eq!(candidate.role, PairPosition::Candidate);
+        assert_eq!(
+            transport::encode_case(&candidate).expect("re-encodes"),
+            CANDIDATE_REQUEST
+        );
+    }
+
+    #[test]
+    fn the_case_of_a_pinned_request_decodes() {
+        let case: Case =
+            serde_json::from_value(decode(BASELINE_REQUEST).case).expect("the case decodes");
+        assert_eq!(case.operation, Operation::Axpy);
+        assert_eq!(case.metric, Metric::KernelIsolated);
+        assert_eq!(case.bytes, 4096);
+        assert_eq!(case.poly, 285);
+    }
+
+    /// A `cold` cell carries its frozen call count; an optional field the
+    /// runner sends must also round-trip.
+    #[test]
+    fn a_cold_request_round_trips_its_frozen_calls() {
+        let cold = BASELINE_REQUEST.replace(
+            r#""cache_state":"warm","windows""#,
+            r#""cache_state":"cold","cold_calls":64,"windows""#,
+        );
+        let request = decode(&cold);
+        assert_eq!(request.cache_state, CacheState::Cold);
+        assert_eq!(request.cold_calls, Some(64));
+        assert_eq!(transport::encode_case(&request).expect("re-encodes"), cold);
+    }
+
+    /// The protocol's sampling classification is not a pair position: a
+    /// request spelling `role` the way the pre-fix struct expected must now
+    /// fail to decode, which is what the 2026-09-12 window discovered.
+    #[test]
+    fn a_sampling_role_is_not_a_pair_position() {
+        let sampling = BASELINE_REQUEST.replace(r#""role":"baseline""#, r#""role":"exploratory""#);
+        let error = transport::decode_case::<Request>(&sampling).expect_err("rejected");
+        assert!(error.contains("exploratory"), "{error}");
+    }
+
+    /// Reads the runner's own source and checks its `ArmRequest` still
+    /// declares [`RUNNER_FIELDS`], so a field added or reordered on the
+    /// runner side fails here rather than in a benchmark window.
+    #[test]
+    fn runner_request_fields_are_unchanged() {
+        const RUNNER: &str = include_str!(
+            "../../../../../tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs"
+        );
+        let body = RUNNER
+            .split_once("struct ArmRequest {")
+            .expect("the runner declares ArmRequest")
+            .1
+            .split_once("\n}")
+            .expect("the declaration closes")
+            .0;
+        let fields: Vec<&str> = body
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty() && !line.starts_with('#') && !line.starts_with("//"))
+            .map(|line| {
+                line.split_once(':')
+                    .expect("every field line names a type")
+                    .0
+                    .trim()
+            })
+            .collect();
+        assert_eq!(fields, RUNNER_FIELDS);
+        for (field, reason) in INTENDED_TYPE_DIFFERENCES {
+            assert!(
+                RUNNER_FIELDS.contains(&field),
+                "{field} is no longer a request field ({reason})"
+            );
+        }
+    }
 }
