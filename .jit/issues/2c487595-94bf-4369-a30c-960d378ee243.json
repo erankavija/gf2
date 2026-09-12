@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-12T15:43:13.659044287Z",
+  "dependencies": [
+    "bdc507a3-b1e8-4d76-bdb0-37410c6ea339"
+  ],
+  "description": "Protocol version 4 replaced the shared addendum schema in place, so the version-2 and version-3 schemas survive only inside committed receipt snapshots and a frozen version-3 addendum no longer validates against the shared path.\n\n## Background\n\n`dev/active/f547c394/addendum.schema.json` is the schema every family addendum validates against, and its `schema` and `version` constants name the protocol version it describes. The version-1 schema is preserved beside it as `addendum-v1.schema.json`. The version-4 amendment edited the shared file rather than adding a version-4 sibling, so the version-2 and version-3 schemas exist only as `inputs/` snapshots inside the receipts whose campaigns pinned them. Validating a frozen version-3 addendum against the shared path fails on the two const constraints, which forced a closed survey to validate against the snapshot its receipt pins instead of the shared schema.\n\n## Success Criteria\n\n- [hard] REQ-01: Every protocol version that a committed receipt pins has a committed schema under `dev/active/f547c394/` whose digest equals the snapshot digest the receipt records.\n- [hard] REQ-02: The shared schema path validates the current protocol version, and a frozen addendum of any earlier version validates against the committed schema of the version it names, from a fresh checkout.\n- [hard] REQ-03: A committed check fails when a receipt pins an addendum schema whose digest matches no committed schema file.\n- [hard] REQ-04: No receipt, snapshot byte, frozen addendum or committed summary changes.\n\n## Notes\n\nSurfaced while repairing the DVB-T2 interleaving family, whose frozen version-3 addendum stopped validating after the version-4 amendment landed.",
+  "documents": [],
+  "first_ready_at": "2026-09-12T15:43:13.659044287Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "2c487595-94bf-4369-a30c-960d378ee243",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Version the addendum schema alongside its predecessors",
+  "updated_at": "2026-09-12T15:43:38.572484363Z"
+}

@@ -431,6 +431,24 @@
       "type": "bug",
       "in_epic": false,
       "reason": "3be770d5 source evidence: the AVX2 min-sum reduction (gf2-kernels-simd llr.rs) counts -0.0 as negative in vector lanes and positive in the scalar tail; depends on 3be770d5"
+    },
+    {
+      "id": "2c487595",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "3e59cb9a found that protocol v4 replaced dev/active/f547c394/addendum.schema.json in place; v2 and v3 schemas survive only in receipt inputs/ snapshots; depends on bdc507a3, feeds 1362381c"
+    },
+    {
+      "id": "706a8f93",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "invoker observation (session 10): the CCX1 wrapper's nice pin always fails on this host and the receipt host observation does not record achieved priority; surfaced_pitfalls names epic REQ-01/REQ-06, so it is a criterion gap; feeds 1362381c. Resolves the session-10 open question with option A."
+    },
+    {
+      "id": "f69c9b87 (just-in-time tracker)",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "jit doc add refuses a .txt containing a demangled Rust symbol (asset scanner reads it as a relative path); filed in ~/Projects/just-in-time, tracker state left uncommitted there for the owner"
     }
   ],
   "escalations": [
