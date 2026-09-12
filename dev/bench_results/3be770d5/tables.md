@@ -186,3 +186,81 @@ Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson
 | dvb-t2-r12-matched-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
 | nr-bg1-z384-matched-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
 | nr-bg1-z384-matched-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+
+### `v4-r1-3be770d5-ldpc-steady-multicore-confirmation`
+
+Source: `v4-r1-3be770d5-ldpc-steady-multicore-confirmation/receipt.json` and its acceptance summary. Family `ldpc-steady-matched-multicore-v1`; label **confirmation**; acceptance **accepted**; ledger-derived attempt alpha 0.025, reserved comparisons 6. SMT active: True. Nothing is adopted.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 median ms/call | AFF3CT median ms/call | gf2 / AFF3CT time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-matched-p6 | physical-cores-6 | 6 | 6 | 24 | 48 | 3455.616 | 222.468 | 15.53 [15.35, 15.83] | 0.9958333333333333 | 0/240 | pass |
+| dvb-t2-r12-matched-p12 | physical-cores-12 | 12 | 12 | 24 | 96 | 4013.751 | 261.645 | 15.34 [15.14, 15.46] | 0.9958333333333333 | 0/240 | pass |
+| dvb-t2-r12-matched-l24 | logical-cpus-24 | 24 | 24 | 24 | 192 | 10188.151 | 844.184 | 12.07 [11.89, 12.15] | 0.9958333333333333 | 0/240 | pass |
+| nr-bg1-z384-matched-p6 | physical-cores-6 | 6 | 6 | 24 | 48 | 2106.811 | 115.798 | 18.19 [18.01, 18.38] | 0.9958333333333333 | 0/240 | pass |
+| nr-bg1-z384-matched-p12 | physical-cores-12 | 12 | 12 | 24 | 96 | 2340.599 | 141.577 | 16.53 [16.35, 16.64] | 0.9958333333333333 | 0/240 | pass |
+| nr-bg1-z384-matched-l24 | logical-cpus-24 | 24 | 24 | 24 | 192 | 4572.053 | 289.425 | 15.8 [15.5, 15.9] | 0.9958333333333333 | 0/240 | pass |
+
+The time ratio is the protocol's speedup of medians with gf2 as baseline: values above one mean AFF3CT is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames/call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-matched-p6 | gf2-nms-f32-dvb-t2-r12 | 29.494 | 0.052 | 15.6 | 24 | [(7, 7)] | True |
+| dvb-t2-r12-matched-p6 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1663.505 | 0.000 | 14.7 | 24 | [(7, 7)] | True |
+| dvb-t2-r12-matched-p12 | gf2-nms-f32-dvb-t2-r12 | 51.144 | 0.052 | 30.1 | 24 | [(13, 13)] | True |
+| dvb-t2-r12-matched-p12 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1727.139 | 0.000 | 31.7 | 24 | [(13, 13)] | True |
+| dvb-t2-r12-matched-l24 | gf2-nms-f32-dvb-t2-r12 | 102.633 | 0.054 | 48.0 | 24 | [(25, 25)] | True |
+| dvb-t2-r12-matched-l24 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1786.416 | 0.000 | 49.5 | 24 | [(25, 25)] | True |
+| nr-bg1-z384-matched-p6 | gf2-nms-f32-nr-bg1-z384 | 20.180 | 0.021 | 13.4 | 24 | [(7, 7)] | True |
+| nr-bg1-z384-matched-p6 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 290.434 | 0.000 | 15.0 | 24 | [(7, 7)] | True |
+| nr-bg1-z384-matched-p12 | gf2-nms-f32-nr-bg1-z384 | 32.552 | 0.022 | 28.4 | 24 | [(13, 13)] | True |
+| nr-bg1-z384-matched-p12 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 313.867 | 0.000 | 32.6 | 24 | [(13, 13)] | True |
+| nr-bg1-z384-matched-l24 | gf2-nms-f32-nr-bg1-z384 | 57.297 | 0.021 | 48.9 | 24 | [(25, 25)] | True |
+| nr-bg1-z384-matched-l24 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 347.681 | 0.000 | 51.6 | 24 | [(25, 25)] | True |
+
+Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson 95%, BER independent-frame Hoeffding 95%):
+
+| Cell | Arm | FER (errors/frames) | FER interval | BER (errors/bits) | BER interval | Iterations mean / p50 / p90 / max | Wave |
+|---|---|---|---|---|---|---|---:|
+| dvb-t2-r12-matched-p6 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-matched-p6 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-matched-p12 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-matched-p12 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-matched-l24 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-matched-l24 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| nr-bg1-z384-matched-p6 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-matched-p6 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-matched-p12 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-matched-p12 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-matched-l24 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-matched-l24 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+
+### `v4-r1-3be770d5-ldpc-steady-single-worker-confirmation`
+
+Source: `v4-r1-3be770d5-ldpc-steady-single-worker-confirmation/receipt.json` and its acceptance summary. Family `ldpc-steady-matched-single-worker-v1`; label **confirmation**; acceptance **accepted**; ledger-derived attempt alpha 0.025, reserved comparisons 2. SMT active: True. Nothing is adopted.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 median ms/call | AFF3CT median ms/call | gf2 / AFF3CT time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-matched-w1 | single-core | 1 | 1 | 24 | 8 | 2647.662 | 204.762 | 12.93 [12.53, 12.96] | 0.9875 | 0/240 | pass |
+| nr-bg1-z384-matched-w1 | single-core | 1 | 1 | 24 | 8 | 1818.381 | 105.018 | 17.32 [16.69, 17.42] | 0.9875 | 0/240 | pass |
+
+The time ratio is the protocol's speedup of medians with gf2 as baseline: values above one mean AFF3CT is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames/call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-matched-w1 | gf2-nms-f32-dvb-t2-r12 | 25.101 | 0.052 | 5.2 | 24 | [(2, 2)] | True |
+| dvb-t2-r12-matched-w1 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1719.368 | 0.000 | 5.2 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-matched-w1 | gf2-nms-f32-nr-bg1-z384 | 16.918 | 0.020 | 5.2 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-matched-w1 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 256.019 | 0.000 | 5.2 | 24 | [(2, 2)] | True |
+
+Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson 95%, BER independent-frame Hoeffding 95%):
+
+| Cell | Arm | FER (errors/frames) | FER interval | BER (errors/bits) | BER interval | Iterations mean / p50 / p90 / max | Wave |
+|---|---|---|---|---|---|---|---:|
+| dvb-t2-r12-matched-w1 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-matched-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| nr-bg1-z384-matched-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-matched-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
