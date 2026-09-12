@@ -55,7 +55,10 @@ fn main() {
     };
     let conf_root = match std::env::var("GF2_AFF3CT_CONF") {
         Ok(root) => root,
-        Err(error) => fail(format!("GF2_AFF3CT_CONF must name AFF3CT's conf tree: {error}"), 2),
+        Err(error) => fail(
+            format!("GF2_AFF3CT_CONF must name AFF3CT's conf tree: {error}"),
+            2,
+        ),
     };
     let configuration = configuration_named(&case.configuration);
     if configuration.redundancy_version != 0 {
@@ -73,14 +76,11 @@ fn main() {
     let params = reference.params().clone();
 
     let setup_start = Instant::now();
-    let comparator = match Comparator::new(
-        configuration.target_k,
-        configuration.target_n,
-        &conf_root,
-    ) {
-        Ok(comparator) => comparator,
-        Err(error) => fail(error, 2),
-    };
+    let comparator =
+        match Comparator::new(configuration.target_k, configuration.target_n, &conf_root) {
+            Ok(comparator) => comparator,
+            Err(error) => fail(error, 2),
+        };
     let setup_ns = arm_common::nanos(setup_start.elapsed());
     let derived = comparator.derived();
     if usize::try_from(derived.base_graph).unwrap_or(0) != usize::from(params.base_graph)

@@ -78,75 +78,33 @@ Source: `dev/active/12fdeb5b/survey/nr-encode-validation.json`. Each arm encodes
 | non-equivalent | 6 |
 | unavailable | 2 |
 
-## Smoke campaign `nr-encode-smoke-12fdeb5b-20260912t171814z`
+## Smoke campaign `nr-encode-smoke-12fdeb5b-20260912t172522z`
 
-Source: `2026-09-12-12fdeb5b-nr-encode-smoke-r1/acceptance-summary.json` (receipt `8dc2f3f8554c4cf3779b82e6709d26174378ff77a9a34191216b4812deea68e2`), label **smoke**, verdict **accepted**, qualifies false, 0 findings, 1 sessions. Family `nr-rate-matched-encode-baselines-v1`: 1 comparisons, attempt alpha 0.025, per-comparison confidence 0.975.
-
-| Cell | Role | Pairs | Flagged windows | Speedup [interval] | gf2 faster by (gap cells) | Relative half-width | Decision | Outcome |
-|---|---|---|---|---|---|---|---|---|
-| `nr-enc-bg2-n1024-k400-null-native-vs-native` | exploratory | 6 | 0/60 | 1.0815 [0.9714, 1.0856] | - | 0.1018 | not-worse | pilot |
-| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | exploratory | 6 | 0/60 | 7.0649 [6.9320, 7.0993] | - | 0.0188 | improved | pilot |
-| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | exploratory | 6 | 0/60 | 162.6313 [149.6840, 166.1804] | - | 0.0796 | improved | pilot |
-| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | exploratory | 6 | 0/60 | 2.2019 [2.1895, 2.2302] | - | 0.0129 | improved | pilot |
-| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | exploratory | 6 | 0/60 | 0.8336 [0.7961, 0.9328] | - | 0.1191 | inconclusive | pilot |
-
-| Quantity | Value | Source |
-|---|---|---|
-| widest relative half-width | 0.119098 (`nr-enc-bg1-n2560-k2048-control-portable-vs-native`) | `2026-09-12-12fdeb5b-nr-encode-smoke-r1/acceptance-summary.json` |
-| declared measurement resolution | none declared | `2026-09-12-12fdeb5b-nr-encode-smoke-r1/inputs/family-addendum.json` |
-| resolution evidence | none | - |
-
-### Family accounting (P-20)
-
-Source: `bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r1/inputs/trial-ledger.jsonl`, the receipt-local ledger prefix pinned by `receipt.trial_ledger.sha256` = `44eb5a7e04987c239e467cdacb9f31ceb41ab9b9d01b06b94a919c1ff6af433b`.
-
-| Sequence | Campaign | Protocol | Comparisons | Candidate identities |
-|---|---|---|---|---|
-| 0 | `nr-encode-smoke-12fdeb5b-20260912t171814z` | 4 | 0 | 0 |
-
-### Per-arm call time and adapter stages
-
-Median over the cell's pairs of each arm's per-execution nanoseconds per call, and of the conversion costs the arm reported. These are descriptive: they carry no interval and decide nothing. `setup` is one untimed construction. `unpack` and `pack` are the external adapter's input and output stages, each timed alone after the measured windows; they are not additive parts of the timed call.
-
-| Cell | Arm | Pairs | Median ns/call | setup (ms) | unpack (ns) | pack (ns) |
-|---|---|---|---|---|---|---|
-| `nr-enc-bg2-n1024-k400-null-native-vs-native` | gf2-native | 6 | 20110.0 | 9.130 | 0 | 0 |
-| `nr-enc-bg2-n1024-k400-null-native-vs-native` | gf2-native-control | 6 | 18594.2 | 9.175 | 0 | 0 |
-| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | gf2-native | 6 | 4722.2 | 1.943 | 0 | 0 |
-| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | srsran-external | 6 | 668.4 | 0.106 | 46 | 44 |
-| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | gf2-native | 6 | 613293.7 | 213.607 | 0 | 0 |
-| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | srsran-external | 6 | 3771.1 | 0.062 | 188 | 882 |
-| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | gf2-native | 6 | 138672.1 | 42.030 | 0 | 0 |
-| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | aff3ct-external | 6 | 62979.2 | 5.273 | 1408 | 2768 |
-| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | gf2-portable | 6 | 118895.9 | 40.145 | 0 | 0 |
-| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | gf2-native | 6 | 142637.3 | 41.934 | 0 | 0 |
-
-## Smoke campaign `nr-encode-smoke-12fdeb5b-20260912t172031z`
-
-Source: `2026-09-12-12fdeb5b-nr-encode-smoke/acceptance-summary.json` (receipt `efde67d53962f484cb9b86028c93d3e61e3bf0915feebb8ce6faeb8ffb262221`), label **smoke**, verdict **accepted**, qualifies false, 0 findings, 1 sessions. Family `nr-rate-matched-encode-baselines-v1`: 1 comparisons, attempt alpha 0.025, per-comparison confidence 0.975.
+Source: `2026-09-12-12fdeb5b-nr-encode-smoke/acceptance-summary.json` (receipt `729d67b369b05edd99c1b9abbae97ee7536d542f6200bd223c4c655f15fc5834`), label **smoke**, verdict **accepted**, qualifies false, 0 findings, 1 sessions. Family `nr-rate-matched-encode-baselines-v1`: 1 comparisons, attempt alpha 0.025, per-comparison confidence 0.975.
 
 | Cell | Role | Pairs | Flagged windows | Speedup [interval] | gf2 faster by (gap cells) | Relative half-width | Decision | Outcome |
 |---|---|---|---|---|---|---|---|---|
-| `nr-enc-bg2-n1024-k400-null-native-vs-native` | exploratory | 6 | 0/60 | 1.0090 [0.9378, 1.0772] | - | 0.0706 | not-worse | pilot |
-| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | exploratory | 6 | 0/60 | 7.0261 [6.9523, 7.1108] | - | 0.0121 | improved | pilot |
-| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | exploratory | 6 | 0/60 | 162.1477 [161.2234, 162.5886] | - | 0.0057 | improved | pilot |
-| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | exploratory | 6 | 0/60 | 2.2087 [2.1856, 2.2725] | - | 0.0289 | improved | pilot |
-| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | exploratory | 6 | 0/60 | 0.8398 [0.8192, 0.8651] | - | 0.0301 | regressed | pilot |
+| `nr-enc-bg2-n1024-k400-null-native-vs-native` | exploratory | 6 | 0/60 | 1.0338 [0.9293, 1.0813] | - | 0.1011 | not-worse | pilot |
+| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | exploratory | 6 | 0/60 | 7.1326 [6.9510, 7.1896] | - | 0.0255 | improved | pilot |
+| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | exploratory | 6 | 0/60 | 160.5030 [157.9368, 163.4575] | - | 0.0184 | improved | pilot |
+| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | exploratory | 6 | 0/60 | 2.1951 [2.1822, 2.2348] | - | 0.0181 | improved | pilot |
+| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | exploratory | 6 | 0/60 | 0.8237 [0.8028, 0.8630] | - | 0.0477 | regressed | pilot |
 
 | Quantity | Value | Source |
 |---|---|---|
-| widest relative half-width | 0.070576 (`nr-enc-bg2-n1024-k400-null-native-vs-native`) | `2026-09-12-12fdeb5b-nr-encode-smoke/acceptance-summary.json` |
+| widest relative half-width | 0.101074 (`nr-enc-bg2-n1024-k400-null-native-vs-native`) | `2026-09-12-12fdeb5b-nr-encode-smoke/acceptance-summary.json` |
 | declared measurement resolution | none declared | `2026-09-12-12fdeb5b-nr-encode-smoke/inputs/family-addendum.json` |
 | resolution evidence | none | - |
 
 ### Family accounting (P-20)
 
-Source: `bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/inputs/trial-ledger.jsonl`, the receipt-local ledger prefix pinned by `receipt.trial_ledger.sha256` = `daeb49cadc1d1e7e0ab0fc4776734cfccf35c6abac21f0d18c73a4bf432fe18d`.
+Source: `bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/inputs/trial-ledger.jsonl`, the receipt-local ledger prefix pinned by `receipt.trial_ledger.sha256` = `fc0841ca559c7231c7e8b7ccf3b20476f5d81433ecbfc1fc732a874eec7bc0fa`.
 
 | Sequence | Campaign | Protocol | Comparisons | Candidate identities |
 |---|---|---|---|---|
 | 0 | `nr-encode-smoke-12fdeb5b-20260912t171814z` | 4 | 0 | 0 |
 | 1 | `nr-encode-smoke-12fdeb5b-20260912t172031z` | 4 | 0 | 0 |
+| 2 | `nr-encode-smoke-12fdeb5b-20260912t172522z` | 4 | 0 | 0 |
 
 ### Per-arm call time and adapter stages
 
@@ -154,14 +112,14 @@ Median over the cell's pairs of each arm's per-execution nanoseconds per call, a
 
 | Cell | Arm | Pairs | Median ns/call | setup (ms) | unpack (ns) | pack (ns) |
 |---|---|---|---|---|---|---|
-| `nr-enc-bg2-n1024-k400-null-native-vs-native` | gf2-native | 6 | 18745.3 | 9.245 | 0 | 0 |
-| `nr-enc-bg2-n1024-k400-null-native-vs-native` | gf2-native-control | 6 | 18577.9 | 9.268 | 0 | 0 |
-| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | gf2-native | 6 | 4716.2 | 1.976 | 0 | 0 |
-| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | srsran-external | 6 | 671.3 | 0.104 | 42 | 44 |
-| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | gf2-native | 6 | 610698.7 | 213.442 | 0 | 0 |
-| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | srsran-external | 6 | 3766.3 | 0.061 | 186 | 882 |
-| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | gf2-native | 6 | 139342.0 | 41.209 | 0 | 0 |
-| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | aff3ct-external | 6 | 63087.6 | 5.339 | 1415 | 2756 |
-| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | gf2-portable | 6 | 116317.3 | 40.702 | 0 | 0 |
-| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | gf2-native | 6 | 138509.9 | 41.822 | 0 | 0 |
+| `nr-enc-bg2-n1024-k400-null-native-vs-native` | gf2-native | 6 | 19300.2 | 9.381 | 0 | 0 |
+| `nr-enc-bg2-n1024-k400-null-native-vs-native` | gf2-native-control | 6 | 18669.8 | 9.419 | 0 | 0 |
+| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | gf2-native | 6 | 4725.2 | 1.926 | 0 | 0 |
+| `nr-enc-bg2-n256-k121-gap-native-vs-srsran` | srsran-external | 6 | 662.5 | 0.106 | 48 | 44 |
+| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | gf2-native | 6 | 611699.7 | 213.220 | 0 | 0 |
+| `nr-enc-bg1-n8448-k4224-gap-native-vs-srsran` | srsran-external | 6 | 3811.1 | 0.062 | 187 | 884 |
+| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | gf2-native | 6 | 138371.2 | 41.756 | 0 | 0 |
+| `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` | aff3ct-external | 6 | 63037.6 | 5.277 | 1414 | 2776 |
+| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | gf2-portable | 6 | 117108.1 | 39.739 | 0 | 0 |
+| `nr-enc-bg1-n2560-k2048-control-portable-vs-native` | gf2-native | 6 | 142168.3 | 41.865 | 0 | 0 |
 

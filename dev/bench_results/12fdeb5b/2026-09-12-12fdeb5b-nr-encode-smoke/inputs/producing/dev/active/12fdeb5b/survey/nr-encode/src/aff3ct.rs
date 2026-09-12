@@ -96,14 +96,13 @@ impl Comparator {
     /// # Panics
     ///
     /// Panics on a length mismatch or when AFF3CT reports a failure.
-    pub fn encode_rate_match(
-        &self,
-        message: &[i32],
-        mother: &mut [i32],
-        transmitted: &mut [i32],
-    ) {
+    pub fn encode_rate_match(&self, message: &[i32], mother: &mut [i32], transmitted: &mut [i32]) {
         assert_eq!(message.len(), self.k, "message length must equal K");
-        assert_eq!(mother.len(), self.mother_len(), "mother length must equal N_LDPC");
+        assert_eq!(
+            mother.len(),
+            self.mother_len(),
+            "mother length must equal N_LDPC"
+        );
         assert_eq!(transmitted.len(), self.n, "output length must equal N");
         // SAFETY: `handle` is live; the three buffers hold exactly the K,
         // N_LDPC and N values the shim's modules were constructed with.

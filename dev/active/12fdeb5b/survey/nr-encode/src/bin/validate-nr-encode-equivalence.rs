@@ -13,14 +13,14 @@
 //!
 //! Usage: validate-nr-encode-equivalence <aff3ct-conf-root> <record.json>
 
+use gf2_coding::traits::BlockEncoder;
+use gf2_core::BitVec;
 use serde::Serialize;
 use std::process::ExitCode;
 use survey_nr_encode::{
     aff3ct, configuration_named, gf2_code, identical_bits, seeded_messages, srsran, Configuration,
     CONFIGURATIONS,
 };
-use gf2_coding::traits::BlockEncoder;
-use gf2_core::BitVec;
 
 /// Seed for the random messages; fixed so the record reproduces.
 const MESSAGE_SEED: u64 = 20260912;
@@ -197,11 +197,7 @@ fn srsran_arm(configuration: Configuration, expected: &[BitVec]) -> ArmOutcome {
     }
 }
 
-fn aff3ct_arm(
-    configuration: Configuration,
-    expected: &[BitVec],
-    conf_root: &str,
-) -> ArmOutcome {
+fn aff3ct_arm(configuration: Configuration, expected: &[BitVec], conf_root: &str) -> ArmOutcome {
     let code = gf2_code(configuration);
     let params = code.params();
     let unavailable = |status: &str, differing: Option<&str>, detail: String| ArmOutcome {
