@@ -43,7 +43,7 @@ use std::path::Path;
 use tuning_campaign_support::abtest::{
     bootstrap_seed, paired_bootstrap_speedup, PairedObservation, SplitMix64,
 };
-use tuning_campaign_support::protocol::sha256_hex;
+use tuning_campaign_support::protocol::{sha256_hex, PROTOCOL_VERSION};
 use tuning_campaign_support::receipt::{BenchmarkReceipt, CellRecord, CellStatus, ExecutionRecord};
 
 /// Coverage a distribution-free median interval must reach.
@@ -227,8 +227,9 @@ fn render_receipt(dir: &Path, out: &mut String) -> Result<(), String> {
         out,
         "- Protocol version {version} (addendum snapshot `{}`){}.",
         receipt.addendum.snapshot,
-        if version < 3 {
-            ": superseded, immutable history that decides nothing under version 3"
+        if version < u64::from(PROTOCOL_VERSION) {
+            ": superseded, immutable history that decides nothing under the \
+             current protocol version"
         } else {
             ""
         }
