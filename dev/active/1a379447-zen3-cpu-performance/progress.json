@@ -873,7 +873,8 @@
     "Session 10: reclaimed worktrees agent-26465e6c-r1 and agent-c7113c5a-v3 after their issues closed; free disk 69G -> 78G.",
     "Session 10: the Codex weekly usage limit was exhausted at 07:05Z by four gate suites plus four independent Terra xhigh reviews, failing two gate suites with 'Agent produced no output' \u2014 which records as a gate FAILURE indistinguishable from a finding. The invoker reset it; both suites were re-run.",
     "Session 10: merged a387825e, bdc507a3, 26465e6c, 04b85d10, 6fb89a3c, 3e59cb9a and a203a23c to main, cargo-ci green after each.",
-    "Session 10 (invoker, mid-session): no more new work this session; finish what is in flight and hand off."
+    "Session 10 (invoker, mid-session): no more new work this session; finish what is in flight and hand off.",
+    "2026-09-12T08:36Z: invoker directed the pending campaigns to start immediately, independent of the session. Window launched as systemd user unit gf2-bench-window-20260912b over the committed queue (7 jobs, ~215 min): 3be770d5 profile re-run, 6c6b09b1 three v4 pilots, 3be770d5 two v4 confirmations, 1c602857 pilot. All seven pre-flighted before launch (worktree present, launcher present, no .done key collision with the 2026-09-12 01:00Z window). Follow with dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -926,5 +927,15 @@
     ],
     "6c6b09b1": "23 entries in the session-10 worker report, plus dev/bench_results/6c6b09b1/run-byte-field-v4.test.sh (notes, 'Byte-field v4 launcher outcome guards') and dev/bench_results/6c6b09b1/v3-r1-void-attempts.json (report, 'Byte-field void ledger attempts'). The three v3 addenda link as specification with supersession in the label; the three family ledgers keep version-free labels because the v4 campaigns append to the same files.",
     "3be770d5": "14 entries in the session-10 worker report, plus dev/bench_results/3be770d5/v3-r1-steady-profile-conditions.md (benchmark, 'Host conditions of the void first profile series'). Link the void series' repetitions.log with 'void' in the label; do NOT link its profile.md, whose every table is empty."
+  },
+  "benchmark_window": {
+    "unit": "gf2-bench-window-20260912b",
+    "started_utc": "2026-09-12T08:36:34Z",
+    "queue_sha256": "fe2d43c99ede1fa4de1a446afb1e582a3ea3163c718c97b3eb5eeb762a2a6a26",
+    "jobs": 7,
+    "estimated_minutes": 215,
+    "state_dir": ".agents/bench-window",
+    "follow": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh [interval]",
+    "note": "systemd-run --user needs XDG_RUNTIME_DIR and DBUS_SESSION_BUS_ADDRESS set explicitly; they are unset in the agent environment. A job's rc is not evidence it measured anything \u2014 check each campaign's own execution log and receipt."
   }
 }
