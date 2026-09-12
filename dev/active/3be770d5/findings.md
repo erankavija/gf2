@@ -175,6 +175,13 @@ executable and no other: the
 joins the digest every committed measurement recorded to the digest the build
 identity now records.
 
+The two series are named `v3-r1-steady-profile` and `v4-r1-steady-profile`,
+after the campaign generation of the window each runs in. A profile series
+pins no protocol version and is evaluated under none, so the change of run id
+marks no change of method: the cases, the sampling period, the counter groups,
+the session count and the summarizer are the same in both, and what separates
+them is the acknowledgement fix and the session guard.
+
 ## Structural and allocation evidence
 
 [structural-costs.json](../../bench_results/3be770d5/preparation/structural-costs.json)
