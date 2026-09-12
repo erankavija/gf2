@@ -13,7 +13,8 @@
 # preparation build identity records and refuses to start when their digests
 # differ. `repetitions.log` is the series' append-only execution log: each
 # session's start with the executable digests, its completion, and the
-# discard of a session that did not finish. A re-run with the same output
+# discard of a session that did not finish or whose every case failed. A
+# session without one usable case stops the series. A re-run with the same output
 # directory resumes after the last completed session, re-runs an unfinished
 # one whole, and refuses to resume when an executable or a case file differs
 # from the first session's record.
@@ -131,6 +132,16 @@ for index in $(seq 1 "${REPETITIONS}"); do
     echo "${rep} start $(date -u +%Y-%m-%dT%H:%M:%SZ) ${IDENTITY_LINE} load=[$(cut -d' ' -f1-3 /proc/loadavg)]" >>"${LOG}"
     GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "${FLOCK}" --full-host \
         bash "${HERE}/profile-session.sh" "${OUT}/${rep}" "${BIN}" "${OUT}/cases.expanded.tsv" "${first}"
+    # profile-session.sh records each case's exit status and keeps going, so
+    # the summary can exclude one failed case. A session in which every case
+    # failed carries no figure at all, and continuing spends the rest of the
+    # window on the same failure.
+    statuses="$(cat "${OUT}/${rep}"/stat/*.status "${OUT}/${rep}"/record/*.status 2>/dev/null || true)"
+    if ! grep -q '^0$' <<<"${statuses}"; then
+        echo "${rep} discarded $(date -u +%Y-%m-%dT%H:%M:%SZ) every profiled case failed" >>"${LOG}"
+        echo "every profiled case in ${rep} failed; see ${OUT}/${rep}/*/*.err" >&2
+        exit 1
+    fi
     echo "${rep} done $(date -u +%Y-%m-%dT%H:%M:%SZ) load=[$(cut -d' ' -f1-3 /proc/loadavg)]" >>"${LOG}"
 done
 grep -q '^series done ' "${LOG}" || echo "series done $(date -u +%Y-%m-%dT%H:%M:%SZ) sessions=${REPETITIONS}" >>"${LOG}"

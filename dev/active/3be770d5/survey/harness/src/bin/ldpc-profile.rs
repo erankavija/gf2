@@ -89,13 +89,22 @@ fn parse() -> Result<Options, String> {
     Ok(options)
 }
 
-/// A `perf` control channel: commands go to CTL, acknowledgements come on ACK.
-struct PerfControl {
-    ctl: File,
-    ack: BufReader<File>,
+/// The acknowledgement tag in one line of the ACK channel.
+///
+/// `perf` writes its tag with the trailing NUL of the C string literal, so
+/// every acknowledgement is the five bytes `ack\n\0` and the NUL of one
+/// acknowledgement leads the line that carries the next one.
+fn ack_tag(line: &str) -> &str {
+    line.trim_matches(|c: char| c == '\0' || c.is_whitespace())
 }
 
-impl PerfControl {
+/// A `perf` control channel: commands go to CTL, acknowledgements come on ACK.
+struct PerfControl<W, R> {
+    ctl: W,
+    ack: R,
+}
+
+impl PerfControl<File, BufReader<File>> {
     fn open(ctl: &str, ack: &str) -> Result<Self, String> {
         let ctl = OpenOptions::new()
             .write(true)
@@ -104,13 +113,15 @@ impl PerfControl {
         let ack = BufReader::new(File::open(ack).map_err(|e| format!("{ack}: {e}"))?);
         Ok(Self { ctl, ack })
     }
+}
 
+impl<W: Write, R: BufRead> PerfControl<W, R> {
     fn command(&mut self, command: &str) -> Result<(), String> {
         writeln!(self.ctl, "{command}").map_err(|e| e.to_string())?;
         self.ctl.flush().map_err(|e| e.to_string())?;
         let mut line = String::new();
         self.ack.read_line(&mut line).map_err(|e| e.to_string())?;
-        if line.trim() != "ack" {
+        if ack_tag(&line) != "ack" {
             return Err(format!("perf answered {line:?} to {command}"));
         }
         Ok(())
@@ -304,5 +315,43 @@ fn main() -> ExitCode {
             eprintln!("ldpc-profile: {error}");
             ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ack_tag, PerfControl};
+
+    /// The byte sequence `perf` writes per acknowledgement, tag and NUL.
+    const ACK: &[u8] = b"ack\n\0";
+
+    #[test]
+    fn a_run_of_acknowledgements_answers_every_command() {
+        let replies: Vec<u8> = ACK.iter().chain(ACK).copied().collect();
+        let mut control = PerfControl {
+            ctl: Vec::new(),
+            ack: replies.as_slice(),
+        };
+        control.command("enable").expect("enable acknowledged");
+        control.command("disable").expect("disable acknowledged");
+        assert_eq!(control.ctl, b"enable\ndisable\n");
+    }
+
+    #[test]
+    fn another_answer_is_an_error_naming_the_command() {
+        let mut control = PerfControl {
+            ctl: Vec::new(),
+            ack: &b"nak\n"[..],
+        };
+        let error = control.command("enable").expect_err("nak rejected");
+        assert!(error.contains("enable"), "{error}");
+    }
+
+    #[test]
+    fn the_tag_survives_perf_padding() {
+        assert_eq!(ack_tag("ack\n"), "ack");
+        assert_eq!(ack_tag("\0ack\n"), "ack");
+        assert_eq!(ack_tag("ack\n\0"), "ack");
+        assert_eq!(ack_tag("\0nak\n"), "nak");
     }
 }
