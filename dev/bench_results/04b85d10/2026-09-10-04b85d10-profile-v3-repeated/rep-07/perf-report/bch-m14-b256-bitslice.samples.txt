@@ -1,0 +1,34 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-bitslice-interleaved  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3643  (96.7%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14572134791
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                    
+# ........  ............  ...............  ................  ..........................................................................................................................
+#
+    92.37%          3365  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_batch_family
+     7.05%           257  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2
+     0.22%             8  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+     0.05%             2  consumer-profil  consumer-profile  [.] gf2_kernels_simd::bch_encode::BchEncodeFns::unpack_parity
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::validate_batch
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_kernels_simd::transpose::transpose_64x64_avx2_safe
+     0.03%             1  consumer-profil  consumer-profile  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e63
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad401d30
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad7d237b
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad896892
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad907a4b
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#

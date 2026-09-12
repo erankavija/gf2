@@ -46,13 +46,13 @@
 # without an inherited descriptor for the held lock (`host::inherited_lock` in
 # dev/tools/tuning-campaign-support, `observed_lock_file` in
 # crates/gf2-core/benches/tuning_calibration.rs). A flock lock is released by
-# an unlock or once every copy of its descriptor is closed, so a daemon the
-# command starts would otherwise keep the mutex. Observed 2026-09-10: an
-# sccache server that a cargo-ci run under this wrapper started held the mutex
-# and the turnstile after the run, and every build on the host waited until
-# the server was stopped. The wrapper therefore unlocks the mutex once the
-# command exits, which releases it whatever copies remain. The turnstile
-# descriptor is closed in the command, so no descendant holds one.
+# an unlock or once every copy of its descriptor is closed, so an inherited
+# copy in a daemon the command leaves running — a compiler-cache server is the
+# case that arises in practice — would hold the mutex for as long as that
+# daemon lived, and every acquirer on the host would wait for it. The wrapper
+# closes that path by unlocking the mutex once the command exits, which
+# releases it whatever copies remain. The turnstile never reaches a descendant
+# at all: its descriptor is closed in the command.
 #
 # HUP, INT and TERM are caught so that the wrapper outlives the command and
 # the unlock runs; the command still receives any signal sent to it or to its
@@ -62,9 +62,8 @@
 # descriptor, a daemon included, have exited.
 #
 # A run that already holds this mutex MUST set CARGO_CI_NO_LOCK=1 for its own
-# cargo work. That was already required to avoid taking the shared side
-# underneath its own exclusive side; it now also avoids blocking on the
-# turnstile it is holding itself.
+# cargo work: that keeps it from taking the shared side underneath its own
+# exclusive side, and from blocking on the turnstile it holds itself.
 #
 # The turnstile binds only acquirers that pass through it. A script taking
 # `flock -s` on this mutex directly — rather than through

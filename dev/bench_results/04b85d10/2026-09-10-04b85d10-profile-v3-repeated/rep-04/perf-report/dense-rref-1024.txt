@@ -1,0 +1,102 @@
+# case: {"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12364114367
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    70.72%          2186  consumer-profil  consumer-profile  [.] gf2_core::alg::rref::rref
+            |
+            ---gf2_core::alg::rref::rref
+               |          
+               |--65.45%--consumer_profile_gf2_side::Prepared::run
+               |          0xef
+               |          
+                --2.04%--0x3ff
+
+    14.40%           445  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_xor_into
+
+     2.10%            65  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::xor_fn
+
+     1.97%            61  consumer-profil  libc.so.6         [.] 0x0000000000176497
+            |
+            ---0x7f6ddb976497
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     1.36%            42  consumer-profil  libc.so.6         [.] 0x0000000000176400
+            |
+            ---0x7f6ddb976400
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     1.33%            41  consumer-profil  libc.so.6         [.] 0x0000000000176421
+            |
+            ---0x7f6ddb976421
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     1.04%            32  consumer-profil  libc.so.6         [.] 0x0000000000176404
+            |
+            ---0x7f6ddb976404
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     0.78%            24  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::swap_rows
+            |
+            ---gf2_core::matrix::BitMatrix::swap_rows
+
+     0.74%            23  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+            |
+            ---0x7f6ddb976e93
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     0.58%            18  consumer-profil  libc.so.6         [.] 0x0000000000176466
+            |
+            ---0x7f6ddb976466
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     0.55%            17  consumer-profil  libc.so.6         [.] 0x00000000001764ac
+            |
+            ---0x7f6ddb9764ac
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     0.55%            17  consumer-profil  libc.so.6         [.] 0x0000000000176e89
+            |
+            ---0x7f6ddb976e89
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+     0.52%            16  consumer-profil  libc.so.6         [.] 0x00000000001764db
+            |
+            ---0x7f6ddb9764db
+               gf2_core::alg::rref::rref
+               consumer_profile_gf2_side::Prepared::run
+               0xef
+
+
+
+#
+# (Tip: To compare scalability of two workload samples use perf diff -c ratio file1 file2)
+#

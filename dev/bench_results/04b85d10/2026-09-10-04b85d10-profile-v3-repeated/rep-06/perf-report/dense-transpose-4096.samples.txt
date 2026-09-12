@@ -1,0 +1,31 @@
+# case: {"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3417  (97.2%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13668126429
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                    
+# ........  ............  ...............  ................  ..........................................................
+#
+    63.65%          2175  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::transpose
+    31.87%          1089  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+     1.93%            66  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+     1.35%            46  consumer-profil  libc.so.6         [.] 0x0000000000176e89
+     0.41%            14  consumer-profil  libc.so.6         [.] 0x0000000000176e84
+     0.35%            12  consumer-profil  libc.so.6         [.] 0x0000000000176e8e
+     0.26%             9  consumer-profil  consumer-profile  [.] gf2_kernels_simd::transpose::transpose_64x64_avx2_safe
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x0000000000176e97
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x000000000017651f
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e00
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e4d
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad891c9f
+
+
+#
+# (Tip: For memory address profiling, try: perf mem record / perf mem report)
+#

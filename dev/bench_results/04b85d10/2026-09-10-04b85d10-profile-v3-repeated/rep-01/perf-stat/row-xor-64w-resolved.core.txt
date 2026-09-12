@@ -1,0 +1,19 @@
+# case: {"workload":"row-xor","size":{"rows":64,"words":64},"seed":101}
+# path: ops-resolved  cache_state: warm  target_ms: 1000
+# events: cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":3144654,"conversion":null,"elapsed_ns":"1019518875","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"ns_per_call":324.2070113277963,"path":"ops-resolved","prepare":{"allocated_bytes":67122,"allocations":131,"freed_bytes":32768},"schema":"consumer-profile-record-v2","seed":101,"selected_path":"ops-resolved/simd","size":{"rows":64,"words":64},"target_ms":1000,"timed":{"allocated_bytes":0,"allocated_bytes_per_call":0.0,"allocations":0,"allocations_per_call":0.0,"freed_bytes":0,"peak_live_bytes":0},"workers_observed":1,"workload":"row-xor"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"row-xor","size":{"rows":64,"words":64},"seed":101} --path ops-resolved --cache-state warm --target-ms 1000':
+
+     4,858,175,554      cycles:u                                                              
+    12,501,579,688      instructions:u                                                        
+     1,860,275,561      branches:u                                                            
+         3,164,257      branch-misses:u                                                       
+        11,933,376      stalled-cycles-frontend:u                                             
+
+       1.023410689 seconds time elapsed
+
+       1.019385000 seconds user
+       0.000996000 seconds sys
+
+

@@ -24,6 +24,10 @@
 //! record reports the count the run actually used, so the derived value is as
 //! auditable as a written one.
 //!
+//! The record names the fixture generator and its resolved crate versions
+//! next to the seed (`fixture_rng`, null where the fixture draws nothing), so
+//! a seeded input is reproducible from the record alone.
+//!
 //! `GF2_PROFILE_ALLOC_TRACE=<n>` prints a backtrace of the first `n`
 //! allocations the timed calls make, which is how an allocation count becomes
 //! an allocation site.
@@ -244,10 +248,11 @@ fn main() {
         .unwrap_or(serde_json::Value::Null);
 
     let record = serde_json::json!({
-        "schema": "consumer-profile-record-v1",
+        "schema": "consumer-profile-record-v2",
         "workload": case.workload,
         "size": case.size,
         "seed": case.seed,
+        "fixture_rng": prepared.fixture_rng,
         "path": path_text,
         "cache_state": cache_state,
         "banks": banks,

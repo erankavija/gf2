@@ -1,0 +1,180 @@
+logical	ops-dispatched	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 4}, "workload": "row-xor"}	
+logical	ops-resolved	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 4}, "workload": "row-xor"}	
+logical	scalar-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 4}, "workload": "row-xor"}	
+logical	simd-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 4}, "workload": "row-xor"}	
+logical	ops-dispatched	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 8}, "workload": "row-xor"}	
+logical	ops-resolved	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 8}, "workload": "row-xor"}	
+logical	scalar-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 8}, "workload": "row-xor"}	
+logical	simd-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 8}, "workload": "row-xor"}	
+logical	ops-dispatched	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 16}, "workload": "row-xor"}	
+logical	ops-resolved	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 16}, "workload": "row-xor"}	
+logical	scalar-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 16}, "workload": "row-xor"}	
+logical	simd-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 16}, "workload": "row-xor"}	
+logical	ops-dispatched	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 64}, "workload": "row-xor"}	
+logical	ops-resolved	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 64}, "workload": "row-xor"}	
+logical	scalar-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 64}, "workload": "row-xor"}	
+logical	simd-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 64}, "workload": "row-xor"}	
+logical	ops-dispatched	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 512}, "workload": "row-xor"}	
+logical	ops-resolved	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 512}, "workload": "row-xor"}	
+logical	scalar-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 512}, "workload": "row-xor"}	
+logical	simd-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 512}, "workload": "row-xor"}	
+logical	ops-dispatched	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 8192}, "workload": "row-xor"}	
+logical	ops-resolved	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 8192}, "workload": "row-xor"}	
+logical	scalar-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 8192}, "workload": "row-xor"}	
+logical	simd-backend	warm	1000	{"seed": 101, "size": {"rows": 64, "words": 8192}, "workload": "row-xor"}	
+logical	current	warm	1000	{"seed": 102, "size": {"cols": 256, "rows": 256}, "workload": "dense-rref"}	
+logical	current	warm	1000	{"seed": 102, "size": {"cols": 512, "rows": 512}, "workload": "dense-rref"}	
+logical	current	warm	1000	{"seed": 102, "size": {"cols": 1024, "rows": 1024}, "workload": "dense-rref"}	
+logical	current	warm	1000	{"seed": 102, "size": {"cols": 2048, "rows": 2048}, "workload": "dense-rref"}	
+logical	current	warm	1000	{"seed": 103, "size": {"cols": 256, "rows": 256}, "workload": "dense-matvec"}	
+logical	current	warm	1000	{"seed": 103, "size": {"cols": 1024, "rows": 1024}, "workload": "dense-matvec"}	
+logical	current	warm	1000	{"seed": 103, "size": {"cols": 4096, "rows": 1024}, "workload": "dense-matvec"}	
+logical	current	warm	1000	{"seed": 103, "size": {"cols": 4096, "rows": 4096}, "workload": "dense-matvec"}	
+logical	current	warm	1000	{"seed": 104, "size": {"n": 16200}, "workload": "ldpc-syndrome"}	
+logical	current	warm	1000	{"seed": 104, "size": {"n": 64800}, "workload": "ldpc-syndrome"}	
+count	ops-dispatched	warm	1000	{"seed": 201, "size": {"words": 4}, "workload": "popcount"}	
+count	scalar-backend	warm	1000	{"seed": 201, "size": {"words": 4}, "workload": "popcount"}	
+count	simd-backend	warm	1000	{"seed": 201, "size": {"words": 4}, "workload": "popcount"}	
+count	ops-dispatched	warm	1000	{"seed": 201, "size": {"words": 8}, "workload": "popcount"}	
+count	scalar-backend	warm	1000	{"seed": 201, "size": {"words": 8}, "workload": "popcount"}	
+count	simd-backend	warm	1000	{"seed": 201, "size": {"words": 8}, "workload": "popcount"}	
+count	ops-dispatched	warm	1000	{"seed": 201, "size": {"words": 16}, "workload": "popcount"}	
+count	scalar-backend	warm	1000	{"seed": 201, "size": {"words": 16}, "workload": "popcount"}	
+count	simd-backend	warm	1000	{"seed": 201, "size": {"words": 16}, "workload": "popcount"}	
+count	ops-dispatched	warm	1000	{"seed": 201, "size": {"words": 64}, "workload": "popcount"}	
+count	scalar-backend	warm	1000	{"seed": 201, "size": {"words": 64}, "workload": "popcount"}	
+count	simd-backend	warm	1000	{"seed": 201, "size": {"words": 64}, "workload": "popcount"}	
+count	ops-dispatched	warm	1000	{"seed": 201, "size": {"words": 127}, "workload": "popcount"}	
+count	scalar-backend	warm	1000	{"seed": 201, "size": {"words": 127}, "workload": "popcount"}	
+count	simd-backend	warm	1000	{"seed": 201, "size": {"words": 127}, "workload": "popcount"}	
+count	ops-dispatched	warm	1000	{"seed": 201, "size": {"words": 507}, "workload": "popcount"}	
+count	scalar-backend	warm	1000	{"seed": 201, "size": {"words": 507}, "workload": "popcount"}	
+count	simd-backend	warm	1000	{"seed": 201, "size": {"words": 507}, "workload": "popcount"}	
+count	ops-dispatched	warm	1000	{"seed": 201, "size": {"words": 4096}, "workload": "popcount"}	
+count	scalar-backend	warm	1000	{"seed": 201, "size": {"words": 4096}, "workload": "popcount"}	
+count	simd-backend	warm	1000	{"seed": 201, "size": {"words": 4096}, "workload": "popcount"}	
+count	ops-dispatched	warm	1000	{"seed": 201, "size": {"words": 65536}, "workload": "popcount"}	
+count	scalar-backend	warm	1000	{"seed": 201, "size": {"words": 65536}, "workload": "popcount"}	
+count	simd-backend	warm	1000	{"seed": 201, "size": {"words": 65536}, "workload": "popcount"}	
+count	count-ones	warm	1000	{"seed": 202, "size": {"set_bit": 4096, "words": 64}, "workload": "zero-test"}	
+count	find-first-one	warm	1000	{"seed": 202, "size": {"set_bit": 4096, "words": 64}, "workload": "zero-test"}	
+count	count-ones	warm	1000	{"seed": 202, "size": {"set_bit": 0, "words": 64}, "workload": "zero-test"}	
+count	find-first-one	warm	1000	{"seed": 202, "size": {"set_bit": 0, "words": 64}, "workload": "zero-test"}	
+count	count-ones	warm	1000	{"seed": 202, "size": {"set_bit": 8128, "words": 127}, "workload": "zero-test"}	
+count	find-first-one	warm	1000	{"seed": 202, "size": {"set_bit": 8128, "words": 127}, "workload": "zero-test"}	
+count	count-ones	warm	1000	{"seed": 202, "size": {"set_bit": 0, "words": 127}, "workload": "zero-test"}	
+count	find-first-one	warm	1000	{"seed": 202, "size": {"set_bit": 0, "words": 127}, "workload": "zero-test"}	
+count	count-ones	warm	1000	{"seed": 202, "size": {"set_bit": 32448, "words": 507}, "workload": "zero-test"}	
+count	find-first-one	warm	1000	{"seed": 202, "size": {"set_bit": 32448, "words": 507}, "workload": "zero-test"}	
+count	count-ones	warm	1000	{"seed": 202, "size": {"set_bit": 0, "words": 507}, "workload": "zero-test"}	
+count	find-first-one	warm	1000	{"seed": 202, "size": {"set_bit": 0, "words": 507}, "workload": "zero-test"}	
+count	count-ones	warm	1000	{"seed": 202, "size": {"set_bit": 262144, "words": 4096}, "workload": "zero-test"}	
+count	find-first-one	warm	1000	{"seed": 202, "size": {"set_bit": 262144, "words": 4096}, "workload": "zero-test"}	
+count	count-ones	warm	1000	{"seed": 202, "size": {"set_bit": 0, "words": 4096}, "workload": "zero-test"}	
+count	find-first-one	warm	1000	{"seed": 202, "size": {"set_bit": 0, "words": 4096}, "workload": "zero-test"}	
+count	count-ones	warm	1000	{"seed": 203, "size": {"n": 16200}, "workload": "ldpc-codeword-check"}	
+count	find-first-one	warm	1000	{"seed": 203, "size": {"n": 16200}, "workload": "ldpc-codeword-check"}	
+count	count-ones	warm	1000	{"seed": 203, "size": {"n": 64800}, "workload": "ldpc-codeword-check"}	
+count	find-first-one	warm	1000	{"seed": 203, "size": {"n": 64800}, "workload": "ldpc-codeword-check"}	
+layout	transpose-scalar	warm	1000	{"seed": 301, "size": {"blocks": 1}, "workload": "transpose-64x64"}	
+layout	transpose-detected	warm	1000	{"seed": 301, "size": {"blocks": 1}, "workload": "transpose-64x64"}	
+layout	transpose-scalar	warm	1000	{"seed": 301, "size": {"blocks": 16}, "workload": "transpose-64x64"}	
+layout	transpose-detected	warm	1000	{"seed": 301, "size": {"blocks": 16}, "workload": "transpose-64x64"}	
+layout	transpose-scalar	warm	1000	{"seed": 301, "size": {"blocks": 256}, "workload": "transpose-64x64"}	
+layout	transpose-detected	warm	1000	{"seed": 301, "size": {"blocks": 256}, "workload": "transpose-64x64"}	
+layout	transpose-scalar	warm	1000	{"seed": 301, "size": {"blocks": 4096}, "workload": "transpose-64x64"}	
+layout	transpose-detected	warm	1000	{"seed": 301, "size": {"blocks": 4096}, "workload": "transpose-64x64"}	
+layout	current	warm	1000	{"seed": 302, "size": {"cols": 1024, "rows": 1024}, "workload": "dense-transpose"}	
+layout	current	warm	1000	{"seed": 302, "size": {"cols": 4096, "rows": 4096}, "workload": "dense-transpose"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-poly-remainder-scalar	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-table-remainder	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-bitslice-interleaved	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	family-clmul-fold	warm	1000	{"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"}	
+layout	current	warm	1000	{"seed": 304, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch-alloc"}	
+layout	caller-buffer	warm	1000	{"seed": 304, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch-alloc"}	
+layout	current	warm	1000	{"seed": 304, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch-alloc"}	
+layout	caller-buffer	warm	1000	{"seed": 304, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch-alloc"}	
+layout	current	warm	1000	{"seed": 304, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch-alloc"}	
+layout	caller-buffer	warm	1000	{"seed": 304, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch-alloc"}	
+layout	current	warm	1000	{"seed": 304, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch-alloc"}	
+layout	caller-buffer	warm	1000	{"seed": 304, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch-alloc"}	
+layout	current	warm	1000	{"seed": 305, "size": {"batch": 256, "degree": 14, "workers": 1}, "workload": "bch-encode-batch-parallel"}	RAYON_NUM_THREADS=1
+layout	current	warm	1000	{"seed": 305, "size": {"batch": 1024, "degree": 14, "workers": 1}, "workload": "bch-encode-batch-parallel"}	RAYON_NUM_THREADS=1
+layout	current	warm	1000	{"seed": 305, "size": {"batch": 256, "degree": 14, "workers": 6}, "workload": "bch-encode-batch-parallel"}	RAYON_NUM_THREADS=6
+layout	current	warm	1000	{"seed": 305, "size": {"batch": 1024, "degree": 14, "workers": 6}, "workload": "bch-encode-batch-parallel"}	RAYON_NUM_THREADS=6
+layout	current	warm	1000	{"seed": 305, "size": {"batch": 256, "degree": 14, "workers": 12}, "workload": "bch-encode-batch-parallel"}	RAYON_NUM_THREADS=12
+layout	current	warm	1000	{"seed": 305, "size": {"batch": 1024, "degree": 14, "workers": 12}, "workload": "bch-encode-batch-parallel"}	RAYON_NUM_THREADS=12
+layout	current	warm	1000	{"seed": 305, "size": {"batch": 256, "degree": 14, "workers": 24}, "workload": "bch-encode-batch-parallel"}	RAYON_NUM_THREADS=24
+layout	current	warm	1000	{"seed": 305, "size": {"batch": 1024, "degree": 14, "workers": 24}, "workload": "bch-encode-batch-parallel"}	RAYON_NUM_THREADS=24
+layout	current	warm	1000	{"seed": 307, "size": {"calls": 1}, "workload": "field-id-hint"}	
+layout	current	warm	1000	{"seed": 307, "size": {"calls": 16}, "workload": "field-id-hint"}	
+layout	current	warm	1000	{"seed": 307, "size": {"calls": 256}, "workload": "field-id-hint"}	
+layout	current	warm	1000	{"seed": 307, "size": {"calls": 1024}, "workload": "field-id-hint"}	
+layout	current	warm	2000	{"seed": 306, "size": {"batch": 16, "n": 7200}, "workload": "dvb-bch-encode"}	
+layout	current	warm	2000	{"seed": 306, "size": {"batch": 1, "n": 32400}, "workload": "dvb-bch-encode"}	

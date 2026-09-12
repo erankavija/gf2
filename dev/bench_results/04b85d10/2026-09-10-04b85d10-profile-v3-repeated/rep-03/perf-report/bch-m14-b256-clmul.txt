@@ -1,0 +1,30 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-clmul-fold  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14652135531
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                    
+# ........  ............  ...............  ................  ..........................................................................................................................
+#
+    95.50%          3498  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+            |
+            ---gf2_coding::bch::encode::packed_write_codeword
+               |          
+               |--94.21%--0x5645d9de8ebf
+               |          
+                --1.28%--0x1b
+
+     3.77%           138  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+            |
+            ---gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#
