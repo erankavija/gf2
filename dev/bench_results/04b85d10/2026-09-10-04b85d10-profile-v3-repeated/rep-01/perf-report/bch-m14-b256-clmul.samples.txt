@@ -1,0 +1,30 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-clmul-fold  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3642  (96.6%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14568134754
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                         
+# ........  ............  ...............  ................  ...............................................................................................................................
+#
+    96.54%          3516  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+     2.75%           100  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+     0.36%            13  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_fold_reduce
+     0.08%             3  consumer-profil  consumer-profile  [.] gf2_kernels_simd::bch_encode::fold_block_pclmul_safe
+     0.08%             3  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.05%             2  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_family
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::<impl gf2_coding::bch::spec::BchCode<X,S,M>>::encode_stamp
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  consumer-profile  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8a898c
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#

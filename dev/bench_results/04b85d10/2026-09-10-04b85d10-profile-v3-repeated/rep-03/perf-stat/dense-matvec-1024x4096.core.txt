@@ -1,0 +1,19 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 1000
+# events: cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":62849,"conversion":{"batch_fill_ns":0,"dispatch_ns":0,"pack_ns":0,"setup_ns":353262,"unpack_ns":779},"elapsed_ns":"982466633","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"ns_per_call":15632.17605689828,"path":"current","prepare":{"allocated_bytes":1082015,"allocations":261,"freed_bytes":557056},"schema":"consumer-profile-record-v2","seed":103,"selected_path":"current/simd-and-popcnt","size":{"cols":4096,"rows":1024},"target_ms":1000,"timed":{"allocated_bytes":8044672,"allocated_bytes_per_call":128.0,"allocations":62849,"allocations_per_call":1.0,"freed_bytes":8044672,"peak_live_bytes":128},"workers_observed":1,"workload":"dense-matvec"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103} --path current --cache-state warm --target-ms 1000':
+
+     4,750,291,464      cycles:u                                                              
+    16,296,744,696      instructions:u                                                        
+     1,361,483,613      branches:u                                                            
+        21,874,709      branch-misses:u                                                       
+       111,081,215      stalled-cycles-frontend:u                                             
+
+       0.986561974 seconds time elapsed
+
+       0.981566000 seconds user
+       0.001973000 seconds sys
+
+

@@ -3,7 +3,7 @@
 #
 # Usage:
 #   dev/bench_results/6fb89a3c/run-campaign.sh preflight
-#   dev/bench_results/6fb89a3c/run-campaign.sh transpose|logical|bch pilot|confirmation [run-id]
+#   dev/bench_results/6fb89a3c/run-campaign.sh transpose|logical|bch pilot|confirmation|remeasure [run-id]
 #
 # `preflight` builds the external libraries and every arm through the
 # committed fetch/build path, records the build/backend evidence, runs the
@@ -14,15 +14,34 @@
 # family addendum, and measures it as a sequence of bounded sessions under the
 # canonical CCX1 mutex (`dev/scripts/ccx1-bench-flock.sh --full-host`). Each
 # session takes the lock, measures at most `max_cells_per_session` cells,
-# checkpoints and releases, so a queued sibling gets the host between sessions
-# and a killed session resumes without repeating a completed cell.
+# checkpoints and releases, so a queued sibling gets the host between sessions.
+#
+# Re-running the same command resumes the same campaign identity: it
+# re-projects the plan, refuses to continue unless the projection equals the
+# staged plan byte for byte, and appends to the launcher log. A campaign whose
+# execution log already ends `complete` is only finalized, and a finalized one
+# is only re-evaluated by the acceptance tool, so no cell is measured twice.
+#
+# A stop between cells, at a cell-budget pause or between sessions resumes
+# without repeating a cell. A stop inside a cell measures that cell again from
+# its first pair: protocol v3 rejects such a campaign (P-11) and protocol v4
+# accepts it once the resumed session journals a `cell-abandoned` record
+# (`dev/active/f547c394/amendment-v4.md`). The campaigns this launcher has
+# published carry v3 addenda, which the addendum validation above rejects
+# against the v4 schema, so those campaigns are finalized and re-evaluated
+# only; a new campaign needs an addendum frozen at the current version.
 #
 # Every numeric setting comes from the addendum and the protocol's frozen
 # shared settings; this script adds none. The cell-to-arm wiring is derived
 # from the cell identifiers, which name the external arm they compare against.
 # The pilot must be published, and its digest placed in the confirmatory
-# addendum, before the confirmation runs.
+# addendum, before the confirmation runs. `remeasure` runs the family's
+# committed exploratory re-measurement addendum (receipt label `pilot`), which
+# repeats the pilot cells with the gf2 arms that make the protocol's warm pass.
 set -euo pipefail
+# The benchmark window starts this from a non-interactive shell; rustup's
+# cargo and rustc proxies live in ~/.cargo/bin.
+command -v cargo >/dev/null 2>&1 || PATH="$HOME/.cargo/bin:$PATH"
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 ISSUE=6fb89a3c
@@ -49,18 +68,24 @@ case "$FAMILY" in
   transpose) ADDENDUM_STEM=addendum-transpose ;;
   logical) ADDENDUM_STEM=addendum-logical-buffer ;;
   bch) ADDENDUM_STEM=addendum-bch-genmatrix ;;
-  *) echo "usage: $0 preflight | transpose|logical|bch pilot|confirmation [run-id]" >&2; exit 2 ;;
+  *) echo "usage: $0 preflight | transpose|logical|bch pilot|confirmation|remeasure [run-id]" >&2; exit 2 ;;
 esac
-case "$MODE" in pilot|confirmation) ;; *) echo "usage: $0 preflight | transpose|logical|bch pilot|confirmation [run-id]" >&2; exit 2 ;; esac
+case "$MODE" in
+  pilot|remeasure) LABEL=pilot ;;
+  confirmation) LABEL=confirmation ;;
+  *) echo "usage: $0 preflight | transpose|logical|bch pilot|confirmation|remeasure [run-id]" >&2; exit 2 ;;
+esac
 ADDENDUM=dev/active/$ISSUE/$ADDENDUM_STEM-v3-$MODE.json
 OUT=dev/bench_results/$ISSUE/$RUN_ID-$ISSUE-$FAMILY-$MODE
 LAUNCH_LOG=dev/bench_results/$ISSUE/$RUN_ID-$FAMILY-$MODE-launcher.log
 [[ -f "$ADDENDUM" ]] || { echo "missing frozen addendum $ADDENDUM" >&2; exit 2; }
-[[ ! -e "$OUT" ]] || { echo "receipt directory $OUT already exists" >&2; exit 2; }
-if [[ "$MODE" == confirmation ]]; then
-  # Publication precedes confirmation: the addendum and its pilot digest are committed bytes.
+[[ ! -e "$OUT" || -f "$OUT/receipt.json" ]] || { echo "receipt directory $OUT exists without a receipt; inspect it" >&2; exit 2; }
+if [[ "$MODE" != pilot ]]; then
+  # Publication precedes measurement: the addendum is committed bytes.
   git ls-files --error-unmatch "$ADDENDUM" >/dev/null
   git diff --exit-code HEAD -- "$ADDENDUM" >/dev/null
+fi
+if [[ "$MODE" == confirmation ]]; then
   grep -Eq '"sha256": "[0-9a-f]{64}"' "$ADDENDUM" || { echo 'confirmation addendum does not pin a pilot receipt digest' >&2; exit 2; }
 fi
 LEDGER=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["family_wise"]["ledger_path"])' "$ADDENDUM")
@@ -89,36 +114,53 @@ PY_CHECK
 
 RUNNER=$(realpath target/release/benchmark-ab-runner)
 ACCEPTANCE=$(realpath target/release/benchmark-acceptance)
+
+evaluate() {
+  set +e
+  "$ACCEPTANCE" "$OUT" | tee -a "$LAUNCH_LOG"
+  verdict=${PIPESTATUS[0]}
+  set -e
+}
+
+if [[ -e "$OUT" ]]; then
+  # Finalized by an earlier invocation: evaluate again, measure nothing.
+  LAUNCH_LOG="$OUT/launcher.log"
+  echo "# re-evaluation_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)  command: $0 $*" >>"$LAUNCH_LOG"
+  evaluate
+  echo "# acceptance exit: $verdict" >>"$LAUNCH_LOG"
+  echo "$FAMILY $MODE receipt: $OUT" >&2
+  exit "$verdict"
+fi
+
 CAMPAIGN="$ISSUE-$RUN_ID-$FAMILY-$MODE"
 STAGE=$repo/target/$ISSUE-campaigns/$CAMPAIGN
 PLAN=$STAGE.plan.json
 mkdir -p "$(dirname "$STAGE")"
-[[ ! -e "$PLAN" ]] || { echo "plan $PLAN already exists; resume the existing campaign identity" >&2; exit 2; }
 LOCK=${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}
 touch "$LOCK"
 LOCK=$(realpath "$LOCK")
 export GF2_CCX1_LOCK="$LOCK"
 export RAYON_NUM_THREADS=1
 
-python3 - "$PLAN" "$CAMPAIGN" "$MODE" "$ADDENDUM" "$LOCK" "$FAMILY" "$SURVEY" "$repo" <<'PY_PLAN'
+python3 - "$PLAN.projected" "$CAMPAIGN" "$MODE" "$LABEL" "$ADDENDUM" "$LOCK" "$FAMILY" "$SURVEY" "$repo" <<'PY_PLAN'
 import json, sys
-plan_path, campaign, label, addendum_path, lock, family, survey, repo = sys.argv[1:]
+plan_path, campaign, mode, label, addendum_path, lock, family, survey, repo = sys.argv[1:]
 addendum = json.load(open(addendum_path))
 gf2 = f"{repo}/{survey}/gf2-side/target/release"
 PORTABLE = "-C target-cpu=x86-64"
 ARMS = {
     "gf2-transpose": {"build": "conservative-portable", "executable": f"{gf2}/gf2_transpose_arm", "rustflags": PORTABLE,
-                      "description": "gf2 transpose: fixed cells call the runtime-dispatched 64x64 kernel (gf2_kernels_simd::transpose::detect), consumer cells call BitMatrix::transpose with a fresh output; x86-64 baseline build, kernel selected at run time and reported by the child"},
+                      "description": "gf2 transpose: fixed cells call the runtime-dispatched 64x64 kernel (gf2_kernels_simd::transpose::detect), consumer cells call BitMatrix::transpose with a fresh output; x86-64 baseline build, kernel selected at run time and reported by the child; warm cells make one untimed pass before calibration"},
     "m4ri-transpose": {"build": "external", "executable": f"{repo}/{survey}/m4ri_transpose_arm", "rustflags": None,
                        "description": "M4RI 20260122 mzd_transpose (release tarball, GPL-2.0-or-later, gcc -O3 -march=native -fPIC, no runtime dispatch); fixed cells reuse a preallocated output, consumer cells allocate a fresh one"},
     "bitshuffle-transpose": {"build": "external", "executable": f"{repo}/{survey}/bitshuffle_transpose_arm", "rustflags": None,
                              "description": "Bitshuffle 0.5.2 bshuf_bitshuffle (commit 52aec3b80d05606c090956aecfe868489d96b95c, MIT, gcc -O3 -march=native -fPIC, compile-time AVX2 route); fixed cells transform 64 eight-byte elements into a preallocated output, adapter cells pad/pack/unpack around one block into a fresh canonical output"},
     "gf2-logical": {"build": "conservative-portable", "executable": f"{gf2}/gf2_logical_xor_arm", "rustflags": PORTABLE,
-                    "description": "gf2 xor_inplace with the fresh-output arrangement (copy source 0, XOR the remaining sources in place); x86-64 baseline build, backend selected at run time by buffer size and reported by the child"},
+                    "description": "gf2 xor_inplace with the fresh-output arrangement (copy source 0, XOR the remaining sources in place); x86-64 baseline build, backend selected at run time by buffer size and reported by the child; warm cells make one untimed pass before calibration"},
     "isal-base": {"build": "external", "executable": f"{repo}/{survey}/isal_xor_arm", "rustflags": None,
                   "description": "ISA-L v2.32.1 xor_gen_base (commit 7c3479e0a9dac17f448603ec1ad64c7c625f530c, BSD-3-Clause, gcc -O3 -march=native -fPIC); the portable C reference of xor_gen, vects = sources + 1, 32-byte aligned; the NASM multi-binary xor_gen dispatcher is unavailable on this host"},
     "gf2-bch-genmatrix": {"build": "conservative-portable", "executable": f"{gf2}/gf2_bch_genmatrix_arm", "rustflags": PORTABLE,
-                          "description": "gf2 generator-matrix construction on the established bch_genmatrix rows with a fresh BitMatrix per call: the production BchCode::generator_matrix materialization, or (reference cells) the test-support oracle bch_generator_matrix_by_encoding; x86-64 baseline build, route reported by the child"},
+                          "description": "gf2 generator-matrix construction on the established bch_genmatrix rows with a fresh BitMatrix per call: the production BchCode::generator_matrix materialization, or (reference cells) the test-support oracle bch_generator_matrix_by_encoding; x86-64 baseline build, route reported by the child; warm cells make one untimed pass before calibration"},
     "m4ri-bch-genmatrix": {"build": "external", "executable": f"{repo}/{survey}/m4ri_genmatrix_arm", "rustflags": None,
                            "description": "M4RI 20260122 shifted-generator fill plus mzd_echelonize_m4ri, the established construction of issue 4e732b56; fresh mzd_copy per call"},
 }
@@ -160,7 +202,7 @@ plan = {
     "campaign_id": campaign,
     "issue": addendum["family"]["issue"],
     "label": label,
-    "campaign_seed": {"pilot": 20260910, "confirmation": 20260911}[label],
+    "campaign_seed": {"pilot": 20260910, "confirmation": 20260911, "remeasure": 20260912}[mode],
     "addendum": addendum_path,
     "producing_manifest": "dev/active/6fb89a3c/producing-inputs.json",
     "lock_path": lock,
@@ -177,9 +219,31 @@ with open(plan_path, "w") as output:
     output.write("\n")
 print(f"plan: {len(cells)} cells, {len(plan['arms'])} arms -> {plan_path}")
 PY_PLAN
+if [[ -e "$PLAN" ]]; then
+  if ! cmp -s "$PLAN.projected" "$PLAN"; then
+    rm -f "$PLAN.projected"
+    echo "plan $PLAN differs from the projection of the current inputs; a resume needs the identical plan" >&2
+    exit 2
+  fi
+  rm -f "$PLAN.projected"
+  INVOCATION=resume
+else
+  mv "$PLAN.projected" "$PLAN"
+  INVOCATION=new
+fi
+
+stage_complete() {
+  [[ -f "$STAGE/execution.log" ]] && python3 - "$STAGE/execution.log" <<'PY_TERMINAL'
+import json, sys
+events = [json.loads(line)["event"] for line in open(sys.argv[1])]
+terminal = [e for e in events if e in ("complete", "failed", "paused", "budget-exhausted")]
+sys.exit(0 if terminal and terminal[-1] == "complete" else 1)
+PY_TERMINAL
+}
 
 {
   echo "# command: $0 $*"
+  echo "# invocation: $INVOCATION"
   echo "# started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "# gf2 revision (informational): $(git rev-parse HEAD)"
   echo "# family: $FAMILY  mode: $MODE  run-id: $RUN_ID"
@@ -197,14 +261,14 @@ PY_PLAN
   done
   echo "# session command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 RAYON_NUM_THREADS=1 dev/scripts/ccx1-bench-flock.sh --full-host $RUNNER run $STAGE $PLAN"
   echo "# load_avg_start: $(uptime)"
-} >"$LAUNCH_LOG"
+} >>"$LAUNCH_LOG"
 
 # Bounded checkpointed sessions: exit 3 means the session paused at the cell
 # budget and the campaign resumes; exit 0 means the campaign is complete.
 # CARGO_CI_NO_LOCK=1 is required because this process holds the exclusive side
 # of the mutex that scripts/cargo-budget.sh takes shared.
 session=0
-while :; do
+while ! stage_complete; do
   session=$((session + 1))
   set +e
   GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host \
@@ -222,13 +286,10 @@ done
 "$RUNNER" finalize "$STAGE" "$OUT" | tee -a "$LAUNCH_LOG"
 cp "$LAUNCH_LOG" "$OUT/launcher.log"
 LAUNCH_LOG="$OUT/launcher.log"
-set +e
-"$ACCEPTANCE" "$OUT" | tee -a "$LAUNCH_LOG"
-verdict=${PIPESTATUS[0]}
-set -e
+evaluate
 {
   echo "# acceptance exit: $verdict"
-  echo "# sessions: $session"
+  echo "# sessions this invocation: $session"
   echo "# load_avg_end: $(uptime)"
   echo "# finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >>"$LAUNCH_LOG"

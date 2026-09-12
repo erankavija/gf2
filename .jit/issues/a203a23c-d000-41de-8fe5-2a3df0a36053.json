@@ -22,7 +22,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
-  "updated_at": "2026-09-11T17:50:30.543787875Z"
+  "updated_at": "2026-09-12T06:50:12.478220706Z"
 }

@@ -1,0 +1,19 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-poly-remainder-scalar  cache_state: warm  target_ms: 1500
+# events: cycles:u,instructions:u,branches:u,branch-misses:u,stalled-cycles-frontend:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":36,"conversion":{"batch_fill_ns":313776,"dispatch_ns":3,"pack_ns":6478,"setup_ns":1608179,"unpack_ns":0},"elapsed_ns":"1490121194","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"ns_per_call":41392255.38888889,"path":"family-poly-remainder-scalar","prepare":{"allocated_bytes":5296968,"allocations":6195,"freed_bytes":4175048},"schema":"consumer-profile-record-v2","seed":303,"selected_path":"family-pinned/PolyRemainderScalar","size":{"batch":256,"degree":14},"target_ms":1500,"timed":{"allocated_bytes":516096,"allocated_bytes_per_call":14336.0,"allocations":9216,"allocations_per_call":256.0,"freed_bytes":516096,"peak_live_bytes":56},"workers_observed":1,"workload":"bch-encode-batch"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303} --path family-poly-remainder-scalar --cache-state warm --target-ms 1500':
+
+     7,599,651,500      cycles:u                                                              
+    11,932,248,959      instructions:u                                                        
+     2,934,051,554      branches:u                                                            
+       158,998,594      branch-misses:u                                                       
+       563,830,228      stalled-cycles-frontend:u                                             
+
+       1.578762156 seconds time elapsed
+
+       1.572138000 seconds user
+       0.001993000 seconds sys
+
+

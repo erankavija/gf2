@@ -1,0 +1,29 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-poly-remainder-scalar  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3669  (96.6%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14676135753
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                       
+# ........  ............  ...............  ................  .............................................................................................................................
+#
+    63.12%          2316  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+    36.66%          1345  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::validate_batch
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  consumer-profile  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad73d478
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad787902
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad81bb80
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad896892
+
+
+#
+# (Tip: Show individual samples with: perf script)
+#

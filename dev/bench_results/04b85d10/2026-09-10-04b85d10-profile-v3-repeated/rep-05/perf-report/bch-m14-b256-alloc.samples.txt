@@ -1,0 +1,31 @@
+# case: {"workload":"bch-encode-batch-alloc","size":{"degree":14,"batch":256},"seed":304}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3668  (91.3%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14672135716
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                         
+# ........  ............  ...............  ................  ...............................................................................................................................
+#
+    63.06%          2313  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+    36.64%          1344  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+     0.05%             2  consumer-profil  [unknown]         [k] 0xffffffffae99e46b
+     0.03%             1  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_family
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  consumer-profile  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a5f0c
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad73d478
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad894abb
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadafadea
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae98c014
+
+
+#
+# (Tip: Save output of perf stat using: perf stat record <target workload>)
+#

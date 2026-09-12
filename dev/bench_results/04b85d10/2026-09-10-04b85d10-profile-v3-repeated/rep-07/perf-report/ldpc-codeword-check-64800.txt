@@ -1,0 +1,23 @@
+# case: {"workload":"ldpc-codeword-check","size":{"n":64800},"seed":203}
+# path: count-ones  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13572125541
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    99.62%          3380  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+            |
+            ---gf2_core::sparse::SpBitMatrix::matvec
+               0x7f69937508af
+
+
+
+#
+# (Tip: To show inline functions in call traces add --inline to perf report)
+#
