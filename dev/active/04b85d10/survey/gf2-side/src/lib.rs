@@ -529,21 +529,125 @@ fn binary_bch(
     .map_err(|error| format!("the declared BCH construction is rejected: {error:?}"))
 }
 
-/// The mother field of one declared BCH row.
+/// One declared packed-BCH mother-code row.
 ///
 /// The rows are those of `dev/active/4e732b56/workload-selection.md`
-/// section 2; `degree` selects the row.
-fn bch_row(degree: usize) -> Result<(u64, u64), String> {
-    Ok(match degree {
-        8 => (0b1_0001_1101, 9),
-        14 => (0b100_0000_0010_1011, 25),
-        16 => (0b1_0000_0000_0010_1101, 25),
-        other => {
-            return Err(format!(
-                "no declared BCH row of mother-field degree {other}"
-            ))
+/// section 2, registered for this survey in
+/// `dev/active/04b85d10/survey/code-rows.json`, which
+/// `tests/declared_codes.rs` checks against this table.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+pub struct BchRow {
+    /// Degree of the mother field.
+    pub degree: usize,
+    /// Primitive polynomial of the mother field, as a bit-packed integer.
+    pub modulus: u64,
+    /// Designed distance of the mother code.
+    pub designed_distance: u64,
+}
+
+/// Every packed-BCH mother-code row a cell of this survey can declare.
+pub const BCH_ROWS: &[BchRow] = &[
+    BchRow {
+        degree: 8,
+        modulus: 0b1_0001_1101,
+        designed_distance: 9,
+    },
+    BchRow {
+        degree: 14,
+        modulus: 0b100_0000_0010_1011,
+        designed_distance: 25,
+    },
+    BchRow {
+        degree: 16,
+        modulus: 0b1_0000_0000_0010_1101,
+        designed_distance: 25,
+    },
+];
+
+/// The declared row of one mother-field degree.
+fn bch_row(degree: usize) -> Result<BchRow, String> {
+    BCH_ROWS
+        .iter()
+        .copied()
+        .find(|row| row.degree == degree)
+        .ok_or_else(|| format!("no declared BCH row of mother-field degree {degree}"))
+}
+
+/// Builds the packed BCH mother code of one declared row.
+fn packed_bch_code(degree: usize) -> Result<BinaryBchCode, String> {
+    let row = bch_row(degree)?;
+    binary_bch(row.degree, row.modulus, row.designed_distance)
+}
+
+/// Builds the DVB-T2 rate-1/2 LDPC code of one declared codeword length.
+fn ldpc_code(n: usize) -> Result<LdpcCode, String> {
+    match n {
+        16200 => Ok(LdpcCode::dvb_t2_short(CodeRate::Rate1_2)),
+        64800 => Ok(LdpcCode::dvb_t2_normal(CodeRate::Rate1_2)),
+        other => Err(format!("no declared LDPC row of length {other}")),
+    }
+}
+
+/// Builds the DVB-T2 rate-1/2 compatibility BCH code of one declared length.
+fn dvb_bch_code(n: usize) -> Result<BchCode, String> {
+    let frame = match n {
+        7200 => gf2_coding::bch::dvb_t2::FrameSize::Short,
+        32400 => gf2_coding::bch::dvb_t2::FrameSize::Normal,
+        other => return Err(format!("no declared DVB-T2 BCH row of length {other}")),
+    };
+    Ok(BchCode::dvb_t2(frame, CodeRate::Rate1_2))
+}
+
+/// The code a cell's declared sizes name, as this harness constructs it.
+///
+/// A cell that reaches a code names it by its declared sizes alone, so the
+/// declared parameters and the constructed code can be compared without
+/// timing anything. `tests/declared_codes.rs` compares them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+pub struct ConstructedCode {
+    /// Mother-field degree, where the workload builds a code over one.
+    pub field_degree: Option<usize>,
+    /// Block length in bits of the constructed code.
+    pub length: usize,
+    /// Message length in bits of the constructed code.
+    pub dimension: usize,
+}
+
+/// Constructs the code one case declares, or `None` when its workload reaches
+/// no code.
+///
+/// # Errors
+///
+/// Returns the declaration error when a size is missing or names no declared
+/// row.
+pub fn constructed_code(case: &Case) -> Result<Option<ConstructedCode>, String> {
+    match case.workload.as_str() {
+        "bch-encode-batch" | "bch-encode-batch-alloc" | "bch-encode-batch-parallel" => {
+            let code = packed_bch_code(case.size("degree")?)?;
+            Ok(Some(ConstructedCode {
+                field_degree: Some(code.splitting_field_id().degree()),
+                length: code.n(),
+                dimension: code.k(),
+            }))
         }
-    })
+        "dvb-bch-encode" => {
+            let code = dvb_bch_code(case.size("n")?)?;
+            Ok(Some(ConstructedCode {
+                field_degree: None,
+                length: code.n(),
+                dimension: code.k(),
+            }))
+        }
+        "ldpc-syndrome" | "ldpc-codeword-check" => {
+            let code = ldpc_code(case.size("n")?)?;
+            Ok(Some(ConstructedCode {
+                field_degree: None,
+                length: code.n(),
+                dimension: code.k(),
+            }))
+        }
+        _ => Ok(None),
+    }
 }
 
 /// Number of fixture banks a cache state reads.
@@ -815,11 +919,7 @@ pub fn prepare(
         }
         "ldpc-syndrome" | "ldpc-codeword-check" => {
             let n = case.size("n")?;
-            let code = match n {
-                16200 => LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
-                64800 => LdpcCode::dvb_t2_normal(CodeRate::Rate1_2),
-                other => return Err(format!("no declared LDPC row of length {other}")),
-            };
+            let code = ldpc_code(n)?;
             let banks: Vec<BitVec> = (0..bank_count)
                 .map(|bank| {
                     BitVec::random_seeded(code.n(), case.seed.wrapping_add(bank as u64 * 0x9E37))
@@ -829,11 +929,7 @@ pub fn prepare(
             conversion = Some(Conversion {
                 // The construction of the code this case measures.
                 setup_ns: per_call_ns(1, || {
-                    black_box(if n == 16200 {
-                        LdpcCode::dvb_t2_short(CodeRate::Rate1_2)
-                    } else {
-                        LdpcCode::dvb_t2_normal(CodeRate::Rate1_2)
-                    });
+                    black_box(ldpc_code(n).ok());
                 }),
                 pack_ns: 0,
                 // The syndrome route allocates its output with one bit of
@@ -867,11 +963,10 @@ pub fn prepare(
         "bch-encode-batch" | "bch-encode-batch-alloc" | "bch-encode-batch-parallel" => {
             let degree = case.size("degree")?;
             let batch = case.size("batch")?;
-            let (modulus, designed_distance) = bch_row(degree)?;
             let setup_ns = per_call_ns(1, || {
-                black_box(binary_bch(degree, modulus, designed_distance).is_ok());
+                black_box(packed_bch_code(degree).is_ok());
             });
-            let code = Box::new(binary_bch(degree, modulus, designed_distance)?);
+            let code = Box::new(packed_bch_code(degree)?);
             let layout = SystematicLayout::default();
             let messages: Vec<BitVec> = (0..batch)
                 .map(|index| {
@@ -972,15 +1067,10 @@ pub fn prepare(
         "dvb-bch-encode" => {
             let n = case.size("n")?;
             let batch = case.size("batch")?;
-            let frame = match n {
-                7200 => gf2_coding::bch::dvb_t2::FrameSize::Short,
-                32400 => gf2_coding::bch::dvb_t2::FrameSize::Normal,
-                other => return Err(format!("no declared DVB-T2 BCH row of length {other}")),
-            };
             let setup_ns = per_call_ns(1, || {
-                black_box(BchCode::dvb_t2(frame, CodeRate::Rate1_2));
+                black_box(dvb_bch_code(n).ok());
             });
-            let code = BchCode::dvb_t2(frame, CodeRate::Rate1_2);
+            let code = dvb_bch_code(n)?;
             let k = code.k();
             let encoder = Box::new(BchEncoder::new(code));
             let messages: Vec<BitVec> = (0..batch)
