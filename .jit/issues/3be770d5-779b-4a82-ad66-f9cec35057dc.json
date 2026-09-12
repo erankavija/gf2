@@ -774,6 +774,7 @@
       "path": "dev/active/3be770d5/survey/harness/Cargo.toml"
     }
   ],
+  "done_at": "2026-09-12T17:34:28.321336973Z",
   "first_ready_at": "2026-09-06T20:03:43.034982897Z",
   "gates_required": [
     "cargo-ci",
@@ -793,13 +794,13 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-12T17:13:36.881072795Z",
+      "status": "passed",
+      "updated_at": "2026-09-12T17:30:23.301042849Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-12T17:11:53.420376952Z",
+      "status": "passed",
+      "updated_at": "2026-09-12T17:33:54.548002975Z",
       "updated_by": "auto:executor"
     }
   },
@@ -814,7 +815,7 @@
     "cites:Cassagne2019"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-  "updated_at": "2026-09-12T17:28:04.384929363Z"
+  "updated_at": "2026-09-12T17:34:28.321336973Z"
 }

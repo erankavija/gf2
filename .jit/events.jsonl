@@ -11720,3 +11720,10 @@
 {"gate_key":"code-review","id":"5f3be824-4dec-41f6-8da2-3e5d4ad5554b","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:16:04.422226903Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"cargo-ci","id":"064510db-255d-49ae-a292-71b1365a53db","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:16:28.037756699Z","type":"gate_passed","updated_by":"auto:executor"}
 {"fields":["description"],"id":"42f27a15-0083-43c4-a0f5-cb8228ed0ea2","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:28:04.384929363Z","type":"issue_updated","updated_by":"issue-update"}
+{"gate_key":"doc-review","id":"bf90478d-25ad-468b-b985-c7a0dd086a55","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:30:23.301042849Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"bab50c7a-4d22-4582-8ff6-1a313a4f6d75","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:33:54.548002975Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"ea9865f0-bc24-41c3-98e4-de68ec275bf3","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:34:28.321336973Z","to":"done","type":"issue_state_changed"}
+{"id":"9d8806a4-f5e1-46a4-88f0-57aa8ff785d9","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T17:34:28.321336973Z","type":"issue_completed"}
+{"from":"backlog","id":"bb19bece-8e7a-4088-aa24-71d8539a1c1a","issue_id":"07ca8585-d822-49e7-96b8-18f6a3d73d4e","timestamp":"2026-09-12T17:34:52.488057975Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"88d9a175-dfec-4652-aba2-2d401aab4e2b","issue_id":"39cbde20-91a6-423a-b3c0-ac9e01939cc7","timestamp":"2026-09-12T17:35:12.756177197Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"d6d9b75b-ce3d-4666-b9f1-8a8fe60e1fe6","issue_id":"d77176e5-eff3-4212-b24d-d475328b1090","timestamp":"2026-09-12T17:35:29.251605407Z","to":"ready","type":"issue_state_changed"}
