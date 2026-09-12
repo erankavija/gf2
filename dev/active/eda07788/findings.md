@@ -29,8 +29,10 @@ measured under protocol version 3.
   itself, not in the adapter.
 
 In the NR family the native and conservative-portable gf2 builds cannot be
-told apart; the DVB-T2 control cells that read the same are withdrawn. NR bit
-selection has no gf2 entry point. Circulant rotation has no gf2 counterpart,
+told apart. The DVB-T2 control cells that read the same are withdrawn, and in
+the re-measurement one control interval excludes equality while both stay far
+inside the material-gap threshold (§1). NR bit selection has no gf2 entry
+point. Circulant rotation has no gf2 counterpart,
 and arbitrary zero-fill shifts have no external counterpart.
 No production code changes.
 
@@ -181,8 +183,11 @@ against both gf2 builds, at 16-QAM and 64-QAM, at Normal and Short FECFRAME
 and under both `warm` and `streaming`, the external arm is more than the
 equivalence margin slower, and the cell table's *gf2 faster by* column gives
 the reciprocal. The identity control and both portable-versus-native controls
-decide `not-worse`, so the two gf2 builds still cannot be told apart on this
-operation. Every cell's relative half-width is an order below the withdrawn
+decide `not-worse`: neither gf2 build is more than the equivalence margin
+slower than the other. One control's interval excludes equality, so the builds
+are separable on this operation at a distance far below the material-gap
+threshold, which the withdrawn receipts' wider control intervals could not
+show. Every cell's relative half-width is an order below the withdrawn
 confirmation's widest.
 
 **What the outcome licenses.** Every cell's role is `exploratory` and every
