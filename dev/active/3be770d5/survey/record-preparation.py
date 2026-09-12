@@ -33,7 +33,8 @@ SHIM = pathlib.Path("dev/active/c077a88b/survey/harness/cpp/aff3ct_shim.cpp")
 EXECUTABLES = ["gf2-throughput-arm", "aff3ct-throughput-arm", "ldpc-profile", "ldpc-plan-check",
                "ldpc-alloc-census", "ldpc-throughput-validate"]
 NOT_BEHAVIOR = {"make-addenda.py", "record-preparation.py", "summarize-profile.py",
-                "summarize.py", "edge-costs.py", "freeze-addendum.py", "validate.py",
+                "summarize.py", "edge-costs.py", "executable-identity.py",
+                "freeze-addendum.py", "validate.py",
                 "validate-arms.py", "intervals.py", "make-source-evidence.py",
                 "source-evidence.json",
                 "run-profile.sh", "profile-session.sh", "profile-cases.tsv"}
