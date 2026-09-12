@@ -1947,6 +1947,79 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWi
 // Multiplication — schoolbook carry-less kernel
 // ---------------------------------------------------------------------------
 
+/// Name the carry-less product dispatch reports when it runs the portable
+/// bit-by-bit schoolbook rather than a capability-dispatched kernel.
+///
+/// The dispatched lanes report the names `gf2_kernels_simd::gf2m_wide`
+/// publishes (`"avx2+vpclmulqdq-ymm"`, `"pclmulqdq-scalar-xmm"`), so one
+/// vocabulary covers every path a product can take.
+pub const PORTABLE_LANE: &str = "portable-scalar";
+
+/// Records the lane a carry-less product just ran on, for the conformance
+/// suite's dispatch witness.
+///
+/// Compiled away outside test and `test-support` builds, where the recorder
+/// is an empty inlined function.
+#[cfg(any(test, feature = "test-support"))]
+#[inline]
+fn record_clmul_wide_lane(lane: &'static str) {
+    LAST_CLMUL_WIDE_LANE.with(|cell| cell.set(lane));
+}
+
+#[cfg(not(any(test, feature = "test-support")))]
+#[inline(always)]
+fn record_clmul_wide_lane(_lane: &'static str) {}
+
+#[cfg(any(test, feature = "test-support"))]
+std::thread_local! {
+    /// Lane of the most recent carry-less product on this thread.
+    static LAST_CLMUL_WIDE_LANE: std::cell::Cell<&'static str> =
+        const { std::cell::Cell::new(PORTABLE_LANE) };
+}
+
+/// The lane the most recent carry-less wide product ran on in this thread:
+/// [`PORTABLE_LANE`] or the dispatched kernel's name.
+///
+/// The witness the shared carry-less product conformance suite reads to prove
+/// which path a public call took. A thread that has run no product yet reports
+/// [`PORTABLE_LANE`].
+#[cfg(any(test, feature = "test-support"))]
+pub fn last_clmul_wide_lane() -> &'static str {
+    LAST_CLMUL_WIDE_LANE.with(std::cell::Cell::get)
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static FORCE_SCALAR_CLMUL_WIDE: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
+/// Holds every wide carry-less product on the portable schoolbook, or releases
+/// it back to capability dispatch, and reports the previous setting.
+///
+/// One switch covers every caller of the canonical dispatch — the public
+/// long-product API, `Gf2mWide` multiplication and the wide Barrett reducer —
+/// so the portable fallback stays reachable under test on a host that has the
+/// accelerated kernels. Every lane computes the same words, so a concurrent
+/// product that observes the switch writes the same bits either way.
+#[cfg(any(test, feature = "test-support"))]
+pub fn force_scalar_clmul_wide(forced: bool) -> bool {
+    FORCE_SCALAR_CLMUL_WIDE.swap(forced, std::sync::atomic::Ordering::Relaxed)
+}
+
+/// Whether capability dispatch is free to select a kernel.
+#[cfg(any(test, feature = "test-support"))]
+#[inline]
+#[cfg_attr(not(feature = "simd"), allow(dead_code))]
+fn clmul_wide_dispatch_enabled() -> bool {
+    !FORCE_SCALAR_CLMUL_WIDE.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+#[cfg(not(any(test, feature = "test-support")))]
+#[inline(always)]
+#[cfg_attr(not(feature = "simd"), allow(dead_code))]
+fn clmul_wide_dispatch_enabled() -> bool {
+    true
+}
+
 /// Carry-less multiplication of two `N`-word GF(2)-polynomial operands,
 /// producing an unreduced `M`-word result where `M == 2 * N`.
 ///
@@ -2051,6 +2124,7 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 #[inline]
 pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u64]) {
     debug_assert_eq!(out.len(), 2 * N);
+    record_clmul_wide_lane(PORTABLE_LANE);
     for i in 0..N {
         for j in 0..N {
             let product: u128 = super::barrett::clmul(a[i], b[j]);
@@ -2077,7 +2151,7 @@ pub(crate) fn clmul_wide_slice_product<const N: usize>(
     debug_assert_eq!(out.len(), 2 * N);
 
     #[cfg(feature = "simd")]
-    {
+    if clmul_wide_dispatch_enabled() {
         if N == 4 {
             if let Some(fns) = crate::simd::maybe_gf2m_wide256() {
                 let a_arr: &[u64; 4] = (&a[..])
@@ -2089,6 +2163,7 @@ pub(crate) fn clmul_wide_slice_product<const N: usize>(
                 let out_arr: &mut [u64; 8] = out
                     .try_into()
                     .expect("2 * N == 8 guarantees an 8-limb slice");
+                record_clmul_wide_lane(fns.name);
                 (fns.clmul)(a_arr, b_arr, out_arr);
                 return;
             }
@@ -2103,6 +2178,7 @@ pub(crate) fn clmul_wide_slice_product<const N: usize>(
                 let out_arr: &mut [u64; 18] = out
                     .try_into()
                     .expect("2 * N == 18 guarantees an 18-limb slice");
+                record_clmul_wide_lane(fns.name);
                 (fns.clmul)(a_arr, b_arr, out_arr);
                 return;
             }

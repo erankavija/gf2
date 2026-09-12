@@ -1,0 +1,37 @@
+# command: ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features simd,test-support --test clmul_wide_conformance
+# recorded_utc: 2026-09-12T07:12:00Z
+# routing: public clmul_wide/clmul_wide_slice still call the portable schoolbook directly
+
+cargo-budget: 24 jobs (1 live, 24 cpus)
+    Finished `ci-test` profile [optimized] target(s) in 0.05s
+────────────
+ Nextest run ID ab7c1abd-2262-48a3-bf9a-cc45fcd15d6b with nextest profile: ci
+    Starting 4 tests across 1 binary
+        FAIL [   0.003s] (1/4) gf2-core::clmul_wide_conformance public_product_reaches_capability_dispatch
+  stdout ───
+
+    running 1 test
+    test public_product_reaches_capability_dispatch ... FAILED
+
+    failures:
+
+    failures:
+        public_product_reaches_capability_dispatch
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+  stderr ───
+
+    thread 'public_product_reaches_capability_dispatch' (3952171) panicked at crates/gf2-core/tests/clmul_wide_conformance.rs:231:5:
+    assertion `left == right` failed: clmul_wide::<4, 8> did not reach the capability dispatch
+      left: "portable-scalar"
+     right: "avx2+vpclmulqdq-ymm"
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        PASS [   0.004s] (2/4) gf2-core::clmul_wide_conformance field_multiplication_shares_the_canonical_dispatch
+        PASS [   0.006s] (3/4) gf2-core::clmul_wide_conformance portable_fallback_matches_the_oracle_at_every_width
+        PASS [   0.007s] (4/4) gf2-core::clmul_wide_conformance public_product_matches_the_oracle_at_every_width
+────────────
+     Summary [   0.007s] 4 tests run: 3 passed, 1 failed, 0 skipped
+        FAIL [   0.003s] (1/4) gf2-core::clmul_wide_conformance public_product_reaches_capability_dispatch
+error: test run failed
