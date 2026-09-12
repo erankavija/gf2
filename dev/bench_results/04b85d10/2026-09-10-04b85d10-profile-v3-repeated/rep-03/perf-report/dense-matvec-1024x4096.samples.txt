@@ -1,0 +1,28 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       2916  (96.9%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 11664107892
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                             
+# ........  ............  ...............  ................  ...................................................
+#
+    78.81%          2298  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    18.48%           539  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::matvec_simd
+     2.40%            70  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.10%             3  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::Prepared::run
+     0.07%             2  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::matvec
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad708154
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad88fd65
+
+
+#
+# (Tip: When collecting LBR backtraces use --stitch-lbr to handle more than 32 deep entries: perf record --call-graph lbr ; perf report --stitch-lbr)
+#

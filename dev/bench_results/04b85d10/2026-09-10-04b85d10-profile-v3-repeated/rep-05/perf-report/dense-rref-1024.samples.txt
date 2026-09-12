@@ -1,0 +1,66 @@
+# case: {"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3112  (97.0%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12448115144
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    70.69%          2200  consumer-profil  consumer-profile  [.] gf2_core::alg::rref::rref
+    15.87%           494  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+     1.77%            55  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+     1.67%            52  consumer-profil  libc.so.6         [.] 0x0000000000176497
+     1.35%            42  consumer-profil  libc.so.6         [.] 0x0000000000176400
+     1.22%            38  consumer-profil  libc.so.6         [.] 0x0000000000176421
+     1.09%            34  consumer-profil  libc.so.6         [.] 0x0000000000176404
+     0.74%            23  consumer-profil  libc.so.6         [.] 0x00000000001764ac
+     0.64%            20  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::swap_rows
+     0.51%            16  consumer-profil  libc.so.6         [.] 0x0000000000176466
+     0.51%            16  consumer-profil  libc.so.6         [.] 0x00000000001764db
+     0.48%            15  consumer-profil  libc.so.6         [.] 0x0000000000176e8e
+     0.48%            15  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+     0.45%            14  consumer-profil  libc.so.6         [.] 0x0000000000176411
+     0.42%            13  consumer-profil  libc.so.6         [.] 0x0000000000176e84
+     0.32%            10  consumer-profil  libc.so.6         [.] 0x0000000000176e89
+     0.19%             6  consumer-profil  consumer-profile  [.] <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+     0.16%             5  consumer-profil  libc.so.6         [.] 0x000000000017642b
+     0.13%             4  consumer-profil  libc.so.6         [.] 0x000000000017642e
+     0.13%             4  consumer-profil  libc.so.6         [.] 0x000000000017646c
+     0.10%             3  consumer-profil  libc.so.6         [.] 0x0000000000176425
+     0.10%             3  consumer-profil  libc.so.6         [.] 0x0000000000176485
+     0.10%             3  consumer-profil  libc.so.6         [.] 0x00000000001764b5
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x0000000000176470
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x00000000001765a4
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x00000000001765ae
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a5edc
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a6196
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a61b7
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a61d3
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a6294
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a629b
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a63b0
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a6e8b
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a6f7b
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a701b
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a7036
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a7633
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x000000000017649d
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000001764a6
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176625
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e9a
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176eb3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad73d478
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8968b2
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae98e340
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#

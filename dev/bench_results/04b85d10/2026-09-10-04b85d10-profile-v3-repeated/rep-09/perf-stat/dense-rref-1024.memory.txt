@@ -1,0 +1,19 @@
+# case: {"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102}
+# path: current  cache_state: warm  target_ms: 1500
+# events: cycles:u,L1-dcache-loads:u,L1-dcache-load-misses:u,cache-references:u,cache-misses:u
+{"banks":1,"cache_state":"warm","call_count_source":"target-ms","calls":1481,"conversion":{"batch_fill_ns":0,"dispatch_ns":0,"pack_ns":0,"setup_ns":110461,"unpack_ns":0},"elapsed_ns":"1156283209","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"ns_per_call":780744.9081701552,"path":"current","prepare":{"allocated_bytes":262212,"allocations":4,"freed_bytes":131072},"schema":"consumer-profile-record-v2","seed":102,"selected_path":"current/blocked-m4ri","size":{"cols":1024,"rows":1024},"target_ms":1500,"timed":{"allocated_bytes":3541082848,"allocated_bytes_per_call":2391008.0,"allocations":395427,"allocations_per_call":267.0,"freed_bytes":3541082848,"peak_live_bytes":172608},"workers_observed":1,"workload":"dense-rref"}
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile --case {"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102} --path current --cache-state warm --target-ms 1500':
+
+     5,550,816,617      cycles:u                                                              
+     8,569,397,083      L1-dcache-loads:u                                                     
+       532,203,629      L1-dcache-load-misses:u                                               
+       666,216,919      cache-references:u                                                    
+        14,221,784      cache-misses:u                                                        
+
+       1.159817038 seconds time elapsed
+
+       1.154122000 seconds user
+       0.001992000 seconds sys
+
+

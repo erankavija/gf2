@@ -1,11 +1,12 @@
 //! Behavioural checks of the consumer harness that need no timing and no
 //! lock: the arm-path vocabulary the plan derivation writes into arm
-//! environments, the bank rule the cache-state contract implies, and the
-//! preparation of the two arms the allocation cell compares.
+//! environments, the bank rule the cache-state contract implies, the
+//! preparation of the two arms the allocation cell compares, and the fixture
+//! generator a record names beside its seed.
 
 use std::collections::BTreeMap;
 
-use consumer_profile_gf2_side::{bank_count, prepare, ArmPath, Case};
+use consumer_profile_gf2_side::{bank_count, prepare, ArmPath, Case, FIXTURE_RNG};
 use tuning_campaign_support::timing::FIXTURE_BANKS;
 
 /// Every spelling `build-plan.py` emits decodes, and an unknown one is
@@ -82,4 +83,51 @@ fn timed_bodies_produce_a_live_result() {
     let first = prepared.sink();
     prepared.run(0);
     assert_ne!(first, prepared.sink(), "the XOR pair alternates the bank");
+}
+
+/// A random fixture names its generator; a deterministic fixture names none.
+#[test]
+fn seeded_fixtures_name_their_generator() {
+    let seeded = prepare(
+        &case("popcount", &[("words", 8)], 201),
+        ArmPath::ScalarBackend,
+        "warm",
+        FIXTURE_BANKS,
+    )
+    .expect("popcount");
+    assert_eq!(seeded.fixture_rng, Some(FIXTURE_RNG));
+
+    let zero = prepare(
+        &case("zero-test", &[("words", 8), ("set_bit", 0)], 202),
+        ArmPath::CountOnes,
+        "warm",
+        FIXTURE_BANKS,
+    )
+    .expect("zero test");
+    assert_eq!(zero.fixture_rng, None);
+}
+
+/// The generator versions a record names are the ones the harness lockfile
+/// resolves, each to a single version.
+#[test]
+fn fixture_generator_versions_match_the_lockfile() {
+    let lock = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.lock"))
+        .expect("the harness lockfile is committed beside its manifest");
+    for (name, recorded) in [
+        ("rand", FIXTURE_RNG.rand),
+        ("rand_chacha", FIXTURE_RNG.rand_chacha),
+        ("rand_core", FIXTURE_RNG.rand_core),
+    ] {
+        let declaration = format!("name = \"{name}\"");
+        let resolved: Vec<&str> = lock
+            .split("[[package]]")
+            .filter(|block| block.lines().any(|line| line.trim() == declaration))
+            .filter_map(|block| {
+                block
+                    .lines()
+                    .find_map(|line| line.trim().strip_prefix("version = \"")?.strip_suffix('"'))
+            })
+            .collect();
+        assert_eq!(resolved, [recorded], "{name} in the harness lockfile");
+    }
 }

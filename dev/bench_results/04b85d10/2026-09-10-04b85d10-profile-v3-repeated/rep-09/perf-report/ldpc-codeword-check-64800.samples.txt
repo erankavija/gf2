@@ -1,0 +1,35 @@
+# case: {"workload":"ldpc-codeword-check","size":{"n":64800},"seed":203}
+# path: count-ones  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3596  (96.3%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14384133052
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                      
+# ........  ............  ...............  ................  ............................................
+#
+    99.56%          3580  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+     0.06%             2  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::from_coo
+     0.03%             1  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::prepare
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.03%             1  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a61c5
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176646
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad401280
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad7f7dae
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad892edd
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad894abb
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad896474
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb10fb3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae960620
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae99dd9b
+
+
+#
+# (Tip: To show information about system the samples were collected on use perf report --header)
+#
