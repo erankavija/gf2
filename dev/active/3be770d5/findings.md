@@ -4,9 +4,13 @@
 
 Survey for `3be770d5`. It measures and ranks; it changes no production decoder.
 The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [benchmark protocol](../f547c394/protocol.md) govern every timed cell,
-the pilots under version 3 and the confirmations under version 4; the
-[plan](plan.md) maps each criterion to what `c077a88b` already settles.
+and the [shared protocol](../f547c394/protocol.md) govern every timed cell.
+A receipt pins, snapshots and is evaluated under the version it names: the
+three pilots name [version 3](../f547c394/amendment-v3.md) and the two matched
+confirmations name [version 4](../f547c394/amendment-v4.md), which admits a
+version-3 pilot as resolution evidence because both versions derive the pilot
+resolution identically. The [plan](plan.md) maps each criterion to what
+`c077a88b` already settles.
 The three pilot campaigns are measured and accepted; the profile shares and
 the two matched confirmations are not yet measured, so the sections that rest
 on them stay WAITING-ON-WINDOW.
@@ -53,14 +57,27 @@ and input identities are in the
 and every campaign refuses to start against an arm executable whose digest
 differs from it.
 
-The confirmations measure the arm executables the pilots measured, so the two
-campaigns of a family compare the same candidate. Those executables were built
-before protocol v4 landed, and v4 changed the campaign-support library the arms
-link for their result encoding, so rebuilding them from the merged tree yields
-different bytes while the profiling executables reproduce theirs exactly. It
-changes no decoder: the merge touched no crate under `crates/` and no arm
-source, and the arms and the v4 runner were exercised together end to end
-before the campaigns were queued.
+The confirmations measure the arm executables the pilots measured, which the
+[executable identity table](../../bench_results/3be770d5/preparation/executable-identity.md)
+records. Two rules make that the required choice rather than a convenience.
+A candidate identity hashes executable bytes, and the confirmatory attempt cap
+is one attempt per candidate identity and protocol version, so rebuilt bytes
+are a different candidate: a confirmation on them would not confirm what the
+pilot resolved, and the pilot-to-confirmation chain the family ledger exists to
+track would be broken. And the protocol treats git revisions, commit ancestry
+and whole-tree state as navigation metadata that decide neither acceptance nor
+resume compatibility, because a receipt pins the exact bytes it measured; the
+standard a build has to meet is reproducible from the recorded identity, not
+built from the tree at run time.
+
+The arms therefore link a campaign-support library older than the runner's:
+they were built before protocol v4 landed, and v4 changed that library's result
+encoding, so rebuilding them from the merged tree yields different bytes while
+the profiling executables reproduce theirs exactly. The mismatch is confined to
+measurement plumbing. It changes no decoder — the v4 merge touched no crate
+under `crates/` and no arm source — and it is not assumed to be harmless: the
+pinned arms and the v4 runner were run together end to end, through the real
+runner to an accepted receipt, before the confirmations were queued.
 
 ## Comparison contract
 
@@ -133,16 +150,30 @@ above AFF3CT's and the L1d or cache miss ratio rises with the worker count.
 
 The first series
 ([v3-r1-steady-profile](../../bench_results/3be770d5/v3-r1-steady-profile/))
-carries no figure: every profiled case of all nine sessions exited on the
-`perf` control channel, so no case wrote its record and the summarizer
+produced zero usable samples: every profiled case of all nine sessions exited
+on the `perf` control channel, so no case wrote its record and the summarizer
 excluded all of them. `perf` answers a control command with its
 acknowledgement tag and the trailing NUL of the C string literal, and the
-driver read the NUL of one answer as the head of the next. Its session
-directories, the statuses, the summary they produce and the
+driver read the NUL of one answer as the head of the next. **No conclusion in
+this document rests on that series**, and its
+[generated summary](../../bench_results/3be770d5/v3-r1-steady-profile/profile.md)
+reports zero samples in every table. The series stays: its session
+directories, the per-case statuses, that summary and the
 [window job log](../../bench_results/3be770d5/v3-r1-steady-profile-window-job.log)
-stay as the record of that outcome. The driver now tolerates the padding and
-the series stops at a session that leaves no usable case, so the failure
-surfaces in the window instead of at the summary.
+are the record of the outcome, and the re-run neither replaces nor amends
+them.
+
+The driver now tolerates the padding and the series stops at a session that
+leaves no usable case, so the same failure surfaces inside the window instead
+of at the summary. The re-run is queued as its own window job. It settles what
+REQ-02 asks and what the lever ranking needs: the sampled share of each
+category with its interval for gf2 and AFF3CT at one and twenty-four workers,
+the counter groups behind the single-core and saturation test stated above,
+and the allocation census the first session records. The fix moved one
+executable and no other: the
+[executable identity table](../../bench_results/3be770d5/preparation/executable-identity.md)
+joins the digest every committed measurement recorded to the digest the build
+identity now records.
 
 ## Structural and allocation evidence
 
