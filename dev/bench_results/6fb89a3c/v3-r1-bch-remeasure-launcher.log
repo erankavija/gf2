@@ -1,0 +1,29 @@
+# command: dev/bench_results/6fb89a3c/run-campaign.sh bch remeasure v3-r1
+# invocation: new
+# started_utc: 2026-09-12T01:06:44Z
+# gf2 revision (informational): f64cfa8ec9e809c1a1fd5503880c582836214a0b
+# family: bch  mode: remeasure  run-id: v3-r1
+# addendum: dev/active/6fb89a3c/addendum-bch-genmatrix-v3-remeasure.json  sha256: b5efb5a23728e5169515c7a8f9222d8f2478cb5b41bef752a8cd0552d9fb483d
+# ledger: dev/bench_results/6fb89a3c/v3-bch-genmatrix-family-ledger.jsonl  sha256: c602b77150a34db4ffa7b1cd668e894abd0dd1a0c1604eb1b240409e933502bf
+# campaign: 6fb89a3c-v3-r1-bch-remeasure
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/target/6fb89a3c-campaigns/6fb89a3c-v3-r1-bch-remeasure
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/target/6fb89a3c-campaigns/6fb89a3c-v3-r1-bch-remeasure.plan.json  sha256: c71d41f7fe71f6149ad143b86974c2e40621a00638ca89fef80ddf73e8a83f59
+# external staging: /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)  cc: gcc (GCC) 16.2.1 20260810
+# arm digests:
+#   5cdd572ebf07455d13bd3c627af447a8d75654e69012b37f1a8e10ea38ab84f0  dev/active/6fb89a3c/survey/m4ri_transpose_arm
+#   416087ed59642180b0cea93e718514c3b6675e1ff05c4337b04deafa1205ca8b  dev/active/6fb89a3c/survey/m4ri_genmatrix_arm
+#   74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b  dev/active/6fb89a3c/survey/bitshuffle_transpose_arm
+#   e66fbbab6db40dd91006275a0e3cf4b0ad8d238a8326d73af987af76b971a53b  dev/active/6fb89a3c/survey/isal_xor_arm
+#   f6fe3288f78d45d03136fa56f77d5694224cceeeeb15ac1631216c4e2e1c1c62  dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_transpose_arm
+#   787e438b4a728748018face738e3a342e9b748492f13637cbc7072577f1e67d1  dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_logical_xor_arm
+#   f5c15729951dbcf151b38c2932112fa20a492933bb97aa1cb6b3fa1ccf90d83f  dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_bch_genmatrix_arm
+# session command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 RAYON_NUM_THREADS=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/target/6fb89a3c-campaigns/6fb89a3c-v3-r1-bch-remeasure /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/target/6fb89a3c-campaigns/6fb89a3c-v3-r1-bch-remeasure.plan.json
+# load_avg_start:  04:06:44 up 8 days,  5:35,  8 users,  load average: 1.06, 0.86, 0.49
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/target/6fb89a3c-campaigns/6fb89a3c-v3-r1-bch-remeasure/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/target/6fb89a3c-campaigns/6fb89a3c-v3-r1-bch-remeasure/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c-v3/target/6fb89a3c-campaigns/6fb89a3c-v3-r1-bch-remeasure/execution.log
+# session 3 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-remeasure/receipt.json
