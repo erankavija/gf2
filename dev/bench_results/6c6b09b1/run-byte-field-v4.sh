@@ -5,8 +5,14 @@
 #   dev/bench_results/6c6b09b1/run-byte-field-v4.sh build
 #   dev/bench_results/6c6b09b1/run-byte-field-v4.sh plan|run|finalize|window CAMPAIGN
 #
-# CAMPAIGN is one of region-axpy-pilot, matrix-product-pilot or
-# pairwise-control-pilot.
+# CAMPAIGN is one of region-axpy-pilot, matrix-product-pilot,
+# pairwise-control-pilot and the three -confirmation campaigns beside them.
+#
+# A pilot measures every cell its family declares on the exploratory pair
+# count below. A confirmation measures the six cells its frozen confirmation
+# addendum declares, on the protocol's confirmatory pair count, with a seed of
+# its own: the samples are fresh, and the addendum's resolution, margins and
+# pilot pin were frozen before this script could reach the host.
 #
 # `build` stages the verified external prefix, compiles the C shim, the
 # conformance and provenance binaries and the Rust arms, runs every
@@ -38,6 +44,10 @@
 # Every numeric setting comes from the addendum and the protocol's frozen
 # shared settings; this script fixes only campaign identities, seeds, the
 # pilot pair count and the session budget.
+#
+# `dev/active/6c6b09b1/survey/smoke-arms.sh` carries every arm these campaigns
+# name through the real runner on a throwaway family before a campaign is
+# queued, so a wire defect fails in a working session rather than in a window.
 set -euo pipefail
 # The benchmark window starts this script with the login environment only.
 [[ -d "$HOME/.cargo/bin" ]] && export PATH="$HOME/.cargo/bin:$PATH"
@@ -110,6 +120,15 @@ case "$CAMPAIGN" in
   pairwise-control-pilot)
     ADDENDUM=dev/active/$ISSUE/addendum-v4-pairwise-control-pilot.json
     LABEL=pilot SEED=2026091103 MAX_CELLS=7 PILOT_PAIRS=12 ;;
+  region-axpy-confirmation)
+    ADDENDUM=dev/active/$ISSUE/addendum-v4-region-axpy-confirmation.json
+    LABEL=confirmation SEED=2026091201 MAX_CELLS=3 PILOT_PAIRS= ;;
+  matrix-product-confirmation)
+    ADDENDUM=dev/active/$ISSUE/addendum-v4-matrix-product-confirmation.json
+    LABEL=confirmation SEED=2026091202 MAX_CELLS=3 PILOT_PAIRS= ;;
+  pairwise-control-confirmation)
+    ADDENDUM=dev/active/$ISSUE/addendum-v4-pairwise-control-confirmation.json
+    LABEL=confirmation SEED=2026091203 MAX_CELLS=3 PILOT_PAIRS= ;;
   *) echo "unknown campaign $CAMPAIGN" >&2; exit 2 ;;
 esac
 ID=$ISSUE-v4-r1-$CAMPAIGN
@@ -242,11 +261,13 @@ case "$ACTION" in
     verify_build
     mkdir -p "$STAGES"
     touch "$LOCK"
+    # A confirmatory cell takes the protocol's frozen pair count, so only an
+    # exploratory campaign names one.
     python3 "$SURVEY/make-plan-versioned.py" --addendum "$ADDENDUM" --label "$LABEL" \
       --campaign-id "$ID" --campaign-seed "$SEED" --lock "$(realpath "$LOCK")" \
       --target "$TARGET" --max-cells-per-session "$MAX_CELLS" \
       --producing-manifest "$SURVEY/producing-inputs-v4.json" \
-      --pilot-pairs "$PILOT_PAIRS" --output "$PLAN"
+      ${PILOT_PAIRS:+--pilot-pairs "$PILOT_PAIRS"} --output "$PLAN"
     ;;
   run) run_sessions "$@" ;;
   finalize) finalize ;;
