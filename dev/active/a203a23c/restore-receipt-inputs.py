@@ -13,6 +13,10 @@ written, so no measurement evidence is reconstructed and every restored byte
 carries a committed source. A pinned file no committed file matches is recorded
 as unrestored with its receipt.
 
+`sources_by_digest` hashes every file the base revision tracks, reading blob
+bytes through one `git cat-file --batch` process rather than one process per
+file; `dev/active/a203a23c/timing/` records the cost that batching avoids.
+
 Usage: dev/active/a203a23c/restore-receipt-inputs.py <base-revision>
 """
 
