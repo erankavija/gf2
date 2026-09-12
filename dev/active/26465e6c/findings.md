@@ -5,7 +5,9 @@
 Survey for `26465e6c` on the Ryzen 9 5900X. It changes no production kernel or
 library. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol version 3](../f547c394/protocol.md) govern every receipt.
+and the [shared protocol](../f547c394/protocol.md) at
+[version 3](../f547c394/amendment-v3.md) — the version every receipt pins,
+snapshots and is evaluated under — govern every receipt.
 
 This report states no measured value. Each conclusion points to its source: a
 section of the generated [receipt tables](../../bench_results/26465e6c/tables.md),
@@ -91,16 +93,22 @@ first session inside cell `and-popcnt-w4096-vs-scalar-control`: that session
 has no exit line in the receipt's `launcher.log`, and its `execution.log`
 starts the cell without completing it. After the second session paused, the
 launcher loop started no third session; a re-invoked `run` did. The second
-session had started the interrupted cell again, which P-11 rejects; the
-shared-tool defect is tracked as `bdc507a3`. The receipt stays published and is
-not resolution evidence: `v3-and-popcnt-pilot-r2` re-measured the same frozen
-pilot addendum as the second of the two pilot trials per cell it allows
-(`search_budget`). Every cell of every receipt ran on one core under the
-protocol's shared window settings, and no window is flagged (column *Flagged*
-in each § Cells; `resolved_cpus` in each summary). The launcher
+session had started the interrupted cell again, which P-11 rejects. Under
+protocol v3 only a stop at a cell boundary, at a cell-budget pause or between
+sessions, resumes without repeating a cell; protocol v4 lifts that restriction
+by journalling the abandoned attempt (`bdc507a3`,
+[amendment](../f547c394/amendment-v4.md)). These receipts pin v3 and are
+evaluated under the rules they pin, so the rejection stands. The receipt stays
+published and is not resolution evidence:
+`v3-and-popcnt-pilot-r2` re-measured the same frozen pilot addendum as the
+second of the two pilot trials per cell it allows (`search_budget`). Every cell
+of every receipt ran on one core under the protocol's shared window settings,
+and no window is flagged (column *Flagged* in each § Cells; `resolved_cpus` in
+each summary). The launcher
 [`run-campaign.sh`](../../bench_results/26465e6c/run-campaign.sh) records the
-exact commands, and [`survey/producing-inputs.json`](survey/producing-inputs.json)
-names every file whose bytes the receipts snapshot.
+exact commands and states the resume condition for its operators, and
+[`survey/producing-inputs.json`](survey/producing-inputs.json) names every file
+whose bytes the receipts snapshot.
 
 ### Arms, pins and builds
 

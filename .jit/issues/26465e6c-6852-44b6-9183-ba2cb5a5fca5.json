@@ -317,6 +317,21 @@
       "status": "passed",
       "updated_at": "2026-09-11T16:55:24.461055720Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-11T17:41:00.810578765Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-11T17:41:58.831799818Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-11T17:42:52.168351313Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "26465e6c-6852-44b6-9183-ba2cb5a5fca5",
@@ -332,5 +347,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Establish population-count and fused-reduction baselines",
-  "updated_at": "2026-09-11T16:57:55.032823810Z"
+  "updated_at": "2026-09-11T17:42:52.168351313Z"
 }

@@ -30,12 +30,14 @@ say() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> "$log"; }
 
 say "window start host=$(hostname) load=$(cut -d' ' -f1-3 /proc/loadavg) queue_sha256=$(sha256sum "$here/queue.tsv" | cut -d' ' -f1)"
 
-# A compiler-cache server that a locked cargo run spawned inherits the CCX1
-# lock descriptors and holds the lock until it exits, blocking every later
-# acquirer; a server that idles out mid-window is respawned by the next cargo
-# run, possibly under a lock. Replace any server that holds a lock descriptor
-# or can idle out with one started here, outside every lock, that never idles
-# out.
+# The lock wrappers on main release the CCX1 locks when the wrapped command
+# exits (jit:a387825e), so a compiler-cache server they spawned no longer keeps
+# the locks held. A worktree that has not merged that fix still runs the old
+# wrapper, under which such a server inherits the lock descriptors and blocks
+# every later acquirer until it exits; and a server that idles out mid-window is
+# respawned by the next cargo run, possibly under a lock. Replace any server
+# that holds a lock descriptor or can idle out with one started here, outside
+# every lock, that never idles out.
 if command -v sccache > /dev/null; then
     for pid in $(pgrep -x sccache); do
         holds_lock=0

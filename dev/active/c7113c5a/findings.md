@@ -26,7 +26,9 @@ binary-polynomial products are different operations. The survey asks which gf2
 consumers perform an operation gf2x also performs once field reduction is
 separated, how far current gf2 is from gf2x on this Ryzen 9 5900X under the
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol version 3](../f547c394/protocol.md), and what accounts for each
+and the [shared protocol](../f547c394/protocol.md) at
+[version 3](../f547c394/amendment-v3.md) — the version every receipt pins,
+snapshots and is evaluated under — and what accounts for each
 gap. The issue excludes adoption, a gf2x production dependency and any gf2
 multiplication change, so every v3 cell is a `comparator-gap` cell with gf2 as
 baseline and gf2x as candidate: a speedup of medians below one means gf2 is

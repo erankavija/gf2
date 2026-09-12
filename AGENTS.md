@@ -53,6 +53,9 @@ release mode.
   it, sibling builds keep the shared side permanently occupied and the
   measurement run is never granted. Such a run sets `CARGO_CI_NO_LOCK=1` for
   its own cargo work or it deadlocks against its own locks.
+- Both lock wrappers hold their locks exactly as long as the wrapped command
+  runs: once it exits, a daemon it started, such as the `sccache` server, holds
+  no lock, and work it left in the background runs unlocked.
 - `RAYON_NUM_THREADS` in `.cargo/config.toml` pairs with `threads-required` in
   `.config/nextest.toml`; change one and change the other. A binary run directly
   from `target/` inherits neither.

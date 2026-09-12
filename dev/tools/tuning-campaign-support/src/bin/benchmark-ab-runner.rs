@@ -5,7 +5,10 @@
 //! `run <stage> <plan.json>` executes unfinished cells inside the lock wrapper
 //! and pauses or completes; `finalize <stage> <out-dir>` assembles the receipt
 //! directory from the stage after the wrapper returns. Every arm is a fresh
-//! child process speaking the canonical child-v2 framing.
+//! child process speaking the canonical child-v2 framing. Under protocol
+//! version 4 a resumed session journals `cell-abandoned` for a cell attempt
+//! that an interruption left unfinished, then measures that cell again from
+//! its first pair.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -30,14 +33,15 @@ use tuning_campaign_support::journal::{
 };
 use tuning_campaign_support::process::run_process;
 use tuning_campaign_support::protocol::{
-    sha256_hex, ArtifactPin, CacheState, FamilyAddendum, RunnerPlan, ADDENDUM_SCHEMA_PATH,
-    CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
+    sha256_hex, ArtifactPin, CacheState, FamilyAddendum, PlanCell, RunnerPlan,
+    ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
 };
 use tuning_campaign_support::provenance::{ProducingInputs, ProducingSnapshot};
 use tuning_campaign_support::receipt::{
-    ArmQuality, ArmRecord, BenchmarkReceipt, CampaignFacts, CellClaim, CellRecord, CellStatus,
-    CheckpointRecord, ConversionCosts, ExecutionRecord, LockRecord, LogRecord, PairRecord,
-    SourceIdentity, WindowRecord, WorkerReport, CHECKPOINT_DIR, LOG_FILE, PLAN_FILE, RECEIPT_FILE,
+    ArmQuality, ArmRecord, BenchmarkReceipt, CampaignFacts, CellAbandonment, CellAttempts,
+    CellClaim, CellRecord, CellStatus, CheckpointRecord, ConversionCosts, ExecutionRecord,
+    LockRecord, LogRecord, PairRecord, SourceIdentity, WindowRecord, WorkerReport, CHECKPOINT_DIR,
+    LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
 use tuning_campaign_support::transport::{self, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 
@@ -273,7 +277,7 @@ fn capture_referenced_receipts(
             let ledger = pilot
                 .trial_ledger
                 .as_ref()
-                .ok_or_else(|| invalid("v3 resolution evidence pilot lacks trial ledger"))?;
+                .ok_or_else(|| invalid("versioned resolution evidence pilot lacks trial ledger"))?;
             capture_pilot_input(
                 &pilot_dir,
                 stage,
@@ -600,6 +604,12 @@ fn run_arm(
     Ok(execution)
 }
 
+/// Journal case of a cell's start, abandonment, checkpoint and completion
+/// records; the cell ID is its checkpoint key.
+fn cell_case(cell: &PlanCell) -> Value {
+    json!({"key": cell.cell_id, "cell_id": cell.cell_id, "case": cell.case})
+}
+
 fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
     let plan_cell = session.plan.cells[index].clone();
     let key = plan_cell.cell_id.clone();
@@ -608,7 +618,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
         .cell(&plan_cell.cell_id)
         .cloned()
         .ok_or_else(|| invalid("undeclared cell"))?;
-    let case = json!({"key": key, "cell_id": plan_cell.cell_id, "case": plan_cell.case});
+    let case = cell_case(&plan_cell);
     session.log.append(
         JournalEvent::CellStart,
         Some(case.clone()),
@@ -802,6 +812,15 @@ fn run(stage: &Path, plan_path: &Path) -> io::Result<i32> {
     let budget = session.plan.max_cells_per_session;
     let mut measured = 0u32;
     let outcome = (|| -> io::Result<TerminalState> {
+        let attempts = if session.addendum.protocol.version >= 4 {
+            let prefix = session.log.validated_synced_prefix()?;
+            CellAttempts::from_journal(&ExecutionLog::validate_prefix(
+                &prefix,
+                &session.plan.campaign_id,
+            )?)
+        } else {
+            CellAttempts::default()
+        };
         for index in 0..session.plan.cells.len() {
             let key = session.plan.cells[index].cell_id.clone();
             if session.checkpoints.completed_unit(&key).is_some() {
@@ -814,6 +833,17 @@ fn run(stage: &Path, plan_path: &Path) -> io::Result<i32> {
             }
             if budget.is_some_and(|limit| measured >= limit) {
                 return Ok(TerminalState::Paused);
+            }
+            // The unfinished attempt's samples never reached a checkpoint;
+            // the cell is measured again from its first pair.
+            if let Some(attempt) = attempts.unfinished(&key) {
+                session.log.append(
+                    JournalEvent::CellAbandoned,
+                    Some(cell_case(&session.plan.cells[index])),
+                    serde_json::to_value(CellAbandonment {
+                        attempt_start: attempt.start,
+                    })?,
+                )?;
             }
             measure_cell(&mut session, index)?;
             measured += 1;
