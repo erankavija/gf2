@@ -1,0 +1,28 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 12824118622
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    75.45%          2419  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    11.48%           368  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.81%           122  libc.so.6         [.] 0x000000000017646c
+     3.31%           106  libc.so.6         [.] malloc
+     1.93%            62  libc.so.6         [.] cfree
+     1.40%            45  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.12%            36  libc.so.6         [.] 0x0000000000176400
+     1.00%            32  libc.so.6         [.] 0x0000000000176476
+     0.41%            13  libc.so.6         [.] 0x0000000000176404
+     0.03%             1  libc.so.6         [.] 0x0000000000176470
+     0.03%             1  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  [unknown]         [k] 0xffffffffad88f30e
+
+
+#
+# (Tip: To adjust path to source files to local file system use perf report --prefix=... --prefix-strip=...)
+#

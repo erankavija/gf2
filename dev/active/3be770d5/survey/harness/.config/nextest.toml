@@ -1,0 +1,5 @@
+# Projection of the repository `[profile.ci]` block (`.config/nextest.toml`) for
+# this standalone workspace; its package-specific overrides match no package here.
+[profile.ci]
+slow-timeout = { period = "15s", terminate-after = 1 }
+fail-fast = false

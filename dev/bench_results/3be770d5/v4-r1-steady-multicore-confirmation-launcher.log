@@ -1,0 +1,30 @@
+start=2026-09-12T09:36:45Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation/execution.log
+terminal=3 end=2026-09-12T09:47:50Z
+start=2026-09-12T09:47:50Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation/execution.log
+terminal=3 end=2026-09-12T10:00:44Z
+start=2026-09-12T10:00:44Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation/execution.log
+terminal=3 end=2026-09-12T10:32:29Z
+start=2026-09-12T10:32:29Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation/execution.log
+terminal=3 end=2026-09-12T10:38:52Z
+start=2026-09-12T10:38:52Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation/execution.log
+terminal=3 end=2026-09-12T10:46:01Z
+start=2026-09-12T10:46:01Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-multicore-confirmation/execution.log
+terminal=0 end=2026-09-12T10:59:55Z
