@@ -80,9 +80,9 @@ through `summarize-v3.py`.
 
 | Source | Pin | License | Role here |
 |---|---|---|---|
-| xdsopl/LDPC [Xdsopl2026] | commit `32357d8ad55a6a302c34e093759f0454e45cca56` | zero-clause BSD grant (`xdsopl-license`) | timed DVB-T2 arm |
-| AFF3CT [Cassagne2019] | tag `v4.7.0`, commit `e8a65c5047262d97a15563b9edc961f69b2792cc` | MIT (`aff3ct-license`) | timed NR arm, linking the static library `c077a88b` built, whose digest and flags `survey/nr-derate-validation.txt` verifies |
-| srsRAN_Project [Srsran2026] | tag `release_25_10`, commit `d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc` | AGPL version 3 or later (`srsran-license-grant`) | source survey; unavailable to build |
+| xdsopl/LDPC [Xdsopl2026] | commit, by `commits.xdsopl-ldpc` in `source-evidence.json`; `survey/xdsopl-pin.txt` and the gate verify it | zero-clause BSD grant (`xdsopl-license`) | timed DVB-T2 arm |
+| AFF3CT [Cassagne2019] | tag `v4.7.0` and commit, by `commits.aff3ct`; `survey/nr-derate-validation.txt` verifies the commit and the static library `c077a88b` built, with its digest and flags | MIT (`aff3ct-license`) | timed NR arm |
+| srsRAN_Project [Srsran2026] | tag `release_25_10` and commit, by `commits.srsran` | AGPL version 3 or later (`srsran-license-grant`) | source survey; unavailable to build |
 
 All arms are single-core release builds from the toolchain the receipts record
 (both table documents, *Sessions and host*). The `native` builds use
