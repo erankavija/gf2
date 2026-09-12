@@ -1,0 +1,10 @@
+cargo-budget: 24 jobs (1 live, 24 cpus)
+   Compiling tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/dev/tools/tuning-campaign-support)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/crates/gf2-core)
+    Finished `ci-test` profile [optimized] target(s) in 2m 56s
+────────────
+ Nextest run ID 9a83722a-0b8e-40e6-9cf5-1631436bc1ed with nextest profile: ci
+    Starting 1 test across 87 binaries (2686 tests skipped)
+        PASS [   0.014s] (1/1) gf2-core field::axiom_tests::test_gf2_8_field_axioms
+────────────
+     Summary [   0.022s] 1 test run: 1 passed, 2686 skipped

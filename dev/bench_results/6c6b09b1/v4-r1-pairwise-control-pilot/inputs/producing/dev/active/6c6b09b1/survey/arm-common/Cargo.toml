@@ -1,0 +1,21 @@
+# Shared arm driver for the byte-field survey (jit:6c6b09b1).
+#
+# Both arm crates depend on this one so the child-v2 transport, the case
+# schema and the conversion-cost accounting have a single definition. The
+# crate holds no arithmetic; each arm supplies its own kernel. The empty
+# workspace table keeps it out of the repository workspace so it can be
+# linted on its own; the arm crates depend on it by path.
+
+[workspace]
+
+[package]
+name = "byte-field-arm-common"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }

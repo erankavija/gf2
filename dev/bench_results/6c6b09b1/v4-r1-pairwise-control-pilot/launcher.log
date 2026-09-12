@@ -1,0 +1,18 @@
+# command: dev/bench_results/6c6b09b1/run-byte-field-v4.sh window pairwise-control-pilot
+# started_utc: 2026-09-12T09:20:17Z
+# gf2 revision (informational): 361e79298789108c8cfa88fed6df055328595fcf
+# addendum: dev/active/6c6b09b1/addendum-v4-pairwise-control-pilot.json sha256 1921c5aa544d6f1b842c1a074913ee5e89e445c4567138394a33e0502e392666
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-pilot.plan.json sha256 09bb5c6afb1e0b5c3b6f28d5df959aaa2da0f478040a0bfbe3f6d7cdb118d43b
+# build record: dev/active/6c6b09b1/conformance-v4/build-record.txt sha256 71061b546cb7f86397998d05367925acf48c6c5019ac516aa0203f2917e2997f
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 1.10 3.40 7.78
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-pilot/execution.log
+# session 1 exit: 3 at 2026-09-12T09:21:57Z load 2.00 3.03 7.19
+# session 2 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-pilot/execution.log
+# session 2 exit: 0 at 2026-09-12T09:22:25Z load 1.72 2.88 7.03
+journal: 9 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/receipt.json

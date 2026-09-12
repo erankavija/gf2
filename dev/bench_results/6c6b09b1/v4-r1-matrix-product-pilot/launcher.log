@@ -1,0 +1,22 @@
+# command: dev/bench_results/6c6b09b1/run-byte-field-v4.sh window matrix-product-pilot
+# started_utc: 2026-09-12T09:16:17Z
+# gf2 revision (informational): 361e79298789108c8cfa88fed6df055328595fcf
+# addendum: dev/active/6c6b09b1/addendum-v4-matrix-product-pilot.json sha256 fb029f20db272c1d802c4100497e5759077ebe26a33f8472ebf10410d01a1022
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot.plan.json sha256 9b350c4d1d23413443d7122fcba4e55c390dd0933b8cc5717655f89ede2caf35
+# build record: dev/active/6c6b09b1/conformance-v4/build-record.txt sha256 71061b546cb7f86397998d05367925acf48c6c5019ac516aa0203f2917e2997f
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 1.28 6.24 9.75
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot/execution.log
+# session 1 exit: 3 at 2026-09-12T09:18:03Z load 1.17 4.72 8.83
+# session 2 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot/execution.log
+# session 2 exit: 3 at 2026-09-12T09:19:20Z load 1.20 3.93 8.23
+# session 3 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-matrix-product-pilot/execution.log
+# session 3 exit: 0 at 2026-09-12T09:20:17Z load 1.10 3.40 7.78
+journal: 14 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot/receipt.json
