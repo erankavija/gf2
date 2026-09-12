@@ -51,12 +51,13 @@ conversions to justify a Zen 3 kernel experiment, and which apparent kernel
 opportunities disappear inside the whole consumer?
 
 Three families answer it, one per consumer group and per downstream issue.
-All six v3 receipts are accepted with zero findings (tables § each receipt's
-heading); none qualifies for production selection, because each family
-contains a confirmed not-material cell and because this issue adopts nothing.
-Four cells carry a recorded contradiction between what their addendum
-declares and what the receipt measures; the conclusions those cells support
-are withdrawn below and the two v4 pilots replace them.
+All six v3 receipts are accepted with zero findings, and none qualifies for
+production selection (tables § each receipt's heading, *verdict* and
+*qualifies*): every family's confirmation records at least one cell that is
+not material, and this issue adopts nothing in any case. Four cells carry a
+recorded contradiction between what their addendum declares and what the
+receipt measures; the conclusions those cells support are withdrawn below,
+and the two v4 pilots replace them.
 
 1. **Layout.** The detected AVX2 64x64 transpose is confirmed faster than the
    portable primitive in isolation and on the six-core streaming arm (tables §
