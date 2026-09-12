@@ -47,7 +47,7 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "rework round 1: in-session work done at 69a3480e (L1 exact POPCNT attribution, RNG provenance, frame relabel, intervals wired). Repeated profile rep-02..rep-09 queued for the 2026-09-12 window (pinned c7de48e9). After the window: commit reps and summaries, check findings against the generated rows, REQ-03/REQ-04 to MET, merge main, then reviews and gates. See reports/04b85d10-s9 in handoff-7.",
+          "status": "in-session work complete at dd653d22 (main merged at be0986af). Nine-session repeated profile committed and verified; lead independently confirmed 180 profile records and 8/8 passing checks in all nine sessions. All six v3 receipts re-accept under the v4 evaluator with byte-identical summaries. REQ-01..05 MET per worker. No window job. Awaiting merge, gates and lead review.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10-v3",
@@ -63,7 +63,7 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "v3 migration done up to the pilots at b2ac9e7c; three exploratory pilots queued for the 2026-09-12 window (pinned 7346b5e5). After the window: commit receipts, derive resolutions, freeze and queue confirmations (at most six confirmatory cells per family), merge main after the last run.",
+          "status": "session 10: wire-type defect fixed (Request.role decoded the runner's A/B pair position as the protocol CellRole enum, killing all three queued v3 pilots in 13 ms); contract tests added that scan the runner's own ArmRequest declaration; untimed end-to-end smoke reached a result line from all six arms over a 19-cell throwaway plan. Merged main at 2b448645, migrated to protocol v4, removed conformance-v3 and producing-inputs-v3.json (justification requested). Three v4 pilot window-job lines queued.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
@@ -126,7 +126,7 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "rework round 1 committed at 5cb229df (doc-review F1: launcher resume comment, findings passage) in worktree .agents/worktrees/agent-26465e6c-r1 on branch worktree-agent-26465e6c-v3. Earlier on cd6e69d1: cargo-ci, two independent reviews, code-review and research-review passed. Next: merge, cargo-ci, two independent reviews and three AI gates on one commit, close.",
+          "status": "done. Rework round 1 (doc-review F1, launcher resume comment) merged at fec1f140; the lead then swept the narrative protocol v4 invalidated and regenerated reevaluation.txt against the v4 evaluator built from main \u2014 every verdict, finding and summary comparison unchanged, the two evaluator digest lines the whole diff, and tables.md byte-identical. All four gates pass on be0986af and two independent Terra xhigh reviews return zero findings. Closed at session 10. Worktree agent-26465e6c-r1 reclaimed.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c-r1",
@@ -142,7 +142,7 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "rework round 1: in-session work done at f64cfa8e (gf2 arm warm pass, M4RI transpose kernel warm pass fixed under a new identity, findings withdrawal). Three exploratory re-measurements queued for the 2026-09-12 window (transpose pins f64cfa8e content, logical and BCH unchanged since 4204248d). After the window: commit receipts, extend summarize.py, write results, merge, then reviews and gates.",
+          "status": "in-session work complete at ea7d77c7 or later. Three v3 re-measurement receipts committed; lead independently confirmed each campaign reaches the runner's complete record with cell-start = cell-complete = the addendum cell count (8/9/6), 48 child executions per cell, zero child diagnostics, all cells measured, verdict Accepted. Corrected measurements reproduce every withdrawn decision and leading arm. REQ-01/04/05 moved to MET on exploratory-only evidence with the lead's conditions. No window job. Awaiting merge, gates and lead review.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6fb89a3c-v3",
@@ -175,7 +175,7 @@
           "short_id": "bdc507a3",
           "title": "Accept resumed campaigns whose interrupted cell restarts",
           "classification": "implementation",
-          "status": "in-session work complete at 8dbc6406 (w9-bdc507a3): REQ-01..04 met per worker; protocol v4 (cell-abandoned record, P-11 v4 rules, amendment-v4.md, schema v4); verdict-preservation.json shows identical verdicts and summaries for all 59 committed receipts between 3aa2920b and head. Not merged. Merging makes main's runner refuse new campaigns from v3 addenda: v3 families finish on their own worktrees, and a family's next campaign needs a v4 addendum. Crate suite 174/174, workspace clippy and fmt clean; full cargo-ci not run.",
+          "status": "done. Merged at 6003c346 with cargo-ci green; protocol v4 (cell-abandoned record, v4-only P-11 rules, amendment-v4.md, schema v4). cargo-ci, code-review and doc-review pass on be0986af; one independent Terra xhigh review passes with a single advisory that is exactly a203a23c. Lead verified REQ-04 independently: verdict-preservation.json shows 59/59 identical verdicts and summaries between 3aa2920b and 566318d4, and its head acceptance digest matches the binary the lead built on main. Six artifacts linked. Worktree agent-c7113c5a-v3 reclaimed.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c7113c5a-v3",
@@ -197,7 +197,7 @@
           "short_id": "a387825e",
           "title": "Close the host-lock leak into daemons started under the lock wrappers",
           "classification": "implementation",
-          "status": "in-session work complete at 7cf03070 (w9-a387825e, worktree .agents/worktrees/agent-26465e6c-v3, branch worktree-agent-a387825e). REQ-01 reworded to lock level with invoker approval; REQ-01..03 met per worker (test dev/scripts/ccx1-bench-flock.test.sh section 3). Not yet merged: merge after the window, then cargo-ci, reviews, gates; afterwards update run-window.sh comments (lines 33-38, 49).",
+          "status": "merged at 3c173cc5 with cargo-ci green; cargo-ci and code-review pass on be0986af. doc-review failed with two present-tense findings (dated incident and commit-history narration in the wrapper's lock-lifetime section and the regression test's section 3); the lead fixed both at 5daab50e as rework round 1, bash -n, shellcheck and the wrapper test suite passing. doc-review re-run and one independent review in flight.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c-v3",
@@ -212,7 +212,7 @@
           "short_id": "3e59cb9a",
           "title": "Repair the DVB-T2 arms warm pass and re-measure the interleaving family",
           "classification": "research",
-          "status": "in-session work done at d23c0de1 (w9-3e59cb9a, worktree .worktrees-local/agent-eda07788-v3, branch worktree-agent-3e59cb9a). REQ-01 and REQ-02 met; REQ-03 reworded with invoker approval; exploratory re-measurement queued for the 2026-09-12 window (pinned fc527d62). After the window: commit receipt and ledger line 4, regenerate tables-v3.md, write outcomes, then merge, reviews and gates.",
+          "status": "dispatched in session 10 (w10-3e59cb9a) on .worktrees-local/agent-eda07788-v3. Window re-measurement succeeded; collecting the receipt, ledger line, tables and outcomes, then merge.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".worktrees-local/agent-eda07788-v3",
@@ -227,7 +227,7 @@
           "short_id": "3be770d5",
           "title": "Profile the CPU LDPC throughput gap against compatible decoders",
           "classification": "research",
-          "status": "in-session work done at 0e8a0a17: steady-state harness, three frozen pilot families, nine-session profile series, untimed replay and 28/28 arm validation, structural costs, allocation census, tables generator, freeze script, findings skeleton. Four window jobs queued for 2026-09-12 (pilots pinned cbacdf99, profile 3507fd4d). After the window: commit receipts and profile, freeze and queue the two matched confirmations, summarize, rank, write results.",
+          "status": "session 10: three pilot receipts committed and verified; the v3-r1 nine-session profile series was void (perf control-FIFO ack carries a trailing NUL, all 342 cases failed while the job exited 0) and is preserved as evidence with the parse fixed, three unit tests and a series-level guard. Findings written under SSOT. Freezing the two matched confirmations as v4 and queueing them plus a v3-r2 profile re-run.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-3be770d5",
@@ -698,6 +698,55 @@
       "origin": "issue-impact",
       "disposition": "26465e6c rework round 1; bdc507a3 changes the rule",
       "criterion_named_by": "26465e6c REQ-01"
+    },
+    {
+      "issue": "6fb89a3c",
+      "subject": "three transpose/logical/BCH questions have no confirmatory decision: the M4RI candidate's v3 confirmatory outcomes are withdrawn and v3 grants no second attempt, so those candidates are not production-selectable on current evidence",
+      "origin": "issue-impact (session 10)",
+      "disposition": "out of 6fb89a3c's own criteria, which are baseline-and-arms criteria. The worker established that the route is effectively closed, not merely unspent: v4 grants each candidate a fresh confirmatory attempt, but the family ledger still counts the v3 reservation, so a v4 confirmation spends the next attempt's alpha, and at that attempt P-20's floor of twenty expected draws per bootstrap tail allows at most two cumulative comparisons while each of these three ledgers has reserved more. A v4 confirmation would therefore return not-confirmatory on every cell. Recorded verbatim at dev/active/6fb89a3c/findings.md:124. The consuming issues are 1d4fd63d and 2037941f (jit graph rdeps), not 5cbb6545 or 63bad95d.",
+      "criterion_named_by": "epic REQ-02 (production selection includes only qualifying candidates) and epic REQ-04"
+    },
+    {
+      "issue": "3be770d5",
+      "subject": "the v3-r1 nine-session steady-state profile series produced zero usable samples: perf's control-FIFO ack carries a trailing NUL the reader rejected, so all 342 cases failed while the window job exited 0",
+      "origin": "issue-impact (session 10)",
+      "disposition": "parse fixed with unit tests plus a series-level guard; the void series is preserved as evidence and a v3-r2 re-run is queued for the next window",
+      "criterion_named_by": "3be770d5 REQ-02 and the profile-share half of REQ-03"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "a queued benchmark job's exit code is not evidence that the job measured anything: a launcher that logs each case's status and continues exits 0 over a wholly failed series",
+      "origin": "process (session 10)",
+      "disposition": "standing worker rule added: verify completeness from each campaign's own execution log and receipt, and make launchers fail a series that leaves no usable case",
+      "criterion_named_by": "epic REQ-01 (measurement contract)"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "protocol.md is a living document: raising it to v4 made every 'protocol version 3' link in the surveys point at text contradicting its own label",
+      "origin": "issue-impact (session 10)",
+      "disposition": "fixed on main for 26465e6c, c7113c5a and eda07788 (be0986af); 04b85d10 and 6fb89a3c fixed by their own workers; c077a88b carries no version label and is unchanged",
+      "criterion_named_by": "epic REQ-05 (reproducible final scorecard) indirectly; doc-review rubric directly"
+    },
+    {
+      "issue": "6c6b09b1",
+      "subject": "a survey's arm crate decoded the runner's A/B pair position as the protocol's cell-classification enum, so every queued pilot died in 13 ms and a whole window slot was lost; the worker had verified runner compatibility by code reading alone",
+      "origin": "issue-impact (session 10)",
+      "disposition": "wire type fixed with contract tests that scan the runner's own declaration; standing worker rule added requiring an untimed end-to-end smoke through the real runner before any window-job line",
+      "criterion_named_by": "6c6b09b1 REQ-01"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "committing on main while an AI gate is mid-run detaches the gate record's commit from the tree the reviewer actually read",
+      "origin": "process (session 10)",
+      "disposition": "a387825e's doc-review fix landed at 5daab50e while 26465e6c's doc- and research-review were still running over be0986af; the change was outside 26465e6c's footprint so its verdict stands, but the lead now holds main still for the duration of a gate suite",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "a387825e",
+      "subject": "dev/scripts/ccx1-bench-flock.sh:23 and ccx1-bench-flock.test.sh:70 carry the same dated-incident narration doc-review rejected at lines 50 and 121, but belong to the earlier turnstile change rather than a387825e",
+      "origin": "issue-impact (session 10)",
+      "disposition": "left unchanged as out of a387825e's scope; the next issue that owns these scripts should close them under @/invariant/present-tense-prose",
+      "criterion_named_by": "none"
     }
   ],
   "notes": [
@@ -755,7 +804,9 @@
     "2026-09-12 session 10 opened. Window of 2026-09-12 01:00-03:06Z ran 9/12 jobs rc=0; the three 6c6b09b1 pilots failed in 13 ms each.",
     "Lead diagnosis of the 6c6b09b1 window failure: arm-common/src/lib.rs:31 declares Request.role as protocol CellRole (exploratory|confirmatory|holdout) while benchmark-ab-runner sends the A/B pair position \"baseline\"/\"candidate\" (bin/benchmark-ab-runner.rs:58-74, :651-676). Every request failed to decode. The session-9 report had already flagged that no arm had ever run through the runner.",
     "New standing worker rule (session 10): an untimed end-to-end smoke through the real benchmark-ab-runner, reaching a result line from every arm the plan names, is mandatory before any window-job line is queued.",
-    "Pruned six stale worktrees (02b8137c, 3f7edef1, 5ee83cd3, 97410c80, b1bd75ca, e1e0e7ff), all clean and fully merged; branches kept. Free disk 38G -> 74G. agent-02b8137c-run kept: 22 untracked validation-journal files belonging to another epic."
+    "Pruned six stale worktrees (02b8137c, 3f7edef1, 5ee83cd3, 97410c80, b1bd75ca, e1e0e7ff), all clean and fully merged; branches kept. Free disk 38G -> 74G. agent-02b8137c-run kept: 22 untracked validation-journal files belonging to another epic.",
+    "Session 10: 26465e6c and bdc507a3 closed; a387825e in doc-review rework round 1 (lead-authored, comments only).",
+    "Session 10: reclaimed worktrees agent-26465e6c-r1 and agent-c7113c5a-v3 after their issues closed; free disk 69G -> 78G."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
