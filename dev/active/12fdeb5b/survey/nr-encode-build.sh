@@ -10,7 +10,9 @@
 # only reads them, and refuses a tree whose commit, submodule commit or
 # static-library digest differs from the pins below, which are the ones
 # `c077a88b`'s build identity records. Build output goes to the staging
-# directory, by default `.agents/ext/12fdeb5b` under this checkout.
+# directory, by default `.agents/ext/12fdeb5b` inside the invoking checkout,
+# which is git-ignored and rebuildable; a linked worktree therefore keeps its
+# own build and never writes a sibling's.
 #
 # Two build flavours produce the four arm executables the family addenda
 # declare. Each compiles the Rust side at one architecture level; the AFF3CT

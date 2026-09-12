@@ -1,0 +1,185 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "d4690db504927a09b6f11746d3c3c1183cfc211fcf53f8f9ef14d6ae7d5be487",
+  "campaign_id": "nr-encode-smoke-12fdeb5b-20260912t173816z",
+  "label": "smoke",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "nr-rate-matched-encode-baselines-v1",
+    "comparisons": 1,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "nr-enc-bg2-n1024-k400-null-native-vs-native",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.9989730711344099,
+        "lower": 0.9939226694252155,
+        "upper": 1.0051399241255907,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 6115605337115897507,
+        "pairs": 6
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg2-n256-k121-gap-native-vs-srsran",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 6.949340179048489,
+        "lower": 6.841478847600363,
+        "upper": 7.0773265867944435,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 10452681723979651696,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n8448-k4224-gap-native-vs-srsran",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 149.20702655592464,
+        "lower": 147.28682018935822,
+        "upper": 151.90319072415943,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 7791459681509728487,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.9618535776236758,
+        "lower": 1.9520925565061844,
+        "upper": 1.9768078586731772,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 17501303051248565000,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n2560-k2048-control-portable-vs-native",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.8988607892009951,
+        "lower": 0.8843844046412696,
+        "upper": 0.964581683035288,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 16134823489890761499,
+        "pairs": 6
+      },
+      "decision": "inconclusive",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}
