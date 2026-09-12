@@ -75,16 +75,19 @@ export GF2_CCX1_LOCK="$LOCK"
 python3 dev/active/$ISSUE/survey/build-plan.py \
   "$PLAN" "$CAMPAIGN" "$ARM" "$LOCK" "$MODE" "$ADDENDUM" 99
 
-# One pair and one short window per execution: enough for every arm to emit a
-# result line, far too little to measure anything.
+# The runner's smallest legal pilot pair count and one short window per
+# execution: enough for every arm to emit a result line, far too little to
+# measure anything.
 python3 - "$PLAN" <<'PY'
 import json, sys
 path = sys.argv[1]
+MIN_PILOT_PAIRS = 6
 with open(path, encoding="utf-8") as handle:
     plan = json.load(handle)
 plan["timing_override"] = {"windows_per_execution": 1, "window_target_ms": 1}
 for cell in plan["cells"]:
-    cell["pilot_pairs"] = 1
+    if cell["pilot_pairs"] is not None:
+        cell["pilot_pairs"] = MIN_PILOT_PAIRS
 with open(path, "w", encoding="utf-8") as handle:
     json.dump(plan, handle, indent=2)
     handle.write("\n")
