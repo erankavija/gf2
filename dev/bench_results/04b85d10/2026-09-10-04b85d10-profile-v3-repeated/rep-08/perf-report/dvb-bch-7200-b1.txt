@@ -1,0 +1,31 @@
+# case: {"workload":"dvb-bch-encode","size":{"n":7200,"batch":1},"seed":306}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13872128316
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                
+# ........  ............  ...............  ................  ......................................................................................................
+#
+    85.81%          2976  consumer-profil  consumer-profile  [.] <gf2_coding::bch::core::BchEncoder as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+            |
+            ---<gf2_coding::bch::core::BchEncoder as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+
+    13.12%           455  consumer-profil  consumer-profile  [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+            |
+            ---<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+
+     0.55%            19  consumer-profil  consumer-profile  [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>
+            |
+            ---core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>
+               <gf2_coding::bch::core::BchEncoder as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+
+
+
+#
+# (Tip: Add -I to perf record to sample register values, which will be visible in perf report sample context.)
+#

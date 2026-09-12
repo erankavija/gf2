@@ -1,0 +1,360 @@
+# logical ops-dispatched {"seed": 101, "size": {"rows": 64, "words": 4}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-resolved {"seed": 101, "size": {"rows": 64, "words": 4}, "workload": "row-xor"} env=[]
+# ok
+# logical scalar-backend {"seed": 101, "size": {"rows": 64, "words": 4}, "workload": "row-xor"} env=[]
+# ok
+# logical simd-backend {"seed": 101, "size": {"rows": 64, "words": 4}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-dispatched {"seed": 101, "size": {"rows": 64, "words": 8}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-resolved {"seed": 101, "size": {"rows": 64, "words": 8}, "workload": "row-xor"} env=[]
+# ok
+# logical scalar-backend {"seed": 101, "size": {"rows": 64, "words": 8}, "workload": "row-xor"} env=[]
+# ok
+# logical simd-backend {"seed": 101, "size": {"rows": 64, "words": 8}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-dispatched {"seed": 101, "size": {"rows": 64, "words": 16}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-resolved {"seed": 101, "size": {"rows": 64, "words": 16}, "workload": "row-xor"} env=[]
+# ok
+# logical scalar-backend {"seed": 101, "size": {"rows": 64, "words": 16}, "workload": "row-xor"} env=[]
+# ok
+# logical simd-backend {"seed": 101, "size": {"rows": 64, "words": 16}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-dispatched {"seed": 101, "size": {"rows": 64, "words": 64}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-resolved {"seed": 101, "size": {"rows": 64, "words": 64}, "workload": "row-xor"} env=[]
+# ok
+# logical scalar-backend {"seed": 101, "size": {"rows": 64, "words": 64}, "workload": "row-xor"} env=[]
+# ok
+# logical simd-backend {"seed": 101, "size": {"rows": 64, "words": 64}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-dispatched {"seed": 101, "size": {"rows": 64, "words": 512}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-resolved {"seed": 101, "size": {"rows": 64, "words": 512}, "workload": "row-xor"} env=[]
+# ok
+# logical scalar-backend {"seed": 101, "size": {"rows": 64, "words": 512}, "workload": "row-xor"} env=[]
+# ok
+# logical simd-backend {"seed": 101, "size": {"rows": 64, "words": 512}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-dispatched {"seed": 101, "size": {"rows": 64, "words": 8192}, "workload": "row-xor"} env=[]
+# ok
+# logical ops-resolved {"seed": 101, "size": {"rows": 64, "words": 8192}, "workload": "row-xor"} env=[]
+# ok
+# logical scalar-backend {"seed": 101, "size": {"rows": 64, "words": 8192}, "workload": "row-xor"} env=[]
+# ok
+# logical simd-backend {"seed": 101, "size": {"rows": 64, "words": 8192}, "workload": "row-xor"} env=[]
+# ok
+# logical current {"seed": 102, "size": {"cols": 256, "rows": 256}, "workload": "dense-rref"} env=[]
+# ok
+# logical current {"seed": 102, "size": {"cols": 512, "rows": 512}, "workload": "dense-rref"} env=[]
+# ok
+# logical current {"seed": 102, "size": {"cols": 1024, "rows": 1024}, "workload": "dense-rref"} env=[]
+# ok
+# logical current {"seed": 102, "size": {"cols": 2048, "rows": 2048}, "workload": "dense-rref"} env=[]
+# ok
+# logical current {"seed": 103, "size": {"cols": 256, "rows": 256}, "workload": "dense-matvec"} env=[]
+# ok
+# logical current {"seed": 103, "size": {"cols": 1024, "rows": 1024}, "workload": "dense-matvec"} env=[]
+# ok
+# logical current {"seed": 103, "size": {"cols": 4096, "rows": 1024}, "workload": "dense-matvec"} env=[]
+# ok
+# logical current {"seed": 103, "size": {"cols": 4096, "rows": 4096}, "workload": "dense-matvec"} env=[]
+# ok
+# logical current {"seed": 104, "size": {"n": 16200}, "workload": "ldpc-syndrome"} env=[]
+# ok
+# logical current {"seed": 104, "size": {"n": 64800}, "workload": "ldpc-syndrome"} env=[]
+# ok
+# count ops-dispatched {"seed": 201, "size": {"words": 4}, "workload": "popcount"} env=[]
+# ok
+# count scalar-backend {"seed": 201, "size": {"words": 4}, "workload": "popcount"} env=[]
+# ok
+# count simd-backend {"seed": 201, "size": {"words": 4}, "workload": "popcount"} env=[]
+# ok
+# count ops-dispatched {"seed": 201, "size": {"words": 8}, "workload": "popcount"} env=[]
+# ok
+# count scalar-backend {"seed": 201, "size": {"words": 8}, "workload": "popcount"} env=[]
+# ok
+# count simd-backend {"seed": 201, "size": {"words": 8}, "workload": "popcount"} env=[]
+# ok
+# count ops-dispatched {"seed": 201, "size": {"words": 16}, "workload": "popcount"} env=[]
+# ok
+# count scalar-backend {"seed": 201, "size": {"words": 16}, "workload": "popcount"} env=[]
+# ok
+# count simd-backend {"seed": 201, "size": {"words": 16}, "workload": "popcount"} env=[]
+# ok
+# count ops-dispatched {"seed": 201, "size": {"words": 64}, "workload": "popcount"} env=[]
+# ok
+# count scalar-backend {"seed": 201, "size": {"words": 64}, "workload": "popcount"} env=[]
+# ok
+# count simd-backend {"seed": 201, "size": {"words": 64}, "workload": "popcount"} env=[]
+# ok
+# count ops-dispatched {"seed": 201, "size": {"words": 127}, "workload": "popcount"} env=[]
+# ok
+# count scalar-backend {"seed": 201, "size": {"words": 127}, "workload": "popcount"} env=[]
+# ok
+# count simd-backend {"seed": 201, "size": {"words": 127}, "workload": "popcount"} env=[]
+# ok
+# count ops-dispatched {"seed": 201, "size": {"words": 507}, "workload": "popcount"} env=[]
+# ok
+# count scalar-backend {"seed": 201, "size": {"words": 507}, "workload": "popcount"} env=[]
+# ok
+# count simd-backend {"seed": 201, "size": {"words": 507}, "workload": "popcount"} env=[]
+# ok
+# count ops-dispatched {"seed": 201, "size": {"words": 4096}, "workload": "popcount"} env=[]
+# ok
+# count scalar-backend {"seed": 201, "size": {"words": 4096}, "workload": "popcount"} env=[]
+# ok
+# count simd-backend {"seed": 201, "size": {"words": 4096}, "workload": "popcount"} env=[]
+# ok
+# count ops-dispatched {"seed": 201, "size": {"words": 65536}, "workload": "popcount"} env=[]
+# ok
+# count scalar-backend {"seed": 201, "size": {"words": 65536}, "workload": "popcount"} env=[]
+# ok
+# count simd-backend {"seed": 201, "size": {"words": 65536}, "workload": "popcount"} env=[]
+# ok
+# count count-ones {"seed": 202, "size": {"set_bit": 4096, "words": 64}, "workload": "zero-test"} env=[]
+# ok
+# count find-first-one {"seed": 202, "size": {"set_bit": 4096, "words": 64}, "workload": "zero-test"} env=[]
+# ok
+# count count-ones {"seed": 202, "size": {"set_bit": 0, "words": 64}, "workload": "zero-test"} env=[]
+# ok
+# count find-first-one {"seed": 202, "size": {"set_bit": 0, "words": 64}, "workload": "zero-test"} env=[]
+# ok
+# count count-ones {"seed": 202, "size": {"set_bit": 8128, "words": 127}, "workload": "zero-test"} env=[]
+# ok
+# count find-first-one {"seed": 202, "size": {"set_bit": 8128, "words": 127}, "workload": "zero-test"} env=[]
+# ok
+# count count-ones {"seed": 202, "size": {"set_bit": 0, "words": 127}, "workload": "zero-test"} env=[]
+# ok
+# count find-first-one {"seed": 202, "size": {"set_bit": 0, "words": 127}, "workload": "zero-test"} env=[]
+# ok
+# count count-ones {"seed": 202, "size": {"set_bit": 32448, "words": 507}, "workload": "zero-test"} env=[]
+# ok
+# count find-first-one {"seed": 202, "size": {"set_bit": 32448, "words": 507}, "workload": "zero-test"} env=[]
+# ok
+# count count-ones {"seed": 202, "size": {"set_bit": 0, "words": 507}, "workload": "zero-test"} env=[]
+# ok
+# count find-first-one {"seed": 202, "size": {"set_bit": 0, "words": 507}, "workload": "zero-test"} env=[]
+# ok
+# count count-ones {"seed": 202, "size": {"set_bit": 262144, "words": 4096}, "workload": "zero-test"} env=[]
+# ok
+# count find-first-one {"seed": 202, "size": {"set_bit": 262144, "words": 4096}, "workload": "zero-test"} env=[]
+# ok
+# count count-ones {"seed": 202, "size": {"set_bit": 0, "words": 4096}, "workload": "zero-test"} env=[]
+# ok
+# count find-first-one {"seed": 202, "size": {"set_bit": 0, "words": 4096}, "workload": "zero-test"} env=[]
+# ok
+# count count-ones {"seed": 203, "size": {"n": 16200}, "workload": "ldpc-codeword-check"} env=[]
+# ok
+# count find-first-one {"seed": 203, "size": {"n": 16200}, "workload": "ldpc-codeword-check"} env=[]
+# ok
+# count count-ones {"seed": 203, "size": {"n": 64800}, "workload": "ldpc-codeword-check"} env=[]
+# ok
+# count find-first-one {"seed": 203, "size": {"n": 64800}, "workload": "ldpc-codeword-check"} env=[]
+# ok
+# layout transpose-scalar {"seed": 301, "size": {"blocks": 1}, "workload": "transpose-64x64"} env=[]
+# ok
+# layout transpose-detected {"seed": 301, "size": {"blocks": 1}, "workload": "transpose-64x64"} env=[]
+# ok
+# layout transpose-scalar {"seed": 301, "size": {"blocks": 16}, "workload": "transpose-64x64"} env=[]
+# ok
+# layout transpose-detected {"seed": 301, "size": {"blocks": 16}, "workload": "transpose-64x64"} env=[]
+# ok
+# layout transpose-scalar {"seed": 301, "size": {"blocks": 256}, "workload": "transpose-64x64"} env=[]
+# ok
+# layout transpose-detected {"seed": 301, "size": {"blocks": 256}, "workload": "transpose-64x64"} env=[]
+# ok
+# layout transpose-scalar {"seed": 301, "size": {"blocks": 4096}, "workload": "transpose-64x64"} env=[]
+# ok
+# layout transpose-detected {"seed": 301, "size": {"blocks": 4096}, "workload": "transpose-64x64"} env=[]
+# ok
+# layout current {"seed": 302, "size": {"cols": 1024, "rows": 1024}, "workload": "dense-transpose"} env=[]
+# ok
+# layout current {"seed": 302, "size": {"cols": 4096, "rows": 4096}, "workload": "dense-transpose"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 1, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 64, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 1024, "degree": 8}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 1, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 64, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 1024, "degree": 14}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 1, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 16, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 64, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-poly-remainder-scalar {"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-table-remainder {"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-bitslice-interleaved {"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout family-clmul-fold {"seed": 303, "size": {"batch": 256, "degree": 16}, "workload": "bch-encode-batch"} env=[]
+# ok
+# layout current {"seed": 304, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch-alloc"} env=[]
+# ok
+# layout caller-buffer {"seed": 304, "size": {"batch": 16, "degree": 8}, "workload": "bch-encode-batch-alloc"} env=[]
+# ok
+# layout current {"seed": 304, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch-alloc"} env=[]
+# ok
+# layout caller-buffer {"seed": 304, "size": {"batch": 256, "degree": 8}, "workload": "bch-encode-batch-alloc"} env=[]
+# ok
+# layout current {"seed": 304, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch-alloc"} env=[]
+# ok
+# layout caller-buffer {"seed": 304, "size": {"batch": 16, "degree": 14}, "workload": "bch-encode-batch-alloc"} env=[]
+# ok
+# layout current {"seed": 304, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch-alloc"} env=[]
+# ok
+# layout caller-buffer {"seed": 304, "size": {"batch": 256, "degree": 14}, "workload": "bch-encode-batch-alloc"} env=[]
+# ok
+# layout current {"seed": 305, "size": {"batch": 256, "degree": 14, "workers": 1}, "workload": "bch-encode-batch-parallel"} env=[RAYON_NUM_THREADS=1]
+# ok
+# layout current {"seed": 305, "size": {"batch": 1024, "degree": 14, "workers": 1}, "workload": "bch-encode-batch-parallel"} env=[RAYON_NUM_THREADS=1]
+# ok
+# layout current {"seed": 305, "size": {"batch": 256, "degree": 14, "workers": 6}, "workload": "bch-encode-batch-parallel"} env=[RAYON_NUM_THREADS=6]
+# ok
+# layout current {"seed": 305, "size": {"batch": 1024, "degree": 14, "workers": 6}, "workload": "bch-encode-batch-parallel"} env=[RAYON_NUM_THREADS=6]
+# ok
+# layout current {"seed": 305, "size": {"batch": 256, "degree": 14, "workers": 12}, "workload": "bch-encode-batch-parallel"} env=[RAYON_NUM_THREADS=12]
+# ok
+# layout current {"seed": 305, "size": {"batch": 1024, "degree": 14, "workers": 12}, "workload": "bch-encode-batch-parallel"} env=[RAYON_NUM_THREADS=12]
+# ok
+# layout current {"seed": 305, "size": {"batch": 256, "degree": 14, "workers": 24}, "workload": "bch-encode-batch-parallel"} env=[RAYON_NUM_THREADS=24]
+# ok
+# layout current {"seed": 305, "size": {"batch": 1024, "degree": 14, "workers": 24}, "workload": "bch-encode-batch-parallel"} env=[RAYON_NUM_THREADS=24]
+# ok
+# layout current {"seed": 307, "size": {"calls": 1}, "workload": "field-id-hint"} env=[]
+# ok
+# layout current {"seed": 307, "size": {"calls": 16}, "workload": "field-id-hint"} env=[]
+# ok
+# layout current {"seed": 307, "size": {"calls": 256}, "workload": "field-id-hint"} env=[]
+# ok
+# layout current {"seed": 307, "size": {"calls": 1024}, "workload": "field-id-hint"} env=[]
+# ok
+# layout current {"seed": 306, "size": {"batch": 16, "n": 7200}, "workload": "dvb-bch-encode"} env=[]
+# ok
+# layout current {"seed": 306, "size": {"batch": 1, "n": 32400}, "workload": "dvb-bch-encode"} env=[]
+# ok

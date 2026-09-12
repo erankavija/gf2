@@ -1,0 +1,34 @@
+# case: {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3454  (96.2%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13816127798
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    99.57%          3439  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+     0.06%             2  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  consumer-profil  consumer-profile  [.] <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+     0.03%             1  consumer-profil  consumer-profile  [.] alloc::raw_vec::RawVecInner<A>::finish_grow
+     0.03%             1  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::Prepared::run
+     0.03%             1  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::prepare
+     0.03%             1  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a5c62
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a620f
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a701b
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a702c
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad401290
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadaf7c7f
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb91652
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb924e9
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#

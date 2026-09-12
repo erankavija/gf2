@@ -1,0 +1,42 @@
+# allocation of 56 bytes
+   0: <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+   1: gf2_coding::bch::encode::validate_batch
+   2: gf2_coding::bch::encode::<impl gf2_coding::bch::spec::BchCode<X,S,M>>::encode_batch_family_into
+   3: consumer_profile_gf2_side::Prepared::run
+   4: consumer_profile::main
+   5: std::sys::backtrace::__rust_begin_short_backtrace
+   6: std::rt::lang_start::{{closure}}
+   7: std::rt::lang_start_internal
+   8: main
+   9: <unknown>
+  10: __libc_start_main
+  11: _start
+
+# allocation of 56 bytes
+   0: <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+   1: gf2_coding::bch::encode::validate_batch
+   2: gf2_coding::bch::encode::<impl gf2_coding::bch::spec::BchCode<X,S,M>>::encode_batch_family_into
+   3: consumer_profile_gf2_side::Prepared::run
+   4: consumer_profile::main
+   5: std::sys::backtrace::__rust_begin_short_backtrace
+   6: std::rt::lang_start::{{closure}}
+   7: std::rt::lang_start_internal
+   8: main
+   9: <unknown>
+  10: __libc_start_main
+  11: _start
+
+# allocation of 56 bytes
+   0: <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+   1: gf2_coding::bch::encode::validate_batch
+   2: gf2_coding::bch::encode::<impl gf2_coding::bch::spec::BchCode<X,S,M>>::encode_batch_family_into
+   3: consumer_profile_gf2_side::Prepared::run
+   4: consumer_profile::main
+   5: std::sys::backtrace::__rust_begin_short_backtrace
+   6: std::rt::lang_start::{{closure}}
+   7: std::rt::lang_start_internal
+   8: main
+   9: <unknown>
+  10: __libc_start_main
+  11: _start
+

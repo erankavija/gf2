@@ -1,0 +1,143 @@
+# label: fold-block-pclmul
+# pattern: x86::bch_encode::fold_block_pclmul
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 779018beddb7a24c7d2e14f21df4006b7da83afcb4ae96ae35a2f973d07c812f
+# symbols matching this pattern in the binary: 1
+
+## symbol at 00000000000954b0, 0x0000000000000222 bytes
+00000000000954b0 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul>:
+   954b0:	sub    $0x58,%rsp
+   954b4:	mov    %rcx,%rax
+   954b7:	mov    %r8,0x8(%rsp)
+   954bc:	mov    %r8,%r11
+   954bf:	shr    $0x6,%r11
+   954c3:	xor    %ecx,%ecx
+   954c5:	mov    %r8,%r10
+   954c8:	and    $0x3f,%r10
+   954cc:	setne  %cl
+   954cf:	add    %r11,%rcx
+   954d2:	mov    %rcx,0x10(%rsp)
+   954d7:	test   %r8,%r8
+   954da:	je     95698 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x1e8>
+   954e0:	mov    %rsi,0x18(%rsp)
+   954e5:	mov    %rax,0x20(%rsp)
+   954ea:	mov    %rcx,0x28(%rsp)
+   954ef:	mov    %rcx,0x30(%rsp)
+   954f4:	cmp    %rcx,%rsi
+   954f7:	jne    9564e <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x19e>
+   954fd:	cmp    %rcx,%rax
+   95500:	jne    9564e <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x19e>
+   95506:	cmp    $0x3f,%r8
+   9550a:	jbe    95532 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x82>
+   9550c:	add    $0xffffffffffffffc0,%r8
+   95510:	shr    $0x6,%r8
+   95514:	cmp    %rsi,%r8
+   95517:	jae    95563 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0xb3>
+   95519:	mov    (%rdi,%r8,8),%r11
+   9551d:	test   %r10,%r10
+   95520:	je     9556b <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0xbb>
+   95522:	lea    0x1(%r8),%rcx
+   95526:	cmp    %rsi,%rcx
+   95529:	jae    95570 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0xc0>
+   9552b:	mov    0x8(%rdi,%r8,8),%r8
+   95530:	jmp    95573 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0xc3>
+   95532:	test   %rsi,%rsi
+   95535:	je     956c1 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x211>
+   9553b:	mov    (%rdi),%r11
+   9553e:	neg    %r8b
+   95541:	mov    %r8d,%ecx
+   95544:	shl    %cl,%r11
+   95547:	cmp    $0x2,%rax
+   9554b:	jae    9558a <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0xda>
+   9554d:	test   %rsi,%rsi
+   95550:	jne    955a8 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0xf8>
+   95552:	lea    0x60257(%rip),%rdx        # f57b0 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x60>
+   95559:	xor    %edi,%edi
+   9555b:	xor    %esi,%esi
+   9555d:	call   *0x62ced(%rip)        # f8250 <_DYNAMIC+0x208>
+   95563:	xor    %r11d,%r11d
+   95566:	test   %r10,%r10
+   95569:	jne    95522 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x72>
+   9556b:	xor    %r8d,%r8d
+   9556e:	jmp    9557b <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0xcb>
+   95570:	xor    %r8d,%r8d
+   95573:	mov    %r10d,%ecx
+   95576:	neg    %cl
+   95578:	shl    %cl,%r8
+   9557b:	mov    %r10d,%ecx
+   9557e:	shr    %cl,%r11
+   95581:	or     %r8,%r11
+   95584:	cmp    $0x2,%rax
+   95588:	jb     9554d <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x9d>
+   9558a:	lea    -0x1(%rax),%rcx
+   9558e:	xchg   %ax,%ax
+   95590:	cmp    %rsi,%rcx
+   95593:	jae    956b1 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x201>
+   95599:	mov    -0x8(%rdi,%rcx,8),%r8
+   9559e:	mov    %r8,(%rdi,%rcx,8)
+   955a2:	sub    $0x1,%rcx
+   955a6:	ja     95590 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0xe0>
+   955a8:	xor    0x60(%rsp),%r11
+   955ad:	movq   %r11,%xmm0
+   955b2:	movq   %r9,%xmm1
+   955b7:	pclmullqlqdq %xmm0,%xmm1
+   955bd:	pextrq $0x1,%xmm1,%rcx
+   955c4:	movq   $0x0,(%rdi)
+   955cb:	xor    %r11,%rcx
+   955ce:	movq   %rcx,%xmm0
+   955d3:	xor    %ecx,%ecx
+   955d5:	cmp    $0x1,%rax
+   955d9:	sbb    %rax,%rcx
+   955dc:	mov    $0x1,%esi
+   955e1:	jmp    95600 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x150>
+   955e3:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   955f0:	lea    (%rcx,%rsi,1),%r8
+   955f4:	inc    %r8
+   955f7:	inc    %rsi
+   955fa:	cmp    $0x1,%r8
+   955fe:	je     95628 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x178>
+   95600:	movq   -0x8(%rdx,%rsi,8),%xmm1
+   95606:	pclmullqlqdq %xmm0,%xmm1
+   9560c:	movq   %xmm1,%r8
+   95611:	xor    %r8,-0x8(%rdi,%rsi,8)
+   95616:	cmp    %rax,%rsi
+   95619:	jae    955f0 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x140>
+   9561b:	pextrq $0x1,%xmm1,%r8
+   95622:	xor    %r8,(%rdi,%rsi,8)
+   95626:	jmp    955f0 <gf2_kernels_simd::x86::bch_encode::fold_block_pclmul+0x140>
+   95628:	mov    $0xffffffffffffffff,%rdx
+   9562f:	mov    %r10d,%ecx
+   95632:	shl    %cl,%rdx
+   95635:	not    %rdx
+   95638:	xor    %ecx,%ecx
+   9563a:	cmp    $0x1,%r10
+   9563e:	sbb    %rcx,%rcx
+   95641:	or     %rdx,%rcx
+   95644:	and    %rcx,-0x8(%rdi,%rax,8)
+   95649:	add    $0x58,%rsp
+   9564d:	ret
+   9564e:	lea    0x10(%rsp),%rax
+   95653:	mov    %rax,0x38(%rsp)
+   95658:	mov    0x62c71(%rip),%rax        # f82d0 <_DYNAMIC+0x288>
+   9565f:	mov    %rax,0x40(%rsp)
+   95664:	lea    0x8(%rsp),%rcx
+   95669:	mov    %rcx,0x48(%rsp)
+   9566e:	mov    %rax,0x50(%rsp)
+   95673:	lea    -0x84eea(%rip),%rcx        # 10790 <anon.eb89d4395b0ead844ef0b45b8b54da85.47.llvm.3643936799275306673+0x2d2>
+   9567a:	lea    0x600ff(%rip),%r9        # f5780 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x30>
+   95681:	lea    0x18(%rsp),%rsi
+   95686:	lea    0x28(%rsp),%rdx
+   9568b:	lea    0x38(%rsp),%r8
+   95690:	xor    %edi,%edi
+   95692:	call   *0x63318(%rip)        # f89b0 <_DYNAMIC+0x968>
+   95698:	lea    -0x75fef(%rip),%rdi        # 1f6b0 <anon.685cef5deda74ba931c528c61804d176.14.llvm.17560408324297722412+0x41>
+   9569f:	lea    0x600c2(%rip),%rdx        # f5768 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x18>
+   956a6:	mov    $0x57,%esi
+   956ab:	call   *0x62c0f(%rip)        # f82c0 <_DYNAMIC+0x278>
+   956b1:	lea    0x60110(%rip),%rdx        # f57c8 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x78>
+   956b8:	mov    %rcx,%rdi
+   956bb:	call   *0x62b8f(%rip)        # f8250 <_DYNAMIC+0x208>
+   956c1:	lea    0x600d0(%rip),%rdx        # f5798 <anon.685cef5deda74ba931c528c61804d176.17.llvm.17560408324297722412+0x48>
+   956c8:	xor    %edi,%edi
+   956ca:	xor    %esi,%esi
+   956cc:	call   *0x62b7e(%rip)        # f8250 <_DYNAMIC+0x208>

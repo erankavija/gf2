@@ -8,9 +8,12 @@
 //!
 //! The checks cover the word-boundary cases the repository requires of
 //! bit-packed behaviour — 0, 1, 63, 64 and 65 bits — alongside the sizes the
-//! profile measures.
+//! profile measures. A record lists the seeds of the random inputs its check
+//! drew and names their generator beside them.
 
 use std::process::ExitCode;
+
+use consumer_profile_gf2_side::FIXTURE_RNG;
 
 use gf2_coding::bch::encode::{EncodeFamily, SystematicLayout};
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
@@ -35,18 +38,22 @@ struct Check {
     name: &'static str,
     detail: String,
     passed: bool,
+    /// Seeds of the random inputs the check drew, empty where it drew none.
+    seeds: Vec<u64>,
 }
 
-fn record(name: &'static str, detail: String, passed: bool) -> Check {
+fn record(name: &'static str, detail: String, passed: bool, seeds: Vec<u64>) -> Check {
     Check {
         name,
         detail,
         passed,
+        seeds,
     }
 }
 
 /// Every logical XOR route writes the same words.
 fn check_row_xor() -> Check {
+    const SEEDS: [u64; 2] = [0x51D0, 0x9C4E];
     let simd = gf2_core::kernels::simd::maybe_simd();
     let mut mismatches = Vec::new();
     for &bits in BIT_LENGTHS {
@@ -54,8 +61,8 @@ fn check_row_xor() -> Check {
         if words == 0 {
             continue;
         }
-        let left = BitVec::random_seeded(words * 64, 0x51D0).words().to_vec();
-        let right = BitVec::random_seeded(words * 64, 0x9C4E).words().to_vec();
+        let left = BitVec::random_seeded(words * 64, SEEDS[0]).words().to_vec();
+        let right = BitVec::random_seeded(words * 64, SEEDS[1]).words().to_vec();
 
         let mut dispatched = left.clone();
         xor_inplace(&mut dispatched, &right);
@@ -87,16 +94,18 @@ fn check_row_xor() -> Check {
             mismatches.join("; ")
         },
         mismatches.is_empty(),
+        SEEDS.to_vec(),
     )
 }
 
 /// Every population-count route returns the same count.
 fn check_popcount() -> Check {
+    const SEED: u64 = 0xC0FF;
     let simd = gf2_core::kernels::simd::maybe_simd();
     let mut mismatches = Vec::new();
     for &bits in BIT_LENGTHS {
         let words = bits.div_ceil(64);
-        let buffer = BitVec::random_seeded(words * 64, 0xC0FF).words().to_vec();
+        let buffer = BitVec::random_seeded(words * 64, SEED).words().to_vec();
         let reference: u64 = buffer.iter().map(|word| u64::from(word.count_ones())).sum();
         if popcount(&buffer) != reference || ScalarBackend.popcount(&buffer) != reference {
             mismatches.push(format!("{bits} bits: dispatched or scalar count differs"));
@@ -115,6 +124,7 @@ fn check_popcount() -> Check {
             mismatches.join("; ")
         },
         mismatches.is_empty(),
+        vec![SEED],
     )
 }
 
@@ -152,14 +162,16 @@ fn check_zero_test() -> Check {
             mismatches.join("; ")
         },
         mismatches.is_empty(),
+        Vec::new(),
     )
 }
 
 /// The two 64x64 block-transpose lanes write the same words, and the
 /// transpose is an involution.
 fn check_transpose() -> Check {
+    const SEED: u64 = 0x7A11;
     let mut mismatches = Vec::new();
-    let vector = BitVec::random_seeded(64 * 64, 0x7A11);
+    let vector = BitVec::random_seeded(64 * 64, SEED);
     let mut input = [0u64; 64];
     input.copy_from_slice(vector.words());
 
@@ -193,14 +205,16 @@ fn check_transpose() -> Check {
             mismatches.join("; ")
         },
         mismatches.is_empty(),
+        vec![SEED],
     )
 }
 
 /// The dense transpose of a random matrix restores itself.
 fn check_dense_transpose() -> Check {
+    const SEED: u64 = 0x2C3F;
     let mut mismatches = Vec::new();
     for &(rows, cols) in &[(64usize, 64usize), (65, 63), (513, 257), (1024, 1024)] {
-        let matrix = BitMatrix::random_seeded(rows, cols, 0x2C3F);
+        let matrix = BitMatrix::random_seeded(rows, cols, SEED);
         let round_trip = matrix.transpose().transpose();
         if round_trip.rows() != rows || round_trip.cols() != cols {
             mismatches.push(format!("{rows}x{cols}: the round trip changed the shape"));
@@ -225,15 +239,17 @@ fn check_dense_transpose() -> Check {
             mismatches.join("; ")
         },
         mismatches.is_empty(),
+        vec![SEED],
     )
 }
 
 /// The dense matrix-vector product matches a naive row-parity reference.
 fn check_dense_matvec() -> Check {
+    const SEEDS: [u64; 2] = [0x4B71, 0x8D22];
     let mut mismatches = Vec::new();
     for &(rows, cols) in &[(64usize, 64usize), (65, 65), (256, 1024), (1024, 4096)] {
-        let matrix = BitMatrix::random_seeded(rows, cols, 0x4B71);
-        let x = BitVec::random_seeded(cols, 0x8D22);
+        let matrix = BitMatrix::random_seeded(rows, cols, SEEDS[0]);
+        let x = BitVec::random_seeded(cols, SEEDS[1]);
         let y = matrix.matvec(&x);
         for row in 0..rows {
             let parity = matrix
@@ -262,12 +278,14 @@ fn check_dense_matvec() -> Check {
             mismatches.join("; ")
         },
         mismatches.is_empty(),
+        SEEDS.to_vec(),
     )
 }
 
 /// The two spellings of the LDPC zero-syndrome check agree, on a codeword and
 /// on a corrupted word.
 fn check_ldpc_codeword() -> Check {
+    const SEED: u64 = 0x1D0C;
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let mut mismatches = Vec::new();
 
@@ -287,7 +305,7 @@ fn check_ldpc_codeword() -> Check {
         mismatches.push("a weight-one word is accepted as a codeword".to_owned());
     }
 
-    let random = BitVec::random_seeded(code.n(), 0x1D0C);
+    let random = BitVec::random_seeded(code.n(), SEED);
     if code.is_valid_codeword(&random) != code.syndrome(&random).find_first_one().is_none() {
         mismatches.push("a random word splits the two spellings".to_owned());
     }
@@ -299,6 +317,7 @@ fn check_ldpc_codeword() -> Check {
             mismatches.join("; ")
         },
         mismatches.is_empty(),
+        vec![SEED],
     )
 }
 
@@ -317,6 +336,7 @@ fn build(degree: usize, modulus: u64, designed_distance: u64) -> BinaryBchCode {
 /// Every available encoding family writes the same codewords as the reference
 /// family, and the allocating entry point writes those same codewords.
 fn check_bch_families() -> Check {
+    const BATCHES: [usize; 5] = [1, 16, 64, 65, 256];
     let mut mismatches = Vec::new();
     let layout = SystematicLayout::default();
     for &(degree, modulus, distance) in &[
@@ -325,7 +345,7 @@ fn check_bch_families() -> Check {
         (16, 0b1_0000_0000_0010_1101, 25),
     ] {
         let code = build(degree, modulus, distance);
-        for &batch in &[1usize, 16, 64, 65, 256] {
+        for batch in BATCHES {
             let messages: Vec<BitVec> = (0..batch)
                 .map(|index| BitVec::random_seeded(code.k(), index as u64 + 1))
                 .collect();
@@ -391,6 +411,8 @@ fn check_bch_families() -> Check {
             mismatches.join("; ")
         },
         mismatches.is_empty(),
+        // Message `i` of a batch draws from seed `i + 1`.
+        (1..=BATCHES[BATCHES.len() - 1] as u64).collect(),
     )
 }
 
@@ -410,13 +432,16 @@ fn main() -> ExitCode {
         if !check.passed {
             failed += 1;
         }
+        let fixture_rng = (!check.seeds.is_empty()).then_some(FIXTURE_RNG);
         println!(
             "{}",
             serde_json::json!({
-                "schema": "consumer-verify-record-v1",
+                "schema": "consumer-verify-record-v2",
                 "check": check.name,
                 "passed": check.passed,
                 "detail": check.detail,
+                "seeds": check.seeds,
+                "fixture_rng": fixture_rng,
             })
         );
     }

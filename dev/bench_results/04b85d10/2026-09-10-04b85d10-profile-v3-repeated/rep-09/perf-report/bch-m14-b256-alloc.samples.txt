@@ -1,0 +1,32 @@
+# case: {"workload":"bch-encode-batch-alloc","size":{"degree":14,"batch":256},"seed":304}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3671  (91.3%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14684135827
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                       
+# ........  ............  ...............  ................  .............................................................................................................................
+#
+    63.12%          2317  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+    36.58%          1343  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x000000000017651f
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4000ad
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad73d478
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad867d66
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadadc39b
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadae5626
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb92096
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae00e1b0
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae99e46b
+
+
+#
+# (Tip: To compute metrics for samples use perf record -e '{cycles,instructions}' ... ; perf script -F +metric)
+#

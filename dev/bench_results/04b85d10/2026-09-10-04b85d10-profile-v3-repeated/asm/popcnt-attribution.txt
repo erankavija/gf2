@@ -1,0 +1,27 @@
+# Population-count instructions and constants per symbol (jit:04b85d10)
+# binary: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-profile
+# binary sha256: 779018beddb7a24c7d2e14f21df4006b7da83afcb4ae96ae35a2f973d07c812f
+# Each count is of instruction lines whose mnemonic field (after any
+# prefix) or one operand equals the named value; no other text is tested.
+
+## POPCNT instructions (mnemonic popcnt, popcntw, popcntl or popcntq): count, symbol
+none: no instruction in the binary has a popcnt mnemonic
+
+## nibble-lookup byte counts: VPSHUFB and VPSADBW instructions: vpshufb, vpsadbw, symbol
+16 8 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt>:
+16 0 <rand_chacha::guts::refill_wide::impl_avx>:
+10 5 <gf2_kernels_simd::x86::avx2::avx2_popcnt>:
+8 0 <rand_chacha::guts::refill_wide::impl_avx2>:
+2 3 <memchr::arch::x86_64::memchr::count_raw::find_avx2>:
+
+## bit-twiddle population-count immediates: 0x5555555555555555, 0x3333333333333333, 0x0f0f0f0f0f0f0f0f (masks), 0x0101010101010101 (byte-sum multiplier), symbol
+5 5 5 5 <consumer_profile_gf2_side::Prepared::run>:
+2 2 2 2 <gf2_coding::ldpc::core::LdpcCode::is_valid_codeword>:
+1 1 1 1 <gf2_core::matrix::BitMatrix::matvec_scalar>:
+1 1 1 1 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt>:
+0 0 0 1 <core::str::count::do_count_chars>:
+3 0 3 0 <gf2_kernels_simd::transpose::transpose_64x64_scalar>:
+1 1 1 0 <<gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_batch_family>:
+1 1 1 0 <gf2_coding::bch::encode::packed_fold_reduce>:
+1 0 1 0 <gf2_kernels_simd::transpose::transpose_64x64_scalar_safe>:
+0 1 1 0 <gf2_coding::bch::encode::packed_table_reduce>:

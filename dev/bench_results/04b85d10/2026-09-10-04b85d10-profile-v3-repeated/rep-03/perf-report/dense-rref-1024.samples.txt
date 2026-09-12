@@ -1,0 +1,64 @@
+# case: {"workload":"dense-rref","size":{"rows":1024,"cols":1024},"seed":102}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3112  (97.0%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12448115144
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    73.14%          2276  consumer-profil  consumer-profile  [.] gf2_core::alg::rref::rref
+    13.01%           405  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+     2.28%            71  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+     2.28%            71  consumer-profil  libc.so.6         [.] 0x0000000000176497
+     1.09%            34  consumer-profil  libc.so.6         [.] 0x0000000000176400
+     0.80%            25  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::swap_rows
+     0.77%            24  consumer-profil  libc.so.6         [.] 0x0000000000176421
+     0.74%            23  consumer-profil  libc.so.6         [.] 0x0000000000176404
+     0.64%            20  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+     0.61%            19  consumer-profil  libc.so.6         [.] 0x00000000001764db
+     0.55%            17  consumer-profil  libc.so.6         [.] 0x0000000000176466
+     0.51%            16  consumer-profil  libc.so.6         [.] 0x0000000000176e8e
+     0.45%            14  consumer-profil  libc.so.6         [.] 0x0000000000176411
+     0.45%            14  consumer-profil  libc.so.6         [.] 0x0000000000176e89
+     0.39%            12  consumer-profil  libc.so.6         [.] 0x0000000000176e84
+     0.32%            10  consumer-profil  libc.so.6         [.] 0x00000000001764ac
+     0.22%             7  consumer-profil  libc.so.6         [.] 0x000000000017642b
+     0.16%             5  consumer-profil  consumer-profile  [.] <consumer_profile::CountingAllocator as core::alloc::global::GlobalAlloc>::alloc
+     0.16%             5  consumer-profil  libc.so.6         [.] 0x0000000000176425
+     0.16%             5  consumer-profil  libc.so.6         [.] 0x00000000001764b5
+     0.13%             4  consumer-profil  libc.so.6         [.] 0x0000000000176470
+     0.13%             4  consumer-profil  libc.so.6         [.] 0x00000000001765ae
+     0.10%             3  consumer-profil  libc.so.6         [.] 0x00000000001764a6
+     0.06%             2  consumer-profil  libc.so.6         [.] malloc
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x00000000000a4fe4
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x000000000017642e
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x0000000000176485
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x00000000001764a1
+     0.06%             2  consumer-profil  libc.so.6         [.] 0x00000000001764b2
+     0.03%             1  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a50cb
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a6e9b
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000000a764b
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x000000000017646c
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176476
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x000000000017649d
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000001765a4
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000001765c0
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176625
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e4d
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e52
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176eb3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4015f4
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad88f2cb
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae98e344
+
+
+#
+# (Tip: To not accumulate CPU time of children symbols add --no-children)
+#

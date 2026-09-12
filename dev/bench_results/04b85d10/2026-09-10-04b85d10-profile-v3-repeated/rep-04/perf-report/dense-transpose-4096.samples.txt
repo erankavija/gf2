@@ -1,0 +1,35 @@
+# case: {"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3375  (97.1%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13500124875
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                    
+# ........  ............  ...............  ................  ..........................................................
+#
+    63.76%          2152  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::transpose
+    31.64%          1068  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+     1.69%            57  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+     1.57%            53  consumer-profil  libc.so.6         [.] 0x0000000000176e89
+     0.44%            15  consumer-profil  libc.so.6         [.] 0x0000000000176e8e
+     0.36%            12  consumer-profil  consumer-profile  [.] gf2_kernels_simd::transpose::transpose_64x64_avx2_safe
+     0.27%             9  consumer-profil  libc.so.6         [.] 0x0000000000176e84
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x00000000001764f4
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e08
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e6c
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176eb3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad890bd4
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8923b5
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad896892
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8968b2
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae98856c
+
+
+#
+# (Tip: See assembly instructions with percentage: perf annotate <symbol>)
+#

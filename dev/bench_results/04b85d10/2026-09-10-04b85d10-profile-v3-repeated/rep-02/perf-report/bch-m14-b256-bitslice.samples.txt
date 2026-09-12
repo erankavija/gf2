@@ -1,0 +1,32 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-bitslice-interleaved  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3645  (96.6%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14580134865
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                    
+# ........  ............  ...............  ................  ..........................................................................................................................
+#
+    92.48%          3371  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_batch_family
+     7.02%           256  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2
+     0.19%             7  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+     0.05%             2  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  consumer-profile  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e52
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e8e
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176eae
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad894abb
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8a89bc
+
+
+#
+# (Tip: Limit to show entries above 5% only: perf report --percent-limit 5)
+#

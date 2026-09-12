@@ -1,0 +1,22 @@
+# case: {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13816127798
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    99.57%          3439  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+            |
+            ---gf2_core::sparse::SpBitMatrix::matvec
+
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#
