@@ -5,14 +5,206 @@
   "created_at": "2026-09-10T23:15:28.708744191Z",
   "dependencies": [],
   "description": "A benchmark campaign interrupted in the middle of a cell can never produce an acceptable receipt: the runner restarts the unfinished cell on resume, and acceptance rejects any cell with more than one start record.\n\n## Background\n\nThe shared benchmark protocol (`dev/active/f547c394/protocol.md`, rule P-11) states that a resumed session journals an omission for every completed cell and never starts it again, so the execution log holds exactly one `cell-start` and one `cell-complete` per cell. That holds when a session pauses at its cell budget. When a session dies mid-cell (an operator signal, a crash, a power loss), the unfinished cell has a `cell-start` and no checkpoint. `benchmark-ab-runner run` then re-measures that cell under a second `cell-start`, and `benchmark-acceptance` rejects the stage with \"cell started 2 times; completed cells must not repeat\" (`dev/tools/tuning-campaign-support/src/receipt.rs`, P-11 checks), although no cell completed twice. The project invariant campaign-resumability requires an interrupted run to continue without repeating completed work, and the protocol's own coverage table lists bounded resumable runs under P-10 to P-12.\n\nObserved on 2026-09-10 in campaign `26465e6c-v3-and-popcnt-pilot` (issue 26465e6c) after an operator stop at 22:54Z that cut cell `and-popcnt-w4096-vs-scalar-control`; the resumed session re-measured it.\n\n## Success Criteria\n\n- [hard] REQ-01: A campaign whose session is interrupted mid-cell resumes under the same identity, re-measures only the unfinished cell, and yields a receipt that acceptance accepts when every other rule holds.\n- [hard] REQ-02: The execution log records every abandoned cell attempt explicitly, and acceptance rejects a cell that completes more than once, a cell whose accepted samples include an abandoned attempt's samples, and a restarted cell without an abandonment record.\n- [hard] REQ-03: The protocol text of P-11 and its coverage table state the rule for interrupted cells, and a regression test covers a mid-cell interruption followed by a resume through acceptance.\n- [hard] REQ-04: Receipts accepted under the current rule keep their verdicts, and the change is versioned the way the protocol versions other acceptance-behaviour changes.\n\n## Notes\n\nUntil this is fixed, scheduled benchmark windows must let every session reach a cell boundary; a stop between sessions is safe.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "fd6a97b8c43e6a3620f2c8a6ab8ecc2d02f70aa5cf49227e6aacd674c8344a86",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca56287b992102d0a42722cb785c1cf08da6a98e79546fdb2d9e37609ee75656",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "amendment-v2.md",
+          "resolved_path": "dev/active/f547c394/amendment-v2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef0304736301968ef5422e0821e762816c88378c3a192088c7e49f59d9052876",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "amendment-v3.md",
+          "resolved_path": "dev/active/f547c394/amendment-v3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "aa437238361ba6519af25fe6408e4206a7c6a898a337d465e06b980f1e60163a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "design.md",
+          "resolved_path": "dev/active/f547c394/design.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Zen 3 benchmark protocol (version 4)",
+      "path": "dev/active/f547c394/protocol.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "34300e46f58f4490396db32b4faf652630b792eda691f17ea363263ca2efc12d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "35ad62a406200c5a6d2bd073ca79721f1532a20478f06077e0b790fa7fe63a02",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/26465e6c/v3-and-popcnt-pilot/acceptance-summary.json",
+          "resolved_path": "dev/bench_results/26465e6c/v3-and-popcnt-pilot/acceptance-summary.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa55569263698b7455d3a865965b99d429dd70458696c62320781024fd27d2ae",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../bdc507a3/verdict-preservation.json",
+          "resolved_path": "dev/active/bdc507a3/verdict-preservation.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Protocol v4 amendment record",
+      "path": "dev/active/f547c394/amendment-v4.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Addendum schema v4",
+      "path": "dev/active/f547c394/addendum.schema.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "fd6a97b8c43e6a3620f2c8a6ab8ecc2d02f70aa5cf49227e6aacd674c8344a86",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "89c6793f89834f0192c9e260de131729c682b6e4e08121895aa0b6c681d5a85a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "rework-validation-r5.md",
+          "resolved_path": "dev/active/f547c394/rework-validation-r5.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d525a71b40721ccc4c08d7289eb11685215349bbd9d003df5d099c28fe4c8312",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/f547c394/v3-r2-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/f547c394/v3-r2-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "06835b62af2b5a35148ae9342392eb61b7d997f01b5abff701def0c2d08adb8d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "findings.md",
+          "resolved_path": "dev/active/f547c394/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "81617be7002434c4a7f0a395eb72805cb7f6e3cca542a17f63899c9aca99c597",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/f547c394/v3-r2-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/f547c394/v3-r2-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "34300e46f58f4490396db32b4faf652630b792eda691f17ea363263ca2efc12d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Campaign tooling design notes",
+      "path": "dev/active/f547c394/design.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Verdict of every committed receipt before and after v4",
+      "path": "dev/active/bdc507a3/verdict-preservation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Verdict-preservation comparison generator",
+      "path": "dev/active/bdc507a3/compare-acceptance-verdicts.sh"
+    }
+  ],
+  "done_at": "2026-09-12T06:49:58.262190115Z",
   "first_ready_at": "2026-09-10T23:15:28.708744191Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-12T06:40:00.251604649Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-12T06:42:25.599912264Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-12T06:44:18.871301134Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "bdc507a3-b1e8-4d76-bdb0-37410c6ea339",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -20,7 +212,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Accept resumed campaigns whose interrupted cell restarts",
-  "updated_at": "2026-09-11T16:56:18.694466416Z"
+  "updated_at": "2026-09-12T06:49:58.262190115Z"
 }
