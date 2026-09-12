@@ -11,9 +11,8 @@ confirmations name [version 4](../f547c394/amendment-v4.md), which admits a
 version-3 pilot as resolution evidence because both versions derive the pilot
 resolution identically. The [plan](plan.md) maps each criterion to what
 `c077a88b` already settles.
-The three pilot campaigns are measured and accepted; the profile shares and
-the two matched confirmations are not yet measured, so the sections that rest
-on them stay WAITING-ON-WINDOW.
+Five campaigns are measured and independently accepted, and one profile series
+of nine sessions carries the sampled shares and counters.
 
 ## Question
 
@@ -42,7 +41,10 @@ observed during calls, process threads) that the runner journals, and fails
 when a worker leaves its CPU, when a thread beyond the workers exists (the
 cells declare no nested pool), or when any worker's decisions differ from the
 frozen per-frame error vector. The harness is
-[survey/harness](survey/harness/Cargo.toml).
+[survey/harness](survey/harness/Cargo.toml). Each receipt's placement and
+thread counts are projected in the
+[tables](../../bench_results/3be770d5/tables.md) "Steady-state campaigns"
+section, one row per cell and arm.
 
 Before timing, an untimed replay of every recorded frame through the
 reused-decoder, multi-worker paths reproduces the prepared per-frame error
@@ -74,10 +76,10 @@ The arms therefore link a campaign-support library older than the runner's:
 they were built before protocol v4 landed, and v4 changed that library's result
 encoding, so rebuilding them from the merged tree yields different bytes while
 the profiling executables reproduce theirs exactly. The mismatch is confined to
-measurement plumbing. It changes no decoder — the v4 merge touched no crate
-under `crates/` and no arm source — and it is not assumed to be harmless: the
-pinned arms and the v4 runner were run together end to end, through the real
-runner to an accepted receipt, before the confirmations were queued.
+measurement plumbing. It changes no decoder, since the v4 merge touches no
+crate under `crates/` and no arm source, and it is not assumed to be harmless:
+the pinned arms and the v4 runner are run together end to end, through the real
+runner to an accepted receipt, before either confirmation is queued.
 
 ## Comparison contract
 
@@ -88,13 +90,13 @@ invocation. The fastest-compatible family pairs gf2 with AFF3CT horizontal
 layered f32, layered f32 INTER and layered i16 INTER; precision, schedule and
 native wave size differ and stay labelled in [arms.json](survey/arms.json).
 All arms report the `c077a88b` prepared quality evidence, whose BER/FER
-counts, intervals and iteration distributions are projected in its
-[tables](../../bench_results/c077a88b/tables.md) "Quality on identical
-recorded inputs"; this survey adds no BER/FER samples. That corpus cannot
-certify quality admission for any fastest-compatible mode under P-19, so that
-family is exploratory only and selects nothing. The fixed-point DVB excess
-frame failures `c077a88b` records remain contradicting evidence against
-adopting quantization without a new numerical contract.
+counts, intervals and iteration distributions each receipt carries and the
+[tables](../../bench_results/3be770d5/tables.md) project per cell and arm.
+This survey adds no BER/FER samples. That corpus cannot certify quality
+admission for any fastest-compatible mode under P-19, so that family is
+exploratory only and selects nothing. The fixed-point DVB excess frame
+failures `c077a88b` records remain contradicting evidence against adopting
+quantization without a new numerical contract.
 
 The source evidence records a signed-zero difference a shared reduction must
 settle: AFF3CT's sign treats negative zero as negative, gf2's scalar min-sum
@@ -133,8 +135,10 @@ changes, so no before/after pair is owed.
 
 [run-profile.sh](survey/run-profile.sh) runs a declared number of sessions,
 each under its own full-host acquisition. `perf` starts disabled and the
-driver enables it only around the profiled dispatches. Record cases sample
-user cycles at a fixed period for gf2 at one and 24 workers and AFF3CT
+driver enables it only around the profiled dispatches; the driver tolerates
+the trailing NUL of each acknowledgement on the control channel, and a session
+that leaves no usable case stops the series inside the window. Record cases
+sample user cycles at a fixed period for gf2 at one and 24 workers and AFF3CT
 flooding at one worker; every sampled address is resolved to its inline chain
 and assigned a category by source-span rules
 ([summarizer](survey/summarize-profile.py)); shares carry Wilson intervals
@@ -143,57 +147,65 @@ non-multiplexed counter groups for both arms at one, six, twelve and 24
 workers; per-session figures carry order-statistic median intervals, and
 per-worker slowdown and gf2-over-AFF3CT ratios carry bootstrap intervals.
 
+Every sample a case records reaches a category. The pooled denominator of a
+case is the SAMPLE count `perf report --stats` reports for it, and a case whose
+address listing and recorded total disagree stops the summary rather than
+reporting shares over an incomplete denominator. Samples whose instruction
+pointer `perf` resolves to no object carry the `unmapped-ip` category: on this
+host they are the kernel-space addresses its own report lists as `[k]`, which
+`cycles:u` samples through interrupt skid and an unprivileged session cannot
+map. The rule is equality, not a tolerance, and `summarize-profile.py
+--self-test` checks the three address shapes, that the unmapped shape reaches
+the pooled total, and that a listing short of its recorded total is rejected.
+
 A bottleneck counts as single-core when its share at 24 workers stays within
 its one-worker Wilson interval and gf2's per-worker slowdown interval overlaps
 AFF3CT's; it counts as multicore saturation when gf2's slowdown interval lies
 above AFF3CT's and the L1d or cache miss ratio rises with the worker count.
+Both halves are evaluated mechanically in the tables' "Single-core work
+against multicore saturation" section.
 
 The first series
 ([v3-r1-steady-profile](../../bench_results/3be770d5/v3-r1-steady-profile/))
-produced zero usable samples: every profiled case of all nine sessions exited
-on the `perf` control channel, so no case wrote its record and the summarizer
-excluded all of them. `perf` answers a control command with its
+produces zero usable samples: every profiled case of all nine sessions exits
+on the `perf` control channel, so no case writes its record and the summarizer
+excludes all of them. `perf` answers a control command with its
 acknowledgement tag and the trailing NUL of the C string literal, and the
-driver read the NUL of one answer as the head of the next. **No conclusion in
-this document rests on that series**, and its
+driver that ran it read the NUL of one answer as the head of the next. **No
+conclusion in this document rests on that series**, and its
 [generated summary](../../bench_results/3be770d5/v3-r1-steady-profile/profile.md)
 reports zero samples in every table. The series stays: its session
 directories, the per-case statuses, that summary and the
 [window job log](../../bench_results/3be770d5/v3-r1-steady-profile-window-job.log)
-are the record of the outcome, and the re-run neither replaces nor amends
-them.
-
-The driver now tolerates the padding and the series stops at a session that
-leaves no usable case, so the same failure surfaces inside the window instead
-of at the summary. The re-run is queued as its own window job. It settles what
-REQ-02 asks and what the lever ranking needs: the sampled share of each
-category with its interval for gf2 and AFF3CT at one and twenty-four workers,
-the counter groups behind the single-core and saturation test stated above,
-and the allocation census the first session records. The fix moved one
-executable and no other: the
-[executable identity table](../../bench_results/3be770d5/preparation/executable-identity.md)
-joins the digest every committed measurement recorded to the digest the build
-identity now records.
+are the record of the outcome, and the second series neither replaces nor
+amends them.
 
 The two series are named `v3-r1-steady-profile` and `v4-r1-steady-profile`,
 after the campaign generation of the window each runs in. A profile series
 pins no protocol version and is evaluated under none, so the change of run id
 marks no change of method: the cases, the sampling period, the counter groups,
 the session count and the summarizer are the same in both, and what separates
-them is the acknowledgement fix and the session guard.
+them is the acknowledgement handling and the session guard. The fix moves one
+executable and no other: the
+[executable identity table](../../bench_results/3be770d5/preparation/executable-identity.md)
+joins the digest every committed measurement records to the digest the build
+identity records.
 
 The conditions the first series ran under are projected beside it
 ([conditions](../../bench_results/3be770d5/v3-r1-steady-profile-conditions.md),
-from its launcher log and host record), so the re-run can be compared against
-like conditions rather than against an assumption. They read as a
-self-generated load: the first session began on an idle host, load climbed
-across the early sessions to a plateau and stayed there, and session duration
-stayed flat across that whole range, the first session's small excess being
+from its launcher log and host record), so the second series can be compared
+against like conditions rather than against an assumption. They read as a
+self-generated load: the first session begins on an idle host, load climbs
+across the early sessions to a plateau and stays there, and session duration
+stays flat across that whole range, the first session's small excess being
 the census and call-graph work only it performs. A rising outside load would
 have lengthened the later sessions. This is a bound, not an isolation: the
 cases themselves occupy every logical CPU, so a load average taken at a
 session boundary cannot separate the series' own work from anything else, and
 what the full-host mutex each session holds excludes is other measurement.
+The second series records the same quantities in its own
+[repetitions log](../../bench_results/3be770d5/v4-r1-steady-profile/repetitions.log)
+and [host record](../../bench_results/3be770d5/v4-r1-steady-profile/host.txt).
 
 ## Structural and allocation evidence
 
@@ -208,7 +220,8 @@ records every heap request of each frame it decodes by size. Every census
 frame allocates exactly one vector per edge per iteration plus two syndrome
 vectors per syndrome check, and frees all of them; the
 [tables](../../bench_results/3be770d5/tables.md) "Allocation census" section
-checks that relation and projects both files, and the profile summary
+checks that relation and projects both files, and the
+[profile summary](../../bench_results/3be770d5/v4-r1-steady-profile/profile.md)
 repeats the check on the census the first profile session records.
 
 ## Lever ranking
@@ -217,17 +230,19 @@ Each lever removes a set of profile categories. Its predicted single-worker
 speedup is at least $1/(1-s_{\text{lo}})$, where $s_{\text{lo}}$ is the lower
 Wilson bound of the removed share; a later confirmed speedup whose upper
 bound falls below that value refutes the attribution. Levers rank by
-$s_{\text{lo}}$; a lever no category isolates is ranked by a labelled estimate
-from the structural counts. Downstream work: `07ca8585` (allocation and edge
-traversal), `f63a2464` (quantized, layered, QC-aware) and `ed3d490e`
-(inter-frame SIMD).
+$s_{\text{lo}}$, taking the smaller of the two codes' bounds; a lever no
+category isolates takes no rank and carries a labelled basis. The ranks, the
+shares, the intervals and the implied speedups are in the tables' "Lever
+ranking" section, derived from [levers.json](survey/levers.json) and the
+profile summary. Downstream work: `07ca8585` (allocation and edge traversal),
+`f63a2464` (quantized, layered, QC-aware) and `ed3d490e` (inter-frame SIMD).
 
 | Lever | gf2 mechanism (source evidence) | Removed categories | Falsifiable workload experiment |
 |---|---|---|---|
 | Allocation removal | per-edge `Vec<f32>` in `boxplus_minsum_n`; per-iteration syndrome vectors | `allocator`, `min-sum-input-vec` | Census of the changed decoder shows zero steady-state allocations; single-worker steady cells meet the prediction. |
 | Canonical edge indexing | linear `find_check_position` and `check_to_var_message` scans | `edge-position-search` | Precomputed edge index with unchanged arithmetic; NR gains more than DVB, as the structural counts predict, or the attribution is refuted. |
 | Flat check/variable-major layout | `Vec<Vec<Llr>>` messages, `Vec<Vec<usize>>` neighbors | none isolated: labelled estimate from counters | Flat arrays with identical arithmetic; L1d misses per frame fall and the twelve-worker per-worker slowdown shrinks, else refuted. |
-| Shared min/second-min/sign | one reduction over d_c - 1 gathered inputs per output edge | `check-node-loop`, `min-sum-dispatch`, `min-sum-reduction` beyond two passes per check | Two-pass check update with the signed-zero rule settled; cycles per frame fall at least by the structural gather ratio times the measured share. |
+| Shared min/second-min/sign | one reduction over d_c - 1 gathered inputs per output edge | upper bound from `check-node-loop`, `min-sum-reduction`, `min-sum-dispatch` | Two-pass check update with the signed-zero rule settled; cycles per frame fall at least by the structural gather ratio times the measured share. |
 | Inter-frame SIMD | none today | none: comparator estimate | AFF3CT's layered f32 scalar-to-INTER ratio in the fastest-compatible cells bounds the gain; a gf2 lane-batched decoder is refuted if it falls below the matched-scalar gap closed by the scalar levers. |
 | Quantized/layered decoding | none today | none: comparator estimate | Layered f32 and i16 INTER cells with iteration distributions; any adoption needs a new numerical contract and quality evidence the current corpus cannot give. |
 | QC-aware intra-frame work | none today | none: labelled estimate | Lifted-block NR update against the flat scalar update on the NR cells; refuted if it does not beat the flat layout at one worker. |
@@ -249,30 +264,34 @@ command resumes under its own identity; the script headers state their
 contracts. A confirmation refuses to run until its addendum is committed and
 unmodified, so freezing it with
 [freeze-addendum.py](survey/freeze-addendum.py) and committing it precede the
-window.
+window. The summary step of a profile series reads files and times nothing,
+so it runs after the mutex and can be repeated over a completed series.
 
 ## Results
 
 [summarize.py](survey/summarize.py) regenerates the
-[tables](../../bench_results/3be770d5/tables.md) from the committed receipts;
-they and the profile series' own `profile.md` are the only numeric
+[tables](../../bench_results/3be770d5/tables.md) from the committed receipts,
+the structural counts and the committed profile summary;
+[summarize-profile.py](survey/summarize-profile.py) regenerates the
+[profile](../../bench_results/3be770d5/v4-r1-steady-profile/profile.md) from
+the nine session directories. Those two documents are the only numeric
 projections, and every statement below points at the section and cell that
-carries its figures.
-[freeze-addendum.py](survey/freeze-addendum.py) derives each matched
-confirmation addendum mechanically from its accepted pilot.
+carries its figures. [freeze-addendum.py](survey/freeze-addendum.py) derives
+each matched confirmation addendum mechanically from its accepted pilot.
 
 ### The per-core gap
 
-Every matched single-worker cell of the accepted pilot puts AFF3CT ahead:
-the paired bootstrap interval of the time ratio lies wholly above one on both
-codes, far from it, and no window is flagged (tables "Steady-state campaigns",
-`v3-r1-3be770d5-ldpc-steady-single-worker-pilot`). Both arms decode the same
-recorded frames of the same parity-check matrix under the same schedule,
+The matched single-worker confirmation puts AFF3CT ahead on both codes: each
+cell's paired bootstrap interval of the time ratio lies wholly above one, far
+from it, no window is flagged, and independent acceptance accepts the receipt
+(tables "Steady-state campaigns",
+`v4-r1-3be770d5-ldpc-steady-single-worker-confirmation`). Both arms decode the
+same recorded frames of the same parity-check matrix under the same schedule,
 precision, normalization, iteration cap and stopping rule, and each worker's
 per-frame decisions are checked against the frozen `c077a88b` evidence, so the
-gap is decode work rather than a difference in what is decoded. The cells are
-exploratory: the pilot observes the resolution and decides nothing, and the
-confirmation of this family is what fixes its margins.
+gap is decode work rather than a difference in what is decoded. The pilot of
+this family observes the same direction and decides nothing; the confirmation
+is what fixes the margins.
 
 The NR BG1 ratio exceeds the DVB-T2 ratio at one worker, the direction the
 degree-structure lever predicts from the structural counts, whose per-edge
@@ -281,23 +300,75 @@ per flooding iteration" and the two single-worker cells). The comparison
 between two cells is descriptive: the family declares no such comparison and
 the correction covers none.
 
-### Saturation is not where the gap comes from
+### Where the single-worker time goes
 
-The matched multicore pilot measures the same operation at six physical
-cores, twelve physical cores and twenty-four logical CPUs, every worker
-pinned, every worker's placement journaled and checked
-(`v3-r1-3be770d5-ldpc-steady-multicore-pilot`). On both codes the ratio at
-twenty-four logical CPUs is smaller than at six physical cores, with intervals
-that do not overlap, so gf2 loses relatively less ground as both decoders
-saturate the machine. The deficit this survey has to attribute is therefore
-single-core work; the profile shares are what will attribute it, and they are
-the measurement still owed. This ordering between cells is descriptive for the
-same reason as above.
+Three categories carry most of gf2's single-worker samples on both codes: the
+linear edge-position searches, the check-node loop, and the allocator together
+with the per-edge input vector the check update allocates (profile "Sampled
+shares by category", `gf2-dvb-w1` and `gf2-nr-w1`). The same tables give AFF3CT's split, where the min-sum update
+rule dominates and no allocator category appears at all, which the structural
+counts predict: AFF3CT allocates nothing per iteration.
+
+One libc region carries a further share of gf2's single-worker samples under
+no symbol, so it stays in its own `other:libc.so.6` category rather than being
+folded into a lever. The first session's call-graph record names its caller:
+it is reached through `boxplus_minsum_n`, the `collect` into the per-edge
+`Vec<f32>` and that vector's trusted extend, so it is the copy that fills the
+vector the allocation lever removes
+([callers](../../bench_results/3be770d5/v4-r1-steady-profile/rep-01/callgraph/gf2-dvb-w1.callers.txt)).
+The ranked allocation share is therefore a lower bound on what per-edge vector
+construction costs, and the lever's own experiment, a census showing zero
+steady-state allocations, is what would settle the rest.
+
+### Single-core work against multicore saturation
+
+The predeclared test is evaluated in the tables' "Single-core work against
+multicore saturation" section, both halves, from the committed summary. Its
+share-stability half fires only for categories at or below a fraction of a
+percent of the one-worker samples: on both codes every category with a
+double-digit single-worker share moves outside its one-worker Wilson interval
+by twenty-four workers, in one direction or the other. Its saturation half
+fires at six and twelve physical cores on DVB-T2 and
+at six on NR, where gf2's per-worker slowdown interval lies wholly above
+AFF3CT's and a miss ratio rises; it does not fire at twenty-four logical CPUs,
+where gf2's slowdown interval lies wholly below AFF3CT's on both codes.
+
+The deficit this survey has to attribute is therefore not multicore
+saturation. It is present at one worker, where no sharing exists, at the
+margins the single-worker confirmation fixes, and it narrows rather than
+widens as both decoders take the whole machine. What the shares do between one
+and twenty-four workers is a separate recorded observation: they move, in both
+directions by category, and the flat-layout lever's experiment is the one that
+tests a layout explanation for that movement.
+
+### Ranked levers
+
+The two levers that remove whole categories at the top of the single-worker
+profile are canonical edge indexing and allocation removal, in that order on
+both codes, and the shares, intervals and implied lower-bound speedups are in
+the tables' "Lever ranking" section. Dispatch, syndrome and termination follow
+at single-digit shares, and batch conversion is negligible at one worker,
+which is itself the answer to whether the matched gap is a conversion
+artifact.
+
+Three levers take no rank because no category isolates them, and each carries
+its labelled basis in the same section: the shared min/second-min/sign
+reduction, bounded above by its containing categories scaled by the structural
+gathers per edge; the flat layout, carried by the L1d miss ratio at one and
+twenty-four workers; and the degree-structure and QC-aware levers, carried by
+the exact position-search comparisons per edge. Inter-frame SIMD and
+quantized/layered decoding are comparator estimates from the fastest-compatible
+cells and adopt nothing.
+
+The upper bound on the shared-reduction lever exceeds the ranked share of
+allocation removal on both codes. It takes no rank because its bound is an
+upper bound and the rule ranks by a lower bound; the two-pass experiment in
+the lever table is what would give it one.
 
 ### Construction and conversion
 
-AFF3CT's decoder construction costs far more than gf2's, and it grows with the
-worker count; the steady-state operation puts it outside the timed window and
+AFF3CT's decoder construction costs far more than gf2's in every cell of every
+family; the steady-state operation puts it outside the timed window and
 reports it as setup, beside the per-call conversion and dispatch costs, in
 each receipt's untimed diagnostics table. Conversion and dispatch stay small
 against the call in every cell, so the matched gap is not a conversion
@@ -314,19 +385,12 @@ table carries the contradicting evidence directly: on DVB-T2 the fixed-point
 inter-frame candidate fails more frames than the baseline it is compared with,
 and its iterations run to the cap.
 
-### What the window still owes
+### Criteria
 
-The profile shares (REQ-02) and the share-ranked levers (REQ-03) need the
-re-run series. The lever table's mechanisms, removed categories and
-falsifiable experiments are committed; what no evidence supports yet is the
-rank order, because the rule ranks by a measured lower bound. Both matched
-confirmations are frozen and queued; until they run, every matched cell stands
-as an exploratory estimate and decides nothing.
-
-| Criterion | Status | Evidence or remaining work |
+| Criterion | Status | Evidence |
 |---|---|---|
-| REQ-01 | MET | Three accepted pilot receipts cover one worker, six and twelve physical cores and twenty-four logical CPUs on both codes, with journaled topology, affinity, observed worker counts, thread counts, SMT state and build identities; the matched confirmations add frozen decision margins. |
-| REQ-02 | WAITING-ON-WINDOW | Structural counts and the allocation census are recorded; no measured time share exists until the re-run profile series replaces the void first one. |
-| REQ-03 | WAITING-ON-WINDOW | Ranking rule, mechanisms and experiments above; the ranks need the profile shares. The degree-structure prediction already holds in the single-worker cells. |
-| REQ-04 | MET | Matched arms keep the numerical contract on identical recorded LLRs; the fastest-compatible modes are separated, labelled and reported with their P-19 notes, iteration distributions and the prepared BER/FER counts and intervals. |
-| REQ-05 | MET for the published campaigns | Each receipt pins the contract, protocol, addendum, ledger and producing closure, and independent acceptance accepted each; the void profile series is preserved rather than discarded. No production change, so no before/after pair is owed. |
+| REQ-01 | MET | Five accepted receipts cover one worker, six and twelve physical cores and twenty-four logical CPUs on both codes, with journaled topology, affinity, observed worker counts, thread counts, SMT state and build identities; the two matched confirmations fix the decision margins. Tables "Steady-state campaigns"; placement per cell and arm in each campaign's second table. |
+| REQ-02 | MET | Nine profile sessions give measured time shares with Wilson intervals and per-session ranges for both decoders at one and twenty-four workers, over categories that include allocation, edge traversal, reduction, dispatch, conversion and syndrome work; at least three categories carry double-digit single-worker shares on both codes. The single-core against saturation test is evaluated mechanically in its own tables section. Profile "Sampled shares by category" and "Counters and time per frame". |
+| REQ-03 | MET | Every REQ-03 lever has a mechanism in the gf2 source, a removed-category set or a labelled basis, and a falsifiable workload experiment; the ranked levers carry measured lower bounds and the implied speedups. Tables "Lever ranking"; mechanisms and experiments in the lever table above. |
+| REQ-04 | MET | Matched arms keep the numerical contract on identical recorded LLRs; the fastest-compatible modes are separated, labelled and reported with their P-19 notes; every cell carries iteration distributions and BER/FER counts with intervals in its receipt's quality table. Tables "Steady-state campaigns", quality table per campaign. |
+| REQ-05 | MET | Each receipt pins the contract, protocol, addendum, ledger and producing closure, and independent acceptance accepted each; the void profile series is preserved as falsified evidence rather than discarded. No production change, so no before/after pair is owed. |

@@ -230,13 +230,14 @@ def saturation(lines):
     lines += ["", "A branch reads `saturation` only when gf2's slowdown interval lies wholly above "
               "AFF3CT's and one miss ratio's interval at that arm lies wholly above its one-worker "
               "interval. Medians carry the 9-session order-statistic intervals of the counter table.", "",
-              "Share stability between one and twenty-four workers, the other half of the test:", "",
+              "Share stability between one and twenty-four workers, the other half of the test, over "
+              "every category of the one-worker case:", "",
               "| Code | Category | Share at 1 worker [Wilson 95%] | Share at 24 workers | Inside the "
               "one-worker interval |", "|---|---|---|---:|---|"]
     for code in ("dvb", "nr"):
         single = {row["category"]: row for row in records[f"gf2-{code}-w1"]["categories"]}
         many = {row["category"]: row for row in records[f"gf2-{code}-l24"]["categories"]}
-        for name, row in sorted(single.items(), key=lambda item: -item[1]["samples"])[:8]:
+        for name, row in sorted(single.items(), key=lambda item: -item[1]["samples"]):
             wide = many.get(name, {"share": 0.0})["share"]
             inside = row["wilson_lower"] <= wide <= row["wilson_upper"]
             lines.append(f"| {code} | `{name}` | {100 * row['share']:.2f}% ({row['samples']}/"
