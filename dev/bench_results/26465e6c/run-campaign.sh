@@ -24,8 +24,11 @@
 #           is re-invoked and repeats no completed cell. A session interrupted
 #           inside a cell leaves that cell started but unfinished: on resume
 #           the runner starts it again, and v3 acceptance rejects the stage
-#           under P-11. bdc507a3 tracks the fix; until it lands, stop a
-#           campaign only between sessions.
+#           under P-11, which is what rejected the first AND-popcount pilot.
+#           Protocol v4 lifts that restriction by journalling the abandoned
+#           attempt (dev/active/f547c394/amendment-v4.md), and a v4 runner
+#           refuses these v3 addenda outright. These campaigns are complete,
+#           so this launcher reproduces them rather than extending them.
 # finalize  assembles the receipt directory, copies the launcher log and the
 #           instruction record into it, and evaluates acceptance.
 #

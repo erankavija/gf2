@@ -91,10 +91,13 @@ first session inside cell `and-popcnt-w4096-vs-scalar-control`: that session
 has no exit line in the receipt's `launcher.log`, and its `execution.log`
 starts the cell without completing it. After the second session paused, the
 launcher loop started no third session; a re-invoked `run` did. The second
-session had started the interrupted cell again, which P-11 rejects; the
-shared-tool defect is tracked as `bdc507a3`. Under protocol v3 only a stop at
-a cell boundary, at a cell-budget pause or between sessions, resumes without
-repeating a cell. The receipt stays published and is not resolution evidence:
+session had started the interrupted cell again, which P-11 rejects. Under
+protocol v3 only a stop at a cell boundary, at a cell-budget pause or between
+sessions, resumes without repeating a cell; protocol v4 lifts that restriction
+by journalling the abandoned attempt (`bdc507a3`,
+[amendment](../f547c394/amendment-v4.md)). These receipts pin v3 and are
+evaluated under the rules they pin, so the rejection stands. The receipt stays
+published and is not resolution evidence:
 `v3-and-popcnt-pilot-r2` re-measured the same frozen pilot addendum as the
 second of the two pilot trials per cell it allows (`search_budget`). Every cell
 of every receipt ran on one core under the protocol's shared window settings,
