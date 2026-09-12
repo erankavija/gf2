@@ -426,8 +426,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-09-12T18:02:32.292686993Z",
+      "status": "passed",
+      "updated_at": "2026-09-12T18:08:49.839355277Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -455,5 +455,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
-  "updated_at": "2026-09-12T18:07:08.991159692Z"
+  "updated_at": "2026-09-12T18:08:49.839355277Z"
 }

@@ -1,0 +1,6 @@
+dev/active/428f2f6b/inventory-c077a88b.json	report	c077a88b quantitative-statement inventory
+dev/active/428f2f6b/inventory-1d0da41f.json	report	1d0da41f quantitative-statement inventory
+dev/active/428f2f6b/inventory-eda07788.json	report	eda07788 quantitative-statement inventory
+dev/active/428f2f6b/corrections.md	report	Citation-pass corrections record
+dev/active/1d0da41f/survey/summarize.py	reference	YMM dispatch table generator
+dev/bench_results/1d0da41f/tables.md	benchmark	YMM carry-less dispatch evidence tables
