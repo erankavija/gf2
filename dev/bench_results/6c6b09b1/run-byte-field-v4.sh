@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Protocol-v3 byte-field comparison campaigns (jit:6c6b09b1).
+# Protocol-v4 byte-field comparison campaigns (jit:6c6b09b1).
 #
 # Usage (from the repository root):
-#   dev/bench_results/6c6b09b1/run-byte-field-v3.sh build
-#   dev/bench_results/6c6b09b1/run-byte-field-v3.sh plan|run|finalize|window CAMPAIGN
+#   dev/bench_results/6c6b09b1/run-byte-field-v4.sh build
+#   dev/bench_results/6c6b09b1/run-byte-field-v4.sh plan|run|finalize|window CAMPAIGN
 #
 # CAMPAIGN is one of region-axpy-pilot, matrix-product-pilot or
 # pairwise-control-pilot.
@@ -12,7 +12,7 @@
 # conformance and provenance binaries and the Rust arms, runs every
 # correctness check (external conformance, FFI wrapper, gf2 adapters, the
 # shared field-law suite over both gf2 element types) and records the build
-# and arm provenance under dev/active/6c6b09b1/conformance-v3/, then builds
+# and arm provenance under dev/active/6c6b09b1/conformance-v4/, then builds
 # the protocol runner and acceptance tool. Every step runs under the CPU
 # budget and finishes before any timed work; any failed check stops it.
 # `plan` projects the saved runner plan from the frozen family addendum once.
@@ -39,7 +39,7 @@ repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the repository root' >&2; exit 2; }
 ISSUE=6c6b09b1
 SURVEY=dev/active/$ISSUE/survey
-EVIDENCE=dev/active/$ISSUE/conformance-v3
+EVIDENCE=dev/active/$ISSUE/conformance-v4
 EXT=$repo/target/$ISSUE-ext
 TARGET=$repo/target/$ISSUE-survey
 CBUILD=$TARGET/c
@@ -79,7 +79,7 @@ if [[ "$ACTION" == build ]]; then
     RUSTFLAGS="$ARM_RUSTFLAGS" \
     ./scripts/cargo-budget.sh "$SURVEY/arm-provenance.sh" >"$EVIDENCE/arm-provenance.txt"
   {
-    echo "# Build record of the byte-field v3 campaigns (jit:6c6b09b1)"
+    echo "# Build record of the byte-field v4 campaigns (jit:6c6b09b1)"
     echo "# toolchain: $(rustc --version)"
     echo "# arm RUSTFLAGS: $ARM_RUSTFLAGS"
     echo "# c compiler: $(cc --version | head -1)"
@@ -96,21 +96,21 @@ fi
 CAMPAIGN=${2:?campaign}
 case "$CAMPAIGN" in
   region-axpy-pilot)
-    ADDENDUM=dev/active/$ISSUE/addendum-v3-region-axpy-pilot.json
+    ADDENDUM=dev/active/$ISSUE/addendum-v4-region-axpy-pilot.json
     LABEL=pilot SEED=2026091101 MAX_CELLS=6 PILOT_PAIRS=12 ;;
   matrix-product-pilot)
-    ADDENDUM=dev/active/$ISSUE/addendum-v3-matrix-product-pilot.json
+    ADDENDUM=dev/active/$ISSUE/addendum-v4-matrix-product-pilot.json
     LABEL=pilot SEED=2026091102 MAX_CELLS=5 PILOT_PAIRS=12 ;;
   pairwise-control-pilot)
-    ADDENDUM=dev/active/$ISSUE/addendum-v3-pairwise-control-pilot.json
+    ADDENDUM=dev/active/$ISSUE/addendum-v4-pairwise-control-pilot.json
     LABEL=pilot SEED=2026091103 MAX_CELLS=7 PILOT_PAIRS=12 ;;
   *) echo "unknown campaign $CAMPAIGN" >&2; exit 2 ;;
 esac
-ID=$ISSUE-v3-r1-$CAMPAIGN
+ID=$ISSUE-v4-r1-$CAMPAIGN
 STAGE=$STAGES/$ID
 PLAN=$STAGE.plan.json
 LAUNCH_LOG=$STAGE.launcher.log
-OUT=dev/bench_results/$ISSUE/v3-r1-$CAMPAIGN
+OUT=dev/bench_results/$ISSUE/v4-r1-$CAMPAIGN
 
 # The executables a plan names must be the ones the committed build record
 # lists, and the libraries the external arm loads must be the verified
@@ -173,9 +173,10 @@ case "$ACTION" in
     verify_build
     mkdir -p "$STAGES"
     touch "$LOCK"
-    python3 "$SURVEY/make-plan-v3.py" --addendum "$ADDENDUM" --label "$LABEL" \
+    python3 "$SURVEY/make-plan-versioned.py" --addendum "$ADDENDUM" --label "$LABEL" \
       --campaign-id "$ID" --campaign-seed "$SEED" --lock "$(realpath "$LOCK")" \
       --target "$TARGET" --max-cells-per-session "$MAX_CELLS" \
+      --producing-manifest "$SURVEY/producing-inputs-v4.json" \
       --pilot-pairs "$PILOT_PAIRS" --output "$PLAN"
     ;;
   run) run_sessions "$@" ;;

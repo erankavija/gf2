@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Project the runner plan for one protocol-v3 byte-field campaign (jit:6c6b09b1).
+"""Project the runner plan of one versioned-protocol byte-field campaign (jit:6c6b09b1).
 
-Usage: make-plan-v3.py --addendum A --label L --campaign-id ID --campaign-seed S
-                       --lock PATH --target DIR --max-cells-per-session N
+Usage: make-plan-versioned.py --addendum A --label L --campaign-id ID
+                       --campaign-seed S --lock PATH --target DIR
+                       --max-cells-per-session N --producing-manifest M
                        [--pilot-pairs P] --output PLAN
+
+The plan schema is independent of the protocol version, so this projector
+serves every versioned addendum; the caller names the producing-input
+manifest of the campaign generation it is projecting.
 
 Every cell identifier ends in `-<baseline>-vs-<candidate>`, naming the two
 arms it compares; the case both arms decode is built from the frozen
@@ -22,8 +27,6 @@ import json
 import os
 
 POLY = 0x11D
-SURVEY = "dev/active/6c6b09b1/survey"
-PRODUCING_MANIFEST = f"{SURVEY}/producing-inputs-v3.json"
 RUSTFLAGS = "-C target-cpu=native"
 
 # Workload identity prefix -> the case operation both arms perform.
@@ -104,7 +107,7 @@ def case_for(declared):
 def main():
     parser = argparse.ArgumentParser()
     for flag in ("addendum", "label", "campaign-id", "campaign-seed", "lock", "target",
-                 "max-cells-per-session", "output"):
+                 "max-cells-per-session", "producing-manifest", "output"):
         parser.add_argument(f"--{flag}", required=True)
     parser.add_argument("--pilot-pairs", type=int)
     args = parser.parse_args()
@@ -146,7 +149,7 @@ def main():
         "label": args.label,
         "campaign_seed": int(args.campaign_seed),
         "addendum": args.addendum,
-        "producing_manifest": PRODUCING_MANIFEST,
+        "producing_manifest": args.producing_manifest,
         "lock_path": args.lock,
         "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
         "timing_override": None,
