@@ -55,6 +55,17 @@ non-confirmatory evidence of a protocol-budget incompatibility. Neither body of
 evidence supports YMM default adoption, and the sequential default remains in
 place.
 
+A fresh checkout does not reproduce the v1 confirmation's accepted verdict. Its
+saved plan predates the typed `producing_manifest` field, so the evaluator
+compares the survey manifest the receipt pins against the historical shared
+manifest that omission selects and reports a P-23 campaign-start mismatch; the
+[re-evaluation record](../a203a23c/receipt-reevaluation.json) states both
+manifest paths beside the verdict. Every file that receipt pins is committed,
+its measurements and its committed summary are unchanged, and the three v3
+receipts above reproduce their verdicts. The conclusion the v1 confirmation
+governs is therefore unaffected — the v3 continuation reaches it independently —
+while the v1 verdict itself no longer re-derives from the repository.
+
 ## Question and method
 
 Does correcting the AVX512VL requirement improve raw independent 64-by-64

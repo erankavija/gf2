@@ -1,0 +1,29 @@
+# case: {"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3418  (97.1%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13672126466
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                    
+# ........  ............  ...............  ................  ..........................................................
+#
+    64.63%          2209  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::transpose
+    31.63%          1081  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+     1.58%            54  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+     1.08%            37  consumer-profil  libc.so.6         [.] 0x0000000000176e89
+     0.56%            19  consumer-profil  consumer-profile  [.] gf2_kernels_simd::transpose::transpose_64x64_avx2_safe
+     0.29%            10  consumer-profil  libc.so.6         [.] 0x0000000000176e84
+     0.15%             5  consumer-profil  libc.so.6         [.] 0x0000000000176e8e
+     0.03%             1  consumer-profil  consumer-profile  [.] <[u64] as rand::rng::Fill>::try_fill
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e47
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8968b2
+
+
+#
+# (Tip: Boolean options have negative forms, e.g.: perf report --no-children)
+#

@@ -67,26 +67,64 @@ while IFS='|' read -r label pattern; do
     done
 done <"${HERE}/asm-symbols.txt"
 
-# Where the POPCNT instruction and the portable bit-twiddle population count
-# actually live in the measured executable. The conservative-portable build
-# enables no `popcnt` target feature, so a scalar `u64::count_ones` compiles
-# to the mask-and-shift sequence identified by its 0x5555.../0x3333...
-# constants; POPCNT can appear only inside kernels compiled under an enabled
-# target feature. The attribution is per symbol, from the whole binary.
+# Where population counts live in the measured executable, per symbol, from
+# the whole binary. Every count tests one field of an instruction line
+# exactly: its mnemonic, after any prefix, or one of its operands. A pattern
+# over the whole line would also count symbol headers, branch-target labels
+# and operands that merely name a `popcnt` routine. The conservative-portable
+# build enables no `popcnt` target feature, so a scalar `u64::count_ones`
+# compiles to the bit-twiddle sequence whose masks and byte-sum multiplier
+# are 64-bit immediates; POPCNT can appear only inside code compiled under an
+# enabled target feature.
 {
-    echo "# POPCNT instructions per symbol (jit:04b85d10)"
+    echo "# Population-count instructions and constants per symbol (jit:04b85d10)"
     echo "# binary: ${BINARY}"
     echo "# binary sha256: $(sha256sum "${BINARY}" | cut -d' ' -f1)"
-    echo
-    echo "## symbols containing a popcnt instruction (count, symbol)"
-    objdump -d --no-show-raw-insn -C "${BINARY}" \
-        | awk '/^[0-9a-f]+ </ {fn=substr($0, index($0, "<"))} /popcnt/ {c[fn]++} END {for (f in c) print c[f], f}' \
-        | sort -rn
-    echo
-    echo "## symbols containing the bit-twiddle popcount constants 0x5555... or 0x3333... (count, symbol)"
-    objdump -d --no-show-raw-insn -C "${BINARY}" \
-        | awk '/^[0-9a-f]+ </ {fn=substr($0, index($0, "<"))} /0x3333333333333333|0x5555555555555555/ {c[fn]++} END {for (f in c) print c[f], f}' \
-        | sort -rn
+    echo "# Each count is of instruction lines whose mnemonic field (after any"
+    echo "# prefix) or one operand equals the named value; no other text is tested."
+    objdump -d --no-show-raw-insn -C "${BINARY}" | awk -F'\t' '
+        BEGIN {
+            prefix = "^(lock|rep|repz|repnz|repe|repne|data16|data32|addr16|addr32|cs|ds|es|fs|gs|ss|notrack|bnd|xacquire|xrelease)$"
+            split("5555555555555555 3333333333333333 f0f0f0f0f0f0f0f 101010101010101", constant, " ")
+        }
+        /^[0-9a-f]+ </ { fn = substr($0, index($0, "<")); next }
+        NF == 2 && $1 ~ /^ +[0-9a-f]+:$/ {
+            words = split($2, word, " ")
+            i = 1
+            while (i < words && word[i] ~ prefix) i++
+            mnemonic = word[i]
+            if (mnemonic ~ /^popcnt[wlq]?$/) popcnt[fn]++
+            if (mnemonic == "vpshufb") shuffle[fn]++
+            if (mnemonic == "vpsadbw") sad[fn]++
+            operands = split(word[i + 1], operand, ",")
+            for (o = 1; o <= operands; o++) {
+                if (operand[o] !~ /^\$0x[0-9a-f]+$/) continue
+                value = substr(operand[o], 4)
+                sub(/^0+/, "", value)
+                for (k = 1; k <= 4; k++) if (value == constant[k]) { hits[fn, k]++; any[fn] = 1 }
+            }
+        }
+        END {
+            print ""
+            print "## POPCNT instructions (mnemonic popcnt, popcntw, popcntl or popcntq): count, symbol"
+            fflush()
+            found = 0
+            for (f in popcnt) { print popcnt[f], f | "LC_ALL=C sort -k1,1nr -k2"; found = 1 }
+            close("LC_ALL=C sort -k1,1nr -k2")
+            if (!found) print "none: no instruction in the binary has a popcnt mnemonic"
+            print ""
+            print "## nibble-lookup byte counts: VPSHUFB and VPSADBW instructions: vpshufb, vpsadbw, symbol"
+            for (f in shuffle) seen[f] = 1
+            for (f in sad) seen[f] = 1
+            fflush()
+            for (f in seen) print shuffle[f] + 0, sad[f] + 0, f | "LC_ALL=C sort -k1,1nr -k2,2nr -k3"
+            close("LC_ALL=C sort -k1,1nr -k2,2nr -k3")
+            print ""
+            print "## bit-twiddle population-count immediates: 0x5555555555555555, 0x3333333333333333, 0x0f0f0f0f0f0f0f0f (masks), 0x0101010101010101 (byte-sum multiplier), symbol"
+            fflush()
+            for (f in any) print hits[f, 1] + 0, hits[f, 2] + 0, hits[f, 3] + 0, hits[f, 4] + 0, f | "LC_ALL=C sort -k4,4nr -k1,1nr -k5"
+            close("LC_ALL=C sort -k4,4nr -k1,1nr -k5")
+        }'
 } >"${OUT}/asm/popcnt-attribution.txt"
 
 # Frame traffic per routine, joined with the source-derived reason the

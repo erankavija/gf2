@@ -1,0 +1,45 @@
+# case: {"workload":"dense-transpose","size":{"rows":4096,"cols":4096},"seed":302}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/Pu'
+# Event count (approx.): 11500106375
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                    
+# ........  ............  ...............  ................  ..........................................................
+#
+    61.43%          1766  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::transpose
+            |
+            ---gf2_core::matrix::BitMatrix::transpose
+               |          
+                --26.09%--0x7f
+
+    33.53%           964  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+            |
+            ---gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+
+     2.02%            58  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+            |
+            ---0x7f1a73176e93
+               gf2_core::matrix::BitMatrix::transpose
+               0x7fff
+
+     1.57%            45  consumer-profil  libc.so.6         [.] 0x0000000000176e89
+            |
+            ---0x7f1a73176e89
+               gf2_core::matrix::BitMatrix::transpose
+               0x7fff
+
+     0.56%            16  consumer-profil  consumer-profile  [.] gf2_kernels_simd::transpose::transpose_64x64_avx2_safe
+            |
+            ---gf2_kernels_simd::transpose::transpose_64x64_avx2_safe
+               gf2_core::matrix::BitMatrix::transpose
+
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

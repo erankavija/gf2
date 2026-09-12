@@ -1,0 +1,61 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12736117808
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                             
+# ........  ............  ...............  ................  ...................................................
+#
+    79.18%          2521  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+               |          
+               |--1.07%--0xf
+               |          
+               |--1.01%--0x4
+               |          
+               |--0.97%--gf2_core::matrix::BitMatrix::matvec_simd
+               |          
+               |--0.94%--0xd
+               |          
+               |--0.88%--0xc
+               |          
+               |--0.79%--0xa
+               |          
+               |--0.79%--0x9
+               |          
+               |--0.79%--0x6
+               |          
+               |--0.75%--0x8
+               |          
+               |--0.75%--0x2
+               |          
+               |--0.72%--0xe
+               |          
+               |--0.69%--0xb
+               |          
+               |--0.69%--0x7
+               |          
+               |--0.66%--0x5
+               |          
+                --0.60%--0x1
+
+    18.53%           590  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::matvec_simd
+            |
+            ---gf2_core::matrix::BitMatrix::matvec_simd
+
+     2.14%            68  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+               gf2_core::matrix::BitMatrix::matvec_simd
+
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#
