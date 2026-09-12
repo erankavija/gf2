@@ -5,7 +5,9 @@
 Survey for `04b85d10`. No production kernel, selector, encoder or decoder is
 changed and no independent BCH campaign is started. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol version 3](../f547c394/protocol.md) govern the six receipts.
+and the [shared protocol](../f547c394/protocol.md) at
+[version 3](../f547c394/amendment-v3.md) — the version every receipt pins,
+snapshots and is evaluated under — govern the six receipts.
 
 This report states no measured value. Each conclusion points to its source:
 
