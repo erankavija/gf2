@@ -1,0 +1,61 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13696126688
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                              
+# ........  ............  ...............  ................  ....................................................................................
+#
+    78.50%          2688  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+            |
+            ---gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+               |          
+               |--1.08%--0x7
+               |          
+               |--0.93%--0xc
+               |          
+               |--0.82%--0x2
+               |          
+               |--0.79%--0xd
+               |          
+               |--0.79%--0xa
+               |          
+               |--0.79%--0x8
+               |          
+               |--0.79%--0x6
+               |          
+               |--0.79%--0x5
+               |          
+               |--0.76%--0xe
+               |          
+               |--0.76%--0x3
+               |          
+               |--0.67%--gf2_core::matrix::BitMatrix::matvec_simd
+               |          
+               |--0.67%--0x4
+               |          
+               |--0.67%--0x1
+               |          
+               |--0.64%--0x1ff
+               |          
+                --0.64%--0xf
+
+    18.40%           630  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::matvec_simd
+            |
+            ---gf2_core::matrix::BitMatrix::matvec_simd
+
+     2.42%            83  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+            |
+            ---gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+               gf2_core::matrix::BitMatrix::matvec_simd
+
+
+
+#
+# (Tip: Show individual samples with: perf script)
+#

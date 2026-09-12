@@ -305,6 +305,7 @@
       "path": "dev/bench_results/26465e6c/v3-and-popcnt-confirmation/instruction-observation.txt"
     }
   ],
+  "done_at": "2026-09-12T06:49:43.700243389Z",
   "first_ready_at": "2026-09-06T19:58:48.008692176Z",
   "gates_required": [
     "cargo-ci",
@@ -315,22 +316,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-11T16:55:24.461055720Z",
+      "updated_at": "2026-09-12T06:39:55.013087072Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-11T17:41:00.810578765Z",
+      "updated_at": "2026-09-12T06:42:29.609974131Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-11T17:41:58.831799818Z",
+      "status": "passed",
+      "updated_at": "2026-09-12T06:44:49.742485400Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-09-11T17:42:52.168351313Z",
+      "updated_at": "2026-09-12T06:48:56.416381373Z",
       "updated_by": "auto:executor"
     }
   },
@@ -345,7 +346,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Establish population-count and fused-reduction baselines",
-  "updated_at": "2026-09-11T17:42:52.168351313Z"
+  "updated_at": "2026-09-12T06:49:43.700243389Z"
 }

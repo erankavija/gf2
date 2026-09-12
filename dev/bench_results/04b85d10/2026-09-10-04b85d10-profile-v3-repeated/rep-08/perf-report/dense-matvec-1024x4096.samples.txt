@@ -1,0 +1,25 @@
+# case: {"workload":"dense-matvec","size":{"rows":1024,"cols":4096},"seed":103}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3184  (97.1%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 12736117808
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                             
+# ........  ............  ...............  ................  ...................................................
+#
+    79.18%          2521  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    18.53%           590  consumer-profil  consumer-profile  [.] gf2_core::matrix::BitMatrix::matvec_simd
+     2.14%            68  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.09%             3  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::Prepared::run
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae98c01e
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

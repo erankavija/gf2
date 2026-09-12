@@ -330,11 +330,14 @@ Re-evaluated with the current acceptance tool on scratch copies, every v3
 summary reproduces byte for byte and every v1 receipt but one reproduces every
 verdict, decision and outcome
 ([`reevaluation.txt`](../../bench_results/26465e6c/reevaluation.txt), written by
-`survey/reevaluate.sh`). The exception is the 2026-09-07 v1 pilot, which v1
-had already superseded: the tool now rejects it on P-05 because its snapshot
-lacks the `Cargo.lock` its receipt pins, a file the v1 branch never committed.
-The other v1 snapshots hold a `Cargo.lock` with the pinned digest; no result
-here rests on that pilot.
+`survey/reevaluate.sh`). The exception is the 2026-09-07 v1 pilot, which v1 had
+already superseded: that record was written while its snapshot lacked the
+`Cargo.lock` its receipt pins, a file the v1 branch never committed, so the tool
+rejected it on P-05. The lockfile is committed now from a byte-identical source
+([restoration record](../a203a23c/restored-inputs.json)) and the pilot
+re-evaluates to the verdict its summary states
+([re-evaluation record](../a203a23c/receipt-reevaluation.json)). No result here
+rests on that pilot.
 
 ## Baseline for 5cbb6545
 

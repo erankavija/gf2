@@ -1,0 +1,30 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: current  cache_state: warm  target_ms: 3000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14660135605
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                         
+# ........  ............  ...............  ................  ...............................................................................................................................
+#
+    63.03%          2310  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+            |
+            ---<gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+               |          
+                --25.95%--0x8000000000000008
+
+    36.70%          1345  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+            |
+            ---gf2_coding::bch::encode::packed_write_codeword
+               |          
+                --0.52%--0xfe
+
+
+
+#
+# (Tip: See assembly instructions with percentage: perf annotate <symbol>)
+#

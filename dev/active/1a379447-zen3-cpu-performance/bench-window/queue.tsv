@@ -1,13 +1,8 @@
 # issue	worktree	est_minutes	command
-6fb89a3c	.agents/worktrees/agent-6fb89a3c-v3	6	dev/bench_results/6fb89a3c/run-campaign.sh transpose remeasure v3-r1
-6fb89a3c	.agents/worktrees/agent-6fb89a3c-v3	7	dev/bench_results/6fb89a3c/run-campaign.sh logical remeasure v3-r1
-6fb89a3c	.agents/worktrees/agent-6fb89a3c-v3	5	dev/bench_results/6fb89a3c/run-campaign.sh bch remeasure v3-r1
-04b85d10	.agents/worktrees/agent-04b85d10-v3	45	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/04b85d10/survey/run-profile.sh dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated >> target/04b85d10-window-profile.log 2>&1
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window region-axpy-pilot
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window matrix-product-pilot
-6c6b09b1	.agents/worktrees/agent-6c6b09b1	6	dev/bench_results/6c6b09b1/run-byte-field-v3.sh window pairwise-control-pilot
-3e59cb9a	.worktrees-local/agent-eda07788-v3	8	GF2_EDA07788_EXT=.agents/ext/eda07788-v3 dev/bench_results/eda07788/run-dvb-t2-baselines.sh remeasure-v3
-3be770d5	.agents/worktrees/agent-3be770d5	8	dev/bench_results/3be770d5/run-campaign.sh single-worker pilot v3-r1 window
-3be770d5	.agents/worktrees/agent-3be770d5	30	dev/bench_results/3be770d5/run-campaign.sh multicore pilot v3-r1 window
-3be770d5	.agents/worktrees/agent-3be770d5	22	dev/bench_results/3be770d5/run-campaign.sh fastest-compatible pilot v3-r1 window
-3be770d5	.agents/worktrees/agent-3be770d5	45	dev/active/3be770d5/survey/run-profile.sh dev/bench_results/3be770d5/v3-r1-steady-profile
+3be770d5	.agents/worktrees/agent-3be770d5	45	dev/active/3be770d5/survey/run-profile.sh dev/bench_results/3be770d5/v4-r1-steady-profile
+6c6b09b1	.agents/worktrees/agent-6c6b09b1	15	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window region-axpy-pilot
+6c6b09b1	.agents/worktrees/agent-6c6b09b1	12	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window matrix-product-pilot
+6c6b09b1	.agents/worktrees/agent-6c6b09b1	8	dev/bench_results/6c6b09b1/run-byte-field-v4.sh window pairwise-control-pilot
+3be770d5	.agents/worktrees/agent-3be770d5	20	dev/bench_results/3be770d5/run-campaign.sh single-worker confirmation v4-r1 window
+3be770d5	.agents/worktrees/agent-3be770d5	95	dev/bench_results/3be770d5/run-campaign.sh multicore confirmation v4-r1 window
+1c602857	.agents/worktrees/agent-1c602857	20	dev/active/1c602857/run-public-clmul.sh pilot
