@@ -4,7 +4,8 @@
 
 Survey for `3be770d5`. It measures and ranks; it changes no production decoder.
 The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol v3](../f547c394/protocol.md) govern every timed cell; the
+and the [benchmark protocol](../f547c394/protocol.md) govern every timed cell,
+the pilots under version 3 and the confirmations under version 4; the
 [plan](plan.md) maps each criterion to what `c077a88b` already settles.
 The three pilot campaigns are measured and accepted; the profile shares and
 the two matched confirmations are not yet measured, so the sections that rest
@@ -61,8 +62,8 @@ native wave size differ and stay labelled in [arms.json](survey/arms.json).
 All arms report the `c077a88b` prepared quality evidence, whose BER/FER
 counts, intervals and iteration distributions are projected in its
 [tables](../../bench_results/c077a88b/tables.md) "Quality on identical
-recorded inputs"; this survey adds no BER/FER samples. Under v3 that corpus
-cannot certify quality admission for any fastest-compatible mode, so that
+recorded inputs"; this survey adds no BER/FER samples. That corpus cannot
+certify quality admission for any fastest-compatible mode under P-19, so that
 family is exploratory only and selects nothing. The fixed-point DVB excess
 frame failures `c077a88b` records remain contradicting evidence against
 adopting quantization without a new numerical contract.
