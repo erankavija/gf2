@@ -282,7 +282,7 @@ Per-worker slowdown against the same arm at one worker, with the ratio of median
 
 A branch reads `saturation` only when gf2's slowdown interval lies wholly above AFF3CT's and one miss ratio's interval at that arm lies wholly above its one-worker interval. Medians carry the 9-session order-statistic intervals of the counter table.
 
-Share stability between one and twenty-four workers, the other half of the test:
+Share stability between one and twenty-four workers, the other half of the test, over every category of the one-worker case:
 
 | Code | Category | Share at 1 worker [Wilson 95%] | Share at 24 workers | Inside the one-worker interval |
 |---|---|---|---:|---|
@@ -294,6 +294,11 @@ Share stability between one and twenty-four workers, the other half of the test:
 | dvb | `syndrome-termination` | 4.22% (1218/28853) [4.00%, 4.46%] | 1.82% | False |
 | dvb | `min-sum-dispatch` | 3.30% (952/28853) [3.10%, 3.51%] | 1.15% | False |
 | dvb | `variable-node-update` | 3.16% (911/28853) [2.96%, 3.37%] | 10.98% | False |
+| dvb | `decode-loop-other` | 0.24% (68/28853) [0.19%, 0.30%] | 0.10% | False |
+| dvb | `min-sum-input-vec` | 0.15% (44/28853) [0.11%, 0.20%] | 0.12% | True |
+| dvb | `unmapped-ip` | 0.08% (24/28853) [0.06%, 0.12%] | 0.11% | True |
+| dvb | `message-reset` | 0.03% (10/28853) [0.02%, 0.06%] | 0.03% | True |
+| dvb | `conversion-output` | 0.03% (10/28853) [0.02%, 0.06%] | 0.04% | True |
 | nr | `edge-position-search` | 28.09% (5574/19840) [27.47%, 28.72%] | 37.53% | False |
 | nr | `allocator` | 20.95% (4157/19840) [20.39%, 21.52%] | 17.28% | False |
 | nr | `check-node-loop` | 20.17% (4001/19840) [19.61%, 20.73%] | 25.41% | False |
@@ -302,6 +307,11 @@ Share stability between one and twenty-four workers, the other half of the test:
 | nr | `min-sum-dispatch` | 4.73% (938/19840) [4.44%, 5.03%] | 2.49% | False |
 | nr | `syndrome-termination` | 3.24% (643/19840) [3.00%, 3.50%] | 2.21% | False |
 | nr | `variable-node-update` | 2.47% (491/19840) [2.27%, 2.70%] | 3.86% | False |
+| nr | `decode-loop-other` | 0.15% (30/19840) [0.11%, 0.22%] | 0.11% | True |
+| nr | `unmapped-ip` | 0.11% (22/19840) [0.07%, 0.17%] | 0.13% | True |
+| nr | `min-sum-input-vec` | 0.11% (21/19840) [0.07%, 0.16%] | 0.17% | False |
+| nr | `conversion-output` | 0.05% (9/19840) [0.02%, 0.09%] | 0.03% | True |
+| nr | `message-reset` | 0.01% (1/19840) [0.00%, 0.03%] | 0.02% | True |
 
 ## Lever ranking
 
