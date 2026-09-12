@@ -38,6 +38,9 @@ pub enum JournalEvent {
     PhaseComplete,
     CellStart,
     CellComplete,
+    /// A later session gives up an unfinished cell attempt before it starts
+    /// the cell again; the details name the attempt's `cell-start` sequence.
+    CellAbandoned,
     ExecutionProgress,
     WindowProgress,
     ChildSpawn,
@@ -88,6 +91,7 @@ impl JournalEvent {
                 | Self::ResultValidated
                 | Self::PendingRecovery
                 | Self::CheckpointAccepted
+                | Self::CellAbandoned
                 | Self::Recovery
                 | Self::Interrupted
                 | Self::Complete
