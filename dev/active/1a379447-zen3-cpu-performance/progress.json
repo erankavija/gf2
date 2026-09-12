@@ -142,7 +142,7 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "in-session work complete at ea7d77c7 or later. Three v3 re-measurement receipts committed; lead independently confirmed each campaign reaches the runner's complete record with cell-start = cell-complete = the addendum cell count (8/9/6), 48 child executions per cell, zero child diagnostics, all cells measured, verdict Accepted. Corrected measurements reproduce every withdrawn decision and leading arm. REQ-01/04/05 moved to MET on exploratory-only evidence with the lead's conditions. No window job. Awaiting merge, gates and lead review.",
+          "status": "done. Freeze-script double-count fixed (fad06995, merged at 28f96566) with a --self-test and byte-for-byte reproduction of the three frozen addenda; all four gates pass at 28f96566; lead review PASS (reviews/6fb89a3c-r2.md). Closed session 11.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6fb89a3c-v3",
@@ -151,7 +151,16 @@
             "attempt": 4,
             "session": 9
           },
-          "merge_commit": "fbc88e61"
+          "merge_commit": "28f96566",
+          "reviews": [
+            "reviews/6fb89a3c-r2.md"
+          ],
+          "gates": {
+            "cargo-ci": "passed 28f96566",
+            "code-review": "passed 28f96566",
+            "doc-review": "passed 28f96566",
+            "research-review": "passed 28f96566"
+          }
         },
         {
           "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
