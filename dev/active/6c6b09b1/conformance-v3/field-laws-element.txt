@@ -1,8 +1,0 @@
-cargo-budget: 24 jobs (1 live, 24 cpus)
-    Finished `ci-test` profile [optimized] target(s) in 0.07s
-────────────
- Nextest run ID 4eab9f9d-59df-4124-814f-08eefc9c187b with nextest profile: ci
-    Starting 1 test across 87 binaries (2686 tests skipped)
-        PASS [   0.013s] (1/1) gf2-core field::axiom_tests::test_gf2_8_field_axioms
-────────────
-     Summary [   0.020s] 1 test run: 1 passed, 2686 skipped
