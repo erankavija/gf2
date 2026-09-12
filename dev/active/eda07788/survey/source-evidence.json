@@ -1,0 +1,1069 @@
+{
+  "schema": "shift-permutation-source-evidence-v1",
+  "commits": {
+    "aff3ct": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+    "aff3ct-conf": "ecae10cd0375f12febe2f5513f8ca39f2540c640",
+    "srsran": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+    "xdsopl-ldpc": "32357d8ad55a6a302c34e093759f0454e45cca56",
+    "gf2": "f88bd137298d93f57f8867acc1f9207186ffbaca"
+  },
+  "claims": [
+    {
+      "claim": "xdsopl-license",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "LICENSE",
+      "line": 3,
+      "text": "Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted.",
+      "why": "xdsopl/LDPC carries the zero-clause BSD grant."
+    },
+    {
+      "claim": "aff3ct-license",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "LICENSE",
+      "line": 1,
+      "text": "MIT License",
+      "why": "AFF3CT is MIT-licensed."
+    },
+    {
+      "claim": "srsran-license-grant",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+      "line": 10,
+      "text": "* the License, or (at your option) any later version.",
+      "why": "The surveyed srsRAN files grant AGPL version 3 or any later version."
+    },
+    {
+      "claim": "xdsopl-dvb-t2-standard",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "README.md",
+      "line": 50,
+      "text": "* [en_302755v010401p.pdf](https://www.etsi.org/deliver/etsi_en/302700_302799/302755/01.04.01_60/en_302755v010401p.pdf)",
+      "why": "The project names ETSI EN 302 755 v1.4.1."
+    },
+    {
+      "claim": "xdsopl-dvb-t2-table-a1",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "tables_handler.cc",
+      "line": 150,
+      "text": "return new LDPC<DVB_T2_TABLE_A1>();",
+      "why": "The program selects the rate-1/2 DVB-T2 table."
+    },
+    {
+      "claim": "xdsopl-pitl-definition",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 63,
+      "text": "struct PITL",
+      "why": "PITL is the parity-interleaving stage."
+    },
+    {
+      "claim": "xdsopl-pitl-fwd",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 74,
+      "text": "out[K+M*q+m] = in[K+Q*m+q];",
+      "why": "Parity interleaving writes out[K+360q+m] from in[K+Qm+q], gf2's parity permutation."
+    },
+    {
+      "claim": "xdsopl-pctitl-definition",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 87,
+      "text": "struct PCTITL",
+      "why": "PCTITL composes parity interleaving with column twisting."
+    },
+    {
+      "claim": "xdsopl-pctitl-overwrites-input",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 96,
+      "text": "in[n] = out[n];",
+      "why": "PCTITL::fwd copies the parity stage back into its input buffer, so the adapter passes a scratch copy."
+    },
+    {
+      "claim": "xdsopl-pctitl-column-twist",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 98,
+      "text": "CT::fwd(out+COLS*row, in, ROWS, row);",
+      "why": "The second stage fills each output row through the column-twist functor."
+    },
+    {
+      "claim": "xdsopl-ct8-definition",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 251,
+      "text": "struct CT8",
+      "why": "CT8 supplies the eight-column twist."
+    },
+    {
+      "claim": "xdsopl-ct8-fwd",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 256,
+      "text": "out[0] = in[0*S+(R+S-T0)%S];",
+      "why": "Column c of row R reads in[c*Nr + (R+Nr-tc) mod Nr], gf2's inverse column twist."
+    },
+    {
+      "claim": "xdsopl-ct12-definition",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "interleaver.hh",
+      "line": 279,
+      "text": "struct CT12",
+      "why": "CT12 supplies the twelve-column twist."
+    },
+    {
+      "claim": "xdsopl-normal-r12-instantiation",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "itls_handler.cc",
+      "line": 81,
+      "text": "return new BITL<code_type, PCTITL<code_type, 64800, 90, CT>, _71425360>();",
+      "why": "The program instantiates normal rate-1/2 PCTITL inside its BITL demux wrapper."
+    },
+    {
+      "claim": "xdsopl-short-r12-instantiation",
+      "project": "xdsopl-ldpc",
+      "commit": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "path": "itls_handler.cc",
+      "line": 102,
+      "text": "return new BITL<code_type, PCTITL<code_type, 16200, 25, CT>, _71425360>();",
+      "why": "The program instantiates short rate-1/2 PCTITL inside its BITL demux wrapper."
+    },
+    {
+      "claim": "aff3ct-bg-selection",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 30,
+      "text": "if (K <= 292 || (K <= 3824 && R <= 0.67f) || R <= 0.25f)",
+      "why": "AFF3CT selects the 5G base graph from K and the rate K/N."
+    },
+    {
+      "claim": "aff3ct-bg2-columns",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 33,
+      "text": "base_graph.K_LDPC = 10;",
+      "why": "BG2 starts from its 10 systematic base columns."
+    },
+    {
+      "claim": "aff3ct-bg1-columns",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 39,
+      "text": "base_graph.K_LDPC = 22;",
+      "why": "BG1 starts from its 22 systematic base columns."
+    },
+    {
+      "claim": "aff3ct-kb-560-640",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 77,
+      "text": "else if (K > 560 && K <= 640)",
+      "why": "The lifting table has a separate branch for 560 < K <= 640."
+    },
+    {
+      "claim": "aff3ct-kb-560-640-value",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 78,
+      "text": "Kb = 8;",
+      "why": "That branch assigns Kb = 8, where gf2's table uses 9."
+    },
+    {
+      "claim": "aff3ct-lifting-uses-kb",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 95,
+      "text": "int curr_k = Kb * val_z;",
+      "why": "Kb enters only the lifting-size search."
+    },
+    {
+      "claim": "aff3ct-mother-dimensions",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 115,
+      "text": "base_graph.K_LDPC = base_graph.K_LDPC * base_graph.Zc;",
+      "why": "K_LDPC is the base-graph systematic column count times Zc, not Kb times Zc."
+    },
+    {
+      "claim": "aff3ct-mother-length",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+      "line": 116,
+      "text": "base_graph.N_LDPC = base_graph.N_LDPC * base_graph.Zc;",
+      "why": "N_LDPC is the base-graph column count times Zc."
+    },
+    {
+      "claim": "aff3ct-puncture-entry",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 33,
+      "text": "Puncturer_5G<B, Q>::_puncture(const B* X_N1, B* X_N2, const size_t /*frame_id*/) const",
+      "why": "The 5G puncturer implements bit selection in _puncture."
+    },
+    {
+      "claim": "aff3ct-puncture-filler-skip",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 39,
+      "text": "if (!(j % (this->N_cw - 2 * this->base_graph.Zc) + 2 * this->base_graph.Zc < this->base_graph.K_LDPC &&",
+      "why": "Selection skips the filler range [K, K_LDPC) of the circular buffer after 2Zc."
+    },
+    {
+      "claim": "aff3ct-puncture-selection",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 42,
+      "text": "X_N2[k] = X_N1[j % (this->N_cw - 2 * this->base_graph.Zc) + 2 * this->base_graph.Zc];",
+      "why": "The operation copies circular-buffer positions in order until N bits are emitted."
+    },
+    {
+      "claim": "aff3ct-depuncture-entry",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 51,
+      "text": "Puncturer_5G<B, Q>::_depuncture(const Q* Y_N1, Q* Y_N2, const size_t /*frame_id*/) const",
+      "why": "The same module implements the inverse LLR mapping."
+    },
+    {
+      "claim": "aff3ct-depuncture-scatter",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 60,
+      "text": "Y_N2[j % (this->N_cw - 2 * this->base_graph.Zc) + 2 * this->base_graph.Zc] = Y_N1[k];",
+      "why": "De-puncturing visits circular-buffer positions one at a time and recomputes the modulo index for each."
+    },
+    {
+      "claim": "aff3ct-depuncture-zero-prefix",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 65,
+      "text": "std::fill(Y_N2, Y_N2 + 2 * this->base_graph.Zc, (Q)0);",
+      "why": "De-puncturing writes zero into the 2Zc punctured systematic positions."
+    },
+    {
+      "claim": "aff3ct-depuncture-filler-inf",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+      "line": 70,
+      "text": "Y_N2 + this->K, Y_N2 + this->K + this->base_graph.K_LDPC - this->K, std::numeric_limits<Q>::infinity());",
+      "why": "Floating-point filler positions receive +infinity."
+    },
+    {
+      "claim": "aff3ct-puncturer-public-puncture",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Puncturer/Puncturer.hpp",
+      "line": 102,
+      "text": "void puncture(const B* X_N1, B* X_N2, const int frame_id = -1, const bool managed_memory = true);",
+      "why": "The public puncture entry point runs the module's puncture task."
+    },
+    {
+      "claim": "aff3ct-puncturer-public-depuncture",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Puncturer/Puncturer.hpp",
+      "line": 116,
+      "text": "void depuncture(const Q* Y_N1, Q* Y_N2, const int frame_id = -1, const bool managed_memory = true);",
+      "why": "The public depuncture entry point runs the module's depuncture task."
+    },
+    {
+      "claim": "aff3ct-puncture-task-dispatch",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Puncturer/Puncturer.hxx",
+      "line": 94,
+      "text": "pct._puncture(",
+      "why": "The puncture task calls the protected _puncture hook."
+    },
+    {
+      "claim": "aff3ct-puncturer-5g-hook-protected",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Puncturer/LDPC/Puncturer_5G.hpp",
+      "line": 30,
+      "text": "void _puncture(const B* X_N1, B* X_N2, const size_t frame_id) const;",
+      "why": "Puncturer_5G overrides only the protected hook; callers use the public base-class entry."
+    },
+    {
+      "claim": "aff3ct-puncturer-factory",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Puncturer/LDPC/Puncturer_LDPC.cpp",
+      "line": 114,
+      "text": "if (this->type == \"LDPC_5G\") return new module::Puncturer_5G<B, Q>(this->K, this->N, this->N_cw, this->pattern);",
+      "why": "The puncturer factory constructs Puncturer_5G."
+    },
+    {
+      "claim": "aff3ct-codec-5g-wiring",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Tools/Codec/LDPC/Codec_LDPC.cpp",
+      "line": 75,
+      "text": "if (enc->type == \"LDPC_5G\")",
+      "why": "The codec's 5G branch sets the 5G standard on encoder and decoder."
+    },
+    {
+      "claim": "aff3ct-codec-5g-base-graph",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Tools/Codec/LDPC/Codec_LDPC.cpp",
+      "line": 82,
+      "text": "auto base_graph = tools::build_5G_base_graph(enc_ldpc->K, enc_ldpc->N);",
+      "why": "The codec derives the 5G base graph from K and N."
+    },
+    {
+      "claim": "aff3ct-codec-5g-ncw",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Tools/Codec/LDPC/Codec_LDPC.cpp",
+      "line": 83,
+      "text": "enc_ldpc->N_cw = base_graph.N_LDPC;",
+      "why": "The codec sets the mother-codeword length the puncturer reads to N_LDPC."
+    },
+    {
+      "claim": "aff3ct-encoder-5g-build-branch",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Encoder/LDPC/Encoder_LDPC.cpp",
+      "line": 144,
+      "text": "if (this->type == \"LDPC_5G\")",
+      "why": "The encoder factory's build method has a 5G branch."
+    },
+    {
+      "claim": "aff3ct-encoder-5g-build",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Encoder/LDPC/Encoder_LDPC.cpp",
+      "line": 154,
+      "text": "return new module::Encoder_LDPC_QC_fast<B>(",
+      "why": "The 5G build constructs Encoder_LDPC_QC_fast."
+    },
+    {
+      "claim": "aff3ct-decoder-5g-build",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Factory/Module/Decoder/LDPC/Decoder_LDPC.cpp",
+      "line": 156,
+      "text": "if (this->H_path.empty() && this->standard == \"5G\")",
+      "why": "The decoder factory derives its 5G base graph and matrix path."
+    },
+    {
+      "claim": "aff3ct-qc-fast-subclass",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Encoder/LDPC/QC/Encoder_LDPC_QC_fast.hpp",
+      "line": 20,
+      "text": "class Encoder_LDPC_QC_fast : public Encoder_LDPC_QC<B>",
+      "why": "The fast QC encoder derives from the QC encoder."
+    },
+    {
+      "claim": "aff3ct-qc-fast-encode",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC_fast.cpp",
+      "line": 72,
+      "text": "Encoder_LDPC_QC_fast<B>::_encode(const B* U_K, B* X_N, const size_t frame_id)",
+      "why": "The fast QC encoder overrides _encode."
+    },
+    {
+      "claim": "aff3ct-qc-fast-shift-wrap",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC_fast.cpp",
+      "line": 97,
+      "text": "parity_block[l] ^= input_ptr[start + l];",
+      "why": "Each nonzero circulant XORs the wrapped tail of the Zc-bit input block into the parity block."
+    },
+    {
+      "claim": "aff3ct-qc-fast-shift-body",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC_fast.cpp",
+      "line": 99,
+      "text": "parity_block[l] ^= input_ptr[l - shift];",
+      "why": "The rest of the block is XORed at offset -shift: a per-frame cyclic-shift XOR."
+    },
+    {
+      "claim": "aff3ct-qc-rotation",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC.cpp",
+      "line": 87,
+      "text": "std::rotate(Gen.begin() + j * Zc, Gen.begin() + (j + 1) * Zc - 1, Gen.begin() + (j + 1) * Zc);",
+      "why": "The base QC encoder rotates each Zc-sized generator block; the 5G factory path does not use this _encode."
+    },
+    {
+      "claim": "aff3ct-qc-rotation-call",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC.cpp",
+      "line": 105,
+      "text": "res = this->_CSRAA(this->Zc, this->G[i], X_N + i * this->Zc, this->K_LDPC, this->N);",
+      "why": "The base QC encoder invokes the rotation from its per-block loop."
+    },
+    {
+      "claim": "aff3ct-user-interleaver-file",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Tools/Interleaver/User/Interleaver_core_user.cpp",
+      "line": 13,
+      "text": "Interleaver_core_user<T>::Interleaver_core_user(const int size, const std::string& filename)",
+      "why": "The user interleaver core loads an arbitrary permutation table from a file."
+    },
+    {
+      "claim": "srsran-circular-shift-forward",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "include/srsran/srsvec/circ_shift.h",
+      "line": 46,
+      "text": "void circ_shift_forward(T&& out, const U& in, unsigned shift)",
+      "why": "srsRAN exposes a circular forward shift."
+    },
+    {
+      "claim": "srsran-circular-shift-backward",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "include/srsran/srsvec/circ_shift.h",
+      "line": 71,
+      "text": "void circ_shift_backward(T&& out, const U& in, unsigned shift)",
+      "why": "srsRAN exposes a circular backward shift."
+    },
+    {
+      "claim": "srsran-ldpc-encoder-generic-rotation",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_encoder_generic.cpp",
+      "line": 135,
+      "text": "srsvec::circ_shift_backward(out_node, codeblock_node, node_shift);",
+      "why": "The generic LDPC encoder rotates a codeblock node by its lifted shift."
+    },
+    {
+      "claim": "srsran-ldpc-encoder-rotation",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_encoder_avx2.cpp",
+      "line": 218,
+      "text": "srsvec::circ_shift_backward(",
+      "why": "The AVX2 LDPC encoder consumes the circular shift."
+    },
+    {
+      "claim": "srsran-rate-matcher-k0",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+      "line": 90,
+      "text": "shift_k0   = static_cast<uint16_t>(std::floor(tmp)) * lifting_size;",
+      "why": "The rate matcher computes the redundancy-version start offset k0."
+    },
+    {
+      "claim": "srsran-rate-matcher-select-bits",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+      "line": 104,
+      "text": "void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, const ldpc_encoder_buffer& in) const",
+      "why": "Bit selection is a separate member function."
+    },
+    {
+      "claim": "srsran-rate-matcher-start",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+      "line": 108,
+      "text": "unsigned in_index      = shift_k0;",
+      "why": "Selection starts reading the circular buffer at k0."
+    },
+    {
+      "claim": "gf2-dvb-t2-interleaver",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 292,
+      "text": "pub struct DvbT2BitInterleaver {",
+      "why": "gf2's DVB-T2 bit interleaver type.",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-dvb-t2-parity-perm",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 375,
+      "text": "parity_perm[k + 360 * t + s] = k + q * s + t;",
+      "why": "gf2's parity permutation, matched by xdsopl's PITL.",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-dvb-t2-twist-row",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 393,
+      "text": "let src_row = (r + nr - config.twist[c] % nr) % nr;",
+      "why": "gf2's inverse column twist, matched by xdsopl's CT functors.",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-dvb-t2-forward-table",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 297,
+      "text": "forward: Vec<usize>,",
+      "why": "The permutation is a table of one usize per bit, built once by new().",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-dvb-t2-interleave",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 473,
+      "text": "pub fn interleave(&self, bits: &BitVec) -> BitVec {",
+      "why": "The timed gf2 call permutes a packed BitVec into a new BitVec.",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-dvb-t2-scatter-loop",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 483,
+      "text": "for (i, &out_idx) in self.forward.iter().enumerate() {",
+      "why": "interleave walks the table once per input bit.",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-dvb-t2-scatter-branch",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 484,
+      "text": "if bits.get(i) {",
+      "why": "Each input bit is tested and, when set, scattered to its output position.",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-dvb-t2-twist-spec-test",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 942,
+      "text": "fn test_twist_offsets_match_spec() {",
+      "why": "gf2 checks its twist offsets against the standard's table.",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-dvb-t2-twist-example-test",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
+      "line": 1085,
+      "text": "fn test_64qam_normal_col_twist_spec_example() {",
+      "why": "gf2 checks a 64-QAM normal-frame column-twist example.",
+      "sha256": "564f0ab09eff13bee643b7e68290ae4e2a0fefbd7ca86cb3889a96607af473c3"
+    },
+    {
+      "claim": "gf2-kb-for-z-selection",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 218,
+      "text": "pub fn kb_for_z_selection(base_graph: u8, target_k: usize) -> usize {",
+      "why": "gf2's block-size-dependent Kb, used only for lifting selection.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-kb-560-640",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 228,
+      "text": "} else if target_k > 560 {",
+      "why": "gf2's table has a separate branch above 560 that returns 9.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-z-selection",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 499,
+      "text": "kb_for_z * z_us >= target_k && target_k + (nb - kb - 2) * z_us >= target_n",
+      "why": "gf2 also requires enough transmitted bits when choosing Z.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-full-k",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 517,
+      "text": "let full_k = kb * z;",
+      "why": "gf2's mother-code message length uses the base graph's full Kb.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-rate-matched-doc-filler",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 419,
+      "text": "/// punctured positions get LLR=0, filler positions get LLR=+inf.",
+      "why": "The constructor's rustdoc states +inf for fillers.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-filler-llr",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 697,
+      "text": "const FILLER_LLR: f32 = 15.0;",
+      "why": "The filler LLR the code writes is 15.0.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-encode-rate-matched-private",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1087,
+      "text": "fn encode_rate_matched(&self, message: &BitVec) -> BitVec {",
+      "why": "Rate-matched encoding is a private method.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-parity-matvec",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1106,
+      "text": "let parity = enc.parity_matrix.matvec_transpose(&padded);",
+      "why": "gf2 computes parity with one dense matvec rather than per-block circulant shifts.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-rref-column-mapping",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1118,
+      "text": "// This correctly handles the case where RREF assigns some natural",
+      "why": "gf2 places message and parity bits through an RREF-derived column mapping.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-nr-block-encoder",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1254,
+      "text": "impl crate::traits::BlockEncoder for Nr5gRateMatchedCode {",
+      "why": "The rate-matched code's public encoder is the BlockEncoder implementation.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-nr-block-encoder-encode",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1264,
+      "text": "self.encode_rate_matched(message)",
+      "why": "BlockEncoder::encode runs the private rate-matched encoding.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "aff3ct-encoder-public-encode",
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Encoder/Encoder.hpp",
+      "line": 108,
+      "text": "void encode(const B* U_K, B* X_N, const int frame_id = -1, const bool managed_memory = true);",
+      "why": "AFF3CT's encoder modules expose a public encode entry point."
+    },
+    {
+      "claim": "gf2-transmitted-gather",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1121,
+      "text": "for &col in &enc.transmitted_cols {",
+      "why": "Bit selection is a gather fused into encoding.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-prepare-llrs-public",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1172,
+      "text": "pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {",
+      "why": "The inverse LLR mapping is public.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-prepare-llrs-scatter",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1189,
+      "text": "full_llrs[col] = channel_llrs[ch_idx];",
+      "why": "gf2 scatters channel LLRs through its precomputed transmitted-column table.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-prepare-llrs-zero-init",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1183,
+      "text": "let mut full_llrs = vec![Llr::zero(); p.full_n];",
+      "why": "Untransmitted and punctured positions start at zero.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-prepare-llrs-filler",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1197,
+      "text": "full_llrs[col] = Llr::new(FILLER_LLR);",
+      "why": "Filler positions receive FILLER_LLR.",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+    },
+    {
+      "claim": "gf2-circulant-to-edges",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 533,
+      "text": "pub fn to_edges(&self, base_row: usize, base_col: usize) -> Vec<(usize, usize)> {",
+      "why": "gf2's only circulant primitive emits sparse coordinates for one block.",
+      "sha256": "2cca98abc11da2dcad729404b42c3bdab4a560842147fb42b5e6c0fbc0e491bc"
+    },
+    {
+      "claim": "gf2-qc-to-edges-caller",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 718,
+      "text": "let block_edges = circ.to_edges(base_row, base_col);",
+      "why": "The QC code expands each block into coordinates when it builds its matrix.",
+      "sha256": "2cca98abc11da2dcad729404b42c3bdab4a560842147fb42b5e6c0fbc0e491bc"
+    },
+    {
+      "claim": "gf2-ldpc-from-qc",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 186,
+      "text": "let edges = qc.to_edges();",
+      "why": "LDPC code construction consumes those coordinates once per code.",
+      "sha256": "2cca98abc11da2dcad729404b42c3bdab4a560842147fb42b5e6c0fbc0e491bc"
+    },
+    {
+      "claim": "survey-gf2-arm-setup",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs",
+      "line": 95,
+      "text": "let interleaver = DvbT2BitInterleaver::new(modcod_for_name(&case.modcod));",
+      "why": "The gf2 arm builds its table once, outside the timed body, and reports that time as setup.",
+      "sha256": "75528c46cf75f85d4dbac2e6e5a55ec35a5b214220bf00a9ebadb22493b7e11b"
+    },
+    {
+      "claim": "survey-gf2-arm-body",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs",
+      "line": 117,
+      "text": "let output = interleaver.interleave(&buffers[bank % banks]);",
+      "why": "The gf2 arm's timed body is one interleave of a packed BitVec.",
+      "sha256": "75528c46cf75f85d4dbac2e6e5a55ec35a5b214220bf00a9ebadb22493b7e11b"
+    },
+    {
+      "claim": "survey-external-unpack",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
+      "line": 111,
+      "text": "let input = unpack_words(packed, bits);",
+      "why": "The external arm's timed body unpacks the packed frame to one int32 per bit.",
+      "sha256": "9f51038aa75514d9abb48158b715349ca27837eb96929c5cfb3075dc2555398e"
+    },
+    {
+      "claim": "survey-external-output",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
+      "line": 115,
+      "text": "let mut output = vec![0_i32; bits];",
+      "why": "It allocates an int32 output frame inside the timed body.",
+      "sha256": "9f51038aa75514d9abb48158b715349ca27837eb96929c5cfb3075dc2555398e"
+    },
+    {
+      "claim": "survey-external-pack",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs",
+      "line": 118,
+      "text": "let packed_output = pack_bits(&output);",
+      "why": "It packs the permuted frame back inside the timed body.",
+      "sha256": "9f51038aa75514d9abb48158b715349ca27837eb96929c5cfb3075dc2555398e"
+    },
+    {
+      "claim": "survey-shim-input-copy",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp",
+      "line": 35,
+      "text": "std::vector<int32_t> mutable_input(input, input + Interleaver::N);",
+      "why": "The shim copies the input because PCTITL::fwd overwrites it.",
+      "sha256": "84c32fdc0eb1f96d05d34142a7d7fecfceb102738fb09cc2423e10b0a5159079"
+    },
+    {
+      "claim": "survey-nr-gf2-arm-body",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/bin/gf2-nr-derate-arm.rs",
+      "line": 100,
+      "text": "black_box(code.prepare_llrs(&buffers[bank % banks]));",
+      "why": "The gf2 de-rate-matching arm times one public prepare_llrs call.",
+      "sha256": "e9165e2ea478408db803987d780612504987f31669c490e0447adbfaabadb71a"
+    },
+    {
+      "claim": "survey-nr-aff3ct-arm-body",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/bin/aff3ct-nr-derate-arm.rs",
+      "line": 134,
+      "text": "black_box(adapter.prepare_llrs(&buffers[bank % banks]));",
+      "why": "The AFF3CT arm times the whole adapter call.",
+      "sha256": "79ec8a8d266f29493e601a70725146fffa65761e6fb9b099d2a4803c3c365315"
+    },
+    {
+      "claim": "survey-nr-adapter-zeroed-output",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/lib.rs",
+      "line": 280,
+      "text": "(input, vec![0.0_f32; self.depuncturer.full_len()])",
+      "why": "The adapter converts the channel to float and allocates a zeroed N_LDPC output inside the call.",
+      "sha256": "8e7505d200ccc9557e90b1be2ada4fe91053e202157e22347b106c6af2181f03"
+    },
+    {
+      "claim": "survey-nr-adapter-depuncture",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/lib.rs",
+      "line": 296,
+      "text": "self.depuncturer.depuncture(&input, &mut full);",
+      "why": "The adapter runs AFF3CT's depuncture between its two conversion stages.",
+      "sha256": "8e7505d200ccc9557e90b1be2ada4fe91053e202157e22347b106c6af2181f03"
+    },
+    {
+      "claim": "survey-nr-adapter-filler",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/src/lib.rs",
+      "line": 288,
+      "text": "out[position] = self.filler;",
+      "why": "The adapter writes gf2's filler value over AFF3CT's filler range.",
+      "sha256": "8e7505d200ccc9557e90b1be2ada4fe91053e202157e22347b106c6af2181f03"
+    },
+    {
+      "claim": "survey-nr-shim-construct",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/cpp/aff3ct_depuncture_shim.cpp",
+      "line": 71,
+      "text": "return new Depuncturer(k, n, derived.N_LDPC, std::vector<bool>());",
+      "why": "The shim constructs Puncturer_5G with the N_cw AFF3CT's codec passes.",
+      "sha256": "0a463a64b60d6bafef37bce2c389e3f52b628ede649ddac030ce5384164d9279"
+    },
+    {
+      "claim": "survey-nr-shim-depuncture",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/nr-derate/cpp/aff3ct_depuncture_shim.cpp",
+      "line": 90,
+      "text": "static_cast<Depuncturer*>(handle)->depuncture(channel, full);",
+      "why": "The shim calls AFF3CT's public depuncture entry point.",
+      "sha256": "0a463a64b60d6bafef37bce2c389e3f52b628ede649ddac030ce5384164d9279"
+    },
+    {
+      "claim": "srsran-dematcher-entry",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher_impl.cpp",
+      "line": 46,
+      "text": "void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       output,",
+      "why": "srsRAN's rate dematcher takes and returns log_likelihood_ratio spans."
+    },
+    {
+      "claim": "srsran-dematcher-shortened",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher_impl.cpp",
+      "line": 98,
+      "text": "// Recall that 2 * lifting_size systematic bits are shortened out of the codeblock.",
+      "why": "Its output excludes the 2Z punctured systematic positions."
+    },
+    {
+      "claim": "srsran-dematcher-deinterleave",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher_impl.cpp",
+      "line": 111,
+      "text": "deinterleave_llrs(aux, input);",
+      "why": "For higher-order modulation it also de-interleaves bits."
+    },
+    {
+      "claim": "srsran-llr-int8",
+      "project": "srsran",
+      "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "path": "include/srsran/phy/upper/log_likelihood_ratio.h",
+      "line": 42,
+      "text": "/// Log-likelihood ratios are represented as \\c int8_t values between <tt>-LLR_MAX</tt> and \\c LLR_MAX. The values",
+      "why": "srsRAN LLRs are int8 values, not gf2's f32."
+    },
+    {
+      "claim": "survey-shift-offsets",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "dev/active/eda07788/survey/analysis/src/bin/validate-shift-semantics.rs",
+      "line": 97,
+      "text": "offsets.push(length + 1);",
+      "why": "The shift validation includes offsets past the vector length.",
+      "sha256": "9b249727879b428f6b4ebcf69584bede97348ba6c86e9fe9f99b9fdc9c43c0d3"
+    },
+    {
+      "claim": "gf2-bitvec-shift-left",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 475,
+      "text": "pub fn shift_left(&mut self, k: usize) {",
+      "why": "Arbitrary-offset zero-fill left shift.",
+      "sha256": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69"
+    },
+    {
+      "claim": "gf2-bitvec-shift-right",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 536,
+      "text": "pub fn shift_right(&mut self, k: usize) {",
+      "why": "Arbitrary-offset zero-fill right shift.",
+      "sha256": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69"
+    },
+    {
+      "claim": "gf2-avx2-shift-left-words",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 460,
+      "text": "unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {",
+      "why": "AVX2 word-shift kernel behind the left shift.",
+      "sha256": "a957a92c53f2767722c69b703899eb04e902464af3bf8c833b6aa76f45989445"
+    },
+    {
+      "claim": "gf2-avx2-shift-right-words",
+      "project": "gf2",
+      "commit": "f88bd137298d93f57f8867acc1f9207186ffbaca",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 512,
+      "text": "unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {",
+      "why": "AVX2 word-shift kernel behind the right shift.",
+      "sha256": "a957a92c53f2767722c69b703899eb04e902464af3bf8c833b6aa76f45989445"
+    }
+  ],
+  "inventories": {
+    "aff3ct-5g-matrix-count": 97,
+    "aff3ct-interleaver-cores": [
+      "ARP",
+      "CCSDS",
+      "Column_row",
+      "Golden",
+      "LTE",
+      "NO",
+      "Random",
+      "Random_column",
+      "Row_column",
+      "User"
+    ],
+    "aff3ct-ldpc-encoder-entries": [
+      "DVBS2",
+      "Encoder_LDPC.cpp",
+      "From_H",
+      "From_IRA",
+      "From_QC",
+      "QC"
+    ]
+  },
+  "negative_searches": [
+    {
+      "project": "aff3ct",
+      "roots": [
+        "src",
+        "include"
+      ],
+      "case_insensitive_terms": [
+        "dvb-t2",
+        "dvb_t2",
+        "302 755",
+        "302755"
+      ],
+      "matching_paths": [],
+      "meaning": "AFF3CT has no DVB-T2 or EN 302 755 code."
+    },
+    {
+      "project": "aff3ct",
+      "files": [
+        "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+        "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC_fast.cpp",
+        "include/Module/Puncturer/LDPC/Puncturer_5G.hpp",
+        "include/Module/Encoder/LDPC/QC/Encoder_LDPC_QC_fast.hpp"
+      ],
+      "case_insensitive_terms": [
+        "mipp",
+        "__m256",
+        "_mm"
+      ],
+      "matching_paths": [],
+      "meaning": "The 5G puncturer and fast QC encoder are scalar C++ with no MIPP or intrinsic backend."
+    }
+  ],
+  "errors": []
+}

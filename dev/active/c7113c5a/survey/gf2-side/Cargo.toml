@@ -1,0 +1,29 @@
+# Arm executables for the polynomial-multiplication baseline survey
+# (jit:c7113c5a).
+#
+# Standalone workspace so the survey adds no target, feature, or dependency to
+# the production workspace; it consumes the gf2 crates by path exactly as an
+# external user would, and reuses `tuning-campaign-support` for the canonical
+# child-v2 framing and window timing rather than restating either.
+
+[workspace]
+
+[package]
+name = "poly-baseline-arms"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

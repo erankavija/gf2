@@ -1,0 +1,25 @@
+# command: dev/active/eda07788/survey/fetch-build.sh
+# host: fraktaali
+# utc: 2026-09-08T09:29:53Z
+# toolchain: rustc 1.97.0 (2d8144b78 2026-07-07)
+# c++: g++ (GCC) 16.2.1 20260810
+
+xdsopl-ldpc: pinned commit 32357d8ad55a6a302c34e093759f0454e45cca56 verified
+building native: RUSTFLAGS=-C target-cpu=native -march=native
+
+building portable: RUSTFLAGS=-C target-cpu=x86-64 -march=x86-64
+
+PASS canonical bit order: 128/128 bits round-trip, lengths 0/1/63/64/65/127/128 preserved with zero tail padding
+PASS qam16-r12-normal: 64800/64800 positions match
+PASS qam64-r12-normal: 64800/64800 positions match
+PASS qam16-r12-short: 16200/16200 positions match
+PASS qam64-r12-short: 16200/16200 positions match
+PASS qam16-r12-normal: 2 banks of 64800 bits, both timed arms agree bit-for-bit
+PASS qam64-r12-normal: 2 banks of 64800 bits, both timed arms agree bit-for-bit
+PASS qam16-r12-short: 2 banks of 16200 bits, both timed arms agree bit-for-bit
+PASS qam64-r12-short: 2 banks of 16200 bits, both timed arms agree bit-for-bit
+arm executables and digests:
+5a4cc503742f6e3caed5668cf2b13b4cf3fea6c5049996ab6f6074417f14e4a7  target-native/release/gf2-dvb-t2-candidate
+7fcfce50fad50178d1731a346b28d8809c46c0364d81d19fe0ea689aa13a762c  target-native/release/xdsopl-dvb-t2-baseline
+c1ca5e569708d8479e7a1633661acbb91199c4b6b67666e41cb3c40473a274b2  target-portable/release/gf2-dvb-t2-candidate
+baselines ready under /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-eda07788/.agents/ext/eda07788

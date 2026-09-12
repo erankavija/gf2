@@ -1,0 +1,113 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "26498454137e2091ea42aa537b3f6fe9d3532eb6fa8fdb591636a935959509ef",
+  "campaign_id": "and-popcnt-pilot-26465e6c-20260908",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "and-popcnt-baselines-pilot",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.95,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "and-popcnt-pilot-cache-resident",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.3252215132652636,
+        "lower": 0.32412673535030295,
+        "upper": 0.3253062035714523,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 14903578399895704346,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "and-popcnt-pilot-streaming",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.6533277808210465,
+        "lower": 0.6435686245790592,
+        "upper": 0.6719407854867261,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 8768791624451452931,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "and-popcnt-pilot-two-pass-consumer",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.38690870232096597,
+        "lower": 0.3792743186399057,
+        "upper": 0.3924937333903676,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 250865392224284551,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    }
+  ]
+}
