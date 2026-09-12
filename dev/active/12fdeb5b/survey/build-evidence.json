@@ -1,0 +1,127 @@
+{
+ "schema": "nr-encoder-build-evidence-v1",
+ "toolchain": {
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+  "cxx": "c++ (GCC) 16.2.1 20260810"
+ },
+ "projects": {
+  "aff3ct": {
+   "citation": "@/citation/Cassagne2019",
+   "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+   "conf_submodule_commit": "ecae10cd0375f12febe2f5513f8ca39f2540c640",
+   "release": "v4.7.0",
+   "license": {
+    "spdx": "MIT",
+    "path": "LICENSE",
+    "sha256": "9467d35542b4535b5536347c28f77d11e69e1151517c20168097112b052183cd"
+   },
+   "linked_static_library": {
+    "path": "build/lib/libaff3ct-4.7.0.a",
+    "sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+   },
+   "shim_compile_flags": [
+    "-std=gnu++11",
+    "-O3",
+    "-march=native",
+    "-DNDEBUG"
+   ],
+   "shim_definitions": [
+    "AFF3CT_EXT_STRINGS",
+    "AFF3CT_MULTI_PREC",
+    "AFF3CT_POLAR_BIT_PACKING",
+    "MIPP_ENABLE_BACKTRACE",
+    "SPU_COLORS",
+    "SPU_STACKTRACE"
+   ],
+   "selected_backend": "scalar",
+   "backend_evidence": "Puncturer_5G and Encoder_LDPC_QC_fast carry no MIPP or intrinsic path; eda07788's negative search over those four files records it."
+  },
+  "srsran": {
+   "citation": "@/citation/Srsran2026",
+   "commit": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+   "release": "25.10",
+   "license": {
+    "spdx": "AGPL-3.0-or-later",
+    "path": "LICENSE",
+    "sha256": "57c8ff33c9c0cfc3ef00e650a1cc910d7ee479a8bc509f6c9209a7c2a11399d6"
+   },
+   "build_method": "The shim compiles the LDPC translation units directly; srsRAN's own CMake configuration stops on a host without MbedTLS.",
+   "mbedtls_present": false,
+   "compiled_sources": [
+    {
+     "path": "lib/phy/upper/channel_coding/ldpc/ldpc_encoder_impl.cpp",
+     "sha256": "010ddbe076cb1931d2d6f4fe51a684eaa7d3cd9935bbb783ecee92381c7ea84a"
+    },
+    {
+     "path": "lib/phy/upper/channel_coding/ldpc/ldpc_encoder_generic.cpp",
+     "sha256": "87104c03516a756a1641b73b9b0cbdedfa127b59ad5c5ef372c0ee7071029c6c"
+    },
+    {
+     "path": "lib/phy/upper/channel_coding/ldpc/ldpc_encoder_avx2.cpp",
+     "sha256": "eb6432896d3fd17edde067afe7018d1c8c4467a754a2a7ba98e50be32983fa68"
+    },
+    {
+     "path": "lib/phy/upper/channel_coding/ldpc/ldpc_graph_impl.cpp",
+     "sha256": "e869e1172ece96f92c53f0cde89b844766b22d165e0edf0723be04ea7625fa68"
+    },
+    {
+     "path": "lib/phy/upper/channel_coding/ldpc/ldpc_luts_impl.cpp",
+     "sha256": "e8b0ad6560ca32d9dd50c05e59f04fa1553ab6c6c465a8b064fac5f4dda55919"
+    },
+    {
+     "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+     "sha256": "a58b61ea17d659c6ff0ffaaa599b2a0307da37a255f268248ce3d44d265f0390"
+    },
+    {
+     "path": "lib/srsvec/bit.cpp",
+     "sha256": "afb30828aac46bfa2714997ddafb389293a3f90368f62df7baaad07b965787ee"
+    }
+   ],
+   "shim_compile_flags": [
+    "-std=c++17",
+    "-O3",
+    "-march=native",
+    "-DNDEBUG"
+   ],
+   "selected_backend": "avx2",
+   "backend_evidence": "The shim reproduces ldpc_encoder_factory_sw(\"auto\"): it constructs ldpc_encoder_avx2 when the CPU reports AVX2 and ldpc_encoder_generic otherwise. The value here is the observation the native flavour reported on this host."
+  }
+ },
+ "shim_sources": {
+  "dev/active/12fdeb5b/survey/nr-encode/build.rs": "68a266e18ab84bb0b3717081cbd41df199265835dae1f6f8135a0e363b6b4ca8",
+  "dev/active/12fdeb5b/survey/nr-encode/cpp/aff3ct_encode_shim.cpp": "71598a64faa6267426be25437e75f2c72c4fe6048508842ca016b34ecdfa06d5",
+  "dev/active/12fdeb5b/survey/nr-encode/cpp/srsran_encode_shim.cpp": "984b1c2316eb413ee909534077591842356baf87e8bb83575c8395ab651deb45",
+  "dev/active/12fdeb5b/survey/nr-encode/src/lib.rs": "a908400b5f2720e6a9e97b8e5ee05327b7f81916606e14b977786ecb45e793ce",
+  "dev/active/12fdeb5b/survey/nr-encode/src/aff3ct.rs": "f78667055ec10a9eaea5127c0c87edab8bedb7433b0fafec14d941c06cf9e453",
+  "dev/active/12fdeb5b/survey/nr-encode/src/srsran.rs": "ef1d5a43c3febc483fb5193b3fbd921ccf8bc1684d26891ab838c95d84e737fe",
+  "dev/active/12fdeb5b/survey/nr-encode/Cargo.toml": "2c688b046b6eff94abdc5f74bcaa56520dfcaee901cfd05e9190b69d9019fcf0",
+  "dev/active/12fdeb5b/survey/nr-encode/Cargo.lock": "0945e33f8d84acc1818daaaf5b95e00ead3b263cecdd04a2ae76d3a38a832c21"
+ },
+ "arms": {
+  "gf2-native": {
+   "staging_path": "target-nr-encode-native/release/gf2-nr-encode-arm",
+   "sha256": "200e7b561e4f34425ac9ba84640d3a5880d5e2b15de112ed01e3640ee774049d",
+   "build_identity": "native",
+   "rustflags": "-C target-cpu=native"
+  },
+  "gf2-portable": {
+   "staging_path": "target-nr-encode-portable/release/gf2-nr-encode-arm",
+   "sha256": "7b7de7fd5160b615f5c1c764f54189e9768af251c59d003480302000028a9513",
+   "build_identity": "conservative-portable",
+   "rustflags": "-C target-cpu=x86-64"
+  },
+  "aff3ct-external": {
+   "staging_path": "target-nr-encode-native/release/aff3ct-nr-encode-arm",
+   "sha256": "f370150176c0c3596b03812a377dece1ab8b28b460d1a3523c6516f36b1e6c03",
+   "build_identity": "external",
+   "rustflags": "-C target-cpu=native"
+  },
+  "srsran-external": {
+   "staging_path": "target-nr-encode-native/release/srsran-nr-encode-arm",
+   "sha256": "6315183adbdef3e49f3d02338971fe34f3e651eb7ee69fe7aa5cdf49e1ee3703",
+   "build_identity": "external",
+   "rustflags": "-C target-cpu=native"
+  }
+ }
+}
