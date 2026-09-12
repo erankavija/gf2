@@ -811,6 +811,13 @@
       "origin": "gate (session 10)",
       "disposition": "OPEN \u2014 blocks closing a203a23c; its other three gates pass. The lead caused this by asking for the cost measurement without also asking where the artifact recording it would live. Fix: commit an artifact carrying the invocation, host and timings with provenance, and point the claim at it. References @/invariant/claims-trace-to-artifacts and @/invariant/benchmark-backed-performance.",
       "criterion_named_by": "epic REQ-01 (measurement contract)"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "the CCX1 wrapper's `nice -n -5` always fails on this host (RLIMIT_NICE max nice priority is 0), so every campaign runs at NI=0; the receipt's host observation records governor, SMT and load but not the achieved scheduling priority",
+      "origin": "invoker observation (session 10), verified",
+      "disposition": "benign and consistent: GNU nice warns and still runs the command (exit status is the command's), the wrapper's own comment already calls the pin best-effort, and 146 committed evidence files carry the same warning back to 2026-05-27 \u2014 so all committed measurements are mutually comparable at NI=0. The gap is provenance, not validity: on a host where the pin succeeded, measurements would shift and nothing would flag it. Worth recording achieved niceness in the host observation.",
+      "criterion_named_by": "epic REQ-01 (measurement contract) and REQ-06 (deterministic seeded execution)"
     }
   ],
   "notes": [
