@@ -58,9 +58,9 @@ and it does not reach the LDPC encoder and rate matcher: the shim compiles
 their translation units directly, and none of the layers that require MbedTLS
 is on that closure. The shim reproduces srsRAN's own `"auto"` backend selection
 and reports the backend it chose. srsRAN is AGPL-3.0-or-later, so the linked
-binary stays under the primary checkout's `.agents/ext/12fdeb5b/` and is
-neither committed nor distributed; the repository commits only this survey's
-own shim source.
+binary stays in the git-ignored `.agents/ext/12fdeb5b/` of the checkout that
+builds it and is neither committed nor distributed; the repository commits only
+this survey's own shim source.
 
 Revisions, licences, compiled units, compiler and toolchain versions, flags,
 selected backends and arm executable digests are recorded, as the build
@@ -135,9 +135,9 @@ is an accepted five-cell exploratory campaign that reaches a result line from
 every arm the pilot names, on the largest and smallest configurations of the
 grid. It is a functional check, not a performance result about gf2, and it
 decides nothing. The superseded smoke campaigns of the same addendum are
-retained beside it under `-r1` to `-r3`, each one run before a harness change
-that altered the arms or the launcher: the staging directory the launcher
-resolves, the semantic type the srsRAN adapter's parameters carry, the
+retained beside it under `-r1` to `-r4`, each one run before a harness change
+that altered the arm executables or the launcher: the build directory the
+launcher resolves, the semantic type the srsRAN adapter's parameters carry, the
 configuration grid, and the comparator trees the launcher defaults to. Every
 one of them is accepted and every one holds its zero-comparison reservation in
 the family ledger, so the accounting shows every attempt.
@@ -181,10 +181,12 @@ own alpha was contradicted by a threefold wider confirmation interval.
 dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh smoke|pilot|confirmation
 ```
 
-The launcher resolves the staged comparator trees under the primary checkout
-through the common git directory, so any worktree of this repository runs it
-with no path of its own; `GF2_AFF3CT_ROOT` and `GF2_SRSRAN_ROOT` override that
-default. It verifies the pins, builds the four arms, regenerates the source and
+The launcher resolves the shared comparator source trees under the primary
+checkout through the common git directory, so any worktree of this repository
+runs it with no path of its own; `GF2_AFF3CT_ROOT` and `GF2_SRSRAN_ROOT`
+override that default. Its own build output stays in the git-ignored
+`.agents/ext/12fdeb5b` of the invoking checkout, which `GF2_12FDEB5B_EXT`
+overrides, so two worktrees never write the same target directory. It verifies the pins, builds the four arms, regenerates the source and
 build evidence, runs the equivalence gate, projects the plan from the frozen
 addendum and measures it as bounded checkpointed sessions under the CCX1
 exclusive mutex. `dev/bench_results/12fdeb5b/summarize.py` regenerates the

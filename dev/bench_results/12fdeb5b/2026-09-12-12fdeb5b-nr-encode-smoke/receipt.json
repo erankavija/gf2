@@ -1,7 +1,7 @@
 {
   "session_hosts": [
     {
-      "observed_utc": "2026-09-12T17:40:23.241844588Z",
+      "observed_utc": "2026-09-12T17:46:21.214242017Z",
       "hostname": "fraktaali",
       "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
       "cpu_flags": [
@@ -757,20 +757,20 @@
         "smt_active": true
       },
       "load_average": [
-        3.12,
-        8.57,
-        8.47
+        2.94,
+        6.38,
+        7.65
       ],
-      "available_memory_kib": 52722616
+      "available_memory_kib": 52786584
     }
   ],
   "trial_ledger": {
     "path": "dev/active/12fdeb5b/nr-rate-matched-encode-trial-ledger.jsonl",
     "snapshot": "inputs/trial-ledger.jsonl",
-    "sha256": "4b1aab1d4c1b3df85ec98db424a253d42d5e072483aadf71393f3ea09e7239f6"
+    "sha256": "49bf72e4e1a45d0f7b0bbd4c85d58e5c15d07ec595bb10a6ec10fdcdf2778493"
   },
   "schema": "zen3-benchmark-receipt-v1",
-  "campaign_id": "nr-encode-smoke-12fdeb5b-20260912t173816z",
+  "campaign_id": "nr-encode-smoke-12fdeb5b-20260912t174447z",
   "family_id": "nr-rate-matched-encode-baselines-v1",
   "issue": "12fdeb5b",
   "receipt_path": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/receipt.json",
@@ -1036,7 +1036,7 @@
         "crates/gf2-kernels-simd/src/x86/mersenne.rs": "f1427b4284e0a7fbbf4f26dbe199d6f18bc6bc945197efedc0edeb2cd439f513",
         "crates/gf2-kernels-simd/src/x86/mod.rs": "1e855043c73cbd52c7e65056ef1461a2eea0fab96b29aa72a2904f7ae4a67895",
         "crates/gf2-kernels-simd/src/x86/transpose.rs": "ec5081d7a45284375c7fa73296f4a48123c7b16bc7b0941fc4b1d7eeec692c0f",
-        "dev/active/12fdeb5b/survey/nr-encode-build.sh": "cd8150bbfa46de66032355d820a65683f66e8972db42c1a67c3bd9315708daae",
+        "dev/active/12fdeb5b/survey/nr-encode-build.sh": "d79b90f81cceffe985ffe0581a8851f40e09d98fe54fa2170b18f3b3d03b451f",
         "dev/active/12fdeb5b/survey/nr-encode/build.rs": "03ad35057e4e3ff45949b3ea71c624a6773ce8b0075fc17546c7b7f9638e7ad0",
         "dev/active/12fdeb5b/survey/nr-encode/cpp/aff3ct_encode_shim.cpp": "71598a64faa6267426be25437e75f2c72c4fe6048508842ca016b34ecdfa06d5",
         "dev/active/12fdeb5b/survey/nr-encode/cpp/srsran_encode_shim.cpp": "984b1c2316eb413ee909534077591842356baf87e8bb83575c8395ab651deb45",
@@ -1047,7 +1047,7 @@
         "dev/active/12fdeb5b/survey/nr-encode/src/bin/srsran-nr-encode-arm.rs": "bbbc5863cdae430f4da5eccef3517a26bd76ef1e5764142a43b7ce7030d3bc3c",
         "dev/active/12fdeb5b/survey/nr-encode/src/lib.rs": "e5b1ecb40adce8e45cf741cefee6b4686b1c31d8a1d04818d0351cf62175f65f",
         "dev/active/12fdeb5b/survey/nr-encode/src/srsran.rs": "af54d4b47e6ced2ec73c9acdcc626ac59f2365c6f20c1f5e4b619814235a6e9f",
-        "dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh": "b75656d90e3bc3d4a03acaa03a7687ce53b254fdb00f68ef1a60d94a0dc3e044",
+        "dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh": "69aac8b442cc22f431727c9a9fabc72af51e9ee2b65e063b0bbf34412d122a4c",
         "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
         "dev/tools/tuning-campaign-support/src/abtest.rs": "095deb55202c80bda2b2eb0b3362f524ab77891f4f05da7c549e7b3f8053e824",
         "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "e23750a6d4a92d95d966ae8618361945b288b26407640f10926134c732300612",
@@ -1070,7 +1070,7 @@
         "dev/tools/tuning-campaign-support/src/trial_ledger.rs": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd"
       },
       "lifecycle_sha256": {
-        "dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh": "b75656d90e3bc3d4a03acaa03a7687ce53b254fdb00f68ef1a60d94a0dc3e044",
+        "dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh": "69aac8b442cc22f431727c9a9fabc72af51e9ee2b65e063b0bbf34412d122a4c",
         "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
         "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "a3ebd9769d81ee2e3eeeaae991053f36a24fce7557254cbabc5a9ed5e80c1e6b",
         "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
@@ -1309,7 +1309,7 @@
         "crates/gf2-kernels-simd/src/x86/mersenne.rs": "f1427b4284e0a7fbbf4f26dbe199d6f18bc6bc945197efedc0edeb2cd439f513",
         "crates/gf2-kernels-simd/src/x86/mod.rs": "1e855043c73cbd52c7e65056ef1461a2eea0fab96b29aa72a2904f7ae4a67895",
         "crates/gf2-kernels-simd/src/x86/transpose.rs": "ec5081d7a45284375c7fa73296f4a48123c7b16bc7b0941fc4b1d7eeec692c0f",
-        "dev/active/12fdeb5b/survey/nr-encode-build.sh": "cd8150bbfa46de66032355d820a65683f66e8972db42c1a67c3bd9315708daae",
+        "dev/active/12fdeb5b/survey/nr-encode-build.sh": "d79b90f81cceffe985ffe0581a8851f40e09d98fe54fa2170b18f3b3d03b451f",
         "dev/active/12fdeb5b/survey/nr-encode/Cargo.lock": "0945e33f8d84acc1818daaaf5b95e00ead3b263cecdd04a2ae76d3a38a832c21",
         "dev/active/12fdeb5b/survey/nr-encode/Cargo.toml": "2c688b046b6eff94abdc5f74bcaa56520dfcaee901cfd05e9190b69d9019fcf0",
         "dev/active/12fdeb5b/survey/nr-encode/build.rs": "03ad35057e4e3ff45949b3ea71c624a6773ce8b0075fc17546c7b7f9638e7ad0",
@@ -1322,7 +1322,7 @@
         "dev/active/12fdeb5b/survey/nr-encode/src/bin/srsran-nr-encode-arm.rs": "bbbc5863cdae430f4da5eccef3517a26bd76ef1e5764142a43b7ce7030d3bc3c",
         "dev/active/12fdeb5b/survey/nr-encode/src/lib.rs": "e5b1ecb40adce8e45cf741cefee6b4686b1c31d8a1d04818d0351cf62175f65f",
         "dev/active/12fdeb5b/survey/nr-encode/src/srsran.rs": "af54d4b47e6ced2ec73c9acdcc626ac59f2365c6f20c1f5e4b619814235a6e9f",
-        "dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh": "b75656d90e3bc3d4a03acaa03a7687ce53b254fdb00f68ef1a60d94a0dc3e044",
+        "dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh": "69aac8b442cc22f431727c9a9fabc72af51e9ee2b65e063b0bbf34412d122a4c",
         "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
         "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
         "dev/tools/tuning-campaign-support/src/abtest.rs": "095deb55202c80bda2b2eb0b3362f524ab77891f4f05da7c549e7b3f8053e824",
@@ -1350,7 +1350,7 @@
   },
   "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
   "host": {
-    "observed_utc": "2026-09-12T17:40:23.241844588Z",
+    "observed_utc": "2026-09-12T17:46:21.214242017Z",
     "hostname": "fraktaali",
     "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
     "cpu_flags": [
@@ -2106,15 +2106,15 @@
       "smt_active": true
     },
     "load_average": [
-      3.12,
-      8.57,
-      8.47
+      2.94,
+      6.38,
+      7.65
     ],
-    "available_memory_kib": 52722616
+    "available_memory_kib": 52786584
   },
   "lock": {
     "lock_path": "/tmp/gf2-ccx1.lock",
-    "holder_pid": 2113988,
+    "holder_pid": 2133204,
     "observation": "inherited-fd-and-independent-flock-conflict"
   },
   "workers": {
@@ -2123,19 +2123,19 @@
   },
   "execution_log": {
     "path": "execution.log",
-    "sha256": "a082e35dc959cbd7785a6536072b81bca91c159f892b47529be33aa1f6bf56c5",
+    "sha256": "b77a3cd350e109ac3f81e9386eec10e60112722c66078bacd2b9aaa95ad93915",
     "sessions": 1,
     "resumed": false
   },
   "checkpoints": {
     "manifest_path": "checkpoints/manifest.json",
-    "manifest_sha256": "8578462f2cd5399a3779f58a303150e89af299da8986ba13d6586bb5763fe73b"
+    "manifest_sha256": "1b03ff34b6c195da7a0dac7c93a4cf800c9498011543fb5800a2138032248b68"
   },
   "arms": {
     "aff3ct-external": {
       "build": "external",
       "description": "AFF3CT v4.7.0 (commit e8a65c5047262d97a15563b9edc961f69b2792cc, MIT) Encoder_LDPC_QC_fast<int32_t>::encode plus Puncturer_5G<int32_t, float>::puncture through a C-ABI shim, static library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529 built -O3 -march=native -funroll-loops; the timed call converts the BitVec message to one int32_t per bit, allocates the mother and transmitted buffers, runs both public entry points, and converts the transmitted values back to a BitVec",
-      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/12fdeb5b/target-nr-encode-native/release/aff3ct-nr-encode-arm",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-native/release/aff3ct-nr-encode-arm",
       "executable_sha256": "11f3b00e0015d7bc2592576ce3c30b43b7ed74d6665e572c73bf61ceb882703e",
       "arguments": [],
       "environment": {
@@ -2147,7 +2147,7 @@
     "gf2-native": {
       "build": "native",
       "description": "gf2 <Nr5gRateMatchedCode as BlockEncoder>::encode on a target_k-bit BitVec, built with -C target-cpu=native",
-      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/12fdeb5b/target-nr-encode-native/release/gf2-nr-encode-arm",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-native/release/gf2-nr-encode-arm",
       "executable_sha256": "b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624",
       "arguments": [],
       "environment": {},
@@ -2157,7 +2157,7 @@
     "gf2-native-control": {
       "build": "native",
       "description": "identity control: the same gf2 native executable as the baseline arm, launched as a second arm",
-      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/12fdeb5b/target-nr-encode-native/release/gf2-nr-encode-arm",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-native/release/gf2-nr-encode-arm",
       "executable_sha256": "b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624",
       "arguments": [],
       "environment": {},
@@ -2167,7 +2167,7 @@
     "gf2-portable": {
       "build": "conservative-portable",
       "description": "scalar/compiler control: the same gf2 encode built with -C target-cpu=x86-64 (baseline x86-64, no target feature beyond SSE2)",
-      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/12fdeb5b/target-nr-encode-portable/release/gf2-nr-encode-arm",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-portable/release/gf2-nr-encode-arm",
       "executable_sha256": "28e910e970754c4f90a09dca80582590b1335b345aa11dc36ee25fad95c9933f",
       "arguments": [],
       "environment": {},
@@ -2177,7 +2177,7 @@
     "srsran-external": {
       "build": "external",
       "description": "srsRAN Project 25.10 (commit d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc, AGPL-3.0-or-later) ldpc_encoder::encode plus ldpc_rate_matcher::rate_match through a C-ABI shim over the LDPC translation units, compiled -O3 -march=native -std=c++17; the timed call converts the BitVec message into srsRAN's packed bit_buffer over K_LDPC bits with fillers zero, runs both public entry points at redundancy version 0 and one bit per symbol, and converts the packed output back to a BitVec",
-      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/12fdeb5b/target-nr-encode-native/release/srsran-nr-encode-arm",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-native/release/srsran-nr-encode-arm",
       "executable_sha256": "869e26351e37641acfa6bc74f527264c2dc57c42252b309689535993254b52e1",
       "arguments": [],
       "environment": {},
@@ -2204,30 +2204,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114074,
+            "pid": 2133264,
             "windows": [
               {
-                "calls": 5343,
-                "elapsed_ns": 99747369
+                "calls": 5355,
+                "elapsed_ns": 99981671
               },
               {
-                "calls": 5343,
-                "elapsed_ns": 99784220
+                "calls": 5355,
+                "elapsed_ns": 100188221
               },
               {
-                "calls": 5343,
-                "elapsed_ns": 99797169
+                "calls": 5355,
+                "elapsed_ns": 99865320
               },
               {
-                "calls": 5343,
-                "elapsed_ns": 99620409
+                "calls": 5355,
+                "elapsed_ns": 100242392
               },
               {
-                "calls": 5343,
-                "elapsed_ns": 100552073
+                "calls": 5355,
+                "elapsed_ns": 99821609
               }
             ],
-            "ns_per_call": 18675.691559049224,
+            "ns_per_call": 18670.713538748834,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2235,40 +2235,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9269779,
+              "setup_ns": 9358269,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 608315407
+            "elapsed_ns": 611704704
           },
           "candidate": {
             "arm": "gf2-native-control",
-            "pid": 2114070,
+            "pid": 2133260,
             "windows": [
               {
-                "calls": 5366,
-                "elapsed_ns": 100612384
+                "calls": 5346,
+                "elapsed_ns": 100841705
               },
               {
-                "calls": 5366,
-                "elapsed_ns": 101038766
+                "calls": 5346,
+                "elapsed_ns": 100047961
               },
               {
-                "calls": 5366,
-                "elapsed_ns": 100603324
+                "calls": 5346,
+                "elapsed_ns": 99970490
               },
               {
-                "calls": 5366,
-                "elapsed_ns": 100532993
+                "calls": 5346,
+                "elapsed_ns": 99623959
               },
               {
-                "calls": 5366,
-                "elapsed_ns": 100221892
+                "calls": 5346,
+                "elapsed_ns": 99447488
               }
             ],
-            "ns_per_call": 18748.289973909803,
+            "ns_per_call": 18700.054246165357,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2276,13 +2276,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9248558,
+              "setup_ns": 9267048,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 610556358
+            "elapsed_ns": 607993135
           }
         },
         {
@@ -2290,30 +2290,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114080,
+            "pid": 2133270,
             "windows": [
               {
-                "calls": 5339,
-                "elapsed_ns": 100035150
+                "calls": 5289,
+                "elapsed_ns": 99173826
               },
               {
-                "calls": 5339,
-                "elapsed_ns": 100092792
+                "calls": 5289,
+                "elapsed_ns": 101976771
               },
               {
-                "calls": 5339,
-                "elapsed_ns": 100736184
+                "calls": 5289,
+                "elapsed_ns": 98962805
               },
               {
-                "calls": 5339,
-                "elapsed_ns": 100989786
+                "calls": 5289,
+                "elapsed_ns": 98914225
               },
               {
-                "calls": 5339,
-                "elapsed_ns": 100015610
+                "calls": 5289,
+                "elapsed_ns": 98697443
               }
             ],
-            "ns_per_call": 18747.479303240307,
+            "ns_per_call": 18711.06163736056,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2321,40 +2321,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9285139,
+              "setup_ns": 9217028,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 610862030
+            "elapsed_ns": 606647287
           },
           "candidate": {
             "arm": "gf2-native-control",
-            "pid": 2114106,
+            "pid": 2133277,
             "windows": [
               {
-                "calls": 5290,
-                "elapsed_ns": 100823565
+                "calls": 5335,
+                "elapsed_ns": 99966811
               },
               {
-                "calls": 5290,
-                "elapsed_ns": 99866490
+                "calls": 5335,
+                "elapsed_ns": 99963350
               },
               {
-                "calls": 5290,
-                "elapsed_ns": 100110721
+                "calls": 5335,
+                "elapsed_ns": 99993931
               },
               {
-                "calls": 5290,
-                "elapsed_ns": 99509348
+                "calls": 5335,
+                "elapsed_ns": 100399492
               },
               {
-                "calls": 5290,
-                "elapsed_ns": 99529478
+                "calls": 5335,
+                "elapsed_ns": 99965790
               }
             ],
-            "ns_per_call": 18878.353497164462,
+            "ns_per_call": 18737.921462043112,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2362,13 +2362,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9286068,
+              "setup_ns": 9262489,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 606054585
+            "elapsed_ns": 608455458
           }
         },
         {
@@ -2376,30 +2376,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114132,
+            "pid": 2133281,
             "windows": [
               {
-                "calls": 5345,
-                "elapsed_ns": 100552183
+                "calls": 5138,
+                "elapsed_ns": 96008360
               },
               {
-                "calls": 5345,
-                "elapsed_ns": 100395752
+                "calls": 5138,
+                "elapsed_ns": 96337801
               },
               {
-                "calls": 5345,
-                "elapsed_ns": 100163852
+                "calls": 5138,
+                "elapsed_ns": 96393282
               },
               {
-                "calls": 5345,
-                "elapsed_ns": 100040801
+                "calls": 5138,
+                "elapsed_ns": 96000909
               },
               {
-                "calls": 5345,
-                "elapsed_ns": 100237642
+                "calls": 5138,
+                "elapsed_ns": 96150011
               }
             ],
-            "ns_per_call": 18753.534518241348,
+            "ns_per_call": 18713.50934215648,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2407,40 +2407,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9201118,
+              "setup_ns": 9234128,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 609791744
+            "elapsed_ns": 589949130
           },
           "candidate": {
             "arm": "gf2-native-control",
-            "pid": 2114140,
+            "pid": 2133285,
             "windows": [
               {
-                "calls": 5324,
-                "elapsed_ns": 100801035
+                "calls": 5362,
+                "elapsed_ns": 99986541
               },
               {
-                "calls": 5324,
-                "elapsed_ns": 99916390
+                "calls": 5362,
+                "elapsed_ns": 100655074
               },
               {
-                "calls": 5324,
-                "elapsed_ns": 99638609
+                "calls": 5362,
+                "elapsed_ns": 100432622
               },
               {
-                "calls": 5324,
-                "elapsed_ns": 99912500
+                "calls": 5362,
+                "elapsed_ns": 100677394
               },
               {
-                "calls": 5324,
-                "elapsed_ns": 100257012
+                "calls": 5362,
+                "elapsed_ns": 100115802
               }
             ],
-            "ns_per_call": 18767.1656649136,
+            "ns_per_call": 18730.440507273404,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2448,13 +2448,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9228748,
+              "setup_ns": 9326749,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 609422083
+            "elapsed_ns": 609737544
           }
         },
         {
@@ -2462,30 +2462,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114172,
+            "pid": 2133317,
             "windows": [
               {
-                "calls": 5305,
-                "elapsed_ns": 100812395
+                "calls": 5352,
+                "elapsed_ns": 101333527
               },
               {
-                "calls": 5305,
-                "elapsed_ns": 100142321
+                "calls": 5352,
+                "elapsed_ns": 101630160
               },
               {
-                "calls": 5305,
-                "elapsed_ns": 99550969
+                "calls": 5352,
+                "elapsed_ns": 99956140
               },
               {
-                "calls": 5305,
-                "elapsed_ns": 99272936
+                "calls": 5352,
+                "elapsed_ns": 100095931
               },
               {
-                "calls": 5305,
-                "elapsed_ns": 101439718
+                "calls": 5352,
+                "elapsed_ns": 99810549
               }
             ],
-            "ns_per_call": 18876.96908576814,
+            "ns_per_call": 18702.52821375187,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2493,40 +2493,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9327619,
+              "setup_ns": 9496109,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 610907140
+            "elapsed_ns": 611711654
           },
           "candidate": {
             "arm": "gf2-native-control",
-            "pid": 2114147,
+            "pid": 2133293,
             "windows": [
               {
-                "calls": 5330,
-                "elapsed_ns": 100782154
+                "calls": 5352,
+                "elapsed_ns": 101449109
               },
               {
-                "calls": 5330,
-                "elapsed_ns": 99935091
+                "calls": 5352,
+                "elapsed_ns": 99903679
               },
               {
-                "calls": 5330,
-                "elapsed_ns": 100046121
+                "calls": 5352,
+                "elapsed_ns": 99871320
               },
               {
-                "calls": 5330,
-                "elapsed_ns": 99855990
+                "calls": 5352,
+                "elapsed_ns": 99728619
               },
               {
-                "calls": 5330,
-                "elapsed_ns": 100764994
+                "calls": 5352,
+                "elapsed_ns": 100533323
               }
             ],
-            "ns_per_call": 18770.379174484053,
+            "ns_per_call": 18666.606689088192,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2534,13 +2534,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9314568,
+              "setup_ns": 9278788,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 608311347
+            "elapsed_ns": 610265847
           }
         },
         {
@@ -2548,30 +2548,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114216,
+            "pid": 2133348,
             "windows": [
               {
-                "calls": 5373,
-                "elapsed_ns": 100416382
+                "calls": 5356,
+                "elapsed_ns": 101509948
               },
               {
-                "calls": 5373,
-                "elapsed_ns": 100147402
+                "calls": 5356,
+                "elapsed_ns": 100568573
               },
               {
-                "calls": 5373,
-                "elapsed_ns": 100261092
+                "calls": 5356,
+                "elapsed_ns": 100371693
               },
               {
-                "calls": 5373,
-                "elapsed_ns": 100081421
+                "calls": 5356,
+                "elapsed_ns": 99978700
               },
               {
-                "calls": 5373,
-                "elapsed_ns": 100270662
+                "calls": 5356,
+                "elapsed_ns": 100675454
               }
             ],
-            "ns_per_call": 18660.169737576773,
+            "ns_per_call": 18776.806011949215,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2579,40 +2579,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9305528,
+              "setup_ns": 9426409,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 609152521
+            "elapsed_ns": 612168006
           },
           "candidate": {
             "arm": "gf2-native-control",
-            "pid": 2114209,
+            "pid": 2133343,
             "windows": [
               {
-                "calls": 5334,
-                "elapsed_ns": 100039041
+                "calls": 5380,
+                "elapsed_ns": 100597014
               },
               {
-                "calls": 5334,
-                "elapsed_ns": 100138601
+                "calls": 5380,
+                "elapsed_ns": 100428273
               },
               {
-                "calls": 5334,
-                "elapsed_ns": 100809655
+                "calls": 5380,
+                "elapsed_ns": 100597283
               },
               {
-                "calls": 5334,
-                "elapsed_ns": 99936601
+                "calls": 5380,
+                "elapsed_ns": 107082478
               },
               {
-                "calls": 5334,
-                "elapsed_ns": 100285251
+                "calls": 5380,
+                "elapsed_ns": 101531268
               }
             ],
-            "ns_per_call": 18773.640982377205,
+            "ns_per_call": 18698.379739776952,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2620,13 +2620,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9290428,
+              "setup_ns": 9353458,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 610524358
+            "elapsed_ns": 618120807
           }
         },
         {
@@ -2634,30 +2634,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114220,
+            "pid": 2133355,
             "windows": [
               {
-                "calls": 5338,
-                "elapsed_ns": 101678649
+                "calls": 5325,
+                "elapsed_ns": 100716594
               },
               {
-                "calls": 5338,
-                "elapsed_ns": 99388748
+                "calls": 5325,
+                "elapsed_ns": 100837285
               },
               {
-                "calls": 5338,
-                "elapsed_ns": 101195267
+                "calls": 5325,
+                "elapsed_ns": 99994121
               },
               {
-                "calls": 5338,
-                "elapsed_ns": 100650903
+                "calls": 5325,
+                "elapsed_ns": 100157021
               },
               {
-                "calls": 5338,
-                "elapsed_ns": 100144362
+                "calls": 5325,
+                "elapsed_ns": 102343373
               }
             ],
-            "ns_per_call": 18855.545710003746,
+            "ns_per_call": 18913.914366197183,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2665,40 +2665,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9371239,
+              "setup_ns": 9295278,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 612022256
+            "elapsed_ns": 611145930
           },
           "candidate": {
             "arm": "gf2-native-control",
-            "pid": 2114227,
+            "pid": 2133380,
             "windows": [
               {
-                "calls": 5359,
-                "elapsed_ns": 100453333
+                "calls": 5356,
+                "elapsed_ns": 100367653
               },
               {
-                "calls": 5359,
-                "elapsed_ns": 100584063
+                "calls": 5356,
+                "elapsed_ns": 101640668
               },
               {
-                "calls": 5359,
-                "elapsed_ns": 100308883
+                "calls": 5356,
+                "elapsed_ns": 101231208
               },
               {
-                "calls": 5359,
-                "elapsed_ns": 100942305
+                "calls": 5356,
+                "elapsed_ns": 100356542
               },
               {
-                "calls": 5359,
-                "elapsed_ns": 101165097
+                "calls": 5356,
+                "elapsed_ns": 100338982
               }
             ],
-            "ns_per_call": 18769.185109162157,
+            "ns_per_call": 18739.292942494398,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2706,21 +2706,21 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n1024-k400",
             "conversion": {
-              "setup_ns": 9305499,
+              "setup_ns": 9395579,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 611857475
+            "elapsed_ns": 611681164
           }
         }
       ],
       "claimed": {
         "interval": {
-          "estimate": 0.9989730711344099,
-          "lower": 0.9939226694252155,
-          "upper": 1.0051399241255907,
+          "estimate": 0.9998417393635659,
+          "lower": 0.9985665526063303,
+          "upper": 1.006714144566142,
           "confidence": 0.975,
           "alpha": 0.025,
           "resamples": 10000,
@@ -2734,7 +2734,7 @@
         }
       },
       "decoder_quality": null,
-      "checkpoint_sha256": "357c346f2e6cf3cb3c694bc69c2c53e55450555a951c28e374296112fa893172"
+      "checkpoint_sha256": "8e818b16cc0efad1d65966ae3f6a9eaa8be5e2077e444af485187c0305ee7345"
     },
     {
       "cell_id": "nr-enc-bg2-n256-k121-gap-native-vs-srsran",
@@ -2754,30 +2754,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114233,
+            "pid": 2133384,
             "windows": [
               {
-                "calls": 21320,
-                "elapsed_ns": 99899190
+                "calls": 21212,
+                "elapsed_ns": 101118716
               },
               {
-                "calls": 21320,
-                "elapsed_ns": 99748580
+                "calls": 21212,
+                "elapsed_ns": 99339947
               },
               {
-                "calls": 21320,
-                "elapsed_ns": 99890590
+                "calls": 21212,
+                "elapsed_ns": 99542748
               },
               {
-                "calls": 21320,
-                "elapsed_ns": 100702764
+                "calls": 21212,
+                "elapsed_ns": 99207147
               },
               {
-                "calls": 21320,
-                "elapsed_ns": 103883551
+                "calls": 21212,
+                "elapsed_ns": 99027795
               }
             ],
-            "ns_per_call": 4685.703095684803,
+            "ns_per_call": 4683.195691118235,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2785,40 +2785,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 1947620,
+              "setup_ns": 1728779,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 605654363
+            "elapsed_ns": 599263809
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114261,
+            "pid": 2133391,
             "windows": [
               {
-                "calls": 148630,
-                "elapsed_ns": 100561593
+                "calls": 146286,
+                "elapsed_ns": 100493713
               },
               {
-                "calls": 148630,
-                "elapsed_ns": 101225907
+                "calls": 146286,
+                "elapsed_ns": 100654264
               },
               {
-                "calls": 148630,
-                "elapsed_ns": 101471678
+                "calls": 146286,
+                "elapsed_ns": 100893285
               },
               {
-                "calls": 148630,
-                "elapsed_ns": 101899091
+                "calls": 146286,
+                "elapsed_ns": 100797654
               },
               {
-                "calls": 148630,
-                "elapsed_ns": 100361172
+                "calls": 146286,
+                "elapsed_ns": 100672025
               }
             ],
-            "ns_per_call": 681.0597254928346,
+            "ns_per_call": 688.186326784518,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2826,13 +2826,13 @@
             ],
             "selected_path": "srsran-avx2-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 104450,
+              "setup_ns": 112931,
               "pack_ns": 44,
               "unpack_ns": 42,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 591661270
+            "elapsed_ns": 588962966
           }
         },
         {
@@ -2840,30 +2840,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114271,
+            "pid": 2133399,
             "windows": [
               {
-                "calls": 21168,
-                "elapsed_ns": 99434147
+                "calls": 21374,
+                "elapsed_ns": 100476343
               },
               {
-                "calls": 21168,
-                "elapsed_ns": 99336758
+                "calls": 21374,
+                "elapsed_ns": 100635874
               },
               {
-                "calls": 21168,
-                "elapsed_ns": 99310506
+                "calls": 21374,
+                "elapsed_ns": 101108476
               },
               {
-                "calls": 21168,
-                "elapsed_ns": 98954466
+                "calls": 21374,
+                "elapsed_ns": 101513648
               },
               {
-                "calls": 21168,
-                "elapsed_ns": 99254636
+                "calls": 21374,
+                "elapsed_ns": 100131601
               }
             ],
-            "ns_per_call": 4691.539399092971,
+            "ns_per_call": 4708.331337138579,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2871,40 +2871,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 1959230,
+              "setup_ns": 1971871,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 601364650
+            "elapsed_ns": 603298760
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114265,
+            "pid": 2133395,
             "windows": [
               {
-                "calls": 147961,
-                "elapsed_ns": 101232007
+                "calls": 148710,
+                "elapsed_ns": 100656394
               },
               {
-                "calls": 147961,
-                "elapsed_ns": 101427258
+                "calls": 148710,
+                "elapsed_ns": 100475623
               },
               {
-                "calls": 147961,
-                "elapsed_ns": 101496358
+                "calls": 148710,
+                "elapsed_ns": 100619864
               },
               {
-                "calls": 147961,
-                "elapsed_ns": 101697740
+                "calls": 148710,
+                "elapsed_ns": 100793965
               },
               {
-                "calls": 147961,
-                "elapsed_ns": 100852364
+                "calls": 148710,
+                "elapsed_ns": 100817944
               }
             ],
-            "ns_per_call": 685.499949310967,
+            "ns_per_call": 676.8636540918567,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2912,13 +2912,13 @@
             ],
             "selected_path": "srsran-avx2-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 100851,
-              "pack_ns": 43,
-              "unpack_ns": 42,
+              "setup_ns": 100140,
+              "pack_ns": 44,
+              "unpack_ns": 43,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 592312174
+            "elapsed_ns": 588537573
           }
         },
         {
@@ -2926,30 +2926,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114276,
+            "pid": 2133406,
             "windows": [
               {
-                "calls": 20506,
-                "elapsed_ns": 95942699
+                "calls": 21374,
+                "elapsed_ns": 100088301
               },
               {
-                "calls": 20506,
-                "elapsed_ns": 96467792
+                "calls": 21374,
+                "elapsed_ns": 101026756
               },
               {
-                "calls": 20506,
-                "elapsed_ns": 96313762
+                "calls": 21374,
+                "elapsed_ns": 101185986
               },
               {
-                "calls": 20506,
-                "elapsed_ns": 96700633
+                "calls": 21374,
+                "elapsed_ns": 101496188
               },
               {
-                "calls": 20506,
-                "elapsed_ns": 96680754
+                "calls": 21374,
+                "elapsed_ns": 100719985
               }
             ],
-            "ns_per_call": 4704.369062713352,
+            "ns_per_call": 4726.619069898007,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2957,40 +2957,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 1964780,
+              "setup_ns": 1953580,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 584682764
+            "elapsed_ns": 605453802
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114280,
+            "pid": 2133444,
             "windows": [
               {
-                "calls": 152195,
-                "elapsed_ns": 100969906
+                "calls": 151266,
+                "elapsed_ns": 100379972
               },
               {
-                "calls": 152195,
-                "elapsed_ns": 100850495
+                "calls": 151266,
+                "elapsed_ns": 100668044
               },
               {
-                "calls": 152195,
-                "elapsed_ns": 101467588
+                "calls": 151266,
+                "elapsed_ns": 100453293
               },
               {
-                "calls": 152195,
-                "elapsed_ns": 100845455
+                "calls": 151266,
+                "elapsed_ns": 100651634
               },
               {
-                "calls": 152195,
-                "elapsed_ns": 101010226
+                "calls": 151266,
+                "elapsed_ns": 101182767
               }
             ],
-            "ns_per_call": 663.4245934491935,
+            "ns_per_call": 665.3949598720135,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2998,13 +2998,13 @@
             ],
             "selected_path": "srsran-avx2-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 104001,
-              "pack_ns": 44,
-              "unpack_ns": 49,
+              "setup_ns": 101420,
+              "pack_ns": 45,
+              "unpack_ns": 44,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 590416654
+            "elapsed_ns": 588111071
           }
         },
         {
@@ -3012,30 +3012,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114291,
+            "pid": 2133488,
             "windows": [
               {
-                "calls": 21266,
-                "elapsed_ns": 99645068
+                "calls": 21281,
+                "elapsed_ns": 99737039
               },
               {
-                "calls": 21266,
-                "elapsed_ns": 99789019
+                "calls": 21281,
+                "elapsed_ns": 99476458
               },
               {
-                "calls": 21266,
-                "elapsed_ns": 99716580
+                "calls": 21281,
+                "elapsed_ns": 101766490
               },
               {
-                "calls": 21266,
-                "elapsed_ns": 100035480
+                "calls": 21281,
+                "elapsed_ns": 100255932
               },
               {
-                "calls": 21266,
-                "elapsed_ns": 99825220
+                "calls": 21281,
+                "elapsed_ns": 99813349
               }
             ],
-            "ns_per_call": 4692.420718517822,
+            "ns_per_call": 4690.25651990038,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3043,40 +3043,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 2094701,
+              "setup_ns": 1960750,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 600907628
+            "elapsed_ns": 602511985
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114284,
+            "pid": 2133482,
             "windows": [
               {
-                "calls": 151799,
-                "elapsed_ns": 100641184
+                "calls": 148693,
+                "elapsed_ns": 100663264
               },
               {
-                "calls": 151799,
-                "elapsed_ns": 101097407
+                "calls": 148693,
+                "elapsed_ns": 100384023
               },
               {
-                "calls": 151799,
-                "elapsed_ns": 101583979
+                "calls": 148693,
+                "elapsed_ns": 100941395
               },
               {
-                "calls": 151799,
-                "elapsed_ns": 100917665
+                "calls": 148693,
+                "elapsed_ns": 101004686
               },
               {
-                "calls": 151799,
-                "elapsed_ns": 101106526
+                "calls": 148693,
+                "elapsed_ns": 100486643
               }
             ],
-            "ns_per_call": 665.9952107721394,
+            "ns_per_call": 676.9872421701089,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3084,13 +3084,13 @@
             ],
             "selected_path": "srsran-avx2-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 101111,
+              "setup_ns": 102690,
               "pack_ns": 44,
-              "unpack_ns": 50,
+              "unpack_ns": 42,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 591188757
+            "elapsed_ns": 588383003
           }
         },
         {
@@ -3098,30 +3098,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114299,
+            "pid": 2133535,
             "windows": [
               {
-                "calls": 21327,
-                "elapsed_ns": 101050235
+                "calls": 21418,
+                "elapsed_ns": 100314582
               },
               {
-                "calls": 21327,
-                "elapsed_ns": 100844126
+                "calls": 21418,
+                "elapsed_ns": 100258102
               },
               {
-                "calls": 21327,
-                "elapsed_ns": 102371742
+                "calls": 21418,
+                "elapsed_ns": 102101851
               },
               {
-                "calls": 21327,
-                "elapsed_ns": 100097162
+                "calls": 21418,
+                "elapsed_ns": 100506124
               },
               {
-                "calls": 21327,
-                "elapsed_ns": 100795464
+                "calls": 21418,
+                "elapsed_ns": 101082946
               }
             ],
-            "ns_per_call": 4728.472171425892,
+            "ns_per_call": 4692.6008030628445,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3129,40 +3129,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 1998530,
+              "setup_ns": 1978990,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 607056961
+            "elapsed_ns": 605390381
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114295,
+            "pid": 2133497,
             "windows": [
               {
-                "calls": 144457,
-                "elapsed_ns": 100495354
+                "calls": 146708,
+                "elapsed_ns": 100200041
               },
               {
-                "calls": 144457,
-                "elapsed_ns": 99909989
+                "calls": 146708,
+                "elapsed_ns": 100060851
               },
               {
-                "calls": 144457,
-                "elapsed_ns": 99877141
+                "calls": 146708,
+                "elapsed_ns": 99262957
               },
               {
-                "calls": 144457,
-                "elapsed_ns": 99166976
+                "calls": 146708,
+                "elapsed_ns": 99221466
               },
               {
-                "calls": 144457,
-                "elapsed_ns": 99355647
+                "calls": 146708,
+                "elapsed_ns": 99014346
               }
             ],
-            "ns_per_call": 691.3970316426341,
+            "ns_per_call": 676.6022098317746,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3170,13 +3170,13 @@
             ],
             "selected_path": "srsran-avx2-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 103240,
-              "pack_ns": 44,
-              "unpack_ns": 42,
+              "setup_ns": 103200,
+              "pack_ns": 45,
+              "unpack_ns": 53,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 585144465
+            "elapsed_ns": 585030745
           }
         },
         {
@@ -3184,30 +3184,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114330,
+            "pid": 2133540,
             "windows": [
               {
-                "calls": 21430,
-                "elapsed_ns": 100194232
+                "calls": 21255,
+                "elapsed_ns": 99756789
               },
               {
-                "calls": 21430,
-                "elapsed_ns": 100326822
+                "calls": 21255,
+                "elapsed_ns": 99971341
               },
               {
-                "calls": 21430,
-                "elapsed_ns": 100073911
+                "calls": 21255,
+                "elapsed_ns": 99871779
               },
               {
-                "calls": 21430,
-                "elapsed_ns": 100277452
+                "calls": 21255,
+                "elapsed_ns": 99623929
               },
               {
-                "calls": 21430,
-                "elapsed_ns": 99979451
+                "calls": 21255,
+                "elapsed_ns": 99623648
               }
             ],
-            "ns_per_call": 4675.419132057863,
+            "ns_per_call": 4693.332815808045,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3215,40 +3215,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 1999110,
+              "setup_ns": 1954160,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 602033964
+            "elapsed_ns": 600173924
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114335,
+            "pid": 2133548,
             "windows": [
               {
-                "calls": 150085,
-                "elapsed_ns": 100375242
+                "calls": 144831,
+                "elapsed_ns": 100379513
               },
               {
-                "calls": 150085,
-                "elapsed_ns": 100215932
+                "calls": 144831,
+                "elapsed_ns": 100528703
               },
               {
-                "calls": 150085,
-                "elapsed_ns": 100892695
+                "calls": 144831,
+                "elapsed_ns": 100863445
               },
               {
-                "calls": 150085,
-                "elapsed_ns": 100642454
+                "calls": 144831,
+                "elapsed_ns": 101567659
               },
               {
-                "calls": 150085,
-                "elapsed_ns": 100448673
+                "calls": 144831,
+                "elapsed_ns": 100970586
               }
             ],
-            "ns_per_call": 669.2785621481161,
+            "ns_per_call": 696.4216569657049,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3256,21 +3256,21 @@
             ],
             "selected_path": "srsran-avx2-bg2-n256-k121",
             "conversion": {
-              "setup_ns": 103601,
+              "setup_ns": 109600,
               "pack_ns": 44,
-              "unpack_ns": 45,
+              "unpack_ns": 49,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 588021401
+            "elapsed_ns": 593682360
           }
         }
       ],
       "claimed": {
         "interval": {
-          "estimate": 6.949340179048489,
-          "lower": 6.841478847600363,
-          "upper": 7.0773265867944435,
+          "estimate": 6.932767592639495,
+          "lower": 6.778766068825492,
+          "upper": 7.030529288760805,
           "confidence": 0.975,
           "alpha": 0.025,
           "resamples": 10000,
@@ -3284,7 +3284,7 @@
         }
       },
       "decoder_quality": null,
-      "checkpoint_sha256": "d4be346cedc6241c0b153ed8a9c85a8845cc10034456055999a7b0f169c29bc2"
+      "checkpoint_sha256": "36ac93967df3bdc99b53dc111e19cb52cc1c657061d514c085e1ab25aa11d82c"
     },
     {
       "cell_id": "nr-enc-bg1-n8448-k4224-gap-native-vs-srsran",
@@ -3304,30 +3304,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114341,
+            "pid": 2133950,
             "windows": [
               {
                 "calls": 175,
-                "elapsed_ns": 99934640
+                "elapsed_ns": 100166461
               },
               {
                 "calls": 175,
-                "elapsed_ns": 100779094
+                "elapsed_ns": 101229047
               },
               {
                 "calls": 175,
-                "elapsed_ns": 100750885
+                "elapsed_ns": 101170527
               },
               {
                 "calls": 175,
-                "elapsed_ns": 101796920
+                "elapsed_ns": 100510903
               },
               {
                 "calls": 175,
-                "elapsed_ns": 101326037
+                "elapsed_ns": 101469898
               }
             ],
-            "ns_per_call": 575880.5371428571,
+            "ns_per_call": 578117.2971428571,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3335,40 +3335,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 216179845,
+              "setup_ns": 218442967,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 815407424
+            "elapsed_ns": 818910713
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114352,
+            "pid": 2134097,
             "windows": [
               {
-                "calls": 26526,
-                "elapsed_ns": 100185162
+                "calls": 26293,
+                "elapsed_ns": 99691169
               },
               {
-                "calls": 26526,
-                "elapsed_ns": 100285482
+                "calls": 26293,
+                "elapsed_ns": 99561508
               },
               {
-                "calls": 26526,
-                "elapsed_ns": 100450023
+                "calls": 26293,
+                "elapsed_ns": 99828310
               },
               {
-                "calls": 26526,
-                "elapsed_ns": 99896580
+                "calls": 26293,
+                "elapsed_ns": 99530848
               },
               {
-                "calls": 26526,
-                "elapsed_ns": 100294682
+                "calls": 26293,
+                "elapsed_ns": 99969450
               }
             ],
-            "ns_per_call": 3780.6484958154265,
+            "ns_per_call": 3791.547902483551,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3376,13 +3376,13 @@
             ],
             "selected_path": "srsran-avx2-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 62401,
-              "pack_ns": 882,
-              "unpack_ns": 198,
+              "setup_ns": 58180,
+              "pack_ns": 872,
+              "unpack_ns": 186,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 832601365
+            "elapsed_ns": 830380202
           }
         },
         {
@@ -3390,30 +3390,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114421,
+            "pid": 2134110,
             "windows": [
               {
-                "calls": 174,
-                "elapsed_ns": 99319566
+                "calls": 171,
+                "elapsed_ns": 97166466
               },
               {
-                "calls": 174,
-                "elapsed_ns": 99909570
+                "calls": 171,
+                "elapsed_ns": 95891629
               },
               {
-                "calls": 174,
-                "elapsed_ns": 99912851
+                "calls": 171,
+                "elapsed_ns": 96205951
               },
               {
-                "calls": 174,
-                "elapsed_ns": 99696249
+                "calls": 171,
+                "elapsed_ns": 96106970
               },
               {
-                "calls": 174,
-                "elapsed_ns": 99950310
+                "calls": 171,
+                "elapsed_ns": 95825299
               }
             ],
-            "ns_per_call": 574192.9310344828,
+            "ns_per_call": 562029.0643274854,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3421,40 +3421,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 217514432,
+              "setup_ns": 216070944,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 813125963
+            "elapsed_ns": 793649341
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114377,
+            "pid": 2134106,
             "windows": [
               {
-                "calls": 26415,
-                "elapsed_ns": 100110581
+                "calls": 26613,
+                "elapsed_ns": 99855549
               },
               {
-                "calls": 26415,
-                "elapsed_ns": 100124641
+                "calls": 26613,
+                "elapsed_ns": 100008681
               },
               {
-                "calls": 26415,
-                "elapsed_ns": 100351803
+                "calls": 26613,
+                "elapsed_ns": 99758009
               },
               {
-                "calls": 26415,
-                "elapsed_ns": 99404187
+                "calls": 26613,
+                "elapsed_ns": 99950180
               },
               {
-                "calls": 26415,
-                "elapsed_ns": 100316812
+                "calls": 26613,
+                "elapsed_ns": 100327242
               }
             ],
-            "ns_per_call": 3790.446375165626,
+            "ns_per_call": 3755.6900762785103,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3462,13 +3462,13 @@
             ],
             "selected_path": "srsran-avx2-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 65871,
-              "pack_ns": 885,
-              "unpack_ns": 188,
+              "setup_ns": 63440,
+              "pack_ns": 882,
+              "unpack_ns": 184,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 832052311
+            "elapsed_ns": 830039860
           }
         },
         {
@@ -3476,30 +3476,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114432,
+            "pid": 2134141,
             "windows": [
               {
-                "calls": 180,
-                "elapsed_ns": 100413902
+                "calls": 171,
+                "elapsed_ns": 98234342
               },
               {
-                "calls": 180,
-                "elapsed_ns": 100856835
+                "calls": 171,
+                "elapsed_ns": 97603768
               },
               {
-                "calls": 180,
-                "elapsed_ns": 101912841
+                "calls": 171,
+                "elapsed_ns": 98332342
               },
               {
-                "calls": 180,
-                "elapsed_ns": 101713689
+                "calls": 171,
+                "elapsed_ns": 99059155
               },
               {
-                "calls": 180,
-                "elapsed_ns": 101759340
+                "calls": 171,
+                "elapsed_ns": 98811424
               }
             ],
-            "ns_per_call": 565076.05,
+            "ns_per_call": 575042.9356725146,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3507,40 +3507,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 216239286,
+              "setup_ns": 216076254,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 816816402
+            "elapsed_ns": 804980990
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114428,
+            "pid": 2134129,
             "windows": [
               {
-                "calls": 26318,
-                "elapsed_ns": 100653384
+                "calls": 26335,
+                "elapsed_ns": 99849560
               },
               {
-                "calls": 26318,
-                "elapsed_ns": 100709744
+                "calls": 26335,
+                "elapsed_ns": 100019590
               },
               {
-                "calls": 26318,
-                "elapsed_ns": 100845245
+                "calls": 26335,
+                "elapsed_ns": 100029541
               },
               {
-                "calls": 26318,
-                "elapsed_ns": 100411133
+                "calls": 26335,
+                "elapsed_ns": 99635639
               },
               {
-                "calls": 26318,
-                "elapsed_ns": 100559603
+                "calls": 26335,
+                "elapsed_ns": 99628338
               }
             ],
-            "ns_per_call": 3824.507333383996,
+            "ns_per_call": 3791.5154737041958,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3548,13 +3548,13 @@
             ],
             "selected_path": "srsran-avx2-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 59610,
-              "pack_ns": 869,
-              "unpack_ns": 187,
+              "setup_ns": 60581,
+              "pack_ns": 873,
+              "unpack_ns": 185,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 832127452
+            "elapsed_ns": 827482007
           }
         },
         {
@@ -3562,30 +3562,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114446,
+            "pid": 2134185,
             "windows": [
               {
-                "calls": 178,
-                "elapsed_ns": 100298122
+                "calls": 179,
+                "elapsed_ns": 100467403
               },
               {
-                "calls": 178,
-                "elapsed_ns": 99647989
+                "calls": 179,
+                "elapsed_ns": 100299312
               },
               {
-                "calls": 178,
-                "elapsed_ns": 99643068
+                "calls": 179,
+                "elapsed_ns": 100860015
               },
               {
-                "calls": 178,
-                "elapsed_ns": 99830880
+                "calls": 179,
+                "elapsed_ns": 100842575
               },
               {
-                "calls": 178,
-                "elapsed_ns": 101500108
+                "calls": 179,
+                "elapsed_ns": 100764485
               }
             ],
-            "ns_per_call": 560847.6404494382,
+            "ns_per_call": 562930.0837988827,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3593,40 +3593,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 215507842,
+              "setup_ns": 216238596,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 808275058
+            "elapsed_ns": 813958657
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114450,
+            "pid": 2134198,
             "windows": [
               {
-                "calls": 26381,
-                "elapsed_ns": 100900055
+                "calls": 26121,
+                "elapsed_ns": 99186806
               },
               {
-                "calls": 26381,
-                "elapsed_ns": 100566823
+                "calls": 26121,
+                "elapsed_ns": 99027445
               },
               {
-                "calls": 26381,
-                "elapsed_ns": 100759725
+                "calls": 26121,
+                "elapsed_ns": 98825765
               },
               {
-                "calls": 26381,
-                "elapsed_ns": 100672754
+                "calls": 26121,
+                "elapsed_ns": 98777884
               },
               {
-                "calls": 26381,
-                "elapsed_ns": 101024666
+                "calls": 26121,
+                "elapsed_ns": 99384717
               }
             ],
-            "ns_per_call": 3819.4050642507864,
+            "ns_per_call": 3791.1046667432333,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3634,13 +3634,13 @@
             ],
             "selected_path": "srsran-avx2-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 59170,
-              "pack_ns": 892,
-              "unpack_ns": 187,
+              "setup_ns": 63670,
+              "pack_ns": 878,
+              "unpack_ns": 185,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 834218942
+            "elapsed_ns": 830742744
           }
         },
         {
@@ -3648,30 +3648,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114459,
+            "pid": 2134236,
             "windows": [
               {
-                "calls": 174,
-                "elapsed_ns": 99818540
+                "calls": 175,
+                "elapsed_ns": 99400067
               },
               {
-                "calls": 174,
-                "elapsed_ns": 99474758
+                "calls": 175,
+                "elapsed_ns": 99497888
               },
               {
-                "calls": 174,
-                "elapsed_ns": 99712769
+                "calls": 175,
+                "elapsed_ns": 99657118
               },
               {
-                "calls": 174,
-                "elapsed_ns": 99889520
+                "calls": 175,
+                "elapsed_ns": 99231767
               },
               {
-                "calls": 174,
-                "elapsed_ns": 100042001
+                "calls": 175,
+                "elapsed_ns": 99629449
               }
             ],
-            "ns_per_call": 573669.7701149426,
+            "ns_per_call": 568559.36,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3679,40 +3679,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 218829219,
+              "setup_ns": 220314397,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 814374619
+            "elapsed_ns": 814076497
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114490,
+            "pid": 2134243,
             "windows": [
               {
-                "calls": 26070,
-                "elapsed_ns": 99711319
+                "calls": 26525,
+                "elapsed_ns": 100202881
               },
               {
-                "calls": 26070,
-                "elapsed_ns": 99695939
+                "calls": 26525,
+                "elapsed_ns": 100305352
               },
               {
-                "calls": 26070,
-                "elapsed_ns": 99896411
+                "calls": 26525,
+                "elapsed_ns": 99778640
               },
               {
-                "calls": 26070,
-                "elapsed_ns": 99464047
+                "calls": 26525,
+                "elapsed_ns": 100238071
               },
               {
-                "calls": 26070,
-                "elapsed_ns": 99533158
+                "calls": 26525,
+                "elapsed_ns": 99855080
               }
             ],
-            "ns_per_call": 3824.163367855773,
+            "ns_per_call": 3777.676946277097,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3720,13 +3720,13 @@
             ],
             "selected_path": "srsran-avx2-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 59461,
-              "pack_ns": 872,
+              "setup_ns": 62260,
+              "pack_ns": 869,
               "unpack_ns": 184,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 828600853
+            "elapsed_ns": 828311251
           }
         },
         {
@@ -3734,30 +3734,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114522,
+            "pid": 2134259,
             "windows": [
               {
-                "calls": 179,
-                "elapsed_ns": 100056901
+                "calls": 176,
+                "elapsed_ns": 99552758
               },
               {
-                "calls": 179,
-                "elapsed_ns": 100888135
+                "calls": 176,
+                "elapsed_ns": 99639989
               },
               {
-                "calls": 179,
-                "elapsed_ns": 101116316
+                "calls": 176,
+                "elapsed_ns": 100165061
               },
               {
-                "calls": 179,
-                "elapsed_ns": 101548109
+                "calls": 176,
+                "elapsed_ns": 100251532
               },
               {
-                "calls": 179,
-                "elapsed_ns": 101000466
+                "calls": 176,
+                "elapsed_ns": 105339249
               }
             ],
-            "ns_per_call": 564248.4134078212,
+            "ns_per_call": 569119.6647727273,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3765,40 +3765,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 216844158,
+              "setup_ns": 216305156,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 816163258
+            "elapsed_ns": 817110543
           },
           "candidate": {
             "arm": "srsran-external",
-            "pid": 2114494,
+            "pid": 2134247,
             "windows": [
               {
-                "calls": 26364,
-                "elapsed_ns": 99828309
+                "calls": 26289,
+                "elapsed_ns": 99544339
               },
               {
-                "calls": 26364,
-                "elapsed_ns": 100853115
+                "calls": 26289,
+                "elapsed_ns": 99192516
               },
               {
-                "calls": 26364,
-                "elapsed_ns": 101395388
+                "calls": 26289,
+                "elapsed_ns": 100259512
               },
               {
-                "calls": 26364,
-                "elapsed_ns": 100514863
+                "calls": 26289,
+                "elapsed_ns": 100607313
               },
               {
-                "calls": 26364,
-                "elapsed_ns": 100211962
+                "calls": 26289,
+                "elapsed_ns": 99726519
               }
             ],
-            "ns_per_call": 3812.580147170384,
+            "ns_per_call": 3793.469473924455,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3806,21 +3806,21 @@
             ],
             "selected_path": "srsran-avx2-bg1-n8448-k4224",
             "conversion": {
-              "setup_ns": 60470,
-              "pack_ns": 870,
+              "setup_ns": 70330,
+              "pack_ns": 876,
               "unpack_ns": 188,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 831971751
+            "elapsed_ns": 829966180
           }
         }
       ],
       "claimed": {
         "interval": {
-          "estimate": 149.20702655592464,
-          "lower": 147.28682018935822,
-          "upper": 151.90319072415943,
+          "estimate": 150.03771832167715,
+          "lower": 148.48708576607842,
+          "upper": 152.07049916482472,
           "confidence": 0.975,
           "alpha": 0.025,
           "resamples": 10000,
@@ -3834,7 +3834,7 @@
         }
       },
       "decoder_quality": null,
-      "checkpoint_sha256": "e33a7ef9d5afea4b78df368da80c7c851f289efb9823eeb2ec4c361f73f02d98"
+      "checkpoint_sha256": "739d1e1399ec03ac92116977c74a6d1798eacd1f2de323610256866bdd90358b"
     },
     {
       "cell_id": "nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct",
@@ -3854,30 +3854,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114526,
+            "pid": 2134285,
             "windows": [
               {
-                "calls": 778,
-                "elapsed_ns": 99877551
+                "calls": 776,
+                "elapsed_ns": 99576748
               },
               {
-                "calls": 778,
-                "elapsed_ns": 100068240
+                "calls": 776,
+                "elapsed_ns": 99497228
               },
               {
-                "calls": 778,
-                "elapsed_ns": 99924580
+                "calls": 776,
+                "elapsed_ns": 99552049
               },
               {
-                "calls": 778,
-                "elapsed_ns": 99899971
+                "calls": 776,
+                "elapsed_ns": 99399897
               },
               {
-                "calls": 778,
-                "elapsed_ns": 100124001
+                "calls": 776,
+                "elapsed_ns": 99237226
               }
             ],
-            "ns_per_call": 128437.76349614396,
+            "ns_per_call": 128218.07731958762,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3885,40 +3885,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 40806392,
+              "setup_ns": 42860223,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 629367105
+            "elapsed_ns": 627117004
           },
           "candidate": {
             "arm": "aff3ct-external",
-            "pid": 2114530,
+            "pid": 2134289,
             "windows": [
               {
-                "calls": 1521,
-                "elapsed_ns": 99921830
+                "calls": 1535,
+                "elapsed_ns": 99819200
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 99826370
+                "calls": 1535,
+                "elapsed_ns": 100418562
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 100409192
+                "calls": 1535,
+                "elapsed_ns": 99782579
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 99462539
+                "calls": 1535,
+                "elapsed_ns": 99697509
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 98457752
+                "calls": 1535,
+                "elapsed_ns": 99776690
               }
             ],
-            "ns_per_call": 65632.0644312952,
+            "ns_per_call": 65004.937459283385,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3926,13 +3926,13 @@
             ],
             "selected_path": "aff3ct-qc-fast-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 5296228,
-              "pack_ns": 2509,
-              "unpack_ns": 1430,
+              "setup_ns": 5242057,
+              "pack_ns": 2526,
+              "unpack_ns": 1417,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 679694528
+            "elapsed_ns": 643409269
           }
         },
         {
@@ -3940,30 +3940,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114545,
+            "pid": 2134300,
             "windows": [
               {
-                "calls": 768,
-                "elapsed_ns": 98734284
+                "calls": 781,
+                "elapsed_ns": 100241332
               },
               {
-                "calls": 768,
-                "elapsed_ns": 98967945
+                "calls": 781,
+                "elapsed_ns": 100612793
               },
               {
-                "calls": 768,
-                "elapsed_ns": 98374382
+                "calls": 781,
+                "elapsed_ns": 100869136
               },
               {
-                "calls": 768,
-                "elapsed_ns": 98463413
+                "calls": 781,
+                "elapsed_ns": 100266621
               },
               {
-                "calls": 768,
-                "elapsed_ns": 98585143
+                "calls": 781,
+                "elapsed_ns": 100414343
               }
             ],
-            "ns_per_call": 128366.07161458333,
+            "ns_per_call": 128571.5019206146,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3971,40 +3971,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 43467056,
+              "setup_ns": 43455876,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 624453350
+            "elapsed_ns": 634150291
           },
           "candidate": {
             "arm": "aff3ct-external",
-            "pid": 2114541,
+            "pid": 2134296,
             "windows": [
               {
-                "calls": 1521,
-                "elapsed_ns": 98614623
+                "calls": 1539,
+                "elapsed_ns": 99707679
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 99005966
+                "calls": 1539,
+                "elapsed_ns": 99294777
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 98464042
+                "calls": 1539,
+                "elapsed_ns": 99641799
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 99406257
+                "calls": 1539,
+                "elapsed_ns": 99271976
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 98795325
+                "calls": 1539,
+                "elapsed_ns": 99963460
               }
             ],
-            "ns_per_call": 64954.19132149901,
+            "ns_per_call": 64744.508771929824,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4012,13 +4012,13 @@
             ],
             "selected_path": "aff3ct-qc-fast-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 5291017,
-              "pack_ns": 2515,
-              "unpack_ns": 1402,
+              "setup_ns": 5233197,
+              "pack_ns": 2504,
+              "unpack_ns": 1413,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 637959332
+            "elapsed_ns": 640931046
           }
         },
         {
@@ -4026,30 +4026,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114584,
+            "pid": 2134352,
             "windows": [
               {
-                "calls": 779,
-                "elapsed_ns": 99952501
+                "calls": 777,
+                "elapsed_ns": 99486167
               },
               {
-                "calls": 779,
-                "elapsed_ns": 100047851
+                "calls": 777,
+                "elapsed_ns": 99522628
               },
               {
-                "calls": 779,
-                "elapsed_ns": 100021200
+                "calls": 777,
+                "elapsed_ns": 99503528
               },
               {
-                "calls": 779,
-                "elapsed_ns": 99986781
+                "calls": 777,
+                "elapsed_ns": 99629679
               },
               {
-                "calls": 779,
-                "elapsed_ns": 100845935
+                "calls": 777,
+                "elapsed_ns": 99648958
               }
             ],
-            "ns_per_call": 128396.919127086,
+            "ns_per_call": 128085.75032175033,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4057,40 +4057,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 43771478,
+              "setup_ns": 42515092,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 633052126
+            "elapsed_ns": 632075960
           },
           "candidate": {
             "arm": "aff3ct-external",
-            "pid": 2114557,
+            "pid": 2134339,
             "windows": [
               {
-                "calls": 1521,
-                "elapsed_ns": 100042241
+                "calls": 1537,
+                "elapsed_ns": 100161671
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 99608519
+                "calls": 1537,
+                "elapsed_ns": 100120491
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 98978875
+                "calls": 1537,
+                "elapsed_ns": 100789745
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 100190182
+                "calls": 1537,
+                "elapsed_ns": 99793619
               },
               {
-                "calls": 1521,
-                "elapsed_ns": 100136941
+                "calls": 1537,
+                "elapsed_ns": 99892630
               }
             ],
-            "ns_per_call": 65773.99145299145,
+            "ns_per_call": 65140.202342225115,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4098,13 +4098,13 @@
             ],
             "selected_path": "aff3ct-qc-fast-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 5353528,
-              "pack_ns": 2529,
-              "unpack_ns": 1410,
+              "setup_ns": 5284598,
+              "pack_ns": 2509,
+              "unpack_ns": 1408,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 644657955
+            "elapsed_ns": 644364574
           }
         },
         {
@@ -4112,30 +4112,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114588,
+            "pid": 2134357,
             "windows": [
               {
-                "calls": 776,
-                "elapsed_ns": 99884010
+                "calls": 756,
+                "elapsed_ns": 97769129
               },
               {
-                "calls": 776,
-                "elapsed_ns": 100655203
+                "calls": 756,
+                "elapsed_ns": 96863675
               },
               {
-                "calls": 776,
-                "elapsed_ns": 99973361
+                "calls": 756,
+                "elapsed_ns": 96931654
               },
               {
-                "calls": 776,
-                "elapsed_ns": 100577963
+                "calls": 756,
+                "elapsed_ns": 96927404
               },
               {
-                "calls": 776,
-                "elapsed_ns": 99612159
+                "calls": 756,
+                "elapsed_ns": 96763854
               }
             ],
-            "ns_per_call": 128831.65077319587,
+            "ns_per_call": 128210.85185185185,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4143,40 +4143,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 43025233,
+              "setup_ns": 42344471,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 633007355
+            "elapsed_ns": 617073872
           },
           "candidate": {
             "arm": "aff3ct-external",
-            "pid": 2114592,
+            "pid": 2134361,
             "windows": [
               {
-                "calls": 1524,
-                "elapsed_ns": 99508848
+                "calls": 1529,
+                "elapsed_ns": 99193856
               },
               {
-                "calls": 1524,
-                "elapsed_ns": 100292282
+                "calls": 1529,
+                "elapsed_ns": 98607093
               },
               {
-                "calls": 1524,
-                "elapsed_ns": 100406723
+                "calls": 1529,
+                "elapsed_ns": 99007846
               },
               {
-                "calls": 1524,
-                "elapsed_ns": 101420558
+                "calls": 1529,
+                "elapsed_ns": 100385162
               },
               {
-                "calls": 1524,
-                "elapsed_ns": 100327002
+                "calls": 1529,
+                "elapsed_ns": 99675469
               }
             ],
-            "ns_per_call": 65831.36614173229,
+            "ns_per_call": 64874.9875735775,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4184,13 +4184,13 @@
             ],
             "selected_path": "aff3ct-qc-fast-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 5741910,
-              "pack_ns": 2539,
-              "unpack_ns": 1420,
+              "setup_ns": 5295017,
+              "pack_ns": 2517,
+              "unpack_ns": 1415,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 644853307
+            "elapsed_ns": 640695695
           }
         },
         {
@@ -4198,30 +4198,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114725,
+            "pid": 2134404,
             "windows": [
               {
-                "calls": 775,
-                "elapsed_ns": 99465277
+                "calls": 781,
+                "elapsed_ns": 99682509
               },
               {
-                "calls": 775,
-                "elapsed_ns": 99870890
+                "calls": 781,
+                "elapsed_ns": 100504723
               },
               {
-                "calls": 775,
-                "elapsed_ns": 99326897
+                "calls": 781,
+                "elapsed_ns": 100202682
               },
               {
-                "calls": 775,
-                "elapsed_ns": 99990091
+                "calls": 781,
+                "elapsed_ns": 100381212
               },
               {
-                "calls": 775,
-                "elapsed_ns": 99398047
+                "calls": 781,
+                "elapsed_ns": 100021010
               }
             ],
-            "ns_per_call": 128342.29290322581,
+            "ns_per_call": 128300.48911651729,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4229,40 +4229,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 42512162,
+              "setup_ns": 49298707,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 630364412
+            "elapsed_ns": 641562020
           },
           "candidate": {
             "arm": "aff3ct-external",
-            "pid": 2114695,
+            "pid": 2134377,
             "windows": [
               {
-                "calls": 1520,
-                "elapsed_ns": 99421187
+                "calls": 1527,
+                "elapsed_ns": 99508528
               },
               {
-                "calls": 1520,
-                "elapsed_ns": 99426698
+                "calls": 1527,
+                "elapsed_ns": 99525098
               },
               {
-                "calls": 1520,
-                "elapsed_ns": 98541833
+                "calls": 1527,
+                "elapsed_ns": 98913104
               },
               {
-                "calls": 1520,
-                "elapsed_ns": 98656903
+                "calls": 1527,
+                "elapsed_ns": 100171752
               },
               {
-                "calls": 1520,
-                "elapsed_ns": 98542943
+                "calls": 1527,
+                "elapsed_ns": 99601268
               }
             ],
-            "ns_per_call": 64905.85723684211,
+            "ns_per_call": 65176.881466928615,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4270,13 +4270,13 @@
             ],
             "selected_path": "aff3ct-qc-fast-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 5242558,
-              "pack_ns": 2645,
-              "unpack_ns": 1406,
+              "setup_ns": 5287437,
+              "pack_ns": 2512,
+              "unpack_ns": 1412,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 639280358
+            "elapsed_ns": 846121753
           }
         },
         {
@@ -4284,30 +4284,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-native",
-            "pid": 2114730,
+            "pid": 2134408,
             "windows": [
               {
-                "calls": 778,
-                "elapsed_ns": 99946001
+                "calls": 779,
+                "elapsed_ns": 99868279
               },
               {
-                "calls": 778,
-                "elapsed_ns": 100425353
+                "calls": 779,
+                "elapsed_ns": 100508933
               },
               {
-                "calls": 778,
-                "elapsed_ns": 100563723
+                "calls": 779,
+                "elapsed_ns": 100188372
               },
               {
-                "calls": 778,
-                "elapsed_ns": 100025401
+                "calls": 779,
+                "elapsed_ns": 99796999
               },
               {
-                "calls": 778,
-                "elapsed_ns": 100187621
+                "calls": 779,
+                "elapsed_ns": 99834940
               }
             ],
-            "ns_per_call": 128775.86246786632,
+            "ns_per_call": 128200.61489088576,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4315,40 +4315,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 42685842,
+              "setup_ns": 49056096,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 634022190
+            "elapsed_ns": 637168737
           },
           "candidate": {
             "arm": "aff3ct-external",
-            "pid": 2114741,
+            "pid": 2134416,
             "windows": [
               {
-                "calls": 1537,
-                "elapsed_ns": 100430883
+                "calls": 1530,
+                "elapsed_ns": 99773189
               },
               {
-                "calls": 1537,
-                "elapsed_ns": 100595603
+                "calls": 1530,
+                "elapsed_ns": 99946270
               },
               {
-                "calls": 1537,
-                "elapsed_ns": 99771040
+                "calls": 1530,
+                "elapsed_ns": 99712309
               },
               {
-                "calls": 1537,
-                "elapsed_ns": 99626869
+                "calls": 1530,
+                "elapsed_ns": 99464688
               },
               {
-                "calls": 1537,
-                "elapsed_ns": 100338792
+                "calls": 1530,
+                "elapsed_ns": 99227086
               }
             ],
-            "ns_per_call": 65282.23292127521,
+            "ns_per_call": 65171.44379084968,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4356,21 +4356,21 @@
             ],
             "selected_path": "aff3ct-qc-fast-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 5295157,
-              "pack_ns": 2531,
-              "unpack_ns": 1421,
+              "setup_ns": 5321318,
+              "pack_ns": 2494,
+              "unpack_ns": 1419,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 645024718
+            "elapsed_ns": 643364358
           }
         }
       ],
       "claimed": {
         "interval": {
-          "estimate": 1.9618535776236758,
-          "lower": 1.9520925565061844,
-          "upper": 1.9768078586731772,
+          "estimate": 1.9703304292617714,
+          "lower": 1.9671286599436304,
+          "upper": 1.9817388454621563,
           "confidence": 0.975,
           "alpha": 0.025,
           "resamples": 10000,
@@ -4384,7 +4384,7 @@
         }
       },
       "decoder_quality": null,
-      "checkpoint_sha256": "436f9289d07034c2bd09d8409cc07d9fa868b28714b138ee9d4a7ac1687ad0bd"
+      "checkpoint_sha256": "a7331bae59fc6cf3ecf192875a2266cc5e0b985668d6bd5395e88df703aa5f17"
     },
     {
       "cell_id": "nr-enc-bg1-n2560-k2048-control-portable-vs-native",
@@ -4404,30 +4404,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-portable",
-            "pid": 2114792,
+            "pid": 2134425,
             "windows": [
               {
-                "calls": 877,
-                "elapsed_ns": 101048646
+                "calls": 883,
+                "elapsed_ns": 99872010
               },
               {
-                "calls": 877,
-                "elapsed_ns": 106664825
+                "calls": 883,
+                "elapsed_ns": 99682719
               },
               {
-                "calls": 877,
-                "elapsed_ns": 110757267
+                "calls": 883,
+                "elapsed_ns": 100486933
               },
               {
-                "calls": 877,
-                "elapsed_ns": 112285544
+                "calls": 883,
+                "elapsed_ns": 113803452
               },
               {
-                "calls": 877,
-                "elapsed_ns": 113289330
+                "calls": 883,
+                "elapsed_ns": 114670447
               }
             ],
-            "ns_per_call": 126291.06841505131,
+            "ns_per_call": 113801.73612684032,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4435,40 +4435,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 39623266,
+              "setup_ns": 45369596,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 664189568
+            "elapsed_ns": 655387541
           },
           "candidate": {
             "arm": "gf2-native",
-            "pid": 2114788,
+            "pid": 2134421,
             "windows": [
               {
-                "calls": 775,
-                "elapsed_ns": 99884970
+                "calls": 780,
+                "elapsed_ns": 99731019
               },
               {
-                "calls": 775,
-                "elapsed_ns": 99996921
+                "calls": 780,
+                "elapsed_ns": 99895280
               },
               {
-                "calls": 775,
-                "elapsed_ns": 100511563
+                "calls": 780,
+                "elapsed_ns": 100049631
               },
               {
-                "calls": 775,
-                "elapsed_ns": 98604443
+                "calls": 780,
+                "elapsed_ns": 99831340
               },
               {
-                "calls": 775,
-                "elapsed_ns": 99520079
+                "calls": 780,
+                "elapsed_ns": 99738419
               }
             ],
-            "ns_per_call": 128883.83225806452,
+            "ns_per_call": 127988.89743589744,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4476,13 +4476,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 47513358,
+              "setup_ns": 42394481,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 635488117
+            "elapsed_ns": 630495942
           }
         },
         {
@@ -4490,30 +4490,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-portable",
-            "pid": 2114803,
+            "pid": 2134431,
             "windows": [
               {
-                "calls": 883,
-                "elapsed_ns": 100054422
+                "calls": 876,
+                "elapsed_ns": 99347127
               },
               {
-                "calls": 883,
-                "elapsed_ns": 100059550
+                "calls": 876,
+                "elapsed_ns": 99161166
               },
               {
-                "calls": 883,
-                "elapsed_ns": 101973611
+                "calls": 876,
+                "elapsed_ns": 99396738
               },
               {
-                "calls": 883,
-                "elapsed_ns": 106434834
+                "calls": 876,
+                "elapsed_ns": 99331327
               },
               {
-                "calls": 883,
-                "elapsed_ns": 106097022
+                "calls": 876,
+                "elapsed_ns": 99432557
               }
             ],
-            "ns_per_call": 115485.40317100793,
+            "ns_per_call": 113409.96232876713,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4521,40 +4521,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 40432071,
+              "setup_ns": 40290380,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 636055691
+            "elapsed_ns": 617762155
           },
           "candidate": {
             "arm": "gf2-native",
-            "pid": 2114829,
+            "pid": 2134455,
             "windows": [
               {
-                "calls": 761,
-                "elapsed_ns": 98651304
+                "calls": 658,
+                "elapsed_ns": 104669835
               },
               {
-                "calls": 761,
-                "elapsed_ns": 98655544
+                "calls": 658,
+                "elapsed_ns": 104385424
               },
               {
-                "calls": 761,
-                "elapsed_ns": 97984680
+                "calls": 658,
+                "elapsed_ns": 104298612
               },
               {
-                "calls": 761,
-                "elapsed_ns": 98162311
+                "calls": 658,
+                "elapsed_ns": 103869241
               },
               {
-                "calls": 761,
-                "elapsed_ns": 99127346
+                "calls": 658,
+                "elapsed_ns": 104046862
               }
             ],
-            "ns_per_call": 129633.77660972405,
+            "ns_per_call": 158508.52887537994,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4562,13 +4562,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 42019869,
+              "setup_ns": 48050560,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 624610042
+            "elapsed_ns": 663831465
           }
         },
         {
@@ -4576,30 +4576,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-portable",
-            "pid": 2114860,
+            "pid": 2134486,
             "windows": [
               {
-                "calls": 857,
-                "elapsed_ns": 97336696
+                "calls": 880,
+                "elapsed_ns": 100180431
               },
               {
-                "calls": 857,
-                "elapsed_ns": 96905784
+                "calls": 880,
+                "elapsed_ns": 99799110
               },
               {
-                "calls": 857,
-                "elapsed_ns": 97456048
+                "calls": 880,
+                "elapsed_ns": 100053860
               },
               {
-                "calls": 857,
-                "elapsed_ns": 98151251
+                "calls": 880,
+                "elapsed_ns": 100260532
               },
               {
-                "calls": 857,
-                "elapsed_ns": 108325534
+                "calls": 880,
+                "elapsed_ns": 100513373
               }
             ],
-            "ns_per_call": 113717.6756126021,
+            "ns_per_call": 113841.39886363636,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4607,40 +4607,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 39855708,
+              "setup_ns": 40250970,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 620006398
+            "elapsed_ns": 621947167
           },
           "candidate": {
             "arm": "gf2-native",
-            "pid": 2114840,
+            "pid": 2134482,
             "windows": [
               {
-                "calls": 762,
-                "elapsed_ns": 97962780
+                "calls": 782,
+                "elapsed_ns": 100299412
               },
               {
-                "calls": 762,
-                "elapsed_ns": 98194051
+                "calls": 782,
+                "elapsed_ns": 99719529
               },
               {
-                "calls": 762,
-                "elapsed_ns": 97494278
+                "calls": 782,
+                "elapsed_ns": 100220552
               },
               {
-                "calls": 762,
-                "elapsed_ns": 97755378
+                "calls": 782,
+                "elapsed_ns": 104608214
               },
               {
-                "calls": 762,
-                "elapsed_ns": 98347292
+                "calls": 782,
+                "elapsed_ns": 104664515
               }
             ],
-            "ns_per_call": 128560.07874015748,
+            "ns_per_call": 128260.11764705883,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4648,13 +4648,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 42951663,
+              "setup_ns": 42679872,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 623681016
+            "elapsed_ns": 640730335
           }
         },
         {
@@ -4662,30 +4662,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-portable",
-            "pid": 2114865,
+            "pid": 2134493,
             "windows": [
               {
-                "calls": 877,
-                "elapsed_ns": 99947020
+                "calls": 878,
+                "elapsed_ns": 104380753
               },
               {
-                "calls": 877,
-                "elapsed_ns": 101381828
+                "calls": 878,
+                "elapsed_ns": 114098924
               },
               {
-                "calls": 877,
-                "elapsed_ns": 106323213
+                "calls": 878,
+                "elapsed_ns": 114998479
               },
               {
-                "calls": 877,
-                "elapsed_ns": 111696282
+                "calls": 878,
+                "elapsed_ns": 115297130
               },
               {
-                "calls": 877,
-                "elapsed_ns": 121196171
+                "calls": 878,
+                "elapsed_ns": 114582526
               }
             ],
-            "ns_per_call": 121235.13454960092,
+            "ns_per_call": 130504.01594533029,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4693,40 +4693,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 40819643,
+              "setup_ns": 39741887,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 663046462
+            "elapsed_ns": 683912350
           },
           "candidate": {
             "arm": "gf2-native",
-            "pid": 2114872,
+            "pid": 2134518,
             "windows": [
               {
-                "calls": 781,
-                "elapsed_ns": 100565134
+                "calls": 777,
+                "elapsed_ns": 99695499
               },
               {
-                "calls": 781,
-                "elapsed_ns": 101313557
+                "calls": 777,
+                "elapsed_ns": 99914810
               },
               {
-                "calls": 781,
-                "elapsed_ns": 99439128
+                "calls": 777,
+                "elapsed_ns": 100219522
               },
               {
-                "calls": 781,
-                "elapsed_ns": 99209066
+                "calls": 777,
+                "elapsed_ns": 100660094
               },
               {
-                "calls": 781,
-                "elapsed_ns": 99658489
+                "calls": 777,
+                "elapsed_ns": 100210021
               }
             ],
-            "ns_per_call": 127603.69910371318,
+            "ns_per_call": 128970.42599742599,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4734,13 +4734,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 42759852,
+              "setup_ns": 43299795,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 632351181
+            "elapsed_ns": 632485342
           }
         },
         {
@@ -4748,30 +4748,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "gf2-portable",
-            "pid": 2114892,
+            "pid": 2134539,
             "windows": [
               {
-                "calls": 879,
-                "elapsed_ns": 99676119
+                "calls": 873,
+                "elapsed_ns": 104944796
               },
               {
-                "calls": 879,
-                "elapsed_ns": 100259712
+                "calls": 873,
+                "elapsed_ns": 116481006
               },
               {
-                "calls": 879,
-                "elapsed_ns": 101485568
+                "calls": 873,
+                "elapsed_ns": 111811832
               },
               {
-                "calls": 879,
-                "elapsed_ns": 111616351
+                "calls": 873,
+                "elapsed_ns": 110729317
               },
               {
-                "calls": 879,
-                "elapsed_ns": 111425710
+                "calls": 873,
+                "elapsed_ns": 110913627
               }
             ],
-            "ns_per_call": 115455.70875995449,
+            "ns_per_call": 127048.82817869415,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4779,40 +4779,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 39823597,
+              "setup_ns": 40621652,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 646139594
+            "elapsed_ns": 677155415
           },
           "candidate": {
             "arm": "gf2-native",
-            "pid": 2114887,
+            "pid": 2134522,
             "windows": [
               {
-                "calls": 775,
-                "elapsed_ns": 99483938
+                "calls": 779,
+                "elapsed_ns": 99889061
               },
               {
-                "calls": 775,
-                "elapsed_ns": 98819114
+                "calls": 779,
+                "elapsed_ns": 100332962
               },
               {
-                "calls": 775,
-                "elapsed_ns": 98669034
+                "calls": 779,
+                "elapsed_ns": 100897815
               },
               {
-                "calls": 775,
-                "elapsed_ns": 99517618
+                "calls": 779,
+                "elapsed_ns": 100460733
               },
               {
-                "calls": 775,
-                "elapsed_ns": 99719659
+                "calls": 779,
+                "elapsed_ns": 100108431
               }
             ],
-            "ns_per_call": 128366.37161290323,
+            "ns_per_call": 128797.1270860077,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4820,13 +4820,13 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 43507557,
+              "setup_ns": 42353560,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 629331236
+            "elapsed_ns": 635216496
           }
         },
         {
@@ -4834,30 +4834,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "gf2-portable",
-            "pid": 2114896,
+            "pid": 2134543,
             "windows": [
               {
-                "calls": 885,
-                "elapsed_ns": 99954001
+                "calls": 884,
+                "elapsed_ns": 100268802
               },
               {
-                "calls": 885,
-                "elapsed_ns": 100127421
+                "calls": 884,
+                "elapsed_ns": 100580444
               },
               {
-                "calls": 885,
-                "elapsed_ns": 99930750
+                "calls": 884,
+                "elapsed_ns": 106472104
               },
               {
-                "calls": 885,
-                "elapsed_ns": 100048981
+                "calls": 884,
+                "elapsed_ns": 112165274
               },
               {
-                "calls": 885,
-                "elapsed_ns": 99703079
+                "calls": 884,
+                "elapsed_ns": 113137019
               }
             ],
-            "ns_per_call": 112942.37401129944,
+            "ns_per_call": 120443.55656108598,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4865,40 +4865,40 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 39339815,
+              "setup_ns": 40310080,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 619258933
+            "elapsed_ns": 654270775
           },
           "candidate": {
             "arm": "gf2-native",
-            "pid": 2114900,
+            "pid": 2134547,
             "windows": [
               {
-                "calls": 776,
-                "elapsed_ns": 99119446
+                "calls": 780,
+                "elapsed_ns": 100351992
               },
               {
-                "calls": 776,
-                "elapsed_ns": 99433708
+                "calls": 780,
+                "elapsed_ns": 100859245
               },
               {
-                "calls": 776,
-                "elapsed_ns": 98921274
+                "calls": 780,
+                "elapsed_ns": 100746055
               },
               {
-                "calls": 776,
-                "elapsed_ns": 99237517
+                "calls": 780,
+                "elapsed_ns": 100234561
               },
               {
-                "calls": 776,
-                "elapsed_ns": 98782914
+                "calls": 780,
+                "elapsed_ns": 100349703
               }
             ],
-            "ns_per_call": 127731.24484536082,
+            "ns_per_call": 128656.4,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4906,21 +4906,21 @@
             ],
             "selected_path": "gf2-encode-rate-matched-bg1-n2560-k2048",
             "conversion": {
-              "setup_ns": 43235945,
+              "setup_ns": 43204464,
               "pack_ns": 0,
               "unpack_ns": 0,
               "batch_fill_ns": 0,
               "dispatch_ns": 0
             },
-            "elapsed_ns": 628304881
+            "elapsed_ns": 634137691
           }
         }
       ],
       "claimed": {
         "interval": {
-          "estimate": 0.8988607892009951,
-          "lower": 0.8843844046412696,
-          "upper": 0.964581683035288,
+          "estimate": 0.9100087230362728,
+          "lower": 0.7903594145043992,
+          "upper": 0.9991670442736453,
           "confidence": 0.975,
           "alpha": 0.025,
           "resamples": 10000,
@@ -4934,7 +4934,7 @@
         }
       },
       "decoder_quality": null,
-      "checkpoint_sha256": "ace265f807406285f32f4c87e32523698202e03df4a6ae4fd0504150acbb10c2"
+      "checkpoint_sha256": "dca55fe79ac640d4d153199fbc68bf1f64d29e9fea0ac5e6076c65ebf1d414c5"
     }
   ]
 }

@@ -8,7 +8,9 @@
 # Project tree that `dev/active/c077a88b/survey/fetch-build.sh` stages. Both
 # default to that script's staging location under the primary checkout, which a
 # linked worktree reaches through the common git directory, so an invocation
-# from any worktree needs no path of its own.
+# from any worktree needs no path of its own. GF2_12FDEB5B_EXT names this
+# survey's own build directory, `.agents/ext/12fdeb5b` inside the invoking
+# checkout, which is git-ignored and rebuildable.
 # `dev/active/12fdeb5b/survey/nr-encode-build.sh` verifies their commits and
 # the AFF3CT static-library digest, builds the four arm executables, records
 # the source and build evidence, and runs the bit-exact equivalence gate. This
@@ -31,9 +33,11 @@ set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
 
-# External comparator trees and builds live under the primary checkout, which a
-# linked worktree reaches through the common git directory, so every worktree of
-# this repository shares one staged tree and one staged build.
+# The comparator source trees `dev/active/c077a88b/survey/fetch-build.sh` clones
+# are shared: they live under the primary checkout, which a linked worktree
+# reaches through the common git directory. This survey's own build output is
+# not shared; it stays inside the invoking checkout, so two worktrees never
+# write the same target directory.
 primary=$(dirname "$(realpath "$(git rev-parse --git-common-dir)")")
 : "${GF2_AFF3CT_ROOT:=$primary/.agents/ext/c077a88b/aff3ct}"
 : "${GF2_SRSRAN_ROOT:=$primary/.agents/ext/c077a88b/srsran}"
@@ -86,7 +90,7 @@ for tree in "$GF2_AFF3CT_ROOT" "$GF2_SRSRAN_ROOT"; do
 done
 
 # Builds, evidence and the equivalence gate finish before any timed work.
-EXT=${GF2_12FDEB5B_EXT:-$primary/.agents/ext/12fdeb5b}
+EXT=${GF2_12FDEB5B_EXT:-$repo/.agents/ext/12fdeb5b}
 dev/active/12fdeb5b/survey/nr-encode-build.sh "$GF2_AFF3CT_ROOT" "$GF2_SRSRAN_ROOT" "$EXT"
 EXT=$(realpath "$EXT")
 AFF3CT_CONF=$(realpath "$GF2_AFF3CT_ROOT/conf")

@@ -111,8 +111,9 @@ and never timed.
   matcher need; none of the layers that require MbedTLS is on that closure.
   The shim reproduces `ldpc_encoder_factory_sw("auto")`
   (`srsran-encoder-backend-auto`) and reports the backend it selected.
-  The linked binary stays under `.agents/ext/12fdeb5b/` and is not committed
-  or distributed; the repository commits only the survey's own shim source.
+  The linked binary stays in the git-ignored `.agents/ext/12fdeb5b/` of the
+  checkout that builds it and is not committed or distributed; the repository
+  commits only the survey's own shim source.
 
 ## Arms
 
