@@ -11543,3 +11543,5 @@
 {"id":"54f7764a-ed1a-4d30-8c75-e3592650aae5","issue_id":"39cbde20-91a6-423a-b3c0-ac9e01939cc7","priority":"low","timestamp":"2026-09-11T18:16:54.648615470Z","title":"Treat negative-zero LLRs consistently in the min-sum sign product","type":"issue_created"}
 {"from":"ready","id":"168a68fb-67ba-4246-972f-b74e6694d7e8","issue_id":"39cbde20-91a6-423a-b3c0-ac9e01939cc7","timestamp":"2026-09-11T18:17:20.198466826Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"de3f2078-294f-4a78-923a-810a431fccf7","issue_id":"39cbde20-91a6-423a-b3c0-ac9e01939cc7","timestamp":"2026-09-11T18:17:20.198466826Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"00d66047-b612-4865-8bf3-6cd8458618fe","issue_id":"6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2","timestamp":"2026-09-12T06:14:31.771728046Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"ebdc9739-a060-4199-a6de-230c7e7a9a77","issue_id":"6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2","timestamp":"2026-09-12T06:14:31.771728046Z","type":"issue_claimed"}
