@@ -1,0 +1,100 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "logical-pilot-6fb89a3c-20260908t103412z",
+  "issue": "6fb89a3c",
+  "label": "pilot",
+  "campaign_seed": 20260908,
+  "addendum": "dev/active/6fb89a3c/addendum-logical-buffer-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2-logical": {
+      "build": "conservative-portable",
+      "description": "gf2 current pinned xor_inplace with aligned fresh-output arrangement",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_logical_xor_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "isal-base": {
+      "build": "external",
+      "description": "ISA-L v2.32.1 xor_gen_base scalar; public multi-binary xor_gen unavailable without NASM",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/dev/active/6fb89a3c/survey/isal_xor_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "logical-xor-7w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 7,
+        "alignment_bytes": 32,
+        "seed": 20260907100
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "logical-xor-8w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 8,
+        "alignment_bytes": 32,
+        "seed": 20260907101
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "logical-xor-9w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 9,
+        "alignment_bytes": 32,
+        "seed": 20260907102
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "logical-xor-63w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 63,
+        "alignment_bytes": 32,
+        "seed": 20260907103
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "logical-xor-64w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 64,
+        "alignment_bytes": 32,
+        "seed": 20260907104
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "logical-xor-65w-vs-isal-base",
+      "baseline_arm": "gf2-logical",
+      "candidate_arm": "isal-base",
+      "case": {
+        "words": 65,
+        "alignment_bytes": 32,
+        "seed": 20260907105
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 2
+}

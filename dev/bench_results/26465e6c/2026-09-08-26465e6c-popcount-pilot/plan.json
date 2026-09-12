@@ -1,0 +1,97 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "popcount-pilot-26465e6c-20260908",
+  "issue": "26465e6c",
+  "label": "pilot",
+  "campaign_seed": 20260908,
+  "addendum": "dev/active/26465e6c/addendum-popcount-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "baseline": {
+      "build": "native",
+      "description": "gf2 production popcount dispatcher, kernels::ops::popcount",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "production-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "compiler-count-ones": {
+      "build": "conservative-portable",
+      "description": "internal control: portable u64::count_ones loop, no target feature",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "compiler-count-ones"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "mula-avx2-harleyseal": {
+      "build": "external",
+      "description": "Mula AVX2 Harley-Seal carry-save reference",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/mula-avx2-harleyseal-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "nibble-lut": {
+      "build": "native",
+      "description": "gf2 AVX2 nibble-LUT kernel called directly, bypassing the size threshold",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "nibble-lut"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-pilot-small-vs-nibble-lut",
+      "baseline_arm": "baseline",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "words": 4,
+        "seed": 101,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "popcount-pilot-alignment-vs-compiler-count-ones",
+      "baseline_arm": "baseline",
+      "candidate_arm": "compiler-count-ones",
+      "case": {
+        "op": "popcount",
+        "words": 256,
+        "seed": 103,
+        "pattern": "random",
+        "word_offset": 3
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "popcount-pilot-streaming-vs-mula",
+      "baseline_arm": "baseline",
+      "candidate_arm": "mula-avx2-harleyseal",
+      "case": {
+        "op": "popcount",
+        "words": 524288,
+        "seed": 107,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": null
+}

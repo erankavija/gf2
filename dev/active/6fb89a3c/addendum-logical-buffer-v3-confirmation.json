@@ -1,0 +1,93 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {"id": "zen3-benchmark-protocol", "version": 3},
+  "family": {
+    "id": "logical-buffer-vs-isal",
+    "issue": "6fb89a3c",
+    "purpose": "consumer-family",
+    "description": "Confirmatory comparison of the logical-buffer family: gf2's dispatched xor_inplace route against ISA-L's operation-equivalent xor_gen_base (the portable C reference of xor_gen, compiled -O3 -march=native; the NASM-built multi-binary xor_gen dispatcher is unavailable on this host and is not substituted). Every call produces a fresh 32-byte-aligned destination from `sources` aligned inputs, the arrangement raid.h documents for xor_gen (vects = sources + 1, destination last, 32-byte alignment): gf2 pays a destination copy plus one in-place XOR per remaining source inside the timed call and ISA-L pays its pointer-array formation inside the timed call; each arm also reports its arrangement alone, averaged over one million repetitions outside the timed windows (gf2: the destination copy as pack_ns; ISA-L: the pointer-array formation as dispatch_ns). Word counts 7, 8 and 9 straddle gf2's scalar/SIMD dispatch threshold of eight words; 63, 64 and 65 straddle the 64-word boundary; 16 and 32 fill the range; the parity cell uses three sources (vects 4). Source/destination aliasing (gf2's accumulate form) and alignments other than 32 bytes are outside ISA-L's documented contract and are recorded unavailable. The baseline arm is always gf2 and the candidate is always ISA-L, so a speedup above 1 means ISA-L is ahead. All nine pilot cells enter confirmation: the question covers the dispatch threshold, the 64-word boundary, the fill sizes and the parity arity. With m = 9 reservations on the family's first confirmatory attempt the corrected per-comparison alpha is 0.025/9 and each bootstrap tail expects 13.9 of 10000 draws, below the twenty P-20 requires, so every cell is reported not-confirmatory; the question is run whole rather than trimmed to fit that bound, and its intervals are fresh-sample evidence without a confirmatory decision. Workload seeds expand through SplitMix64 [Steele2014], implemented as tuning_campaign_support::abtest::SplitMix64 (dev/tools/tuning-campaign-support/src/abtest.rs) in the gf2 arms and as splitmix64_next (dev/active/6fb89a3c/survey/harness_common.h) in the C arms; both are pinned by the producing snapshot. Buffers draw one word per SplitMix64 output; source s uses seed + s. Between the v3-r1 pilot and this confirmation both arms were rebuilt: the gf2 arm's source was reformatted by rustfmt (its .text and .rodata sections are byte-identical; six panic-location line numbers and the build ID differ), and the ISA-L arm's arrangement probe now forms the pointer array in every repetition behind a compiler barrier, where the pilot's probe loop had been deleted by GCC and reported 0 ns; the timed calls are unchanged. Resolution evidence is the accepted pilot receipt dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-pilot/receipt.json (SHA-256 0d72a72e300963fd2061d618ef5197153a121ea5b3109c3568ccaba8ca21fb2e); its widest relative bootstrap half-width over all 9 pilot cells at the ledger-derived pilot alpha 0.025 is 0.0213 (logical-xor-63w-vs-isal-base), frozen as 0.03. This survey adopts no production implementation; the outcomes are comparator-gap decisions and the receipt is not expected to qualify."
+  },
+  "frozen": {"frozen_utc": "2026-09-10T22:30:10Z"},
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This survey adopts no production implementation, so no worthwhile-speedup threshold applies and none is declared.",
+    "measurement_resolution": 0.03,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-pilot/receipt.json",
+      "sha256": "0d72a72e300963fd2061d618ef5197153a121ea5b3109c3568ccaba8ca21fb2e"
+    },
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "One-sided non-inferiority margin 1.1: the pilot's widest relative half-width over all its cells is 0.0213 (frozen resolution 0.03), so the margin lies strictly outside the measured resolution as protocol v3 requires. It is the pilot's provisional value, kept because the resolution permits it.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "Material-gap threshold 1.2: a 20% whole-operation gap on a buffer XOR of at most 65 words is the smallest difference worth attributing to a named cause (vector width, dispatch, destination copy, arrangement) rather than to host noise; it exceeds one plus the frozen resolution 0.03."
+  },
+  "complexity_budget": {"max_new_unsafe_kernels": 0, "max_added_source_lines": 0, "maintenance_rationale": "The family surveys an external comparator and changes no production code; the whole diff is under dev/."},
+  "family_wise": {"alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": [], "ledger_path": "dev/bench_results/6fb89a3c/v3-logical-buffer-family-ledger.jsonl"},
+  "search_budget": {"max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1},
+  "holdout": {"required": false, "cells": []},
+  "cells": [
+    {
+      "cell_id": "logical-xor-7w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 7, "alignment_bytes": 32, "sources": 2}, "seed": 20260910100},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-8w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 8, "alignment_bytes": 32, "sources": 2}, "seed": 20260910101},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-9w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 9, "alignment_bytes": 32, "sources": 2}, "seed": 20260910102},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-63w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 63, "alignment_bytes": 32, "sources": 2}, "seed": 20260910103},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-64w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 64, "alignment_bytes": 32, "sources": 2}, "seed": 20260910104},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-65w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 65, "alignment_bytes": 32, "sources": 2}, "seed": 20260910105},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-16w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 16, "alignment_bytes": 32, "sources": 2}, "seed": 20260910106},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-xor-32w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-xor-fresh-output", "size": {"words": 32, "alignment_bytes": 32, "sources": 2}, "seed": 20260910107},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "logical-parity-3src-64w-vs-isal-base", "objective": "comparator-gap", "role": "confirmatory",
+      "workload": {"identity": "logical-parity-fresh-output", "size": {"words": 64, "alignment_bytes": 32, "sources": 3}, "seed": 20260910108},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    }
+  ]
+}

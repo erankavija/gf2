@@ -1,0 +1,14 @@
+# command: dev/active/6fb89a3c/survey/run-campaign.sh transpose pilot 2026-09-08
+# started_utc: 2026-09-08T09:52:11Z
+# family: transpose
+# mode: pilot
+# addendum: dev/active/6fb89a3c/addendum-transpose-pilot.json
+# addendum_sha256: bfe62af939f2f00bd29ab0fc34a6054e840922c32b895c0b725e3f39f9c7bd61
+# campaign: transpose-pilot-6fb89a3c-20260908t095211z
+# stage: /tmp/gf2-transpose-pilot-6fb89a3c-20260908t095211z
+# lock invocation: CARGO_CI_NO_LOCK=1 GF2_BENCH=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/target/release/benchmark-ab-runner run /tmp/gf2-transpose-pilot-6fb89a3c-20260908t095211z /tmp/gf2-transpose-pilot-6fb89a3c-20260908t095211z.plan.json
+# load_avg_start:  12:52:11 up 4 days, 14:21,  5 users,  load average: 1.45, 1.97, 3.44
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-transpose-pilot-6fb89a3c-20260908t095211z/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-transpose-pilot-6fb89a3c-20260908t095211z/execution.log
+# session 2 exit: 1

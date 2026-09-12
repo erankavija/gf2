@@ -128,9 +128,9 @@ mkdir -p "$LOCK_DIR"
 # that arrives after a measurement run blocks here instead of entering the
 # shared side ahead of it. The pass-through is exclusive but momentary: it is
 # released as soon as the shared side is held, so builds never serialize
-# against each other beyond one acquisition. Deadlock is not reachable — a
-# build holds the turnstile only while no measurement run does, so its `-s`
-# acquisition below cannot be blocked by an exclusive holder.
+# against each other beyond one acquisition. Deadlock is not reachable — an
+# acquirer waits for the turnstile holding no lock, and for the mutex holding
+# only the turnstile, which no holder of the mutex waits for.
 #
 # Bounded and announced for the same reason the test lock is, and it exits 75
 # so `cargo-ci.sh` reports a queue timeout rather than a test failure. The

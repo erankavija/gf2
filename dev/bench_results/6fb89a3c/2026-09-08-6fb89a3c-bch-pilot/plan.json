@@ -1,0 +1,64 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "bch-pilot-6fb89a3c-20260908t105414z",
+  "issue": "6fb89a3c",
+  "label": "pilot",
+  "campaign_seed": 20260908,
+  "addendum": "dev/active/6fb89a3c/addendum-bch-genmatrix-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2-bch-genmatrix": {
+      "build": "conservative-portable",
+      "description": "current gf2 bch_generator_matrix_by_encoding; established bch_genmatrix rows",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/dev/active/6fb89a3c/survey/gf2-side/target/release/gf2_bch_genmatrix_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "m4ri-bch-genmatrix": {
+      "build": "external",
+      "description": "M4RI 20260122 current genmatrix-rref route reused from issue 4e732b56",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6fb89a3c/dev/active/6fb89a3c/survey/m4ri_genmatrix_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "bch-genmatrix-b1-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B1",
+        "seed": 20260907201
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "bch-genmatrix-b2-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B2",
+        "seed": 20260907202
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "bch-genmatrix-b3-vs-m4ri",
+      "baseline_arm": "gf2-bch-genmatrix",
+      "candidate_arm": "m4ri-bch-genmatrix",
+      "case": {
+        "code": "B3",
+        "seed": 20260907203
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 2
+}

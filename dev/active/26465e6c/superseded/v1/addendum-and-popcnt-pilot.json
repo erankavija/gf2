@@ -1,0 +1,73 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": { "id": "zen3-benchmark-protocol", "version": 1 },
+  "family": {
+    "id": "and-popcnt-baselines-pilot",
+    "issue": "26465e6c",
+    "purpose": "kernel-family",
+    "description": "Exploratory pilot establishing the measurement resolution of the fused AND+population-count reduction family: gf2's avx2_and_popcnt kernel called directly, against a single-pass scalar control and against the two-pass and_inplace-then-popcount pattern a consumer reaches through gf2-core's public API. Three cells bracket the family: cache-resident, streaming, and the whole-consumer comparison whose timed body carries the two-pass model's temporary buffer. No external library in this survey exposes a fused AND-popcount operation, so this family has no external candidate; see findings.md."
+  },
+  "frozen": { "frozen_utc": "2026-09-08T09:00:00Z" },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Pilot addendum; no adoption decision is made here.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "Pilot addendum; resolved in the confirmatory addendum from this pilot's receipt.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "Pilot addendum; resolved in the confirmatory addendum from this pilot's receipt."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This family is a baseline survey: it authorizes no production code change under crates/. It records comparative evidence only."
+  },
+  "family_wise": { "alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": [] },
+  "search_budget": { "max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1 },
+  "holdout": { "required": false, "cells": [] },
+  "cells": [
+    {
+      "cell_id": "and-popcnt-pilot-cache-resident",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": { "identity": "and-popcnt-random-cache-resident", "size": { "words": 4096, "word_offset": 0 }, "seed": 301 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "warm",
+      "builds": { "baseline": "native", "candidate": "conservative-portable" },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-pilot-streaming",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": { "identity": "and-popcnt-random-streaming", "size": { "words": 524288, "word_offset": 0 }, "seed": 302 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "streaming",
+      "builds": { "baseline": "native", "candidate": "conservative-portable" },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-pilot-two-pass-consumer",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": { "identity": "and-popcnt-random-cache-resident-consumer", "size": { "words": 4096, "word_offset": 0 }, "seed": 303 },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "warm",
+      "builds": { "baseline": "native", "candidate": "native" },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
