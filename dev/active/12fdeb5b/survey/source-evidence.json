@@ -1,0 +1,368 @@
+{
+ "schema": "nr-encoder-source-evidence-v1",
+ "commits": {
+  "aff3ct": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+  "aff3ct-conf": "ecae10cd0375f12febe2f5513f8ca39f2540c640",
+  "srsran": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+  "gf2": "a935e4ff00145bc68a2eb5add9da066a4feb6d72"
+ },
+ "file_sha256": {
+  "aff3ct/LICENSE": "9467d35542b4535b5536347c28f77d11e69e1151517c20168097112b052183cd",
+  "aff3ct/src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp": "2c52a734476ce92e5d42436d5d1355b37f3d2519a371a2496f55019e5b671c58",
+  "aff3ct/src/Factory/Module/Encoder/LDPC/Encoder_LDPC.cpp": "9d59d4f8c8b031fa2d321b63a3b80b173377f52dc8057a8fecb71245c6593d11",
+  "aff3ct/include/Module/Encoder/Encoder.hpp": "22e15c40c80c93a96cbcf0704a9dcd91dd584cfc828a9f1e074ee629c892be14",
+  "aff3ct/include/Module/Puncturer/Puncturer.hpp": "0acef6190d85027d8dcecd0ce58c4f306af63d2da6d24de323f1793a7a26f90a",
+  "aff3ct/src/Module/Puncturer/LDPC/Puncturer_5G.cpp": "35cbf8161b805ea942170c2e27d701e12283fc18a39bf4e94c45646c8e29fb5f",
+  "aff3ct/src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC_fast.cpp": "1a76993f141628fe66a9e917af6edeb2fccd83cf1ae34b6279fa98e087eb639e",
+  "srsran/LICENSE": "57c8ff33c9c0cfc3ef00e650a1cc910d7ee479a8bc509f6c9209a7c2a11399d6",
+  "srsran/cmake/modules/version.cmake": "537d6161130673f74bec6c2af37eb9491bdba13267ea6e68bec803514a76e17a",
+  "srsran/include/srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h": "65bd0c469e3a3a6c1fe2ed51534adacdd613176c6b3ea16849dd11fb3abccbfb",
+  "srsran/lib/phy/upper/channel_coding/ldpc/ldpc_encoder_impl.cpp": "010ddbe076cb1931d2d6f4fe51a684eaa7d3cd9935bbb783ecee92381c7ea84a",
+  "srsran/include/srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h": "3a31de999bc0adcca27803815172f1716d58dff6d260747bf7d295190ae6b3d9",
+  "srsran/lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp": "a58b61ea17d659c6ff0ffaaa599b2a0307da37a255f268248ce3d44d265f0390",
+  "srsran/lib/phy/upper/channel_coding/channel_coding_factories.cpp": "27a1a91c1bd14bd59d7d2f13b81f79a16ddef3991eea1d82c2461dadf479c0d8",
+  "gf2/crates/gf2-coding/src/ldpc/nr_5g/mod.rs": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228"
+ },
+ "claims": [
+  {
+   "claim": "aff3ct-license",
+   "project": "aff3ct",
+   "path": "LICENSE",
+   "line": 1,
+   "text": "MIT License",
+   "why": "AFF3CT v4.7.0 carries the MIT licence."
+  },
+  {
+   "claim": "aff3ct-bg-selection",
+   "project": "aff3ct",
+   "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+   "line": 30,
+   "text": "if (K <= 292 || (K <= 3824 && R <= 0.67f) || R <= 0.25f)",
+   "why": "AFF3CT chooses the base graph itself from K and the rate K/N; a caller cannot impose one."
+  },
+  {
+   "claim": "aff3ct-bg2-branch",
+   "project": "aff3ct",
+   "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+   "line": 32,
+   "text": "base_graph.Bg = 2;",
+   "why": "The rate and length test selects base graph 2 for the configurations it matches."
+  },
+  {
+   "claim": "aff3ct-kb-560-640",
+   "project": "aff3ct",
+   "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+   "line": 77,
+   "text": "else if (K > 560 && K <= 640)",
+   "why": "AFF3CT's lifting Kb has its own branch for 560 < K <= 640."
+  },
+  {
+   "claim": "aff3ct-kb-560-640-value",
+   "project": "aff3ct",
+   "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+   "line": 78,
+   "text": "Kb = 8;",
+   "why": "That branch uses Kb = 8, where TS 38.212 Section 5.2.2 and gf2 use 9."
+  },
+  {
+   "claim": "aff3ct-mother-dimensions",
+   "project": "aff3ct",
+   "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+   "line": 115,
+   "text": "base_graph.K_LDPC = base_graph.K_LDPC * base_graph.Zc;",
+   "why": "K_LDPC is the base-graph systematic column count times the chosen lifting size."
+  },
+  {
+   "claim": "aff3ct-mother-length",
+   "project": "aff3ct",
+   "path": "src/Tools/Code/LDPC/Standard/5G/5G_base_graph.cpp",
+   "line": 116,
+   "text": "base_graph.N_LDPC = base_graph.N_LDPC * base_graph.Zc;",
+   "why": "N_LDPC is the base-graph column count times the chosen lifting size, which is gf2's rule."
+  },
+  {
+   "claim": "aff3ct-encoder-5g-build",
+   "project": "aff3ct",
+   "path": "src/Factory/Module/Encoder/LDPC/Encoder_LDPC.cpp",
+   "line": 154,
+   "text": "return new module::Encoder_LDPC_QC_fast<B>(",
+   "why": "The 5G encoder AFF3CT's factory builds is Encoder_LDPC_QC_fast, which the shim constructs identically."
+  },
+  {
+   "claim": "aff3ct-encoder-5g-arguments",
+   "project": "aff3ct",
+   "path": "src/Factory/Module/Encoder/LDPC/Encoder_LDPC.cpp",
+   "line": 155,
+   "text": "this->K, base_graph.N_LDPC, base_graph.Zc, G_path.c_str(), base_graph.K_LDPC);",
+   "why": "The factory passes K, the mother length, the lifting size, the generator-matrix path and K_LDPC."
+  },
+  {
+   "claim": "aff3ct-encoder-5g-g-path",
+   "project": "aff3ct",
+   "path": "src/Factory/Module/Encoder/LDPC/Encoder_LDPC.cpp",
+   "line": 150,
+   "text": "G_path = \"conf/enc/LDPC/5G/NR_\" + std::to_string(base_graph.Bg) + \"_\" +",
+   "why": "The generator matrix is a per (base graph, lifting set, lifting size) file in AFF3CT's conf tree."
+  },
+  {
+   "claim": "aff3ct-encoder-public-encode",
+   "project": "aff3ct",
+   "path": "include/Module/Encoder/Encoder.hpp",
+   "line": 108,
+   "text": "void encode(const B* U_K, B* X_N, const int frame_id = -1, const bool managed_memory = true);",
+   "why": "Encoding is reachable through the public Encoder::encode entry point."
+  },
+  {
+   "claim": "aff3ct-puncturer-public-puncture",
+   "project": "aff3ct",
+   "path": "include/Module/Puncturer/Puncturer.hpp",
+   "line": 102,
+   "text": "void puncture(const B* X_N1, B* X_N2, const int frame_id = -1, const bool managed_memory = true);",
+   "why": "Bit selection is reachable through the public Puncturer::puncture entry point."
+  },
+  {
+   "claim": "aff3ct-puncture-selection",
+   "project": "aff3ct",
+   "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+   "line": 42,
+   "text": "X_N2[k] = X_N1[j % (this->N_cw - 2 * this->base_graph.Zc) + 2 * this->base_graph.Zc];",
+   "why": "Selection reads the mother codeword from position 2*Zc, wrapping over the shortened buffer."
+  },
+  {
+   "claim": "aff3ct-puncture-filler-skip",
+   "project": "aff3ct",
+   "path": "src/Module/Puncturer/LDPC/Puncturer_5G.cpp",
+   "line": 39,
+   "text": "if (!(j % (this->N_cw - 2 * this->base_graph.Zc) + 2 * this->base_graph.Zc < this->base_graph.K_LDPC &&",
+   "why": "Selection skips the filler positions between K and K_LDPC."
+  },
+  {
+   "claim": "aff3ct-qc-fast-encode",
+   "project": "aff3ct",
+   "path": "src/Module/Encoder/LDPC/QC/Encoder_LDPC_QC_fast.cpp",
+   "line": 72,
+   "text": "Encoder_LDPC_QC_fast<B>::_encode(const B* U_K, B* X_N, const size_t frame_id)",
+   "why": "The encode hook the public entry runs is the fast quasi-cyclic encoder."
+  },
+  {
+   "claim": "srsran-license",
+   "project": "srsran",
+   "path": "LICENSE",
+   "line": 1,
+   "text": "GNU AFFERO GENERAL PUBLIC LICENSE",
+   "why": "The srsRAN Project source carries the GNU Affero General Public Licence version 3."
+  },
+  {
+   "claim": "srsran-version",
+   "project": "srsran",
+   "path": "cmake/modules/version.cmake",
+   "line": 21,
+   "text": "set(SRSRAN_VERSION_MAJOR 25)",
+   "why": "The pinned tree declares srsRAN Project version 25.10."
+  },
+  {
+   "claim": "srsran-encoder-entry",
+   "project": "srsran",
+   "path": "include/srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h",
+   "line": 59,
+   "text": "virtual const ldpc_encoder_buffer& encode(const bit_buffer& input, const configuration& cfg) = 0;",
+   "why": "Encoding is a public interface method taking the packed message and returning an encoder buffer."
+  },
+  {
+   "claim": "srsran-encoder-caller-base-graph",
+   "project": "srsran",
+   "path": "include/srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h",
+   "line": 45,
+   "text": "ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;",
+   "why": "srsRAN takes the base graph from its caller, as gf2 does, so no derivation can diverge."
+  },
+  {
+   "claim": "srsran-encoder-caller-lifting",
+   "project": "srsran",
+   "path": "include/srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h",
+   "line": 47,
+   "text": "ldpc::lifting_size_t lifting_size = ldpc::LS2;",
+   "why": "srsRAN takes the lifting size from its caller too."
+  },
+  {
+   "claim": "srsran-codeblock-short",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_encoder_impl.cpp",
+   "line": 77,
+   "text": "return bg_N_short * lifting_size;",
+   "why": "The encoder's codeblock excludes the 2*Z punctured systematic prefix."
+  },
+  {
+   "claim": "srsran-rate-matcher-entry",
+   "project": "srsran",
+   "path": "include/srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h",
+   "line": 47,
+   "text": "virtual void rate_match(bit_buffer& output, const ldpc_encoder_buffer& input, const codeblock_metadata& cfg) = 0;",
+   "why": "Rate matching is a public interface method writing the packed rate-matched codeblock."
+  },
+  {
+   "claim": "srsran-rate-matcher-rv-range",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+   "line": 39,
+   "text": "srsran_assert((cfg.tb_common.rv >= 0) && (cfg.tb_common.rv <= 3), \"RV should an integer between 0 and 3.\");",
+   "why": "srsRAN implements all four redundancy versions."
+  },
+  {
+   "claim": "srsran-rate-matcher-shift-bg1",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+   "line": 34,
+   "text": "static const std::array<double, 4> shift_factor_bg1 = {0, 17, 33, 56};",
+   "why": "The base-graph-1 redundancy-version offsets are TS 38.212 Table 5.4.2.1-2's."
+  },
+  {
+   "claim": "srsran-rate-matcher-shift-bg2",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+   "line": 35,
+   "text": "static const std::array<double, 4> shift_factor_bg2 = {0, 13, 25, 43};",
+   "why": "The base-graph-2 redundancy-version offsets are that table's second row set."
+  },
+  {
+   "claim": "srsran-rate-matcher-k0",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+   "line": 90,
+   "text": "shift_k0   = static_cast<uint16_t>(std::floor(tmp)) * lifting_size;",
+   "why": "The starting offset k0 is zero only for redundancy version 0, whose shift factor is zero."
+  },
+  {
+   "claim": "srsran-rate-matcher-start",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+   "line": 108,
+   "text": "unsigned in_index      = shift_k0;",
+   "why": "Bit selection starts at that offset, which is the only difference from AFF3CT's rule."
+  },
+  {
+   "claim": "srsran-rate-matcher-systematic",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+   "line": 82,
+   "text": "nof_systematic_bits = (BG_K - 2) * lifting_size;",
+   "why": "The systematic count excludes the 2*Z prefix, so filler indices are relative to the shortened buffer."
+  },
+  {
+   "claim": "srsran-rate-matcher-filler-range",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+   "line": 121,
+   "text": "interval<unsigned> filler_bits_range(nof_systematic_bits - nof_filler_bits, nof_systematic_bits);",
+   "why": "Filler bits occupy the end of the systematic section and selection skips them."
+  },
+  {
+   "claim": "srsran-interleave-identity",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp",
+   "line": 176,
+   "text": "srsvec::bit_pack(out, in);",
+   "why": "At one bit per symbol TS 38.212 Section 5.4.2.2 interleaving is the identity, leaving only packing."
+  },
+  {
+   "claim": "srsran-encoder-backend-auto",
+   "project": "srsran",
+   "path": "lib/phy/upper/channel_coding/channel_coding_factories.cpp",
+   "line": 154,
+   "text": "if (((enc_type == \"avx2\") || (enc_type == \"auto\")) && supports_avx2) {",
+   "why": "srsRAN's own factory selects the AVX2 backend on a CPU that reports AVX2; the shim reproduces that choice."
+  },
+  {
+   "claim": "gf2-block-encoder-encode",
+   "project": "gf2",
+   "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+   "line": 1263,
+   "text": "fn encode(&self, message: &BitVec) -> BitVec {",
+   "why": "The public whole-consumer entry point is the BlockEncoder implementation on the rate-matched code."
+  },
+  {
+   "claim": "gf2-encode-rate-matched-private",
+   "project": "gf2",
+   "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+   "line": 1087,
+   "text": "fn encode_rate_matched(&self, message: &BitVec) -> BitVec {",
+   "why": "The rate-matched encode itself is private, so the consumer is the only comparable operation."
+  },
+  {
+   "claim": "gf2-filler-pad",
+   "project": "gf2",
+   "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+   "line": 1100,
+   "text": "let mut padded = BitVec::zeros(p.full_k);",
+   "why": "Filler positions are zero-padded into the systematic block before the parity solve."
+  },
+  {
+   "claim": "gf2-transmitted-gather",
+   "project": "gf2",
+   "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+   "line": 1121,
+   "text": "for &col in &enc.transmitted_cols {",
+   "why": "Bit selection is a gather over a precomputed column list fused into the encode."
+  },
+  {
+   "claim": "gf2-kb-560-640",
+   "project": "gf2",
+   "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+   "line": 228,
+   "text": "} else if target_k > 560 {",
+   "why": "gf2's lifting Kb has the same 560 < K <= 640 branch."
+  },
+  {
+   "claim": "gf2-kb-560-640-value",
+   "project": "gf2",
+   "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+   "line": 229,
+   "text": "9",
+   "why": "That branch uses Kb = 9, the value TS 38.212 Section 5.2.2 specifies."
+  },
+  {
+   "claim": "gf2-z-selection",
+   "project": "gf2",
+   "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+   "line": 499,
+   "text": "kb_for_z * z_us >= target_k && target_k + (nb - kb - 2) * z_us >= target_n",
+   "why": "gf2 additionally requires enough transmitted bits when choosing the lifting size."
+  }
+ ],
+ "negative_searches": [
+  {
+   "claim": "gf2-no-redundancy-version",
+   "project": "gf2",
+   "roots": [
+    "crates/gf2-coding/src/ldpc"
+   ],
+   "case_insensitive_terms": [
+    "redundancy_version",
+    "redundancy version",
+    "rv0",
+    "k_0",
+    "shift_k0"
+   ],
+   "matching_paths": [],
+   "meaning": "gf2's LDPC sources carry no redundancy-version parameter, so its rate-matched encoder implements only the version-0 starting offset."
+  },
+  {
+   "claim": "aff3ct-no-redundancy-version",
+   "project": "aff3ct",
+   "roots": [
+    "src/Module/Puncturer/LDPC",
+    "include/Module/Puncturer/LDPC",
+    "src/Tools/Code/LDPC/Standard/5G",
+    "include/Tools/Code/LDPC/Standard/5G"
+   ],
+   "case_insensitive_terms": [
+    "redundancy",
+    "rv",
+    "k0"
+   ],
+   "matching_paths": [],
+   "meaning": "AFF3CT's 5G puncturer and base-graph derivation carry no redundancy-version offset, so they implement only the version-0 starting offset."
+  }
+ ],
+ "errors": []
+}

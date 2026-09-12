@@ -35,6 +35,10 @@
 
 set -euo pipefail
 
+# The arms are release executables the campaign digests; pin the MSRV
+# toolchain here and in the launcher so both build the same bytes.
+export PATH="${HOME}/.cargo/bin:${PATH}" RUSTUP_TOOLCHAIN="${RUSTUP_TOOLCHAIN:-1.95}"
+
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 AFF3CT_ROOT="$(cd "${1:?usage: nr-encode-build.sh <aff3ct-root> <srsran-root> [staging-dir]}" && pwd)"
@@ -120,6 +124,11 @@ build_flavour portable "-C target-cpu=x86-64" --bin gf2-nr-encode-arm
 "${EXT}/target-nr-encode-native/release/validate-nr-encode-equivalence" \
     "${AFF3CT_ROOT}/conf" "${SURVEY}/nr-encode-validation.json" \
     | tee "${SURVEY}/nr-encode-validation.txt"
+
+python3 "${SURVEY}/inspect-sources.py" "${AFF3CT_ROOT}" "${SRSRAN_ROOT}" \
+    "${SURVEY}/source-evidence.json"
+python3 "${SURVEY}/record-build-evidence.py" "${AFF3CT_ROOT}" "${SRSRAN_ROOT}" "${EXT}" \
+    "${SURVEY}/build-evidence.json"
 
 echo
 echo "arm executables and digests:"
