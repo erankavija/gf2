@@ -212,7 +212,7 @@
           "short_id": "3e59cb9a",
           "title": "Repair the DVB-T2 arms warm pass and re-measure the interleaving family",
           "classification": "research",
-          "status": "dispatched in session 10 (w10-3e59cb9a) on .worktrees-local/agent-eda07788-v3. Window re-measurement succeeded; collecting the receipt, ledger line, tables and outcomes, then merge.",
+          "status": "done. Merged, all four gates pass first time, lead review PASS, 15 artifacts linked. Found two defects the v4 merge created: the in-place schema replacement and the freeze-script double-count.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".worktrees-local/agent-eda07788-v3",
@@ -242,7 +242,7 @@
           "short_id": "a203a23c",
           "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
           "classification": "research",
-          "status": "pending (filed in session 9 from bdc507a3's verdict comparison; depends on bdc507a3)"
+          "status": "merged at 76812a4e; cargo-ci, code-review and doc-review pass; research-review FAILED on one blocking finding (unsupported performance claim in the commit message, no committed benchmark artifact). Nine of fourteen receipts restored; repository-wide 57/62 reproduce, up from 48. Does not close."
         }
       ]
     },
@@ -303,7 +303,7 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "pending"
+          "status": "in-session work complete at 612c9108 on worktree-agent-1c602857. REQ-02, REQ-03, REQ-05 MET; REQ-01 and REQ-04 WAITING-ON-WINDOW and REQ-04 needs two windows (pilot, then freeze from the committed pilot receipt, then confirmation). Pilot queued as window job 7. Its untimed smoke caught the same 13 ms wire defect class as 6c6b09b1, before it cost a window."
         }
       ]
     },
@@ -574,10 +574,11 @@
   "rework_counts": {
     "f547c394": 2,
     "1d0da41f": 1,
-    "04b85d10": 1,
+    "04b85d10": 2,
     "c7113c5a": 2,
     "6fb89a3c": 1,
-    "26465e6c": 1
+    "26465e6c": 1,
+    "a203a23c": 0
   },
   "surfaced_pitfalls": [
     {
@@ -775,6 +776,41 @@
       "origin": "tooling (session 10)",
       "disposition": "dev/bench_results/04b85d10/.../asm/popcnt-attribution.txt could not be linked; it stays reachable through the linked attribution-summary.md that cites it. Affects any committed disassembly or profiler dump. To be filed as a bug outside the epic.",
       "criterion_named_by": "none"
+    },
+    {
+      "issue": "6fb89a3c",
+      "subject": "dev/active/6fb89a3c/survey/freeze-remeasure.py no longer reproduces the addenda it froze: pilot_history() globs dev/bench_results/6fb89a3c/*/execution.log and filters only on family id and exploratory role, with no skip for the campaign the addendum itself drives, while main() adds +1 for 'this campaign' \u2014 so now that the three re-measurement receipts are committed, each campaign is counted twice",
+      "origin": "lead review (session 10), by reading; not confirmable by running from main because the arm executables are gitignored",
+      "disposition": "OPEN \u2014 blocks closing 6fb89a3c. Identical defect to the one 3e59cb9a found and fixed in dev/active/eda07788/survey/freeze-remeasure.py (skip a campaign whose campaign-start record names this addendum as its own path). A reviewer rerunning the script would find the frozen addendum disagreeing with the receipt that measured it.",
+      "criterion_named_by": "6fb89a3c REQ-01 (reproducible release benchmarks) and epic REQ-01"
+    },
+    {
+      "issue": "bdc507a3",
+      "subject": "protocol v4 replaced dev/active/f547c394/addendum.schema.json in place instead of versioning it alongside; addendum-v1.schema.json is preserved but v2 and v3 are not, so the only surviving copies of the v3 schema are inside receipt inputs/ snapshots",
+      "origin": "issue-impact (session 10), found by 3e59cb9a when its frozen-addendum test went red on the merge",
+      "disposition": "OPEN \u2014 bdc507a3 is already closed, so this needs its own issue. Anything validating a frozen v3 addendum against the shared path fails on two const constraints ($id and protocol.version). Workaround in use: validate against the version-3 snapshot the receipt pins and assert that snapshot's digest against receipt.addendum_schema.sha256. FamilyAddendum::validate() itself accepts 1..=PROTOCOL_VERSION, so only the JSON-Schema file is affected.",
+      "criterion_named_by": "epic REQ-01 and REQ-06 (deterministic, reproducible execution)"
+    },
+    {
+      "issue": "04b85d10",
+      "subject": "code-review round 2 returned three issue-impact blocking findings: F1 the frozen layout addendum labels degree-14 short-frame BCH measurements as normal-frame so its declared workload does not match the receipt (addendum-bit-storage-layout-v3-confirmation.json:11); F2 the n=64800 whole-consumer receipt reports conversion costs from a short-code setup and a 32448-bit proxy rather than the declared normal-frame consumer (survey/gf2-side/src/lib.rs:781 in the count-v3-confirmation producing snapshot); F3 summarize-receipts.py hard-codes receipt-specific provenance and correction prose instead of deriving it from structured receipt evidence (:93)",
+      "origin": "gate (session 10)",
+      "disposition": "OPEN \u2014 blocks closing 04b85d10; rework round 2 of 2, so a third failure escalates per policy item 5. F1 and F2 are measurement-validity defects, not wording: the declared workload does not match what was measured. Verdict references @/issue/04b85d10/requirement/REQ-01..03 and @/invariant/benchmark-backed-performance.",
+      "criterion_named_by": "04b85d10 REQ-01, REQ-02, REQ-03 and epic REQ-01"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "a worktree seeded from the shared cache pool can carry an internally inconsistent target/release dependency tree: rustc reported 'can't find crate for sha2' and 'serde_json' while both .rlib and .rmeta were present, readable and correct-length, and cargo reported them Fresh",
+      "origin": "tooling (session 10, reported by the a203a23c worker)",
+      "disposition": "cargo clean --release over the affected crate's dependencies fixed it in 40 s. Other workers on pre-seeded targets may hit the same; the dispatch script hardlinks pool entries, so a stale pool entry propagates.",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "a203a23c",
+      "subject": "research-review F1 (high, blocking): tagged commit 76812a4e reports the checker's 23.1 s -> 2.59 s and the restoration generator's 60.2 s -> 10.1 s reductions without a committed benchmark artifact, invocation, hardware or provenance",
+      "origin": "gate (session 10)",
+      "disposition": "OPEN \u2014 blocks closing a203a23c; its other three gates pass. The lead caused this by asking for the cost measurement without also asking where the artifact recording it would live. Fix: commit an artifact carrying the invocation, host and timings with provenance, and point the claim at it. References @/invariant/claims-trace-to-artifacts and @/invariant/benchmark-backed-performance.",
+      "criterion_named_by": "epic REQ-01 (measurement contract)"
     }
   ],
   "notes": [
@@ -834,7 +870,10 @@
     "New standing worker rule (session 10): an untimed end-to-end smoke through the real benchmark-ab-runner, reaching a result line from every arm the plan names, is mandatory before any window-job line is queued.",
     "Pruned six stale worktrees (02b8137c, 3f7edef1, 5ee83cd3, 97410c80, b1bd75ca, e1e0e7ff), all clean and fully merged; branches kept. Free disk 38G -> 74G. agent-02b8137c-run kept: 22 untracked validation-journal files belonging to another epic.",
     "Session 10: 26465e6c and bdc507a3 closed; a387825e in doc-review rework round 1 (lead-authored, comments only).",
-    "Session 10: reclaimed worktrees agent-26465e6c-r1 and agent-c7113c5a-v3 after their issues closed; free disk 69G -> 78G."
+    "Session 10: reclaimed worktrees agent-26465e6c-r1 and agent-c7113c5a-v3 after their issues closed; free disk 69G -> 78G.",
+    "Session 10: the Codex weekly usage limit was exhausted at 07:05Z by four gate suites plus four independent Terra xhigh reviews, failing two gate suites with 'Agent produced no output' \u2014 which records as a gate FAILURE indistinguishable from a finding. The invoker reset it; both suites were re-run.",
+    "Session 10: merged a387825e, bdc507a3, 26465e6c, 04b85d10, 6fb89a3c, 3e59cb9a and a203a23c to main, cargo-ci green after each.",
+    "Session 10 (invoker, mid-session): no more new work this session; finish what is in flight and hand off."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -845,5 +884,47 @@
     "handoff-5.md",
     "handoff-6.md",
     "handoff-7.md"
-  ]
+  ],
+  "pending_artifact_links": {
+    "note": "Reported by session-10 workers; not linked because the issue has not closed. Doc types normalized to the jit vocabulary (specification/report/notes/research/reference/benchmark/test).",
+    "1c602857": [
+      [
+        "dev/active/1c602857/findings.md",
+        "research",
+        "1c602857 findings and criterion map"
+      ],
+      [
+        "dev/active/1c602857/addendum-v4-public-clmul-pilot.json",
+        "specification",
+        "Protocol-v4 public-clmul pilot addendum"
+      ],
+      [
+        "dev/active/1c602857/producing-inputs.json",
+        "specification",
+        "Issue-owned producing-input manifest"
+      ],
+      [
+        "dev/active/1c602857/run-public-clmul.sh",
+        "notes",
+        "Protocol-v4 public-clmul campaign launcher"
+      ],
+      [
+        "dev/active/1c602857/make-plan.py",
+        "notes",
+        "Public-clmul campaign plan generator"
+      ],
+      [
+        "dev/active/1c602857/validation.json",
+        "report",
+        "Carry-less product conformance validation"
+      ],
+      [
+        "dev/bench_results/1c602857/public-clmul-dispatch-family-ledger.jsonl",
+        "report",
+        "Public-clmul dispatch family ledger (genesis)"
+      ]
+    ],
+    "6c6b09b1": "23 entries in the session-10 worker report, plus dev/bench_results/6c6b09b1/run-byte-field-v4.test.sh (notes, 'Byte-field v4 launcher outcome guards') and dev/bench_results/6c6b09b1/v3-r1-void-attempts.json (report, 'Byte-field void ledger attempts'). The three v3 addenda link as specification with supersession in the label; the three family ledgers keep version-free labels because the v4 campaigns append to the same files.",
+    "3be770d5": "14 entries in the session-10 worker report, plus dev/bench_results/3be770d5/v3-r1-steady-profile-conditions.md (benchmark, 'Host conditions of the void first profile series'). Link the void series' repetitions.log with 'void' in the label; do NOT link its profile.md, whose every table is empty."
+  }
 }
