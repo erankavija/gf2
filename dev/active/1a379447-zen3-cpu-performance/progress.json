@@ -47,7 +47,7 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "session 11: rework round 2 of 2 dispatched (w11-04b85d10, opus) on code-review F1-F3 at 4c565af6: preserve the mislabeled layout/count v3 evidence as falsified, fix the harness so declared consumer = measured consumer, freeze new v4 pilots (window), derive summarize-receipts.py prose from structured evidence.",
+          "status": "session 11: rework round 2 delivered at 8c089201 in worktree (main merged in): mislabeled layout/count v3 cells preserved as falsified in receipt-evidence-record.json and findings, harness builds the declared codes with a declared-vs-built guard, summarize-receipts.py projects provenance from the structured record, v4 count and layout pilot addenda frozen, smoke passed, cargo-ci 27/27. Two pilot queue lines queued for the overnight window; lead review and gates after the pilots and confirmations land.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10-v3",
@@ -63,7 +63,7 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "session 11: three v4 pilots collected (17/14/9 cells, Accepted). Worker w11-6c6b09b1 (opus) dispatched to verify, commit, freeze v4 confirmations, smoke, hand queue lines, update tables and findings, merge main, run CI.",
+          "status": "session 11: three v4 pilots verified and committed; v4 confirmation addenda frozen at six cells per family (P-20 tail rule); smoke passed through the real runner; head 6e907460, cargo-ci 27/27 in worktree; main merged in. Three confirmation queue lines queued for the overnight window. Not merged to main until the confirmations land.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
@@ -227,7 +227,7 @@
           "short_id": "3be770d5",
           "title": "Profile the CPU LDPC throughput gap against compatible decoders",
           "classification": "research",
-          "status": "session 11: window collected (two v4 confirmations Accepted qualifies=true; profile series ran, summary failed on a one-sample listing mismatch). Worker w11-3be770d5 (opus) dispatched to verify, commit, fix the summary check, complete findings, merge main, run CI.",
+          "status": "session 11: window collected and verified; branch merged at 6055e0c7, 56 artifacts linked at ad76be4a, cargo-ci passed. Independent Terra xhigh review FAIL on one blocking finding (lever table presents 1/(1-s_lo) as a realized 'speedup at least' and refutes attribution on it; must be an Amdahl ceiling labelled as an estimate with a share-based refutation rule). Rework round 1 dispatched to w11-3be770d5; review gates run on the reworked commit.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-3be770d5",
@@ -235,7 +235,11 @@
             "base": "cd6e69d1",
             "attempt": 1,
             "session": 11
-          }
+          },
+          "merge_commit": "6055e0c7",
+          "reviews": [
+            "reviews/3be770d5-r1.md"
+          ]
         },
         {
           "id": "a203a23c",
@@ -311,7 +315,7 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "in-session work complete at 612c9108 on worktree-agent-1c602857. REQ-02, REQ-03, REQ-05 MET; REQ-01 and REQ-04 WAITING-ON-WINDOW and REQ-04 needs two windows (pilot, then freeze from the committed pilot receipt, then confirmation). Pilot queued as window job 7. Its untimed smoke caught the same 13 ms wire defect class as 6c6b09b1, before it cost a window."
+          "status": "session 11: launcher PATH/toolchain fix and build mode at 3c35eee2 (main merged in); smoke through the real runner reached result lines for all six cells of the frozen v4 pilot; pilot queue line queued for the overnight window (5 min floor). Confirmation freeze then a second window remain."
         }
       ]
     },
@@ -604,7 +608,8 @@
     "c7113c5a": 2,
     "6fb89a3c": 1,
     "26465e6c": 1,
-    "a203a23c": 1
+    "a203a23c": 1,
+    "3be770d5": 1
   },
   "surfaced_pitfalls": [
     {
