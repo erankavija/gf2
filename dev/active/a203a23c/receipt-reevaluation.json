@@ -3,7 +3,8 @@
   "purpose": "Acceptance verdict of every committed benchmark receipt when the evaluator reads committed content alone, beside the verdict of the acceptance summary committed with it.",
   "generator": "dev/active/a203a23c/reevaluate-receipts.sh",
   "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
-  "revision": "f007401a1cf8240563de09b5521f4fe6480b9535",
+  "evidence_revision": "a46b56747e85ebb23d4929e88e64186da6967b28",
+  "evaluator_revision": "a46b56747e85ebb23d4929e88e64186da6967b28",
   "benchmark_acceptance_sha256": "146f30a8b06741f12a635b5662dbb22c812bb5f94e67daf96ee89f91d5b00906",
   "receipts": [
     {
