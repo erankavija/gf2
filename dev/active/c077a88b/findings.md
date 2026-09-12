@@ -189,6 +189,24 @@ remain historical evidence, not v3 claims. Earlier missing-quality, asymmetric
 setup and encoder-construction failures remain visible, together with the r4
 recorded-AList pilots. None supplies v3 resolution evidence.
 
+Four of those v1 pilots — the r3 and r4 matched-algorithm and quality-compatible
+pilots — carry an acceptance summary recording them as accepted that a fresh
+checkout does not reproduce, for two reasons the
+[re-evaluation record](../a203a23c/receipt-reevaluation.json) states per receipt.
+Their snapshot of the standalone harness lockfile was never committed and the
+harness has since resolved its dependencies again, so no content of this
+repository carries the pinned digest;
+[`dev/scripts/receipt-input-omissions.json`](../../scripts/receipt-input-omissions.json)
+records that omission. Independently of it, their saved plans predate the typed
+`producing_manifest` field, so the evaluator compares the family manifest the
+receipt pins against the historical shared manifest that omission selects and
+reports a P-23 campaign-start mismatch. Both are properties of how the v1
+evidence was recorded, not of the measurements: the receipts, their checkpoints
+and their summaries are unchanged. Every v3 campaign this survey's conclusions
+rest on reproduces its committed verdict on a fresh checkout, so no conclusion
+here changes; what the four v1 pilots lose is the ability to re-derive their own
+superseded verdicts from the repository.
+
 The canonical matched and quality-family ledgers retain retrospective entries
 for the v1 exploratory campaigns, including the interrupted attempt. Their
 origin records cite exact plans, addenda and available receipts. These entries
