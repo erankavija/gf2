@@ -1,0 +1,62 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {"id": "zen3-benchmark-protocol", "version": 1},
+  "family": {
+    "id": "transpose-vs-external-pilot",
+    "issue": "6fb89a3c",
+    "purpose": "kernel-family",
+    "description": "Frozen exploratory comparison of gf2's canonical 64x64 word transpose against M4RI mzd_transpose and Bitshuffle bshuf_bitshuffle, plus whole-consumer BitMatrix/M4RI 63x63, 64x64 and 65x65 cells. The direct Bitshuffle geometry has zero adapter cost at 64x64; non-multiple-of-eight element counts are unavailable without padding and are not substituted."
+  },
+  "frozen": {"frozen_utc": "2026-09-08T09:12:10Z"},
+  "effect": {
+    "worthwhile_speedup": 1.5,
+    "rationale": "Unused by comparator-gap cells; no implementation is adopted by this survey.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A 10% equivalence margin is intentionally provisional until this pilot measures the host's resolution.",
+    "material_gap_threshold": 1.15,
+    "material_gap_rationale": "A 15% gap is large enough to merit attribution across fixed-size transpose strategies while this survey retains all negative outcomes."
+  },
+  "complexity_budget": {"max_new_unsafe_kernels": 0, "max_added_source_lines": 0, "maintenance_rationale": "The family surveys external comparators and changes no production code."},
+  "family_wise": {"alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": []},
+  "search_budget": {"max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1},
+  "holdout": {"required": false, "cells": []},
+  "cells": [
+    {
+      "cell_id": "transpose-64-canonical-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "transpose-64-word-kernel", "size": {"n": 64}, "seed": 20260907001},
+      "metric_kind": "kernel-isolated", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": false, "decoder": null
+    },
+    {
+      "cell_id": "transpose-64-canonical-vs-bitshuffle", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "transpose-64-word-kernel", "size": {"n": 64}, "seed": 20260907002},
+      "metric_kind": "kernel-isolated", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": false, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-63-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 63, "cols": 63}, "seed": 20260907003},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-64-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 64, "cols": 64}, "seed": 20260907004},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    },
+    {
+      "cell_id": "transpose-consumer-65-vs-m4ri", "objective": "comparator-gap", "role": "exploratory",
+      "workload": {"identity": "bitmatrix-transpose", "size": {"rows": 65, "cols": 65}, "seed": 20260907005},
+      "metric_kind": "whole-consumer", "scaling": "single-core-latency", "core_arm": "single-core",
+      "workers": {"declared": 1, "nested_pools_allowed": false}, "cache_state": "warm",
+      "builds": {"baseline": "conservative-portable", "candidate": "external"}, "conversion_costs_included": true, "decoder": null
+    }
+  ]
+}

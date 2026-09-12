@@ -1,0 +1,1643 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "popcount-baselines",
+    "issue": "26465e6c",
+    "purpose": "kernel-family",
+    "description": "Protocol-v3 confirmation of jit:26465e6c. Question: on the Ryzen 9 5900X, is gf2's production population-count dispatcher (gf2_core::kernels::ops::popcount) the fastest measured arm for each workload class, against libpopcnt v4.2, Mula's AVX2 Harley-Seal reference and the labelled internal controls (gf2's nibble-lookup kernel called directly, a forced scalar POPCNT loop, the portable count_ones loop)? The dispatcher is the baseline of every cell and each alternative its candidate, so a speedup above 1 means the alternative is faster. Workloads bracket the thresholds read from the emitted instructions (gf2 at 8 words, libpopcnt at 96 B and 1 KiB, Mula's 16-vector carry-save loop at 512 B), a window 24 bytes past a vector boundary with its aligned control, all-ones and all-zero patterns, an L2-resident size and a streaming size. Every arm is a single-threaded leaf kernel, so every cell is single-core. Cells are warm or streaming: the protocol's cold state is a fixed-call first-use series that nanosecond calls cannot resolve above timer overhead. Mula's reference is absent from the misaligned workload because it loads through const __m256i*. This family continues the question whose protocol-v1 confirmation popcount-26465e6c-20260908 the ledger imports. The frozen ledger holds 1 earlier non-exploratory reservation(s) spending 9 comparisons, so this confirmation is attempt 2 with cumulative m = 68: the corrected per-comparison alpha 0.05/(2*3)/68 = 0.0001225 leaves 0.61 expected bootstrap draws per tail, fewer than the 20 P-20 requires, so every cell is not-confirmatory by construction and the attempt re-measures the question with fresh samples."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-10T22:09:27Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Unused: every cell is comparator-gap and decides against the material-gap threshold.",
+    "measurement_resolution": 0.12,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/26465e6c/v3-popcount-pilot/receipt.json",
+      "sha256": "81fef577d1ea03e58a0f4643fc8d15ccdb703778543433060e489d6eb6b0e52e"
+    },
+    "equivalence_margin": 1.13,
+    "equivalence_rationale": "An alternative within 5% of gf2's route is not a materially different implementation for a consumer of these leaf kernels, so an interval whose lower bound clears 1/margin records not-worse rather than a gap. The consumer-benefit value 1.05 does not strictly exceed one plus the pilot resolution 0.12, so the operative equivalence margin is 1.13.",
+    "material_gap_threshold": 1.13,
+    "material_gap_rationale": "An alternative must run at least 10% faster than gf2's route before replacing gf2's route, or moving a dispatch threshold toward the alternative, could repay its maintenance and dependency cost for a consumer; smaller gaps leave the established route in place. The consumer-benefit value 1.10 does not strictly exceed one plus the pilot resolution 0.12, so the operative material-gap threshold is 1.13."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "A baseline survey: it authorizes no production change. Adoption belongs to the optimization issue that consumes this baseline, with its own before/after evidence."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/26465e6c/v3-popcount-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-w4-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w4 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 301): 32 B, one vector: below gf2's 8-word SIMD threshold; libpopcnt runs scalar POPCNT",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w4-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w4 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 301): 32 B, one vector: below gf2's 8-word SIMD threshold; libpopcnt runs scalar POPCNT",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w4-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w4 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 301): 32 B, one vector: below gf2's 8-word SIMD threshold; libpopcnt runs scalar POPCNT",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w4-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w4 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 301): 32 B, one vector: below gf2's 8-word SIMD threshold; libpopcnt runs scalar POPCNT",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w4-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w4 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 301): 32 B, one vector: below gf2's 8-word SIMD threshold; libpopcnt runs scalar POPCNT",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w8-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w8 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 302): 64 B: gf2's observed SIMD threshold (cmp $0x7); libpopcnt still scalar POPCNT",
+        "size": {
+          "words": 8,
+          "word_offset": 0
+        },
+        "seed": 302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w8-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w8 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 302): 64 B: gf2's observed SIMD threshold (cmp $0x7); libpopcnt still scalar POPCNT",
+        "size": {
+          "words": 8,
+          "word_offset": 0
+        },
+        "seed": 302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w8-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w8 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 302): 64 B: gf2's observed SIMD threshold (cmp $0x7); libpopcnt still scalar POPCNT",
+        "size": {
+          "words": 8,
+          "word_offset": 0
+        },
+        "seed": 302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w8-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w8 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 302): 64 B: gf2's observed SIMD threshold (cmp $0x7); libpopcnt still scalar POPCNT",
+        "size": {
+          "words": 8,
+          "word_offset": 0
+        },
+        "seed": 302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w8-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w8 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 302): 64 B: gf2's observed SIMD threshold (cmp $0x7); libpopcnt still scalar POPCNT",
+        "size": {
+          "words": 8,
+          "word_offset": 0
+        },
+        "seed": 302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w12-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w12 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 303): 96 B: libpopcnt's observed AVX2 threshold (cmp $0x5f)",
+        "size": {
+          "words": 12,
+          "word_offset": 0
+        },
+        "seed": 303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w12-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w12 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 303): 96 B: libpopcnt's observed AVX2 threshold (cmp $0x5f)",
+        "size": {
+          "words": 12,
+          "word_offset": 0
+        },
+        "seed": 303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w12-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w12 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 303): 96 B: libpopcnt's observed AVX2 threshold (cmp $0x5f)",
+        "size": {
+          "words": 12,
+          "word_offset": 0
+        },
+        "seed": 303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w12-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w12 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 303): 96 B: libpopcnt's observed AVX2 threshold (cmp $0x5f)",
+        "size": {
+          "words": 12,
+          "word_offset": 0
+        },
+        "seed": 303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w12-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w12 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 303): 96 B: libpopcnt's observed AVX2 threshold (cmp $0x5f)",
+        "size": {
+          "words": 12,
+          "word_offset": 0
+        },
+        "seed": 303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w60-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w60 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 304): 480 B, 15 whole vectors: Mula's carry-save loop does not engage and no byte tail remains",
+        "size": {
+          "words": 60,
+          "word_offset": 0
+        },
+        "seed": 304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w60-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w60 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 304): 480 B, 15 whole vectors: Mula's carry-save loop does not engage and no byte tail remains",
+        "size": {
+          "words": 60,
+          "word_offset": 0
+        },
+        "seed": 304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w60-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w60 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 304): 480 B, 15 whole vectors: Mula's carry-save loop does not engage and no byte tail remains",
+        "size": {
+          "words": 60,
+          "word_offset": 0
+        },
+        "seed": 304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w60-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w60 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 304): 480 B, 15 whole vectors: Mula's carry-save loop does not engage and no byte tail remains",
+        "size": {
+          "words": 60,
+          "word_offset": 0
+        },
+        "seed": 304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w60-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w60 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 304): 480 B, 15 whole vectors: Mula's carry-save loop does not engage and no byte tail remains",
+        "size": {
+          "words": 60,
+          "word_offset": 0
+        },
+        "seed": 304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w64 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 305): 512 B, 16 vectors: Mula's carry-save loop engages (trip mask $0xfffffffffffffff0)",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 305
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w64 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 305): 512 B, 16 vectors: Mula's carry-save loop engages (trip mask $0xfffffffffffffff0)",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 305
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w64 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 305): 512 B, 16 vectors: Mula's carry-save loop engages (trip mask $0xfffffffffffffff0)",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 305
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w64 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 305): 512 B, 16 vectors: Mula's carry-save loop engages (trip mask $0xfffffffffffffff0)",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 305
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w64 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 305): 512 B, 16 vectors: Mula's carry-save loop engages (trip mask $0xfffffffffffffff0)",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 305
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w128-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w128 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 306): 1 KiB: libpopcnt's observed Harley-Seal threshold (cmp $0x3ff)",
+        "size": {
+          "words": 128,
+          "word_offset": 0
+        },
+        "seed": 306
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w128-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w128 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 306): 1 KiB: libpopcnt's observed Harley-Seal threshold (cmp $0x3ff)",
+        "size": {
+          "words": 128,
+          "word_offset": 0
+        },
+        "seed": 306
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w128-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w128 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 306): 1 KiB: libpopcnt's observed Harley-Seal threshold (cmp $0x3ff)",
+        "size": {
+          "words": 128,
+          "word_offset": 0
+        },
+        "seed": 306
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w128-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w128 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 306): 1 KiB: libpopcnt's observed Harley-Seal threshold (cmp $0x3ff)",
+        "size": {
+          "words": 128,
+          "word_offset": 0
+        },
+        "seed": 306
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w128-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w128 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 306): 1 KiB: libpopcnt's observed Harley-Seal threshold (cmp $0x3ff)",
+        "size": {
+          "words": 128,
+          "word_offset": 0
+        },
+        "seed": 306
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB, L1-resident, vector aligned: the alignment control",
+        "size": {
+          "words": 256,
+          "word_offset": 0
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB, L1-resident, vector aligned: the alignment control",
+        "size": {
+          "words": 256,
+          "word_offset": 0
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB, L1-resident, vector aligned: the alignment control",
+        "size": {
+          "words": 256,
+          "word_offset": 0
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB, L1-resident, vector aligned: the alignment control",
+        "size": {
+          "words": 256,
+          "word_offset": 0
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB, L1-resident, vector aligned: the alignment control",
+        "size": {
+          "words": 256,
+          "word_offset": 0
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-off24-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256-off24 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB starting 24 bytes past a vector boundary; Mula's aligned loads cannot accept it",
+        "size": {
+          "words": 256,
+          "word_offset": 3
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-off24-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256-off24 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB starting 24 bytes past a vector boundary; Mula's aligned loads cannot accept it",
+        "size": {
+          "words": 256,
+          "word_offset": 3
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-off24-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256-off24 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB starting 24 bytes past a vector boundary; Mula's aligned loads cannot accept it",
+        "size": {
+          "words": 256,
+          "word_offset": 3
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w256-off24-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w256-off24 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 307): 2 KiB starting 24 bytes past a vector boundary; Mula's aligned loads cannot accept it",
+        "size": {
+          "words": 256,
+          "word_offset": 3
+        },
+        "seed": 307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allone-w64-ones (constant all_one words; the seed is unused): 512 B, every bit set",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 308
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allone-w64-ones (constant all_one words; the seed is unused): 512 B, every bit set",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 308
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allone-w64-ones (constant all_one words; the seed is unused): 512 B, every bit set",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 308
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allone-w64-ones (constant all_one words; the seed is unused): 512 B, every bit set",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 308
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-ones-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allone-w64-ones (constant all_one words; the seed is unused): 512 B, every bit set",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 308
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allzero-w64-zeros (constant all_zero words; the seed is unused): 512 B, every bit clear",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 309
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allzero-w64-zeros (constant all_zero words; the seed is unused): 512 B, every bit clear",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 309
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allzero-w64-zeros (constant all_zero words; the seed is unused): 512 B, every bit clear",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 309
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allzero-w64-zeros (constant all_zero words; the seed is unused): 512 B, every bit clear",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 309
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w64-zeros-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-allzero-w64-zeros (constant all_zero words; the seed is unused): 512 B, every bit clear",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 309
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w16384-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w16384 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 310): 128 KiB: L2-resident (512 KiB L2 per core)",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 310
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w16384-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w16384 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 310): 128 KiB: L2-resident (512 KiB L2 per core)",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 310
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w16384-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w16384 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 310): 128 KiB: L2-resident (512 KiB L2 per core)",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 310
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w16384-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w16384 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 310): 128 KiB: L2-resident (512 KiB L2 per core)",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 310
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w16384-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w16384 (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 310): 128 KiB: L2-resident (512 KiB L2 per core)",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 310
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-nibble-lut",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w1m-streaming (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 311): 8 MiB per bank, 64 MiB rotated over eight banks: twice the 32 MiB L3 of one CCD",
+        "size": {
+          "words": 1048576,
+          "word_offset": 0
+        },
+        "seed": 311
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-scalar-popcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w1m-streaming (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 311): 8 MiB per bank, 64 MiB rotated over eight banks: twice the 32 MiB L3 of one CCD",
+        "size": {
+          "words": 1048576,
+          "word_offset": 0
+        },
+        "seed": 311
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-compiler-count-ones",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w1m-streaming (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 311): 8 MiB per bank, 64 MiB rotated over eight banks: twice the 32 MiB L3 of one CCD",
+        "size": {
+          "words": 1048576,
+          "word_offset": 0
+        },
+        "seed": 311
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w1m-streaming (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 311): 8 MiB per bank, 64 MiB rotated over eight banks: twice the 32 MiB L3 of one CCD",
+        "size": {
+          "words": 1048576,
+          "word_offset": 0
+        },
+        "seed": 311
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w1m-streaming-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "popcount-random-w1m-streaming (words from SplitMix64 [Steele2014] as tuning-campaign-support 0.1.0 implements it in dev/tools/tuning-campaign-support/src/abtest.rs, seed 311): 8 MiB per bank, 64 MiB rotated over eight banks: twice the 32 MiB L3 of one CCD",
+        "size": {
+          "words": 1048576,
+          "word_offset": 0
+        },
+        "seed": 311
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

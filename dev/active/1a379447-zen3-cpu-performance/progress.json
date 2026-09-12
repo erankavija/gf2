@@ -47,14 +47,14 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "rework round 1 on w-04b85d10-r1 (claude-opus). Merged at f1a1c975 (cargo-ci passed), linked at 16cfcf35; both independent Terra xhigh reviews FAIL: A-F1 single-run profile shares/times without intervals support rankings; A-F2 seeded profile inputs lack RNG implementation/version; B-F1 m=14 BCH cells mislabelled as DVB-T2 normal frame (m=14 is the short frame) and no [Etsi2015] citation.",
+          "status": "rework round 1: in-session work done at 69a3480e (L1 exact POPCNT attribution, RNG provenance, frame relabel, intervals wired). Repeated profile rep-02..rep-09 queued for the 2026-09-12 window (pinned c7de48e9). After the window: commit reps and summaries, check findings against the generated rows, REQ-03/REQ-04 to MET, merge main, then reviews and gates. See reports/04b85d10-s9 in handoff-7.",
           "dispatch": {
-            "model": "claude-fable (native subagent)",
+            "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10-v3",
             "branch": "worktree-agent-04b85d10-v3",
             "base": "02c39ba6",
-            "attempt": 3,
-            "session": 7
+            "attempt": 4,
+            "session": 9
           },
           "merge_commit": "f1a1c975"
         },
@@ -63,14 +63,14 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "not dispatched in session 7: the invoker stopped new work before a slot freed. Protocol-v3 migration from old branch worktree-agent-6c6b09b1 remains; carry the 0x11B framing correction.",
+          "status": "v3 migration done up to the pilots at b2ac9e7c; three exploratory pilots queued for the 2026-09-12 window (pinned 7346b5e5). After the window: commit receipts, derive resolutions, freeze and queue confirmations (at most six confirmatory cells per family), merge main after the last run.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
-            "branch": "worktree-agent-6c6b09b1",
-            "base": "23aa0824 (main merged into every wave-2 branch 2026-09-08)",
-            "attempt": 2,
-            "session": 4
+            "branch": "worktree-agent-6c6b09b1-v3",
+            "base": "3ec7e22c",
+            "attempt": 3,
+            "session": 9
           }
         },
         {
@@ -110,7 +110,7 @@
           "short_id": "c7113c5a",
           "title": "Establish equivalent polynomial multiplication baselines",
           "classification": "research",
-          "status": "rework round 1 on w-c7113c5a (claude-opus). Merged 4edbadf1, linked 9aa6c8db; cargo-ci and doc-review pass; both independent reviews pass; code-review F1 (dot-product reduction probe reduces an already reduced value, REQ-03) and research-review F1 (tables.md cost/derived estimates without intervals) fail.",
+          "status": "done. Round 2 (lead SSOT finding) merged at aaac73ef with cargo-ci pass; two independent Terra xhigh reviews and code-review, doc-review, research-review pass on 1757b2a7 with zero findings; tables.md regenerates byte for byte. Closed at 19097475. Worktree free for reuse.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-c7113c5a-v3",
@@ -126,30 +126,32 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "in flight on w-26465e6c (claude-opus, session 7): protocol-v3 migration on .agents/worktrees/agent-26465e6c-v3 from main dda44c25.",
+          "status": "rework round 1 committed at 5cb229df (doc-review F1: launcher resume comment, findings passage) in worktree .agents/worktrees/agent-26465e6c-r1 on branch worktree-agent-26465e6c-v3. Earlier on cd6e69d1: cargo-ci, two independent reviews, code-review and research-review passed. Next: merge, cargo-ci, two independent reviews and three AI gates on one commit, close.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
-            "worktree": ".agents/worktrees/agent-26465e6c-v3",
+            "worktree": ".agents/worktrees/agent-26465e6c-r1",
             "branch": "worktree-agent-26465e6c-v3",
-            "base": "dda44c25",
-            "attempt": 3,
-            "session": 7
-          }
+            "base": "b1da85a6",
+            "attempt": 4,
+            "session": 9
+          },
+          "merge_commit": "85cd6415"
         },
         {
           "id": "6fb89a3c-f1a7-439d-a397-add1782afe2b",
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "in flight on w-6fb89a3c (claude-fable, session 7): protocol-v3 migration on a fresh worktree from main 02c39ba6; old session-4 branch worktree-agent-6fb89a3c ported byte-identically as history.",
+          "status": "rework round 1: in-session work done at f64cfa8e (gf2 arm warm pass, M4RI transpose kernel warm pass fixed under a new identity, findings withdrawal). Three exploratory re-measurements queued for the 2026-09-12 window (transpose pins f64cfa8e content, logical and BCH unchanged since 4204248d). After the window: commit receipts, extend summarize.py, write results, merge, then reviews and gates.",
           "dispatch": {
-            "model": "claude-fable (native subagent)",
+            "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6fb89a3c-v3",
             "branch": "worktree-agent-6fb89a3c-v3",
-            "base": "02c39ba6",
-            "attempt": 3,
-            "session": 7
-          }
+            "base": "1757b2a7",
+            "attempt": 4,
+            "session": 9
+          },
+          "merge_commit": "fbc88e61"
         },
         {
           "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
@@ -167,19 +169,86 @@
           },
           "merge_commit": "e36ad350",
           "note": "F14 biases toward declaring improvement and this receipt declined to, so the negative result holds a fortiori: the known defect works against the conclusion reached, not for it."
+        },
+        {
+          "id": "bdc507a3",
+          "short_id": "bdc507a3",
+          "title": "Accept resumed campaigns whose interrupted cell restarts",
+          "classification": "implementation",
+          "status": "in-session work complete at 8dbc6406 (w9-bdc507a3): REQ-01..04 met per worker; protocol v4 (cell-abandoned record, P-11 v4 rules, amendment-v4.md, schema v4); verdict-preservation.json shows identical verdicts and summaries for all 59 committed receipts between 3aa2920b and head. Not merged. Merging makes main's runner refuse new campaigns from v3 addenda: v3 families finish on their own worktrees, and a family's next campaign needs a v4 addendum. Crate suite 174/174, workspace clippy and fmt clean; full cargo-ci not run.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-c7113c5a-v3",
+            "branch": "worktree-agent-bdc507a3",
+            "base": "3aa2920b",
+            "attempt": 1,
+            "session": 9
+          }
+        },
+        {
+          "id": "428f2f6b",
+          "short_id": "428f2f6b",
+          "title": "Replace hand-copied numbers in closed survey reports with citations",
+          "classification": "documentation",
+          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
+        },
+        {
+          "id": "a387825e",
+          "short_id": "a387825e",
+          "title": "Close the host-lock leak into daemons started under the lock wrappers",
+          "classification": "implementation",
+          "status": "in-session work complete at 7cf03070 (w9-a387825e, worktree .agents/worktrees/agent-26465e6c-v3, branch worktree-agent-a387825e). REQ-01 reworded to lock level with invoker approval; REQ-01..03 met per worker (test dev/scripts/ccx1-bench-flock.test.sh section 3). Not yet merged: merge after the window, then cargo-ci, reviews, gates; afterwards update run-window.sh comments (lines 33-38, 49).",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-26465e6c-v3",
+            "branch": "worktree-agent-a387825e",
+            "base": "bf762c43",
+            "attempt": 1,
+            "session": 9
+          }
+        },
+        {
+          "id": "3e59cb9a",
+          "short_id": "3e59cb9a",
+          "title": "Repair the DVB-T2 arms warm pass and re-measure the interleaving family",
+          "classification": "research",
+          "status": "in-session work done at d23c0de1 (w9-3e59cb9a, worktree .worktrees-local/agent-eda07788-v3, branch worktree-agent-3e59cb9a). REQ-01 and REQ-02 met; REQ-03 reworded with invoker approval; exploratory re-measurement queued for the 2026-09-12 window (pinned fc527d62). After the window: commit receipt and ledger line 4, regenerate tables-v3.md, write outcomes, then merge, reviews and gates.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".worktrees-local/agent-eda07788-v3",
+            "branch": "worktree-agent-3e59cb9a",
+            "base": "cea30281",
+            "attempt": 1,
+            "session": 9
+          }
+        },
+        {
+          "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
+          "short_id": "3be770d5",
+          "title": "Profile the CPU LDPC throughput gap against compatible decoders",
+          "classification": "research",
+          "status": "in-session work done at 0e8a0a17: steady-state harness, three frozen pilot families, nine-session profile series, untimed replay and 28/28 arm validation, structural costs, allocation census, tables generator, freeze script, findings skeleton. Four window jobs queued for 2026-09-12 (pilots pinned cbacdf99, profile 3507fd4d). After the window: commit receipts and profile, freeze and queue the two matched confirmations, summarize, rank, write results.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-3be770d5",
+            "branch": "worktree-agent-3be770d5",
+            "base": "cd6e69d1",
+            "attempt": 1,
+            "session": 9
+          }
+        },
+        {
+          "id": "a203a23c",
+          "short_id": "a203a23c",
+          "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
+          "classification": "research",
+          "status": "pending (filed in session 9 from bdc507a3's verdict comparison; depends on bdc507a3)"
         }
       ]
     },
     {
       "wave_number": 3,
       "issues": [
-        {
-          "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
-          "short_id": "3be770d5",
-          "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-          "classification": "research",
-          "status": "pending"
-        },
         {
           "id": "53c5a8c0-ad93-4fdb-8319-aea18c3c257c",
           "short_id": "53c5a8c0",
@@ -312,6 +381,48 @@
       "type": "bug",
       "in_epic": false,
       "reason": "eda07788 found NR rate-matched rustdoc documents +inf filler LLRs while de-rate-matching writes 15.0; depends on eda07788"
+    },
+    {
+      "id": "bdc507a3",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "26465e6c showed that a mid-cell interruption makes the runner restart the cell and acceptance reject the stage under P-11 (cell started twice), contradicting campaign-resumability; feeds 1362381c"
+    },
+    {
+      "id": "428f2f6b",
+      "type": "task",
+      "in_epic": true,
+      "reason": "invoker SSOT directive: the closed survey reports of c077a88b, 1d0da41f and eda07788 hand-copy numbers from generated tables and receipts; feeds 1362381c"
+    },
+    {
+      "id": "a387825e",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "a cargo-ci gate run under ccx1-bench-flock.sh --full-host started an sccache server that inherited the CCX1 lock descriptors and held the exclusive lock host-wide after the run (23:24-23:32Z); feeds 1362381c"
+    },
+    {
+      "id": "3e59cb9a",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "lead cross-survey audit after the 6fb89a3c code-review F1: eda07788 DVB-T2 arms warm with black_box(&buffers[0]) only, violating the protocol warm definition; feeds 1362381c and c04dd4ac"
+    },
+    {
+      "id": "835f34f0",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "6c6b09b1 found that Gf2mField::gf256() rustdoc names the AES polynomial 0x11B while the code builds 0x11D, and primitive_polys.rs calls the five-term 0x11D a trinomial; depends on 6c6b09b1"
+    },
+    {
+      "id": "a203a23c",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "bdc507a3 verdict comparison: 14 committed receipts are rejected on a fresh checkout (missing gitignored snapshot Cargo.lock files; 1d0da41f v1 dispatch confirmation P-23) although their committed summaries say accepted; depends on bdc507a3, feeds 1362381c"
+    },
+    {
+      "id": "39cbde20",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "3be770d5 source evidence: the AVX2 min-sum reduction (gf2-kernels-simd llr.rs) counts -0.0 as negative in vector lanes and positive in the scalar tail; depends on 3be770d5"
     }
   ],
   "escalations": [
@@ -386,13 +497,87 @@
       "status": "resolved",
       "raised_at": "2026-09-10",
       "resolution": "Invoker approved; applied in dda44c25."
+    },
+    {
+      "category": "scheduling (benchmark window)",
+      "issue": "none",
+      "question": "when to run the next benchmark window",
+      "recommendation": "tonight 04:00 Europe/Helsinki",
+      "status": "resolved",
+      "raised_at": "2026-09-11T16:30Z",
+      "resolution": "Invoker chose 2026-09-12 04:00 Europe/Helsinki; transient timer gf2-bench-window-20260912 armed; queue cutoff 03:40."
+    },
+    {
+      "category": "shared infrastructure (policy item 8)",
+      "issue": "a387825e",
+      "question": "implement the lock-descriptor leak fix in scripts/cargo-budget.sh and dev/scripts/ccx1-bench-flock.sh",
+      "recommendation": "authorize",
+      "status": "resolved",
+      "raised_at": "2026-09-11T16:30Z",
+      "resolution": "Invoker authorized implementation this session."
+    },
+    {
+      "category": "process deviation",
+      "issue": "26465e6c",
+      "question": "keep AND-popcount pilot-r2 and confirmation receipts measured 23:18-23:24Z after the no-timed-runs order the worker had not yet received",
+      "recommendation": "keep",
+      "status": "resolved",
+      "raised_at": "2026-09-11T16:30Z",
+      "resolution": "Invoker kept the evidence."
+    },
+    {
+      "category": "issue scope change (criterion wording)",
+      "issue": "a387825e",
+      "question": "REQ-01 descriptor-level wording conflicts with protocol P-07 (runners must inherit the held CCX1 lock descriptor)",
+      "recommendation": "lock-level wording",
+      "status": "resolved",
+      "raised_at": "2026-09-11T17:20Z",
+      "resolution": "Invoker approved: REQ-01 now reads \"holds the CCX1 lock, or any turnstile descriptor, after the wrapped command exits\"; applied in session 9."
+    },
+    {
+      "category": "issue scope change (criterion wording)",
+      "issue": "3e59cb9a",
+      "question": "REQ-03 \"counted in its family ledger as a further attempt\" versus an exploratory re-measurement (attempt 3 cannot pass P-20)",
+      "recommendation": "exploratory, reword",
+      "status": "resolved",
+      "raised_at": "2026-09-11T17:30Z",
+      "resolution": "Invoker approved: REQ-03 now reads \"recorded in its family ledger\"; applied in session 9."
+    },
+    {
+      "category": "scheduling (benchmark window)",
+      "issue": "none",
+      "question": "when to run the next benchmark window, needed by 6c6b09b1 (three re-frozen pilots) and 3be770d5 (two matched confirmations)",
+      "recommendation": "tonight 2026-09-13 04:00 Europe/Helsinki",
+      "status": "resolved",
+      "raised_at": "2026-09-12T06:00Z",
+      "resolution": "Invoker deferred it: the window runs after this session ends, at a time the invoker sets. Session 10 therefore runs no timed work; workers prepare, freeze and queue only."
+    },
+    {
+      "category": "shared infrastructure (policy item 8)",
+      "issue": "bdc507a3",
+      "question": "merge protocol v4 now, or hold it until the remaining v3 families finish their campaigns",
+      "recommendation": "merge now; 6c6b09b1 must re-freeze after its arm fix and 3be770d5's confirmations are new addenda either way, so the migration cost is near zero and a203a23c unblocks",
+      "status": "resolved",
+      "raised_at": "2026-09-12T06:00Z",
+      "resolution": "Invoker chose merge now. v3 families move their next campaigns to v4 addenda; completed v3 receipts stay v3."
+    },
+    {
+      "category": "issue scope / evidence policy",
+      "issue": "a203a23c (and the 26465e6c v1 pilot)",
+      "question": "may the lead restore byte-identical missing Cargo.lock files into committed receipt snapshots, which the harness refuses as audit tampering",
+      "recommendation": "restore where the digest matches, record the discrepancy otherwise",
+      "status": "resolved",
+      "raised_at": "2026-09-12T06:00Z",
+      "resolution": "Invoker: 'We cannot get stuck with git hashes and such for provenance. We do HPC and we trust the caller in general. Provenance is informative.' Restoration authorized; a missing gitignored snapshot file is a bug to fix by committing the file, not a reason to invalidate a receipt. Does not relax the measurement contract, the statistical rules, the single-source-of-truth rule, or citation requirements. The 26465e6c v1 popcount pilot is left to a203a23c, which already lists it, rather than reopening a nearly-closed 26465e6c."
     }
   ],
   "rework_counts": {
     "f547c394": 2,
     "1d0da41f": 1,
     "04b85d10": 1,
-    "c7113c5a": 1
+    "c7113c5a": 2,
+    "6fb89a3c": 1,
+    "26465e6c": 1
   },
   "surfaced_pitfalls": [
     {
@@ -432,7 +617,7 @@
     },
     {
       "issue": "f547c394",
-      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set — declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property — is the rework's design target.",
+      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set \u2014 declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property \u2014 is the rework's design target.",
       "origin": "issue-impact",
       "disposition": "all recorded in reviews/f547c394-r3.md; the rework worker reads that file as part of its mandatory audit step",
       "criterion_named_by": "REQ-02, REQ-03, REQ-04, REQ-06 of f547c394"
@@ -471,6 +656,48 @@
       "origin": "issue-impact",
       "disposition": "added to 04b85d10 rework round 1 as lead finding L1",
       "criterion_named_by": "04b85d10 REQ-03"
+    },
+    {
+      "issue": "6fb89a3c",
+      "subject": "cross-survey warm-pass audit: c077a88b, 1d0da41f, 04b85d10, 26465e6c, c7113c5a and the eda07788 NR arms run the timed body once before calibration; the 6fb89a3c gf2 arms skip it (code-review F1) and the eda07788 DVB-T2 arms only black_box a reference",
+      "origin": "issue-impact",
+      "disposition": "6fb89a3c rework round 1; eda07788 filed as 3e59cb9a",
+      "criterion_named_by": "REQ-01 of both issues (measurement contract); epic REQ-01"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "an sccache server spawned by a locked cargo run inherits the CCX1 lock descriptors and holds the lock after the run; the lead stopped it (23:32Z) and hardened the window runner to start a lock-free, non-idling server",
+      "origin": "pre-existing shared tooling",
+      "disposition": "filed as a387825e",
+      "criterion_named_by": "none directly; blocks benchmark windows"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "stopping a native worker's background or monitor tasks kills every process its tool calls spawned, setsid or not (26465e6c, 04b85d10 and 6fb89a3c campaign launchers died at the moments the session-8 lead stopped their tasks)",
+      "origin": "harness behaviour",
+      "disposition": "lead never stops worker tasks while campaigns run; timed runs happen only in the window runner, outside worker processes",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "lead messages reach a native worker only between its tool calls; workers blocked in 5-8 minute sleep loops received the session-8 timed-run orders 20-50 minutes late",
+      "origin": "harness behaviour",
+      "disposition": "session-9 briefs require polling in calls of at most about two minutes",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "reusing a worktree directory for a new issue before the previous issue closes: 26465e6c failed doc-review after its directory had been switched to a387825e, leaving its rework without a worktree",
+      "origin": "process (session 9)",
+      "disposition": "reuse a worktree only after its issue is done; handoff-7 trap",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "26465e6c",
+      "subject": "survey launchers promise a resume that never repeats a cell, which is false for a mid-cell interruption under protocol v3 (P-11); doc-review F1 on 26465e6c; other surveys' launchers may carry the same sentence",
+      "origin": "issue-impact",
+      "disposition": "26465e6c rework round 1; bdc507a3 changes the rule",
+      "criterion_named_by": "26465e6c REQ-01"
     }
   ],
   "notes": [
@@ -493,13 +720,13 @@
     "Session 4 lead direction on f547c394 F12: the rework materially amends P-17, P-18, P-19 and P-22, so the protocol becomes version 2. Version-1 receipts stay valid as version-1 evidence and acceptance must refuse to evaluate a receipt under a version it was not pinned to.",
     "Session 4: all eight wave-2 branches merged current main and were lead-preserved first. c7113c5a's confirmatory receipt and 26465e6c's popcount pilot receipt were sitting uncommitted in their worktrees and are now on their branches.",
     "Session 4 confirmed empirically: codex --add-dir <repo>/.git does NOT make a linked worktree's git directory writable; the sandbox mounts it read-only regardless. Codex workers keep a COMMIT-PLAN.md and the lead commits for them.",
-    "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations — but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
+    "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations \u2014 but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
     "Session 4: the CCX1 mutex starved every exclusive waiter because cargo-budget.sh took the shared side with flock -s and a pending flock -x does not block a new flock -s on Linux. Fixed at d088c284 with a turnstile both sides pass through, authorized by the invoker as a shared-infrastructure change. The fix binds only checkouts that have it, so the lead merged main into all nine live worktrees and then held the turnstile to drain the six runners launched under the old wrapper.",
-    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record — c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
+    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record \u2014 c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
     "Session 4: the lead commissioned two stood-down duplicate workers as read-only auditors rather than idling them. One verified 106 citations across all five survey findings documents and nine external checkouts; the other audited the shared crate for the defect class the first F13 instance revealed. Between them they produced F13-F19 and two false claims that would have reached receipts. Neither wrote a byte in any worktree.",
     "Session 4 convention adopted: a survey records code claims in a source-evidence.json ledger (project, commit, path, line, the verbatim text of that line, and why) rather than putting line numbers in prose. c077a88b did this and audited clean on 37 citations in seconds; the four prose-citation surveys took minutes each and two carried claims their citations did not support.",
-    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted — the F3 repair it needs to emit a decoder receipt at all — in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
-    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots — re-read each branch before acting.",
+    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted \u2014 the F3 repair it needs to emit a decoder receipt at all \u2014 in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
+    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots \u2014 re-read each branch before acting.",
     "Session 4 sequencing rule still in force: four surveys were told to hold their confirmatory campaigns until the lead says protocol v2 has landed. v2 is the critical path.",
     "Session 4 open question for the invoker: whether the 5G NR whole-consumer encoder cell eda07788 proposed becomes a new survey family in this epic, a tracked follow-up outside it, or is dropped. Lead recommends a tracked follow-up outside the epic.",
     "Session 6 halted on the invoker request after stopping all three subagents and releasing the c077a88b, 1d0da41f and eda07788 leases. c077a88b is merged but open; 1d0da41f is complete on an unmerged branch; eda07788 completed all six frozen confirmation cells while the interrupt was being delivered and preserves the generated result uncommitted. Exact state and resume order are in handoff-5.md.",
@@ -516,7 +743,19 @@
     "Invoker policy 2026-09-11 (session 8): benchmark runs during a working session may last only about as long as cargo-ci; longer runs need separate time windows outside the session. Lead calibration: cold cargo-ci passes take about 400-500 s (max 807 s), so an in-session timed launch may hold the CCX1 lock for at most about 8 minutes in total. Longer campaigns are prepared and frozen in-session, stopped cleanly at a session boundary if already running (they stay resumable under the same identity), and queued as window jobs. All four running workers were told; future briefs carry the rule.",
     "Session 8: invoker scheduled the first benchmark window overnight at 04:00 Europe/Helsinki. systemd user timer gf2-bench-window-20260911 (transient, linger enabled) runs dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh, which executes queue.tsv jobs sequentially from their worker worktrees; runtime log and done markers in .agents/bench-window/ (locally excluded from git). The unit environment was smoke-tested (cargo 1.97 default, cargo +1.95.0, python3, flock). Jobs must be committed to queue.tsv before 04:00.",
     "Session 8, ~22:55Z: on the invoker order to stop the long run now, the lead stopped 6fb89a3c run-confirmations-s8.sh (transpose confirmation complete; logical confirmation stopped after 3 sessions before its fourth acquired the lock; BCH never started) and the 04b85d10 repeated profile (9 repetitions x ~5 min in one launch; rep-01 complete, rep-02 interrupted and re-run whole on resume). Both are deferred to the 04:00 window. The 26465e6c AND-popcount pilot, launched without a slot, was stopped after 1 of 6 cells and, at about 1.5 minutes total, given the free slot to resume. A one-timed-run-at-a-time slot rule (ask the lead first) now applies to all workers.",
-    "Invoker instruction 2026-09-11 ~23:00Z (session 8): include ALL benchmarking in the 04:00 window; no timed runs of any kind during a working session. Workers prepare, freeze and commit each run and send the lead its queue line; steps that need a run result wait for the next session unless fully mechanical. The instruction also says to proceed at full speed with the remaining work. All four workers were told; future briefs carry the rule. The 26465e6c AND-popcount pilot slot granted minutes earlier was revoked before it resumed."
+    "Invoker instruction 2026-09-11 ~23:00Z (session 8): include ALL benchmarking in the 04:00 window; no timed runs of any kind during a working session. Workers prepare, freeze and commit each run and send the lead its queue line; steps that need a run result wait for the next session unless fully mechanical. The instruction also says to proceed at full speed with the remaining work. All four workers were told; future briefs carry the rule. The 26465e6c AND-popcount pilot slot granted minutes earlier was revoked before it resumed.",
+    "Invoker directive 2026-09-11 (session 8): copies that go stale are the worst; SSOT applies (@/inv/single-source-prose). Survey reports carry the argument and cite each number at its authoritative location (generated tables file section and cell, or receipt field); numbers appear only in generated artifacts. Applied to all open surveys (6fb89a3c, 26465e6c, 04b85d10, 6c6b09b1 and the c7113c5a rework) and filed as 428f2f6b for the closed surveys c077a88b, 1d0da41f and eda07788.",
+    "Invoker instruction 2026-09-11 (session 8): write the session handoff once the current workers finish, each issue either complete or blocked only by a pending 04:00-window run. No new dispatches beyond the current workers (6c6b09b1 is the last).",
+    "Session 8 ended at a provider session limit at about 23:50Z on 2026-09-10 (lead and all four workers) without a handoff; the 04:00 window ran at 01:00Z with an empty queue. Session 9 reconstructed state from branches and the session-8 transcripts under ~/.claude/projects/-home-vkaskivuo-Projects-gf2/4dd2dc73-68da-4918-ba03-2653c6d62e7b/subagents/.",
+    "Invocation 2026-09-11 (session 9): drive epic 1a379447; subagent model by task difficulty, no Fable; parallel worktrees, four workers at a time; prefer worktree reuse over proliferation.",
+    "Session 9: bdc507a3, a387825e, 428f2f6b and 3e59cb9a have no sibling dependencies and moved from wave 3 to wave 2 (reordering, autonomous per escalation policy).",
+    "Session 9: benchmark window 2026-09-12 04:00 Europe/Helsinki armed as transient user timer gf2-bench-window-20260912 running bench-window/run-window.sh; queue cutoff 03:40.",
+    "Session 9: the session-8 workers still appear as idle teammates (w8-*) in ListAgents; never message them, since a message revives them against current worktrees.",
+    "Session 9 end (invoker: \"time for handoff\"): window queue committed with eight jobs (6fb89a3c x3, 04b85d10, 6c6b09b1 x3, 3e59cb9a); bdc507a3 and 3be770d5 told to commit and report; 26465e6c rework deferred.",
+    "2026-09-12 session 10 opened. Window of 2026-09-12 01:00-03:06Z ran 9/12 jobs rc=0; the three 6c6b09b1 pilots failed in 13 ms each.",
+    "Lead diagnosis of the 6c6b09b1 window failure: arm-common/src/lib.rs:31 declares Request.role as protocol CellRole (exploratory|confirmatory|holdout) while benchmark-ab-runner sends the A/B pair position \"baseline\"/\"candidate\" (bin/benchmark-ab-runner.rs:58-74, :651-676). Every request failed to decode. The session-9 report had already flagged that no arm had ever run through the runner.",
+    "New standing worker rule (session 10): an untimed end-to-end smoke through the real benchmark-ab-runner, reaching a result line from every arm the plan names, is mandatory before any window-job line is queued.",
+    "Pruned six stale worktrees (02b8137c, 3f7edef1, 5ee83cd3, 97410c80, b1bd75ca, e1e0e7ff), all clean and fully merged; branches kept. Free disk 38G -> 74G. agent-02b8137c-run kept: 22 untracked validation-journal files belonging to another epic."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -525,6 +764,7 @@
     "handoff-3.md",
     "handoff-4.md",
     "handoff-5.md",
-    "handoff-6.md"
+    "handoff-6.md",
+    "handoff-7.md"
   ]
 }

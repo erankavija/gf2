@@ -152,26 +152,29 @@ def overview(rows):
 
 def cells_table(directory, receipt, summary):
     verdicts = {cell["cell_id"]: cell for cell in summary["cells"]}
-    lines = [f"### `{directory}`", "",
-             f"Family `{summary['family']['family_id']}`, campaign `{summary['campaign_id']}`. "
-             "gf2 is the baseline and gf2x the candidate: a speedup above 1 means gf2x is faster. Per-arm "
+    lines = [f"### Cells: `{directory}`", "",
+             f"Family `{summary['family']['family_id']}`, campaign `{summary['campaign_id']}`. The speedup is "
+             "the baseline arm's median time over the candidate's, so above 1 the candidate is faster. Per-arm "
              f"medians carry {CONFIDENCE:.0%} bootstrap intervals over the cell's pairs.", "",
              "`Flagged` is the acceptance tool's count under the receipt's protocol version; `Per-execution` "
              "recounts the raw windows under the protocol-v3 rule.", "",
-             "| Cell | Pairs | gf2 median | gf2x median | Speedup | Interval | gf2 faster by | Decision | Outcome | Flagged | Per-execution | gf2 path |",
-             "|---|---:|---|---|---:|---|---:|---|---|---:|---:|---|"]
+             "| Cell | Pairs | Baseline | Candidate | Baseline median | Candidate median | Speedup | Interval | Baseline faster by | Decision | Outcome | Flagged | Per-execution | Baseline path |",
+             "|---|---:|---|---|---|---|---:|---|---:|---|---|---:|---:|---|"]
     for cell in receipt["cells"]:
         verdict = verdicts[cell["cell_id"]]
         estimate_interval = verdict.get("interval")
+        arms = f"`{cell['baseline_arm']}` | `{cell['candidate_arm']}`"
         if not cell["pairs"] or estimate_interval is None:
-            lines.append(f"| `{cell['cell_id']}` | 0 | - | - | - | - | - | - | {verdict['outcome']} | - | - | {cell.get('unavailable_reason') or '-'} |")
+            lines.append(f"| `{cell['cell_id']}` | 0 | {arms} | - | - | - | - | - | - | {verdict['outcome']} | - | - | "
+                         f"{cell.get('unavailable_reason') or '-'} |")
             continue
         estimate = estimate_interval["estimate"]
         faster = (f"{1 / estimate:.4g} [{1 / estimate_interval['upper']:.4g}, {1 / estimate_interval['lower']:.4g}]"
                   if estimate < 1 else "-")
         flagged, total = execution_flags(cell)
         lines.append(
-            f"| `{cell['cell_id']}` | {len(cell['pairs'])} | {ns_interval(arm_estimate(directory, cell, 'baseline'))} | "
+            f"| `{cell['cell_id']}` | {len(cell['pairs'])} | {arms} | "
+            f"{ns_interval(arm_estimate(directory, cell, 'baseline'))} | "
             f"{ns_interval(arm_estimate(directory, cell, 'candidate'))} | {estimate:.4g} | "
             f"[{estimate_interval['lower']:.4g}, {estimate_interval['upper']:.4g}] "
             f"at {estimate_interval['confidence']:.5f} | {faster} | {verdict.get('decision') or '-'} | {verdict['outcome']} | "
@@ -207,7 +210,7 @@ def conversion_semantics():
 
 
 def conversion_table(directory, receipt):
-    lines = [f"### `{directory}`", "",
+    lines = [f"### Costs: `{directory}`", "",
              "| Cell | Arm | Executions | setup | pack | batch fill | dispatch | unpack |",
              "|---|---|---:|---|---|---|---|---|"]
     for cell in receipt["cells"]:
@@ -231,7 +234,7 @@ def conversion_table(directory, receipt):
 
 
 def per_product_table(directory, receipt):
-    lines = [f"### Cost per schoolbook word product: `{directory}`", "",
+    lines = [f"## Cost per schoolbook word product: `{directory}`", "",
              "Each arm's median call divided by the $N^2$ word products the schoolbook definition performs per "
              "operation, times `inner` and the worker count. For gf2x this is a normalised rate, because its "
              "recursion avoids most of those products.", "",
@@ -276,28 +279,33 @@ def estimates_table(directory, receipt):
 
     # A single-cell row reuses that arm's median interval, scaled.
     scaled = [
-        ("gf2 sequential-PCLMULQDQ word product in the raw batch, unpack included", batch, "baseline",
+        ("raw-batch-word-product", "gf2 sequential-PCLMULQDQ word product in the raw batch, unpack included",
+         batch, "baseline", cases[batch]["count"]),
+        ("ymm4-word-product", "gf2 YMM 4-limb kernel per schoolbook word product", w4, "baseline", 16),
+        ("scalar-word-product-256w", "gf2 scalar schoolbook word product at 256 words", w256, "baseline",
+         256 ** 2),
+        ("scalar-word-product-2048w", "gf2 scalar schoolbook word product at 2048 words", w2048, "baseline",
+         2048 ** 2),
+        ("gf2x-one-word-call", "gf2x one-word gf2x_mul_r call in the raw-batch arm", batch, "candidate",
          cases[batch]["count"]),
-        ("gf2 YMM 4-limb kernel per schoolbook word product", w4, "baseline", 16),
-        ("gf2 scalar schoolbook word product at 256 words", w256, "baseline", 256 ** 2),
-        ("gf2 scalar schoolbook word product at 2048 words", w2048, "baseline", 2048 ** 2),
-        ("gf2x one-word gf2x_mul_r call in the raw-batch arm", batch, "candidate", cases[batch]["count"]),
-        ("gf2x four-word gf2x_mul_r call", w4, "candidate", 1),
+        ("gf2x-four-word-call", "gf2x four-word gf2x_mul_r call", w4, "candidate", 1),
     ]
     by_id = {cell["cell_id"]: cell for cell in receipt["cells"]}
     rows = [
-        ("instruction factor: scalar word product at 256 words over the raw-batch word product", [w256, batch],
+        ("instruction-factor-256w",
+         "instruction factor: scalar word product at 256 words over the raw-batch word product", [w256, batch],
          lambda g: scalar(g, w256) / hardware(g)),
-        ("256-word gap divided by that instruction factor", [w256, batch],
+        ("residual-gap-256w", "256-word gap divided by that instruction factor", [w256, batch],
          lambda g: gf2(g, w256) / gf2x(g, w256) / (scalar(g, w256) / hardware(g))),
-        ("2048-word gap divided by the 2048-word instruction factor", [w2048, batch],
+        ("residual-gap-2048w", "2048-word gap divided by the 2048-word instruction factor", [w2048, batch],
          lambda g: gf2(g, w2048) / gf2x(g, w2048) / (scalar(g, w2048) / hardware(g))),
-        ("gf2 public API over dispatched kernel at 4 words", [public, w4],
+        ("public-api-over-dispatched-4w", "gf2 public API over dispatched kernel at 4 words", [public, w4],
          lambda g: gf2(g, public) / gf2(g, w4)),
     ]
     for words, name in ((4, w4), (9, w9)):
         for side, arm in (("baseline", "gf2"), ("candidate", "gf2x")):
-            rows.append((f"{words}-word {arm}: separated reduction over unreduced product plus reduction", [name],
+            rows.append((f"reduction-share-{words}w-{arm}",
+                         f"{words}-word {arm}: separated reduction over unreduced product plus reduction", [name],
                          lambda g, name=name, side=side: conversion_median(g[name], side, "unpack_ns")
                          / (arm_median(g[name], side) + conversion_median(g[name], side, "unpack_ns"))))
     for name in ("poly-mul-256w-6core", "poly-mul-256w-12core", "poly-mul-256w-24smt"):
@@ -306,19 +314,20 @@ def estimates_table(directory, receipt):
         workers = cells[name][0]["baseline"]["workers_observed"]
         scale = cases[name]["inner"] * workers
         for side, arm in (("baseline", "gf2"), ("candidate", "gf2x")):
-            rows.append((f"{workers}-worker aggregate throughput over one core, {arm}", [w256, name],
+            rows.append((f"throughput-{workers}-workers-{arm}",
+                         f"{workers}-worker aggregate throughput over one core, {arm}", [w256, name],
                          lambda g, name=name, side=side, scale=scale:
                          arm_median(g[w256], side) * scale / arm_median(g[name], side)))
-    lines = [f"### Derived estimates: `{directory}`", "",
+    lines = [f"## Derived estimates: `{directory}`", "",
              "Quotients of per-arm medians from the named cells of this receipt, 24 pairs each; the interval "
              "resamples every named cell.", "",
-             "| Quantity | Cells | Value [95% interval] |", "|---|---|---|"]
-    for label, name, side, divisor in scaled:
+             "| Id | Quantity | Cells | Value [95% interval] |", "|---|---|---|---|"]
+    for row_id, label, name, side, divisor in scaled:
         estimate = tuple(value / divisor for value in arm_estimate(directory, by_id[name], side))
-        lines.append(f"| {label} | `{name}` | {ns_interval(estimate)} |")
-    for label, names, statistic in rows:
+        lines.append(f"| `{row_id}` | {label} | `{name}` | {ns_interval(estimate)} |")
+    for row_id, label, names, statistic in rows:
         estimate = bootstrap(f"{directory}:{label}", {name: cells[name] for name in names}, statistic)
-        lines.append(f"| {label} | {', '.join(f'`{name}`' for name in names)} | {interval(estimate)} |")
+        lines.append(f"| `{row_id}` | {label} | {', '.join(f'`{name}`' for name in names)} | {interval(estimate)} |")
     return lines
 
 
@@ -361,12 +370,12 @@ def diagnostic_table(directory, rows):
                              lambda groups, probe=probe: pooled(groups, probe))
         count = sum(len(process) for process in per_reduction[probe])
         lines.append(f"| `{probe}` | {text} | {count} | {interval(estimate, 5)} |")
-    lines += ["", "| Share of the timed dot-product call | Value [95% interval] |", "|---|---|"]
+    lines += ["", "| Id | Share of the timed dot-product call | Value [95% interval] |", "|---|---|---|"]
     for probe, side, arm in (("consumer", "baseline", "gf2"), ("composed", "candidate", "gf2x")):
         estimate = bootstrap(f"{directory}:{probe}:share", {probe: per_reduction[probe], "cell": dot["pairs"]},
                              lambda groups, probe=probe, side=side:
                              pooled(groups, probe) / arm_median(groups["cell"], side))
-        lines.append(f"| `{probe}` reduction over the {arm} arm's median call in "
+        lines.append(f"| `{probe}-share` | `{probe}` reduction over the {arm} arm's median call in "
                      f"`internal-gf2m-dot-1024-1core` | {interval(estimate)} |")
     return lines
 
@@ -386,8 +395,8 @@ def ladder_table(rows):
              "Each leg is its own cell with its own pairs; conservative and tuned come from the "
              "host-targeting confirmation, native from the native-family confirmation. `Over native` divides "
              "the leg's per-arm median by the native leg's, resampling both cells.", "",
-             "| Size | Level | gf2 median | gf2x median | Speedup | Interval | Outcome | gf2 over native | gf2x over native |",
-             "|---|---|---|---|---:|---|---|---|---|"]
+             "| Size | Level | Cell | gf2 median | gf2x median | Speedup | Interval | Outcome | gf2 over native | gf2x over native |",
+             "|---|---|---|---|---|---:|---|---|---|---|"]
     legs = [("conservative", targeting, "poly-mul-{w}w-conservative-1core"),
             ("tuned", targeting, "poly-mul-{w}w-tuned-1core"),
             ("native", native, "poly-mul-{w}w-1core")]
@@ -405,7 +414,7 @@ def ladder_table(rows):
                                              lambda g, side=side: arm_median(g["leg"], side)
                                              / arm_median(g["native"], side)))
                           for side in ("baseline", "candidate")]
-            lines.append(f"| {words} words | {level} | {ns_interval(arm_estimate(directory, cell, 'baseline'))} | "
+            lines.append(f"| {words} words | {level} | `{cell_id}` | {ns_interval(arm_estimate(directory, cell, 'baseline'))} | "
                          f"{ns_interval(arm_estimate(directory, cell, 'candidate'))} | {estimate_interval['estimate']:.4g} | "
                          f"[{estimate_interval['lower']:.4g}, {estimate_interval['upper']:.4g}] at "
                          f"{estimate_interval['confidence']:.5f} | {verdict['outcome']} | {ratios[0]} | {ratios[1]} |")
