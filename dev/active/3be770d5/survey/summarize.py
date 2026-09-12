@@ -272,7 +272,8 @@ def levers(lines):
                 count = samples(case, lever["removed"])
                 low, high = wilson_interval(count, total)
                 row["figures"][case] = {"samples": count, "total": total, "share": count / total,
-                                        "lower": low, "upper": high, "speedup_at_least": 1 / (1 - low)}
+                                        "lower": low, "upper": high,
+                                        "amdahl_ceiling_from_lower": 1 / (1 - low)}
             row["rank_key"] = min(row["figures"][case]["lower"] for case in cases)
             ranked.append(row)
         else:
@@ -291,13 +292,21 @@ def levers(lines):
     lines += ["## Lever ranking", "",
               f"Source: `dev/active/3be770d5/survey/levers.json` and `{spec['profile']}/profile-summary.json`. "
               "A lever's removed share is the pooled samples of the categories it removes over the pooled "
-              "samples of the case, with a Wilson 95% interval; the rule ranks by the smaller of the two "
-              "codes' lower bounds, and predicts a single-worker speedup of at least 1/(1 - lower). A later "
-              "confirmed speedup whose upper bound falls below that value refutes the attribution.", ""]
+              "samples of the case, with a Wilson 95% interval. That share and its interval are the measured "
+              "evidence, and the rule ranks by the smaller of the two codes' lower bounds.", "",
+              "The Amdahl ceiling beside each share is an **estimate**, not a predicted result: it is "
+              "1/(1 - lower), the single-worker speedup that would follow if the removed categories vanished "
+              "at no replacement cost and nothing else changed. A real change pays for its replacement work "
+              "and shifts what remains, so a measured speedup below the ceiling refutes nothing.", "",
+              "An attribution is refuted by the profile rather than by the clock. After the change the same "
+              "record cases are sampled again and the removed categories pooled again: the attribution holds "
+              "when the post-change share's Wilson upper bound lies below the pre-change share's Wilson lower "
+              "bound, and is refuted when it does not. Throughput is the separate question, decided by a "
+              "matched confirmation family under the protocol, against no predicted lower bound.", ""]
     header = "| Rank | Lever | Removed categories |"
     divider = "|---:|---|---|"
     for case in cases:
-        header += f" {case} share [Wilson 95%] | {case} speedup at least |"
+        header += f" {case} share [Wilson 95%] | {case} Amdahl ceiling (estimate) |"
         divider += "---|---:|"
     lines += [header, divider]
     for index, row in enumerate(ranked, start=1):
@@ -306,7 +315,7 @@ def levers(lines):
             figure = row["figures"][case]
             line += (f" {100 * figure['share']:.2f}% ({figure['samples']}/{figure['total']}) "
                      f"[{100 * figure['lower']:.2f}%, {100 * figure['upper']:.2f}%] |"
-                     f" {figure['speedup_at_least']:.3f} |")
+                     f" {figure['amdahl_ceiling_from_lower']:.3f} |")
         lines.append(line)
     lines += ["", "Levers no category isolates carry a labelled estimate and take no rank:", "",
               "| Lever | Basis | Figure |", "|---|---|---|"]
