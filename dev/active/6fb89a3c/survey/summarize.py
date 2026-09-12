@@ -242,7 +242,7 @@ def render(directory: pathlib.Path, family: str) -> list[str]:
     return lines
 
 
-def corrected_rows(family: str, family_id: str) -> list[str]:
+def corrected_rows(family: str, family_id: str, resolution: float | None) -> list[str]:
     """One row per re-measured cell, beside the withdrawn campaign that measured the same cell."""
     withdrawn = [(directory, json.loads((directory / "acceptance-summary.json").read_text()))
                  for directory in campaign_dirs(family, "confirmation") + campaign_dirs(family, "pilot")]
@@ -255,12 +255,14 @@ def corrected_rows(family: str, family_id: str) -> list[str]:
                            if any(c["cell_id"] == cell["cell_id"] for c in earlier["cells"])), None)
             if source is None:
                 rows.append(f"| `{family_id}` | `{cell['cell_id']}` | none | - | - | {cell['decision']} | "
-                            f"{speedup(cell)} | new cell | new cell |")
+                            f"{speedup(cell)} | - | - | new cell | new cell |")
                 continue
             reference, earlier_cell = source
+            shift = cell["interval"]["estimate"] / earlier_cell["interval"]["estimate"] - 1.0
             rows.append(
                 f"| `{family_id}` | `{cell['cell_id']}` | `{reference.name}` | {earlier_cell['decision']} | "
-                f"{speedup(earlier_cell)} | {cell['decision']} | {speedup(cell)} | "
+                f"{speedup(earlier_cell)} | {cell['decision']} | {speedup(cell)} | {shift:+.2%} | "
+                f"{'-' if resolution is None else 'yes' if abs(shift) < resolution else 'no'} | "
                 f"{'unchanged' if earlier_cell['decision'] == cell['decision'] else 'changed'} | "
                 f"{'unchanged' if leading_arm(earlier_cell) == leading_arm(cell) else 'changed'} |")
     return rows
@@ -302,7 +304,7 @@ def overview() -> list[str]:
                 again = remeasure_arms.get(arm, {}).get("executable_sha256")
                 arms.append(f"| `{fam['family_id']}` | {arm} | `{before}` | `{after}` | {'yes' if before == after else 'no'} | "
                             f"{f'`{again}`' if again else '-'} | {'-' if again is None else 'yes' if again == after else 'no'} |")
-            corrected += corrected_rows(family, fam["family_id"])
+            corrected += corrected_rows(family, fam["family_id"], effect["measurement_resolution"])
     return [
         "## Overview",
         "",
@@ -331,12 +333,14 @@ def overview() -> list[str]:
         "**Corrected re-measurement.** Every re-measured cell beside the withdrawn campaign that measured the same cell: the "
         "confirmation where it reserved the cell, otherwise the family's v3 pilot. Both sides are the evaluator's paired "
         "speedup intervals, each at the per-comparison confidence its own campaign carries. The leading arm is the external "
-        "arm where the estimate exceeds 1 and gf2 where it falls below. A re-measured cell is exploratory, so it settles "
-        "direction and decision and reopens no confirmatory attempt.",
+        "arm where the estimate exceeds 1 and gf2 where it falls below. `Shift` is the re-measured estimate over the "
+        "withdrawn one, and the column beside it compares its magnitude with the family's frozen measurement resolution "
+        "(Resolution, above). A re-measured cell is exploratory, so it settles direction and decision and reopens no "
+        "confirmatory attempt.",
         "",
         "| Family | Cell | Withdrawn campaign | Withdrawn decision | Withdrawn speedup [interval] | Re-measured decision | "
-        "Re-measured speedup [interval] | Decision | Leading arm |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "Re-measured speedup [interval] | Shift | Within resolution | Decision | Leading arm |",
+        "|---|---|---|---|---|---|---|---:|---|---|---|",
         *corrected,
         "",
     ]
