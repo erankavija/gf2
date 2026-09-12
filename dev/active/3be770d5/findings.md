@@ -72,6 +72,12 @@ settle: AFF3CT's sign treats negative zero as negative, gf2's scalar min-sum
 as positive, and gf2's AVX2 min-sum kernel does both, by sign bit in its
 vector lanes and by comparison in its scalar tail
 ([source evidence](survey/source-evidence.json), lever `numerical-contract`).
+The gf2 arms reach that kernel through the runtime kernel table the same
+source evidence records, and its internal disagreement is filed as
+`39cbde20`. Each arm's decisions are checked frame by frame against the
+frozen `c077a88b` evidence and match it, so the measured gap does not rest on
+the discrepancy; the shared-reduction lever does, because a two-pass check
+update has to fix one rule for both paths.
 
 ## Families, statistics and host
 
