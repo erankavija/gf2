@@ -1,0 +1,249 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "9c1e056af19695d28b0aa6c1cf5d448e52c841d535256365ad413449d1758037",
+  "campaign_id": "3be770d5-v3-r1-steady-fastest-compatible-pilot",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "ldpc-steady-fastest-compatible-v1",
+    "comparisons": 1,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 6,
+  "resumed": true,
+  "findings": [
+    {
+      "rule": "P-19",
+      "severity": "note",
+      "cell": "dvb-t2-r12-layered-f32-w1",
+      "message": "candidate FER upper bound exceeds the predeclared tolerance"
+    },
+    {
+      "rule": "P-19",
+      "severity": "note",
+      "cell": "dvb-t2-r12-layered-f32-inter-w1",
+      "message": "candidate FER upper bound exceeds the predeclared tolerance"
+    },
+    {
+      "rule": "P-19",
+      "severity": "note",
+      "cell": "dvb-t2-r12-layered-i16-inter-w1",
+      "message": "candidate FER upper bound exceeds the predeclared tolerance"
+    },
+    {
+      "rule": "P-19",
+      "severity": "note",
+      "cell": "nr-bg1-z384-layered-f32-w1",
+      "message": "candidate FER upper bound exceeds the predeclared tolerance"
+    },
+    {
+      "rule": "P-19",
+      "severity": "note",
+      "cell": "nr-bg1-z384-layered-f32-inter-w1",
+      "message": "candidate FER upper bound exceeds the predeclared tolerance"
+    },
+    {
+      "rule": "P-19",
+      "severity": "note",
+      "cell": "nr-bg1-z384-layered-i16-inter-w1",
+      "message": "candidate FER upper bound exceeds the predeclared tolerance"
+    }
+  ],
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-layered-f32-w1",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 18.407873749413117,
+        "lower": 18.322955434200498,
+        "upper": 18.547087676497604,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 376733793964383772,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-layered-f32-inter-w1",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 96.32222373532518,
+        "lower": 93.67712262006198,
+        "upper": 97.16132765838539,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 1399033213363421701,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-layered-i16-inter-w1",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 204.02582220901132,
+        "lower": 199.7738698474732,
+        "upper": 204.2629351788701,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 12263683900581646847,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-layered-f32-w1",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 30.42484900756316,
+        "lower": 30.295544669907823,
+        "upper": 30.68547053223041,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 5508676770429594993,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-layered-f32-inter-w1",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 279.1185379212898,
+        "lower": 272.2228825815309,
+        "upper": 286.148658487322,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 4394194825110036223,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-layered-i16-inter-w1",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 724.8135803076492,
+        "lower": 709.3480515369191,
+        "upper": 727.2454251504472,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 18247567872025049599,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.material_gap_threshold",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    }
+  ]
+}
