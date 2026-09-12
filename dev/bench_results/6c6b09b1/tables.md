@@ -8,7 +8,7 @@ Command: `survey-analysis tables dev/bench_results/6c6b09b1/tables.md dev/bench_
 
 - Receipt: `dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/receipt.json`, SHA-256 `b15308aad470be693d0f0afff09fd418c074fde58230fdb25ae8ef3fab928425`; acceptance summary SHA-256 `6e518ed304a63dc0fd0e7d94a0bbfb5b4a04520189b05efd680c38afe82b51c5`.
 - Label `pilot`, family not recorded by this protocol version, verdict `accepted`, qualifies `false`, 0 finding(s), sessions 2.
-- Protocol version 1 (addendum snapshot `inputs/family-addendum.json`): superseded, immutable history that decides nothing under version 3.
+- Protocol version 1 (addendum snapshot `inputs/family-addendum.json`): superseded, immutable history that decides nothing under the current protocol version.
 - Family comparisons m = 1, per-comparison confidence 0.95 (bootstrap resamples 10000).
 - Host `fraktaali`: AMD Ryzen 9 5900X 12-Core Processor, kernel `Linux 7.2.2-arch1-1`, SMT Some(true), governors ["powersave"]; toolchain `rustc 1.97.0 (2d8144b78 2026-07-07)`.
 
