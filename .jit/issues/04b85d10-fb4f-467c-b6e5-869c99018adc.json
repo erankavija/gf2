@@ -243,13 +243,6 @@
       "commit": null,
       "doc_type": "report",
       "format": "markdown",
-      "label": "v3 profile attribution summary",
-      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/attribution-summary.md"
-    },
-    {
-      "commit": null,
-      "doc_type": "report",
-      "format": "markdown",
       "label": "Verified code-claim register",
       "path": "dev/active/04b85d10/survey/source-evidence.json"
     },
@@ -415,6 +408,33 @@
       "doc_type": "report",
       "label": "Protocol-v3 layout confirmation execution log",
       "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Repeated profile sweep summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/profile-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Repeated profile attribution summary",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/attribution-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Repeated profile execution log",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/repetitions.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Repeated profile launcher",
+      "path": "dev/active/04b85d10/survey/run-profile.sh"
     }
   ],
   "first_ready_at": "2026-09-06T19:59:16.619469775Z",
@@ -427,7 +447,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-10T17:20:14.266846443Z",
+      "updated_at": "2026-09-12T07:49:47.252077807Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-12T07:56:52.510778058Z",
       "updated_by": "auto:executor"
     }
   },
@@ -443,5 +468,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile bit-storage costs in production consumers",
-  "updated_at": "2026-09-10T17:20:35.748482377Z"
+  "updated_at": "2026-09-12T07:56:52.510778058Z"
 }

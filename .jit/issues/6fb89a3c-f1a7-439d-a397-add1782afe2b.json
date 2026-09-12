@@ -82,7 +82,7 @@
     {
       "commit": null,
       "doc_type": "report",
-      "label": "Protocol v3 transpose confirmation receipt",
+      "label": "Withdrawn protocol-v3 transpose confirmation receipt",
       "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation/receipt.json"
     },
     {
@@ -94,7 +94,7 @@
     {
       "commit": null,
       "doc_type": "report",
-      "label": "Protocol v3 logical confirmation receipt",
+      "label": "Withdrawn protocol-v3 logical confirmation receipt",
       "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation/receipt.json"
     },
     {
@@ -106,7 +106,7 @@
     {
       "commit": null,
       "doc_type": "report",
-      "label": "Protocol v3 bch confirmation receipt",
+      "label": "Withdrawn protocol-v3 BCH confirmation receipt",
       "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/receipt.json"
     },
     {
@@ -244,6 +244,107 @@
       "format": "markdown",
       "label": "Campaign launcher",
       "path": "dev/bench_results/6fb89a3c/run-campaign.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Corrected transpose re-measurement receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-remeasure/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Corrected transpose re-measurement acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-remeasure/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Corrected logical-buffer re-measurement receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-remeasure/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Corrected logical-buffer re-measurement acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-remeasure/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Corrected BCH re-measurement receipt",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-remeasure/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Corrected BCH re-measurement acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-remeasure/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen transpose re-measurement addendum",
+      "path": "dev/active/6fb89a3c/addendum-transpose-v3-remeasure.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen logical-buffer re-measurement addendum",
+      "path": "dev/active/6fb89a3c/addendum-logical-buffer-v3-remeasure.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen BCH re-measurement addendum",
+      "path": "dev/active/6fb89a3c/addendum-bch-genmatrix-v3-remeasure.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Warm-pass observation under gdb",
+      "path": "dev/active/6fb89a3c/survey/verify-warm-pass.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Warm-pass observation, re-measurement arms",
+      "path": "dev/active/6fb89a3c/survey/warm-pass-report.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Warm-pass observation, confirmation-pinned arms",
+      "path": "dev/active/6fb89a3c/survey/warm-pass-report-receipt-arms.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Re-measurement addendum freeze script",
+      "path": "dev/active/6fb89a3c/survey/freeze-remeasure.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Withdrawn protocol-v3 transpose confirmation acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Withdrawn protocol-v3 logical confirmation acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Withdrawn protocol-v3 BCH confirmation acceptance summary",
+      "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/acceptance-summary.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:58:57.724502744Z",
@@ -256,12 +357,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-10T23:24:44.508199738Z",
+      "updated_at": "2026-09-12T07:03:44.599139782Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-09-10T23:35:03.271822914Z",
+      "updated_at": "2026-09-12T07:05:14.391350811Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -289,5 +390,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Establish transpose and logical-buffer comparison arms",
-  "updated_at": "2026-09-10T23:35:03.271822914Z"
+  "updated_at": "2026-09-12T07:05:14.391350811Z"
 }
