@@ -1,0 +1,25 @@
+{
+  "pilot_receipt": "dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-single-worker-pilot/receipt.json",
+  "receipt_sha256": "d5454a63dcb287eab6a15496d56c3229564bab489da978462b421eda4a76a794",
+  "acceptance_summary_sha256": "2c87a0fc7cc259bf8585263ce48c15903c70d88f2dfd471cacfba016555cdfba",
+  "pilot_addendum": {
+    "path": "dev/active/3be770d5/addendum-ldpc-steady-matched-single-worker-pilot.json",
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "63ad30dd907ae60ccb0699ddf095f94a42d95b22230dda790f71db4059fdad8d"
+  },
+  "pilot_ledger": {
+    "path": "dev/bench_results/3be770d5/v3-steady-matched-single-worker-family-ledger.jsonl",
+    "snapshot": "inputs/trial-ledger.jsonl",
+    "sha256": "f09963918a88192aab61984d8dffc9d50ad6a43d56792acae1aa13660d4dc61c"
+  },
+  "pilot_corrected_alpha": 0.025,
+  "cell_relative_half_widths": {
+    "dvb-t2-r12-matched-w1": 0.018658030310735825,
+    "nr-bg1-z384-matched-w1": 0.025001448678413675
+  },
+  "observed_resolution": 0.025001448678413675,
+  "frozen_resolution": 0.03,
+  "rule": "ceil(widest relative half-width x 200) / 200; equivalence 1 + 2r; material gap 1 + 4r",
+  "pilot_protocol_version": 3,
+  "confirmation_protocol_version": 4
+}
