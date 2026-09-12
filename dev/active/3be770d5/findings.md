@@ -182,6 +182,19 @@ marks no change of method: the cases, the sampling period, the counter groups,
 the session count and the summarizer are the same in both, and what separates
 them is the acknowledgement fix and the session guard.
 
+The conditions the first series ran under are projected beside it
+([conditions](../../bench_results/3be770d5/v3-r1-steady-profile-conditions.md),
+from its launcher log and host record), so the re-run can be compared against
+like conditions rather than against an assumption. They read as a
+self-generated load: the first session began on an idle host, load climbed
+across the early sessions to a plateau and stayed there, and session duration
+stayed flat across that whole range, the first session's small excess being
+the census and call-graph work only it performs. A rising outside load would
+have lengthened the later sessions. This is a bound, not an isolation: the
+cases themselves occupy every logical CPU, so a load average taken at a
+session boundary cannot separate the series' own work from anything else, and
+what the full-host mutex each session holds excludes is other measurement.
+
 ## Structural and allocation evidence
 
 [structural-costs.json](../../bench_results/3be770d5/preparation/structural-costs.json)
