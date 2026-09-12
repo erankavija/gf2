@@ -1,0 +1,201 @@
+{
+  "schema": "6fb89a3c-warm-pass-report-v1",
+  "method": "gdb breakpoint at the library call of each C arm's timed body, counting calls from the arm: warm and cold zero-window requests isolate the warm pass, and a one-window warm request is killed at its calibration call, the timed body on bank 0, whose buffer arguments the warm call must repeat; no window is measured",
+  "gdb": "GNU gdb (GDB) 17.2",
+  "arms": [
+    {
+      "binary": "m4ri_transpose_arm",
+      "sha256": "5cdd572ebf07455d13bd3c627af447a8d75654e69012b37f1a8e10ea38ab84f0",
+      "case": {
+        "n": 64,
+        "seed": 1
+      },
+      "trigger": "mzd_transpose",
+      "warm_pass_calls": 1,
+      "setup_probe_calls": 0,
+      "compared_arguments": {
+        "rdi": true,
+        "rsi": true
+      },
+      "checks": {
+        "zero_window_requests_refused": true,
+        "one_warm_call_per_bank": true,
+        "calibration_call_reached": true,
+        "warm_call_uses_the_timed_buffers": true
+      },
+      "status": "pass"
+    },
+    {
+      "binary": "m4ri_transpose_arm",
+      "sha256": "5cdd572ebf07455d13bd3c627af447a8d75654e69012b37f1a8e10ea38ab84f0",
+      "case": {
+        "cols": 63,
+        "rows": 63,
+        "seed": 1
+      },
+      "trigger": "mzd_transpose",
+      "warm_pass_calls": 1,
+      "setup_probe_calls": 0,
+      "compared_arguments": {
+        "rdi": true,
+        "rsi": true
+      },
+      "checks": {
+        "zero_window_requests_refused": true,
+        "one_warm_call_per_bank": true,
+        "calibration_call_reached": true,
+        "warm_call_uses_the_timed_buffers": true
+      },
+      "status": "pass"
+    },
+    {
+      "binary": "bitshuffle_transpose_arm",
+      "sha256": "74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b",
+      "case": {
+        "n": 64,
+        "seed": 1
+      },
+      "trigger": "bshuf_bitshuffle",
+      "warm_pass_calls": 1,
+      "setup_probe_calls": 0,
+      "compared_arguments": {
+        "rdi": true,
+        "rsi": true,
+        "rdx": true,
+        "rcx": true,
+        "r8": true
+      },
+      "checks": {
+        "zero_window_requests_refused": true,
+        "one_warm_call_per_bank": true,
+        "calibration_call_reached": true,
+        "warm_call_uses_the_timed_buffers": true
+      },
+      "status": "pass"
+    },
+    {
+      "binary": "bitshuffle_transpose_arm",
+      "sha256": "74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b",
+      "case": {
+        "cols": 64,
+        "rows": 64,
+        "seed": 1,
+        "adapter": "padded"
+      },
+      "trigger": "bshuf_bitshuffle",
+      "warm_pass_calls": 1,
+      "setup_probe_calls": 0,
+      "compared_arguments": {
+        "rdi": true,
+        "rdx": true,
+        "rcx": true,
+        "r8": true
+      },
+      "checks": {
+        "zero_window_requests_refused": true,
+        "one_warm_call_per_bank": true,
+        "calibration_call_reached": true,
+        "warm_call_uses_the_timed_buffers": true
+      },
+      "status": "pass"
+    },
+    {
+      "binary": "bitshuffle_transpose_arm",
+      "sha256": "74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b",
+      "case": {
+        "cols": 65,
+        "rows": 65,
+        "seed": 1,
+        "adapter": "padded"
+      },
+      "trigger": "bshuf_bitshuffle",
+      "warm_pass_calls": 1,
+      "setup_probe_calls": 0,
+      "compared_arguments": {
+        "rdi": true,
+        "rsi": true,
+        "rdx": true,
+        "rcx": true,
+        "r8": true
+      },
+      "checks": {
+        "zero_window_requests_refused": true,
+        "one_warm_call_per_bank": true,
+        "calibration_call_reached": true,
+        "warm_call_uses_the_timed_buffers": true
+      },
+      "status": "pass"
+    },
+    {
+      "binary": "isal_xor_arm",
+      "sha256": "e66fbbab6db40dd91006275a0e3cf4b0ad8d238a8326d73af987af76b971a53b",
+      "case": {
+        "alignment_bytes": 32,
+        "seed": 1,
+        "words": 8
+      },
+      "trigger": "xor_gen_base",
+      "warm_pass_calls": 1,
+      "setup_probe_calls": 0,
+      "compared_arguments": {
+        "edi": true,
+        "esi": true,
+        "array": true
+      },
+      "checks": {
+        "zero_window_requests_refused": true,
+        "one_warm_call_per_bank": true,
+        "calibration_call_reached": true,
+        "warm_call_uses_the_timed_buffers": true
+      },
+      "status": "pass"
+    },
+    {
+      "binary": "isal_xor_arm",
+      "sha256": "e66fbbab6db40dd91006275a0e3cf4b0ad8d238a8326d73af987af76b971a53b",
+      "case": {
+        "alignment_bytes": 32,
+        "seed": 1,
+        "words": 64,
+        "sources": 3
+      },
+      "trigger": "xor_gen_base",
+      "warm_pass_calls": 1,
+      "setup_probe_calls": 0,
+      "compared_arguments": {
+        "edi": true,
+        "esi": true,
+        "array": true
+      },
+      "checks": {
+        "zero_window_requests_refused": true,
+        "one_warm_call_per_bank": true,
+        "calibration_call_reached": true,
+        "warm_call_uses_the_timed_buffers": true
+      },
+      "status": "pass"
+    },
+    {
+      "binary": "m4ri_genmatrix_arm",
+      "sha256": "416087ed59642180b0cea93e718514c3b6675e1ff05c4337b04deafa1205ca8b",
+      "case": {
+        "code": "B1",
+        "seed": 1
+      },
+      "trigger": "mzd_copy",
+      "warm_pass_calls": 1,
+      "setup_probe_calls": 1,
+      "compared_arguments": {
+        "rdi": true,
+        "rsi": true
+      },
+      "checks": {
+        "zero_window_requests_refused": true,
+        "one_warm_call_per_bank": true,
+        "calibration_call_reached": true,
+        "warm_call_uses_the_timed_buffers": true
+      },
+      "status": "pass"
+    }
+  ]
+}
