@@ -509,7 +509,10 @@ closure plus the re-measurement's freeze script and arm-digest record. Every
 v3 receipt of both families, the re-measurement included, re-evaluates as
 accepted with the evaluator merged from main (`reevaluation-v3.log`), and its
 receipt, input-tree and summary bytes are unchanged. Each confirmation's
-execution log is byte-identical to the runner's canonical log.
+execution log is byte-identical to the runner's canonical log. Protocol version
+4 replaced the shared addendum schema in place, so the re-measurement addendum
+is checked against the version-3 snapshot its receipt pins; `freeze-remeasure.py`
+reproduces that addendum byte for byte from the committed evidence.
 
 ## Criterion outcomes
 
