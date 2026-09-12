@@ -1,5 +1,5 @@
 # Byte-field survey arm provenance (jit:6c6b09b1)
-# observed_utc: 2026-09-11T16:45:35Z
+# observed_utc: 2026-09-12T06:38:05Z
 # host: Linux 7.2.2-arch1-1 x86_64, AMD Ryzen 9 5900X 12-Core Processor
 
 ## Source pins

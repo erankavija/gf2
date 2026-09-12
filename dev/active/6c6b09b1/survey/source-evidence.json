@@ -2,7 +2,7 @@
   "schema": "6c6b09b1-source-evidence-v1",
   "projects": {
     "gf2": {
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "revision_kind": "git commit (navigation only; receipts pin these files by content)"
     },
     "isa-l": {
@@ -26,7 +26,7 @@
     {
       "claim": "gf2-gf256-constructor",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/field.rs",
       "line": 849,
       "text": "    pub fn gf256() -> Self {",
@@ -35,7 +35,7 @@
     {
       "claim": "gf2-gf256-polynomial",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/field.rs",
       "line": 850,
       "text": "        Gf2mField::new(8, 0b100011101)",
@@ -44,7 +44,7 @@
     {
       "claim": "gf2-gf256-doc-polynomial",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/field.rs",
       "line": 837,
       "text": "    /// Creates a GF(2^8) field with standard primitive polynomial x^8 + x^4 + x^3 + x + 1.",
@@ -53,7 +53,7 @@
     {
       "claim": "gf2-gf256-doc-aes",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/field.rs",
       "line": 839,
       "text": "    /// This is the standard field used in AES and many error-correcting codes.",
@@ -62,7 +62,7 @@
     {
       "claim": "gf2-catalogue-degree-8",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/primitive_polys.rs",
       "line": 139,
       "text": "            8 => Some(0b100011101),          // x^8 + x^4 + x^3 + x^2 + 1 (primitive trinomial)",
@@ -71,7 +71,7 @@
     {
       "claim": "gf2-wide-config-trait",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/wide_config.rs",
       "line": 96,
       "text": "pub trait Gf2mWideConfig<const N: usize>: 'static {",
@@ -80,7 +80,7 @@
     {
       "claim": "gf2-wide-test-config-0x11b",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/matrix.rs",
       "line": 4893,
       "text": "        const MODULUS: [u64; 1] = [0x1B];",
@@ -89,7 +89,7 @@
     {
       "claim": "gf2-wide-bench-config-0x11b",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/benches/field_matrix_gemm.rs",
       "line": 37,
       "text": "    const MODULUS: [u64; 1] = [0x1B];",
@@ -98,7 +98,7 @@
     {
       "claim": "gf2-element-value",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/field.rs",
       "line": 207,
       "text": "    value: V,",
@@ -107,7 +107,7 @@
     {
       "claim": "gf2-element-params",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/field.rs",
       "line": 208,
       "text": "    params: Arc<FieldParams_<V>>,",
@@ -116,7 +116,7 @@
     {
       "claim": "gf2-element-alias",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/field.rs",
       "line": 212,
       "text": "pub type Gf2mElement = Gf2mElement_<u64>;",
@@ -125,7 +125,7 @@
     {
       "claim": "gf2-wide-words",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/wide.rs",
       "line": 115,
       "text": "    words: [u64; N],",
@@ -134,7 +134,7 @@
     {
       "claim": "gf2-axpy-signature",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/vec.rs",
       "line": 663,
       "text": "    pub fn axpy(&mut self, a: &F, rhs: &Self) {",
@@ -143,7 +143,7 @@
     {
       "claim": "gf2-axpy-simd-hook",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/vec.rs",
       "line": 675,
       "text": "        if F::try_simd_axpy(self.data.as_mut_slice(), a, rhs.data.as_slice()) {",
@@ -152,7 +152,7 @@
     {
       "claim": "gf2-axpy-default-false",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/traits.rs",
       "line": 610,
       "text": "    fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {",
@@ -161,7 +161,7 @@
     {
       "claim": "gf2-axpy-fp-override",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gfp/mod.rs",
       "line": 811,
       "text": "    fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {",
@@ -170,7 +170,7 @@
     {
       "claim": "gf2-axpy-element-loop",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/vec.rs",
       "line": 679,
       "text": "            *y += a.clone() * x.clone();",
@@ -179,7 +179,7 @@
     {
       "claim": "gf2-gemm-entry",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/matrix.rs",
       "line": 2948,
       "text": "pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {",
@@ -188,7 +188,7 @@
     {
       "claim": "gf2-gemm-fresh-output",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/matrix.rs",
       "line": 3006,
       "text": "        data: FieldVec::zeros_from(a.rows * b.cols, &zero),",
@@ -197,7 +197,7 @@
     {
       "claim": "gf2-gemm-transpose",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/matrix.rs",
       "line": 3032,
       "text": "    let b_t = b.transpose();",
@@ -206,7 +206,7 @@
     {
       "claim": "gf2-gemm-whole-hook",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/matrix.rs",
       "line": 3040,
       "text": "    if F::try_simd_gemm_classical(",
@@ -215,7 +215,7 @@
     {
       "claim": "gf2-gemm-per-cell-hook",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/field/matrix.rs",
       "line": 3082,
       "text": "                    if let Some(value) = F::try_gf2m_u64_batch_dot_product(",
@@ -224,7 +224,7 @@
     {
       "claim": "gf2-wide-gemm-kernel",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/wide.rs",
       "line": 1667,
       "text": "            if let Some(fns) = crate::simd::maybe_gf2m_gemm() {",
@@ -233,7 +233,7 @@
     {
       "claim": "gf2-wide-gemm-fallback",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/wide.rs",
       "line": 1718,
       "text": "            Self::scalar_panelized_gemm_fallback_inline(a, b_t, m, k, n, out);",
@@ -242,7 +242,7 @@
     {
       "claim": "gf2-element-batch-dot",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/field.rs",
       "line": 1436,
       "text": "        crate::gf2m::batch::batch_mul_raw(",
@@ -251,7 +251,7 @@
     {
       "claim": "gf2-batch-mul-entry",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/batch.rs",
       "line": 94,
       "text": "pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {",
@@ -260,7 +260,7 @@
     {
       "claim": "gf2-batch-mul-dispatch",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/src/gf2m/batch.rs",
       "line": 115,
       "text": "            if let Some(fns) = crate::simd::maybe_gf2m_batch() {",
@@ -269,7 +269,7 @@
     {
       "claim": "gf2-simd-feature",
       "project": "gf2",
-      "revision": "7346b5e54d6abcdf102d0c1a1ba1978061fe6c28",
+      "revision": "2b448645062cbf1dde57a9d467eba6515fd21edb",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 50,
       "text": "simd = []",
