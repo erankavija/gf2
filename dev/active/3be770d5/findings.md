@@ -6,7 +6,9 @@ Survey for `3be770d5`. It measures and ranks; it changes no production decoder.
 The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
 and [protocol v3](../f547c394/protocol.md) govern every timed cell; the
 [plan](plan.md) maps each criterion to what `c077a88b` already settles.
-Results sections are WAITING-ON-WINDOW: no timed run has happened yet.
+The three pilot campaigns are measured and accepted; the profile shares and
+the two matched confirmations are not yet measured, so the sections that rest
+on them stay WAITING-ON-WINDOW.
 
 ## Question
 
@@ -103,6 +105,19 @@ its one-worker Wilson interval and gf2's per-worker slowdown interval overlaps
 AFF3CT's; it counts as multicore saturation when gf2's slowdown interval lies
 above AFF3CT's and the L1d or cache miss ratio rises with the worker count.
 
+The first series
+([v3-r1-steady-profile](../../bench_results/3be770d5/v3-r1-steady-profile/))
+carries no figure: every profiled case of all nine sessions exited on the
+`perf` control channel, so no case wrote its record and the summarizer
+excluded all of them. `perf` answers a control command with its
+acknowledgement tag and the trailing NUL of the C string literal, and the
+driver read the NUL of one answer as the head of the next. Its session
+directories, the statuses, the summary they produce and the
+[window job log](../../bench_results/3be770d5/v3-r1-steady-profile-window-job.log)
+stay as the record of that outcome. The driver now tolerates the padding and
+the series stops at a session that leaves no usable case, so the failure
+surfaces in the window instead of at the summary.
+
 ## Structural and allocation evidence
 
 [structural-costs.json](../../bench_results/3be770d5/preparation/structural-costs.json)
@@ -158,18 +173,79 @@ contracts.
 
 ## Results
 
-WAITING-ON-WINDOW: the three pilot receipts, the profile summary
-(`profile.md` in the profile directory) and, after the freeze, the two
-matched confirmations. [summarize.py](survey/summarize.py) regenerates the
+[summarize.py](survey/summarize.py) regenerates the
 [tables](../../bench_results/3be770d5/tables.md) from the committed receipts;
-they and `profile.md` are the only numeric projections.
+they and the profile series' own `profile.md` are the only numeric
+projections, and every statement below points at the section and cell that
+carries its figures.
 [freeze-addendum.py](survey/freeze-addendum.py) derives each matched
 confirmation addendum mechanically from its accepted pilot.
 
+### The per-core gap
+
+Every matched single-worker cell of the accepted pilot puts AFF3CT ahead:
+the paired bootstrap interval of the time ratio lies wholly above one on both
+codes, far from it, and no window is flagged (tables "Steady-state campaigns",
+`v3-r1-3be770d5-ldpc-steady-single-worker-pilot`). Both arms decode the same
+recorded frames of the same parity-check matrix under the same schedule,
+precision, normalization, iteration cap and stopping rule, and each worker's
+per-frame decisions are checked against the frozen `c077a88b` evidence, so the
+gap is decode work rather than a difference in what is decoded. The cells are
+exploratory: the pilot observes the resolution and decides nothing, and the
+confirmation of this family is what fixes its margins.
+
+The NR BG1 ratio exceeds the DVB-T2 ratio at one worker, the direction the
+degree-structure lever predicts from the structural counts, whose per-edge
+search and gather costs are higher for the NR graph (tables "Structural work
+per flooding iteration" and the two single-worker cells). The comparison
+between two cells is descriptive: the family declares no such comparison and
+the correction covers none.
+
+### Saturation is not where the gap comes from
+
+The matched multicore pilot measures the same operation at six physical
+cores, twelve physical cores and twenty-four logical CPUs, every worker
+pinned, every worker's placement journaled and checked
+(`v3-r1-3be770d5-ldpc-steady-multicore-pilot`). On both codes the ratio at
+twenty-four logical CPUs is smaller than at six physical cores, with intervals
+that do not overlap, so gf2 loses relatively less ground as both decoders
+saturate the machine. The deficit this survey has to attribute is therefore
+single-core work; the profile shares are what will attribute it, and they are
+the measurement still owed. This ordering between cells is descriptive for the
+same reason as above.
+
+### Construction and conversion
+
+AFF3CT's decoder construction costs far more than gf2's, and it grows with the
+worker count; the steady-state operation puts it outside the timed window and
+reports it as setup, beside the per-call conversion and dispatch costs, in
+each receipt's untimed diagnostics table. Conversion and dispatch stay small
+against the call in every cell, so the matched gap is not a conversion
+artifact.
+
+### Fastest-compatible modes
+
+The exploratory family widens the gap further with layered and inter-frame
+modes, the fixed-point inter-frame mode most
+(`v3-r1-3be770d5-ldpc-steady-fastest-compatible-pilot`). Every cell of it
+carries a P-19 note, so this corpus establishes no quality admission for any
+of those modes and the family selects nothing. The receipt's own quality
+table carries the contradicting evidence directly: on DVB-T2 the fixed-point
+inter-frame candidate fails more frames than the baseline it is compared with,
+and its iterations run to the cap.
+
+### What the window still owes
+
+The profile shares (REQ-02) and the share-ranked levers (REQ-03) need the
+re-run series, and the two matched confirmations need their own window job.
+The lever table's mechanisms, removed categories and falsifiable experiments
+are committed; what no evidence supports yet is the rank order, because the
+rule ranks by a measured lower bound.
+
 | Criterion | Status | Evidence or remaining work |
 |---|---|---|
-| REQ-01 | WAITING-ON-WINDOW | Pilot campaigns frozen; confirmations after the pilot freeze. |
-| REQ-02 | WAITING-ON-WINDOW | Profile series frozen; structural counts and census recorded. |
-| REQ-03 | WAITING-ON-WINDOW | Ranking rule and experiments above; ranks need the profile shares. |
-| REQ-04 | MET for contract and inputs; results WAITING-ON-WINDOW | Validation evidence and addenda above; fastest-compatible pilot pending. |
-| REQ-05 | WAITING-ON-WINDOW | Receipts and acceptance pending; no production change. |
+| REQ-01 | MET | Three accepted pilot receipts cover one worker, six and twelve physical cores and twenty-four logical CPUs on both codes, with journaled topology, affinity, observed worker counts, thread counts, SMT state and build identities; the matched confirmations add frozen decision margins. |
+| REQ-02 | WAITING-ON-WINDOW | Structural counts and the allocation census are recorded; no measured time share exists until the re-run profile series replaces the void first one. |
+| REQ-03 | WAITING-ON-WINDOW | Ranking rule, mechanisms and experiments above; the ranks need the profile shares. The degree-structure prediction already holds in the single-worker cells. |
+| REQ-04 | MET | Matched arms keep the numerical contract on identical recorded LLRs; the fastest-compatible modes are separated, labelled and reported with their P-19 notes, iteration distributions and the prepared BER/FER counts and intervals. |
+| REQ-05 | MET for the published campaigns | Each receipt pins the contract, protocol, addendum, ledger and producing closure, and independent acceptance accepted each; the void profile series is preserved rather than discarded. No production change, so no before/after pair is owed. |
