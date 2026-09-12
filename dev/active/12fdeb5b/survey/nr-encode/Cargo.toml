@@ -1,0 +1,65 @@
+# 5G NR rate-matched encoder comparison harness (jit:12fdeb5b).
+#
+# A standalone workspace, like `../../../eda07788/survey/nr-derate`, so the
+# survey adds no target, feature or dependency to the production workspace.
+# Each external adapter is feature-gated because it links a comparator build
+# that `../nr-encode-build.sh` verifies outside the repository; the gf2 arm
+# builds without either feature.
+
+[workspace]
+
+[package]
+name = "survey-nr-encode"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+build = "build.rs"
+
+[features]
+default = []
+# Links the pinned AFF3CT static library; needs GF2_AFF3CT_ROOT.
+aff3ct = []
+# Compiles the pinned srsRAN LDPC encoder and rate matcher; needs GF2_SRSRAN_ROOT.
+srsran = []
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "gf2-nr-encode-arm"
+path = "src/bin/gf2-nr-encode-arm.rs"
+
+[[bin]]
+name = "aff3ct-nr-encode-arm"
+path = "src/bin/aff3ct-nr-encode-arm.rs"
+required-features = ["aff3ct"]
+
+[[bin]]
+name = "srsran-nr-encode-arm"
+path = "src/bin/srsran-nr-encode-arm.rs"
+required-features = ["srsran"]
+
+[[bin]]
+name = "validate-nr-encode-equivalence"
+path = "src/bin/validate-nr-encode-equivalence.rs"
+required-features = ["aff3ct", "srsran"]
+
+[[bin]]
+name = "derive-nr-encode-parameters"
+path = "src/bin/derive-nr-encode-parameters.rs"
+
+[dependencies]
+gf2-core = { path = "../../../../../crates/gf2-core" }
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+
+[build-dependencies]
+cc = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
