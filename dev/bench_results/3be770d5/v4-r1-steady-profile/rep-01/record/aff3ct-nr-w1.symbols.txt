@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 994  of event 'cycles:u'
+# Event count (approx.): 3976036778
+#
+# Overhead       Samples  Shared Object  Symbol                                                                                                                                                                                                                                           
+# ........  ............  .............  .................................................................................................................................................................................................................................................
+#
+    66.00%           656  ldpc-profile   [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode_single_ite(std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> >&)
+    33.80%           336  ldpc-profile   [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode(float const*, unsigned long)
+     0.10%             1  ldpc-profile   [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode_siho(float const*, signed char*, int*, unsigned long)
+     0.10%             1  ldpc-profile   [.] aff3ct::module::Decoder_SIHO<int, float>::decode_siho(float const*, int*, int, bool) [clone .constprop.0]
+
+
+#
+# (Tip: To see list of saved events and attributes: perf evlist -v)
+#

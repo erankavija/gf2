@@ -1,0 +1,36 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 8816081548
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    68.47%          1509  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    19.60%           432  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     2.99%            66  libc.so.6         [.] cfree
+     2.81%            62  libc.so.6         [.] malloc
+     1.77%            39  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     0.95%            21  libc.so.6         [.] 0x000000000017646c
+     0.91%            20  libc.so.6         [.] 0x0000000000176466
+     0.73%            16  libc.so.6         [.] 0x0000000000176400
+     0.36%             8  libc.so.6         [.] 0x0000000000176404
+     0.32%             7  libc.so.6         [.] 0x0000000000176470
+     0.27%             6  libc.so.6         [.] 0x0000000000176497
+     0.23%             5  libc.so.6         [.] 0x0000000000176476
+     0.18%             4  libc.so.6         [.] 0x0000000000176485
+     0.14%             3  libc.so.6         [.] 0x0000000000176411
+     0.05%             1  libc.so.6         [.] 0x0000000000176421
+     0.05%             1  libc.so.6         [.] 0x000000000017642b
+     0.05%             1  libc.so.6         [.] 0x00000000001764ac
+     0.05%             1  libc.so.6         [.] 0x00000000001764b2
+     0.05%             1  libc.so.6         [.] 0x00000000001764db
+     0.05%             1  [unknown]         [k] 0xffffffffae98e344
+
+
+#
+# (Tip: To not record events from perf itself add --exclude-perf)
+#
