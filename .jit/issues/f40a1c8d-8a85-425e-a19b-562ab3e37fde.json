@@ -19,7 +19,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Remove gf2-core dead code under partial feature configurations",
-  "updated_at": "2026-09-10T17:17:35.046665743Z"
+  "updated_at": "2026-09-11T16:11:05.421238619Z"
 }

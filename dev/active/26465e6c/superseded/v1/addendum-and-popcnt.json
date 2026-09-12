@@ -1,0 +1,130 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 1
+  },
+  "family": {
+    "id": "and-popcnt-baselines",
+    "issue": "26465e6c",
+    "purpose": "kernel-family",
+    "description": "Confirmatory family for the fused AND+population-count reduction (gf2's avx2_and_popcnt in crates/gf2-kernels-simd/src/x86/avx2.rs, reachable only through gf2_kernels_simd::detect() and through no public gf2-core dispatcher). It is compared against a single-pass scalar control and against the two-pass and_inplace-then-popcount pattern a consumer reaches through gf2-core's public API today, whose temporary buffer allocation and extra pass sit inside the timed body of the whole-consumer cell. No external library in this survey exposes a matching fused AND-popcount operation; findings.md reports that gap rather than substituting a different operation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-08T09:47:49Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Unused: every cell in this family has objective comparator-gap, which decides against the material-gap threshold, not against a worthwhile speedup.",
+    "measurement_resolution": 0.03,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot/receipt.json",
+      "sha256": "26498454137e2091ea42aa537b3f6fe9d3532eb6fa8fdb591636a935959509ef"
+    },
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "An arm within a factor 1.05 of gf2's own implementation is not a materially different implementation for any consumer of these leaf kernels, so a cell whose interval lower bound stays above 1/1.05 is reported as not materially different rather than as a gap. The intended margin is 1.05, chosen on consumer benefit. It lies outside the pilot-measured resolution 0.03.",
+    "material_gap_threshold": 1.1,
+    "material_gap_rationale": "A comparator arm has to run at least 10% faster than gf2's own implementation before replacing that implementation, or moving its dispatch threshold, could repay the maintenance and dependency cost; below that the survey's conclusion is that gf2's existing kernel is retained. The threshold is tied to consumer benefit, not to the noise floor. The pilot receipt dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot/receipt.json observed a widest relative confidence-interval half-width of 0.0217 in cell and-popcnt-pilot-streaming, which rounds up to a measurement resolution of 0.03. The declared threshold lies outside that resolution."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This family is a baseline survey: it authorizes no production code change under crates/. It records comparative evidence only; any adoption decision, such as exposing avx2_and_popcnt through a public dispatcher, is a separate, future issue."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "and-popcnt-cache-resident-vs-scalar-control",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "and-popcnt-random-cache-resident",
+        "size": {
+          "words": 4096,
+          "word_offset": 0
+        },
+        "seed": 401
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-streaming-vs-scalar-control",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "and-popcnt-random-streaming",
+        "size": {
+          "words": 524288,
+          "word_offset": 0
+        },
+        "seed": 402
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "native",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-fused-vs-two-pass-consumer",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "and-popcnt-random-cache-resident-consumer",
+        "size": {
+          "words": 4096,
+          "word_offset": 0
+        },
+        "seed": 403
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

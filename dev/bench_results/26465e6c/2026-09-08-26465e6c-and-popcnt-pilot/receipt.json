@@ -1,0 +1,2388 @@
+{
+  "schema": "zen3-benchmark-receipt-v1",
+  "campaign_id": "and-popcnt-pilot-26465e6c-20260908",
+  "issue": "26465e6c",
+  "receipt_path": "dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot/receipt.json",
+  "label": "pilot",
+  "campaign_seed": 20260908,
+  "settings": {
+    "family_alpha": 0.05,
+    "bootstrap_resamples": 10000,
+    "confirmatory_pairs": 24,
+    "pilot_min_pairs": 6,
+    "pilot_max_pairs": 24,
+    "windows_per_execution": 5,
+    "window_target_ms": 100,
+    "flagged_window_factor": 2.0,
+    "max_flagged_fraction": 0.1,
+    "max_pilot_trials_per_cell": 8,
+    "max_confirmatory_attempts_per_candidate": 1,
+    "child_timeout_seconds": 120,
+    "quality_confidence": 0.95
+  },
+  "settings_deviation": false,
+  "protocol": {
+    "path": "dev/active/f547c394/protocol.md",
+    "snapshot": "inputs/protocol.md",
+    "sha256": "4cc897ed267e40a8bfa1fbc18950e6539c4456d0e22a6b84d42d9dab43132117"
+  },
+  "contract": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+    "snapshot": "inputs/measurement-contract.md",
+    "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3"
+  },
+  "addendum_schema": {
+    "path": "dev/active/f547c394/addendum.schema.json",
+    "snapshot": "inputs/addendum.schema.json",
+    "sha256": "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1"
+  },
+  "addendum": {
+    "path": "dev/active/26465e6c/addendum-and-popcnt-pilot.json",
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "898ca5cc23b0ce3759884cfbe9d869ea052df3e4a6b261209c88f34d732c7288"
+  },
+  "source": {
+    "producing": {
+      "manifest_path": "dev/active/f547c394/producing-inputs.json",
+      "manifest_sha256": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+      "behavior_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "f7ecad300d02961c4b0f38069fc0ea1e483c311def6e3811c77533d1d6d49567",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      },
+      "lifecycle_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "f7ecad300d02961c4b0f38069fc0ea1e483c311def6e3811c77533d1d6d49567",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554"
+      },
+      "build_inputs_sha256": {
+        ".cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "dev/bench_results/f547c394/run-smoke.sh": "6e44c749e14fecb883300053eff5c71500d98a2aac25210c1410d76e5f2e5772",
+        "dev/scripts/ccx1-bench-flock.sh": "f7ecad300d02961c4b0f38069fc0ea1e483c311def6e3811c77533d1d6d49567",
+        "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "bde0e8e3967cae4b1725d4259ad73c36bb14dbbdec91557c10bd14f3192e2eed",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "01df012b8a6be48c710c61917d1afc0d9832a31fcb10446d9842c15db7aa3990",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "a306418cffb1823e002c745ee9f232bdfc6166d7808322d91d7f39fedcc2490d",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "c54ff1b069a1dcdb0da5671f91e62289a131e769c468c99976ba0d2ff050d554",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      }
+    }
+  },
+  "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "host": {
+    "observed_utc": "2026-09-08T09:38:54.241947546Z",
+    "hostname": "fraktaali",
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "cpu_flags": [
+      "3dnowprefetch",
+      "abm",
+      "adx",
+      "aes",
+      "aperfmperf",
+      "apic",
+      "arat",
+      "avic",
+      "avx",
+      "avx2",
+      "bmi1",
+      "bmi2",
+      "bpext",
+      "cat_l3",
+      "cdp_l3",
+      "clflush",
+      "clflushopt",
+      "clwb",
+      "clzero",
+      "cmov",
+      "cmp_legacy",
+      "constant_tsc",
+      "cpb",
+      "cpuid",
+      "cqm",
+      "cqm_llc",
+      "cqm_mbm_local",
+      "cqm_mbm_total",
+      "cqm_occup_llc",
+      "cr8_legacy",
+      "cx16",
+      "cx8",
+      "de",
+      "debug_swap",
+      "decodeassists",
+      "erms",
+      "extapic",
+      "extd_apicid",
+      "f16c",
+      "flushbyasid",
+      "fma",
+      "fpu",
+      "fsgsbase",
+      "fsrm",
+      "fxsr",
+      "fxsr_opt",
+      "ht",
+      "hw_pstate",
+      "ibpb",
+      "ibrs",
+      "ibs",
+      "invpcid",
+      "irperf",
+      "lahf_lm",
+      "lbrv",
+      "lm",
+      "mba",
+      "mca",
+      "mce",
+      "misalignsse",
+      "mmx",
+      "mmxext",
+      "monitor",
+      "movbe",
+      "msr",
+      "mtrr",
+      "mwaitx",
+      "nonstop_tsc",
+      "nopl",
+      "npt",
+      "nrip_save",
+      "nx",
+      "ospke",
+      "osvw",
+      "overflow_recov",
+      "pae",
+      "pat",
+      "pausefilter",
+      "pclmulqdq",
+      "pdpe1gb",
+      "perfctr_core",
+      "perfctr_llc",
+      "perfctr_nb",
+      "pfthreshold",
+      "pge",
+      "pku",
+      "pni",
+      "popcnt",
+      "pse",
+      "pse36",
+      "rapl",
+      "rdpid",
+      "rdpru",
+      "rdrand",
+      "rdseed",
+      "rdt_a",
+      "rdtscp",
+      "rep_good",
+      "sep",
+      "sha_ni",
+      "skinit",
+      "smap",
+      "smca",
+      "smep",
+      "ssbd",
+      "sse",
+      "sse2",
+      "sse4_1",
+      "sse4_2",
+      "sse4a",
+      "ssse3",
+      "stibp",
+      "succor",
+      "svm_lock",
+      "syscall",
+      "tce",
+      "topoext",
+      "tsc",
+      "tsc_scale",
+      "umip",
+      "user_shstk",
+      "v_spec_ctrl",
+      "v_vmsave_vmload",
+      "vaes",
+      "vgif",
+      "vmcb_clean",
+      "vme",
+      "vmmcall",
+      "vpclmulqdq",
+      "wbnoinvd",
+      "wdt",
+      "x2apic",
+      "xgetbv1",
+      "xsave",
+      "xsavec",
+      "xsaveerptr",
+      "xsaveopt",
+      "xsaves",
+      "xtopology"
+    ],
+    "os_kernel": "Linux 7.2.2-arch1-1",
+    "governors": {
+      "cpu0": "powersave",
+      "cpu1": "powersave",
+      "cpu10": "powersave",
+      "cpu11": "powersave",
+      "cpu12": "powersave",
+      "cpu13": "powersave",
+      "cpu14": "powersave",
+      "cpu15": "powersave",
+      "cpu16": "powersave",
+      "cpu17": "powersave",
+      "cpu18": "powersave",
+      "cpu19": "powersave",
+      "cpu2": "powersave",
+      "cpu20": "powersave",
+      "cpu21": "powersave",
+      "cpu22": "powersave",
+      "cpu23": "powersave",
+      "cpu3": "powersave",
+      "cpu4": "powersave",
+      "cpu5": "powersave",
+      "cpu6": "powersave",
+      "cpu7": "powersave",
+      "cpu8": "powersave",
+      "cpu9": "powersave"
+    },
+    "smt_active": true,
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "topology": {
+      "cpus": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 6,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 7,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 8,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 9,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 10,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 11,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 12,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 13,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 14,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 15,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 16,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 17,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 18,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 19,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 20,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 21,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 22,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 23,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        }
+      ],
+      "smt_active": true
+    },
+    "load_average": [
+      1.52,
+      3.54,
+      5.47
+    ],
+    "available_memory_kib": 53154172
+  },
+  "lock": {
+    "lock_path": "/tmp/gf2-ccx1.lock",
+    "holder_pid": 2526628,
+    "observation": "inherited-fd-and-independent-flock-conflict",
+    "wrapper": "dev/scripts/ccx1-bench-flock.sh"
+  },
+  "workers": {
+    "environment_rayon_threads": null,
+    "runner_threads": 1
+  },
+  "execution_log": {
+    "path": "execution.log",
+    "sha256": "cbf48e39918142e324b0eb6d1a3aae6da1d4757ab8b49c212d77b63ab958bd7e",
+    "sessions": 1,
+    "resumed": false
+  },
+  "checkpoints": {
+    "manifest_path": "checkpoints/manifest.json",
+    "manifest_sha256": "293fcbf066ccae24923219c0d7c9587b5627cfdd92db77146cbe579b7dd800cf"
+  },
+  "arms": {
+    "and-fused": {
+      "build": "native",
+      "description": "gf2 fused AVX2 AND+popcount kernel, called directly",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "executable_sha256": "f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-popcnt-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-scalar-control": {
+      "build": "conservative-portable",
+      "description": "internal control: single-pass scalar AND+popcount loop",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "executable_sha256": "f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-popcnt-scalar-control"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-two-pass": {
+      "build": "native",
+      "description": "public-API two-pass model: and_inplace into a fresh buffer, then popcount",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/ext/26465e6c/bin/popcount-gf2-side",
+      "executable_sha256": "f021dfd7dc1b0f6bd45c9d6cd4a53cbef8468fd88e5bd1f99a33373e32f3f26e",
+      "arguments": [],
+      "environment": {
+        "GF2_POPCOUNT_ARM": "and-popcnt-two-pass-consumer"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "and-popcnt-pilot-cache-resident",
+      "key": "and-popcnt-pilot-cache-resident",
+      "role": "exploratory",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-scalar-control",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2526650,
+            "windows": [
+              {
+                "calls": 171697,
+                "elapsed_ns": 100102013
+              },
+              {
+                "calls": 171697,
+                "elapsed_ns": 99114887
+              },
+              {
+                "calls": 171697,
+                "elapsed_ns": 99145088
+              },
+              {
+                "calls": 171697,
+                "elapsed_ns": 98999926
+              },
+              {
+                "calls": 171697,
+                "elapsed_ns": 99290039
+              }
+            ],
+            "ns_per_call": 577.4421684712022,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 588477601
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2526656,
+            "windows": [
+              {
+                "calls": 56500,
+                "elapsed_ns": 100281433
+              },
+              {
+                "calls": 56500,
+                "elapsed_ns": 100347584
+              },
+              {
+                "calls": 56500,
+                "elapsed_ns": 100434515
+              },
+              {
+                "calls": 56500,
+                "elapsed_ns": 100157023
+              },
+              {
+                "calls": 56500,
+                "elapsed_ns": 100413014
+              }
+            ],
+            "ns_per_call": 1776.0634336283185,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 575203368
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2526666,
+            "windows": [
+              {
+                "calls": 173349,
+                "elapsed_ns": 100123443
+              },
+              {
+                "calls": 173349,
+                "elapsed_ns": 99964162
+              },
+              {
+                "calls": 173349,
+                "elapsed_ns": 99993632
+              },
+              {
+                "calls": 173349,
+                "elapsed_ns": 100280404
+              },
+              {
+                "calls": 173349,
+                "elapsed_ns": 99913161
+              }
+            ],
+            "ns_per_call": 576.834201524093,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 591231565
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2526660,
+            "windows": [
+              {
+                "calls": 56301,
+                "elapsed_ns": 99743631
+              },
+              {
+                "calls": 56301,
+                "elapsed_ns": 100031942
+              },
+              {
+                "calls": 56301,
+                "elapsed_ns": 99806391
+              },
+              {
+                "calls": 56301,
+                "elapsed_ns": 100229043
+              },
+              {
+                "calls": 56301,
+                "elapsed_ns": 99876002
+              }
+            ],
+            "ns_per_call": 1773.9649739791478,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 572484924
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2526670,
+            "windows": [
+              {
+                "calls": 172807,
+                "elapsed_ns": 99734511
+              },
+              {
+                "calls": 172807,
+                "elapsed_ns": 99902462
+              },
+              {
+                "calls": 172807,
+                "elapsed_ns": 100261023
+              },
+              {
+                "calls": 172807,
+                "elapsed_ns": 100303964
+              },
+              {
+                "calls": 172807,
+                "elapsed_ns": 101115938
+              }
+            ],
+            "ns_per_call": 580.1907503746954,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 592895405
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2526699,
+            "windows": [
+              {
+                "calls": 55343,
+                "elapsed_ns": 99697411
+              },
+              {
+                "calls": 55343,
+                "elapsed_ns": 99468479
+              },
+              {
+                "calls": 55343,
+                "elapsed_ns": 98853486
+              },
+              {
+                "calls": 55343,
+                "elapsed_ns": 98060742
+              },
+              {
+                "calls": 55343,
+                "elapsed_ns": 98406253
+              }
+            ],
+            "ns_per_call": 1786.1967367146704,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 569222666
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2526802,
+            "windows": [
+              {
+                "calls": 173656,
+                "elapsed_ns": 100279994
+              },
+              {
+                "calls": 173656,
+                "elapsed_ns": 100224003
+              },
+              {
+                "calls": 173656,
+                "elapsed_ns": 100182883
+              },
+              {
+                "calls": 173656,
+                "elapsed_ns": 100876947
+              },
+              {
+                "calls": 173656,
+                "elapsed_ns": 100506125
+              }
+            ],
+            "ns_per_call": 577.4634564886903,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 593185167
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2526797,
+            "windows": [
+              {
+                "calls": 56315,
+                "elapsed_ns": 99994453
+              },
+              {
+                "calls": 56315,
+                "elapsed_ns": 100143882
+              },
+              {
+                "calls": 56315,
+                "elapsed_ns": 100018683
+              },
+              {
+                "calls": 56315,
+                "elapsed_ns": 99857691
+              },
+              {
+                "calls": 56315,
+                "elapsed_ns": 100287094
+              }
+            ],
+            "ns_per_call": 1776.0575867885998,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 573959691
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2526820,
+            "windows": [
+              {
+                "calls": 171722,
+                "elapsed_ns": 99201188
+              },
+              {
+                "calls": 171722,
+                "elapsed_ns": 99475849
+              },
+              {
+                "calls": 171722,
+                "elapsed_ns": 99483490
+              },
+              {
+                "calls": 171722,
+                "elapsed_ns": 100399124
+              },
+              {
+                "calls": 171722,
+                "elapsed_ns": 99363859
+              }
+            ],
+            "ns_per_call": 579.2842443018367,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 590554581
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2526827,
+            "windows": [
+              {
+                "calls": 55937,
+                "elapsed_ns": 100028432
+              },
+              {
+                "calls": 55937,
+                "elapsed_ns": 99738891
+              },
+              {
+                "calls": 55937,
+                "elapsed_ns": 99717851
+              },
+              {
+                "calls": 55937,
+                "elapsed_ns": 100288493
+              },
+              {
+                "calls": 55937,
+                "elapsed_ns": 100083753
+              }
+            ],
+            "ns_per_call": 1788.2337629833562,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 574530695
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2526906,
+            "windows": [
+              {
+                "calls": 170625,
+                "elapsed_ns": 99315318
+              },
+              {
+                "calls": 170625,
+                "elapsed_ns": 98514994
+              },
+              {
+                "calls": 170625,
+                "elapsed_ns": 98688255
+              },
+              {
+                "calls": 170625,
+                "elapsed_ns": 99462080
+              },
+              {
+                "calls": 170625,
+                "elapsed_ns": 98689655
+              }
+            ],
+            "ns_per_call": 578.4009084249084,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 586861492
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2526868,
+            "windows": [
+              {
+                "calls": 56239,
+                "elapsed_ns": 99850102
+              },
+              {
+                "calls": 56239,
+                "elapsed_ns": 99994062
+              },
+              {
+                "calls": 56239,
+                "elapsed_ns": 100370484
+              },
+              {
+                "calls": 56239,
+                "elapsed_ns": 99781751
+              },
+              {
+                "calls": 56239,
+                "elapsed_ns": 100433785
+              }
+            ],
+            "ns_per_call": 1778.0199150056012,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 574536335
+          }
+        }
+      ],
+      "claimed": null,
+      "decoder_quality": null,
+      "checkpoint_sha256": "498e5fbdbf41a39ca4595d350fb5bf6058c5cd23b24a162b96c566884b018f90"
+    },
+    {
+      "cell_id": "and-popcnt-pilot-streaming",
+      "key": "and-popcnt-pilot-streaming",
+      "role": "exploratory",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-scalar-control",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2526946,
+            "windows": [
+              {
+                "calls": 619,
+                "elapsed_ns": 97721949
+              },
+              {
+                "calls": 619,
+                "elapsed_ns": 107999116
+              },
+              {
+                "calls": 619,
+                "elapsed_ns": 104337295
+              },
+              {
+                "calls": 619,
+                "elapsed_ns": 103380421
+              },
+              {
+                "calls": 619,
+                "elapsed_ns": 103692532
+              }
+            ],
+            "ns_per_call": 167516.20678513733,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 596550164
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2526934,
+            "windows": [
+              {
+                "calls": 396,
+                "elapsed_ns": 98592214
+              },
+              {
+                "calls": 396,
+                "elapsed_ns": 98544745
+              },
+              {
+                "calls": 396,
+                "elapsed_ns": 98434593
+              },
+              {
+                "calls": 396,
+                "elapsed_ns": 99004247
+              },
+              {
+                "calls": 396,
+                "elapsed_ns": 98607924
+              }
+            ],
+            "ns_per_call": 248970.2373737374,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 596447964
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2526990,
+            "windows": [
+              {
+                "calls": 587,
+                "elapsed_ns": 96881065
+              },
+              {
+                "calls": 587,
+                "elapsed_ns": 97114766
+              },
+              {
+                "calls": 587,
+                "elapsed_ns": 97573349
+              },
+              {
+                "calls": 587,
+                "elapsed_ns": 100741536
+              },
+              {
+                "calls": 587,
+                "elapsed_ns": 107211612
+              }
+            ],
+            "ns_per_call": 166223.76320272574,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 580056765
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2526999,
+            "windows": [
+              {
+                "calls": 390,
+                "elapsed_ns": 99297019
+              },
+              {
+                "calls": 390,
+                "elapsed_ns": 101006578
+              },
+              {
+                "calls": 390,
+                "elapsed_ns": 101213018
+              },
+              {
+                "calls": 390,
+                "elapsed_ns": 101033728
+              },
+              {
+                "calls": 390,
+                "elapsed_ns": 100653916
+              }
+            ],
+            "ns_per_call": 258991.22564102564,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 603813044
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527003,
+            "windows": [
+              {
+                "calls": 577,
+                "elapsed_ns": 97772280
+              },
+              {
+                "calls": 577,
+                "elapsed_ns": 95588978
+              },
+              {
+                "calls": 577,
+                "elapsed_ns": 96344622
+              },
+              {
+                "calls": 577,
+                "elapsed_ns": 95760050
+              },
+              {
+                "calls": 577,
+                "elapsed_ns": 98154022
+              }
+            ],
+            "ns_per_call": 166975.0814558059,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 564023308
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2527009,
+            "windows": [
+              {
+                "calls": 405,
+                "elapsed_ns": 102826878
+              },
+              {
+                "calls": 405,
+                "elapsed_ns": 104786508
+              },
+              {
+                "calls": 405,
+                "elapsed_ns": 104825848
+              },
+              {
+                "calls": 405,
+                "elapsed_ns": 104791759
+              },
+              {
+                "calls": 405,
+                "elapsed_ns": 104857688
+              }
+            ],
+            "ns_per_call": 258745.0839506173,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 621358299
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527020,
+            "windows": [
+              {
+                "calls": 625,
+                "elapsed_ns": 104616877
+              },
+              {
+                "calls": 625,
+                "elapsed_ns": 104506176
+              },
+              {
+                "calls": 625,
+                "elapsed_ns": 103742613
+              },
+              {
+                "calls": 625,
+                "elapsed_ns": 103293740
+              },
+              {
+                "calls": 625,
+                "elapsed_ns": 108549729
+              }
+            ],
+            "ns_per_call": 167209.8816,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 602602237
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2527014,
+            "windows": [
+              {
+                "calls": 401,
+                "elapsed_ns": 100142333
+              },
+              {
+                "calls": 401,
+                "elapsed_ns": 100264274
+              },
+              {
+                "calls": 401,
+                "elapsed_ns": 101697681
+              },
+              {
+                "calls": 401,
+                "elapsed_ns": 104112785
+              },
+              {
+                "calls": 401,
+                "elapsed_ns": 104783968
+              }
+            ],
+            "ns_per_call": 253610.1770573566,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 610516020
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527039,
+            "windows": [
+              {
+                "calls": 544,
+                "elapsed_ns": 95271877
+              },
+              {
+                "calls": 544,
+                "elapsed_ns": 96127121
+              },
+              {
+                "calls": 544,
+                "elapsed_ns": 97446949
+              },
+              {
+                "calls": 544,
+                "elapsed_ns": 98558124
+              },
+              {
+                "calls": 544,
+                "elapsed_ns": 94174411
+              }
+            ],
+            "ns_per_call": 176704.26654411765,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 563625066
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2527099,
+            "windows": [
+              {
+                "calls": 401,
+                "elapsed_ns": 100199643
+              },
+              {
+                "calls": 401,
+                "elapsed_ns": 99784072
+              },
+              {
+                "calls": 401,
+                "elapsed_ns": 103849393
+              },
+              {
+                "calls": 401,
+                "elapsed_ns": 104083954
+              },
+              {
+                "calls": 401,
+                "elapsed_ns": 103725792
+              }
+            ],
+            "ns_per_call": 258667.81047381545,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 611354625
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527120,
+            "windows": [
+              {
+                "calls": 617,
+                "elapsed_ns": 97591090
+              },
+              {
+                "calls": 617,
+                "elapsed_ns": 98813315
+              },
+              {
+                "calls": 617,
+                "elapsed_ns": 105435232
+              },
+              {
+                "calls": 617,
+                "elapsed_ns": 103332420
+              },
+              {
+                "calls": 617,
+                "elapsed_ns": 103902634
+              }
+            ],
+            "ns_per_call": 167475.55915721232,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": null,
+            "elapsed_ns": 587781827
+          },
+          "candidate": {
+            "arm": "and-scalar-control",
+            "pid": 2527106,
+            "windows": [
+              {
+                "calls": 398,
+                "elapsed_ns": 100036292
+              },
+              {
+                "calls": 398,
+                "elapsed_ns": 100589415
+              },
+              {
+                "calls": 398,
+                "elapsed_ns": 98967587
+              },
+              {
+                "calls": 398,
+                "elapsed_ns": 98691645
+              },
+              {
+                "calls": 398,
+                "elapsed_ns": 99427449
+              }
+            ],
+            "ns_per_call": 249817.7110552764,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "and-popcnt-scalar-fused-control",
+            "conversion": null,
+            "elapsed_ns": 598928007
+          }
+        }
+      ],
+      "claimed": null,
+      "decoder_quality": null,
+      "checkpoint_sha256": "1fd887cb7760d8e609d8623166a447a37fb6fa86c49b9e4fcd41d8ac03c08101"
+    },
+    {
+      "cell_id": "and-popcnt-pilot-two-pass-consumer",
+      "key": "and-popcnt-pilot-two-pass-consumer",
+      "role": "exploratory",
+      "baseline_arm": "and-fused",
+      "candidate_arm": "and-two-pass",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527160,
+            "windows": [
+              {
+                "calls": 173473,
+                "elapsed_ns": 100200303
+              },
+              {
+                "calls": 173473,
+                "elapsed_ns": 100222633
+              },
+              {
+                "calls": 173473,
+                "elapsed_ns": 99966652
+              },
+              {
+                "calls": 173473,
+                "elapsed_ns": 100395035
+              },
+              {
+                "calls": 173473,
+                "elapsed_ns": 100302284
+              }
+            ],
+            "ns_per_call": 577.7419713730667,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": {
+              "setup_ns": 25980,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 606231637
+          },
+          "candidate": {
+            "arm": "and-two-pass",
+            "pid": 2527124,
+            "windows": [
+              {
+                "calls": 76878,
+                "elapsed_ns": 114523561
+              },
+              {
+                "calls": 76878,
+                "elapsed_ns": 115287725
+              },
+              {
+                "calls": 76878,
+                "elapsed_ns": 116040409
+              },
+              {
+                "calls": 76878,
+                "elapsed_ns": 115382406
+              },
+              {
+                "calls": 76878,
+                "elapsed_ns": 114814002
+              }
+            ],
+            "ns_per_call": 1499.6192018522854,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-and-inplace-then-popcount-two-pass",
+            "conversion": {
+              "setup_ns": 26740,
+              "pack_ns": 482,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 1
+            },
+            "elapsed_ns": 662881304
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527165,
+            "windows": [
+              {
+                "calls": 172844,
+                "elapsed_ns": 99634050
+              },
+              {
+                "calls": 172844,
+                "elapsed_ns": 99535989
+              },
+              {
+                "calls": 172844,
+                "elapsed_ns": 99889302
+              },
+              {
+                "calls": 172844,
+                "elapsed_ns": 99879402
+              },
+              {
+                "calls": 172844,
+                "elapsed_ns": 99558919
+              }
+            ],
+            "ns_per_call": 576.4391590104372,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": {
+              "setup_ns": 30680,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 604124016
+          },
+          "candidate": {
+            "arm": "and-two-pass",
+            "pid": 2527171,
+            "windows": [
+              {
+                "calls": 66371,
+                "elapsed_ns": 102450225
+              },
+              {
+                "calls": 66371,
+                "elapsed_ns": 103188090
+              },
+              {
+                "calls": 66371,
+                "elapsed_ns": 101777782
+              },
+              {
+                "calls": 66371,
+                "elapsed_ns": 101836332
+              },
+              {
+                "calls": 66371,
+                "elapsed_ns": 102139154
+              }
+            ],
+            "ns_per_call": 1538.912386433834,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-and-inplace-then-popcount-two-pass",
+            "conversion": {
+              "setup_ns": 26780,
+              "pack_ns": 481,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 1
+            },
+            "elapsed_ns": 603221220
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527187,
+            "windows": [
+              {
+                "calls": 173756,
+                "elapsed_ns": 100852957
+              },
+              {
+                "calls": 173756,
+                "elapsed_ns": 101177899
+              },
+              {
+                "calls": 173756,
+                "elapsed_ns": 100099672
+              },
+              {
+                "calls": 173756,
+                "elapsed_ns": 100682117
+              },
+              {
+                "calls": 173756,
+                "elapsed_ns": 100300783
+              }
+            ],
+            "ns_per_call": 579.4454119569972,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": {
+              "setup_ns": 28730,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 608493900
+          },
+          "candidate": {
+            "arm": "and-two-pass",
+            "pid": 2527211,
+            "windows": [
+              {
+                "calls": 72379,
+                "elapsed_ns": 108556568
+              },
+              {
+                "calls": 72379,
+                "elapsed_ns": 109026231
+              },
+              {
+                "calls": 72379,
+                "elapsed_ns": 109822886
+              },
+              {
+                "calls": 72379,
+                "elapsed_ns": 108437808
+              },
+              {
+                "calls": 72379,
+                "elapsed_ns": 108725089
+              }
+            ],
+            "ns_per_call": 1502.1634590143549,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-and-inplace-then-popcount-two-pass",
+            "conversion": {
+              "setup_ns": 31090,
+              "pack_ns": 487,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 1
+            },
+            "elapsed_ns": 634260559
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527243,
+            "windows": [
+              {
+                "calls": 173682,
+                "elapsed_ns": 100186424
+              },
+              {
+                "calls": 173682,
+                "elapsed_ns": 100251733
+              },
+              {
+                "calls": 173682,
+                "elapsed_ns": 100529185
+              },
+              {
+                "calls": 173682,
+                "elapsed_ns": 100067052
+              },
+              {
+                "calls": 173682,
+                "elapsed_ns": 100018733
+              }
+            ],
+            "ns_per_call": 576.8382676385578,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": {
+              "setup_ns": 29540,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 606267787
+          },
+          "candidate": {
+            "arm": "and-two-pass",
+            "pid": 2527237,
+            "windows": [
+              {
+                "calls": 74831,
+                "elapsed_ns": 110142838
+              },
+              {
+                "calls": 74831,
+                "elapsed_ns": 110214887
+              },
+              {
+                "calls": 74831,
+                "elapsed_ns": 109671785
+              },
+              {
+                "calls": 74831,
+                "elapsed_ns": 109997426
+              },
+              {
+                "calls": 74831,
+                "elapsed_ns": 110202668
+              }
+            ],
+            "ns_per_call": 1471.887827237375,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-and-inplace-then-popcount-two-pass",
+            "conversion": {
+              "setup_ns": 31130,
+              "pack_ns": 444,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 1
+            },
+            "elapsed_ns": 636640032
+          }
+        },
+        {
+          "index": 4,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527256,
+            "windows": [
+              {
+                "calls": 172870,
+                "elapsed_ns": 100205293
+              },
+              {
+                "calls": 172870,
+                "elapsed_ns": 99586900
+              },
+              {
+                "calls": 172870,
+                "elapsed_ns": 99741991
+              },
+              {
+                "calls": 172870,
+                "elapsed_ns": 99739561
+              },
+              {
+                "calls": 172870,
+                "elapsed_ns": 99679261
+              }
+            ],
+            "ns_per_call": 576.9628102041997,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": {
+              "setup_ns": 27760,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 604234906
+          },
+          "candidate": {
+            "arm": "and-two-pass",
+            "pid": 2527248,
+            "windows": [
+              {
+                "calls": 72733,
+                "elapsed_ns": 106944090
+              },
+              {
+                "calls": 72733,
+                "elapsed_ns": 106717888
+              },
+              {
+                "calls": 72733,
+                "elapsed_ns": 107044701
+              },
+              {
+                "calls": 72733,
+                "elapsed_ns": 106779099
+              },
+              {
+                "calls": 72733,
+                "elapsed_ns": 106624298
+              }
+            ],
+            "ns_per_call": 1468.0969986113594,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-and-inplace-then-popcount-two-pass",
+            "conversion": {
+              "setup_ns": 29381,
+              "pack_ns": 445,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 1
+            },
+            "elapsed_ns": 621564210
+          }
+        },
+        {
+          "index": 5,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "and-fused",
+            "pid": 2527260,
+            "windows": [
+              {
+                "calls": 173329,
+                "elapsed_ns": 100317644
+              },
+              {
+                "calls": 173329,
+                "elapsed_ns": 100286034
+              },
+              {
+                "calls": 173329,
+                "elapsed_ns": 99941111
+              },
+              {
+                "calls": 173329,
+                "elapsed_ns": 100057053
+              },
+              {
+                "calls": 173329,
+                "elapsed_ns": 100299974
+              }
+            ],
+            "ns_per_call": 578.5877377703673,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-avx2-and-popcnt-fused",
+            "conversion": {
+              "setup_ns": 30400,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 606064537
+          },
+          "candidate": {
+            "arm": "and-two-pass",
+            "pid": 2527265,
+            "windows": [
+              {
+                "calls": 77040,
+                "elapsed_ns": 113516856
+              },
+              {
+                "calls": 77040,
+                "elapsed_ns": 114390390
+              },
+              {
+                "calls": 77040,
+                "elapsed_ns": 113716987
+              },
+              {
+                "calls": 77040,
+                "elapsed_ns": 114979963
+              },
+              {
+                "calls": 77040,
+                "elapsed_ns": 114550541
+              }
+            ],
+            "ns_per_call": 1484.8181464174454,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-and-inplace-then-popcount-two-pass",
+            "conversion": {
+              "setup_ns": 26800,
+              "pack_ns": 465,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 1
+            },
+            "elapsed_ns": 656815141
+          }
+        }
+      ],
+      "claimed": null,
+      "decoder_quality": null,
+      "checkpoint_sha256": "8ab4a061c87741a49cea45c261669d44f9e3eae61c377d9a2a5774b06786ccfb"
+    }
+  ]
+}

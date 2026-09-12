@@ -1,0 +1,223 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "7d9c85d6ed9a6eaea537e959df4ff5e28b06280cf1445a5e4668e959cca82137",
+  "campaign_id": "26465e6c-v3-and-popcnt-pilot",
+  "label": "pilot",
+  "verdict": "rejected",
+  "qualifies": false,
+  "family": {
+    "family_id": "and-popcnt-baselines",
+    "comparisons": 1,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 3,
+  "resumed": true,
+  "findings": [
+    {
+      "rule": "P-11",
+      "severity": "error",
+      "cell": "and-popcnt-w4096-vs-scalar-control",
+      "message": "cell started 2 times; completed cells must not repeat"
+    },
+    {
+      "rule": "P-11",
+      "severity": "error",
+      "cell": "and-popcnt-w4096-vs-scalar-control",
+      "message": "cell-start input differs from the saved plan"
+    },
+    {
+      "rule": "P-11",
+      "severity": "error",
+      "cell": "and-popcnt-w4096-vs-scalar-control",
+      "message": "cell has no single cell-start record"
+    }
+  ],
+  "cells": [
+    {
+      "cell_id": "and-popcnt-w4-vs-scalar-control",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 0.8373340762728142,
+        "lower": 0.8342041591309722,
+        "upper": 0.8408790142066492,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 5049982034061347741,
+        "pairs": 12
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "and-popcnt-w4096-vs-scalar-control",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "invalid",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": null,
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "and-popcnt-w512k-streaming-vs-scalar-control",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 0.648576969697559,
+        "lower": 0.6440486479489049,
+        "upper": 0.6662884508436077,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 12186130724984788604,
+        "pairs": 12
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "and-popcnt-w4-vs-two-pass",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 0.20369934202207052,
+        "lower": 0.2031311846333347,
+        "upper": 0.20438237513885862,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 35867159433785106,
+        "pairs": 12
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "and-popcnt-w4096-vs-two-pass",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 0.4220684734101792,
+        "lower": 0.4204332565390425,
+        "upper": 0.4235562611676705,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 239639600375971980,
+        "pairs": 12
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "and-popcnt-w512k-streaming-vs-two-pass",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 0.5982119226735395,
+        "lower": 0.5590056988898976,
+        "upper": 0.6094398953040889,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 16800481826697297978,
+        "pairs": 12
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}

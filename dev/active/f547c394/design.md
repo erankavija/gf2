@@ -43,11 +43,16 @@ connections and the derived checkpoint identities.
 
 ## Decisions worth knowing
 
-- **Versioned acceptance.** [Protocol v3](protocol.md) and its
-  [amendment record](amendment-v3.md) specify current measurement behavior.
+- **Versioned acceptance.** [Protocol v4](protocol.md) and its
+  [amendment record](amendment-v4.md) specify current measurement behavior.
   The shared evaluator keeps the named v1 evidence boundary while committed
   v1 receipts require reproducible evaluation. Producing new evidence requires
   the current document version to match the addendum before measurement.
+- **Interrupted cells.** `receipt::CellAttempts` reads cell attempts, their
+  completions, abandonments and journaled executions from the execution log.
+  The runner uses it to find the attempt a resumed session abandons and the
+  evaluator uses it for P-11, so producer and verifier share one reading of
+  the journal.
 - **Family reservations.** `trial_ledger` owns append-only attempt accounting;
   it is a library consumer of the shared atomic publisher. Each reservation
   binds its predecessor and exists before measurement, including attempts
@@ -109,8 +114,12 @@ evaluator, records the focused tests, and verifies the frozen
 [confirmation](../../bench_results/f547c394/v3-r2-confirmation/receipt.json)
 receipts. Both evidence collections contain their complete frozen inputs and
 report zero acceptance findings. These receipts exercise the protocol pipeline
-without claiming a gf2 speedup.
+without claiming a gf2 speedup. The version-4 interrupted-cell rule is
+exercised by the runner contract tests in `tests/protocol_contracts.rs`, which
+kill a session inside a cell and carry the resumed campaign through
+acceptance.
 
-The [findings](findings.md) carry the version amendments and cumulative review
-resolutions. The v1 and v2 collections remain preserved under their pinned
+The [findings](findings.md) carry the version-3 research rework and its
+cumulative review resolutions; each amendment record carries its version's
+changes. The v1 and v2 collections remain preserved under their pinned
 rules, and the v3 r1 collection remains preserved as falsified evidence.

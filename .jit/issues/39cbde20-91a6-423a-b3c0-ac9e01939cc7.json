@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-11T18:16:54.648615470Z",
+  "dependencies": [
+    "3be770d5-779b-4a82-ad66-f9cec35057dc"
+  ],
+  "description": "The AVX2 min-sum check-node reduction treats a negative-zero LLR as negative in its vector lanes and as positive in its scalar tail, so the sign of its result depends on where a negative zero sits in the input slice.\n\n## Background\n\nIn `crates/gf2-kernels-simd/src/llr.rs`, the AVX2 min-sum reduction accumulates signs by XOR of IEEE sign bits across eight-lane chunks, which counts `-0.0` as negative, and handles the remainder with `val < 0.0`, which counts `-0.0` as positive. gf2's scalar min-sum counts `-0.0` as positive, and AFF3CT's sign function counts it as negative. When a zero magnitude is present the result's magnitude is zero either way, but its sign bit differs by input position and by backend, which breaks the scalar and SIMD equivalence the kernels promise for any consumer that reads the sign bit.\n\n## Success Criteria\n\n- [hard] REQ-01: The min-sum reduction's treatment of a signed-zero input is defined once in its documented numerical contract, and the scalar backend, the AVX2 vector lanes and the AVX2 remainder all follow it.\n- [hard] REQ-02: The shared scalar and SIMD behavioural suite covers inputs with `-0.0` and `+0.0` in lane and remainder positions, including lengths 0, 1, 7, 8 and 9, and passes for every backend.\n- [hard] REQ-03: The emitted-assembly artefact of the changed SIMD source is regenerated at Rust 1.95.\n\n## Notes\n\nSurfaced by the CPU LDPC throughput-gap survey while recording the numerical contract a shared min/second-min/sign reduction must settle (`dev/active/3be770d5/survey/source-evidence.json`, lever `numerical-contract`).\n",
+  "documents": [],
+  "first_ready_at": "2026-09-11T18:16:54.648615470Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "39cbde20-91a6-423a-b3c0-ac9e01939cc7",
+  "labels": [
+    "component:gf2-kernels-simd",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Treat negative-zero LLRs consistently in the min-sum sign product",
+  "updated_at": "2026-09-11T18:17:20.198466826Z"
+}

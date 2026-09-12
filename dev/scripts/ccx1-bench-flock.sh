@@ -31,12 +31,35 @@
 # moment they hold the shared side, so they never serialize against each other
 # for longer than one lock acquisition.
 #
-# The nesting below is the whole mechanism: the outer `flock` holds the
-# turnstile and execs the inner `flock`, which holds the mutex and execs the
-# command. Both descriptors survive `exec`, so both locks are held for the
-# child's lifetime and released together when it exits. Deadlock is not
-# reachable: a build holds the turnstile only while no measurement run does,
-# and a measurement run holds both or neither.
+# This wrapper takes the turnstile, then the mutex, and holds both until the
+# command exits. Deadlock is not reachable: an acquirer waits for the
+# turnstile holding no lock, and for the mutex holding only the turnstile,
+# which no holder of the mutex waits for.
+#
+# ## Lock lifetime
+#
+# Both locks are released when the command exits, even if it left a daemon
+# running.
+#
+# The command inherits the mutex descriptor, and so does every process it
+# starts: the benchmark runner and the calibration harness refuse to measure
+# without an inherited descriptor for the held lock (`host::inherited_lock` in
+# dev/tools/tuning-campaign-support, `observed_lock_file` in
+# crates/gf2-core/benches/tuning_calibration.rs). A flock lock is released by
+# an unlock or once every copy of its descriptor is closed, so a daemon the
+# command starts would otherwise keep the mutex. Observed 2026-09-10: an
+# sccache server that a cargo-ci run under this wrapper started held the mutex
+# and the turnstile after the run, and every build on the host waited until
+# the server was stopped. The wrapper therefore unlocks the mutex once the
+# command exits, which releases it whatever copies remain. The turnstile
+# descriptor is closed in the command, so no descendant holds one.
+#
+# HUP, INT and TERM are caught so that the wrapper outlives the command and
+# the unlock runs; the command still receives any signal sent to it or to its
+# process group. SIGKILL cannot be caught: if the wrapper is killed with it,
+# the unlock cannot run, the turnstile is released at once, and the mutex
+# stays held until the command and every process holding a copy of its
+# descriptor, a daemon included, have exited.
 #
 # A run that already holds this mutex MUST set CARGO_CI_NO_LOCK=1 for its own
 # cargo work. That was already required to avoid taking the shared side
@@ -58,13 +81,24 @@ TURNSTILE="${GF2_CCX1_TURNSTILE:-${LOCK_FILE}.turnstile}"
 test -f "$LOCK_FILE" || touch "$LOCK_FILE"
 test -f "$TURNSTILE" || touch "$TURNSTILE"
 
+PIN=(taskset -c 6-11)
 if [[ "${1:-}" == "--full-host" ]]; then
   shift
   test "$#" -gt 0 || {
     echo "usage: $0 [--full-host] <command> [args...]" >&2
     exit 2
   }
-  exec flock -x "$TURNSTILE" flock -x "$LOCK_FILE" nice -n -5 "$@"
+  PIN=()
 fi
 
-exec flock -x "$TURNSTILE" flock -x "$LOCK_FILE" taskset -c 6-11 nice -n -5 "$@"
+exec {TURNSTILE_FD}<"$TURNSTILE"
+flock -x "$TURNSTILE_FD"
+exec {LOCK_FD}<"$LOCK_FILE"
+flock -x "$LOCK_FD"
+
+trap : HUP INT TERM
+rc=0
+"${PIN[@]}" nice -n -5 "$@" {TURNSTILE_FD}<&- || rc=$?
+flock -u "$LOCK_FD"
+flock -u "$TURNSTILE_FD"
+exit "$rc"

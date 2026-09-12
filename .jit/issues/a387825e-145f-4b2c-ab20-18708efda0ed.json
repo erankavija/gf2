@@ -1,9 +1,10 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-11T16:57:08.837087978Z",
   "context": {},
   "created_at": "2026-09-10T23:37:54.718485518Z",
   "dependencies": [],
-  "description": "The host benchmark and build locks leak into long-lived processes started under them: a compiler-cache server spawned by a locked cargo run inherits the lock descriptors and holds the lock after the run ends, blocking every other build and benchmark on the host.\n\n## Background\n\n`dev/scripts/ccx1-bench-flock.sh` holds the CCX1 mutex and its turnstile through descriptors that the wrapped command inherits, and `scripts/cargo-budget.sh` holds the shared side through a descriptor its cargo child inherits. An `flock` lock belongs to the open file description, so it is released only when every process holding a copy of the descriptor has closed it. When a cargo command under either wrapper starts the `sccache` server, which daemonizes and outlives the command, the server keeps the descriptors and the lock stays held until the server exits on its idle timeout.\n\nObserved on 2026-09-10: a `cargo-ci` gate run under `ccx1-bench-flock.sh --full-host` at 23:24:08Z started an `sccache` server that held the exclusive mutex and the turnstile after the run finished; every `cargo-budget.sh` acquirer on the host waited until the server was stopped at 23:32Z. A server spawned under the shared side would in the same way delay every exclusive benchmark run.\n\n## Success Criteria\n\n- [hard] REQ-01: No process started by a command under `ccx1-bench-flock.sh` or `scripts/cargo-budget.sh` holds a CCX1 lock or turnstile descriptor after the wrapped command exits.\n- [hard] REQ-02: The wrappers keep their existing guarantees while the wrapped command runs: exclusive runs exclude builds, builds share, and the turnstile's writer preference holds.\n- [hard] REQ-03: A regression test starts a daemonizing child under each wrapper and shows the lock is free once the wrapped command exits.\n\n## Notes\n\nUntil this is fixed, a compiler-cache server started outside every lock before locked cargo work prevents the leak.\n",
+  "description": "The host benchmark and build locks leak into long-lived processes started under them: a compiler-cache server spawned by a locked cargo run inherits the lock descriptors and holds the lock after the run ends, blocking every other build and benchmark on the host.\n\n## Background\n\n`dev/scripts/ccx1-bench-flock.sh` holds the CCX1 mutex and its turnstile through descriptors that the wrapped command inherits, and `scripts/cargo-budget.sh` holds the shared side through a descriptor its cargo child inherits. An `flock` lock belongs to the open file description, so it is released only when every process holding a copy of the descriptor has closed it. When a cargo command under either wrapper starts the `sccache` server, which daemonizes and outlives the command, the server keeps the descriptors and the lock stays held until the server exits on its idle timeout.\n\nObserved on 2026-09-10: a `cargo-ci` gate run under `ccx1-bench-flock.sh --full-host` at 23:24:08Z started an `sccache` server that held the exclusive mutex and the turnstile after the run finished; every `cargo-budget.sh` acquirer on the host waited until the server was stopped at 23:32Z. A server spawned under the shared side would in the same way delay every exclusive benchmark run.\n\n## Success Criteria\n\n- [hard] REQ-01: No process started by a command under `ccx1-bench-flock.sh` or `scripts/cargo-budget.sh` holds the CCX1 lock, or any turnstile descriptor, after the wrapped command exits.\n- [hard] REQ-02: The wrappers keep their existing guarantees while the wrapped command runs: exclusive runs exclude builds, builds share, and the turnstile's writer preference holds.\n- [hard] REQ-03: A regression test starts a daemonizing child under each wrapper and shows the lock is free once the wrapped command exits.\n\n## Notes\n\nUntil this is fixed, a compiler-cache server started outside every lock before locked cargo work prevents the leak.\n",
   "documents": [],
   "first_ready_at": "2026-09-10T23:37:54.718485518Z",
   "gates_required": [
@@ -19,7 +20,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Close the host-lock leak into daemons started under the lock wrappers",
-  "updated_at": "2026-09-10T23:37:54.718485518Z"
+  "updated_at": "2026-09-11T17:44:41.846913290Z"
 }
