@@ -220,9 +220,11 @@ resumes after an interrupted session, so its sessions span more than one host
 window; a resumed run re-runs an unfinished session whole and refuses to
 resume when the executables it runs or the files that define its cases differ
 from the first session's record. Its harness-source digests are that first
-session's, and two of them, the launcher's and the disassembler's, differ
-from the files in the tree; the committed disassembly is the current
-disassembler's output, which the completed series reproduces byte for byte.
+session's, and the series is complete under them. Where a survey file in the
+tree differs from the digest recorded beside it, this profile's evidence rests
+on the recorded identity; the disassembler is one such file, and the committed
+disassembly is the current disassembler's output, which the completed series
+reproduces byte for byte.
 A session first
 proves the compared routes agree (`rep-*/verify.jsonl`), then sweeps the
 current production routes of `survey/profile-cases.py` with per-call wall
