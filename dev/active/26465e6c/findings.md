@@ -5,7 +5,9 @@
 Survey for `26465e6c` on the Ryzen 9 5900X. It changes no production kernel or
 library. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol version 3](../f547c394/protocol.md) govern every receipt.
+and the [shared protocol](../f547c394/protocol.md) at
+[version 3](../f547c394/amendment-v3.md) — the version every receipt pins,
+snapshots and is evaluated under — govern every receipt.
 
 This report states no measured value. Each conclusion points to its source: a
 section of the generated [receipt tables](../../bench_results/26465e6c/tables.md),
