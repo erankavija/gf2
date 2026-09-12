@@ -1,6 +1,6 @@
 {
   "schema": "ldpc-throughput-build-identity-v1",
-  "observed_utc": "2026-09-11T17:49:40+00:00",
+  "observed_utc": "2026-09-12T06:28:26+00:00",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
   "cxx": "c++ (GCC) 16.2.1 20260810",
   "rustflags": "-C target-cpu=native",
@@ -37,7 +37,7 @@
   "executables": {
     "gf2-throughput-arm": "350f2e448de11f7f8853474342a189dd805ac974b89a0ba48ef7c949ac574f69",
     "aff3ct-throughput-arm": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
-    "ldpc-profile": "5af7ef86106e1483c332612b5d2825e889fd3a7db27d4d76fd48a516ff84f228",
+    "ldpc-profile": "2ba24e5a81aa4193ede75e51270b2c49968d8af43f942014ef323254a489f017",
     "ldpc-plan-check": "b7f58d61e418f0e1f7b8fff9d00812859de0409017372d48117bbeb10f643707",
     "ldpc-alloc-census": "44d5ef19daa827b2af2a5d0c9aafd60de394d41809bd794cfc3012ef6ea20006",
     "ldpc-throughput-validate": "f932f709abd8c60b3683e8bda52e5da534f4e0f4097fb420230c5d1a900781f8"
