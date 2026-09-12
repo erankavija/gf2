@@ -11706,3 +11706,12 @@
 {"fields":["documents"],"id":"0e65dd5f-ce6f-4710-98e8-384bd4be2e84","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T16:35:33.523888095Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"61bb8dea-ab4b-44ec-a6a9-cc4db1f3fad7","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T16:35:33.822457894Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"2b1081a5-0cde-4535-9727-c17d9976ffe7","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T16:35:34.126718882Z","type":"issue_updated","updated_by":"doc-add"}
+{"assignee":"agent:jit-execution-lead","id":"51280d37-938d-44e2-b259-2dadc574c88a","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T16:36:14.544268877Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"1a8f86d6-c858-4b04-bb98-af8fa8b2a754","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-09-12T16:37:34.226919768Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"ready","id":"88aa1e93-19d7-4a84-990d-9989b69c15e0","issue_id":"428f2f6b-4cfa-4c78-b93c-a576e443594d","timestamp":"2026-09-12T16:38:43.751982432Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"bd9e7175-2a3c-417c-b9fd-a4a2b22f9ea8","issue_id":"428f2f6b-4cfa-4c78-b93c-a576e443594d","timestamp":"2026-09-12T16:38:43.751982432Z","type":"issue_claimed"}
+{"from":"ready","id":"f91bbc73-d4cc-4b79-abda-4450ace420f2","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-12T16:41:59.651387530Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"cbaae5c4-5d5a-4639-9e54-b72b65f35086","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-12T16:41:59.651387530Z","type":"issue_claimed"}
+{"id":"8b383c7a-a256-4c20-8a4e-e973b66669dc","issue_id":"94ab019f-cc91-4081-b787-39037d14fc86","priority":"low","timestamp":"2026-09-12T16:53:18.188190684Z","title":"Gate the conservative tuning test on every feature it needs","type":"issue_created"}
+{"from":"ready","id":"873cd29e-b05a-4fca-ab27-db06bdbdaac7","issue_id":"94ab019f-cc91-4081-b787-39037d14fc86","timestamp":"2026-09-12T16:53:33.978784228Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"3c5f72cc-ddf7-4e3b-8bcd-3eaa0f2f9a26","issue_id":"94ab019f-cc91-4081-b787-39037d14fc86","timestamp":"2026-09-12T16:53:33.978784228Z","type":"issue_updated","updated_by":"dependency-add"}

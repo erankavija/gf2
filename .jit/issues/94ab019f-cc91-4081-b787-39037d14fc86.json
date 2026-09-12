@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-12T16:53:18.188190684Z",
+  "dependencies": [
+    "1c602857-5e5b-4981-949a-09bb7639476b"
+  ],
+  "description": "The gf2-core integration test `tuning_conservative_cfg.rs` compiles only when the `tuning-profile` feature accompanies `test-support`, although its own gate names `test-support` alone, so a partial-feature test run of the crate fails to build.\n\n## Background\n\n`crates/gf2-core/tests/tuning_conservative_cfg.rs` opens with `#![cfg(feature = \"test-support\")]` and includes `tests/support/core_tuning.rs`, whose `prepared_core_json` needs the tuning-profile machinery. The CI contract builds with `--all-features`, so the mismatch stays hidden there and appears only in focused runs such as `cargo nextest run -p gf2-core --features simd,test-support`, which a survey worker used to run the carry-less product conformance suite.\n\n## Success Criteria\n\n- [hard] REQ-01: `cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features simd,test-support` builds, with the tuning test either gated on every feature it needs or its support module made independent of the missing feature.\n- [hard] REQ-02: The all-features fast tier still runs the test.\n\n## Notes\n\nSurfaced by the public wide carry-less product routing work while running its conformance tests with a focused feature set.",
+  "documents": [],
+  "first_ready_at": "2026-09-12T16:53:18.188190684Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "94ab019f-cc91-4081-b787-39037d14fc86",
+  "labels": [
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Gate the conservative tuning test on every feature it needs",
+  "updated_at": "2026-09-12T16:53:33.978784228Z"
+}
