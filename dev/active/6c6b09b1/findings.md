@@ -38,7 +38,8 @@ medians below one means gf2 is faster.
 | `survey/fetch-build.sh` | the pinned libraries, built from verified pins under the primary checkout's `.agents/ext/6c6b09b1/` |
 | `survey/stage-externals.sh` | that prefix, checked against `survey/ext-prefix.sha256` and copied into `target/6c6b09b1-ext/` |
 | `../../bench_results/6c6b09b1/run-byte-field-v4.sh build` | the C shim, conformance and provenance tools, both arm executables, the runner, and `conformance-v4/`: correctness evidence, `arm-provenance.txt`, `build-record.txt` |
-| `../../bench_results/6c6b09b1/run-byte-field-v4.sh plan\|window CAMPAIGN` | the v4 campaigns; each receipt's `launcher.log` records every session command |
+| `../../bench_results/6c6b09b1/run-byte-field-v4.sh plan\|window CAMPAIGN` | the v4 campaigns; each receipt's `launcher.log` records every session command. A campaign that completes holding no cell with paired executions fails the job (exit 4) instead of passing as a clean run; a cell the host makes inapplicable is named, not failed |
+| `../../bench_results/6c6b09b1/run-byte-field-v4.test.sh` | the launcher's outcome guards over synthesized journals and receipts, alongside the real failed v3 stage and the committed v1 receipt |
 | `survey/make-addenda.py`, `survey/make-plan-versioned.py`, `survey/make-producing-inputs.py` | the pilot addenda, the runner plans and the producing closure `survey/producing-inputs-v4.json` |
 | `survey/make-source-evidence.py` | `survey/source-evidence.json`: every code claim below, cited by claim ID in backticks |
 | `survey/make-ledger-origin-v3.py` | `../../bench_results/6c6b09b1/v3-*-ledger-origin.json` |
