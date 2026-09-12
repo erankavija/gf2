@@ -14,8 +14,12 @@ measured under protocol version 3.
   comparison in them is withdrawn, including the gap and its attribution to
   the adapter's representation conversion; the receipts stay byte-identical
   as history. The exploratory re-measurement, with arms that apply the
-  declared cache state, is frozen and its receipt is pending, so this report
-  states no current DVB-T2 comparison.
+  declared cache state, is accepted with zero findings, and every comparator
+  cell decides against the external arm at both MODCODs, both FECFRAME
+  lengths and both cache states. Every cell is exploratory and the family
+  ledger records the campaign as an attempt that reserves no comparison, so
+  the re-measurement supports no confirmatory claim (§1, *Exploratory
+  re-measurement outcomes*).
 - **5G NR LLR de-rate-matching** against AFF3CT. The confirmation
   `nr-derate-confirmation-eda07788-20260910t170957z` is accepted with zero
   findings, and all six cells are confirmatory. In the five gap cells gf2 is
@@ -55,7 +59,7 @@ Committed commands produce every artifact:
 | `survey/analysis` `bootstrap-resolution` | NR resolution derivation `pilot-resolution-nr-derate.txt`; DVB-T2 endpoint stability `survey/dvb-t2-v3-endpoint-stability.txt` |
 | `survey/inspect-sources.py` | `survey/source-evidence.json`: every code claim below with project, commit, path, line, verbatim text and interpretation |
 | `../../bench_results/eda07788/run-dvb-t2-baselines.sh`, `run-nr-derate-baselines.sh` | bounded checkpointed campaigns under the CCX1 full-host lock; `remeasure-v3` runs the DVB-T2 re-measurement and resumes under its campaign identity |
-| `../../bench_results/eda07788/reevaluate-v3.sh` | independent re-evaluation of all five v3 receipts: `reevaluation-v3.log` |
+| `../../bench_results/eda07788/reevaluate-v3.sh` | independent re-evaluation of every v3 receipt of both families: `reevaluation-v3.log` |
 | `../../bench_results/eda07788/summarize-v3.py` | [DVB-T2 tables](../../bench_results/eda07788/tables-v3.md) and [NR tables](../../bench_results/eda07788/tables-nr-derate.md) |
 
 Code claims cite `source-evidence.json` claim IDs in backticks. Every number
@@ -74,14 +78,14 @@ builds. Every receipt records each session's host observation: `fraktaali`,
 an AMD Ryzen 9 5900X on Linux 7.2.2-arch1-1 with all 24 CPUs in the mask, SMT
 active and the `powersave` governor. Every confirmatory cell is
 whole-consumer, single-core latency and declares a warm cache, which the
-DVB-T2 arms did not apply (§1). The baseline is always gf2, so a speedup
-below 1 in a `-gap-` cell means gf2 is faster.
+DVB-T2 arms of those receipts did not apply (§1). The baseline is always gf2,
+so a speedup below 1 in a `-gap-` cell means gf2 is faster.
 
 ## Operation mapping outcomes
 
 | Operation | External path | Mapping | Timed |
 |---|---|---|---|
-| DVB-T2 §6.1.3 bit interleaving [Etsi2015] | xdsopl `PCTITL` | operation-equivalent, bit-exact | withdrawn for the warm-state defect; exploratory re-measurement pending (§1) |
+| DVB-T2 §6.1.3 bit interleaving [Etsi2015] | xdsopl `PCTITL` | operation-equivalent, bit-exact | withdrawn for the warm-state defect; re-measured, every cell exploratory (§1) |
 | 5G NR LLR de-rate-matching | AFF3CT `Puncturer::depuncture` | bit-exact after an adapter, in 8 of 12 configurations | six confirmatory cells |
 | 5G NR rate-matching bit selection | AFF3CT `Puncturer::puncture` | AFF3CT's rule selects gf2's positions in 8/8 configurations | no: gf2 has no public bit-selection entry point |
 | 5G NR circulant rotation | AFF3CT fast QC encoder, srsRAN `circ_shift_backward` | external per-frame operation, no gf2 counterpart | no |
@@ -128,9 +132,10 @@ and pack spans inside the windows.
 
 ### Warm-state defect and re-measurement
 
-Protocol version 3 defines a `warm` cell as one untimed pass over the working
-set before calibration, and P-17 requires the applied cache state to match the
-declaration ([protocol](../f547c394/protocol.md), *Sampling design*). The v3
+[Version 3](../f547c394/amendment-v3.md) of the
+[shared protocol](../f547c394/protocol.md) defines a `warm` cell as one untimed
+pass over the working set before calibration, and its P-17 requires the applied
+cache state to match the declaration (*Sampling design*). The v3
 receipts snapshot the arm sources under `inputs/producing/`. In those
 snapshots, both arms' warm branch only passes a reference to the input bank
 through `black_box` (`survey-v3-gf2-arm-warm-defect`,
@@ -158,12 +163,63 @@ both comparators, and P-20's tail support rules out a confirmatory outcome for
 any further attempt of this family; the addendum's family description derives
 both, with each cell's pilot-trial count. The family ledger counts the
 campaign as a further reservation that spends no comparisons.
-`run-dvb-t2-baselines.sh remeasure-v3` runs it in a benchmark window. Its
-receipt is pending, and nothing in the next subsection is a current finding.
+`run-dvb-t2-baselines.sh remeasure-v3` ran it in a benchmark window, and its
+[receipt](../../bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json)
+is committed.
+
+### Exploratory re-measurement outcomes
+
+The campaign `remeasure-v3-eda07788-r1` is accepted with no findings. Every
+cell is `measured` at its frozen pair count, no window is flagged anywhere, and
+every arm reports the cache state its cell declares as applied. The
+[tables](../../bench_results/eda07788/tables-v3.md), *Protocol-v3
+re-measurement with the repaired warm pass*, carry every value, recomputed from
+the receipt's raw pairs by `benchmark-acceptance`.
+
+**What the cells decide.** Every comparator-gap cell decides `regressed`:
+against both gf2 builds, at 16-QAM and 64-QAM, at Normal and Short FECFRAME
+and under both `warm` and `streaming`, the external arm is more than the
+equivalence margin slower, and the cell table's *gf2 faster by* column gives
+the reciprocal. The identity control and both portable-versus-native controls
+decide `not-worse`, so the two gf2 builds still cannot be told apart on this
+operation. Every cell's relative half-width is an order below the withdrawn
+confirmation's widest.
+
+**What the outcome licenses.** Every cell's role is `exploratory` and every
+outcome is `pilot`. The family ledger records the campaign as a reservation
+that spends no comparison, so the family's m and t stay where the withdrawn
+confirmation left them (family accounting table) and the P-20 tail condition
+still fails. No cell of this family can reach a confirmatory outcome under
+protocol version 3, whichever further attempt is made, and
+[version 4](../f547c394/amendment-v4.md) restores none: its per-candidate cap
+counts attempts per protocol version, while the family ledger's sequential
+attempt budget still counts every earlier reservation, so a further attempt
+spends a smaller alpha again. The re-measurement therefore replaces no
+withdrawn conclusion with a confirmed one: it shows the gap survives the
+repair, and confirms nothing.
+
+**What the repair changed.** The re-measurement arms differ from the withdrawn
+arms only in the cache-state policy and the timing loop they call; the rest of
+the producing closure differs in comment text alone, and the toolchain is the
+same. Each gf2 arm's median call nonetheless falls below what the withdrawn
+receipts report, and the `streaming` cell, which runs no untimed pass in either
+arm version, falls by about the same proportion (the two receipts' *Per-arm
+call time* tables). Rebuilding the arms therefore accounts for the shift and
+the warm pass does not; the pass's own effect on a one-bank working set that
+calibration already touches is not separable from the rebuild. What the repair
+secures is the declaration, not the speed: the state a cell applies now matches
+the state its receipt records.
+
+**Attribution.** The external arm's conversion still exceeds the paired call
+gap in every 16-QAM Normal cell, including the `streaming` one, and in none of
+the 64-QAM Normal or Short FECFRAME cells (*Paired conversion attribution*).
+In the Short cells the external residual alone stands well above the paired
+gf2 call. These decompositions are descriptive and carry no interval.
 
 ### Withdrawn protocol-v3 confirmation
 
-This subsection records what the withdrawn receipts hold.
+This subsection records what the withdrawn receipts hold. Nothing in it is a
+current finding.
 
 [Receipt](../../bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json)
 `ab94fa3fcb4b9f54d4d236b1e80494767f8cc3e1141b063acc1d4342eeded52d`: three
@@ -427,6 +483,12 @@ stays explicitly unmatched.
   warm-state defect (§1).
 - All six DVB-T2 v3 cells are `not-confirmatory`, and one interval is three
   times the declared resolution.
+- The re-measurement's comparator-gap estimates lie outside the withdrawn v3
+  intervals in most of the cells they share, and outside the `streaming`
+  pilot cell's interval although that cell is not withdrawn. As between v1
+  and v3 (§1), within-campaign intervals do not bound between-build
+  variation. Every gap cell's decision keeps its direction, and every control
+  still reads `not-worse`.
 - Four NR configurations are non-equivalent, the srsRAN arm is unavailable,
   and AFF3CT has no DVB-T2 interleaver. No substitute operation was timed in
   their place.
@@ -435,28 +497,28 @@ stays explicitly unmatched.
 
 Each family keeps an append-only ledger. Every line binds the SHA-256 of its
 predecessor, and each receipt snapshots the prefix through its reservation.
-`dvb-t2-bit-interleave-baselines-trial-ledger.jsonl` holds four reservations;
-the first is the retrospective v1 import, derived in
-`trial-ledger-v1-import.json`. The DVB-T2 re-measurement appends its
-exploratory reservation when its campaign starts.
+`dvb-t2-bit-interleave-baselines-trial-ledger.jsonl` holds one reservation per
+campaign of that family, listed in the tables' family accounting; the first is
+the retrospective v1 import, derived in `trial-ledger-v1-import.json`, and the
+last is the re-measurement's exploratory reservation.
 `nr-llr-derate-matching-trial-ledger.jsonl` began empty and holds the NR pilot
 and confirmation. `producing-inputs.json`, `producing-inputs-nr-derate.json`
 and `producing-inputs-dvb-t2-remeasure.json` name the producing closures that
 the receipts snapshot under `inputs/producing/`; the last is the DVB-T2
-closure plus the re-measurement's freeze script and arm-digest record. All
-five v3 receipts re-evaluate as accepted with the evaluator merged from main
-(`reevaluation-v3.log`), and their receipt and summary bytes are unchanged.
-Each confirmation's execution log is byte-identical to the runner's canonical
-log.
+closure plus the re-measurement's freeze script and arm-digest record. Every
+v3 receipt of both families, the re-measurement included, re-evaluates as
+accepted with the evaluator merged from main (`reevaluation-v3.log`), and its
+receipt, input-tree and summary bytes are unchanged. Each confirmation's
+execution log is byte-identical to the runner's canonical log.
 
 ## Criterion outcomes
 
 | Criterion | Status | Evidence |
 |---|---|---|
-| REQ-01 | MET for NR; DVB-T2 withdrawn, re-measurement pending | Accepted v3 pilots and confirmations for both families pin the contract, protocol, schema, addendum, ledger prefix and producing closure. Release builds, full-host lock and checkpointed sessions. Negative, `fail`, `not-material` and `not-confirmatory` outcomes are recorded. The DVB-T2 receipts' `warm` declarations are false, so their comparisons fail the contract's comparison validity (§1). With no production change, before/after evidence does not apply. |
+| REQ-01 | MET for NR; DVB-T2 withdrawn and re-measured exploratorily | Accepted v3 pilots and confirmations for both families pin the contract, protocol, schema, addendum, ledger prefix and producing closure. Release builds, full-host lock and checkpointed sessions. Negative, `fail`, `not-material` and `not-confirmatory` outcomes are recorded. The DVB-T2 receipts' `warm` declarations are false, so their comparisons fail the contract's comparison validity; the re-measurement applies the state it declares, and every one of its cells is exploratory (§1). With no production change, before/after evidence does not apply. |
 | REQ-02 | MET | Three sources are pinned with licenses. Operation, layout, standards mapping and backend evidence are in `source-evidence.json`. Arm build identities are in the receipts; the AFF3CT static library's digest is verified. The AFF3CT 5G modules are scalar C++ (negative search). Arbitrary shifts are unmatched. |
 | REQ-03 | MET | Zero-fill versus wrap and offsets through `len+1` (`analysis-output-v3.txt`). Canonical order, tails and the §6.1.3 permutation (`validation-output-v3.txt`; re-measurement arms `validation-output-v3-remeasure.txt`). NR transmitted, punctured, filler and untransmitted positions checked exactly (`nr-derate-validation.txt`). Conversion and initialization costs are inside every timed call and reported per arm. |
-| REQ-04 | MET for NR; DVB-T2 withdrawn, re-measurement pending | Frozen addenda: five DVB-T2 (v1 pilot and confirmation, v3 pilot, r2, confirmation), the DVB-T2 re-measurement and two NR (pilot, confirmation). Internal and external receipts include scalar/compiler controls in both families; the DVB-T2 receipts are withdrawn for the warm-state defect (§1). Inapplicable mappings are recorded: circulant rotation, bit selection, shifts, four NR configurations and srsRAN. |
+| REQ-04 | MET for NR; DVB-T2 withdrawn and re-measured exploratorily | Frozen addenda: five DVB-T2 (v1 pilot and confirmation, v3 pilot, r2, confirmation), the DVB-T2 re-measurement and two NR (pilot, confirmation). Internal and external receipts include scalar/compiler controls in both families; the DVB-T2 receipts are withdrawn for the warm-state defect, and the re-measurement's cells carry its controls under the repaired arms (§1). Inapplicable mappings are recorded: circulant rotation, bit selection, shifts, four NR configurations and srsRAN. |
 
 ## Recommendations
 
@@ -470,10 +532,10 @@ log.
   sides, and a codeword-agreement gate must pass before timing, because gf2
   places bits through an RREF-derived column mapping
   (`gf2-rref-column-mapping`).
-- If the DVB-T2 re-measurement reproduces the 16-QAM external residual that
-  the withdrawn receipts show, profile gf2's per-bit scatter in `interleave`.
-  The falsifiable follow-up is whether a branch-free or word-level form beats
-  that residual.
+- The re-measurement reproduces the 16-QAM Normal external residual below the
+  paired gf2 call that the withdrawn receipts show, so profile gf2's per-bit
+  scatter in `interleave`. The falsifiable follow-up is whether a branch-free
+  or word-level form beats that residual.
 - Correct gf2's filler-LLR rustdoc to match `FILLER_LLR`.
 - Re-survey circulant rotations if gf2 gains a per-frame rotation primitive.
 
