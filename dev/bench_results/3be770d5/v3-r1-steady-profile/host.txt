@@ -1,0 +1,123 @@
+# steady-state LDPC profile host record - produced by run-profile.sh
+# generated_utc: 2026-09-12T02:31:46Z
+# gf2 revision (informational): 0e8a0a17850c060ed284f765ca5d974348911a65
+# identity: ldpc-profile=5af7ef86106e1483c332612b5d2825e889fd3a7db27d4d76fd48a516ff84f228 ldpc-alloc-census=44d5ef19daa827b2af2a5d0c9aafd60de394d41809bd794cfc3012ef6ea20006 profile-session.sh=4d511b8e6e20e7f24602586d40bf49aefb061e7af4d26fbb90b4cda12adfadcd profile-cases.tsv=eb2c350c917b7843aac39d51fb9bfa39997e6e4bde2be096f260f0944f68e218 arms.json=5ed10180dc92881fad2e95e135a44fac9707fe9836e2d417cb62ae3a5a4eec81
+
+## uname
+Linux fraktaali 7.2.2-arch1-1 #1 SMP PREEMPT_DYNAMIC Fri, 28 Aug 2026 16:09:39 +0000 x86_64 GNU/Linux
+
+## perf
+perf version 7.2.4-1
+
+## perf_event_paranoid
+2
+
+## lscpu
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  24
+On-line CPU(s) list:                     0-23
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 9 5900X 12-Core Processor
+CPU family:                              25
+Model:                                   33
+Thread(s) per core:                      2
+Core(s) per socket:                      12
+Socket(s):                               1
+Stepping:                                2
+Microcode version:                       0xa201211
+Frequency boost:                         enabled
+CPU(s) scaling MHz:                      65%
+CPU max MHz:                             4954.5649
+CPU min MHz:                             567.0890
+BogoMIPS:                                7399.51
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap
+L1d cache:                               384 KiB (12 instances)
+L1i cache:                               384 KiB (12 instances)
+L2 cache:                                6 MiB (12 instances)
+L3 cache:                                64 MiB (2 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-23
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Mitigation; Clear CPU buffers
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+## smt
+on
+
+## thread siblings
+cpu0 0,12 l3=0-5,12-17
+cpu1 1,13 l3=0-5,12-17
+cpu10 10,22 l3=6-11,18-23
+cpu11 11,23 l3=6-11,18-23
+cpu12 0,12 l3=0-5,12-17
+cpu13 1,13 l3=0-5,12-17
+cpu14 2,14 l3=0-5,12-17
+cpu15 3,15 l3=0-5,12-17
+cpu16 4,16 l3=0-5,12-17
+cpu17 5,17 l3=0-5,12-17
+cpu18 6,18 l3=6-11,18-23
+cpu19 7,19 l3=6-11,18-23
+cpu2 2,14 l3=0-5,12-17
+cpu20 8,20 l3=6-11,18-23
+cpu21 9,21 l3=6-11,18-23
+cpu22 10,22 l3=6-11,18-23
+cpu23 11,23 l3=6-11,18-23
+cpu3 3,15 l3=0-5,12-17
+cpu4 4,16 l3=0-5,12-17
+cpu5 5,17 l3=0-5,12-17
+cpu6 6,18 l3=6-11,18-23
+cpu7 7,19 l3=6-11,18-23
+cpu8 8,20 l3=6-11,18-23
+cpu9 9,21 l3=6-11,18-23
+
+## governors
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu10/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu11/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu12/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu13/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu14/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu15/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu16/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu17/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu18/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu19/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu20/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu21/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu22/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu23/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu8/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu9/cpufreq/scaling_governor powersave
+
+## load average at start
+ 05:31:46 up 8 days,  7:00,  8 users,  load average: 1.20, 1.52, 4.66
+
+## load average at end
+ 06:06:28 up 8 days,  7:35,  8 users,  load average: 16.89, 15.66, 13.96
+# finished_utc: 2026-09-12T03:06:28Z

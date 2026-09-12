@@ -1,0 +1,39 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 8752080956
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    67.60%          1479  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    20.34%           445  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.24%            71  libc.so.6         [.] cfree
+     2.93%            64  libc.so.6         [.] malloc
+     1.74%            38  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.05%            23  libc.so.6         [.] 0x000000000017646c
+     0.64%            14  libc.so.6         [.] 0x0000000000176400
+     0.50%            11  libc.so.6         [.] 0x0000000000176466
+     0.27%             6  libc.so.6         [.] 0x0000000000176404
+     0.23%             5  libc.so.6         [.] 0x0000000000176476
+     0.23%             5  libc.so.6         [.] 0x0000000000176485
+     0.23%             5  libc.so.6         [.] 0x00000000001764ac
+     0.18%             4  libc.so.6         [.] 0x0000000000176497
+     0.18%             4  libc.so.6         [.] 0x00000000001764db
+     0.14%             3  libc.so.6         [.] 0x0000000000176411
+     0.09%             2  libc.so.6         [.] 0x0000000000176421
+     0.09%             2  libc.so.6         [.] 0x0000000000176470
+     0.09%             2  [unknown]         [k] 0xffffffffad4015f0
+     0.05%             1  libc.so.6         [.] 0x00000000001764b2
+     0.05%             1  libc.so.6         [.] 0x00000000001764b5
+     0.05%             1  libc.so.6         [.] 0x0000000000176f04
+     0.05%             1  [unknown]         [k] 0xffffffffad892f0f
+     0.05%             1  [unknown]         [k] 0xffffffffad8a898c
+
+
+#
+# (Tip: Use parent filter to see specific call path: perf report -p <regex>)
+#

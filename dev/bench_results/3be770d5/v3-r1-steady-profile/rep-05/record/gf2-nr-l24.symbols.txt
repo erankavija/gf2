@@ -1,0 +1,89 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 109K of event 'cycles:u'
+# Event count (approx.): 437560047393
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    79.79%         87283  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    10.89%         11912  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.16%          3456  libc.so.6         [.] malloc
+     3.02%          3309  libc.so.6         [.] cfree
+     1.47%          1603  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     0.51%           556  libc.so.6         [.] 0x0000000000176400
+     0.26%           284  libc.so.6         [.] 0x0000000000176404
+     0.17%           189  libc.so.6         [.] 0x0000000000176466
+     0.17%           189  libc.so.6         [.] 0x000000000017646c
+     0.10%           105  libc.so.6         [.] 0x0000000000176476
+     0.07%            72  libc.so.6         [.] 0x0000000000176470
+     0.05%            56  libc.so.6         [.] 0x00000000001764db
+     0.04%            41  libc.so.6         [.] 0x0000000000176485
+     0.03%            38  libc.so.6         [.] 0x00000000001764b5
+     0.03%            37  [unknown]         [k] 0xffffffffad4015f0
+     0.03%            34  libc.so.6         [.] 0x0000000000176497
+     0.02%            27  libc.so.6         [.] 0x00000000001764b2
+     0.02%            25  libc.so.6         [.] 0x0000000000176411
+     0.02%            20  libc.so.6         [.] 0x0000000000176421
+     0.02%            17  libc.so.6         [.] 0x00000000001764ac
+     0.01%            12  libc.so.6         [.] 0x000000000017642e
+     0.01%            10  libc.so.6         [.] 0x0000000000176425
+     0.01%            10  libc.so.6         [.] 0x00000000001764a1
+     0.01%             9  libc.so.6         [.] 0x0000000000176490
+     0.01%             7  libc.so.6         [.] 0x000000000017642b
+     0.00%             5  [unknown]         [k] 0xffffffffad4015f4
+     0.00%             5  [unknown]         [k] 0xffffffffad7794b3
+     0.00%             5  [unknown]         [k] 0xffffffffae98856c
+     0.00%             4  libc.so.6         [.] 0x0000000000176433
+     0.00%             4  [unknown]         [k] 0xffffffffad729b1c
+     0.00%             4  [unknown]         [k] 0xffffffffad896874
+     0.00%             3  [unknown]         [k] 0xffffffffad401602
+     0.00%             3  [unknown]         [k] 0xffffffffad401d22
+     0.00%             3  [unknown]         [k] 0xffffffffad7f9db2
+     0.00%             3  [unknown]         [k] 0xffffffffad81a4e6
+     0.00%             3  [unknown]         [k] 0xffffffffae98ce93
+     0.00%             2  libc.so.6         [.] 0x00000000000a7640
+     0.00%             2  libc.so.6         [.] 0x00000000001764cd
+     0.00%             2  libc.so.6         [.] 0x0000000000176e00
+     0.00%             2  [unknown]         [k] 0xffffffffad890bd4
+     0.00%             2  [unknown]         [k] 0xffffffffad896892
+     0.00%             2  [unknown]         [k] 0xffffffffad8968da
+     0.00%             2  [unknown]         [k] 0xffffffffae9898f4
+     0.00%             2  [unknown]         [k] 0xffffffffae989941
+     0.00%             2  [unknown]         [k] 0xffffffffae98ce54
+     0.00%             1  ldpc-profile      [.] gf2_kernels_simd::x86::avx2::fns::popcnt_fn
+     0.00%             1  libc.so.6         [.] 0x00000000000a6e8b
+     0.00%             1  libc.so.6         [.] 0x00000000000a79cb
+     0.00%             1  libc.so.6         [.] 0x0000000000176407
+     0.00%             1  libc.so.6         [.] 0x00000000001765c5
+     0.00%             1  libc.so.6         [.] 0x0000000000176e04
+     0.00%             1  libc.so.6         [.] 0x0000000000176e2d
+     0.00%             1  libc.so.6         [.] 0x0000000000176f0a
+     0.00%             1  [unknown]         [k] 0xffffffffad400005
+     0.00%             1  [unknown]         [k] 0xffffffffad401cc0
+     0.00%             1  [unknown]         [k] 0xffffffffad401cf0
+     0.00%             1  [unknown]         [k] 0xffffffffad401d30
+     0.00%             1  [unknown]         [k] 0xffffffffad6f7a84
+     0.00%             1  [unknown]         [k] 0xffffffffad729b05
+     0.00%             1  [unknown]         [k] 0xffffffffad7f9e03
+     0.00%             1  [unknown]         [k] 0xffffffffad88fe14
+     0.00%             1  [unknown]         [k] 0xffffffffad88fe4a
+     0.00%             1  [unknown]         [k] 0xffffffffad890be8
+     0.00%             1  [unknown]         [k] 0xffffffffad896931
+     0.00%             1  [unknown]         [k] 0xffffffffae96e3c6
+     0.00%             1  [unknown]         [k] 0xffffffffae96e534
+     0.00%             1  [unknown]         [k] 0xffffffffae988595
+     0.00%             1  [unknown]         [k] 0xffffffffae9898f8
+     0.00%             1  [unknown]         [k] 0xffffffffae98c010
+     0.00%             1  [unknown]         [k] 0xffffffffae98c014
+     0.00%             1  [unknown]         [k] 0xffffffffae98c016
+     0.00%             1  [unknown]         [k] 0xffffffffae98c01e
+     0.00%             1  [unknown]         [k] 0xffffffffae98ce5b
+
+
+#
+# (Tip: To show assembler sample context control flow use perf record -b / perf report --samples 10 and then browse context)
+#
