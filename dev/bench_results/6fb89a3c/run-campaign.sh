@@ -14,14 +14,22 @@
 # family addendum, and measures it as a sequence of bounded sessions under the
 # canonical CCX1 mutex (`dev/scripts/ccx1-bench-flock.sh --full-host`). Each
 # session takes the lock, measures at most `max_cells_per_session` cells,
-# checkpoints and releases, so a queued sibling gets the host between sessions
-# and a killed session resumes without repeating a completed cell.
+# checkpoints and releases, so a queued sibling gets the host between sessions.
 #
 # Re-running the same command resumes the same campaign identity: it
 # re-projects the plan, refuses to continue unless the projection equals the
 # staged plan byte for byte, and appends to the launcher log. A campaign whose
 # execution log already ends `complete` is only finalized, and a finalized one
 # is only re-evaluated by the acceptance tool, so no cell is measured twice.
+#
+# A stop between cells, at a cell-budget pause or between sessions resumes
+# without repeating a cell. A stop inside a cell measures that cell again from
+# its first pair: protocol v3 rejects such a campaign (P-11) and protocol v4
+# accepts it once the resumed session journals a `cell-abandoned` record
+# (`dev/active/f547c394/amendment-v4.md`). The campaigns this launcher has
+# published carry v3 addenda, which the addendum validation above rejects
+# against the v4 schema, so those campaigns are finalized and re-evaluated
+# only; a new campaign needs an addendum frozen at the current version.
 #
 # Every numeric setting comes from the addendum and the protocol's frozen
 # shared settings; this script adds none. The cell-to-arm wiring is derived
