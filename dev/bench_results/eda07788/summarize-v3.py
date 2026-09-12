@@ -28,6 +28,7 @@ V1_CONFIRMATION = "2026-09-08-eda07788-dvb-t2-confirmation"
 V3_PILOT = "2026-09-08-eda07788-dvb-t2-v3-pilot"
 V3_PILOT_R2 = "2026-09-08-eda07788-dvb-t2-v3-pilot-r2"
 V3_CONFIRMATION = "2026-09-08-eda07788-dvb-t2-v3-confirmation"
+V3_REMEASURE = "eda07788-dvb-t2-v3-remeasure-r1"
 NR_PILOT = "2026-09-10-eda07788-nr-derate-pilot"
 NR_CONFIRMATION = "2026-09-10-eda07788-nr-derate-confirmation"
 TAIL_DRAWS_REQUIRED = 20.0
@@ -278,10 +279,22 @@ def dvb_tables():
     lines = ["# DVB-T2 bit-interleave evidence tables", ""] + PREAMBLE + [
         "`unpack` and `pack` are the external arm's mean per-call conversion time inside",
         "the measured windows.",
+        "A section marked withdrawn holds cells whose arms declared `warm` without running",
+        "the protocol's untimed pass, so their applied cache state is unknown.",
         "",
-        "## Protocol-v3 confirmation",
+        "## Protocol-v3 re-measurement with the repaired warm pass",
         "",
     ]
+    remeasure = summary_cells(lines, V3_REMEASURE)
+    lines += ["### Family accounting (P-20)", ""]
+    family_accounting(lines, V3_REMEASURE, remeasure)
+    lines += ["### Per-arm call time and conversion spans", ""]
+    receipt = arm_medians(lines, V3_REMEASURE)
+    lines += ["### Paired conversion attribution", ""]
+    paired_attribution(lines, receipt)
+    lines += ["### Sessions and host", ""]
+    sessions(lines, V3_REMEASURE)
+    lines += ["## Protocol-v3 confirmation (withdrawn)", ""]
     summary = summary_cells(lines, V3_CONFIRMATION)
     lines += ["### Family accounting (P-20)", ""]
     family_accounting(lines, V3_CONFIRMATION, summary)
@@ -293,16 +306,17 @@ def dvb_tables():
     paired_attribution(lines, receipt)
     lines += ["### Sessions and host", ""]
     sessions(lines, V3_CONFIRMATION)
-    lines += ["## Protocol-v3 exploratory pilots", ""]
+    lines += ["## Protocol-v3 exploratory pilots (warm cells withdrawn)", ""]
     summary_cells(lines, V3_PILOT)
     arm_medians(lines, V3_PILOT)
     summary_cells(lines, V3_PILOT_R2)
-    lines += ["## Protocol-v1 history (immutable, superseded)", ""]
+    lines += ["## Protocol-v1 history (immutable, superseded, warm cells withdrawn)", ""]
     summary_cells(lines, V1_CONFIRMATION)
     arm_medians(lines, V1_CONFIRMATION)
     summary_cells(lines, V1_PILOT)
     lines += ["## Arm executables", ""]
-    executables(lines, (V1_PILOT, V1_CONFIRMATION, V3_PILOT, V3_PILOT_R2, V3_CONFIRMATION))
+    executables(lines, (V1_PILOT, V1_CONFIRMATION, V3_PILOT, V3_PILOT_R2, V3_CONFIRMATION,
+                        V3_REMEASURE))
     write(os.path.join(HERE, "tables-v3.md"), lines)
 
 

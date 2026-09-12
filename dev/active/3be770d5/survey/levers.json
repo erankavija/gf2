@@ -1,0 +1,86 @@
+{
+  "schema": "ldpc-steady-levers-v1",
+  "profile": "v4-r1-steady-profile",
+  "cases": ["gf2-dvb-w1", "gf2-nr-w1"],
+  "saturation_cases": ["gf2-dvb-l24", "gf2-nr-l24"],
+  "levers": [
+    {
+      "id": "canonical-edge-indexing",
+      "name": "Canonical edge indexing",
+      "basis": "measured",
+      "removed": ["edge-position-search"],
+      "mechanism": "linear find_check_position and check_to_var_message scans"
+    },
+    {
+      "id": "allocation-removal",
+      "name": "Allocation removal",
+      "basis": "measured",
+      "removed": ["allocator", "min-sum-input-vec"],
+      "mechanism": "per-edge Vec<f32> in boxplus_minsum_n and per-iteration syndrome vectors"
+    },
+    {
+      "id": "syndrome-termination",
+      "name": "Syndrome and termination",
+      "basis": "measured",
+      "removed": ["syndrome-termination"],
+      "mechanism": "hard-decision vector plus full syndrome each iteration"
+    },
+    {
+      "id": "dispatch",
+      "name": "Dispatch",
+      "basis": "measured",
+      "removed": ["min-sum-dispatch", "dispatch"],
+      "mechanism": "lazy kernel table and indirect call per edge, pool barriers per call"
+    },
+    {
+      "id": "batch-conversion",
+      "name": "Batch conversion",
+      "basis": "measured",
+      "removed": ["conversion-output"],
+      "mechanism": "f32-to-Llr copy and bit extraction per frame"
+    },
+    {
+      "id": "shared-min-second-min-sign",
+      "name": "Shared min/second-min/sign",
+      "basis": "bounded",
+      "bounded_by": ["check-node-loop", "min-sum-reduction", "min-sum-dispatch"],
+      "scale": "two-passes-over-gathers",
+      "mechanism": "one reduction over d_c - 1 gathered inputs per output edge"
+    },
+    {
+      "id": "flat-layout",
+      "name": "Flat check/variable-major layout",
+      "basis": "counters",
+      "counter": "l1d_miss_fraction",
+      "mechanism": "Vec<Vec<Llr>> messages and Vec<Vec<usize>> neighbors"
+    },
+    {
+      "id": "degree-structure",
+      "name": "Degree structure",
+      "basis": "per-code",
+      "structural": "gf2 position-search comparisons per edge",
+      "mechanism": "search and gather cost grow with check and variable degree"
+    },
+    {
+      "id": "qc-aware",
+      "name": "QC-aware intra-frame work",
+      "basis": "structural-estimate",
+      "structural": "gf2 position-search comparisons per edge",
+      "mechanism": "no lifted-block update today"
+    },
+    {
+      "id": "inter-frame-simd",
+      "name": "Inter-frame SIMD",
+      "basis": "comparator-estimate",
+      "comparator": "AFF3CT layered f32 scalar against layered f32 INTER",
+      "mechanism": "no lane-batched decoder today"
+    },
+    {
+      "id": "quantized-layered",
+      "name": "Quantized/layered decoding",
+      "basis": "comparator-estimate",
+      "comparator": "AFF3CT layered f32 and layered i16 INTER",
+      "mechanism": "no layered or fixed-point schedule today"
+    }
+  ]
+}

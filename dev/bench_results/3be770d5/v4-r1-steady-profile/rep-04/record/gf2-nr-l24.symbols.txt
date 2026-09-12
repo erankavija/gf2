@@ -1,0 +1,99 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 109K of event 'cycles:u'
+# Event count (approx.): 439460064968
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    78.73%         86493  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    11.35%         12468  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.55%          3898  libc.so.6         [.] cfree
+     3.18%          3499  libc.so.6         [.] malloc
+     1.43%          1572  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     0.52%           571  libc.so.6         [.] 0x0000000000176400
+     0.27%           300  libc.so.6         [.] 0x0000000000176404
+     0.18%           203  libc.so.6         [.] 0x000000000017646c
+     0.16%           175  libc.so.6         [.] 0x0000000000176466
+     0.10%           110  libc.so.6         [.] 0x0000000000176476
+     0.07%            80  libc.so.6         [.] 0x00000000001764db
+     0.05%            53  libc.so.6         [.] 0x0000000000176470
+     0.05%            53  libc.so.6         [.] 0x0000000000176485
+     0.04%            48  [unknown]         [k] 0xffffffffad4015f0
+     0.03%            38  libc.so.6         [.] 0x0000000000176497
+     0.03%            38  libc.so.6         [.] 0x00000000001764b5
+     0.02%            21  libc.so.6         [.] 0x0000000000176411
+     0.02%            20  libc.so.6         [.] 0x00000000001764b2
+     0.02%            19  libc.so.6         [.] 0x0000000000176421
+     0.01%            15  libc.so.6         [.] 0x00000000001764ac
+     0.01%            13  [unknown]         [k] 0xffffffffad81a4e6
+     0.01%            11  libc.so.6         [.] 0x0000000000176490
+     0.01%             9  libc.so.6         [.] 0x0000000000176425
+     0.01%             9  libc.so.6         [.] 0x000000000017642b
+     0.01%             9  [unknown]         [k] 0xffffffffad4015f4
+     0.01%             8  libc.so.6         [.] 0x000000000017642e
+     0.01%             8  libc.so.6         [.] 0x00000000001764a1
+     0.01%             8  [unknown]         [k] 0xffffffffad7794b3
+     0.01%             7  [unknown]         [k] 0xffffffffae98ce93
+     0.01%             6  [unknown]         [k] 0xffffffffad401ca6
+     0.01%             6  [unknown]         [k] 0xffffffffad401d22
+     0.01%             6  [unknown]         [k] 0xffffffffad890be8
+     0.01%             6  [unknown]         [k] 0xffffffffae98856c
+     0.00%             4  [unknown]         [k] 0xffffffffad7f9d74
+     0.00%             4  [unknown]         [k] 0xffffffffad896892
+     0.00%             4  [unknown]         [k] 0xffffffffae988595
+     0.00%             3  libc.so.6         [.] 0x00000000000a701b
+     0.00%             3  libc.so.6         [.] 0x0000000000176433
+     0.00%             3  [unknown]         [k] 0xffffffffad6f7a90
+     0.00%             3  [unknown]         [k] 0xffffffffad73298d
+     0.00%             3  [unknown]         [k] 0xffffffffad779494
+     0.00%             3  [unknown]         [k] 0xffffffffad8968b2
+     0.00%             3  [unknown]         [k] 0xffffffffae98c016
+     0.00%             3  [unknown]         [k] 0xffffffffae98c01e
+     0.00%             3  [unknown]         [k] 0xffffffffae98ce54
+     0.00%             2  ldpc-profile      [.] gf2_kernels_simd::x86::avx2::fns::popcnt_fn
+     0.00%             2  libc.so.6         [.] 0x00000000001764a6
+     0.00%             2  libc.so.6         [.] 0x00000000001764c7
+     0.00%             2  libc.so.6         [.] 0x0000000000176e00
+     0.00%             2  [unknown]         [k] 0xffffffffad4015f8
+     0.00%             2  [unknown]         [k] 0xffffffffad896874
+     0.00%             2  [unknown]         [k] 0xffffffffae989941
+     0.00%             1  libc.so.6         [.] 0x00000000000a7640
+     0.00%             1  libc.so.6         [.] 0x00000000000a79cb
+     0.00%             1  libc.so.6         [.] 0x000000000017640b
+     0.00%             1  libc.so.6         [.] 0x0000000000176415
+     0.00%             1  libc.so.6         [.] 0x0000000000176488
+     0.00%             1  libc.so.6         [.] 0x00000000001765bb
+     0.00%             1  libc.so.6         [.] 0x00000000001765c5
+     0.00%             1  [unknown]         [k] 0xffffffffad400002
+     0.00%             1  [unknown]         [k] 0xffffffffad401544
+     0.00%             1  [unknown]         [k] 0xffffffffad401602
+     0.00%             1  [unknown]         [k] 0xffffffffad401ca1
+     0.00%             1  [unknown]         [k] 0xffffffffad401cc1
+     0.00%             1  [unknown]         [k] 0xffffffffad6f7a97
+     0.00%             1  [unknown]         [k] 0xffffffffad729ae4
+     0.00%             1  [unknown]         [k] 0xffffffffad729b1c
+     0.00%             1  [unknown]         [k] 0xffffffffad7794d5
+     0.00%             1  [unknown]         [k] 0xffffffffad7e4a21
+     0.00%             1  [unknown]         [k] 0xffffffffad7f9d81
+     0.00%             1  [unknown]         [k] 0xffffffffad88fdb3
+     0.00%             1  [unknown]         [k] 0xffffffffad890bd4
+     0.00%             1  [unknown]         [k] 0xffffffffad890c52
+     0.00%             1  [unknown]         [k] 0xffffffffad890ccf
+     0.00%             1  [unknown]         [k] 0xffffffffad8968da
+     0.00%             1  [unknown]         [k] 0xffffffffad8a8b44
+     0.00%             1  [unknown]         [k] 0xffffffffae9885a4
+     0.00%             1  [unknown]         [k] 0xffffffffae9898f4
+     0.00%             1  [unknown]         [k] 0xffffffffae9898f8
+     0.00%             1  [unknown]         [k] 0xffffffffae989937
+     0.00%             1  [unknown]         [k] 0xffffffffae98c014
+     0.00%             1  [unknown]         [k] 0xffffffffae99dd83
+     0.00%             1  [unknown]         [k] 0xffffffffae99dd9b
+
+
+#
+# (Tip: To compute metrics for samples use perf record -e '{cycles,instructions}' ... ; perf script -F +metric)
+#

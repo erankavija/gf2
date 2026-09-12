@@ -1,0 +1,774 @@
+{
+  "schema": "a203a23c-receipt-reevaluation-v1",
+  "purpose": "Acceptance verdict of every committed benchmark receipt when the evaluator reads committed content alone, beside the verdict of the acceptance summary committed with it.",
+  "generator": "dev/active/a203a23c/reevaluate-receipts.sh",
+  "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "evidence_revision": "e8d1a0bb806886a3de3eb5d082276cffe161c180",
+  "evaluator_revision": "e8d1a0bb806886a3de3eb5d082276cffe161c180",
+  "benchmark_acceptance_sha256": "146f30a8b06741f12a635b5662dbb22c812bb5f94e67daf96ee89f91d5b00906",
+  "receipts": [
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-23: campaign-start freeze: saved plan producing manifest differs from campaign-start"
+        ]
+      },
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/1d0da41f/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-pilot-r2/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-and-popcnt-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-and-popcnt-pilot-r2/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-and-popcnt-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "rejected",
+      "fresh_checkout": {
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-11: cell has no single cell-start record",
+          "P-11: cell started 2 times; completed cells must not repeat",
+          "P-11: cell-start input differs from the saved plan"
+        ]
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-popcount-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/26465e6c/v3-popcount-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-remeasure/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-remeasure/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-remeasure/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6fb89a3c/v3-r2-6fb89a3c-transpose-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "rejected",
+      "fresh_checkout": {
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)",
+          "P-18: decoder cell reports no BER/FER evidence",
+          "P-23: campaign-start freeze: saved plan producing manifest differs from campaign-start"
+        ]
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)",
+          "P-23: campaign-start freeze: saved plan producing manifest differs from campaign-start"
+        ]
+      },
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/c077a88b/survey/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)",
+          "P-23: campaign-start freeze: saved plan producing manifest differs from campaign-start"
+        ]
+      },
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/c077a88b/survey/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)",
+          "P-23: campaign-start freeze: saved plan producing manifest differs from campaign-start"
+        ]
+      },
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/c077a88b/survey/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 1,
+        "verdict": "rejected",
+        "errors": [
+          "P-05: producing inputs: No such file or directory (os error 2)",
+          "P-23: campaign-start freeze: saved plan producing manifest differs from campaign-start"
+        ]
+      },
+      "reproduces": false,
+      "cause": {
+        "pinned_inputs_absent": [
+          "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock"
+        ],
+        "producing_manifest": {
+          "plan": null,
+          "receipt": "dev/active/c077a88b/survey/producing-inputs.json",
+          "evaluated_default": "dev/active/f547c394/producing-inputs.json"
+        }
+      }
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/v3-r1-baselines-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/v3-r1-baselines-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/c7113c5a/v3-r1-host-targeting-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot-r2/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v2-confirmation/receipt.json",
+      "protocol_version": 2,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v2-pilot/receipt.json",
+      "protocol_version": 2,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-r2-confirmation/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/f547c394/v3-r2-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    }
+  ],
+  "result": {
+    "receipts": 62,
+    "reproduces": 57,
+    "differs": [
+      "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+      "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json",
+      "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
+      "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json"
+    ]
+  }
+}

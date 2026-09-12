@@ -1,0 +1,339 @@
+{
+  "schema": "ldpc-throughput-source-evidence-v1",
+  "note": "gf2 revisions are navigation metadata; the producing manifests of the campaigns pin the gf2 source bytes. AFF3CT is the pinned v4.7.0 checkout whose source archive c077a88b committed.",
+  "claims": [
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1202,
+      "text": "for (pos, &_var) in neighbors.iter().enumerate() {",
+      "lever": "reduction",
+      "why": "check-node update: one output position at a time"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1205,
+      "text": "for (other_pos, &other_var) in neighbors.iter().enumerate() {",
+      "lever": "reduction",
+      "why": "each output re-gathers the other d_c - 1 inputs, so a check costs d_c (d_c - 1) gathers"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1207,
+      "text": "let var_check_pos = self.find_check_position(other_var, check);",
+      "lever": "edge-indexing",
+      "why": "every gathered input is located by a search of the variable's check list"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1216,
+      "text": "Llr::boxplus_normalized_minsum_n(&self.temp_inputs, alpha)",
+      "lever": "reduction",
+      "why": "one reduction per output edge instead of a shared minimum, second minimum and sign per check"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1293,
+      "text": ".position(|&check| check == target_check)",
+      "lever": "edge-indexing",
+      "why": "find_check_position is a linear scan"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1302,
+      "text": ".position(|&v| v == var)",
+      "lever": "edge-indexing",
+      "why": "check_to_var_message scans the check's variable list; the variable update calls it twice per edge"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1275,
+      "text": "belief = Llr::new(belief.value() + self.check_to_var_message(var, pos).value());",
+      "lever": "edge-indexing",
+      "why": "variable-node sum reads check-to-variable messages through the search"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 392,
+      "text": "let f32_vals: Vec<f32> = llrs.iter().map(|l| l.0).collect();",
+      "lever": "allocation",
+      "why": "a heap allocation and copy per min-sum call, that is per edge per iteration"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 393,
+      "text": "let result = (fns.minsum_fn)(&f32_vals);",
+      "lever": "dispatch",
+      "why": "an indirect call per edge per iteration"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 387,
+      "text": "static SIMD_FNS: Lazy<Option<gf2_kernels_simd::llr::LlrFns>> =",
+      "lever": "dispatch",
+      "why": "the kernel table is read through a lazy static on every call"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-kernels-simd/src/llr.rs",
+      "line": 139,
+      "text": "let chunks = n / 8;",
+      "lever": "dispatch",
+      "why": "the AVX2 kernel vectorizes only whole groups of eight inputs"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-kernels-simd/src/llr.rs",
+      "line": 172,
+      "text": "for &val in &inputs[chunks * 8..] {",
+      "lever": "degree-structure",
+      "why": "degree-6 and degree-7 DVB checks (5 or 6 inputs) and most NR checks run entirely in the scalar tail"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 913,
+      "text": "check_to_var: Vec<Vec<Llr>>,",
+      "lever": "layout",
+      "why": "one heap vector per check: jagged, pointer-chased message layout"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 915,
+      "text": "var_to_check: Vec<Vec<Llr>>,",
+      "lever": "layout",
+      "why": "one heap vector per variable"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 917,
+      "text": "check_neighbors: Vec<Vec<usize>>,",
+      "lever": "layout",
+      "why": "eight-byte neighbor indices in per-node vectors"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1352,
+      "text": "let decoded = self.hard_decode();",
+      "lever": "syndrome",
+      "why": "every iteration builds a new hard-decision vector before the syndrome check"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1353,
+      "text": "if self.code.is_valid_codeword(&decoded) {",
+      "lever": "syndrome",
+      "why": "every iteration computes the full syndrome"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1375,
+      "text": "decoded.push_bit(belief.hard_decision());",
+      "lever": "syndrome",
+      "why": "hard decisions are appended one bit at a time"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 141,
+      "text": "let syndrome = self.syndrome(codeword);",
+      "lever": "syndrome",
+      "why": "the syndrome is materialized in a new vector before counting its ones"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-core/src/sparse.rs",
+      "line": 1369,
+      "text": "let mut y = BitVec::with_capacity(self.rows);",
+      "lever": "allocation",
+      "why": "the syndrome matvec allocates its output"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1337,
+      "text": "for (var, &llr) in llrs.iter().enumerate().take(self.code.n()) {",
+      "lever": "layout",
+      "why": "per-frame message initialization walks the jagged variable vectors"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-sim/src/bin/ldpc_bler_sweep.rs",
+      "line": 230,
+      "text": "let mut dec = LdpcDecoder::with_config(code.clone(), cfg);",
+      "lever": "dispatch",
+      "why": "gf2-sim's multi-worker consumer builds one decoder per worker chunk, the model the gf2 arm pins"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx",
+      "line": 247,
+      "text": "this->up_rule.compute_chk_node_in(v, msg_var_to_chk[transpose_ptr[v]]);",
+      "lever": "edge-indexing",
+      "why": "first pass over a check's inputs through a precomputed edge index"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx",
+      "line": 252,
+      "text": "msg_chk_to_var[transpose_ptr[v]] = this->up_rule.compute_chk_node_out(v, msg_var_to_chk[transpose_ptr[v]]);",
+      "lever": "reduction",
+      "why": "second pass writes every output from the shared reduction: 2 d_c reads per check"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx",
+      "line": 31,
+      "text": ", msg_chk_to_var(this->n_frames, std::vector<R>(this->H.get_n_connections()))",
+      "lever": "layout",
+      "why": "one flat message array per frame"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx",
+      "line": 225,
+      "text": "msg_var_to_chk_ptr[c] = tmp - msg_chk_to_var_ptr[c];",
+      "lever": "layout",
+      "why": "variable-major sequential variable update"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx",
+      "line": 192,
+      "text": "valid_synd = this->template check_syndrome_soft<R, Syndrome_checker>(this->post.data());",
+      "lever": "syndrome",
+      "why": "the syndrome is checked on the soft posteriors without a hard-decision vector"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Tools/Code/LDPC/Syndrome/LDPC_syndrome.hxx",
+      "line": 51,
+      "text": "while (c < n_chk_nodes && !syndrome)",
+      "lever": "syndrome",
+      "why": "the soft syndrome stops at the first unsatisfied check"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx",
+      "line": 65,
+      "text": "this->min2 = std::min(this->min2, std::max(var_abs, this->min1));",
+      "lever": "reduction",
+      "why": "shared minimum and second-minimum tracking"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx",
+      "line": 62,
+      "text": "const auto var_sign = std::signbit((float)var_val) ? -1 : 0;",
+      "lever": "numerical-contract",
+      "why": "AFF3CT's sign treats negative zero as negative; gf2's scalar min-sum treats it as positive, a contract detail a shared reduction must preserve"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 406,
+      "text": ".map(|llr| if llr.0 >= 0.0 { 1.0 } else { -1.0 })",
+      "lever": "numerical-contract",
+      "why": "gf2's scalar min-sum sign: negative zero counts as positive"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-kernels-simd/src/llr.rs",
+      "line": 149,
+      "text": "let signs = _mm256_and_ps(vals, sign_mask);",
+      "lever": "numerical-contract",
+      "why": "the AVX2 kernel's vector lanes take the sign bit, so negative zero counts as negative there"
+    },
+    {
+      "project": "gf2",
+      "commit": "3507fd4dd7b365ac86118bb65f8afdd78d86ed1e",
+      "path": "crates/gf2-kernels-simd/src/llr.rs",
+      "line": 174,
+      "text": "if val < 0.0 {",
+      "lever": "numerical-contract",
+      "why": "the AVX2 kernel's scalar tail counts negative zero as positive: the two parts of one kernel disagree on signed zero, a contract detail a shared reduction must settle"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx",
+      "line": 88,
+      "text": "const auto res_abs = ((var_abs == this->min1) ? this->cst1 : this->cst2);",
+      "lever": "numerical-contract",
+      "why": "outputs select the second minimum by magnitude equality with the first"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx",
+      "line": 80,
+      "text": "auto m = new Decoder_LDPC_BP_flooding(*this);",
+      "lever": "dispatch",
+      "why": "AFF3CT replicates a decoder by copy, the route the AFF3CT arm uses per worker"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "include/Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx",
+      "line": 54,
+      "text": "for (auto ii = 0; ii < (int)var_id; ii++)",
+      "lever": "setup",
+      "why": "the constructor computes each edge's index with a scan over earlier variables, which makes construction (setup) expensive on DVB"
+    },
+    {
+      "project": "aff3ct",
+      "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+      "path": "src/Module/Decoder/LDPC/BP/Horizontal_layered/ONMS/Decoder_LDPC_BP_horizontal_layered_ONMS_inter.cpp",
+      "line": 40,
+      "text": "this->set_n_frames_per_wave(mipp::N<R>());",
+      "lever": "inter-frame",
+      "why": "the INTER decoder decodes one frame per SIMD lane: eight f32 or sixteen i16 frames per wave on AVX2"
+    }
+  ]
+}
