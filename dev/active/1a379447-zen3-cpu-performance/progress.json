@@ -747,6 +747,34 @@
       "origin": "issue-impact (session 10)",
       "disposition": "left unchanged as out of a387825e's scope; the next issue that owns these scripts should close them under @/invariant/present-tense-prose",
       "criterion_named_by": "none"
+    },
+    {
+      "issue": "6c6b09b1",
+      "subject": "the launcher completeness guard read measured_cells from the terminal record, which benchmark-ab-runner increments regardless of outcome and which a resumed session that finds every cell checkpointed reports as zero \u2014 so the guard would have passed an all-inapplicable campaign and failed a legitimately resumed one",
+      "origin": "issue-impact (session 10)",
+      "disposition": "found only because the lead required the untested host-unavailable branch to be exercised against a synthesized fixture rather than code-read. Guard now counts cell-complete records carrying pairs; ten cases committed as dev/bench_results/6c6b09b1/run-byte-field-v4.test.sh, two of them pinned to real artifacts. Exit 4 distinguishes a sound run whose plan does not fit the host from exit 1, a run that broke.",
+      "criterion_named_by": "epic REQ-01 (measurement contract)"
+    },
+    {
+      "issue": "3be770d5",
+      "subject": "REQ-03's lever ranking cannot be applied at all: the rule ranks by a measured lower bound of a removed share and no share exists while the profile series is void",
+      "origin": "issue-impact (session 10)",
+      "disposition": "genuinely unfinished, not merely unpolished, in the worker's own words. Waits on the v4-r1 profile re-run queued for the next window.",
+      "criterion_named_by": "3be770d5 REQ-03 and epic REQ-05 (assembly/profiler attribution of remaining gaps)"
+    },
+    {
+      "issue": "3be770d5",
+      "subject": "ldpc-plan-check and ldpc-throughput-validate are pinned by no committed measurement, so their pre-fix digests rest on the worker's reading of the build directory rather than on evidence",
+      "origin": "issue-impact (session 10)",
+      "disposition": "reported as such by the worker and shown as 'no measurement records it' in the generated identity table rather than asserted",
+      "criterion_named_by": "epic REQ-01 (measurement contract)"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "jit doc add refuses any .txt artifact containing a demangled Rust symbol: the asset scanner reads 'memchr::arch::x86_64::memchr::count_raw::find_avx2' as a relative path and rejects it as not lexically confined, for every doc type tried",
+      "origin": "tooling (session 10)",
+      "disposition": "dev/bench_results/04b85d10/.../asm/popcnt-attribution.txt could not be linked; it stays reachable through the linked attribution-summary.md that cites it. Affects any committed disassembly or profiler dump. To be filed as a bug outside the epic.",
+      "criterion_named_by": "none"
     }
   ],
   "notes": [
