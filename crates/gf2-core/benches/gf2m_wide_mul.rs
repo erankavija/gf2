@@ -2,9 +2,9 @@
 //!
 //! Two groups:
 //!
-//! 1. **scalar-baseline** — the pure-Rust `clmul_wide_slice::<4>` + Barrett
-//!    reduction path. This is what `Gf2mWide::<4, _>::mul` executes when the
-//!    `simd` feature is disabled or PCLMULQDQ is unavailable.
+//! 1. **scalar-baseline** — the pure-Rust `clmul_wide_slice_portable::<4>` +
+//!    Barrett reduction path. This is what `Gf2mWide::<4, _>::mul` executes
+//!    when the `simd` feature is disabled or PCLMULQDQ is unavailable.
 //!
 //! 2. **simd-kernel** — the dispatched kernel returned by
 //!    `gf2_kernels_simd::gf2m_wide::detect()` (AVX2+VPCLMULQDQ YMM on Zen 3-
@@ -27,7 +27,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use gf2_core::gf2m::barrett::BarrettReducerWide;
-use gf2_core::gf2m::wide::clmul_wide_slice;
+use gf2_core::gf2m::wide::clmul_wide_slice_portable;
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 
 /// GF(2^256), Seroussi HPL-98-135 Table 1 row m = 256: `x^256 + x^10 + x^5 + x^2 + 1`.
@@ -80,7 +80,7 @@ fn make_reducer_m571() -> BarrettReducerWide<9> {
 }
 
 // ---------------------------------------------------------------------------
-// Scalar baseline: clmul_wide_slice + Barrett (the non-SIMD path of Mul)
+// Scalar baseline: clmul_wide_slice_portable + Barrett (the non-SIMD path of Mul)
 // ---------------------------------------------------------------------------
 
 fn bench_scalar_clmul_plus_barrett(c: &mut Criterion) {
@@ -91,9 +91,9 @@ fn bench_scalar_clmul_plus_barrett(c: &mut Criterion) {
 
     c.bench_function("gf2m_wide4_scalar_clmul_barrett", |bench| {
         bench.iter(|| {
-            // Zero the buffer — `clmul_wide_slice` XOR-accumulates.
+            // Zero the buffer — `clmul_wide_slice_portable` XOR-accumulates.
             product.fill(0);
-            clmul_wide_slice::<4>(black_box(&a), black_box(&b), &mut product);
+            clmul_wide_slice_portable::<4>(black_box(&a), black_box(&b), &mut product);
             let reduced = reducer.reduce_slice(&product);
             black_box(reduced)
         })
@@ -139,7 +139,7 @@ fn bench_raw_kernels(c: &mut Criterion) {
     c.bench_function("gf2m_wide4_scalar_clmul_only", |bench| {
         bench.iter(|| {
             product.fill(0);
-            clmul_wide_slice::<4>(black_box(&a), black_box(&b), &mut product);
+            clmul_wide_slice_portable::<4>(black_box(&a), black_box(&b), &mut product);
             black_box(&product);
         })
     });
@@ -172,7 +172,7 @@ fn bench_scalar_clmul_plus_barrett_m571(c: &mut Criterion) {
     c.bench_function("gf2m_wide9_m571_scalar_clmul_barrett", |bench| {
         bench.iter(|| {
             product.fill(0);
-            clmul_wide_slice::<9>(black_box(&a), black_box(&b), &mut product);
+            clmul_wide_slice_portable::<9>(black_box(&a), black_box(&b), &mut product);
             let reduced = reducer.reduce_slice(&product);
             black_box(reduced)
         })
@@ -204,7 +204,7 @@ fn bench_raw_kernels_m571(c: &mut Criterion) {
     c.bench_function("gf2m_wide9_m571_scalar_clmul_only", |bench| {
         bench.iter(|| {
             product.fill(0);
-            clmul_wide_slice::<9>(black_box(&a), black_box(&b), &mut product);
+            clmul_wide_slice_portable::<9>(black_box(&a), black_box(&b), &mut product);
             black_box(&product);
         })
     });
