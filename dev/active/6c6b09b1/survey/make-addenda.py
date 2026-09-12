@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Write the protocol-v3 pilot addenda of the byte-field survey (jit:6c6b09b1).
+"""Write the pilot addenda of the byte-field survey (jit:6c6b09b1).
 
-Usage: make-addenda-v3.py FROZEN_UTC
+Usage: make-addenda.py PROTOCOL_VERSION FROZEN_UTC
+
+The versioned addendum schema differs between protocol versions only in its
+identity and its version constant, so one generator writes the family design
+for whichever version the campaigns run under; the design itself is the cell
+tables below.
 
 One family per scientific question, each with its own append-only ledger:
 
@@ -23,6 +28,11 @@ import sys
 
 ISSUE = "6c6b09b1"
 LEDGERS = "dev/bench_results/6c6b09b1"
+# The three family ledgers opened during the version-3 migration. One family
+# is one scientific question with one append-only history, so each ledger
+# carries the retrospective version-1 line and every attempt of every later
+# protocol version; the prefix names the migration that opened it.
+LEDGER_PREFIX = "v3"
 KIB = 1024
 MIB = 1024 * KIB
 
@@ -169,10 +179,15 @@ def pairwise_cells():
             for cid, n, seed, metric, c in cells]
 
 
+def pilot_preamble(version):
+    """Opening sentence of every family description."""
+    return f"Exploratory pilot of issue {ISSUE}, protocol version {version}. "
+
+
 FAMILIES = {
     "region-axpy": (
         "byte-field-region-axpy",
-        "Exploratory pilot of issue 6c6b09b1, protocol version 3. Question: how much slower "
+        "Question: how much slower "
         "is gf2's fixed-coefficient GF(2^8) region multiply-accumulate y[i] += a*x[i] "
         "(FieldVec::axpy, one coefficient reused across the region, accumulation by XOR, "
         "source and destination distinct) than the fastest pinned external region kernel, "
@@ -187,7 +202,7 @@ FAMILIES = {
     ),
     "matrix-product": (
         "byte-field-matrix-product",
-        "Exploratory pilot of issue 6c6b09b1, protocol version 3. Question: how much slower "
+        "Question: how much slower "
         "is gf2's dense GF(2^8) matrix product (field::matrix::gemm on FieldMatrix) than "
         "the pinned external matrix products, at square dimensions 64, 256 and 512 "
         "(M4RIE mzed_mul, whose recursion at each dimension the arm provenance record "
@@ -202,7 +217,7 @@ FAMILIES = {
     ),
     "pairwise-control": (
         "byte-field-pairwise-control",
-        "Exploratory pilot of issue 6c6b09b1, protocol version 3. Question: how does gf2's "
+        "Question: how does gf2's "
         "arbitrary pairwise GF(2^8) product z[i] = x[i]*y[i] (gf2m::batch::batch_mul on u64 "
         "lanes, no coefficient reuse) compare with the only pairwise form each pinned "
         "library offers, its single-element multiply applied per byte (ISA-L gf_mul, "
@@ -217,18 +232,20 @@ FAMILIES = {
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         raise SystemExit(__doc__.strip())
-    frozen = sys.argv[1]
+    version = int(sys.argv[1])
+    frozen = sys.argv[2]
     for short, (family, question, cells) in FAMILIES.items():
         addendum = {
-            "schema": "zen3-benchmark-addendum-v3",
-            "protocol": {"id": "zen3-benchmark-protocol", "version": 3},
+            "schema": f"zen3-benchmark-addendum-v{version}",
+            "protocol": {"id": "zen3-benchmark-protocol", "version": version},
             "family": {
                 "id": family,
                 "issue": ISSUE,
                 "purpose": "consumer-family",
-                "description": question + FIELD + " " + ARMS + " " + RNG + " " + SCOPE,
+                "description": (pilot_preamble(version) + question + FIELD + " "
+                                + ARMS + " " + RNG + " " + SCOPE),
             },
             "frozen": {"frozen_utc": frozen},
             "effect": EFFECT,
@@ -237,7 +254,7 @@ def main():
                 "alpha": 0.05,
                 "prior_confirmatory_trials": 0,
                 "prior_trials": [],
-                "ledger_path": f"{LEDGERS}/v3-{short}-family-ledger.jsonl",
+                "ledger_path": f"{LEDGERS}/{LEDGER_PREFIX}-{short}-family-ledger.jsonl",
             },
             "search_budget": {
                 "max_pilot_trials_per_cell": 2,
@@ -246,7 +263,7 @@ def main():
             "holdout": {"required": False, "cells": []},
             "cells": cells(),
         }
-        path = f"dev/active/{ISSUE}/addendum-v3-{short}-pilot.json"
+        path = f"dev/active/{ISSUE}/addendum-v{version}-{short}-pilot.json"
         with open(path, "w") as output:
             json.dump(addendum, output, indent=2)
             output.write("\n")
