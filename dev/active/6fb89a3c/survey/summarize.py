@@ -140,6 +140,26 @@ def fmt_interval(triple) -> str:
     return f"{fmt(triple[0])} [{fmt(triple[1])}, {fmt(triple[2])}]"
 
 
+def speedup(verdict: dict) -> str:
+    """The evaluator's paired speedup interval of one cell, with its confidence."""
+    ci = verdict.get("interval")
+    return f"{fmt(ci['estimate'])} [{fmt(ci['lower'])}, {fmt(ci['upper'])}] at {ci['confidence']:.4g}" if ci else "-"
+
+
+def leading_arm(verdict: dict) -> str:
+    """Which arm the estimate puts ahead; speedup above 1 is the external arm."""
+    ci = verdict.get("interval")
+    if not ci:
+        return "-"
+    return "external" if ci["estimate"] > 1 else "gf2"
+
+
+def campaign_dirs(family: str, mode: str) -> list[pathlib.Path]:
+    """Committed campaign directories of one family and mode that carry a summary."""
+    return [directory for directory in sorted(RESULTS.glob(f"v3-*-6fb89a3c-{family}-{mode}"))
+            if (directory / "acceptance-summary.json").exists()]
+
+
 def render(directory: pathlib.Path, family: str) -> list[str]:
     receipt = json.loads((directory / "receipt.json").read_text())
     summary = json.loads((directory / "acceptance-summary.json").read_text())
@@ -162,15 +182,13 @@ def render(directory: pathlib.Path, family: str) -> list[str]:
     for cell in receipt["cells"]:
         verdict = verdicts[cell["cell_id"]]
         pairs = cell["pairs"]
-        ci = verdict.get("interval")
-        speedup = f"{fmt(ci['estimate'])} [{fmt(ci['lower'])}, {fmt(ci['upper'])}] at {ci['confidence']:.4g}" if ci else "-"
         note = ("; ".join(filter(None, [verdict.get("reason"), "; ".join(verdict.get("unresolved_settings") or []),
                                         "; ".join(cell_findings.get(cell["cell_id"], []))])) or "-")
         paths = {side: ", ".join(sorted({p[side]["selected_path"] for p in pairs})) for side in ("baseline", "candidate")}
         lines.append(
             f"| `{cell['cell_id']}` | {cell['role']} | {len(pairs)} | {verdict['flagged_windows']}/{verdict['total_windows']} | "
             f"{fmt_interval(median_interval([p['baseline']['ns_per_call'] for p in pairs]))} | "
-            f"{fmt_interval(median_interval([p['candidate']['ns_per_call'] for p in pairs]))} | {speedup} | "
+            f"{fmt_interval(median_interval([p['candidate']['ns_per_call'] for p in pairs]))} | {speedup(verdict)} | "
             f"{verdict.get('decision') or '-'} | **{verdict['outcome']}** | {note} | {paths['baseline']} | {paths['candidate']} |")
 
     probe_rows, share_rows = [], []
@@ -224,11 +242,35 @@ def render(directory: pathlib.Path, family: str) -> list[str]:
     return lines
 
 
+def corrected_rows(family: str, family_id: str) -> list[str]:
+    """One row per re-measured cell, beside the withdrawn campaign that measured the same cell."""
+    withdrawn = [(directory, json.loads((directory / "acceptance-summary.json").read_text()))
+                 for directory in campaign_dirs(family, "confirmation") + campaign_dirs(family, "pilot")]
+    rows = []
+    for directory in campaign_dirs(family, "remeasure"):
+        summary = json.loads((directory / "acceptance-summary.json").read_text())
+        for cell in summary["cells"]:
+            source = next(((reference, {c["cell_id"]: c for c in earlier["cells"]}[cell["cell_id"]])
+                           for reference, earlier in withdrawn
+                           if any(c["cell_id"] == cell["cell_id"] for c in earlier["cells"])), None)
+            if source is None:
+                rows.append(f"| `{family_id}` | `{cell['cell_id']}` | none | - | - | {cell['decision']} | "
+                            f"{speedup(cell)} | new cell | new cell |")
+                continue
+            reference, earlier_cell = source
+            rows.append(
+                f"| `{family_id}` | `{cell['cell_id']}` | `{reference.name}` | {earlier_cell['decision']} | "
+                f"{speedup(earlier_cell)} | {cell['decision']} | {speedup(cell)} | "
+                f"{'unchanged' if earlier_cell['decision'] == cell['decision'] else 'changed'} | "
+                f"{'unchanged' if leading_arm(earlier_cell) == leading_arm(cell) else 'changed'} |")
+    return rows
+
+
 def overview() -> list[str]:
-    """Per-family confirmation outcomes, resolution derivation and arm identity."""
-    outcomes, resolutions, arms = [], [], []
+    """Per-family confirmation outcomes, resolution derivation, arm identity and the corrected re-measurement."""
+    outcomes, resolutions, arms, corrected = [], [], [], []
     for _, family in FAMILIES:
-        for directory in sorted(RESULTS.glob(f"v3-*-6fb89a3c-{family}-confirmation")):
+        for directory in campaign_dirs(family, "confirmation"):
             receipt = json.loads((directory / "receipt.json").read_text())
             summary = json.loads((directory / "acceptance-summary.json").read_text())
             fam = summary["family"]
@@ -252,10 +294,15 @@ def overview() -> list[str]:
                 f"{widths[widest]:.4f} (`{widest}`) | {effect['measurement_resolution']} | {effect['material_gap_threshold']} | "
                 f"{effect['equivalence_margin']} |")
             pilot_arms = json.loads((pilot / "receipt.json").read_text())["arms"]
+            remeasures = campaign_dirs(family, "remeasure")
+            remeasure_arms = json.loads((remeasures[-1] / "receipt.json").read_text())["arms"] if remeasures else {}
             for arm, described in receipt["arms"].items():
                 before = pilot_arms.get(arm, {}).get("executable_sha256")
                 after = described["executable_sha256"]
-                arms.append(f"| `{fam['family_id']}` | {arm} | `{before}` | `{after}` | {'yes' if before == after else 'no'} |")
+                again = remeasure_arms.get(arm, {}).get("executable_sha256")
+                arms.append(f"| `{fam['family_id']}` | {arm} | `{before}` | `{after}` | {'yes' if before == after else 'no'} | "
+                            f"{f'`{again}`' if again else '-'} | {'-' if again is None else 'yes' if again == after else 'no'} |")
+            corrected += corrected_rows(family, fam["family_id"])
     return [
         "## Overview",
         "",
@@ -274,11 +321,23 @@ def overview() -> list[str]:
         "|---|---|---:|---:|---:|---:|---:|",
         *resolutions,
         "",
-        "**Arm executables.** Each arm's executable digest in the resolution pilot and in the confirmation receipt.",
+        "**Arm executables.** Each arm's executable digest in the resolution pilot, in the confirmation receipt and in the "
+        "re-measurement receipt.",
         "",
-        "| Family | Arm | Pilot SHA-256 | Confirmation SHA-256 | Same bytes |",
-        "|---|---|---|---|---|",
+        "| Family | Arm | Pilot SHA-256 | Confirmation SHA-256 | Same as pilot | Re-measurement SHA-256 | Same as confirmation |",
+        "|---|---|---|---|---|---|---|",
         *arms,
+        "",
+        "**Corrected re-measurement.** Every re-measured cell beside the withdrawn campaign that measured the same cell: the "
+        "confirmation where it reserved the cell, otherwise the family's v3 pilot. Both sides are the evaluator's paired "
+        "speedup intervals, each at the per-comparison confidence its own campaign carries. The leading arm is the external "
+        "arm where the estimate exceeds 1 and gf2 where it falls below. A re-measured cell is exploratory, so it settles "
+        "direction and decision and reopens no confirmatory attempt.",
+        "",
+        "| Family | Cell | Withdrawn campaign | Withdrawn decision | Withdrawn speedup [interval] | Re-measured decision | "
+        "Re-measured speedup [interval] | Decision | Leading arm |",
+        "|---|---|---|---|---|---|---|---|---|",
+        *corrected,
         "",
     ]
 
@@ -297,19 +356,20 @@ def main() -> None:
         "[Efron1979] of the committed per-execution values (10000 resamples, 95% nearest-rank quantiles, SplitMix64 "
         "[Steele2014] index draws implemented in the generator, seed 0x6FB89A3C); they are descriptive.",
         "",
-        "**Withdrawn.** The gf2 arms of every receipt tabulated here declared `warm` without the protocol's untimed pass "
-        "over the working set before calibration, while the external arms made one (M4RI's transpose arm left its kernel "
-        "cell's preallocated output outside it), so every comparison of gf2 with an "
-        "external arm in these tables is withdrawn ([findings](../../active/6fb89a3c/findings.md) §4 and §5). The "
-        "external arms' own probes and shares do not depend on the gf2 arms.",
+        "**Withdrawn and corrected.** The gf2 arms of every `pilot` and `confirmation` campaign tabulated here declared "
+        "`warm` without the protocol's untimed pass over the working set before calibration, while the external arms made "
+        "one (M4RI's transpose arm left its kernel cell's preallocated output outside it), so every comparison of gf2 with "
+        "an external arm those campaigns support is withdrawn ([findings](../../active/6fb89a3c/findings.md) §4 and §5). "
+        "The `remeasure` campaigns repeat the same cells with the fixed gf2 arms and the rebuilt M4RI transpose arm, and "
+        "carry the comparisons that stand (Overview → Corrected re-measurement). The external arms' own probes and shares "
+        "do not depend on the gf2 arms.",
         "",
     ] + overview()
     for title, family in FAMILIES:
         out += [f"## {title}", ""]
-        for mode in ("pilot", "confirmation"):
-            for directory in sorted(RESULTS.glob(f"v3-*-6fb89a3c-{family}-{mode}")):
-                if (directory / "acceptance-summary.json").exists():
-                    out += [f"### {mode} `{directory.name}`", ""] + render(directory, family) + [""]
+        for mode in ("pilot", "confirmation", "remeasure"):
+            for directory in campaign_dirs(family, mode):
+                out += [f"### {mode} `{directory.name}`", ""] + render(directory, family) + [""]
     (RESULTS / "tables.md").write_text("\n".join(out))
     print(f"-> {RESULTS / 'tables.md'}")
 
