@@ -37,7 +37,9 @@ missing, and on which side?
 ## Method and evidence
 
 The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol version 3](../f547c394/protocol.md) govern all timed work.
+and the [shared protocol](../f547c394/protocol.md) at
+[version 3](../f547c394/amendment-v3.md) — the version these receipts pin,
+snapshot and are evaluated under — govern all timed work.
 Committed commands produce every artifact:
 
 | Command | Output |
