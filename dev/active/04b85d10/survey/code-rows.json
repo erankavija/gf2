@@ -15,7 +15,8 @@
       "length": 255,
       "corpus_row": "B3",
       "dvb_t2_frame": null,
-      "label": "the degree-8 mother code of corpus row B3"
+      "label": "the degree-8 mother code of corpus row B3",
+      "field_label": "corpus row B3 mother field"
     },
     {
       "degree": 14,
@@ -24,7 +25,8 @@
       "length": 16383,
       "corpus_row": "T2S",
       "dvb_t2_frame": "short",
-      "label": "the mother code of the DVB-T2 short frame"
+      "label": "the mother code of the DVB-T2 short frame",
+      "field_label": "short-frame mother field"
     },
     {
       "degree": 16,
@@ -33,7 +35,8 @@
       "length": 65535,
       "corpus_row": "T2N",
       "dvb_t2_frame": "normal",
-      "label": "the mother code of the DVB-T2 normal frame"
+      "label": "the mother code of the DVB-T2 normal frame",
+      "field_label": "normal-frame mother field"
     }
   ],
   "dvb_t2_bch_codes": [
