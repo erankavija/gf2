@@ -4,8 +4,10 @@
 
 Plan for `3be770d5`. The issue measures and ranks; it changes no production
 decoder. The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [benchmark protocol](../f547c394/protocol.md) govern every timed cell:
-the pilots pin version 3 and the confirmations version 4.
+and the [shared protocol](../f547c394/protocol.md) govern every timed cell,
+each receipt under the version it names: the pilots
+[version 3](../f547c394/amendment-v3.md) and the matched confirmations
+[version 4](../f547c394/amendment-v4.md).
 
 ## What `c077a88b` already establishes
 
@@ -15,7 +17,7 @@ the pilots pin version 3 and the confirmations version 4.
 | REQ-02 | No profile. Setup/conversion diagnostics only. | [tables](../../bench_results/c077a88b/tables.md) "Matched-algorithm timing" |
 | REQ-03 | Names the follow-up issues; ranks nothing. | findings "Limits and follow-up" |
 | REQ-04 | Identical digested AList and recorded LLR bundles, NMS 0.75, flooding, cap 50, syndrome stopping; fastest-compatible AFF3CT modes with precision, schedule and wave size; recorded-corpus BER/FER counts, intervals and iteration distributions. | [tables](../../bench_results/c077a88b/tables.md) "Quality on identical recorded inputs"; [validation](../../bench_results/c077a88b/v3-preparation/validation.json) |
-| REQ-05 | Protocol-v3 receipts with pinned contract, protocol and addenda for **whole-call** cells, where AList parsing and decoder construction are inside every timed call. | [matched confirmation](../../bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json) |
+| REQ-05 | Receipts naming protocol version 3, with pinned contract, protocol and addenda for **whole-call** cells, where AList parsing and decoder construction are inside every timed call. | [matched confirmation](../../bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json) |
 
 The whole-call cells answer a consumer-latency question in which AFF3CT's
 decoder construction dominates the DVB call. A reused-decoder comparison is
