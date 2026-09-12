@@ -87,7 +87,15 @@ the per-core gap and the gap under multicore saturation. One family holding
 both would be `not-confirmatory` under P-20's tail rule; the split follows the
 questions, and each family keeps its own append-only ledger from genesis.
 Pilots run first; confirmation addenda freeze resolution and margins from the
-accepted pilots and run in a later window. The runner observes topology, SMT,
+accepted pilots and run in a later window. Both matched confirmations are
+frozen ([single worker](addendum-ldpc-steady-matched-single-worker.json),
+[multicore](addendum-ldpc-steady-matched-multicore.json), each with its
+[derivation](addendum-ldpc-steady-matched-single-worker-derivation.json)
+record) and each keeps every cell of its family: no cell is trimmed and no
+question split to satisfy the multiple-comparison correction, because at a
+first attempt's family alpha P-20's tail rule admits a family of this size.
+Each confirmation's own acceptance summary reports the status its cells
+actually reach. The runner observes topology, SMT,
 governors, affinity and load, holds the exclusive full-host lock, and pins the
 contract, protocol, addendum and producing closure in every receipt
 ([launcher](../../bench_results/3be770d5/run-campaign.sh)). No production code
@@ -172,11 +180,14 @@ From the worktree root: build the harness with the command the build identity
 records, extract the `c077a88b` recorded-input archive into
 `target/ldpc-inputs`, record the preparation with
 [record-preparation.py](survey/record-preparation.py), then run
-`dev/bench_results/3be770d5/run-campaign.sh FAMILY pilot RUN_ID prepare`
-followed by `window` for each family, and
+`dev/bench_results/3be770d5/run-campaign.sh FAMILY MODE RUN_ID prepare`
+followed by `window` for each family and mode, and
 `dev/active/3be770d5/survey/run-profile.sh DIR` for the profile series. Each
 command resumes under its own identity; the script headers state their
-contracts.
+contracts. A confirmation refuses to run until its addendum is committed and
+unmodified, so freezing it with
+[freeze-addendum.py](survey/freeze-addendum.py) and committing it precede the
+window.
 
 ## Results
 
