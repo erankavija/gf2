@@ -172,3 +172,13 @@ d33ab8b5e8e4856227d7901b61ba7463afb7a414c8081932d2f393173bf95ab5 (sha256 over th
 # resumed_utc: 2026-09-10T23:03:22Z
 # gf2 revision (informational): 546cc2759d758fad0b72165728a5a1e904bc8179
  02:03:22 up 7 days,  3:32,  9 users,  load average: 5.15, 2.46, 1.72
+
+## resumed
+# resumed_utc: 2026-09-12T01:09:03Z
+# gf2 revision (informational): 69a3480e4aa4931691015576630b9cd36de75589
+# unchanged since the first session: consumer-profile, consumer-verify, sweep.sh profile-cases.py counter-cases.txt report-cases.txt alloc-trace-cases.txt
+ 04:09:03 up 8 days,  5:38,  8 users,  load average: 1.24, 1.00, 0.60
+
+## load average at end
+ 04:43:11 up 8 days,  6:12,  8 users,  load average: 1.61, 1.54, 1.35
+# finished_utc: 2026-09-12T01:43:11Z

@@ -1,0 +1,31 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-clmul-fold  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3663  (96.6%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14652135531
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                    
+# ........  ............  ...............  ................  ..........................................................................................................................
+#
+    95.50%          3498  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_write_codeword
+     3.77%           138  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::fold_block_pclmul
+     0.49%            18  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::packed_fold_reduce
+     0.03%             1  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_batch_family
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::validate_batch
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  consumer-profile  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-profil  libc.so.6         [.] malloc
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad890be8
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad89647d
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae989937
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

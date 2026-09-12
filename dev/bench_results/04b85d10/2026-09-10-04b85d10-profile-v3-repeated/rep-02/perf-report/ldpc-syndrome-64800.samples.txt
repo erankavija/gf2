@@ -1,0 +1,32 @@
+# case: {"workload":"ldpc-syndrome","size":{"n":64800},"seed":104}
+# path: current  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3469  (96.2%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 13876128353
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                      
+# ........  ............  ...............  ................  ............................................
+#
+    99.60%          3455  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::matvec
+     0.06%             2  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::Prepared::run
+     0.06%             2  consumer-profil  consumer-profile  [.] consumer_profile_gf2_side::prepare
+     0.03%             1  consumer-profil  consumer-profile  [.] alloc::raw_vec::RawVec<T,A>::grow_one
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::from_coo
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.03%             1  consumer-profil  libc.so.6         [.] cfree
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad7a9371
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad7f9da3
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8650c8
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad891c98
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad896cf6
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffadb10fb3
+
+
+#
+# (Tip: Profiling branch (mis)predictions with: perf record -b / perf report)
+#

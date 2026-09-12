@@ -1,0 +1,31 @@
+# case: {"workload":"bch-encode-batch","size":{"degree":14,"batch":256},"seed":303}
+# path: family-bitslice-interleaved  cache_state: warm  target_ms: 3000
+# SAMPLE events:       3682  (96.6%)
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu/cycles/Pu'
+# Event count (approx.): 14728136234
+#
+# Overhead       Samples  Command          Shared Object     Symbol                                                                                                                    
+# ........  ............  ...............  ................  ..........................................................................................................................
+#
+    92.34%          3400  consumer-profil  consumer-profile  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_batch_family
+     7.25%           267  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2
+     0.16%             6  consumer-profil  consumer-profile  [.] gf2_kernels_simd::x86::transpose::transpose_64x64_avx2
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::encode::<impl gf2_coding::bch::spec::BchCode<X,S,M>>::encode_stamp
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-profil  consumer-profile  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-profil  libc.so.6         [.] 0x0000000000176e93
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad401d22
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad890be8
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffad8968b2
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae95bc26
+     0.03%             1  consumer-profil  [unknown]         [k] 0xffffffffae99fa66
+
+
+#
+# (Tip: Boolean options have negative forms, e.g.: perf report --no-children)
+#
