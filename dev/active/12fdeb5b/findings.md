@@ -15,11 +15,12 @@ none.
 
 ## Question
 
-`eda07788` compared the inverse mapping, from channel LLRs onto the mother
-code, and left the forward direction open: gf2 has no public bit-selection
-entry point, because its rate-matched encoder fuses the transmitted-position
-gather into the encode. This survey compares the operation that surface does
-expose, the whole consumer: information bits in, rate-matched codeword out.
+`eda07788` covers the inverse mapping, from channel LLRs onto the mother code.
+The forward direction is this survey's question, and gf2's public surface
+offers no bit selection of its own: its rate-matched encoder fuses the
+transmitted-position gather into the encode. The comparable operation is
+therefore the whole consumer, information bits in and rate-matched codeword
+out.
 The family description in the
 [pilot addendum](addendum-nr-encode-pilot.json) is the authoritative operation
 definition.
@@ -50,15 +51,16 @@ AFF3CT [Cassagne2019] v4.7.0 is the MIT-licensed tree `c077a88b` pins, with its
 reads. Its 5G puncturer and fast quasi-cyclic encoder carry no intrinsic path,
 so the selected backend is scalar.
 
-srsRAN [Srsran2026] is available to this survey, where `eda07788` recorded it
-as unavailable. Its own CMake configuration still stops on this host because
-MbedTLS is absent, so the shim compiles the LDPC and `srsvec` translation units
-the encoder and rate matcher need directly; none of the layers that require
-MbedTLS is on that closure. The shim reproduces srsRAN's own `"auto"` backend
-selection and reports the backend it chose. srsRAN is AGPL-3.0-or-later: the
-linked binary stays under the primary checkout's `.agents/ext/12fdeb5b/` and is
-neither committed nor distributed, and the repository commits only this
-survey's own shim source.
+srsRAN [Srsran2026] serves as a measured comparator here. `eda07788` records
+its rate dematcher as unavailable because srsRAN's CMake configuration stops on
+a host without MbedTLS. That still holds for the whole-project configuration
+and it does not reach the LDPC encoder and rate matcher: the shim compiles
+their translation units directly, and none of the layers that require MbedTLS
+is on that closure. The shim reproduces srsRAN's own `"auto"` backend selection
+and reports the backend it chose. srsRAN is AGPL-3.0-or-later, so the linked
+binary stays under the primary checkout's `.agents/ext/12fdeb5b/` and is
+neither committed nor distributed; the repository commits only this survey's
+own shim source.
 
 Revisions, licences, compiled units, compiler and toolchain versions, flags,
 selected backends and arm executable digests are recorded, as the build
@@ -82,10 +84,14 @@ The outcome per configuration and arm, the configurations and the code
 parameters each project derives are projected in the
 ["Bit-exact equivalence outcomes"](../../bench_results/12fdeb5b/tables.md)
 and "Configuration grid" sections of the tables. The grid spans both base
-graphs, the rates TS 38.212 Section 7.2.2 assigns them, lifting sizes drawn
-from seven of the eight lifting sets, codes with and without filler bits for
-both base graphs, both sides of the base-graph-2 `560 < K <= 640` boundary, and
-redundancy versions beyond 0.
+graphs, the rates TS 38.212 Section 7.2.2 assigns them, at least one lifting
+size from each of the eight lifting sets of its Table 5.3.2-1, codes with and
+without filler bits for both base graphs, and redundancy versions beyond 0.
+Two pairs cross a lifting-size boundary on one information bit: the
+base-graph-1 pair moves to the next lifting size and from a filler-free code to
+one with fillers, at a rate high enough that AFF3CT's own rule also selects
+base graph 1, and the base-graph-2 pair crosses the `560 < K <= 640` lifting
+constant.
 
 ## Where the projects diverge
 
@@ -103,8 +109,12 @@ Section 5.2.2 specifies for that range and AFF3CT uses the value of the
 adjacent range, which selects a larger lifting size and a different mother
 code. This reproduces `eda07788`'s finding on the forward direction and adds
 the standard's own value as the arbiter: the ledger records both branches with
-their verbatim source lines. The affected configuration is recorded, not timed,
-on the AFF3CT arm.
+their verbatim source lines. The grid pins the divergence at its minimal
+witness, a pair of configurations one information bit apart: at the last
+message length of the lower range both projects agree, and at the first length
+of the disputed range they select different lifting sizes. srsRAN is unaffected
+because it takes the lifting size from the caller. The affected configurations
+are recorded, not timed, on the AFF3CT arm.
 
 **Redundancy-version starting offset.** srsRAN implements all four versions
 through the TS 38.212 Table 5.4.2.1-2 shift factors. gf2 and AFF3CT carry no
@@ -124,12 +134,13 @@ The [smoke](../../bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/rec
 is an accepted five-cell exploratory campaign that reaches a result line from
 every arm the pilot names, on the largest and smallest configurations of the
 grid. It is a functional check, not a performance result about gf2, and it
-decides nothing. Two superseded smoke campaigns of the same addendum are
-retained beside it with their receipts: `-r1` ran before the launcher resolved
-its comparator staging directory through the common git directory, and `-r2`
-before the srsRAN adapter's parameters were given one semantic type. All three
-are accepted and all three hold their zero-comparison reservations in the
-family ledger, so the accounting shows every attempt.
+decides nothing. The superseded smoke campaigns of the same addendum are
+retained beside it under `-r1` to `-r3`, each one run before a harness change
+that altered the arms or the launcher: the staging directory the launcher
+resolves, the semantic type the srsRAN adapter's parameters carry, the
+configuration grid, and the comparator trees the launcher defaults to. Every
+one of them is accepted and every one holds its zero-comparison reservation in
+the family ledger, so the accounting shows every attempt.
 
 The [pilot](addendum-nr-encode-pilot.json) is frozen: eight exploratory cells
 over both base graphs, both comparators, the build control and the identity
@@ -156,8 +167,9 @@ own alpha was contradicted by a threefold wider confirmation interval.
   the standard's ordering: on this grid it does not.
 - Redundancy versions other than 0 have no gf2 counterpart and are recorded,
   not timed.
-- The four configurations where AFF3CT's own derivation differs from gf2's are
-  recorded, not timed, on the AFF3CT arm.
+- The configurations where AFF3CT's own derivation differs from gf2's are
+  recorded, not timed, on the AFF3CT arm; the equivalence table names each one
+  with the parameter that differs.
 - Bit selection alone is not a cell. gf2 exposes no forward selection entry
   point, so timing a harness re-implementation would time the harness.
 - The survey proposes no production change, so its addenda declare no
@@ -166,13 +178,15 @@ own alpha was contradicted by a threefold wider confirmation interval.
 ## Reproduction
 
 ```
-GF2_AFF3CT_ROOT=<aff3ct-v4.7.0-tree> GF2_SRSRAN_ROOT=<srsran-tree> \
-  dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh smoke|pilot|confirmation
+dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh smoke|pilot|confirmation
 ```
 
-The launcher verifies the pins, builds the four arms, regenerates the source
-and build evidence, runs the equivalence gate, projects the plan from the
-frozen addendum and measures it as bounded checkpointed sessions under the CCX1
+The launcher resolves the staged comparator trees under the primary checkout
+through the common git directory, so any worktree of this repository runs it
+with no path of its own; `GF2_AFF3CT_ROOT` and `GF2_SRSRAN_ROOT` override that
+default. It verifies the pins, builds the four arms, regenerates the source and
+build evidence, runs the equivalence gate, projects the plan from the frozen
+addendum and measures it as bounded checkpointed sessions under the CCX1
 exclusive mutex. `dev/bench_results/12fdeb5b/summarize.py` regenerates the
 tables from the committed records and receipts.
 
