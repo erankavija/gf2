@@ -85,14 +85,44 @@ def committed_oids(root: Path, revision: str | None = None) -> dict[str, str]:
     return oids
 
 
-def committed_reader(root: Path, oids: dict[str, str]) -> Callable[[str], bytes | None]:
+class BlobReader:
+    """Reads committed bytes by repository-relative path.
+
+    One `git cat-file --batch` serves every read: a receipt pins tens of files
+    and the repository holds tens of receipts, so a process per file dominated
+    the run. The process ends with the reader.
+    """
+
+    def __init__(self, root: Path, oids: dict[str, str]) -> None:
+        self.oids = oids
+        self.process = subprocess.Popen(
+            ["git", "-C", str(root), "cat-file", "--batch"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+        )
+
+    def __call__(self, path: str) -> bytes | None:
+        oid = self.oids.get(path)
+        if oid is None:
+            return None
+        self.process.stdin.write(f"{oid}\n".encode())
+        self.process.stdin.flush()
+        header = self.process.stdout.readline().split()
+        if len(header) != 3:
+            raise RuntimeError(f"git cat-file does not serve {path}: {header}")
+        content = self.process.stdout.read(int(header[2]))
+        self.process.stdout.read(1)
+        return content
+
+    def close(self) -> None:
+        self.process.stdin.close()
+        self.process.stdout.close()
+        self.process.wait()
+
+
+def committed_reader(root: Path, oids: dict[str, str]) -> BlobReader:
     """Returns a reader of committed bytes by repository-relative path."""
-
-    def read(path: str) -> bytes | None:
-        oid = oids.get(path)
-        return None if oid is None else git(root, "cat-file", "blob", oid)
-
-    return read
+    return BlobReader(root, oids)
 
 
 def receipt_paths(oids: dict[str, str]) -> list[str]:
@@ -219,19 +249,24 @@ def check(root: Path, revision: str | None = None) -> list[Finding]:
     oids = committed_oids(root, revision)
     read = committed_reader(root, oids)
     findings: list[Finding] = []
-    for path in receipt_paths(oids):
-        receipt = decode(read, path)
-        if not isinstance(receipt, dict):
-            findings.append(Finding(path, path, "receipt", UNREADABLE))
-            continue
-        pins, snapshot_findings = pinned_inputs(str(Path(path).parent), receipt, read)
-        findings.extend(snapshot_findings)
-        for pin in pins:
-            content = read(pin.path)
-            if content is None:
-                findings.append(Finding(path, pin.path, pin.origin, ABSENT))
-            elif hashlib.sha256(content).hexdigest() != pin.sha256:
-                findings.append(Finding(path, pin.path, pin.origin, DIFFERS))
+    try:
+        for path in receipt_paths(oids):
+            receipt = decode(read, path)
+            if not isinstance(receipt, dict):
+                findings.append(Finding(path, path, "receipt", UNREADABLE))
+                continue
+            pins, snapshot_findings = pinned_inputs(
+                str(Path(path).parent), receipt, read
+            )
+            findings.extend(snapshot_findings)
+            for pin in pins:
+                content = read(pin.path)
+                if content is None:
+                    findings.append(Finding(path, pin.path, pin.origin, ABSENT))
+                elif hashlib.sha256(content).hexdigest() != pin.sha256:
+                    findings.append(Finding(path, pin.path, pin.origin, DIFFERS))
+    finally:
+        read.close()
     return findings
 
 
@@ -352,9 +387,9 @@ def self_test() -> int:
             write_fixture(root, omit=omit, corrupt=corrupt)
             if register is not None:
                 write_registry(root, fixture_receipt, register)
-            registered, errors = registered_omissions(
-                committed_reader(root, committed_oids(root))
-            )
+            read = committed_reader(root, committed_oids(root))
+            registered, errors = registered_omissions(read)
+            read.close()
             unregistered, recorded, stale = partition(check(root), registered)
             observed = (
                 [finding.problem for finding in unregistered],
@@ -389,7 +424,9 @@ def main() -> int:
         return self_test()
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel").decode().strip())
     oids = committed_oids(root, arguments.revision)
-    registered, errors = registered_omissions(committed_reader(root, oids))
+    read = committed_reader(root, oids)
+    registered, errors = registered_omissions(read)
+    read.close()
     findings = check(root, arguments.revision)
     unregistered, recorded, stale = partition(findings, registered)
     if recorded:
