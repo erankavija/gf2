@@ -20,8 +20,12 @@ description states:
   confirmatory cell could be confirmatory, and every cell here is exploratory.
 - Pilot trials per cell count every committed campaign that started the cell
   as an exploratory cell of this question, under the family's id or the v1
-  pilot's id, plus this campaign. The search budget declares the maximum and
-  must not exceed the schema's cap.
+  pilot's id, plus this campaign, which a committed receipt of its own does not
+  count a second time. The search budget declares the maximum and must not
+  exceed the schema's cap.
+
+Rerunning the script with the frozen time reproduces the frozen addendum byte
+for byte, before or after its campaign has run.
 
 The addendum keeps the v3 pilot's cells, seeds and objectives and the v3
 confirmation's margins, and is written to
@@ -116,11 +120,20 @@ def rebuilt_comparators(cells: list[dict], ledger: list[dict]) -> list[str]:
 
 
 def pilot_history() -> dict[str, list[str]]:
-    """Committed campaigns that started each cell as an exploratory cell."""
+    """Committed campaigns other than this one that started each cell as an
+    exploratory cell.
+
+    A campaign driven by this script's own output is this campaign, which the
+    caller counts once. Counting its committed receipt as well would raise every
+    cell's trial number on each rerun, so the script would stop reproducing the
+    addendum it froze."""
     history: dict[str, list[str]] = collections.defaultdict(list)
     for log in sorted(RESULTS.glob("*/execution.log")):
         entries = [json.loads(line) for line in log.read_text().splitlines()]
-        snapshot = log.parent / entries[0]["details"]["addendum"]["snapshot"]
+        declared = entries[0]["details"]["addendum"]
+        if pathlib.Path(declared["path"]) == OUTPUT:
+            continue
+        snapshot = log.parent / declared["snapshot"]
         addendum = json.loads(snapshot.read_text())
         if addendum["family"]["id"] not in QUESTION_IDS:
             continue
