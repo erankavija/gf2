@@ -42,6 +42,7 @@ medians below one means gf2 is faster.
 | `survey/make-addenda.py`, `survey/make-plan-versioned.py`, `survey/make-producing-inputs.py` | the pilot addenda, the runner plans and the producing closure `survey/producing-inputs-v4.json` |
 | `survey/make-source-evidence.py` | `survey/source-evidence.json`: every code claim below, cited by claim ID in backticks |
 | `survey/make-ledger-origin-v3.py` | `../../bench_results/6c6b09b1/v3-*-ledger-origin.json` |
+| `survey/make-void-attempt-record.py` | `../../bench_results/6c6b09b1/v3-r1-void-attempts.json`: what each ledger attempt that measured no cell actually did |
 | `survey-analysis tables` (`survey/analysis/`) | [the generated tables](../../bench_results/6c6b09b1/tables.md) |
 
 This report states no measured value. Each conclusion points to its source: a
@@ -267,7 +268,9 @@ stopped before a campaign opened
 carries the version-3 pilot attempt of 2026-09-12, which reserved its
 campaign, failed on its first arm and measured no cell: a pilot addendum
 declares only exploratory cells, so that reservation spends zero comparisons
-and names no candidate identity. The frozen v1 confirmation never ran either,
+and names no candidate identity
+(`../../bench_results/6c6b09b1/v3-r1-void-attempts.json`). The frozen v1
+confirmation never ran either,
 so no family has spent a comparison, and each family's confirmation will be
 its first confirmatory attempt, which P-20's twenty expected tail draws at the
 corrected alpha allow for at most six confirmatory cells.
@@ -294,6 +297,25 @@ no cell: each arm rejected the runner's request, so each campaign ended on its
 first arm with a `failed` journal record and a reserved ledger line spending
 zero comparisons. That is a run that produced no data, not a falsified result;
 the ledgers keep it, and nothing about the three questions changed.
+
+A ledger line cannot say that on its own. It records the comparisons the
+addendum predeclared, and a pilot addendum declares none, so the line a void
+attempt writes is the line a complete pilot would write.
+[The void-attempt record](../../bench_results/6c6b09b1/v3-r1-void-attempts.json)
+closes that gap from the artifacts: per family it carries the ledger line, the
+addendum it pins, the journal's terminal event, the cells it completed and the
+child diagnostic naming the cause, which otherwise survives only in the
+uncommitted stage directory. `survey/make-void-attempt-record.py` derives it
+and refuses a ledger line whose addendum digest does not resolve.
+
+The version-3 pre-timing evidence (`conformance-v3/`) and producing manifest
+(`survey/producing-inputs-v3.json`) are not retained. No result rests on them:
+those three campaigns measured zero cells, so no receipt exists to pin them,
+and the manifest named generator paths that the version-4 rename moved, so it
+no longer resolved. What the attempts do pin is kept: the version-3 addenda
+stay, because each ledger line names one by content digest, and the ledger
+lines stay, because the chain rejects a removed attempt. The removed bytes
+remain in git history at commit `d9100acd^`.
 
 ### Protocol-v1 pilot (history)
 

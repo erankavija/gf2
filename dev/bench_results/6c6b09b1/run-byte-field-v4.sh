@@ -25,6 +25,10 @@
 # its acceptance summary. `build` and `plan` run in a working session before
 # a campaign is queued; `window` builds nothing.
 #
+# `run` and `finalize` check what the campaign wrote rather than trusting an
+# exit code: a journal that completes having measured no cell, or a receipt
+# with no paired execution, fails the job instead of passing as a clean run.
+#
 # Every step that measures or builds takes the CCX1 mutex only through
 # `dev/scripts/ccx1-bench-flock.sh --full-host` (timed sessions) and
 # `scripts/cargo-budget.sh` (builds and correctness checks).
@@ -121,6 +125,44 @@ verify_build() {
   (cd "$EXT/prefix" && sha256sum --quiet -c "$repo/$SURVEY/ext-prefix.sha256")
 }
 
+# An exit code says a process ended, not that it produced data: a campaign
+# whose every cell failed can still leave a session that exits cleanly. These
+# two checks read what the campaign actually wrote and stop the job when it
+# holds no usable cell, so a window slot spent on nothing fails loudly.
+
+# The journal ends in `complete` and that record counts measured cells.
+require_measured_journal() {
+  python3 - "$STAGE/execution.log" <<'PY'
+import json, sys
+events = [json.loads(line) for line in open(sys.argv[1])]
+last = events[-1]
+if last["event"] != "complete":
+    sys.exit(f"campaign ended in {last['event']!r}, not 'complete': {last['details']}")
+measured = last["details"].get("measured_cells", 0)
+completed = sum(1 for e in events if e["event"] == "cell-complete")
+if measured == 0 or completed == 0:
+    sys.exit(f"campaign completed having measured {measured} cells "
+             f"and journalled {completed} cell-complete records")
+print(f"journal: {measured} measured cells, {completed} completed")
+PY
+}
+
+# The receipt carries cells with paired executions. Cells the host made
+# unavailable are a legitimate protocol outcome and are reported, not failed;
+# a receipt with no paired cell at all is the failure this guards.
+require_measured_receipt() {
+  python3 - "$1/receipt.json" <<'PY'
+import json, sys
+cells = json.load(open(sys.argv[1]))["cells"]
+paired = [c for c in cells if c.get("pairs")]
+unavailable = [c["cell_id"] for c in cells if c.get("status") != "measured"]
+if not paired:
+    sys.exit(f"receipt carries {len(cells)} cells and no paired execution")
+print(f"receipt: {len(paired)} paired cells of {len(cells)}"
+      + (f"; not measured: {', '.join(unavailable)}" if unavailable else ""))
+PY
+}
+
 run_sessions() {
   [[ -f "$PLAN" ]] || { echo "plan the campaign first: $PLAN" >&2; exit 2; }
   verify_build
@@ -152,6 +194,7 @@ run_sessions() {
       *) exit "$code" ;;
     esac
   done
+  require_measured_journal | tee -a "$LAUNCH_LOG"
 }
 
 finalize() {
@@ -159,6 +202,7 @@ finalize() {
   "$RUNNER" finalize "$STAGE" "$OUT" | tee -a "$LAUNCH_LOG"
   cp "$LAUNCH_LOG" "$OUT/launcher.log"
   "$ACCEPTANCE" "$OUT"
+  require_measured_receipt "$OUT"
 }
 
 case "$ACTION" in
@@ -184,6 +228,7 @@ case "$ACTION" in
   window)
     if [[ -f "$OUT/acceptance-summary.json" ]]; then
       echo "campaign $ID is finalized and evaluated: $OUT"
+      require_measured_receipt "$OUT"
       exit 0
     fi
     # A campaign whose log already ends in its `complete` terminal record is
