@@ -396,6 +396,25 @@
       "format": "markdown",
       "label": "Compatible LDPC decoder benchmark findings",
       "path": "dev/active/c077a88b/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "cat-file batch timing harness",
+      "path": "dev/active/a203a23c/timing/measure.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "cat-file batch timing note",
+      "path": "dev/active/a203a23c/timing/README.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "cat-file batch timing record",
+      "path": "dev/active/a203a23c/timing/timing.json"
     }
   ],
   "first_ready_at": "2026-09-11T17:50:04.437172198Z",
@@ -436,5 +455,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
-  "updated_at": "2026-09-12T08:14:52.209815241Z"
+  "updated_at": "2026-09-12T18:00:51.997344117Z"
 }
