@@ -185,7 +185,11 @@ mod tests {
         let first = seeded_messages(7, 2, 65);
         assert_eq!(first, seeded_messages(7, 2, 65));
         assert_ne!(first[0], first[1], "banks draw distinct messages");
-        assert_ne!(first, seeded_messages(8, 2, 65), "the seed selects the stream");
+        assert_ne!(
+            first,
+            seeded_messages(8, 2, 65),
+            "the seed selects the stream"
+        );
     }
 
     #[test]
@@ -194,7 +198,11 @@ mod tests {
             let bits = seeded_messages(11, 1, len).pop().expect("one bank");
             let bytes = to_msb_first_bytes(&bits, len);
             assert_eq!(bytes.len(), len.div_ceil(8));
-            assert_eq!(from_msb_first_bytes(&bytes, len), bits, "round trip at {len}");
+            assert_eq!(
+                from_msb_first_bytes(&bytes, len),
+                bits,
+                "round trip at {len}"
+            );
         }
     }
 

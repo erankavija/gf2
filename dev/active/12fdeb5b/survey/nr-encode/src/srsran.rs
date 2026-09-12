@@ -76,6 +76,24 @@ impl Backend {
     }
 }
 
+/// One rate-matching request in srsRAN's own parameter vocabulary.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Request {
+    /// Base graph, 1 or 2.
+    pub base_graph: u8,
+    /// Lifting size.
+    pub z: usize,
+    /// Information bits, excluding fillers.
+    pub k: usize,
+    /// Rate-matched codeword bits.
+    pub n: usize,
+    /// Redundancy version, as TS 38.212 Table 5.4.2.1-2 indexes it.
+    pub redundancy_version: u8,
+    /// Modulation order, the bits per symbol TS 38.212 Section 5.4.2.2
+    /// interleaves over.
+    pub modulation_order: u8,
+}
+
 /// True when this host's CPU reports AVX2, which is the backend srsRAN's own
 /// `ldpc_encoder_factory_sw("auto")` then selects.
 pub fn supports_avx2() -> bool {
@@ -89,8 +107,7 @@ pub fn dimensions(base_graph: u8, z: usize) -> Option<Dimensions> {
     let mut out = Dimensions::default();
     // SAFETY: `out` is a valid, exclusively borrowed `Dimensions` whose
     // layout matches the shim's `gf2_srsran_nr_dims`.
-    let status =
-        unsafe { gf2_srsran_nr_dims_for(i32::from(base_graph), dimension(z), &mut out) };
+    let status = unsafe { gf2_srsran_nr_dims_for(i32::from(base_graph), dimension(z), &mut out) };
     (status == 0).then_some(out)
 }
 
@@ -144,16 +161,11 @@ impl Comparator {
     /// Panics when a buffer is too short for the declared lengths.
     pub fn encode_rate_match(
         &self,
-        base_graph: u8,
-        z: usize,
-        k: usize,
-        n: usize,
-        redundancy_version: u8,
-        modulation_order: u8,
+        request: &Request,
         input: &[u8],
         output: &mut [u8],
     ) -> Result<(), i32> {
-        let dims = dimensions(base_graph, z).ok_or(1)?;
+        let dims = dimensions(request.base_graph, request.z).ok_or(1)?;
         let k_ldpc = usize::try_from(dims.k_ldpc).expect("positive K_LDPC");
         assert!(
             input.len() >= k_ldpc.div_ceil(8),
@@ -162,22 +174,22 @@ impl Comparator {
             k_ldpc.div_ceil(8)
         );
         assert!(
-            output.len() >= n.div_ceil(8),
+            output.len() >= request.n.div_ceil(8),
             "output holds {} bytes, N needs {}",
             output.len(),
-            n.div_ceil(8)
+            request.n.div_ceil(8)
         );
         // SAFETY: `handle` is live; `input` holds at least the K_LDPC bits
         // and `output` at least the N bits the shim reads and writes.
         let status = unsafe {
             gf2_srsran_nr_encode_rate_match(
                 self.handle,
-                i32::from(base_graph),
-                dimension(z),
-                dimension(k),
-                dimension(n),
-                i32::from(redundancy_version),
-                i32::from(modulation_order),
+                i32::from(request.base_graph),
+                dimension(request.z),
+                dimension(request.k),
+                dimension(request.n),
+                i32::from(request.redundancy_version),
+                i32::from(request.modulation_order),
                 input.as_ptr(),
                 output.as_mut_ptr(),
             )
@@ -240,13 +252,8 @@ impl Drop for Comparator {
 /// The whole-consumer srsRAN arm: gf2's representation in and out.
 pub struct Adapter {
     comparator: Comparator,
-    base_graph: u8,
-    z: usize,
-    target_k: usize,
-    target_n: usize,
+    request: Request,
     k_ldpc: usize,
-    redundancy_version: u8,
-    modulation_order: u8,
 }
 
 impl Adapter {
@@ -265,18 +272,25 @@ impl Adapter {
             .expect("srsRAN carries a graph for gf2's base graph and lifting size");
         Self {
             comparator,
-            base_graph: params.base_graph,
-            z: params.lifting_factor,
-            target_k: params.target_k,
-            target_n: params.target_n,
+            request: Request {
+                base_graph: params.base_graph,
+                z: params.lifting_factor,
+                k: params.target_k,
+                n: params.target_n,
+                redundancy_version,
+                modulation_order,
+            },
             k_ldpc: usize::try_from(dims.k_ldpc).expect("positive K_LDPC"),
-            redundancy_version,
-            modulation_order,
         }
     }
 
     pub fn comparator(&self) -> &Comparator {
         &self.comparator
+    }
+
+    /// The request this adapter drives srsRAN with.
+    pub fn request(&self) -> &Request {
+        &self.request
     }
 
     /// srsRAN's systematic length, which equals gf2's `full_k` when the two
@@ -291,13 +305,13 @@ impl Adapter {
     pub fn unpack(&self, message: &BitVec) -> (Vec<u8>, Vec<u8>) {
         (
             to_msb_first_bytes(message, self.k_ldpc),
-            vec![0_u8; self.target_n.div_ceil(8)],
+            vec![0_u8; self.request.n.div_ceil(8)],
         )
     }
 
     /// Stage 3: converts srsRAN's packed output into gf2's representation.
     pub fn pack(&self, output: &[u8]) -> BitVec {
-        from_msb_first_bytes(output, self.target_n)
+        from_msb_first_bytes(output, self.request.n)
     }
 
     /// The timed call: unpack, srsRAN encode and rate match, pack.
@@ -309,16 +323,7 @@ impl Adapter {
     pub fn encode(&self, message: &BitVec) -> BitVec {
         let (input, mut output) = self.unpack(message);
         self.comparator
-            .encode_rate_match(
-                self.base_graph,
-                self.z,
-                self.target_k,
-                self.target_n,
-                self.redundancy_version,
-                self.modulation_order,
-                &input,
-                &mut output,
-            )
+            .encode_rate_match(&self.request, &input, &mut output)
             .expect("srsRAN accepts the validated request");
         self.pack(&output)
     }

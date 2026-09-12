@@ -137,16 +137,7 @@ fn main() {
         let (input, mut output) = adapter.unpack(&messages[0]);
         adapter
             .comparator()
-            .encode_rate_match(
-                params.base_graph,
-                params.lifting_factor,
-                params.target_k,
-                params.target_n,
-                configuration.redundancy_version,
-                MODULATION_ORDER,
-                &input,
-                &mut output,
-            )
+            .encode_rate_match(adapter.request(), &input, &mut output)
             .unwrap_or_else(|status| fail(format!("srsRAN rejected the request: {status}"), 1));
         output
     };

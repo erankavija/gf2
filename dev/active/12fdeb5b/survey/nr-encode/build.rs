@@ -39,7 +39,8 @@ const SRSRAN_SOURCES: [&str; 7] = [
 
 fn external_root(variable: &str) -> PathBuf {
     PathBuf::from(
-        env::var(variable).unwrap_or_else(|_| panic!("{variable} must name the pinned source tree")),
+        env::var(variable)
+            .unwrap_or_else(|_| panic!("{variable} must name the pinned source tree")),
     )
 }
 
