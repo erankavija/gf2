@@ -46,13 +46,13 @@
 # without an inherited descriptor for the held lock (`host::inherited_lock` in
 # dev/tools/tuning-campaign-support, `observed_lock_file` in
 # crates/gf2-core/benches/tuning_calibration.rs). A flock lock is released by
-# an unlock or once every copy of its descriptor is closed, so a daemon the
-# command leaves running keeps the mutex until it exits. A compiler-cache
-# server started by a build under this wrapper is the case that arises in
-# practice: it outlives the run and every build on the host then waits for it.
-# The wrapper therefore unlocks the mutex once the command exits, which
-# releases it whatever copies remain. The turnstile descriptor is closed in
-# the command, so no descendant holds one.
+# an unlock or once every copy of its descriptor is closed, so an inherited
+# copy in a daemon the command leaves running — a compiler-cache server is the
+# case that arises in practice — would hold the mutex for as long as that
+# daemon lived, and every acquirer on the host would wait for it. The wrapper
+# closes that path by unlocking the mutex once the command exits, which
+# releases it whatever copies remain. The turnstile never reaches a descendant
+# at all: its descriptor is closed in the command.
 #
 # HUP, INT and TERM are caught so that the wrapper outlives the command and
 # the unlock runs; the command still receives any signal sent to it or to its
