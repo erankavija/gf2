@@ -20,7 +20,7 @@ use crate::journal::atomic_write_new;
 /// Stable protocol identifier; a new version keeps the identifier.
 pub const PROTOCOL_ID: &str = "zen3-benchmark-protocol";
 /// Protocol version described by this module and the committed document.
-pub const PROTOCOL_VERSION: u32 = 3;
+pub const PROTOCOL_VERSION: u32 = 4;
 /// Repository-relative path of the executable protocol document.
 pub const PROTOCOL_PATH: &str = "dev/active/f547c394/protocol.md";
 /// Repository-relative path of the addendum JSON Schema.
@@ -28,7 +28,7 @@ pub const ADDENDUM_SCHEMA_PATH: &str = "dev/active/f547c394/addendum.schema.json
 /// Repository-relative path of the normative measurement contract.
 pub const CONTRACT_PATH: &str = "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md";
 /// Schema identity carried by every addendum.
-pub const ADDENDUM_SCHEMA_ID: &str = "zen3-benchmark-addendum-v3";
+pub const ADDENDUM_SCHEMA_ID: &str = "zen3-benchmark-addendum-v4";
 /// Schema identity carried by every runner plan.
 pub const PLAN_SCHEMA_ID: &str = "zen3-benchmark-plan-v1";
 /// Schema identity carried by every receipt.
@@ -38,7 +38,7 @@ pub const ACCEPTANCE_SCHEMA_ID: &str = "zen3-benchmark-acceptance-v1";
 /// Lifecycle schema recorded in the runner's resume identity.
 pub const RUNNER_LIFECYCLE_SCHEMA: &str = "zen3-benchmark-runner-session-v1";
 
-/// Shared numeric settings retained by protocol versions 1 and 2.
+/// Shared numeric settings of every protocol version.
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SharedSettings {
@@ -645,7 +645,9 @@ impl FamilyAddendum {
                 self.schema
             ));
         }
-        if self.protocol.id != PROTOCOL_ID || !matches!(self.protocol.version, 1..=3) {
+        if self.protocol.id != PROTOCOL_ID
+            || !(1..=PROTOCOL_VERSION).contains(&self.protocol.version)
+        {
             errors.push(format!(
                 "addendum targets protocol {}/{} rather than {PROTOCOL_ID}/{PROTOCOL_VERSION}",
                 self.protocol.id, self.protocol.version
