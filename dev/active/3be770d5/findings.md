@@ -49,7 +49,18 @@ placement checks
 ([arm validation](../../bench_results/3be770d5/preparation/arm-validation.jsonl)).
 Executables, toolchain, AFF3CT commit and static-library digest, shim flags
 and input identities are in the
-[build identity](../../bench_results/3be770d5/preparation/build-identity.json).
+[build identity](../../bench_results/3be770d5/preparation/build-identity.json),
+and every campaign refuses to start against an arm executable whose digest
+differs from it.
+
+The confirmations measure the arm executables the pilots measured, so the two
+campaigns of a family compare the same candidate. Those executables were built
+before protocol v4 landed, and v4 changed the campaign-support library the arms
+link for their result encoding, so rebuilding them from the merged tree yields
+different bytes while the profiling executables reproduce theirs exactly. It
+changes no decoder: the merge touched no crate under `crates/` and no arm
+source, and the arms and the v4 runner were exercised together end to end
+before the campaigns were queued.
 
 ## Comparison contract
 
