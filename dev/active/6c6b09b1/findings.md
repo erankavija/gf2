@@ -12,7 +12,7 @@ libraries and gf2's runtime GF(2^8) field all use the polynomial 0x11D; gf2
 ships no GF(2^8) field modulo 0x11B, so no cell uses 0x11B and none needs a
 basis conversion. A region multiply-accumulate, a matrix product and an
 arbitrary pairwise product are different operations, and the survey keeps them
-in three families with three ledgers. The protocol-v3 pilots of all three
+in three families with three ledgers. The protocol-v4 pilots of all three
 families are built, frozen and queued for the benchmark window; every measured
 result, every confirmation and the list of gf2's losing cells wait on those
 receipts. The superseded protocol-v1 pilot is kept as history. No production
@@ -26,7 +26,7 @@ GF-Complete and ISA-L once field polynomial, coefficient reuse, accumulation
 and overlap are matched; how far current gf2 is from those libraries on this
 Ryzen 9 5900X under the
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol version 3](../f547c394/protocol.md), per cache regime,
+and [protocol version 4](../f547c394/protocol.md), per cache regime,
 kernel-isolated and as a whole byte-region consumer; and which cells gf2 loses,
 as the baseline for the feasibility issue `19513245`. The issue excludes
 adoption and any production change, so every cell is a `comparator-gap` cell
@@ -37,9 +37,9 @@ medians below one means gf2 is faster.
 |---|---|
 | `survey/fetch-build.sh` | the pinned libraries, built from verified pins under the primary checkout's `.agents/ext/6c6b09b1/` |
 | `survey/stage-externals.sh` | that prefix, checked against `survey/ext-prefix.sha256` and copied into `target/6c6b09b1-ext/` |
-| `../../bench_results/6c6b09b1/run-byte-field-v3.sh build` | the C shim, conformance and provenance tools, both arm executables, the runner, and `conformance-v3/`: correctness evidence, `arm-provenance.txt`, `build-record.txt` |
-| `../../bench_results/6c6b09b1/run-byte-field-v3.sh plan\|window CAMPAIGN` | the v3 campaigns; each receipt's `launcher.log` records every session command |
-| `survey/make-addenda-v3.py`, `survey/make-plan-v3.py`, `survey/make-producing-inputs-v3.py` | the pilot addenda, the runner plans and the producing closure `survey/producing-inputs-v3.json` |
+| `../../bench_results/6c6b09b1/run-byte-field-v4.sh build` | the C shim, conformance and provenance tools, both arm executables, the runner, and `conformance-v4/`: correctness evidence, `arm-provenance.txt`, `build-record.txt` |
+| `../../bench_results/6c6b09b1/run-byte-field-v4.sh plan\|window CAMPAIGN` | the v4 campaigns; each receipt's `launcher.log` records every session command |
+| `survey/make-addenda.py`, `survey/make-plan-versioned.py`, `survey/make-producing-inputs.py` | the pilot addenda, the runner plans and the producing closure `survey/producing-inputs-v4.json` |
 | `survey/make-source-evidence.py` | `survey/source-evidence.json`: every code claim below, cited by claim ID in backticks |
 | `survey/make-ledger-origin-v3.py` | `../../bench_results/6c6b09b1/v3-*-ledger-origin.json` |
 | `survey-analysis tables` (`survey/analysis/`) | [the generated tables](../../bench_results/6c6b09b1/tables.md) |
@@ -55,7 +55,7 @@ kernel, governors, SMT state and CPU mask per session. Timed work runs only
 under `dev/scripts/ccx1-bench-flock.sh --full-host`, builds and checks under
 `scripts/cargo-budget.sh`. Arms, runner and acceptance tool are Rust 1.95
 release builds; the libraries and the shim are built by GCC with
-`-O3 -march=native` (`conformance-v3/arm-provenance.txt` § Compiler
+`-O3 -march=native` (`conformance-v4/arm-provenance.txt` § Compiler
 targeting). Seeds: each campaign seed in the launcher drives the
 counterbalanced pair order and the acceptance bootstrap through
 `Xoshiro256StarStar` seeded by `SplitMix64` [BlackmanVigna2021] [Steele2014],
@@ -75,7 +75,7 @@ its own SplitMix64 stream with the fixed seed set in `main` of
 | M4RIE [Mfourrie2026] over M4RI [AlbrechtBard2026] | release tarballs by version and SHA-256 in `survey/fetch-build.sh` | GPL-2.0-or-later (`m4rie-license-header`, `m4rie-license-version`, `m4rie-license-readme`; M4RI `m4ri-license-header`, `m4ri-license-version`, the label sibling survey `6fb89a3c` records) | table multiply `_gf2e_mul_table`; `mzed_mul` recursion recorded per shape; no OpenMP (`m4ri-no-openmp`) |
 
 `stage-externals.sh` re-verifies every pin and every installed library and
-header before a build. `conformance-v3/arm-provenance.txt` records the pins,
+header before a build. `conformance-v4/arm-provenance.txt` records the pins,
 licence-file digests, compiler targeting, the digests of the libraries the
 external arm links, and the kernels each library selects, read from the loaded
 binaries by `survey/backend_provenance.c` (§ Selected arithmetic backends,
@@ -106,17 +106,17 @@ share, and it is gf2's own:
 
 0x11B and 0x11D are distinct fields on the same byte carrier: both conformance
 runs exhibit a product that differs between them (the distinctness lines of
-`conformance-v3/externals.txt` and `conformance-v3/gf2-side.txt`). A 0x11B
+`conformance-v4/externals.txt` and `conformance-v4/gf2-side.txt`). A 0x11B
 consumer could use GF-Complete or M4RIE, whose full 0x11B multiplication tables
-pass against the independent oracle (`conformance-v3/externals.txt`), or gf2
-through `Gf2mField::new(8, 0x11B)` (`conformance-v3/gf2-side.txt`); ISA-L
+pass against the independent oracle (`conformance-v4/externals.txt`), or gf2
+through `Gf2mField::new(8, 0x11B)` (`conformance-v4/gf2-side.txt`); ISA-L
 refuses 0x11B. No pinned library offers a change of polynomial basis, since
 M4RIE's conversion module changes storage layout within one field
 (`m4rie-conversion-scope`), so a 0x11B consumer reaching ISA-L would need an
 isomorphism adapter that this survey neither builds nor times. The
 protocol-v1 design declared a 0x11B cell on the premise that gf2's
 compile-time GF(2^8) aliases were a shipped 0x11B field; they are test code,
-and the v3 design has no such cell.
+and the current design has no such cell.
 
 The rustdoc of `gf256()` names x^8+x^4+x^3+x+1 and calls the field the one
 "used in AES" (`gf2-gf256-doc-polynomial`, `gf2-gf256-doc-aes`) while the code
@@ -149,7 +149,7 @@ The table rests on these facts:
   library's public single-element multiply applied per byte, labelled
   `element-multiply-per-byte` in its selected path: a log/antilog lookup for
   ISA-L (`isal-gf-mul-tables`), an indirect call for GF-Complete
-  (`conformance-v3/arm-provenance.txt`), an inline lookup in a 256 by 256 table
+  (`conformance-v4/arm-provenance.txt`), an inline lookup in a 256 by 256 table
   of 64-bit words for M4RIE (`m4rie-mul-table`, `m4rie-word`). A pairwise
   result compares gf2's batched kernel with per-element calls, not with a
   region kernel.
@@ -205,44 +205,55 @@ and setup costs, § Whole-consumer over kernel-isolated).
 
 The launcher's `build` step stops at the first failed check, and each
 campaign's producing snapshot pins the evidence it wrote
-(`survey/producing-inputs-v3.json` lists `conformance-v3/`):
+(`survey/producing-inputs-v4.json` lists `conformance-v4/`):
 
-- `conformance-v3/externals.txt`: every backend through the C shim against an
+- `conformance-v4/externals.txt`: every backend through the C shim against an
   independent shift-and-reduce oracle (`bfx_ref_mul`): full multiplication
   tables; region multiply-accumulate at the byte boundary lengths and at the 4
   KiB and 128 KiB cell lengths; the M4RIE row form; pairwise products; dense
   products at boundary and cell dimensions and at the encode shape; the ISA-L
   encode; and the 0x11B refusal, tables and distinctness witness.
-- `conformance-v3/ext-wrapper.txt`: the region, pairwise, product and encode
+- `conformance-v4/ext-wrapper.txt`: the region, pairwise, product and encode
   paths through the Rust wrapper the external arm calls.
-- `conformance-v3/gf2-side.txt`: both gf2 representations through the arm's
+- `conformance-v4/gf2-side.txt`: both gf2 representations through the arm's
   own conversions, `FieldVec::axpy` for every coefficient, `gemm` at boundary
   and cell shapes on the route the arm records, `batch_mul`, and the 0x11B
   field, against an oracle written without gf2-core.
-- `conformance-v3/field-laws-element.txt` and
-  `conformance-v3/field-laws-wide.txt`: the shared field-law suite,
+- `conformance-v4/field-laws-element.txt` and
+  `conformance-v4/field-laws-wide.txt`: the shared field-law suite,
   `test_field_axioms`, over `Gf2mField::gf256()` (gf2-core's
   `test_gf2_8_field_axioms`) and over `Gf2mWide<1, Gf256x11d>`
   (`survey/field-laws`).
 
 Each file ends in its check count with no failure, or in its pass line.
 
+The arms also have to speak the runner's wire. `survey/arm-common` decodes the
+request `benchmark-ab-runner` writes on each child's stdin and writes the one
+canonical result line it reads back, and the shared transport rejects a request
+whose re-encoding differs from the bytes it received, so the field names, their
+order and every wire spelling are part of the contract. The `role` field of a
+request names the arm's position in the A/B pair, not the cell's sampling
+classification. The `wire` tests in `survey/arm-common/src/lib.rs` pin the
+contract from both ends: a request the runner emits, round-tripped, and a scan
+of the runner's own `ArmRequest` declaration that fails when the runner gains,
+loses or reorders a field.
+
 ## Families and campaigns
 
-Three questions, three families, each with its own append-only ledger created
-before its first v3 campaign:
+Three questions, three families, each with its own append-only ledger that
+carries every attempt of that question under every protocol version:
 
-- `byte-field-region-axpy` ([pilot addendum](addendum-v3-region-axpy-pilot.json)):
+- `byte-field-region-axpy` ([pilot addendum](addendum-v4-region-axpy-pilot.json)):
   fixed-coefficient region multiply-accumulate per cache regime (4 KiB, 128 KiB
   and 8 MiB warm; 2 MiB regions rotated through eight banks), kernel-isolated
   and whole-consumer, for both gf2 representations. The pilot also compares
   ISA-L with GF-Complete and M4RIE, and the two representations with each other.
-- `byte-field-matrix-product` ([pilot addendum](addendum-v3-matrix-product-pilot.json)):
+- `byte-field-matrix-product` ([pilot addendum](addendum-v4-matrix-product-pilot.json)):
   dense products at n = 64, 256 and 512, which spans M4RIE's switch to its
   bitsliced Karatsuba path (the `mzed_mul` lines of
-  `conformance-v3/arm-provenance.txt`), and the encode shape against ISA-L,
+  `conformance-v4/arm-provenance.txt`), and the encode shape against ISA-L,
   kernel-isolated and whole-consumer.
-- `byte-field-pairwise-control` ([pilot addendum](addendum-v3-pairwise-control-pilot.json)):
+- `byte-field-pairwise-control` ([pilot addendum](addendum-v4-pairwise-control-pilot.json)):
   arbitrary pairwise products against each library's per-byte multiply at 4 KiB
   and 128 KiB, kernel-isolated and whole-consumer.
 
@@ -252,14 +263,18 @@ addendum states this. Each ledger opens with the retrospective zero-comparison
 restatement of the protocol-v1 pilot, which measured one cell of each
 operation; the origin records derive it and list the two v1 launches that
 stopped before a campaign opened
-(`../../bench_results/6c6b09b1/v3-*-ledger-origin.json`). The frozen v1
-confirmation never ran, so no family has spent a comparison: each family's v3
-confirmation is its first attempt, which P-20's twenty expected tail draws at
-the corrected alpha allow for at most six confirmatory cells.
+(`../../bench_results/6c6b09b1/v3-*-ledger-origin.json`). Each ledger then
+carries the version-3 pilot attempt of 2026-09-12, which reserved its
+campaign, failed on its first arm and measured no cell: a pilot addendum
+declares only exploratory cells, so that reservation spends zero comparisons
+and names no candidate identity. The frozen v1 confirmation never ran either,
+so no family has spent a comparison, and each family's confirmation will be
+its first confirmatory attempt, which P-20's twenty expected tail draws at the
+corrected alpha allow for at most six confirmatory cells.
 
 The pilots are exploratory, with the launcher's `PILOT_PAIRS` pairs per cell,
 and are queued for the benchmark window; their receipts will be
-`../../bench_results/6c6b09b1/v3-r1-<family>-pilot/`. Each family's
+`../../bench_results/6c6b09b1/v4-r1-<family>-pilot/`. Each family's
 confirmation is then frozen from its own pilot receipt: a measurement
 resolution at or above the pilot's widest relative bootstrap half-width
 (`survey-analysis resolution`, the quantity P-03 recomputes), margins strictly
@@ -269,10 +284,16 @@ runs those cells and reports them `not-confirmatory`.
 
 ## Results
 
-### Protocol-v3 pilots
+### Protocol-v4 pilots
 
 Pending the benchmark window. The tables file gains one section per receipt
 when `survey-analysis tables` is rerun.
+
+The version-3 pilots of the same three families ran on 2026-09-12 and measured
+no cell: each arm rejected the runner's request, so each campaign ended on its
+first arm with a `failed` journal record and a reserved ledger line spending
+zero comparisons. That is a run that produced no data, not a falsified result;
+the ledgers keep it, and nothing about the three questions changed.
 
 ### Protocol-v1 pilot (history)
 
@@ -280,8 +301,8 @@ The v1 pilot `pilot-6c6b09b1-20260908t092546z` is immutable, superseded
 evidence and decides nothing (tables § `pilot-6c6b09b1-20260908t092546z`). It
 measured only the `Gf2mElement` representation, one kernel-isolated cell per
 operation, built with a Rust newer than the MSRV. Within those limits it points
-where the v3 design looks: ISA-L's region multiply-accumulate was far ahead of
-`FieldVec::axpy` (`axpy-isal-l2-1core`), M4RIE's product was well ahead
+where the current design looks: ISA-L's region multiply-accumulate was far
+ahead of `FieldVec::axpy` (`axpy-isal-l2-1core`), M4RIE's product was well ahead
 (`matmul-m4rie-n128-1core`), and gf2's `batch_mul` was ahead of GF-Complete's
 per-element loop (`pairwise-gfcomplete-l2-1core`). Its flagged-window counts follow v1's pooled
 rule, which version 3 replaced by an execution-local rule
@@ -292,7 +313,7 @@ rule, which version 3 replaced by an execution-local rule
 The feasibility issue `19513245` receives, per family, the current gap of both
 gf2 GF(2^8) representations to the fastest measured external arm, per cache
 regime and with and without conversion costs, and the list of cells gf2 loses.
-Both wait on the v3 receipts. The v1 history already marks region
+Both wait on the v4 receipts. The v1 history already marks region
 multiply-accumulate and dense products as losing operations for `Gf2mElement`,
 and pairwise products as one where gf2 leads, against per-element comparators
 only.
@@ -300,7 +321,7 @@ only.
 ## Status against the criteria
 
 - REQ-01: the contract, protocol and addendum pins, the launcher and the
-  ledgers are in place; the v3 receipts wait on the window.
+  ledgers are in place; the v4 receipts wait on the window.
 - REQ-02: met; see Arms and pins.
 - REQ-03: met; see One field and Operation mapping.
 - REQ-04: validation met (Correctness before timing); measured conversion,
