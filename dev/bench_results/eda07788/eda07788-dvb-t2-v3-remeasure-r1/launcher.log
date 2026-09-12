@@ -1,0 +1,48 @@
+# command: dev/bench_results/eda07788/run-dvb-t2-baselines.sh remeasure-v3
+# invocation: new
+# started_utc: 2026-09-12T01:43:15Z
+# gf2 revision (informational): d23c0de1734585195772c6d4650154f381a38288
+# mode: remeasure-v3
+# addendum: dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-remeasure.json
+# addendum sha256: 93c1970a33ba70cf31b3d572234da820ef768c0de166a8808a56565db4a71451
+# ledger: dev/active/eda07788/dvb-t2-bit-interleave-baselines-trial-ledger.jsonl  sha256: ee8f565c87236d1ea595fd63120bcbdde45d2358526c87c02fefb23ff10064a7
+# producing manifest: dev/active/eda07788/producing-inputs-dvb-t2-remeasure.json  sha256: 84e34f583c1783c1b31b112d90dc9fa2b10cf3a3f84016ca7e4d5a6d22bb5982
+# campaign: remeasure-v3-eda07788-r1
+# stage: /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1
+# plan: /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1.plan.json  sha256: 9ea50c827370a7f1c2a7363257bd6b77693b074d1689faeb63d60f3dd8751ae1
+# external staging: /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3
+# toolchain: rustc 1.97.0 (2d8144b78 2026-07-07)
+# c++: g++ (GCC) 16.2.1 20260810
+# arm digests:
+#   40e9c0bd5868863d086d763f59346b3dd3a7b6d6c28469711360cb5ac4923d6d  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-native/release/gf2-dvb-t2-candidate
+#   08a443827455d6076b4006f0a8cde1f7b16b798a7e779ad3f2e393373db6ec72  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-portable/release/gf2-dvb-t2-candidate
+#   63026844b7c07df568839478a19ada37253e074910ae45d9094b9ffff4716a86  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/eda07788-v3/target-native/release/xdsopl-dvb-t2-baseline
+# survey source digests:
+#   2454bcf3e2b109a0fad8ae259b8c12297e5b54d2502af95a2ebae4857cafe511  dev/active/eda07788/survey/fetch-build.sh
+#   84c32fdc0eb1f96d05d34142a7d7fecfceb102738fb09cc2423e10b0a5159079  dev/active/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp
+#   eb2bf6b917acf4eca992457f70aea59605ee9ec1e4347d9d22c9d6da0f244165  dev/active/eda07788/survey/gf2-side/src/lib.rs
+#   a28031cfbd8b35e8369081acac782369ea959e27db801f667e974ac66b01dbc2  dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs
+#   b1027a82bd32072e41e3ee0517461f81ea8787475477f7d95a921fdb41e1ddc3  dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs
+#   c248a2f7b0041eb56c5a14f2216199f2fc96d767bc27190734f6a5a9d4d55bec  dev/active/eda07788/survey/gf2-side/src/bin/validate-permutation-equivalence.rs
+#   3f1091a40c5a6ff7cf52b4a86ec77b62ffb37c2cf51887cf3f8943210362d085  dev/active/eda07788/survey/gf2-side/Cargo.toml
+#   49cece52c527e90e06d9a54249b81b3873a4c4246218a7fb424695cf0d9f003f  dev/active/eda07788/survey/gf2-side/Cargo.lock
+#   0a621ff2b76281b688fa548ff793de1a90b30eb892e02266209aa5237b48fc33  dev/active/eda07788/survey/gf2-side/build.rs
+#   0602b5e6b59050bdd404d18c408e5c1cb1f3049c5d98fb686837bc752564315a  dev/bench_results/eda07788/run-dvb-t2-baselines.sh
+# session command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1 /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1.plan.json
+# load_avg_start:  04:43:15 up 8 days,  6:12,  8 users,  load average: 1.64, 1.55, 1.36
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1/execution.log
+# session 3 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1/execution.log
+# session 4 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/eda07788-campaigns/remeasure-v3-eda07788-r1/execution.log
+# session 5 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions this invocation: 5
+# load_avg_end:  04:47:50 up 8 days,  6:16,  8 users,  load average: 1.13, 1.32, 1.31
+# finished_utc: 2026-09-12T01:47:50Z
