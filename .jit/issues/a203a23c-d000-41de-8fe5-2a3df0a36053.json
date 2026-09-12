@@ -1,12 +1,403 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-09-12T08:00:41.668180541Z",
   "context": {},
   "created_at": "2026-09-11T17:50:04.437172198Z",
   "dependencies": [
     "bdc507a3-b1e8-4d76-bdb0-37410c6ea339"
   ],
   "description": "Fourteen committed benchmark receipts are rejected when their acceptance is re-evaluated on a fresh checkout, although the acceptance summaries committed beside them record them as accepted.\n\n## Background\n\nThe acceptance tool (`benchmark-acceptance` in `dev/tools/tuning-campaign-support`) evaluates a receipt against the producing-input snapshot stored in the receipt directory. Nested `Cargo.lock` files are excluded by `.gitignore`, so several snapshots were committed without a lockfile their receipt pins, and the committed acceptance summaries were written where the files still existed. A comparison that built the evaluator from two revisions and ran both over every committed receipt on a fresh checkout (`dev/active/bdc507a3/verdict-preservation.json`, `committed_verdict_differs_from_both`) found these receipts rejected by both builds:\n\n- `dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/`\n- `dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/`, `v3-confirmation/`, `v3-pilot/`, `v3-pilot-r2/`\n- `dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot/`\n- `dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot/`, `-logical-pilot/`, `-transpose-pilot/`\n- `dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/`, `-r3-…-quality-compatible-pilot/`, `-r4-…-matched-algorithm-pilot/`, `-r4-…-quality-compatible-pilot/`\n- `dev/bench_results/f547c394/v3-confirmation/`\n\nMost lack a snapshot `Cargo.lock`; the 1d0da41f v1 dispatch confirmation fails P-23. Some of these receipts are governing evidence of closed issues, so claims resting on them do not currently reproduce from the repository.\n\n## Success Criteria\n\n- [hard] REQ-01: For each listed receipt, the cause of the fresh-checkout rejection is identified and recorded, and the receipt either re-evaluates on a fresh checkout to the verdict its committed summary states or its survey report and a committed re-evaluation record state the discrepancy and which conclusions it affects.\n- [hard] REQ-02: No receipt, snapshot byte or committed summary changes except to add a missing snapshot file whose content matches the digest the receipt pins, and every such addition is recorded with its source and digest.\n- [hard] REQ-03: A committed check detects a receipt whose producing snapshot omits a file the receipt pins, runs from a fresh checkout, and fails on the pre-fix state of the listed receipts.\n\n## Notes\n\nSurfaced while showing that a protocol acceptance-behaviour change preserves every committed verdict. Restoring files into committed evidence directories needs the repository owner's explicit approval; recording the discrepancy is the alternative.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Receipt input-snapshot completeness check",
+      "path": "dev/scripts/check-receipt-input-snapshots.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Pinned receipt inputs no committed content restores",
+      "path": "dev/scripts/receipt-input-omissions.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Receipt input restoration generator",
+      "path": "dev/active/a203a23c/restore-receipt-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Restored receipt inputs with source and digest",
+      "path": "dev/active/a203a23c/restored-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Fresh-checkout re-evaluation generator",
+      "path": "dev/active/a203a23c/reevaluate-receipts.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Fresh-checkout verdict of every committed receipt",
+      "path": "dev/active/a203a23c/receipt-reevaluation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Fresh-checkout verdicts before the restoration",
+      "path": "dev/active/a203a23c/receipt-reevaluation-before.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "6dec69703bd75605cfce9b0f32fe6a43dd4c7c95eff463bb4879e0e790870eb2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/cargo-ci.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/cargo-ci.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4cc897ed267e40a8bfa1fbc18950e6539c4456d0e22a6b84d42d9dab43132117",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/inputs/protocol.md",
+          "resolved_path": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/inputs/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4f607e48db53859e48c12839f2d0778c11aefd8e767d97c8f0feb2262173fe94",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/baseline-source.tar.gz",
+          "resolved_path": "dev/active/1d0da41f/survey/baseline-source.tar.gz"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3f6b3bc16c707471ded7e4ad971a2f880c13efa9a34a9060417c89c864c6aca1",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/asm-gate.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/asm-gate.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "40e2223beca83b7f66904cbc1f443b05c52c94ca48e6215b5e7b8b0b83089282",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/1d0da41f/run-clmul-ab.sh",
+          "resolved_path": "dev/bench_results/1d0da41f/run-clmul-ab.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ymm-clmul-dispatch.json",
+          "resolved_path": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e43c11408930f5c5306577e3b1167fee9946ee7cedc08eee7b6f734626a8e05d",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/default-failing-test.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/default-failing-test.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a8d63435609caaf5f0bb2a22586b9de2913a338c3941bed8c560a4de6b72d728",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "evidence/assembly-audit.json",
+          "resolved_path": "dev/active/1d0da41f/evidence/assembly-audit.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "788518d4ea707d02e41c00dfef00561bdc4bea5ccae95aeb86395a32e6e3a319",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/adoption-tests.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/adoption-tests.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "69ca8d747afaf1dfe6c7df1764860d3dae00cb130c7cf7f703a7733b57142207",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d0da41f/v3-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d0da41f/v3-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dedf6bdcb818242169c83c425b82e42f220d34f45f207fdf7284deb577b27e35",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/portable-tests.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/portable-tests.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3581d006221ba2a387eb6a4c9c933309d9a1b83674ebef26a7697b62eec68efb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cae1d89b7088f78fb59492d6a7ed83dd8e2c7249449b056378b1fd32b0f02223",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d0da41f/v3-pilot-r2/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d0da41f/v3-pilot-r2/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "49d85124f418eda5069b50435313721fb5aa3acf1d81ecb45a7bdcc5c51c6181",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/ci-prerequisite-failures.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/ci-prerequisite-failures.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "89c0cd7ea52cd11099e30492b9f632a59d8161c9cc6a438efd59aa08d0f9f410",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/req07-failing-test.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/req07-failing-test.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "210ff5d6c7c07ac3a5bed2b713868f8f6a47375bbc6b2fd0a4d2f1ca660901c7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a088d22a0b246924c6887689c560eb5125a68e33756489b633eb2109356a6527",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../a203a23c/receipt-reevaluation.json",
+          "resolved_path": "dev/active/a203a23c/receipt-reevaluation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9abfc8db312329ea0317bf801c4a3e8f0d403b6ad92542dbe872793411ef76f9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d0da41f/v3-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d0da41f/v3-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ae6fbc48e8619859e42671b73bbe53045df6d002d6c37f94f383902e0dc3a63e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "evidence/reproduction.md",
+          "resolved_path": "dev/active/1d0da41f/evidence/reproduction.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "66eb27945ceecc6ff22db51f8fb1e2dc603ad703d9b7e25f47a2d6c928891ba0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "producing-inputs.json",
+          "resolved_path": "dev/active/1d0da41f/producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "91f11a886f4635c24a99c8913bf9995860eacc38645f3ec8ea7ff267cada20b8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/1d0da41f/v3-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/1d0da41f/v3-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "96c7089898abec5b0a51ec38ec53108be8ea4f23efba17bc7d8a4e258dd244fd",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "evidence/preflight-tests.txt",
+          "resolved_path": "dev/active/1d0da41f/evidence/preflight-tests.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e7aa1aa534d3a938d7049c723167afde82dcbb5126f3846df842151afea92213",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b6f0f5ebaee59ab6ba5a5feffc371654219099281f107ee97740695fe49272e2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt",
+          "resolved_path": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "YMM carry-less batch dispatch findings",
+      "path": "dev/active/1d0da41f/findings.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7bffa4f4031a0716ea88c9a4002fe8ad5e3bbab1ce347cffa6dc84ccf596c482",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/source-evidence.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fd4cac622bcd92dd55ba6340a37bbf825ff6ee0287bc31dfebd44b6ab009136f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-preparation/shared-contract-red.log",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/shared-contract-red.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "34300e46f58f4490396db32b4faf652630b792eda691f17ea363263ca2efc12d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5a5485165cfc48dc1af19a52bf3b7cc9c41eb198519f885d99ff6e359734fa78",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../scripts/receipt-input-omissions.json",
+          "resolved_path": "dev/scripts/receipt-input-omissions.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a088d22a0b246924c6887689c560eb5125a68e33756489b633eb2109356a6527",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../a203a23c/receipt-reevaluation.json",
+          "resolved_path": "dev/active/a203a23c/receipt-reevaluation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88cd6bbfa5748cd86b6304ab4d50b4d187195aef1828912cf54f3e32b7d1a343",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/xdsopl-code-identity.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/xdsopl-code-identity.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "de2cffa8500619b6b4cbc97f2e14b1af9169d54c78d5e50e763e16e16cf925ee",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-corrections.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-corrections.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec6153bc3e15bc7c8708b389f32d83a2003864e7ea1d2f36546eeee697b63800",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-08-c077a88b-preparation/capabilities-nr.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/capabilities-nr.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca4adf8647912792f14f7c00850bbe3c6589ce98024557ac60943d7fa5809c6a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c077a88b/tables.md",
+          "resolved_path": "dev/bench_results/c077a88b/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8f42c2afbea96b763117335d3daab9c415bc84bfebe28272457bc82b65a56eea",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-preparation/build-identity.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/build-identity.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "719cb61fe9bf8f48c128fbfbc49560ef0534048d663abdf2340a3d00300a99cd",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/superseded-v1-evidence.json",
+          "resolved_path": "dev/bench_results/c077a88b/superseded-v1-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c1dbfda6f7e7508a695308f39b791e7322ea81a514b7fe105236ae8f445be51f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-r1-matched-confirmation-reevaluation.log",
+          "resolved_path": "dev/bench_results/c077a88b/v3-r1-matched-confirmation-reevaluation.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "836de94e8ed87d2c4df77774188a5086472044f614092b31f6770283cde10ec0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-r1-matched-confirmation-rejection/acceptance-summary.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-r1-matched-confirmation-rejection/acceptance-summary.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bf211bd370d7f0c27ef2dce137bf0b054d33707ede643efa54334ebbd115018f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/2026-09-08-c077a88b-preparation/upstream-status.json",
+          "resolved_path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/upstream-status.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "81dad8f7a4a3e63fbe6310432cdda44a01116197f52bcc0dd88b75b9a02a58b6",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "resume-confirmation.md",
+          "resolved_path": "dev/active/c077a88b/resume-confirmation.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Compatible LDPC decoder benchmark findings",
+      "path": "dev/active/c077a88b/findings.md"
+    }
+  ],
   "first_ready_at": "2026-09-11T17:50:04.437172198Z",
   "gates_required": [
     "cargo-ci",
@@ -14,7 +405,28 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-12T08:02:48.100979672Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-12T08:07:37.413950928Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-12T08:10:44.319070286Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-12T08:14:52.209815241Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "a203a23c-d000-41de-8fe5-2a3df0a36053",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -22,7 +434,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
-  "updated_at": "2026-09-12T06:50:12.478220706Z"
+  "updated_at": "2026-09-12T08:14:52.209815241Z"
 }
