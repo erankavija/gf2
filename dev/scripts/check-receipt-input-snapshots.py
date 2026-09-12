@@ -7,12 +7,18 @@ uncommitted turns an accepted receipt into a rejected one on a fresh checkout.
 `.gitignore` excludes nested `Cargo.lock` files, which is the route such an
 omission takes.
 
-The check reads committed content only: paths come from the git index and bytes
-from the blobs it names, so the verdict is the verdict a fresh checkout gets
-whatever untracked files sit in the working tree.
+The check reads committed content only: paths come from the git index, or from
+a named revision, and bytes from the blobs they name, so the verdict is the
+verdict a fresh checkout gets whatever untracked files sit in the working tree.
+
+A pinned file whose content survives nowhere in the repository cannot be
+restored. `dev/scripts/receipt-input-omissions.json` registers each such file
+with its cause and the documents that state which conclusions it affects; the
+check prints those and passes, and fails on an unregistered omission and on a
+registered one that is no longer missing.
 
 Usage:
-  dev/scripts/check-receipt-input-snapshots.py [--self-test]
+  dev/scripts/check-receipt-input-snapshots.py [--revision <rev>] [--self-test]
 """
 
 from __future__ import annotations
@@ -32,6 +38,8 @@ RESOLUTION_RECEIPT = "inputs/resolution-evidence/receipt.json"
 RESOLUTION_ADDENDUM = "inputs/resolution-evidence/family-addendum.json"
 RESOLUTION_LEDGER = "inputs/resolution-evidence/trial-ledger.jsonl"
 PRIOR_TRIAL_ROOT = "inputs/prior-trials"
+OMISSIONS = "dev/scripts/receipt-input-omissions.json"
+OMISSIONS_SCHEMA = "receipt-input-omissions-v1"
 
 ABSENT = "absent from the commit"
 DIFFERS = "committed content differs from the pinned digest"
@@ -62,13 +70,18 @@ def git(root: Path, *arguments: str) -> bytes:
     ).stdout
 
 
-def index_oids(root: Path) -> dict[str, str]:
-    """Maps every path in the git index to the blob it names."""
+def committed_oids(root: Path, revision: str | None = None) -> dict[str, str]:
+    """Maps every committed path to the blob it names, in `revision` or the index."""
+    listing = (
+        git(root, "ls-tree", "-r", "-z", revision)
+        if revision is not None
+        else git(root, "ls-files", "-s", "-z")
+    )
     oids: dict[str, str] = {}
-    for record in git(root, "ls-files", "-s", "-z").decode().split("\0"):
+    for record in listing.decode().split("\0"):
         if record:
             metadata, path = record.split("\t", 1)
-            oids[path] = metadata.split(" ")[1]
+            oids[path] = metadata.split(" ")[2 if revision is not None else 1]
     return oids
 
 
@@ -201,9 +214,9 @@ def pinned_inputs(
     return pins, findings
 
 
-def check(root: Path) -> list[Finding]:
+def check(root: Path, revision: str | None = None) -> list[Finding]:
     """Reports every pinned input a fresh checkout of `root` cannot reproduce."""
-    oids = index_oids(root)
+    oids = committed_oids(root, revision)
     read = committed_reader(root, oids)
     findings: list[Finding] = []
     for path in receipt_paths(oids):
@@ -220,6 +233,40 @@ def check(root: Path) -> list[Finding]:
             elif hashlib.sha256(content).hexdigest() != pin.sha256:
                 findings.append(Finding(path, pin.path, pin.origin, DIFFERS))
     return findings
+
+
+def registered_omissions(
+    read: Callable[[str], bytes | None]
+) -> tuple[set[tuple[str, str]], list[str]]:
+    """Reads the registry of pinned files no committed content can restore."""
+    registry = decode(read, OMISSIONS)
+    if registry is None:
+        return set(), []
+    if not isinstance(registry, dict) or registry.get("schema") != OMISSIONS_SCHEMA:
+        return set(), [f"{OMISSIONS}: schema is not {OMISSIONS_SCHEMA}"]
+    return {
+        (entry["receipt"], entry["path"]) for entry in registry["omissions"]
+    }, []
+
+
+def partition(
+    findings: list[Finding], registered: set[tuple[str, str]]
+) -> tuple[list[Finding], list[Finding], list[str]]:
+    """Splits findings into unregistered and registered, and names stale entries."""
+    keys = {(finding.receipt, finding.path) for finding in findings}
+    unregistered = [
+        finding
+        for finding in findings
+        if (finding.receipt, finding.path) not in registered
+    ]
+    recorded = [
+        finding for finding in findings if (finding.receipt, finding.path) in registered
+    ]
+    stale = [
+        f"{OMISSIONS} registers {path} of {receipt}, which is not missing"
+        for receipt, path in sorted(registered - keys)
+    ]
+    return unregistered, recorded, stale
 
 
 def report(findings: list[Finding], stream) -> None:
@@ -264,22 +311,61 @@ def write_fixture(root: Path, omit: str | None = None, corrupt: str | None = Non
         git(root, "rm", "--cached", "-q", f"{producing.relative_to(root)}/{omit}")
 
 
+def write_registry(root: Path, receipt: str, path: str) -> None:
+    """Stages a registry that records one pinned file as unrestorable."""
+    registry = root / OMISSIONS
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(
+        json.dumps(
+            {
+                "schema": OMISSIONS_SCHEMA,
+                "omissions": [
+                    {
+                        "receipt": receipt,
+                        "path": path,
+                        "cause": "fixture",
+                        "recorded_in": [],
+                    }
+                ],
+            }
+        )
+    )
+    git(root, "add", "-f", OMISSIONS)
+
+
 def self_test() -> int:
     """Asserts the check accepts a complete snapshot and rejects each defect."""
+    fixture_receipt = "dev/bench_results/fixture/pilot/receipt.json"
+    fixture_lock = "dev/bench_results/fixture/pilot/inputs/producing/dev/Cargo.lock"
+    cases = (
+        ("complete", None, None, None, ([], [])),
+        ("omitted", "dev/Cargo.lock", None, None, ([ABSENT], [])),
+        ("changed", None, "dev/Cargo.lock", None, ([DIFFERS], [])),
+        ("registered", "dev/Cargo.lock", None, fixture_lock, ([], [ABSENT])),
+        ("stale", None, None, fixture_lock, ([], [])),
+    )
     with tempfile.TemporaryDirectory() as directory:
-        for case, omit, corrupt, expected in (
-            ("complete", None, None, []),
-            ("omitted", "dev/Cargo.lock", None, [ABSENT]),
-            ("changed", None, "dev/Cargo.lock", [DIFFERS]),
-        ):
+        for case, omit, corrupt, register, expected in cases:
             root = Path(directory) / case
             root.mkdir()
             git(root, "init", "-q")
             write_fixture(root, omit=omit, corrupt=corrupt)
-            problems = [finding.problem for finding in check(root)]
-            if problems != expected:
+            if register is not None:
+                write_registry(root, fixture_receipt, register)
+            registered, errors = registered_omissions(
+                committed_reader(root, committed_oids(root))
+            )
+            unregistered, recorded, stale = partition(check(root), registered)
+            observed = (
+                [finding.problem for finding in unregistered],
+                [finding.problem for finding in recorded],
+            )
+            expected_stale = case == "stale"
+            if observed != expected or errors or bool(stale) != expected_stale:
                 print(
-                    f"self-test case {case}: expected {expected}, observed {problems}",
+                    f"self-test case {case}: expected {expected} and "
+                    f"stale={expected_stale}, observed {observed} and "
+                    f"stale={stale} with {errors}",
                     file=sys.stderr,
                 )
                 return 1
@@ -294,19 +380,35 @@ def main() -> int:
         action="store_true",
         help="check the checker against a synthetic complete and incomplete snapshot",
     )
+    parser.add_argument(
+        "--revision",
+        help="check this revision instead of the git index",
+    )
     arguments = parser.parse_args()
     if arguments.self_test:
         return self_test()
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel").decode().strip())
-    findings = check(root)
-    if findings:
-        report(findings, sys.stderr)
+    oids = committed_oids(root, arguments.revision)
+    registered, errors = registered_omissions(committed_reader(root, oids))
+    findings = check(root, arguments.revision)
+    unregistered, recorded, stale = partition(findings, registered)
+    if recorded:
+        print(f"recorded in {OMISSIONS}:")
+        report(recorded, sys.stdout)
+    for message in errors + stale:
+        print(message, file=sys.stderr)
+    if unregistered:
+        report(unregistered, sys.stderr)
         print(
-            f"{len(findings)} pinned receipt inputs are missing from the commit",
+            f"{len(unregistered)} pinned receipt inputs are missing from the commit",
             file=sys.stderr,
         )
+    if unregistered or errors or stale:
         return 1
-    print("check-receipt-input-snapshots: every committed receipt pins committed inputs")
+    print(
+        "check-receipt-input-snapshots: every pinned receipt input is committed"
+        + (f", {len(recorded)} recorded as unrestorable" if recorded else "")
+    )
     return 0
 
 
