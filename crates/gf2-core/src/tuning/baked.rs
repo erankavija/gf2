@@ -139,6 +139,16 @@ mod tests {
     }
 
     #[test]
+    fn popcount_csa_min_words_matches_conservative_section() {
+        assert_matches_conservative(
+            POPCOUNT_CSA_MIN_WORDS as u64,
+            CoreTuning::CONSERVATIVE
+                .bit_backend()
+                .popcount_csa_min_words() as u64,
+        );
+    }
+
+    #[test]
     fn matvec_simd_min_words_matches_conservative_section() {
         assert_matches_conservative(
             MATVEC_SIMD_MIN_WORDS as u64,
