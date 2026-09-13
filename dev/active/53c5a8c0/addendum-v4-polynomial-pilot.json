@@ -11,7 +11,7 @@
     "description": "How the current gf2 long product and the whole-consumer wide GF(2^m) field product compare with the pinned gf2x 1.3.0 build across operand widths, and where along that grid the comparison changes direction. Baseline arm: gf2 — the public clmul_wide_slice, which routes through the crate's capability dispatch, and Gf2mWide::mul_ref, which composes that dispatch with BarrettReducerWide. Candidate arm: gf2x_mul_r from the pinned build, composed with the same gf2 reducer where the cell is a field product, so the two arms differ in the product stage alone. A speedup of medians below one means gf2 is faster. The whole-consumer wide-field cells are the composed operation no earlier receipt measured: they carry the operand masking, the product and the field reduction inside the timed call. The raw independent carry-less batch has no external equivalent — gf2x exposes no batch entry point — so its cell composes one single-word gf2x call per product and is recorded as a composed arm bounding what a consumer reaching gf2x through its public API pays, not as an equivalent operation and not as a gf2x basecase rate. The study adopts no gf2x dependency and changes no gf2 multiplication. This addendum is the pilot: every cell is exploratory, it fixes the measurement resolution the confirmation freezes against, and none of its samples enter a confirmation."
   },
   "frozen": {
-    "frozen_utc": "2026-09-13T12:06:00Z"
+    "frozen_utc": "2026-09-13T12:10:40Z"
   },
   "effect": {
     "worthwhile_speedup": 1.15,
