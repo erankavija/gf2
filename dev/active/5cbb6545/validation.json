@@ -1,7 +1,7 @@
 {
   "schema": "count-optimization-validation-v1",
   "issue": "5cbb6545",
-  "recorded_utc": "2026-09-13T18:57:43Z",
+  "recorded_utc": "2026-09-13T19:09:42Z",
   "shared_suite": {
     "command": "./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features simd,test-support --test popcount_routes",
     "suite": "crates/gf2-core/tests/popcount_routes.rs",
@@ -17,6 +17,12 @@
   "production_audit": {
     "command": "rg for unsupported CSA selector and automatic-dispatch references",
     "raw_output": "dev/active/5cbb6545/validation-production.txt",
+    "exit_status": 0
+  },
+  "source_evidence": {
+    "command": "python3 dev/active/5cbb6545/survey/make-source-evidence.py --check dev/active/5cbb6545/survey/source-evidence.json",
+    "artifact": "dev/active/5cbb6545/survey/source-evidence.json",
+    "raw_output": "dev/active/5cbb6545/validation-source-evidence.txt",
     "exit_status": 0
   },
   "passed": true
