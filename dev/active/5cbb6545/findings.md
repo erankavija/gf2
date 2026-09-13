@@ -186,9 +186,9 @@ Every cell of every receipt ran on one core under the protocol's shared window
 settings, with no flagged window (tables § Cells, columns *Flagged*, and the
 `resolved_cpus` field of each summary). Each § Cells header carries its
 campaign's toolchain, host, kernel and the load average at its host observation.
-[`survey/producing-inputs.json`](survey/producing-inputs.json) names every file
-whose bytes the receipts snapshot, and
-[`survey/make-producing-inputs.py`](survey/make-producing-inputs.py) writes it.
+[`producing-inputs.json`](producing-inputs.json) names every file whose bytes the
+receipts snapshot, and
+[`make-producing-inputs.py`](make-producing-inputs.py) writes it.
 
 ### Arms, pins and builds
 
