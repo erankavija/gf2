@@ -64,10 +64,11 @@
 //! ## Internal arithmetic
 //!
 //! All multi-word carry-less multiplications go through
-//! `wide::clmul_wide_dispatch`, so a host with PCLMULQDQ reduces
-//! `GF(2^256)` and `GF(2^571)` in the kernels of `gf2-kernels-simd` and every
-//! other field runs the portable schoolbook. Internal helpers operate on
-//! `&[u64]` slices
+//! `wide::clmul_wide_dispatch`, so a build with the `simd` feature enabled
+//! and a host with PCLMULQDQ reduces `GF(2^256)` and `GF(2^571)` in the
+//! kernels of `gf2-kernels-simd`. `simd` is off by default; every other
+//! field, and every build that does not enable `simd`, runs the portable
+//! schoolbook. Internal helpers operate on `&[u64]` slices
 //! with `debug_assert!` bounds checks when the output size cannot be expressed
 //! as a compile-time constant directly in that context.
 

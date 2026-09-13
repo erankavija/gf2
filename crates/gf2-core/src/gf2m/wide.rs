@@ -22,12 +22,15 @@
 //! `clmul_wide_dispatch` is the one place a wide carry-less product selects
 //! its kernel. The public long-product API ([`clmul_wide`],
 //! [`clmul_wide_slice`]), [`Gf2mWide::mul_ref`] and the wide Barrett reducer
-//! all reach it, so whichever of them a caller uses, a host with PCLMULQDQ
-//! computes the `GF(2^256)` and `GF(2^571)` products in the AVX2+VPCLMULQDQ
-//! or PCLMULQDQ kernels of [`gf2_kernels_simd::gf2m_wide`]. Every other width,
-//! and every host without the capability, runs [`clmul_wide_slice_portable`].
-//! A caller that wants the portable schoolbook whatever the host offers — a
-//! benchmark baseline, a conformance oracle — calls that function directly.
+//! all reach it, so whichever of them a caller uses, a build with the `simd`
+//! feature enabled *and* a host with PCLMULQDQ computes the `GF(2^256)` and
+//! `GF(2^571)` products in the AVX2+VPCLMULQDQ or PCLMULQDQ kernels of
+//! [`gf2_kernels_simd::gf2m_wide`]. `simd` is not a default feature: every
+//! other width, every host without the capability, and every build that
+//! does not enable `simd` — including the crate's own default build — runs
+//! [`clmul_wide_slice_portable`]. A caller that wants the portable
+//! schoolbook whatever the build and host offer — a benchmark baseline, a
+//! conformance oracle — calls that function directly.
 //!
 //! Historically this file grew through five tasks of story `bdf95060`
 //! (nee `6fb4abad`): Task 1 landed the type shell and XOR operators
@@ -876,9 +879,11 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// The unreduced product and the two products inside Barrett reduction all
     /// run through `clmul_wide_dispatch`, the canonical carry-less product
-    /// selection this crate shares with its public long-product API, so a host
-    /// with PCLMULQDQ reaches the `gf2-kernels-simd` kernels at `N == 4` and
-    /// `N == 9`. Every other case runs [`clmul_wide_slice_portable`].
+    /// selection this crate shares with its public long-product API, so a
+    /// build with the `simd` feature enabled and a host with PCLMULQDQ
+    /// reaches the `gf2-kernels-simd` kernels at `N == 4` and `N == 9`.
+    /// `simd` is off by default. Every other case, including a build
+    /// without `simd`, runs [`clmul_wide_slice_portable`].
     ///
     /// # Arguments
     ///
@@ -2061,10 +2066,12 @@ pub(crate) enum ProductWrite {
 /// public or internal, selects its kernel here.
 ///
 /// Selects the PCLMULQDQ kernels `gf2-kernels-simd` publishes for the widths
-/// that have one — 4 words (GF(2^256)) and 9 words (GF(2^571)) — and otherwise
-/// runs [`clmul_wide_slice_portable`]. The selection is a runtime capability
-/// question at those two widths and a compile-time one everywhere else, since
-/// `N` is a const parameter.
+/// that have one — 4 words (GF(2^256)) and 9 words (GF(2^571)) — when the
+/// `simd` feature is enabled, and otherwise runs
+/// [`clmul_wide_slice_portable`]. `simd` is not a default feature. At the two
+/// dispatched widths, with `simd` enabled, the selection is also a runtime
+/// capability question (PCLMULQDQ present or not); every other width is a
+/// compile-time question alone, since `N` is a const parameter.
 ///
 /// # Arguments
 ///
@@ -2173,10 +2180,11 @@ fn xor_into(out: &mut [u64], scratch: &[u64]) {
 /// # Mechanism
 ///
 /// The product runs through `clmul_wide_dispatch`, the canonical selection
-/// this crate's wide arithmetic shares, so a host with PCLMULQDQ computes the
-/// 4-word and 9-word products in the vector kernels of `gf2-kernels-simd`.
-/// Every other width, and every host without the capability, runs
-/// [`clmul_wide_slice_portable`].
+/// this crate's wide arithmetic shares, so a build with the `simd` feature
+/// enabled and a host with PCLMULQDQ computes the 4-word and 9-word products
+/// in the vector kernels of `gf2-kernels-simd`. `simd` is off by default.
+/// Every other width, every host without the capability, and every build
+/// that does not enable `simd` runs [`clmul_wide_slice_portable`].
 ///
 /// # Stable-Rust caveat: why two const parameters?
 ///
@@ -2240,7 +2248,9 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 /// # Mechanism
 ///
 /// The product runs through `clmul_wide_dispatch` exactly as [`clmul_wide`]
-/// does, so it reaches the same kernels. Accumulating into a caller's buffer
+/// does, so it reaches the same kernels under the same condition: the `simd`
+/// feature enabled and a host with PCLMULQDQ, at `N == 4` or `N == 9`; every
+/// other case runs [`clmul_wide_slice_portable`]. Accumulating into a caller's buffer
 /// costs a scratch product and one XOR pass on a dispatched width, which
 /// [`clmul_wide`] avoids; a caller that wants the plain product of a 4- or
 /// 9-word operand pair is better served by [`clmul_wide`].
