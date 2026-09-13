@@ -1,0 +1,87 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "pilot-r2-crossover-53c5a8c0-20260913t130716z",
+  "issue": "53c5a8c0",
+  "label": "pilot",
+  "campaign_seed": 20260913102,
+  "addendum": "dev/active/53c5a8c0/addendum-v4-crossover-pilot-r2.json",
+  "producing_manifest": "dev/active/53c5a8c0/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "element-path": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing the per-element path: the bundle's single carry-less multiply in a loop, FieldVec::dot_product, and Gf2mElement multiplication one pair at a time.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/crossover-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_CROSSOVER_PATH": "element"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "batch-path": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing the batched path: the bundle's raw-batch kernel, FieldVec::simd_dot_product, and gf2m::batch::batch_mul.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/crossover-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_CROSSOVER_PATH": "batch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "raw-batch-8",
+      "baseline_arm": "element-path",
+      "candidate_arm": "batch-path",
+      "case": {
+        "kind": "raw-batch",
+        "count": 8,
+        "inner": 256,
+        "seed": 5301
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "field-dot-8",
+      "baseline_arm": "element-path",
+      "candidate_arm": "batch-path",
+      "case": {
+        "kind": "field-dot",
+        "count": 8,
+        "inner": 256,
+        "seed": 5311
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "field-dot-64",
+      "baseline_arm": "element-path",
+      "candidate_arm": "batch-path",
+      "case": {
+        "kind": "field-dot",
+        "count": 64,
+        "inner": 64,
+        "seed": 5312
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "field-batch-mul-8",
+      "baseline_arm": "element-path",
+      "candidate_arm": "batch-path",
+      "case": {
+        "kind": "field-batch-mul",
+        "count": 8,
+        "inner": 256,
+        "seed": 5321
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 4
+}

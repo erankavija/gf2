@@ -1,0 +1,32 @@
+pilot receipt  dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-pilot/receipt.json
+receipt sha256 188b0fe2004f968f548be090b8022df234a7fd7233f5290be6c30185532678df
+campaign       pilot-polynomial-53c5a8c0-20260913t125436z
+verdict        accepted (label pilot)
+family         wide-polynomial-competitiveness: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+wide-field-256-composed                  6       1.374      1.3487      1.4564    0.0600
+wide-field-571-composed                  6      1.1154      1.0976       1.132    0.0160
+poly-4w                                  6     0.80034     0.79904     0.80251    0.0027
+poly-9w                                  6     0.76851     0.76717     0.81574    0.0615
+poly-16w                                 6      96.889      95.806      97.155    0.0112
+poly-64w                                 6      164.58      163.95      165.27    0.0042
+poly-256w                                6      277.82      276.46      278.99    0.0049
+raw-batch-1024-composed                  6    0.080874    0.080555     0.08105    0.0039
+
+widest relative half-width   0.061450
+frozen measurement resolution 0.07
+replaced equivalence_margin 1.05 -> 1.08
+
+selection      6 of 8 pilot cells become confirmatory
+rationale      P-20's tail-support bound admits six confirmatory comparisons on this family's first attempt, and the pilot carries eight cells. The six retained are the ones the family's question turns on: the two whole-consumer composed field products, which no earlier receipt measured; the two widths a gf2 kernel covers; the first width above them, which is where the comparison changes direction; and the composed raw-batch cell, whose honest record of having no external equivalent is part of the result. The two dropped cells, poly-64w and poly-256w, extend a direction the retained poly-16w already establishes and which an accepted earlier confirmation of the polynomial-multiplication-baselines family already measured; their pilot values stay in this family's pilot receipt.
+retained       wide-field-256-composed
+retained       wide-field-571-composed
+retained       poly-4w
+retained       poly-9w
+retained       poly-16w
+retained       raw-batch-1024-composed
+dropped        poly-64w
+dropped        poly-256w
+margins: equivalence 1.08, material gap 1.25
+confirmation addendum dev/active/53c5a8c0/addendum-v4-polynomial-confirmation.json

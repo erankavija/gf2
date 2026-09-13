@@ -105,22 +105,22 @@ def main():
     if label in ("pilot", "smoke"):
         pilot_pairs = int(os.environ.get("GF2_PILOT_PAIRS", "6"))
 
-    declared = list(grid.cells_of(family))
-    if label not in ("pilot", "smoke"):
-        # A confirmation runs exactly the cells its frozen addendum declares,
-        # which is a selection of the pilot cells plus any holdout cells.
-        with open(addendum) as handle:
-            frozen = json.load(handle)
-        wanted = [cell["cell_id"] for cell in frozen["cells"]]
-        by_id = {cell["cell_id"]: cell for cell in declared}
-        if holdout_declaration:
-            with open(holdout_declaration) as handle:
-                for cell in json.load(handle)["cells"]:
-                    by_id[cell["cell_id"]] = cell
-        missing = [cell_id for cell_id in wanted if cell_id not in by_id]
-        if missing:
-            raise SystemExit(f"the addendum declares cells the plan cannot run: {missing}")
-        declared = [by_id[cell_id] for cell_id in wanted]
+    # Every campaign runs exactly the cells its addendum declares, in the
+    # addendum's order: the full grid for a pilot, a selection of it for a
+    # resolution pilot, and that selection plus the holdout cells for a
+    # confirmation.
+    with open(addendum) as handle:
+        frozen = json.load(handle)
+    wanted = [cell["cell_id"] for cell in frozen["cells"]]
+    by_id = {cell["cell_id"]: cell for cell in grid.cells_of(family)}
+    if holdout_declaration:
+        with open(holdout_declaration) as handle:
+            for cell in json.load(handle)["cells"]:
+                by_id[cell["cell_id"]] = cell
+    missing = [cell_id for cell_id in wanted if cell_id not in by_id]
+    if missing:
+        raise SystemExit(f"the addendum declares cells the plan cannot run: {missing}")
+    declared = [by_id[cell_id] for cell_id in wanted]
 
     plan = {
         "schema": "zen3-benchmark-plan-v1",
