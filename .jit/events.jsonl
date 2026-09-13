@@ -12158,3 +12158,4 @@
 {"from":"in_progress","id":"b0980d16-bd8c-473e-ab7f-c410dd613d42","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T18:21:20.570758139Z","to":"done","type":"issue_state_changed"}
 {"id":"d4744640-3fa5-43e0-b69c-18c224e70d8a","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T18:21:20.570758139Z","type":"issue_completed"}
 {"from":"backlog","id":"9ef18d54-048b-4088-8c79-e7807c11565e","issue_id":"8e53235b-50d2-45ea-84fd-d73999a326ed","timestamp":"2026-09-13T18:21:40.607797720Z","to":"ready","type":"issue_state_changed"}
+{"fields":["documents"],"id":"58b60708-1b95-4b28-a336-14793e3d096a","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T18:31:04.059312741Z","type":"issue_updated","updated_by":"doc-add"}
