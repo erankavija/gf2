@@ -162,17 +162,17 @@ is the frozen list and
 [`resolution-nr-encode-confirmation.txt`](resolution-nr-encode-confirmation.txt)
 records the selection.
 
-Step 4 does not complete. The first confirmatory campaign measured four of its
-six cells and was killed over the step-3 rule, spending the family's six
-comparisons and both candidate identities' single protocol-v4 confirmatory
-attempt; its reservation was then removed from the ledger by hand, and the
-second campaign reserved against the shortened chain. On the restored ledger
-that second reservation is a second attempt on the same identities, which P-22
-and the one-attempt cap reject, so its receipt is not a valid confirmation and
-no claim rests on it. The family's baseline evidence is the accepted pilot
-receipt, and the six candidate identities cannot be confirmed again under
-protocol version 4. `dev/bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json`
-records the abandoned attempt and the break.
+Step 4 takes two launches. The first, `nr-encode-confirmation-12fdeb5b-20260913t064237z`,
+runs against an addendum frozen at the pilot's own alpha rather than under the
+step-3 rule; the executor aborts it for that procedural defect before reading
+any result and voids it under the protocol's voided-attempt rule, so its
+reservation stays out of the chain and spends no comparison and no candidate
+attempt. Its stage and
+`dev/bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json` are
+committed. The second, `nr-encode-confirmation-12fdeb5b-20260913t065640z`, is
+the family's confirmation: accepted, six cells measured, and it spends both
+candidate identities' single protocol-v4 confirmatory attempt, so these cells
+are not confirmable again under this protocol version.
 
 ## What this survey does not measure
 

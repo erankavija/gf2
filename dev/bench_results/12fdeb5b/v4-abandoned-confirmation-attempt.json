@@ -1,29 +1,34 @@
 {
-  "kind": "abandoned-family-ledger-attempt",
-  "summary": "This attempt measured data. It reserved the family's six confirmatory comparisons and the single protocol-v4 confirmatory attempt of each candidate identity it named, measured four of its six cells at the confirmatory pair count, and was then killed by its operator. Under the frozen protocol a crashed, interrupted or failed confirmation spends its full reservation even without a final receipt, and completion never removes or discounts a reservation. The reservation was nonetheless removed from the family ledger by hand after the kill, which let a second confirmatory reservation for the same candidate identities be appended where the chain would have rejected it. This record and the restored ledger state that break; the abandoned stage is preserved beside it so its measured executions remain available.",
+  "kind": "voided-family-ledger-attempt",
+  "summary": "The executor aborted this confirmatory attempt for a procedural defect in its own freeze, before reading any of its results, and voided it under the protocol's voided-attempt rule. Its reservation does not enter the chain the replacement attempt reserves on, so it is never interior to that chain and it spends no comparison and no candidate attempt. The aborted stage is preserved whole beside the published outcomes, so the executions of the cells it reached remain available. The rule reaches only an attempt whose results were unread; an attempt whose results were read spends its reservation like any other.",
   "attempt": {
     "family": "nr-rate-matched-encode-baselines-v1",
-    "ledger": "dev/active/12fdeb5b/nr-rate-matched-encode-trial-ledger.jsonl",
-    "ledger_sequence": 6,
-    "ledger_line_index": 6,
     "campaign": "nr-encode-confirmation-12fdeb5b-20260913t064237z",
     "protocol_version": 4,
+    "rule": "dev/active/f547c394/protocol.md, the voided-attempt paragraph of the family-ledger section; dev/active/f547c394/amendment-v4.md records the entry.",
     "stage": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned",
     "addendum": "dev/active/12fdeb5b/addendum-nr-encode-confirmation.json",
     "addendum_sha256": "ac942a4341eac167beedcdb7709375e7596c298f15c715147c7936734eba20df",
     "addendum_frozen_by_commit": "a91b3ef8",
-    "reserved_comparisons": 6,
-    "reserved_candidates": [
-      "56a716003e738aa3165f0170276fba224783717f135dcda46f5d3c39c4a0e5f4",
-      "712bd6b17f59b20c0e75cb356bb4fe1055932577d3d8b7225784b754f5666e4a"
-    ],
-    "spends": "the family's six confirmatory comparisons, and the one protocol-v4 confirmatory attempt of each of the two reserved candidate identities. No further confirmatory attempt for either identity is admissible under protocol version 4.",
-    "why_killed": "The addendum this attempt measured declared measurement_resolution 0.04, the pilot's widest relative half-width at the pilot's own corrected alpha. The family's declared rule, recorded in dev/active/12fdeb5b/plan.md and dev/active/12fdeb5b/findings.md, sizes the resolution at the confirmation's corrected alpha together with P-20's endpoint shift. The operator killed the campaign on noticing the disagreement.",
-    "kill": {
+    "defect": "The addendum this attempt launched against declares measurement_resolution 0.04, the pilot's widest relative half-width at the pilot's own corrected alpha. The family's rule, declared in dev/active/12fdeb5b/plan.md and dev/active/12fdeb5b/findings.md, sizes the resolution at the confirmation's corrected alpha together with P-20's endpoint shift, which gives 0.08. The freeze is therefore procedurally wrong for this family.",
+    "results_read": false,
+    "results_read_detail": "The abort follows from the addendum's declared resolution alone. No interval, decision or outcome of this attempt is computed, and none is quoted anywhere in this survey.",
+    "abort": {
+      "actor": "executor",
       "signal": "SIGTERM to the launcher and the runner",
       "launcher_exit_code": 144,
       "receipt_written": false,
       "terminal_event": false
+    },
+    "reservation": {
+      "comparisons": 6,
+      "candidates": [
+        "56a716003e738aa3165f0170276fba224783717f135dcda46f5d3c39c4a0e5f4",
+        "712bd6b17f59b20c0e75cb356bb4fe1055932577d3d8b7225784b754f5666e4a"
+      ],
+      "in_family_ledger": false,
+      "snapshot": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/inputs/trial-ledger.jsonl",
+      "spends": "nothing: no comparison and no candidate attempt. The family's six comparisons and both candidate identities' single protocol-v4 confirmatory attempt are spent by the valid confirmation nr-encode-confirmation-12fdeb5b-20260913t065640z."
     },
     "cells_declared": 6,
     "cells_measured": 4,
@@ -54,11 +59,6 @@
       "cell-complete": 4,
       "paused": 2
     },
-    "measured_data_location": "Every window of every execution of the four measured cells is in the stage's execution.log, and each measured cell's result is in checkpoints/units/. No interval, decision or outcome is derived from them here.",
-    "ledger_tampering": {
-      "what_happened": "After the kill the ledger was rewritten from its committed HEAD state, which removed this reservation.",
-      "consequence": "The next confirmatory reservation, nr-encode-confirmation-12fdeb5b-20260913t065640z, was appended against line 5 as if this attempt had never existed. Its reservation therefore carries sequence 6 and a predecessor linking to line 5, the same predecessor this line carries.",
-      "restored": "The ledger now holds this reservation at line index 6, byte-for-byte from the stage's own inputs/trial-ledger.jsonl snapshot, and the 065640z reservation unchanged at line index 7."
-    }
+    "measured_data_location": "Every window of every execution of the four cells this attempt reached is in the stage's execution.log, and each of their results is in checkpoints/units/. No interval, decision or outcome is derived from them."
   }
 }
