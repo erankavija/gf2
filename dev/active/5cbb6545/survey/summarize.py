@@ -147,7 +147,9 @@ def campaigns_section(lines, stages):
         " per tail* the expected draws in each interval tail at that alpha, the P-20"
         " tail-support quantity. *Arms* digests the arm executable and the survey's"
         " arm source in the receipt's own producing snapshot, so two stages that"
-        " measured the same arms are recognisable."
+        " measured the same arms are recognisable. *Verdict* is the receipt's"
+        " acceptance verdict; *Qualifies* is the separate production-qualification"
+        " flag and remains explicit even when the receipt itself is accepted."
     )
     lines.append("")
     rows = []
@@ -177,7 +179,8 @@ def campaigns_section(lines, stages):
                 f"{stage['addendum']['effect']['worthwhile_speedup']:.2f} /"
                 f" {stage['addendum']['effect']['equivalence_margin']:.2f} /"
                 f" {stage['addendum']['effect']['material_gap_threshold']:.2f}",
-                summary["verdict"] + (", qualifies" if summary["qualifies"] else ""),
+                summary["verdict"],
+                "yes" if summary["qualifies"] else "no",
                 str(len(summary["findings"])),
                 digest(stage["receipt"]["arms"]) + " / " + short(sha256_of(arm_source)),
             ]
@@ -195,6 +198,7 @@ def campaigns_section(lines, stages):
             "Resolution",
             "Margins (worthwhile / equivalence / gap)",
             "Verdict",
+            "Qualifies",
             "Findings",
             "Arms (executable / arms.rs)",
         ],
@@ -477,10 +481,16 @@ def coverage_section(lines):
             f"`{record['arm_verifier']['raw_output']}`",
             str(record["arm_verifier"]["exit_status"]),
         ],
+        [
+            "production selection audit",
+            f"`{record['production_audit']['command']}`",
+            f"`{record['production_audit']['raw_output']}`",
+            str(record["production_audit"]["exit_status"]),
+        ],
     ]
     table(lines, ["Group", "Source", "Raw output", "Exit status"], rows)
     lines.append(
-        f"Both groups pass: `passed` is {json.dumps(record['passed'])} in"
+        f"All groups pass: `passed` is {json.dumps(record['passed'])} in"
         f" `{VALIDATION}`."
     )
     lines.append("")
@@ -495,11 +505,11 @@ def clock_section(lines, record, clock):
         " case, under `perf stat` for user-space cycles and task-clock. *Timed share*"
         " is the fraction of the child's task-clock its five timed windows occupy,"
         " from the child's own window record. The record establishes a clock and no"
-        " comparison; *Route* is the route the delivered tree takes, which is why a"
-        " reverted width reports the route it retains rather than the route its"
-        " receipt measured. The observation therefore runs an arm executable of its"
-        " own, whose digest the line below this table gives beside the revision; the"
-        " receipts' own arm digests are in § Campaigns."
+        " comparison; *Route* is the route the observation's candidate-producing"
+        " executable took. The final production route is stated in the findings and"
+        " protected by the conformance record. The observation runs an arm executable"
+        " of its own, whose digest the line below this table gives beside the revision;"
+        " the receipts' own arm digests are in § Campaigns."
     )
     lines.append("")
     rows = []

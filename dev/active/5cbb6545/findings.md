@@ -2,8 +2,9 @@
 
 > **Diátaxis Type:** Explanation
 
-Survey for `5cbb6545`. It changes the population-count and fused
-AND-population-count routes of `gf2-core` and adds two carry-save kernels to
+Survey for `5cbb6545`. It evaluates population-count and fused
+AND-population-count candidates for `gf2-core`, retains the established
+production routes, and adds two directly testable carry-save kernels to
 `gf2-kernels-simd`. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
 and the [shared protocol](../f547c394/protocol.md) at
@@ -28,22 +29,25 @@ this host serves, against the established AVX2 nibble lookup, scalar `POPCNT`,
 Harley-Seal carry-save accumulation [Mula2018] and pinned libpopcnt
 [Libpopcnt2026]? Where does a fused reduction earn its place in a consumer?
 
-1. **Carry-save accumulation wins from 256 words and nowhere below it.** The
+1. **The exploratory sweep finds a carry-save crossover at 256 words, but the
+   confirmation does not qualify the family for production.** The
    unfused carry-save kernel is slower than the established per-vector lookup at
    every swept width up to 128 words and clears this family's worthwhile margin
    first at 256 words (tables § Cells: `popcount-sweep`, rows
    `sweep-popcount-w16-csa` through `sweep-popcount-w128-csa`, decision
    `regressed`; § Cells: `popcount-sweep2`, row `sweep2-popcount-w256-csa`,
    decision `improved`, against `sweep2-popcount-w224-csa`, decision
-   `not-worse`). The fused kernel crosses earlier and is already materially
+   `not-worse`). The fused candidate crosses earlier and is already materially
    faster there (§ Cells: `fused-sweep2`, rows `sweep2-and-w192-csa` and
-   `sweep2-and-w256-csa`). One boundary at 256 words therefore serves both
-   routes, and the confirmations decide it: `popcount-w1024-dispatch`,
+   `sweep2-and-w256-csa`). Those exploratory cells do not establish a canonical
+   cutover, and no exact 255/256/257 confirmation exists. The confirmations
+   contain passing cells at `popcount-w1024-dispatch`,
    `popcount-w16384-dispatch`, `and-w512-fused`, `and-w4096-fused` and
-   `matvec-1024x16384` all pass (§ Cells: `popcount-confirmation` and
-   `fused-confirmation`).
-2. **Fusing the AND into the count replaces a consumer's temporary buffer at a
-   large multiple of the gain the kernel choice buys.** The fused route beats the
+   `matvec-1024x16384`, but each family also has a non-passing cell and therefore
+   records `qualifies: false` (§ Campaigns and § Cells). P-20 makes that
+   family-level result controlling, so the production selector stays unchanged.
+2. **A fused direct comparator avoids a temporary buffer and second pass.** The
+   candidate fused route beats the
    two-pass route a `gf2-core` consumer has without it, allocation and second
    pass included, by the widest margin in either family (§ Cells:
    `fused-confirmation`, row `and-w4096-vs-two-pass`, decision `improved`), and
@@ -60,8 +64,9 @@ Harley-Seal carry-save accumulation [Mula2018] and pinned libpopcnt
    established implementation, and the production resolver returns the scalar
    backend's portable count below the bit-backend SIMD threshold
    (`ops-scalar-retained`, `scalar-count-ones`).
-4. **The residual gap to libpopcnt is not material.** With the carry-save route
-   adopted, libpopcnt still leads the cache-resident count, by less than this
+4. **The residual candidate gap to libpopcnt is not material.** In the
+   candidate-producing confirmation, libpopcnt leads the cache-resident count
+   by less than this
    family's material-gap threshold: the confirmation records
    `popcount-w16384-vs-libpopcnt` as `not-worse`, outcome **not-material**
    (§ Cells: `popcount-confirmation`). Against Muła's reference the surveyed gap
@@ -71,12 +76,14 @@ Harley-Seal carry-save accumulation [Mula2018] and pinned libpopcnt
    the epic — meeting the fastest compatible measured implementation — is
    therefore met against Muła and falsified against libpopcnt, by a gap this
    family's own rule reports and leaves.
-5. **Two cells establish no non-regression, and both are below the boundary.**
+5. **Two cells establish no non-regression, making their families
+   nonqualifying.**
    `and-w128-fused` and `matvec-1024x4096` are `inconclusive` at the frozen
-   equivalence margin (§ Cells: `fused-confirmation`). Both widths resolve to the
-   established nibble lookup, which they keep; § Clock observation names the
-   route each takes in the delivered tree. Neither cell licenses a change, and
-   none is made there.
+   equivalence margin (§ Cells: `fused-confirmation`), while
+   `popcount-w4-dispatch` is `regressed` in the other family. The production
+   tree retains the established scalar route below the SIMD threshold and the
+   established nibble routes at every SIMD width. § Clock observation names the
+   route each observed width takes after that retention.
 6. **The two confirmations measure arms their pilots did not.** Only the
    confirmations time the library arms through a consumer's indirect call; every
    sweep and pilot times a devirtualised copy. The arm digests differ between
@@ -91,22 +98,22 @@ Harley-Seal carry-save accumulation [Mula2018] and pinned libpopcnt
 | Width, in `u64` words | Route the tree takes | Rule and evidence |
 |---|---|---|
 | below the bit-backend SIMD threshold | the scalar backend's portable count (`ops-scalar-retained`, `scalar-count-ones`) | REQ-10: a no-win region retains its established implementation. Tables § Cells: `popcount-confirmation`, row `popcount-w4-dispatch`, decision `regressed`, outcome **fail** |
-| from that threshold to 256 words | the established AVX2 nibble lookup (`ops-csa-boundary` for the upper edge, `legacy-bundle-popcount` for the kernel) | REQ-09: the boundary is the first swept width clearing the worthwhile margin, § Cells: `popcount-sweep2`. The widths that keep the lookup must not pay for the boundary: `popcount-w8-dispatch` and `popcount-w128-dispatch` pass |
-| 256 words and above | the Harley-Seal carry-save kernels, unfused and fused (`ops-csa-boundary`, `ops-fused-csa-boundary`, `backend-csa-default`, `baked-csa-mirror`, `tuning-csa-selector`) | REQ-09: independently confirmed at `popcount-w1024-dispatch`, `popcount-w16384-dispatch`, `and-w512-fused`, `and-w4096-fused` and `matvec-1024x16384`, all **pass** |
-| every width, fused consumers | one resolved fused kernel per product instead of a temporary buffer and a second pass (`matvec-resolve-once`) | REQ-08: fused reduction only where it replaces a measured consumer's temporary buffer or extra pass, confirmed at `and-w4096-vs-two-pass` |
+| at and above that threshold | the established AVX2 nibble lookup (`ops-nibble-resolver`, `ops-route-report`, `legacy-bundle-popcount`) | P-20 and the measurement contract: `popcount-confirmation` records `qualifies: false`, so passing cells do not authorize a partial family adoption |
+| every width, fused consumers | the established fused nibble kernel (`ops-fused-nibble-resolver`, `matvec-established-fused`) | P-20 and the measurement contract: `fused-confirmation` records `qualifies: false`; the existing matrix path already counts the row intersection without a temporary buffer |
+| direct comparator calls only | scalar `POPCNT` and the unfused and fused carry-save kernels (`bundle-scalar-popcnt-comparator`, `bundle-csa-comparator`, `bundle-fused-csa-comparator`) | Negative results remain reproducible without placing a nonqualifying candidate in an automatic production route |
 
-Retaining the established count below the SIMD threshold is a reversion of the
-route the candidate took there, and the receipt rows above are its evidence: the
-region is not re-measured, because the cell that measures it is the cell that
-records the regression. The kernel itself stays in the bundle as the measured
-scalar comparator that no resolver selects (`bundle-scalar-popcnt-comparator`),
-so the conformance suite and this survey keep exercising it.
+The candidate kernels stay in the bundle as measured direct comparators that no
+automatic resolver selects (`bundle-scalar-popcnt-comparator`,
+`bundle-csa-comparator`, `bundle-fused-csa-comparator`), so the conformance suite
+and this survey keep exercising them. The exact 255/256/257 regression cases in
+that suite guard the absence of an unsupported production cutover; they are
+untimed behavioral checks, not receipt evidence for a crossover.
 
 Neither family qualifies for production selection by the tool's own flag: both
-confirmations record `qualifies: false` (tables § Campaigns, column *Verdict*),
-because each holds at least one cell the evaluator did not pass. The adoption
-above therefore rests on the per-cell rules REQ-09 and REQ-10 state, cell by
-cell, not on a family-wide qualification.
+confirmations record `qualifies: false` (tables § Campaigns, column
+*Qualifies*), because each holds at least one cell the evaluator did not pass.
+No per-cell override exists in the contract or protocol. Production therefore
+retains the established implementation over the full automatic-dispatch domain.
 
 ## Arm fidelity
 
@@ -129,7 +136,8 @@ cell in either family
 ([Family accounting](#family-accounting-and-what-a-second-attempt-admits)):
 
 - The confirmations are the deciding trials and they measure the call shape a
-  consumer has. Every adoption above rests on them.
+  consumer has. Their family-level nonqualification permits no production
+  adoption.
 - A pilot estimate is not an independent earlier sample of the confirmed cell of
   the same name. Pilot and confirmation agreement is therefore not evidence in
   this survey, and the tables state no agreement row.
@@ -140,7 +148,8 @@ cell in either family
   confirmation records it as `regressed` (tables § Cells:
   `popcount-confirmation`). The direction is what the barrier changes, and the
   sweep shows the same route winning when called directly (§ Cells:
-  `popcount-sweep`). Adoption follows the confirmation.
+  `popcount-sweep`). Production retention follows the confirmation's
+  family-level result.
 
 P-03 is satisfied as it is written: resolution evidence is a distinct,
 digest-matched pilot receipt of the same family whose widest relative half-width
@@ -200,17 +209,17 @@ every arm it names.
 | Arm | Runs | Role |
 |---|---|---|
 | `legacy-dispatch` | the route `ops::popcount` takes without this issue: the scalar backend below the threshold, the bundle's nibble lookup at and above it | popcount baseline |
-| `resolved-dispatch` | `ops::popcount` as this issue leaves it, resolved for the buffer's width | popcount candidate |
+| `resolved-dispatch` | the route selected by the candidate-producing receipt snapshot, resolved for the buffer's width | popcount candidate; the receipt snapshot is evidence, not the retained production selection |
 | `nibble-lut`, `scalar-popcnt`, `csa` | the bundle's `avx2_popcnt`, `popcnt_words` and `avx2_popcnt_csa` called directly, with no threshold | internal controls, the sweeps' crossover arms |
 | `compiler-count-ones` | the portable `u64::count_ones` loop | internal control, named only by the smoke stage |
 | `libpopcnt` | libpopcnt v4.2 `popcnt()` with its own CPUID dispatch, compiled `-O3` [Libpopcnt2026] | external arm |
 | `mula-avx2-harley-seal` | sse-popcount `popcnt_AVX2_harley_seal` [Mula2018], which loads through `const __m256i*` and so takes only vector-aligned windows | external arm |
 | `and-legacy-fused` | the bundle's `avx2_and_popcnt`, the route a fused consumer takes without this issue | fused baseline |
-| `and-resolved-fused` | `ops::and_popcount` as this issue leaves it | fused candidate |
+| `and-resolved-fused` | the route selected by the candidate-producing receipt snapshot | fused candidate; the receipt snapshot is evidence, not the retained production selection |
 | `and-csa-fused` | the bundle's `avx2_and_popcnt_csa` called directly | internal control |
 | `and-two-pass` | the public route without a fused kernel: temporary, `and_inplace`, `popcount`, all inside every call | whole-consumer comparator |
 | `and-scalar-control` | a single-pass portable `(a & b).count_ones()` loop | internal control, named only by the smoke stage |
-| `matvec-legacy`, `matvec-resolved` | the row loop `BitMatrix::matvec` runs without and with this issue, output allocation included | whole-consumer arms |
+| `matvec-legacy`, `matvec-resolved` | the row loops in the baseline and candidate-producing receipt snapshots, output allocation included | whole-consumer arms |
 
 The smoke stage names every arm identity once through the real runner, so the
 wire contract between runner and arm child is established by an execution rather
@@ -226,27 +235,32 @@ its *external build* line. The external sources live under the primary checkout'
 
 ## Routes from the public entry points to the kernels
 
-`BitVec::count_ones` resolves one route per call for the buffer it holds
-(`bitvec-count-ones`), so a caller that counts the same width repeatedly pays one
-resolution per call; `ops::resolve_popcount` exists for a caller that hoists it
-out of a loop, as `XorInplaceFn` does for in-place XOR. `BitMatrix::matvec` takes
-the fused path and hoists: it resolves once for the stride the whole product
-repeats, then calls the kernel per row (`matvec-entry`, `matvec-resolve-once`).
-Both resolvers read two compile-time boundaries, the bit-backend SIMD threshold
-(`backend-simd-threshold`) and `bit_backend.popcount_csa_min_words`
-(`ops-csa-boundary`, `ops-fused-csa-boundary`), the second of which the canonical
-tuning mechanism carries as a selector (`tuning-csa-selector`) and the
-conservative and baked tables mirror (`backend-csa-default`, `baked-csa-mirror`).
-Every kernel route is reachable only through the non-default `simd` feature of
-`gf2-core` (`core-simd-optional`); without it, and on a host whose bundle is
-absent, every width takes the scalar count.
+`BitVec::count_ones` uses the established backend dispatch for the buffer it
+holds (`bitvec-count-ones`). `ops::resolve_popcount` and
+`ops::resolve_and_popcount` expose the same established selection for callers
+that hoist a function pointer out of a loop (`ops-nibble-resolver`,
+`ops-fused-nibble-resolver`). `BitMatrix::matvec` loads the bundle once and calls
+its established fused nibble kernel for each row (`matvec-entry`,
+`matvec-established-fused`).
+
+The only automatic boundary is the bit-backend SIMD threshold
+(`backend-simd-threshold`). There is no carry-save tuning field or 256-word
+selector. Scalar `POPCNT` and the two carry-save kernels remain bundle
+comparators reachable through direct function-pointer fields, but no production
+resolver selects them (`bundle-scalar-popcnt-comparator`,
+`bundle-csa-comparator`, `bundle-fused-csa-comparator`). Every kernel route is
+reachable only through the non-default `simd` feature of `gf2-core`
+(`core-simd-optional`); without it, and on a host whose bundle is absent, every
+width takes the scalar count.
 
 The route each width resolves to is observed rather than inferred:
 `ops::popcount_route` and `and_popcount_route` report it at run time
-(`ops-route-report`), the conformance run records it per width
-([`validation-arms.txt`](validation-arms.txt), the *gf2 route* lines), and every
-receipt pair records the route its arm took in `selected_path` (tables § Cells,
-column *Route*).
+(`ops-route-report`), the shared suite asserts the retained route at 255, 256
+and 257 words, and the arm verifier records it at receipt widths including 256
+([`validation-arms.txt`](validation-arms.txt), the *gf2 route* lines). Every
+receipt pair records the route its candidate-producing executable took in
+`selected_path` (tables § Cells, column *Route*). Those committed receipt values
+remain unchanged as provenance for the negative family verdicts.
 
 ## Input coverage (REQ-07)
 
@@ -306,9 +320,13 @@ are exercised rather than argued: the per-vector remainder loop
 (`csa-vector-remainder`), the word tail of each vector kernel (`csa-word-tail`,
 `lut-word-tail`) and the sub-vector widths that never enter a vector loop at all.
 
-The fused reduction is exercised only where it replaces a consumer's temporary
-buffer or extra pass: `BitMatrix::matvec` is the consumer (`matvec-resolve-once`),
-and `and-w4096-vs-two-pass` measures the route it replaces.
+The established fused reduction already avoids a consumer temporary:
+`BitMatrix::matvec` calls the fused bundle kernel directly
+(`matvec-established-fused`). The `and-w4096-vs-two-pass` candidate cell measures
+that whole-consumer benefit, but it does not override the fused family's
+`qualifies: false` result. `run-validation.sh` also audits that neither automatic
+entry point selects the comparator pointers and that no removed carry-save
+tuning selector remains (tables § Correctness coverage).
 
 ## Rates and consumer results (REQ-09)
 
@@ -318,9 +336,9 @@ estimate at an observed clock rather than a counted cycle total: the receipts
 count no cycles, so [`survey/observe-clock.py`](survey/observe-clock.py) runs one
 arm child per confirmatory cell under `perf stat` and records cycles over
 task-clock, with the fraction of the child its timed windows occupy (§ Clock
-observation). That record establishes a clock and no comparison; it also runs the
-delivered tree's arms, which is why it reports the retained route at four words
-while the receipt of the same cell records the route it measured.
+observation). That record establishes a clock and no comparison; it runs the
+candidate-producing revision recorded in the observation. Its `selected_path`
+values describe that revision and do not state the final production selection.
 
 Consumer results carry their dispatch and setup costs. The whole-consumer cells
 declare their conversion costs included, and tables § Conversion costs lists
@@ -329,11 +347,12 @@ allocation, the matrix-vector arms' fixture construction, and the backend
 selection one call performs. The per-call latency of a whole-consumer cell is
 therefore a whole product, output allocation included, not a kernel in isolation.
 
-The size-dependent winner is determined and confirmed through the canonical
-tuning mechanism: the boundary is a bit-backend selector (`tuning-csa-selector`)
-whose conservative and baked values agree (`backend-csa-default`,
-`baked-csa-mirror`), the sweeps moved it, and the confirmations decided it on
-fresh pairs at the corrected alpha.
+The sweeps describe size-dependent candidate performance, and the confirmations
+test fresh pairs at the corrected alpha. Neither confirmation qualifies its
+family, so the canonical tuning mechanism gains no selector and production
+retains the established SIMD threshold alone (`tuning-retained-selector`). The
+exploratory 256-word crossover is reported but not promoted to a production
+boundary.
 
 ## Emitted instructions, register lifetimes and dependency chains (REQ-10)
 
@@ -351,8 +370,8 @@ headers name the revision and toolchain each was recorded from.
 - **The accumulator set costs register lifetime.** Five carry-save registers and
   the running total live across the whole block loop, and the kernel spills six
   callee-saved registers to hold them (`csa-callee-saved-spill`). The per-vector
-  kernel keeps one accumulator and spills none. This is the mechanism behind the
-  no-win region below 256 words: a buffer that runs few blocks pays the prologue,
+  kernel keeps one accumulator and spills none. This explains the exploratory
+  regressions below 256 words: a buffer that runs few blocks pays the prologue,
   the spill and the remainder handling without amortising the saved lookups,
   which is what the sweep measures as a regression at every width up to 128 words
   (tables § Cells: `popcount-sweep`).
@@ -377,10 +396,11 @@ headers name the revision and toolchain each was recorded from.
   is a single inlined expression over the same four words
   (`scalar-count-ones`).
 
-The no-win regions are therefore every width below the bit-backend SIMD threshold
-for the scalar `POPCNT` kernel, which retains the established count, and every
-width below 256 words for both carry-save kernels, which retain the established
-nibble lookup. Harley-Seal is not unconditional.
+The scalar `POPCNT` candidate therefore does not replace the established scalar
+count below the bit-backend SIMD threshold. The carry-save families do not
+qualify, so neither carry-save comparator enters automatic dispatch at any
+width. The exploratory crossover explains a measured pattern; it is not a
+canonical production cutoff.
 
 ## Family accounting and what a second attempt admits
 
@@ -426,10 +446,9 @@ the two `inconclusive` cells stay inconclusive.
   cycle total of a timed window is counted.
 - Pilot and confirmation estimates are not two samples of one experiment in this
   survey; see [Arm fidelity](#arm-fidelity).
-- `BitVec::count_ones` resolves per call. Nothing here measures an unfused
-  consumer that hoists `resolve_popcount` out of a loop over equal widths, which
-  is the shape `BitMatrix::matvec` uses on the fused side and the only hoisted
-  shape measured.
+- Nothing here measures an unfused consumer that hoists
+  `resolve_popcount` out of a loop over equal widths. The matrix consumer uses
+  the established fused bundle function directly.
 
 ## Criteria
 
@@ -438,9 +457,9 @@ the two `inconclusive` cells stay inconclusive.
 | REQ-01 (contract, receipts, before/after evidence, negative outcomes preserved) | Every receipt pins the contract, protocol and addendum by path and digest (tables § Method, § Campaigns); the baseline arm of every dispatch cell is the route without this issue; the `fail`, `not-material` and `inconclusive` outcomes are reported as recorded, above and in § Cells |
 | REQ-07 (candidates against pinned libpopcnt and Muła on identical buffers, over sizes, boundaries, cache regimes, offsets and patterns) | [Input coverage](#input-coverage-req-07); the external arms in § Cells: `popcount-sweep` and the confirmatory comparator cell |
 | REQ-08 (exact counts, canonical indexing, zero tail padding, fused reduction only where it replaces a consumer's buffer or pass) | [Correctness](#correctness-req-08); tables § Correctness coverage |
-| REQ-09 (cycles per byte, useful bytes per second, per-call latency, consumer results with dispatch and setup costs; winners determined and independently confirmed through the canonical tuning mechanism) | [Rates and consumer results](#rates-and-consumer-results-req-09); tables § Rates, § Conversion costs, § Clock observation, § Campaigns |
+| REQ-09 (cycles per byte, useful bytes per second, per-call latency, consumer results with dispatch and setup costs; winners determined and independently confirmed through the canonical tuning mechanism) | [Rates and consumer results](#rates-and-consumer-results-req-09); tables § Rates, § Conversion costs, § Clock observation, § Campaigns; the independent confirmation outcome is nonqualification, so no new selector is installed |
 | REQ-10 (register lifetimes, accumulator chains, scalar tails, emitted instructions; no-win regions retain their established implementation) | [Emitted instructions](#emitted-instructions-register-lifetimes-and-dependency-chains-req-10); the retained regions in [What production takes](#what-production-takes-and-the-rule-that-decided-it) |
-| REQ-02 of the epic (measured outcomes for bit reductions; production selection includes only qualifying candidates) | The adoption table states the rule behind each width; `qualifies: false` on both confirmations is reported above, and each adopted width rests on the per-cell rules REQ-09 and REQ-10 state |
+| REQ-02 of the epic (measured outcomes for bit reductions; production selection includes only qualifying candidates) | [What production takes](#what-production-takes-and-the-rule-that-decided-it) reports `qualifies: false` for both confirmations and retains the established production selection over the complete automatic-dispatch domain |
 | REQ-06 of the epic (zero tail padding, unsafe-kernel isolation, canonical abstractions, deterministic seeded execution) | The unsafe kernels stay confined to `gf2-kernels-simd` and are reached through the bundle; tail and indexing semantics are in [Correctness](#correctness-req-08); every workload word comes from the protocol's seeded generator, as each cell's `workload.seed` records |
 
 Every `cites:` label of the issue appears here: [Libpopcnt2026] and [Mula2018].

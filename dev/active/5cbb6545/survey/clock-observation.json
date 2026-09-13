@@ -5,7 +5,7 @@
   "arm_executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
   "arm_executable_sha256": "ea061cc3cff3175856cb80e617f531b517fdd98b2ffbabf1ebd354d7ca9ac1f7",
   "command_template": "dev/scripts/ccx1-bench-flock.sh --full-host taskset -c <cpus> perf stat -x, -e cycles:u,task-clock:u -- <arm executable>",
-  "note": "One child per arm per cell, on that cell's own case from the receipt's plan, outside any counterbalanced block: this record establishes the clock a route runs at and makes no comparison between arms. The arms are those of the revision recorded here, which is the delivered tree; a route this issue reverted therefore reports the clock of the route the tree keeps, as each observation's selected_path states.",
+  "note": "One child per arm per cell, on that cell's own case from the receipt's plan, outside any counterbalanced block: this record establishes the clock a route ran at and makes no comparison between arms. The selected paths belong to the recorded candidate-producing revision and do not state the final production selection.",
   "observations": [
     {
       "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",

@@ -1,16 +1,13 @@
-cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
-cargo-budget: 12 jobs (2 live, 24 cpus)
-cargo-budget: another test run holds the lock; waiting up to 600s
-   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/crates/gf2-kernels-simd)
-   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/crates/gf2-core)
-    Finished `ci-test` profile [optimized] target(s) in 4.58s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+    Finished `ci-test` profile [optimized] target(s) in 0.05s
 ────────────
- Nextest run ID 85f71f20-53bf-41ae-88bb-c0b239f06636 with nextest profile: ci
-    Starting 5 tests across 1 binary
-        PASS [   0.004s] (1/5) gf2-core::popcount_routes every_fused_route_counts_the_intersection
-        PASS [   0.004s] (2/5) gf2-core::popcount_routes bit_vector_counts_honour_canonical_indexing_and_zero_tail_padding
-        PASS [   0.004s] (3/5) gf2-core::popcount_routes every_population_count_route_reproduces_the_reference
-        PASS [   0.004s] (4/5) gf2-core::popcount_routes every_fused_route_covers_the_shorter_operand
-        PASS [   0.005s] (5/5) gf2-core::popcount_routes matrix_vector_parity_agrees_across_strides_that_change_the_route
+ Nextest run ID 1392ad7a-8c29-4a31-8e7c-bff295f7c0e9 with nextest profile: ci
+    Starting 6 tests across 1 binary
+        PASS [   0.004s] (1/6) gf2-core::popcount_routes every_fused_route_covers_the_shorter_operand
+        PASS [   0.004s] (2/6) gf2-core::popcount_routes automatic_routes_retain_the_established_implementations
+        PASS [   0.004s] (3/6) gf2-core::popcount_routes every_population_count_route_reproduces_the_reference
+        PASS [   0.004s] (4/6) gf2-core::popcount_routes bit_vector_counts_honour_canonical_indexing_and_zero_tail_padding
+        PASS [   0.005s] (5/6) gf2-core::popcount_routes every_fused_route_counts_the_intersection
+        PASS [   0.005s] (6/6) gf2-core::popcount_routes matrix_vector_parity_agrees_across_strides_that_change_the_route
 ────────────
-     Summary [   0.005s] 5 tests run: 5 passed, 0 skipped
+     Summary [   0.005s] 6 tests run: 6 passed, 0 skipped
