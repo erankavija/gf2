@@ -14,6 +14,863 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "34300e46f58f4490396db32b4faf652630b792eda691f17ea363263ca2efc12d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "062008fb7c769c8ba75208706f53372e356bc2b11757acdcc690f90a1d795d80",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-region-axpy-pilot.json",
+          "resolved_path": "dev/active/6c6b09b1/addendum-v4-region-axpy-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "088a90ed009ab9189a2158a7759b81230d551d5c9c6f7c77c1c88863028d2f1d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-matrix-product-confirmation.json",
+          "resolved_path": "dev/active/6c6b09b1/addendum-v4-matrix-product-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0c725246b4177c2a8e0cc5cf5be9dbc1fc26ea923f2b20876e086f8d012f36d2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-region-axpy-confirmation.json",
+          "resolved_path": "dev/active/6c6b09b1/addendum-v4-region-axpy-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "518513f4faa61461338526bb639e163859cda00cb16c64c0e0606c47c5f83f21",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-pairwise-control-confirmation.json",
+          "resolved_path": "dev/active/6c6b09b1/addendum-v4-pairwise-control-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef0304736301968ef5422e0821e762816c88378c3a192088c7e49f59d9052876",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v3.md",
+          "resolved_path": "dev/active/f547c394/amendment-v3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fb029f20db272c1d802c4100497e5759077ebe26a33f8472ebf10410d01a1022",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-matrix-product-pilot.json",
+          "resolved_path": "dev/active/6c6b09b1/addendum-v4-matrix-product-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1921c5aa544d6f1b842c1a074913ee5e89e445c4567138394a33e0502e392666",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-pairwise-control-pilot.json",
+          "resolved_path": "dev/active/6c6b09b1/addendum-v4-pairwise-control-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a4b12b22fc0429c8e31770223ea2fb3f7839e6659b664ab1d5a1971a86993f8c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/6c6b09b1/v3-r1-void-attempts.json",
+          "resolved_path": "dev/bench_results/6c6b09b1/v3-r1-void-attempts.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e115f4ef9aa5e1dfba6a54991fe0e2db0b31df3089e64c792e554a8dc70eba32",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/6c6b09b1/tables.md",
+          "resolved_path": "dev/bench_results/6c6b09b1/tables.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Byte-field vector and matrix comparison arms: findings",
+      "path": "dev/active/6c6b09b1/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v1 family addendum (superseded)",
+      "path": "dev/active/6c6b09b1/addendum-byte-field-arms.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v1 pilot addendum (superseded)",
+      "path": "dev/active/6c6b09b1/addendum-byte-field-arms-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 region multiply-accumulate pilot addendum (void attempt)",
+      "path": "dev/active/6c6b09b1/addendum-v3-region-axpy-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 matrix product pilot addendum (void attempt)",
+      "path": "dev/active/6c6b09b1/addendum-v3-matrix-product-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v3 pairwise control pilot addendum (void attempt)",
+      "path": "dev/active/6c6b09b1/addendum-v3-pairwise-control-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 region multiply-accumulate pilot addendum",
+      "path": "dev/active/6c6b09b1/addendum-v4-region-axpy-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 matrix product pilot addendum",
+      "path": "dev/active/6c6b09b1/addendum-v4-matrix-product-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 pairwise control pilot addendum",
+      "path": "dev/active/6c6b09b1/addendum-v4-pairwise-control-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 region multiply-accumulate confirmation addendum (frozen)",
+      "path": "dev/active/6c6b09b1/addendum-v4-region-axpy-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 matrix product confirmation addendum (frozen)",
+      "path": "dev/active/6c6b09b1/addendum-v4-matrix-product-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 pairwise control confirmation addendum (frozen)",
+      "path": "dev/active/6c6b09b1/addendum-v4-pairwise-control-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v1 producing-input closure (superseded)",
+      "path": "dev/active/6c6b09b1/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 producing-input closure",
+      "path": "dev/active/6c6b09b1/survey/producing-inputs-v4.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v1 arm provenance (superseded)",
+      "path": "dev/active/6c6b09b1/arm-provenance.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Pinned arms, licences, compiler targeting and selected backends",
+      "path": "dev/active/6c6b09b1/conformance-v4/arm-provenance.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Build record of the v4 campaigns",
+      "path": "dev/active/6c6b09b1/conformance-v4/build-record.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "External backends against the independent oracle",
+      "path": "dev/active/6c6b09b1/conformance-v4/externals.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "External arm wrapper conformance",
+      "path": "dev/active/6c6b09b1/conformance-v4/ext-wrapper.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "gf2 representations against an oracle written without gf2-core",
+      "path": "dev/active/6c6b09b1/conformance-v4/gf2-side.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Field laws over Gf2mField::gf256()",
+      "path": "dev/active/6c6b09b1/conformance-v4/field-laws-element.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Field laws over Gf2mWide<1, Gf256x11d>",
+      "path": "dev/active/6c6b09b1/conformance-v4/field-laws-wide.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Staged external prefix verification",
+      "path": "dev/active/6c6b09b1/conformance-v4/stage-externals.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 external conformance (superseded)",
+      "path": "dev/active/6c6b09b1/conformance/externals.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 wrapper conformance (superseded)",
+      "path": "dev/active/6c6b09b1/conformance/ext-wrapper.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 gf2-side conformance (superseded)",
+      "path": "dev/active/6c6b09b1/conformance/gf2-side.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 field laws (superseded)",
+      "path": "dev/active/6c6b09b1/conformance/field-laws.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Source evidence: every code claim of findings.md by claim ID",
+      "path": "dev/active/6c6b09b1/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Digest manifest of the staged external prefix",
+      "path": "dev/active/6c6b09b1/survey/ext-prefix.sha256"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Pinned fetch and build of M4RIE, M4RI, GF-Complete and ISA-L",
+      "path": "dev/active/6c6b09b1/survey/fetch-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "External prefix staging and pin re-verification",
+      "path": "dev/active/6c6b09b1/survey/stage-externals.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Arm provenance collection",
+      "path": "dev/active/6c6b09b1/survey/arm-provenance.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Wire smoke test of every arm and case operation",
+      "path": "dev/active/6c6b09b1/survey/smoke-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "C shim, conformance and provenance build",
+      "path": "dev/active/6c6b09b1/survey/Makefile"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "C shim interface",
+      "path": "dev/active/6c6b09b1/survey/byte_field_ext.h"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "C shim over the three pinned libraries",
+      "path": "dev/active/6c6b09b1/survey/byte_field_ext.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "C conformance suite against the shift-and-reduce oracle",
+      "path": "dev/active/6c6b09b1/survey/byte_field_conformance.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Selected arithmetic backends read from the loaded binaries",
+      "path": "dev/active/6c6b09b1/survey/backend_provenance.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Pilot addenda generator",
+      "path": "dev/active/6c6b09b1/survey/make-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Confirmation addenda freeze",
+      "path": "dev/active/6c6b09b1/survey/make-confirmation-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Guards over the confirmation freeze",
+      "path": "dev/active/6c6b09b1/survey/make-confirmation-addenda.test.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v1 runner plan generator (superseded)",
+      "path": "dev/active/6c6b09b1/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Runner plan generator",
+      "path": "dev/active/6c6b09b1/survey/make-plan-versioned.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Producing-input closure generator",
+      "path": "dev/active/6c6b09b1/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Source-evidence generator",
+      "path": "dev/active/6c6b09b1/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Family-ledger origin record generator",
+      "path": "dev/active/6c6b09b1/survey/make-ledger-origin-v3.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Void-attempt record generator",
+      "path": "dev/active/6c6b09b1/survey/make-void-attempt-record.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Receipt summary helper",
+      "path": "dev/active/6c6b09b1/survey/summarize-receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Shared arm wire, operand stream and conversion probes",
+      "path": "dev/active/6c6b09b1/survey/arm-common/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Shared arm crate manifest",
+      "path": "dev/active/6c6b09b1/survey/arm-common/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "gf2 arm crate root",
+      "path": "dev/active/6c6b09b1/survey/gf2-side/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "gf2 workloads and the Gf256x11d configuration",
+      "path": "dev/active/6c6b09b1/survey/gf2-side/src/workload.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "gf2 arm executable",
+      "path": "dev/active/6c6b09b1/survey/gf2-side/src/gf2_arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "gf2-side conformance executable",
+      "path": "dev/active/6c6b09b1/survey/gf2-side/src/gf2_conformance.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "gf2 arm crate manifest",
+      "path": "dev/active/6c6b09b1/survey/gf2-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Rust wrapper over the C shim",
+      "path": "dev/active/6c6b09b1/survey/ext-side/src/shim.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "External arm executable",
+      "path": "dev/active/6c6b09b1/survey/ext-side/src/ext_arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "External arm build script",
+      "path": "dev/active/6c6b09b1/survey/ext-side/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "External arm crate manifest",
+      "path": "dev/active/6c6b09b1/survey/ext-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Field-law suite over the wide representation",
+      "path": "dev/active/6c6b09b1/survey/field-laws/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Field-law crate manifest",
+      "path": "dev/active/6c6b09b1/survey/field-laws/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "survey-analysis entry points",
+      "path": "dev/active/6c6b09b1/survey/analysis/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Table, interval and resolution derivations",
+      "path": "dev/active/6c6b09b1/survey/analysis/src/tables.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Analysis crate manifest",
+      "path": "dev/active/6c6b09b1/survey/analysis/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Generated interval tables for every receipt of the survey",
+      "path": "dev/bench_results/6c6b09b1/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v4 campaign launcher",
+      "path": "dev/bench_results/6c6b09b1/run-byte-field-v4.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Launcher outcome guards",
+      "path": "dev/bench_results/6c6b09b1/run-byte-field-v4.test.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v1 campaign launcher (superseded)",
+      "path": "dev/bench_results/6c6b09b1/run-byte-field.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Family ledger: region multiply-accumulate",
+      "path": "dev/bench_results/6c6b09b1/v3-region-axpy-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Ledger origin record: region multiply-accumulate",
+      "path": "dev/bench_results/6c6b09b1/v3-region-axpy-ledger-origin.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Family ledger: matrix product",
+      "path": "dev/bench_results/6c6b09b1/v3-matrix-product-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Ledger origin record: matrix product",
+      "path": "dev/bench_results/6c6b09b1/v3-matrix-product-ledger-origin.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Family ledger: pairwise control",
+      "path": "dev/bench_results/6c6b09b1/v3-pairwise-control-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Ledger origin record: pairwise control",
+      "path": "dev/bench_results/6c6b09b1/v3-pairwise-control-ledger-origin.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Void-attempt record of the three protocol-v3 attempts",
+      "path": "dev/bench_results/6c6b09b1/v3-r1-void-attempts.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v1 launch that stopped before a campaign opened",
+      "path": "dev/bench_results/6c6b09b1/v1-launch-history/gf2-pilot-6c6b09b1-20260907t195857z.launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Plan of that protocol-v1 launch",
+      "path": "dev/bench_results/6c6b09b1/v1-launch-history/gf2-pilot-6c6b09b1-20260907t195857z.plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Second protocol-v1 launch that stopped before a campaign opened",
+      "path": "dev/bench_results/6c6b09b1/v1-launch-history/gf2-pilot-6c6b09b1-20260908t090803z.launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Plan of that second protocol-v1 launch",
+      "path": "dev/bench_results/6c6b09b1/v1-launch-history/gf2-pilot-6c6b09b1-20260908t090803z.plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 pilot (superseded history): receipt",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v1 pilot (superseded history): acceptance summary",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 pilot (superseded history): execution log",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v1 pilot (superseded history): runner plan",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v1 pilot (superseded history): launcher log",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 region multiply-accumulate pilot: receipt",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v4 region multiply-accumulate pilot: acceptance summary",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 region multiply-accumulate pilot: execution log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 region multiply-accumulate pilot: runner plan",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v4 region multiply-accumulate pilot: launcher log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 region multiply-accumulate confirmation: receipt",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v4 region multiply-accumulate confirmation: acceptance summary",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 region multiply-accumulate confirmation: execution log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 region multiply-accumulate confirmation: runner plan",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v4 region multiply-accumulate confirmation: launcher log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 matrix product pilot: receipt",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v4 matrix product pilot: acceptance summary",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 matrix product pilot: execution log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 matrix product pilot: runner plan",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v4 matrix product pilot: launcher log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 matrix product confirmation: receipt",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v4 matrix product confirmation: acceptance summary",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 matrix product confirmation: execution log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 matrix product confirmation: runner plan",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v4 matrix product confirmation: launcher log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 pairwise control pilot: receipt",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v4 pairwise control pilot: acceptance summary",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 pairwise control pilot: execution log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 pairwise control pilot: runner plan",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v4 pairwise control pilot: launcher log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 pairwise control confirmation: receipt",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v4 pairwise control confirmation: acceptance summary",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 pairwise control confirmation: execution log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 pairwise control confirmation: runner plan",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-confirmation/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Protocol-v4 pairwise control confirmation: launcher log",
+      "path": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v1 pilot (superseded history): arm provenance",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/arm-provenance.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 pilot (superseded history): external conformance",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/externals.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 pilot (superseded history): wrapper conformance",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/ext-wrapper.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 pilot (superseded history): gf2-side conformance",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/gf2-side.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 pilot (superseded history): field laws",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/field-laws.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v1 pilot (superseded history): survey input digests",
+      "path": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/survey-inputs.sha256"
     }
   ],
   "first_ready_at": "2026-09-06T19:58:29.065198552Z",
@@ -38,5 +895,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Establish byte-field vector and matrix comparison arms",
-  "updated_at": "2026-09-12T06:14:31.771728046Z"
+  "updated_at": "2026-09-13T06:56:17.070804934Z"
 }
