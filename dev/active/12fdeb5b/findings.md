@@ -86,12 +86,30 @@ parameters each project derives are projected in the
 and "Configuration grid" sections of the tables. The grid spans both base
 graphs, the rates TS 38.212 Section 7.2.2 assigns them, at least one lifting
 size from each of the eight lifting sets of its Table 5.3.2-1, codes with and
-without filler bits for both base graphs, and redundancy versions beyond 0.
-Two pairs cross a lifting-size boundary on one information bit: the
-base-graph-1 pair moves to the next lifting size and from a filler-free code to
-one with fillers, at a rate high enough that AFF3CT's own rule also selects
-base graph 1, and the base-graph-2 pair crosses the `560 < K <= 640` lifting
-constant.
+without filler bits for both base graphs, and every redundancy version srsRAN
+implements beyond 0. Two pairs cross a lifting-size boundary on one information
+bit: the base-graph-1 pair moves to the next lifting size and from a filler-free
+code to one with fillers, at a rate high enough that AFF3CT's own rule also
+selects base graph 1, and the base-graph-2 pair crosses the `560 < K <= 640`
+lifting constant.
+
+Every capability the [source-evidence ledger](survey/source-evidence.json)
+claims for a comparator has a grid row that exercises it: caller-supplied base
+graph and lifting size, AFF3CT's own base-graph and lifting derivations, both
+projects' filler handling, and srsRAN's four redundancy versions with their two
+shift-factor row sets. One claim is deliberately out of the grid.
+`srsran-interleave-identity` holds at one bit per symbol, which is the only
+modulation order the grid uses; a higher order would engage a TS 38.212 Section
+5.4.2.2 interleave that gf2 has no counterpart for, so there is nothing to
+compare it against and the survey times none.
+
+Widening the grid changes no arm's measurement behaviour: a configuration is
+data the validator and the parameter dump iterate, the timed arms select theirs
+by name, and the redundancy-version rows carry no cell. Under
+behavioral-evidence-validity the committed receipts therefore stay valid, and
+they pin their own producing snapshots regardless: re-running the acceptance
+tool over the pilot and the confirmation on the widened grid returns each
+verdict unchanged.
 
 ## Where the projects diverge
 
@@ -119,12 +137,15 @@ are recorded, not timed, on the AFF3CT arm.
 **Redundancy-version starting offset.** srsRAN implements all four versions
 through the TS 38.212 Table 5.4.2.1-2 shift factors. gf2 and AFF3CT carry no
 redundancy-version parameter at all, which two committed negative searches
-establish, so both implement the version-0 offset only. The non-zero
-redundancy-version configurations are therefore recorded as non-equivalent on
-srsRAN and unavailable on AFF3CT, and carry no cell. Their rows also show why
-an all-zero-only validation would be worthless here: under a different starting
-offset the all-zero message still produces gf2's codeword, and every other
-message does not.
+establish, so both implement the version-0 offset only. The grid exercises every
+version srsRAN implements: versions 1 and 2 once each, and version 3 on both
+base graphs, because the table gives its two row sets different shift factors
+there. Each non-zero version is recorded as non-equivalent on srsRAN, with
+`redundancy_version` as the differing parameter, and unavailable on AFF3CT, and
+none carries a cell. Their rows also show why an all-zero-only validation would
+be worthless here: under a different starting offset the all-zero message still
+produces gf2's codeword and every other message does not, which is exactly the
+one identical message each of those rows reports.
 
 ## Campaign order and standing
 
@@ -210,6 +231,26 @@ names the campaign, the addendum digest, the defect, the cells measured and
 unmeasured, and the abort. No figure in this survey comes from it. The rule
 reaches an attempt whose results are unread; an attempt whose results are read
 spends its reservation, so it cannot retire a losing measurement.
+
+The rule postdates both campaigns. Protocol v4 carried no voided-attempt
+paragraph when either ran: the rule it carried spends the reservation of every
+interrupted or failed confirmation, and under that rule the aborted attempt
+spends the family's comparisons and both candidates' single attempt, which
+leaves the re-run outside the one-attempt cap. Both stages pin the protocol
+snapshot that precedes the rule — `inputs/protocol.md` in the aborted stage and
+in the confirmation receipt is the same file, and it differs from the current
+[protocol](../f547c394/protocol.md) — so the re-run's status as a permitted
+retry was not preregistered. The amendment records the rule without a version
+change, which acceptance is indifferent to, but that does not make the rule
+prior to the measurement.
+
+The re-run's standing as the family's confirmation therefore rests on **DEC-01**
+of this issue, the invoker's recorded decision that the aborted attempt is
+voided and the re-run is the valid confirmation, and not on a retry the frozen
+protocol permitted in advance. A reader who rejects that decision should read
+the confirmation's cells as measured data whose confirmatory standing is
+unestablished; the pilot's exploratory rows, which no decision is needed to
+read, carry the same comparisons at their own standing.
 
 ## Measured outcomes
 
@@ -305,7 +346,7 @@ tables from the committed records and receipts.
 |---|---|---|
 | REQ-01 | met | The smoke, [pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json) and [confirmation](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json) receipts are accepted under protocol version 4, each pinning the contract, protocol, schema and its addendum by digest; the Source line of each campaign's section in the [tables](../../bench_results/12fdeb5b/tables.md) carries its verdict and finding count, and each smoke receipt carries its own in its `acceptance-summary.md` header. The `fail` cell and the exploratory `inconclusive` control stay recorded under the outcomes the evaluator assigned, and the aborted attempt keeps its stage and its record (*The aborted attempt*). |
 | REQ-02 | met | [build evidence](survey/build-evidence.json), [source-evidence ledger](survey/source-evidence.json), [plan](plan.md) |
-| REQ-03 | met | [validation record](survey/nr-encode-validation.json), projected in the tables |
+| REQ-03 | met | [validation record](survey/nr-encode-validation.json), projected in the ["Bit-exact equivalence outcomes"](../../bench_results/12fdeb5b/tables.md) table. Every configuration reaching a timed cell is bit-exact on its arm; every redundancy version srsRAN implements is exercised, versions 1 to 3 recorded non-equivalent on srsRAN and unavailable on AFF3CT; and *Where the projects diverge* names each divergence with the parameter that differs. |
 | REQ-04 | met | The [pilot](addendum-nr-encode-pilot.json) and [confirmatory](addendum-nr-encode-confirmation.json) addenda are frozen and their receipts committed, alongside the aborted attempt's stage, over base-graph-1 and base-graph-2 block sizes and rates with conversion costs inside every timed call. Unavailable and non-equivalent arms are recorded in the ["Bit-exact equivalence outcomes"](../../bench_results/12fdeb5b/tables.md) table and in *Where the projects diverge*. |
 
 ## Citations

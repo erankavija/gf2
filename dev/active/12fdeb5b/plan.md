@@ -174,6 +174,12 @@ the family's confirmation: accepted, six cells measured, and it spends both
 candidate identities' single protocol-v4 confirmatory attempt, so these cells
 are not confirmable again under this protocol version.
 
+The voided-attempt rule postdates both campaigns, and both stages pin the
+protocol snapshot that precedes it, so the re-run is not a preregistered retry.
+Its standing as the family's confirmation rests on DEC-01 of this issue, the
+invoker's recorded decision. `findings.md` § *The aborted attempt* states the
+premise in full.
+
 ## What this survey does not measure
 
 - Redundancy versions other than 0 have no gf2 counterpart. They are recorded

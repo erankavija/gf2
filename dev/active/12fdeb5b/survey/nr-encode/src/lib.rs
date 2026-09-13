@@ -61,7 +61,7 @@ const fn with_rv(mut configuration: Configuration, redundancy_version: u8) -> Co
 /// Table 5.3.2-1, codes with and without filler bits, the two lifting-size
 /// boundaries a one-bit change in the message length crosses, and the
 /// redundancy versions that only one arm implements.
-pub const CONFIGURATIONS: [Configuration; 24] = [
+pub const CONFIGURATIONS: [Configuration; 26] = [
     // Base graph 2: short blocks, low rates, every lifting set boundary the
     // grid reaches.
     configuration("bg2-n256-k121", 2, 256, 121),
@@ -98,9 +98,14 @@ pub const CONFIGURATIONS: [Configuration; 24] = [
     configuration("bg1-n706-k529", 1, 706, 529),
     configuration("bg2-n1120-k560", 2, 1120, 560),
     configuration("bg2-n1122-k561", 2, 1122, 561),
-    // Redundancy versions other than 0.
+    // Redundancy versions other than 0. srsRAN implements all four through the
+    // TS 38.212 Table 5.4.2.1-2 shift factors, so every one it implements
+    // beyond 0 appears here; version 3 covers both base graphs, because its
+    // shift factor differs between the table's two row sets.
     with_rv(configuration("bg1-n2560-k2048-rv1", 1, 2560, 2048), 1),
     with_rv(configuration("bg2-n1024-k400-rv2", 2, 1024, 400), 2),
+    with_rv(configuration("bg1-n2560-k2048-rv3", 1, 2560, 2048), 3),
+    with_rv(configuration("bg2-n1024-k400-rv3", 2, 1024, 400), 3),
 ];
 
 /// Looks up a configuration by name.
