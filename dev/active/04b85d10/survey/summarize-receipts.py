@@ -135,6 +135,25 @@ def contradiction_rows(record):
         yield entry
 
 
+def replacement_text(entry):
+    """Per-cell replacement, so a shared entry cannot imply one cell's answer
+    covers another. A cell without a replacement carries the entry's reason."""
+    replacement = entry["replacement"]
+    missing = [cell for cell in entry["cells"] if cell not in replacement]
+    if missing:
+        sys.exit(f"{RECORD} entry {entry['id']} names no replacement for {missing}")
+    parts = []
+    for cell in entry["cells"]:
+        target = replacement[cell]
+        parts.append(f"`{cell}` by `{target}`" if target else f"`{cell}` none")
+    text = "; ".join(parts)
+    if any(replacement[cell] is None for cell in entry["cells"]):
+        if not entry["no_replacement_rationale"]:
+            sys.exit(f"{RECORD} entry {entry['id']} leaves a cell unreplaced without a reason")
+        text += f". No replacement is owed because {entry['no_replacement_rationale']}"
+    return text
+
+
 def main():
     record, record_sha256 = load_record()
     described = list(record["receipts"])
@@ -177,20 +196,20 @@ def main():
     print(
         "Recorded contradictions. Each entry names a receipt cell whose measurement differs "
         "from what its addendum declares. The receipts and addenda keep their bytes; the "
-        "affected rows below name the entry, and the entry states what the cell falsifies and "
-        "what it still supports."
+        "affected rows below name the entry, and the entry states what the cell falsifies, "
+        "what it still supports, and, for each cell separately, which addendum replaces it or "
+        "why no replacement measurement is owed."
     )
     print()
     for entry in contradiction_rows(record):
         cells = ", ".join(f"`{cell}`" for cell in entry["cells"])
         declared_in = ", ".join(f"`{path}`" for path in entry["declared_in"])
         evidence = ", ".join(f"`{path}`" for path in entry["evidence"])
-        replacement = f"`{entry['replacement']}`" if entry["replacement"] else "none"
         print(
             f"- **`{entry['id']}`** ({entry['class']}, {entry['status']}). Declared in "
             f"{declared_in}: {entry['declared']}. Measured: {entry['measured']}. Cells: {cells}. "
             f"Withdrawn: {entry['withdrawn']}. Stands: {entry['stands']}. Evidence: {evidence}. "
-            f"Replacement: {replacement}."
+            f"Replacement per cell: {replacement_text(entry)}."
         )
 
     unseeded = unseeded_workloads(record)
