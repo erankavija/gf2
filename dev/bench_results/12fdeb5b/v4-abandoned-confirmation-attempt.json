@@ -1,0 +1,64 @@
+{
+  "kind": "abandoned-family-ledger-attempt",
+  "summary": "This attempt measured data. It reserved the family's six confirmatory comparisons and the single protocol-v4 confirmatory attempt of each candidate identity it named, measured four of its six cells at the confirmatory pair count, and was then killed by its operator. Under the frozen protocol a crashed, interrupted or failed confirmation spends its full reservation even without a final receipt, and completion never removes or discounts a reservation. The reservation was nonetheless removed from the family ledger by hand after the kill, which let a second confirmatory reservation for the same candidate identities be appended where the chain would have rejected it. This record and the restored ledger state that break; the abandoned stage is preserved beside it so its measured executions remain available.",
+  "attempt": {
+    "family": "nr-rate-matched-encode-baselines-v1",
+    "ledger": "dev/active/12fdeb5b/nr-rate-matched-encode-trial-ledger.jsonl",
+    "ledger_sequence": 6,
+    "ledger_line_index": 6,
+    "campaign": "nr-encode-confirmation-12fdeb5b-20260913t064237z",
+    "protocol_version": 4,
+    "stage": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned",
+    "addendum": "dev/active/12fdeb5b/addendum-nr-encode-confirmation.json",
+    "addendum_sha256": "ac942a4341eac167beedcdb7709375e7596c298f15c715147c7936734eba20df",
+    "addendum_frozen_by_commit": "a91b3ef8",
+    "reserved_comparisons": 6,
+    "reserved_candidates": [
+      "56a716003e738aa3165f0170276fba224783717f135dcda46f5d3c39c4a0e5f4",
+      "712bd6b17f59b20c0e75cb356bb4fe1055932577d3d8b7225784b754f5666e4a"
+    ],
+    "spends": "the family's six confirmatory comparisons, and the one protocol-v4 confirmatory attempt of each of the two reserved candidate identities. No further confirmatory attempt for either identity is admissible under protocol version 4.",
+    "why_killed": "The addendum this attempt measured declared measurement_resolution 0.04, the pilot's widest relative half-width at the pilot's own corrected alpha. The family's declared rule, recorded in dev/active/12fdeb5b/plan.md and dev/active/12fdeb5b/findings.md, sizes the resolution at the confirmation's corrected alpha together with P-20's endpoint shift. The operator killed the campaign on noticing the disagreement.",
+    "kill": {
+      "signal": "SIGTERM to the launcher and the runner",
+      "launcher_exit_code": 144,
+      "receipt_written": false,
+      "terminal_event": false
+    },
+    "cells_declared": 6,
+    "cells_measured": 4,
+    "cells_measured_ids": [
+      "nr-enc-bg2-n256-k121-gap-native-vs-srsran",
+      "nr-enc-bg2-n1440-k720-gap-native-vs-srsran",
+      "nr-enc-bg1-n2560-k2048-gap-native-vs-srsran",
+      "nr-enc-bg1-n8448-k4224-gap-native-vs-srsran"
+    ],
+    "cells_unmeasured_ids": [
+      "nr-enc-bg2-n256-k121-gap-native-vs-aff3ct",
+      "nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct"
+    ],
+    "pairs_per_measured_cell": 24,
+    "execution_log": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/execution.log",
+    "execution_log_events": {
+      "campaign-start": 1,
+      "session-start": 1,
+      "orchestration-start": 2,
+      "lock-hold": 2,
+      "driver-diagnostic": 4,
+      "omission": 2,
+      "cell-start": 4,
+      "child-spawn": 192,
+      "child-exit": 192,
+      "execution-progress": 192,
+      "checkpoint-accepted": 4,
+      "cell-complete": 4,
+      "paused": 2
+    },
+    "measured_data_location": "Every window of every execution of the four measured cells is in the stage's execution.log, and each measured cell's result is in checkpoints/units/. No interval, decision or outcome is derived from them here.",
+    "ledger_tampering": {
+      "what_happened": "After the kill the ledger was rewritten from its committed HEAD state, which removed this reservation.",
+      "consequence": "The next confirmatory reservation, nr-encode-confirmation-12fdeb5b-20260913t065640z, was appended against line 5 as if this attempt had never existed. Its reservation therefore carries sequence 6 and a predecessor linking to line 5, the same predecessor this line carries.",
+      "restored": "The ledger now holds this reservation at line index 6, byte-for-byte from the stage's own inputs/trial-ledger.jsonl snapshot, and the 065640z reservation unchanged at line index 7."
+    }
+  }
+}

@@ -178,47 +178,82 @@ this survey's pilot receipt. The freeze refuses a resolution below the width at
 the pilot's own alpha, and refuses margins that do not strictly exceed one plus
 the frozen value.
 
-The [confirmation](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json)
-is accepted with no findings and does not qualify for production selection,
-which is the standing a survey proposing no change should reach. Every declared
-cell is measured at the protocol's confirmatory pair count, none reports an
-unresolved setting, and none exceeds the flagged-window fraction. Its own
-widest relative half-width, in the summary table of the "Confirmation campaign"
-section of the [tables](../../bench_results/12fdeb5b/tables.md), sits far inside
-the declared resolution, which the dropped portable-build control sized.
+## The family spends its confirmatory attempt without a valid confirmation
+
+Two confirmatory campaigns exist and neither yields a usable confirmation.
+
+The first, `nr-encode-confirmation-12fdeb5b-20260913t064237z`, reserved the
+family's six comparisons and both candidate identities, measured four of its six
+cells at the confirmatory pair count, and was killed by its operator because its
+addendum declared the resolution at the pilot's own alpha rather than under the
+rule above. Its stage is preserved whole at
+[`2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned`](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/execution.log),
+and
+[`v4-abandoned-confirmation-attempt.json`](../../bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json)
+records what it reserved, measured and spent. The protocol spends a reservation
+whether or not a receipt follows: a crashed, interrupted or failed confirmation
+spends its full reservation, and completion never removes or discounts one.
+
+That reservation was then removed from the family ledger by hand, and the second
+campaign, `nr-encode-confirmation-12fdeb5b-20260913t065640z`, reserved against
+the shortened chain. On the restored ledger it is a second confirmatory
+reservation for candidate identities that had already spent their one
+protocol-v4 attempt, and the chain rejects it: its line repeats sequence 6 and
+its predecessor still names line 5. **Its receipt is therefore not a valid
+confirmatory attempt under P-22 and the one-attempt cap, and no claim in this
+report rests on it.**
+
+Its [receipt](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json)
+and
+[acceptance summary](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md)
+stay committed as measured data with this contradiction beside them. The
+acceptance tool still reports the receipt accepted, because P-22 validates the
+ledger prefix the receipt itself pinned and that snapshot is exactly the
+shortened chain; the tool reads no live ledger, so its verdict does not reach
+the defect. The "Void confirmation campaign" section of the
+[tables](../../bench_results/12fdeb5b/tables.md) carries its cells under that
+label.
+
+Both candidate identities have now spent their single protocol-v4 confirmatory
+attempt, so none of the six cells can be confirmed again under this protocol
+version. A confirmation of this family needs a later protocol version, and that
+is a separate issue's work, not a deferral inside this one.
 
 ## Measured outcomes
 
-Every figure below is a pointer. The cell rows are the "Confirmation campaign"
-section of the [tables](../../bench_results/12fdeb5b/tables.md) and the cell
-entries of the
-[acceptance summary](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md);
-the exploratory rows that sized them are the "Pilot campaign" section of the
-same tables.
+The family's baseline evidence is the accepted
+[pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json).
+Its cells are exploratory: each carries the `pilot` outcome, none yields a pass
+and none decides adoption. Every figure below is a pointer to the "Pilot
+campaign" section of the
+[tables](../../bench_results/12fdeb5b/tables.md) and to the pilot's
+[acceptance summary](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/acceptance-summary.md).
 
-**srsRAN is ahead on every configuration measured, by a margin that grows with
-block length.** All four `-gap-native-vs-srsran` cells pass: each interval lies
-entirely above the material-gap threshold, and the smallest base-graph-2
-configuration and the largest base-graph-1 configuration bound the range. The
-gap is a whole-consumer one and includes each arm's representation conversion,
-which the "Per-arm call time and adapter stages" table decomposes descriptively
-per arm; those medians carry no interval and decide nothing.
+**srsRAN encodes this consumer faster than gf2 on every configuration the pilot
+measures, by a ratio that grows with block length.** All four
+`-gap-native-vs-srsran` rows read a speedup above one, the smallest base-graph-2
+and the largest base-graph-1 configuration bounding the range, and each interval
+lies clear of the family's material-gap threshold. The gap is a whole-consumer
+one and includes each arm's representation conversion, which the "Per-arm call
+time and adapter stages" table decomposes per arm; those medians carry no
+interval. At exploratory standing this is an observation, not a confirmed
+decision.
 
-**AFF3CT splits.** `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` passes: AFF3CT
-is materially ahead on the larger base-graph-1 configuration.
-`nr-enc-bg2-n256-k121-gap-native-vs-aff3ct` is a **`fail`**: the evaluator
-records the decision `regressed`, meaning AFF3CT is materially slower than gf2
-on the smallest base-graph-2 configuration. The tables' "gf2 faster by (gap
-cells)" column reports the reciprocal of that cell's interval. The outcome is
-recorded as the evaluator states it and is not reinterpreted.
+**AFF3CT splits.** `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` reads a speedup
+above one, so AFF3CT leads on the larger base-graph-1 configuration.
+`nr-enc-bg2-n256-k121-gap-native-vs-aff3ct` reads the decision `regressed`:
+AFF3CT is slower than gf2 on the smallest base-graph-2 configuration, and the
+tables' "gf2 faster by (gap cells)" column reports the reciprocal of that
+interval. The void confirmation records the same cell as a `fail`; that
+outcome is stated as the evaluator assigned it and is not reinterpreted, and it
+supports no claim here.
 
-**The identity floor and the build control are settled at exploratory
-standing.** The pilot's `-null-` cell reads the noise floor between two
-launches of the same executable, and its `-control-portable-vs-native` cell
-compares the conservative-portable build with the native one and is
-`inconclusive` at the pilot's alpha. Neither is confirmatory, so neither
-supports a claim about gf2's build targeting; the portable control is also the
-cell whose width sizes the family's resolution.
+**The identity floor and the build control.** The pilot's `-null-` cell reads
+the noise floor between two launches of the same executable, and its
+`-control-portable-vs-native` cell compares the conservative-portable build with
+the native one and reads `inconclusive`. Neither supports a claim about gf2's
+build targeting; the portable control is also the cell whose width sizes the
+family's resolution.
 
 Every cell is a comparator-gap cell about a whole-consumer operation. None
 measures a kernel, none proposes a change, and the family's
@@ -239,12 +274,16 @@ measures a kernel, none proposes a change, and the family's
   point, so timing a harness re-implementation would time the harness.
 - The survey proposes no production change, so its addenda declare no
   worthwhile speedup and adopt nothing.
-- One confirmatory cell is a `fail`: AFF3CT is materially slower than gf2 on
-  the smallest base-graph-2 configuration. It stays in the confirmation and in
-  the tables under the outcome the evaluator assigned.
+- AFF3CT is slower than gf2 on the smallest base-graph-2 configuration. The
+  pilot reads `regressed` there and the void confirmation records it as a
+  `fail`; both stay committed under the outcomes the evaluator assigned.
 - gf2 is behind srsRAN on every configuration this survey measures. That is the
-  survey's principal result, and it stands whether or not any later issue acts
-  on it.
+  survey's principal observation, and it stands whether or not any later issue
+  acts on it. It rests on exploratory cells, so it is not a confirmed decision.
+- The family spends both candidate identities' single protocol-v4 confirmatory
+  attempt without producing a valid confirmation. That negative accounting
+  outcome stays in the ledger and in the attempt record rather than being
+  cleared.
 
 ## Reproduction
 
@@ -276,10 +315,10 @@ tables from the committed records and receipts.
 
 | Criterion | Standing | Evidence |
 |---|---|---|
-| REQ-01 | met | The smoke, [pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json) and [confirmation](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json) receipts are accepted with zero findings under protocol version 4, each pinning the contract, protocol, schema and its addendum by digest. The `fail` cell and the exploratory `inconclusive` control stay recorded under the outcomes the evaluator assigned. |
+| REQ-01 | partially met | The smoke and [pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json) receipts are accepted with zero findings under protocol version 4, each pinning the contract, protocol, schema and its addendum by digest, and the family's baseline evidence rests on the pilot. Comparison validity is not met at confirmatory standing: the ledger was tampered with between the two confirmatory campaigns, so the second receipt is void (*The family spends its confirmatory attempt without a valid confirmation*) and both candidate identities have spent their one protocol-v4 attempt. Every negative outcome, including that accounting failure, is preserved. |
 | REQ-02 | met | [build evidence](survey/build-evidence.json), [source-evidence ledger](survey/source-evidence.json), [plan](plan.md) |
 | REQ-03 | met | [validation record](survey/nr-encode-validation.json), projected in the tables |
-| REQ-04 | met | The [pilot](addendum-nr-encode-pilot.json) and [confirmatory](addendum-nr-encode-confirmation.json) addenda are frozen and their receipts committed, over base-graph-1 and base-graph-2 block sizes and rates, with conversion costs inside every timed call. Unavailable and non-equivalent arms are recorded in the ["Bit-exact equivalence outcomes"](../../bench_results/12fdeb5b/tables.md) table and in *Where the projects diverge*. |
+| REQ-04 | partially met | The [pilot](addendum-nr-encode-pilot.json) and [confirmatory](addendum-nr-encode-confirmation.json) addenda are frozen and every receipt, including the abandoned stage and the void one, is committed, over base-graph-1 and base-graph-2 block sizes and rates with conversion costs inside every timed call. Unavailable and non-equivalent arms are recorded in the ["Bit-exact equivalence outcomes"](../../bench_results/12fdeb5b/tables.md) table and in *Where the projects diverge*. The baseline receipts that stand are exploratory; no confirmatory receipt of this family is valid. |
 
 ## Citations
 

@@ -162,6 +162,18 @@ is the frozen list and
 [`resolution-nr-encode-confirmation.txt`](resolution-nr-encode-confirmation.txt)
 records the selection.
 
+Step 4 does not complete. The first confirmatory campaign measured four of its
+six cells and was killed over the step-3 rule, spending the family's six
+comparisons and both candidate identities' single protocol-v4 confirmatory
+attempt; its reservation was then removed from the ledger by hand, and the
+second campaign reserved against the shortened chain. On the restored ledger
+that second reservation is a second attempt on the same identities, which P-22
+and the one-attempt cap reject, so its receipt is not a valid confirmation and
+no claim rests on it. The family's baseline evidence is the accepted pilot
+receipt, and the six candidate identities cannot be confirmed again under
+protocol version 4. `dev/bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json`
+records the abandoned attempt and the break.
+
 ## What this survey does not measure
 
 - Redundancy versions other than 0 have no gf2 counterpart. They are recorded
