@@ -12169,3 +12169,4 @@
 {"gate_key":"doc-review","id":"9aded554-0877-4f75-8351-e1b43ff32db8","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T19:32:32.757132256Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"b64a9073-8b78-4c25-b9f1-0fe8344adc35","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T19:37:10.308030041Z","type":"gate_passed","updated_by":"auto:executor"}
 {"fields":["documents"],"id":"ab051fab-343a-4d0e-8a09-4487940a56e3","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T19:38:18.182625559Z","type":"issue_updated","updated_by":"doc-update"}
+{"gate_key":"doc-review","id":"cb253ef5-1d56-48e0-b335-225b8173299a","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T19:41:47.448551350Z","type":"gate_failed","updated_by":"auto:executor"}
