@@ -13,3 +13,6 @@
 07ca8585	.agents/worktrees/agent-1c602857	6	dev/bench_results/07ca8585/run-campaign.sh checknode confirmation v4-r1 prepare && dev/bench_results/07ca8585/run-campaign.sh checknode confirmation v4-r1 window
 07ca8585	.agents/worktrees/agent-1c602857	18	dev/bench_results/07ca8585/run-campaign.sh fixed-iteration confirmation v4-r1 prepare && dev/bench_results/07ca8585/run-campaign.sh fixed-iteration confirmation v4-r1 window
 07ca8585	.agents/worktrees/agent-1c602857	40	dev/bench_results/07ca8585/run-profile-resample.sh dev/bench_results/07ca8585/v4-r1-resampled-profile
+19513245	.agents/worktrees/agent-19513245	15	dev/bench_results/19513245/run-consumer-bytefield.sh window vector-confirmation
+19513245	.agents/worktrees/agent-19513245	8	dev/bench_results/19513245/run-consumer-bytefield.sh window matrix-confirmation
+53c5a8c0	.agents/worktrees/agent-53c5a8c0	20	dev/active/53c5a8c0/survey/run-profile.sh dev/bench_results/53c5a8c0/profile
