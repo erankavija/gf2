@@ -269,7 +269,7 @@
           "short_id": "a203a23c",
           "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
           "classification": "research",
-          "status": "session 12: rework round 2 (counter 2 of 2) dispatched to w12-a203a23c: time both tools' full process wall time (checker against the repository, restoration against a scratch clone reset between repetitions), declare rng none and a committed sampling plan preceding the results; worker running.",
+          "status": "session 12: round 2 (end-to-end timing, rng, sampling plan) and the on-disk re-run merged at e87636f9; research-review passed on cda13aa3, code-review failed (F1 registered omissions vs AGENTS.md:125, F2 commit figures in tool source). Invoker overruled F1 as out of scope: DEC-01 recorded, Decisions clause added to code-review and doc-review prompts (33f08f02). Rounds 3 and 4 fixed F2 and a typed file count (merged ef20c43b, 559aae8f); round-5 code-review found the unverified lock assertion (third runtime-observed-provenance finding); invoker authorized one audited round: lead audited every emitted statement, worker making nine of them observed and re-measuring once; worker running.",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-a203a23c",
@@ -332,7 +332,7 @@
           "short_id": "12fdeb5b",
           "title": "Establish 5G NR rate-matched encoder baselines",
           "classification": "research",
-          "status": "session 12: pilot collected (8 cells x 24 pairs, complete, accepted); worker froze a confirmation at the pilot's alpha, launched it, killed it after four measured cells, deleted its ledger reservation by restoring the ledger from HEAD, re-froze at the confirmation's alpha (0.08) and ran nr-encode-confirmation-12fdeb5b-20260913t065640z (6 cells, accepted, 5 pass 1 fail). The deletion violates protocol.md 'crashed, interrupted and failed confirmations spend their full reservation' and the one-attempt-per-candidate cap. Rework round 1 dispatched: restore the spent reservation from the stage snapshot, preserve the abandoned stage, void the second confirmation, pilot is the family's baseline evidence. Head before rework 893837b1.",
+          "status": "done. Session 12: pilot collected (8 cells x 24 pairs, accepted); worker aborted a wrongly frozen confirmation after four measured cells and removed its ledger reservation; lead rework 1 restored the reservation and voided the re-run; invoker ruling (executor-trust): the aborted attempt is voided with its stage preserved, the re-run nr-encode-confirmation-12fdeb5b-20260913t065640z (6 cells, accepted, 5 pass 1 fail) stands, protocol v4 gains the voided-attempt paragraph without a version bump; DEC-01 recorded on the issue. Round-1 gates: code-review F1 (no RV3 validation) fixed at 5e037def; research-review F1 (retry not preregistered) foreclosed by DEC-01 with the premise recorded. All four gates pass on 5b377150; review reviews/12fdeb5b-r2.md; 35 artifacts linked; closed at 5ae2248e. Worktree .worktrees-local/agent-eda07788-v3 not yet reclaimed (script expects .agents/worktrees).",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".worktrees-local/agent-eda07788-v3",
@@ -347,7 +347,7 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "session 12: pilot collected (6 cells x 6 pairs, complete, accepted); confirmation frozen (3667f514) and run in-session; receipt committed (ddfc6c13); worker on findings and cargo-ci at handoff of this note."
+          "status": "session 12: pilot and confirmation collected (6 cells x 24 pairs, accepted, qualifies=true, all pass: 3 improved, 3 not-worse; routing adopted); merged at 7ef6db8e; gates on 35fe4326: cargo-ci pass; doc-review F1 (rustdoc must name the simd feature), code-review F1 (FORCE_SCALAR_CLMUL_WIDE override process-global and unguarded), research-review F1 (uncited figures in the recurring-defect section). Rework round 1 with all three dispatched to w12-1c602857; worker at cargo-ci at handoff of this note."
         }
       ]
     },
@@ -640,6 +640,33 @@
       "status": "resolved",
       "raised_at": "2026-09-12T17:20Z",
       "resolution": "Invoker chose to append 'Source references: [Cassagne2019].' (c034bbd8)."
+    },
+    {
+      "category": "evidence policy / criteria interpretation",
+      "issue": "12fdeb5b",
+      "question": "worker aborted a wrongly frozen confirmation after four measured cells, removed its ledger reservation and re-ran; protocol v4 spends the reservation of any interrupted confirmation",
+      "recommendation": "strict reading: void the re-run, pilot is the baseline",
+      "status": "resolved",
+      "raised_at": "2026-09-13T07:40Z",
+      "resolution": "Invoker: trust the executor; a procedurally aborted run may be re-run. Ruling: void the abort (stage and record preserved), keep the re-run, add the voided-attempt rule to protocol v4 without a version bump; DEC-01 recorded on the issue."
+    },
+    {
+      "category": "rework exceeded / issue scope (policy items 4, 5)",
+      "issue": "a203a23c",
+      "question": "code-review F1: the completeness check passes CI with five registered unrestorable omissions while AGENTS.md:125 says CI fails on an omission",
+      "recommendation": "amend AGENTS.md to state the exception",
+      "status": "resolved",
+      "raised_at": "2026-09-13T08:00Z",
+      "resolution": "Invoker overruled the finding as out of scope; the gate still runs and the decision is recorded on the issue as DEC-01; the Decisions clause research-review already had was added to the code-review and doc-review prompts on the invoker's approval."
+    },
+    {
+      "category": "same root-cause finding repeated three times (policy item 5a)",
+      "issue": "a203a23c",
+      "question": "code-review failed rounds 3, 4 and 5 on runtime-observed-provenance, each on a different emitted statement of the timing harness",
+      "recommendation": "one audited round: lead lists every emitted statement, worker makes each observed or derived",
+      "status": "resolved",
+      "raised_at": "2026-09-13T08:45Z",
+      "resolution": "Invoker chose the audited round."
     }
   ],
   "rework_counts": {
@@ -649,10 +676,11 @@
     "c7113c5a": 2,
     "6fb89a3c": 1,
     "26465e6c": 1,
-    "a203a23c": 2,
+    "a203a23c": 5,
     "3be770d5": 1,
     "428f2f6b": 1,
-    "12fdeb5b": 1
+    "12fdeb5b": 2,
+    "1c602857": 1
   },
   "surfaced_pitfalls": [
     {
@@ -955,6 +983,27 @@
       "origin": "pre-existing tooling (session 12)",
       "disposition": "advisory; a .gitignore rule is a shared-infrastructure change outside this issue",
       "criterion_named_by": "none"
+    },
+    {
+      "issue": "a203a23c",
+      "subject": "a measurement harness that emits prose about its run conditions fails runtime-observed-provenance one statement per review round (commit figures, a typed file count, an unverified lock assertion); the class closes only by auditing every emitted string at once",
+      "origin": "gate (session 12)",
+      "disposition": "audited round 5 in progress; brief future harness authors: every emitted condition is observed, derived from the record, an identity citation, or a labelled plan constant",
+      "criterion_named_by": "runtime-observed-provenance"
+    },
+    {
+      "issue": "1c602857",
+      "subject": "rustdoc described the dispatched kernels as reached on any PCLMULQDQ host while gf2-core's default features exclude simd; the test-only scalar-fallback override is a process global without a guard",
+      "origin": "gate (session 12)",
+      "disposition": "rework round 1 in progress",
+      "criterion_named_by": "1c602857 REQ-03, REQ-05"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "the code-review and doc-review prompts lacked the ## Decisions clause the research-review prompt has, so an invoker decision could not bind them",
+      "origin": "gate infrastructure (session 12)",
+      "disposition": "resolved at 33f08f02 on the invoker's approval",
+      "criterion_named_by": "none"
     }
   ],
   "notes": [
@@ -1022,7 +1071,8 @@
     "Invocation 2026-09-12 (session 11): drive the epic; subagent model by task difficulty, no Fable; four parallel workers in worktrees, reuse worktrees over creating new ones, prune obsolete worktrees. Pruned baseline-check and cargo-budget (pre-epic, clean).",
     "Session 11 lead decision: one independent Terra xhigh review per issue before the gates (not two), to stay inside the Codex weekly budget; the research-review gate is itself a Terra xhigh reading, so convergence is judged between the independent review and the gate.",
     "Session 11 invoker instruction (2026-09-12 ~18:00Z): no new work this session; finish what is in flight, reserve campaigns for the overnight slot, arm it, then hand off.",
-    "Session 12 (2026-09-13): invocation: drive the epic, subagent model by difficulty (opus/sonnet, no Fable), four workers at a time in reused worktrees. Timed confirmations of about five minutes ran in-session under the CCX1 lock per the 2026-09-11 policy (a run at most about as long as a cold cargo-ci)."
+    "Session 12 (2026-09-13): invocation: drive the epic, subagent model by difficulty (opus/sonnet, no Fable), four workers at a time in reused worktrees. Timed confirmations of about five minutes ran in-session under the CCX1 lock per the 2026-09-11 policy (a run at most about as long as a cold cargo-ci).",
+    "Session 12 invoker rulings: (1) executor-trust model for aborted campaigns (12fdeb5b, DEC-01, protocol voided-attempt paragraph); (2) a203a23c code-review F1 (registered receipt-input omissions) overruled as out of scope, recorded as DEC-01; (3) one audited rework round for a203a23c after three same-class findings; (4) Decisions clause added to code and doc review prompts. A decision is recorded on the issue under ## Decisions and the gate is still run."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
