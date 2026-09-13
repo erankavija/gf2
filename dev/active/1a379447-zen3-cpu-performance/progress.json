@@ -349,14 +349,14 @@
           "short_id": "5cbb6545",
           "title": "Optimize population count and fused bit reductions",
           "classification": "implementation",
-          "status": "session 15: lead review round 1 FAIL (reviews/5cbb6545-r1.md): both confirmation receipts have qualifies=false despite production adoption, and the 256-word CSA cutoff lacks exact 255/256/257 receipt evidence and canonical calibration. Rework round 1 dispatched to Sol xhigh in the existing worktree; timed measurements are forbidden, so it must restore contract-literal production behavior and preserve negative receipts or report that new evidence is required.",
+          "status": "session 15: rework round 1 restored established scalar/nibble production behavior, removed the unsupported CSA selector/cutoff, added exact 255/256/257 retained-route coverage, and reconciled the preserved nonqualifying receipts. Round-2 review confirms every substantive criterion but FAILs on one narrow provenance defect: source-evidence.json records the prior source commit while its generator emits HEAD. Sol xhigh rework round 2 is making that revision explicit and reproducible without measurements.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-5cbb6545",
             "branch": "worktree-agent-5cbb6545",
             "base": "2d8b6c0b (main merged later)",
             "attempt": 3,
-            "rework_round": 1,
+            "rework_round": 2,
             "session": 15
           }
         },
@@ -798,7 +798,7 @@
     "12fdeb5b": 2,
     "1c602857": 2,
     "07ca8585": 1,
-    "5cbb6545": 1
+    "5cbb6545": 2
   },
   "surfaced_pitfalls": [
     {
