@@ -101,6 +101,17 @@ case "$MODE" in
     OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-$FAMILY-pilot${SUFFIX}"
     SEED=$PILOT_SEED
     ;;
+  pilot-r2)
+    # The second-round resolution pilot: the confirmation's own cells at the
+    # protocol's maximum pilot pair count, so the resolution the confirmation
+    # freezes against is estimated on the sample size it uses. Its samples
+    # enter no confirmation.
+    LABEL=pilot
+    ADDENDUM="$ACTIVE/addendum-v4-$FAMILY-pilot-r2.json"
+    OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-$FAMILY-pilot-r2${SUFFIX}"
+    SEED=$((PILOT_SEED + 1))
+    export GF2_PILOT_PAIRS=24
+    ;;
   confirmation)
     LABEL=confirmation
     ADDENDUM="$ACTIVE/addendum-v4-$FAMILY-confirmation.json"
@@ -133,7 +144,7 @@ PY
     ;;
   build) ;;
   *)
-    echo "mode must be pilot, confirmation, smoke or build" >&2
+    echo "mode must be pilot, pilot-r2, confirmation, smoke or build" >&2
     exit 2
     ;;
 esac

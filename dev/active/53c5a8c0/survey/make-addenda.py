@@ -14,6 +14,7 @@ rationales state what the number is for; none of them is derived from a result.
 """
 
 import argparse
+import copy
 import json
 import os
 import sys
@@ -183,7 +184,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--frozen-utc", required=True)
     parser.add_argument("--output-dir", default="dev/active/53c5a8c0")
+    parser.add_argument(
+        "--resolution-stage",
+        help="write a second-round resolution pilot under this suffix, holding "
+        "only the cells named by --cell",
+    )
+    parser.add_argument("--cell", action="append", default=[], dest="cells")
     args = parser.parse_args()
+    if bool(args.resolution_stage) != bool(args.cells):
+        raise SystemExit("a resolution stage needs both --resolution-stage and --cell")
 
     written = []
     for name, family, description, effect, budget, ledger, purpose, holdout in (
@@ -213,15 +222,32 @@ def main():
             {"required": False, "cells": []},
         ),
     ):
+        document = addendum(family, description, effect, budget, ledger, purpose,
+                            args.frozen_utc, holdout)
+        if args.resolution_stage:
+            if family != grid.CROSSOVER_FAMILY:
+                continue
+            name = name.replace("-pilot.json", f"-{args.resolution_stage}.json")
+            declared = {cell["cell_id"] for cell in document["cells"]}
+            unknown = [cell for cell in args.cells if cell not in declared]
+            if unknown:
+                raise SystemExit(f"unknown cells: {unknown}")
+            document = copy.deepcopy(document)
+            document["cells"] = [
+                cell for cell in document["cells"] if cell["cell_id"] in set(args.cells)
+            ]
+            document["family"]["description"] = (
+                document["family"]["description"]
+                + " This addendum is the family's second-round resolution pilot: "
+                "it re-measures the cells the confirmation will carry at the "
+                "protocol's maximum pilot pair count, so the resolution the "
+                "confirmation freezes against is estimated on the sample size "
+                "the confirmation itself uses. Its samples enter no "
+                "confirmation."
+            )
         path = os.path.join(args.output_dir, name)
         with open(path, "w") as handle:
-            json.dump(
-                addendum(family, description, effect, budget, ledger, purpose,
-                         args.frozen_utc, holdout),
-                handle,
-                indent=2,
-                ensure_ascii=False,
-            )
+            json.dump(document, handle, indent=2, ensure_ascii=False)
             handle.write("\n")
         written.append(path)
     print("\n".join(written), file=sys.stderr)
