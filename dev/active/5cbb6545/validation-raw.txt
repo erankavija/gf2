@@ -1,13 +1,15 @@
-cargo-budget: 12 jobs (2 live, 24 cpus)
-   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/crates/gf2-core)
-    Finished `ci-test` profile [optimized] target(s) in 9.40s
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Finished `ci-test` profile [optimized] target(s) in 0.07s
 ────────────
- Nextest run ID b498b023-0854-4233-9efe-4e3c557c2021 with nextest profile: ci
+ Nextest run ID 5830d3fd-4ab0-40cb-92fe-0bca331c7fe8 with nextest profile: ci
     Starting 5 tests across 1 binary
-        PASS [   0.013s] (1/5) gf2-core::popcount_routes every_fused_route_counts_the_intersection
-        PASS [   0.013s] (2/5) gf2-core::popcount_routes bit_vector_counts_honour_canonical_indexing_and_zero_tail_padding
-        PASS [   0.014s] (3/5) gf2-core::popcount_routes every_population_count_route_reproduces_the_reference
-        PASS [   0.016s] (4/5) gf2-core::popcount_routes every_fused_route_covers_the_shorter_operand
-        PASS [   0.029s] (5/5) gf2-core::popcount_routes matrix_vector_parity_agrees_across_strides_that_change_the_route
+        PASS [   0.004s] (1/5) gf2-core::popcount_routes bit_vector_counts_honour_canonical_indexing_and_zero_tail_padding
+        PASS [   0.004s] (2/5) gf2-core::popcount_routes every_fused_route_counts_the_intersection
+        PASS [   0.005s] (3/5) gf2-core::popcount_routes every_population_count_route_reproduces_the_reference
+        PASS [   0.005s] (4/5) gf2-core::popcount_routes matrix_vector_parity_agrees_across_strides_that_change_the_route
+        PASS [   0.006s] (5/5) gf2-core::popcount_routes every_fused_route_covers_the_shorter_operand
 ────────────
-     Summary [   0.033s] 5 tests run: 5 passed, 0 skipped
+     Summary [   0.006s] 5 tests run: 5 passed, 0 skipped
