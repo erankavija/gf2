@@ -21,8 +21,10 @@ pub(crate) const SIMD_MIN_WORDS: usize = 4;
 ///
 /// The word count at or above which `kernels::ops::resolve_popcount` and
 /// `resolve_and_popcount` take the Harley-Seal carry-save kernels instead of
-/// the per-vector nibble lookup.
-pub(crate) const POPCOUNT_CSA_MIN_WORDS: usize = usize::MAX;
+/// the per-vector nibble lookup. Both arms of the boundary are public, so the
+/// field is sweepable; its value is the measured one the core section's
+/// conservative declaration also carries.
+pub(crate) const POPCOUNT_CSA_MIN_WORDS: usize = 256;
 
 /// Baked value for `bit_matrix.matvec_simd_min_words`, mirroring
 /// `crate::matrix::MATVEC_SIMD_MIN_WORDS`.

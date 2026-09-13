@@ -21,6 +21,8 @@ STAGES = {
     "fused-sweep": families.fused_sweep,
     "popcount-sweep2": families.popcount_sweep2,
     "fused-sweep2": families.fused_sweep2,
+    "popcount-pilot": families.popcount_pilot,
+    "fused-pilot": families.fused_pilot,
     "smoke-smoke": families.smoke,
 }
 
