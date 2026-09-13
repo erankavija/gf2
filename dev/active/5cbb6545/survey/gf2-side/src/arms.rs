@@ -33,8 +33,17 @@ pub type AndPopcountFn = fn(&[u64], &[u64]) -> u64;
 /// conservative table.
 const LEGACY_SIMD_MIN_WORDS: usize = 8;
 
+/// The detected kernel bundle, behind an optimisation barrier.
+///
+/// A gf2-core consumer reaches these kernels through a function pointer loaded
+/// from a process-wide `OnceLock`, which no caller can see through: every call
+/// is indirect. `detect()` called here instead constructs the bundle in this
+/// crate's own link-time-optimised unit, where the optimiser resolves each
+/// field to its kernel and emits a direct call. The barrier restores the call
+/// shape a consumer has, so an arm that spells a library route measures that
+/// route rather than a devirtualised copy of it.
 fn simd_fns() -> Option<gf2_kernels_simd::LogicalFns> {
-    gf2_kernels_simd::detect()
+    std::hint::black_box(gf2_kernels_simd::detect())
 }
 
 fn host_has_avx2() -> bool {
