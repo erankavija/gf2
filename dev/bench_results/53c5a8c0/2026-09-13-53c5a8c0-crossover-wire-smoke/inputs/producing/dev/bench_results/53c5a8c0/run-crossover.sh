@@ -108,28 +108,10 @@ case "$MODE" in
     SEED=$CONFIRM_SEED
     ;;
   smoke)
-    # A smoke establishes the wire contract, not a family result: it reserves
-    # nothing in the family's canonical ledger. The addendum it runs is the
-    # pilot addendum with its ledger redirected into the throwaway area, so a
-    # smoke can never spend a comparison or enter the committed chain.
-    LABEL=smoke
-    ADDENDUM="target/bench-smoke/$ISSUE-$FAMILY-addendum.json"
+    LABEL=pilot
+    ADDENDUM="$ACTIVE/addendum-v4-$FAMILY-pilot.json"
     OUT="target/bench-smoke/$ISSUE-$FAMILY"
     SEED=$PILOT_SEED
-    mkdir -p "target/bench-smoke"
-    : >"target/bench-smoke/$ISSUE-$FAMILY-ledger.jsonl"
-    python3 - "$ACTIVE/addendum-v4-$FAMILY-pilot.json" "$ADDENDUM"       "target/bench-smoke/$ISSUE-$FAMILY-ledger.jsonl" <<'PY'
-import json
-import sys
-
-source, target, ledger = sys.argv[1:4]
-with open(source) as handle:
-    addendum = json.load(handle)
-addendum["family_wise"]["ledger_path"] = ledger
-with open(target, "w") as handle:
-    json.dump(addendum, handle, indent=2, ensure_ascii=False)
-    handle.write("\n")
-PY
     ;;
   build) ;;
   *)

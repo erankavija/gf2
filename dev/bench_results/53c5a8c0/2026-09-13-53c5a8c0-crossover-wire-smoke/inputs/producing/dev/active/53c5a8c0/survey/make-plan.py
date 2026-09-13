@@ -93,12 +93,10 @@ def main():
         lock,
     ) = sys.argv[1:9]
     holdout_declaration = sys.argv[9] if len(sys.argv) > 9 else None
-    # A smoke runs the pilot grid at the protocol's minimum pilot pair count;
-    # a confirmation uses the frozen confirmatory count.
-    pilot_pairs = 6 if label in ("pilot", "smoke") else None
+    pilot_pairs = 6 if label == "pilot" else None
 
     declared = list(grid.cells_of(family))
-    if label not in ("pilot", "smoke"):
+    if label != "pilot":
         # A confirmation runs exactly the cells its frozen addendum declares,
         # which is a selection of the pilot cells plus any holdout cells.
         with open(addendum) as handle:
