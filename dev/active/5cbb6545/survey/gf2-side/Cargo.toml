@@ -1,0 +1,44 @@
+# Population-count and fused-reduction optimization harness (jit:5cbb6545).
+#
+# One arm binary serves every arm of all three families: the pre-change gf2
+# routes spelled out word for word, the routes this issue leaves in place, the
+# individual kernels of the detected bundle, and the vendored libpopcnt and
+# Mula kernels that `build.rs` compiles from sibling survey 26465e6c's pinned
+# checkout and links in. Every arm therefore runs under the same fixture,
+# timing loop and per-call structure. The crate is its own workspace so its
+# build graph stays separate from the production workspace while consuming gf2
+# by path.
+
+[workspace]
+
+[package]
+name = "count-optimization-survey"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "count-arm"
+path = "src/bin/count-arm.rs"
+
+[[bin]]
+name = "count-verify"
+path = "src/bin/count-verify.rs"
+
+[dependencies]
+gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+
+# The repository's release profile: thin LTO and one codegen unit, no ISA
+# flags, so gf2 reaches AVX2 only through its runtime detection.
+[profile.release]
+lto = "thin"
+codegen-units = 1
