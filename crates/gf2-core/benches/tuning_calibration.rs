@@ -214,10 +214,10 @@ const DEFAULT_TARGET_MS: u64 = tuning_campaign_support::timing::TARGET.as_millis
 #[cfg(test)]
 #[allow(dead_code)]
 const EXPECTED_MEASURED_FIELDS: usize = 16;
-const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;
+const EXPECTED_CORE_SCHEMA_FIELDS: usize = 38;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_OMITTED_FIELDS: usize = 21;
+const EXPECTED_OMITTED_FIELDS: usize = 22;
 #[cfg(test)]
 #[allow(dead_code)]
 const EXPECTED_GRID_ARM_CELLS: usize = 306;
@@ -3020,8 +3020,13 @@ fn forced_profile_for(spec: ChildSpec) -> Result<(PreparedEnvelope, Vec<ForcedVa
     let mut values = Vec::new();
     match spec.field {
         CalibratedField::SimdMinWords => {
-            selectors.bit_backend =
-                BitBackendSelectors::try_new(spec.size).map_err(|error| error.to_string())?;
+            selectors.bit_backend = BitBackendSelectors::try_new(
+                spec.size,
+                CoreTuning::CONSERVATIVE
+                    .bit_backend()
+                    .popcount_csa_min_words(),
+            )
+            .map_err(|error| error.to_string())?;
             values.push(ForcedValue::new("bit_backend", "simd_min_words", spec.size));
         }
         CalibratedField::KaratsubaMinDegree => {
@@ -4465,8 +4470,13 @@ fn build_profile(
     let subproduct_min_len: usize = selected.subproduct_min_len;
     let interpolate_fast_min_points: usize = selected.interpolate_fast_min_points;
 
-    let bit_backend =
-        BitBackendSelectors::try_new(simd_min_words).map_err(|error| error.to_string())?;
+    let bit_backend = BitBackendSelectors::try_new(
+        simd_min_words,
+        CoreTuning::CONSERVATIVE
+            .bit_backend()
+            .popcount_csa_min_words(),
+    )
+    .map_err(|error| error.to_string())?;
     let polynomial = PolynomialSelectors::try_new(
         karatsuba_min_degree,
         karatsuba_max_out_len,
@@ -4974,7 +4984,7 @@ struct CampaignCoverage {
 }
 
 /// Rejects publication unless the codec-derived inventory is exactly the
-/// campaign's sixteen measured fields and its 21-of-37 omission complement.
+/// campaign's sixteen measured fields and its 22-of-38 omission complement.
 #[cfg(test)]
 #[allow(dead_code)]
 fn validate_campaign_coverage(
@@ -5383,15 +5393,30 @@ mod tests {
     }
 
     #[test]
-    fn omitting_the_last_field_of_a_family_leaves_an_empty_object() {
+    fn omitting_every_field_of_a_family_leaves_an_empty_object() {
         let profile = profile_from(&DISTINCT);
-        let document =
-            calibrated_document(&profile, &[CalibratedField::SimdMinWords.schema_field()]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[
+                CalibratedField::SimdMinWords.schema_field(),
+                SchemaField {
+                    family: "bit_backend".to_owned(),
+                    name: "popcount_csa_min_words".to_owned(),
+                },
+            ],
+        )
+        .unwrap();
         assert!(document.contains(r#""bit_backend":{}"#), "{document}");
         let loaded = ProducedCoreProfile::from_json(&document).unwrap();
         assert_eq!(
             loaded.bit_backend().simd_min_words(),
             CoreTuning::CONSERVATIVE.bit_backend().simd_min_words()
+        );
+        assert_eq!(
+            loaded.bit_backend().popcount_csa_min_words(),
+            CoreTuning::CONSERVATIVE
+                .bit_backend()
+                .popcount_csa_min_words()
         );
     }
 
@@ -5561,7 +5586,7 @@ mod tests {
     }
 
     #[test]
-    fn campaign_publication_requires_16_measured_and_21_of_37_omitted() {
+    fn campaign_publication_requires_16_measured_and_22_of_38_omitted() {
         let document = profile_from(&DISTINCT).to_json();
         let sweeps = measured_sweeps();
         let omitted = omitted_fields(&document, &sweeps).unwrap();
@@ -5569,14 +5594,14 @@ mod tests {
             validate_campaign_coverage(&document, &sweeps, &omitted),
             Ok(CampaignCoverage {
                 measured: 16,
-                omitted: 21,
-                total: 37,
+                omitted: 22,
+                total: 38,
             })
         );
     }
 
     #[test]
-    fn a_fifteen_field_run_cannot_publish_a_22_field_omission_set() {
+    fn a_fifteen_field_run_cannot_publish_a_23_field_omission_set() {
         let document = profile_from(&DISTINCT).to_json();
         let mut sweeps = measured_sweeps();
         sweeps.retain(|sweep| sweep.field != CalibratedField::SimdMinWords);
@@ -5586,7 +5611,7 @@ mod tests {
         ));
         let omitted = omitted_fields(&document, &sweeps).unwrap();
         assert_eq!(measured_fields(&sweeps).len(), 15);
-        assert_eq!(omitted.len(), 22);
+        assert_eq!(omitted.len(), 23);
         assert!(validate_campaign_coverage(&document, &sweeps, &omitted).is_err());
     }
 
@@ -9948,7 +9973,7 @@ mod campaign_owner {
                 omitted.push(path);
             }
         }
-        if omitted.len() != 10 {
+        if omitted.len() != 11 {
             return Err("core omission complement mismatch".to_owned());
         }
         let section = CoreTuningCodec::decode_body(CanonicalValue::serialize(&body).map_err(err)?)
@@ -10823,7 +10848,7 @@ mod campaign_owner {
             let (section, decisions) = decide_owner(&input).unwrap();
             assert_eq!(section.selectors(), CoreTuning::CONSERVATIVE.selectors());
             assert_eq!(decisions.measured.len(), 27);
-            assert_eq!(decisions.omitted.len(), 10);
+            assert_eq!(decisions.omitted.len(), 11);
             assert_eq!(
                 decisions.joint_m4rm.reason,
                 statistics::JointVectorReason::ConservativeVector
@@ -11150,13 +11175,13 @@ mod campaign_owner {
             assert_eq!(measured.len(), CORE_FIELDS);
             let all = complete_selector_value(&CoreTuning::CONSERVATIVE).unwrap();
             let leaves = flatten_selectors(&all).unwrap();
-            assert_eq!(leaves.len(), 37);
+            assert_eq!(leaves.len(), 38);
             assert_eq!(
                 leaves
                     .iter()
                     .filter(|v| !measured.contains(&format!("{}.{}", v.family, v.field)))
                     .count(),
-                10
+                11
             );
             for field in ExtentField::ALL {
                 assert!(field.candidates().contains(&field.default_candidate()));

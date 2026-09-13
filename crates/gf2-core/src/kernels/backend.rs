@@ -82,6 +82,20 @@ impl SelectedBackend {
 /// Conservative-table value for `bit_backend.simd_min_words`.
 pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;
 
+/// Conservative-table value for `bit_backend.popcount_csa_min_words`.
+///
+/// `usize::MAX` keeps every buffer on the per-vector nibble lookup, which is
+/// the route the conservative table established. A build carrying the declared
+/// `gf2_tuning_baked` cfg takes the measured value in
+/// [`crate::tuning::baked::POPCOUNT_CSA_MIN_WORDS`] instead.
+pub(crate) const POPCOUNT_CSA_MIN_WORDS_DEFAULT: usize = usize::MAX;
+
+#[cfg(all(any(test, feature = "simd"), gf2_tuning_baked))]
+pub(crate) const POPCOUNT_CSA_MIN_WORDS: usize = crate::tuning::baked::POPCOUNT_CSA_MIN_WORDS;
+
+#[cfg(all(any(test, feature = "simd"), not(gf2_tuning_baked)))]
+pub(crate) const POPCOUNT_CSA_MIN_WORDS: usize = POPCOUNT_CSA_MIN_WORDS_DEFAULT;
+
 #[cfg(all(any(test, feature = "simd"), gf2_tuning_baked))]
 const SIMD_MIN_WORDS: usize = crate::tuning::baked::SIMD_MIN_WORDS;
 
