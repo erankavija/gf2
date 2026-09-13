@@ -1,0 +1,24 @@
+dev/active/07ca8585/findings.md	report	Allocation and edge traversal in the CPU min-sum LDPC update
+dev/active/07ca8585/plan.md	specification	Measurement plan for the min-sum update change
+dev/active/07ca8585/survey/source-evidence.json	reference	Source evidence for the min-sum update path, before and after
+dev/active/07ca8585/addendum-ldpc-update-single-worker-pilot.json	specification	Pilot addendum, before/after single-worker family
+dev/active/07ca8585/addendum-ldpc-update-single-worker.json	specification	Frozen v4 addendum, before/after single-worker confirmation
+dev/active/07ca8585/addendum-ldpc-update-single-worker-derivation.txt	reference	Derivation of the single-worker confirmation addendum from its pilot
+dev/active/07ca8585/addendum-ldpc-update-multicore-pilot.json	specification	Pilot addendum, before/after multicore family
+dev/active/07ca8585/addendum-ldpc-update-comparator-single-worker-pilot.json	specification	Pilot addendum, comparator single-worker family
+dev/active/07ca8585/addendum-ldpc-update-comparator-single-worker.json	specification	Frozen v4 addendum, comparator single-worker confirmation
+dev/active/07ca8585/addendum-ldpc-update-comparator-single-worker-derivation.txt	reference	Derivation of the comparator single-worker confirmation addendum from its pilot
+dev/active/07ca8585/addendum-ldpc-update-comparator-multicore-pilot.json	specification	Pilot addendum, comparator multicore family
+dev/bench_results/07ca8585/tables.md	reference	Min-sum update evidence tables
+dev/bench_results/07ca8585/preparation/build-identity.json	benchmark	Build identity of both gf2 generations and the pinned AFF3CT arm
+dev/bench_results/07ca8585/preparation/structural-costs.json	benchmark	Derived per-iteration structural work of both update paths
+dev/bench_results/07ca8585/preparation/alloc-census.jsonl	benchmark	Allocation census of both generations over the frozen workloads
+dev/bench_results/07ca8585/preparation/allocation-counter.jsonl	benchmark	Steady-state allocation counter run record (REQ-07)
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-pilot/acceptance-summary.json	benchmark	Accepted before/after single-worker pilot, acceptance summary
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-pilot/receipt.json	benchmark	Accepted before/after single-worker pilot, receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot/acceptance-summary.json	benchmark	Accepted comparator single-worker pilot, acceptance summary
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot/receipt.json	benchmark	Accepted comparator single-worker pilot, receipt
+dev/bench_results/07ca8585/v4-update-single-worker-family-ledger.jsonl	benchmark	Append-only family ledger, before/after single-worker family
+dev/bench_results/07ca8585/v4-update-comparator-single-worker-family-ledger.jsonl	benchmark	Append-only family ledger, comparator single-worker family
+dev/bench_results/07ca8585/run-campaign.sh	benchmark	Campaign launcher for the min-sum update families
+dev/bench_results/07ca8585/run-smoke.sh	benchmark	Wire-contract smoke of the min-sum update arms

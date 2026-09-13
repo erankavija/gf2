@@ -1,0 +1,43 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-13T11:40:06.478865369Z",
+  "dependencies": [
+    "8d8be934-347f-4d7a-a53a-e7f8e13aaad8"
+  ],
+  "description": "After the plan-review checkpoint passes, decompose the plan for Profile and optimize mid-range buffer operations (8-64 words) (2037941f) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
+  "documents": [],
+  "gates_required": [
+    "coverage-preview",
+    "breakdown-review"
+  ],
+  "gates_status": {
+    "breakdown-review": {
+      "status": "pending",
+      "updated_at": "2026-09-13T11:40:06.478865369Z",
+      "updated_by": null
+    },
+    "coverage-preview": {
+      "status": "pending",
+      "updated_at": "2026-09-13T11:40:06.478865369Z",
+      "updated_by": null
+    }
+  },
+  "id": "30c3aef1-9272-425d-8ac5-276cca22a8c7",
+  "labels": [
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "epic:zen3-cpu-performance",
+    "satisfies:REQ-02",
+    "satisfies:REQ-06",
+    "cites:IsaL2026",
+    "cites:AlbrechtBard2026",
+    "type:breakdown",
+    "brackets:2037941f"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "breakdown: Profile and optimize mid-range buffer operations (8-64 words)",
+  "updated_at": "2026-09-13T11:40:06.478865369Z"
+}

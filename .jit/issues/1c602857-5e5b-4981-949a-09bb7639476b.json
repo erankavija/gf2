@@ -237,8 +237,34 @@
       "doc_type": "notes",
       "label": "Producing-input snapshot generator",
       "path": "dev/active/1c602857/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Conformance validation raw log (default features)",
+      "path": "dev/active/1c602857/validation-raw-default-features.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Conformance validation raw log (--features simd,test-support)",
+      "path": "dev/active/1c602857/validation-raw-simd-test-support.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Conformance validation raw log (--all-features)",
+      "path": "dev/active/1c602857/validation-raw-all-features.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 3",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/1c602857-r3.md"
     }
   ],
+  "done_at": "2026-09-13T12:00:43.204262357Z",
   "first_ready_at": "2026-09-10T16:45:41.029543432Z",
   "gates_required": [
     "cargo-ci",
@@ -249,22 +275,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-13T09:11:50.148066400Z",
+      "updated_at": "2026-09-13T11:59:45.203559280Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-13T09:08:41.565978108Z",
+      "updated_at": "2026-09-13T11:51:02.519014298Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-13T09:06:28.397948144Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T11:48:41.303258906Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-13T09:09:11.987709002Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T11:51:58.067661950Z",
       "updated_by": "auto:executor"
     }
   },
@@ -276,7 +302,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Route the public wide carry-less product through capability dispatch",
-  "updated_at": "2026-09-13T09:11:50.148066400Z"
+  "updated_at": "2026-09-13T12:00:43.204262357Z"
 }

@@ -1,0 +1,151 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "smoke-1d4fd63d-20260913t120848z",
+  "issue": "1d4fd63d",
+  "label": "smoke",
+  "campaign_seed": 20260913001,
+  "addendum": "dev/active/1d4fd63d/addendum-v4-transpose-lane-smoke.json",
+  "producing_manifest": "dev/active/1d4fd63d/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "production": {
+      "build": "conservative-portable",
+      "description": "the 64x64 block kernel gf2_kernels_simd::transpose::detect publishes for this host, which is what BitMatrix::transpose and gf2-coding's bit-sliced BCH encoding reach: the pinned pre-change implementation",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "production"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "production-control": {
+      "build": "conservative-portable",
+      "description": "identity control: the production dispatch launched as a second arm, so the cell measures the pinned consumer against itself",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "production"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "lane-avx2-ymm6": {
+      "build": "conservative-portable",
+      "description": "the avx2-ymm6 candidate lane, named through transpose::lane: all six mask-shift-XOR stages in YMM registers with no stack scratch",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "avx2-ymm6"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "lane-avx2-pshufb": {
+      "build": "conservative-portable",
+      "description": "the avx2-pshufb candidate lane, named through transpose::lane: 8x8 byte tiles through a vpshufb bit-reversal lookup",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "avx2-pshufb"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "lane-avx2-movemask": {
+      "build": "conservative-portable",
+      "description": "the avx2-movemask candidate lane, named through transpose::lane: an SSE byte transpose followed by vpmovmskb bit-plane extraction",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "avx2-movemask"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "lane-avx2-ymm6-smoke-block-16-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-ymm6",
+      "case": {
+        "kind": "transpose-block",
+        "blocks": 16,
+        "seed": 20260913011
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-smoke-bulk-64-6core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-pshufb",
+      "case": {
+        "kind": "transpose-bulk",
+        "blocks": 64,
+        "seed": 20260913012
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "lane-avx2-movemask-smoke-absorb-m8-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-movemask",
+      "case": {
+        "kind": "bitslice-absorb",
+        "degree": 8,
+        "modulus": 285,
+        "designed_distance": 9,
+        "seed": 20260913013
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-smoke-unpack-m8-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-ymm6",
+      "case": {
+        "kind": "bitslice-unpack",
+        "degree": 8,
+        "modulus": 285,
+        "designed_distance": 9,
+        "seed": 20260913014
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "lane-avx2-movemask-smoke-matrix-128-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-movemask",
+      "case": {
+        "kind": "matrix-transpose",
+        "rows": 128,
+        "cols": 128,
+        "seed": 20260913015
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "bch-encode-bitslice-m8-b8-smoke-control-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "production-control",
+      "case": {
+        "kind": "bch-encode-bitslice",
+        "degree": 8,
+        "modulus": 285,
+        "designed_distance": 9,
+        "seed": 20260913016,
+        "batch": 8
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 5
+}

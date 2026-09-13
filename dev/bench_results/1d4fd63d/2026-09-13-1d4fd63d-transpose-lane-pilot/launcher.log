@@ -1,0 +1,28 @@
+# command: ./dev/bench_results/1d4fd63d/run-transpose-lane.sh pilot
+# started_utc: 2026-09-13T12:12:57Z
+# gf2 revision (informational): c5972f3cce022b13e42b935de78d2f24b45f6962
+# mode: pilot  label: pilot
+# addendum: dev/active/1d4fd63d/addendum-v4-transpose-lane-pilot.json  sha256: 05c8c84a4791d34e46eaa1a238d587a96b217a69a1c6e22685f60ac359d8d64d
+# ledger: dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl  sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-pilot.plan.json  sha256: e00ccffcdc8a940516e2c06b91e8c6045683019ef204a76ad619939411b8a6fa
+# exploratory pairs per cell: 12
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-pilot
+# arm: 0a9c4061506e2b2f9446b313c4c8d557b8c0d2c60e90a66ba806d7e652dabe20  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-acceptance
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start:  15:12:57 up 9 days, 16:41,  9 users,  load average: 9.78, 5.81, 4.88
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-pilot/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-pilot/execution.log
+# session 2 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-pilot/execution.log
+# session 3 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-pilot/execution.log
+# session 4 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions this invocation: 4
+# load_avg_end:  15:20:31 up 9 days, 16:49,  9 users,  load average: 1.98, 2.94, 3.78
+# finished_utc: 2026-09-13T12:20:31Z

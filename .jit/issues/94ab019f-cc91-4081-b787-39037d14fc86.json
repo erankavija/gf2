@@ -19,7 +19,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Gate the conservative tuning test on every feature it needs",
-  "updated_at": "2026-09-12T16:53:33.978784228Z"
+  "updated_at": "2026-09-13T12:01:02.083896024Z"
 }

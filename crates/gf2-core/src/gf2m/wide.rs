@@ -20,14 +20,12 @@
 //! # Carry-less product dispatch
 //!
 //! `clmul_wide_dispatch` is the one place a wide carry-less product selects
-//! its kernel. The public long-product API ([`clmul_wide`],
-//! [`clmul_wide_slice`]), [`Gf2mWide::mul_ref`] and the wide Barrett reducer
-//! all reach it, so whichever of them a caller uses, a build with the `simd`
-//! feature enabled *and* a host with PCLMULQDQ computes the `GF(2^256)` and
-//! `GF(2^571)` products in the AVX2+VPCLMULQDQ or PCLMULQDQ kernels of
-//! [`gf2_kernels_simd::gf2m_wide`]. `simd` is not a default feature: every
-//! other width, every host without the capability, and every build that
-//! does not enable `simd` — including the crate's own default build — runs
+//! its kernel; its rustdoc states the exact dispatch predicate (the `simd`
+//! feature, target and runtime CPU-flag conditions). The public long-product
+//! API ([`clmul_wide`], [`clmul_wide_slice`]), [`Gf2mWide::mul_ref`] and the
+//! wide Barrett reducer all reach it, so whichever of them a caller uses,
+//! that predicate decides whether the call reaches the `GF(2^256)` /
+//! `GF(2^571)` kernels of [`gf2_kernels_simd::gf2m_wide`] or
 //! [`clmul_wide_slice_portable`]. A caller that wants the portable
 //! schoolbook whatever the build and host offer — a benchmark baseline, a
 //! conformance oracle — calls that function directly.
@@ -879,11 +877,9 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// The unreduced product and the two products inside Barrett reduction all
     /// run through `clmul_wide_dispatch`, the canonical carry-less product
-    /// selection this crate shares with its public long-product API, so a
-    /// build with the `simd` feature enabled and a host with PCLMULQDQ
-    /// reaches the `gf2-kernels-simd` kernels at `N == 4` and `N == 9`.
-    /// `simd` is off by default. Every other case, including a build
-    /// without `simd`, runs [`clmul_wide_slice_portable`].
+    /// selection this crate shares with its public long-product API; see its
+    /// rustdoc for the exact dispatch predicate. Every case the predicate
+    /// does not satisfy runs [`clmul_wide_slice_portable`].
     ///
     /// # Arguments
     ///
@@ -934,9 +930,10 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         let mut product = vec![0u64; 2 * N];
 
         // Step 1: the canonical dispatch selects the `gf2-kernels-simd`
-        // kernel for N == 4 (GF(2^256)) and N == 9 (GF(2^571)) on a host with
-        // PCLMULQDQ and the portable schoolbook otherwise, so all unsafe
-        // intrinsics stay isolated in the kernels crate.
+        // kernel for N == 4 (GF(2^256)) and N == 9 (GF(2^571)) when
+        // `clmul_wide_dispatch`'s dispatch predicate holds, and the portable
+        // schoolbook otherwise, so all unsafe intrinsics stay isolated in the
+        // kernels crate.
         clmul_wide_dispatch::<N>(
             &self.words,
             &rhs.words,
@@ -2065,13 +2062,28 @@ pub(crate) enum ProductWrite {
 /// The canonical carry-less product dispatch: every wide product in the crate,
 /// public or internal, selects its kernel here.
 ///
-/// Selects the PCLMULQDQ kernels `gf2-kernels-simd` publishes for the widths
-/// that have one — 4 words (GF(2^256)) and 9 words (GF(2^571)) — when the
-/// `simd` feature is enabled, and otherwise runs
-/// [`clmul_wide_slice_portable`]. `simd` is not a default feature. At the two
-/// dispatched widths, with `simd` enabled, the selection is also a runtime
-/// capability question (PCLMULQDQ present or not); every other width is a
-/// compile-time question alone, since `N` is a const parameter.
+/// # Dispatch predicate
+///
+/// This is the authoritative statement of when a kernel runs; every other
+/// mention of this dispatch (the public API, `Gf2mWide::mul_ref`, the module
+/// docs of this module and [`crate::gf2m::barrett`]) cites it by name rather
+/// than restate it.
+///
+/// A kernel runs only for the two widths `gf2-kernels-simd` publishes one for
+/// — 4 words (GF(2^256)) and 9 words (GF(2^571)) — and only when *all* of the
+/// following hold, exactly as `gf2_kernels_simd::gf2m_wide::detect_x86_wide`
+/// evaluates them:
+///
+/// 1. The crate's `simd` feature is enabled (it is not a default feature).
+/// 2. The target is `x86` or `x86_64`.
+/// 3. The runtime host reports, for the preferred YMM lane, **AVX2 and
+///    VPCLMULQDQ and SSE4.1**; failing that, for the XMM lane, **PCLMULQDQ
+///    and SSE4.1**. No other flag (no BMI, no AVX-512) is checked.
+///
+/// Every other width, every other target, a `simd`-disabled build, and a host
+/// that clears neither flag set all run [`clmul_wide_slice_portable`]. Width
+/// is a compile-time question alone, since `N` is a const parameter; the flag
+/// check is the only part decided at runtime.
 ///
 /// # Arguments
 ///
@@ -2180,11 +2192,9 @@ fn xor_into(out: &mut [u64], scratch: &[u64]) {
 /// # Mechanism
 ///
 /// The product runs through `clmul_wide_dispatch`, the canonical selection
-/// this crate's wide arithmetic shares, so a build with the `simd` feature
-/// enabled and a host with PCLMULQDQ computes the 4-word and 9-word products
-/// in the vector kernels of `gf2-kernels-simd`. `simd` is off by default.
-/// Every other width, every host without the capability, and every build
-/// that does not enable `simd` runs [`clmul_wide_slice_portable`].
+/// this crate's wide arithmetic shares; see its rustdoc for the exact
+/// dispatch predicate. Every case the predicate does not satisfy runs
+/// [`clmul_wide_slice_portable`].
 ///
 /// # Stable-Rust caveat: why two const parameters?
 ///
@@ -2248,9 +2258,9 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 /// # Mechanism
 ///
 /// The product runs through `clmul_wide_dispatch` exactly as [`clmul_wide`]
-/// does, so it reaches the same kernels under the same condition: the `simd`
-/// feature enabled and a host with PCLMULQDQ, at `N == 4` or `N == 9`; every
-/// other case runs [`clmul_wide_slice_portable`]. Accumulating into a caller's buffer
+/// does, so it reaches the same kernels under the same dispatch predicate
+/// (see that function's rustdoc); every case the predicate does not satisfy
+/// runs [`clmul_wide_slice_portable`]. Accumulating into a caller's buffer
 /// costs a scratch product and one XOR pass on a dispatched width, which
 /// [`clmul_wide`] avoids; a caller that wants the plain product of a 4- or
 /// 9-word operand pair is better served by [`clmul_wide`].
@@ -3857,9 +3867,9 @@ mod tests {
 
             /// Unconditional agreement test for the N=4 multiplication path.
             ///
-            /// On SIMD hosts (VPCLMULQDQ present, Zen 3 and similar)
-            /// `Gf2mWide::<4, _>::mul` dispatches through the kernel in
-            /// `gf2-kernels-simd::gf2m_wide`. On hosts without PCLMULQDQ
+            /// When `clmul_wide_dispatch`'s dispatch predicate holds (Zen 3 and
+            /// similar hosts, `simd` enabled) `Gf2mWide::<4, _>::mul` dispatches
+            /// through the kernel in `gf2-kernels-simd::gf2m_wide`; otherwise
             /// the dispatch falls back to the pure-Rust scalar schoolbook.
             /// Either way the result must equal the independent reference
             /// implementation in `scalar_reference_mul`.
@@ -3878,9 +3888,9 @@ mod tests {
 
             /// Agreement test for the N=9 / m=571 multiplication path.
             ///
-            /// On AVX2+VPCLMULQDQ hosts this covers the new 9×9 YMM kernel in
-            /// both the initial product and Barrett's two internal products;
-            /// on non-SIMD hosts it still checks the scalar path against the
+            /// When `clmul_wide_dispatch`'s dispatch predicate holds this covers
+            /// the 9×9 YMM kernel in both the initial product and Barrett's two
+            /// internal products; otherwise it checks the scalar path against the
             /// independent shift-and-XOR reducer.
             #[test]
             fn prop_simd_matches_scalar_reference_m571(

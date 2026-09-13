@@ -290,28 +290,68 @@
           "short_id": "53c5a8c0",
           "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
           "classification": "research",
-          "status": "session 12: dispatched to w12-53c5a8c0 (opus) in .agents/worktrees/agent-53c5a8c0 (base 2d8b6c0b) with the worker brief."
+          "status": "session 14: continuation worker w14-53c5a8c0 (opus) in .agents/worktrees/agent-53c5a8c0 from 4fd96ef9 (both confirmations committed, qualifies=false each; freezer extended with --holdout-cells/--purpose): asm and profiler attribution (REQ-04), crossover recommendations (REQ-05), findings, tables, cargo-ci, merge main, links.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-53c5a8c0",
+            "branch": "worktree-agent-53c5a8c0",
+            "base": "2d8b6c0b",
+            "attempt": 3,
+            "rework_round": null,
+            "session": 14
+          }
         },
         {
           "id": "19513245-7fb9-4490-8e41-d9c01405db01",
           "short_id": "19513245",
           "title": "Assess byte-field acceleration in vector and matrix consumers",
           "classification": "research",
-          "status": "pending"
+          "status": "session 14: dispatched to w14-19513245 (opus) in .agents/worktrees/agent-19513245 (base f753f8db).",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-19513245",
+            "branch": "worktree-agent-19513245",
+            "base": "f753f8db",
+            "attempt": 1,
+            "rework_round": null,
+            "session": 14
+          }
         },
         {
           "id": "1d4fd63d-c522-47cb-9448-fe8f5220f0ed",
           "short_id": "1d4fd63d",
           "title": "Optimize bit transpose and bitslice conversion",
           "classification": "implementation",
-          "status": "session 12: dispatched to w12-1d4fd63d (opus) in .agents/worktrees/agent-1d4fd63d (base 2d8b6c0b) with the worker brief."
+          "status": "session 14: worker branch (8ca2b3f4, cargo-ci not run by the worker) reviewed by the lead: PASS at Tier 2/2.5/2.75/3 (reviews/1d4fd63d-r1.md); lead commit 49d838a7 names owners for the four follow-ups (63bad95d, 8e53235b, 1362381c); merged at 0bce899b. Gates: asm-artefact-present passed; research-review failed tier 1 on cites labels absent from the text (invoker chose the 3be770d5 repair for all ten affected issues); doc-review F1 (dispatch rustdoc provenance, lead fix on main) and F2 (report not linked; links from pending-links/1d4fd63d-links.tsv); code-review run errored in the tracker (serialization) and is re-run. Candidate lane not selected under the frozen rule; adoption question raised to the invoker (non-blocking).",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-1d4fd63d",
+            "branch": "worktree-agent-1d4fd63d",
+            "base": "2d8b6c0b",
+            "attempt": 2,
+            "rework_round": null,
+            "session": 13
+          },
+          "merge_commit": "0bce899b",
+          "reviews": [
+            "reviews/1d4fd63d-r1.md"
+          ]
         },
         {
           "id": "5cbb6545-4496-4325-8fa9-d50aaa9fcf50",
           "short_id": "5cbb6545",
           "title": "Optimize population count and fused bit reductions",
           "classification": "implementation",
-          "status": "session 12: dispatched to w12-5cbb6545 (opus) in .agents/worktrees/agent-5cbb6545 (branch worktree-agent-5cbb6545, base 2d8b6c0b) with the worker brief; survey, candidates, frozen families, pilot/confirmation, tuning-mechanism winners."
+          "status": "session 14: continuation worker w14-5cbb6545 (opus) in .agents/worktrees/agent-5cbb6545 from be7d9ba5: commits the popcount confirmation that completed after the session-13 worker died (accepted, qualifies=false: w4 fail, w16384-vs-libpopcnt not-material), runs the fused confirmation, adoption under REQ-10, findings, tables, cargo-ci, merge main, links.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-5cbb6545",
+            "branch": "worktree-agent-5cbb6545",
+            "base": "2d8b6c0b (main merged later)",
+            "attempt": 3,
+            "rework_round": null,
+            "session": 14
+          }
         },
         {
           "id": "2037941f-852c-4d94-9d49-ad06a364dca8",
@@ -347,7 +387,26 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "session 12: round-1 rework merged at 71c6b135; gates on it: cargo-ci and code-review pass; doc-review F1 (exact dispatch predicate: SSE4.1 + PCLMULQDQ, AVX2 + VPCLMULQDQ + SSE4.1) and research-review F2 (all-features test claim without a committed record) failed; rework round 2 of 2 dispatched to w12-1c602857."
+          "status": "done. Session 13: round 2 merged at c1cd9256 (worker db720448, 1016092b; lead 529662f0 cites the predicate from the test docs); links at e479a99c; code-review, doc-review and research-review pass on e479a99c (A1 advisory: frozen confirmation addendum keeps the pilot's stage sentence; brief amended, task 94bbe5d7 filed), cargo-ci pass on b9989fc7 (5987 tests). Review reviews/1c602857-r3.md.",
+          "dispatch": {
+            "model": "claude-sonnet (native subagent)",
+            "worktree": ".agents/worktrees/agent-1c602857",
+            "branch": "worktree-agent-1c602857",
+            "base": "71c6b135 (main merged)",
+            "attempt": 3,
+            "rework_round": 2,
+            "session": 13
+          },
+          "reviews": [
+            "reviews/1c602857-r3.md"
+          ],
+          "merge_commit": "c1cd9256",
+          "gates": {
+            "cargo-ci": "passed b9989fc7",
+            "code-review": "passed e479a99c",
+            "doc-review": "passed e479a99c",
+            "research-review": "passed e479a99c (A1 advisory)"
+          }
         }
       ]
     },
@@ -359,7 +418,19 @@
           "short_id": "07ca8585",
           "title": "Remove allocation and repeated edge traversal from LDPC updates",
           "classification": "implementation",
-          "status": "pending"
+          "status": "session 14: round-1 lead review FAIL (reviews/07ca8585-r1.md): REQ-10 unmet (no isolated check-node-update or fixed-iteration cells; multicore only queued), deferred markers in findings.md, untested GPU device-layout change although a gfx1030 is present. Rework round 1 dispatched to w14-07ca8585 (opus) in the reused agent-1c602857 directory from b2822c98; measured after-arm sources must stay byte-identical; four queue lines already on the branch.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-1c602857 (reused directory)",
+            "branch": "worktree-agent-07ca8585",
+            "base": "e479a99c",
+            "attempt": 2,
+            "rework_round": 1,
+            "session": 14
+          },
+          "reviews": [
+            "reviews/07ca8585-r1.md"
+          ]
         },
         {
           "id": "63bad95d-0e69-459b-840b-c37521036f52",
@@ -485,6 +556,18 @@
       "type": "bug",
       "in_epic": false,
       "reason": "jit doc add refuses a .txt containing a demangled Rust symbol (asset scanner reads it as a relative path); filed in ~/Projects/just-in-time, tracker state left uncommitted there for the owner"
+    },
+    {
+      "id": "94bbe5d7",
+      "type": "task",
+      "in_epic": true,
+      "reason": "1c602857 research-review A1: the canonical freezer copies the pilot's stage sentence into a confirmation unless --family-description is passed; feeds 1362381c"
+    },
+    {
+      "id": "8e53235b",
+      "type": "task",
+      "in_epic": false,
+      "reason": "1d4fd63d follow-up 3 / 04b85d10 ranked entry 1: word-wise systematic codeword assembly for packed BCH is a gf2-coding packing change with no owner; depends on 1d4fd63d"
     }
   ],
   "escalations": [
@@ -667,6 +750,23 @@
       "status": "resolved",
       "raised_at": "2026-09-13T08:45Z",
       "resolution": "Invoker chose the audited round."
+    },
+    {
+      "category": "issue scope change (description)",
+      "issue": "ten open issues",
+      "question": "cites labels absent from the description text fail research-review at tier 1",
+      "recommendation": "append Source references to all ten",
+      "status": "resolved",
+      "raised_at": "2026-09-13T17:05Z",
+      "resolution": "Invoker chose 'Append to all eleven': the 3be770d5 form applied in one batch; labels, criteria and gates unchanged."
+    },
+    {
+      "category": "open question (non-blocking)",
+      "issue": "1d4fd63d",
+      "question": "the avx2-ymm6 lane is confirmed faster on three kernel cells and ahead of both comparators but its receipt does not qualify (two minority-share consumer cells frozen as improvement record not-material) and the family has no further attempt",
+      "recommendation": "leave the published lane unchanged; 63bad95d calibrates selectors under its own frozen protocol",
+      "status": "open",
+      "raised_at": "2026-09-13T17:00Z"
     }
   ],
   "rework_counts": {
@@ -680,7 +780,8 @@
     "3be770d5": 1,
     "428f2f6b": 1,
     "12fdeb5b": 2,
-    "1c602857": 2
+    "1c602857": 2,
+    "07ca8585": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1004,6 +1105,13 @@
       "origin": "gate infrastructure (session 12)",
       "disposition": "resolved at 33f08f02 on the invoker's approval",
       "criterion_named_by": "none"
+    },
+    {
+      "issue": "1c602857",
+      "subject": "the frozen confirmation addendum's family description ends with the pilot's own sentence ('This addendum is the pilot: every cell is exploratory'); the canonical freezer copies the pilot prose unless --family-description is passed, so every confirmation frozen without it carries a false stage statement (research-review A1, advisory, present in two rounds)",
+      "origin": "issue-impact (freezer default)",
+      "disposition": "advisory; the receipt pins the addendum bytes so the frozen file stays; worker brief amended to require --family-description; freezer default change filed as an epic task",
+      "criterion_named_by": "none in 1a379447"
     }
   ],
   "notes": [
@@ -1073,7 +1181,13 @@
     "Session 11 invoker instruction (2026-09-12 ~18:00Z): no new work this session; finish what is in flight, reserve campaigns for the overnight slot, arm it, then hand off.",
     "Session 12 (2026-09-13): invocation: drive the epic, subagent model by difficulty (opus/sonnet, no Fable), four workers at a time in reused worktrees. Timed confirmations of about five minutes ran in-session under the CCX1 lock per the 2026-09-11 policy (a run at most about as long as a cold cargo-ci).",
     "Session 12 invoker rulings: (1) executor-trust model for aborted campaigns (12fdeb5b, DEC-01, protocol voided-attempt paragraph); (2) a203a23c code-review F1 (registered receipt-input omissions) overruled as out of scope, recorded as DEC-01; (3) one audited rework round for a203a23c after three same-class findings; (4) Decisions clause added to code and doc review prompts. A decision is recorded on the issue under ## Decisions and the gate is still run.",
-    "Session 12 wave 3, batch 1 (dispatched 2026-09-13T09:15Z): 5cbb6545, 1d4fd63d, 53c5a8c0 in fresh worktrees off 2d8b6c0b; 19513245 follows when a slot frees; the stories 2037941f and c04dd4ac are breakable (templates applies_to story) and need the bracketed breakdown before dispatch; 2c487595 and 706a8f93 are small bugs for sonnet slots; c04dd4ac also needs the eda07788 arms rebuilt first. Shared-surface conflict risk noted for tuning/, bitvec.rs and dev/tools/tuning-campaign-support; workers keep such edits in separate commits."
+    "Session 12 wave 3, batch 1 (dispatched 2026-09-13T09:15Z): 5cbb6545, 1d4fd63d, 53c5a8c0 in fresh worktrees off 2d8b6c0b; 19513245 follows when a slot frees; the stories 2037941f and c04dd4ac are breakable (templates applies_to story) and need the bracketed breakdown before dispatch; 2c487595 and 706a8f93 are small bugs for sonnet slots; c04dd4ac also needs the eda07788 arms rebuilt first. Shared-surface conflict risk noted for tuning/, bitvec.rs and dev/tools/tuning-campaign-support; workers keep such edits in separate commits.",
+    "Session 13 (2026-09-13T11:28Z): session 12 ended on a usage limit at 09:22Z with four workers running; the three wave-3 workers had produced only uncommitted candidate code (5cbb6545 popcount.rs, 1d4fd63d transpose.rs lanes) and 1c602857's round 2 had committed 164dd895 plus an uncommitted validation harness. Resumed all four as w13-<id> in the same worktrees (opus for the three measurement tasks, sonnet for the bounded rework). The Decisions clause of 33f08f02 had been edited into the gate-prompt projections without their package source (packages/sim-research/assets/live/contrib/gates), so `jit recover`'s derived-state repair reverted it; fixed at the source as sim-research 1.2.1 (3dad2478) per the invoker's session-12 ruling 4.",
+    "Session 13 lead decision (07ca8585): the canonical check-node reduction follows the supported scalar reference (REQ-09); the pre-change AVX2 lanes of Llr::boxplus_minsum_n diverge on negative-zero/NaN messages at check degree >= 9 (NR BG1 reachable, DVB-T2 not), the kernel defect bug 39cbde20 tracks. Accepted as a disclosed correctness alignment, not a hidden numerical change: findings.md section, decoder rustdoc citing @/issue/39cbde20, divergence-measuring test, kernel untouched, before arm = pinned pre-change decoder. Worker's 'main is broken' report was partial-feature clippy/check; cargo-ci passes on the anchor.",
+    "Session 13 invoker instruction 12:56Z: no new dispatches; let the four running workers finish, then hand off (handoff-10.md).",
+    "Invocation 2026-09-13 (session 14): drive the epic; subagent model by difficulty, no Fable; four workers at a time in reused worktrees. Session 13 died on a usage limit at 13:26Z with four workers running; only 07ca8585 had reported.",
+    "Invoker ruling (session 14): dispatch prompts are ephemeral and are not committed; the session-13 suggestion to commit them is void. The 07ca8585 round-1 verdict stays under reviews/.",
+    "Invoker decision (session 14): the 3be770d5 citation repair ('Source references: [Key].' appended to Notes) applies to all ten open issues whose cites labels were absent from their text: 1d4fd63d 5cbb6545 53c5a8c0 07ca8585 19513245 f63a2464 ed3d490e 1362381c 2037941f c04dd4ac."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1085,10 +1199,11 @@
     "handoff-6.md",
     "handoff-7.md",
     "handoff-8.md",
-    "handoff-9.md"
+    "handoff-9.md",
+    "handoff-10.md"
   ],
   "pending_artifact_links": {
-    "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report."
+    "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
   },
   "benchmark_window": {
     "unit": "gf2-bench-window-20260913",
