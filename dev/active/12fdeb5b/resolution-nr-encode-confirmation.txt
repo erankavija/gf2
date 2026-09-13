@@ -1,0 +1,34 @@
+pilot receipt  dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json
+receipt sha256 9e2c362845d5c84bff33fdbeeee8ffab4685e0189ac7896828e496c2435974a5
+campaign       nr-encode-pilot-12fdeb5b-20260913t011403z
+verdict        accepted (label pilot)
+family         nr-rate-matched-encode-baselines-v1: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+nr-enc-bg2-n1024-k400-null-native-vs-native    24      1.0006     0.99915      1.0021    0.0015
+nr-enc-bg2-n256-k121-gap-native-vs-srsran    24      6.9139      6.8181      6.9453    0.0139
+nr-enc-bg2-n1440-k720-gap-native-vs-srsran    24      34.656      34.444      34.812    0.0061
+nr-enc-bg1-n2560-k2048-gap-native-vs-srsran    24      80.561      80.272      80.892    0.0041
+nr-enc-bg1-n8448-k4224-gap-native-vs-srsran    24      150.44      149.95      151.38    0.0062
+nr-enc-bg2-n256-k121-gap-native-vs-aff3ct    24      0.4724     0.46957     0.47382    0.0060
+nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct    24       1.973      1.9677      1.9803    0.0037
+nr-enc-bg1-n2560-k2048-control-portable-vs-native    24     0.89314     0.88397     0.92501    0.0357
+
+widest relative half-width   0.035684
+frozen measurement resolution 0.04
+restated equivalence_margin rationale; value 1.1 unchanged
+restated material_gap_threshold rationale; value 1.2 unchanged
+restated the family description for the confirmatory stage
+
+selection      6 of 8 pilot cells become confirmatory
+rationale      P-20 rejects a confirmatory cell whose corrected tail holds fewer than twenty expected bootstrap draws. This family's first attempt derives alpha 0.05/(1*2) from the ledger, the corrected alpha divides it by the number of comparisons, and each tail holds bootstrap_resamples * corrected_alpha / 2 draws; six comparisons clear twenty draws and seven do not, so at most six of the eight pilot cells become confirmatory. The dropped pair are the identity controls: the null cell compares the native gf2 executable with itself and the portable cell compares two builds of the same gf2 source, so each answers a validity question about the harness rather than attributing a comparator gap. The pilot settled both, and this record's table carries their intervals. Every gf2-versus-comparator pair the pilot measured is retained.
+retained       nr-enc-bg2-n256-k121-gap-native-vs-srsran
+retained       nr-enc-bg2-n1440-k720-gap-native-vs-srsran
+retained       nr-enc-bg1-n2560-k2048-gap-native-vs-srsran
+retained       nr-enc-bg1-n8448-k4224-gap-native-vs-srsran
+retained       nr-enc-bg2-n256-k121-gap-native-vs-aff3ct
+retained       nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct
+dropped        nr-enc-bg2-n1024-k400-null-native-vs-native
+dropped        nr-enc-bg1-n2560-k2048-control-portable-vs-native
+margins: equivalence 1.1, material gap 1.2
+confirmation addendum dev/active/12fdeb5b/addendum-nr-encode-confirmation.json
