@@ -1,0 +1,869 @@
+{
+  "rows": [
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 5,
+        "k_ldpc": 220,
+        "lifting_factor": 22,
+        "n_ldpc": 1144
+      },
+      "configuration": "bg2-n256-k121",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.47265625,
+        "full_k": 220,
+        "full_n": 1144,
+        "kb": 10,
+        "kb_for_z_selection": 6,
+        "lifting_factor": 22,
+        "nb": 52,
+        "num_punctured_parity": 745,
+        "num_punctured_systematic": 44,
+        "num_shortened": 99,
+        "target_k": 121,
+        "target_n": 256
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 220,
+        "lifting_factor": 22,
+        "n_full": 1144,
+        "n_short": 1100,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 6,
+        "k_ldpc": 260,
+        "lifting_factor": 26,
+        "n_ldpc": 1352
+      },
+      "configuration": "bg2-n512-k200",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.390625,
+        "full_k": 260,
+        "full_n": 1352,
+        "kb": 10,
+        "kb_for_z_selection": 8,
+        "lifting_factor": 26,
+        "nb": 52,
+        "num_punctured_parity": 728,
+        "num_punctured_systematic": 52,
+        "num_shortened": 60,
+        "target_k": 200,
+        "target_n": 512
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 260,
+        "lifting_factor": 26,
+        "n_full": 1352,
+        "n_short": 1300,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 6,
+        "k_ldpc": 520,
+        "lifting_factor": 52,
+        "n_ldpc": 2704
+      },
+      "configuration": "bg2-n1024-k400",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.390625,
+        "full_k": 520,
+        "full_n": 2704,
+        "kb": 10,
+        "kb_for_z_selection": 8,
+        "lifting_factor": 52,
+        "nb": 52,
+        "num_punctured_parity": 1456,
+        "num_punctured_systematic": 104,
+        "num_shortened": 120,
+        "target_k": 400,
+        "target_n": 1024
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 520,
+        "lifting_factor": 52,
+        "n_full": 2704,
+        "n_short": 2600,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 2,
+        "k_ldpc": 800,
+        "lifting_factor": 80,
+        "n_ldpc": 4160
+      },
+      "configuration": "bg2-n1200-k600",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.5,
+        "full_k": 720,
+        "full_n": 3744,
+        "kb": 10,
+        "kb_for_z_selection": 9,
+        "lifting_factor": 72,
+        "nb": 52,
+        "num_punctured_parity": 2280,
+        "num_punctured_systematic": 144,
+        "num_shortened": 120,
+        "target_k": 600,
+        "target_n": 1200
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 720,
+        "lifting_factor": 72,
+        "n_full": 3744,
+        "n_short": 3600,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 4,
+        "k_ldpc": 720,
+        "lifting_factor": 72,
+        "n_ldpc": 3744
+      },
+      "configuration": "bg2-n1440-k720",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.5,
+        "full_k": 720,
+        "full_n": 3744,
+        "kb": 10,
+        "kb_for_z_selection": 10,
+        "lifting_factor": 72,
+        "nb": 52,
+        "num_punctured_parity": 2160,
+        "num_punctured_systematic": 144,
+        "num_shortened": 0,
+        "target_k": 720,
+        "target_n": 1440
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 720,
+        "lifting_factor": 72,
+        "n_full": 3744,
+        "n_short": 3600,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 0,
+        "k_ldpc": 1280,
+        "lifting_factor": 128,
+        "n_ldpc": 6656
+      },
+      "configuration": "bg2-n3840-k1280",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.3333333333333333,
+        "full_k": 1280,
+        "full_n": 6656,
+        "kb": 10,
+        "kb_for_z_selection": 10,
+        "lifting_factor": 128,
+        "nb": 52,
+        "num_punctured_parity": 2560,
+        "num_punctured_systematic": 256,
+        "num_shortened": 0,
+        "target_k": 1280,
+        "target_n": 3840
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 1280,
+        "lifting_factor": 128,
+        "n_full": 6656,
+        "n_short": 6400,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 3,
+        "k_ldpc": 70,
+        "lifting_factor": 7,
+        "n_ldpc": 364
+      },
+      "configuration": "bg2-n100-k40",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.4,
+        "full_k": 70,
+        "full_n": 364,
+        "kb": 10,
+        "kb_for_z_selection": 6,
+        "lifting_factor": 7,
+        "nb": 52,
+        "num_punctured_parity": 220,
+        "num_punctured_systematic": 14,
+        "num_shortened": 30,
+        "target_k": 40,
+        "target_n": 100
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 70,
+        "lifting_factor": 7,
+        "n_full": 364,
+        "n_short": 350,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 0,
+        "k_ldpc": 2560,
+        "lifting_factor": 256,
+        "n_ldpc": 13312
+      },
+      "configuration": "bg2-n5000-k2500",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.5,
+        "full_k": 2560,
+        "full_n": 13312,
+        "kb": 10,
+        "kb_for_z_selection": 10,
+        "lifting_factor": 256,
+        "nb": 52,
+        "num_punctured_parity": 7740,
+        "num_punctured_systematic": 512,
+        "num_shortened": 60,
+        "target_k": 2500,
+        "target_n": 5000
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 2560,
+        "lifting_factor": 256,
+        "n_full": 13312,
+        "n_short": 12800,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 0,
+        "k_ldpc": 640,
+        "lifting_factor": 64,
+        "n_ldpc": 3328
+      },
+      "configuration": "bg1-n1024-k512",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.5,
+        "full_k": 528,
+        "full_n": 1632,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 24,
+        "nb": 68,
+        "num_punctured_parity": 544,
+        "num_punctured_systematic": 48,
+        "num_shortened": 16,
+        "target_k": 512,
+        "target_n": 1024
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 528,
+        "lifting_factor": 24,
+        "n_full": 1632,
+        "n_short": 1584,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 6,
+        "k_ldpc": 1040,
+        "lifting_factor": 104,
+        "n_ldpc": 5408
+      },
+      "configuration": "bg1-n2048-k1024",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.5,
+        "full_k": 1056,
+        "full_n": 3264,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 48,
+        "nb": 68,
+        "num_punctured_parity": 1088,
+        "num_punctured_systematic": 96,
+        "num_shortened": 32,
+        "target_k": 1024,
+        "target_n": 2048
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 1056,
+        "lifting_factor": 48,
+        "n_full": 3264,
+        "n_short": 3168,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 6,
+        "k_ldpc": 2080,
+        "lifting_factor": 208,
+        "n_ldpc": 10816
+      },
+      "configuration": "bg1-n4096-k2048",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.5,
+        "full_k": 2112,
+        "full_n": 6528,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 96,
+        "nb": 68,
+        "num_punctured_parity": 2176,
+        "num_punctured_systematic": 192,
+        "num_shortened": 64,
+        "target_k": 2048,
+        "target_n": 4096
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 2112,
+        "lifting_factor": 96,
+        "n_full": 6528,
+        "n_short": 6336,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 5,
+        "k_ldpc": 968,
+        "lifting_factor": 44,
+        "n_ldpc": 2992
+      },
+      "configuration": "bg1-n1200-k900",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.75,
+        "full_k": 968,
+        "full_n": 2992,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 44,
+        "nb": 68,
+        "num_punctured_parity": 1636,
+        "num_punctured_systematic": 88,
+        "num_shortened": 68,
+        "target_k": 900,
+        "target_n": 1200
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 968,
+        "lifting_factor": 44,
+        "n_full": 2992,
+        "n_short": 2904,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 3,
+        "k_ldpc": 308,
+        "lifting_factor": 14,
+        "n_ldpc": 952
+      },
+      "configuration": "bg1-n400-k308",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.77,
+        "full_k": 308,
+        "full_n": 952,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 14,
+        "nb": 68,
+        "num_punctured_parity": 524,
+        "num_punctured_systematic": 28,
+        "num_shortened": 0,
+        "target_k": 308,
+        "target_n": 400
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 308,
+        "lifting_factor": 14,
+        "n_full": 952,
+        "n_short": 924,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 1,
+        "k_ldpc": 1056,
+        "lifting_factor": 48,
+        "n_ldpc": 3264
+      },
+      "configuration": "bg1-n1320-k1056",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.8,
+        "full_k": 1056,
+        "full_n": 3264,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 48,
+        "nb": 68,
+        "num_punctured_parity": 1848,
+        "num_punctured_systematic": 96,
+        "num_shortened": 0,
+        "target_k": 1056,
+        "target_n": 1320
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 1056,
+        "lifting_factor": 48,
+        "n_full": 3264,
+        "n_short": 3168,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 1,
+        "k_ldpc": 2112,
+        "lifting_factor": 96,
+        "n_ldpc": 6528
+      },
+      "configuration": "bg1-n2560-k2048",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.8,
+        "full_k": 2112,
+        "full_n": 6528,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 96,
+        "nb": 68,
+        "num_punctured_parity": 3712,
+        "num_punctured_systematic": 192,
+        "num_shortened": 64,
+        "target_k": 2048,
+        "target_n": 2560
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 2112,
+        "lifting_factor": 96,
+        "n_full": 6528,
+        "n_short": 6336,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 1,
+        "k_ldpc": 4224,
+        "lifting_factor": 192,
+        "n_ldpc": 13056
+      },
+      "configuration": "bg1-n8448-k4224",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.5,
+        "full_k": 4224,
+        "full_n": 13056,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 192,
+        "nb": 68,
+        "num_punctured_parity": 4224,
+        "num_punctured_systematic": 384,
+        "num_shortened": 0,
+        "target_k": 4224,
+        "target_n": 8448
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 4224,
+        "lifting_factor": 192,
+        "n_full": 13056,
+        "n_short": 12672,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 2,
+        "k_ldpc": 880,
+        "lifting_factor": 40,
+        "n_ldpc": 2720
+      },
+      "configuration": "bg1-n1100-k880",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.8,
+        "full_k": 880,
+        "full_n": 2720,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 40,
+        "nb": 68,
+        "num_punctured_parity": 1540,
+        "num_punctured_systematic": 80,
+        "num_shortened": 0,
+        "target_k": 880,
+        "target_n": 1100
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 880,
+        "lifting_factor": 40,
+        "n_full": 2720,
+        "n_short": 2640,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 7,
+        "k_ldpc": 2640,
+        "lifting_factor": 120,
+        "n_ldpc": 8160
+      },
+      "configuration": "bg1-n3300-k2640",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.8,
+        "full_k": 2640,
+        "full_n": 8160,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 120,
+        "nb": 68,
+        "num_punctured_parity": 4620,
+        "num_punctured_systematic": 240,
+        "num_shortened": 0,
+        "target_k": 2640,
+        "target_n": 3300
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 2640,
+        "lifting_factor": 120,
+        "n_full": 8160,
+        "n_short": 7920,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 1,
+        "k_ldpc": 528,
+        "lifting_factor": 24,
+        "n_ldpc": 1632
+      },
+      "configuration": "bg1-n704-k528",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.75,
+        "full_k": 528,
+        "full_n": 1632,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 24,
+        "nb": 68,
+        "num_punctured_parity": 880,
+        "num_punctured_systematic": 48,
+        "num_shortened": 0,
+        "target_k": 528,
+        "target_n": 704
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 528,
+        "lifting_factor": 24,
+        "n_full": 1632,
+        "n_short": 1584,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 6,
+        "k_ldpc": 572,
+        "lifting_factor": 26,
+        "n_ldpc": 1768
+      },
+      "configuration": "bg1-n706-k529",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.7492917847025495,
+        "full_k": 572,
+        "full_n": 1768,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 26,
+        "nb": 68,
+        "num_punctured_parity": 967,
+        "num_punctured_systematic": 52,
+        "num_shortened": 43,
+        "target_k": 529,
+        "target_n": 706
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 572,
+        "lifting_factor": 26,
+        "n_full": 1768,
+        "n_short": 1716,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 4,
+        "k_ldpc": 720,
+        "lifting_factor": 72,
+        "n_ldpc": 3744
+      },
+      "configuration": "bg2-n1120-k560",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.5,
+        "full_k": 720,
+        "full_n": 3744,
+        "kb": 10,
+        "kb_for_z_selection": 8,
+        "lifting_factor": 72,
+        "nb": 52,
+        "num_punctured_parity": 2320,
+        "num_punctured_systematic": 144,
+        "num_shortened": 160,
+        "target_k": 560,
+        "target_n": 1120
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 720,
+        "lifting_factor": 72,
+        "n_full": 3744,
+        "n_short": 3600,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 4,
+        "k_ldpc": 720,
+        "lifting_factor": 72,
+        "n_ldpc": 3744
+      },
+      "configuration": "bg2-n1122-k561",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.5,
+        "full_k": 640,
+        "full_n": 3328,
+        "kb": 10,
+        "kb_for_z_selection": 9,
+        "lifting_factor": 64,
+        "nb": 52,
+        "num_punctured_parity": 1999,
+        "num_punctured_systematic": 128,
+        "num_shortened": 79,
+        "target_k": 561,
+        "target_n": 1122
+      },
+      "redundancy_version": 0,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 640,
+        "lifting_factor": 64,
+        "n_full": 3328,
+        "n_short": 3200,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 1,
+        "k_ldpc": 2112,
+        "lifting_factor": 96,
+        "n_ldpc": 6528
+      },
+      "configuration": "bg1-n2560-k2048-rv1",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.8,
+        "full_k": 2112,
+        "full_n": 6528,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 96,
+        "nb": 68,
+        "num_punctured_parity": 3712,
+        "num_punctured_systematic": 192,
+        "num_shortened": 64,
+        "target_k": 2048,
+        "target_n": 2560
+      },
+      "redundancy_version": 1,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 2112,
+        "lifting_factor": 96,
+        "n_full": 6528,
+        "n_short": 6336,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 6,
+        "k_ldpc": 520,
+        "lifting_factor": 52,
+        "n_ldpc": 2704
+      },
+      "configuration": "bg2-n1024-k400-rv2",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.390625,
+        "full_k": 520,
+        "full_n": 2704,
+        "kb": 10,
+        "kb_for_z_selection": 8,
+        "lifting_factor": 52,
+        "nb": 52,
+        "num_punctured_parity": 1456,
+        "num_punctured_systematic": 104,
+        "num_shortened": 120,
+        "target_k": 400,
+        "target_n": 1024
+      },
+      "redundancy_version": 2,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 520,
+        "lifting_factor": 52,
+        "n_full": 2704,
+        "n_short": 2600,
+        "supports_avx2": true
+      }
+    }
+  ],
+  "schema": "nr-encode-parameters-v1"
+}
