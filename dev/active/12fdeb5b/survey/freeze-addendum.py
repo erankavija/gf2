@@ -3,11 +3,20 @@
 
 Usage:
   freeze-addendum.py smoke|pilot <output.json> [frozen-utc]
+  freeze-addendum.py confirmation <output.json> <pilot-receipt-dir> [frozen-utc]
 
 Cell workload sizes are read from `nr-encode-parameters.json`, the dump the
 native flavour produced, so no dimension is transcribed by hand. The stage's
 cell list, seeds, margins and rationales are the declarations below; everything
 else comes from the protocol's frozen shared settings.
+
+The confirmation stage owns no freezing logic of its own: it delegates to the
+canonical `dev/active/c7113c5a/survey/freeze-confirmation.py`, which derives the
+measurement resolution from the committed pilot receipt, pins that receipt by
+path and digest, and writes the derivation record beside the addendum. This
+module supplies the cell selection P-20's tail-support bound admits, its
+rationale, and the prose the confirmatory stage carries. Run it from the
+worktree root so every recorded path stays repository-relative.
 
 `frozen-utc` defaults to the current whole-second UTC time. It must not follow
 the campaign's opening record, so freeze before launching.
@@ -16,10 +25,13 @@ the campaign's opening record, so freeze before launching.
 import datetime
 import json
 import pathlib
+import subprocess
 import sys
 
 FAMILY_ID = "nr-rate-matched-encode-baselines-v1"
 LEDGER = "dev/active/12fdeb5b/nr-rate-matched-encode-trial-ledger.jsonl"
+PILOT_ADDENDUM = "dev/active/12fdeb5b/addendum-nr-encode-pilot.json"
+CANONICAL_FREEZER = "dev/active/c7113c5a/survey/freeze-confirmation.py"
 
 # (cell suffix, configuration, seed)
 SMOKE_CELLS = [
@@ -69,6 +81,52 @@ COMMON_DESCRIPTION = (
     "backends are recorded in dev/active/12fdeb5b/survey/build-evidence.json."
 )
 
+# The confirmatory stage keeps the pilot's comparator-gap cells and drops the
+# two identity controls, the largest set P-20's tail-support bound admits.
+CONFIRMATION_CELLS = [
+    "nr-enc-bg2-n256-k121-gap-native-vs-srsran",
+    "nr-enc-bg2-n1440-k720-gap-native-vs-srsran",
+    "nr-enc-bg1-n2560-k2048-gap-native-vs-srsran",
+    "nr-enc-bg1-n8448-k4224-gap-native-vs-srsran",
+    "nr-enc-bg2-n256-k121-gap-native-vs-aff3ct",
+    "nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct",
+]
+
+CONFIRMATION_SELECTION_RATIONALE = (
+    "P-20 rejects a confirmatory cell whose corrected tail holds fewer than twenty "
+    "expected bootstrap draws. This family's first attempt derives alpha "
+    "0.05/(1*2) from the ledger, the corrected alpha divides it by the number of "
+    "comparisons, and each tail holds bootstrap_resamples * corrected_alpha / 2 "
+    "draws; six comparisons clear twenty draws and seven do not, so at most six of "
+    "the eight pilot cells become confirmatory. The dropped pair are the identity "
+    "controls: the null cell compares the native gf2 executable with itself and the "
+    "portable cell compares two builds of the same gf2 source, so each answers a "
+    "validity question about the harness rather than attributing a comparator gap. "
+    "The pilot settled both, and this record's table carries their intervals. Every "
+    "gf2-versus-comparator pair the pilot measured is retained."
+)
+
+CONFIRMATION_EQUIVALENCE_RATIONALE = (
+    "A 10% equivalence margin, unchanged from the pilot that sized the resolution "
+    "and strictly above one plus it. Two arms of this whole-consumer operation "
+    "within 10% of each other are not separated by any cause this survey can name."
+)
+
+CONFIRMATION_MATERIAL_GAP_RATIONALE = (
+    "A 20% whole-consumer wall-clock gap is the smallest gap between two arms of "
+    "this operation worth attributing to a named cause (representation conversion, "
+    "parity solve, selection gather or per-call dispatch) rather than host noise. "
+    "It is unchanged from the pilot and strictly exceeds one plus the frozen "
+    "measurement resolution."
+)
+
+CONFIRMATION_DESCRIPTION = (
+    "Confirmatory stage for the NR rate-matched encoder family. Its cells attribute "
+    "the whole-consumer wall-clock gap between gf2 and each comparator at the frozen "
+    "measurement resolution; the family proposes no production change, so no cell "
+    "decides adoption. " + COMMON_DESCRIPTION
+)
+
 STAGES = {
     "smoke": {
         "cells": SMOKE_CELLS,
@@ -92,18 +150,49 @@ STAGES = {
 }
 
 
+def now_utc():
+    return (datetime.datetime.now(datetime.timezone.utc)
+            .replace(microsecond=0)
+            .strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+
+def freeze_confirmation(output, pilot_receipt, frozen):
+    """Delegate to the canonical freezer with this family's selection."""
+    record = output.with_name(f"resolution-{output.stem.removeprefix('addendum-')}.txt")
+    command = [
+        sys.executable, CANONICAL_FREEZER,
+        "--pilot-addendum", PILOT_ADDENDUM,
+        "--pilot", pilot_receipt,
+        "--frozen-utc", frozen,
+        "--output", str(output),
+        "--record", str(record),
+        "--selection-rationale", CONFIRMATION_SELECTION_RATIONALE,
+        "--equivalence-rationale", CONFIRMATION_EQUIVALENCE_RATIONALE,
+        "--material-gap-rationale", CONFIRMATION_MATERIAL_GAP_RATIONALE,
+        "--family-description", CONFIRMATION_DESCRIPTION,
+    ]
+    for cell_id in CONFIRMATION_CELLS:
+        command += ["--cell", cell_id]
+    subprocess.run(command, check=True)
+    print(f"confirmation: {len(CONFIRMATION_CELLS)} cells frozen at {frozen} -> {output}")
+
+
 def main():
-    if len(sys.argv) not in (3, 4):
+    if len(sys.argv) < 2:
         sys.exit(__doc__)
     stage = sys.argv[1]
+    if stage == "confirmation":
+        if len(sys.argv) not in (4, 5):
+            sys.exit(__doc__)
+        freeze_confirmation(pathlib.Path(sys.argv[2]), sys.argv[3],
+                            sys.argv[4] if len(sys.argv) == 5 else now_utc())
+        return
+    if len(sys.argv) not in (3, 4):
+        sys.exit(__doc__)
     if stage not in STAGES:
         sys.exit(f"unknown stage {stage!r}")
     output = pathlib.Path(sys.argv[2])
-    frozen = sys.argv[3] if len(sys.argv) == 4 else (
-        datetime.datetime.now(datetime.timezone.utc)
-        .replace(microsecond=0)
-        .strftime("%Y-%m-%dT%H:%M:%SZ")
-    )
+    frozen = sys.argv[3] if len(sys.argv) == 4 else now_utc()
 
     survey = pathlib.Path(__file__).resolve().parent
     parameters = {
