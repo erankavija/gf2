@@ -82,24 +82,6 @@ impl SelectedBackend {
 /// Conservative-table value for `bit_backend.simd_min_words`.
 pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;
 
-/// Conservative-table value for `bit_backend.popcount_csa_min_words`.
-///
-/// Two kibibytes is the smallest swept width at which the Harley-Seal
-/// carry-save count clears the worthwhile margin of the frozen
-/// `popcount-route-selection` family over the per-vector nibble lookup, and at
-/// which the fused carry-save kernel is already materially faster; below it
-/// both routes keep the established lookup. The receipts are under
-/// `dev/bench_results/5cbb6545/`. A build carrying the declared
-/// `gf2_tuning_baked` cfg takes [`crate::tuning::baked::POPCOUNT_CSA_MIN_WORDS`]
-/// instead, which mirrors this value.
-pub(crate) const POPCOUNT_CSA_MIN_WORDS_DEFAULT: usize = 256;
-
-#[cfg(all(any(test, feature = "simd"), gf2_tuning_baked))]
-pub(crate) const POPCOUNT_CSA_MIN_WORDS: usize = crate::tuning::baked::POPCOUNT_CSA_MIN_WORDS;
-
-#[cfg(all(any(test, feature = "simd"), not(gf2_tuning_baked)))]
-pub(crate) const POPCOUNT_CSA_MIN_WORDS: usize = POPCOUNT_CSA_MIN_WORDS_DEFAULT;
-
 #[cfg(all(any(test, feature = "simd"), gf2_tuning_baked))]
 const SIMD_MIN_WORDS: usize = crate::tuning::baked::SIMD_MIN_WORDS;
 

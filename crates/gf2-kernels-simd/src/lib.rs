@@ -117,16 +117,15 @@ pub struct LogicalFns {
     /// blocks, counting every block remainder through the per-vector nibble
     /// lookup [Mula2018].
     ///
-    /// The word count at which a consumer takes this route instead of
-    /// [`Self::popcnt_fn`] is the `bit_backend.popcount_csa_min_words`
-    /// selector of `gf2-core`'s canonical tuning mechanism.
+    /// This is a measured comparator and is not selected by `gf2-core`'s
+    /// automatic dispatch because its confirmation receipt does not qualify.
     pub popcnt_csa_fn: fn(&[u64]) -> u64,
     /// Counts the set bits of `lhs & rhs` through the same carry-save loop as
     /// [`Self::popcnt_csa_fn`], with each bit-plane ANDed from the two
     /// operands as it is loaded, so no temporary buffer exists.
     ///
-    /// The word count at which a consumer takes this route instead of
-    /// [`Self::and_popcnt_fn`] is the same selector.
+    /// This is a measured comparator and is not selected by `gf2-core`'s
+    /// automatic dispatch because its confirmation receipt does not qualify.
     pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,
     pub find_first_one_fn: fn(&[u64]) -> Option<usize>,
     pub find_first_zero_fn: fn(&[u64]) -> Option<usize>,
