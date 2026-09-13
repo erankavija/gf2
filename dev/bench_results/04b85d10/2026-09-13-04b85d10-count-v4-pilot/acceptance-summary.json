@@ -1,0 +1,53 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "a06c966e3a3e600c1de547a36c9177da55cd4193ff5b7ba7bc7ee37fa0667e79",
+  "campaign_id": "pilot-v4-count-04b85d10-20260913t010111z",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "bit-storage-count-consumers",
+    "comparisons": 5,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.995,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "count-ldpc-check-64800-1core",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.001861991401431,
+        "lower": 0.9969013539497664,
+        "upper": 1.005586191868154,
+        "confidence": 0.995,
+        "alpha": 0.005,
+        "resamples": 10000,
+        "seed": 13422904346938403379,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.05,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}
