@@ -13,8 +13,8 @@ Every worker dispatched on a child of epic 1a379447 (Zen 3 CPU performance) foll
 
 ## Timed runs
 
-- Invoker policy: a timed run inside a working session lasts at most about as long as a cold cargo-ci run (about ten minutes). Estimate from the pilot's per-cell durations; a longer campaign is queued for a benchmark window (`dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` line: `issue<TAB>repo-relative worktree<TAB>est_minutes<TAB>command`; the launcher must export `~/.cargo/bin` on PATH itself, since the window unit has no login shell).
-- Every timed session runs under `dev/scripts/ccx1-bench-flock.sh --full-host`; builds and tests go through `scripts/cargo-budget.sh`. Check `/proc/loadavg` before launching; other workers build on the shared side of the mutex. `nice: cannot set niceness` is expected (RLIMIT_NICE is 0) and harmless.
+- Invoker policy (2026-09-13): the host is never locked during a working session. No worker launches a timed campaign, profile session or any run that takes `dev/scripts/ccx1-bench-flock.sh`; the wrapper refuses to run outside a benchmark window and `scripts/cargo-budget.sh` takes no lock there. Every measurement is a queue line in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` (`issue<TAB>repo-relative worktree<TAB>est_minutes<TAB>command`) committed on the worker's branch; the launcher must export `~/.cargo/bin` on PATH itself (the window unit has no login shell) and must resume an interrupted campaign under its own identity rather than start a new one. The worker's report lists its queue lines and states which cells are measured and which wait for the window.
+- Everything untimed (correctness validation, builds, tests, cargo-ci, asm, allocation counters, plan checks, smoke through the runner on a throwaway plan) runs in-session, unlocked.
 - Rerun nothing that is committed. Superseded runs stay committed under their own directories.
 
 ## Evidence and prose
