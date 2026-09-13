@@ -147,9 +147,10 @@ the build directory the launcher resolves, the semantic type the srsRAN
 adapter's parameters carry, the configuration grid, and the comparator trees
 the launcher defaults to. A superseded receipt stays committed under its own
 directory rather than being replaced, so every family-ledger reservation names
-a campaign whose receipt is present. All five are accepted with zero findings
-and all five spend zero comparisons, so the accounting shows every attempt
-without touching the family's error budget.
+a campaign whose receipt is present. All five are accepted, each carrying its
+own finding count in its `acceptance-summary.md` header, and all five spend
+zero comparisons, so the accounting shows every attempt without touching the
+family's error budget.
 
 The [pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json)
 is an accepted eight-cell exploratory campaign over both base graphs, both
@@ -179,8 +180,11 @@ the pilot's own alpha, and refuses margins that do not strictly exceed one plus
 the frozen value.
 
 The [confirmation](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json)
-is accepted with no findings and does not qualify for production selection,
-which is the standing a survey proposing no change should reach. Every declared
+is accepted and does not qualify for production selection, which is the
+standing a survey proposing no change should reach; the Source line of the
+"Confirmation campaign" section of the
+[tables](../../bench_results/12fdeb5b/tables.md) carries its verdict, finding
+count and session count. Every declared
 cell is measured at the protocol's confirmatory pair count, none reports an
 unresolved setting, and none exceeds the flagged-window fraction. Its own widest
 relative half-width, in the summary table of the "Confirmation campaign" section
@@ -299,7 +303,7 @@ tables from the committed records and receipts.
 
 | Criterion | Standing | Evidence |
 |---|---|---|
-| REQ-01 | met | The smoke, [pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json) and [confirmation](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json) receipts are accepted with zero findings under protocol version 4, each pinning the contract, protocol, schema and its addendum by digest. The `fail` cell and the exploratory `inconclusive` control stay recorded under the outcomes the evaluator assigned, and the aborted attempt keeps its stage and its record (*The aborted attempt*). |
+| REQ-01 | met | The smoke, [pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json) and [confirmation](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json) receipts are accepted under protocol version 4, each pinning the contract, protocol, schema and its addendum by digest; the Source line of each campaign's section in the [tables](../../bench_results/12fdeb5b/tables.md) carries its verdict and finding count, and each smoke receipt carries its own in its `acceptance-summary.md` header. The `fail` cell and the exploratory `inconclusive` control stay recorded under the outcomes the evaluator assigned, and the aborted attempt keeps its stage and its record (*The aborted attempt*). |
 | REQ-02 | met | [build evidence](survey/build-evidence.json), [source-evidence ledger](survey/source-evidence.json), [plan](plan.md) |
 | REQ-03 | met | [validation record](survey/nr-encode-validation.json), projected in the tables |
 | REQ-04 | met | The [pilot](addendum-nr-encode-pilot.json) and [confirmatory](addendum-nr-encode-confirmation.json) addenda are frozen and their receipts committed, alongside the aborted attempt's stage, over base-graph-1 and base-graph-2 block sizes and rates with conversion costs inside every timed call. Unavailable and non-equivalent arms are recorded in the ["Bit-exact equivalence outcomes"](../../bench_results/12fdeb5b/tables.md) table and in *Where the projects diverge*. |
