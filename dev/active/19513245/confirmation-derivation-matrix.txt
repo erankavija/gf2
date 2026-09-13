@@ -1,0 +1,32 @@
+pilot receipt  dev/bench_results/19513245/r1-matrix-pilot/receipt.json
+receipt sha256 dc39e3f2d8bc2098a88408342480e655367ec43898ae59220a1eb0da9715a751
+campaign       19513245-r1-matrix-pilot
+verdict        accepted (label pilot)
+family         bytefield-consumer-matrix: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+matmul-n64-element                      12      11.098      11.048      11.135    0.0045
+matmul-n256-element                     12      10.051      9.9843      10.301    0.0248
+matmul-n512-element                     12      10.133      10.092      10.211    0.0077
+matmul-n256-whole-element               12      9.5685      9.5217      9.7862    0.0227
+matmul-n64-wide                         12      3.2177      3.2044      3.2348    0.0053
+matmul-n256-wide                        12      3.0692      3.0632       3.075    0.0020
+matmul-n512-wide                        12      3.1235      3.1114      3.1286    0.0039
+matmul-n256-whole-wide                  12      3.0457      3.0358      3.0515    0.0032
+
+widest relative half-width   0.024817
+frozen measurement resolution 0.03
+restated the family description for the confirmatory stage
+
+selection      6 of 8 pilot cells become confirmatory
+rationale      The confirmatory budget of a family's first attempt admits six cells. The six are the two larger square dimensions for both element representations, which is where a dense product's own cost dominates its per-call overhead, and both FieldMatrix-boundary cells, which are the ones that decide whether the prototype's conversion eats its gain for a library consumer. The n = 64 cells keep the pilot's exploratory strength, because at that dimension the per-call allocation and transpose of the current route are a large part of its cost and the cell answers a different question.
+retained       matmul-n256-element
+retained       matmul-n512-element
+retained       matmul-n256-whole-element
+retained       matmul-n256-wide
+retained       matmul-n512-wide
+retained       matmul-n256-whole-wide
+dropped        matmul-n64-element
+dropped        matmul-n64-wide
+margins: equivalence 1.15, material gap None
+confirmation addendum dev/active/19513245/addendum-v4-matrix-confirmation.json

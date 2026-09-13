@@ -1,0 +1,16 @@
+pilot receipt  dev/bench_results/19513245/r1-control-pilot/receipt.json
+receipt sha256 5e7a93870e0bd3026b17985e5949d65d9f6e3c76ee3ecc4936ad9486778f6392
+campaign       19513245-r1-control-pilot
+verdict        accepted (label pilot)
+family         bytefield-consumer-control: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+pairwise-4k-batch                       12      2.3215      2.3121      2.3254    0.0041
+pairwise-128k-batch                     12      2.2854      2.2728      2.3385    0.0233
+pairwise-128k-whole-batch               12      3.4801      3.4682      3.6072    0.0365
+
+widest relative half-width   0.036538
+frozen measurement resolution 0.04
+restated the family description for the confirmatory stage
+margins: equivalence 1.15, material gap None
+confirmation addendum dev/active/19513245/addendum-v4-control-confirmation.json
