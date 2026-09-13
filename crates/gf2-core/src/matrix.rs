@@ -1257,6 +1257,37 @@ impl BitMatrix {
         self.transpose_blocked(transpose_64x64)
     }
 
+    /// [`Self::transpose`] driven by one caller-chosen 64×64 block kernel.
+    ///
+    /// The tiling, the output allocation, the zero padding of a partial
+    /// input tile and the output tail mask are the production ones; only the
+    /// block primitive differs. `crates/gf2-core/tests/transpose_lane_contract.rs`
+    /// runs the matrix-level contract over every lane of
+    /// `gf2_kernels_simd::transpose::TransposeLane` through this entry point,
+    /// which is why no process-global lane override exists.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::matrix::BitMatrix;
+    /// use gf2_kernels_simd::transpose::{lane, TransposeLane};
+    ///
+    /// let mut m = BitMatrix::zeros(2, 3);
+    /// m.set(0, 1, true);
+    /// let scalar = lane(TransposeLane::Scalar).expect("always available");
+    /// assert_eq!(m.transpose_with_block_kernel(scalar), m.transpose());
+    /// ```
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn transpose_with_block_kernel(
+        &self,
+        transpose_64x64: gf2_kernels_simd::transpose::Transpose64x64Fn,
+    ) -> Self {
+        if self.rows == 0 || self.cols == 0 {
+            return Self::zeros(self.cols, self.rows);
+        }
+        self.transpose_blocked(transpose_64x64)
+    }
+
     /// Tiled transpose driver: walks 64×64 bit-blocks and dispatches each
     /// to `transpose_64x64`.
     ///

@@ -1,33 +1,53 @@
-//! AVX2 64×64 bit-block transpose lanes (V3 of PPC-spiral B1).
+//! AVX2 64×64 bit-block transpose lanes.
 //!
-//! Implements the same Hacker's Delight 6-stage mask-shift-XOR
-//! algorithm as `crate::transpose::transpose_64x64_scalar`, but lifts
-//! the wide-distance stages (j ∈ {32, 16, 8, 4}) into AVX2 YMM
-//! intrinsics. The narrow stages (j ∈ {2, 1}) operate on bit pairs
-//! and bits within a u64 — the compiler already issues YMM-wide
-//! `vpand`/`vpsrlq`/`vpsllq`/`vpxor` for the inner block when the
-//! `target_feature(enable = "avx2")` attribute is in scope, so the
-//! whole function compiles to ~80 YMM-flavour instructions plus a
-//! handful of scalar word ops for the final two stages.
+//! Every kernel here answers the block contract
+//! [`crate::transpose`] states and is reached only through
+//! [`crate::transpose::lane`], which publishes a safe pointer to it once
+//! `is_x86_feature_detected!("avx2")` holds.
+//! [`crate::transpose::TransposeLane`] names them and
+//! [`crate::transpose::PRODUCTION_PREFERENCE`] says which one the production
+//! dispatch takes.
 //!
-//! A PSHUFB lane is also provided for the issue's byte-tile artefact
-//! requirement. Dispatch currently keeps the YMM bit-twiddle lane as
-//! the production default because it is faster on the recovery host;
-//! the PSHUFB lane remains tested and inspectable in the sibling asm
-//! artefact.
+//! - [`transpose_64x64_avx2`] runs the four wide stages (j ∈ {32, 16, 8, 4})
+//!   of the Hacker's Delight mask-shift-XOR recursion in YMM registers over a
+//!   stack copy of the block and the two narrow stages (j ∈ {2, 1}) in words.
+//! - [`transpose_64x64_avx2_ymm6`] runs all six stages in YMM registers and
+//!   writes the first stage straight from the caller's input into the
+//!   caller's output, so the block is never copied into a stack scratch.
+//! - [`transpose_64x64_avx2_pshufb`] transposes 8×8 byte tiles through a
+//!   `vpshufb` bit-reversal lookup and assembles them with a scalar bit loop.
+//! - [`transpose_64x64_avx2_movemask`] transposes the 64×8 byte matrix
+//!   through the SSE interleave ladder and then extracts each bit plane with
+//!   `vpmovmskb` over byte-wise doubling.
+//!
+//! # Generated code
+//!
+//! `src/x86/asm/transpose.asm.txt` is the release disassembly of all four,
+//! with a derived annotation that counts each one's stack frame, block
+//! copies, frame stores and loads, and mnemonic mix. The buffer each lane
+//! declares in its source is what settles whether that frame traffic is an
+//! intentional scratch or a compiler spill:
+//! [`transpose_64x64_avx2`]'s copy of the block and
+//! [`transpose_64x64_avx2_movemask`]'s byte-plane array are declared,
+//! and [`transpose_64x64_avx2_ymm6`] declares none.
 //!
 //! Future work (V7 cache layout, n > 8K): drive a tile-of-tiles
 //! outer loop from `gf2-core` so multiple 64×64 blocks fit in L1.
 
 use core::arch::x86_64::*;
 
-/// AVX2 lane: 64×64 bit-block transpose using YMM-wide bit-twiddle.
+/// AVX2 lane: the four wide stages in YMM registers over a stack copy.
+///
+/// The block is copied into a 512-byte local the stages mutate in place, and
+/// copied back into the caller's output at the end. That local is the
+/// declared scratch the annotation of `src/x86/asm/transpose.asm.txt` counts;
+/// [`transpose_64x64_avx2_ymm6`] is the lane that removes it.
 ///
 /// # Safety
 ///
 /// The caller must ensure the AVX2 feature is enabled at runtime.
-/// `crate::transpose::detect_x86` only publishes a function pointer
-/// to this fn when `is_x86_feature_detected!("avx2")` returns true.
+/// `crate::transpose::lane` only publishes a function pointer to this fn
+/// when `is_x86_feature_detected!("avx2")` returns true.
 #[target_feature(enable = "avx2")]
 pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 64]) {
     // Copy input into a stack scratch buffer; we mutate it in place.
@@ -114,14 +134,15 @@ pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 
 /// AVX2 PSHUFB lane: transpose 64×64 as 8×8 byte tiles.
 ///
 /// This path uses `vpshufb` as a byte-local bit-reversal LUT, then assembles
-/// each 8×8 transposed tile into the corresponding output byte. It is kept as
-/// an explicit PSHUFB artefact lane for B1; production dispatch currently
-/// prefers [`transpose_64x64_avx2`] because the YMM bit-twiddle lane is faster
-/// on the measured Zen host.
+/// each 8×8 transposed tile into the corresponding output byte with a scalar
+/// bit loop. It is the explicit PSHUFB candidate of the lane family that
+/// [`crate::transpose::TransposeLane`] names.
 ///
 /// # Safety
 ///
 /// The caller must ensure the AVX2 feature is enabled at runtime.
+/// `crate::transpose::lane` only publishes a function pointer to this fn
+/// when `is_x86_feature_detected!("avx2")` returns true.
 #[target_feature(enable = "avx2")]
 pub(crate) unsafe fn transpose_64x64_avx2_pshufb(input: &[u64; 64], output: &mut [u64; 64]) {
     let mut bytes = [0u8; 64 * 8];
@@ -170,4 +191,217 @@ pub(crate) unsafe fn transpose_64x64_avx2_pshufb(input: &[u64; 64], output: &mut
     }
 
     *output = out;
+}
+
+/// AVX2 lane: 64×64 bit-block transpose with every stage in YMM registers.
+///
+/// The algorithm is the same six-stage mask-shift-XOR recursion as
+/// [`transpose_64x64_avx2`], and it differs in two mechanical ways.
+///
+/// The wide stages (j ∈ {32, 16, 8, 4}) pair rows that are four apart or
+/// further, so each pair of operands is a contiguous run of four rows and a
+/// plain pair of YMM loads brings them into matching lanes. The first of
+/// those stages reads the caller's `input` and writes the caller's `output`,
+/// and the remaining five run in place on `output`, so the kernel copies no
+/// 512-byte block into a stack scratch and copies none back out.
+///
+/// The narrow stages (j ∈ {2, 1}) pair rows inside one four-row register.
+/// `vpermq` broadcasts the low and the high half of the register for j = 2,
+/// `vpshufd` broadcasts the low and the high quadword of each 128-bit half
+/// for j = 1, and `vpblendd` recombines the two halves of the result. So the
+/// two stages [`transpose_64x64_avx2`] leaves to word operations run four
+/// rows at a time here as well.
+///
+/// # Safety
+///
+/// The caller must ensure the AVX2 feature is enabled at runtime.
+/// `crate::transpose::lane` only publishes a function pointer to this fn
+/// when `is_x86_feature_detected!("avx2")` returns true.
+#[target_feature(enable = "avx2")]
+pub(crate) unsafe fn transpose_64x64_avx2_ymm6(input: &[u64; 64], output: &mut [u64; 64]) {
+    let inp = input.as_ptr();
+    let outp = output.as_mut_ptr();
+
+    // Stage 1 (j = 32) reads the caller's input and writes the caller's
+    // output: the whole kernel's only pass over `input`, and the pass that
+    // makes the remaining stages in-place work on `output`.
+    {
+        let m = _mm256_set1_epi64x(0x0000_0000_FFFF_FFFFu64 as i64);
+        let mut i = 0usize;
+        while i < 32 {
+            let lo = _mm256_loadu_si256(inp.add(i) as *const __m256i);
+            let hi = _mm256_loadu_si256(inp.add(i + 32) as *const __m256i);
+            let t = _mm256_and_si256(_mm256_xor_si256(_mm256_srli_epi64(lo, 32), hi), m);
+            _mm256_storeu_si256(
+                outp.add(i) as *mut __m256i,
+                _mm256_xor_si256(lo, _mm256_slli_epi64(t, 32)),
+            );
+            _mm256_storeu_si256(outp.add(i + 32) as *mut __m256i, _mm256_xor_si256(hi, t));
+            i += 4;
+        }
+    }
+
+    // Stages 2–4 (j ∈ {16, 8, 4}) keep pairing contiguous four-row runs, now
+    // in place on the output.
+    macro_rules! stage_wide {
+        ($j:expr, $mask:expr) => {{
+            let j: usize = $j;
+            let m = _mm256_set1_epi64x($mask as i64);
+            let mut i = 0usize;
+            while i < 64 {
+                let lo = _mm256_loadu_si256(outp.add(i) as *const __m256i);
+                let hi = _mm256_loadu_si256(outp.add(i + j) as *const __m256i);
+                let t = _mm256_and_si256(_mm256_xor_si256(_mm256_srli_epi64(lo, $j), hi), m);
+                _mm256_storeu_si256(
+                    outp.add(i) as *mut __m256i,
+                    _mm256_xor_si256(lo, _mm256_slli_epi64(t, $j)),
+                );
+                _mm256_storeu_si256(outp.add(i + j) as *mut __m256i, _mm256_xor_si256(hi, t));
+                i += 4;
+                // Skip the upper half of the just-handled 2j-block.
+                if i % (2 * j) == j {
+                    i += j;
+                }
+            }
+        }};
+    }
+    stage_wide!(16, 0x0000_FFFF_0000_FFFFu64);
+    stage_wide!(8, 0x00FF_00FF_00FF_00FFu64);
+    stage_wide!(4, 0x0F0F_0F0F_0F0F_0F0Fu64);
+
+    // Stage 5 (j = 2): within rows [i, i+4) the pairs are (i, i+2) and
+    // (i+1, i+3), so `vpermq` puts rows (i, i+1) in both halves of one
+    // register and rows (i+2, i+3) in both halves of the other. The low
+    // half of the updated low operand and the high half of the updated high
+    // operand are the four result rows.
+    {
+        let m = _mm256_set1_epi64x(0x3333_3333_3333_3333u64 as i64);
+        let mut i = 0usize;
+        while i < 64 {
+            let v = _mm256_loadu_si256(outp.add(i) as *const __m256i);
+            let lo = _mm256_permute4x64_epi64(v, 0b01_00_01_00);
+            let hi = _mm256_permute4x64_epi64(v, 0b11_10_11_10);
+            let t = _mm256_and_si256(_mm256_xor_si256(_mm256_srli_epi64(lo, 2), hi), m);
+            let lo_new = _mm256_xor_si256(lo, _mm256_slli_epi64(t, 2));
+            let hi_new = _mm256_xor_si256(hi, t);
+            _mm256_storeu_si256(
+                outp.add(i) as *mut __m256i,
+                _mm256_blend_epi32(lo_new, hi_new, 0b1111_0000),
+            );
+            i += 4;
+        }
+    }
+
+    // Stage 6 (j = 1): the pairs are (i, i+1) and (i+2, i+3), each inside
+    // one 128-bit half, so `vpshufd` broadcasts the low quadword of each
+    // half into one operand and the high quadword into the other.
+    {
+        let m = _mm256_set1_epi64x(0x5555_5555_5555_5555u64 as i64);
+        let mut i = 0usize;
+        while i < 64 {
+            let v = _mm256_loadu_si256(outp.add(i) as *const __m256i);
+            let lo = _mm256_shuffle_epi32(v, 0b01_00_01_00);
+            let hi = _mm256_shuffle_epi32(v, 0b11_10_11_10);
+            let t = _mm256_and_si256(_mm256_xor_si256(_mm256_srli_epi64(lo, 1), hi), m);
+            let lo_new = _mm256_xor_si256(lo, _mm256_slli_epi64(t, 1));
+            let hi_new = _mm256_xor_si256(hi, t);
+            _mm256_storeu_si256(
+                outp.add(i) as *mut __m256i,
+                _mm256_blend_epi32(lo_new, hi_new, 0b1100_1100),
+            );
+            i += 4;
+        }
+    }
+}
+
+/// AVX2 lane: 64×64 bit-block transpose through a byte transpose and
+/// `vpmovmskb` bit-plane extraction.
+///
+/// The input is a 64×8 matrix of bytes, byte `q` of row `r` carrying columns
+/// `8q..8q+8`. The kernel first transposes it to the 8×64 byte matrix whose
+/// row `q` is that byte column, eight rows at a time through the SSE
+/// interleave ladder (`vpunpck{l,h}bw`, `vpunpck{l,h}wd`, `vpunpck{l,h}dq`);
+/// the eight rows enter the ladder in the order that cancels the ladder's own
+/// permutation, so no fixup shuffle follows it.
+///
+/// Each byte-transposed row is then 64 bytes whose bit `b` is the matrix
+/// entry of column `8q + b`. `vpmovmskb` reads bit 7 of each of 32 bytes in
+/// one instruction, so two extractions give the whole output word of column
+/// `8q + 7`, and `vpaddb` of a register with itself doubles every byte and
+/// steps the extraction down to the next column. Eight steps per byte column
+/// produce all 64 output words.
+///
+/// This is the movemask/byte-shift candidate of the lane family: it carries
+/// the tile assembly (the byte transpose) and the packing (the bit-plane
+/// extraction) that the 32×8 geometry needs in order to answer the same
+/// 64×64 contract as the other lanes.
+///
+/// # Safety
+///
+/// The caller must ensure the AVX2 feature is enabled at runtime.
+/// `crate::transpose::lane` only publishes a function pointer to this fn
+/// when `is_x86_feature_detected!("avx2")` returns true.
+#[target_feature(enable = "avx2")]
+pub(crate) unsafe fn transpose_64x64_avx2_movemask(input: &[u64; 64], output: &mut [u64; 64]) {
+    // `planes[q]` is byte column `q` of all 64 rows.
+    let mut planes = [[0u8; 64]; 8];
+
+    // Byte transpose, eight rows per step. The interleave ladder emits the
+    // eight rows of a byte column in the order (p, r, q, s, t, v, u, w) of
+    // its four operand halves, so the rows are loaded as (0,2), (1,3),
+    // (4,6), (5,7) and come out ascending.
+    let mut group = 0usize;
+    while group < 64 {
+        let x0 = _mm_set_epi64x(input[group + 2] as i64, input[group] as i64);
+        let x1 = _mm_set_epi64x(input[group + 3] as i64, input[group + 1] as i64);
+        let x2 = _mm_set_epi64x(input[group + 6] as i64, input[group + 4] as i64);
+        let x3 = _mm_set_epi64x(input[group + 7] as i64, input[group + 5] as i64);
+
+        let t0 = _mm_unpacklo_epi8(x0, x1);
+        let t1 = _mm_unpackhi_epi8(x0, x1);
+        let t2 = _mm_unpacklo_epi8(x2, x3);
+        let t3 = _mm_unpackhi_epi8(x2, x3);
+
+        let u0 = _mm_unpacklo_epi16(t0, t1);
+        let u1 = _mm_unpackhi_epi16(t0, t1);
+        let u2 = _mm_unpacklo_epi16(t2, t3);
+        let u3 = _mm_unpackhi_epi16(t2, t3);
+
+        let v0 = _mm_unpacklo_epi32(u0, u2);
+        let v1 = _mm_unpackhi_epi32(u0, u2);
+        let v2 = _mm_unpacklo_epi32(u1, u3);
+        let v3 = _mm_unpackhi_epi32(u1, u3);
+
+        // Each half of `v0..v3` is one byte column's eight bytes for this
+        // row group, in ascending byte columns 0..8.
+        let columns = [
+            _mm_extract_epi64(v0, 0) as u64,
+            _mm_extract_epi64(v0, 1) as u64,
+            _mm_extract_epi64(v1, 0) as u64,
+            _mm_extract_epi64(v1, 1) as u64,
+            _mm_extract_epi64(v2, 0) as u64,
+            _mm_extract_epi64(v2, 1) as u64,
+            _mm_extract_epi64(v3, 0) as u64,
+            _mm_extract_epi64(v3, 1) as u64,
+        ];
+        for (q, packed) in columns.iter().enumerate() {
+            planes[q][group..group + 8].copy_from_slice(&packed.to_le_bytes());
+        }
+        group += 8;
+    }
+
+    // Bit-plane extraction. Bit 7 of byte `r` of `planes[q]` is the matrix
+    // entry of row `r` and column `8q + 7`, which is output word `8q + 7`
+    // bit `r`; doubling every byte steps down to column `8q + 6`, and so on.
+    for (q, plane) in planes.iter().enumerate() {
+        let mut lo = _mm256_loadu_si256(plane.as_ptr() as *const __m256i);
+        let mut hi = _mm256_loadu_si256(plane.as_ptr().add(32) as *const __m256i);
+        for step in 0..8usize {
+            let low = _mm256_movemask_epi8(lo) as u32 as u64;
+            let high = _mm256_movemask_epi8(hi) as u32 as u64;
+            output[q * 8 + 7 - step] = low | (high << 32);
+            lo = _mm256_add_epi8(lo, lo);
+            hi = _mm256_add_epi8(hi, hi);
+        }
+    }
 }
