@@ -1,0 +1,22 @@
+# command: ./dev/bench_results/1d4fd63d/run-transpose-lane.sh external-confirmation
+# started_utc: 2026-09-13T13:04:01Z
+# gf2 revision (informational): e77acb20e81cf55c688c916b8f6c8ea1dfc3113e
+# mode: external-confirmation  label: confirmation
+# addendum: dev/active/1d4fd63d/addendum-v4-external-confirmation.json  sha256: e1a46c67cda934d715a02afdb4dab668ad1eebddfd7aae0f8199efc3a425d6c9
+# ledger: dev/bench_results/1d4fd63d/transpose-lane-vs-external-family-ledger.jsonl  sha256: 866d7e98965da65ce3afcf7ef121198e9170be036702ebe9763e231337bf0726
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-external-confirmation.plan.json  sha256: ce18e86709b8592021525c84756c8712ecca88410c7c1b38de01eda5303643a0
+# exploratory pairs per cell: 12
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-external-confirmation
+# arm: 06f6bd9855f6abdd9b3b87fc47b74c3deaa8f0d9c6926c2568f4b29949e1adc1  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/external-arms/target/release/transpose-lane-external-arm
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-acceptance
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start:  16:04:01 up 9 days, 17:33,  9 users,  load average: 1.41, 2.41, 3.11
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-external-confirmation/execution.log
+# session 1 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions this invocation: 1
+# load_avg_end:  16:07:16 up 9 days, 17:36,  9 users,  load average: 1.42, 2.11, 2.87
+# finished_utc: 2026-09-13T13:07:16Z
