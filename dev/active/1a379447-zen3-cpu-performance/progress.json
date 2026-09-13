@@ -1187,7 +1187,8 @@
     "Session 13 invoker instruction 12:56Z: no new dispatches; let the four running workers finish, then hand off (handoff-10.md).",
     "Invocation 2026-09-13 (session 14): drive the epic; subagent model by difficulty, no Fable; four workers at a time in reused worktrees. Session 13 died on a usage limit at 13:26Z with four workers running; only 07ca8585 had reported.",
     "Invoker ruling (session 14): dispatch prompts are ephemeral and are not committed; the session-13 suggestion to commit them is void. The 07ca8585 round-1 verdict stays under reviews/.",
-    "Invoker decision (session 14): the 3be770d5 citation repair ('Source references: [Key].' appended to Notes) applies to all ten open issues whose cites labels were absent from their text: 1d4fd63d 5cbb6545 53c5a8c0 07ca8585 19513245 f63a2464 ed3d490e 1362381c 2037941f c04dd4ac."
+    "Invoker decision (session 14): the 3be770d5 citation repair ('Source references: [Key].' appended to Notes) applies to all ten open issues whose cites labels were absent from their text: 1d4fd63d 5cbb6545 53c5a8c0 07ca8585 19513245 f63a2464 ed3d490e 1362381c 2037941f c04dd4ac.",
+    "Invoker instruction 2026-09-13T18:00Z (session 14): no new work this session; let the four running workers finish; write the handoff. The two 53c5a8c0 follow-ups (no wide carry-less kernel above nine words; dot_chunk_len uncalibrated for short vectors) are recorded in handoff-11.md for filing next session."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1200,7 +1201,8 @@
     "handoff-7.md",
     "handoff-8.md",
     "handoff-9.md",
-    "handoff-10.md"
+    "handoff-10.md",
+    "handoff-11.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
