@@ -665,8 +665,16 @@
       "doc_type": "report",
       "label": "Protocol-v4 layout pilot resolution derivation",
       "path": "dev/active/04b85d10/pilot-resolution-v4-layout.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "04b85d10 lead review round 3",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/04b85d10-r3.md"
     }
   ],
+  "done_at": "2026-09-13T07:16:35.738890792Z",
   "first_ready_at": "2026-09-06T19:59:16.619469775Z",
   "gates_required": [
     "cargo-ci",
@@ -677,12 +685,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-12T07:49:47.252077807Z",
+      "updated_at": "2026-09-13T07:11:43.734837629Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-12T07:56:52.510778058Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T07:14:29.808519833Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-13T07:13:30.946031729Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-13T07:14:56.271050705Z",
       "updated_by": "auto:executor"
     }
   },
@@ -696,7 +714,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Profile bit-storage costs in production consumers",
-  "updated_at": "2026-09-13T07:08:35.235373794Z"
+  "updated_at": "2026-09-13T07:16:35.738890792Z"
 }
