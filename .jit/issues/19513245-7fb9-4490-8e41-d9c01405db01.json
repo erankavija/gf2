@@ -37,7 +37,7 @@
     "cites:Mfourrie2026"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Assess byte-field acceleration in vector and matrix consumers",
-  "updated_at": "2026-09-06T20:07:47.726435527Z"
+  "updated_at": "2026-09-13T07:08:03.930623255Z"
 }

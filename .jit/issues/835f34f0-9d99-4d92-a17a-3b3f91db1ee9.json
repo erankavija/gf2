@@ -20,7 +20,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Document the GF(2^8) polynomial that gf256() builds",
-  "updated_at": "2026-09-11T16:38:49.286928863Z"
+  "updated_at": "2026-09-13T07:08:21.706779973Z"
 }
