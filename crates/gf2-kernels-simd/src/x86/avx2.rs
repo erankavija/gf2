@@ -686,6 +686,18 @@ pub(crate) fn fns() -> LogicalFns {
     fn and_popcnt_fn(lhs: &[u64], rhs: &[u64]) -> u64 {
         unsafe { avx2_and_popcnt(lhs, rhs) }
     }
+    fn popcnt_csa_fn(src: &[u64]) -> u64 {
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
+        unsafe { super::popcount::avx2_popcnt_csa(src) }
+    }
+    fn and_popcnt_csa_fn(lhs: &[u64], rhs: &[u64]) -> u64 {
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
+        unsafe { super::popcount::avx2_and_popcnt_csa(lhs, rhs) }
+    }
+    fn popcnt_instruction_fn(src: &[u64]) -> u64 {
+        // SAFETY: taken only on the branch below that detected POPCNT.
+        unsafe { super::popcount::popcnt_words(src) }
+    }
     fn find_first_one_fn(src: &[u64]) -> Option<usize> {
         unsafe { avx2_find_first_one(src) }
     }
@@ -716,6 +728,16 @@ pub(crate) fn fns() -> LogicalFns {
         not_fn,
         popcnt_fn,
         and_popcnt_fn,
+        // POPCNT is a capability of its own: AVX2 hosts carry it in practice,
+        // but the bundle is built from what this host reports, not from what
+        // AVX2 implies.
+        popcnt_scalar_fn: if std::arch::is_x86_feature_detected!("popcnt") {
+            popcnt_instruction_fn
+        } else {
+            super::popcount::count_ones_words
+        },
+        popcnt_csa_fn,
+        and_popcnt_csa_fn,
         find_first_one_fn,
         find_first_zero_fn,
         shift_left_words_fn,
