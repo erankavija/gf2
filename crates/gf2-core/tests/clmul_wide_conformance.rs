@@ -4,7 +4,8 @@
 //! two `N`-word GF(2) polynomials runs the same cases here: the public
 //! [`clmul_wide`] and [`clmul_wide_slice`] long-product API, the capability
 //! dispatch that `Gf2mWide` multiplication and the wide Barrett reducer share,
-//! and the portable scalar fallback that hosts without PCLMULQDQ take. The
+//! and the portable scalar fallback that hosts outside `clmul_wide_dispatch`'s
+//! dispatch predicate take. The
 //! suite is the behavioural contract those paths hold in common, so a new
 //! kernel, a new width or a new caller joins it rather than growing a private
 //! test of its own.
@@ -243,11 +244,17 @@ fn expected_lane<const N: usize>() -> &'static str {
 /// Asserts that both public entry points run on the dispatched lane of width
 /// `N`, and that forcing the portable fallback moves them onto it without
 /// changing a single output word.
+///
+/// Prints a `dispatch-lane-witness` line so a captured run (nextest
+/// `--success-output=final`) records which lane this build and host actually
+/// reached, independent of the assertion outcome; `run-validation.sh` parses
+/// it into the committed validation record.
 fn check_public_dispatch<const N: usize, const M: usize>(seed: u64) {
     let _guard = DISPATCH_LANE_MUTEX
         .lock()
         .unwrap_or_else(|e| e.into_inner());
     let lane = expected_lane::<N>();
+    eprintln!("dispatch-lane-witness N={N} lane={lane}");
     let (a, b) = pairs::<N>(seed)[0];
 
     let dispatched_owned = clmul_wide::<N, M>(&a, &b);
@@ -292,8 +299,8 @@ fn check_public_dispatch<const N: usize, const M: usize>(seed: u64) {
 }
 
 /// Asserts the forced portable fallback produces the oracle's words at width
-/// `N` for every operand pair, which is the coverage a host without
-/// PCLMULQDQ gets from its own dispatch.
+/// `N` for every operand pair, which is the coverage a host outside
+/// `clmul_wide_dispatch`'s dispatch predicate gets from its own dispatch.
 fn check_portable_fallback<const N: usize, const M: usize>(seed: u64) {
     let _guard = DISPATCH_LANE_MUTEX
         .lock()

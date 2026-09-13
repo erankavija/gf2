@@ -1,0 +1,43 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-13T11:40:06.951560552Z",
+  "dependencies": [
+    "8ed3ac58-48a7-4a3b-8a4d-475e23eadcdd"
+  ],
+  "description": "After the plan-review checkpoint passes, decompose the plan for Optimize arbitrary-offset shifts and coding permutations (c04dd4ac) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
+  "documents": [],
+  "gates_required": [
+    "coverage-preview",
+    "breakdown-review"
+  ],
+  "gates_status": {
+    "breakdown-review": {
+      "status": "pending",
+      "updated_at": "2026-09-13T11:40:06.951560552Z",
+      "updated_by": null
+    },
+    "coverage-preview": {
+      "status": "pending",
+      "updated_at": "2026-09-13T11:40:06.951560552Z",
+      "updated_by": null
+    }
+  },
+  "id": "16560579-abd8-446c-9a02-9715feeee1af",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-core",
+    "component:gf2-coding",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-02",
+    "satisfies:REQ-06",
+    "cites:Cassagne2019",
+    "story:zen3-shifts-and-permutations",
+    "type:breakdown",
+    "brackets:c04dd4ac"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "breakdown: Optimize arbitrary-offset shifts and coding permutations",
+  "updated_at": "2026-09-13T11:40:06.951560552Z"
+}
