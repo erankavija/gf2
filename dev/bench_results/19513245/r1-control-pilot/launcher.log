@@ -1,0 +1,14 @@
+# command: ./dev/bench_results/19513245/run-consumer-bytefield.sh window control-pilot
+# started_utc: 2026-09-13T17:36:59Z
+# gf2 revision (informational): fe334b2e16ae63b3f52df6128d9b3009f6b40db0
+# addendum: dev/active/19513245/addendum-v4-control-pilot.json sha256 5608ede5ea7ee0bf691e57b23c3913a7c5b279708161eab30500a96ac29fc50d
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-control-pilot.plan.json sha256 a6a53f9ff219a6bd4e74023076ef906f79d28d747b309c358e011b0be84ec233
+# build record: dev/active/19513245/conformance/build-record.txt sha256 0dc444701e0873e8d85ffbf04d58b357a40939edcfcce01d54115339233096b8
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 2.17 3.07 3.75
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-control-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-control-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-control-pilot/execution.log
+# session 1 exit: 0 at 2026-09-13T17:38:01Z load 1.70 2.74 3.59
+journal: 3 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/19513245/r1-control-pilot/receipt.json

@@ -1,0 +1,18 @@
+# command: ./dev/bench_results/19513245/run-consumer-bytefield.sh window vector-pilot
+# started_utc: 2026-09-13T17:38:01Z
+# gf2 revision (informational): fe334b2e16ae63b3f52df6128d9b3009f6b40db0
+# addendum: dev/active/19513245/addendum-v4-vector-pilot.json sha256 47f5ddecbc2e36c5014cda5f618a00f1356bf9e92b341ae0b134512cbf1121c1
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-vector-pilot.plan.json sha256 bca4b77864058f460bd17d16346f8522baf1508b247575a103104892d98b3607
+# build record: dev/active/19513245/conformance/build-record.txt sha256 0dc444701e0873e8d85ffbf04d58b357a40939edcfcce01d54115339233096b8
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 1.70 2.74 3.59
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-vector-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-vector-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-vector-pilot/execution.log
+# session 1 exit: 3 at 2026-09-13T17:40:29Z load 1.39 2.25 3.28
+# session 2 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-vector-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-vector-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-vector-pilot/execution.log
+# session 2 exit: 0 at 2026-09-13T17:45:16Z load 1.51 2.71 3.29
+journal: 12 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/19513245/r1-vector-pilot/receipt.json
