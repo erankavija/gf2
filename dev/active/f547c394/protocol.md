@@ -121,6 +121,16 @@ The campaign ID links every reservation to its durable execution log; keep losin
 and unfinished stages available alongside published outcomes. Completion never
 removes or discounts a reservation.
 
+An attempt the executor aborts for a procedural defect in its own freeze or
+launch, before reading any of its results, may be voided instead. The executor
+keeps the aborted stage available beside the published outcomes and commits an
+attempt record naming the campaign, the addendum digest, the defect, the cells
+measured and unmeasured, and the abort. A voided attempt's reservation does not
+enter the chain the replacement attempt reserves on, so it is never interior to
+that chain, and it spends no comparison and no candidate attempt. An attempt
+whose results were read is never voided: reading them makes the outcome part of
+the record, and the attempt spends its reservation like any other.
+
 The receipt pins the complete prefix through its reservation. Acceptance validates
 every link, terminal campaign/addendum/cell count, and recomputes the comparison
 count from that prefix (P-22). Removing an interior failed attempt breaks its
