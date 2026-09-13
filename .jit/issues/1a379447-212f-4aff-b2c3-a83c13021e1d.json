@@ -786,6 +786,47 @@
       "format": "markdown",
       "label": "Session 13 handoff",
       "path": "dev/active/1a379447-zen3-cpu-performance/handoff-10.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c2d8cff7fb956e650a6a990b320bb5b59bc62223ffc92a0cc67d2d552a847fd2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reviews/07ca8585-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/07ca8585-r1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7dbdd8bec478f49616c36f357637f160b9e1d75557f43f837f949c1124722f83",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "bench-window/run-window.sh",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ac2646c9190d5479ed93455bf9b55e60046985400ff67b1189b62d75c8266a8a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-11.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-11.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2ca801f7c7b405328c0a68aced89602694bbba87382c265b53d6cccceadf0523",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "bench-window/queue.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+        }
+      ],
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Session 15 handoff",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-12.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -809,5 +850,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-13T12:57:47.168393587Z"
+  "updated_at": "2026-09-13T20:14:55.276821143Z"
 }

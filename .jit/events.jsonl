@@ -12181,3 +12181,4 @@
 {"gate_key":"research-review","id":"9cccd1ba-29f4-4c13-b643-98ce1747d3b6","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T20:08:13.627501087Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"746e368f-59c4-4a9b-bd7e-b4c469d9a6e2","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T20:09:02.007568906Z","to":"done","type":"issue_state_changed"}
 {"id":"84144dea-f547-4ac8-8820-d66bd30e92c3","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T20:09:02.007568906Z","type":"issue_completed"}
+{"fields":["documents"],"id":"9b8495cd-f3a8-4037-88df-4ef8707dc266","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-09-13T20:14:55.276821143Z","type":"issue_updated","updated_by":"doc-add"}
