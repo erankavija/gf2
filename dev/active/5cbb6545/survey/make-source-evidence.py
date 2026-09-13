@@ -9,13 +9,22 @@ cite can be checked at its location. The asm claims cite the committed artefacts
 beside the kernel sources, which the regeneration script writes from the
 compiler, so an instruction claim is checked the same way as a source claim.
 
-Usage: make-source-evidence.py > dev/active/5cbb6545/survey/source-evidence.json
+Usage:
+  make-source-evidence.py > dev/active/5cbb6545/survey/source-evidence.json
+  make-source-evidence.py --check dev/active/5cbb6545/survey/source-evidence.json
 """
 
+import argparse
 import json
 import pathlib
 import subprocess
 import sys
+
+# The claims describe the production source after the contract-literal route
+# decision. A documentation-only commit followed that source commit, so select
+# the source revision explicitly and reject generation if any claimed source
+# path differs from it.
+SOURCE_REVISION = "c4288da38db2b8a82263878990c21e97f9b45da7"
 
 OPS = "crates/gf2-core/src/kernels/ops.rs"
 BACKEND = "crates/gf2-core/src/kernels/backend.rs"
@@ -118,10 +127,35 @@ CLAIMS = [
 ]
 
 
-def main():
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"], check=True, capture_output=True, text=True
-    ).stdout.strip()
+def validate_source_revision():
+    subprocess.run(
+        ["git", "rev-parse", "--verify", f"{SOURCE_REVISION}^{{commit}}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    paths = sorted({path for _, path, *_ in CLAIMS})
+    result = subprocess.run(
+        ["git", "diff", "--quiet", SOURCE_REVISION, "--", *paths], check=False
+    )
+    if result.returncode == 0:
+        return
+    if result.returncode == 1:
+        changed = subprocess.run(
+            ["git", "diff", "--name-only", SOURCE_REVISION, "--", *paths],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        raise SystemExit(
+            "claimed source paths differ from selected revision "
+            f"{SOURCE_REVISION}:\n{changed}"
+        )
+    raise SystemExit(f"git diff failed with exit status {result.returncode}")
+
+
+def render():
+    validate_source_revision()
     claims = []
     for claim_id, path, line, fragment, why, topic in CLAIMS:
         text = pathlib.Path(path).read_text(encoding="utf-8").splitlines()[line - 1]
@@ -131,23 +165,38 @@ def main():
             raise SystemExit(f"claim id {claim_id!r} is not unique")
         claims.append({"id": claim_id, "path": path, "line": line, "text": text.strip(),
                        "topic": topic, "why": why})
-    json.dump(
-        {
-            "schema": "count-optimization-source-evidence-v1",
-            "commit": revision,
-            "note": (
-                "The commit is navigation metadata; the producing manifests of the campaigns pin "
-                "the source bytes the receipts measured. Lines under "
-                "crates/gf2-kernels-simd/src/x86/asm/ are the committed artefacts "
-                "dev/scripts/regen-asm.sh writes from the compiler, and each artefact's header "
-                "names the revision and toolchain it was recorded from."
-            ),
-            "claims": claims,
-        },
-        fp=sys.stdout,
-        indent=2,
+    document = {
+        "schema": "count-optimization-source-evidence-v1",
+        "commit": SOURCE_REVISION,
+        "note": (
+            "The generator selects this source revision explicitly and refuses to emit when any "
+            "claimed source path has a byte delta from it. The producing manifests of the "
+            "campaigns separately pin the source bytes the receipts measured. Lines under "
+            "crates/gf2-kernels-simd/src/x86/asm/ are the committed artefacts "
+            "dev/scripts/regen-asm.sh writes from the compiler, and each artefact's header names "
+            "the revision and toolchain it was recorded from."
+        ),
+        "claims": claims,
+    }
+    return json.dumps(document, indent=2) + "\n"
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--check",
+        type=pathlib.Path,
+        metavar="ARTIFACT",
+        help="verify that ARTIFACT is byte-identical to generated output",
     )
-    print()
+    args = parser.parse_args()
+    rendered = render()
+    if args.check is None:
+        sys.stdout.write(rendered)
+        return
+    if args.check.read_bytes() != rendered.encode("utf-8"):
+        raise SystemExit(f"{args.check} does not match generated source evidence")
+    print(f"source evidence reproduces byte-for-byte: {args.check}")
 
 
 if __name__ == "__main__":

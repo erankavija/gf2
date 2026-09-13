@@ -2,12 +2,13 @@
 # Correctness evidence for the count-optimization receipts (jit:5cbb6545).
 #
 # Runs the shared population-count suite over every resolved route, the survey's
-# own arm verifier, and a production-selection audit, then records all outcomes
-# in validation.json, which the launcher asserts before it takes the benchmark
-# mutex: timing never precedes correctness. The shared suite covers the library
-# routes and the bit semantics; the verifier additionally covers the external
-# arms, their byte-length tails, Mula's alignment precondition and the consumer
-# arms, all against an independent byte-table count.
+# own arm verifier, a production-selection audit, and a source-evidence
+# reproducibility check, then records all outcomes in validation.json, which the
+# launcher asserts before it takes the benchmark mutex: timing never precedes
+# correctness. The shared suite covers the library routes and the bit semantics;
+# the verifier additionally covers the external arms, their byte-length tails,
+# Mula's alignment precondition and the consumer arms, all against an independent
+# byte-table count.
 #
 # Usage: ./run-validation.sh
 
@@ -20,6 +21,8 @@ OUT="$ACTIVE/validation.json"
 LOG="$ACTIVE/validation-raw.txt"
 VERIFY_LOG="$ACTIVE/validation-arms.txt"
 PRODUCTION_LOG="$ACTIVE/validation-production.txt"
+SOURCE_EVIDENCE_LOG="$ACTIVE/validation-source-evidence.txt"
+SOURCE_EVIDENCE="$ACTIVE/survey/source-evidence.json"
 
 SUITE=(cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci
        --features simd,test-support --test popcount_routes)
@@ -37,6 +40,13 @@ set +e
 verify_status=$?
 set -e
 cat "$VERIFY_LOG"
+
+set +e
+python3 "$ACTIVE/survey/make-source-evidence.py" --check "$SOURCE_EVIDENCE" \
+  >"$SOURCE_EVIDENCE_LOG" 2>&1
+source_evidence_status=$?
+set -e
+cat "$SOURCE_EVIDENCE_LOG"
 
 set +e
 (
@@ -68,11 +78,29 @@ set -e
 cat "$PRODUCTION_LOG"
 
 python3 - "$OUT" "$LOG" "$suite_status" "$VERIFY_LOG" "$verify_status" \
-  "$PRODUCTION_LOG" "$audit_status" "${SUITE[*]}" <<'PY'
+  "$PRODUCTION_LOG" "$audit_status" "$SOURCE_EVIDENCE" \
+  "$SOURCE_EVIDENCE_LOG" "$source_evidence_status" "${SUITE[*]}" <<'PY'
 import json, sys, time
 
-out, log, suite_status, verify_log, verify_status, production_log, audit_status, command = sys.argv[1:]
-passed = suite_status == "0" and verify_status == "0" and audit_status == "0"
+(
+    out,
+    log,
+    suite_status,
+    verify_log,
+    verify_status,
+    production_log,
+    audit_status,
+    source_evidence,
+    source_evidence_log,
+    source_evidence_status,
+    command,
+) = sys.argv[1:]
+passed = (
+    suite_status == "0"
+    and verify_status == "0"
+    and audit_status == "0"
+    and source_evidence_status == "0"
+)
 document = {
     "schema": "count-optimization-validation-v1",
     "issue": "5cbb6545",
@@ -94,6 +122,12 @@ document = {
         "raw_output": production_log,
         "exit_status": int(audit_status),
     },
+    "source_evidence": {
+        "command": f"python3 dev/active/5cbb6545/survey/make-source-evidence.py --check {source_evidence}",
+        "artifact": source_evidence,
+        "raw_output": source_evidence_log,
+        "exit_status": int(source_evidence_status),
+    },
     "passed": passed,
 }
 with open(out, "w") as handle:
@@ -103,4 +137,5 @@ print(f"validation passed={passed} -> {out}", file=sys.stderr)
 PY
 if [[ "$suite_status" -ne 0 ]]; then exit "$suite_status"; fi
 if [[ "$verify_status" -ne 0 ]]; then exit "$verify_status"; fi
+if [[ "$source_evidence_status" -ne 0 ]]; then exit "$source_evidence_status"; fi
 exit "$audit_status"

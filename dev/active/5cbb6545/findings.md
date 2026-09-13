@@ -326,7 +326,8 @@ The established fused reduction already avoids a consumer temporary:
 that whole-consumer benefit, but it does not override the fused family's
 `qualifies: false` result. `run-validation.sh` also audits that neither automatic
 entry point selects the comparator pointers and that no removed carry-save
-tuning selector remains (tables § Correctness coverage).
+tuning selector remains, and checks that the source-evidence generator exactly
+reproduces its committed artifact (tables § Correctness coverage).
 
 ## Rates and consumer results (REQ-09)
 

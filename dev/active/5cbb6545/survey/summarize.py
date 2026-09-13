@@ -487,6 +487,12 @@ def coverage_section(lines):
             f"`{record['production_audit']['raw_output']}`",
             str(record["production_audit"]["exit_status"]),
         ],
+        [
+            "source-evidence reproduction",
+            f"`{record['source_evidence']['artifact']}`",
+            f"`{record['source_evidence']['raw_output']}`",
+            str(record["source_evidence"]["exit_status"]),
+        ],
     ]
     table(lines, ["Group", "Source", "Raw output", "Exit status"], rows)
     lines.append(

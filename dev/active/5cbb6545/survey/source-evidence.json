@@ -1,7 +1,7 @@
 {
   "schema": "count-optimization-source-evidence-v1",
   "commit": "c4288da38db2b8a82263878990c21e97f9b45da7",
-  "note": "The commit is navigation metadata; the producing manifests of the campaigns pin the source bytes the receipts measured. Lines under crates/gf2-kernels-simd/src/x86/asm/ are the committed artefacts dev/scripts/regen-asm.sh writes from the compiler, and each artefact's header names the revision and toolchain it was recorded from.",
+  "note": "The generator selects this source revision explicitly and refuses to emit when any claimed source path has a byte delta from it. The producing manifests of the campaigns separately pin the source bytes the receipts measured. Lines under crates/gf2-kernels-simd/src/x86/asm/ are the committed artefacts dev/scripts/regen-asm.sh writes from the compiler, and each artefact's header names the revision and toolchain it was recorded from.",
   "claims": [
     {
       "id": "bitvec-count-ones",

@@ -134,6 +134,7 @@ The conformance record beside this survey, whose raw outputs carry the case coun
 | shared suite | `crates/gf2-core/tests/popcount_routes.rs` | `dev/active/5cbb6545/validation-raw.txt` | 0 |
 | arm verifier | `dev/active/5cbb6545/survey/gf2-side/src/bin/count-verify.rs` | `dev/active/5cbb6545/validation-arms.txt` | 0 |
 | production selection audit | `rg for unsupported CSA selector and automatic-dispatch references` | `dev/active/5cbb6545/validation-production.txt` | 0 |
+| source-evidence reproduction | `dev/active/5cbb6545/survey/source-evidence.json` | `dev/active/5cbb6545/validation-source-evidence.txt` | 0 |
 
 All groups pass: `passed` is true in `dev/active/5cbb6545/validation.json`.
 
