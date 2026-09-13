@@ -561,8 +561,8 @@ impl BitBackendSelectors {
     /// Builds a validated bit-backend selector family.
     ///
     /// Every `usize` word count is admissible, including zero, because zero
-    /// means that SIMD is eligible for every buffer when the feature is
-    /// available.
+    /// means that the gated route is eligible for every buffer when the
+    /// feature is available.
     pub fn try_new(simd_min_words: usize) -> Result<Self, ProfileError> {
         Ok(Self { simd_min_words })
     }
@@ -1877,7 +1877,11 @@ fn core_presence(selectors: &JsonSelectors) -> CorePresence {
             }
         };
     }
-    family!(bit_backend, 1 << 0, [simd_min_words => 1 << 0]);
+    family!(
+        bit_backend,
+        1 << 0,
+        [simd_min_words => 1 << 0]
+    );
     family!(
         bit_matrix,
         1 << 1,
@@ -1989,7 +1993,9 @@ fn encode_core_body(
     family!(
         "bit_backend",
         1 << 0,
-        ["simd_min_words" => 1 << 0 => selectors.bit_backend.simd_min_words]
+        [
+            "simd_min_words" => 1 << 0 => selectors.bit_backend.simd_min_words,
+        ]
     );
     family!(
         "bit_matrix",

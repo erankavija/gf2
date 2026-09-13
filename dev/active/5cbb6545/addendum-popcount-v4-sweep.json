@@ -1,0 +1,668 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "popcount-route-selection",
+    "issue": "5cbb6545",
+    "purpose": "kernel-family",
+    "description": "The word count at which each population-count route of gf2-core overtakes the next, measured on identical buffers. Arms: the route ops::popcount took before this issue (the scalar backend below eight words, the AVX2 nibble lookup at or above), each kernel of the gf2-kernels-simd bundle called directly (the scalar POPCNT loop, the nibble lookup, the Harley-Seal carry-save loop), and the pinned libpopcnt and Mula references on the same windows. Cells sweep one word to a streaming set twice the last-level cache, with a three-word alignment offset and all-one and all-zero data at one mid width. Every cell is exploratory: this stage fixes the boundaries a later pilot and confirmation decide, and its samples enter no confirmation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T12:24:19Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The candidate routes add one unsafe kernel module to gf2-kernels-simd and one selector to the canonical tuning mechanism. A tenth of the runtime at a width a consumer counts is the smallest gain that repays that: below it the choice of route stops changing what a caller of BitVec::count_ones or BitMatrix::matvec observes, and the established nibble lookup keeps the width.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.03,
+    "equivalence_rationale": "A width that gains nothing from the new boundary must not pay for it. Three percent is the largest slowdown at such a width that would still leave the boundary worth having; above it the route the width keeps is the wrong one.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A fifth of the runtime is the smallest residual gap against a pinned external implementation that would justify further kernel work rather than a reported measurement; smaller gaps are reported and left."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 3,
+    "max_added_source_lines": 900,
+    "maintenance_rationale": "The budget covers one unsafe kernel module holding the scalar POPCNT loop and the two Harley-Seal kernels, the bundle fields and resolvers that reach them, the tuning selector that carries the boundary, and the rustdoc the changed mechanism needs. It excludes the shared behavioural suite and this survey, which are test and evidence code."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "sweep-popcount-w1-scalar-popcnt",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1-words-random-aligned",
+        "size": {
+          "words": 1,
+          "word_offset": 0
+        },
+        "seed": 5101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w2-scalar-popcnt",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-2-words-random-aligned",
+        "size": {
+          "words": 2,
+          "word_offset": 0
+        },
+        "seed": 5102
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w4-scalar-popcnt",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-4-words-random-aligned",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 5104
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w7-scalar-popcnt",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-7-words-random-aligned",
+        "size": {
+          "words": 7,
+          "word_offset": 0
+        },
+        "seed": 5107
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w8-nibble-vs-scalar",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-8-words-random-aligned",
+        "size": {
+          "words": 8,
+          "word_offset": 0
+        },
+        "seed": 5108
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w12-nibble-vs-scalar",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-12-words-random-aligned",
+        "size": {
+          "words": 12,
+          "word_offset": 0
+        },
+        "seed": 5112
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16-nibble-vs-scalar",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-16-words-random-aligned",
+        "size": {
+          "words": 16,
+          "word_offset": 0
+        },
+        "seed": 5116
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-16-words-random-aligned",
+        "size": {
+          "words": 16,
+          "word_offset": 0
+        },
+        "seed": 5116
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w32-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-32-words-random-aligned",
+        "size": {
+          "words": 32,
+          "word_offset": 0
+        },
+        "seed": 5132
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w64-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-64-words-random-aligned",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 5164
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w96-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-96-words-random-aligned",
+        "size": {
+          "words": 96,
+          "word_offset": 0
+        },
+        "seed": 5196
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w128-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-128-words-random-aligned",
+        "size": {
+          "words": 128,
+          "word_offset": 0
+        },
+        "seed": 5228
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w256-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-256-words-random-aligned",
+        "size": {
+          "words": 256,
+          "word_offset": 0
+        },
+        "seed": 5356
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1024-words-random-aligned",
+        "size": {
+          "words": 1024,
+          "word_offset": 0
+        },
+        "seed": 6124
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-16384-words-random-aligned",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 21484
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-off3-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1024-words-random-offset-3-words",
+        "size": {
+          "words": 1024,
+          "word_offset": 3
+        },
+        "seed": 6124
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-ones-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1024-words-all_one-aligned",
+        "size": {
+          "words": 1024,
+          "word_offset": 0
+        },
+        "seed": 6124
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-zeros-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1024-words-all_zero-aligned",
+        "size": {
+          "words": 1024,
+          "word_offset": 0
+        },
+        "seed": 6124
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1024-words-random-aligned",
+        "size": {
+          "words": 1024,
+          "word_offset": 0
+        },
+        "seed": 6124
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1024-words-random-aligned",
+        "size": {
+          "words": 1024,
+          "word_offset": 0
+        },
+        "seed": 6124
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-16384-words-random-aligned",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 21484
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-vs-mula-avx2-harley-seal",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-16384-words-random-aligned",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 21484
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1m-streaming-csa",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1048576-words-random-aligned-streaming",
+        "size": {
+          "words": 1048576,
+          "word_offset": 0
+        },
+        "seed": 5101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

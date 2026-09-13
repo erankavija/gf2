@@ -1,0 +1,209 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "popcount-route-selection",
+    "issue": "5cbb6545",
+    "purpose": "kernel-family",
+    "description": "Every population-count route this issue adopts, measured at the widths its dispatcher distinguishes: the route ops::popcount took before the change against the route it takes after, at four words where the scalar POPCNT kernel replaces the bit-twiddle count, at eight and 128 words where the established nibble lookup is retained and must not pay for the new boundary, and at 1024 and 16384 words where the Harley-Seal carry-save loop replaces it. One further cell measures what is left of the gap to libpopcnt, the pinned external implementation that led this workload before the change. Every cell is exploratory: this stage fixes the measurement resolution the confirmation freezes against, and its samples enter no confirmation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T12:53:31Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The candidate routes add one unsafe kernel module to gf2-kernels-simd and one selector to the canonical tuning mechanism. A tenth of the runtime at a width a consumer counts is the smallest gain that repays that: below it the choice of route stops changing what a caller of BitVec::count_ones or BitMatrix::matvec observes, and the established nibble lookup keeps the width.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.03,
+    "equivalence_rationale": "A width that gains nothing from the new boundary must not pay for it. Three percent is the largest slowdown at such a width that would still leave the boundary worth having; above it the route the width keeps is the wrong one.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A fifth of the runtime is the smallest residual gap against a pinned external implementation that would justify further kernel work rather than a reported measurement; smaller gaps are reported and left."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 3,
+    "max_added_source_lines": 900,
+    "maintenance_rationale": "The budget covers one unsafe kernel module holding the scalar POPCNT loop and the two Harley-Seal kernels, the bundle fields and resolvers that reach them, the tuning selector that carries the boundary, and the rustdoc the changed mechanism needs. It excludes the shared behavioural suite and this survey, which are test and evidence code."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-w4-dispatch",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-4-words-random-aligned",
+        "size": {
+          "words": 4,
+          "word_offset": 0
+        },
+        "seed": 5304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w8-dispatch",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-8-words-random-aligned",
+        "size": {
+          "words": 8,
+          "word_offset": 0
+        },
+        "seed": 5308
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w128-dispatch",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-128-words-random-aligned",
+        "size": {
+          "words": 128,
+          "word_offset": 0
+        },
+        "seed": 5428
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w1024-dispatch",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-1024-words-random-aligned",
+        "size": {
+          "words": 1024,
+          "word_offset": 0
+        },
+        "seed": 6324
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w16384-dispatch",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-16384-words-random-aligned",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 21684
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-w16384-vs-libpopcnt",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-16384-words-random-aligned",
+        "size": {
+          "words": 16384,
+          "word_offset": 0
+        },
+        "seed": 21684
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
