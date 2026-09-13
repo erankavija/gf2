@@ -4,8 +4,11 @@
 //! core:
 //!
 //! - [`popcnt_words`] counts one word at a time with the scalar `POPCNT`
-//!   instruction, for buffers too short for a vector kernel to repay its
-//!   setup; [`count_ones_words`] is the same loop for a host without `POPCNT`.
+//!   instruction, and [`count_ones_words`] is the same loop for a host without
+//!   `POPCNT`. Both are measured comparators for buffers too short for a
+//!   vector kernel: on the surveyed host a resolved call to either loses to
+//!   the scalar count `gf2-core` already runs there, so no `gf2-core` route
+//!   selects them (`dev/active/5cbb6545/findings.md`).
 //! - `avx2_popcnt` in the sibling `avx2` module counts every vector through a
 //!   `VPSHUFB` nibble lookup summed by `VPSADBW`. It is the established
 //!   mid-range route and stays unchanged.
