@@ -1,0 +1,255 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "transpose-lane-vs-external",
+    "issue": "1d4fd63d",
+    "purpose": "kernel-family",
+    "description": "Whether a material gap separates gf2's 64x64 bit-block transpose lanes from the two external comparators at the kernel geometry 6fb89a3c froze: one 64x64 block per call into a preallocated output, with no tail and no geometry adapter, because one block of 64 eight-byte elements is the canonical gf2 layout for both comparators. The baseline arm of every cell is a gf2 lane and the candidate is the external arm, so the speedup of medians is median(gf2) / median(external) and a value above one means the external arm is ahead; `improved` in a comparator-gap cell is a material gap in the external arm's favour that needs attribution and `regressed` means gf2 is materially ahead. The gf2 arms are one executable that selects its lane from GF2_TRANSPOSE_LANE: production is the lane gf2_kernels_simd::transpose::detect publishes on this host; avx2-ymm6 is all six mask-shift-XOR stages in YMM registers with no stack scratch; avx2-pshufb is 8x8 byte tiles through a vpshufb bit-reversal lookup; avx2-movemask is an SSE byte transpose followed by vpmovmskb bit-plane extraction. The external arms are 6fb89a3c's pinned executables, rebuilt by its committed fetch-build.sh and checked byte for byte against its committed build-evidence.json before any timed run: m4ri is M4RI 20260122 mzd_transpose into a preallocated output; bitshuffle is Bitshuffle 0.5.2 bshuf_bitshuffle over 64 eight-byte elements. Every arm reads the same fixture, 64 words of SplitMix64 seeded at the cell's seed, and this issue's verify-bit-mapping.py checks every one of them against naive bit arithmetic at five seeds before any timing, so no cell times two routes that compute different bits. Adapter costs are zero at this geometry and are not hidden: the geometries that do pay an adapter, 63 and 65 rows, are 6fb89a3c's own consumer cells and that survey carries them. Every cell here is exploratory; it ranks the lanes against the comparators and fixes the measurement resolution the confirmation freezes against."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T12:50:52Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This family adopts no implementation and selects nothing, so no worthwhile-speedup threshold applies and none is declared; the lane gf2 publishes is decided by the transpose-lane-selection family.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A one-sided non-inferiority margin of ten percent: a gf2 lane within ten percent of an external comparator at a kernel this small is not behind it in any way a consumer of the library can act on, because every consumer pays tile assembly and allocation around the block. It is provisional until the pilot measures the family's resolution, and the freezer replaces it if the resolution does not admit it.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A twenty percent gap in a nanosecond-scale block transpose is the smallest difference worth attributing to a named cause (the tile kernel, the instruction mix, the output handling) rather than to host noise. It is the threshold 6fb89a3c froze for the same comparison, kept so the two surveys' comparator-gap decisions are read under one rule."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This family surveys external comparators and changes no production line; its whole diff is under dev/."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/1d4fd63d/transpose-lane-vs-external-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "lane-production-block-64-vs-m4ri",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-production-block-64-vs-bitshuffle",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-block-64-vs-m4ri",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-block-64-vs-bitshuffle",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-block-64-vs-m4ri",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913305
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-block-64-vs-bitshuffle",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913306
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-movemask-block-64-vs-m4ri",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913307
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-movemask-block-64-vs-bitshuffle",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913308
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

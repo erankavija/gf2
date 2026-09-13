@@ -3,6 +3,7 @@
 #
 # Usage:
 #   dev/bench_results/1d4fd63d/run-transpose-lane.sh smoke|pilot|selected|confirmation [date-utc] [suffix]
+#   dev/bench_results/1d4fd63d/run-transpose-lane.sh external-pilot|external-confirmation [date-utc] [suffix]
 #   dev/bench_results/1d4fd63d/run-transpose-lane.sh build
 #
 # Both timed modes measure the same arms: the baseline runs the block kernel
@@ -28,6 +29,14 @@
 # resolution, the receipt's digest and the cell selection, so the confirmatory
 # family's thresholds are frozen before its first trial and never after a
 # result.
+#
+# `external-pilot` and `external-confirmation` measure the second family, which
+# puts each gf2 lane against M4RI and Bitshuffle at the kernel geometry
+# 6fb89a3c froze. Their gf2 side is this issue's own arm; their external arms
+# are 6fb89a3c's pinned executables, rebuilt by its committed `fetch-build.sh`
+# and checked byte for byte against its committed `build-evidence.json` here
+# before any timed run, with the bit mapping of every arm checked against naive
+# bit arithmetic by `survey/verify-bit-mapping.py`.
 #
 # `build` checks the conformance record and builds the runner, the acceptance
 # tool and the arm executable, then stops: it proves this launcher's
@@ -62,6 +71,10 @@ RESULTS="dev/bench_results/$ISSUE"
 PILOT_PAIRS=12
 
 MODE=${1:-}
+# Which family this mode measures: `selection` compares gf2 lanes against each
+# other, `external` compares them against M4RI and Bitshuffle. Each has its own
+# addenda, ledger, arms, plan derivation and producing manifest.
+FAMILY=selection
 DATE_UTC=${2:-$(date -u +%Y-%m-%d)}
 # A suffix separates receipts of the same label and date. A superseded receipt
 # stays committed under its own directory rather than being replaced.
@@ -97,14 +110,29 @@ case "$MODE" in
     OUT="$RESULTS/$DATE_UTC-$ISSUE-transpose-lane-confirmation${SUFFIX}"
     SEED=20260913201
     ;;
+  external-pilot)
+    LABEL=pilot
+    FAMILY=external
+    ADDENDUM="$ACTIVE/addendum-v4-external-pilot.json"
+    OUT="$RESULTS/$DATE_UTC-$ISSUE-external-pilot${SUFFIX}"
+    SEED=20260913301
+    PILOT_PAIRS=24
+    ;;
+  external-confirmation)
+    LABEL=confirmation
+    FAMILY=external
+    ADDENDUM="$ACTIVE/addendum-v4-external-confirmation.json"
+    OUT="$RESULTS/$DATE_UTC-$ISSUE-external-confirmation${SUFFIX}"
+    SEED=20260913401
+    ;;
   build) ;;
   *)
-    echo "usage: $0 smoke|pilot|selected|confirmation [date-utc] [suffix] | build" >&2
+    echo "usage: $0 smoke|pilot|selected|confirmation|external-pilot|external-confirmation [date-utc] [suffix] | build" >&2
     exit 2
     ;;
 esac
 
-if [[ "$MODE" == confirmation ]]; then
+if [[ "$MODE" == confirmation || "$MODE" == external-confirmation ]]; then
   if [[ ! -f "$ADDENDUM" ]]; then
     echo "$ADDENDUM does not exist; derive it from the committed pilot receipt" >&2
     echo "with dev/active/c7113c5a/survey/freeze-confirmation.py" >&2
@@ -136,10 +164,25 @@ python3 -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1]))["passed"
 # Builds finish before timed work.
 ./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
   --bin benchmark-ab-runner --bin benchmark-acceptance
-(cd "$ACTIVE/arms" && "$repo/scripts/cargo-budget.sh" cargo build --release)
 RUNNER=$(realpath target/release/benchmark-ab-runner)
 ACCEPTANCE=$(realpath target/release/benchmark-acceptance)
-ARM=$(realpath "$ACTIVE/arms/target/release/transpose-lane-arm")
+if [[ "$FAMILY" == external ]]; then
+  (cd "$ACTIVE/external-arms" && "$repo/scripts/cargo-budget.sh" cargo build --release)
+  ARM=$(realpath "$ACTIVE/external-arms/target/release/transpose-lane-external-arm")
+  # The external arms are 6fb89a3c's, rebuilt from its committed sources and
+  # accepted only when byte-identical to the digests it pinned; the bit mapping
+  # of every arm of every cell is checked against naive bit arithmetic before
+  # any timing.
+  SURVEY="$repo/dev/active/6fb89a3c/survey"
+  GF2_SURVEY_EXT=${GF2_SURVEY_EXT:-$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.agents/ext/6fb89a3c}
+  export GF2_SURVEY_EXT
+  "$SURVEY/fetch-build.sh" "$GF2_SURVEY_EXT"
+  python3 "$ACTIVE/survey/check-external-arms.py" --survey "$SURVEY"
+  python3 "$ACTIVE/survey/verify-bit-mapping.py" --arm "$ARM" --survey "$SURVEY"
+else
+  (cd "$ACTIVE/arms" && "$repo/scripts/cargo-budget.sh" cargo build --release)
+  ARM=$(realpath "$ACTIVE/arms/target/release/transpose-lane-arm")
+fi
 
 if [[ "$MODE" == build ]]; then
   echo "# build complete; no campaign staged" >&2
@@ -162,7 +205,12 @@ if [[ -f "$PLAN" ]]; then
   echo "# resuming the campaign already staged at $STAGE" >&2
 else
   CAMPAIGN="$MODE-$ISSUE-$(date -u +%Y%m%dt%H%M%Sz)"
-  python3 "$ACTIVE/make-plan.py" "$PLAN" "$CAMPAIGN" "$LABEL" "$ADDENDUM" "$SEED" "$ARM" "$LOCK" "$PILOT_PAIRS"
+  if [[ "$FAMILY" == external ]]; then
+    python3 "$ACTIVE/make-external-plan.py" "$PLAN" "$CAMPAIGN" "$LABEL" "$ADDENDUM" \
+      "$SEED" "$ARM" "$SURVEY" "$LOCK" "$PILOT_PAIRS"
+  else
+    python3 "$ACTIVE/make-plan.py" "$PLAN" "$CAMPAIGN" "$LABEL" "$ADDENDUM" "$SEED" "$ARM" "$LOCK" "$PILOT_PAIRS"
+  fi
 fi
 
 LAUNCH_LOG="$STAGE.launcher.log"
