@@ -136,11 +136,11 @@ impl GpuBpAlgorithm {
 /// views.
 ///
 /// The caller (the `gf2-sim` stage, which owns the `LdpcCode`) builds this from
-/// the parity-check matrix so that the kernel's check-node gather order is
-/// **exactly** the CPU decoder's `check_neighbors` (CSR `row_iter`) order and
-/// the variable-node belief sum order is exactly the `var_neighbors` (CSC
-/// `col_iter`) order — the basis of the CPU↔GPU byte-identity of the hard
-/// decision.
+/// the canonical edge layout `gf2-coding` computes for that code, so the
+/// kernel's check-node gather order is **exactly** the CPU decoder's check-major
+/// (CSR `row_iter`) order and the variable-node belief sum order is exactly its
+/// variable-major (CSC `col_iter`) order — the basis of the CPU↔GPU
+/// byte-identity of the hard decision.
 ///
 /// # Standard-agnostic by construction (design doc §6 shared binary)
 ///
