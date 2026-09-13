@@ -205,10 +205,10 @@ pub fn not_inplace(buf: &mut [u64]) {
 /// the matrix-vector product.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PopcountRoute {
-    /// The scalar backend's portable count: no kernel bundle is available.
+    /// The scalar backend's portable count, which every width below the
+    /// bit-backend SIMD threshold retains and which a host without the kernel
+    /// bundle takes at every width.
     Scalar,
-    /// One word at a time through the host's `POPCNT` instruction.
-    ScalarPopcnt,
     /// Every vector through a `VPSHUFB` nibble lookup summed by `VPSADBW`.
     SimdNibbleLut,
     /// Sixteen vectors per Harley-Seal carry-save block before one lookup.
@@ -221,7 +221,6 @@ impl PopcountRoute {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Scalar => "scalar",
-            Self::ScalarPopcnt => "scalar-popcnt",
             Self::SimdNibbleLut => "simd-nibble-lut",
             Self::SimdCarrySave => "simd-carry-save",
         }
@@ -231,9 +230,9 @@ impl PopcountRoute {
 /// Reports the route [`resolve_popcount`] takes for `word_len` words.
 ///
 /// The boundaries are the compile-time counterparts of
-/// `bit_backend.simd_min_words` and `bit_backend.popcount_csa_min_words`; a
-/// host without the kernel bundle reports [`PopcountRoute::Scalar`] at every
-/// width.
+/// `bit_backend.simd_min_words` and `bit_backend.popcount_csa_min_words`. Every
+/// width below the first reports [`PopcountRoute::Scalar`], and so does every
+/// width on a host without the kernel bundle.
 #[must_use]
 pub fn popcount_route(word_len: usize) -> PopcountRoute {
     use crate::kernels::backend::select_backend_for_size;
@@ -249,33 +248,19 @@ pub fn popcount_route(word_len: usize) -> PopcountRoute {
                 PopcountRoute::SimdNibbleLut
             }
         }
-        crate::kernels::backend::SelectedBackend::Scalar => {
-            #[cfg(feature = "simd")]
-            {
-                if crate::simd::maybe_simd().is_some() {
-                    PopcountRoute::ScalarPopcnt
-                } else {
-                    PopcountRoute::Scalar
-                }
-            }
-            #[cfg(not(feature = "simd"))]
-            {
-                PopcountRoute::Scalar
-            }
-        }
+        crate::kernels::backend::SelectedBackend::Scalar => PopcountRoute::Scalar,
     }
 }
 
 /// Reports the route [`resolve_and_popcount`] takes for `word_len` words.
 ///
-/// The fused kernels exist only in the SIMD bundle, so every width below the
-/// bit-backend threshold reports [`PopcountRoute::Scalar`].
+/// The two resolvers share both boundaries, so this reports what
+/// [`popcount_route`] reports: the fused kernels exist only in the SIMD
+/// bundle, and every width below the bit-backend threshold reports
+/// [`PopcountRoute::Scalar`] for the unfused count as well.
 #[must_use]
 pub fn and_popcount_route(word_len: usize) -> PopcountRoute {
-    match popcount_route(word_len) {
-        PopcountRoute::ScalarPopcnt | PopcountRoute::Scalar => PopcountRoute::Scalar,
-        simd => simd,
-    }
+    popcount_route(word_len)
 }
 
 /// Resolved population-count operation for fixed-width hot loops.
@@ -304,17 +289,22 @@ fn scalar_and_popcount(lhs: &[u64], rhs: &[u64]) -> u64 {
 /// Resolves the fastest measured population-count implementation for
 /// `word_len` words.
 ///
-/// Three routes share this one boundary, each measured on the target host and
+/// Two kernel routes share one boundary, each measured on the target host and
 /// reachable only when the non-default `simd` feature is enabled and the
 /// runtime backend is available:
 ///
-/// - below the bit-backend SIMD threshold, `LogicalFns::popcnt_scalar_fn`
-///   counts one word at a time with the host's `POPCNT` instruction;
-/// - from that threshold to `bit_backend.popcount_csa_min_words`,
+/// - from the bit-backend SIMD threshold to `bit_backend.popcount_csa_min_words`,
 ///   `LogicalFns::popcnt_fn` counts every vector through a `VPSHUFB` nibble
 ///   lookup;
 /// - at or above that word count, `LogicalFns::popcnt_csa_fn` folds sixteen
 ///   vectors per Harley-Seal block before one lookup.
+///
+/// Every width below the SIMD threshold keeps the scalar backend's portable
+/// count. The bundle's `LogicalFns::popcnt_scalar_fn`, which counts one word at
+/// a time with the host's `POPCNT` instruction, loses to that count through a
+/// resolved call on the measured host, so this region retains its established
+/// implementation: cell `popcount-w4-dispatch` of the confirmation receipt
+/// under `dev/bench_results/5cbb6545/` records the regression that decides it.
 ///
 /// Without the feature or the backend every width takes the scalar fallback.
 /// Both boundaries are compile-time constants, per DEC-G in
@@ -348,18 +338,7 @@ pub fn resolve_popcount(word_len: usize) -> PopcountFn {
                 }
             })
             .unwrap_or(scalar_popcount),
-        crate::kernels::backend::SelectedBackend::Scalar => {
-            #[cfg(feature = "simd")]
-            {
-                crate::simd::maybe_simd()
-                    .map(|backend| backend.popcnt_scalar_fn)
-                    .unwrap_or(scalar_popcount)
-            }
-            #[cfg(not(feature = "simd"))]
-            {
-                scalar_popcount
-            }
-        }
+        crate::kernels::backend::SelectedBackend::Scalar => scalar_popcount,
     }
 }
 
