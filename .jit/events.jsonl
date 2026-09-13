@@ -12010,3 +12010,4 @@
 {"gate_key":"code-review","id":"e4fa7cf4-6752-4412-94dd-06b231326974","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T09:08:41.565978108Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"45c8c2d6-7a09-4d33-ba1c-1a69074557d5","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T09:09:11.987709002Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"cargo-ci","id":"e680cd49-f91a-4824-93c9-1a2cb26359bc","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T09:11:50.148066400Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"74458931-8ea4-448c-bc82-bc84bda1eef3","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-09-13T09:12:08.260730041Z","type":"issue_updated","updated_by":"doc-add"}
