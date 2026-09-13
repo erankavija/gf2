@@ -1,0 +1,231 @@
+{
+  "schema": "count-optimization-source-evidence-v1",
+  "commit": "b8a80d09afac359aa3b58d038bbfbc51ba2b0650",
+  "note": "The commit is navigation metadata; the producing manifests of the campaigns pin the source bytes the receipts measured. Lines under crates/gf2-kernels-simd/src/x86/asm/ are the committed artefacts dev/scripts/regen-asm.sh writes from the compiler, and each artefact's header names the revision and toolchain it was recorded from.",
+  "claims": [
+    {
+      "id": "bitvec-count-ones",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 602,
+      "text": "crate::kernels::ops::popcount(&self.data) as usize",
+      "topic": "entry-point",
+      "why": "BitVec::count_ones is the unfused public entry point: it resolves one route per call"
+    },
+    {
+      "id": "matvec-entry",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1498,
+      "text": "pub fn matvec(&self, x: &crate::BitVec) -> crate::BitVec {",
+      "topic": "entry-point",
+      "why": "BitMatrix::matvec is the fused public entry point"
+    },
+    {
+      "id": "matvec-resolve-once",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1564,
+      "text": "let and_popcount = crate::kernels::ops::resolve_and_popcount(self.stride_words);",
+      "topic": "entry-point",
+      "why": "the product resolves the fused route once for the stride it repeats, so a row pays no resolution"
+    },
+    {
+      "id": "ops-scalar-retained",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 341,
+      "text": "crate::kernels::backend::SelectedBackend::Scalar => scalar_popcount,",
+      "topic": "no-win-region",
+      "why": "below the bit-backend SIMD threshold the resolver returns the scalar backend's portable count: the established implementation the measured no-win region retains"
+    },
+    {
+      "id": "ops-csa-boundary",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 335,
+      "text": "backend.popcnt_csa_fn",
+      "topic": "boundary",
+      "why": "at or above the carry-save boundary the unfused resolver returns the Harley-Seal kernel"
+    },
+    {
+      "id": "ops-fused-csa-boundary",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 378,
+      "text": "backend.and_popcnt_csa_fn",
+      "topic": "boundary",
+      "why": "the fused resolver splits at the same boundary"
+    },
+    {
+      "id": "ops-route-report",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 245,
+      "text": "} else if word_len >= crate::kernels::backend::POPCOUNT_CSA_MIN_WORDS {",
+      "topic": "boundary",
+      "why": "popcount_route reports the boundary at run time, so a test or an arm observes the route instead of inferring it"
+    },
+    {
+      "id": "backend-simd-threshold",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 133,
+      "text": "if _size >= SIMD_MIN_WORDS {",
+      "topic": "boundary",
+      "why": "the bit-backend threshold that separates the scalar count from the vector kernels"
+    },
+    {
+      "id": "backend-csa-default",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 95,
+      "text": "pub(crate) const POPCOUNT_CSA_MIN_WORDS_DEFAULT: usize = 256;",
+      "topic": "tuning",
+      "why": "the adopted carry-save boundary in the conservative table's compile-time counterpart"
+    },
+    {
+      "id": "baked-csa-mirror",
+      "path": "crates/gf2-core/src/tuning/baked.rs",
+      "line": 27,
+      "text": "pub(crate) const POPCOUNT_CSA_MIN_WORDS: usize = 256;",
+      "topic": "tuning",
+      "why": "the baked table mirrors the same boundary, so the cfg-selected build takes the same route"
+    },
+    {
+      "id": "tuning-csa-selector",
+      "path": "crates/gf2-core/src/tuning/mod.rs",
+      "line": 561,
+      "text": "popcount_csa_min_words: usize,",
+      "topic": "tuning",
+      "why": "the canonical tuning mechanism carries the boundary as a bit-backend selector, which is how the sweeps moved it"
+    },
+    {
+      "id": "core-simd-optional",
+      "path": "crates/gf2-core/Cargo.toml",
+      "line": 54,
+      "text": "simd = []",
+      "topic": "feature",
+      "why": "the kernel routes are reachable only through a non-default feature of gf2-core"
+    },
+    {
+      "id": "scalar-count-ones",
+      "path": "crates/gf2-core/src/kernels/scalar/logical.rs",
+      "line": 105,
+      "text": "buf.iter().map(|w| w.count_ones() as u64).sum()",
+      "topic": "no-win-region",
+      "why": "the established sub-threshold count: one portable count_ones per word, which this toolchain lowers without POPCNT"
+    },
+    {
+      "id": "legacy-bundle-popcount",
+      "path": "crates/gf2-core/src/kernels/simd/mod.rs",
+      "line": 56,
+      "text": "(self.fns.popcnt_fn)(buf)",
+      "topic": "baseline",
+      "why": "the route the pre-change dispatcher took at and above the threshold, which the baseline arm reproduces"
+    },
+    {
+      "id": "bundle-scalar-popcnt-comparator",
+      "path": "crates/gf2-kernels-simd/src/lib.rs",
+      "line": 115,
+      "text": "pub popcnt_scalar_fn: fn(&[u64]) -> u64,",
+      "topic": "no-win-region",
+      "why": "the scalar POPCNT kernel stays in the bundle as the measured comparator no resolver selects"
+    },
+    {
+      "id": "csa-block-vectors",
+      "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+      "line": 36,
+      "text": "pub const CSA_BLOCK_VECTORS: usize = 16;",
+      "topic": "kernel",
+      "why": "one carry-save block folds sixteen vectors, so the block is 512 bytes and a shorter buffer reaches only the remainder"
+    },
+    {
+      "id": "csa-block-loop",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 44,
+      "text": ".LBB120_4:",
+      "topic": "dependency-chain",
+      "why": "the carry-save block loop of avx2_popcnt_csa"
+    },
+    {
+      "id": "csa-unaligned-loads",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 45,
+      "text": "vmovdqu ymm9, ymmword ptr [rdi + r8]",
+      "topic": "alignment",
+      "why": "the block loop loads its sixteen vectors with unaligned moves, so no alignment precondition reaches a caller"
+    },
+    {
+      "id": "csa-block-stride",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 144,
+      "text": "add r8, 512",
+      "topic": "kernel",
+      "why": "the block loop advances 512 bytes per iteration"
+    },
+    {
+      "id": "csa-callee-saved-spill",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 148,
+      "text": "push rbp",
+      "topic": "register-pressure",
+      "why": "the carry-save kernel spills six callee-saved registers: holding five carry-save accumulators and the total across the loop costs the register file"
+    },
+    {
+      "id": "csa-vector-remainder",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 217,
+      "text": ".LBB120_7:",
+      "topic": "tail",
+      "why": "the per-vector remainder loop between the block loop and the word tail: a buffer shorter than one block is counted here through the same nibble lookup the established route uses"
+    },
+    {
+      "id": "csa-word-tail",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 263,
+      "text": "imul r11, rcx",
+      "topic": "tail",
+      "why": "the word tail of the carry-save kernel counts with the SWAR multiply, not with POPCNT"
+    },
+    {
+      "id": "fused-and-on-load",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 322,
+      "text": "vpand ymm13, ymm9, ymmword ptr [rdi + r9]",
+      "topic": "fused",
+      "why": "the fused kernel ANDs the second operand as it loads the first, so no temporary buffer exists"
+    },
+    {
+      "id": "popcnt-words-symbol",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 577,
+      "text": "gf2_kernels_simd::x86::popcount::popcnt_words:",
+      "topic": "no-win-region",
+      "why": "the scalar POPCNT kernel"
+    },
+    {
+      "id": "popcnt-words-loop",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+      "line": 584,
+      "text": "popcnt rdx, qword ptr [rdi + rcx]",
+      "topic": "dependency-chain",
+      "why": "one POPCNT per word into one accumulator: five instructions per word with a single dependency chain and no unrolling, which is what loses at four words"
+    },
+    {
+      "id": "lut-vector-loop",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+      "line": 177,
+      "text": ".LBB66_9:",
+      "topic": "dependency-chain",
+      "why": "the per-vector loop of avx2_popcnt"
+    },
+    {
+      "id": "lut-accumulator",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+      "line": 186,
+      "text": "vpaddq ymm0, ymm4, ymm0",
+      "topic": "dependency-chain",
+      "why": "the per-vector loop accumulates into one register per vector, so its lookup and its accumulator chain both run once per 32 bytes"
+    },
+    {
+      "id": "lut-word-tail",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+      "line": 207,
+      "text": ".LBB66_6:",
+      "topic": "tail",
+      "why": "the established kernel's word tail, the SWAR count it shares with the carry-save kernel"
+    }
+  ]
+}
