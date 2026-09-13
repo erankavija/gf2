@@ -22,6 +22,13 @@
       "format": "markdown",
       "label": "5cbb6545 review round 1",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/5cbb6545-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "5cbb6545 review round 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/5cbb6545-r2.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:17:10.818861173Z",
@@ -47,5 +54,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize population count and fused bit reductions",
-  "updated_at": "2026-09-13T18:31:04.059312741Z"
+  "updated_at": "2026-09-13T19:06:48.317135566Z"
 }
