@@ -1,0 +1,42 @@
+# Profile rows of the measured gf2 and gf2x paths (jit:53c5a8c0).
+#
+# One row is one path on one cell's fixture. Columns:
+#   label      identity of the row in the profile record
+#   cell       the study cell whose workload and seed this row reproduces
+#   build      arms build variant: conservative (the crossover family's
+#              portable executables) or native (the polynomial family's)
+#   arm        gf2 or gf2x
+#   path       value of GF2_CROSSOVER_PATH; `batch` for rows whose case does
+#              not read it, because the variable is mandatory for the crossover
+#              cases and harmless elsewhere
+#   case       the case JSON, character for character the workload and seed the
+#              frozen cell declares
+#
+# Every case here is copied from the frozen addendum's cell of the same name,
+# so a profile row measures the fixture its receipt measured. No row adds a
+# size, a seed or a path the addenda do not declare.
+#label	cell	build	arm	path	case
+raw-batch-8-element	raw-batch-8	conservative	gf2	element	{"kind":"raw-batch","count":8,"inner":256,"seed":5301}
+raw-batch-8-batch	raw-batch-8	conservative	gf2	batch	{"kind":"raw-batch","count":8,"inner":256,"seed":5301}
+field-dot-8-element	field-dot-8	conservative	gf2	element	{"kind":"field-dot","count":8,"inner":256,"seed":5311}
+field-dot-8-batch	field-dot-8	conservative	gf2	batch	{"kind":"field-dot","count":8,"inner":256,"seed":5311}
+field-dot-16-element	field-dot-16-holdout	conservative	gf2	element	{"kind":"field-dot","count":16,"inner":128,"seed":5331}
+field-dot-16-batch	field-dot-16-holdout	conservative	gf2	batch	{"kind":"field-dot","count":16,"inner":128,"seed":5331}
+field-dot-64-element	field-dot-64	conservative	gf2	element	{"kind":"field-dot","count":64,"inner":64,"seed":5312}
+field-dot-64-batch	field-dot-64	conservative	gf2	batch	{"kind":"field-dot","count":64,"inner":64,"seed":5312}
+field-dot-512-element	field-dot-512-holdout	conservative	gf2	element	{"kind":"field-dot","count":512,"inner":8,"seed":5332}
+field-dot-512-batch	field-dot-512-holdout	conservative	gf2	batch	{"kind":"field-dot","count":512,"inner":8,"seed":5332}
+field-batch-mul-8-element	field-batch-mul-8	conservative	gf2	element	{"kind":"field-batch-mul","count":8,"inner":256,"seed":5321}
+field-batch-mul-8-batch	field-batch-mul-8	conservative	gf2	batch	{"kind":"field-batch-mul","count":8,"inner":256,"seed":5321}
+poly-4w-gf2	poly-4w	native	gf2	batch	{"kind":"poly-mul","words":4,"inner":64,"seed":5411}
+poly-4w-gf2x	poly-4w	native	gf2x	batch	{"kind":"poly-mul","words":4,"inner":64,"seed":5411}
+poly-9w-gf2	poly-9w	native	gf2	batch	{"kind":"poly-mul","words":9,"inner":64,"seed":5412}
+poly-9w-gf2x	poly-9w	native	gf2x	batch	{"kind":"poly-mul","words":9,"inner":64,"seed":5412}
+poly-16w-gf2	poly-16w	native	gf2	batch	{"kind":"poly-mul","words":16,"inner":16,"seed":5413}
+poly-16w-gf2x	poly-16w	native	gf2x	batch	{"kind":"poly-mul","words":16,"inner":16,"seed":5413}
+wide-field-256-gf2	wide-field-256-composed	native	gf2	batch	{"kind":"wide-field-mul","words":4,"inner":64,"seed":5401}
+wide-field-256-gf2x	wide-field-256-composed	native	gf2x	batch	{"kind":"wide-field-mul","words":4,"inner":64,"seed":5401}
+wide-field-571-gf2	wide-field-571-composed	native	gf2	batch	{"kind":"wide-field-mul","words":9,"inner":32,"seed":5402}
+wide-field-571-gf2x	wide-field-571-composed	native	gf2x	batch	{"kind":"wide-field-mul","words":9,"inner":32,"seed":5402}
+raw-batch-1024-composed-gf2	raw-batch-1024-composed	native	gf2	batch	{"kind":"raw-batch","count":1024,"inner":1,"seed":5421}
+raw-batch-1024-composed-gf2x	raw-batch-1024-composed	native	gf2x	batch	{"kind":"raw-batch","count":1024,"inner":1,"seed":5421}

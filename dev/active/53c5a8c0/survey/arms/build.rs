@@ -14,7 +14,7 @@ fn main() {
     let prefix = std::env::var("GF2X_PREFIX")
         .expect("GF2X_PREFIX must name a prefix produced by survey/fetch-build.sh");
     println!("cargo:rustc-link-search=native={prefix}/lib");
-    for binary in ["gf2x-poly-arm", "crossover-validate"] {
+    for binary in ["gf2x-poly-arm", "crossover-validate", "profile-arm"] {
         println!("cargo:rustc-link-arg-bin={binary}=-Wl,-rpath,{prefix}/lib");
         println!("cargo:rustc-link-arg-bin={binary}=-Wl,--disable-new-dtags");
     }
