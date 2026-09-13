@@ -1,0 +1,18 @@
+pilot receipt  dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/receipt.json
+receipt sha256 095e22ee8d767e94118ec8b8c4058ca4aa510a29790c1b7920099d464cf8d743
+campaign       pilot-1c602857-20260913t010028z
+verdict        accepted (label pilot)
+family         public-clmul-wide-dispatch: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+clmul-wide-4w-owned                      6      77.377      75.993      77.632    0.0179
+clmul-wide-9w-owned                      6      114.04      113.94      114.29    0.0022
+clmul-wide-4w-accumulate                 6      65.493       65.41      65.593    0.0015
+clmul-wide-1w-dispatch-overhead          6           1     0.99793      1.0005    0.0021
+clmul-wide-2w-dispatch-overhead          6     0.99891     0.99662      1.0016    0.0027
+clmul-wide-16w-dispatch-overhead         6     0.99971     0.99392      1.0057    0.0060
+
+widest relative half-width   0.017888
+frozen measurement resolution 0.02
+margins: equivalence 1.05, material gap 1.25
+confirmation addendum dev/active/1c602857/addendum-v4-public-clmul-confirmation.json
