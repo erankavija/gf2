@@ -100,6 +100,16 @@ if [ -z "${CARGO_CI_NO_NICE:-}" ]; then
   command -v ionice >/dev/null 2>&1 && PREFIX+=(ionice -c2 -n7)
 fi
 
+# Invoker policy (2026-09-13): the host is never locked during a working
+# session. The lock discipline below exists for the overnight benchmark window,
+# which exports GF2_BENCH_WINDOW=1 (see
+# dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh); outside
+# it every invocation runs unlocked and unbudgeted, exactly as under
+# CARGO_CI_NO_LOCK=1.
+if [ -z "${GF2_BENCH_WINDOW:-}" ]; then
+  CARGO_CI_NO_LOCK=1
+fi
+
 if [ -n "${CARGO_CI_NO_LOCK:-}" ] || ! command -v flock >/dev/null 2>&1; then
   export CARGO_BUILD_JOBS="$NPROC" RUST_TEST_THREADS="$NPROC"
   exec "${PREFIX[@]}" "$@"

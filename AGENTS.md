@@ -40,11 +40,16 @@ execution with `./scripts/cargo-budget.sh --test`.
 Tests, examples, simulations, and benchmarks that do substantial work must use
 release mode.
 
-- Test execution goes through `./scripts/cargo-budget.sh --test`. A direct
-  `cargo nextest` bypasses the test lock and is not a permitted path for a
-  suite run.
-- Builds and lints run unlocked under the CPU budget; only test execution
-  serializes.
+- Test execution goes through `./scripts/cargo-budget.sh --test`, the path
+  the benchmark window serializes; a direct `cargo nextest` is not a permitted
+  path for a suite run.
+- The host is never locked during a working session. Outside the overnight
+  benchmark window (`GF2_BENCH_WINDOW=1`, exported by the window runner) both
+  wrappers run their command unlocked: `scripts/cargo-budget.sh` applies no
+  budget and takes no lock, and `dev/scripts/ccx1-bench-flock.sh` refuses to
+  run. Every timed measurement is queued for the window. Inside the window
+  builds and lints run under the CPU budget, only test execution serializes,
+  and the discipline below applies.
 - `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
 - `dev/scripts/ccx1-bench-flock.sh --full-host` holds the CCX1 mutex
   exclusively and budget work holds it shared, so budget work waits. A pending
