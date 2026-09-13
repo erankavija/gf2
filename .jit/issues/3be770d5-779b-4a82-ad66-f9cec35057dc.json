@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-11T17:45:19.350108929Z",
   "context": {},
   "created_at": "2026-06-12T16:50:06.823759512Z",
@@ -7,7 +7,7 @@
     "18e69a1a-c86f-49dc-b381-88f62cd20aa0",
     "c077a88b-2d35-49ed-bfe0-6fbc7055cea1"
   ],
-  "description": "Establish the normalized CPU LDPC throughput gap against AFF3CT and rank measured bottlenecks before decoder optimization.\n\n## Background\n\nThe existing comparison harness in dev/benchmarks/gf2-sim/comparison exports identical parity-check matrices for DVB-T2 rate-1/2 normal frames and the NR BG1 Z=384 mother code. Earlier throughput columns did not normalize worker counts or affinity and therefore do not establish the per-core competitive gap. This issue owns profiling and recommendations, not decoder optimization implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish pinned-thread, quiet-host comparisons for both existing configurations: one worker versus one worker, and 24 versus 24 logical-CPU workers, augmented with six- and twelve-physical-core arms. Resolve topology and record affinity, actual worker counts, nested thread pools, SMT state and source/build identities.\n\n- [hard] REQ-02: Identify at least three leading hot-path contributors with measured time shares and committed perf profiles or equivalent evidence, including allocation, edge traversal, layout, reduction and dispatch costs where present. Distinguish single-core bottlenecks from multicore saturation.\n\n- [hard] REQ-03: Rank candidate levers using measured evidence or labeled estimates: allocation removal, canonical edge indexing, flat check/variable-major message layouts, shared min/second-min/sign reductions, inter-frame SIMD, quantized/layered decoding and QC-aware intra-frame work. Include batch conversion, syndrome/termination and degree-structure costs; name a falsifiable workload experiment for each recommendation.\n\n- [hard] REQ-04: Preserve the existing numerical comparison contract: identical H, NMS alpha 0.75, flooding schedule, iteration cap 50 and syndrome early termination in matched arms; feed identical recorded LLRs where the adapter supports it. Separate fastest-compatible AFF3CT modes and report precision/schedule/batching differences, iteration distributions, and BER/FER counts and confidence intervals.\n\n- [hard] REQ-05: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n## Notes\n\nKeep this issue profiling-only. Reuse the linked comparison harness; no AVX-512/GFNI or GPU kernel implementation is included. The evidence contains profile.md and machine-readable measurements under the issue's configured dev/bench_results directory, with durable links to the raw execution log and profiler artifacts.\n\n\n",
+  "description": "Establish the normalized CPU LDPC throughput gap against AFF3CT and rank measured bottlenecks before decoder optimization.\n\n## Background\n\nThe existing comparison harness in dev/benchmarks/gf2-sim/comparison exports identical parity-check matrices for DVB-T2 rate-1/2 normal frames and the NR BG1 Z=384 mother code. Earlier throughput columns did not normalize worker counts or affinity and therefore do not establish the per-core competitive gap. This issue owns profiling and recommendations, not decoder optimization implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish pinned-thread, quiet-host comparisons for both existing configurations: one worker versus one worker, and 24 versus 24 logical-CPU workers, augmented with six- and twelve-physical-core arms. Resolve topology and record affinity, actual worker counts, nested thread pools, SMT state and source/build identities.\n\n- [hard] REQ-02: Identify at least three leading hot-path contributors with measured time shares and committed perf profiles or equivalent evidence, including allocation, edge traversal, layout, reduction and dispatch costs where present. Distinguish single-core bottlenecks from multicore saturation.\n\n- [hard] REQ-03: Rank candidate levers using measured evidence or labeled estimates: allocation removal, canonical edge indexing, flat check/variable-major message layouts, shared min/second-min/sign reductions, inter-frame SIMD, quantized/layered decoding and QC-aware intra-frame work. Include batch conversion, syndrome/termination and degree-structure costs; name a falsifiable workload experiment for each recommendation.\n\n- [hard] REQ-04: Preserve the existing numerical comparison contract: identical H, NMS alpha 0.75, flooding schedule, iteration cap 50 and syndrome early termination in matched arms; feed identical recorded LLRs where the adapter supports it. Separate fastest-compatible AFF3CT modes and report precision/schedule/batching differences, iteration distributions, and BER/FER counts and confidence intervals.\n\n- [hard] REQ-05: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n## Notes\n\nKeep this issue profiling-only. Reuse the linked comparison harness; no AVX-512/GFNI or GPU kernel implementation is included. The evidence contains profile.md and machine-readable measurements under the issue's configured dev/bench_results directory, with durable links to the raw execution log and profiler artifacts.\n\nSource references: [Cassagne2019].\n\n",
   "documents": [
     {
       "assets": [
@@ -774,6 +774,7 @@
       "path": "dev/active/3be770d5/survey/harness/Cargo.toml"
     }
   ],
+  "done_at": "2026-09-12T17:34:28.321336973Z",
   "first_ready_at": "2026-09-06T20:03:43.034982897Z",
   "gates_required": [
     "cargo-ci",
@@ -783,19 +784,24 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-06-12T16:50:17.097931252Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-12T17:16:28.037756699Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-06-12T16:50:17.105475134Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-12T17:16:04.422226903Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-12T17:30:23.301042849Z",
+      "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "pending",
-      "updated_at": "2026-09-06T19:18:29.127808422Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-12T17:33:54.548002975Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
@@ -809,7 +815,7 @@
     "cites:Cassagne2019"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-  "updated_at": "2026-09-12T16:35:34.126718882Z"
+  "updated_at": "2026-09-12T17:34:28.321336973Z"
 }

@@ -1,0 +1,206 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "byte-field-region-axpy",
+    "issue": "6c6b09b1",
+    "purpose": "consumer-family",
+    "description": "Confirmation of issue 6c6b09b1, protocol version 4, frozen from the pilot receipt dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot before any confirmatory trial. Question: how much slower is gf2's fixed-coefficient GF(2^8) region multiply-accumulate y[i] += a*x[i] (FieldVec::axpy, one coefficient reused across the region, accumulation by XOR, source and destination distinct) than the fastest pinned external region kernel, per cache regime (4 KiB, 128 KiB and 8 MiB byte regions warm; 2 MiB regions rotated through eight banks), kernel-isolated and as a whole byte-region consumer that converts its operands in and its result out? Both gf2 element representations are measured against ISA-L gf_vect_mad; the isal-vs-gfcomplete and isal-vs-m4rie cells establish which external arm is fastest (GF-Complete multiply_region.w32 with add=1; M4RIE mzed_add_multiple_of_row on one-row matrices); element-vs-wide compares the two gf2 representations directly. The six confirmed cells sweep the warm cache regimes 4 KiB, 128 KiB and 8 MiB for FieldVec<Gf2mElement> kernel-isolated against ISA-L, the fastest external region kernel this family's pilot measured, and take 128 KiB as the anchor at which both gf2 representations are confirmed kernel-isolated and as whole byte-region consumers. The pilot's streaming regime, its 4 KiB and 8 MiB Gf2mWide cells, its 4 KiB whole-consumer cells and its external-against-external cells keep their exploratory evidence and are not confirmed here. Every cell works in GF(2^8) modulo 0x11D (x^8+x^4+x^3+x^2+1), the one field all compared arms share: ISA-L implements no other, and the gf2 arms use Gf2mField::gf256() or the survey's Gf2mWideConfig with the same polynomial. gf2 ships no GF(2^8) field modulo 0x11B, so no cell uses it. Arm names in a cell identifier: element = FieldVec/FieldMatrix<Gf2mElement>; wide = FieldVec/FieldMatrix<Gf2mWide<1,Gf256x11d>>; batch = gf2m::batch::batch_mul on u64 lanes; isal, gfcomplete, m4rie = the pinned libraries [IsaL2026] [GfComplete2026] [Mfourrie2026] through the survey's C shim. In a cell <x>-vs-<y> the baseline is x and the candidate y, so a speedup above one favours y; with gf2 as baseline, a value below one means gf2 is faster. Operands come from SplitMix64 [Steele2014] as implemented in tuning-campaign-support 0.1.0 (dev/tools/tuning-campaign-support/src/abtest.rs), seeded with the cell's workload seed and read through OperandStream in dev/active/6c6b09b1/survey/arm-common/src/lib.rs: each operand byte is the low byte of one output, and the coefficient of a region cell is the next output's low byte with its low bit set. Every cell is single-core: none of the measured gf2 entry points (FieldVec::axpy, field::matrix::gemm, gf2m::batch::batch_mul) and none of the external region, element or matrix calls has a parallel form in these builds (M4RI is configured without OpenMP), so a 6-, 12- or 24-CPU arm would time a harness thread pool rather than either library, and none is declared."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-12T13:20:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "No cell is an improvement cell: the survey compares current gf2 consumer paths with pinned external libraries and adopts nothing, so no worthwhile-speedup threshold applies.",
+    "measurement_resolution": 0.105371,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/receipt.json",
+      "sha256": "36c76bea9e8c61bb80e6ba1bd230fec9c05389962653e3e24a428ce3a0384393"
+    },
+    "equivalence_margin": 1.15,
+    "equivalence_rationale": "Within fifteen percent a consumer choosing between gf2 and an external byte-field library decides on licensing, portability and the conversion it must add, not on the kernel speed. The confirmation freezes a pilot-derived resolution strictly below this margin.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A quarter of the runtime is the smallest gap that survives the byte conversion a gf2 consumer would add to reach an external library, so it is the smallest gap that would change a decision about the gf2 path for the downstream feasibility work. The confirmation freezes a pilot-derived resolution strictly below it."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "The survey establishes comparison arms and baselines and changes no production kernel or library, so its budget for production change is zero by construction."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/6c6b09b1/v3-region-axpy-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "axpy-4k-element-vs-isal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-region-axpy-4096-bytes",
+        "size": {
+          "bytes": 4096
+        },
+        "seed": 301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-128k-element-vs-isal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-region-axpy-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-8m-element-vs-isal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-region-axpy-8388608-bytes",
+        "size": {
+          "bytes": 8388608
+        },
+        "seed": 303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-128k-wide-vs-isal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-region-axpy-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-128k-whole-element-vs-isal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-region-axpy-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 302
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "axpy-128k-whole-wide-vs-isal",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-region-axpy-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 302
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

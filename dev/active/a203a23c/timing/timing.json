@@ -1,0 +1,128 @@
+{
+  "schema": "a203a23c-cat-file-batch-timing-v1",
+  "purpose": "Wall time of the per-file and batch git cat-file mechanisms 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31 replaced, measured directly against the committed object database without writing to the repository.",
+  "generator": "dev/active/a203a23c/timing/measure.py",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "command": "python3 -B dev/active/a203a23c/timing/measure.py --repetitions 5",
+  "repetitions": 5,
+  "workload_revision": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+  "per_file_source_revision": "a6427615adf607caca5e4adb3be917a20f18891f",
+  "batch_source_revision": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+  "host": {
+    "hostname": "fraktaali",
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "cpu_count": 24,
+    "os_kernel": "Linux 7.2.2-arch1-1",
+    "governors": {
+      "cpu0": "powersave",
+      "cpu1": "powersave",
+      "cpu10": "powersave",
+      "cpu11": "powersave",
+      "cpu12": "powersave",
+      "cpu13": "powersave",
+      "cpu14": "powersave",
+      "cpu15": "powersave",
+      "cpu16": "powersave",
+      "cpu17": "powersave",
+      "cpu18": "powersave",
+      "cpu19": "powersave",
+      "cpu2": "powersave",
+      "cpu20": "powersave",
+      "cpu21": "powersave",
+      "cpu22": "powersave",
+      "cpu23": "powersave",
+      "cpu3": "powersave",
+      "cpu4": "powersave",
+      "cpu5": "powersave",
+      "cpu6": "powersave",
+      "cpu7": "powersave",
+      "cpu8": "powersave",
+      "cpu9": "powersave"
+    },
+    "smt_active": true
+  },
+  "toolchain": {
+    "python3": "3.14.7",
+    "git": "git version 2.55.0"
+  },
+  "measurements": {
+    "checker_check": {
+      "tool": "dev/scripts/check-receipt-input-snapshots.py",
+      "function": "check()",
+      "per_file": {
+        "repetitions_s": [
+          23.236279280041344,
+          23.340717743034475,
+          23.30975872289855,
+          23.142198830959387,
+          23.19756307103671
+        ],
+        "min_s": 23.142198830959387,
+        "median_s": 23.236279280041344
+      },
+      "batch": {
+        "repetitions_s": [
+          2.4919792029540986,
+          2.4935547510394827,
+          2.4752694109920412,
+          2.4672633729642257,
+          2.480275957030244
+        ],
+        "min_s": 2.4672633729642257,
+        "median_s": 2.480275957030244
+      }
+    },
+    "restoration_sources_by_digest": {
+      "tool": "dev/active/a203a23c/restore-receipt-inputs.py",
+      "function": "sources_by_digest()",
+      "per_file": {
+        "repetitions_s": [
+          35.73050312302075,
+          38.32348661602009,
+          35.71742524893489,
+          40.79366850294173,
+          38.87853988399729
+        ],
+        "min_s": 35.71742524893489,
+        "median_s": 38.32348661602009
+      },
+      "batch": {
+        "repetitions_s": [
+          4.910646122996695,
+          3.3672856009798124,
+          3.579214320052415,
+          3.66088703495916,
+          3.3347303150221705
+        ],
+        "min_s": 3.3347303150221705,
+        "median_s": 3.579214320052415
+      }
+    },
+    "restoration_proxy_total": {
+      "tool": "dev/active/a203a23c/restore-receipt-inputs.py",
+      "function": "check() + sources_by_digest(), summed per repetition",
+      "per_file": {
+        "repetitions_s": [
+          58.9667824030621,
+          61.664204359054565,
+          59.02718397183344,
+          63.935867333901115,
+          62.076102955034
+        ],
+        "min_s": 58.9667824030621,
+        "median_s": 61.664204359054565
+      },
+      "batch": {
+        "repetitions_s": [
+          7.402625325950794,
+          5.860840352019295,
+          6.054483731044456,
+          6.1281504079233855,
+          5.815006272052415
+        ],
+        "min_s": 5.815006272052415,
+        "median_s": 6.054483731044456
+      }
+    }
+  }
+}

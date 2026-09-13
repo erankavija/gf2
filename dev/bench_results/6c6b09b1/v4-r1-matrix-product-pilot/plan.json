@@ -1,0 +1,301 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "6c6b09b1-v4-r1-matrix-product-pilot",
+  "issue": "6c6b09b1",
+  "label": "pilot",
+  "campaign_seed": 2026091102,
+  "addendum": "dev/active/6c6b09b1/addendum-v4-matrix-product-pilot.json",
+  "producing_manifest": "dev/active/6c6b09b1/survey/producing-inputs-v4.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-element": {
+      "build": "native",
+      "description": "gf2-core FieldVec/FieldMatrix<Gf2mElement> over Gf2mField::gf256(), built with -C target-cpu=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-survey/release/gf2-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_GF2_REPR": "element"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "m4rie": {
+      "build": "external",
+      "description": "M4RIE 20250128 over M4RI 20260122 through the C shim, gcc -O3 -march=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-survey/release/ext-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_BACKEND": "m4rie",
+        "GF2_SURVEY_VARIANT": "default"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-wide": {
+      "build": "native",
+      "description": "gf2-core FieldVec/FieldMatrix<Gf2mWide<1,Gf256x11d>>, the survey's 0x11D Gf2mWideConfig, built with -C target-cpu=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-survey/release/gf2-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_GF2_REPR": "wide"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "isal": {
+      "build": "external",
+      "description": "ISA-L v2.32.1 (7c3479e0) runtime-dispatched kernels through the C shim, gcc -O3 -march=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-survey/release/ext-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_BACKEND": "isa-l",
+        "GF2_SURVEY_VARIANT": "default"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "matmul-n64-element-vs-m4rie",
+      "baseline_arm": "gf2-element",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 64,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 401,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "matmul-n256-element-vs-m4rie",
+      "baseline_arm": "gf2-element",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 402,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "matmul-n512-element-vs-m4rie",
+      "baseline_arm": "gf2-element",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 512,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 403,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "matmul-n256-whole-element-vs-m4rie",
+      "baseline_arm": "gf2-element",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 402,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "matmul-n64-wide-vs-m4rie",
+      "baseline_arm": "gf2-wide",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 64,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 401,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "matmul-n256-wide-vs-m4rie",
+      "baseline_arm": "gf2-wide",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 402,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "matmul-n512-wide-vs-m4rie",
+      "baseline_arm": "gf2-wide",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 512,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 403,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "matmul-n256-whole-wide-vs-m4rie",
+      "baseline_arm": "gf2-wide",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 402,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "encode-k10r4-64k-element-vs-isal",
+      "baseline_arm": "gf2-element",
+      "candidate_arm": "isal",
+      "case": {
+        "operation": "encode",
+        "bytes": 65536,
+        "n": 0,
+        "k": 10,
+        "rows": 4,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 404,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "encode-k10r4-64k-whole-element-vs-isal",
+      "baseline_arm": "gf2-element",
+      "candidate_arm": "isal",
+      "case": {
+        "operation": "encode",
+        "bytes": 65536,
+        "n": 0,
+        "k": 10,
+        "rows": 4,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 404,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "encode-k10r4-64k-wide-vs-isal",
+      "baseline_arm": "gf2-wide",
+      "candidate_arm": "isal",
+      "case": {
+        "operation": "encode",
+        "bytes": 65536,
+        "n": 0,
+        "k": 10,
+        "rows": 4,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 404,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "encode-k10r4-64k-whole-wide-vs-isal",
+      "baseline_arm": "gf2-wide",
+      "candidate_arm": "isal",
+      "case": {
+        "operation": "encode",
+        "bytes": 65536,
+        "n": 0,
+        "k": 10,
+        "rows": 4,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 404,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "encode-k10r4-64k-isal-vs-m4rie",
+      "baseline_arm": "isal",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "encode",
+        "bytes": 65536,
+        "n": 0,
+        "k": 10,
+        "rows": 4,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 404,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "matmul-n256-element-vs-wide",
+      "baseline_arm": "gf2-element",
+      "candidate_arm": "gf2-wide",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 402,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 5
+}

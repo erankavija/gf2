@@ -1,0 +1,206 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "049706676a5a527b968aa4ca7c60e5d2817bc5441d5f338b6be3c6fb15250612",
+  "campaign_id": "6c6b09b1-v4-r1-pairwise-control-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "byte-field-pairwise-control",
+    "comparisons": 6,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.9958333333333333,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "pairwise-4k-batch-vs-m4rie",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-material",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.1300568582065673,
+        "lower": 1.1011067487767479,
+        "upper": 1.167011675760127,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 14007249432008265000,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch-vs-m4rie",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.8298085401821228,
+        "lower": 0.8163357418505828,
+        "upper": 0.8519637612409924,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 8770675785316886040,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch-vs-m4rie",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-material",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.0888982168747403,
+        "lower": 1.077816284450498,
+        "upper": 1.1067671626469793,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 7606603416145194662,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "pairwise-4k-batch-vs-gfcomplete",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.5390306367861786,
+        "lower": 0.5365261962652585,
+        "upper": 0.5404564816644745,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 13018689094588129812,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch-vs-gfcomplete",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.5312523314623492,
+        "lower": 0.5305640921514956,
+        "upper": 0.5355852936832565,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 6682336525208042587,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch-vs-gfcomplete",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.6882746851883885,
+        "lower": 0.6875544705654926,
+        "upper": 0.7033379302555873,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 12427874044777918927,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

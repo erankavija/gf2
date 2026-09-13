@@ -1,0 +1,7 @@
+verified nasm-2.16.03.tar.xz sha256=1412a1c760bbd05db026b6c0d1657affd6631cd0a63cddb6f73cc6d4aa616148
+verified m4ri-20260122.tar.gz sha256=7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404
+verified m4rie-20250128.tar.gz sha256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7
+verified gf-complete commit=a6862d10c9db467148f20eef2c6445ac9afd94d8
+verified isa-l tag=v2.32.1 commit=7c3479e0a9dac17f448603ec1ad64c7c625f530c
+verified 64 prefix files against /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/dev/active/6c6b09b1/survey/ext-prefix.sha256
+staged the verified prefix at /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-ext/prefix

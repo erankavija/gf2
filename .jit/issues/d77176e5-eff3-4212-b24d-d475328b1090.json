@@ -7,6 +7,7 @@
   ],
   "description": "Conduct rigorous performance benchmarking of gf2 against established systems:\n\n## Benchmark targets\n\n| System | Domain | Comparison areas |\n|--------|--------|-----------------|\n| **Magma / Sage** | Binary field operations, polynomial arithmetic | GF(2^m) element arithmetic, polynomial operations |\n| **AFF3CT / IT++** | FEC decoder performance | LDPC, BCH, polar code throughput |\n| **fflas-ffpack** | Finite field linear algebra | Matrix multiply, Gaussian elimination, inversion, linear solve over GF(p) and GF(2^m) |\n\n## Methodology\n\n- Criterion.rs benchmarks with statistical rigor\n- Competitors built with optimal flags (`-O3 -march=native`, OpenBLAS for fflas-ffpack)\n- Same hardware, same input data, median of 100+ iterations\n- Published results with full methodology documentation\n\n## Goals\n\n- Within 2× of Magma/Sage for field arithmetic; exceed on SIMD operations\n- Within 2× of fflas-ffpack for GF(p) linear algebra; **exceed** for GF(2^m) (direct PCLMULQDQ vs float-BLAS detour)\n- Competitive with AFF3CT for FEC decoder throughput\n- Identify optimization targets from any gaps\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Competitive benchmarking against Magma/Sage/AFF3CT” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "first_ready_at": "2026-09-12T17:35:29.251605407Z",
   "gates_required": [
     "repo-validate",
     "doc-review",
@@ -21,7 +22,7 @@
     "epic:competitive-benchmarking"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Competitive benchmarking against Magma/Sage/AFF3CT",
-  "updated_at": "2026-08-07T20:41:26.192533948Z"
+  "updated_at": "2026-09-12T17:35:29.251605407Z"
 }

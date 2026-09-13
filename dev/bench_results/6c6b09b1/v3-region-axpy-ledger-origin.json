@@ -1,0 +1,64 @@
+{
+  "kind": "retrospective-v1-exploratory-history",
+  "family": "byte-field-region-axpy",
+  "ledger": "dev/bench_results/6c6b09b1/v3-region-axpy-family-ledger.jsonl",
+  "genesis_sha256": "144d3d67631a579674d880f51836952a0db57057a94eef1308eb598dd53c1fc7",
+  "derivation": {
+    "implementation": "dev/active/6c6b09b1/survey/analysis/src/main.rs",
+    "method": "ledger-genesis restates the completed protocol-v1 pilot as the reservation the v3 runner would have appended before measuring it: its campaign ID and addendum digest from the receipt, its protocol version and its count of non-exploratory cells from the receipt's addendum snapshot, no candidate identities, encoded with the shared tuning_campaign_support::trial_ledger::Reservation and decoded by trial_ledger::decode before it is written. The family field names the canonical v3 question; the source keeps its original v1 family.",
+    "retrospective": "This line is accounting, not a premeasurement reservation: protocol v1 took none, and no lock acquisition is claimed for it. The v1 pilot measured one cell for each of this survey's three operations, so the same line opens all three family ledgers; it spends zero comparisons.",
+    "command": "survey-analysis ledger-genesis byte-field-region-axpy dev/bench_results/6c6b09b1/v3-region-axpy-family-ledger.jsonl dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot"
+  },
+  "sources": [
+    {
+      "sequence": 0,
+      "campaign": "pilot-6c6b09b1-20260908t092546z",
+      "original_family": "byte-field-arms-pilot",
+      "receipt": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/receipt.json",
+      "receipt_sha256": "b15308aad470be693d0f0afff09fd418c074fde58230fdb25ae8ef3fab928425",
+      "plan": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/plan.json",
+      "plan_sha256": "6d37305a6350688e09466838f60b010cc70f868c01f8d6fa7cd85021ec22a58b",
+      "addendum": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/inputs/family-addendum.json",
+      "addendum_sha256": "23252109d3c957d839318fd2839af3ead6a98a51c8a1f1971e64189a8cd78c73",
+      "acceptance_summary": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/acceptance-summary.json",
+      "acceptance_summary_sha256": "6e518ed304a63dc0fd0e7d94a0bbfb5b4a04520189b05efd680c38afe82b51c5",
+      "non_exploratory_cells": 0,
+      "disposition": "completed v1 pilot; exploratory, zero comparisons"
+    }
+  ],
+  "interrupted_launches_without_line": [
+    {
+      "campaign": "pilot-6c6b09b1-20260907t195857z",
+      "evidence": [
+        {
+          "path": "dev/bench_results/6c6b09b1/v1-launch-history/gf2-pilot-6c6b09b1-20260907t195857z.launcher.log",
+          "sha256": "2bada9c6598f27ad807a263d7c4769d9fd1e51e64682925a1342f7eb90755855"
+        },
+        {
+          "path": "dev/bench_results/6c6b09b1/v1-launch-history/gf2-pilot-6c6b09b1-20260907t195857z.plan.json",
+          "sha256": "3d268102077ace9a8fe0231e7855848766c74b0adabd26015a25171c80650f64"
+        }
+      ],
+      "disposition": "launcher stopped before the runner opened a stage or execution log; no campaign, no samples and no reservation exist"
+    },
+    {
+      "campaign": "pilot-6c6b09b1-20260908t090803z",
+      "evidence": [
+        {
+          "path": "dev/bench_results/6c6b09b1/v1-launch-history/gf2-pilot-6c6b09b1-20260908t090803z.launcher.log",
+          "sha256": "87f894c49f555d1f2d30f9f48852dabb12a336ea8d83086c685c4086c7910469"
+        },
+        {
+          "path": "dev/bench_results/6c6b09b1/v1-launch-history/gf2-pilot-6c6b09b1-20260908t090803z.plan.json",
+          "sha256": "9968bc6bbac5768c83657188a6270f71cb67403176de0d29cc1b94c761c4559e"
+        }
+      ],
+      "disposition": "launcher stopped before the runner opened a stage or execution log; no campaign, no samples and no reservation exist"
+    }
+  ],
+  "unrun_v1_confirmation": {
+    "addendum": "dev/active/6c6b09b1/addendum-byte-field-arms.json",
+    "addendum_sha256": "66ef0410b9cf55c953f8ac24fd2d175645e8b1813bb86403a10716ad025e512c",
+    "disposition": "frozen under protocol v1 and never launched: no stage, execution log, receipt or reservation exists, so it spends no comparisons"
+  }
+}
