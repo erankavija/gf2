@@ -1,0 +1,19 @@
+# command: ./dev/active/5cbb6545/run-count-campaign.sh fused-pilot
+# started_utc: 2026-09-13T12:56:38Z
+# gf2 revision (informational): fc4088dec51a5c95092e30ffd955096b977b977f
+# stage: fused-pilot
+# addendum: dev/active/5cbb6545/addendum-fused-v4-pilot.json
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/target/bench-stage/5cbb6545-fused-pilot.plan.json
+# stage directory: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/target/bench-stage/5cbb6545-fused-pilot
+# arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/target/release/benchmark-acceptance
+# external build: {"units": [{"unit": "libpopcnt_kernels", "compiler": "gcc", "compiler_version": "gcc (GCC) 16.2.1 20260810", "arguments": ["-O3", "-I", "../../../26465e6c/survey/vendor/libpopcnt", "-c", "../../../26465e6c/survey/gf2-side/csrc/libpopcnt_kernels.c", "-o", "$OUT_DIR/libpopcnt_kernels.o"]}, {"unit": "mula_kernels", "compiler": "g++", "compiler_version": "g++ (GCC) 16.2.1 20260810", "arguments": ["-std=c++17", "-O2", "-Wall", "-pedantic", "-Wextra", "-Wfatal-errors", "-mpopcnt", "-fabi-version=6", "-mavx2", "-DHAVE_AVX2_INSTRUCTIONS", "-I", "../../../26465e6c/survey/vendor/mula", "-c", "../../../26465e6c/survey/gf2-side/csrc/mula_kernels.cpp", "-o", "$OUT_DIR/mula_kernels.o"]}]}
+# load_avg_start:  15:56:38 up 9 days, 17:25,  9 users,  load average: 2.39, 4.68, 3.92
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/target/bench-stage/5cbb6545-fused-pilot/execution.log
+# session 1 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  15:57:50 up 9 days, 17:26,  9 users,  load average: 2.03, 4.10, 3.77
+# finished_utc: 2026-09-13T12:57:50Z

@@ -1,0 +1,156 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "fused-pilot-5cbb6545-20260913t125637z",
+  "issue": "5cbb6545",
+  "label": "pilot",
+  "campaign_seed": 20260913202,
+  "addendum": "dev/active/5cbb6545/addendum-fused-v4-pilot.json",
+  "producing_manifest": "dev/active/5cbb6545/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "and-legacy-fused": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_and_popcnt called directly, as BitMatrix::matvec reached it before this issue.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "and-legacy-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-resolved-fused": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing ops::and_popcount as this issue leaves it: one fused route resolved for the width.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "and-resolved-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-two-pass": {
+      "build": "conservative-portable",
+      "description": "The whole route a gf2-core consumer has without a fused kernel: a temporary copy of the left operand, ops::and_inplace and ops::popcount, all inside every timed call.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "and-two-pass"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "matvec-legacy": {
+      "build": "conservative-portable",
+      "description": "The row loop BitMatrix::matvec ran before this issue: the bundle's fused nibble-lookup kernel fetched per product and called per row, into a freshly allocated output vector.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "matvec-legacy"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "matvec-resolved": {
+      "build": "conservative-portable",
+      "description": "BitMatrix::matvec as this issue leaves it: one fused route resolved for the stride, called per row, into a freshly allocated output vector.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "matvec-resolved"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "and-w128-fused",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-resolved-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 128,
+        "seed_lhs": 6428,
+        "seed_rhs": 14145,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "and-w512-fused",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-resolved-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 512,
+        "seed_lhs": 6812,
+        "seed_rhs": 14529,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "and-w4096-fused",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-resolved-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 4096,
+        "seed_lhs": 10396,
+        "seed_rhs": 18113,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "and-w4096-vs-two-pass",
+      "baseline_arm": "and-two-pass",
+      "candidate_arm": "and-resolved-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 4096,
+        "seed_lhs": 10396,
+        "seed_rhs": 18113,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": true
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "matvec-1024x16384",
+      "baseline_arm": "matvec-legacy",
+      "candidate_arm": "matvec-resolved",
+      "case": {
+        "op": "matvec",
+        "rows": 1024,
+        "cols": 16384,
+        "seed": 6301
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "matvec-1024x4096",
+      "baseline_arm": "matvec-legacy",
+      "candidate_arm": "matvec-resolved",
+      "case": {
+        "op": "matvec",
+        "rows": 1024,
+        "cols": 4096,
+        "seed": 6302
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 8
+}
