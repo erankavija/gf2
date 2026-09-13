@@ -201,6 +201,86 @@
       "text": "let chunks = n / 8;",
       "lever": "numerical-contract",
       "why": "only whole groups of eight inputs reach the vector lanes, so the disagreement needs nine or more inputs"
+    },
+    {
+      "generation": "after",
+      "project": "gf2",
+      "commit": "1231387fadc9f2508d255264b65f67a08638bcab",
+      "path": "crates/gf2-coding/src/ldpc/edge_layout.rs",
+      "line": 60,
+      "text": "pub struct EdgeLayout {",
+      "lever": "edge-indexing",
+      "why": "the one canonical precomputed edge indexing both node updates and the syndrome read"
+    },
+    {
+      "generation": "after",
+      "project": "gf2",
+      "commit": "1231387fadc9f2508d255264b65f67a08638bcab",
+      "path": "crates/gf2-coding/src/ldpc/edge_layout.rs",
+      "line": 70,
+      "text": "var_edge_to_check_edge: Vec<u32>,",
+      "lever": "edge-indexing",
+      "why": "a variable's edges resolve to canonical edge ids without a neighbour search"
+    },
+    {
+      "generation": "after",
+      "project": "gf2",
+      "commit": "1231387fadc9f2508d255264b65f67a08638bcab",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 109,
+      "text": "pub fn min_sum_check_row(rule: MinSumRule, inputs: &[Llr], outputs: &mut [Llr]) {",
+      "lever": "reduction",
+      "why": "one shared minimum, second-minimum and sign reduction writes every output of a check"
+    },
+    {
+      "generation": "after",
+      "project": "gf2",
+      "commit": "1231387fadc9f2508d255264b65f67a08638bcab",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 138,
+      "text": "if magnitude < min1 {",
+      "lever": "reduction",
+      "why": "pass one tracks the two smallest magnitudes and the position of the smallest"
+    },
+    {
+      "generation": "after",
+      "project": "gf2",
+      "commit": "1231387fadc9f2508d255264b65f67a08638bcab",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 155,
+      "text": "let magnitude = if index == arg1 { min2 } else { min1 };",
+      "lever": "reduction",
+      "why": "pass two takes each output's excluded minimum from the shared reduction"
+    },
+    {
+      "generation": "after",
+      "project": "gf2",
+      "commit": "1231387fadc9f2508d255264b65f67a08638bcab",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 132,
+      "text": "sign_product = if value >= 0.0 {",
+      "lever": "numerical-contract",
+      "why": "the canonical reduction keeps the supported scalar reference's sign rule, taken by comparison"
+    },
+    {
+      "generation": "after",
+      "project": "gf2",
+      "commit": "1231387fadc9f2508d255264b65f67a08638bcab",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 917,
+      "text": "check_to_var: Vec<Llr>,",
+      "lever": "layout",
+      "why": "one flat check-major message array replaces the jagged per-check vectors"
+    },
+    {
+      "generation": "after",
+      "project": "gf2",
+      "commit": "1231387fadc9f2508d255264b65f67a08638bcab",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1230,
+      "text": "fn syndrome_passes(&mut self) -> bool {",
+      "lever": "allocation",
+      "why": "the syndrome is checked over the canonical layout without a hard-decision vector"
     }
   ]
 }
