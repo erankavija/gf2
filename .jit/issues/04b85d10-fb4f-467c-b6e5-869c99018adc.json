@@ -27,67 +27,75 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "f8a60d0ad54105d9a0b78340fa54edd33dc768fb816ea8b1b41d294fde875866",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/acceptance-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "67e99048178315999aa5b30be3eda11d9f5b9e24cda6e63bd9ff48c526617abc",
+          "content_hash": "7bda94dbe051605d940993cf594b7811985c416690c904301dd395e36c3a3d07",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "pilot-resolution-v3-logical.txt",
-          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-logical.txt"
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/host.txt",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/host.txt"
         },
         {
           "asset_type": "local",
-          "content_hash": "61a8cc25a5ba45672f0fbd482b2cf5c6a48011e0d0cecbf2133647fa96b63270",
+          "content_hash": "d9f8fd454abe2845583bcd8650fde4c2885a6bd88aeded4150f0d2e1d4581e40",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/acceptance-summary.md"
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/profile-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/profile-summary.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "f43365c1b72d1bbc52c6d121265c8a09fe944d325507334214cff027a005322b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/04b85d10/run-consumer-campaigns.sh",
-          "resolved_path": "dev/bench_results/04b85d10/run-consumer-campaigns.sh"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "389ba450fd29a256f5171725de3d3d8dcdf9732296ba888d1780155f915833e4",
+          "content_hash": "869fc864d63c76a8107dc7970ac3a48fac4fc2912c76e69c14827ed81cca6635",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/popcnt-attribution.txt",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/popcnt-attribution.txt"
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/asm/frame-traffic.txt",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/asm/frame-traffic.txt"
         },
         {
           "asset_type": "local",
-          "content_hash": "a4cfb15eab88e170c16914104d0200bd29695b2dfaceb41815db356b07ba9b29",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/run-profile.sh",
-          "resolved_path": "dev/active/04b85d10/survey/run-profile.sh"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "d01a59b6983e2ab3c2e7f72c2c1a778ceaecb3c9bb21b7dccd29f281914d340a",
+          "content_hash": "ef0304736301968ef5422e0821e762816c88378c3a192088c7e49f59d9052876",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/acceptance-summary.md"
+          "original_path": "../f547c394/amendment-v3.md",
+          "resolved_path": "dev/active/f547c394/amendment-v3.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "10be0051db0adb167cf9ed7dfafeda069424b2d0c336367f5ed16fe1e88c4bb8",
+          "content_hash": "86fd4a73c5bdeda86c804388aaad96e5a56ad37273ed8b6c2d152bafe9178abb",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-v3-count.txt",
+          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-count.txt"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl",
-          "resolved_path": "dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl"
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "41c6f281a80febbaf96d8d7edc5bcc5612c3189b101604d956fa52750cd8cdbc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "943d16049afdb31de91e3746f0eefce565670ef4011d3e8b68c0c036e057b348",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d0b5d05ad7a32fe8f77874bba48406816b5ad70bd0036e16570e132375bc2b7f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "ledger-genesis.json",
+          "resolved_path": "dev/active/04b85d10/ledger-genesis.json"
         },
         {
           "asset_type": "local",
@@ -99,11 +107,51 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "0a05ba95195b6c687813a7f89a583370e588ca2e99acbd07544a926003fab6a7",
+          "content_hash": "f3460aaa053fc8f0398c489118324bdc3947fa06a1666b21b4019de266fa325b",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md"
+          "original_path": "../../bench_results/04b85d10/tables.md",
+          "resolved_path": "dev/bench_results/04b85d10/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "51400c7d6e527b621426d18387ce3f4828fcd803edaa43859779c3ccb42f5c39",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a9d1496347d4b7d4e3994a044fbf2f136a8467b3503a57555bc38d67fc7c9860",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e8aeaa2edaf441d8531ad57d3279cf629a4d8202cdbfc75e0106939e941f694c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/run-consumer-campaigns.sh",
+          "resolved_path": "dev/bench_results/04b85d10/run-consumer-campaigns.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "61a8cc25a5ba45672f0fbd482b2cf5c6a48011e0d0cecbf2133647fa96b63270",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d6e614d2650f405ed7390acbaf4fb401a8afb2851d9607c18ee6c6708b030afa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-bit-storage-logical-v3-confirmation.json",
+          "resolved_path": "dev/active/04b85d10/addendum-bit-storage-logical-v3-confirmation.json"
         },
         {
           "asset_type": "local",
@@ -115,27 +163,43 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "869fc864d63c76a8107dc7970ac3a48fac4fc2912c76e69c14827ed81cca6635",
+          "content_hash": "7d8bc35ed4ef624c0c237ed339a6d448ab92544f09df25441bdedca43004dd3d",
           "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/frame-traffic.txt",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/asm/frame-traffic.txt"
+          "mime_type": null,
+          "original_path": "addendum-bit-storage-layout-v4-pilot.json",
+          "resolved_path": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json"
         },
         {
           "asset_type": "local",
-          "content_hash": "b0923d31ced5672cd3330089e756e3aa362926150f0eaf93d372c39302e255c5",
+          "content_hash": "dd48774aa3eaee79fad7a8b36d410b0292b1a9049fd7cbc4f0b601feafddfcd3",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "pilot-resolution-v3-layout.txt",
-          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-layout.txt"
+          "original_path": "pilot-resolution-v4-layout.txt",
+          "resolved_path": "dev/active/04b85d10/pilot-resolution-v4-layout.txt"
         },
         {
           "asset_type": "local",
-          "content_hash": "57f37470290dc1b9c17a8d98f470602b01f8971b74f34743fa4f1b0e91c2de77",
+          "content_hash": "34300e46f58f4490396db32b4faf652630b792eda691f17ea363263ca2efc12d",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/profile-summary.md",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/profile-summary.md"
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f8a60d0ad54105d9a0b78340fa54edd33dc768fb816ea8b1b41d294fde875866",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fd6a97b8c43e6a3620f2c8a6ab8ecc2d02f70aa5cf49227e6aacd674c8344a86",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
         },
         {
           "asset_type": "local",
@@ -147,27 +211,75 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "ed3ab1ba9ae12dc2300d6ffe8f6dce574748d94aaaece3df3df8c99dbfa636bc",
+          "content_hash": "152831eb02a2917b486ed3b4dc1e676dbc5724cf01084d7c82d184268469e2e9",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "survey/producing-inputs.json",
-          "resolved_path": "dev/active/04b85d10/survey/producing-inputs.json"
+          "original_path": "addendum-bit-storage-layout-v3-confirmation.json",
+          "resolved_path": "dev/active/04b85d10/addendum-bit-storage-layout-v3-confirmation.json"
         },
         {
           "asset_type": "local",
-          "content_hash": "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c",
+          "content_hash": "ae4be4a21aeb60418059d6c361c83600c30e6254854fb1e8cf51ae27061137bf",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../f547c394/protocol.md",
-          "resolved_path": "dev/active/f547c394/protocol.md"
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/acceptance-summary.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "d0b5d05ad7a32fe8f77874bba48406816b5ad70bd0036e16570e132375bc2b7f",
+          "content_hash": "da762da21d422019256c9a5a1be63d43918d12ac2e1c6e8f04eb91d7043721a0",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "ledger-genesis.json",
-          "resolved_path": "dev/active/04b85d10/ledger-genesis.json"
+          "original_path": "survey/code-rows.json",
+          "resolved_path": "dev/active/04b85d10/survey/code-rows.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "67e99048178315999aa5b30be3eda11d9f5b9e24cda6e63bd9ff48c526617abc",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-v3-logical.txt",
+          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-logical.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ea197556bb87e063ad67eddf8dc893ae357a2f368d5688e28cd018c033a9f92c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/attribution-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/attribution-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bf9c196a340c644633ea945e71b8ad0bd51a27a7e9f4294fe9cba596e6e9e50b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/repetitions.log",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/repetitions.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b0923d31ced5672cd3330089e756e3aa362926150f0eaf93d372c39302e255c5",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-v3-layout.txt",
+          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-layout.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "980ba0aefb3cee25519ee674e40c7897e2a5a5f96fd65f7da2c64ad867f832ff",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/04b85d10/receipt-evidence-record.json",
+          "resolved_path": "dev/bench_results/04b85d10/receipt-evidence-record.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9bba3c83f4d9deee849a8a5ebe549789ac6f0ecd30726ac4e4a91426a52face1",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/asm/popcnt-attribution.txt",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/asm/popcnt-attribution.txt"
         },
         {
           "asset_type": "local",
@@ -187,43 +299,67 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "e8340fca36b09144a789fd07faffb911d3b3fc160d55f54e7403a181eea885b0",
+          "content_hash": "d01a59b6983e2ab3c2e7f72c2c1a778ceaecb3c9bb21b7dccd29f281914d340a",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../bench_results/04b85d10/tables.md",
-          "resolved_path": "dev/bench_results/04b85d10/tables.md"
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/acceptance-summary.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "cc2b2705ca81ad9c04a12c88b7e189449bcac4a6c2c9a337ff573d7b9832fa81",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl",
-          "resolved_path": "dev/bench_results/04b85d10/v3-bit-storage-layout-consumers-family-ledger.jsonl"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ae4be4a21aeb60418059d6c361c83600c30e6254854fb1e8cf51ae27061137bf",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot/acceptance-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "52770369bc664f121dbf0d293a20875d215a89853c8ca7f10efcfb34358df87d",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/attribution-summary.md",
-          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/attribution-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "86fd4a73c5bdeda86c804388aaad96e5a56ad37273ed8b6c2d152bafe9178abb",
+          "content_hash": "adc2a9680406e1d8357a27f75dc4d3f3da8c6a69537c4b09e07d22a1207a4892",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "pilot-resolution-v3-count.txt",
-          "resolved_path": "dev/active/04b85d10/pilot-resolution-v3-count.txt"
+          "original_path": "pilot-resolution-v4-count.txt",
+          "resolved_path": "dev/active/04b85d10/pilot-resolution-v4-count.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0a05ba95195b6c687813a7f89a583370e588ca2e99acbd07544a926003fab6a7",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2411c74f4fd02ed156bca67933efec0293c5141bed4ac8559c7a4d1221a86e2f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/run-profile.sh",
+          "resolved_path": "dev/active/04b85d10/survey/run-profile.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4af50b8f6509531bdf984c8797db7a34aebb50af763125b5fcb0da584719d016",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-bit-storage-count-v3-confirmation.json",
+          "resolved_path": "dev/active/04b85d10/addendum-bit-storage-count-v3-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "57a8edd012762a42703a408a5bd6fc23fbcd9a91d8eaa80ab0a33179fda92cca",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-bit-storage-count-v4-pilot.json",
+          "resolved_path": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ed3ab1ba9ae12dc2300d6ffe8f6dce574748d94aaaece3df3df8c99dbfa636bc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/producing-inputs.json",
+          "resolved_path": "dev/active/04b85d10/survey/producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "57f37470290dc1b9c17a8d98f470602b01f8971b74f34743fa4f1b0e91c2de77",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/profile-summary.md",
+          "resolved_path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/profile-summary.md"
         }
       ],
       "commit": null,
@@ -236,7 +372,7 @@
       "commit": null,
       "doc_type": "report",
       "format": "markdown",
-      "label": "Generated v3 receipt tables",
+      "label": "Generated receipt tables",
       "path": "dev/bench_results/04b85d10/tables.md"
     },
     {
@@ -256,7 +392,7 @@
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
-      "label": "Protocol-v3 campaign launcher",
+      "label": "Consumer campaign launcher",
       "path": "dev/bench_results/04b85d10/run-consumer-campaigns.sh"
     },
     {
@@ -442,6 +578,93 @@
       "format": "markdown",
       "label": "Repeated profile popcount attribution (perf report)",
       "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/asm/popcnt-attribution.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Declared code-row registry",
+      "path": "dev/active/04b85d10/survey/code-rows.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Receipt derivation and contradiction record",
+      "path": "dev/bench_results/04b85d10/receipt-evidence-record.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 count pilot addendum",
+      "path": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Protocol-v4 layout pilot addendum",
+      "path": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Campaign wire-smoke launcher",
+      "path": "dev/bench_results/04b85d10/run-consumer-smoke.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "label": "Declared-code agreement test",
+      "path": "dev/active/04b85d10/survey/gf2-side/tests/declared_codes.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 count pilot receipt",
+      "path": "dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v4 count pilot acceptance summary",
+      "path": "dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 count pilot execution log",
+      "path": "dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 layout pilot receipt",
+      "path": "dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Protocol-v4 layout pilot acceptance summary",
+      "path": "dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 layout pilot execution log",
+      "path": "dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 count pilot resolution derivation",
+      "path": "dev/active/04b85d10/pilot-resolution-v4-count.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Protocol-v4 layout pilot resolution derivation",
+      "path": "dev/active/04b85d10/pilot-resolution-v4-layout.txt"
     }
   ],
   "first_ready_at": "2026-09-06T19:59:16.619469775Z",
@@ -475,5 +698,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile bit-storage costs in production consumers",
-  "updated_at": "2026-09-12T16:07:09.525245726Z"
+  "updated_at": "2026-09-13T07:08:35.235373794Z"
 }
