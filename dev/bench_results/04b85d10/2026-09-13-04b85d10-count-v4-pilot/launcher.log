@@ -1,0 +1,36 @@
+# command: dev/bench_results/04b85d10/run-consumer-campaigns.sh count pilot 4
+# started_utc: 2026-09-13T01:01:11Z
+# gf2 revision (informational): 8c089201f207e1807318e5379c4ad832dc879da6
+# family: count  mode: pilot  protocol version: 4
+# addendum: dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json
+# addendum sha256: 57a8edd012762a42703a408a5bd6fc23fbcd9a91d8eaa80ab0a33179fda92cca
+# ledger: dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl (3 lines before this campaign)
+# campaign: pilot-v4-count-04b85d10-20260913t010111z
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-campaigns/pilot-v4-count-04b85d10-20260913t010111z
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# RUSTFLAGS: <unset>
+# arm sha256: 7b41a4deb829d78cfe5ca5636d4ba926adbb1ebc4e9ba58060d2fd7c937da7c8
+# verify sha256: d9558c192cd6ebfd56d026a493352cae23fa3f56dc4f489cfcf30013938095ad
+# runner sha256: 5a544af0de11b1aae4e822e2a3caa645137376091ef192fd96829858d3dc17d2
+# acceptance sha256: 9a685d57ba3340eb7d3b54d7d0c73b05feaeb74de3e36ac24f6d33e2676f835e
+# load_avg_start:  04:01:11 up 9 days,  5:30,  8 users,  load average: 0.80, 0.33, 0.24
+# consumer-verify:
+{"check":"row-xor-routes-agree","detail":"9 bit lengths agree","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"passed":true,"schema":"consumer-verify-record-v2","seeds":[20944,40014]}
+{"check":"popcount-routes-agree","detail":"9 bit lengths agree","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"passed":true,"schema":"consumer-verify-record-v2","seeds":[49407]}
+{"check":"zero-test-spellings-agree","detail":"9 bit lengths agree over four bit patterns","fixture_rng":null,"passed":true,"schema":"consumer-verify-record-v2","seeds":[]}
+{"check":"transpose-lanes-agree","detail":"both lanes agree and the transpose is an involution","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"passed":true,"schema":"consumer-verify-record-v2","seeds":[31249]}
+{"check":"dense-transpose-round-trips","detail":"four shapes round-trip identically","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"passed":true,"schema":"consumer-verify-record-v2","seeds":[11327]}
+{"check":"dense-matvec-matches-reference","detail":"four shapes match the naive row-parity reference","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"passed":true,"schema":"consumer-verify-record-v2","seeds":[19313,36130]}
+{"check":"ldpc-zero-syndrome-spellings-agree","detail":"the two spellings agree on the zero, weight-one and random words","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"passed":true,"schema":"consumer-verify-record-v2","seeds":[7436]}
+{"check":"bch-encoding-families-agree","detail":"three rows, five batch lengths, every available family and both batch entry points bit-identical","fixture_rng":{"algorithm":"ChaCha12 (rand 0.8 StdRng is rand_chacha::ChaCha12Rng); seed_from_u64 expands the u64 seed to the 32-byte key with PCG32 (rand_core 0.6)","generator":"gf2_core BitVec::random_seeded and BitMatrix::random_seeded: rand::rngs::StdRng::seed_from_u64(seed), then Rng::fill over u64 words; per-row, per-block and per-bank seeds are the case-seed offsets `prepare` defines","rand":"0.8.8","rand_chacha":"0.3.1","rand_core":"0.6.4"},"passed":true,"schema":"consumer-verify-record-v2","seeds":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256]}
+{"checks":8,"failed":0,"schema":"consumer-verify-summary-v1"}
+# consumer-verify exit: 0
+# session 1 start: 2026-09-13T01:01:13Z
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-campaigns/pilot-v4-count-04b85d10-20260913t010111z/execution.log
+# session 1 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions: 1
+# load_avg_end:  04:01:43 up 9 days,  5:30,  8 users,  load average: 1.14, 0.47, 0.29
+# finished_utc: 2026-09-13T01:01:43Z
