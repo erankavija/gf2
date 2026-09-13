@@ -1,0 +1,82 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "8576519d3a068bfc9929f2701ba274ab5deb12dc6f530748c2f0e96a3579d0c3",
+  "campaign_id": "3be770d5-v4-r1-steady-single-worker-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": true,
+  "family": {
+    "family_id": "ldpc-steady-matched-single-worker-v1",
+    "comparisons": 2,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.9875,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-matched-w1",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 12.930457098776765,
+        "lower": 12.527705990376756,
+        "upper": 12.958446241984246,
+        "confidence": 0.9875,
+        "alpha": 0.0125,
+        "resamples": 10000,
+        "seed": 2691112737879240326,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.12,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-matched-w1",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 17.31501830825161,
+        "lower": 16.686091614584882,
+        "upper": 17.415384611866525,
+        "confidence": 0.9875,
+        "alpha": 0.0125,
+        "resamples": 10000,
+        "seed": 604864670363800652,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.12,
+        "equivalence": 1.06
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

@@ -35,7 +35,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Remove allocation and repeated edge traversal from LDPC updates",
-  "updated_at": "2026-09-06T20:07:47.853446312Z"
+  "updated_at": "2026-09-12T17:34:52.488057975Z"
 }

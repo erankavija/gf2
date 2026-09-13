@@ -347,6 +347,7 @@
       "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/acceptance-summary.md"
     }
   ],
+  "done_at": "2026-09-12T18:00:33.353010894Z",
   "first_ready_at": "2026-09-06T19:58:57.724502744Z",
   "gates_required": [
     "cargo-ci",
@@ -357,22 +358,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-12T07:03:44.599139782Z",
+      "updated_at": "2026-09-12T17:57:02.009837675Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-12T07:05:14.391350811Z",
+      "status": "passed",
+      "updated_at": "2026-09-12T17:59:46.788338863Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-10T23:31:07.964563641Z",
+      "updated_at": "2026-09-12T17:56:13.056729979Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-09-10T23:33:14.771877406Z",
+      "updated_at": "2026-09-12T17:59:33.014752525Z",
       "updated_by": "auto:executor"
     }
   },
@@ -388,7 +389,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Establish transpose and logical-buffer comparison arms",
-  "updated_at": "2026-09-12T07:05:14.391350811Z"
+  "updated_at": "2026-09-12T18:00:33.353010894Z"
 }
