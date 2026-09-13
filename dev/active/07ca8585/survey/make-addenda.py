@@ -195,7 +195,7 @@ def main():
             for arm_key in spec["arms"]
         ]
         addendum = {
-            "schema": "zen3-benchmark-addendum-v3",
+            "schema": "zen3-benchmark-addendum-v4",
             "protocol": {"id": "zen3-benchmark-protocol", "version": 4},
             "family": {
                 "id": family,
