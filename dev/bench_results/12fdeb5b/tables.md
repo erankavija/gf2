@@ -40,6 +40,8 @@ Source: `dev/active/12fdeb5b/survey/nr-encode-parameters.json`, the dump `derive
 | `bg2-n1122-k561` | 0 | 2 | 64 | 561 | 1122 | 640 | 3328 | 79 | 9 | 0.500 |
 | `bg1-n2560-k2048-rv1` | 1 | 1 | 96 | 2048 | 2560 | 2112 | 6528 | 64 | 22 | 0.800 |
 | `bg2-n1024-k400-rv2` | 2 | 2 | 52 | 400 | 1024 | 520 | 2704 | 120 | 8 | 0.391 |
+| `bg1-n2560-k2048-rv3` | 3 | 1 | 96 | 2048 | 2560 | 2112 | 6528 | 64 | 22 | 0.800 |
+| `bg2-n1024-k400-rv3` | 3 | 2 | 52 | 400 | 1024 | 520 | 2704 | 120 | 8 | 0.391 |
 
 ## Bit-exact equivalence outcomes
 
@@ -95,12 +97,16 @@ Source: `dev/active/12fdeb5b/survey/nr-encode-validation.json`. Each arm encodes
 | `bg1-n2560-k2048-rv1` | aff3ct | unavailable | 0/0 | - | redundancy_version |
 | `bg2-n1024-k400-rv2` | srsran | non-equivalent | 1/10 | 436 / 1024 | redundancy_version |
 | `bg2-n1024-k400-rv2` | aff3ct | unavailable | 0/0 | - | redundancy_version |
+| `bg1-n2560-k2048-rv3` | srsran | non-equivalent | 1/10 | 1240 / 2560 | redundancy_version |
+| `bg1-n2560-k2048-rv3` | aff3ct | unavailable | 0/0 | - | redundancy_version |
+| `bg2-n1024-k400-rv3` | srsran | non-equivalent | 1/10 | 495 / 1024 | redundancy_version |
+| `bg2-n1024-k400-rv3` | aff3ct | unavailable | 0/0 | - | redundancy_version |
 
 | Outcome | Arms |
 |---|---|
 | matched | 39 |
-| non-equivalent | 7 |
-| unavailable | 2 |
+| non-equivalent | 9 |
+| unavailable | 4 |
 
 ## Pilot campaign `nr-encode-pilot-12fdeb5b-20260913t011403z`
 
