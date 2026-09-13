@@ -3,7 +3,7 @@
   "issue": "1d4fd63d",
   "projects": {
     "gf2": {
-      "revision": "613e44486f79d0f31b992612aa4c51193cfe442b",
+      "revision": "95bc447e4efae97d2086d3b843f0fce34a05e353",
       "revision_kind": "git commit (informational navigation metadata; the receipts pin these files by content digest)"
     }
   },
