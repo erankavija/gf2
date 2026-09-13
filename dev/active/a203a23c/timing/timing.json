@@ -48,7 +48,7 @@
       "same_device": true,
       "why": "the restoration generator's real working tree is the repository's own, so the scratch clone shares its filesystem and the measured times carry no filesystem difference of the harness's making"
     },
-    "clone": "git clone --shared --no-checkout of this repository, then git checkout --detach 8cfc015de59f8e3accc51bca46d13d94b0bee267: the working tree the restoration generator was written against, whose receipts pin 23 snapshot files the revision does not carry, and whose objects are this repository's own through the clone's alternates",
+    "clone": "git clone --shared --no-checkout of this repository, then git checkout --detach 8cfc015de59f8e3accc51bca46d13d94b0bee267: the working tree the restoration generator was written against, whose objects are this repository's own through the clone's alternates; its committed receipts pin 23 snapshot files it does not carry, the restored and unrestored files the restoration series' own output reports",
     "reset_between_repetitions": "git reset --hard and git clean -fdx inside the clone, before each repetition and once after the last, so every repetition performs the whole restoration and nothing it writes survives",
     "tool_sources": "git show <revision>:<path> of both tool files into the clone's working tree after each reset, outside the timed region"
   },

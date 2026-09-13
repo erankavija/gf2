@@ -47,8 +47,13 @@ Each record also carries an assessment of the figures 76812a4e's own message
 publishes. This script holds none of them: it cites that commit by identity and
 reads every figure out of the commit message at assessment time, refusing to
 assess if the sentence the message carries is not in the shape the pattern
-names. `--assess` rebuilds that block alone on an already committed record, so
-an assessment can be re-derived without measuring anything again.
+names. The same holds of every other figure a record states about the run: the
+niceness the lock wrapper asks for is read from the wrapper, and the count of
+pinned files the base revision omits is the restored and unrestored files the
+restoration series itself reports. Only the sampling plan's repetitions and the
+confirmation tolerance are this harness's own declared constants. `--assess`
+rebuilds the derived prose on an already committed record, so an assessment can
+be re-derived without measuring anything again.
 
 Usage:
   dev/active/a203a23c/timing/measure.py --scratch <directory> [--repetitions N]
@@ -87,6 +92,10 @@ SERIES_ORDER = (
     "restoration_batch",
 )
 
+# The sampling plan and the confirmation tolerance are this harness's own
+# protocol constants, declared here and in the README before any run rather
+# than observed from one. Every other figure a record carries is observed at
+# run time, derived from the record's own samples, or an identity citation.
 SAMPLING_PLAN = {
     "declared_in": "dev/active/a203a23c/timing/README.md",
     "repetitions_per_series": 5,
@@ -119,6 +128,9 @@ RNG = {
         "spread between repetitions is host timing noise alone."
     ),
 }
+
+WRAPPER_PATH = "dev/scripts/ccx1-bench-flock.sh"
+WRAPPER_NICENESS = re.compile(r"\bnice -n (?P<niceness>-?[0-9]+)\b")
 
 PUBLISHED_CLAIM_REVISION = BATCH_REVISION
 PUBLISHED_SENTENCE = re.compile(
@@ -321,15 +333,33 @@ def collect_host() -> dict:
     }
 
 
-def collect_scheduling() -> dict:
+def requested_niceness(root: Path) -> int:
+    """Reads the niceness the lock wrapper asks for out of the wrapper itself.
+
+    The figure is the wrapper's, not this tool's, so it is read from the
+    wrapper at run time; a wrapper that names more than one niceness, or none,
+    stops the run rather than have this record state a niceness it guessed.
+    """
+    source = (root / WRAPPER_PATH).read_text()
+    named = {int(match["niceness"]) for match in WRAPPER_NICENESS.finditer(source)}
+    if len(named) != 1:
+        raise SystemExit(
+            f"{WRAPPER_PATH} names {sorted(named) or 'no'} niceness where this "
+            f"record expects exactly one: {WRAPPER_NICENESS.pattern}"
+        )
+    return named.pop()
+
+
+def collect_scheduling(root: Path) -> dict:
     """Records the scheduling the run achieves, not the one the wrapper requests."""
     loadavg = Path("/proc/loadavg").read_text().split()
+    requested = requested_niceness(root)
     return {
         "requested": (
-            "dev/scripts/ccx1-bench-flock.sh requests nice -n -5 and, with "
+            f"{WRAPPER_PATH} requests nice -n {requested} and, with "
             "--full-host, no taskset pin"
         ),
-        "requested_niceness": -5,
+        "requested_niceness": requested,
         "observed_niceness": os.nice(0),
         "niceness_note": (
             "`nice: cannot set niceness` is the expected warning for an "
@@ -350,6 +380,47 @@ def collect_toolchain() -> dict:
         "python3": sys.version.split()[0],
         "git": run("git", "--version").strip(),
     }
+
+
+def pinned_but_missing(series: dict) -> int | None:
+    """Counts the pinned files the base revision omits, from a run's own output.
+
+    The restoration generator prints how many pinned files it restored and how
+    many it could not; their sum is how many the base revision's receipts pin
+    and the revision does not carry. Returns None when no restoration series in
+    `series` printed a result to count, so the sentence that would state it is
+    left unstated rather than guessed.
+    """
+    for name, measured in series.items():
+        if not name.startswith("restoration"):
+            continue
+        try:
+            result = json.loads(measured.get("final_stdout", ""))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(result, dict) and {"restored", "unrestored"} <= result.keys():
+            return int(result["restored"]) + int(result["unrestored"])
+    return None
+
+
+def clone_description(series: dict) -> str:
+    """Describes the scratch clone, counting its omissions from the run's output."""
+    count = pinned_but_missing(series)
+    counted = (
+        ""
+        if count is None
+        else (
+            f"; its committed receipts pin {count} snapshot files it does not "
+            "carry, the restored and unrestored files the restoration series' "
+            "own output reports"
+        )
+    )
+    return (
+        "git clone --shared --no-checkout of this repository, then git "
+        f"checkout --detach {RESTORE_BASE_REVISION}: the working tree the "
+        "restoration generator was written against, whose objects are this "
+        "repository's own through the clone's alternates" + counted
+    )
 
 
 def published_figures(root: Path) -> tuple[dict, str]:
@@ -414,11 +485,19 @@ def published_claim(root: Path, series: dict) -> dict:
 
 
 def assess(root: Path, record_path: Path) -> int:
-    """Rewrites one committed record's `published_claim`, leaving the rest alone."""
+    """Re-derives one committed record's derived prose, leaving its samples alone.
+
+    Both the assessment against the cited commit and the clone's description
+    come from data the record already holds, so a committed record can be
+    brought back through this tool without measuring anything again. Nothing
+    outside `published_claim` and `scratch.clone` is touched.
+    """
     record = json.loads(record_path.read_text())
     if "series" not in record:
         raise SystemExit(f"{record_path} carries no series to assess")
     record["published_claim"] = published_claim(root, record["series"])
+    if "clone" in record.get("scratch", {}):
+        record["scratch"]["clone"] = clone_description(record["series"])
     record_path.write_text(json.dumps(record, indent=2) + "\n")
     return 0
 
@@ -455,8 +534,9 @@ def main() -> int:
     parser.add_argument(
         "--assess",
         metavar="RECORD",
-        help="rewrite this committed record's published_claim from the cited "
-        "commit's message and the record's own series, measuring nothing",
+        help="re-derive this committed record's published_claim and clone "
+        "description from the cited commit and the record's own series, "
+        "measuring nothing",
     )
     arguments = parser.parse_args()
 
@@ -484,7 +564,7 @@ def main() -> int:
     clone = scratch / "clone"
     prepare_clone(root, clone, RESTORE_BASE_REVISION)
 
-    scheduling = collect_scheduling()
+    scheduling = collect_scheduling(root)
     series = {}
     for name in SERIES_ORDER:
         if name == "checker_per_file":
@@ -547,14 +627,7 @@ def main() -> int:
                     "difference of the harness's making"
                 ),
             },
-            "clone": (
-                "git clone --shared --no-checkout of this repository, then "
-                f"git checkout --detach {RESTORE_BASE_REVISION}: the working "
-                "tree the restoration generator was written against, whose "
-                "receipts pin 23 snapshot files the revision does not carry, "
-                "and whose objects are this repository's own through the "
-                "clone's alternates"
-            ),
+            "clone": clone_description(series),
             "reset_between_repetitions": (
                 "git reset --hard and git clean -fdx inside the clone, before "
                 "each repetition and once after the last, so every repetition "

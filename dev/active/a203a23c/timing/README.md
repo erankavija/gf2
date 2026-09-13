@@ -140,10 +140,19 @@ stands from the published figure.
 the restoration base revision, the host (CPU model, core count, kernel,
 frequency governors, SMT), the toolchain (`python3` and `git` versions), the
 invocation, what the scratch clone holds, and the scheduling the run achieves
-rather than the scheduling the wrapper requests: `ccx1-bench-flock.sh` asks for
-`nice -n -5`, an unprivileged user gets `nice: cannot set niceness`, and the
-`observed_niceness` field carries the niceness that applies. The host's load
-average at the start of the run is recorded with it.
+rather than the scheduling the wrapper requests. `scheduling.requested_niceness`
+is read out of `ccx1-bench-flock.sh` itself when the record is written, an
+unprivileged user gets `nice: cannot set niceness`, and
+`scheduling.observed_niceness` carries the niceness that applies. The host's
+load average at the start of the run is recorded with it.
+
+No figure describing the workload, the host or the run is written into
+`measure.py`: each is observed when the record is written, derived from the
+record's own samples — the count of pinned files the base revision omits, at
+`scratch.clone`, is the restored and unrestored files the restoration series
+reports — or an identity citation of a commit or a path. The repetitions and
+the confirmation tolerance are the exception, and they are declarations of this
+plan rather than observations of a run.
 
 The `rng` field states that no random number generator takes part: the harness
 draws no random numbers and fixes the workload, the arguments and the series
