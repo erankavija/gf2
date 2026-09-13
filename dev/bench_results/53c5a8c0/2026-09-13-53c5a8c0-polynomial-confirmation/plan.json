@@ -1,0 +1,109 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "confirmation-polynomial-53c5a8c0-20260913t131633z",
+  "issue": "53c5a8c0",
+  "label": "confirmation",
+  "campaign_seed": 20260913401,
+  "addendum": "dev/active/53c5a8c0/addendum-v4-polynomial-confirmation.json",
+  "producing_manifest": "dev/active/53c5a8c0/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-long-product": {
+      "build": "native",
+      "description": "gf2 host-targeted build timing the public clmul_wide owned long product, the whole-consumer Gf2mWide::mul_ref field product, and the dispatched raw carry-less batch, which is the production default path for independent products.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/poly-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_CROSSOVER_PATH": "batch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "gf2x-long-product": {
+      "build": "external",
+      "description": "the pinned gf2x 1.3.0 host-targeted build timing gf2x_mul_r, composed with gf2's own BarrettReducerWide where the cell is a field product.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/gf2x-poly-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "wide-field-256-composed",
+      "baseline_arm": "gf2-long-product",
+      "candidate_arm": "gf2x-long-product",
+      "case": {
+        "kind": "wide-field-mul",
+        "words": 4,
+        "inner": 64,
+        "seed": 5401
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "wide-field-571-composed",
+      "baseline_arm": "gf2-long-product",
+      "candidate_arm": "gf2x-long-product",
+      "case": {
+        "kind": "wide-field-mul",
+        "words": 9,
+        "inner": 32,
+        "seed": 5402
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-4w",
+      "baseline_arm": "gf2-long-product",
+      "candidate_arm": "gf2x-long-product",
+      "case": {
+        "kind": "poly-mul",
+        "words": 4,
+        "inner": 64,
+        "seed": 5411
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-9w",
+      "baseline_arm": "gf2-long-product",
+      "candidate_arm": "gf2x-long-product",
+      "case": {
+        "kind": "poly-mul",
+        "words": 9,
+        "inner": 64,
+        "seed": 5412
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "poly-16w",
+      "baseline_arm": "gf2-long-product",
+      "candidate_arm": "gf2x-long-product",
+      "case": {
+        "kind": "poly-mul",
+        "words": 16,
+        "inner": 16,
+        "seed": 5413
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "raw-batch-1024-composed",
+      "baseline_arm": "gf2-long-product",
+      "candidate_arm": "gf2x-long-product",
+      "case": {
+        "kind": "raw-batch",
+        "count": 1024,
+        "inner": 1,
+        "seed": 5421
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 4
+}
