@@ -1,0 +1,24 @@
+# command: ./dev/bench_results/1d4fd63d/run-transpose-lane.sh confirmation
+# started_utc: 2026-09-13T12:29:51Z
+# gf2 revision (informational): 35546f307bfab2a46bd868b8392ce7937da45f86
+# mode: confirmation  label: confirmation
+# addendum: dev/active/1d4fd63d/addendum-v4-transpose-lane-confirmation.json  sha256: 4f585ee9d10d39d5289a4b0a07f9f5df5afdb6e1e84a7b4b7420a06f6eaa0149
+# ledger: dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl  sha256: b8fbc7b234595db6ecc2a4b78a12f1a3707a6804f3d89fc41598ba5532b26cc8
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-confirmation.plan.json  sha256: 467ff9f98554aabd7de547e2729eae2fb0c54c819eab30e66e5a26207a996774
+# exploratory pairs per cell: 12
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-confirmation
+# arm: 0a9c4061506e2b2f9446b313c4c8d557b8c0d2c60e90a66ba806d7e652dabe20  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-acceptance
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start:  15:29:51 up 9 days, 16:58,  9 users,  load average: 1.76, 2.10, 2.91
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-confirmation/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-confirmation/execution.log
+# session 2 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions this invocation: 2
+# load_avg_end:  15:32:55 up 9 days, 17:01,  9 users,  load average: 1.11, 1.65, 2.59
+# finished_utc: 2026-09-13T12:32:55Z
