@@ -237,6 +237,24 @@
       "doc_type": "notes",
       "label": "Producing-input snapshot generator",
       "path": "dev/active/1c602857/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Conformance validation raw log (default features)",
+      "path": "dev/active/1c602857/validation-raw-default-features.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Conformance validation raw log (--features simd,test-support)",
+      "path": "dev/active/1c602857/validation-raw-simd-test-support.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Conformance validation raw log (--all-features)",
+      "path": "dev/active/1c602857/validation-raw-all-features.txt"
     }
   ],
   "first_ready_at": "2026-09-10T16:45:41.029543432Z",
@@ -278,5 +296,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Route the public wide carry-less product through capability dispatch",
-  "updated_at": "2026-09-13T09:11:50.148066400Z"
+  "updated_at": "2026-09-13T11:46:06.192721251Z"
 }
