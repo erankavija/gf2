@@ -28,14 +28,17 @@ Four series cover both tools in both forms:
 
 - `checker_per_file`, `checker_batch` run
   `check-receipt-input-snapshots.py --revision 76812a4e...` from this
-  repository's root. The checker reads committed objects only and writes
-  nothing, so the working tree cannot reach either the verdict or the time.
+  repository's root. `git status --porcelain` is read immediately before and
+  after each repetition, outside the timed region, so whether the checker left
+  the working tree alone is observed rather than asserted:
+  `series.<name>.working_tree` carries the line counts and
+  `unchanged_every_repetition`.
 - `restoration_per_file`, `restoration_batch` run
   `restore-receipt-inputs.py 8cfc015d...` from the root of a scratch clone.
-  The whole process is timed, including the check, the digest index over every
-  file the base revision tracks, the pinned-file read that assembles the pins,
-  and the copy-and-stage tail that writes the restored files into the working
-  tree and stages them.
+  The whole process of that tool's `main()` at the form's revision is timed;
+  `series.<name>.functions_defined_at_revision` lists what that revision's
+  source defines, and `series.<name>.staged.paths_staged` counts what each
+  repetition left in the clone's index.
 
 ## The scratch clone
 
@@ -55,6 +58,11 @@ whole restoration and nothing the tool writes survives the series. The form's
 two source files are placed into the clone after each reset, outside the timed
 region, because `restore-receipt-inputs.py` imports the checker from its own
 working tree: a form is both files of its revision together.
+
+`scratch.location` is the path the clone resolves to relative to this
+repository, and `scratch.git_check_ignore` is what `git check-ignore -v`
+answered for it; a scratch inside the repository that git does not ignore stops
+the run.
 
 Placing the clone under `target/` puts it on the filesystem the repository sits
 on, which is the point of the placement rather than a convenience: the
@@ -139,28 +147,46 @@ stands from the published figure.
 `timing.json` records the source revision of each form, the workload revision,
 the restoration base revision, the host (CPU model, core count, kernel,
 frequency governors, SMT), the toolchain (`python3` and `git` versions), the
-invocation, what the scratch clone holds, and the scheduling the run achieves
-rather than the scheduling the wrapper requests. `scheduling.requested_niceness`
-is read out of `ccx1-bench-flock.sh` itself when the record is written, an
-unprivileged user gets `nice: cannot set niceness`, and
-`scheduling.observed_niceness` carries the niceness that applies. The host's
-load average at the start of the run is recorded with it.
+invocation, what the scratch clone holds, and the scheduling the run observes
+for itself.
 
-No figure describing the workload, the host or the run is written into
-`measure.py`: each is observed when the record is written, derived from the
-record's own samples — the count of pinned files the base revision omits, at
-`scratch.clone`, is the restored and unrestored files the restoration series
-reports — or an identity citation of a commit or a path. The repetitions and
-the confirmation tolerance are the exception, and they are declarations of this
-plan rather than observations of a run.
+The conditions a record states about its own run are probed rather than
+asserted, and `declaration_note` names the few fields that are not:
 
-The `rng` field states that no random number generator takes part: the harness
-draws no random numbers and fixes the workload, the arguments and the series
-order as constants, and neither tool imports a random number generator in
-either form. The checker's only randomness-bearing import, `tempfile`, is
-reached from its `--self-test` path alone, which these invocations do not take.
-Every repetition runs the same work, so the spread within a series is host
-timing noise.
+- `scheduling.mutex` carries the lock file, the probe used and its outcome. A
+  non-blocking shared `flock` on a fresh descriptor fails with EWOULDBLOCK
+  exactly when some open file description holds the lock exclusively, so
+  `exclusive_holder_observed` is a measurement; `inherited_descriptors` lists
+  the descriptors on that file this process was started with. A measuring run
+  that observes no exclusive holder refuses to start.
+- `scheduling.wrapper` carries the first ancestor process whose argv names
+  `ccx1-bench-flock.sh`, with that argv and whether it contains `--full-host`,
+  or records that no ancestor does. What the run may schedule on is
+  `scheduling.cpu_affinity_size`.
+- `scheduling.requested_niceness` is read out of `ccx1-bench-flock.sh` itself,
+  `scheduling.rlimit_nice` is this process's own `RLIMIT_NICE`, and
+  `scheduling.niceness_note` follows from the two beside
+  `scheduling.observed_niceness`, the niceness that applies.
+- `rng` is a scan of every source this run executes or times — this harness and
+  both tools at both revisions, the same bytes each form runs. It records the
+  pattern, what was scanned, every matching line with its text and enclosing
+  function, and a statement that follows from the matches.
+
+Beyond those, no figure describing the workload, the host or the run is written
+into `measure.py`: each is observed when the record is written, derived from
+the record's own samples — the count of pinned files the base revision omits,
+at `scratch.clone`, is the restored and unrestored files the restoration series
+reports — or an identity citation of a commit or a path. What is declared
+rather than observed is this harness's own protocol, and `declaration_note`
+names those fields exactly.
+
+`timing-tmpfs-superseded.json` predates these observations. `--assess`
+re-derives everything that still follows from committed data it names — the
+assessment, the clone description, the randomness scan, what each timed source
+defines — and withdraws what its run stated without probing, leaving each
+withdrawn sentence visible under `observed: false` beside the note that says
+why. The fields a run would have had to observe stay absent rather than being
+back-filled into it.
 
 ## Running it
 
@@ -180,9 +206,12 @@ python3 -B dev/active/a203a23c/timing/measure.py \
 
 `--scratch` holds the clone and the extracted tool sources; `target/` is
 git-ignored and on the repository's own filesystem, and `timing.json` records
-that filesystem rather than the path. `ccx1-bench-flock.sh --full-host` holds
-this host's benchmark mutex exclusively without pinning to a core subset, so no
-other benchmark or build on the host overlaps the run.
+both the path relative to this repository and that filesystem.
+`ccx1-bench-flock.sh --full-host` takes this host's benchmark mutex exclusively
+and omits the core pin; what the run then observes of the lock, the wrapper and
+its affinity is at `scheduling.mutex`, `scheduling.wrapper` and
+`scheduling.cpu_affinity_size`, and a measuring run that observes no exclusive
+holder refuses to start.
 
 `timing-tmpfs-superseded.json` is an earlier run of the same harness under the
 same sampling plan whose scratch clone sat on a tmpfs instead, so its
