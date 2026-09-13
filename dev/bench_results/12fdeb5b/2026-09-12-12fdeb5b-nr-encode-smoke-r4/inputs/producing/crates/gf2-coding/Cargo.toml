@@ -1,0 +1,186 @@
+[package]
+name = "gf2-coding"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+description = "Error-correcting code constructions and compression research built on gf2-core"
+license = "MIT"
+keywords = ["coding-theory", "compression", "gf2"]
+categories = ["algorithms", "encoding", "mathematics"]
+rust-version = "1.95"
+
+[dependencies]
+gf2-core = { path = "../gf2-core" }
+gf2-kernels-simd = { path = "../gf2-kernels-simd" }
+gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
+rand = { workspace = true }
+rand_distr = "0.4"
+rayon = { workspace = true, optional = true }
+once_cell = "1.19"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+# sim-observability feature dependencies (default on)
+# Exception to @/inv/convention-convergence: the converged form is
+# `[workspace.dependencies] rand_chacha = "0.9"` in the workspace `Cargo.toml`.
+rand_chacha = { version = "0.3", optional = true }
+blake3 = { version = "1.5", optional = true }
+ctrlc = { version = "3.4", optional = true }
+tracing = { version = "0.1", optional = true }
+tracing-subscriber = { version = "0.3", optional = true, features = ["json", "env-filter"] }
+
+[dev-dependencies]
+proptest = { workspace = true }
+rand = { workspace = true }
+criterion = { workspace = true }
+tempfile = "3.8"
+thiserror = "1.0"
+num_cpus = "1.17.0"
+serde_json = "1.0"
+# Digests the ETSI verification streams the oracle-agreement suite reads, so
+# the run receipt carries the identity of the exact bytes that were compared.
+sha2 = "0.10"
+# Self-dev-dependency enabling `test-support` for integration tests that
+# share helpers with crate-internal unit tests (ETSI CSP test-point
+# parser, etc.). Pattern matches gf2-algebra.
+gf2-coding = { path = ".", features = ["test-support"] }
+# SVG plot generation for the d4851c3d presentation figures example only.
+# Default-features disabled: we only need the SVG backend, not the bitmap
+# / font backends, which keeps the build lean.
+plotters = { version = "0.3", default-features = false, features = ["svg_backend", "line_series", "histogram"] }
+
+[features]
+default = ["simd", "sim-observability"]
+simd = ["gf2-core/simd"]
+parallel = ["dep:rayon", "gf2-core/parallel"]
+visualization = ["gf2-core/visualization"]
+# Use f64 precision for LLRs instead of f32 (slower, for research/comparison)
+llr-f64 = []
+# HIP/ROCm GPU acceleration (requires hipcc and AMD GPU). Propagates the
+# `hip` feature into gf2-kernels-hip so the BCH syndrome wrappers
+# (`GpuBchSyndrome` / `BchFieldTables`), gated behind that feature there,
+# resolve for the `compute_syndromes_batch_gpu` / `correct_batch_gpu` hooks.
+hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
+# Bench-csv emitter support (jit:47698404). Pulls in `gf2-core/test-support`
+# which exposes the `bench_seed` module used by the sparse CSV harness.
+bench-csv = ["gf2-core/test-support"]
+# Observability and resume support for long-running campaigns.
+# Enables: per-SNR JSON checkpoints, SIGINT/SIGTERM flush via `ctrlc`,
+# JSON-lines tracing output, and deterministic ChaCha20 RNG seek.
+# Default-on so the existing CI surface keeps working. Embedded users
+# who need the smallest possible binary can opt out with
+# `default-features = false`.
+sim-observability = [
+    "dep:rand_chacha", "dep:blake3", "dep:ctrlc",
+    "dep:tracing", "dep:tracing-subscriber",
+]
+# Strict format-2 owner codec for coding-owned tuning. The typed selector
+# section and active accessor are always available; only JSON support is
+# gated. `serde` is already an unconditional dependency here, so this feature
+# adds only the generic profile mechanism's own optional surface.
+tuning-profile = ["gf2-core/tuning-profile"]
+# Exposes `gf2_coding::test_support` to integration tests that need to
+# share helpers with crate-internal unit tests (e.g., the ETSI CSP
+# test-point parser used by both `concat.rs` and the bit-interleaver
+# integration test). Default-off; integration tests enable it via the
+# self-referenced dev-dependency.
+test-support = []
+
+# Binaries are auto-discovered in src/bin/
+# - generate_ldpc_cache: Generate DVB-T2 LDPC encoding cache files
+# - validate_ldpc_cache: Comprehensive LDPC validation with error correction
+# - check_encoding: Quick encoding sanity check
+
+# Sparse-side CSV emitter for the post-PPC scorecard (jit:47698404).
+# Mirrors the dense emitter's example layout in `crates/gf2-core/examples/`.
+[[example]]
+name = "bench_sparse_csv_emitter"
+required-features = ["bench-csv"]
+
+# Sparse-smoke ground-truth emitter (jit:96fde7c7). Emits the binary
+# `benchmarks/expected/sparse_smoke_n16.bin` consumed by the C++
+# `benchmarks/reference/sparse_smoke.cpp` cross-equality oracle. Same
+# `bench-csv` gate as the CSV emitter so both share the
+# `gf2-core/test-support` (bench_seed module) dependency.
+[[example]]
+name = "sparse_smoke_emit_expected"
+required-features = ["bench-csv"]
+
+# GF(2^32) matmul smoke ground-truth emitter (jit:b13799ac R2). Emits
+# `benchmarks/expected/gf2pow32_smoke_n16.bin` consumed by the C++
+# `benchmarks/reference/ntl_gf2pow32_smoke.cpp` direct gf2-core ↔ NTL
+# bitwise-equality oracle. Same `bench-csv` gate as the sparse emitter
+# so both share the `gf2-core/test-support` (bench_seed) dependency.
+[[example]]
+name = "gf2pow32_smoke_emit_expected"
+required-features = ["bench-csv"]
+
+# Corpus emitter for the external BCH oracles (jit:3f7edef1). The corpus
+# construction lives in `test_support`, which both this emitter and the
+# `bch_oracle_agreement` suite consume, so the emitter needs that feature.
+[[example]]
+name = "bch_oracle_messages"
+required-features = ["test-support"]
+
+[[bench]]
+name = "linear_codes"
+harness = false
+
+[[bench]]
+name = "sparse_preprocessing"
+harness = false
+
+[[bench]]
+name = "ldpc_throughput"
+harness = false
+
+[[bench]]
+name = "profile_ldpc_encode"
+harness = false
+
+[[bench]]
+name = "profile_ldpc_decode"
+harness = false
+
+[[bench]]
+name = "batch_operations"
+harness = false
+
+[[bench]]
+name = "quick_parallel"
+harness = false
+
+[[bench]]
+name = "bch_parallel"
+harness = false
+
+[[bench]]
+name = "bch_genmatrix"
+harness = false
+
+[[bench]]
+name = "ldpc_decode"
+harness = false
+
+[[bench]]
+name = "llr_simd"
+harness = false
+
+[[bench]]
+name = "allocation_optimization"
+harness = false
+
+[[bench]]
+name = "modem_cpu"
+harness = false
+
+[[bench]]
+name = "cpu_dispatch_probe"
+harness = false
+
+[[bench]]
+name = "modem_generic_vs_fast"
+harness = false
+
+[[bench]]
+name = "simulation_no_analysis_overhead"
+harness = false

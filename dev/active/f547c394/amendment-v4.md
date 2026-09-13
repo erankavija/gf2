@@ -38,3 +38,23 @@ attempt cap counts attempts per protocol version (shared settings table), and
 the family ledger's sequential attempt budget counts every earlier
 reservation, so a version-4 confirmation after a version-3 confirmation
 spends the next attempt's alpha.
+
+The ledger section gains the voided-attempt rule, which the NR rate-matched
+encoder family of `12fdeb5b` is the first to exercise.
+
+- An attempt the executor aborts for a procedural defect in its own freeze or
+  launch, before reading any of its results, may be voided. The executor keeps
+  the aborted stage available and commits an attempt record naming the
+  campaign, the addendum digest, the defect, the cells measured and unmeasured,
+  and the abort.
+- A voided attempt's reservation does not enter the chain the replacement
+  attempt reserves on. It is therefore never interior to that chain, and the
+  P-22 sentence about a removed interior attempt breaking its successor's link
+  stays true by construction.
+- A voided attempt spends no comparison and no candidate attempt. An attempt
+  whose results were read is never voided and spends its reservation, so the
+  rule cannot retire a losing measurement.
+- The executor, not the tool, applies the rule. Acceptance behaviour is
+  unchanged: P-22 validates the ledger prefix a receipt itself pinned and reads
+  no live ledger, so the evaluator's verdict on every committed receipt is the
+  same before and after this entry. The protocol version does not change.

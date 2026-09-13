@@ -1,0 +1,206 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "814343d65ac13891c3fef5da97b19759f6e3576b2fffa22b08e15bd07050abbf",
+  "campaign_id": "nr-encode-confirmation-12fdeb5b-20260913t065640z",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "nr-rate-matched-encode-baselines-v1",
+    "comparisons": 6,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.9958333333333333,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 3,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "nr-enc-bg2-n256-k121-gap-native-vs-srsran",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 6.888607191364012,
+        "lower": 6.826340828417489,
+        "upper": 6.978897049308803,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 10452681723979651696,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg2-n1440-k720-gap-native-vs-srsran",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 34.64922786420944,
+        "lower": 34.38174651387222,
+        "upper": 34.85612826105367,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 8811276055120769032,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n2560-k2048-gap-native-vs-srsran",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 80.36900034499082,
+        "lower": 79.93560904014504,
+        "upper": 80.75704617854412,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 11735735063581531124,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n8448-k4224-gap-native-vs-srsran",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 151.3072518684073,
+        "lower": 149.1436013930694,
+        "upper": 152.07143852813826,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 7791459681509728487,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg2-n256-k121-gap-native-vs-aff3ct",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.47512434416199034,
+        "lower": 0.47263419907736703,
+        "upper": 0.47699582906588917,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 11130294563203381794,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.9772068623151768,
+        "lower": 1.9707667866095522,
+        "upper": 1.9890901409772515,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 17501303051248565000,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

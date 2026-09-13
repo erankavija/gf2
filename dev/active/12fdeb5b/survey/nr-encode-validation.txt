@@ -1,0 +1,50 @@
+configuration          arm     status          detail
+bg2-n256-k121          srsran  matched         10/10 messages identical
+bg2-n256-k121          aff3ct  matched         10/10 messages identical
+bg2-n512-k200          srsran  matched         10/10 messages identical
+bg2-n512-k200          aff3ct  matched         10/10 messages identical
+bg2-n1024-k400         srsran  matched         10/10 messages identical
+bg2-n1024-k400         aff3ct  matched         10/10 messages identical
+bg2-n1200-k600         srsran  matched         10/10 messages identical
+bg2-n1200-k600         aff3ct  non-equivalent  0/0 messages identical; AFF3CT derives BG2 Z=80 K_LDPC=800 N=4160 from (K=600, N=1200); gf2 uses BG2 Z=72 K_LDPC=720 N=3744
+bg2-n1440-k720         srsran  matched         10/10 messages identical
+bg2-n1440-k720         aff3ct  matched         10/10 messages identical
+bg2-n3840-k1280        srsran  matched         10/10 messages identical
+bg2-n3840-k1280        aff3ct  matched         10/10 messages identical
+bg2-n100-k40           srsran  matched         10/10 messages identical
+bg2-n100-k40           aff3ct  matched         10/10 messages identical
+bg2-n5000-k2500        srsran  matched         10/10 messages identical
+bg2-n5000-k2500        aff3ct  matched         10/10 messages identical
+bg1-n1024-k512         srsran  matched         10/10 messages identical
+bg1-n1024-k512         aff3ct  non-equivalent  0/0 messages identical; AFF3CT derives BG2 Z=64 K_LDPC=640 N=3328 from (K=512, N=1024); gf2 uses BG1 Z=24 K_LDPC=528 N=1632
+bg1-n2048-k1024        srsran  matched         10/10 messages identical
+bg1-n2048-k1024        aff3ct  non-equivalent  0/0 messages identical; AFF3CT derives BG2 Z=104 K_LDPC=1040 N=5408 from (K=1024, N=2048); gf2 uses BG1 Z=48 K_LDPC=1056 N=3264
+bg1-n4096-k2048        srsran  matched         10/10 messages identical
+bg1-n4096-k2048        aff3ct  non-equivalent  0/0 messages identical; AFF3CT derives BG2 Z=208 K_LDPC=2080 N=10816 from (K=2048, N=4096); gf2 uses BG1 Z=96 K_LDPC=2112 N=6528
+bg1-n1200-k900         srsran  matched         10/10 messages identical
+bg1-n1200-k900         aff3ct  matched         10/10 messages identical
+bg1-n400-k308          srsran  matched         10/10 messages identical
+bg1-n400-k308          aff3ct  matched         10/10 messages identical
+bg1-n1320-k1056        srsran  matched         10/10 messages identical
+bg1-n1320-k1056        aff3ct  matched         10/10 messages identical
+bg1-n2560-k2048        srsran  matched         10/10 messages identical
+bg1-n2560-k2048        aff3ct  matched         10/10 messages identical
+bg1-n8448-k4224        srsran  matched         10/10 messages identical
+bg1-n8448-k4224        aff3ct  matched         10/10 messages identical
+bg1-n1100-k880         srsran  matched         10/10 messages identical
+bg1-n1100-k880         aff3ct  matched         10/10 messages identical
+bg1-n3300-k2640        srsran  matched         10/10 messages identical
+bg1-n3300-k2640        aff3ct  matched         10/10 messages identical
+bg1-n704-k528          srsran  matched         10/10 messages identical
+bg1-n704-k528          aff3ct  matched         10/10 messages identical
+bg1-n706-k529          srsran  matched         10/10 messages identical
+bg1-n706-k529          aff3ct  matched         10/10 messages identical
+bg2-n1120-k560         srsran  matched         10/10 messages identical
+bg2-n1120-k560         aff3ct  matched         10/10 messages identical
+bg2-n1122-k561         srsran  matched         10/10 messages identical
+bg2-n1122-k561         aff3ct  non-equivalent  0/0 messages identical; AFF3CT derives BG2 Z=72 K_LDPC=720 N=3744 from (K=561, N=1122); gf2 uses BG2 Z=64 K_LDPC=640 N=3328
+bg1-n2560-k2048-rv1    srsran  non-equivalent  1/10 messages identical; srsRAN selects from the redundancy-version 1 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z
+bg1-n2560-k2048-rv1    aff3ct  unavailable     0/0 messages identical; AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 1
+bg2-n1024-k400-rv2     srsran  non-equivalent  1/10 messages identical; srsRAN selects from the redundancy-version 2 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z
+bg2-n1024-k400-rv2     aff3ct  unavailable     0/0 messages identical; AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 2
+matched arms: 39
