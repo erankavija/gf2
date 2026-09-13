@@ -115,6 +115,7 @@ fn main() {
                 .expect("fixed transpose input has 64 words");
             let fns = transpose::detect().unwrap_or(transpose::TransposeFns {
                 transpose_64x64: transpose::transpose_64x64_scalar,
+                lane: transpose::TransposeLane::Scalar,
                 name: "scalar-bit-twiddle",
             });
             let mut output = [0u64; 64];
