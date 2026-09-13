@@ -12,6 +12,10 @@ Read the context issue, its hard criteria, relationship labels, linked documents
 
 Read every applicable `AGENTS.md` from the repository root to each affected path. Resolve any governing JIT item address with `jit item show`; registry-first sources govern their rendered projections.
 
+## User decisions
+
+The issue description may record user decisions under a `## Decisions` heading (items `DEC-NN`). Decisions bind this review: treat the state a decision accepts as authoritative, and do not raise a blocking finding whose only remedy the decision forecloses. If evidence contradicts a decision's factual premise, surface that as an advisory finding citing the decision identifier.
+
 ## Documentation impact
 
 Determine whether attributable behavior changes require updates to any of:
