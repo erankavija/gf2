@@ -1,0 +1,485 @@
+{
+  "schema": "citation-inventory-v1",
+  "issue": "1d0da41f",
+  "report": "dev/active/1d0da41f/findings.md",
+  "report_revision": "ad76be4a",
+  "generator": "dev/active/1d0da41f/survey/summarize.py",
+  "generated_tables": [
+    "dev/bench_results/1d0da41f/tables.md"
+  ],
+  "generator_state_before": "absent: the report carried two hand-typed results tables and no generated projection existed for this issue",
+  "retention_rule": "A number stays in the report only when it identifies a cell, names a workload size, names a protocol or addendum constant that fixes the design before measurement, or belongs to a citation key, version pin or commit id. Every measured or derived value is replaced by a conclusion and a pointer.",
+  "entries": [
+    {
+      "id": "1d0da41f-01",
+      "line_before": 7,
+      "statement": "The confirmatory receipt is accepted with zero protocol findings and does not qualify for adoption.",
+      "numbers": ["zero findings"],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/acceptance-summary.json",
+        "location": "findings (empty), qualifies"
+      },
+      "artifact_value": "findings: [], qualifies: false",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "1d0da41f-02",
+      "line_before": 9,
+      "statement": "All cells are `regressed`.",
+      "numbers": ["5 cells"],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v1 confirmation, Decision column of every row"
+      },
+      "artifact_value": "regressed in all five rows",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "1d0da41f-03",
+      "line_before": 30,
+      "statement": "Its first four-cell exploratory pilot is accepted with zero findings.",
+      "numbers": [4, "zero findings"],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/v3-pilot/acceptance-summary.json",
+        "location": "cells (4 entries), findings (empty)"
+      },
+      "artifact_value": "4 cells, 0 findings, verdict accepted",
+      "agrees": true,
+      "disposition": "kept-design-count-with-pointer"
+    },
+    {
+      "id": "1d0da41f-04",
+      "line_before": 33,
+      "statement": "a noisy six-pair odd-tail interval gives a conservative resolution of 0.1246014148",
+      "numbers": [0.1246014148, 6],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/evidence/v3-validation.json",
+        "location": "pilot.measurement_resolution; pilot.margins_admissible"
+      },
+      "artifact_value": "0.12460141476908276; margins_admissible false",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-05",
+      "line_before": 34,
+      "statement": "A separately frozen, one-cell, 24-pair resolution pilot is accepted with zero findings.",
+      "numbers": [1, 24, "zero findings"],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/v3-pilot-r2/acceptance-summary.json",
+        "location": "cells (1 entry, interval.pairs 24), findings (empty)"
+      },
+      "artifact_value": "1 cell, 24 pairs, 0 findings, verdict accepted",
+      "agrees": true,
+      "disposition": "kept-design-count-with-pointer"
+    },
+    {
+      "id": "1d0da41f-06",
+      "line_before": 36,
+      "statement": "Its odd-tail estimate is 0.6054968089 with interval [0.6040122157, 0.6078261575]",
+      "numbers": [0.6054968089, 0.6040122157, 0.6078261575],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/v3-pilot-r2/acceptance-summary.json",
+        "location": "cells[raw-batch-odd-tail-65-1core].interval"
+      },
+      "artifact_value": "estimate 0.6054968089258577, lower 0.6040122157048241, upper 0.6078261575057301",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-07",
+      "line_before": 37,
+      "statement": "giving resolution 0.00388547393",
+      "numbers": [0.00388547393],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/addendum-ymm-clmul-v3-confirmation.json",
+        "location": "effect.measurement_resolution; the same value is in dev/active/1d0da41f/evidence/v3-validation.json resolution_pilot.measurement_resolution"
+      },
+      "artifact_value": "0.003885473929820891",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-08",
+      "line_before": 38,
+      "statement": "the original margins remain admissible because 1.00388547393 is below both 1.05 and 1.10",
+      "numbers": [1.00388547393, 1.05, 1.1],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/addendum-ymm-clmul-v3-confirmation.json",
+        "location": "effect.equivalence_margin, effect.worthwhile_speedup, effect.measurement_resolution"
+      },
+      "artifact_value": "equivalence_margin 1.05, worthwhile_speedup 1.1, measurement_resolution 0.003885473929820891",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-09",
+      "line_before": 41,
+      "statement": "The resulting five-cell v3 receipt is structurally accepted and again estimates every YMM cell as slower.",
+      "numbers": [5],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v3 confirmation, five rows, Speedup column"
+      },
+      "artifact_value": "five rows, every estimate below 1",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "1d0da41f-10",
+      "line_before": 44,
+      "statement": "Its acceptance summary classifies all five cells as `not-confirmatory` under P-20.",
+      "numbers": [5],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/v3-confirmation/acceptance-summary.json",
+        "location": "cells[].outcome; findings (five P-20 notes)"
+      },
+      "artifact_value": "not-confirmatory in all five cells; five P-20 notes",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "1d0da41f-11",
+      "line_before": 46,
+      "statement": "the retrospective v1 reservation and the fresh v3 reservation produce ten family comparisons",
+      "numbers": [10],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/v3-family-ledger.jsonl",
+        "location": "sum of comparisons across reservations; projected in tables.md Protocol-v3 confirmation, Family accounting (P-20)"
+      },
+      "artifact_value": "m = 10",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-12",
+      "line_before": 47,
+      "statement": "the second-attempt family alpha is 0.0083333333 and the per-comparison alpha is 0.0008333333",
+      "numbers": [0.0083333333, 0.0008333333],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/v3-confirmation/acceptance-summary.json",
+        "location": "family.family_alpha, family.per_comparison_confidence; derivation projected in tables.md Family accounting (P-20)"
+      },
+      "artifact_value": "family_alpha 0.008333333333333333, per_comparison_confidence 0.9991666666666666",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-13",
+      "line_before": 48,
+      "statement": "Ten thousand bootstrap draws therefore provide only about 4.17 expected draws in each tail, below the protocol's fixed minimum of twenty.",
+      "numbers": [10000, 4.17, 20],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/evidence/v3-validation.json",
+        "location": "confirmation.incompatibility; recomputed in tables.md Family accounting (P-20)"
+      },
+      "artifact_value": "about 4.17 expected draws in each tail from 10000 resamples; P-20 requires at least twenty",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-14",
+      "line_before": 71,
+      "statement": "raw independent 64-by-64 carry-less products",
+      "numbers": [64],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json",
+        "location": "cells[].workload"
+      },
+      "artifact_value": "64-bit operand pairs",
+      "agrees": true,
+      "disposition": "kept-workload-size"
+    },
+    {
+      "id": "1d0da41f-15",
+      "line_before": 82,
+      "statement": "The family bytes remain identical to commit `9e6ebad6`, SHA-256 `23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36`.",
+      "numbers": ["23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36"],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+        "location": "addendum.sha256"
+      },
+      "artifact_value": "23732531a6e468b570a5af518eb349771e0e51c33a606caaaf093615d5973a36",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-16",
+      "line_before": 84,
+      "statement": "Its resolution evidence is the distinct committed exploratory pilot receipt, SHA-256 `da17c31c357951f4082e2b9c57eb581672309e0ef01ef2ac8a6ab0e251f0fbc0`.",
+      "numbers": ["da17c31c357951f4082e2b9c57eb581672309e0ef01ef2ac8a6ab0e251f0fbc0"],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json",
+        "location": "effect.resolution_evidence.sha256; matches the v1 pilot acceptance summary receipt_sha256"
+      },
+      "artifact_value": "da17c31c357951f4082e2b9c57eb581672309e0ef01ef2ac8a6ab0e251f0fbc0",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-17",
+      "line_before": 92,
+      "statement": "The completed campaign uses three sessions with at most two cells each.",
+      "numbers": [3, 2],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+        "location": "execution_log.sessions; dev/bench_results/1d0da41f/run-clmul-ab.sh cell batching"
+      },
+      "artifact_value": "sessions 3, resumed true",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-18",
+      "line_before": 110,
+      "statement": "Both gf2 libraries and the adapter are version 0.1.0.",
+      "numbers": ["0.1.0"],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml",
+        "location": "package.version"
+      },
+      "artifact_value": "0.1.0",
+      "agrees": true,
+      "disposition": "kept-version-pin"
+    },
+    {
+      "id": "1d0da41f-19",
+      "line_before": 111,
+      "statement": "The two arm builds use Rust 1.95.0 (`59807616e`, 2026-04-14).",
+      "numbers": ["1.95.0", "59807616e"],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+        "location": "toolchain"
+      },
+      "artifact_value": "rustc 1.95.0 (59807616e 2026-04-14)",
+      "agrees": true,
+      "disposition": "kept-version-pin"
+    },
+    {
+      "id": "1d0da41f-20",
+      "line_before": 122,
+      "statement": "Arm table: baseline executable SHA-256 91373c57... on path pclmulqdq-scalar-xmm; candidate executable SHA-256 c89f97fd... on path avx2+vpclmulqdq-ymm.",
+      "numbers": [
+        "91373c57a51ab10a9b48b8dc3b9d3398a3cbb2498f9dadf8f650d6ec788c9203",
+        "c89f97fd654158fb364625d43d7e375d49ef95b37f39270425e14eb544bc3116"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Arm executables, rows `2026-09-08-1d0da41f-clmul-dispatch-confirmation`; Protocol-v1 confirmation, Per-arm call time and selected path"
+      },
+      "artifact_value": "baseline 91373c57a51ab10a9b48b8dc3b9d3398a3cbb2498f9dadf8f650d6ec788c9203, candidate c89f97fd654158fb364625d43d7e375d49ef95b37f39270425e14eb544bc3116; selected paths pclmulqdq-scalar-xmm and avx2+vpclmulqdq-ymm in every execution",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-21",
+      "line_before": 127,
+      "statement": "Runtime observations identify AMD Ryzen 9 5900X 12-Core Processor, SMT enabled and the powersave governor.",
+      "numbers": ["5900X", 12],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v1 confirmation, Sessions and host"
+      },
+      "artifact_value": "fraktaali, AMD Ryzen 9 5900X 12-Core Processor, powersave, SMT active",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "1d0da41f-22",
+      "line_before": 129,
+      "statement": "Latency cells run on CPU 0. The streaming cell resolves CPUs 0-5 but declares and observes one worker.",
+      "numbers": [0, "0-5", 1],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v1 confirmation, CPUs column; Per-arm call time and selected path, Workers observed column"
+      },
+      "artifact_value": "CPUs 0 for the latency cells, 0,1,2,3,4,5 for `raw-batch-l1-512-streaming-6core`; workers observed 1 in every execution",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "1d0da41f-23",
+      "line_before": 138,
+      "statement": "Each row contains 24 fresh paired executions, with five 100-ms timing windows per arm execution (240 retained windows per cell).",
+      "numbers": [24, 5, 100, 240],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
+        "location": "settings.confirmatory_pairs, settings.windows_per_execution, settings.window_target_ms; Flagged windows column of tables.md"
+      },
+      "artifact_value": "confirmatory_pairs 24, windows_per_execution 5, window_target_ms 100, 240 windows per cell",
+      "agrees": true,
+      "disposition": "kept-frozen-setting-with-pointer"
+    },
+    {
+      "id": "1d0da41f-24",
+      "line_before": 141,
+      "statement": "Paired bootstrap intervals use 10000 resamples and 99% confidence per comparison, controlling the five-comparison family at 95%.",
+      "numbers": [10000, 0.99, 5, 0.95],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/acceptance-summary.json",
+        "location": "family block; projected in tables.md Protocol-v1 confirmation source line"
+      },
+      "artifact_value": "comparisons 5, family_alpha 0.05, per_comparison_confidence 0.99, bootstrap_resamples 10000",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-25",
+      "line_before": 142,
+      "statement": "Every cell has zero flagged windows.",
+      "numbers": [0],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v1 confirmation, Flagged windows column"
+      },
+      "artifact_value": "0/240 in all five rows",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "1d0da41f-26",
+      "line_before": 145,
+      "statement": "Hand-typed confirmatory measurement table: five rows of pairs, baseline/candidate time ratio, confidence interval, candidate/baseline time ratio and its interval.",
+      "numbers": [
+        "0.7934 [0.7792, 0.8117] / 1.2604 [1.2320, 1.2834]",
+        "0.6052 [0.6041, 0.6064] / 1.6524 [1.6492, 1.6553]",
+        "0.5854 [0.5833, 0.5872] / 1.7083 [1.7029, 1.7144]",
+        "0.7732 [0.7683, 0.7780] / 1.2933 [1.2854, 1.3017]",
+        "0.5856 [0.5827, 0.5872] / 1.7076 [1.7029, 1.7162]"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v1 confirmation, Speedup and Candidate/baseline time ratio columns"
+      },
+      "artifact_value": "every hand-typed value reproduces the generated row to the printed precision",
+      "agrees": true,
+      "disposition": "removed-hand-typed-table"
+    },
+    {
+      "id": "1d0da41f-27",
+      "line_before": 153,
+      "statement": "All confidence intervals place YMM outside the frozen 1.05 non-regression margin, and below the raw-cell 1.10 worthwhile-speedup threshold.",
+      "numbers": [1.05, 1.1],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json",
+        "location": "effect.equivalence_margin, effect.worthwhile_speedup; projected in tables.md Frozen margins and declared resolution"
+      },
+      "artifact_value": "equivalence_margin 1.05, worthwhile_speedup 1.1",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-28",
+      "line_before": 163,
+      "statement": "The pilot summary contains six pairs per cell, 95% percentile-bootstrap intervals and zero flagged windows.",
+      "numbers": [6, 0.95, 0],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v1 exploratory pilot source line and Pairs, Flagged windows columns"
+      },
+      "artifact_value": "6 pairs, per-comparison confidence 0.950000, 0/60 flagged",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-29",
+      "line_before": 166,
+      "statement": "The pilot records Rust 1.97.0, whereas confirmation uses Rust 1.95.0.",
+      "numbers": ["1.97.0", "1.95.0"],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v1 exploratory pilot and Protocol-v1 confirmation, Sessions and host toolchain lines"
+      },
+      "artifact_value": "rustc 1.97.0 (2d8144b78 2026-07-07) and rustc 1.95.0 (59807616e 2026-04-14)",
+      "agrees": true,
+      "disposition": "kept-version-pin-with-pointer"
+    },
+    {
+      "id": "1d0da41f-30",
+      "line_before": 172,
+      "statement": "Hand-typed exploratory pilot table: four rows of pairs, ratio, interval, reciprocal ratio and its interval.",
+      "numbers": [
+        "0.8054 [0.7947, 0.8235] / 1.2417 [1.2144, 1.2584]",
+        "0.6082 [0.6067, 0.6152] / 1.6441 [1.6254, 1.6483]",
+        "0.5812 [0.5801, 0.5815] / 1.7206 [1.7197, 1.7238]",
+        "0.7725 [0.7699, 0.7748] / 1.2945 [1.2906, 1.2989]"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/1d0da41f/tables.md",
+        "location": "Protocol-v1 exploratory pilot, Speedup and Candidate/baseline time ratio columns"
+      },
+      "artifact_value": "every hand-typed value reproduces the generated row to the printed precision",
+      "agrees": true,
+      "disposition": "removed-hand-typed-table"
+    },
+    {
+      "id": "1d0da41f-31",
+      "line_before": 188,
+      "statement": "The exact YMM contract is AVX2 + VPCLMULQDQ + PCLMULQDQ + SSE4.1; both the runtime predicate and `#[target_feature]` declaration name all four.",
+      "numbers": [4],
+      "authority": {
+        "artifact": "crates/gf2-kernels-simd/src/x86/",
+        "location": "runtime predicate and target-feature declaration; dev/active/1d0da41f/evidence/assembly-audit.json"
+      },
+      "artifact_value": "four named features",
+      "agrees": true,
+      "disposition": "kept-contract-statement"
+    },
+    {
+      "id": "1d0da41f-32",
+      "line_before": 214,
+      "statement": "It covers random and adversarial operands, zero, the high bit, complete 128-bit outputs, empty batches, odd lengths, non-vector tails and 0/1/63/64/65 boundaries.",
+      "numbers": [128, 0, 1, 63, 64, 65],
+      "authority": {
+        "artifact": "AGENTS.md",
+        "location": "Correctness and test policy, word-boundary cases"
+      },
+      "artifact_value": "0, 1, 63, 64, 65 are the repository's declared word-boundary cases",
+      "agrees": true,
+      "disposition": "kept-workload-size"
+    },
+    {
+      "id": "1d0da41f-33",
+      "line_before": 219,
+      "statement": "Portable consumer checks pass all eight selected tests with the core SIMD feature disabled.",
+      "numbers": [8],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/evidence/portable-tests.txt",
+        "location": "nextest summary line"
+      },
+      "artifact_value": "8 tests run: 8 passed, 1979 skipped",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "1d0da41f-34",
+      "line_before": 256,
+      "statement": "REQ-10 MET; assembly committed with the final SIMD source change (`c9e498b6`).",
+      "numbers": ["c9e498b6"],
+      "authority": {
+        "artifact": "git history",
+        "location": "commit c9e498b6"
+      },
+      "artifact_value": "commit id, navigation metadata only",
+      "agrees": true,
+      "disposition": "kept-commit-id"
+    },
+    {
+      "id": "1d0da41f-35",
+      "line_before": 259,
+      "statement": "The repository CI contract passes with exit 0; the recorded run's main test tier reports 5959 passed, 0 failed and 248 skipped.",
+      "numbers": [0, 5959, 0, 248],
+      "authority": {
+        "artifact": "dev/active/1d0da41f/evidence/cargo-ci.txt",
+        "location": "step summary line for the `test` step"
+      },
+      "artifact_value": "test: 5959 passed, 0 failed, 248 skipped (473s)",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    }
+  ],
+  "unbacked_numbers": [],
+  "disagreements": []
+}
