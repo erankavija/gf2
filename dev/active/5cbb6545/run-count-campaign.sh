@@ -19,9 +19,14 @@
 #                                 the word counts the pilot and confirmation
 #                                 then measure.
 #   popcount-pilot, fused-pilot   exactly the cells the confirmation decides,
-#                                 measured exploratorily; the committed receipt
-#                                 is the resolution evidence the confirmation
-#                                 addendum pins.
+#                                 measured exploratorily on one counterbalanced
+#                                 block.
+#   popcount-pilot-r2,            the second pilot trial per cell the frozen
+#   fused-pilot-r2                search budget allows, on the protocol's
+#                                 largest pilot sample. Its committed receipt is
+#                                 the resolution evidence the confirmation
+#                                 addendum pins; the first trial stays committed
+#                                 as the independent earlier sample.
 #   popcount-confirmation,        the frozen confirmatory stage. It refuses to
 #   fused-confirmation            run until
 #                                 dev/active/c7113c5a/survey/freeze-confirmation.py
@@ -67,8 +72,10 @@ case "$STAGE_NAME" in
   fused-sweep)          FAMILY=fused;    KIND=sweep;        LABEL=pilot;        SEED=20260913102 ;;
   popcount-sweep2)      FAMILY=popcount; KIND=sweep2;       LABEL=pilot;        SEED=20260913111 ;;
   fused-sweep2)         FAMILY=fused;    KIND=sweep2;       LABEL=pilot;        SEED=20260913112 ;;
-  popcount-pilot)       FAMILY=popcount; KIND=pilot;        LABEL=pilot;        SEED=20260913201 ;;
-  fused-pilot)          FAMILY=fused;    KIND=pilot;        LABEL=pilot;        SEED=20260913202 ;;
+  popcount-pilot)       FAMILY=popcount; KIND=pilot;        LABEL=pilot;        SEED=20260913201; PAIRS=6 ;;
+  fused-pilot)          FAMILY=fused;    KIND=pilot;        LABEL=pilot;        SEED=20260913202; PAIRS=6 ;;
+  popcount-pilot-r2)    FAMILY=popcount; KIND=pilot;        LABEL=pilot;        SEED=20260913211; PAIRS=24 ;;
+  fused-pilot-r2)       FAMILY=fused;    KIND=pilot;        LABEL=pilot;        SEED=20260913212; PAIRS=24 ;;
   popcount-confirmation) FAMILY=popcount; KIND=confirmation; LABEL=confirmation; SEED=20260913301 ;;
   fused-confirmation)   FAMILY=fused;    KIND=confirmation; LABEL=confirmation; SEED=20260913302 ;;
   smoke)                FAMILY=smoke;    KIND=smoke;        LABEL=pilot;        SEED=20260913001 ;;
@@ -151,7 +158,8 @@ if [[ -f "$PLAN" ]]; then
   echo "# resuming the campaign already staged at $STAGE" >&2
 else
   CAMPAIGN="$STAGE_NAME-$ISSUE-$(date -u +%Y%m%dt%H%M%Sz)"
-  python3 "$ACTIVE/survey/make-plan.py" "$PLAN" "$CAMPAIGN" "$LABEL" "$ADDENDUM" "$SEED" "$ARM" "$LOCK"
+  python3 "$ACTIVE/survey/make-plan.py" "$PLAN" "$CAMPAIGN" "$LABEL" "$ADDENDUM" "$SEED" "$ARM" \
+    "$LOCK" "${PAIRS:-6}"
 fi
 
 # Every arm of every planned cell answers its exact case before the mutex is

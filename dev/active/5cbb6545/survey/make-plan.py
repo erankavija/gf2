@@ -2,6 +2,7 @@
 """Write the runner plan for one count-optimization campaign (jit:5cbb6545).
 
 Usage: make-plan.py <plan.json> <campaign-id> <label> <addendum> <seed> <arm> <lock>
+                    [pilot-pairs]
 
 The plan names the addendum's cells, the arms those cells reference and the
 producing-input manifest. Every arm is the same executable and differs only in
@@ -9,6 +10,9 @@ producing-input manifest. Every arm is the same executable and differs only in
 attributes to that route rather than to two builds. The cell table comes from
 `families.py`, the same module the addendum generator reads; the plan refuses
 to run if the addendum it is paired with names different cells.
+
+A pilot stage declares its pair count, inside the protocol's pilot bounds; a
+confirmation takes the protocol's frozen confirmatory count and declares none.
 """
 
 import json
@@ -116,6 +120,7 @@ def arm(executable, name):
 
 def main():
     plan_path, campaign, label, addendum, seed, executable, lock = sys.argv[1:8]
+    pairs = int(sys.argv[8]) if len(sys.argv) > 8 else 6
     stage = addendum.rsplit("/", 1)[-1].removeprefix("addendum-").removesuffix(".json")
     key = stage.replace("-v4-", "-")
     if key not in STAGES:
@@ -125,7 +130,7 @@ def main():
     declared_ids = [cell["cell_id"] for cell in declared["cells"]]
     if declared_ids != [cell["cell_id"] for cell in cells]:
         raise SystemExit(f"{addendum} names different cells than the {key} table")
-    pilot_pairs = 6 if label == "pilot" else None
+    pilot_pairs = pairs if label == "pilot" else None
     arms = {}
     for cell in cells:
         for name in (cell["baseline_arm"], cell["candidate_arm"]):
