@@ -271,10 +271,11 @@ The sweeps cover the sizes and regimes, and their rows are in tables § Cells:
   against the sub-threshold route, and eight, twelve and sixteen words against
   the vector kernel (`sweep-popcount-w{1,2,4,7}-scalar-popcnt`,
   `sweep-popcount-w{8,12,16}-nibble-vs-scalar`).
-- **The carry-save block boundary**: sixteen words, which is one block, and the
-  widths between two and six blocks (`sweep-popcount-w{16,32,64,96,128}-csa`,
+- **The carry-save block boundary**: one block is sixteen AVX2 vectors, or
+  sixty-four words and 512 bytes (`csa-block-vectors`, `csa-block-stride`). The
+  sweeps cover one-quarter, one-half and one through six blocks, including the
+  exact boundary (`sweep-popcount-w{16,32,64,96,128}-csa`,
   `sweep2-popcount-w{160,192,224,256,320,384}-csa`, and the fused counterparts).
-  One block is 512 bytes (`csa-block-vectors`, `csa-block-stride`).
 - **Cache regimes**: a 2 KiB buffer that fits L1, a 128 KiB buffer that exceeds
   it, a 1 MiB buffer, and a streaming cell whose working set rotates through the
   eight fixture banks of the protocol's streaming state
