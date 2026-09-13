@@ -217,7 +217,7 @@
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-09-13T19:41:47.448551350Z",
+      "updated_at": "2026-09-13T19:45:45.302961287Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -240,5 +240,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize population count and fused bit reductions",
-  "updated_at": "2026-09-13T19:43:39.550529222Z"
+  "updated_at": "2026-09-13T19:45:45.302961287Z"
 }

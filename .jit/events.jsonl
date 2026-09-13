@@ -12171,3 +12171,4 @@
 {"fields":["documents"],"id":"ab051fab-343a-4d0e-8a09-4487940a56e3","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T19:38:18.182625559Z","type":"issue_updated","updated_by":"doc-update"}
 {"gate_key":"doc-review","id":"cb253ef5-1d56-48e0-b335-225b8173299a","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T19:41:47.448551350Z","type":"gate_failed","updated_by":"auto:executor"}
 {"fields":["documents"],"id":"6f7ec7c1-9859-4e6f-93c5-b5a7a775bb66","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T19:43:39.550529222Z","type":"issue_updated","updated_by":"doc-update"}
+{"gate_key":"doc-review","id":"057002db-7dbe-4ad0-9d60-2ec377c3609a","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T19:45:45.302961287Z","type":"gate_failed","updated_by":"auto:executor"}
