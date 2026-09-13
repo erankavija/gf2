@@ -2,12 +2,11 @@
 """Generate the NR rate-matched encoder evidence tables (jit:12fdeb5b).
 
 Usage:
-  summarize.py <output.md> [[--void|--abandoned] <dir> ...]
+  summarize.py <output.md> [[--abandoned] <dir> ...]
 
-A plain directory is an accepted receipt. `--void` marks the receipt that
-follows as one the family ledger rejects, and `--abandoned` marks a killed
-campaign stage that never reached a receipt; each renders under its own heading
-and neither contributes a confirmatory claim.
+A plain directory is an accepted receipt. `--abandoned` marks an aborted
+campaign stage that never reached a receipt; it renders under its own heading
+and contributes no claim.
 
 Every figure is read from a committed artifact: the configuration grid and the
 derived code parameters from the survey's parameter dump, the equivalence
@@ -161,23 +160,8 @@ def arm_rows(out, receipt):
     out.append("")
 
 
-VOID_STANDING = (
-    "**Void.** This campaign reserved its comparisons on a family ledger from "
-    "which a spent confirmatory reservation had been removed by hand. On the "
-    "restored ledger it is a second confirmatory reservation for candidate "
-    "identities that had already spent their one attempt at this protocol "
-    "version, which P-22 and the one-attempt cap reject, so it is not a valid "
-    "confirmatory attempt. The acceptance tool still accepts the receipt because "
-    "P-22 validates the ledger prefix the receipt itself pinned, and that "
-    "snapshot is the shortened chain. The cells below are measured data and "
-    "support no confirmatory claim; "
-    "`dev/bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json` records "
-    "the attempt whose removal broke the chain.\n"
-)
-
-
 def abandoned_section(out, directory):
-    """Render a killed campaign stage, which has no receipt to evaluate."""
+    """Render an aborted campaign stage, which has no receipt to evaluate."""
     directory = pathlib.Path(directory)
     plan = load(directory / "plan.json")
     declared = [cell["cell_id"] for cell in plan["cells"]]
@@ -189,14 +173,16 @@ def abandoned_section(out, directory):
         measured.append(load(unit)["key"])
     out.append(f"## Abandoned campaign stage `{plan['campaign_id']}`\n")
     out.append(
-        f"Source: `{directory.name}/plan.json` and its `execution.log`. The campaign "
-        f"was killed before a terminal record, so no receipt and no acceptance "
-        f"summary exist and no interval is computed here. It reserved "
-        f"{len(declared)} cells and completed {events['cell-complete']} of them "
-        f"({events['execution-progress']} executions recorded). Its reservation is "
-        f"spent: a crashed, interrupted or failed confirmation spends its full "
-        f"reservation. `dev/bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json` "
-        f"records what it spends and why it was killed.\n"
+        f"Source: `{directory.name}/plan.json` and its `execution.log`. The executor "
+        f"aborted this campaign for a procedural defect in its freeze before reading "
+        f"any result, so no receipt and no acceptance summary exist and no interval "
+        f"is computed here. It declared {len(declared)} cells and completed "
+        f"{events['cell-complete']} of them ({events['execution-progress']} "
+        f"executions recorded). It is voided under the protocol's voided-attempt "
+        f"rule, so its reservation stays out of the chain and spends no comparison "
+        f"and no candidate attempt; "
+        f"`dev/bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json` names "
+        f"the defect and the abort.\n"
     )
     out.append("| Cell | Reached a checkpoint |")
     out.append("|---|---|")
@@ -205,15 +191,12 @@ def abandoned_section(out, directory):
     out.append("")
 
 
-def receipt_section(out, directory, standing=None):
+def receipt_section(out, directory):
     directory = pathlib.Path(directory)
     summary = load(directory / "acceptance-summary.json")
     receipt = load(directory / "receipt.json")
     family = summary["family"]
-    heading = "Void confirmation" if standing else summary["label"].capitalize()
-    out.append(f"## {heading} campaign `{summary['campaign_id']}`\n")
-    if standing:
-        out.append(standing)
+    out.append(f"## {summary['label'].capitalize()} campaign `{summary['campaign_id']}`\n")
     out.append(
         f"Source: `{directory.name}/acceptance-summary.json` (receipt "
         f"`{summary['receipt_sha256']}`), label **{summary['label']}**, verdict "
@@ -293,13 +276,12 @@ def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     output = pathlib.Path(sys.argv[1])
-    # Each section is one directory, in the order given. `--void` marks a
-    # receipt whose reservation the family ledger rejects and `--abandoned` a
-    # killed stage that never reached a receipt; both render as themselves.
+    # Each section is one directory, in the order given. `--abandoned` marks a
+    # stage the executor aborted, which never reached a receipt.
     sections, kind = [], "receipt"
     for argument in sys.argv[2:]:
-        if argument in ("--void", "--abandoned"):
-            kind = argument.removeprefix("--")
+        if argument == "--abandoned":
+            kind = "abandoned"
         else:
             sections.append((kind, pathlib.Path(argument)))
             kind = "receipt"
@@ -320,7 +302,7 @@ def main():
             if kind == "abandoned":
                 abandoned_section(out, directory)
             else:
-                receipt_section(out, directory, VOID_STANDING if kind == "void" else None)
+                receipt_section(out, directory)
     else:
         out.append("## Measured cells\n")
         out.append(
