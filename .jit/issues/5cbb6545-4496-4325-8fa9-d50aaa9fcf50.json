@@ -191,6 +191,7 @@
       "path": "dev/active/5cbb6545/findings.md"
     }
   ],
+  "done_at": "2026-09-13T20:09:02.007568906Z",
   "first_ready_at": "2026-09-06T19:17:10.818861173Z",
   "gates_required": [
     "cargo-ci",
@@ -238,7 +239,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Optimize population count and fused bit reductions",
-  "updated_at": "2026-09-13T20:08:13.627501087Z"
+  "updated_at": "2026-09-13T20:09:02.007568906Z"
 }

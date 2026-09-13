@@ -12179,3 +12179,5 @@
 {"fields":["documents"],"id":"67ae7ce5-da23-453c-8029-be81c594fefc","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T20:00:24.173443475Z","type":"issue_updated","updated_by":"doc-update"}
 {"gate_key":"doc-review","id":"d4f6b5f2-ca34-4164-82e1-bb13085a8d8b","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T20:02:41.336402221Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"9cccd1ba-29f4-4c13-b643-98ce1747d3b6","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T20:08:13.627501087Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"746e368f-59c4-4a9b-bd7e-b4c469d9a6e2","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T20:09:02.007568906Z","to":"done","type":"issue_state_changed"}
+{"id":"84144dea-f547-4ac8-8820-d66bd30e92c3","issue_id":"5cbb6545-4496-4325-8fa9-d50aaa9fcf50","timestamp":"2026-09-13T20:09:02.007568906Z","type":"issue_completed"}
