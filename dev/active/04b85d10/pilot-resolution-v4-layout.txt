@@ -1,0 +1,15 @@
+receipt dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot/receipt.json
+receipt_sha256 5a6f47f09b46f673802471a48a9767b99e5dd6dae73f5cb8c4bd753a091e416e
+label pilot verdict accepted findings 0
+family bit-storage-layout-consumers comparisons 5 family_alpha 0.025 per-comparison confidence 0.995
+
+cell_id                                               estimate     lower     upper  rel_half
+layout-bch-encode-bitslice-m14-b256-1core               2.4821    2.4789    2.4868    0.0019
+layout-bch-encode-fold-m14-b256-1core                   2.6972    2.6929    2.7025    0.0019
+layout-bch-encode-caller-buffer-m14-b256-1core          1.0027    1.0004    1.0035    0.0023
+layout-bch-encode-bitslice-m16-b256-1core               2.4605    2.4571    2.4642    0.0015
+layout-bch-encode-fold-m16-b256-1core                   2.7143    2.7130    2.7158    0.0006
+layout-bch-encode-caller-buffer-m16-b256-1core          1.0038    1.0032    1.0045    0.0008
+
+largest relative half-width: 0.002305
+rounded up to two decimals:  0.01
