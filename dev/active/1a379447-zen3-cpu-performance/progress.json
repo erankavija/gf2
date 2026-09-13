@@ -374,7 +374,7 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "session 13: round 2 merged at c1cd9256 (worker commits db720448, 1016092b plus lead commit 529662f0 citing the predicate from four test doc-comments); links at e479a99c; code-review, doc-review and research-review pass on e479a99c (research-review A1 advisory: the frozen confirmation addendum's family prose still calls itself the pilot); cargo-ci running.",
+          "status": "done. Session 13: round 2 merged at c1cd9256 (worker db720448, 1016092b; lead 529662f0 cites the predicate from the test docs); links at e479a99c; code-review, doc-review and research-review pass on e479a99c (A1 advisory: frozen confirmation addendum keeps the pilot's stage sentence; brief amended, task 94bbe5d7 filed), cargo-ci pass on b9989fc7 (5987 tests). Review reviews/1c602857-r3.md.",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-1c602857",
@@ -386,7 +386,14 @@
           },
           "reviews": [
             "reviews/1c602857-r3.md"
-          ]
+          ],
+          "merge_commit": "c1cd9256",
+          "gates": {
+            "cargo-ci": "passed b9989fc7",
+            "code-review": "passed e479a99c",
+            "doc-review": "passed e479a99c",
+            "research-review": "passed e479a99c (A1 advisory)"
+          }
         }
       ]
     },
@@ -533,6 +540,12 @@
       "type": "bug",
       "in_epic": false,
       "reason": "jit doc add refuses a .txt containing a demangled Rust symbol (asset scanner reads it as a relative path); filed in ~/Projects/just-in-time, tracker state left uncommitted there for the owner"
+    },
+    {
+      "id": "94bbe5d7",
+      "type": "task",
+      "in_epic": true,
+      "reason": "1c602857 research-review A1: the canonical freezer copies the pilot's stage sentence into a confirmation unless --family-description is passed; feeds 1362381c"
     }
   ],
   "escalations": [
