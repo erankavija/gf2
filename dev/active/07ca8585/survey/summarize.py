@@ -119,11 +119,21 @@ def census(lines):
             f"{span(byte_counts)} | {span(sorted(set(iterations)))} | "
             f"{sum(row['bit_errors'] for row in rows)} |"
         )
+    iterations = defaultdict(dict)
+    errors = defaultdict(dict)
+    for (code, generation), rows in records.items():
+        for row in rows:
+            iterations[(code, row["frame"])][generation] = row["iterations"]
+            errors[(code, row["frame"])][generation] = row["bit_errors"]
+    agreeing = sum(1 for counts in iterations.values() if len(set(counts.values())) == 1)
+    clean = sum(1 for counts in errors.values() if set(counts.values()) == {0})
     lines += [
         "",
-        "The two generations decode the same frames in the same number of iterations, each frame "
-        "with no bit error against the frozen `c077a88b` per-frame evidence, which is the "
-        "behavioural check this table carries beside the allocation counts.",
+        f"Frames censused per code and generation: {len(iterations)} frame identities. Frames whose "
+        f"two generations agree on the iteration count: {agreeing}. Frames both generations decode "
+        f"with no bit error against the frozen `c077a88b` per-frame evidence: {clean}. That "
+        "agreement is the behavioural check this table carries beside the allocation counts; it is "
+        "computed here from the census rather than asserted.",
         "",
     ]
 
