@@ -1,0 +1,592 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::popcount::avx2_popcnt_csa
+; extra symbols : gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa gf2_kernels_simd::x86::popcount::popcnt_words
+; output        : crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : e3f330a8
+; regenerated   : 2026-09-13T12:06:56Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::popcount::avx2_popcnt_csa
+;==========================================================
+
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/crates/gf2-kernels-simd)
+
+    Finished `release` profile [optimized] target(s) in 2.56s
+gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
+	test rsi, rsi
+	je .LBB120_1
+	mov rax, rsi
+	shr rax, 2
+	mov rcx, rsi
+	shr rcx, 6
+	vpxor xmm0, xmm0, xmm0
+	vpxor xmm7, xmm7, xmm7
+	vpxor xmm8, xmm8, xmm8
+	vpxor xmm6, xmm6, xmm6
+	vpxor xmm2, xmm2, xmm2
+	vpxor xmm1, xmm1, xmm1
+	je .LBB120_5
+	mov rdx, rcx
+	shl rdx, 9
+	vpxor xmm3, xmm3, xmm3
+	xor r8d, r8d
+	vpbroadcastb ymm4, byte ptr [rip + .LCPI120_2]
+	vmovdqa ymm5, ymmword ptr [rip + .LCPI120_1]
+.LBB120_4:
+	vmovdqu ymm9, ymmword ptr [rdi + r8]
+	vmovdqu ymm10, ymmword ptr [rdi + r8 + 32]
+	vmovdqu ymm11, ymmword ptr [rdi + r8 + 64]
+	vmovdqu ymm12, ymmword ptr [rdi + r8 + 96]
+	vmovdqu ymm13, ymmword ptr [rdi + r8 + 128]
+	vpxor ymm14, ymm9, ymm6
+	vpand ymm6, ymm9, ymm6
+	vpxor ymm9, ymm10, ymm14
+	vpand ymm10, ymm10, ymm14
+	vmovdqu ymm14, ymmword ptr [rdi + r8 + 160]
+	vpor ymm6, ymm10, ymm6
+	vpxor ymm10, ymm11, ymm9
+	vpand ymm9, ymm11, ymm9
+	vpxor ymm11, ymm12, ymm10
+	vpand ymm10, ymm12, ymm10
+	vmovdqu ymm12, ymmword ptr [rdi + r8 + 192]
+	vpor ymm9, ymm10, ymm9
+	vpxor ymm10, ymm8, ymm6
+	vpand ymm6, ymm8, ymm6
+	vpxor ymm8, ymm9, ymm10
+	vpand ymm9, ymm9, ymm10
+	vmovdqu ymm10, ymmword ptr [rdi + r8 + 224]
+	vpor ymm9, ymm9, ymm6
+	vpxor ymm6, ymm13, ymm11
+	vpand ymm11, ymm13, ymm11
+	vpxor ymm13, ymm14, ymm6
+	vpand ymm6, ymm14, ymm6
+	vpor ymm11, ymm11, ymm6
+	vpxor ymm6, ymm12, ymm13
+	vpxor ymm14, ymm10, ymm6
+	vpand ymm12, ymm12, ymm13
+	vpand ymm6, ymm10, ymm6
+	vpor ymm10, ymm12, ymm6
+	vpxor ymm12, ymm11, ymm8
+	vpxor ymm6, ymm10, ymm12
+	vpand ymm8, ymm11, ymm8
+	vpand ymm10, ymm10, ymm12
+	vpor ymm8, ymm10, ymm8
+	vpxor ymm11, ymm9, ymm7
+	vpxor ymm10, ymm8, ymm11
+	vpand ymm7, ymm9, ymm7
+	vpand ymm8, ymm8, ymm11
+	vpor ymm9, ymm8, ymm7
+	vmovdqu ymm7, ymmword ptr [rdi + r8 + 256]
+	vmovdqu ymm8, ymmword ptr [rdi + r8 + 288]
+	vmovdqu ymm11, ymmword ptr [rdi + r8 + 320]
+	vmovdqu ymm12, ymmword ptr [rdi + r8 + 352]
+	vpxor ymm13, ymm14, ymm7
+	vpand ymm7, ymm14, ymm7
+	vpxor ymm14, ymm8, ymm13
+	vpand ymm8, ymm8, ymm13
+	vmovdqu ymm13, ymmword ptr [rdi + r8 + 384]
+	vpor ymm7, ymm8, ymm7
+	vpxor ymm8, ymm11, ymm14
+	vpand ymm11, ymm11, ymm14
+	vpxor ymm14, ymm12, ymm8
+	vpand ymm8, ymm12, ymm8
+	vmovdqu ymm12, ymmword ptr [rdi + r8 + 416]
+	vpor ymm8, ymm8, ymm11
+	vpxor ymm11, ymm7, ymm6
+	vpand ymm6, ymm7, ymm6
+	vpxor ymm7, ymm8, ymm11
+	vpand ymm8, ymm8, ymm11
+	vmovdqu ymm11, ymmword ptr [rdi + r8 + 448]
+	vpor ymm15, ymm8, ymm6
+	vpxor ymm6, ymm13, ymm14
+	vpand ymm8, ymm13, ymm14
+	vpxor ymm13, ymm12, ymm6
+	vpand ymm6, ymm12, ymm6
+	vmovdqu ymm12, ymmword ptr [rdi + r8 + 480]
+	vpor ymm8, ymm8, ymm6
+	vpxor ymm14, ymm11, ymm13
+	vpand ymm11, ymm11, ymm13
+	vpxor ymm6, ymm12, ymm14
+	vpand ymm12, ymm12, ymm14
+	vpor ymm11, ymm12, ymm11
+	vpxor ymm12, ymm8, ymm7
+	vpand ymm7, ymm8, ymm7
+	vpxor ymm8, ymm11, ymm12
+	vpand ymm11, ymm11, ymm12
+	vpor ymm11, ymm11, ymm7
+	vpxor ymm12, ymm15, ymm10
+	vpand ymm10, ymm15, ymm10
+	vpxor ymm7, ymm11, ymm12
+	vpand ymm11, ymm11, ymm12
+	vpor ymm10, ymm11, ymm10
+	vpxor ymm11, ymm9, ymm1
+	vpand ymm9, ymm9, ymm1
+	vpxor ymm1, ymm10, ymm11
+	vpand ymm10, ymm10, ymm11
+	vpor ymm9, ymm10, ymm9
+	vpsrlw ymm10, ymm9, 4
+	vpand ymm9, ymm9, ymm4
+	vpshufb ymm9, ymm5, ymm9
+	vpand ymm10, ymm10, ymm4
+	vpshufb ymm10, ymm5, ymm10
+	vpaddb ymm9, ymm10, ymm9
+	vpsadbw ymm9, ymm9, ymm3
+	vpaddq ymm2, ymm9, ymm2
+	add r8, 512
+	cmp rdx, r8
+	jne .LBB120_4
+.LBB120_5:
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	vextracti128 xmm3, ymm2, 1
+	vpaddq xmm2, xmm3, xmm2
+	vmovq r8, xmm2
+	vpextrq rdx, xmm2, 1
+	add rdx, r8
+	vpsrlw ymm3, ymm1, 4
+	vpbroadcastb ymm2, byte ptr [rip + .LCPI120_2]
+	vpand ymm4, ymm1, ymm2
+	vmovdqa ymm1, ymmword ptr [rip + .LCPI120_1]
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm3, ymm3, ymm2
+	vpshufb ymm3, ymm1, ymm3
+	vpaddb ymm3, ymm3, ymm4
+	vpsadbw ymm3, ymm3, ymm0
+	vextracti128 xmm4, ymm3, 1
+	vpaddq xmm3, xmm4, xmm3
+	vmovd r9d, xmm3
+	vpextrd r8d, xmm3, 2
+	add r8d, r9d
+	shl r8d, 3
+	vpsrlw ymm3, ymm7, 4
+	vpand ymm4, ymm7, ymm2
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm3, ymm3, ymm2
+	vpshufb ymm3, ymm1, ymm3
+	vpaddb ymm3, ymm3, ymm4
+	vpsadbw ymm3, ymm3, ymm0
+	vextracti128 xmm4, ymm3, 1
+	vpaddq xmm3, xmm4, xmm3
+	vmovd r10d, xmm3
+	vpextrd r9d, xmm3, 2
+	add r9d, r10d
+	shl r9d, 2
+	vpsrlw ymm3, ymm8, 4
+	vpand ymm4, ymm8, ymm2
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm3, ymm3, ymm2
+	vpshufb ymm3, ymm1, ymm3
+	vpaddb ymm3, ymm3, ymm4
+	vpsadbw ymm3, ymm3, ymm0
+	vextracti128 xmm4, ymm3, 1
+	vpaddq xmm3, xmm4, xmm3
+	vmovd r11d, xmm3
+	vpextrd r10d, xmm3, 2
+	add r10d, r11d
+	add r10d, r10d
+	vpsrlw ymm3, ymm6, 4
+	vpand ymm4, ymm6, ymm2
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm3, ymm3, ymm2
+	vpshufb ymm3, ymm1, ymm3
+	vpaddb ymm3, ymm3, ymm4
+	vpsadbw ymm3, ymm3, ymm0
+	vextracti128 xmm4, ymm3, 1
+	vpaddq xmm3, xmm4, xmm3
+	mov r11, rcx
+	shl r11, 4
+	sub rax, r11
+	jbe .LBB120_8
+	shl rcx, 9
+	add rcx, rdi
+	vpxor xmm4, xmm4, xmm4
+	vpxor xmm0, xmm0, xmm0
+.LBB120_7:
+	vmovdqu ymm5, ymmword ptr [rcx]
+	vpsrlw ymm6, ymm5, 4
+	vpand ymm5, ymm5, ymm2
+	vpshufb ymm5, ymm1, ymm5
+	vpand ymm6, ymm6, ymm2
+	vpshufb ymm6, ymm1, ymm6
+	vpaddb ymm5, ymm6, ymm5
+	vpsadbw ymm5, ymm5, ymm4
+	vpaddq ymm0, ymm5, ymm0
+	add rcx, 32
+	dec rax
+	jne .LBB120_7
+.LBB120_8:
+	shl rdx, 4
+	vmovq qword ptr [rsp - 8], xmm3
+	vpextrq rax, xmm3, 1
+	vextracti128 xmm1, ymm0, 1
+	vpaddq xmm0, xmm1, xmm0
+	vpextrq qword ptr [rsp - 16], xmm0, 1
+	vmovq qword ptr [rsp - 24], xmm0
+	movabs r15, 1152921504606846972
+	and r15, rsi
+	xor r14d, r14d
+	cmp r15, rsi
+	je .LBB120_11
+	movabs r12, 6148914691236517205
+	movabs r13, 3689348814741910323
+	movabs rbp, 1085102592571150095
+	movabs rcx, 72340172838076673
+.LBB120_10:
+	mov rbx, qword ptr [rdi + 8*r15]
+	inc r15
+	mov r11, rbx
+	shr r11
+	and r11, r12
+	sub rbx, r11
+	mov r11, rbx
+	and r11, r13
+	shr rbx, 2
+	and rbx, r13
+	add rbx, r11
+	mov r11, rbx
+	shr r11, 4
+	add r11, rbx
+	and r11, rbp
+	imul r11, rcx
+	shr r11, 56
+	add r14, r11
+	cmp r15, rsi
+	jb .LBB120_10
+.LBB120_11:
+	add r8, rdx
+	add r8, r9
+	add r8, qword ptr [rsp - 8]
+	add r8, r10
+	add rax, qword ptr [rsp - 24]
+	add rax, qword ptr [rsp - 16]
+	add rax, r8
+	add rax, r14
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	vzeroupper
+	ret
+.LBB120_1:
+	xor eax, eax
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
+
+gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
+	cmp rcx, rsi
+	cmovb rsi, rcx
+	test rsi, rsi
+	je .LBB122_1
+	mov rcx, rsi
+	shr rcx, 2
+	mov r8, rsi
+	shr r8, 6
+	vpxor xmm0, xmm0, xmm0
+	vpxor xmm6, xmm6, xmm6
+	vpxor xmm8, xmm8, xmm8
+	vpxor xmm7, xmm7, xmm7
+	vpxor xmm2, xmm2, xmm2
+	vpxor xmm1, xmm1, xmm1
+	je .LBB122_6
+	mov rax, r8
+	shl rax, 9
+	vpxor xmm3, xmm3, xmm3
+	xor r9d, r9d
+	vpbroadcastb ymm4, byte ptr [rip + .LCPI122_2]
+	vmovdqa ymm5, ymmword ptr [rip + .LCPI122_1]
+.LBB122_5:
+	vmovdqu ymm9, ymmword ptr [rdx + r9]
+	vmovdqu ymm10, ymmword ptr [rdx + r9 + 32]
+	vmovdqu ymm11, ymmword ptr [rdx + r9 + 64]
+	vmovdqu ymm12, ymmword ptr [rdx + r9 + 96]
+	vpand ymm13, ymm9, ymmword ptr [rdi + r9]
+	vpand ymm10, ymm10, ymmword ptr [rdi + r9 + 32]
+	vpand ymm11, ymm11, ymmword ptr [rdi + r9 + 64]
+	vpand ymm12, ymm12, ymmword ptr [rdi + r9 + 96]
+	vmovdqu ymm9, ymmword ptr [rdx + r9 + 128]
+	vpand ymm9, ymm9, ymmword ptr [rdi + r9 + 128]
+	vpxor ymm14, ymm13, ymm7
+	vpand ymm7, ymm13, ymm7
+	vpxor ymm13, ymm10, ymm14
+	vpand ymm10, ymm10, ymm14
+	vmovdqu ymm14, ymmword ptr [rdx + r9 + 160]
+	vpand ymm14, ymm14, ymmword ptr [rdi + r9 + 160]
+	vpor ymm7, ymm10, ymm7
+	vpxor ymm10, ymm11, ymm13
+	vpand ymm11, ymm11, ymm13
+	vpxor ymm13, ymm12, ymm10
+	vpand ymm10, ymm12, ymm10
+	vmovdqu ymm12, ymmword ptr [rdx + r9 + 192]
+	vpand ymm12, ymm12, ymmword ptr [rdi + r9 + 192]
+	vpor ymm10, ymm10, ymm11
+	vpxor ymm11, ymm8, ymm7
+	vpand ymm7, ymm8, ymm7
+	vpxor ymm15, ymm10, ymm11
+	vpand ymm8, ymm10, ymm11
+	vmovdqu ymm10, ymmword ptr [rdx + r9 + 224]
+	vpand ymm10, ymm10, ymmword ptr [rdi + r9 + 224]
+	vpor ymm11, ymm8, ymm7
+	vpxor ymm7, ymm9, ymm13
+	vpand ymm8, ymm9, ymm13
+	vpxor ymm9, ymm14, ymm7
+	vpand ymm7, ymm14, ymm7
+	vpor ymm13, ymm8, ymm7
+	vpxor ymm7, ymm12, ymm9
+	vpxor ymm8, ymm10, ymm7
+	vpand ymm9, ymm12, ymm9
+	vpand ymm7, ymm10, ymm7
+	vpor ymm9, ymm9, ymm7
+	vpxor ymm10, ymm13, ymm15
+	vpxor ymm7, ymm9, ymm10
+	vpand ymm12, ymm13, ymm15
+	vpand ymm9, ymm9, ymm10
+	vpor ymm10, ymm9, ymm12
+	vpxor ymm12, ymm11, ymm6
+	vmovdqu ymm9, ymmword ptr [rdx + r9 + 256]
+	vpand ymm13, ymm9, ymmword ptr [rdi + r9 + 256]
+	vpxor ymm9, ymm10, ymm12
+	vmovdqu ymm14, ymmword ptr [rdx + r9 + 288]
+	vpand ymm14, ymm14, ymmword ptr [rdi + r9 + 288]
+	vpand ymm6, ymm11, ymm6
+	vmovdqu ymm11, ymmword ptr [rdx + r9 + 320]
+	vpand ymm11, ymm11, ymmword ptr [rdi + r9 + 320]
+	vpand ymm10, ymm10, ymm12
+	vmovdqu ymm12, ymmword ptr [rdx + r9 + 352]
+	vpand ymm12, ymm12, ymmword ptr [rdi + r9 + 352]
+	vpor ymm10, ymm10, ymm6
+	vpxor ymm6, ymm13, ymm8
+	vpand ymm8, ymm13, ymm8
+	vpxor ymm13, ymm14, ymm6
+	vpand ymm6, ymm14, ymm6
+	vmovdqu ymm14, ymmword ptr [rdx + r9 + 384]
+	vpand ymm14, ymm14, ymmword ptr [rdi + r9 + 384]
+	vpor ymm6, ymm8, ymm6
+	vpxor ymm8, ymm11, ymm13
+	vpand ymm11, ymm11, ymm13
+	vpxor ymm13, ymm12, ymm8
+	vpand ymm8, ymm12, ymm8
+	vmovdqu ymm12, ymmword ptr [rdx + r9 + 416]
+	vpand ymm12, ymm12, ymmword ptr [rdi + r9 + 416]
+	vpor ymm8, ymm8, ymm11
+	vpxor ymm11, ymm6, ymm7
+	vpand ymm6, ymm6, ymm7
+	vpxor ymm15, ymm8, ymm11
+	vpand ymm7, ymm8, ymm11
+	vmovdqu ymm8, ymmword ptr [rdx + r9 + 448]
+	vpand ymm8, ymm8, ymmword ptr [rdi + r9 + 448]
+	vpor ymm6, ymm7, ymm6
+	vpxor ymm7, ymm14, ymm13
+	vpand ymm11, ymm14, ymm13
+	vpxor ymm13, ymm12, ymm7
+	vpand ymm7, ymm12, ymm7
+	vmovdqu ymm12, ymmword ptr [rdx + r9 + 480]
+	vpand ymm12, ymm12, ymmword ptr [rdi + r9 + 480]
+	vpor ymm11, ymm11, ymm7
+	vpxor ymm14, ymm8, ymm13
+	vpand ymm8, ymm8, ymm13
+	vpxor ymm7, ymm12, ymm14
+	vpand ymm12, ymm12, ymm14
+	vpor ymm12, ymm12, ymm8
+	vpxor ymm13, ymm11, ymm15
+	vpand ymm11, ymm11, ymm15
+	vpxor ymm8, ymm12, ymm13
+	vpand ymm12, ymm12, ymm13
+	vpor ymm11, ymm12, ymm11
+	vpxor ymm12, ymm9, ymm6
+	vpand ymm9, ymm9, ymm6
+	vpxor ymm6, ymm11, ymm12
+	vpand ymm11, ymm11, ymm12
+	vpor ymm9, ymm11, ymm9
+	vpxor ymm11, ymm10, ymm1
+	vpand ymm10, ymm10, ymm1
+	vpxor ymm1, ymm9, ymm11
+	vpand ymm9, ymm9, ymm11
+	vpor ymm9, ymm9, ymm10
+	vpsrlw ymm10, ymm9, 4
+	vpand ymm9, ymm9, ymm4
+	vpshufb ymm9, ymm5, ymm9
+	vpand ymm10, ymm10, ymm4
+	vpshufb ymm10, ymm5, ymm10
+	vpaddb ymm9, ymm10, ymm9
+	vpsadbw ymm9, ymm9, ymm3
+	vpaddq ymm2, ymm9, ymm2
+	add r9, 512
+	cmp rax, r9
+	jne .LBB122_5
+.LBB122_6:
+	push r15
+	push r14
+	push rbx
+	vextracti128 xmm3, ymm2, 1
+	vpaddq xmm2, xmm3, xmm2
+	vmovq rax, xmm2
+	vpextrq r9, xmm2, 1
+	add r9, rax
+	shl r9, 4
+	vpsrlw ymm3, ymm1, 4
+	vpbroadcastb ymm2, byte ptr [rip + .LCPI122_2]
+	vpand ymm4, ymm1, ymm2
+	vmovdqa ymm1, ymmword ptr [rip + .LCPI122_1]
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm3, ymm3, ymm2
+	vpshufb ymm3, ymm1, ymm3
+	vpaddb ymm3, ymm3, ymm4
+	vpsadbw ymm3, ymm3, ymm0
+	vextracti128 xmm4, ymm3, 1
+	vpaddq xmm3, xmm4, xmm3
+	vmovd r10d, xmm3
+	vpextrd eax, xmm3, 2
+	add eax, r10d
+	shl eax, 3
+	vpsrlw ymm3, ymm6, 4
+	vpand ymm4, ymm6, ymm2
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm3, ymm3, ymm2
+	vpshufb ymm3, ymm1, ymm3
+	vpaddb ymm3, ymm3, ymm4
+	vpsadbw ymm3, ymm3, ymm0
+	vextracti128 xmm4, ymm3, 1
+	vpaddq xmm3, xmm4, xmm3
+	vpextrd r10d, xmm3, 2
+	vmovd r11d, xmm3
+	add r10d, r11d
+	shl r10d, 2
+	vpsrlw ymm3, ymm8, 4
+	vpand ymm4, ymm8, ymm2
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm3, ymm3, ymm2
+	vpshufb ymm3, ymm1, ymm3
+	vpaddb ymm3, ymm3, ymm4
+	vpsadbw ymm3, ymm3, ymm0
+	vextracti128 xmm4, ymm3, 1
+	vpaddq xmm3, xmm4, xmm3
+	vmovd ebx, xmm3
+	vpextrd r11d, xmm3, 2
+	add r11d, ebx
+	add r11d, r11d
+	vpsrlw ymm3, ymm7, 4
+	vpand ymm4, ymm7, ymm2
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm3, ymm3, ymm2
+	vpshufb ymm3, ymm1, ymm3
+	vpaddb ymm3, ymm3, ymm4
+	vpsadbw ymm3, ymm3, ymm0
+	vextracti128 xmm4, ymm3, 1
+	vpaddq xmm3, xmm4, xmm3
+	vpextrq rbx, xmm3, 1
+	vmovq r14, xmm3
+	mov r15, r8
+	shl r15, 4
+	sub rcx, r15
+	jbe .LBB122_9
+	shl r8, 9
+	vpxor xmm3, xmm3, xmm3
+	vpxor xmm0, xmm0, xmm0
+.LBB122_8:
+	vmovdqu ymm4, ymmword ptr [rdx + r8]
+	vpand ymm4, ymm4, ymmword ptr [rdi + r8]
+	vpsrlw ymm5, ymm4, 4
+	vpand ymm4, ymm4, ymm2
+	vpshufb ymm4, ymm1, ymm4
+	vpand ymm5, ymm5, ymm2
+	vpshufb ymm5, ymm1, ymm5
+	vpaddb ymm4, ymm5, ymm4
+	vpsadbw ymm4, ymm4, ymm3
+	vpaddq ymm0, ymm4, ymm0
+	add r8, 32
+	dec rcx
+	jne .LBB122_8
+.LBB122_9:
+	vextracti128 xmm1, ymm0, 1
+	vpaddq xmm0, xmm1, xmm0
+	vmovq rcx, xmm0
+	vpextrq r8, xmm0, 1
+	add rax, r9
+	add rax, r10
+	add rax, r14
+	add rax, r11
+	add rax, rbx
+	add rax, rcx
+	add rax, r8
+	movabs r11, 1152921504606846972
+	and r11, rsi
+	cmp r11, rsi
+	je .LBB122_12
+	movabs rcx, 6148914691236517205
+	movabs r8, 3689348814741910323
+	movabs r9, 1085102592571150095
+	movabs r10, 72340172838076673
+.LBB122_11:
+	mov rbx, qword ptr [rdx + 8*r11]
+	and rbx, qword ptr [rdi + 8*r11]
+	inc r11
+	mov r14, rbx
+	shr r14
+	and r14, rcx
+	sub rbx, r14
+	mov r14, rbx
+	and r14, r8
+	shr rbx, 2
+	and rbx, r8
+	add rbx, r14
+	mov r14, rbx
+	shr r14, 4
+	add r14, rbx
+	and r14, r9
+	imul r14, r10
+	shr r14, 56
+	add rax, r14
+	cmp r11, rsi
+	jb .LBB122_11
+.LBB122_12:
+	pop rbx
+	pop r14
+	pop r15
+	vzeroupper
+	ret
+.LBB122_1:
+	xor eax, eax
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::popcount::popcnt_words
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
+
+gf2_kernels_simd::x86::popcount::popcnt_words:
+	test rsi, rsi
+	je .LBB119_1
+	shl rsi, 3
+	xor eax, eax
+	xor ecx, ecx
+.LBB119_3:
+	popcnt rdx, qword ptr [rdi + rcx]
+	add rax, rdx
+	add rcx, 8
+	cmp rsi, rcx
+	jne .LBB119_3
+	ret
+.LBB119_1:
+	xor eax, eax
+	ret
