@@ -1,0 +1,26 @@
+libpopcnt get_cpuid(): flags=0x800020 popcnt=true avx2=true avx512_vpopcntdq=false
+host: avx2=true popcnt=true avx512vpopcntdq=false
+gf2 route words=1: legacy=scalar resolved=scalar-popcnt and_resolved=scalar
+gf2 route words=4: legacy=scalar resolved=scalar-popcnt and_resolved=scalar
+gf2 route words=7: legacy=scalar resolved=scalar-popcnt and_resolved=scalar
+gf2 route words=8: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=16: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=32: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=63: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=64: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=65: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=128: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=256: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=1024: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=16384: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=1048576: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+word_offset=0: 0 bytes past a vector boundary; arms accepting it: legacy-dispatch resolved-dispatch nibble-lut scalar-popcnt csa compiler-count-ones libpopcnt mula-avx2-harley-seal
+word_offset=1: 8 bytes past a vector boundary; arms accepting it: legacy-dispatch resolved-dispatch nibble-lut scalar-popcnt csa compiler-count-ones libpopcnt
+word_offset=2: 16 bytes past a vector boundary; arms accepting it: legacy-dispatch resolved-dispatch nibble-lut scalar-popcnt csa compiler-count-ones libpopcnt
+word_offset=3: 24 bytes past a vector boundary; arms accepting it: legacy-dispatch resolved-dispatch nibble-lut scalar-popcnt csa compiler-count-ones libpopcnt
+count arms refused 1134 misaligned windows (Mula at offsets 1-3)
+count arms over word windows: PASS 10962 cases
+external byte-length tails: PASS 256 cases
+bit-length tail semantics: PASS 52 cases
+fused AND arms: PASS 2540 cases
+matrix-vector consumer arms: PASS 20 cases
