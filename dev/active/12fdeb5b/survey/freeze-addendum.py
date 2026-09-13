@@ -15,8 +15,9 @@ canonical `dev/active/c7113c5a/survey/freeze-confirmation.py`, which derives the
 measurement resolution from the committed pilot receipt, pins that receipt by
 path and digest, and writes the derivation record beside the addendum. This
 module supplies the cell selection P-20's tail-support bound admits, its
-rationale, and the prose the confirmatory stage carries. Run it from the
-worktree root so every recorded path stays repository-relative.
+rationale, the prose the confirmatory stage carries, and the resolution this
+family's rule derives at the confirmation's own corrected alpha. Run it from
+the worktree root so every recorded path stays repository-relative.
 
 `frozen-utc` defaults to the current whole-second UTC time. It must not follow
 the campaign's opening record, so freeze before launching.
@@ -32,6 +33,8 @@ FAMILY_ID = "nr-rate-matched-encode-baselines-v1"
 LEDGER = "dev/active/12fdeb5b/nr-rate-matched-encode-trial-ledger.jsonl"
 PILOT_ADDENDUM = "dev/active/12fdeb5b/addendum-nr-encode-pilot.json"
 CANONICAL_FREEZER = "dev/active/c7113c5a/survey/freeze-confirmation.py"
+RESOLUTION_DERIVATION = "dev/active/12fdeb5b/pilot-resolution-nr-encode.txt"
+FAMILY_ALPHA = 0.05
 
 # (cell suffix, configuration, seed)
 SMOKE_CELLS = [
@@ -156,6 +159,34 @@ def now_utc():
             .strftime("%Y-%m-%dT%H:%M:%SZ"))
 
 
+def supplied_resolution():
+    """Read the resolution `bootstrap-resolution` derived, and check its alpha.
+
+    The family sizes its resolution at the confirmation's own corrected alpha,
+    not at the pilot's, because the DVB-T2 family's use of the pilot's alpha was
+    contradicted by a threefold wider confirmation interval. The derivation is
+    the committed output of `eda07788`'s `bootstrap-resolution`, which also
+    reports P-20's endpoint shift; the value frozen is the larger of the two
+    rounded up. Reading the number from that output keeps it untranscribed, and
+    checking the alpha it was computed at against this stage's comparison count
+    rejects a derivation left over from a different cell selection.
+    """
+    text = pathlib.Path(RESOLUTION_DERIVATION).read_text()
+    # The ledger spends alpha / (attempts * (attempts + 1)) on attempt number
+    # `attempts`; this is the family's first, and the comparison count divides
+    # what that attempt spends.
+    attempts = 1
+    expected = FAMILY_ALPHA / (attempts * (attempts + 1)) / len(CONFIRMATION_CELLS)
+    alphas = [float(line.split()[1]) for line in text.splitlines() if line.startswith("alpha ")]
+    if alphas != [expected]:
+        sys.exit(f"{RESOLUTION_DERIVATION} reports alpha {alphas}, not [{expected!r}]")
+    marker = "larger of the two rounded up to two decimals:"
+    values = [line.split(marker)[1] for line in text.splitlines() if marker in line]
+    if len(values) != 1:
+        sys.exit(f"{RESOLUTION_DERIVATION} does not state one rounded resolution")
+    return values[0].strip()
+
+
 def freeze_confirmation(output, pilot_receipt, frozen):
     """Delegate to the canonical freezer with this family's selection."""
     record = output.with_name(f"resolution-{output.stem.removeprefix('addendum-')}.txt")
@@ -170,6 +201,8 @@ def freeze_confirmation(output, pilot_receipt, frozen):
         "--equivalence-rationale", CONFIRMATION_EQUIVALENCE_RATIONALE,
         "--material-gap-rationale", CONFIRMATION_MATERIAL_GAP_RATIONALE,
         "--family-description", CONFIRMATION_DESCRIPTION,
+        "--resolution", supplied_resolution(),
+        "--resolution-derivation", RESOLUTION_DERIVATION,
     ]
     for cell_id in CONFIRMATION_CELLS:
         command += ["--cell", cell_id]
