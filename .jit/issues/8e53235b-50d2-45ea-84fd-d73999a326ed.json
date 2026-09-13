@@ -21,7 +21,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Assemble packed systematic BCH codewords word-wise",
-  "updated_at": "2026-09-13T16:57:27.448105782Z"
+  "updated_at": "2026-09-13T18:21:40.607797720Z"
 }
