@@ -315,9 +315,13 @@ Share stability between one and twenty-four workers, the other half of the test,
 
 ## Lever ranking
 
-Source: `dev/active/3be770d5/survey/levers.json` and `v4-r1-steady-profile/profile-summary.json`. A lever's removed share is the pooled samples of the categories it removes over the pooled samples of the case, with a Wilson 95% interval; the rule ranks by the smaller of the two codes' lower bounds, and predicts a single-worker speedup of at least 1/(1 - lower). A later confirmed speedup whose upper bound falls below that value refutes the attribution.
+Source: `dev/active/3be770d5/survey/levers.json` and `v4-r1-steady-profile/profile-summary.json`. A lever's removed share is the pooled samples of the categories it removes over the pooled samples of the case, with a Wilson 95% interval. That share and its interval are the measured evidence, and the rule ranks by the smaller of the two codes' lower bounds.
 
-| Rank | Lever | Removed categories | gf2-dvb-w1 share [Wilson 95%] | gf2-dvb-w1 speedup at least | gf2-nr-w1 share [Wilson 95%] | gf2-nr-w1 speedup at least |
+The Amdahl ceiling beside each share is an **estimate**, not a predicted result: it is 1/(1 - lower), the single-worker speedup that would follow if the removed categories vanished at no replacement cost and nothing else changed. A real change pays for its replacement work and shifts what remains, so a measured speedup below the ceiling refutes nothing.
+
+An attribution is refuted by the profile rather than by the clock. After the change the same record cases are sampled again and the removed categories pooled again: the attribution holds when the post-change share's Wilson upper bound lies below the pre-change share's Wilson lower bound, and is refuted when it does not. Throughput is the separate question, decided by a matched confirmation family under the protocol, against no predicted lower bound.
+
+| Rank | Lever | Removed categories | gf2-dvb-w1 share [Wilson 95%] | gf2-dvb-w1 Amdahl ceiling (estimate) | gf2-nr-w1 share [Wilson 95%] | gf2-nr-w1 Amdahl ceiling (estimate) |
 |---:|---|---|---|---:|---|---:|
 | 1 | Canonical edge indexing | `edge-position-search` | 33.93% (9790/28853) [33.39%, 34.48%] | 1.501 | 28.09% (5574/19840) [27.47%, 28.72%] | 1.379 |
 | 2 | Allocation removal | `allocator`, `min-sum-input-vec` | 16.63% (4799/28853) [16.21%, 17.07%] | 1.193 | 21.06% (4178/19840) [20.50%, 21.63%] | 1.258 |

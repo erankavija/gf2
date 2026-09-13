@@ -1,0 +1,6 @@
+dev/active/04b85d10/survey/code-rows.json	reference	Declared code-row registry
+dev/bench_results/04b85d10/receipt-evidence-record.json	report	Receipt derivation and contradiction record
+dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json	specification	Protocol-v4 count pilot addendum
+dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json	specification	Protocol-v4 layout pilot addendum
+dev/bench_results/04b85d10/run-consumer-smoke.sh	notes	Campaign wire-smoke launcher
+dev/active/04b85d10/survey/gf2-side/tests/declared_codes.rs	test	Declared-code agreement test

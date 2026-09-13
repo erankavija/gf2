@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-11T17:45:19.350108929Z",
   "context": {},
   "created_at": "2026-06-12T16:50:06.823759512Z",
@@ -7,7 +7,7 @@
     "18e69a1a-c86f-49dc-b381-88f62cd20aa0",
     "c077a88b-2d35-49ed-bfe0-6fbc7055cea1"
   ],
-  "description": "Establish the normalized CPU LDPC throughput gap against AFF3CT and rank measured bottlenecks before decoder optimization.\n\n## Background\n\nThe existing comparison harness in dev/benchmarks/gf2-sim/comparison exports identical parity-check matrices for DVB-T2 rate-1/2 normal frames and the NR BG1 Z=384 mother code. Earlier throughput columns did not normalize worker counts or affinity and therefore do not establish the per-core competitive gap. This issue owns profiling and recommendations, not decoder optimization implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish pinned-thread, quiet-host comparisons for both existing configurations: one worker versus one worker, and 24 versus 24 logical-CPU workers, augmented with six- and twelve-physical-core arms. Resolve topology and record affinity, actual worker counts, nested thread pools, SMT state and source/build identities.\n\n- [hard] REQ-02: Identify at least three leading hot-path contributors with measured time shares and committed perf profiles or equivalent evidence, including allocation, edge traversal, layout, reduction and dispatch costs where present. Distinguish single-core bottlenecks from multicore saturation.\n\n- [hard] REQ-03: Rank candidate levers using measured evidence or labeled estimates: allocation removal, canonical edge indexing, flat check/variable-major message layouts, shared min/second-min/sign reductions, inter-frame SIMD, quantized/layered decoding and QC-aware intra-frame work. Include batch conversion, syndrome/termination and degree-structure costs; name a falsifiable workload experiment for each recommendation.\n\n- [hard] REQ-04: Preserve the existing numerical comparison contract: identical H, NMS alpha 0.75, flooding schedule, iteration cap 50 and syndrome early termination in matched arms; feed identical recorded LLRs where the adapter supports it. Separate fastest-compatible AFF3CT modes and report precision/schedule/batching differences, iteration distributions, and BER/FER counts and confidence intervals.\n\n- [hard] REQ-05: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n## Notes\n\nKeep this issue profiling-only. Reuse the linked comparison harness; no AVX-512/GFNI or GPU kernel implementation is included. The evidence contains profile.md and machine-readable measurements under the issue's configured dev/bench_results directory, with durable links to the raw execution log and profiler artifacts.\n\n\n",
+  "description": "Establish the normalized CPU LDPC throughput gap against AFF3CT and rank measured bottlenecks before decoder optimization.\n\n## Background\n\nThe existing comparison harness in dev/benchmarks/gf2-sim/comparison exports identical parity-check matrices for DVB-T2 rate-1/2 normal frames and the NR BG1 Z=384 mother code. Earlier throughput columns did not normalize worker counts or affinity and therefore do not establish the per-core competitive gap. This issue owns profiling and recommendations, not decoder optimization implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish pinned-thread, quiet-host comparisons for both existing configurations: one worker versus one worker, and 24 versus 24 logical-CPU workers, augmented with six- and twelve-physical-core arms. Resolve topology and record affinity, actual worker counts, nested thread pools, SMT state and source/build identities.\n\n- [hard] REQ-02: Identify at least three leading hot-path contributors with measured time shares and committed perf profiles or equivalent evidence, including allocation, edge traversal, layout, reduction and dispatch costs where present. Distinguish single-core bottlenecks from multicore saturation.\n\n- [hard] REQ-03: Rank candidate levers using measured evidence or labeled estimates: allocation removal, canonical edge indexing, flat check/variable-major message layouts, shared min/second-min/sign reductions, inter-frame SIMD, quantized/layered decoding and QC-aware intra-frame work. Include batch conversion, syndrome/termination and degree-structure costs; name a falsifiable workload experiment for each recommendation.\n\n- [hard] REQ-04: Preserve the existing numerical comparison contract: identical H, NMS alpha 0.75, flooding schedule, iteration cap 50 and syndrome early termination in matched arms; feed identical recorded LLRs where the adapter supports it. Separate fastest-compatible AFF3CT modes and report precision/schedule/batching differences, iteration distributions, and BER/FER counts and confidence intervals.\n\n- [hard] REQ-05: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n## Notes\n\nKeep this issue profiling-only. Reuse the linked comparison harness; no AVX-512/GFNI or GPU kernel implementation is included. The evidence contains profile.md and machine-readable measurements under the issue's configured dev/bench_results directory, with durable links to the raw execution log and profiler artifacts.\n\nSource references: [Cassagne2019].\n\n",
   "documents": [
     {
       "assets": [
@@ -32,8 +32,749 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "6b6f44b33a63037092fd793596dbf94568b8229fcab4f31c0a620d3946ecbfd1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/summarize-profile.py",
+          "resolved_path": "dev/active/3be770d5/survey/summarize-profile.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9fc1b20c8f42449df89ccc954f9e01f6739ff632593fa92e1313008b6ff7b7f1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/preparation/alloc-census.jsonl",
+          "resolved_path": "dev/bench_results/3be770d5/preparation/alloc-census.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fd6a97b8c43e6a3620f2c8a6ab8ecc2d02f70aa5cf49227e6aacd674c8344a86",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef0304736301968ef5422e0821e762816c88378c3a192088c7e49f59d9052876",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v3.md",
+          "resolved_path": "dev/active/f547c394/amendment-v3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "34300e46f58f4490396db32b4faf652630b792eda691f17ea363263ca2efc12d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "47ae92ea4fa7b4961fdc03fa1581c50cd400ebf49459957970ed3d50d93ccfd8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/preparation/validation.jsonl",
+          "resolved_path": "dev/bench_results/3be770d5/preparation/validation.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a458b46589f2eccf5c1a140abdf6cbc00d99b245f8ec85c9aab7f550ae73a368",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-steady-matched-multicore.json",
+          "resolved_path": "dev/active/3be770d5/addendum-ldpc-steady-matched-multicore.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5ed10180dc92881fad2e95e135a44fac9707fe9836e2d417cb62ae3a5a4eec81",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/arms.json",
+          "resolved_path": "dev/active/3be770d5/survey/arms.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "313132cf5ec48faadcabf2f5d080a02f1da1137f86d20cb1aa8d28fca9654a56",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/3be770d5/v3-r1-steady-profile-conditions.md",
+          "resolved_path": "dev/bench_results/3be770d5/v3-r1-steady-profile-conditions.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "49a1e8ba92426c6ec72c56598a270752a865f7cc64e27719a6d1570c044a18fc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/freeze-addendum.py",
+          "resolved_path": "dev/active/3be770d5/survey/freeze-addendum.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c15453dc094639497a11a3e84e39aa620c0ee37113fd51f47bf3875d2850fc7c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/run-campaign.sh",
+          "resolved_path": "dev/bench_results/3be770d5/run-campaign.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ccab6e52710f8911389c41004e8b212da6a66fa1b20bbc736bc384938347ea26",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-steady-fastest-compatible-pilot.json",
+          "resolved_path": "dev/active/3be770d5/addendum-ldpc-steady-fastest-compatible-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f17f73b16807e9943ac175c4c4a23b54be71312899963346823926701a4ee72c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/run-profile.sh",
+          "resolved_path": "dev/active/3be770d5/survey/run-profile.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7cd3421e01081f00a0c1f6acab61391c3b20690d28ded4fbe8b921b3ac0a39ee",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/3be770d5/tables.md",
+          "resolved_path": "dev/bench_results/3be770d5/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fbb1861275673ed77520d2e658f5a805ddb622108ce7737534aa7b0426dc2ac7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/3be770d5/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c55f521bd574c475743ec046650198600eda93b75c0b2e1680d2b1338775e698",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/3be770d5/v3-r1-steady-profile/profile.md",
+          "resolved_path": "dev/bench_results/3be770d5/v3-r1-steady-profile/profile.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6d9dd3bfde2486333c8accf9d6a55726322a1375af70e829e28a13ad3ca72295",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-steady-matched-single-worker.json",
+          "resolved_path": "dev/active/3be770d5/addendum-ldpc-steady-matched-single-worker.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "de8d8971279739edd10ae163777997c66644f9889e659e501eadc43c3d219910",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/record-preparation.py",
+          "resolved_path": "dev/active/3be770d5/survey/record-preparation.py"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/v3-r1-steady-profile/",
+          "resolved_path": "dev/bench_results/3be770d5/v3-r1-steady-profile"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9dbac5fcf435caa2a24e114e52aae849c41bc7f9579c2e66e84d99c426970fcf",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/3be770d5/v4-r1-steady-profile/profile.md",
+          "resolved_path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "38629c181ef8ab8f38fb559278087b4aa840a3f7e0131d3ec88308fd99cc999c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/3be770d5/preparation/executable-identity.md",
+          "resolved_path": "dev/bench_results/3be770d5/preparation/executable-identity.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec7590195dcce3478735df395992f449c7ba50710be1897b0bf227023afbfb0c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/v4-r1-steady-profile/repetitions.log",
+          "resolved_path": "dev/bench_results/3be770d5/v4-r1-steady-profile/repetitions.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/preparation/build-identity.json",
+          "resolved_path": "dev/bench_results/3be770d5/preparation/build-identity.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "653e9225bb7d8947a7cd74bdbb3de45e3b758414db489218a605f4a599a10dfe",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/v3-r1-steady-profile-window-job.log",
+          "resolved_path": "dev/bench_results/3be770d5/v3-r1-steady-profile-window-job.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b90f70d31131dea190355b71fc98c8242e31befbf72536c9caafabf5fb5b4e88",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/3be770d5/v4-r1-steady-profile/rep-01/callgraph/gf2-dvb-w1.callers.txt",
+          "resolved_path": "dev/bench_results/3be770d5/v4-r1-steady-profile/rep-01/callgraph/gf2-dvb-w1.callers.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0a9b3d5e9e0884ed6e9294f7770a25c987a96e05c651359966ea5d43ea0fe209",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/levers.json",
+          "resolved_path": "dev/active/3be770d5/survey/levers.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "609c49e208b3f11932235eb37ed290ef44e50728ea5e1098c72dc7905be60795",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/preparation/structural-costs.json",
+          "resolved_path": "dev/bench_results/3be770d5/preparation/structural-costs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "16c8f90ce16f114fe9d47283db7321d30fd91c236c1059febd0d794db64ee30e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/harness/Cargo.toml",
+          "resolved_path": "dev/active/3be770d5/survey/harness/Cargo.toml"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "574c6e04791d1e52e36d818b9a9cccf71acf5edd2b642b77ee78e9e5ae9efe8d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-steady-matched-single-worker-derivation.json",
+          "resolved_path": "dev/active/3be770d5/addendum-ldpc-steady-matched-single-worker-derivation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0cda9606ca5ba10dcbf5ae7c23cfebe3812a592d47319f9322f947316959720f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/3be770d5/v4-r1-steady-profile/host.txt",
+          "resolved_path": "dev/bench_results/3be770d5/v4-r1-steady-profile/host.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cc4087da09bf4a505edb0b8ff1413fa0c99c731117f4b64c429a3e1dc9046bbb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/3be770d5/preparation/arm-validation.jsonl",
+          "resolved_path": "dev/bench_results/3be770d5/preparation/arm-validation.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f1c83c6bd5611eb8a733fba21fbd8b5d30fd397ef937dfe4b9a4035aeed76fe5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-steady-matched-multicore-pilot.json",
+          "resolved_path": "dev/active/3be770d5/addendum-ldpc-steady-matched-multicore-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "63ad30dd907ae60ccb0699ddf095f94a42d95b22230dda790f71db4059fdad8d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-steady-matched-single-worker-pilot.json",
+          "resolved_path": "dev/active/3be770d5/addendum-ldpc-steady-matched-single-worker-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "774c5f68c68a349348cacfddb0c223bad5f733e325b1c8bb7733e5e03f3f2096",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/summarize.py",
+          "resolved_path": "dev/active/3be770d5/survey/summarize.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dfe9530acb23c635327838e0f7058a75678fd64d5b45a98202656354145549c5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/3be770d5/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "CPU LDPC throughput gap: steady-state profile",
+      "path": "dev/active/3be770d5/findings.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "fd6a97b8c43e6a3620f2c8a6ab8ecc2d02f70aa5cf49227e6aacd674c8344a86",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "34300e46f58f4490396db32b4faf652630b792eda691f17ea363263ca2efc12d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca4adf8647912792f14f7c00850bbe3c6589ce98024557ac60943d7fa5809c6a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c077a88b/tables.md",
+          "resolved_path": "dev/bench_results/c077a88b/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88144b9aba21bf0c92caba3b9ed07190061d08ec77839c17dfd69cd9b4bb405b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c077a88b/findings.md",
+          "resolved_path": "dev/active/c077a88b/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "37fda99e6f956ec92bf3a4525577ef825258308dfc2fac7e4ca558cf8a8683b9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef0304736301968ef5422e0821e762816c88378c3a192088c7e49f59d9052876",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v3.md",
+          "resolved_path": "dev/active/f547c394/amendment-v3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "77f938f51dbf9ab594bea293939445951956233bb5b2a6e8098d1f24f1da5829",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-preparation/validation.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/validation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8f42c2afbea96b763117335d3daab9c415bc84bfebe28272457bc82b65a56eea",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c077a88b/v3-preparation/build-identity.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/build-identity.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Plan: CPU LDPC throughput gap profile",
+      "path": "dev/active/3be770d5/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, matched single-worker confirmation",
+      "path": "dev/active/3be770d5/addendum-ldpc-steady-matched-single-worker.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, matched multicore confirmation",
+      "path": "dev/active/3be770d5/addendum-ldpc-steady-matched-multicore.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Derivation of the single-worker confirmation addendum from its pilot",
+      "path": "dev/active/3be770d5/addendum-ldpc-steady-matched-single-worker-derivation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Derivation of the multicore confirmation addendum from its pilot",
+      "path": "dev/active/3be770d5/addendum-ldpc-steady-matched-multicore-derivation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Pilot addendum, matched single-worker family",
+      "path": "dev/active/3be770d5/addendum-ldpc-steady-matched-single-worker-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Pilot addendum, matched multicore family",
+      "path": "dev/active/3be770d5/addendum-ldpc-steady-matched-multicore-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Pilot addendum, exploratory fastest-compatible family",
+      "path": "dev/active/3be770d5/addendum-ldpc-steady-fastest-compatible-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Steady-state LDPC survey tables",
+      "path": "dev/bench_results/3be770d5/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Steady-state LDPC profile, second series",
+      "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Machine-readable profile summary, second series",
+      "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Per-address attribution with inline chains and categories",
+      "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/attribution.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Session identities and load of the second profile series",
+      "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/repetitions.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Session identities of the void first profile series",
+      "path": "dev/bench_results/3be770d5/v3-r1-steady-profile/repetitions.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Host conditions of the void first profile series",
+      "path": "dev/bench_results/3be770d5/v3-r1-steady-profile-conditions.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Window job log of the void first profile series",
+      "path": "dev/bench_results/3be770d5/v3-r1-steady-profile-window-job.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Receipt, matched single-worker confirmation",
+      "path": "dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-single-worker-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Acceptance summary, matched single-worker confirmation",
+      "path": "dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-single-worker-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Execution log, matched single-worker confirmation",
+      "path": "dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-single-worker-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Receipt, matched multicore confirmation",
+      "path": "dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-multicore-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Acceptance summary, matched multicore confirmation",
+      "path": "dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-multicore-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Execution log, matched multicore confirmation",
+      "path": "dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-multicore-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Receipt, matched single-worker pilot",
+      "path": "dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-single-worker-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Receipt, matched multicore pilot",
+      "path": "dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-multicore-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Receipt, exploratory fastest-compatible pilot",
+      "path": "dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-fastest-compatible-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Family ledger, matched single-worker",
+      "path": "dev/bench_results/3be770d5/v3-steady-matched-single-worker-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Family ledger, matched multicore",
+      "path": "dev/bench_results/3be770d5/v3-steady-matched-multicore-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Family ledger, fastest compatible",
+      "path": "dev/bench_results/3be770d5/v3-steady-fastest-compatible-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Steady-state campaign launcher",
+      "path": "dev/bench_results/3be770d5/run-campaign.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Executables, toolchain, AFF3CT identity and input digests",
+      "path": "dev/bench_results/3be770d5/preparation/build-identity.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "build-identity.json",
+          "resolved_path": "dev/bench_results/3be770d5/preparation/build-identity.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Executable identity across this survey's measurements",
+      "path": "dev/bench_results/3be770d5/preparation/executable-identity.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Derived per-iteration structural work of both decoders",
+      "path": "dev/bench_results/3be770d5/preparation/structural-costs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Allocation census of the preparation run",
+      "path": "dev/bench_results/3be770d5/preparation/alloc-census.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "label": "Untimed replay validation of the reused-decoder paths",
+      "path": "dev/bench_results/3be770d5/preparation/validation.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "label": "Per-arm validation runs with placement checks",
+      "path": "dev/bench_results/3be770d5/preparation/arm-validation.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Profile series summarizer (carries --self-test)",
+      "path": "dev/active/3be770d5/survey/summarize-profile.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Evidence table generator",
+      "path": "dev/active/3be770d5/survey/summarize.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "REQ-03 lever definitions and removed-category sets",
+      "path": "dev/active/3be770d5/survey/levers.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Repeated profile series driver",
+      "path": "dev/active/3be770d5/survey/run-profile.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "One profiled session",
+      "path": "dev/active/3be770d5/survey/profile-session.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Profile case matrix",
+      "path": "dev/active/3be770d5/survey/profile-cases.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Arm definitions with precision, schedule and wave size",
+      "path": "dev/active/3be770d5/survey/arms.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Structural cost derivation",
+      "path": "dev/active/3be770d5/survey/edge-costs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Interval estimators of the profile summaries",
+      "path": "dev/active/3be770d5/survey/intervals.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Addendum generator",
+      "path": "dev/active/3be770d5/survey/make-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Campaign plan generator",
+      "path": "dev/active/3be770d5/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Confirmation addendum freezer",
+      "path": "dev/active/3be770d5/survey/freeze-addendum.py"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "{IDENTITY.name}",
+          "resolved_path": "dev/active/3be770d5/survey/{IDENTITY.name}"
+        }
+      ],
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Executable identity table generator",
+      "path": "dev/active/3be770d5/survey/executable-identity.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Preparation recorder",
+      "path": "dev/active/3be770d5/survey/record-preparation.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "research",
+      "label": "Source evidence generator",
+      "path": "dev/active/3be770d5/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "research",
+      "label": "Decoder source evidence behind the lever mechanisms",
+      "path": "dev/active/3be770d5/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Producing-input closure of the campaigns",
+      "path": "dev/active/3be770d5/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "label": "Survey definition validator",
+      "path": "dev/active/3be770d5/survey/validate.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "label": "Arm definition validator",
+      "path": "dev/active/3be770d5/survey/validate-arms.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "format": "markdown",
+      "label": "Steady-state LDPC throughput harness (standalone workspace)",
+      "path": "dev/active/3be770d5/survey/harness/Cargo.toml"
     }
   ],
+  "done_at": "2026-09-12T17:34:28.321336973Z",
   "first_ready_at": "2026-09-06T20:03:43.034982897Z",
   "gates_required": [
     "cargo-ci",
@@ -43,19 +784,24 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-06-12T16:50:17.097931252Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-12T17:16:28.037756699Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-06-12T16:50:17.105475134Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-12T17:16:04.422226903Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-12T17:30:23.301042849Z",
+      "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "pending",
-      "updated_at": "2026-09-06T19:18:29.127808422Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-12T17:33:54.548002975Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
@@ -69,7 +815,7 @@
     "cites:Cassagne2019"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-  "updated_at": "2026-09-11T17:45:19.350108929Z"
+  "updated_at": "2026-09-12T17:34:28.321336973Z"
 }
