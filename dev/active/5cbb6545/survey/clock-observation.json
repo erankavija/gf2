@@ -1,0 +1,515 @@
+{
+  "schema": "count-clock-observation-v1",
+  "observed_utc": "2026-09-13T17:05:12Z",
+  "revision": "006e456df8b8bba5d09860d695b8c2874e862d47",
+  "arm_executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+  "arm_executable_sha256": "ea061cc3cff3175856cb80e617f531b517fdd98b2ffbabf1ebd354d7ca9ac1f7",
+  "command_template": "dev/scripts/ccx1-bench-flock.sh --full-host taskset -c <cpus> perf stat -x, -e cycles:u,task-clock:u -- <arm executable>",
+  "note": "One child per arm per cell, on that cell's own case from the receipt's plan, outside any counterbalanced block: this record establishes the clock a route runs at and makes no comparison between arms. The arms are those of the revision recorded here, which is the delivered tree; a route this issue reverted therefore reports the clock of the route the tree keeps, as each observation's selected_path states.",
+  "observations": [
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w4-dispatch",
+      "arm": "legacy-dispatch",
+      "arm_role": "baseline",
+      "selected_path": "gf2-legacy-popcount:scalar",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 32,
+      "calls": 148236875,
+      "timed_ns": 501151873,
+      "cycles": 2647666592.0,
+      "task_clock_ns": 558920000.0,
+      "cycles_per_ns": 4.737111915837687,
+      "timed_share": 0.8966432995777571
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w4-dispatch",
+      "arm": "resolved-dispatch",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-popcount:scalar",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 32,
+      "calls": 157531370,
+      "timed_ns": 500413309,
+      "cycles": 2619624860.0,
+      "task_clock_ns": 554340000.0,
+      "cycles_per_ns": 4.725664501930224,
+      "timed_share": 0.9027191056030595
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w8-dispatch",
+      "arm": "legacy-dispatch",
+      "arm_role": "baseline",
+      "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 64,
+      "calls": 123437440,
+      "timed_ns": 473485741,
+      "cycles": 2545803834.0,
+      "task_clock_ns": 541920000.0,
+      "cycles_per_ns": 4.697748438883968,
+      "timed_share": 0.8737188902421021
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w8-dispatch",
+      "arm": "resolved-dispatch",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 64,
+      "calls": 130885210,
+      "timed_ns": 477897855,
+      "cycles": 2539165115.0,
+      "task_clock_ns": 542520000.0,
+      "cycles_per_ns": 4.680316145026912,
+      "timed_share": 0.8808852300376023
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w128-dispatch",
+      "arm": "legacy-dispatch",
+      "arm_role": "baseline",
+      "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 1024,
+      "calls": 26782325,
+      "timed_ns": 497040491,
+      "cycles": 2738089178.0,
+      "task_clock_ns": 576070000.0,
+      "cycles_per_ns": 4.753049417605499,
+      "timed_share": 0.8628126633916017
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w128-dispatch",
+      "arm": "resolved-dispatch",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 1024,
+      "calls": 27706005,
+      "timed_ns": 499415584,
+      "cycles": 2730919529.0,
+      "task_clock_ns": 575560000.0,
+      "cycles_per_ns": 4.744804241086942,
+      "timed_share": 0.8677037737160331
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w1024-dispatch",
+      "arm": "legacy-dispatch",
+      "arm_role": "baseline",
+      "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 8192,
+      "calls": 3788995,
+      "timed_ns": 498694880,
+      "cycles": 2702771455.0,
+      "task_clock_ns": 568210000.0,
+      "cycles_per_ns": 4.756641831365164,
+      "timed_share": 0.8776594568909382
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w1024-dispatch",
+      "arm": "resolved-dispatch",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-popcount:simd-carry-save",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 8192,
+      "calls": 5029955,
+      "timed_ns": 494053564,
+      "cycles": 2616156336.0,
+      "task_clock_ns": 546630000.0,
+      "cycles_per_ns": 4.785972844520059,
+      "timed_share": 0.90381714139363
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w16384-dispatch",
+      "arm": "legacy-dispatch",
+      "arm_role": "baseline",
+      "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 131072,
+      "calls": 247915,
+      "timed_ns": 497873296,
+      "cycles": 2673993247.0,
+      "task_clock_ns": 564430000.0,
+      "cycles_per_ns": 4.737510846340556,
+      "timed_share": 0.8820815619297344
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w16384-dispatch",
+      "arm": "resolved-dispatch",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-popcount:simd-carry-save",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 131072,
+      "calls": 333475,
+      "timed_ns": 499261924,
+      "cycles": 2604132057.0,
+      "task_clock_ns": 548870000.0,
+      "cycles_per_ns": 4.744533417749194,
+      "timed_share": 0.9096178038515496
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w16384-vs-libpopcnt",
+      "arm": "resolved-dispatch",
+      "arm_role": "baseline",
+      "selected_path": "gf2-ops-popcount:simd-carry-save",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 131072,
+      "calls": 331125,
+      "timed_ns": 499862467,
+      "cycles": 2608130000.0,
+      "task_clock_ns": 549880000.0,
+      "cycles_per_ns": 4.7430894013239255,
+      "timed_share": 0.9090391849130719
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation",
+      "campaign": "popcount-confirmation-5cbb6545-20260913t132314z",
+      "cell_id": "popcount-w16384-vs-libpopcnt",
+      "arm": "libpopcnt",
+      "arm_role": "candidate",
+      "selected_path": "libpopcnt-4.2-popcnt:cpuid=0x800020:bytes=131072",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 131072,
+      "calls": 344645,
+      "timed_ns": 498802671,
+      "cycles": 2601256189.0,
+      "task_clock_ns": 546910000.0,
+      "cycles_per_ns": 4.756278343785998,
+      "timed_share": 0.9120379422574099
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "and-w128-fused",
+      "arm": "and-legacy-fused",
+      "arm_role": "baseline",
+      "selected_path": "gf2-kernels-simd:avx2-and-popcnt",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 2048,
+      "calls": 24750450,
+      "timed_ns": 500508091,
+      "cycles": 2568016467.0,
+      "task_clock_ns": 543320000.0,
+      "cycles_per_ns": 4.726526663844512,
+      "timed_share": 0.9212031417948907
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "and-w128-fused",
+      "arm": "and-resolved-fused",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-and-popcount:simd-nibble-lut",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 2048,
+      "calls": 24025295,
+      "timed_ns": 503364687,
+      "cycles": 2590717325.0,
+      "task_clock_ns": 547400000.0,
+      "cycles_per_ns": 4.732768222506394,
+      "timed_share": 0.9195555115089514
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "and-w512-fused",
+      "arm": "and-legacy-fused",
+      "arm_role": "baseline",
+      "selected_path": "gf2-kernels-simd:avx2-and-popcnt",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 8192,
+      "calls": 6861410,
+      "timed_ns": 506680954,
+      "cycles": 2745718576.0,
+      "task_clock_ns": 583620000.0,
+      "cycles_per_ns": 4.704634138651863,
+      "timed_share": 0.8681692779548337
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "and-w512-fused",
+      "arm": "and-resolved-fused",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-and-popcount:simd-carry-save",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 8192,
+      "calls": 8941300,
+      "timed_ns": 498634021,
+      "cycles": 2649692389.0,
+      "task_clock_ns": 557860000.0,
+      "cycles_per_ns": 4.749744360592263,
+      "timed_share": 0.8938336159609938
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "and-w4096-fused",
+      "arm": "and-legacy-fused",
+      "arm_role": "baseline",
+      "selected_path": "gf2-kernels-simd:avx2-and-popcnt",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 65536,
+      "calls": 869425,
+      "timed_ns": 498305398,
+      "cycles": 2711664850.0,
+      "task_clock_ns": 574030000.0,
+      "cycles_per_ns": 4.723907896799819,
+      "timed_share": 0.8680825009145864
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "and-w4096-fused",
+      "arm": "and-resolved-fused",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-and-popcount:simd-carry-save",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 65536,
+      "calls": 1119855,
+      "timed_ns": 500677521,
+      "cycles": 2642689709.0,
+      "task_clock_ns": 559780000.0,
+      "cycles_per_ns": 4.720943422415949,
+      "timed_share": 0.894418380435171
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "and-w4096-vs-two-pass",
+      "arm": "and-two-pass",
+      "arm_role": "baseline",
+      "selected_path": "gf2-core-copy-and-inplace-popcount",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 65536,
+      "calls": 395680,
+      "timed_ns": 529594831,
+      "cycles": 2842117210.0,
+      "task_clock_ns": 600520000.0,
+      "cycles_per_ns": 4.732760291081063,
+      "timed_share": 0.881893743755412
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "and-w4096-vs-two-pass",
+      "arm": "and-resolved-fused",
+      "arm_role": "candidate",
+      "selected_path": "gf2-ops-and-popcount:simd-carry-save",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 65536,
+      "calls": 1113065,
+      "timed_ns": 500356070,
+      "cycles": 2642721076.0,
+      "task_clock_ns": 560000000.0,
+      "cycles_per_ns": 4.719144778571429,
+      "timed_share": 0.8934929821428571
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "matvec-1024x16384",
+      "arm": "matvec-legacy",
+      "arm_role": "baseline",
+      "selected_path": "gf2-matvec-legacy:avx2-and-popcnt",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 4194304,
+      "calls": 10940,
+      "timed_ns": 512940660,
+      "cycles": 2744881069.0,
+      "task_clock_ns": 583170000.0,
+      "cycles_per_ns": 4.70682831592846,
+      "timed_share": 0.8795731261896188
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "matvec-1024x16384",
+      "arm": "matvec-resolved",
+      "arm_role": "candidate",
+      "selected_path": "gf2-matvec:simd-carry-save",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 4194304,
+      "calls": 13165,
+      "timed_ns": 496700340,
+      "cycles": 2834892852.0,
+      "task_clock_ns": 598390000.0,
+      "cycles_per_ns": 4.737533802369692,
+      "timed_share": 0.8300612309697689
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "matvec-1024x4096",
+      "arm": "matvec-legacy",
+      "arm_role": "baseline",
+      "selected_path": "gf2-matvec-legacy:avx2-and-popcnt",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 1048576,
+      "calls": 31225,
+      "timed_ns": 496389878,
+      "cycles": 2759965345.0,
+      "task_clock_ns": 585610000.0,
+      "cycles_per_ns": 4.712975094346066,
+      "timed_share": 0.8476458359659159
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation",
+      "campaign": "fused-confirmation-5cbb6545-20260913t165142z",
+      "cell_id": "matvec-1024x4096",
+      "arm": "matvec-resolved",
+      "arm_role": "candidate",
+      "selected_path": "gf2-matvec:simd-nibble-lut",
+      "cpus": [
+        0
+      ],
+      "cpus_observed": [
+        0
+      ],
+      "bytes_per_call": 1048576,
+      "calls": 31645,
+      "timed_ns": 523315817,
+      "cycles": 2893726634.0,
+      "task_clock_ns": 612470000.0,
+      "cycles_per_ns": 4.724683060394795,
+      "timed_share": 0.8544350204907996
+    }
+  ]
+}
