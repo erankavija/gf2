@@ -137,20 +137,23 @@ or `inconclusive`; there is no negative outcome to preserve.
 | REQ-04 (frozen before/after receipt at dispatched and non-dispatched widths including dispatch overhead, adoption follows the frozen non-regression rule) | Met | Confirmation [acceptance-summary.md](../../bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/acceptance-summary.md): six cells, all `pass`, `qualifies: true`; dispatch overhead at 1/2/16 words is the three `*-dispatch-overhead` rows, all `not-worse` |
 | REQ-05 (rustdoc of the public functions and `Gf2mWide::mul_ref` states the actual mechanism and complexity) | Met | `crates/gf2-core/src/gf2m/wide.rs`: `clmul_wide` and `clmul_wide_slice` rustdoc `# Mechanism`/`# Complexity` sections name the dispatched-kernel/portable-schoolbook split and state that the kernel path additionally needs the `simd` feature, which is off by default; `Gf2mWide::mul_ref`'s `# Mechanism` and `# Complexity` sections do the same and name `clmul_wide_dispatch` and the two extra Barrett-reduction products, matching the body read at HEAD |
 
-## A recurring defect class: the arm's wire shape
+## A wire-shape defect this issue's smoke caught
 
-The untimed smoke through the real `benchmark-ab-runner` caught this arm
-serializing `cold_calls` and `decoder` as explicit nulls where the runner skips
-them when absent. The canonical round trip rejects that, and the arm died in
-13 ms before producing a result line.
+Commit `86296cd4` (this issue) records an untimed wire smoke through the real
+`benchmark-ab-runner` — a throwaway plan under `target/`, never committed —
+that carried all six cells through three bounded sessions, finalization and
+acceptance, and caught the arm's request type emitting absent optional fields
+(`cold_calls`, `decoder`) as explicit nulls where the runner's canonical
+round trip skips them when absent and rejects the null form. No timing or
+outcome from that smoke is committed beyond what the commit message states,
+so no duration or downstream-cost figure is claimed here.
 
-That is the same signature that killed three queued `6c6b09b1` pilots and cost
-a whole benchmark window slot: an arm whose request type does not round-trip to
-the runner's own bytes. Two independent surveys have now hit it, so it is a
-defect class, not one survey's mistake. The child-v2 request type is a wire
-contract, not a struct that merely has to decode: `deny_unknown_fields` plus
-canonical re-serialization means every optional field needs the runner's own
-`skip_serializing_if`, and field order must match. Code reading does not
-establish this. Run the campaign end to end through the real runner with a
-throwaway plan, and reach a result line from every arm, before queuing
-anything.
+The fix is visible in the committed arm: `dev/active/1c602857/arms/src/main.rs`
+marks both fields `#[serde(default, skip_serializing_if = "Option::is_none")]`,
+so a request that leaves them unset omits them instead of serializing an
+explicit null. The lesson this issue draws from its own smoke: the child-v2
+request type is a wire contract, not a struct that merely has to decode —
+`deny_unknown_fields` plus canonical re-serialization means every optional
+field needs the runner's own `skip_serializing_if`. Code reading does not
+establish this; running the campaign end to end through the real runner with
+a throwaway plan, and reaching a result line from every arm, does.
