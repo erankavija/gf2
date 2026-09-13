@@ -12,14 +12,15 @@ libraries and gf2's runtime GF(2^8) field all use the polynomial 0x11D; gf2
 ships no GF(2^8) field modulo 0x11B, so no cell uses 0x11B and none needs a
 basis conversion. A region multiply-accumulate, a matrix product and an
 arbitrary pairwise product are different operations, and the survey keeps them
-in three families with three ledgers. The protocol-v4 pilots of all three
-families ran on 2026-09-12 and are committed: every declared cell is measured
-and accepted. gf2 loses every region multiply-accumulate and every dense
-product cell to the pinned libraries and leads the pairwise control against
-two of the three; the generated tables carry each figure. Each family's
-confirmation is frozen from its own pilot receipt and queued for the benchmark
-window, and every confirmatory statement waits on those receipts. The
-superseded protocol-v1 pilot is kept as history. No production code changes.
+in three families with three ledgers. Each family carries a protocol-v4 pilot
+over its whole declared breadth and a protocol-v4 confirmation over the six
+cells the protocol's confirmatory budget admits; all six receipts are
+committed, every declared cell of every one of them is measured, and the
+evaluator accepts each with no finding. gf2 loses every confirmed region
+multiply-accumulate cell and every confirmed dense-product cell to the pinned
+libraries at the family confidence, and leads four of the six confirmed
+pairwise-control cells; the generated tables carry each figure. The superseded
+protocol-v1 pilot is kept as history. No production code changes.
 
 ## Question and evidence
 
@@ -280,17 +281,18 @@ restatement of the protocol-v1 pilot, which measured one cell of each
 operation; the origin records derive it and list the two v1 launches that
 stopped before a campaign opened
 (`../../bench_results/6c6b09b1/v3-*-ledger-origin.json`). Each ledger then
-carries the version-3 pilot attempt of 2026-09-12, which reserved its
-campaign, failed on its first arm and measured no cell
-(`../../bench_results/6c6b09b1/v3-r1-void-attempts.json`), and the version-4
-pilot of the same day, which measured every cell it declared.
+carries the version-3 pilot attempt, which reserved its campaign, failed on
+its first arm and measured no cell
+(`../../bench_results/6c6b09b1/v3-r1-void-attempts.json`); the version-4
+pilot, which measured every cell it declared; and the version-4 confirmation,
+the first line of the chain to spend comparisons.
 
-### What the confirmations may confirm
+### What the confirmations confirm
 
 A pilot addendum declares only exploratory cells, so each of those three
-reservations spends zero comparisons and names no candidate identity. No
-family has therefore spent a comparison, and each family's confirmation is its
-first confirmatory attempt: `attempt_alpha` in
+reservations spends zero comparisons and names no candidate identity. No line
+ahead of a confirmation therefore spends a comparison, and each family's
+confirmation is its first confirmatory attempt: `attempt_alpha` in
 `dev/tools/tuning-campaign-support/src/trial_ledger.rs` counts reservations
 whose comparison count is positive, finds none, and allocates the first
 attempt's budget, which Bonferroni then divides by the attempt's own
@@ -321,29 +323,31 @@ tree and shows it writes the same bytes once a confirmation receipt, or a
 pilot-labelled campaign relaunched from the confirmation addendum, sits beside
 the pilot.
 
-One reading of the confirmation receipts needs stating before they exist,
-because the outcome vocabulary is written for adoption decisions and these
-cells decide no adoption. Every cell has gf2 as baseline and the library as
-candidate, and the decision rule maps an interval below the reciprocal of the
-equivalence margin to `regressed`, which the receipt records as the outcome
-`fail` whatever the cell's objective (`abtest::decide` and the outcome match in
+The confirmation receipts need one reading stated, because the outcome
+vocabulary is written for adoption decisions and these cells decide no
+adoption. Every cell has gf2 as baseline and the library as candidate, and the
+decision rule maps an interval below the reciprocal of the equivalence margin
+to `regressed`, which the receipt records as the outcome `fail` whatever the
+cell's objective (`abtest::decide` and the outcome match in
 `dev/tools/tuning-campaign-support/src/receipt.rs`). In a `comparator-gap` cell
 that outcome means the external library is more than the equivalence margin
 slower than gf2 at the family confidence: it is gf2 winning the cell, not gf2
 failing it. The pairwise control is where that applies, since gf2 leads most of
-its cells, so its confirmation receipt is expected to carry `fail` outcomes and
-not to qualify, and `qualifies` on such a receipt would mean only that every
-comparator was materially ahead. The region and matrix families read the
-ordinary way round, because the library leads every one of their cells.
+its cells, so its confirmation receipt carries `fail` outcomes and does not
+qualify; `qualifies` requires every confirmatory cell to pass
+(the `qualifies` computation in `receipt.rs`), which on such a receipt would
+mean only that every comparator is materially ahead. The region and matrix
+families read the ordinary way round, because the library leads every one of
+their cells.
 
 ## Results
 
 ### Protocol-v4 pilots
 
-The three pilots ran on 2026-09-12 between 09:11Z and 09:22Z. Each declared
-cell starts, checkpoints and completes exactly once across the campaign's
-sessions, on the launcher's exploratory pair count with the frozen window
-count; each campaign ends in its own `complete` terminal record; and
+In each of the three pilots every declared cell starts, checkpoints and
+completes exactly once across the campaign's sessions, on the launcher's
+exploratory pair count with the frozen window count; each campaign ends in its
+own `complete` terminal record; and
 `benchmark-acceptance` recomputes each receipt to `accepted` with no finding
 and `qualifies` false, which is what an exploratory-only receipt is
 (tables § `6c6b09b1-v4-r1-region-axpy-pilot`,
@@ -390,10 +394,63 @@ the comparator both confirmatory encode cells use.
 the fastest of the three, the direction depends on the size: M4RIE is ahead at
 4 KiB and in the 128 KiB whole-consumer cell, gf2 at 128 KiB kernel-isolated
 (`pairwise-4k-batch-vs-m4rie`, `pairwise-128k-whole-batch-vs-m4rie`,
-`pairwise-128k-batch-vs-m4rie`). None of those three gaps reaches the family's
-material-gap threshold in either direction, which is why the family's
+`pairwise-128k-batch-vs-m4rie`). None of those three pilot intervals clears the
+family's material-gap threshold in either direction at the pilot's own
+per-comparison confidence and pair count, which is why the family's
 confirmation takes M4RIE and GF-Complete, the two fastest external arms, and
 leaves ISA-L's per-byte multiply as exploratory evidence.
+
+### Protocol-v4 confirmations
+
+Each family's confirmation measures the six cells its addendum declares
+confirmatory, on the launcher's confirmatory pair count with the frozen window
+count, and nothing else. Every declared cell starts, checkpoints and completes
+exactly once across the campaign's sessions; each campaign ends in its own
+`complete` terminal record; no cell is flagged unstable, the flagged-window
+counts being zero throughout; and `benchmark-acceptance` built from this tree
+recomputes each receipt to the verdict, qualification and empty finding list
+its committed acceptance summary carries (tables §
+`6c6b09b1-v4-r1-region-axpy-confirmation`,
+§ `6c6b09b1-v4-r1-matrix-product-confirmation`,
+§ `6c6b09b1-v4-r1-pairwise-control-confirmation`, each receipt's
+`acceptance-summary.json`). Each family ledger's confirmation line spends one
+comparison per confirmatory cell, the first spend of its chain
+(`../../bench_results/6c6b09b1/v3-*-family-ledger.jsonl`, the sequence-3
+reservation of each).
+
+**Region multiply-accumulate: six cells of six to ISA-L.** Every confirmed
+cell passes, so ISA-L's `gf_vect_mad` is ahead of `FieldVec::axpy` by more
+than the family's improvement margin at the corrected confidence: for
+`Gf2mElement` in the 4 KiB, 128 KiB and 8 MiB warm cells, for `Gf2mWide` at
+128 KiB, and for both representations in the 128 KiB whole-consumer twins
+(tables § `6c6b09b1-v4-r1-region-axpy-confirmation` § Cells). The receipt
+qualifies, which for this family means every confirmatory comparator is
+materially ahead of gf2.
+
+**Dense products: six cells of six to the libraries.** Every confirmed cell
+passes: M4RIE's `mzed_mul` at n = 256 for both gf2 representations and for
+both whole-consumer twins, and ISA-L's `ec_encode_data` at the generator shape
+for both representations (tables §
+`6c6b09b1-v4-r1-matrix-product-confirmation` § Cells). That receipt qualifies
+on the same reading.
+
+**Pairwise control: four cells of six to gf2, two inside the band.** No
+confirmed cell passes, so the receipt does not qualify, and four of the six
+record the outcome `fail`. Each of those four is a cell gf2 wins: the interval
+lies below the reciprocal of the family's equivalence margin, which in a
+`comparator-gap` cell places the library more than that margin behind gf2 at
+the corrected confidence (What the confirmations confirm). They are
+`gf2m::batch::batch_mul` against GF-Complete's `multiply.w32` per byte at
+4 KiB, at 128 KiB and in the 128 KiB whole-consumer cell, and against M4RIE's
+`gf2e_mul` per byte at 128 KiB kernel-isolated. The remaining two cells,
+against M4RIE at 4 KiB and in the 128 KiB whole-consumer twin, record
+`not-material`: their intervals neither clear the improvement margin nor fall
+below the reciprocal of the equivalence margin, so the decision rule separates
+neither arm there and the receipt states the two as measured (tables §
+`6c6b09b1-v4-r1-pairwise-control-confirmation` § Cells). Of the three M4RIE
+cells the pilot leaves unseparated, the confirmation therefore separates one,
+the 128 KiB kernel-isolated cell, in gf2's favour, and leaves the other two
+unseparated at the higher confidence as well.
 
 ### Cache regimes
 
@@ -408,6 +465,13 @@ regime changes the gap by well under the factor that separates the two gf2
 representations, so which representation a consumer holds matters more here
 than which cache level its region lives in.
 
+The confirmation covers three of the four regimes, the warm ones, and for
+`Gf2mElement` covers all three (tables §
+`6c6b09b1-v4-r1-region-axpy-confirmation` § Cells). The streaming regime and
+the `Gf2mWide` cells at 4 KiB and 8 MiB keep the pilot's exploratory strength,
+because the confirmatory budget admits six cells per family and the family
+spends them on one regime sweep plus the whole-consumer twins.
+
 The protocol's cache-state declarations are what the arms applied and the
 receipts record, and they establish less than their names suggest: `warm`
 establishes one untimed pass over the working set before calibration, and
@@ -420,9 +484,9 @@ carry exactly that meaning.
 
 The twin cells of each shape put a number on what the byte-region round trip
 costs each arm, and the tables carry the ratios with their intervals and
-execution counts as descriptive figures, since the two cells of a twin ran in
+execution counts as descriptive figures, since the two cells of a twin run in
 separate executions and no decision uses the ratio (tables §
-Whole-consumer over kernel-isolated, in each of the three receipt sections).
+Whole-consumer over kernel-isolated, in every protocol-v4 receipt section).
 The pattern differs by family and by arm:
 
 - In the region family the round trip is expensive for `FieldVec<Gf2mElement>`
@@ -447,8 +511,8 @@ carry both.
 
 Every execution reports these costs, whether or not its cell includes them in
 the timing window, so the composition of a whole-consumer cost is visible in
-every cell (tables § Conversion and setup costs, in each of the three receipt
-sections). What they show: GF-Complete and M4RIE each pay a large one-time
+every cell (tables § Conversion and setup costs, in every protocol-v4 receipt
+section). What they show: GF-Complete and M4RIE each pay a large one-time
 setup, their table construction, which is the same order of magnitude in every
 cell and which a kernel-isolated cell excludes from its window; ISA-L's setup
 is small and its per-call cost is the coefficient or generator table it
@@ -463,7 +527,7 @@ with the whole-consumer twins above.
 
 The v1 pilot `pilot-6c6b09b1-20260908t092546z` is immutable, superseded
 evidence and decides nothing (tables § `pilot-6c6b09b1-20260908t092546z`). It
-measured only the `Gf2mElement` representation, one kernel-isolated cell per
+covers only the `Gf2mElement` representation, one kernel-isolated cell per
 operation, built with a Rust newer than the MSRV. Within those limits it points
 where the current design looks, and the v4 pilots agree with it on all three
 operations: ISA-L's region multiply-accumulate ahead of `FieldVec::axpy`
@@ -479,15 +543,15 @@ because it is superseded evidence and the tables pin it by digest.
 
 ### Protocol-v3 attempts, and their pre-timing evidence
 
-The version-3 pilots of the same three families ran on 2026-09-12 and measured
-no cell: each arm rejected the runner's request, so each campaign ended on its
-first arm with a `failed` journal record and a reserved ledger line spending
-zero comparisons. That is a run that produced no data, not a falsified result;
-the ledgers keep it, and nothing about the three questions changed.
+The version-3 pilot of each of the same three families measures no cell: each
+arm rejects the runner's request, so each campaign ends on its first arm with a
+`failed` journal record and a reserved ledger line spending zero comparisons.
+That is a run that produces no data, not a falsified result; the ledgers keep
+it, and it changes nothing about the three questions.
 
 A ledger line cannot say that on its own. It records the comparisons the
-addendum predeclared, and a pilot addendum declares none, so the line a void
-attempt writes is the line a complete pilot would write.
+addendum predeclares, and a pilot addendum declares none, so the line a void
+attempt writes is the line a complete pilot writes.
 [The void-attempt record](../../bench_results/6c6b09b1/v3-r1-void-attempts.json)
 closes that gap from the artifacts: per family it carries the ledger line, the
 addendum it pins, the journal's terminal event, the cells it completed and the
@@ -496,18 +560,18 @@ uncommitted stage directory. `survey/make-void-attempt-record.py` derives it
 and refuses a ledger line whose addendum digest does not resolve.
 
 The version-3 pre-timing evidence and producing manifest do not survive under
-their version-3 names. They were not discarded: commit `d9100acd` moved them
+their version-3 names, and they are not discarded: commit `d9100acd` moves them
 into the version-4 generation, and git records the move as renames, five of
 the eight evidence files byte for byte
 (`git show d9100acd -M --name-status`). `conformance-v3/arm-provenance.txt`
-and `conformance-v3/build-record.txt` became their v4 counterparts with the
+and `conformance-v3/build-record.txt` become their v4 counterparts with the
 provenance and digests of the executables the v4 plans name, and
-`producing-inputs-v3.json` became `producing-inputs-v4.json` over the same
-closure, which it had to, because it named generator paths the rename moved
-and would otherwise no longer resolve. One file, the element field-law run,
-was regenerated rather than moved, because it is a test-runner transcript that
+`producing-inputs-v3.json` becomes `producing-inputs-v4.json` over the same
+closure, which it has to, because it names generator paths the rename moves
+and would otherwise no longer resolve. One file, the element field-law run, is
+regenerated rather than moved, because it is a test-runner transcript that
 differs between runs. Keeping a second, stale copy under the v3 name would pin
-nothing: the three version-3 campaigns measured zero cells, so no receipt
+nothing: the three version-3 campaigns measure zero cells, so no receipt
 cites that evidence, and the only artifacts that pin a version-3 attempt are
 the three version-3 addenda, each named by digest in its ledger line, and the
 ledger lines themselves. Both are retained, because the chain rejects a
@@ -517,31 +581,63 @@ removed attempt. The bytes under the version-3 names remain at `d9100acd^`.
 
 The feasibility issue `19513245` receives, per family, the current gap of both
 gf2 GF(2^8) representations to the fastest measured external arm, per cache
-regime and with and without conversion costs, and the list of cells gf2 loses.
-The pilots establish that list; the confirmations, once their receipts exist,
-raise the cells they declare from exploratory to confirmatory evidence at the
-family confidence.
+regime and with and without conversion costs, the list of cells gf2 loses, and
+the strength each cell carries: confirmatory at the family confidence for the
+six cells of each confirmation, exploratory for the rest of each pilot's
+breadth.
 
-gf2 loses, at pilot strength, every cell of two of the three families:
+gf2 loses every cell of two of the three families:
 
 - every region multiply-accumulate cell against ISA-L, in all four cache
   regimes, for both representations, kernel-isolated and whole-consumer
   (tables § `6c6b09b1-v4-r1-region-axpy-pilot` § Cells, the twelve `*-vs-isal`
-  rows);
+  rows). Six of those twelve are confirmed at the family confidence (tables §
+  `6c6b09b1-v4-r1-region-axpy-confirmation` § Cells); the streaming regime and
+  the `Gf2mWide` 4 KiB and 8 MiB cells stay exploratory;
 - every dense-product cell: the three square dimensions against M4RIE for both
   representations and their whole-consumer twins, and both encode cells against
-  ISA-L (tables § `6c6b09b1-v4-r1-matrix-product-pilot` § Cells).
+  ISA-L (tables § `6c6b09b1-v4-r1-matrix-product-pilot` § Cells). The n = 256
+  cells and both encode cells are confirmed (tables §
+  `6c6b09b1-v4-r1-matrix-product-confirmation` § Cells); n = 64 and n = 512
+  stay exploratory.
 
-gf2 loses no pairwise cell materially. It leads against ISA-L's and
-GF-Complete's per-byte multiplies in all six of those cells, and against
-M4RIE's the two arms trade places by size without either gap reaching the
-family's material-gap threshold (tables §
-`6c6b09b1-v4-r1-pairwise-control-pilot` § Cells).
+So 19513245 inherits a confirmed gap in both families, and in each of them the
+confirmed cells fix the representation, the shape and the conversion regime the
+gap is measured in.
 
-Two facts from the pilots bear directly on where an improvement would go.
-Neither gf2 representation dominates the other: `Gf2mElement` is the faster
-region arm and `Gf2mWide` the faster dense-product arm, in the cells that
-compare them directly (`axpy-128k-element-vs-wide`,
+gf2 loses no pairwise cell. It leads materially against GF-Complete's per-byte
+multiply in all three confirmed GF-Complete cells and against M4RIE's at
+128 KiB kernel-isolated, and the two remaining confirmed M4RIE cells separate
+neither arm (tables §
+`6c6b09b1-v4-r1-pairwise-control-confirmation` § Cells); the pilot's ISA-L
+cells, which gf2 also leads, stay exploratory (tables §
+`6c6b09b1-v4-r1-pairwise-control-pilot` § Cells). The control therefore tells
+19513245 that the region and matrix gaps belong to fixed-coefficient reuse and
+to dense products, not to GF(2^8) multiplication as such.
+
+Three absences bound what 19513245 can ask for, and each is recorded rather
+than filled with a different operation (REQ-03). `FieldVec::dot_product` has no
+equivalent in any pinned library, so no cell measures it and the issue receives
+no external baseline for it. Neither ISA-L nor GF-Complete has a dense matrix
+type, so the square product has M4RIE as its only comparator, and ISA-L's
+encode is a matrix product only at the generator shape. And no library has a
+region kernel for distinct pairs, so every pairwise comparator is a per-element
+call, which is what the control measures and all it establishes.
+
+The field mismatch bounds the same way (REQ-05, One field: 0x11D). Every cell
+works in GF(2^8) modulo 0x11D, the one field all four arms implement; gf2 ships
+no GF(2^8) field modulo 0x11B, ISA-L refuses 0x11B, and no pinned library
+offers a change of basis. A 0x11B byte-region consumer therefore inherits from
+this survey the GF-Complete and M4RIE baselines, whose 0x11B tables the
+conformance run validates, and no ISA-L baseline at all; reaching ISA-L would
+need an isomorphism adapter that this survey neither builds nor times, and
+whose cost 19513245 would have to measure before counting the ISA-L gap as
+available to it.
+
+Two further facts, both from the pilots' exploratory breadth, bear directly on
+where an improvement would go. Neither gf2 representation dominates the other:
+`Gf2mElement` is the faster region arm and `Gf2mWide` the faster dense-product
+arm, in the cells that compare them directly (`axpy-128k-element-vs-wide`,
 `matmul-n256-element-vs-wide`). And the conversion a byte-region consumer
 would pay is a large fraction of `FieldVec<Gf2mElement>`'s region cost and a
 small one of every other arm's (tables § Whole-consumer over kernel-isolated),
@@ -549,23 +645,25 @@ so a byte-region consumer's choice is not the same question as a kernel's.
 
 ## Status against the criteria
 
-- REQ-01: met for the pilots. The contract, protocol and addendum pins, the
-  launcher and the ledgers are in place; the three pilot receipts are
-  committed, each accepted by the evaluator with no finding, and each family's
-  ledger carries its reservation. The negative version-3 outcome is retained
-  with the record that says what it did. The three confirmation receipts
-  WAITING-ON-WINDOW. No production change, so no before/after evidence is due.
+- REQ-01: met. The contract, protocol and addendum pins, the launcher and the
+  ledgers are in place; the three pilot receipts and the three confirmation
+  receipts are committed, each accepted by the evaluator with no finding, and
+  each family's ledger carries both reservations. The pairwise control's four
+  `fail` cells and its `qualifies` false are recorded as the evaluator states
+  them, and so is the negative version-3 outcome, with the record that says
+  what it did. No production change, so no before/after evidence is due.
 - REQ-02: met; see Arms and pins.
-- REQ-03: met; see One field and Operation mapping.
+- REQ-03: met; see One field, Operation mapping and the recorded absences in
+  Baseline for 19513245.
 - REQ-04: met. Validation precedes timing (Correctness before timing), and
-  every execution of every committed pilot reports its conversion, packing,
+  every execution of every committed receipt reports its conversion, packing,
   table-preparation and setup costs, with the whole-consumer twins beside the
   kernel-isolated cells (tables § Conversion and setup costs, § Whole-consumer
   over kernel-isolated). The pairwise control is a separate family from the
   fixed-coefficient region family and shares no cell with it.
-- REQ-05: met for the pilots and frozen for the confirmations. The three pilot
-  addenda and the three confirmation addenda are committed and frozen; the
-  pilot receipts cover every admissible cell across the declared sizes and
-  cache regimes; and the 0x11B/0x11D mismatch is documented with the reason no
-  supported basis conversion exists. The confirmation receipts are
-  WAITING-ON-WINDOW.
+- REQ-05: met. The three pilot addenda and the three confirmation addenda are
+  committed and frozen; the pilot receipts cover every admissible cell across
+  the declared sizes and cache regimes, and each confirmation receipt covers
+  the six of them its family's confirmatory budget admits; and the 0x11B/0x11D
+  mismatch is documented with the reason no supported basis conversion exists
+  and with what a 0x11B consumer inherits instead.
