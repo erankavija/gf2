@@ -7,7 +7,9 @@
     "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot",
     "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation",
     "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot",
-    "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation"
+    "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation",
+    "dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot",
+    "dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot"
   ],
   "seed_derivation": [
     {
