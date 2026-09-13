@@ -11878,3 +11878,4 @@
 {"fields":["documents"],"id":"23372b69-750a-4f1d-a036-53fcf5bc04a3","issue_id":"6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2","timestamp":"2026-09-13T06:56:16.574187041Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"c579c561-d02d-4455-9a25-482d05de772f","issue_id":"6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2","timestamp":"2026-09-13T06:56:16.822899780Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"63bac5f2-86d6-473f-816d-1553de7d92b6","issue_id":"6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2","timestamp":"2026-09-13T06:56:17.070804934Z","type":"issue_updated","updated_by":"doc-add"}
+{"assignee":"agent:jit-execution-lead","id":"472969ea-7649-4ec7-a7dc-ce443912ddbb","issue_id":"6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2","timestamp":"2026-09-13T06:56:49.633384089Z","type":"issue_claimed"}
