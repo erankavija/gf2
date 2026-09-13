@@ -1,10 +1,70 @@
 {
-  "schema": "public-clmul-validation-v1",
+  "schema": "public-clmul-validation-v2",
   "issue": "1c602857",
-  "recorded_utc": "2026-09-12T07:56:37Z",
-  "command": "./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features simd,test-support --test clmul_wide_conformance",
-  "raw_output": "dev/active/1c602857/validation-raw.txt",
+  "recorded_utc": "2026-09-13T09:18:23Z",
   "suite": "crates/gf2-core/tests/clmul_wide_conformance.rs",
-  "exit_status": 0,
-  "passed": true
+  "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "passed": true,
+  "runs": [
+    {
+      "label": "default-features",
+      "cargo_features": "(default)",
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --test clmul_wide_conformance --success-output=final",
+      "raw_output": "dev/active/1c602857/validation-raw-default-features.txt",
+      "exit_status": 0,
+      "passed": true,
+      "counts": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "observed_dispatch_lanes": {
+        "1": "portable-scalar",
+        "2": "portable-scalar",
+        "4": "portable-scalar",
+        "9": "portable-scalar",
+        "16": "portable-scalar"
+      }
+    },
+    {
+      "label": "simd-test-support",
+      "cargo_features": "--features simd,test-support",
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --test clmul_wide_conformance --success-output=final --features simd,test-support",
+      "raw_output": "dev/active/1c602857/validation-raw-simd-test-support.txt",
+      "exit_status": 0,
+      "passed": true,
+      "counts": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "observed_dispatch_lanes": {
+        "1": "portable-scalar",
+        "2": "portable-scalar",
+        "4": "avx2+vpclmulqdq-ymm",
+        "9": "avx2+vpclmulqdq-ymm",
+        "16": "portable-scalar"
+      }
+    },
+    {
+      "label": "all-features",
+      "cargo_features": "--all-features",
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --test clmul_wide_conformance --success-output=final --all-features",
+      "raw_output": "dev/active/1c602857/validation-raw-all-features.txt",
+      "exit_status": 0,
+      "passed": true,
+      "counts": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "observed_dispatch_lanes": {
+        "1": "portable-scalar",
+        "2": "portable-scalar",
+        "4": "avx2+vpclmulqdq-ymm",
+        "9": "avx2+vpclmulqdq-ymm",
+        "16": "portable-scalar"
+      }
+    }
+  ]
 }
