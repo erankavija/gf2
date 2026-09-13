@@ -44,6 +44,8 @@
 //! }
 //! ```
 
+use crate::ldpc::edge_layout::EdgeLayout;
+use crate::ldpc::min_sum::{min_sum_check_row, MinSumRule};
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::sparse::SpBitMatrixDual;
@@ -907,18 +909,19 @@ impl Default for DecoderConfig {
 #[derive(Debug)]
 pub struct LdpcDecoder {
     code: LdpcCode,
+    /// The canonical edge indexing both node updates and the syndrome read.
+    layout: EdgeLayout,
     /// Current variable node beliefs (posterior LLRs)
     beliefs: Vec<Llr>,
-    /// Check-to-variable messages: indexed by [check][position in row]
-    check_to_var: Vec<Vec<Llr>>,
-    /// Variable-to-check messages: indexed by [var][position in column]
-    var_to_check: Vec<Vec<Llr>>,
-    /// Cached check node neighbors (pre-computed at construction)
-    check_neighbors: Vec<Vec<usize>>,
-    /// Cached variable node neighbors (pre-computed at construction)
-    var_neighbors: Vec<Vec<usize>>,
-    /// Temporary buffer for check node computations (reused to avoid allocations)
+    /// Check-to-variable messages, one entry per canonical edge.
+    check_to_var: Vec<Llr>,
+    /// Variable-to-check messages, one entry per canonical edge.
+    var_to_check: Vec<Llr>,
+    /// Gather buffer for the sum-product check update, sized at construction to
+    /// the largest check degree so no update allocates.
     temp_inputs: Vec<Llr>,
+    /// Hard decisions of the current beliefs, reused by the syndrome check.
+    hard_bits: Vec<bool>,
     /// Number of iterations in last decode
     last_iterations: usize,
     /// Decoder configuration (algorithm, early termination)
@@ -970,50 +973,39 @@ impl LdpcDecoder {
     /// ```
     pub fn with_config(code: LdpcCode, config: DecoderConfig) -> Self {
         let n = code.n();
-        let m = code.m();
-        let h = code.parity_check_matrix();
-
-        // Pre-compute check node neighbors (cached for hot path optimization)
-        let check_neighbors: Vec<Vec<usize>> =
-            (0..m).map(|check| h.row_iter(check).collect()).collect();
-
-        // Pre-compute variable node neighbors (cached for hot path optimization)
-        let var_neighbors: Vec<Vec<usize>> = (0..n).map(|var| h.col_iter(var).collect()).collect();
-
-        // Find maximum check node degree for temp buffer sizing
-        let max_check_degree = check_neighbors
-            .iter()
-            .map(|neighbors| neighbors.len())
-            .max()
-            .unwrap_or(0);
-
-        // Preallocate message storage
-        let check_to_var: Vec<Vec<Llr>> = (0..m)
-            .map(|check| {
-                let degree = h.row_iter(check).count();
-                vec![Llr::zero(); degree]
-            })
-            .collect();
-
-        let var_to_check: Vec<Vec<Llr>> = (0..n)
-            .map(|var| {
-                let degree = h.col_iter(var).count();
-                vec![Llr::zero(); degree]
-            })
-            .collect();
+        let layout = EdgeLayout::from_parity_check(code.parity_check_matrix());
+        let edges = layout.edges();
+        let max_check_degree = layout.max_check_degree();
 
         Self {
             code,
+            layout,
             beliefs: vec![Llr::zero(); n],
-            check_to_var,
-            var_to_check,
-            check_neighbors,
-            var_neighbors,
+            check_to_var: vec![Llr::zero(); edges],
+            var_to_check: vec![Llr::zero(); edges],
             temp_inputs: Vec::with_capacity(max_check_degree),
+            hard_bits: vec![false; n],
             last_iterations: 0,
             config,
             systematic_cols: None,
         }
+    }
+
+    /// The canonical edge indexing this decoder passes messages over.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
+    ///
+    /// let code = LdpcCode::from_edges(1, 3, &[(0, 0), (0, 1), (0, 2)]);
+    /// let decoder = LdpcDecoder::new(code);
+    /// assert_eq!(decoder.edge_layout().edges(), 3);
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn edge_layout(&self) -> &EdgeLayout {
+        &self.layout
     }
 
     /// Returns the current posterior LLR for each variable node.
@@ -1140,18 +1132,18 @@ impl LdpcDecoder {
     /// Performs check node update (sum-product algorithm).
     ///
     /// Computes check-to-variable messages using the exact box-plus operation.
-    fn check_node_update_spa(&mut self, _channel_llrs: &[Llr]) {
-        for (check, neighbors) in self.check_neighbors.iter().enumerate() {
-            for (pos, &_var) in neighbors.iter().enumerate() {
+    /// Each output gathers the check's other inputs into the preallocated
+    /// buffer through the canonical layout, so the `tanh` product still
+    /// accumulates in the check's own edge order.
+    fn check_node_update_spa(&mut self) {
+        for check in 0..self.layout.m() {
+            let range = self.layout.check_range(check);
+            for position in range.clone() {
                 // Reuse pre-allocated buffer
                 self.temp_inputs.clear();
-
-                for (other_pos, &other_var) in neighbors.iter().enumerate() {
-                    if other_pos != pos {
-                        // Get variable-to-check message
-                        let var_check_pos = self.find_check_position(other_var, check);
-                        self.temp_inputs
-                            .push(self.var_to_check[other_var][var_check_pos]);
+                for other in range.clone() {
+                    if other != position {
+                        self.temp_inputs.push(self.var_to_check[other]);
                     }
                 }
 
@@ -1162,146 +1154,94 @@ impl LdpcDecoder {
                     Llr::boxplus_n(&self.temp_inputs)
                 };
 
-                self.check_to_var[check][pos] = message;
+                self.check_to_var[position] = message;
             }
         }
     }
 
-    /// Performs check node update (min-sum approximation).
-    fn check_node_update_minsum(&mut self, _channel_llrs: &[Llr]) {
-        for (check, neighbors) in self.check_neighbors.iter().enumerate() {
-            for (pos, &_var) in neighbors.iter().enumerate() {
-                // Reuse pre-allocated buffer
-                self.temp_inputs.clear();
-
-                for (other_pos, &other_var) in neighbors.iter().enumerate() {
-                    if other_pos != pos {
-                        let var_check_pos = self.find_check_position(other_var, check);
-                        self.temp_inputs
-                            .push(self.var_to_check[other_var][var_check_pos]);
-                    }
-                }
-
-                let message = if self.temp_inputs.is_empty() {
-                    Llr::zero()
-                } else {
-                    // boxplus_minsum_n handles SIMD dispatch internally
-                    Llr::boxplus_minsum_n(&self.temp_inputs)
-                };
-
-                self.check_to_var[check][pos] = message;
-            }
-        }
-    }
-
-    /// Performs check node update (normalized min-sum approximation).
+    /// Performs a check node update of the min-sum family.
     ///
-    /// Scales the standard min-sum output by `alpha` to compensate for overestimation.
-    fn check_node_update_normalized_minsum(&mut self, _channel_llrs: &[Llr], alpha: f32) {
-        for (check, neighbors) in self.check_neighbors.iter().enumerate() {
-            for (pos, &_var) in neighbors.iter().enumerate() {
-                self.temp_inputs.clear();
-
-                for (other_pos, &other_var) in neighbors.iter().enumerate() {
-                    if other_pos != pos {
-                        let var_check_pos = self.find_check_position(other_var, check);
-                        self.temp_inputs
-                            .push(self.var_to_check[other_var][var_check_pos]);
-                    }
-                }
-
-                let message = if self.temp_inputs.is_empty() {
-                    Llr::zero()
-                } else {
-                    Llr::boxplus_normalized_minsum_n(&self.temp_inputs, alpha)
-                };
-
-                self.check_to_var[check][pos] = message;
-            }
-        }
-    }
-
-    /// Performs check node update (offset min-sum approximation).
-    ///
-    /// Subtracts `beta` from the minimum magnitude to compensate for overestimation.
-    fn check_node_update_offset_minsum(&mut self, _channel_llrs: &[Llr], beta: f32) {
-        for (check, neighbors) in self.check_neighbors.iter().enumerate() {
-            for (pos, &_var) in neighbors.iter().enumerate() {
-                self.temp_inputs.clear();
-
-                for (other_pos, &other_var) in neighbors.iter().enumerate() {
-                    if other_pos != pos {
-                        let var_check_pos = self.find_check_position(other_var, check);
-                        self.temp_inputs
-                            .push(self.var_to_check[other_var][var_check_pos]);
-                    }
-                }
-
-                let message = if self.temp_inputs.is_empty() {
-                    Llr::zero()
-                } else {
-                    Llr::boxplus_offset_minsum_n(&self.temp_inputs, beta)
-                };
-
-                self.check_to_var[check][pos] = message;
-            }
+    /// Every check writes all of its outgoing messages from one shared
+    /// minimum, second-minimum and sign reduction over its incoming messages,
+    /// so each incoming message is read exactly twice. The reduction is
+    /// [`min_sum_check_row`], which follows the supported scalar reference's
+    /// numerical contract whatever the `simd` cargo feature and the host's SIMD
+    /// capabilities are.
+    fn check_node_update_min_sum(&mut self, rule: MinSumRule) {
+        for check in 0..self.layout.m() {
+            let range = self.layout.check_range(check);
+            min_sum_check_row(
+                rule,
+                &self.var_to_check[range.clone()],
+                &mut self.check_to_var[range],
+            );
         }
     }
 
     /// Dispatches the check node update to the configured algorithm.
-    fn check_node_update(&mut self, channel_llrs: &[Llr]) {
+    fn check_node_update(&mut self) {
         match self.config.algorithm {
-            DecoderAlgorithm::MinSum => self.check_node_update_minsum(channel_llrs),
+            DecoderAlgorithm::MinSum => self.check_node_update_min_sum(MinSumRule::Plain),
             DecoderAlgorithm::NormalizedMinSum(alpha) => {
-                self.check_node_update_normalized_minsum(channel_llrs, alpha)
+                self.check_node_update_min_sum(MinSumRule::Normalized(alpha))
             }
             DecoderAlgorithm::OffsetMinSum(beta) => {
-                self.check_node_update_offset_minsum(channel_llrs, beta)
+                self.check_node_update_min_sum(MinSumRule::Offset(beta))
             }
-            DecoderAlgorithm::SumProduct => self.check_node_update_spa(channel_llrs),
+            DecoderAlgorithm::SumProduct => self.check_node_update_spa(),
         }
     }
 
     /// Performs variable node update.
     ///
-    /// Updates beliefs and variable-to-check messages.
+    /// Updates beliefs and variable-to-check messages. A variable's edges are
+    /// its canonical layout slots, so both passes read the incoming messages in
+    /// the parity-check matrix's column order without a neighbour search.
     fn variable_node_update(&mut self, channel_llrs: &[Llr]) {
+        let slots = self.layout.var_edge_to_check_edge();
         for (var, &channel_llr) in channel_llrs.iter().enumerate().take(self.code.n()) {
-            let neighbors = &self.var_neighbors[var];
+            let range = self.layout.var_range(var);
 
             // Compute total belief: channel LLR + sum of incoming check messages
             let mut belief = channel_llr;
-            for (pos, &_check) in neighbors.iter().enumerate() {
-                belief = Llr::new(belief.value() + self.check_to_var_message(var, pos).value());
+            for slot in range.clone() {
+                let edge = slots[slot] as usize;
+                belief = Llr::new(belief.value() + self.check_to_var[edge].value());
             }
             self.beliefs[var] = belief;
 
             // Compute variable-to-check messages
-            for (pos, &_check) in neighbors.iter().enumerate() {
+            for slot in range {
                 // Message = belief - incoming message from this check
-                let incoming = self.check_to_var_message(var, pos);
-                let message = Llr::new(belief.value() - incoming.value());
-                self.var_to_check[var][pos] = message;
+                let edge = slots[slot] as usize;
+                let incoming = self.check_to_var[edge];
+                self.var_to_check[edge] = Llr::new(belief.value() - incoming.value());
             }
         }
     }
 
-    /// Helper: Find the position of check in variable's neighbor list.
-    fn find_check_position(&self, var: usize, target_check: usize) -> usize {
-        self.var_neighbors[var]
-            .iter()
-            .position(|&check| check == target_check)
-            .expect("Check not found in variable's neighbors")
-    }
-
-    /// Helper: Get check-to-variable message.
-    fn check_to_var_message(&self, var: usize, var_check_pos: usize) -> Llr {
-        let check = self.var_neighbors[var][var_check_pos];
-        let check_var_pos = self.check_neighbors[check]
-            .iter()
-            .position(|&v| v == var)
-            .unwrap();
-        self.check_to_var[check][check_var_pos]
+    /// Whether the hard decisions of the current beliefs satisfy every check.
+    ///
+    /// This is the predicate [`LdpcCode::is_valid_codeword`] computes for the
+    /// hard-decided beliefs, evaluated over the canonical layout: each check's
+    /// parity is the exclusive or of its edges' decisions, and the scan stops at
+    /// the first unsatisfied check. Neither the hard-decision word nor the
+    /// syndrome is materialised.
+    fn syndrome_passes(&mut self) -> bool {
+        for (bit, belief) in self.hard_bits.iter_mut().zip(self.beliefs.iter()) {
+            *bit = belief.hard_decision();
+        }
+        let edge_var = self.layout.check_edge_var();
+        for check in 0..self.layout.m() {
+            let mut parity = false;
+            for edge in self.layout.check_range(check) {
+                parity ^= self.hard_bits[edge_var[edge] as usize];
+            }
+            if parity {
+                return false;
+            }
+        }
+        true
     }
 
     /// Runs iterative BP and returns the full decoded codeword (all n bits).
@@ -1326,56 +1266,126 @@ impl LdpcDecoder {
     ///
     /// Same as [`IterativeSoftDecoder::decode_iterative`].
     pub fn decode_to_codeword(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
+        let mut codeword = BitVec::with_capacity(self.code.n());
+        let outcome = self.decode_codeword_into(llrs, max_iterations, &mut codeword);
+        DecoderResult::new(
+            codeword,
+            outcome.iterations,
+            outcome.converged,
+            outcome.syndrome_check_passed,
+        )
+    }
+
+    /// Runs iterative BP and writes the decoded codeword into `codeword`.
+    ///
+    /// This is the allocation-free entry point: with a decoder that has already
+    /// decoded once and a `codeword` buffer that already holds `n` bits of
+    /// storage, a call performs no heap allocation at all. Message storage,
+    /// the check-update scratch buffer and the syndrome's hard-decision buffer
+    /// are all sized at construction from the code's edge layout, and the
+    /// syndrome is evaluated without materialising a hard-decision word.
+    /// [`LdpcDecoder::decode_to_codeword`] and
+    /// [`IterativeSoftDecoder::decode_iterative`] delegate here and allocate
+    /// only the vectors they return.
+    ///
+    /// `codeword` is overwritten with all `n` hard-decided codeword bits; its
+    /// previous contents and length are discarded and its capacity is kept.
+    ///
+    /// # Arguments
+    ///
+    /// * `llrs` - Channel LLRs, one per codeword position (length n)
+    /// * `max_iterations` - Maximum BP iterations
+    /// * `codeword` - Buffer receiving the `n` hard-decided bits
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llrs.len()` differs from the code's `n`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
+    /// use gf2_coding::llr::Llr;
+    /// use gf2_core::BitVec;
+    ///
+    /// let code = LdpcCode::from_edges(1, 3, &[(0, 0), (0, 1), (0, 2)]);
+    /// let mut decoder = LdpcDecoder::new(code);
+    /// let mut codeword = BitVec::with_capacity(3);
+    ///
+    /// let outcome = decoder.decode_codeword_into(&[Llr::new(10.0); 3], 10, &mut codeword);
+    /// assert!(outcome.syndrome_check_passed);
+    /// assert_eq!(codeword.len(), 3);
+    ///
+    /// // The same buffer is reused by the next decode.
+    /// decoder.decode_codeword_into(&[Llr::new(-10.0); 3], 10, &mut codeword);
+    /// assert_eq!(codeword.len(), 3);
+    /// ```
+    pub fn decode_codeword_into(
+        &mut self,
+        llrs: &[Llr],
+        max_iterations: usize,
+        codeword: &mut BitVec,
+    ) -> DecodeOutcome {
         assert_eq!(llrs.len(), self.code.n(), "LLR length must equal n");
 
-        // Reset all messages
-        for check_msgs in &mut self.check_to_var {
-            for msg in check_msgs {
-                *msg = Llr::zero();
-            }
-        }
-        for (var, &llr) in llrs.iter().enumerate().take(self.code.n()) {
-            for pos in 0..self.var_to_check[var].len() {
-                self.var_to_check[var][pos] = llr;
-            }
+        // Reset all messages: check-to-variable to zero, and every
+        // variable-to-check message on an edge to that edge's channel LLR.
+        self.check_to_var.fill(Llr::zero());
+        let edge_var = self.layout.check_edge_var();
+        for (message, &var) in self.var_to_check.iter_mut().zip(edge_var.iter()) {
+            *message = llrs[var as usize];
         }
 
         let mut iterations = 0;
         let mut converged = false;
+        let early_termination = self.config.early_termination;
 
         for iter in 0..max_iterations {
             iterations = iter + 1;
-            self.check_node_update(llrs);
+            self.check_node_update();
             self.variable_node_update(llrs);
 
-            if self.config.early_termination {
-                let decoded = self.hard_decode();
-                if self.code.is_valid_codeword(&decoded) {
-                    converged = true;
-                    break;
-                }
+            if early_termination && self.syndrome_passes() {
+                converged = true;
+                break;
             }
         }
 
         self.last_iterations = iterations;
-        let decoded_codeword = self.hard_decode();
-        let syndrome_passed = self.code.is_valid_codeword(&decoded_codeword);
-
-        if !self.config.early_termination {
-            converged = syndrome_passed;
+        let syndrome_check_passed = self.syndrome_passes();
+        if !early_termination {
+            converged = syndrome_check_passed;
         }
 
-        DecoderResult::new(decoded_codeword, iterations, converged, syndrome_passed)
-    }
-
-    /// Makes hard decisions on current beliefs.
-    fn hard_decode(&self) -> BitVec {
-        let mut decoded = BitVec::with_capacity(self.code.n());
-        for &belief in &self.beliefs {
-            decoded.push_bit(belief.hard_decision());
+        // `syndrome_passes` leaves the current hard decisions in the reused
+        // buffer, so the codeword is written from it without a second pass
+        // over the beliefs.
+        codeword.clear();
+        for &bit in &self.hard_bits {
+            codeword.push_bit(bit);
         }
-        decoded
+
+        DecodeOutcome {
+            iterations,
+            converged,
+            syndrome_check_passed,
+        }
     }
+}
+
+/// Outcome of a decode that writes its codeword into a caller-provided buffer.
+///
+/// The fields carry the same meanings as the corresponding fields of
+/// [`DecoderResult`], which owns its decoded bits; this type owns nothing and
+/// is returned by [`LdpcDecoder::decode_codeword_into`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DecodeOutcome {
+    /// Number of BP iterations performed.
+    pub iterations: usize,
+    /// Whether the decoder converged to a valid codeword.
+    pub converged: bool,
+    /// Whether the final hard decisions satisfy every parity check.
+    pub syndrome_check_passed: bool,
 }
 
 impl SoftDecoder for LdpcDecoder {
@@ -1400,53 +1410,13 @@ impl SoftDecoder for LdpcDecoder {
 
 impl IterativeSoftDecoder for LdpcDecoder {
     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
-        assert_eq!(llrs.len(), self.n(), "LLR length must equal n");
-
-        // Reset all messages to ensure clean state
-        for check_msgs in &mut self.check_to_var {
-            for msg in check_msgs {
-                *msg = Llr::zero();
-            }
-        }
-
-        // Initialize: variable-to-check messages = channel LLRs
-        for (var, &llr) in llrs.iter().enumerate().take(self.code.n()) {
-            for pos in 0..self.var_to_check[var].len() {
-                self.var_to_check[var][pos] = llr;
-            }
-        }
-
-        let mut iterations = 0;
-        let mut converged = false;
-        let early_termination = self.config.early_termination;
-
-        for iter in 0..max_iterations {
-            iterations = iter + 1;
-
-            // Check node update (dispatches to configured algorithm)
-            self.check_node_update(llrs);
-
-            // Variable node update
-            self.variable_node_update(llrs);
-
-            // Early termination: check syndrome before max iterations
-            if early_termination {
-                let decoded = self.hard_decode();
-                if self.code.is_valid_codeword(&decoded) {
-                    converged = true;
-                    break;
-                }
-            }
-        }
-
-        self.last_iterations = iterations;
-        let decoded_codeword = self.hard_decode();
-        let syndrome_passed = self.code.is_valid_codeword(&decoded_codeword);
-
-        // If early termination was disabled, set converged based on final syndrome
-        if !early_termination {
-            converged = syndrome_passed;
-        }
+        let mut decoded_codeword = BitVec::with_capacity(self.code.n());
+        let outcome = self.decode_codeword_into(llrs, max_iterations, &mut decoded_codeword);
+        let DecodeOutcome {
+            iterations,
+            converged,
+            syndrome_check_passed: syndrome_passed,
+        } = outcome;
 
         // Extract message bits from the decoded codeword at the systematic
         // column positions determined by RREF. Message bit i is located at
@@ -1474,19 +1444,10 @@ impl IterativeSoftDecoder for LdpcDecoder {
 
     fn reset(&mut self) {
         // Reset all messages to zero
-        for check_msgs in &mut self.check_to_var {
-            for msg in check_msgs {
-                *msg = Llr::zero();
-            }
-        }
-        for var_msgs in &mut self.var_to_check {
-            for msg in var_msgs {
-                *msg = Llr::zero();
-            }
-        }
-        for belief in &mut self.beliefs {
-            *belief = Llr::zero();
-        }
+        self.check_to_var.fill(Llr::zero());
+        self.var_to_check.fill(Llr::zero());
+        self.beliefs.fill(Llr::zero());
+        self.hard_bits.fill(false);
         self.last_iterations = 0;
     }
 }

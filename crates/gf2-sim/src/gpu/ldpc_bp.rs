@@ -11,11 +11,12 @@
 //!
 //! # Byte-identity (design doc §11)
 //!
-//! The check-node gather order is the parity-check matrix CSR `row_iter` order
-//! and the variable-node belief sum order is the CSC `col_iter` order —
-//! **exactly** the CPU [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder)'s
-//! `check_neighbors` / `var_neighbors` orders — so the device output matches the
-//! CPU hard decision bit-for-bit. For MinSum / NormalizedMinSum the check-node
+//! The device layout is built from the canonical
+//! [`EdgeLayout`](gf2_coding::ldpc::EdgeLayout), the same edge indexing the CPU
+//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder) passes messages over, so the
+//! check-node gather order is the parity-check matrix CSR `row_iter` order and
+//! the variable-node belief sum order is the CSC `col_iter` order on both
+//! sides, and the device output matches the CPU hard decision bit-for-bit. For MinSum / NormalizedMinSum the check-node
 //! rule uses only sign / min / scalar-multiply (order-independent and exactly
 //! representable in f32); for SumProduct the `tanh` product is accumulated in
 //! the same CSR order. The hard-decision *verdict* is robust to the 1-3 ULP
@@ -50,7 +51,7 @@
 
 #[cfg(feature = "hip")]
 mod imp {
-    use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder};
+    use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, EdgeLayout, LdpcCode, LdpcDecoder};
     use gf2_coding::Llr;
     use gf2_core::BitVec;
     use gf2_kernels_hip::host::HipStream;
@@ -63,95 +64,28 @@ mod imp {
     use crate::stage::{ExecutionClass, Stage};
 
     /// Builds the device CSR/CSC [`LdpcGraphLayout`] from an [`LdpcCode`],
-    /// reproducing the CPU decoder's neighbor orders.
+    /// reproducing the CPU decoder's edge orders.
     ///
-    /// The check-major CSR rows follow `h.row_iter(c)` (the CPU
-    /// `check_neighbors[c]` order) and the variable-major CSC columns follow
-    /// `h.col_iter(v)` (the CPU `var_neighbors[v]` order). The two cross-maps
-    /// link a check-edge to the variable-edge for the same Tanner edge, so the
-    /// kernel's per-edge gather visits messages in exactly the CPU order — the
-    /// basis of the hard-decision byte-identity.
+    /// The arrays are the canonical [`EdgeLayout`] `gf2-coding` computes for the
+    /// code, widened to the `i32` the kernel consumes. That layout is the one
+    /// the CPU [`LdpcDecoder`] passes messages over, so the kernel's per-edge
+    /// gather visits messages in exactly the CPU order, which is the basis of
+    /// the hard-decision byte-identity. DVB-T2 flattens an already-expanded
+    /// parity-check matrix straight into this layout; the Phase E (`23d3525f`)
+    /// 5G NR constructor will host-expand a base graph and per-`i_LS` shift
+    /// table into the same one, the shift being consumed during that host-side
+    /// expansion and never by the kernel.
     fn build_layout(code: &LdpcCode) -> LdpcGraphLayout {
-        let n = code.n();
-        let m = code.m();
-        let h = code.parity_check_matrix();
-
-        // Check-major CSR (row_iter order) and variable-major CSC (col_iter
-        // order). Edge indices are assigned in scan order within each view.
-        let check_neighbors: Vec<Vec<usize>> = (0..m).map(|c| h.row_iter(c).collect()).collect();
-        let var_neighbors: Vec<Vec<usize>> = (0..n).map(|v| h.col_iter(v).collect()).collect();
-
-        let edges: usize = check_neighbors.iter().map(Vec::len).sum();
-        debug_assert_eq!(edges, var_neighbors.iter().map(Vec::len).sum::<usize>());
-
-        // CSR row pointers + the variable of each check-edge.
-        let mut check_row_ptr = Vec::with_capacity(m + 1);
-        let mut check_edge_var = Vec::with_capacity(edges);
-        check_row_ptr.push(0i32);
-        for neigh in &check_neighbors {
-            for &v in neigh {
-                check_edge_var.push(v as i32);
-            }
-            check_row_ptr.push(check_edge_var.len() as i32);
-        }
-
-        // CSC column pointers. We also record, per variable, the starting
-        // variable-edge index so the cross-maps can resolve a (var, check) pair
-        // to its variable-edge slot. (No per-var-edge "check" array is uploaded:
-        // the syndrome kernel reads the per-check-edge variable via
-        // `check_edge_var`; the var-side check identity is only needed here to
-        // build the cross-maps.)
-        let mut var_col_ptr = Vec::with_capacity(n + 1);
-        let mut var_edge_start = Vec::with_capacity(n);
-        var_col_ptr.push(0i32);
-        let mut running = 0usize;
-        for neigh in &var_neighbors {
-            var_edge_start.push(running);
-            running += neigh.len();
-            var_col_ptr.push(running as i32);
-        }
-
-        // For a (var, check) pair, find the variable-edge index = the var's edge
-        // start + the position of `check` within `var_neighbors[var]`. Likewise
-        // for the check view. Build a position lookup per variable to keep this
-        // O(edges) rather than O(edges * degree).
-        let mut var_check_pos: Vec<std::collections::HashMap<usize, usize>> = Vec::with_capacity(n);
-        for neigh in &var_neighbors {
-            let mut map = std::collections::HashMap::with_capacity(neigh.len());
-            for (pos, &c) in neigh.iter().enumerate() {
-                map.insert(c, pos);
-            }
-            var_check_pos.push(map);
-        }
-
-        // check_edge_to_var_edge: for each check-edge (c, v) the var-edge slot
-        // (v, c). var_edge_to_check_edge is its inverse over the same edge set.
-        let mut check_edge_to_var_edge = vec![0i32; edges];
-        let mut var_edge_to_check_edge = vec![0i32; edges];
-        let mut e = 0usize; // check-edge index, in CSR scan order
-        for (c, neigh) in check_neighbors.iter().enumerate() {
-            for &v in neigh {
-                let pos = var_check_pos[v][&c];
-                let f = var_edge_start[v] + pos; // variable-edge index
-                check_edge_to_var_edge[e] = f as i32;
-                var_edge_to_check_edge[f] = e as i32;
-                e += 1;
-            }
-        }
-
-        // DVB-T2 flattens an already-expanded parity-check matrix straight into
-        // the flat, standard-agnostic layout the kernel decodes. The Phase E
-        // (`23d3525f`) 5G NR constructor will host-expand a base graph +
-        // per-`i_LS` shift table into this same layout; the per-`i_LS` shift is
-        // consumed during that host-side expansion, never by the kernel.
+        let layout = EdgeLayout::from_parity_check(code.parity_check_matrix());
+        let widen = |values: &[u32]| values.iter().map(|&value| value as i32).collect();
         LdpcGraphLayout {
-            n,
-            m,
-            check_row_ptr,
-            check_edge_var,
-            check_edge_to_var_edge,
-            var_col_ptr,
-            var_edge_to_check_edge,
+            n: layout.n(),
+            m: layout.m(),
+            check_row_ptr: widen(layout.check_offsets()),
+            check_edge_var: widen(layout.check_edge_var()),
+            check_edge_to_var_edge: widen(layout.check_edge_to_var_edge()),
+            var_col_ptr: widen(layout.var_offsets()),
+            var_edge_to_check_edge: widen(layout.var_edge_to_check_edge()),
         }
     }
 

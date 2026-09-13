@@ -64,7 +64,7 @@
 // This kernel is FLAT and STANDARD-AGNOSTIC: it decodes whatever expanded
 // Tanner-graph layout the host hands it, with no knowledge of DVB-T2 vs 5G NR.
 // The graph is stored as a double CSR (check-major and variable-major),
-// matching the CPU decoder's `check_neighbors` / `var_neighbors`:
+// matching the canonical edge layout the CPU decoder passes messages over:
 //
 //   check_row_ptr[c]   .. check_row_ptr[c+1]    : edges of check c (CSR row)
 //   check_edge_var[e]                            : the variable of check-edge e
