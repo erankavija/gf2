@@ -26,9 +26,9 @@
 # from the cell identifiers, which name the two arms they compare.
 #
 # The smoke label is a functional check that reaches a result line from every
-# arm; it is not a performance result about gf2. The pilot must be published,
-# and its digest placed in the confirmatory addendum, before the confirmation
-# runs.
+# arm; it is not a performance result about gf2. The confirmatory addendum and
+# the pilot receipt whose digest it pins must both be committed before the
+# confirmation runs.
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
@@ -76,10 +76,33 @@ case "$MODE" in
     exit 2
     ;;
 esac
-if [[ "$MODE" == confirmation ]] && \
-   ! grep -Eq '"sha256": "[0-9a-f]{64}"' "$ADDENDUM"; then
-  echo 'confirmation addendum does not identify a pilot receipt digest' >&2
-  exit 2
+# A confirmation measures what a committed addendum declares against a
+# committed pilot: an addendum still in the working tree, or one pinning a
+# receipt whose bytes are uncommitted or no longer match the pin, names
+# evidence nobody else can reconstruct.
+committed() {
+  git ls-files --error-unmatch "$1" >/dev/null 2>&1 &&
+    [[ "$(git rev-parse "HEAD:$1" 2>/dev/null)" == "$(git hash-object "$1")" ]]
+}
+if [[ "$MODE" == confirmation ]]; then
+  committed "$ADDENDUM" || {
+    echo "confirmation addendum $ADDENDUM is not committed" >&2; exit 2; }
+  read -r PIN_RECEIPT PIN_SHA < <(python3 - "$ADDENDUM" <<'PY_PIN'
+import json, sys
+evidence = (json.load(open(sys.argv[1]))["effect"] or {}).get("resolution_evidence")
+if not evidence:
+    raise SystemExit("confirmation addendum pins no pilot receipt")
+print(evidence["receipt"], evidence["sha256"])
+PY_PIN
+  ) || exit 2
+  [[ "$PIN_SHA" =~ ^[0-9a-f]{64}$ ]] || {
+    echo 'confirmation addendum does not identify a pilot receipt digest' >&2; exit 2; }
+  [[ -f "$PIN_RECEIPT" ]] || {
+    echo "pinned pilot receipt $PIN_RECEIPT is missing" >&2; exit 2; }
+  [[ "$(sha256sum "$PIN_RECEIPT" | cut -d' ' -f1)" == "$PIN_SHA" ]] || {
+    echo "pinned pilot receipt $PIN_RECEIPT does not match its declared digest" >&2; exit 2; }
+  committed "$PIN_RECEIPT" || {
+    echo "pinned pilot receipt $PIN_RECEIPT is not committed" >&2; exit 2; }
 fi
 if [[ -e "$OUT" ]]; then
   echo "receipt directory $OUT already exists; remove it to re-run" >&2
