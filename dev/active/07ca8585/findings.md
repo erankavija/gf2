@@ -186,6 +186,21 @@ both codes; both pilots put the changed decoder ahead of the path it replaces
 and narrow the comparator gap the predecessor measured, at intervals the tables
 carry. A pilot decides nothing: it fixes the resolution its confirmation freezes.
 
+### The residual gap
+
+The comparator pilot leaves the changed decoder behind AFF3CT [Cassagne2019] at
+one worker on both codes, by the factors its cells carry. The predecessor's
+[lever ranking](../../bench_results/3be770d5/tables.md) accounts for what remains
+and assigns each part an owner. The levers this issue spends are canonical edge
+indexing, allocation removal, the shared reduction, the flat layout and the
+syndrome and termination work. What it does not spend are the three the same
+ranking carries as comparator estimates with no gf2 mechanism: inter-frame SIMD,
+tracked by `ed3d490e`, and quantized and layered decoding with QC-aware
+intra-frame work, tracked by `f63a2464`. The predecessor's refutation rule for
+this issue's levers is a re-sampled profile rather than a clock, and that
+re-sampling is a cell of the profile series rather than of a throughput family;
+it is not run here.
+
 ### What REQ-10 does not cover yet
 
 REQ-10 asks for matched comparisons at three granularities. Full decoding is
