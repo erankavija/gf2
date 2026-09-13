@@ -122,8 +122,8 @@ routes that compute different bits.
 The frozen geometry is 6fb89a3c's: one 64x64 block per call into a preallocated
 output, no tail and no adapter, because one block of 64 eight-byte elements is
 the canonical gf2 layout for both comparators. Adapter costs are zero there and
-are not hidden — the geometries that do pay an adapter, 63 and 65 rows, are
-6fb89a3c's own consumer cells and that survey carries them with the padding,
+are not hidden. The geometries that do pay an adapter, 63 and 65 rows, are
+6fb89a3c's own consumer cells, and that survey carries them with the padding,
 packing and plane-unpacking it measured. The tile shapes, tails and matrix
 dimensions of both families are frozen in their addenda (`cells`, each cell's
 `workload.size`) before either campaign launched.
@@ -147,7 +147,7 @@ traffic alone does not say whether a routine declares a buffer or the compiler
 spilled; the declaration in the source settles it, and the two read together
 give:
 
-- The incumbent declares a 512-byte local and copies the block into it and back
+- The incumbent declares a 64-word local and copies the block into it and back
   out, which the annotation counts as block copies rather than as individual
   stores (`incumbent-declares-scratch`, `asm-incumbent-block-copy`). This is
   intentional scratch, the classification 04b85d10 recorded for it.
@@ -155,8 +155,9 @@ give:
   (`asm-ymm6-no-block-copy`). Its remaining frame traffic belongs to no declared
   local, so it is register pressure: the six-stage recursion holds more live
   YMM values than the incumbent's four-stage one, and the compiler spills some
-  of them. Removing an intentional 512-byte scratch and paying a smaller spill
-  is the mechanism behind the block cell's confirmed gain.
+  of them. Removing an intentional block-sized scratch and paying a smaller
+  frame instead is the mechanism behind the block cell's confirmed gain; the
+  annotation's frame rows carry both sides of that trade.
 - The movemask lane declares a byte-plane array (`movemask-declares-planes`),
   the family's second intentional scratch, which is the packing its geometry
   needs.
@@ -222,16 +223,17 @@ non-regression rule, and the packing half and the dense whole-matrix consumer
 record `not-material` (tables § Lane confirmation → Cells). No cell regresses.
 
 Why the two `not-material` cells read that way is arithmetic, not noise. The
-whole bit-slice conversion is about a tenth of the whole bit-sliced BCH batch
-encode, and the candidate lane removes a small fraction of a percent of that
-encode (tables § Conversion share of the whole BCH consumer, which also gives
-the Amdahl ceiling as an estimate). Inside the packing half the transpose is
-one block operation against a bit-sliced recurrence over the code's whole
-redundancy, and inside the dense matrix consumer the outer tiling loop, the
-output allocation and the cache traffic bound the call, which is what 04b85d10
-attributed there. A block kernel a quarter faster moves a tenth of one and
-under a tenth of the other; the family's ten-percent worthwhile threshold
-applies to the complete conversion cost, so both record not-material.
+whole bit-slice conversion is a minority share of the whole bit-sliced BCH
+batch encode, and what the candidate lane removes from a batch is a small part
+of that share; the Amdahl ceiling on what any faster conversion can give that
+consumer follows and is labelled an estimate (tables § Conversion share of the
+whole BCH consumer). Inside the packing half the transpose is one block
+operation against a bit-sliced recurrence over the code's whole redundancy, and
+inside the dense matrix consumer the outer tiling loop, the output allocation
+and the cache traffic bound the call, which is what 04b85d10 attributed there.
+A faster block kernel moves only its own share of each; the family's frozen
+worthwhile threshold applies to the complete conversion cost, so both record
+not-material.
 
 ### 5.2 The comparator family
 
@@ -286,12 +288,13 @@ comparable sibling receipt of this epic, `1c602857`, declares exactly that
 distinction and qualifies. The assignment was frozen before the trial and stays
 as it is.
 
-No further confirmatory attempt exists for this family. Its ledger holds one
-non-exploratory reservation of six comparisons, so a second attempt spends
-$\alpha/[t(t+1)]$ at $t = 2$ over at least seven cumulative comparisons, and
-P-20's floor of twenty expected draws per bootstrap tail is not reached at any
-cell count (tables § Tail support and remaining budget of the lane-selection
-family). A renamed family is a different scientific question, not a way to
+No further confirmatory attempt exists for this family. Its ledger already
+holds one non-exploratory reservation, so a second attempt spends the smaller
+budget $\alpha/[t(t+1)]$ at $t = 2$ over a cumulative comparison count that
+includes the first attempt's, and P-20's floor of twenty expected draws per
+bootstrap tail is reached at no cell count (tables § Tail support and remaining
+budget of the lane-selection family, which recomputes both rates from the
+ledger the confirmation pins). A renamed family is a different scientific question, not a way to
 retry this one. So the choice is between adopting on the evidence as recorded
 and never adopting, and that is an invoker decision rather than a worker's: the
 evidence says the candidate is materially faster on the block kernel, on a
@@ -342,8 +345,8 @@ here, so that clause is not engaged.
 The bit-slice conversion exists because a BCH shift register is serial per
 frame, so the parallelism a batch offers is across frames, and moving a batch
 into and out of that layout is a transpose. AFF3CT's `Encoder_BCH_inter`
-[Cassagne2019] is the same design — the same recurrence advanced across a SIMD
-wave of frames with the batch transposed in and out by a reorderer — which is
+[Cassagne2019] is the same design: the same recurrence advanced across a SIMD
+wave of frames, with the batch transposed in and out by a reorderer. That is
 what makes the two halves measured here the right unit rather than the block
 kernel alone. The generic binary BCH library of the Linux kernel [Djelic2011]
 takes the other branch: a table-driven remainder over packed bytes, one frame at
