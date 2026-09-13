@@ -196,6 +196,12 @@ Every cell of every receipt ran on one core under the protocol's shared window
 settings, with no flagged window (tables § Cells, columns *Flagged*, and the
 `resolved_cpus` field of each summary). Each § Cells header carries its
 campaign's toolchain, host, kernel and the load average at its host observation.
+The selected operations are leaf count functions with no internal worker pool:
+popcount handles one buffer, fused AND-popcount handles one pair, and the matrix
+consumer invokes that fused function once per row. Six-core, twelve-core, or
+twenty-four-logical-CPU arms would therefore measure an added scheduling layer,
+not another route implemented or selected by this issue; multicore orchestration
+belongs to the higher-level consumer that batches independent calls.
 [`producing-inputs.json`](producing-inputs.json) names every file whose bytes the
 receipts snapshot, and
 [`make-producing-inputs.py`](make-producing-inputs.py) writes it.
