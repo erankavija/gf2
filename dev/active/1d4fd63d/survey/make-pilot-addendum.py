@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
-"""Write the frozen pilot addendum of the transpose-lane family (jit:1d4fd63d).
+"""Write a frozen pilot addendum of the transpose-lane family (jit:1d4fd63d).
 
-Usage: make-pilot-addendum.py --frozen-utc <YYYY-MM-DDTHH:MM:SSZ> --output <json>
+Usage:
+  make-pilot-addendum.py --frozen-utc <UTC> --output <json> [--stage rank]
+  make-pilot-addendum.py --frozen-utc <UTC> --output <json> --stage selected --lane <tag>
 
-The cell grid is the product of the candidate lanes and the workloads the
-issue's REQ-09 names, plus the identity control that pins the whole BCH
-consumer the conversion sits inside. A code cell names a mother-field degree;
+The family runs two exploratory stages. The `rank` stage crosses every
+candidate lane with the workloads the issue's REQ-09 names, plus the identity
+control that pins the whole BCH consumer the conversion sits inside, and its
+recorded outcomes select one lane. The `selected` stage repeats that lane's
+cells and the control at the confirmatory sample, so the resolution the
+confirmation freezes against is the one a confirmatory sample has rather than
+the wider one a half-size stage observes. Neither stage decides anything:
+every cell of both is exploratory.
+
+A code cell names a mother-field degree;
 the family description takes that code's words from the committed registry
 `dev/active/04b85d10/survey/code-rows.json` rather than from free text, and
 `make-plan.py` resolves the same row into the modulus and designed distance the
@@ -140,7 +149,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--frozen-utc", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--stage", choices=("rank", "selected"), default="rank")
+    parser.add_argument("--lane")
     args = parser.parse_args()
+    if (args.stage == "selected") != bool(args.lane):
+        raise SystemExit("the selected stage needs --lane and the rank stage takes none")
+    if args.lane and args.lane not in dict(CANDIDATES):
+        raise SystemExit(f"{args.lane} is not a candidate lane of this family")
 
     root = pathlib.Path(
         subprocess.run(
@@ -153,10 +168,15 @@ def main():
     rows = json.loads((root / REGISTRY).read_text())["packed_bch_mother_codes"]
     row = next(entry for entry in rows if entry["degree"] == 14)
 
+    # A cell's seed is a function of its position in the whole grid, so a stage
+    # carrying a subset of the cells carries their original seeds and measures
+    # the same fixtures.
     cells, seed = [], SEED_BASE
     for lane, _mechanism in CANDIDATES:
         for suffix, identity, size, metric, scaling, core_arm, cache_state, objective in WORKLOADS:
             seed += 1
+            if args.lane and lane != args.lane:
+                continue
             cells.append(
                 cell(
                     f"lane-{lane}-{suffix}",
@@ -209,6 +229,47 @@ def main():
         "measurement resolution the confirmation freezes against, and none of its "
         "samples enters a confirmation."
     )
+    if args.lane:
+        description = (
+            "Which 64x64 bit-block transpose lane gf2 should publish, at the "
+            "confirmatory sample. The baseline arm is the kernel "
+            "gf2_kernels_simd::transpose::detect publishes on this host, the pinned "
+            "pre-change implementation that BitMatrix::transpose and gf2-coding's "
+            "bit-sliced BCH encoding reach. The candidate arm is the "
+            + args.lane
+            + " lane, which is "
+            + dict(CANDIDATES)[args.lane]
+            + ", named through the public transpose::lane and reaching the consumers "
+            "through the same abstraction the production kernel does. One executable "
+            "serves both arms and selects its lane from GF2_TRANSPOSE_LANE, so the "
+            "arms share a build, a fixture generator, a warm pass and a timing loop. "
+            "The cells are that lane's six workloads of this family's ranking stage at "
+            "the same sizes, seeds and fixtures, plus the same identity control: the "
+            "block kernel alone over a 256-block L2-resident run and over a "
+            "4096-block streaming run on a six-core arm; the two halves of the BCH "
+            "bit-slice conversion, which are one lane group's whole message absorbed "
+            "through the transpose and the bit-sliced recurrence and the reduced "
+            "register read back as packed per-frame parity, both on "
+            + row["label"]
+            + " (mother-field degree "
+            + str(row["degree"])
+            + ", corpus row "
+            + row["corpus_row"]
+            + ", resolved from "
+            + REGISTRY
+            + "); the whole BitMatrix::transpose consumer at 4096 squared and at 65 "
+            "squared, whose output allocation, tile assembly, partial boundary tiles "
+            "and tail mask are inside the timed call; and the whole bit-sliced BCH "
+            "batch encode of the same code at batch 256 against itself through the "
+            "production family entry point, which resolves its own block kernel and so "
+            "measures no lane difference. The 65-squared cell and the control are "
+            "non-regression cells; every other cell is an improvement cell. The other "
+            "candidate lanes are not carried: the ranking stage recorded their "
+            "outcomes and this stage measures the one lane a confirmation can reach. "
+            "Every cell is exploratory; this stage ranks nothing further and exists to "
+            "observe, at the confirmatory sample, the measurement resolution the "
+            "confirmation freezes against."
+        )
 
     addendum = {
         "schema": "zen3-benchmark-addendum-v4",
@@ -270,7 +331,9 @@ def main():
             "ledger_path": "dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl",
         },
         "search_budget": {
-            "max_pilot_trials_per_cell": 1,
+            # A cell both stages measure has two pilot trials; a cell only one
+            # stage carries has one.
+            "max_pilot_trials_per_cell": 2 if args.lane else 1,
             "max_confirmatory_attempts_per_candidate": 1,
         },
         "holdout": {"required": False, "cells": []},

@@ -2,7 +2,7 @@
 # Transpose-lane campaigns (jit:1d4fd63d).
 #
 # Usage:
-#   dev/bench_results/1d4fd63d/run-transpose-lane.sh smoke|pilot|confirmation [date-utc] [suffix]
+#   dev/bench_results/1d4fd63d/run-transpose-lane.sh smoke|pilot|selected|confirmation [date-utc] [suffix]
 #   dev/bench_results/1d4fd63d/run-transpose-lane.sh build
 #
 # Both timed modes measure the same arms: the baseline runs the block kernel
@@ -17,8 +17,12 @@
 # queued. Its family and ledger are its own and its receipt is labelled
 # `smoke`, which is never a performance result about gf2.
 #
-# `pilot` measures every cell exploratorily: it ranks the candidate lanes and
-# fixes the measurement resolution. `confirmation` refuses to run until
+# `pilot` is the ranking stage: every cell is exploratory and its recorded
+# outcomes select the lane a confirmation can reach. `selected` repeats that
+# lane's cells and the identity control at the confirmatory sample, so the
+# measurement resolution the confirmation freezes against is the one a
+# confirmatory sample has; its cells are exploratory too. `confirmation`
+# refuses to run until
 # `dev/active/c7113c5a/survey/freeze-confirmation.py` has derived the
 # confirmation addendum from the committed pilot receipt, stamping that
 # resolution, the receipt's digest and the cell selection, so the confirmatory
@@ -78,6 +82,15 @@ case "$MODE" in
     OUT="$RESULTS/$DATE_UTC-$ISSUE-transpose-lane-pilot${SUFFIX}"
     SEED=20260913101
     ;;
+  selected)
+    LABEL=pilot
+    ADDENDUM="$ACTIVE/addendum-v4-transpose-lane-selected.json"
+    OUT="$RESULTS/$DATE_UTC-$ISSUE-transpose-lane-selected${SUFFIX}"
+    SEED=20260913151
+    # The stage that sizes the resolution runs at the confirmatory sample, so
+    # its cells take the frozen `confirmatory_pairs` rather than a pilot count.
+    PILOT_PAIRS=24
+    ;;
   confirmation)
     LABEL=confirmation
     ADDENDUM="$ACTIVE/addendum-v4-transpose-lane-confirmation.json"
@@ -86,7 +99,7 @@ case "$MODE" in
     ;;
   build) ;;
   *)
-    echo "usage: $0 smoke|pilot|confirmation [date-utc] [suffix] | build" >&2
+    echo "usage: $0 smoke|pilot|selected|confirmation [date-utc] [suffix] | build" >&2
     exit 2
     ;;
 esac
