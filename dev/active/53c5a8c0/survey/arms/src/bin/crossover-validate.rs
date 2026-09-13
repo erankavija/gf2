@@ -20,7 +20,7 @@
 #[path = "../gf2x_backend.rs"]
 mod gf2x_backend;
 
-use clmul_crossover_arms::gf2_backend::{long_product, wide_lane, Gf2Backend};
+use clmul_crossover_arms::gf2_backend::{long_product_into, wide_lane, Gf2Backend};
 use clmul_crossover_arms::stages::StageFixture;
 use clmul_crossover_arms::wide_field::WideReducer;
 use clmul_crossover_arms::{
@@ -259,7 +259,7 @@ fn main() {
             seed: 9300 + words as u64,
         };
         let mut gf2_bank = crossover_bank(&case);
-        long_product(words, &gf2_bank.a.clone(), &gf2_bank.b.clone(), &mut gf2_bank.out);
+        long_product_into(words, &gf2_bank.a.clone(), &gf2_bank.b.clone(), &mut gf2_bank.out);
         let expected = oracle(&gf2_bank.a, &gf2_bank.b);
         check.assert(gf2_bank.out == expected, || {
             format!("gf2 long product words={words}")
@@ -279,7 +279,7 @@ fn main() {
             a[0] = 1u64 << boundary;
             b[words - 1] = 1u64 << boundary;
             let mut out = vec![0u64; 2 * words];
-            long_product(words, &a, &b, &mut out);
+            long_product_into(words, &a, &b, &mut out);
             check.assert(out == oracle(&a, &b), || {
                 format!("gf2 single term words={words} bit={boundary}")
             });

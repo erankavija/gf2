@@ -92,6 +92,29 @@ impl WideReducer {
             .collect()
     }
 
+    /// Writes the field element of `words` into `out`, without allocating.
+    ///
+    /// The allocating [`Self::element`] serves the setup paths; a timed
+    /// whole-consumer call uses this form so the arm does not charge itself an
+    /// allocation its counterpart does not pay.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `out` is shorter than `words`.
+    pub fn element_into(&self, words: &[u64], out: &mut [u64]) {
+        let degree = self.degree();
+        for (index, word) in words.iter().enumerate() {
+            let low = 64 * index;
+            out[index] = if low + 64 <= degree {
+                *word
+            } else if low >= degree {
+                0
+            } else {
+                word & ((1u64 << (degree - low)) - 1)
+            };
+        }
+    }
+
     /// Reduces an unreduced `2N`-word product to its `N`-word field element.
     ///
     /// # Panics

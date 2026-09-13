@@ -224,10 +224,8 @@ impl Backend for Gf2xBackend {
                     .reducer
                     .as_ref()
                     .expect("a wide-field case resolved its reducer");
-                let masked_a = reducer.element(&bank.a);
-                let masked_b = reducer.element(&bank.b);
-                self.packed_a.copy_from_slice(&masked_a);
-                self.packed_b.copy_from_slice(&masked_b);
+                reducer.element_into(&bank.a, &mut self.packed_a);
+                reducer.element_into(&bank.b, &mut self.packed_b);
                 mul(
                     &mut self.pool,
                     &self.packed_a,

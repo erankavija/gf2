@@ -12,14 +12,14 @@
 //!   same bundle, `FieldVec::simd_dot_product`, and `gf2m::batch::batch_mul`.
 //!
 //! The long-product and wide-field cases have one gf2 path each: the public
-//! `clmul_wide_slice`, which routes through the crate's capability dispatch,
-//! and `Gf2mWide::mul_ref`, which composes that dispatch with
+//! `clmul_wide`, the owned product that routes through the crate's capability
+//! dispatch, and `Gf2mWide::mul_ref`, which composes that dispatch with
 //! `BarrettReducerWide`. Nothing in `crates/` changes; these arms only observe
 //! which path the current code selects at run time.
 
 use gf2_core::field::FieldVec;
 use gf2_core::gf2m::batch::batch_mul;
-use gf2_core::gf2m::wide::clmul_wide_slice;
+use gf2_core::gf2m::wide::clmul_wide;
 use gf2_core::gf2m::{Gf2mElement, Gf2mField};
 use gf2_kernels_simd::gf2m::{ClmulBatchFn, ClmulFn};
 
@@ -28,50 +28,78 @@ use crate::{
     field_element_word, probe_ns, Backend, Bank, Case, Conversion, FIELD_DEGREE, FIELD_POLY,
 };
 
-/// Word counts the schoolbook long-product path is instantiated for.
+/// Word counts the long-product path is instantiated for.
 ///
-/// `clmul_wide_slice` is const-generic in the operand word count, so an arm can
-/// only reach the lengths it names. The list carries every cell size plus the
-/// 1, 63, 64, 65 and 127/128 word boundaries the validator exercises.
+/// `clmul_wide` is const-generic in the operand and product word counts, so an
+/// arm can only reach the lengths it names. Each entry pairs a width with its
+/// doubled product width; the list carries every cell size plus the 1, 63, 64,
+/// 65 and 127/128 word boundaries the validator exercises.
+///
+/// Each arm calls a separate `#[inline(never)]` monomorphisation rather than
+/// inlining every width into one body. A single body would carry the largest
+/// width's product array in its stack frame, and a frame that size makes every
+/// call — the four-word one included — pay a stack probe that has nothing to
+/// do with the product being timed. One call instruction per product is the
+/// cost that replaces it, and the external arm pays the same shape through its
+/// own library call.
 macro_rules! for_each_length {
-    ($words:expr, $body:ident) => {
+    ($words:expr, $body:ident, $($argument:expr),*) => {
         match $words {
-            1 => $body!(1),
-            2 => $body!(2),
-            3 => $body!(3),
-            4 => $body!(4),
-            5 => $body!(5),
-            8 => $body!(8),
-            9 => $body!(9),
-            16 => $body!(16),
-            32 => $body!(32),
-            63 => $body!(63),
-            64 => $body!(64),
-            65 => $body!(65),
-            127 => $body!(127),
-            128 => $body!(128),
-            256 => $body!(256),
-            1024 => $body!(1024),
-            2048 => $body!(2048),
+            1 => $body::<1, 2>($($argument),*),
+            2 => $body::<2, 4>($($argument),*),
+            3 => $body::<3, 6>($($argument),*),
+            4 => $body::<4, 8>($($argument),*),
+            5 => $body::<5, 10>($($argument),*),
+            8 => $body::<8, 16>($($argument),*),
+            9 => $body::<9, 18>($($argument),*),
+            16 => $body::<16, 32>($($argument),*),
+            32 => $body::<32, 64>($($argument),*),
+            63 => $body::<63, 126>($($argument),*),
+            64 => $body::<64, 128>($($argument),*),
+            65 => $body::<65, 130>($($argument),*),
+            127 => $body::<127, 254>($($argument),*),
+            128 => $body::<128, 256>($($argument),*),
+            256 => $body::<256, 512>($($argument),*),
             other => panic!("the gf2 arm is not instantiated for {other}-word operands"),
         }
     };
 }
 
-/// Runs the public long product for any instantiated word count.
+/// The public owned product at one width, discarded through `black_box`.
+#[inline(never)]
+fn owned_product<const N: usize, const M: usize>(a: &[u64], b: &[u64]) {
+    let a: &[u64; N] = a.try_into().expect("operand length matches the arm");
+    let b: &[u64; N] = b.try_into().expect("operand length matches the arm");
+    std::hint::black_box(clmul_wide::<N, M>(a, b));
+}
+
+/// The public owned product at one width, written into `out`.
+#[inline(never)]
+fn owned_product_into<const N: usize, const M: usize>(a: &[u64], b: &[u64], out: &mut [u64]) {
+    let a: &[u64; N] = a.try_into().expect("operand length matches the arm");
+    let b: &[u64; N] = b.try_into().expect("operand length matches the arm");
+    out[..M].copy_from_slice(&clmul_wide::<N, M>(a, b));
+}
+
+/// Runs the public owned long product for any instantiated word count,
+/// discarding the result.
 ///
-/// `clmul_wide_slice` XOR-accumulates, so the destination is cleared first and
-/// the call then writes the complete `2 * words`-word product.
-pub fn long_product(words: usize, a: &[u64], b: &[u64], out: &mut [u64]) {
-    out.fill(0);
-    macro_rules! call {
-        ($n:literal) => {{
-            let a: &[u64; $n] = a.try_into().expect("operand length matches the arm");
-            let b: &[u64; $n] = b.try_into().expect("operand length matches the arm");
-            clmul_wide_slice::<$n>(a, b, out)
-        }};
-    }
-    for_each_length!(words, call)
+/// `clmul_wide` overwrites a fresh `2 * words`-word product, which is the
+/// operation an external long-product library performs. Its sibling
+/// `clmul_wide_slice` XOR-accumulates instead, so timing that form against an
+/// overwriting library would charge gf2 for a destination clear and an
+/// accumulation the comparator never performs.
+pub fn long_product(words: usize, a: &[u64], b: &[u64]) {
+    for_each_length!(words, owned_product, a, b)
+}
+
+/// The same owned long product, written into `out` for the validator.
+///
+/// # Panics
+///
+/// Panics if `out` is shorter than `2 * words`.
+pub fn long_product_into(words: usize, a: &[u64], b: &[u64], out: &mut [u64]) {
+    for_each_length!(words, owned_product_into, a, b, out)
 }
 
 /// The raw-batch lane `gf2_kernels_simd::gf2m::detect` published on this host.
@@ -209,7 +237,7 @@ impl Backend for Gf2Backend {
                 _ => "Gf2mElement::mul".to_owned(),
             },
             Case::PolyMul { words, .. } => {
-                format!("clmul_wide_slice:{}", wide_lane(*words))
+                format!("clmul_wide:{}", wide_lane(*words))
             }
             Case::WideFieldMul { words, .. } => {
                 format!("Gf2mWide::mul_ref:{}", wide_lane(*words))
@@ -292,7 +320,7 @@ impl Backend for Gf2Backend {
                     }
                 }
             }
-            Case::PolyMul { words, .. } => long_product(*words, &bank.a, &bank.b, &mut bank.out),
+            Case::PolyMul { words, .. } => long_product(*words, &bank.a, &bank.b),
             Case::WideFieldMul { words, .. } => wide_field_product(*words, bank),
         }
     }
@@ -393,7 +421,7 @@ impl Backend for Gf2Backend {
                 let pack_ns = probe_ns(|| {
                     std::hint::black_box(reducer.element(&bank.a));
                 });
-                long_product(words, &packed.a, &packed.b, &mut packed.out);
+                long_product_into(words, &packed.a, &packed.b, &mut packed.out);
                 let unpack_ns = reducer.probe_ns(&packed.out);
                 let batch_fill_ns = probe_ns(|| self.run(case, bank));
                 Conversion {
