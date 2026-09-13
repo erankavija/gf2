@@ -246,7 +246,28 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-13T08:01:44.433370470Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-13T07:58:10.196972407Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-13T07:57:59.164533475Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-13T07:58:29.514697843Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "1c602857-5e5b-4981-949a-09bb7639476b",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -257,5 +278,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Route the public wide carry-less product through capability dispatch",
-  "updated_at": "2026-09-13T07:53:18.667702079Z"
+  "updated_at": "2026-09-13T08:01:44.433370470Z"
 }
