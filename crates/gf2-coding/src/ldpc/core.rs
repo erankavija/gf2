@@ -1166,7 +1166,12 @@ impl LdpcDecoder {
     /// so each incoming message is read exactly twice. The reduction is
     /// [`min_sum_check_row`], which follows the supported scalar reference's
     /// numerical contract whatever the `simd` cargo feature and the host's SIMD
-    /// capabilities are.
+    /// capabilities are: an input's sign is taken by comparison against zero, so
+    /// a negative zero counts as positive and a NaN counts as negative, and the
+    /// magnitude is the `f32::min` fold from infinity, which skips a NaN. The
+    /// AVX2 kernel `Llr::boxplus_minsum_n` reaches under `simd` disagrees with
+    /// both rules in its vector lanes; that kernel discrepancy is tracked by
+    /// `@/issue/39cbde20` and this update does not go through it.
     fn check_node_update_min_sum(&mut self, rule: MinSumRule) {
         for check in 0..self.layout.m() {
             let range = self.layout.check_range(check);

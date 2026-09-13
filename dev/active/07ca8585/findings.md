@@ -100,29 +100,56 @@ position, and the second smallest when it is, which is the minimum over the
 other inputs including when the two smallest magnitudes are equal. So the shared
 reduction reproduces the per-output reduction bit for bit.
 
-### What the reduction fixes and what it changes
+### What the reduction fixes
 
 The canonical reduction follows the supported scalar reference in both rules
 recorded under lever `numerical-contract`: an input's sign is taken by
-comparison, so negative zero counts as positive, and the magnitude fold skips a
-NaN input. The three min-sum variants, the empty and degree-one cases, clipping
-and finite extrema are unchanged, and the behavioural suite in
+comparison, so negative zero counts as positive and a NaN counts as negative,
+and the magnitude fold skips a NaN input. The three min-sum variants, the empty
+and degree-one cases, clipping and finite extrema are unchanged, and the
+behavioural suite in
 `crates/gf2-coding/tests/ldpc_check_update_contract.rs` asserts the shared
 reduction against that reference directly.
 
-The decoder's previous min-sum and normalized min-sum paths did not always
-reach that reference. With the default `simd` feature on a host whose AVX2
-kernel is selected, they reached `Llr::boxplus_minsum_n`, whose vector lanes
-take the IEEE sign bit and whose scalar tail takes the comparison, so one
-kernel disagrees with itself and with the scalar reference on a negative-zero
-input. Only whole groups of eight inputs reach the lanes, so the disagreement
-needs a check of degree nine or more: it cannot arise on the frozen DVB-T2
-workload, whose checks are of degree six and seven, and can arise on the frozen
-NR workload. **This is a disclosed behavioural change on that path**, in the
-direction of the declared contract: after this issue the decoder follows the
-scalar reference for every supported configuration and every check degree.
-`Llr::boxplus_minsum_n` itself is unchanged, and the kernel's internal
-disagreement stays open under its owning issue `39cbde20`, which owns the
+### The disclosed numerical change
+
+The decoder's min-sum and normalized min-sum paths do not always reach that
+reference before this change. With the default `simd` feature on a host whose
+AVX2 kernel is selected, they reach `Llr::boxplus_minsum_n`, whose vector lanes
+take the IEEE sign bit and propagate a NaN through `_mm256_min_ps`, while its
+scalar tail does neither, so one kernel disagrees with itself and with the
+scalar reference.
+
+**The exact condition.** Only whole groups of eight inputs reach the lanes, so
+the disagreement needs a check whose excluded input set fills a lane group: a
+check of degree nine or more, carrying a negative-zero or NaN incoming message.
+
+**Which frozen workload reaches it.** The DVB-T2 workload cannot: its checks are
+of degree six and seven, so every excluded input set runs in the kernel's scalar
+tail, which already follows the comparison rule. The NR BG1 workload can: it
+carries checks of degree ten and nineteen, as the tables'
+"Representative degree distributions" section records. Reaching it still needs a
+negative-zero or NaN message, which a recorded channel LLR does not produce.
+
+**The test that measures it.**
+`the_public_reduction_api_and_the_scalar_contract_part_on_non_finite_messages`,
+in `crates/gf2-coding/tests/ldpc_check_update_contract.rs`, decodes one
+input set through both reductions on a code with degree-ten checks and asserts
+that they differ and that the decoder follows the scalar one. The divergence is
+therefore measured rather than claimed, and the test fails if a backend change
+removes it. The sibling test
+`decoder_matches_the_scalar_contract_on_saturating_and_extreme_llrs` asserts the
+decoder against the scalar contract over the same extreme inputs.
+
+**What the frozen workloads show.** The allocation census decodes the recorded
+DVB-T2 and NR frames through both arms; the tables' "Allocation census of the
+measured harness" section reports how many censused frames the two generations
+agree on for the iteration count and how many each decodes with no bit error
+against the frozen `c077a88b` per-frame evidence. The measured gap therefore
+does not rest on the discrepancy.
+
+`Llr::boxplus_minsum_n` itself is unchanged by this issue, and the kernel's
+internal disagreement stays open under `@/issue/39cbde20`, which owns the
 kernel's contract and its assembly artefact.
 
 ## Allocation counting

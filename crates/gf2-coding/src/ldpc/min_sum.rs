@@ -24,8 +24,8 @@
 //! performs no runtime dispatch, so it is independent of the `simd` cargo
 //! feature and of the host's SIMD capabilities. `Llr::boxplus_minsum_n` keeps
 //! its own behaviour, including the AVX2 kernel it reaches under `simd`, whose
-//! disagreement with this contract on a negative-zero input is owned by JIT
-//! issue `39cbde20`.
+//! vector lanes take the IEEE sign bit and propagate a NaN and so disagree with
+//! this contract; that kernel discrepancy is tracked by `@/issue/39cbde20`.
 //!
 //! # Exactness of the shared reduction
 //!
