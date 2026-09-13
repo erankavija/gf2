@@ -31,6 +31,10 @@ Do not enumerate every project item or turn the review into a repository-wide po
 
 Treat `satisfies:`, `enforces:`, and `per:` relationship labels as evidence claims, not proof. Resolve their targets and test the assertions against current behavior, at the strength the label's own `[namespaces.<ns>]` declaration gives it: a label declared to denote contribution or conformance claims that the issue's criteria are consistent with the target, not that this issue delivers the target whole. Attributable dangling, contradictory, or unsupported claims are blocking. An unrelated pre-existing defect is advisory.
 
+## User decisions
+
+The issue description may record user decisions under a `## Decisions` heading (items `DEC-NN`). Decisions bind this review: treat the state a decision accepts as authoritative, and do not raise a blocking finding whose only remedy the decision forecloses. If evidence contradicts a decision's factual premise, surface that as an advisory finding citing the decision identifier.
+
 ## Bounded inspection and truncation recovery
 
 Read patches and current files in bounded calls, partitioned by commit, path, or line range. Search only relevant directories and patterns. Do not combine a full patch, the full gate registry, and repository-wide searches in one command.
