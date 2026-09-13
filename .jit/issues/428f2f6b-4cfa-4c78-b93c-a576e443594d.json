@@ -12,7 +12,23 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-13T06:40:22.080941009Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-13T06:39:46.916025112Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-13T06:42:37.108583891Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "428f2f6b-4cfa-4c78-b93c-a576e443594d",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -22,5 +38,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Replace hand-copied numbers in closed survey reports with citations",
-  "updated_at": "2026-09-13T06:36:38.537519571Z"
+  "updated_at": "2026-09-13T06:42:37.108583891Z"
 }
