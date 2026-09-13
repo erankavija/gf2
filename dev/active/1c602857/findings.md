@@ -17,15 +17,15 @@ acceptance summary row that holds it.
 ## What the code does now
 
 `gf2m::wide::clmul_wide_dispatch` is the single place a wide carry-less product
-selects its kernel. `clmul_wide`, `clmul_wide_slice`, `Gf2mWide::mul_ref` and
+selects its kernel, and its rustdoc is the authoritative statement of the
+dispatch predicate. `clmul_wide`, `clmul_wide_slice`, `Gf2mWide::mul_ref` and
 the wide Barrett reducer all reach it. The kernel selection itself is
-`#[cfg(feature = "simd")]`: a build with that feature enabled, on a host with
-PCLMULQDQ, computes the 4-word and 9-word products in the `gf2-kernels-simd`
-kernels whichever of those a caller used. `simd` is not a default feature of
-`gf2-core` (`default = ["rand", "io"]`); every other width, every host
-without the capability, and every build that does not enable `simd` —
-including a plain `cargo build -p gf2-core` — runs
-`clmul_wide_slice_portable`.
+`#[cfg(feature = "simd")]` (not a default feature of `gf2-core`,
+`default = ["rand", "io"]`); at runtime, on `x86`/`x86_64`, it also needs
+either AVX2 + VPCLMULQDQ + SSE4.1 (preferred YMM lane) or PCLMULQDQ + SSE4.1
+(XMM lane), exactly the flags `gf2_kernels_simd::gf2m_wide::detect_x86_wide`
+checks. Every case that predicate does not satisfy — including a plain
+`cargo build -p gf2-core` — runs `clmul_wide_slice_portable`.
 
 Two consequences change how callers and tests behave:
 
@@ -135,7 +135,7 @@ or `inconclusive`; there is no negative outcome to preserve.
 | REQ-02 (public path reaches the same dispatch as internal wide-field multiplication, portable fallback kept elsewhere) | Met | `crates/gf2-core/src/gf2m/wide.rs`: `clmul_wide`, `clmul_wide_slice` and `Gf2mWide::mul_ref` all call `clmul_wide_dispatch`; the kernel-selecting arm of that function is `#[cfg(feature = "simd")]` (not a default feature), so the same dispatch point compiles to always-portable without it. Asserted directly by `public_product_reaches_capability_dispatch` and `field_multiplication_shares_the_canonical_dispatch` in `crates/gf2-core/tests/clmul_wide_conformance.rs`, both of which pass with and without `--all-features` (`cargo nextest run -p gf2-core --test clmul_wide_conformance --cargo-profile ci-test --profile ci` via `./scripts/cargo-budget.sh --test`: 4/4 each) |
 | REQ-03 (conformance suite covers public functions at dispatched and non-dispatched widths, random and adversarial operands, complete double-width output against the portable oracle, fallback included) | Met | `crates/gf2-core/tests/clmul_wide_conformance.rs`: `public_product_matches_the_oracle_at_every_width` (widths 1,2,3,4,5,8,9,16, random and adversarial pairs via `pairs`), `portable_fallback_matches_the_oracle_at_every_width` (forced-fallback lane), `public_product_reaches_capability_dispatch` (lane witness, `expected_lane` itself `#[cfg]`-split on `simd` so the dispatched lane is only asserted when the build can reach it); recorded passing in [validation.json](validation.json), and confirmed passing both with and without `--all-features` above |
 | REQ-04 (frozen before/after receipt at dispatched and non-dispatched widths including dispatch overhead, adoption follows the frozen non-regression rule) | Met | Confirmation [acceptance-summary.md](../../bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/acceptance-summary.md): six cells, all `pass`, `qualifies: true`; dispatch overhead at 1/2/16 words is the three `*-dispatch-overhead` rows, all `not-worse` |
-| REQ-05 (rustdoc of the public functions and `Gf2mWide::mul_ref` states the actual mechanism and complexity) | Met | `crates/gf2-core/src/gf2m/wide.rs`: `clmul_wide` and `clmul_wide_slice` rustdoc `# Mechanism`/`# Complexity` sections name the dispatched-kernel/portable-schoolbook split and state that the kernel path additionally needs the `simd` feature, which is off by default; `Gf2mWide::mul_ref`'s `# Mechanism` and `# Complexity` sections do the same and name `clmul_wide_dispatch` and the two extra Barrett-reduction products, matching the body read at HEAD |
+| REQ-05 (rustdoc of the public functions and `Gf2mWide::mul_ref` states the actual mechanism and complexity) | Met | `clmul_wide_dispatch`'s `# Dispatch predicate` rustdoc (`crates/gf2-core/src/gf2m/wide.rs`) is the single authoritative statement of the exact runtime/compile-time condition — `simd` feature, `x86`/`x86_64` target, and AVX2+VPCLMULQDQ+SSE4.1 (preferred) or PCLMULQDQ+SSE4.1 (fallback lane), matching `gf2_kernels_simd::gf2m_wide::detect_x86_wide` read at HEAD with no other flag checked; `clmul_wide`, `clmul_wide_slice` and `Gf2mWide::mul_ref` cite it by name in their `# Mechanism` sections rather than restate it, and their `# Complexity` sections name the dispatched-kernel/portable-schoolbook split |
 
 ## A wire-shape defect this issue's smoke caught
 
