@@ -124,6 +124,28 @@ Source: `preparation/allocation-counter.jsonl`, the records `crates/gf2-coding/t
 
 Steady-state sections recorded: 48; sections that requested nothing: 48. The test asserts that relation, so a run that does not hold it fails rather than publishing.
 
+## Matched-ness of the isolated check-node arms
+
+Source: `preparation/checknode-parity.jsonl` (`dev/active/07ca8585/survey/arms/src/bin/ldpc-checknode-verify.rs`). Untimed: both check-node passes run in one process over the prepared array the timed cells declare, and their outputs are compared bit for bit. The checksums are the 64-bit FNV-1a of the canonical check-major message array; the timed cells declare them and every worker of either arm reproduces them or the arm fails.
+
+| Code | Checks | Edges | Max check degree | Frames | Warm-up rounds | Input checksum | gf2 output | AFF3CT output | Differing outputs | AFF3CT transpose is the canonical map |
+|---|---:|---:|---:|---:|---:|---|---|---|---:|---|
+| dvb-t2-r12 | 32400 | 226799 | 7 | 8 | 8 | `1bd7d12c4732a009` | `b8a2ee8aee08ac2c` | `b8a2ee8aee08ac2c` | 0 | True |
+| nr-bg1-r12 | 17664 | 121344 | 19 | 8 | 8 | `02857f028397d61e` | `fd885d4ada849e8f` | `fd885d4ada849e8f` | 0 | True |
+
+Codes compared: 2; codes whose two passes write bit-identical outputs: 2. The AFF3CT side is `aff3ct Update_rule_NMS flooding check pass`. The tool exits nonzero when a code's outputs differ, so a run that does not hold this fails rather than publishing.
+
+## Prepared quality at the iteration cap (untimed)
+
+Source: `preparation/quality-fixed/` (`dev/active/07ca8585/survey/arms/src/bin/ldpc-fixed-quality.rs`). The corpus REQ-10's full-iteration cells decode against: every recorded frame of each frozen workload decoded once per arm with syndrome stopping off, so each arm performs exactly the declared cap on every frame. The reused `c077a88b` corpus was produced under syndrome stopping, and the arms refuse a corpus whose settings differ from theirs. Every field below is a deterministic function of the decoder and the recorded input.
+
+| Corpus | Frames | Frame errors | Bit errors / bits | Iterations mean / p50 / max | Stopping | Iteration cap |
+|---|---:|---:|---|---|---|---:|
+| `aff3ct-flooding-nms-f32-dvb-t2-r12.json` | 128 | 2 | 2/4147200 | 50.000 / 50 / 50 | fixed | 50 |
+| `aff3ct-flooding-nms-f32-nr-bg1-z384.json` | 128 | 1 | 644/1081344 | 50.000 / 50 / 50 | fixed | 50 |
+| `gf2-nms-f32-dvb-t2-r12.json` | 128 | 2 | 2/4147200 | 50.000 / 50 / 50 | fixed | 50 |
+| `gf2-nms-f32-nr-bg1-z384.json` | 128 | 1 | 677/1081344 | 50.000 / 50 / 50 | fixed | 50 |
+
 ## Campaigns
 
 ### `v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot`

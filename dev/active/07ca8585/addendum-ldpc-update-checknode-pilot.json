@@ -1,0 +1,119 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "ldpc-update-checknode-v1",
+    "issue": "07ca8585",
+    "purpose": "decoder-family",
+    "description": "Exploratory pilot. The changed gf2 check-node update against AFF3CT v4.7.0's own check-node update rule, isolated from the rest of a decode, which is REQ-10's kernel granularity. Both arms read the same prepared messages on the same edges of the same recorded graph, each in the edge layout its own production decoder holds them in, and write an output array of the same size; the gf2 arm runs `min_sum_check_row` over the canonical `EdgeLayout` check runs and the AFF3CT arm runs `tools::Update_rule_NMS<float>` over the scan order of `Decoder_LDPC_BP_flooding::_decode_single_ite`, at normalization factor 0.75. This family publishes the REQ-10 kernel comparison and selects nothing: adoption is decided by the before/after families, which keep their own ledgers. One worker. Kernel-isolated operation version 1: each worker is a thread pinned to one resolved CPU and owns its own copy of the prepared variable-to-check message array of the first 8 recorded frames and its own output array of the same shape. Both are built before timing, from the frozen recorded LLRs and the recorded graph, by one function both arms call: every edge starts at its variable's recorded LLR and 8 flooding rounds follow, each one check-node pass and one variable-node pass, which is the state a flooding decode reaches. AList parsing, the layout build, the preparation and, for the AFF3CT arm, the permutation into its variable-major edge order are reported as setup, outside the timed windows. A timed call makes every worker run one flooding check-node pass over each of the 8 prepared frames, and nothing else: no variable update, no syndrome, no conversion and no allocation. Throughput is workers times 8 frames per call. The cell declares the checksum of the prepared array and of the output, both in the canonical check-major edge order; every worker of either arm reproduces both or the arm fails. An isolated pass decodes no frame, so the cell declares no decoder and the runner asks for no per-frame quality; what stands in its place is the committed matched-ness receipt `dev/bench_results/07ca8585/preparation/checknode-parity.jsonl`, which records that the two passes write bit-identical outputs over these workloads and that AFF3CT's transpose is the canonical edge map. Arms report observed per-worker affinity, CPUs and process thread counts; no nested pool is declared. It observes the measurement resolution that this family's confirmatory addendum freezes; it decides nothing."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T17:10:04Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "A pilot observes the resolution that later fixes this family's margins; declaring them here would defeat the observation.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "A pilot decides nothing, so it declares no equivalence margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "A confirmatory addendum fixes the material-gap threshold from this pilot's observed resolution."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 900,
+    "maintenance_rationale": "The change is one edge-layout type and one scalar reduction in the owning library layer, with their tests. It adds no unsafe kernel, so the budget for one is zero, and the source budget is the size of those two modules and the decoder rewrite they replace."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/07ca8585/v4-update-checknode-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-checknode-w1",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs; prepared variable-to-check messages after 8 flooding rounds, input 1bd7d12c4732a009, output b8a2ee8aee08ac2c",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1,
+          "checks": 32400,
+          "edges": 226799,
+          "max_check_degree": 7,
+          "warmup_rounds": 8
+        },
+        "seed": 42
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-checknode-w1",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs; prepared variable-to-check messages after 8 flooding rounds, input 02857f028397d61e, output fd885d4ada849e8f",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1,
+          "checks": 17664,
+          "edges": 121344,
+          "max_check_degree": 19,
+          "warmup_rounds": 8
+        },
+        "seed": 42
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
