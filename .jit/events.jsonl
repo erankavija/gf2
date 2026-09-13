@@ -12059,3 +12059,4 @@
 {"from":"in_progress","id":"d0c8fcdb-69c1-4a55-a485-f058556114a7","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T12:00:43.204262357Z","to":"done","type":"issue_state_changed"}
 {"id":"411d567f-8ad6-497b-b549-7c6851bfc8b7","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T12:00:43.204262357Z","type":"issue_completed"}
 {"from":"backlog","id":"eca02d48-1307-47b3-bb88-096405c607f8","issue_id":"94ab019f-cc91-4081-b787-39037d14fc86","timestamp":"2026-09-13T12:01:02.083896024Z","to":"ready","type":"issue_state_changed"}
+{"fields":["documents"],"id":"c84ec57b-aad8-4800-845e-6f3ba18191b9","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-09-13T12:57:47.168393587Z","type":"issue_updated","updated_by":"doc-add"}
