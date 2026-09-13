@@ -2,7 +2,11 @@
   "schema": "a203a23c-cat-file-batch-timing-v2",
   "purpose": "Whole-process wall time of dev/scripts/check-receipt-input-snapshots.py and dev/active/a203a23c/restore-receipt-inputs.py, in the per-file form committed at 76812a4e's parent and the batch form committed at 76812a4e, against one fixed workload.",
   "generator": "dev/active/a203a23c/timing/measure.py",
-  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "wrapper": {
+    "observed": false,
+    "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+    "withdrawn_statement": "dev/scripts/ccx1-bench-flock.sh --full-host"
+  },
   "command": "python3 -B dev/active/a203a23c/timing/measure.py --scratch <scratch-directory> --repetitions 5",
   "repetitions": 5,
   "sampling_plan": {
@@ -23,8 +27,45 @@
     "interleaving": "none: a series' repetitions run consecutively, and the forms are compared across series rather than repetition by repetition"
   },
   "rng": {
-    "used": false,
-    "statement": "No random number generator takes part. This harness draws no random numbers and fixes the workload, the arguments and the series order as constants. Neither tool imports a random number generator in either form; the checker's only randomness-bearing import, `tempfile`, is reached solely from its `--self-test` path, which these invocations do not take. Every repetition therefore runs the same work, and the spread between repetitions is host timing noise alone."
+    "pattern": "\\b(?:import\\s+(?:random|secrets|tempfile|numpy)|from\\s+(?:random|secrets|tempfile|numpy[.\\w]*)\\s+import|numpy\\.random|os\\.urandom|random\\.|secrets\\.|tempfile\\.)",
+    "sources_scanned": [
+      "batch:dev/active/a203a23c/restore-receipt-inputs.py",
+      "batch:dev/scripts/check-receipt-input-snapshots.py",
+      "harness:dev/active/a203a23c/timing/measure.py",
+      "per_file:dev/active/a203a23c/restore-receipt-inputs.py",
+      "per_file:dev/scripts/check-receipt-input-snapshots.py"
+    ],
+    "randomness_bearing_lines_found": 4,
+    "matches": {
+      "harness:dev/active/a203a23c/timing/measure.py": [],
+      "per_file:dev/scripts/check-receipt-input-snapshots.py": [
+        {
+          "line": 31,
+          "text": "import tempfile",
+          "enclosing_function": null
+        },
+        {
+          "line": 347,
+          "text": "with tempfile.TemporaryDirectory() as directory:",
+          "enclosing_function": "self_test"
+        }
+      ],
+      "per_file:dev/active/a203a23c/restore-receipt-inputs.py": [],
+      "batch:dev/scripts/check-receipt-input-snapshots.py": [
+        {
+          "line": 31,
+          "text": "import tempfile",
+          "enclosing_function": null
+        },
+        {
+          "line": 382,
+          "text": "with tempfile.TemporaryDirectory() as directory:",
+          "enclosing_function": "self_test"
+        }
+      ],
+      "batch:dev/active/a203a23c/restore-receipt-inputs.py": []
+    },
+    "statement": "Scanning every source this run executes or times, with the pattern in `pattern`, found 4 line(s) that could bear randomness. Every match is recorded in `matches` with its line number, its text and the function containing it, here <module level>, self_test. The arguments each invocation actually received are at series.<name>.process and what each printed is at series.<name>.final_stdout."
   },
   "revisions": {
     "per_file_source": "a6427615adf607caca5e4adb3be917a20f18891f",
@@ -73,10 +114,50 @@
     "smt_active": true
   },
   "scheduling": {
-    "requested": "dev/scripts/ccx1-bench-flock.sh requests nice -n -5 and, with --full-host, no taskset pin",
+    "requested": {
+      "observed": false,
+      "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+      "withdrawn_statement": {
+        "observed": false,
+        "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+        "withdrawn_statement": {
+          "observed": false,
+          "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+          "withdrawn_statement": {
+            "observed": false,
+            "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+            "withdrawn_statement": {
+              "observed": false,
+              "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+              "withdrawn_statement": "dev/scripts/ccx1-bench-flock.sh requests nice -n -5 and, with --full-host, no taskset pin"
+            }
+          }
+        }
+      }
+    },
     "requested_niceness": -5,
     "observed_niceness": 0,
-    "niceness_note": "`nice: cannot set niceness` is the expected warning for an unprivileged user; the observed niceness is the one that applies",
+    "niceness_note": {
+      "observed": false,
+      "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+      "withdrawn_statement": {
+        "observed": false,
+        "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+        "withdrawn_statement": {
+          "observed": false,
+          "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+          "withdrawn_statement": {
+            "observed": false,
+            "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+            "withdrawn_statement": {
+              "observed": false,
+              "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+              "withdrawn_statement": "`nice: cannot set niceness` is the expected warning for an unprivileged user; the observed niceness is the one that applies"
+            }
+          }
+        }
+      }
+    },
     "cpu_affinity_size": 24,
     "load_average_at_start": [
       0.64,
@@ -84,7 +165,11 @@
       5.46
     ],
     "runnable_at_start": "2/1557",
-    "mutex": "the run holds /tmp/gf2-ccx1.lock exclusively for its whole duration, so no other benchmark or build on this host overlaps it"
+    "mutex": {
+      "observed": false,
+      "note": "the run that wrote this record stated this without probing it. The statement is withdrawn rather than restated, since a condition of a run that has ended cannot be observed afterwards.",
+      "withdrawn_statement": "the run holds /tmp/gf2-ccx1.lock exclusively for its whole duration, so no other benchmark or build on this host overlaps it"
+    }
   },
   "toolchain": {
     "python3": "3.14.7",
@@ -96,7 +181,7 @@
       "process": "python3 -B <dev/scripts/check-receipt-input-snapshots.py of the form's revision> --revision 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
       "measures": "whole process wall time, from start to exit",
       "working_directory": "the root of this repository's checkout",
-      "workload": "every input pinned by every campaign receipt committed at the workload revision, read from this repository's object database; the checker writes nothing",
+      "workload": "the committed objects of 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31, read by main() of dev/scripts/check-receipt-input-snapshots.py at a6427615adf607caca5e4adb3be917a20f18891f; what the run reported is at `final_stdout` and what it left in the working tree is at `working_tree`",
       "exit_codes": [
         0,
         0,
@@ -115,14 +200,31 @@
       "min_s": 23.458352103014477,
       "median_s": 23.567952206009068,
       "source_revision": "a6427615adf607caca5e4adb3be917a20f18891f",
-      "form": "per-file"
+      "form": "per-file",
+      "functions_defined_at_revision": [
+        "artifact_pins",
+        "check",
+        "committed_oids",
+        "committed_reader",
+        "decode",
+        "git",
+        "main",
+        "partition",
+        "pinned_inputs",
+        "receipt_paths",
+        "registered_omissions",
+        "report",
+        "self_test",
+        "write_fixture",
+        "write_registry"
+      ]
     },
     "checker_batch": {
       "tool": "dev/scripts/check-receipt-input-snapshots.py",
       "process": "python3 -B <dev/scripts/check-receipt-input-snapshots.py of the form's revision> --revision 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
       "measures": "whole process wall time, from start to exit",
       "working_directory": "the root of this repository's checkout",
-      "workload": "every input pinned by every campaign receipt committed at the workload revision, read from this repository's object database; the checker writes nothing",
+      "workload": "the committed objects of 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31, read by main() of dev/scripts/check-receipt-input-snapshots.py at 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31; what the run reported is at `final_stdout` and what it left in the working tree is at `working_tree`",
       "exit_codes": [
         0,
         0,
@@ -141,14 +243,31 @@
       "min_s": 2.535943939932622,
       "median_s": 2.5489084009313956,
       "source_revision": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
-      "form": "batch"
+      "form": "batch",
+      "functions_defined_at_revision": [
+        "artifact_pins",
+        "check",
+        "committed_oids",
+        "committed_reader",
+        "decode",
+        "git",
+        "main",
+        "partition",
+        "pinned_inputs",
+        "receipt_paths",
+        "registered_omissions",
+        "report",
+        "self_test",
+        "write_fixture",
+        "write_registry"
+      ]
     },
     "restoration_per_file": {
       "tool": "dev/active/a203a23c/restore-receipt-inputs.py",
       "process": "python3 -B dev/active/a203a23c/restore-receipt-inputs.py 8cfc015de59f8e3accc51bca46d13d94b0bee267",
-      "measures": "whole process wall time, from start to exit: the checker load, the committed-object listing, the check, the digest index over every file the base revision tracks, the pinned-file read that assembles the pins, and the copy-and-stage tail",
+      "measures": "whole process wall time, from start to exit, of main() in dev/active/a203a23c/restore-receipt-inputs.py at a6427615adf607caca5e4adb3be917a20f18891f",
       "working_directory": "the root of the scratch clone",
-      "workload": "the snapshot files the base revision's committed receipts pin and the base revision does not carry, restored into the scratch clone's working tree and staged there",
+      "workload": "the scratch clone at 8cfc015de59f8e3accc51bca46d13d94b0bee267, processed by main() of dev/active/a203a23c/restore-receipt-inputs.py at a6427615adf607caca5e4adb3be917a20f18891f; what the run reported is at `final_stdout` and what it left staged is at `staged`",
       "exit_codes": [
         0,
         0,
@@ -167,14 +286,19 @@
       "min_s": 58.070371008012444,
       "median_s": 58.860080747981556,
       "source_revision": "a6427615adf607caca5e4adb3be917a20f18891f",
-      "form": "per-file"
+      "form": "per-file",
+      "functions_defined_at_revision": [
+        "load_checker",
+        "main",
+        "sources_by_digest"
+      ]
     },
     "restoration_batch": {
       "tool": "dev/active/a203a23c/restore-receipt-inputs.py",
       "process": "python3 -B dev/active/a203a23c/restore-receipt-inputs.py 8cfc015de59f8e3accc51bca46d13d94b0bee267",
-      "measures": "whole process wall time, from start to exit: the checker load, the committed-object listing, the check, the digest index over every file the base revision tracks, the pinned-file read that assembles the pins, and the copy-and-stage tail",
+      "measures": "whole process wall time, from start to exit, of main() in dev/active/a203a23c/restore-receipt-inputs.py at 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
       "working_directory": "the root of the scratch clone",
-      "workload": "the snapshot files the base revision's committed receipts pin and the base revision does not carry, restored into the scratch clone's working tree and staged there",
+      "workload": "the scratch clone at 8cfc015de59f8e3accc51bca46d13d94b0bee267, processed by main() of dev/active/a203a23c/restore-receipt-inputs.py at 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31; what the run reported is at `final_stdout` and what it left staged is at `staged`",
       "exit_codes": [
         0,
         0,
@@ -193,7 +317,12 @@
       "min_s": 6.747102755936794,
       "median_s": 6.968018804909661,
       "source_revision": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
-      "form": "batch"
+      "form": "batch",
+      "functions_defined_at_revision": [
+        "load_checker",
+        "main",
+        "sources_by_digest"
+      ]
     }
   },
   "published_claim": {
