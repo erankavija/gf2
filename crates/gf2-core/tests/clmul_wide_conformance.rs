@@ -243,11 +243,17 @@ fn expected_lane<const N: usize>() -> &'static str {
 /// Asserts that both public entry points run on the dispatched lane of width
 /// `N`, and that forcing the portable fallback moves them onto it without
 /// changing a single output word.
+///
+/// Prints a `dispatch-lane-witness` line so a captured run (nextest
+/// `--success-output=final`) records which lane this build and host actually
+/// reached, independent of the assertion outcome; `run-validation.sh` parses
+/// it into the committed validation record.
 fn check_public_dispatch<const N: usize, const M: usize>(seed: u64) {
     let _guard = DISPATCH_LANE_MUTEX
         .lock()
         .unwrap_or_else(|e| e.into_inner());
     let lane = expected_lane::<N>();
+    eprintln!("dispatch-lane-witness N={N} lane={lane}");
     let (a, b) = pairs::<N>(seed)[0];
 
     let dispatched_owned = clmul_wide::<N, M>(&a, &b);
