@@ -17,6 +17,16 @@ import pathlib
 import statistics
 from collections import defaultdict
 
+# What each family's baseline and candidate arm is, for the column headings.
+ARM_LABELS = {
+    "ldpc-update-single-worker-v1": ("gf2 before", "gf2 after"),
+    "ldpc-update-multicore-v1": ("gf2 before", "gf2 after"),
+    "ldpc-update-comparator-single-worker-v1": ("gf2 after", "AFF3CT"),
+    "ldpc-update-comparator-multicore-v1": ("gf2 after", "AFF3CT"),
+    "ldpc-update-checknode-v1": ("gf2 check pass", "AFF3CT check pass"),
+    "ldpc-update-fixed-iteration-v1": ("gf2 after at the cap", "AFF3CT at the cap"),
+}
+
 BASE = pathlib.Path("dev/bench_results/07ca8585")
 PREPARATION = BASE / "preparation"
 SURVEY = pathlib.Path("dev/active/07ca8585/survey")
@@ -209,9 +219,7 @@ def receipts(lines):
         verdicts = {cell["cell_id"]: cell for cell in summary["cells"]}
         quality_notes = {f["cell"] for f in summary["findings"] if f["rule"] == "P-19"}
         placed = placements(directory)
-        comparator = "comparator" in receipt["family_id"]
-        baseline_label = "gf2 after" if comparator else "gf2 before"
-        candidate_label = "AFF3CT" if comparator else "gf2 after"
+        baseline_label, candidate_label = ARM_LABELS[receipt["family_id"]]
         lines += [
             f"### `{directory.name}`",
             "",
@@ -246,7 +254,10 @@ def receipts(lines):
             workers = sorted(
                 {p[side]["workers_observed"] for p in pairs for side in ("baseline", "candidate")}
             )
-            frames = workers[0] * cases[cell["cell_id"]]["batch_size"]
+            case = cases[cell["cell_id"]]
+            # A whole-decoding cell declares its per-worker batch of frames; an
+            # isolated check-node cell declares the prepared frames it passes over.
+            frames = workers[0] * case.get("batch_size", case.get("frames", 0))
             median = lambda side: statistics.median(p[side]["ns_per_call"] for p in pairs) / 1e6
             text = (
                 f"{interval['estimate']:.4g} [{interval['lower']:.4g}, {interval['upper']:.4g}]"
@@ -321,6 +332,83 @@ def receipts(lines):
         lines.append("")
 
 
+def checknode_parity(lines):
+    path = PREPARATION / "checknode-parity.jsonl"
+    lines += [
+        "## Matched-ness of the isolated check-node arms",
+        "",
+        "Source: `preparation/checknode-parity.jsonl` "
+        "(`dev/active/07ca8585/survey/arms/src/bin/ldpc-checknode-verify.rs`). Untimed: both "
+        "check-node passes run in one process over the prepared array the timed cells declare, and "
+        "their outputs are compared bit for bit. The checksums are the 64-bit FNV-1a of the "
+        "canonical check-major message array; the timed cells declare them and every worker of "
+        "either arm reproduces them or the arm fails.",
+        "",
+    ]
+    if not path.exists():
+        lines += ["No matched-ness receipt is available.", ""]
+        return
+    lines += [
+        "| Code | Checks | Edges | Max check degree | Frames | Warm-up rounds | Input checksum | "
+        "gf2 output | AFF3CT output | Differing outputs | AFF3CT transpose is the canonical map |",
+        "|---|---:|---:|---:|---:|---:|---|---|---|---:|---|",
+    ]
+    rows = read_jsonl(path)
+    for row in rows:
+        lines.append(
+            f"| {row['code']} | {row['checks']} | {row['edges']} | {row['max_check_degree']} | "
+            f"{row['frames']} | {row['warmup_rounds']} | `{row['input_checksum']}` | "
+            f"`{row['gf2_output_checksum']}` | `{row['aff3ct_output_checksum']}` | "
+            f"{row['differing_outputs']} | {row['aff3ct_transpose_is_the_canonical_map']} |"
+        )
+    identical = sum(1 for row in rows if row["outputs_bit_identical"])
+    rules = sorted({row["aff3ct_rule"] for row in rows})
+    lines += [
+        "",
+        f"Codes compared: {len(rows)}; codes whose two passes write bit-identical outputs: "
+        f"{identical}. The AFF3CT side is {', '.join(f'`{rule}`' for rule in rules)}. The tool "
+        "exits nonzero when a code's outputs differ, so a run that does not hold this fails rather "
+        "than publishing.",
+        "",
+    ]
+
+
+def fixed_quality(lines):
+    directory = PREPARATION / "quality-fixed"
+    lines += [
+        "## Prepared quality at the iteration cap (untimed)",
+        "",
+        "Source: `preparation/quality-fixed/` "
+        "(`dev/active/07ca8585/survey/arms/src/bin/ldpc-fixed-quality.rs`). The corpus REQ-10's "
+        "full-iteration cells decode against: every recorded frame of each frozen workload decoded "
+        "once per arm with syndrome stopping off, so each arm performs exactly the declared cap on "
+        "every frame. The reused `c077a88b` corpus was produced under syndrome stopping, and the "
+        "arms refuse a corpus whose settings differ from theirs. Every field below is a "
+        "deterministic function of the decoder and the recorded input.",
+        "",
+    ]
+    files = sorted(directory.glob("*.json"))
+    if not files:
+        lines += ["No fixed-iteration corpus is available.", ""]
+        return
+    lines += [
+        "| Corpus | Frames | Frame errors | Bit errors / bits | Iterations mean / p50 / max | "
+        "Stopping | Iteration cap |",
+        "|---|---:|---:|---|---|---|---:|",
+    ]
+    for path in files:
+        record = read_json(path)
+        it = record["iterations"]
+        settings = record["settings"]
+        lines.append(
+            f"| `{path.name}` | {record['frames']} | {record['frame_errors']} | "
+            f"{record['bit_errors']}/{record['bits']} | "
+            f"{it['mean']:.3f} / {it['p50']} / {it['max']} | {settings['stopping']['kind']} | "
+            f"{settings['iteration_cap']} |"
+        )
+    lines.append("")
+
+
 def degrees(lines):
     data = read_json(PREPARATION / "structural-costs.json")["codes"]
     lines += [
@@ -352,6 +440,8 @@ def main():
     degrees(lines)
     census(lines)
     allocation_counter(lines)
+    checknode_parity(lines)
+    fixed_quality(lines)
     receipts(lines)
     BASE.mkdir(parents=True, exist_ok=True)
     (BASE / "tables.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")

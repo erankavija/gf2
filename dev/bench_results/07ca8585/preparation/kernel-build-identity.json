@@ -1,0 +1,99 @@
+{
+  "schema": "ldpc-update-kernel-build-identity-v1",
+  "observed_utc": "2026-09-13T17:11:30+00:00",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
+  "cxx": "c++ (GCC) 16.2.1 20260810",
+  "rustflags": "-C target-cpu=native",
+  "cargo_profile": "release: opt-level 3, lto, codegen-units 1, debug line-tables-only",
+  "build_command": "CARGO_CI_NO_SCCACHE=1 GF2_AFF3CT_ROOT=<aff3ct root> CARGO_TARGET_DIR=\"$PWD/target/ldpc-update-arms\" RUSTFLAGS='-C target-cpu=native' ./scripts/cargo-budget.sh cargo +1.95 build --offline --release --features aff3ct --manifest-path dev/active/07ca8585/survey/arms/Cargo.toml",
+  "revision": "ec8ffd00f217db1336c5d067fe6bff4cf572a0bc",
+  "kernel": {
+    "workspace": "dev/active/07ca8585/survey/arms",
+    "target_dir": "target/ldpc-update-arms/release",
+    "note": "its own workspace and its own target directory, so every executable the frozen whole-decoding confirmations were built from stays byte-identical",
+    "executables": {
+      "gf2-checknode-arm": "b93dffa00d616fd02a1b384035e23eb5ddca9200789feda64be2ae28f2efd0b8",
+      "aff3ct-checknode-arm": "0d2420fd971933b09482ab948c7480d37f3b93983334b6a75b8ebc145c97aa9a",
+      "ldpc-checknode-verify": "0e187dc119192e2446f5c94ac7358d0efa8168d73778fa9ca44148dae19ec6b9",
+      "ldpc-fixed-quality": "6f3418c55baa17cdfe70568a91c27abebb35665f280e7cefff9fe3a48062641c"
+    }
+  },
+  "profile_resample": {
+    "target_dir": "target/ldpc-throughput/release",
+    "note": "the `after` generation of the 3be770d5 harness, which the profile re-sampling series measures under the predecessor's own case set",
+    "executables": {
+      "ldpc-profile": "4349a556571af45fc6af56b4b15effde9223fee4934f6c7f264304f0fd291aa9",
+      "ldpc-alloc-census": "8cbd5c9a6901d1411bc6ceaba07bff0e7d0af23c22b4ab746f21684acae17030"
+    }
+  },
+  "whole_decoding_identity": {
+    "path": "dev/bench_results/07ca8585/preparation/build-identity.json",
+    "sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c"
+  },
+  "aff3ct": {
+    "root": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct",
+    "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+    "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+    "source_archive": {
+      "path": "dev/bench_results/c077a88b/v3-preparation/source-inputs/aff3ct-source.tar.gz",
+      "sha256": "370f78e20000bc5fa0ae56c5534f6cf44c278480321a478f7b95b277ab7091fb"
+    }
+  },
+  "shim": {
+    "unit": "dev/active/07ca8585/survey/arms/cpp/update_rule_shim.cpp",
+    "unit_sha256": "4dbbdf48c4abe82640f54d74b1bcff4140e5d86db95ee78251924bd00c4e0d66",
+    "includes_a_pinned_shim": false,
+    "flags": [
+      "-std=gnu++11",
+      "-O3",
+      "-march=native",
+      "-g1",
+      "-DNDEBUG"
+    ],
+    "definitions_source": "dev/active/07ca8585/survey/arms/build.rs AFF3CT_DEFINITIONS",
+    "build_rs_sha256": "6969128bf4c2b06af6ec87f7a5899f8c3cbc617222cc98d4cf826a525c60b315"
+  },
+  "checknode_parity": {
+    "path": "dev/bench_results/07ca8585/preparation/checknode-parity.jsonl",
+    "sha256": "525ea89560505e07b8e100e15057cfcadc193ea1e25e9fb8bb1521e61d4f813a",
+    "rows": [
+      {
+        "code": "dvb-t2-r12",
+        "edges": 226799,
+        "checks": 32400,
+        "input_checksum": "1bd7d12c4732a009",
+        "output_checksum": "b8a2ee8aee08ac2c",
+        "outputs_bit_identical": true
+      },
+      {
+        "code": "nr-bg1-r12",
+        "edges": 121344,
+        "checks": 17664,
+        "input_checksum": "02857f028397d61e",
+        "output_checksum": "fd885d4ada849e8f",
+        "outputs_bit_identical": true
+      }
+    ]
+  },
+  "prepared_quality_fixed": {
+    "note": "produced by ldpc-fixed-quality from the frozen recorded frames with syndrome stopping off; every field but the observed peak RSS and the median per-frame latency is a deterministic function of the decoder and the recorded input",
+    "files": {
+      "dev/bench_results/07ca8585/preparation/quality-fixed/aff3ct-flooding-nms-f32-dvb-t2-r12.json": "951195c853a092fada1302ba904f61d8de117c32a2ca181693b530bab0442359",
+      "dev/bench_results/07ca8585/preparation/quality-fixed/aff3ct-flooding-nms-f32-nr-bg1-z384.json": "0daad1c52c72e82e65274b3700d87b00b7a8b716de248302e0063ddb2f67456f",
+      "dev/bench_results/07ca8585/preparation/quality-fixed/gf2-nms-f32-dvb-t2-r12.json": "fb9506701a9f170bcda4db3959360d3f83a0310cb1caa0dfcd8210baba9e5ee2",
+      "dev/bench_results/07ca8585/preparation/quality-fixed/gf2-nms-f32-nr-bg1-z384.json": "c1f4f435a6643504fed9858221aaf156e98e81b546faf0ec68be328e6545cfc3"
+    }
+  },
+  "inputs": {
+    "archive": {
+      "path": "dev/bench_results/c077a88b/v3-preparation/source-inputs/recorded-inputs.tar.gz",
+      "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba"
+    },
+    "extracted_to": "target/ldpc-inputs"
+  },
+  "harness_reused": {
+    "path": "dev/active/3be770d5/survey/harness",
+    "cargo_lock_sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+    "note": "the 3be770d5 harness supplies the worker pool and the bundle loader"
+  }
+}

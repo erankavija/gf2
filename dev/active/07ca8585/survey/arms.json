@@ -1,6 +1,6 @@
 {
   "schema": "ldpc-update-arms-v1",
-  "note": "The gf2 arms are the 3be770d5 steady-state harness built against the two generations of gf2-coding. `before` is built from an export of the pre-change revision, `after` from the changed tree; their executables therefore live in different target directories, which the plan generator resolves. The AFF3CT arm is the one 3be770d5 measured, unchanged.",
+  "note": "The gf2 throughput arms are the 3be770d5 steady-state harness built against the two generations of gf2-coding. `before` is built from an export of the pre-change revision, `after` from the changed tree; their executables therefore live in different target directories, which the plan generator resolves. The AFF3CT throughput arm is the one 3be770d5 measured, unchanged. The two `checknode` arms are the isolated check-node pass of REQ-10's kernel granularity; they live in this issue's own arms workspace, whose target directory is the `kernel` generation, and they read no prepared quality because an isolated pass decodes no frame.",
   "codes": {
     "dvb-t2-r12": {
       "bundle": "dvb-t2-r12-waterfall",
@@ -41,6 +41,20 @@
         "GF2_AFF3CT_PRECISION": "f32",
         "GF2_AFF3CT_SYNDROME_DEPTH": "1"
       }
+    },
+    "gf2-checknode-nms-f32": {
+      "executable": "gf2-checknode-arm",
+      "generation": "kernel",
+      "build": "native",
+      "description": "gf2-coding after 07ca8585, one flooding check-node pass over a prepared variable-to-check message array through the canonical EdgeLayout check runs and min_sum_check_row, f32 normalized min-sum, no variable update and no termination in the timed call, one prepared array and one output array per pinned worker",
+      "environment": {}
+    },
+    "aff3ct-checknode-nms-f32": {
+      "executable": "aff3ct-checknode-arm",
+      "generation": "kernel",
+      "build": "external",
+      "description": "AFF3CT v4.7.0 tools::Update_rule_NMS<float> over the check-node scan order of Decoder_LDPC_BP_flooding::_decode_single_ite, one pass over the same prepared variable-to-check messages in AFF3CT's own variable-major edge order, one pass object per pinned worker",
+      "environment": {}
     }
   },
   "families": {
@@ -63,6 +77,16 @@
       "baseline": "gf2-after-nms-f32",
       "candidate": "aff3ct-flooding-nms-f32",
       "seed": 519627909890183172
+    },
+    "ldpc-update-checknode-v1": {
+      "baseline": "gf2-checknode-nms-f32",
+      "candidate": "aff3ct-checknode-nms-f32",
+      "seed": 519627909890183173
+    },
+    "ldpc-update-fixed-iteration-v1": {
+      "baseline": "gf2-after-nms-f32",
+      "candidate": "aff3ct-flooding-nms-f32",
+      "seed": 519627909890183174
     }
   }
 }

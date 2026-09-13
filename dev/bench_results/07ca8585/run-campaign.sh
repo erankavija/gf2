@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Min-sum update before/after and comparator campaigns (jit:07ca8585).
+# Min-sum update before/after, comparator and REQ-10 granularity campaigns (jit:07ca8585).
 #
 # Each campaign is evaluated under the protocol version its addendum names and
 # its receipt pins and snapshots that version. The launcher adds no numeric
@@ -9,6 +9,7 @@
 #   run-campaign.sh FAMILY MODE RUN_ID ACTION
 #     FAMILY  single-worker | multicore
 #             | comparator-single-worker | comparator-multicore
+#             | checknode | fixed-iteration
 #     MODE    pilot | confirmation
 #     ACTION  prepare   build nothing, write the plan; times nothing
 #             run       bounded full-host sessions until the campaign completes
@@ -25,10 +26,18 @@
 # failed attempt stays in the stage and the family ledger. A repeated `window`
 # resumes an unfinished campaign and skips a finalized one.
 #
-# The two gf2 generations are the same harness built from two trees. Rebuilding
-# either is outside this script, because a rebuilt executable is a different
-# candidate identity: see the preparation build identity for the commands and
-# the digests a campaign requires.
+# The two gf2 generations are the same harness built from two trees, and the two
+# isolated check-node arms are a third build in this issue's own arms workspace.
+# Rebuilding any of them is outside this script, because a rebuilt executable is
+# a different candidate identity: see the two preparation build identities for
+# the commands and the digests a campaign requires.
+#
+# `checknode` is REQ-10's kernel granularity and `fixed-iteration` its
+# full-iteration granularity. The first runs the arms of the kernel identity and
+# reads no prepared quality; the second runs the pinned throughput arms against
+# the fixed-stopping prepared quality corpus this issue committed, because the
+# reused c077a88b corpus was produced under syndrome stopping and the arms refuse
+# a corpus whose settings differ from theirs.
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
@@ -37,7 +46,7 @@ MODE=${2:?pilot or confirmation}
 RUN_ID=${3:?run id, for example v4-r1}
 ACTION=${4:?prepare, run, finalize or window}
 case "$FAMILY" in
- single-worker|multicore|comparator-single-worker|comparator-multicore)
+ single-worker|multicore|comparator-single-worker|comparator-multicore|checknode|fixed-iteration)
   FAMILY_ID=ldpc-update-$FAMILY-v1 ;;
  *) echo "unknown family $FAMILY" >&2; exit 2 ;;
 esac
@@ -50,9 +59,20 @@ ADDENDUM=dev/active/07ca8585/addendum-${FAMILY_ID%-v1}
 ADDENDUM=$ADDENDUM.json
 AFTER=$repo/target/ldpc-throughput/release
 BEFORE=$repo/target/ldpc-throughput-before/release
+KERNEL=$repo/target/ldpc-update-arms/release
 BUNDLES=$repo/target/ldpc-inputs
 QUALITY=$repo/dev/bench_results/c077a88b/v3-preparation/quality
 IDENTITY=$RESULTS/preparation/build-identity.json
+KERNEL_IDENTITY=$RESULTS/preparation/kernel-build-identity.json
+PRODUCING=dev/active/07ca8585/survey/producing-inputs.json
+# The full-iteration cells decode against this issue's own corpus, and the
+# kernel cells read none: an isolated check-node pass decodes no frame.
+if [[ "$FAMILY" == fixed-iteration ]]; then
+  QUALITY=$repo/$RESULTS/preparation/quality-fixed
+fi
+if [[ "$FAMILY" == checknode || "$FAMILY" == fixed-iteration ]]; then
+  PRODUCING=dev/active/07ca8585/survey/producing-inputs-kernel.json
+fi
 STAGE=$repo/target/ldpc-update-campaigns/$RUN_ID-$FAMILY-$MODE
 PLAN=$STAGE.plan.json
 OUT=$RESULTS/$RUN_ID-07ca8585-ldpc-update-$FAMILY-$MODE
@@ -60,7 +80,31 @@ LAUNCH_LOG=$RESULTS/$RUN_ID-update-$FAMILY-$MODE-launcher.log
 RUNNER=$repo/target/release/benchmark-ab-runner
 ACCEPTANCE=$repo/target/release/benchmark-acceptance
 
+# Every executable of the kernel identity, checked when a kernel arm runs.
+check_kernel_arms() {
+  while read -r arm; do
+    recorded=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kernel"]["executables"][sys.argv[2]])' \
+      "$KERNEL_IDENTITY" "$arm")
+    [[ "$(sha256sum "$KERNEL/$arm" | cut -d' ' -f1)" == "$recorded" ]] \
+      || { echo "kernel/$arm differs from $KERNEL_IDENTITY" >&2; exit 2; }
+  done < <(python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))["kernel"]["executables"]))' \
+    "$KERNEL_IDENTITY")
+}
+
+# The fixed-stopping prepared quality corpus, checked when the arms read it.
+check_fixed_quality() {
+  while read -r path; do
+    recorded=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["prepared_quality_fixed"]["files"][sys.argv[2]])' \
+      "$KERNEL_IDENTITY" "$path")
+    [[ "$(sha256sum "$repo/$path" | cut -d' ' -f1)" == "$recorded" ]] \
+      || { echo "$path differs from $KERNEL_IDENTITY" >&2; exit 2; }
+  done < <(python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))["prepared_quality_fixed"]["files"]))' \
+    "$KERNEL_IDENTITY")
+}
+
 check_arms() {
+  if [[ "$FAMILY" == checknode ]]; then check_kernel_arms; return; fi
+  [[ "$FAMILY" != fixed-iteration ]] || check_fixed_quality
   for generation in before after; do
     if [[ "$generation" == before ]]; then dir=$BEFORE; else dir=$AFTER; fi
     while read -r arm; do
@@ -118,7 +162,8 @@ case "$ACTION" in
     --bin benchmark-ab-runner --bin benchmark-acceptance
   python3 "$SURVEY/make-plan.py" --family "$FAMILY_ID" --label "$MODE" \
     --addendum "$ADDENDUM" --before-dir "$BEFORE" --after-dir "$AFTER" \
-    --bundles-dir "$BUNDLES" --quality-dir "$QUALITY" \
+    --bundles-dir "$BUNDLES" --quality-dir "$QUALITY" --kernel-dir "$KERNEL" \
+    --producing-manifest "$PRODUCING" \
     --campaign-id "07ca8585-$RUN_ID-update-$FAMILY-$MODE" \
     --max-cells-per-session 1 --output "$PLAN"
   ;;
