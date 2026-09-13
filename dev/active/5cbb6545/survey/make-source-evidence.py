@@ -19,7 +19,6 @@ import sys
 
 OPS = "crates/gf2-core/src/kernels/ops.rs"
 BACKEND = "crates/gf2-core/src/kernels/backend.rs"
-BAKED = "crates/gf2-core/src/tuning/baked.rs"
 TUNING = "crates/gf2-core/src/tuning/mod.rs"
 MATRIX = "crates/gf2-core/src/matrix.rs"
 BITVEC = "crates/gf2-core/src/bitvec.rs"
@@ -34,36 +33,31 @@ LUT_ASM = "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt"
 CLAIMS = [
     # Public entry points and the routes they reach.
     ("bitvec-count-ones", BITVEC, 602, "crate::kernels::ops::popcount(&self.data)",
-     "BitVec::count_ones is the unfused public entry point: it resolves one route per call",
+     "BitVec::count_ones is the unfused public entry point and uses the established dispatcher",
      "entry-point"),
     ("matvec-entry", MATRIX, 1538, "pub fn matvec(&self, x: &crate::BitVec)",
      "BitMatrix::matvec is the fused public entry point", "entry-point"),
-    ("matvec-resolve-once", MATRIX, 1604, "let and_popcount = crate::kernels::ops::resolve_and_popcount(self.stride_words)",
-     "the product resolves the fused route once for the stride it repeats, so a row pays no "
-     "resolution", "entry-point"),
-    ("ops-scalar-retained", OPS, 341, "SelectedBackend::Scalar => scalar_popcount",
-     "below the bit-backend SIMD threshold the resolver returns the scalar backend's portable "
-     "count: the established implementation the measured no-win region retains", "no-win-region"),
-    ("ops-csa-boundary", OPS, 335, "backend.popcnt_csa_fn",
-     "at or above the carry-save boundary the unfused resolver returns the Harley-Seal kernel",
-     "boundary"),
-    ("ops-fused-csa-boundary", OPS, 378, "backend.and_popcnt_csa_fn",
-     "the fused resolver splits at the same boundary", "boundary"),
-    ("ops-route-report", OPS, 245, "word_len >= crate::kernels::backend::POPCOUNT_CSA_MIN_WORDS",
-     "popcount_route reports the boundary at run time, so a test or an arm observes the route "
-     "instead of inferring it", "boundary"),
-    ("backend-simd-threshold", BACKEND, 133, "if _size >= SIMD_MIN_WORDS",
+    ("matvec-established-fused", MATRIX, 1607, "(fns.and_popcnt_fn)(row, x_words)",
+     "the matrix consumer retains the bundle's established fused nibble-lookup function",
+     "retained-route"),
+    ("ops-scalar-retained", OPS, 387, "SCALAR_BACKEND.popcount(buf)",
+     "below the bit-backend SIMD threshold the public dispatcher retains the scalar backend's "
+     "portable count", "retained-route"),
+    ("ops-nibble-resolver", OPS, 326, "backend.popcnt_fn",
+     "the fixed-width resolver retains the bundle's established nibble-lookup function at every "
+     "SIMD width", "retained-route"),
+    ("ops-fused-nibble-resolver", OPS, 362, "backend.and_popcnt_fn",
+     "the fused resolver retains the bundle's established nibble-lookup function at every SIMD "
+     "width", "retained-route"),
+    ("ops-route-report", OPS, 245, "PopcountRoute::SimdNibbleLut",
+     "the observable route reports the retained SIMD implementation without a CSA boundary",
+     "retained-route"),
+    ("backend-simd-threshold", BACKEND, 115, "if _size >= SIMD_MIN_WORDS",
      "the bit-backend threshold that separates the scalar count from the vector kernels",
      "boundary"),
-    ("backend-csa-default", BACKEND, 95, "POPCOUNT_CSA_MIN_WORDS_DEFAULT: usize = 256",
-     "the adopted carry-save boundary in the conservative table's compile-time counterpart",
-     "tuning"),
-    ("baked-csa-mirror", BAKED, 27, "POPCOUNT_CSA_MIN_WORDS: usize = 256",
-     "the baked table mirrors the same boundary, so the cfg-selected build takes the same route",
-     "tuning"),
-    ("tuning-csa-selector", TUNING, 561, "popcount_csa_min_words: usize",
-     "the canonical tuning mechanism carries the boundary as a bit-backend selector, which is "
-     "how the sweeps moved it", "tuning"),
+    ("tuning-retained-selector", TUNING, 557, "simd_min_words: usize",
+     "the canonical bit-backend tuning family retains its established SIMD threshold and carries "
+     "no unconfirmed CSA cutoff", "tuning"),
     ("core-simd-optional", CORE_MANIFEST, 56, "simd = []",
      "the kernel routes are reachable only through a non-default feature of gf2-core",
      "feature"),
@@ -74,9 +68,16 @@ CLAIMS = [
      "the route the pre-change dispatcher took at and above the threshold, which the baseline arm "
      "reproduces", "baseline"),
     ("bundle-scalar-popcnt-comparator", BUNDLE, 115, "pub popcnt_scalar_fn: fn(&[u64]) -> u64",
-     "the scalar POPCNT kernel stays in the bundle as the measured comparator no resolver selects",
+     "the scalar POPCNT kernel remains in the bundle as a measured comparator no resolver selects",
      "no-win-region"),
-    ("csa-block-vectors", KERNEL, 36, "pub const CSA_BLOCK_VECTORS: usize = 16",
+    ("bundle-csa-comparator", BUNDLE, 122, "pub popcnt_csa_fn: fn(&[u64]) -> u64",
+     "the carry-save kernel remains in the bundle as preserved, tested negative evidence rather "
+     "than an automatic route", "no-win-region"),
+    ("bundle-fused-csa-comparator", BUNDLE, 129,
+     "pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64",
+     "the fused carry-save kernel remains a tested comparator rather than an automatic route",
+     "no-win-region"),
+    ("csa-block-vectors", KERNEL, 35, "pub const CSA_BLOCK_VECTORS: usize = 16",
      "one carry-save block folds sixteen vectors, so the block is 512 bytes and a shorter buffer "
      "reaches only the remainder", "kernel"),
     # Emitted instructions: the carry-save kernel.

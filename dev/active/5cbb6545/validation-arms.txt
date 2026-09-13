@@ -10,10 +10,10 @@ gf2 route words=63: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved
 gf2 route words=64: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
 gf2 route words=65: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
 gf2 route words=128: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
-gf2 route words=256: legacy=simd-nibble-lut resolved=simd-carry-save and_resolved=simd-carry-save
-gf2 route words=1024: legacy=simd-nibble-lut resolved=simd-carry-save and_resolved=simd-carry-save
-gf2 route words=16384: legacy=simd-nibble-lut resolved=simd-carry-save and_resolved=simd-carry-save
-gf2 route words=1048576: legacy=simd-nibble-lut resolved=simd-carry-save and_resolved=simd-carry-save
+gf2 route words=256: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=1024: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=16384: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
+gf2 route words=1048576: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
 word_offset=0: 0 bytes past a vector boundary; arms accepting it: legacy-dispatch resolved-dispatch nibble-lut scalar-popcnt csa compiler-count-ones libpopcnt mula-avx2-harley-seal
 word_offset=1: 8 bytes past a vector boundary; arms accepting it: legacy-dispatch resolved-dispatch nibble-lut scalar-popcnt csa compiler-count-ones libpopcnt
 word_offset=2: 16 bytes past a vector boundary; arms accepting it: legacy-dispatch resolved-dispatch nibble-lut scalar-popcnt csa compiler-count-ones libpopcnt

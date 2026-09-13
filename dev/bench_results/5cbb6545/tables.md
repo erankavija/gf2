@@ -10,20 +10,20 @@ Protocol version 4, pinned at `dev/active/f547c394/protocol.md` digest `047b8f39
 
 ## Campaigns
 
-One row per committed receipt, in the order `run-count-campaign.sh` runs its stages. *Attempt* is the family attempt the receipt's own frozen ledger prefix makes it, counting only entries that reserved a comparison, as `trial_ledger::attempt_alpha` does; a stage that reserves none decides nothing and shows none. *m* is the comparisons the prefix reserves, *alpha_c* the corrected per-comparison alpha the tool applied, and *Draws per tail* the expected draws in each interval tail at that alpha, the P-20 tail-support quantity. *Arms* digests the arm executable and the survey's arm source in the receipt's own producing snapshot, so two stages that measured the same arms are recognisable.
+One row per committed receipt, in the order `run-count-campaign.sh` runs its stages. *Attempt* is the family attempt the receipt's own frozen ledger prefix makes it, counting only entries that reserved a comparison, as `trial_ledger::attempt_alpha` does; a stage that reserves none decides nothing and shows none. *m* is the comparisons the prefix reserves, *alpha_c* the corrected per-comparison alpha the tool applied, and *Draws per tail* the expected draws in each interval tail at that alpha, the P-20 tail-support quantity. *Arms* digests the arm executable and the survey's arm source in the receipt's own producing snapshot, so two stages that measured the same arms are recognisable. *Verdict* is the receipt's acceptance verdict; *Qualifies* is the separate production-qualification flag and remains explicit even when the receipt itself is accepted.
 
-| Stage | Label | Cells | Attempt | m | alpha_c | Draws per tail | Resolution | Margins (worthwhile / equivalence / gap) | Verdict | Findings | Arms (executable / arms.rs) |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| `popcount-sweep` | pilot | 23 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | 0 | `53bce8f572a3` / `2ea45ec999e5` |
-| `popcount-sweep2` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | 0 | `53bce8f572a3` / `2ea45ec999e5` |
-| `popcount-pilot` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | 0 | `2a999f6f60ec` / `2ea45ec999e5` |
-| `popcount-pilot-r2` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | 0 | `2a999f6f60ec` / `2ea45ec999e5` |
-| `popcount-confirmation` | confirmation | 6 | 1 | 6 | 0.004167 | 20.83 | 0.020 | 1.10 / 1.03 / 1.20 | accepted | 0 | `f951eab0aa3a` / `ff167fc2a896` |
-| `fused-sweep` | pilot | 9 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | 0 | `53bce8f572a3` / `2ea45ec999e5` |
-| `fused-sweep2` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | 0 | `53bce8f572a3` / `2ea45ec999e5` |
-| `fused-pilot` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | 0 | `2a999f6f60ec` / `2ea45ec999e5` |
-| `fused-pilot-r2` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | 0 | `2a999f6f60ec` / `2ea45ec999e5` |
-| `fused-confirmation` | confirmation | 6 | 1 | 6 | 0.004167 | 20.83 | 0.030 | 1.10 / 1.04 / 1.20 | accepted | 0 | `f951eab0aa3a` / `ff167fc2a896` |
+| Stage | Label | Cells | Attempt | m | alpha_c | Draws per tail | Resolution | Margins (worthwhile / equivalence / gap) | Verdict | Qualifies | Findings | Arms (executable / arms.rs) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `popcount-sweep` | pilot | 23 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `53bce8f572a3` / `2ea45ec999e5` |
+| `popcount-sweep2` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `53bce8f572a3` / `2ea45ec999e5` |
+| `popcount-pilot` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `2a999f6f60ec` / `2ea45ec999e5` |
+| `popcount-pilot-r2` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `2a999f6f60ec` / `2ea45ec999e5` |
+| `popcount-confirmation` | confirmation | 6 | 1 | 6 | 0.004167 | 20.83 | 0.020 | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `f951eab0aa3a` / `ff167fc2a896` |
+| `fused-sweep` | pilot | 9 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `53bce8f572a3` / `2ea45ec999e5` |
+| `fused-sweep2` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `53bce8f572a3` / `2ea45ec999e5` |
+| `fused-pilot` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `2a999f6f60ec` / `2ea45ec999e5` |
+| `fused-pilot-r2` | pilot | 6 | — | 1 | 0.025000 | 125.00 | — | 1.10 / 1.03 / 1.20 | accepted | no | 0 | `2a999f6f60ec` / `2ea45ec999e5` |
+| `fused-confirmation` | confirmation | 6 | 1 | 6 | 0.004167 | 20.83 | 0.030 | 1.10 / 1.04 / 1.20 | accepted | no | 0 | `f951eab0aa3a` / `ff167fc2a896` |
 
 ## Numerical resolution and tail support
 
@@ -94,7 +94,7 @@ Every probe of every cell that declares its conversion costs included: the whole
 
 ## Clock observation
 
-The clock the cycles-per-byte column converts at, from `dev/active/5cbb6545/survey/clock-observation.json`: one child per arm per confirmatory cell, on that cell's own case, under `perf stat` for user-space cycles and task-clock. *Timed share* is the fraction of the child's task-clock its five timed windows occupy, from the child's own window record. The record establishes a clock and no comparison; *Route* is the route the delivered tree takes, which is why a reverted width reports the route it retains rather than the route its receipt measured. The observation therefore runs an arm executable of its own, whose digest the line below this table gives beside the revision; the receipts' own arm digests are in § Campaigns.
+The clock the cycles-per-byte column converts at, from `dev/active/5cbb6545/survey/clock-observation.json`: one child per arm per confirmatory cell, on that cell's own case, under `perf stat` for user-space cycles and task-clock. *Timed share* is the fraction of the child's task-clock its five timed windows occupy, from the child's own window record. The record establishes a clock and no comparison; *Route* is the route the observation's candidate-producing executable took. The final production route is stated in the findings and protected by the conformance record. The observation runs an arm executable of its own, whose digest the line below this table gives beside the revision; the receipts' own arm digests are in § Campaigns.
 
 | Cell | Arm | Route | Cycles | Task clock (ms) | Cycles/ns | Timed share |
 |---|---|---|---|---|---|---|
@@ -133,8 +133,9 @@ The conformance record beside this survey, whose raw outputs carry the case coun
 |---|---|---|---|
 | shared suite | `crates/gf2-core/tests/popcount_routes.rs` | `dev/active/5cbb6545/validation-raw.txt` | 0 |
 | arm verifier | `dev/active/5cbb6545/survey/gf2-side/src/bin/count-verify.rs` | `dev/active/5cbb6545/validation-arms.txt` | 0 |
+| production selection audit | `rg for unsupported CSA selector and automatic-dispatch references` | `dev/active/5cbb6545/validation-production.txt` | 0 |
 
-Both groups pass: `passed` is true in `dev/active/5cbb6545/validation.json`.
+All groups pass: `passed` is true in `dev/active/5cbb6545/validation.json`.
 
 ## Cells: `popcount-sweep`
 
