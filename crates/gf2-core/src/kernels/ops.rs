@@ -197,26 +197,150 @@ pub fn not_inplace(buf: &mut [u64]) {
     }
 }
 
-/// Counts the number of set bits across all words.
+/// Resolved population-count operation for fixed-width hot loops.
 ///
-/// Automatically selects the best backend based on buffer size.
-#[inline]
-pub fn popcount(buf: &[u64]) -> u64 {
-    use crate::kernels::{backend::select_backend_for_size, Backend};
+/// Call [`resolve_popcount`] once before entering a loop that repeatedly
+/// counts buffers of the same word width, then invoke the returned function
+/// pointer inside the loop, as [`XorInplaceFn`] does for in-place XOR.
+pub type PopcountFn = fn(&[u64]) -> u64;
 
-    match select_backend_for_size(buf.len()) {
+/// Resolved fused AND-population-count operation for fixed-width hot loops.
+pub type AndPopcountFn = fn(&[u64], &[u64]) -> u64;
+
+#[inline]
+fn scalar_popcount(buf: &[u64]) -> u64 {
+    crate::kernels::Backend::popcount(&crate::kernels::scalar::SCALAR_BACKEND, buf)
+}
+
+#[inline]
+fn scalar_and_popcount(lhs: &[u64], rhs: &[u64]) -> u64 {
+    lhs.iter()
+        .zip(rhs)
+        .map(|(left, right)| u64::from((left & right).count_ones()))
+        .sum()
+}
+
+/// Resolves the fastest measured population-count implementation for
+/// `word_len` words.
+///
+/// Three routes share this one boundary, each measured on the target host and
+/// reachable only when the non-default `simd` feature is enabled and the
+/// runtime backend is available:
+///
+/// - below the bit-backend SIMD threshold, `LogicalFns::popcnt_scalar_fn`
+///   counts one word at a time with the host's `POPCNT` instruction;
+/// - from that threshold to `bit_backend.popcount_csa_min_words`,
+///   `LogicalFns::popcnt_fn` counts every vector through a `VPSHUFB` nibble
+///   lookup;
+/// - at or above that word count, `LogicalFns::popcnt_csa_fn` folds sixteen
+///   vectors per Harley-Seal block before one lookup.
+///
+/// Without the feature or the backend every width takes the scalar fallback.
+/// Both boundaries are compile-time constants, per DEC-G in
+/// `dev/active/220cab0b/design.md`; the profile fields of the same names carry
+/// them for calibration.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::kernels::ops::resolve_popcount;
+///
+/// let popcount = resolve_popcount(2);
+/// assert_eq!(popcount(&[0b1011, 0b0100]), 4);
+/// ```
+///
+/// # Complexity
+///
+/// O(1) to resolve; the returned function runs in O(`word_len`).
+#[inline]
+pub fn resolve_popcount(word_len: usize) -> PopcountFn {
+    use crate::kernels::backend::select_backend_for_size;
+
+    match select_backend_for_size(word_len) {
         #[cfg(feature = "simd")]
-        crate::kernels::backend::SelectedBackend::Simd => {
-            if let Some(backend) = crate::kernels::simd::maybe_simd() {
-                backend.popcount(buf)
-            } else {
-                crate::kernels::scalar::SCALAR_BACKEND.popcount(buf)
+        crate::kernels::backend::SelectedBackend::Simd => crate::simd::maybe_simd()
+            .map(|backend| {
+                if word_len >= crate::kernels::backend::POPCOUNT_CSA_MIN_WORDS {
+                    backend.popcnt_csa_fn
+                } else {
+                    backend.popcnt_fn
+                }
+            })
+            .unwrap_or(scalar_popcount),
+        crate::kernels::backend::SelectedBackend::Scalar => {
+            #[cfg(feature = "simd")]
+            {
+                crate::simd::maybe_simd()
+                    .map(|backend| backend.popcnt_scalar_fn)
+                    .unwrap_or(scalar_popcount)
+            }
+            #[cfg(not(feature = "simd"))]
+            {
+                scalar_popcount
             }
         }
-        crate::kernels::backend::SelectedBackend::Scalar => {
-            crate::kernels::scalar::SCALAR_BACKEND.popcount(buf)
-        }
     }
+}
+
+/// Resolves the fastest measured fused AND-population-count implementation for
+/// `word_len` words.
+///
+/// The fused kernels count `lhs & rhs` without materializing the AND, so a
+/// consumer that only needs the weight of an intersection avoids a temporary
+/// buffer and a second pass. The route splits at
+/// `bit_backend.popcount_csa_min_words`, the same boundary
+/// [`resolve_popcount`] uses, because both kernels fold the same 512-byte
+/// carry-save block.
+///
+/// The count covers the shorter of the two slices.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::kernels::ops::resolve_and_popcount;
+///
+/// let and_popcount = resolve_and_popcount(2);
+/// assert_eq!(and_popcount(&[0b1011, 0b0110], &[0b1001, 0b1100]), 3);
+/// ```
+///
+/// # Complexity
+///
+/// O(1) to resolve; the returned function runs in O(`word_len`).
+#[inline]
+pub fn resolve_and_popcount(word_len: usize) -> AndPopcountFn {
+    use crate::kernels::backend::select_backend_for_size;
+
+    match select_backend_for_size(word_len) {
+        #[cfg(feature = "simd")]
+        crate::kernels::backend::SelectedBackend::Simd => crate::simd::maybe_simd()
+            .map(|backend| {
+                if word_len >= crate::kernels::backend::POPCOUNT_CSA_MIN_WORDS {
+                    backend.and_popcnt_csa_fn
+                } else {
+                    backend.and_popcnt_fn
+                }
+            })
+            .unwrap_or(scalar_and_popcount),
+        crate::kernels::backend::SelectedBackend::Scalar => scalar_and_popcount,
+    }
+}
+
+/// Counts the number of set bits across all words.
+///
+/// Resolves the route for this buffer's width through [`resolve_popcount`] and
+/// calls it once.
+#[inline]
+pub fn popcount(buf: &[u64]) -> u64 {
+    resolve_popcount(buf.len())(buf)
+}
+
+/// Counts the set bits of the intersection of two bit buffers.
+///
+/// Resolves the route for this width through [`resolve_and_popcount`] and
+/// calls it once. The count covers the shorter slice.
+#[inline]
+pub fn and_popcount(lhs: &[u64], rhs: &[u64]) -> u64 {
+    resolve_and_popcount(lhs.len().min(rhs.len()))(lhs, rhs)
 }
 
 #[cfg(test)]
