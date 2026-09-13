@@ -46,10 +46,10 @@ run() {
 }
 
 status=0
-run kernels-lib "$BUDGET" cargo test -p gf2-kernels-simd --lib transpose || status=$?
-run kernels-bitslice "$BUDGET" cargo test -p gf2-kernels-simd --lib bch_encode || status=$?
-run matrix-contract-portable "$BUDGET" cargo test -p gf2-core --test transpose_lane_contract || status=$?
-run matrix-contract-simd "$BUDGET" cargo test -p gf2-core --features simd --test transpose_lane_contract || status=$?
+run kernels-lib "$BUDGET" --test cargo test -p gf2-kernels-simd --lib transpose || status=$?
+run kernels-bitslice "$BUDGET" --test cargo test -p gf2-kernels-simd --lib bch_encode || status=$?
+run matrix-contract-portable "$BUDGET" --test cargo test -p gf2-core --test transpose_lane_contract || status=$?
+run matrix-contract-simd "$BUDGET" --test cargo test -p gf2-core --features simd --test transpose_lane_contract || status=$?
 
 python3 - "$OUTPUT" "$status" "$LOG" <<'PY'
 import json
