@@ -1,6 +1,6 @@
 {
   "schema": "count-optimization-source-evidence-v1",
-  "commit": "c4288da38db2b8a82263878990c21e97f9b45da7",
+  "commit": "af0dacfa5aa0c2986f6dda6883f99109c4b6a4c4",
   "note": "The generator selects this source revision explicitly and refuses to emit when any claimed source path has a byte delta from it. The producing manifests of the campaigns separately pin the source bytes the receipts measured. Lines under crates/gf2-kernels-simd/src/x86/asm/ are the committed artefacts dev/scripts/regen-asm.sh writes from the compiler, and each artefact's header names the revision and toolchain it was recorded from.",
   "claims": [
     {
@@ -38,7 +38,7 @@
     {
       "id": "ops-nibble-resolver",
       "path": "crates/gf2-core/src/kernels/ops.rs",
-      "line": 326,
+      "line": 328,
       "text": ".map(|backend| backend.popcnt_fn)",
       "topic": "retained-route",
       "why": "the fixed-width resolver retains the bundle's established nibble-lookup function at every SIMD width"
@@ -46,7 +46,7 @@
     {
       "id": "ops-fused-nibble-resolver",
       "path": "crates/gf2-core/src/kernels/ops.rs",
-      "line": 362,
+      "line": 366,
       "text": ".map(|backend| backend.and_popcnt_fn)",
       "topic": "retained-route",
       "why": "the fused resolver retains the bundle's established nibble-lookup function at every SIMD width"
