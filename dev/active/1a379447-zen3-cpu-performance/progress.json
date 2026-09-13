@@ -1,7 +1,7 @@
 {
   "epic_id": "1a379447-212f-4aff-b2c3-a83c13021e1d",
   "epic_short_id": "1a379447",
-  "current_wave": 2,
+  "current_wave": 3,
   "waves": [
     {
       "wave_number": 1,
@@ -269,7 +269,7 @@
           "short_id": "a203a23c",
           "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
           "classification": "research",
-          "status": "session 12: round 2 (end-to-end timing, rng, sampling plan) and the on-disk re-run merged at e87636f9; research-review passed on cda13aa3, code-review failed (F1 registered omissions vs AGENTS.md:125, F2 commit figures in tool source). Invoker overruled F1 as out of scope: DEC-01 recorded, Decisions clause added to code-review and doc-review prompts (33f08f02). Rounds 3 and 4 fixed F2 and a typed file count (merged ef20c43b, 559aae8f); round-5 code-review found the unverified lock assertion (third runtime-observed-provenance finding); invoker authorized one audited round: lead audited every emitted statement, worker making nine of them observed and re-measuring once; worker running.",
+          "status": "done. Session 12: rounds 2-5 (end-to-end timing on disk, rng and sampling plan, commit figures derived from the cited commit, every emitted figure derived, every run condition observed); DEC-01 recorded (registered receipt-input omissions out of scope, invoker overrule); all four gates pass on 29c6efea; review reviews/a203a23c-r3.md; closed at 33ec447c; worktree reclaimed.",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-a203a23c",
@@ -290,7 +290,7 @@
           "short_id": "53c5a8c0",
           "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
           "classification": "research",
-          "status": "pending"
+          "status": "session 12: dispatched to w12-53c5a8c0 (opus) in .agents/worktrees/agent-53c5a8c0 (base 2d8b6c0b) with the worker brief."
         },
         {
           "id": "19513245-7fb9-4490-8e41-d9c01405db01",
@@ -304,14 +304,14 @@
           "short_id": "1d4fd63d",
           "title": "Optimize bit transpose and bitslice conversion",
           "classification": "implementation",
-          "status": "pending"
+          "status": "session 12: dispatched to w12-1d4fd63d (opus) in .agents/worktrees/agent-1d4fd63d (base 2d8b6c0b) with the worker brief."
         },
         {
           "id": "5cbb6545-4496-4325-8fa9-d50aaa9fcf50",
           "short_id": "5cbb6545",
           "title": "Optimize population count and fused bit reductions",
           "classification": "implementation",
-          "status": "pending"
+          "status": "session 12: dispatched to w12-5cbb6545 (opus) in .agents/worktrees/agent-5cbb6545 (branch worktree-agent-5cbb6545, base 2d8b6c0b) with the worker brief; survey, candidates, frozen families, pilot/confirmation, tuning-mechanism winners."
         },
         {
           "id": "2037941f-852c-4d94-9d49-ad06a364dca8",
@@ -347,7 +347,7 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "session 12: pilot and confirmation collected (6 cells x 24 pairs, accepted, qualifies=true, all pass: 3 improved, 3 not-worse; routing adopted); merged at 7ef6db8e; gates on 35fe4326: cargo-ci pass; doc-review F1 (rustdoc must name the simd feature), code-review F1 (FORCE_SCALAR_CLMUL_WIDE override process-global and unguarded), research-review F1 (uncited figures in the recurring-defect section). Rework round 1 with all three dispatched to w12-1c602857; worker at cargo-ci at handoff of this note."
+          "status": "session 12: round-1 rework merged at 71c6b135; gates on it: cargo-ci and code-review pass; doc-review F1 (exact dispatch predicate: SSE4.1 + PCLMULQDQ, AVX2 + VPCLMULQDQ + SSE4.1) and research-review F2 (all-features test claim without a committed record) failed; rework round 2 of 2 dispatched to w12-1c602857."
         }
       ]
     },
@@ -680,7 +680,7 @@
     "3be770d5": 1,
     "428f2f6b": 1,
     "12fdeb5b": 2,
-    "1c602857": 1
+    "1c602857": 2
   },
   "surfaced_pitfalls": [
     {
@@ -1072,7 +1072,8 @@
     "Session 11 lead decision: one independent Terra xhigh review per issue before the gates (not two), to stay inside the Codex weekly budget; the research-review gate is itself a Terra xhigh reading, so convergence is judged between the independent review and the gate.",
     "Session 11 invoker instruction (2026-09-12 ~18:00Z): no new work this session; finish what is in flight, reserve campaigns for the overnight slot, arm it, then hand off.",
     "Session 12 (2026-09-13): invocation: drive the epic, subagent model by difficulty (opus/sonnet, no Fable), four workers at a time in reused worktrees. Timed confirmations of about five minutes ran in-session under the CCX1 lock per the 2026-09-11 policy (a run at most about as long as a cold cargo-ci).",
-    "Session 12 invoker rulings: (1) executor-trust model for aborted campaigns (12fdeb5b, DEC-01, protocol voided-attempt paragraph); (2) a203a23c code-review F1 (registered receipt-input omissions) overruled as out of scope, recorded as DEC-01; (3) one audited rework round for a203a23c after three same-class findings; (4) Decisions clause added to code and doc review prompts. A decision is recorded on the issue under ## Decisions and the gate is still run."
+    "Session 12 invoker rulings: (1) executor-trust model for aborted campaigns (12fdeb5b, DEC-01, protocol voided-attempt paragraph); (2) a203a23c code-review F1 (registered receipt-input omissions) overruled as out of scope, recorded as DEC-01; (3) one audited rework round for a203a23c after three same-class findings; (4) Decisions clause added to code and doc review prompts. A decision is recorded on the issue under ## Decisions and the gate is still run.",
+    "Session 12 wave 3, batch 1 (dispatched 2026-09-13T09:15Z): 5cbb6545, 1d4fd63d, 53c5a8c0 in fresh worktrees off 2d8b6c0b; 19513245 follows when a slot frees; the stories 2037941f and c04dd4ac are breakable (templates applies_to story) and need the bracketed breakdown before dispatch; 2c487595 and 706a8f93 are small bugs for sonnet slots; c04dd4ac also needs the eda07788 arms rebuilt first. Shared-surface conflict risk noted for tuning/, bitvec.rs and dev/tools/tuning-campaign-support; workers keep such edits in separate commits."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
