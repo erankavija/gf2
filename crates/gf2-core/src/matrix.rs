@@ -1588,6 +1588,13 @@ impl BitMatrix {
         acc.count_ones() & 1 == 1
     }
 
+    /// Row parities through the detected bundle's established fused
+    /// AND-population-count kernel.
+    ///
+    /// The kernel counts each row's intersection with `x` without a temporary
+    /// buffer or a second pass. The carry-save candidate is not selected
+    /// because its confirmation receipt does not qualify under the shared
+    /// measurement contract.
     #[cfg(feature = "simd")]
     #[inline(never)]
     fn matvec_simd(&self, x: &crate::BitVec, fns: &gf2_kernels_simd::LogicalFns) -> crate::BitVec {

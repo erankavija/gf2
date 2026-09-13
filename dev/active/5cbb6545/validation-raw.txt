@@ -1,0 +1,13 @@
+cargo-budget: 24 jobs (1 live, 24 cpus)
+    Finished `ci-test` profile [optimized] target(s) in 0.05s
+────────────
+ Nextest run ID eca045ea-d7ff-4ef4-b00c-7d2ad26f4b58 with nextest profile: ci
+    Starting 6 tests across 1 binary
+        PASS [   0.004s] (1/6) gf2-core::popcount_routes automatic_routes_retain_the_established_implementations
+        PASS [   0.004s] (2/6) gf2-core::popcount_routes every_fused_route_covers_the_shorter_operand
+        PASS [   0.004s] (3/6) gf2-core::popcount_routes every_fused_route_counts_the_intersection
+        PASS [   0.004s] (4/6) gf2-core::popcount_routes bit_vector_counts_honour_canonical_indexing_and_zero_tail_padding
+        PASS [   0.005s] (5/6) gf2-core::popcount_routes every_population_count_route_reproduces_the_reference
+        PASS [   0.005s] (6/6) gf2-core::popcount_routes matrix_vector_parity_agrees_across_strides_that_change_the_route
+────────────
+     Summary [   0.005s] 6 tests run: 6 passed, 0 skipped

@@ -1,0 +1,779 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "c0eb6e5e9329d125c3fd908247167c9b3a6b07bf6ee945f07b9ecb825c447cd1",
+  "campaign_id": "popcount-sweep-5cbb6545-20260913t123255z",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "popcount-route-selection",
+    "comparisons": 1,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 3,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "sweep-popcount-w1-scalar-popcnt",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.2270568644308901,
+        "lower": 1.2212248197214384,
+        "upper": 1.2307819677769278,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 16462600326459588177,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w2-scalar-popcnt",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.483082924419812,
+        "lower": 1.4810883609142462,
+        "upper": 1.4881746222241377,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 11157894570299629290,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w4-scalar-popcnt",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.236967787723427,
+        "lower": 1.2273003679636851,
+        "upper": 1.2434514745572858,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 7672809545808878023,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w7-scalar-popcnt",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.6489202269310235,
+        "lower": 1.6415259526347574,
+        "upper": 1.6552577752781872,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 4693814637306195686,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w8-nibble-vs-scalar",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.0469821300585873,
+        "lower": 1.0384851668862063,
+        "upper": 1.0584747270588744,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 1498734797832773994,
+        "pairs": 6
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w12-nibble-vs-scalar",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.2320192575728515,
+        "lower": 1.220546022875867,
+        "upper": 1.244988319593145,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 15398875595925432299,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16-nibble-vs-scalar",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.2333753151575002,
+        "lower": 1.2114445928652906,
+        "upper": 1.2390602682513403,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 4805042681558226368,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.49325410945789655,
+        "lower": 0.4908471746435432,
+        "upper": 0.4949807642330883,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 13785360453232265761,
+        "pairs": 6
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w32-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.7265630368625837,
+        "lower": 0.7189651725071642,
+        "upper": 0.7338670528059696,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 4110409513609602640,
+        "pairs": 6
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w64-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.80301311767458,
+        "lower": 0.7842563499131002,
+        "upper": 0.8263781504121358,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 12206330520382586449,
+        "pairs": 6
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w96-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.8257251484953941,
+        "lower": 0.8230411267734488,
+        "upper": 0.8289148750672692,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 13560058475004717263,
+        "pairs": 6
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w128-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.9460592125606342,
+        "lower": 0.9091855466206388,
+        "upper": 0.9502913521660585,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 15724546985808286143,
+        "pairs": 6
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w256-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.1074289839149216,
+        "lower": 1.1036105705552095,
+        "upper": 1.1112659575780772,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 4504580844883017790,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.31510949395921,
+        "lower": 1.3112956888746832,
+        "upper": 1.3160250494177648,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 10808504126955232268,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.3297867404263952,
+        "lower": 1.323639268251102,
+        "upper": 1.3365886287275615,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 14188929716354465819,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-off3-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.3085494178215455,
+        "lower": 1.2895679091785464,
+        "upper": 1.3109927099692653,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 466753132737874750,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-ones-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.3105034202128023,
+        "lower": 1.3059741811255738,
+        "upper": 1.3135894736189293,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 15630782229048460798,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-zeros-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.324995390564725,
+        "lower": 1.3218274775497416,
+        "upper": 1.3310076037141838,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 16473054379943319799,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-vs-libpopcnt",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.0612538528072066,
+        "lower": 1.057621201350269,
+        "upper": 1.0683524333062109,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 14774389818167123608,
+        "pairs": 6
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-vs-mula-avx2-harley-seal",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.9672938009202585,
+        "lower": 0.9548118717687809,
+        "upper": 0.9892034457815132,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 14879361379593023561,
+        "pairs": 6
+      },
+      "decision": "inconclusive",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-vs-libpopcnt",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.0365218351703285,
+        "lower": 1.0312799994582371,
+        "upper": 1.0420000380966397,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 10185022026289143729,
+        "pairs": 6
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-vs-mula-avx2-harley-seal",
+      "role": "exploratory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 0.9709844137746384,
+        "lower": 0.9678656953728368,
+        "upper": 0.9774179928054876,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 17864593412445993101,
+        "pairs": 6
+      },
+      "decision": "inconclusive",
+      "margins": {
+        "improvement": 1.2,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "sweep-popcount-w1m-streaming-csa",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.0699435017989485,
+        "lower": 1.0660343281839944,
+        "upper": 1.0790170288108187,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 18362386518774214007,
+        "pairs": 6
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.03
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}
