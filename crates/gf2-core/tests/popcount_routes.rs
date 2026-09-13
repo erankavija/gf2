@@ -10,7 +10,8 @@
 //! boundary, on random, all-zero and all-one data.
 
 use gf2_core::kernels::ops::{
-    and_popcount, popcount, resolve_and_popcount, resolve_popcount, AndPopcountFn, PopcountFn,
+    and_popcount, and_popcount_route, popcount, popcount_route, resolve_and_popcount,
+    resolve_popcount, AndPopcountFn, PopcountFn, PopcountRoute,
 };
 use gf2_core::kernels::Backend;
 use gf2_core::BitVec;
@@ -148,6 +149,28 @@ fn every_fused_route_covers_the_shorter_operand() {
                 "{route}, short-first, shorter length {short_len}"
             );
         }
+    }
+}
+
+#[test]
+fn automatic_routes_retain_the_established_implementations() {
+    for words in [0, 1, 7] {
+        assert_eq!(popcount_route(words), PopcountRoute::Scalar);
+        assert_eq!(and_popcount_route(words), PopcountRoute::Scalar);
+    }
+
+    let expected = if gf2_kernels_simd::detect().is_some() {
+        PopcountRoute::SimdNibbleLut
+    } else {
+        PopcountRoute::Scalar
+    };
+    for words in [8, 255, 256, 257, 1024, 16_384] {
+        assert_eq!(popcount_route(words), expected, "popcount at {words} words");
+        assert_eq!(
+            and_popcount_route(words),
+            expected,
+            "fused count at {words} words"
+        );
     }
 }
 
