@@ -1,0 +1,22 @@
+# command: dev/bench_results/6c6b09b1/run-byte-field-v4.sh window region-axpy-pilot
+# started_utc: 2026-09-12T09:11:40Z
+# gf2 revision (informational): 361e79298789108c8cfa88fed6df055328595fcf
+# addendum: dev/active/6c6b09b1/addendum-v4-region-axpy-pilot.json sha256 062008fb7c769c8ba75208706f53372e356bc2b11757acdcc690f90a1d795d80
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot.plan.json sha256 605c340ac1a355e983f6d478ad710fbdfe34ed8d25b932f0f3acf9874fd24ad0
+# build record: dev/active/6c6b09b1/conformance-v4/build-record.txt sha256 71061b546cb7f86397998d05367925acf48c6c5019ac516aa0203f2917e2997f
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 14.57 14.14 12.79
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot/execution.log
+# session 1 exit: 3 at 2026-09-12T09:13:13Z load 3.82 10.57 11.65
+# session 2 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot/execution.log
+# session 2 exit: 3 at 2026-09-12T09:15:06Z load 1.61 7.68 10.48
+# session 3 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-pilot/execution.log
+# session 3 exit: 0 at 2026-09-12T09:16:17Z load 1.28 6.24 9.75
+journal: 17 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/receipt.json

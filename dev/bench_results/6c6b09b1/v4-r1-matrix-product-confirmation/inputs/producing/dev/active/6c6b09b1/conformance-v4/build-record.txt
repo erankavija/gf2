@@ -1,0 +1,11 @@
+# Build record of the byte-field v4 campaigns (jit:6c6b09b1)
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# arm RUSTFLAGS: -C target-cpu=native
+# c compiler: cc (GCC) 16.2.1 20260810
+# executables the plans name (sha256, path relative to the repository root):
+17fded39f3d04f55e6090464a43c5e80ac6cefa53674fb808121ebd0ecd05103  target/6c6b09b1-survey/release/gf2-arm
+d21b319d507f2b883f8e5d298ecab090cde9e54a0a741fe12e04925c653260e8  target/6c6b09b1-survey/release/ext-arm
+ec35eb969c3128be492da39137393ddaa8c23709d08986d9a4ea777c938e3d34  target/6c6b09b1-survey/c/byte_field_conformance
+e7c384ddd581e1d156dc938fe2c530c9d2ee04a97bd84169d219a6715f68ce74  target/6c6b09b1-survey/c/backend_provenance
+5a544af0de11b1aae4e822e2a3caa645137376091ef192fd96829858d3dc17d2  target/release/benchmark-ab-runner
+9a685d57ba3340eb7d3b54d7d0c73b05feaeb74de3e36ac24f6d33e2676f835e  target/release/benchmark-acceptance

@@ -1,0 +1,124 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 1
+  },
+  "family": {
+    "id": "byte-field-arms-pilot",
+    "issue": "6c6b09b1",
+    "purpose": "consumer-family",
+    "description": "Exploratory arms that estimate the measurement resolution of the byte-field comparison before the confirmatory family freezes. One cell per operation shape the survey measures: fixed-coefficient region multiply-accumulate against ISA-L, dense GF(2^8) matrix multiply against M4RIE, and arbitrary pairwise multiplication against GF-Complete. No cell here is a baseline result."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-07T20:30:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "The confirmatory family sets the threshold once this pilot has measured the resolution; leaving it unresolved keeps every cell here exploratory.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A ten percent margin is the smallest band that exceeds the pilot noise this family expects on a quiet CCX1 while still separating implementations whose costs differ by an order of magnitude.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "Set in the confirmatory family from this pilot's measured resolution."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This survey is a feasibility study that changes no production kernel, so its adoption budget is zero by construction."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "axpy-isal-l2-1core",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "byte-region-axpy-gf256",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 11
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-m4rie-n128-1core",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dense-matmul-gf256",
+        "size": {
+          "n": 128
+        },
+        "seed": 12
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-gfcomplete-l2-1core",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "pairwise-multiply-gf256",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 13
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

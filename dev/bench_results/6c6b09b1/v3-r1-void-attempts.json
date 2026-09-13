@@ -1,0 +1,78 @@
+{
+  "kind": "void-family-ledger-attempts",
+  "summary": "Every attempt listed here measured no cell. A reservation spending zero comparisons and naming no candidate is what a pilot addendum always reserves, because a pilot declares only exploratory cells, so the ledger line alone cannot say whether the attempt produced data. These attempts produced none: they falsify nothing, support no claim, and consume neither a confirmatory comparison nor any candidate's confirmatory attempt. The family keeps them because the ledger chain rejects a removed attempt.",
+  "attempts": [
+    {
+      "family": "byte-field-region-axpy",
+      "ledger": "dev/bench_results/6c6b09b1/v3-region-axpy-family-ledger.jsonl",
+      "ledger_sequence": 1,
+      "campaign": "6c6b09b1-v3-r1-region-axpy-pilot",
+      "protocol_version": 3,
+      "addendum": "dev/active/6c6b09b1/addendum-v3-region-axpy-pilot.json",
+      "addendum_sha256": "cd93b17a7f541426a22b4c168ffde9d9e87fd447e8577919f4f0152938a2cc5d",
+      "reserved_comparisons": 0,
+      "reserved_candidates": [],
+      "cells_measured": 0,
+      "outcome": "the campaign stopped on an error and measured no further cell",
+      "execution_log_events": 10,
+      "terminal_event": "failed",
+      "terminal_detail": {
+        "error": "arm gf2-element did not exit cleanly: Exited { pid: 3284745, exit_code: 2, elapsed_ns: 13158892, all_descendants_reaped: true }"
+      },
+      "cells_completed": [],
+      "first_child_diagnostic": {
+        "arm": "gf2-element",
+        "cell_id": "axpy-4k-element-vs-isal",
+        "stderr": "byte-field arm: request does not decode: fresh tuning stdin is not one valid value: unknown variant `baseline`, expected one of `exploratory`, `confirmatory`, `holdout` at line 1 column 115\n"
+      }
+    },
+    {
+      "family": "byte-field-matrix-product",
+      "ledger": "dev/bench_results/6c6b09b1/v3-matrix-product-family-ledger.jsonl",
+      "ledger_sequence": 1,
+      "campaign": "6c6b09b1-v3-r1-matrix-product-pilot",
+      "protocol_version": 3,
+      "addendum": "dev/active/6c6b09b1/addendum-v3-matrix-product-pilot.json",
+      "addendum_sha256": "658865d14f2a348320394552cdef030f67fab91f179a68636c9fa8b1786dcb39",
+      "reserved_comparisons": 0,
+      "reserved_candidates": [],
+      "cells_measured": 0,
+      "outcome": "the campaign stopped on an error and measured no further cell",
+      "execution_log_events": 10,
+      "terminal_event": "failed",
+      "terminal_detail": {
+        "error": "arm gf2-element did not exit cleanly: Exited { pid: 3284806, exit_code: 2, elapsed_ns: 13099891, all_descendants_reaped: true }"
+      },
+      "cells_completed": [],
+      "first_child_diagnostic": {
+        "arm": "gf2-element",
+        "cell_id": "matmul-n64-element-vs-m4rie",
+        "stderr": "byte-field arm: request does not decode: fresh tuning stdin is not one valid value: unknown variant `baseline`, expected one of `exploratory`, `confirmatory`, `holdout` at line 1 column 119\n"
+      }
+    },
+    {
+      "family": "byte-field-pairwise-control",
+      "ledger": "dev/bench_results/6c6b09b1/v3-pairwise-control-family-ledger.jsonl",
+      "ledger_sequence": 1,
+      "campaign": "6c6b09b1-v3-r1-pairwise-control-pilot",
+      "protocol_version": 3,
+      "addendum": "dev/active/6c6b09b1/addendum-v3-pairwise-control-pilot.json",
+      "addendum_sha256": "836452ee0b00b4b5bedbbc0dc869f7c68afddfde9c413c13aec769fc28f195cc",
+      "reserved_comparisons": 0,
+      "reserved_candidates": [],
+      "cells_measured": 0,
+      "outcome": "the campaign stopped on an error and measured no further cell",
+      "execution_log_events": 10,
+      "terminal_event": "failed",
+      "terminal_detail": {
+        "error": "arm gf2-batch did not exit cleanly: Exited { pid: 3284866, exit_code: 2, elapsed_ns: 13109381, all_descendants_reaped: true }"
+      },
+      "cells_completed": [],
+      "first_child_diagnostic": {
+        "arm": "gf2-batch",
+        "cell_id": "pairwise-4k-batch-vs-gfcomplete",
+        "stderr": "byte-field arm: request does not decode: fresh tuning stdin is not one valid value: unknown variant `baseline`, expected one of `exploratory`, `confirmatory`, `holdout` at line 1 column 121\n"
+      }
+    }
+  ]
+}

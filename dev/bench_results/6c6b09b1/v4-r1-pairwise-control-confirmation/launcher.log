@@ -1,0 +1,18 @@
+# command: dev/bench_results/6c6b09b1/run-byte-field-v4.sh window pairwise-control-confirmation
+# started_utc: 2026-09-13T01:11:07Z
+# gf2 revision (informational): 6e9074604489ecaa860b5142281ec7c5ddd17251
+# addendum: dev/active/6c6b09b1/addendum-v4-pairwise-control-confirmation.json sha256 518513f4faa61461338526bb639e163859cda00cb16c64c0e0606c47c5f83f21
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-confirmation.plan.json sha256 aff7f95fcf40124e398899c6a6fe05a551e8203b63396e78ed2d43618be54aae
+# build record: dev/active/6c6b09b1/conformance-v4/build-record.txt sha256 71061b546cb7f86397998d05367925acf48c6c5019ac516aa0203f2917e2997f
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 1.17 1.05 0.69
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-confirmation/execution.log
+# session 1 exit: 3 at 2026-09-13T01:12:33Z load 1.16 1.08 0.74
+# session 2 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-pairwise-control-confirmation/execution.log
+# session 2 exit: 0 at 2026-09-13T01:13:57Z load 1.21 1.14 0.80
+journal: 6 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/6c6b09b1/v4-r1-pairwise-control-confirmation/receipt.json

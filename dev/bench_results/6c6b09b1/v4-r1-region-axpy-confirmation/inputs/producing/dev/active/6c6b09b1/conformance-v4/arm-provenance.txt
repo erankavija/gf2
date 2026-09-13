@@ -1,0 +1,74 @@
+# Byte-field survey arm provenance (jit:6c6b09b1)
+# observed_utc: 2026-09-12T06:38:05Z
+# host: Linux 7.2.2-arch1-1 x86_64, AMD Ryzen 9 5900X 12-Core Processor
+
+## Source pins
+# projected from fetch-build.sh, which re-verifies each pin on every run.
+nasm version=2.16.03 sha256=1412a1c760bbd05db026b6c0d1657affd6631cd0a63cddb6f73cc6d4aa616148 license=nasm-src/LICENSE
+m4ri version=20260122 sha256=7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404 license=m4ri-src/COPYING
+m4rie version=20250128 sha256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7 license=m4rie-src/COPYING
+gf-complete branch=master commit=a6862d10c9db467148f20eef2c6445ac9afd94d8 license=gf-complete/License.txt
+isa-l tag=v2.32.1 commit=7c3479e0a9dac17f448603ec1ad64c7c625f530c license=isa-l/LICENSE
+opt -O3 -march=native
+staging /home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1
+
+## Pinned sources as staged on this host
+gf-complete head=a6862d10c9db467148f20eef2c6445ac9afd94d8
+isa-l head=7c3479e0a9dac17f448603ec1ad64c7c625f530c
+m4ri-20260122.tar.gz sha256=7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404
+m4rie-20250128.tar.gz sha256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7
+nasm-2.16.03.tar.xz sha256=1412a1c760bbd05db026b6c0d1657affd6631cd0a63cddb6f73cc6d4aa616148
+
+## Licenses
+nasm sha256=1563996c52e220e15ef2418e67d39488255aa8c28c89e617074d3afe3ee329e0 first-line=NASM is now licensed under the 2-clause BSD license, also known as the 
+m4ri sha256=98193898c663001eff2fdcfb676e210c13042bc1a05e8d570c363efa396f8e24 first-line= GNU GENERAL PUBLIC LICENSE 
+m4rie sha256=98193898c663001eff2fdcfb676e210c13042bc1a05e8d570c363efa396f8e24 first-line= GNU GENERAL PUBLIC LICENSE 
+gf-complete sha256=cb9790699b4a3d56a43bba1dd859f7f41361cd224e8745a24eef933ea134a280 first-line=Copyright (c) 2013, James S. Plank, Ethan L. Miller, Kevin M. Greenan, 
+isa-l sha256=bc8fd4a3d031e65e05e9c9e2add2c3f336ce527fa85c1e31031c808b58216217 first-line= Copyright(c) 2011-2024 Intel Corporation All rights reserved. 
+
+## Compiler targeting
+m4ri=20260122
+m4rie=20250128
+isa-l=2.32.1
+gf-complete=ceph/gf-complete@a6862d10c9db
+cc=cc (GCC) 16.2.1 20260810
+cflags=-std=c11 -O3 -march=native -fPIC -Wall -Wextra -I/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-ext/prefix/include -DM4RIE_VERSION_STR='20250128' -DM4RI_VERSION_STR='20260122' -DGFCOMPLETE_VERSION_STR='ceph/gf-complete@a6862d10c9db'
+gcc-march-native=znver3
+rustc=rustc 1.95.0 (59807616e 2026-04-14)
+rust-arm-rustflags=-C target-cpu=native
+rust-arm-profile=release opt-level=3 lto=true codegen-units=1
+
+## Linked libraries of the external arm
+libisal.so.2.0.32 sha256=92f832d619ed20ba19f9a816aca34f89b71cb0d3f218b03512260dc0fdc1573d
+libgf_complete.so.1.0.0 sha256=316d71e3805925e2888ccf892ba2633d537b93d40c23d5d10764d06d12cbfb92
+libm4rie.so.1.0.0 sha256=8528ba4b024eb568d69f9f5f5bfb0845dfd74bb886c761bbb68235bb364e1217
+libm4ri.so.2.0.1 sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
+
+## Selected arithmetic backends, observed at run time
+cpu avx2=1 avx512f=0 ssse3=1 sse4.2=1 pclmul=1
+library isa-l 2.32.1 poly=0x11D compiled-in
+kernel   isa-l/ec_init_tables libisal.so.2 0x8f70 -> ec_init_tables_base [T]
+kernel   isa-l/gf_vect_mad libisal.so.2 0x2ab50 -> gf_vect_mad_avx2 [T]
+kernel   isa-l/gf_vect_mul libisal.so.2 0x27f70 -> gf_vect_mul_avx [T]
+kernel   isa-l/gf_vect_dot_prod libisal.so.2 0x28170 -> gf_vect_dot_prod_avx2 [T]
+kernel   isa-l/ec_encode_data libisal.so.2 0x269d0 -> ec_encode_data_avx2 [T]
+kernel   isa-l/gf_mul libisal.so.2 0x8500 -> gf_mul [T]
+library gf-complete ceph/gf-complete@a6862d10c9db poly=0x11D requested
+kernel   gf-complete/default/multiply.w32 libgf_complete.so.1 0x13360 -> gf_w8_default_multiply [t]
+kernel   gf-complete/default/multiply_region.w32 libgf_complete.so.1 0x19940 -> gf_w8_split_multiply_region_sse [t]
+kernel   gf-complete/split-table-4-8-simd/multiply.w32 libgf_complete.so.1 0x13420 -> gf_w8_split_multiply [t]
+kernel   gf-complete/split-table-4-8-simd/multiply_region.w32 libgf_complete.so.1 0x19940 -> gf_w8_split_multiply_region_sse [t]
+kernel   gf-complete/full-table/multiply.w32 libgf_complete.so.1 0x13320 -> gf_w8_table_multiply [t]
+kernel   gf-complete/full-table/multiply_region.w32 libgf_complete.so.1 0x13880 -> gf_w8_table_multiply_region [t]
+library m4rie 20250128 (over m4ri 20260122) poly=0x11D requested
+m4rie degree=8 minpoly=0x11D element-multiply-table=present
+kernel   m4rie/gf2e->mul libm4rie.so.1 0x5080 -> _gf2e_mul_table [t]
+kernel   m4rie/gf2e->inv libm4rie.so.1 0x5620 -> gf2e_inv [t]
+kernel   m4rie/mzed_add_multiple_of_row libm4rie.so.1 0xa2a0 -> mzed_add_multiple_of_row [T]
+m4rie strassen-cutoff-n=512
+m4rie mzed_mul 64x64 by 64x64 strassen=1 newton-john=1 naive=0 bitslice-karatsuba(slice=0 cling=0)
+m4rie mzed_mul 128x128 by 128x128 strassen=1 newton-john=1 naive=0 bitslice-karatsuba(slice=0 cling=0)
+m4rie mzed_mul 256x256 by 256x256 strassen=1 newton-john=1 naive=0 bitslice-karatsuba(slice=0 cling=0)
+m4rie mzed_mul 512x512 by 512x512 strassen=0 newton-john=0 naive=0 bitslice-karatsuba(slice=3 cling=1)
+m4rie mzed_mul 1024x1024 by 1024x1024 strassen=0 newton-john=0 naive=0 bitslice-karatsuba(slice=3 cling=1)
+m4rie mzed_mul 4x10 by 10x65536 strassen=1 newton-john=1 naive=1 bitslice-karatsuba(slice=0 cling=0)
