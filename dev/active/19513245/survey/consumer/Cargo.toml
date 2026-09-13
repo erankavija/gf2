@@ -1,0 +1,50 @@
+# Consumer-side byte-field feasibility harness (jit:19513245).
+#
+# A standalone workspace so the assessment adds no target, feature or
+# dependency to the production workspace. It consumes `gf2-core` by path with
+# the `simd` feature that gates runtime kernel dispatch, exactly as an
+# external user does, and it reuses the byte-field survey's arm driver
+# (`byte-field-arm-common`, the runner's wire contract and the conversion-cost
+# accounting) and its element representations and byte conversions
+# (`byte-field-gf2-side`) rather than restating either.
+#
+# One executable carries every arm of every campaign: the current consumer
+# path and the byte-field prototype differ only in the route the environment
+# selects, so both sides of a pair share one build identity.
+
+[workspace]
+
+[package]
+name = "bytefield-consumer"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+byte-field-arm-common = { path = "../../../6c6b09b1/survey/arm-common" }
+byte-field-gf2-side = { path = "../../../6c6b09b1/survey/gf2-side" }
+gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "consumer-arm"
+path = "src/bin/consumer-arm.rs"
+
+[[bin]]
+name = "consumer-verify"
+path = "src/bin/consumer-verify.rs"
+
+[[bin]]
+name = "consumer-profile"
+path = "src/bin/consumer-profile.rs"
+
+# The workspace release profile verbatim, so every measured executable is the
+# build a production receipt would measure.
+[profile.release]
+lto = "thin"
+codegen-units = 1
