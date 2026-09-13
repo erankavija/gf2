@@ -160,7 +160,9 @@ FAMILIES = {
     "ldpc-update-checknode-v1": {
         "arms": ("w1",),
         "objective": "comparator-gap",
-        "purpose": "decoder-family",
+        # An isolated check-node pass decodes no frame, so the family is a kernel
+        # family: a decoder family's cells must each carry a decoder declaration.
+        "purpose": "kernel-family",
         "ledger": "dev/bench_results/07ca8585/v4-update-checknode-family-ledger.jsonl",
         "metric_kind": "kernel-isolated",
         "scaling": "single-core-latency",
