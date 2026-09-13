@@ -252,9 +252,11 @@ pub fn popcount_route(word_len: usize) -> PopcountRoute {
 /// Reports the route [`resolve_and_popcount`] takes for `word_len` words.
 ///
 /// The two resolvers share the SIMD boundary, so this reports what
-/// [`popcount_route`] reports. The carry-save candidate remains available in
-/// the kernel bundle for conformance and research, but automatic dispatch
-/// retains the established fused nibble-lookup route.
+/// [`popcount_route`] reports: scalar below the threshold or when the SIMD
+/// bundle is unavailable, and the established fused nibble-lookup route at and
+/// above the threshold when that bundle is available. The carry-save candidate
+/// remains available in the kernel bundle for conformance and research but is
+/// not selected automatically.
 #[must_use]
 pub fn and_popcount_route(word_len: usize) -> PopcountRoute {
     popcount_route(word_len)
@@ -334,9 +336,11 @@ pub fn resolve_popcount(word_len: usize) -> PopcountFn {
 ///
 /// The fused kernels count `lhs & rhs` without materializing the AND, so a
 /// consumer that only needs the weight of an intersection avoids a temporary
-/// buffer and a second pass. Automatic dispatch retains the per-vector nibble
-/// lookup because the carry-save family's confirmation receipt does not
-/// qualify for production selection.
+/// buffer and a second pass. Automatic dispatch uses the scalar fused fallback
+/// below the bit-backend SIMD threshold or when the SIMD bundle is unavailable.
+/// At and above the threshold with that bundle available, it retains the
+/// per-vector nibble lookup because the carry-save family's confirmation
+/// receipt does not qualify for production selection.
 ///
 /// The count covers the shorter of the two slices.
 ///
