@@ -80,6 +80,16 @@ decisions over its contiguous run, and the scan stops at the first unsatisfied
 check. The result is the predicate `is_valid_codeword` computes, over the same
 matrix rows, without materialising either vector.
 
+### The GPU device layout
+
+The GPU LDPC stage derives its device layout from the same `EdgeLayout`, so its
+hard decisions stay the CPU decoder's. On this host's gfx1030 they are:
+[gpu-byte-identity.md](../../bench_results/07ca8585/preparation/gpu-byte-identity.md)
+records the kernel build, the six byte-identity legs that exercise the LDPC stage
+and their verdicts. All six pass, over both frozen workloads and all three
+supported algorithms, so the device layout carries the canonical layout without
+changing what the stage decides.
+
 ## The shared reduction
 
 `min_sum_check_row` performs the whole of one check. Pass one reads the `d_c`
@@ -205,18 +215,21 @@ per-frame evidence.
 
 ### Throughput
 
-The before/after and comparator campaigns are in the tables' "Campaigns"
-section, each with its acceptance verdict, its `qualifies` flag, its finding
-count on its own Source line, its journaled placement and its per-arm iteration
-distribution. The single-worker pilot of each family is accepted and measures
-both codes; both pilots put the changed decoder ahead of the path it replaces
-and narrow the comparator gap the predecessor measured, at intervals the tables
-carry. A pilot decides nothing: it fixes the resolution its confirmation freezes.
+Every campaign is in the tables' "Campaigns" section with its acceptance
+verdict, its `qualifies` flag, its finding count on its own Source line, its
+journaled placement and, where its cells declare a decoder, its per-arm iteration
+distribution. Four single-worker pilots are accepted and each measures both
+codes: the before/after pilot, which puts the changed decoder ahead of the path
+it replaces and narrows the comparator gap the predecessor measured at whole
+decoding, and the three comparator pilots of REQ-10's three granularities. A
+pilot decides nothing: it fixes the resolution its confirmation freezes.
 
 ### The residual gap
 
-The comparator pilot leaves the changed decoder behind AFF3CT [Cassagne2019] at
-one worker on both codes, by the factors its cells carry. The predecessor's
+All three comparator pilots leave the changed decoder behind AFF3CT
+[Cassagne2019] at one worker on both codes, by the factors their cells carry, and
+the isolated check-node cells locate part of that gap in the update itself rather
+than only in the whole decode. The predecessor's
 [lever ranking](../../bench_results/3be770d5/tables.md) accounts for what remains
 and assigns each part an owner. The levers this issue spends are canonical edge
 indexing, allocation removal, the shared reduction, the flat layout and the
@@ -225,20 +238,67 @@ ranking carries as comparator estimates with no gf2 mechanism: inter-frame SIMD,
 tracked by `ed3d490e`, and quantized and layered decoding with QC-aware
 intra-frame work, tracked by `f63a2464`. The predecessor's refutation rule for
 this issue's levers is a re-sampled profile rather than a clock, and that
-re-sampling is a cell of the profile series rather than of a throughput family;
-it is not run here.
+re-sampling is a cell of the profile series rather than of a throughput family.
+[run-profile-resample.sh](../../bench_results/07ca8585/run-profile-resample.sh)
+runs it over this issue's `after` build, with the predecessor's own session
+script, case set and arm catalogue unchanged so the sampled quantities stay the
+ones the ranking was derived from, and with the executables pinned by this
+issue's
+[kernel build identity](../../bench_results/07ca8585/preparation/kernel-build-identity.json)
+rather than the predecessor's. Its nine sessions exceed a working session's
+timed budget, so it is queued for the benchmark window beside this issue's other
+queued campaigns, and the tables gain its figures when it runs.
 
-### What REQ-10 does not cover yet
+### The three REQ-10 granularities
 
-REQ-10 asks for matched comparisons at three granularities. Full decoding is
-measured, at one worker on both codes, by an accepted comparator pilot whose
-confirmation is frozen and queued. The other two are **not delivered**, for the
-reasons the [plan](plan.md) states: a fixed-iteration cell needs its own prepared
-quality corpus, because the harness refuses an arm whose settings differ from the
-settings the reused `c077a88b` evidence was produced under, and an isolated
-check-node cell needs a new arm on each side, because neither the harness nor the
-pinned AFF3CT shim exposes the update rule outside a whole decode. Neither is
-approximated by relabelling a whole-decode cell.
+REQ-10 asks for the matched comparison at three granularities over the same
+frozen workloads. Each is a family of its own, each has an accepted single-worker
+pilot and a confirmation frozen from that pilot's committed receipt, and each
+publishes a comparison without selecting anything.
+
+**Full decoding** is the `3be770d5` steady-state operation unchanged, measured by
+`ldpc-update-comparator-single-worker-v1` on both codes.
+
+**Full iterations** is `ldpc-update-fixed-iteration-v1`: both arms decode at the
+iteration cap with syndrome stopping off, so each performs the same declared
+number of flooding iterations on every frame instead of stopping at a passing
+syndrome. The measured harness refuses an arm whose settings differ from the
+settings its prepared quality evidence was produced under, and the reused
+`c077a88b` corpus was produced under syndrome stopping, so this issue produced
+the corpus these settings require: `preparation/quality-fixed/`, untimed and
+committed, every recorded frame decoded once per arm by
+[ldpc-fixed-quality](survey/arms/src/bin/ldpc-fixed-quality.rs) from the same
+frozen frames. The tables' "Prepared quality at the iteration cap" section
+carries its counts, and the campaign launcher checks its digests before the arms
+read it.
+
+**Check-node updates** is `ldpc-update-checknode-v1`: one flooding check-node
+pass over a prepared variable-to-check message array, with no variable update, no
+termination rule, no conversion and no allocation inside the timed call. Neither
+the measured harness nor the pinned AFF3CT shim exposes the update rule outside a
+whole decode, so this issue adds one arm on each side, in
+[its own workspace](survey/arms/) with its own target directory, which is why
+every executable the frozen whole-decoding confirmations were built from stays
+byte-identical. The gf2 arm runs `min_sum_check_row` over the canonical
+`EdgeLayout` check runs; the AFF3CT arm runs AFF3CT's own
+`tools::Update_rule_NMS` over the check-node scan order of its flooding decoder,
+through a translation unit whose C entry points are disjoint from the pinned
+shims' so a binary may link both.
+
+Both arms read the same messages on the same edges. One function derives the
+prepared array and both arms call it, so neither can prepare its own; each cell
+freezes the checksum of that array and of the pass's output in the canonical
+check-major edge order, and every worker of either arm reproduces both or the arm
+fails. The matched-ness is measured rather than argued: the tables'
+"Matched-ness of the isolated check-node arms" section records that the two
+passes write bit-identical outputs on both codes and that AFF3CT's transpose is
+the canonical check-edge-to-variable-edge map, which is what places the same
+message on the same edge.
+
+Scaling is REQ-10's second axis. The single-core arm of every family is measured.
+The physical-core and SMT arms are the `ldpc-update-multicore-v1` and
+`ldpc-update-comparator-multicore-v1` families, whose cells arrive from their
+queued campaigns.
 
 ## Adoption
 
@@ -251,10 +311,18 @@ addendum is frozen from its committed pilot receipt by the canonical freezer
 comparator single-worker confirmation likewise
 ([addendum](addendum-ldpc-update-comparator-single-worker.json),
 [derivation](addendum-ldpc-update-comparator-single-worker-derivation.txt)).
-Those confirmations and the two multicore pilots exceed a working session's
-timed budget and are queued for a benchmark window; the tables gain their cells
-when they run, and a family in which nothing qualifies keeps the established
-path and stays recorded exactly as the evaluator records it.
+The two REQ-10 granularity families freeze their own confirmations the same way
+([check-node](addendum-ldpc-update-checknode.json), with its
+[derivation](addendum-ldpc-update-checknode-derivation.txt), and
+[fixed-iteration](addendum-ldpc-update-fixed-iteration.json), with its
+[derivation](addendum-ldpc-update-fixed-iteration-derivation.txt)); they publish
+comparisons and select nothing, so no adoption follows them.
+
+Those four confirmations, the two multicore pilots and the re-sampled profile
+series exceed a working session's timed budget and are queued for a benchmark
+window; the tables gain their cells when they run, and a family in which nothing
+qualifies keeps the established path and stays recorded exactly as the evaluator
+records it.
 
 The tree carries the replacement now, on the strength of the accepted pilots'
 direction, the allocation counter and the behavioural suite. What the queued
@@ -277,5 +345,24 @@ untimed and runs outside the mutex:
 [record-alloc-census.py](survey/record-alloc-census.py) and
 [record-allocation-counter.sh](survey/record-allocation-counter.sh). A
 confirmation refuses to run until its addendum is committed and unmodified.
+
+The REQ-10 granularity arms are a second build, from
+[survey/arms](survey/arms/) into its own target directory, with the command and
+the digests
+[kernel-build-identity.json](../../bench_results/07ca8585/preparation/kernel-build-identity.json)
+records; [record-kernel-preparation.py](survey/record-kernel-preparation.py)
+writes that file and the producing manifest those families' plans select. Their
+untimed preparation runs outside the mutex:
+[ldpc-checknode-verify](survey/arms/src/bin/ldpc-checknode-verify.rs) for the
+matched-ness receipt and
+[ldpc-fixed-quality](survey/arms/src/bin/ldpc-fixed-quality.rs) for the
+fixed-stopping quality corpus. `run-campaign.sh checknode` and
+`run-campaign.sh fixed-iteration` then run those families, and
+[run-profile-resample.sh](../../bench_results/07ca8585/run-profile-resample.sh)
+runs the re-sampled profile series. The GPU byte-identity legs need only a
+gfx1030 and the two commands
+[gpu-byte-identity.md](../../bench_results/07ca8585/preparation/gpu-byte-identity.md)
+records.
+
 [summarize.py](survey/summarize.py) regenerates the tables from the committed
 evidence and reproduces them byte for byte.
