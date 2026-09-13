@@ -1,0 +1,111 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "pilot-1c602857-20260913t010028z",
+  "issue": "1c602857",
+  "label": "pilot",
+  "campaign_seed": 20260912101,
+  "addendum": "dev/active/1c602857/addendum-v4-public-clmul-pilot.json",
+  "producing_manifest": "dev/active/1c602857/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "portable-path": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing clmul_wide_slice_portable: the bit-by-bit schoolbook that reaches no capability dispatch, which is the public path before this issue routed it.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/dev/active/1c602857/arms/target/release/clmul-wide-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_CLMUL_PATH": "portable"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "public-path": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing the public clmul_wide and clmul_wide_slice long-product API, routed through the capability dispatch this issue gives it.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/dev/active/1c602857/arms/target/release/clmul-wide-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_CLMUL_PATH": "public"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "clmul-wide-4w-owned",
+      "baseline_arm": "portable-path",
+      "candidate_arm": "public-path",
+      "case": {
+        "kind": "clmul-wide",
+        "words": 4,
+        "inner": 64,
+        "seed": 1001
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "clmul-wide-9w-owned",
+      "baseline_arm": "portable-path",
+      "candidate_arm": "public-path",
+      "case": {
+        "kind": "clmul-wide",
+        "words": 9,
+        "inner": 64,
+        "seed": 1002
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "clmul-wide-4w-accumulate",
+      "baseline_arm": "portable-path",
+      "candidate_arm": "public-path",
+      "case": {
+        "kind": "clmul-wide-accumulate",
+        "words": 4,
+        "inner": 64,
+        "seed": 1003
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "clmul-wide-1w-dispatch-overhead",
+      "baseline_arm": "portable-path",
+      "candidate_arm": "public-path",
+      "case": {
+        "kind": "clmul-wide",
+        "words": 1,
+        "inner": 64,
+        "seed": 1004
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "clmul-wide-2w-dispatch-overhead",
+      "baseline_arm": "portable-path",
+      "candidate_arm": "public-path",
+      "case": {
+        "kind": "clmul-wide",
+        "words": 2,
+        "inner": 64,
+        "seed": 1005
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "clmul-wide-16w-dispatch-overhead",
+      "baseline_arm": "portable-path",
+      "candidate_arm": "public-path",
+      "case": {
+        "kind": "clmul-wide",
+        "words": 16,
+        "inner": 64,
+        "seed": 1006
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 2
+}

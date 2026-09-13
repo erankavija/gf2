@@ -1,0 +1,22 @@
+# command: dev/active/1c602857/run-public-clmul.sh pilot
+# started_utc: 2026-09-13T01:00:28Z
+# gf2 revision (informational): 3c35eee2dcd8152ed67e52056ef09128bf399f36
+# mode: pilot
+# addendum: dev/active/1c602857/addendum-v4-public-clmul-pilot.json
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/bench-stage/1c602857-pilot.plan.json
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/bench-stage/1c602857-pilot
+# arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/dev/active/1c602857/arms/target/release/clmul-wide-arm
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/release/benchmark-acceptance
+# load_avg_start:  04:00:28 up 9 days,  5:29,  8 users,  load average: 0.24, 0.16, 0.18
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/bench-stage/1c602857-pilot/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/bench-stage/1c602857-pilot/execution.log
+# session 2 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/bench-stage/1c602857-pilot/execution.log
+# session 3 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  04:01:11 up 9 days,  5:30,  8 users,  load average: 0.80, 0.33, 0.24
+# finished_utc: 2026-09-13T01:01:11Z
