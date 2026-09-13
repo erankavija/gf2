@@ -106,7 +106,9 @@ fn run() -> Result<bool, String> {
         .count();
     let mut degrees: BTreeMap<usize, usize> = BTreeMap::new();
     for check in 0..prepared.layout.m() {
-        *degrees.entry(prepared.layout.check_range(check).len()).or_default() += 1;
+        *degrees
+            .entry(prepared.layout.check_range(check).len())
+            .or_default() += 1;
     }
     let identical = differing == 0 && canonical_transpose;
     println!(

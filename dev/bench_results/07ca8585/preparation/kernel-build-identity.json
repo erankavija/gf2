@@ -1,21 +1,21 @@
 {
   "schema": "ldpc-update-kernel-build-identity-v1",
-  "observed_utc": "2026-09-13T17:11:30+00:00",
+  "observed_utc": "2026-09-13T18:01:16+00:00",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
   "cxx": "c++ (GCC) 16.2.1 20260810",
   "rustflags": "-C target-cpu=native",
   "cargo_profile": "release: opt-level 3, lto, codegen-units 1, debug line-tables-only",
   "build_command": "CARGO_CI_NO_SCCACHE=1 GF2_AFF3CT_ROOT=<aff3ct root> CARGO_TARGET_DIR=\"$PWD/target/ldpc-update-arms\" RUSTFLAGS='-C target-cpu=native' ./scripts/cargo-budget.sh cargo +1.95 build --offline --release --features aff3ct --manifest-path dev/active/07ca8585/survey/arms/Cargo.toml",
-  "revision": "ec8ffd00f217db1336c5d067fe6bff4cf572a0bc",
+  "revision": "3f7b3dceeb7245905d382a08b27d64a3308564b3",
   "kernel": {
     "workspace": "dev/active/07ca8585/survey/arms",
     "target_dir": "target/ldpc-update-arms/release",
     "note": "its own workspace and its own target directory, so every executable the frozen whole-decoding confirmations were built from stays byte-identical",
     "executables": {
-      "gf2-checknode-arm": "b93dffa00d616fd02a1b384035e23eb5ddca9200789feda64be2ae28f2efd0b8",
-      "aff3ct-checknode-arm": "0d2420fd971933b09482ab948c7480d37f3b93983334b6a75b8ebc145c97aa9a",
-      "ldpc-checknode-verify": "0e187dc119192e2446f5c94ac7358d0efa8168d73778fa9ca44148dae19ec6b9",
-      "ldpc-fixed-quality": "6f3418c55baa17cdfe70568a91c27abebb35665f280e7cefff9fe3a48062641c"
+      "gf2-checknode-arm": "84c498b09e99b10dc8322cbadf56f90692a8a2fd15b9ddcc2e5d121847480e4f",
+      "aff3ct-checknode-arm": "d5ee5755b46d96d7e7b05afa1a0591efc832ccd0b03c428f48f72d8b39fd7cde",
+      "ldpc-checknode-verify": "0ed52502a45c1a3ef3aa0c2795858aacf361d7183e3e776d23095e28774482ba",
+      "ldpc-fixed-quality": "1302a29cb1bc9d168419fc7e2dfc9dc6a22c5ab195f3e58a922d23c963e27bc8"
     }
   },
   "profile_resample": {

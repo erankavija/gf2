@@ -20,8 +20,8 @@
 use gf2_coding::ldpc::{DecoderConfig, LdpcDecoder};
 use gf2_coding::llr::Llr;
 use ldpc_survey::arm::{
-    self, ArmSettings, DecoderCase, Normalization, NormalizationKind, Precision, QualityAccumulator,
-    Schedule, Stopping, StoppingKind,
+    self, ArmSettings, DecoderCase, Normalization, NormalizationKind, Precision,
+    QualityAccumulator, Schedule, Stopping, StoppingKind,
 };
 use ldpc_throughput::aff3ct::{Handle, Selection};
 use ldpc_throughput::gf2::config;
@@ -69,7 +69,8 @@ fn run() -> Result<(), String> {
     let mut accumulator = QualityAccumulator::default();
     let batch_size = match arm_name.as_str() {
         "gf2" => {
-            let built = ldpc_survey::read_alist_code(&workload.alist()).map_err(|e| e.to_string())?;
+            let built =
+                ldpc_survey::read_alist_code(&workload.alist()).map_err(|e| e.to_string())?;
             let settings: DecoderConfig = config(norm, false);
             let mut decoder = LdpcDecoder::with_config(built, settings);
             let mut packed = vec![Llr::zero(); n];
@@ -91,8 +92,7 @@ fn run() -> Result<(), String> {
         }
         "aff3ct" => {
             let selection = Selection::from_environment()?;
-            let mut handle =
-                Handle::build(&workload.alist(), k, n, cap, norm, false, &selection)?;
+            let mut handle = Handle::build(&workload.alist(), k, n, cap, norm, false, &selection)?;
             let wave = handle.wave();
             if wave != 1 {
                 return Err(format!(
@@ -125,7 +125,7 @@ fn run() -> Result<(), String> {
             kind: StoppingKind::Fixed,
             crc: None,
         },
-        batch_size: batch_size,
+        batch_size,
     };
     let quality = accumulator.finish(arm::peak_rss_bytes(), settings);
     let mut text = serde_json::to_string_pretty(&quality).map_err(|e| e.to_string())?;

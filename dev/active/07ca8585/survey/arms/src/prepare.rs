@@ -139,9 +139,9 @@ pub fn check_pass(layout: &EdgeLayout, rule: MinSumRule, inputs: &[Llr], outputs
 /// One flooding variable-node pass, used by the preparation only.
 fn variable_pass(layout: &EdgeLayout, channel: &[f32], incoming: &[Llr], outgoing: &mut [Llr]) {
     let slots = layout.var_edge_to_check_edge();
-    for var in 0..layout.n() {
+    for (var, received) in channel.iter().enumerate() {
         let range = layout.var_range(var);
-        let mut posterior = channel[var];
+        let mut posterior = *received;
         for slot in range.clone() {
             posterior += incoming[slots[slot] as usize].value();
         }
