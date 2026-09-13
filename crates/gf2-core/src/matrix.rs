@@ -1202,12 +1202,17 @@ impl BitMatrix {
     /// # Implementation
     ///
     /// Uses a 64×64 bit-block transpose primitive driven from
-    /// [`gf2_kernels_simd::transpose`]: an O(N log N) Hacker's Delight
-    /// recursive bit-twiddle (V4) on the scalar fallback, and the measured
-    /// AVX2 YMM bit-twiddle lane on x86_64 hosts that report AVX2 at
-    /// runtime. A separate AVX2 PSHUFB byte-tile lane is kept in the SIMD
-    /// crate for B1 artefact inspection, but production dispatch uses the
-    /// faster measured bit-twiddle lane.
+    /// [`gf2_kernels_simd::transpose`], whose `TransposeLane` family names
+    /// every implementation of the block contract: the scalar Hacker's
+    /// Delight bit-twiddle lane, which needs no processor feature, and the
+    /// AVX2 lanes (`avx2-bit-twiddle`, `avx2-ymm6`, `avx2-pshufb`,
+    /// `avx2-movemask`), each published only after a runtime AVX2 check.
+    /// This method resolves the production lane through
+    /// `gf2_kernels_simd::transpose::detect`, the `PRODUCTION_PREFERENCE`
+    /// order, under this crate's `simd` cargo feature; without that feature
+    /// the scalar lane is called directly. Every lane is reachable by name
+    /// through [`transpose_with_block_kernel`](Self::transpose_with_block_kernel),
+    /// which runs the same driver at the lane a caller picks.
     ///
     /// The outer driver tiles the matrix into 64×64 bit-blocks, calls
     /// the kernel once per block, and writes the transposed block at
