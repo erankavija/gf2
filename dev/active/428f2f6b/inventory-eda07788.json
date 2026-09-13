@@ -745,6 +745,66 @@
       "artifact_value": "three of the four shared gap cells fall outside the withdrawn interval; the streaming estimate 0.5213 falls outside the pilot's [0.5618, 0.5653]",
       "agrees": true,
       "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "eda07788-40",
+      "line_before": 17,
+      "statement": "The exploratory re-measurement, with arms that apply the declared cache state, is accepted with zero findings",
+      "numbers": [
+        "zero findings"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 re-measurement with the repaired warm pass, Source line"
+      },
+      "artifact_value": "0 findings",
+      "agrees": true,
+      "disposition": "removed-restatement (rework round 1: finding count cited through the Source line)"
+    },
+    {
+      "id": "eda07788-41",
+      "line_before": 24,
+      "statement": "The confirmation `nr-derate-confirmation-eda07788-20260910t170957z` is accepted with zero findings",
+      "numbers": [
+        "zero findings"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-nr-derate.md",
+        "location": "Protocol-v3 confirmation, Source line"
+      },
+      "artifact_value": "0 findings",
+      "agrees": true,
+      "disposition": "removed-restatement (rework round 1: finding count cited through the Source line)"
+    },
+    {
+      "id": "eda07788-42",
+      "line_before": 187,
+      "statement": "The campaign `remeasure-v3-eda07788-r1` is accepted with no findings.",
+      "numbers": [
+        "no findings"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 re-measurement with the repaired warm pass, Source line"
+      },
+      "artifact_value": "0 findings",
+      "agrees": true,
+      "disposition": "removed-restatement (rework round 1: finding count cited through the Source line)"
+    },
+    {
+      "id": "eda07788-43",
+      "line_before": 420,
+      "statement": "The confirmation receipt is accepted with zero findings.",
+      "numbers": [
+        "zero findings"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-nr-derate.md",
+        "location": "Protocol-v3 confirmation, Source line"
+      },
+      "artifact_value": "0 findings",
+      "agrees": true,
+      "disposition": "removed-restatement (rework round 1: finding count cited through the Source line)"
     }
   ],
   "unbacked_numbers": [

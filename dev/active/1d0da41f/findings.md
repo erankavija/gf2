@@ -42,14 +42,17 @@ explicit, capability-checked preference.
 The protocol-v3 continuation preserves the negative result and does not create
 a new confirmatory performance claim. Its first exploratory
 [pilot](../../bench_results/1d0da41f/v3-pilot/acceptance-summary.md) covers the
-four single-core cells and is accepted with no finding, but its odd-tail cell
+four single-core cells and is accepted (its finding count is on the Source
+line of the tables' "Protocol-v3 exploratory pilots" section for `v3-pilot`),
+but its odd-tail cell
 draws an interval wide enough to put the conservative resolution above both
 frozen margins (tables "Protocol-v3 exploratory pilots", row
 `raw-batch-odd-tail-65-1core`; "Measurement resolution", row "v3 exploratory
 pilot", whose `Frozen margins admissible` cell reads no). A separately frozen,
 one-cell
 [resolution pilot](../../bench_results/1d0da41f/v3-pilot-r2/acceptance-summary.md)
-at the protocol's maximum pilot pair count is accepted with no finding, and the
+at the protocol's maximum pilot pair count is accepted (its finding count is
+on that section's Source line for `v3-pilot-r2`), and the
 resolution it derives leaves the original margins admissible: one plus that
 resolution stays below both the equivalence margin and the worthwhile-speedup
 threshold the family froze (tables "Measurement resolution", row "v3 resolution

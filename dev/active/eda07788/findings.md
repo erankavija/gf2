@@ -14,15 +14,17 @@ measured under protocol version 3.
   comparison in them is withdrawn, including the gap and its attribution to
   the adapter's representation conversion; the receipts stay byte-identical
   as history. The exploratory re-measurement, with arms that apply the
-  declared cache state, is accepted with zero findings, and every comparator
-  cell decides against the external arm at both MODCODs, both FECFRAME
-  lengths and both cache states. Every cell is exploratory and the family
+  declared cache state, is accepted (its finding count is on the Source line
+  of the DVB-T2 tables' *Protocol-v3 re-measurement with the repaired warm
+  pass* section), and every comparator cell decides against the external arm
+  at both MODCODs, both FECFRAME lengths and both cache states. Every cell is exploratory and the family
   ledger records the campaign as an attempt that reserves no comparison, so
   the re-measurement supports no confirmatory claim (§1, *Exploratory
   re-measurement outcomes*).
 - **5G NR LLR de-rate-matching** against AFF3CT. The confirmation
-  `nr-derate-confirmation-eda07788-20260910t170957z` is accepted with zero
-  findings, and all six cells are confirmatory. gf2 leads the external arm in
+  `nr-derate-confirmation-eda07788-20260910t170957z` is accepted (its finding
+  count is on the Source line of the NR tables' *Protocol-v3 confirmation*
+  section), and all six cells are confirmatory. gf2 leads the external arm in
   every gap cell by a wide margin, which the NR tables' *Protocol-v3
   confirmation* section carries in the `Speedup [interval]` and `gf2 faster by`
   columns of the five `-gap-` rows. The decision records `fail`, the protocol's
@@ -184,8 +186,9 @@ is committed.
 
 ### Exploratory re-measurement outcomes
 
-The campaign `remeasure-v3-eda07788-r1` is accepted with no findings. Every
-cell is `measured` at its frozen pair count, no window is flagged anywhere, and
+The campaign `remeasure-v3-eda07788-r1` is accepted; its finding count is on
+the Source line of the DVB-T2 tables' *Protocol-v3 re-measurement with the
+repaired warm pass* section. Every cell is `measured` at its frozen pair count, no window is flagged anywhere, and
 every arm reports the cache state its cell declares as applied (DVB-T2 tables,
 *Protocol-v3 re-measurement with the repaired warm pass*, source line and the
 `Pairs`, `Flagged windows` columns). That section carries every value,
@@ -417,7 +420,8 @@ resolution (*Measurement resolution*).
 
 **Confirmation.** The
 [confirmation receipt](../../bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/receipt.json)
-is accepted with zero findings. It is the family's first attempt and reserves
+is accepted, with its finding count on the Source line of the NR tables'
+*Protocol-v3 confirmation* section. It is the family's first attempt and reserves
 only its own comparisons, so the attempt alpha, the corrected alpha and the
 expected bootstrap draws per tail clear P-20 (NR tables, *Family accounting
 (P-20)*, whose `tail condition` row reads holds). Every gap cell decides
