@@ -47,7 +47,7 @@
       },
       "artifact_value": "4 cells, 0 findings, verdict accepted",
       "agrees": true,
-      "disposition": "kept-design-count-with-pointer"
+      "disposition": "kept-design-count-with-pointer; finding count removed (rework round 1: a finding count is an acceptance result, cited through the tables' Source line)"
     },
     {
       "id": "1d0da41f-04",
@@ -73,7 +73,7 @@
       },
       "artifact_value": "1 cell, 24 pairs, 0 findings, verdict accepted",
       "agrees": true,
-      "disposition": "kept-design-count-with-pointer"
+      "disposition": "kept-design-count-with-pointer; finding count removed (rework round 1: a finding count is an acceptance result, cited through the tables' Source line)"
     },
     {
       "id": "1d0da41f-06",
