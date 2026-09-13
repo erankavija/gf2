@@ -28,7 +28,7 @@ dense matrix consumer (tables § Lane confirmation → Cells). Its receipt does
 not qualify for production selection, because two of its six confirmatory cells
 are improvement cells that record `not-material`; § [Adoption](#6-adoption)
 gives the reason, the arithmetic that leaves this family no further confirmatory
-attempt, and what is therefore left to the invoker. The published lane is
+attempt, and which issue owns the selector decision. The published lane is
 unchanged.
 
 The comparator family reaches the confirmatory decision the transpose question
@@ -296,7 +296,9 @@ bootstrap tail is reached at no cell count (tables § Tail support and remaining
 budget of the lane-selection family, which recomputes both rates from the
 ledger the confirmation pins). A renamed family is a different scientific question, not a way to
 retry this one. So the choice is between adopting on the evidence as recorded
-and never adopting, and that is an invoker decision rather than a worker's: the
+and never adopting. That choice belongs to `63bad95d`, which calibrates the
+production kernel selectors through the canonical tuning mechanism and reads
+this family's receipts as its evidence: the
 evidence says the candidate is materially faster on the block kernel, on a
 streaming run and on the parity unpack, confirmed not worse everywhere else it
 is measured, materially ahead of both external comparators, and correct on every
@@ -367,19 +369,22 @@ where the conversion belongs, not for a figure.
 
 ## 10. Follow-ups
 
-1. **Adopting the candidate lane** is the open decision § 6 states, and it is the
-   invoker's: this family can produce no qualifying receipt, and the evidence it
-   did produce is complete. The change is one constant.
+1. **Adopting the candidate lane** is the open decision § 6 states, and
+   `63bad95d` owns it: that issue calibrates the production kernel selectors
+   through the canonical tuning mechanism. This family can produce no
+   qualifying receipt, the evidence it did produce is complete, and the change
+   is one constant.
 2. **Admitting the bit-sliced BCH encoding family at a production batch length**
    is 04b85d10's ranked entry 2 and a tuning-profile question; this issue
-   measures the conversion inside that family but selects no profile.
+   measures the conversion inside that family but selects no profile, and
+   `63bad95d` owns the profile the production build installs.
 3. **Word-wise systematic codeword assembly** is 04b85d10's ranked entry 1. Its
    share of the BCH consumer is far larger than the conversion's (tables
    § Conversion share of the whole BCH consumer bounds what a faster conversion
    can give), so it is the lever that consumer has left. It is a packing change
-   in `gf2-coding` rather than a transpose lane, and it has no owning issue yet.
+   in `gf2-coding` rather than a transpose lane, and `8e53235b` owns it.
 4. **The 63 and 65 consumer geometries against the external comparators** stay
    with 6fb89a3c, whose ledger admits no further confirmatory attempt for them;
    a confirmatory decision there needs a new family narrow enough to carry at
    most two comparisons, as this issue's comparator family is for the kernel
-   geometry.
+   geometry; `1362381c` records it among the remaining limits.
