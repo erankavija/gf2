@@ -57,6 +57,23 @@ def matvec_case(rows, cols, seed):
     return {"op": "matvec", "rows": rows, "cols": cols, "seed": seed}
 
 
+def bytes_per_call(case):
+    """Useful operand bytes one call of this case feeds to its route.
+
+    Every generator that turns a receipt's times into a rate reads this, so the
+    byte count behind a rate has one definition: the operand bytes the route
+    reads, both operands of a fused case included.
+    """
+    if case["op"] == "popcount":
+        return case["words"] * 8
+    if case["op"] == "and_popcnt":
+        return case["words"] * 8 * 2
+    if case["op"] == "matvec":
+        row_bytes = (case["cols"] + 63) // 64 * 8
+        return case["rows"] * row_bytes * 2
+    raise SystemExit(f"unknown case op {case['op']!r}")
+
+
 def cell(
     cell_id,
     baseline,
