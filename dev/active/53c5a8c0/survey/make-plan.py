@@ -59,7 +59,10 @@ def arms_for(family, arm_dir):
             os.path.join(arm_dir, "poly-arm"),
             "native",
             "gf2 host-targeted build timing the public clmul_wide_slice long "
-            "product and the whole-consumer Gf2mWide::mul_ref field product.",
+            "product, the whole-consumer Gf2mWide::mul_ref field product, and "
+            "the dispatched raw carry-less batch, which is the production "
+            "default path for independent products.",
+            {"GF2_CROSSOVER_PATH": "batch"},
         ),
         grid.GF2X_ARM: arm(
             os.path.join(arm_dir, "gf2x-poly-arm"),
