@@ -1,0 +1,1093 @@
+; release assembly of the measured gf2 paths (jit:53c5a8c0)
+;
+; Produced by dev/active/53c5a8c0/survey/dump-asm.py from the bytes of
+; the executable named below and from nothing else. Instruction
+; addresses are replaced by offsets from each body's entry point, so a
+; body that has not changed reproduces byte for byte. A branch into
+; the same body reads `.L+0x<offset from that body's entry>`.
+;
+; executable   : target/53c5a8c0-arms-native/release/poly-arm
+; sha256       : 5d66284d85896ee2c238f128c199c3ffd9c0ffc7ab10aec82f482f0b094e5602
+; objdump      : GNU objdump (GNU Binutils) 2.47
+; disassembler : objdump -d -M intel --demangle --no-show-raw-insn
+;
+; body         : gf2_kernels_simd::gf2m_wide::clmul_wide4_ymm_safe
+;                nm symbol at 0x41dc0, 354 bytes
+; body         : gf2_kernels_simd::gf2m_wide::clmul_wide9_ymm_safe
+;                nm symbol at 0x41f30, 1251 bytes
+; body         : clmul_crossover_arms::gf2_backend::owned_product::<4, 8>
+;                long_product jump table, 4-word entry, tail call to 0x2b5c0, 168 bytes
+; body         : clmul_crossover_arms::gf2_backend::owned_product::<9, 18>
+;                long_product jump table, 9-word entry, tail call to 0x2abc0, 254 bytes
+; body         : clmul_crossover_arms::gf2_backend::owned_product::<16, 32>
+;                long_product jump table, 16-word entry, tail call to 0x2a8a0, 792 bytes
+; body         : clmul_crossover_arms::gf2_backend::owned_product::<64, 128>
+;                long_product jump table, 64-word entry, tail call to 0x2b330, 644 bytes
+; body         : clmul_crossover_arms::gf2_backend::owned_product::<256, 512>
+;                long_product explicit comparison, 256-word entry, tail call to 0x2a2f0, 676 bytes
+
+;==========================================================
+; symbol: gf2_kernels_simd::gf2m_wide::clmul_wide4_ymm_safe
+; located: nm symbol at 0x41dc0, 354 bytes
+;==========================================================
+
+	vmovdqu	ymm3,YMMWORD PTR [rsi]
+	vpbroadcastq	ymm1,QWORD PTR [rsi+0x8]
+	vpbroadcastq	ymm0,QWORD PTR [rdi]
+	vbroadcasti128	ymm4,XMMWORD PTR [rdi+0x10]
+	vpbroadcastq	ymm6,QWORD PTR [rsi+0x18]
+	vpalignr	xmm5,xmm4,XMMWORD PTR [rdi],0x8
+	vpblendd	ymm1,ymm3,ymm1,0x30
+	vpermq	ymm3,ymm3,0xd4
+	vpclmullqlqdq	ymm2,ymm0,ymm1
+	vmovdqu	xmm1,XMMWORD PTR [rsi+0x10]
+	vpermq	ymm10,ymm2,0xff
+	vmovq	QWORD PTR [rdx],xmm2
+	vpblendd	ymm1,ymm1,ymm6,0xf0
+	vpclmullqlqdq	ymm6,ymm4,ymm3
+	vpclmullqlqdq	ymm8,ymm0,ymm1
+	vinserti128	ymm0,ymm5,xmm5,0x1
+	vpclmullqlqdq	ymm5,ymm0,ymm3
+	vpclmullqlqdq	ymm9,ymm0,ymm1
+	vpclmullqlqdq	ymm0,ymm4,ymm1
+	vpbroadcastq	ymm4,QWORD PTR [rdi+0x18]
+	vextracti128	xmm14,ymm6,0x1
+	vpermq	ymm7,ymm8,0xed
+	vextracti128	xmm11,ymm8,0x1
+	vpxor	xmm8,xmm8,xmm10
+	vpbroadcastq	xmm8,xmm8
+	vextracti128	xmm12,ymm5,0x1
+	vpxor	xmm8,xmm8,xmm5
+	vpblendd	xmm11,xmm11,xmm9,0xc
+	vpclmullqlqdq	ymm3,ymm4,ymm3
+	vpxor	xmm11,xmm11,xmm7
+	vextracti128	xmm7,ymm9,0x1
+	vpblendd	xmm9,xmm9,xmm14,0xc
+	vpclmullqlqdq	ymm1,ymm4,ymm1
+	vpermq	ymm4,ymm0,0xaa
+	vpxor	xmm9,xmm11,xmm9
+	vpalignr	xmm11,xmm0,xmm6,0x8
+	vpbroadcastq	xmm6,xmm6
+	vpxor	xmm9,xmm9,xmm11
+	vpblendd	xmm11,xmm14,xmm3,0xc
+	vpalignr	xmm13,xmm7,xmm12,0x8
+	vpxor	xmm9,xmm9,xmm11
+	vpxor	xmm9,xmm9,xmm13
+	vextracti128	xmm13,ymm2,0x1
+	vpalignr	xmm2,xmm12,xmm2,0x8
+	vpxor	xmm4,xmm4,xmm0
+	vextracti128	xmm0,ymm0,0x1
+	vpxor	xmm4,xmm7,xmm4
+	vpunpckhqdq	xmm4,xmm4,xmm1
+	vpblendd	xmm8,xmm13,xmm8,0xc
+	vpxor	xmm2,xmm8,xmm2
+	vinserti128	ymm2,ymm2,xmm9,0x1
+	vpermq	ymm9,ymm3,0x84
+	vextracti128	xmm3,ymm3,0x1
+	vpunpckhqdq	xmm0,xmm3,xmm0
+	vpblendd	ymm5,ymm9,ymm5,0xf
+	vpblendd	ymm5,ymm5,ymm6,0xc
+	vpxor	ymm2,ymm2,ymm5
+	vmovdqu	YMMWORD PTR [rdx+0x8],ymm2
+	vpermq	ymm2,ymm1,0xe8
+	vextracti128	xmm1,ymm1,0x1
+	vpxor	xmm0,xmm0,xmm2
+	vpxor	xmm0,xmm4,xmm0
+	vmovdqu	XMMWORD PTR [rdx+0x28],xmm0
+	vpextrq	QWORD PTR [rdx+0x38],xmm1,0x1
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::gf2m_wide::clmul_wide9_ymm_safe
+; located: nm symbol at 0x41f30, 1251 bytes
+;==========================================================
+
+	sub	rsp,0x208
+	vmovq	xmm2,QWORD PTR [rsi]
+	vpbroadcastq	ymm5,QWORD PTR [rdi]
+	vpbroadcastq	ymm1,QWORD PTR [rdi+0x8]
+	vmovdqu	xmm9,XMMWORD PTR [rsi+0x38]
+	vpxor	xmm3,xmm3,xmm3
+	vpermq	ymm7,YMMWORD PTR [rsi+0x8],0xd4
+	vpermq	ymm8,YMMWORD PTR [rsi+0x18],0xd4
+	vpermq	ymm10,YMMWORD PTR [rsi+0x28],0xd4
+	vpxor	xmm4,xmm4,xmm4
+	vpxor	xmm14,xmm14,xmm14
+	vmovq	xmm0,xmm5
+	vpbroadcastq	ymm2,xmm2
+	vpblendd	ymm0,ymm0,ymm1,0x30
+	vpsrldq	xmm1,xmm9,0x8
+	vpblendd	ymm1,ymm1,ymm2,0x30
+	vpbroadcastq	ymm2,QWORD PTR [rdi+0x38]
+	vpblendd	ymm6,ymm1,ymm3,0xc0
+	vpbroadcastq	ymm1,QWORD PTR [rdi+0x18]
+	vpclmullqlqdq	ymm0,ymm0,ymm6
+	vpblendd	ymm13,ymm7,ymm4,0xcc
+	vpblendd	ymm3,ymm10,ymm4,0xcc
+	vmovdqu	YMMWORD PTR [rsp+0x1e0],ymm0
+	vpbroadcastq	ymm0,QWORD PTR [rdi+0x10]
+	vmovdqu	YMMWORD PTR [rsp+0x160],ymm0
+	vmovq	xmm0,xmm0
+	vpblendd	ymm0,ymm0,ymm1,0x30
+	vpbroadcastq	ymm1,QWORD PTR [rdi+0x28]
+	vpclmullqlqdq	ymm0,ymm0,ymm6
+	vmovdqu	YMMWORD PTR [rsp+0x1c0],ymm0
+	vpbroadcastq	ymm0,QWORD PTR [rdi+0x20]
+	vmovdqu	YMMWORD PTR [rsp+0x140],ymm0
+	vmovq	xmm0,xmm0
+	vpblendd	ymm0,ymm0,ymm1,0x30
+	vpbroadcastq	ymm1,QWORD PTR [rdi+0x30]
+	vpclmullqlqdq	ymm0,ymm0,ymm6
+	vmovdqu	YMMWORD PTR [rsp+0x1a0],ymm0
+	vpermq	ymm0,ymm9,0xd4
+	vmovdqu	YMMWORD PTR [rsp+0x120],ymm1
+	vmovq	xmm1,xmm1
+	vpblendd	ymm1,ymm1,ymm2,0x30
+	vmovq	xmm2,QWORD PTR [rdi+0x8]
+	vpclmullqlqdq	ymm1,ymm1,ymm6
+	vmovdqu	YMMWORD PTR [rsp+0x180],ymm1
+	vinserti128	ymm1,ymm2,xmm2,0x1
+	vpclmullqlqdq	ymm2,ymm1,ymm13
+	vpclmullqlqdq	ymm12,ymm1,ymm3
+	vmovdqu	YMMWORD PTR [rsp-0x20],ymm2
+	vpblendd	ymm2,ymm8,ymm4,0xcc
+	vpblendd	ymm4,ymm0,ymm4,0xcc
+	vpclmullqlqdq	ymm0,ymm1,ymm4
+	vpclmullqlqdq	ymm11,ymm1,ymm2
+	vmovq	xmm1,QWORD PTR [rdi+0x18]
+	vmovdqu	YMMWORD PTR [rsp+0x80],ymm0
+	vinserti128	ymm1,ymm1,xmm1,0x1
+	vpclmullqlqdq	ymm0,ymm1,ymm2
+	vpclmullqlqdq	ymm6,ymm1,ymm13
+	vmovdqu	YMMWORD PTR [rsp-0x80],ymm0
+	vpclmullqlqdq	ymm0,ymm1,ymm3
+	vmovdqu	YMMWORD PTR [rsp-0x40],ymm0
+	vpclmullqlqdq	ymm0,ymm1,ymm4
+	vmovq	xmm1,QWORD PTR [rdi+0x28]
+	vmovdqu	YMMWORD PTR [rsp+0xa0],ymm0
+	vinserti128	ymm1,ymm1,xmm1,0x1
+	vpclmullqlqdq	ymm0,ymm1,ymm13
+	vmovdqu	YMMWORD PTR [rsp-0x60],ymm0
+	vpclmullqlqdq	ymm0,ymm1,ymm2
+	vmovdqu	YMMWORD PTR [rsp+0x20],ymm0
+	vpclmullqlqdq	ymm0,ymm1,ymm3
+	vmovdqu	YMMWORD PTR [rsp+0x40],ymm0
+	vpclmullqlqdq	ymm0,ymm1,ymm4
+	vmovq	xmm1,QWORD PTR [rdi+0x38]
+	vmovdqu	YMMWORD PTR [rsp+0xc0],ymm0
+	vinserti128	ymm0,ymm1,xmm1,0x1
+	vpclmullqlqdq	ymm1,ymm0,ymm13
+	vpbroadcastq	ymm13,xmm9
+	vmovdqu	YMMWORD PTR [rsp+0xe0],ymm1
+	vpclmullqlqdq	ymm1,ymm0,ymm2
+	vpbroadcastq	ymm2,QWORD PTR [rsi+0x8]
+	vmovdqu	YMMWORD PTR [rsp+0x60],ymm1
+	vmovq	xmm1,QWORD PTR [rsi]
+	vpblendd	ymm1,ymm1,ymm2,0x30
+	vpclmullqlqdq	ymm2,ymm0,ymm3
+	vpclmullqlqdq	ymm0,ymm0,ymm4
+	vpbroadcastq	ymm4,QWORD PTR [rsi+0x28]
+	vmovdqu	YMMWORD PTR [rsp],ymm2
+	vpbroadcastq	ymm2,QWORD PTR [rsi+0x18]
+	vmovdqu	YMMWORD PTR [rsp+0x100],ymm0
+	vpsrldq	ymm0,ymm7,0x8
+	vpblendd	ymm7,ymm0,ymm2,0x30
+	vpsrldq	ymm0,ymm8,0x8
+	vpblendd	ymm2,ymm5,ymm14,0xcc
+	vpblendd	ymm8,ymm0,ymm4,0x30
+	vpsrldq	ymm0,ymm10,0x8
+	vpclmullqlqdq	ymm15,ymm2,ymm1
+	vpclmullqlqdq	ymm5,ymm2,ymm7
+	vmovdqa	ymm10,ymm9
+	vpblendd	ymm0,ymm0,ymm13,0x30
+	vpblendd	ymm13,ymm14,YMMWORD PTR [rsp+0x160],0x33
+	vpclmullqlqdq	ymm4,ymm2,ymm8
+	vpclmullqlqdq	ymm3,ymm2,ymm0
+	vpxor	ymm4,ymm11,ymm4
+	vpxor	ymm3,ymm12,ymm3
+	vpclmullqlqdq	ymm2,ymm13,ymm1
+	vpxor	ymm2,ymm2,YMMWORD PTR [rsp-0x20]
+	vpclmullqlqdq	ymm11,ymm13,ymm7
+	vpclmullqlqdq	ymm9,ymm13,ymm8
+	vpxor	ymm9,ymm9,YMMWORD PTR [rsp-0x80]
+	vpxor	ymm2,ymm2,ymm5
+	vpxor	ymm5,ymm11,ymm6
+	vpclmullqlqdq	ymm6,ymm13,ymm0
+	vpxor	ymm9,ymm9,ymm3
+	vpxor	ymm3,ymm6,YMMWORD PTR [rsp-0x40]
+	vpxor	ymm4,ymm4,ymm5
+	vpblendd	ymm5,ymm14,YMMWORD PTR [rsp+0x140],0x33
+	vpxor	ymm6,ymm3,YMMWORD PTR [rsp+0x80]
+	vpclmullqlqdq	ymm11,ymm5,ymm1
+	vpclmullqlqdq	ymm12,ymm5,ymm7
+	vpclmullqlqdq	ymm13,ymm5,ymm8
+	vpclmullqlqdq	ymm5,ymm5,ymm0
+	vpxor	ymm5,ymm5,YMMWORD PTR [rsp+0x40]
+	vpxor	ymm5,ymm5,YMMWORD PTR [rsp+0xa0]
+	vpxor	ymm3,ymm11,ymm4
+	vpxor	ymm4,ymm12,YMMWORD PTR [rsp-0x60]
+	vpblendd	ymm12,ymm14,YMMWORD PTR [rsp+0x120],0x33
+	vpxor	ymm11,ymm13,YMMWORD PTR [rsp+0x20]
+	vpclmullqlqdq	ymm13,ymm12,ymm1
+	vpclmullqlqdq	ymm14,ymm12,ymm7
+	vpxor	ymm4,ymm13,ymm4
+	vpxor	ymm11,ymm11,ymm14
+	vmovq	xmm13,QWORD PTR [rdi+0x40]
+	vpxor	xmm14,xmm14,xmm14
+	vpxor	ymm4,ymm9,ymm4
+	vpclmullqlqdq	ymm9,ymm12,ymm8
+	vpxor	ymm6,ymm11,ymm6
+	vpclmullqlqdq	ymm11,ymm12,ymm0
+	vmovq	xmm12,QWORD PTR [rdi+0x40]
+	vpxor	ymm9,ymm9,YMMWORD PTR [rsp+0x60]
+	vpxor	ymm11,ymm11,YMMWORD PTR [rsp]
+	vpxor	ymm11,ymm11,YMMWORD PTR [rsp+0xc0]
+	vpbroadcastq	ymm12,xmm12
+	vpblendd	ymm12,ymm13,ymm12,0x30
+	vpblendd	ymm12,ymm12,ymm14,0xc0
+	vpclmullqlqdq	ymm1,ymm12,ymm1
+	vpxor	ymm1,ymm1,YMMWORD PTR [rsp+0xe0]
+	vpclmullqlqdq	ymm0,ymm12,ymm0
+	vpxor	ymm6,ymm6,ymm1
+	vpclmullqlqdq	ymm1,ymm12,ymm7
+	vpxor	ymm1,ymm9,ymm1
+	vpxor	ymm9,ymm1,ymm5
+	vpclmullqlqdq	ymm1,ymm12,ymm8
+	vmovdqu	ymm12,YMMWORD PTR [rsp+0x1c0]
+	vpxor	ymm7,ymm11,ymm1
+	vmovdqu	ymm11,YMMWORD PTR [rsp+0x1e0]
+	vpxor	ymm1,ymm0,YMMWORD PTR [rsp+0x100]
+	vpshufb	ymm0,ymm10,YMMWORD PTR [rip+0xfffffffffffc8757]
+	vpxor	ymm8,ymm12,ymm2
+	vinserti128	ymm2,ymm15,xmm2,0x1
+	vpxor	ymm5,ymm11,ymm15
+	vpclmullqlqdq	ymm0,ymm13,ymm0
+	vmovdqu	ymm13,YMMWORD PTR [rsp+0x180]
+	vperm2i128	ymm10,ymm5,ymm8,0x31
+	vpalignr	ymm5,ymm10,ymm5,0x8
+	vpblendd	ymm5,ymm5,ymm14,0x3
+	vmovdqu	ymm14,YMMWORD PTR [rsp+0x1a0]
+	vpxor	ymm2,ymm2,ymm5
+	vmovdqu	YMMWORD PTR [rdx],ymm2
+	vextracti128	xmm2,ymm3,0x1
+	vextracti128	xmm5,ymm14,0x1
+	vpxor	xmm2,xmm5,xmm2
+	vextracti128	xmm5,ymm8,0x1
+	vpunpckhqdq	xmm5,xmm5,xmm3
+	vpunpcklqdq	xmm3,xmm3,xmm2
+	vpunpckhqdq	xmm2,xmm2,xmm4
+	vpxor	xmm3,xmm3,xmm5
+	vpxor	ymm5,ymm13,ymm4
+	vmovdqu	XMMWORD PTR [rdx+0x20],xmm3
+	vextracti128	xmm3,ymm5,0x1
+	vpunpcklqdq	xmm3,xmm4,xmm3
+	vpxor	ymm4,ymm9,ymm12
+	vpxor	xmm2,xmm3,xmm2
+	vpermq	ymm3,ymm5,0xff
+	vpbroadcastq	xmm5,xmm4
+	vpermq	ymm4,ymm4,0x55
+	vmovdqu	XMMWORD PTR [rdx+0x30],xmm2
+	vpxor	ymm2,ymm11,ymm6
+	vpxor	xmm3,xmm2,xmm3
+	vmovq	QWORD PTR [rdx+0x40],xmm3
+	vperm2i128	ymm3,ymm9,ymm6,0x13
+	vpblendd	ymm3,ymm3,ymm5,0xc
+	vextracti128	xmm5,ymm6,0x1
+	vpunpckhqdq	xmm2,xmm2,xmm5
+	vpxor	ymm5,ymm14,ymm7
+	vpbroadcastq	ymm6,xmm5
+	vpblendd	ymm2,ymm2,ymm4,0xf0
+	vpblendd	ymm2,ymm2,ymm6,0xc0
+	vpxor	ymm2,ymm3,ymm2
+	vpxor	ymm3,ymm13,ymm1
+	vmovdqu	YMMWORD PTR [rdx+0x48],ymm2
+	vpblendd	ymm2,ymm3,ymm7,0xf0
+	vpbroadcastq	ymm3,xmm0
+	vpermq	ymm2,ymm2,0xd2
+	vpblendd	ymm2,ymm2,ymm3,0xc0
+	vpshufd	xmm3,xmm5,0xee
+	vpblendd	ymm1,ymm1,ymm3,0xf
+	vextracti128	xmm3,ymm7,0x1
+	vpblendd	ymm1,ymm1,ymm3,0xc
+	vpxor	ymm1,ymm2,ymm1
+	vmovdqu	YMMWORD PTR [rdx+0x68],ymm1
+	vpextrq	QWORD PTR [rdx+0x88],xmm0,0x1
+	add	rsp,0x208
+	vzeroupper
+	ret
+
+;==========================================================
+; symbol: clmul_crossover_arms::gf2_backend::owned_product::<4, 8>
+; located: long_product jump table, 4-word entry, tail call to 0x2b5c0, 168 bytes
+;==========================================================
+
+	sub	rsp,0x98
+	cmp	rsi,0x4
+	jne	.L+0x5e
+	cmp	rcx,0x4
+	jne	.L+0x83
+	lea	rax,[rsp+0x10]
+	vxorps	xmm0,xmm0,xmm0
+	mov	rsi,rdx
+	vmovups	YMMWORD PTR [rsp+0x30],ymm0
+	vmovups	YMMWORD PTR [rsp+0x10],ymm0
+	mov	rdx,rax
+	vzeroupper
+	call	gf2_core::gf2m::wide::clmul_wide_dispatch
+	vmovups	ymm0,YMMWORD PTR [rsp+0x10]
+	vmovups	ymm1,YMMWORD PTR [rsp+0x30]
+	lea	rax,[rsp+0x50]
+	vmovups	YMMWORD PTR [rsp+0x70],ymm1
+	vmovups	YMMWORD PTR [rsp+0x50],ymm0
+	add	rsp,0x98
+	vzeroupper
+	ret
+.L+0x5e:
+	lea	rdi,[rip+0xfffffffffffdfb85]
+	lea	rcx,[rip+0x799dc]
+	lea	r8,[rip+0x797fd]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7d725]
+.L+0x83:
+	lea	rdi,[rip+0xfffffffffffdfb60]
+	lea	rcx,[rip+0x799b7]
+	lea	r8,[rip+0x797f0]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7d700]
+
+;==========================================================
+; symbol: clmul_crossover_arms::gf2_backend::owned_product::<9, 18>
+; located: long_product jump table, 9-word entry, tail call to 0x2abc0, 254 bytes
+;==========================================================
+
+	sub	rsp,0x138
+	cmp	rsi,0x9
+	jne	.L+0xb4
+	cmp	rcx,0x9
+	jne	.L+0xd9
+	lea	rax,[rsp+0x10]
+	vxorps	xmm0,xmm0,xmm0
+	vmovups	YMMWORD PTR [rsp+0x80],ymm0
+	mov	rsi,rdx
+	vmovups	YMMWORD PTR [rsp+0x70],ymm0
+	vmovups	YMMWORD PTR [rsp+0x50],ymm0
+	vmovups	YMMWORD PTR [rsp+0x30],ymm0
+	vmovups	YMMWORD PTR [rsp+0x10],ymm0
+	mov	rdx,rax
+	vzeroupper
+	call	gf2_core::gf2m::wide::clmul_wide_dispatch
+	vmovups	ymm0,YMMWORD PTR [rsp+0x80]
+	vmovups	ymm4,YMMWORD PTR [rsp+0x10]
+	vmovups	ymm1,YMMWORD PTR [rsp+0x30]
+	vmovups	ymm2,YMMWORD PTR [rsp+0x50]
+	vmovups	ymm3,YMMWORD PTR [rsp+0x70]
+	lea	rax,[rsp+0xa0]
+	vmovups	YMMWORD PTR [rsp+0x110],ymm0
+	vmovups	YMMWORD PTR [rsp+0x100],ymm3
+	vmovups	YMMWORD PTR [rsp+0xe0],ymm2
+	vmovups	YMMWORD PTR [rsp+0xc0],ymm1
+	vmovups	YMMWORD PTR [rsp+0xa0],ymm4
+	add	rsp,0x138
+	vzeroupper
+	ret
+.L+0xb4:
+	lea	rdi,[rip+0xfffffffffffe052f]
+	lea	rcx,[rip+0x7a386]
+	lea	r8,[rip+0x7a1a7]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7e0cf]
+.L+0xd9:
+	lea	rdi,[rip+0xfffffffffffe050a]
+	lea	rcx,[rip+0x7a361]
+	lea	r8,[rip+0x7a19a]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7e0aa]
+
+;==========================================================
+; symbol: clmul_crossover_arms::gf2_backend::owned_product::<16, 32>
+; located: long_product jump table, 16-word entry, tail call to 0x2a8a0, 792 bytes
+;==========================================================
+
+	push	r15
+	push	r14
+	push	r13
+	push	r12
+	push	rbx
+	sub	rsp,0x210
+	cmp	rsi,0x10
+	jne	.L+0x2ce
+	cmp	rcx,0x10
+	jne	.L+0x2f3
+	vpxor	xmm0,xmm0,xmm0
+	vmovdqu	YMMWORD PTR [rsp+0x10],ymm0
+	vmovdqu	YMMWORD PTR [rsp+0x30],ymm0
+	vmovdqu	YMMWORD PTR [rsp+0x50],ymm0
+	vmovdqu	YMMWORD PTR [rsp+0x70],ymm0
+	vmovdqu	YMMWORD PTR [rsp+0x90],ymm0
+	vmovdqu	YMMWORD PTR [rsp+0xb0],ymm0
+	vmovdqu	YMMWORD PTR [rsp+0xd0],ymm0
+	vmovdqu	YMMWORD PTR [rsp+0xf0],ymm0
+	xor	eax,eax
+	xor	esi,esi
+	jmp	.L+0x7d
+	nop	WORD PTR [rax+rax*1+0x0]
+.L+0x70:
+	inc	rsi
+	cmp	rsi,0x10
+	je	.L+0x22e
+.L+0x7d:
+	mov	r8,QWORD PTR [rdi+rsi*8]
+	lea	r9,[rsp+rsi*8+0x10]
+	xor	r10d,r10d
+	jmp	.L+0xb4
+	nop	DWORD PTR [rax+rax*1+0x0]
+.L+0x90:
+	vmovq	xmm0,r14
+	vmovq	xmm1,r15
+	vpunpcklqdq	xmm0,xmm0,xmm1
+.L+0x9e:
+	vpxor	xmm0,xmm0,XMMWORD PTR [r9+rbx*8]
+	add	r10,0x4
+	vmovdqu	XMMWORD PTR [r9+rbx*8],xmm0
+	cmp	r10,0x10
+	je	.L+0x70
+.L+0xb4:
+	mov	r11,QWORD PTR [rdx+r10*8]
+	vpxor	xmm0,xmm0,xmm0
+	vpxor	xmm1,xmm1,xmm1
+	test	r11,r11
+	je	.L+0x107
+	xor	ebx,ebx
+	xor	r14d,r14d
+	nop	WORD PTR [rax+rax*1+0x0]
+.L+0xd0:
+	tzcnt	rcx,r11
+	xor	r15d,r15d
+	shld	r15,r8,cl
+	shlx	r12,r8,rcx
+	test	cl,0x40
+	cmovne	r15,r12
+	cmovne	r12,rax
+	xor	r14,r15
+	xor	rbx,r12
+	blsr	r11,r11
+	jne	.L+0xd0
+	vmovq	xmm1,rbx
+	vmovq	xmm2,r14
+	vpunpcklqdq	xmm1,xmm1,xmm2
+.L+0x107:
+	vpxor	xmm1,xmm1,XMMWORD PTR [r9+r10*8]
+	mov	rbx,r10
+	or	rbx,0x1
+	mov	r11,QWORD PTR [rdx+rbx*8]
+	vmovdqu	XMMWORD PTR [r9+r10*8],xmm1
+	test	r11,r11
+	je	.L+0x167
+	xor	r14d,r14d
+	xor	r15d,r15d
+	nop	DWORD PTR [rax+0x0]
+.L+0x130:
+	tzcnt	rcx,r11
+	xor	r12d,r12d
+	shld	r12,r8,cl
+	shlx	r13,r8,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,rax
+	xor	r15,r12
+	xor	r14,r13
+	blsr	r11,r11
+	jne	.L+0x130
+	vmovq	xmm0,r14
+	vmovq	xmm1,r15
+	vpunpcklqdq	xmm0,xmm0,xmm1
+.L+0x167:
+	vpxor	xmm0,xmm0,XMMWORD PTR [r9+rbx*8]
+	mov	r11,r10
+	or	r11,0x2
+	vpxor	xmm1,xmm1,xmm1
+	vmovdqu	XMMWORD PTR [r9+rbx*8],xmm0
+	mov	rbx,QWORD PTR [rdx+r11*8]
+	vpxor	xmm0,xmm0,xmm0
+	test	rbx,rbx
+	je	.L+0x1d7
+	xor	r14d,r14d
+	xor	r15d,r15d
+	data16	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x1a0:
+	tzcnt	rcx,rbx
+	xor	r12d,r12d
+	shld	r12,r8,cl
+	shlx	r13,r8,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,rax
+	xor	r15,r12
+	xor	r14,r13
+	blsr	rbx,rbx
+	jne	.L+0x1a0
+	vmovq	xmm1,r14
+	vmovq	xmm2,r15
+	vpunpcklqdq	xmm1,xmm1,xmm2
+.L+0x1d7:
+	vpxor	xmm1,xmm1,XMMWORD PTR [r9+r11*8]
+	mov	rbx,r10
+	or	rbx,0x3
+	vmovdqu	XMMWORD PTR [r9+r11*8],xmm1
+	mov	r11,QWORD PTR [rdx+rbx*8]
+	test	r11,r11
+	je	.L+0x9e
+	xor	r14d,r14d
+	xor	r15d,r15d
+	nop	DWORD PTR [rax]
+.L+0x200:
+	tzcnt	rcx,r11
+	xor	r12d,r12d
+	shld	r12,r8,cl
+	shlx	r13,r8,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,rax
+	xor	r15,r12
+	xor	r14,r13
+	blsr	r11,r11
+	jne	.L+0x200
+	jmp	.L+0x90
+.L+0x22e:
+	vmovups	ymm1,YMMWORD PTR [rsp+0xd0]
+	vmovups	ymm2,YMMWORD PTR [rsp+0xb0]
+	vmovups	ymm0,YMMWORD PTR [rsp+0xf0]
+	vmovups	ymm4,YMMWORD PTR [rsp+0x10]
+	vmovups	ymm3,YMMWORD PTR [rsp+0x70]
+	lea	rax,[rsp+0x110]
+	vmovups	YMMWORD PTR [rsp+0x1d0],ymm1
+	vmovups	ymm1,YMMWORD PTR [rsp+0x90]
+	vmovups	YMMWORD PTR [rsp+0x1b0],ymm2
+	vmovups	ymm2,YMMWORD PTR [rsp+0x50]
+	vmovups	YMMWORD PTR [rsp+0x1f0],ymm0
+	vmovups	YMMWORD PTR [rsp+0x170],ymm3
+	vmovups	YMMWORD PTR [rsp+0x110],ymm4
+	vmovups	YMMWORD PTR [rsp+0x190],ymm1
+	vmovups	ymm1,YMMWORD PTR [rsp+0x30]
+	vmovups	YMMWORD PTR [rsp+0x150],ymm2
+	vmovups	YMMWORD PTR [rsp+0x130],ymm1
+	add	rsp,0x210
+	pop	rbx
+	pop	r12
+	pop	r13
+	pop	r14
+	pop	r15
+	vzeroupper
+	ret
+.L+0x2ce:
+	lea	rdi,[rip+0xfffffffffffe0635]
+	lea	rcx,[rip+0x7a48c]
+	lea	r8,[rip+0x7a2ad]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7e1d5]
+.L+0x2f3:
+	lea	rdi,[rip+0xfffffffffffe0610]
+	lea	rcx,[rip+0x7a467]
+	lea	r8,[rip+0x7a2a0]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7e1b0]
+
+;==========================================================
+; symbol: clmul_crossover_arms::gf2_backend::owned_product::<64, 128>
+; located: long_product jump table, 64-word entry, tail call to 0x2b330, 644 bytes
+;==========================================================
+
+	push	r15
+	push	r14
+	push	r13
+	push	r12
+	push	rbx
+	sub	rsp,0x810
+	cmp	rsi,0x40
+	jne	.L+0x23a
+	cmp	rcx,0x40
+	jne	.L+0x25f
+	mov	rbx,rdx
+	mov	r14,rdi
+	lea	rdi,[rsp+0x10]
+	mov	edx,0x400
+	xor	esi,esi
+	xor	r15d,r15d
+	call	QWORD PTR [rip+0x7d989]
+	xor	eax,eax
+	jmp	.L+0x5d
+	data16	data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x50:
+	inc	rax
+	cmp	rax,0x40
+	je	.L+0x20e
+.L+0x5d:
+	mov	rdx,QWORD PTR [r14+rax*8]
+	lea	rsi,[rsp+rax*8+0x10]
+	xor	edi,edi
+	jmp	.L+0x94
+	nop	WORD PTR [rax+rax*1+0x0]
+.L+0x70:
+	vmovq	xmm0,r10
+	vmovq	xmm1,r11
+	vpunpcklqdq	xmm0,xmm0,xmm1
+.L+0x7e:
+	vpxor	xmm0,xmm0,XMMWORD PTR [rsi+r9*8]
+	add	rdi,0x4
+	vmovdqu	XMMWORD PTR [rsi+r9*8],xmm0
+	cmp	rdi,0x40
+	je	.L+0x50
+.L+0x94:
+	mov	r8,QWORD PTR [rbx+rdi*8]
+	vpxor	xmm0,xmm0,xmm0
+	vpxor	xmm1,xmm1,xmm1
+	test	r8,r8
+	je	.L+0xe7
+	xor	r9d,r9d
+	xor	r10d,r10d
+	nop	DWORD PTR [rax+rax*1+0x0]
+.L+0xb0:
+	tzcnt	rcx,r8
+	xor	r11d,r11d
+	shld	r11,rdx,cl
+	shlx	r12,rdx,rcx
+	test	cl,0x40
+	cmovne	r11,r12
+	cmovne	r12,r15
+	xor	r10,r11
+	xor	r9,r12
+	blsr	r8,r8
+	jne	.L+0xb0
+	vmovq	xmm1,r9
+	vmovq	xmm2,r10
+	vpunpcklqdq	xmm1,xmm1,xmm2
+.L+0xe7:
+	vpxor	xmm1,xmm1,XMMWORD PTR [rsi+rdi*8]
+	mov	r9,rdi
+	or	r9,0x1
+	mov	r8,QWORD PTR [rbx+r9*8]
+	vmovdqu	XMMWORD PTR [rsi+rdi*8],xmm1
+	test	r8,r8
+	je	.L+0x147
+	xor	r10d,r10d
+	xor	r11d,r11d
+	nop	WORD PTR [rax+rax*1+0x0]
+.L+0x110:
+	tzcnt	rcx,r8
+	xor	r12d,r12d
+	shld	r12,rdx,cl
+	shlx	r13,rdx,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,r15
+	xor	r11,r12
+	xor	r10,r13
+	blsr	r8,r8
+	jne	.L+0x110
+	vmovq	xmm0,r10
+	vmovq	xmm1,r11
+	vpunpcklqdq	xmm0,xmm0,xmm1
+.L+0x147:
+	vpxor	xmm0,xmm0,XMMWORD PTR [rsi+r9*8]
+	mov	r8,rdi
+	or	r8,0x2
+	vpxor	xmm1,xmm1,xmm1
+	vmovdqu	XMMWORD PTR [rsi+r9*8],xmm0
+	mov	r9,QWORD PTR [rbx+r8*8]
+	vpxor	xmm0,xmm0,xmm0
+	test	r9,r9
+	je	.L+0x1b7
+	xor	r10d,r10d
+	xor	r11d,r11d
+	data16	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x180:
+	tzcnt	rcx,r9
+	xor	r12d,r12d
+	shld	r12,rdx,cl
+	shlx	r13,rdx,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,r15
+	xor	r11,r12
+	xor	r10,r13
+	blsr	r9,r9
+	jne	.L+0x180
+	vmovq	xmm1,r10
+	vmovq	xmm2,r11
+	vpunpcklqdq	xmm1,xmm1,xmm2
+.L+0x1b7:
+	vpxor	xmm1,xmm1,XMMWORD PTR [rsi+r8*8]
+	mov	r9,rdi
+	or	r9,0x3
+	vmovdqu	XMMWORD PTR [rsi+r8*8],xmm1
+	mov	r8,QWORD PTR [rbx+r9*8]
+	test	r8,r8
+	je	.L+0x7e
+	xor	r10d,r10d
+	xor	r11d,r11d
+	nop	DWORD PTR [rax]
+.L+0x1e0:
+	tzcnt	rcx,r8
+	xor	r12d,r12d
+	shld	r12,rdx,cl
+	shlx	r13,rdx,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,r15
+	xor	r11,r12
+	xor	r10,r13
+	blsr	r8,r8
+	jne	.L+0x1e0
+	jmp	.L+0x70
+.L+0x20e:
+	lea	rbx,[rsp+0x410]
+	lea	rsi,[rsp+0x10]
+	mov	edx,0x400
+	mov	rdi,rbx
+	call	QWORD PTR [rip+0x7d78f]
+	add	rsp,0x810
+	pop	rbx
+	pop	r12
+	pop	r13
+	pop	r14
+	pop	r15
+	ret
+.L+0x23a:
+	lea	rdi,[rip+0xfffffffffffdfc39]
+	lea	rcx,[rip+0x79a90]
+	lea	r8,[rip+0x798b1]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7d7d9]
+.L+0x25f:
+	lea	rdi,[rip+0xfffffffffffdfc14]
+	lea	rcx,[rip+0x79a6b]
+	lea	r8,[rip+0x798a4]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7d7b4]
+
+;==========================================================
+; symbol: clmul_crossover_arms::gf2_backend::owned_product::<256, 512>
+; located: long_product explicit comparison, 256-word entry, tail call to 0x2a2f0, 676 bytes
+;==========================================================
+
+	push	r15
+	push	r14
+	push	r13
+	push	r12
+	push	rbx
+	sub	rsp,0x1000
+	mov	QWORD PTR [rsp],0x0
+	sub	rsp,0x1000
+	mov	QWORD PTR [rsp],0x0
+	sub	rsp,0x10
+	cmp	rsi,0x100
+	jne	.L+0x25a
+	cmp	rcx,0x100
+	jne	.L+0x27f
+	mov	rbx,rdx
+	mov	r14,rdi
+	lea	rdi,[rsp+0x10]
+	mov	edx,0x1000
+	xor	esi,esi
+	xor	r15d,r15d
+	call	QWORD PTR [rip+0x7e9a8]
+	xor	eax,eax
+	jmp	.L+0x7f
+	data16	data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x70:
+	inc	rax
+	cmp	rax,0x100
+	je	.L+0x22e
+.L+0x7f:
+	mov	rdx,QWORD PTR [r14+rax*8]
+	lea	rsi,[rsp+rax*8+0x10]
+	xor	edi,edi
+	jmp	.L+0xb7
+	nop	DWORD PTR [rax+0x0]
+.L+0x90:
+	vmovq	xmm0,r10
+	vmovq	xmm1,r11
+	vpunpcklqdq	xmm0,xmm0,xmm1
+.L+0x9e:
+	vpxor	xmm0,xmm0,XMMWORD PTR [rsi+r9*8]
+	add	rdi,0x4
+	vmovdqu	XMMWORD PTR [rsi+r9*8],xmm0
+	cmp	rdi,0x100
+	je	.L+0x70
+.L+0xb7:
+	mov	r8,QWORD PTR [rbx+rdi*8]
+	vpxor	xmm0,xmm0,xmm0
+	vpxor	xmm1,xmm1,xmm1
+	test	r8,r8
+	je	.L+0x107
+	xor	r9d,r9d
+	xor	r10d,r10d
+	xchg	ax,ax
+.L+0xd0:
+	tzcnt	rcx,r8
+	xor	r11d,r11d
+	shld	r11,rdx,cl
+	shlx	r12,rdx,rcx
+	test	cl,0x40
+	cmovne	r11,r12
+	cmovne	r12,r15
+	xor	r10,r11
+	xor	r9,r12
+	blsr	r8,r8
+	jne	.L+0xd0
+	vmovq	xmm1,r9
+	vmovq	xmm2,r10
+	vpunpcklqdq	xmm1,xmm1,xmm2
+.L+0x107:
+	vpxor	xmm1,xmm1,XMMWORD PTR [rsi+rdi*8]
+	mov	r9,rdi
+	or	r9,0x1
+	mov	r8,QWORD PTR [rbx+r9*8]
+	vmovdqu	XMMWORD PTR [rsi+rdi*8],xmm1
+	test	r8,r8
+	je	.L+0x167
+	xor	r10d,r10d
+	xor	r11d,r11d
+	nop	WORD PTR [rax+rax*1+0x0]
+.L+0x130:
+	tzcnt	rcx,r8
+	xor	r12d,r12d
+	shld	r12,rdx,cl
+	shlx	r13,rdx,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,r15
+	xor	r11,r12
+	xor	r10,r13
+	blsr	r8,r8
+	jne	.L+0x130
+	vmovq	xmm0,r10
+	vmovq	xmm1,r11
+	vpunpcklqdq	xmm0,xmm0,xmm1
+.L+0x167:
+	vpxor	xmm0,xmm0,XMMWORD PTR [rsi+r9*8]
+	mov	r8,rdi
+	or	r8,0x2
+	vpxor	xmm1,xmm1,xmm1
+	vmovdqu	XMMWORD PTR [rsi+r9*8],xmm0
+	mov	r9,QWORD PTR [rbx+r8*8]
+	vpxor	xmm0,xmm0,xmm0
+	test	r9,r9
+	je	.L+0x1d7
+	xor	r10d,r10d
+	xor	r11d,r11d
+	data16	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x1a0:
+	tzcnt	rcx,r9
+	xor	r12d,r12d
+	shld	r12,rdx,cl
+	shlx	r13,rdx,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,r15
+	xor	r11,r12
+	xor	r10,r13
+	blsr	r9,r9
+	jne	.L+0x1a0
+	vmovq	xmm1,r10
+	vmovq	xmm2,r11
+	vpunpcklqdq	xmm1,xmm1,xmm2
+.L+0x1d7:
+	vpxor	xmm1,xmm1,XMMWORD PTR [rsi+r8*8]
+	mov	r9,rdi
+	or	r9,0x3
+	vmovdqu	XMMWORD PTR [rsi+r8*8],xmm1
+	mov	r8,QWORD PTR [rbx+r9*8]
+	test	r8,r8
+	je	.L+0x9e
+	xor	r10d,r10d
+	xor	r11d,r11d
+	nop	DWORD PTR [rax]
+.L+0x200:
+	tzcnt	rcx,r8
+	xor	r12d,r12d
+	shld	r12,rdx,cl
+	shlx	r13,rdx,rcx
+	test	cl,0x40
+	cmovne	r12,r13
+	cmovne	r13,r15
+	xor	r11,r12
+	xor	r10,r13
+	blsr	r8,r8
+	jne	.L+0x200
+	jmp	.L+0x90
+.L+0x22e:
+	lea	rbx,[rsp+0x1010]
+	lea	rsi,[rsp+0x10]
+	mov	edx,0x1000
+	mov	rdi,rbx
+	call	QWORD PTR [rip+0x7e7af]
+	add	rsp,0x2010
+	pop	rbx
+	pop	r12
+	pop	r13
+	pop	r14
+	pop	r15
+	ret
+.L+0x25a:
+	lea	rdi,[rip+0xfffffffffffe0c59]
+	lea	rcx,[rip+0x7aab0]
+	lea	r8,[rip+0x7a8d1]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7e7f9]
+.L+0x27f:
+	lea	rdi,[rip+0xfffffffffffe0c34]
+	lea	rcx,[rip+0x7aa8b]
+	lea	r8,[rip+0x7a8c4]
+	lea	rdx,[rsp+0xf]
+	mov	esi,0x1e
+	call	QWORD PTR [rip+0x7e7d4]
+
+
+;=== derived annotation block ===
+;==========================================================
+; Counted from the disassembly above by
+; dev/active/53c5a8c0/survey/annotate-asm.py, which reads only these
+; bytes. See that script's module docstring for what each row counts.
+;==========================================================
+
+;=== derived annotation for gf2_kernels_simd::gf2m_wide::clmul_wide4_ymm_safe ===
+;
+; instructions                                           66
+; stack frame bytes                                      0
+; block copies (memcpy)                                  0
+; frame stores                                           0
+; frame loads                                            0
+; backward branches                                      0
+; vpclmullqlqdq (vector carry-less multiply, low x low)  8
+; vpxor (vector XOR)                                     13
+; vpalignr (vector byte align)                           4
+; vpunpckhqdq (quadword interleave (high))               2
+; vpermq (cross-lane quadword permute)                   6
+; vinserti128 (128-bit lane insert)                      2
+; vextracti128 (128-bit lane extract)                    8
+; vmovdqu (unaligned vector move)                        4
+; vmovq (64-bit vector move)                             1
+; vzeroupper (upper-lane zeroing)                        1
+;
+
+;=== derived annotation for gf2_kernels_simd::gf2m_wide::clmul_wide9_ymm_safe ===
+;
+; instructions                                           213
+; stack frame bytes                                      520
+; block copies (memcpy)                                  0
+; frame stores                                           20
+; frame loads                                            20
+; backward branches                                      0
+; vpclmullqlqdq (vector carry-less multiply, low x low)  41
+; vpxor (vector XOR)                                     46
+; vpsrldq (vector byte shift right)                      4
+; vpalignr (vector byte align)                           1
+; vpunpcklqdq (quadword interleave (low))                2
+; vpunpckhqdq (quadword interleave (high))               3
+; vpermq (cross-lane quadword permute)                   7
+; vinserti128 (128-bit lane insert)                      5
+; vextracti128 (128-bit lane extract)                    6
+; vmovdqu (unaligned vector move)                        30
+; vmovdqa (aligned vector move)                          1
+; vmovq (64-bit vector move)                             13
+; vzeroupper (upper-lane zeroing)                        1
+;
+
+;=== derived annotation for clmul_crossover_arms::gf2_backend::owned_product::<4, 8> ===
+;
+; instructions                                33
+; stack frame bytes                           152
+; block copies (memcpy)                       0
+; frame stores                                4
+; frame loads                                 2
+; backward branches                           0
+; vmovups (unaligned vector move (fp-typed))  6
+; vzeroupper (upper-lane zeroing)             2
+; call (calls)                                3
+;
+
+;=== derived annotation for clmul_crossover_arms::gf2_backend::owned_product::<9, 18> ===
+;
+; instructions                                42
+; stack frame bytes                           312
+; block copies (memcpy)                       0
+; frame stores                                10
+; frame loads                                 5
+; backward branches                           0
+; vmovups (unaligned vector move (fp-typed))  15
+; vzeroupper (upper-lane zeroing)             2
+; call (calls)                                3
+;
+
+;=== derived annotation for clmul_crossover_arms::gf2_backend::owned_product::<16, 32> ===
+;
+; instructions                                   170
+; stack frame bytes                              528
+; block copies (memcpy)                          0
+; frame stores                                   16
+; frame loads                                    8
+; backward branches                              7
+; tzcnt (trailing-zero count (bit-serial step))  4
+; blsr (clear lowest set bit (bit-serial step))  4
+; shlx (variable shift left)                     4
+; shld (double-precision shift left)             4
+; xor (scalar XOR)                               23
+; vpxor (vector XOR)                             9
+; vpunpcklqdq (quadword interleave (low))        4
+; vmovdqu (unaligned vector move)                12
+; vmovups (unaligned vector move (fp-typed))     16
+; vmovq (64-bit vector move)                     8
+; vzeroupper (upper-lane zeroing)                1
+; call (calls)                                   2
+;
+
+;=== derived annotation for clmul_crossover_arms::gf2_backend::owned_product::<64, 128> ===
+;
+; instructions                                   154
+; stack frame bytes                              2064
+; block copies (memcpy)                          0
+; frame stores                                   0
+; frame loads                                    0
+; backward branches                              7
+; tzcnt (trailing-zero count (bit-serial step))  4
+; blsr (clear lowest set bit (bit-serial step))  4
+; shlx (variable shift left)                     4
+; shld (double-precision shift left)             4
+; xor (scalar XOR)                               24
+; vpxor (vector XOR)                             8
+; vpunpcklqdq (quadword interleave (low))        4
+; vmovdqu (unaligned vector move)                4
+; vmovq (64-bit vector move)                     8
+; call (calls)                                   4
+;
+
+;=== derived annotation for clmul_crossover_arms::gf2_backend::owned_product::<256, 512> ===
+;
+; instructions                                   158
+; stack frame bytes                              8208
+; block copies (memcpy)                          0
+; frame stores                                   2
+; frame loads                                    0
+; backward branches                              7
+; tzcnt (trailing-zero count (bit-serial step))  4
+; blsr (clear lowest set bit (bit-serial step))  4
+; shlx (variable shift left)                     4
+; shld (double-precision shift left)             4
+; xor (scalar XOR)                               24
+; vpxor (vector XOR)                             8
+; vpunpcklqdq (quadword interleave (low))        4
+; vmovdqu (unaligned vector move)                4
+; vmovq (64-bit vector move)                     8
+; call (calls)                                   4
+;
