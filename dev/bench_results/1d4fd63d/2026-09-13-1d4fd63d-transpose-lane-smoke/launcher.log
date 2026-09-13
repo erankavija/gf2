@@ -1,0 +1,24 @@
+# command: ./dev/bench_results/1d4fd63d/run-transpose-lane.sh smoke
+# started_utc: 2026-09-13T12:08:48Z
+# gf2 revision (informational): 184ae5d8a7a747f8633a72eae4ea00af8b2940de
+# mode: smoke  label: smoke
+# addendum: dev/active/1d4fd63d/addendum-v4-transpose-lane-smoke.json  sha256: 9ebe33cc36b27a7a324830233c67ed95d6a0e46da38c5f8d353d873510f237c8
+# ledger: dev/bench_results/1d4fd63d/transpose-lane-smoke-family-ledger.jsonl  sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-smoke.plan.json  sha256: 4c889b97dd495b26931f69c8fef1b8fe9e1a13201f3beb5ef749d3b4f3b9fbb8
+# exploratory pairs per cell: 12
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-smoke
+# arm: 0a9c4061506e2b2f9446b313c4c8d557b8c0d2c60e90a66ba806d7e652dabe20  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-acceptance
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start:  15:08:48 up 9 days, 16:37,  9 users,  load average: 1.69, 3.62, 4.32
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-smoke/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-smoke/execution.log
+# session 2 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions this invocation: 2
+# load_avg_end:  15:10:18 up 9 days, 16:39,  9 users,  load average: 1.17, 2.95, 4.02
+# finished_utc: 2026-09-13T12:10:18Z

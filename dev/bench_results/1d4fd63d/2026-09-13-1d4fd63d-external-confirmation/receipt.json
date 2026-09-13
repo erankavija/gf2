@@ -1,0 +1,5789 @@
+{
+  "session_hosts": [
+    {
+      "observed_utc": "2026-09-13T13:06:33.996545161Z",
+      "hostname": "fraktaali",
+      "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+      "cpu_flags": [
+        "3dnowprefetch",
+        "abm",
+        "adx",
+        "aes",
+        "aperfmperf",
+        "apic",
+        "arat",
+        "avic",
+        "avx",
+        "avx2",
+        "bmi1",
+        "bmi2",
+        "bpext",
+        "cat_l3",
+        "cdp_l3",
+        "clflush",
+        "clflushopt",
+        "clwb",
+        "clzero",
+        "cmov",
+        "cmp_legacy",
+        "constant_tsc",
+        "cpb",
+        "cpuid",
+        "cqm",
+        "cqm_llc",
+        "cqm_mbm_local",
+        "cqm_mbm_total",
+        "cqm_occup_llc",
+        "cr8_legacy",
+        "cx16",
+        "cx8",
+        "de",
+        "debug_swap",
+        "decodeassists",
+        "erms",
+        "extapic",
+        "extd_apicid",
+        "f16c",
+        "flushbyasid",
+        "fma",
+        "fpu",
+        "fsgsbase",
+        "fsrm",
+        "fxsr",
+        "fxsr_opt",
+        "ht",
+        "hw_pstate",
+        "ibpb",
+        "ibrs",
+        "ibs",
+        "invpcid",
+        "irperf",
+        "lahf_lm",
+        "lbrv",
+        "lm",
+        "mba",
+        "mca",
+        "mce",
+        "misalignsse",
+        "mmx",
+        "mmxext",
+        "monitor",
+        "movbe",
+        "msr",
+        "mtrr",
+        "mwaitx",
+        "nonstop_tsc",
+        "nopl",
+        "npt",
+        "nrip_save",
+        "nx",
+        "ospke",
+        "osvw",
+        "overflow_recov",
+        "pae",
+        "pat",
+        "pausefilter",
+        "pclmulqdq",
+        "pdpe1gb",
+        "perfctr_core",
+        "perfctr_llc",
+        "perfctr_nb",
+        "pfthreshold",
+        "pge",
+        "pku",
+        "pni",
+        "popcnt",
+        "pse",
+        "pse36",
+        "rapl",
+        "rdpid",
+        "rdpru",
+        "rdrand",
+        "rdseed",
+        "rdt_a",
+        "rdtscp",
+        "rep_good",
+        "sep",
+        "sha_ni",
+        "skinit",
+        "smap",
+        "smca",
+        "smep",
+        "ssbd",
+        "sse",
+        "sse2",
+        "sse4_1",
+        "sse4_2",
+        "sse4a",
+        "ssse3",
+        "stibp",
+        "succor",
+        "svm_lock",
+        "syscall",
+        "tce",
+        "topoext",
+        "tsc",
+        "tsc_scale",
+        "umip",
+        "user_shstk",
+        "v_spec_ctrl",
+        "v_vmsave_vmload",
+        "vaes",
+        "vgif",
+        "vmcb_clean",
+        "vme",
+        "vmmcall",
+        "vpclmulqdq",
+        "wbnoinvd",
+        "wdt",
+        "x2apic",
+        "xgetbv1",
+        "xsave",
+        "xsavec",
+        "xsaveerptr",
+        "xsaveopt",
+        "xsaves",
+        "xtopology"
+      ],
+      "os_kernel": "Linux 7.2.2-arch1-1",
+      "governors": {
+        "cpu0": "powersave",
+        "cpu1": "powersave",
+        "cpu10": "powersave",
+        "cpu11": "powersave",
+        "cpu12": "powersave",
+        "cpu13": "powersave",
+        "cpu14": "powersave",
+        "cpu15": "powersave",
+        "cpu16": "powersave",
+        "cpu17": "powersave",
+        "cpu18": "powersave",
+        "cpu19": "powersave",
+        "cpu2": "powersave",
+        "cpu20": "powersave",
+        "cpu21": "powersave",
+        "cpu22": "powersave",
+        "cpu23": "powersave",
+        "cpu3": "powersave",
+        "cpu4": "powersave",
+        "cpu5": "powersave",
+        "cpu6": "powersave",
+        "cpu7": "powersave",
+        "cpu8": "powersave",
+        "cpu9": "powersave"
+      },
+      "smt_active": true,
+      "affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "topology": {
+        "cpus": [
+          {
+            "cpu": 0,
+            "core_id": 0,
+            "package_id": 0,
+            "thread_siblings": [
+              0,
+              12
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 1,
+            "core_id": 1,
+            "package_id": 0,
+            "thread_siblings": [
+              1,
+              13
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 2,
+            "core_id": 2,
+            "package_id": 0,
+            "thread_siblings": [
+              2,
+              14
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 3,
+            "core_id": 3,
+            "package_id": 0,
+            "thread_siblings": [
+              3,
+              15
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 4,
+            "core_id": 4,
+            "package_id": 0,
+            "thread_siblings": [
+              4,
+              16
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 5,
+            "core_id": 5,
+            "package_id": 0,
+            "thread_siblings": [
+              5,
+              17
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 6,
+            "core_id": 8,
+            "package_id": 0,
+            "thread_siblings": [
+              6,
+              18
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 7,
+            "core_id": 9,
+            "package_id": 0,
+            "thread_siblings": [
+              7,
+              19
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 8,
+            "core_id": 10,
+            "package_id": 0,
+            "thread_siblings": [
+              8,
+              20
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 9,
+            "core_id": 11,
+            "package_id": 0,
+            "thread_siblings": [
+              9,
+              21
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 10,
+            "core_id": 12,
+            "package_id": 0,
+            "thread_siblings": [
+              10,
+              22
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 11,
+            "core_id": 13,
+            "package_id": 0,
+            "thread_siblings": [
+              11,
+              23
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 12,
+            "core_id": 0,
+            "package_id": 0,
+            "thread_siblings": [
+              0,
+              12
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 13,
+            "core_id": 1,
+            "package_id": 0,
+            "thread_siblings": [
+              1,
+              13
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 14,
+            "core_id": 2,
+            "package_id": 0,
+            "thread_siblings": [
+              2,
+              14
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 15,
+            "core_id": 3,
+            "package_id": 0,
+            "thread_siblings": [
+              3,
+              15
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 16,
+            "core_id": 4,
+            "package_id": 0,
+            "thread_siblings": [
+              4,
+              16
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 17,
+            "core_id": 5,
+            "package_id": 0,
+            "thread_siblings": [
+              5,
+              17
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 18,
+            "core_id": 8,
+            "package_id": 0,
+            "thread_siblings": [
+              6,
+              18
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 19,
+            "core_id": 9,
+            "package_id": 0,
+            "thread_siblings": [
+              7,
+              19
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 20,
+            "core_id": 10,
+            "package_id": 0,
+            "thread_siblings": [
+              8,
+              20
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 21,
+            "core_id": 11,
+            "package_id": 0,
+            "thread_siblings": [
+              9,
+              21
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 22,
+            "core_id": 12,
+            "package_id": 0,
+            "thread_siblings": [
+              10,
+              22
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 23,
+            "core_id": 13,
+            "package_id": 0,
+            "thread_siblings": [
+              11,
+              23
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          }
+        ],
+        "smt_active": true
+      },
+      "load_average": [
+        1.72,
+        2.25,
+        2.94
+      ],
+      "available_memory_kib": 43835072
+    }
+  ],
+  "trial_ledger": {
+    "path": "dev/bench_results/1d4fd63d/transpose-lane-vs-external-family-ledger.jsonl",
+    "snapshot": "inputs/trial-ledger.jsonl",
+    "sha256": "2c7009729a370fbc50a48d169f56bb6a5c9ce93d04f7a4a3aab600573af12667"
+  },
+  "schema": "zen3-benchmark-receipt-v1",
+  "campaign_id": "external-confirmation-1d4fd63d-20260913t130401z",
+  "family_id": "transpose-lane-vs-external",
+  "issue": "1d4fd63d",
+  "receipt_path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/receipt.json",
+  "label": "confirmation",
+  "campaign_seed": 20260913401,
+  "settings": {
+    "family_alpha": 0.05,
+    "bootstrap_resamples": 10000,
+    "confirmatory_pairs": 24,
+    "pilot_min_pairs": 6,
+    "pilot_max_pairs": 24,
+    "windows_per_execution": 5,
+    "window_target_ms": 100,
+    "flagged_window_factor": 2.0,
+    "max_flagged_fraction": 0.1,
+    "max_pilot_trials_per_cell": 8,
+    "max_confirmatory_attempts_per_candidate": 1,
+    "child_timeout_seconds": 120,
+    "quality_confidence": 0.95
+  },
+  "settings_deviation": false,
+  "protocol": {
+    "path": "dev/active/f547c394/protocol.md",
+    "snapshot": "inputs/protocol.md",
+    "sha256": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb"
+  },
+  "contract": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+    "snapshot": "inputs/measurement-contract.md",
+    "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3"
+  },
+  "addendum_schema": {
+    "path": "dev/active/f547c394/addendum.schema.json",
+    "snapshot": "inputs/addendum.schema.json",
+    "sha256": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47"
+  },
+  "addendum": {
+    "path": "dev/active/1d4fd63d/addendum-v4-external-confirmation.json",
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "e1a46c67cda934d715a02afdb4dab668ad1eebddfd7aae0f8199efc3a425d6c9"
+  },
+  "source": {
+    "producing": {
+      "manifest_path": "dev/active/1d4fd63d/external-producing-inputs.json",
+      "manifest_sha256": "f71842a4e2a58d2fd1cc0f49490d3cddea6cf1ceadeb36d6b9b7ea3a1e992998",
+      "behavior_sha256": {
+        "crates/gf2-kernels-simd/src/bch_encode.rs": "9a55049459f3745c360d59e02abfac4dbc8f92633184ef6f35112bbb6354d57d",
+        "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs": "98c9c3edd0130749ccf02ad5006ab4c73a0b56baa736dc14ee6cbf0d59f4c17e",
+        "crates/gf2-kernels-simd/src/bipedal/framework.rs": "ab00cf16b07867970f4a5c68b9d4da5079ebde3dae4a079a2e27907772632ac4",
+        "crates/gf2-kernels-simd/src/bipedal/lanes.rs": "a37362602d32ed72faf80c9cd4c42ef67ba6cf50241f677b2fb1ec4a6f06cf5e",
+        "crates/gf2-kernels-simd/src/bipedal/mod.rs": "63ab65571d4babd7cf3a889df2335320f1a2b2dd998d3d7a0a7168559750ed77",
+        "crates/gf2-kernels-simd/src/bipedal/packed5.rs": "1d3bd57360cdb08f5d5704ff7ea9dd619695eaf83b0b8afcda3eed3d2fdcf886",
+        "crates/gf2-kernels-simd/src/bipedal/packed7.rs": "e63941a14a0e76be26afb97fbbaa7d9efafa9d51df8baff4e7f2fde59744e86e",
+        "crates/gf2-kernels-simd/src/clmul_scalar.rs": "69b87a2624ce1abe10ed0aee9b8aa9b09f245c2abf46b32240966e42816e096d",
+        "crates/gf2-kernels-simd/src/fp65537.rs": "d48c830b27e53041a89ccda5e8ece19ddcb642cbe2a248f38586146f5e3cb8ac",
+        "crates/gf2-kernels-simd/src/fp_generic.rs": "6b4b7dd52ee325a982e3134e632a8e1a3b0509b5415340e39f61987a21e2fb61",
+        "crates/gf2-kernels-simd/src/fp_medium.rs": "fb46dbecb352f1a191a0d675787af2f09bcf4f1ec6f4bca5c5ff338e439a3120",
+        "crates/gf2-kernels-simd/src/fp_medium_f64.rs": "24bec2a0d131ea70b422c0ccfe9099d1e9e806858f434eb6a28f4ec5df49d13e",
+        "crates/gf2-kernels-simd/src/fp_medium_ple.rs": "719852e059106b305b00e36fbd3c87f0befed47f9c4618f8c8bcff3fe633100a",
+        "crates/gf2-kernels-simd/src/fp_small.rs": "04bc8785ba22af8c4b0fedbfebae42ff21030bc57661be3d700ff1f1a7d56944",
+        "crates/gf2-kernels-simd/src/fp_small_f32.rs": "6b5c1c3f2676f38fb2adb9349a640b1b1c3901e178b11ab021a5bfaf691e2b84",
+        "crates/gf2-kernels-simd/src/fp_small_panel.rs": "a14b813e2bb8fbfce2c5e4d84914511316b9e2bdaa859904b2c04e281e504bc0",
+        "crates/gf2-kernels-simd/src/fp_small_ple.rs": "fbd9aa0eb85280a2f0b0cb2fc5b4a867de24496d2123bb33f28b64b2f57853dd",
+        "crates/gf2-kernels-simd/src/gf2m.rs": "30a6c259fe90dabc84b94c32b61363531b2b33bd819ddcb71e112f8dab8260bb",
+        "crates/gf2-kernels-simd/src/gf2m_batch.rs": "fb534d4979366faf3d3d550bb9e088a7a06171f3fc164361e54f1acfce604fa3",
+        "crates/gf2-kernels-simd/src/gf2m_gemm.rs": "27d99ee222b5bf78ec25f59bbcf3cb94de88e92ccb8e68a9f65c60b7df6c317e",
+        "crates/gf2-kernels-simd/src/gf2m_wide.rs": "1ec1f3b214b03fd4c5bacb76a0b1a9658c200eacea804ebf6c17a2f5118ee5e0",
+        "crates/gf2-kernels-simd/src/lib.rs": "9b2aab12ba4193a44ef7d8b3eee672bb564716b0b68853e7de313d5687a3fa18",
+        "crates/gf2-kernels-simd/src/llr.rs": "efed86c90e984cc38854e5065a5f280bac7a2f5f65998aa7b750cf6258eca17b",
+        "crates/gf2-kernels-simd/src/mersenne.rs": "5118c17feb25c9278d18ed97754d4fdb08f0cf6419b1881b16b28345b8f85ac3",
+        "crates/gf2-kernels-simd/src/modem.rs": "451a767c840cfc3a8b98ef2f2a63bc5a48b613980c8bf748240476588549a3a7",
+        "crates/gf2-kernels-simd/src/prefetch.rs": "74352170691de56ad5b6f5d73678100cb015301e57de3349cb28a174bdfc0be0",
+        "crates/gf2-kernels-simd/src/transpose.rs": "9d8d5a1dae2542e522f3f6239688b3071d08cf982b351ee2b1d6b7071ab06653",
+        "crates/gf2-kernels-simd/src/x86/avx2.rs": "a957a92c53f2767722c69b703899eb04e902464af3bf8c833b6aa76f45989445",
+        "crates/gf2-kernels-simd/src/x86/bch_encode.rs": "3601c3b13e0b921cb7c7298c87e5b8ba04af92beee4fd4634fe33fe253df9f15",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs": "8269ee99f77d77af53bcf047d230d548aa23f44e469b095f91984c31c8b012f4",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs": "0ad2cf38fcbe03a5bc2e36b920056d74fd6110be59aea7de6e9d71adaa83e791",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs": "6955e532a267da21a0ef2834e684b892c6fc6143e18888d72f41fd93b27e9521",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs": "fec4243bcc2b3cf5c41eb9a1f0647bbfcee5269458427f1d1d45fb2ec990f660",
+        "crates/gf2-kernels-simd/src/x86/clmul.rs": "a4c59d76fb90bcfa4ca9ff87459b80741e88003abd7c71f8d5c4167c915b0616",
+        "crates/gf2-kernels-simd/src/x86/fp65537.rs": "28597457a5523ef7030313e31e92d6082af709f4c1fa1ac9f6d693edf57d7a50",
+        "crates/gf2-kernels-simd/src/x86/fp_generic.rs": "0a30f181d9818e32c42b2ebbfb05fd92f9f8d950b6df9ec9ff22d3951bf49d85",
+        "crates/gf2-kernels-simd/src/x86/fp_medium.rs": "29842afef301387bd9f355d1330eb666168b551c6b4563ad2e35f4780656af63",
+        "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs": "46d14e6e33e2214d77035ec75e958d01bcae02fc686666f0f2568e8605034ba7",
+        "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs": "e299296bea8891eeb9294c52eb7445006a81e86d6642f8b1681e346c48f1e6a1",
+        "crates/gf2-kernels-simd/src/x86/fp_small.rs": "7d702d3c6019af54c710b54eff92d3bf26b5a556a0dbfd42d4a2f6c58ac2e3f1",
+        "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs": "ade0e6709429fe3493b02e6c6759e07a273dedbf92cab0b391738fc53aa268e7",
+        "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs": "801c6841cd440fcf63d6f3244ce3ee1ed1a76e985e55f9225d1c6e913857c179",
+        "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs": "db5bd1f6dffe4cd2684285516615935f7936944732fb86aeac80e8d78f2766e4",
+        "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs": "3a660491c147703650de7147b8d3a7aca2cae695eb43a6ba500e391f2e186eee",
+        "crates/gf2-kernels-simd/src/x86/gf2m_common.rs": "3f3a3dd12607ac8b5259f2334e3e9b8026f7ca51ebc36158bf100df32a083881",
+        "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs": "1e705775745245d93bb5092fa7460991238c42d8dc37092fba53b888e0feddba",
+        "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs": "dda98102f4a5aa12a75734a63cde2c494a20770e7f1798ba8b56dd878d4c98c1",
+        "crates/gf2-kernels-simd/src/x86/mersenne.rs": "f1427b4284e0a7fbbf4f26dbe199d6f18bc6bc945197efedc0edeb2cd439f513",
+        "crates/gf2-kernels-simd/src/x86/mod.rs": "1e855043c73cbd52c7e65056ef1461a2eea0fab96b29aa72a2904f7ae4a67895",
+        "crates/gf2-kernels-simd/src/x86/transpose.rs": "9f796e462ef36dc826dda66a4d1b431626851a134c1b65686e8f25e30b37ad1c",
+        "dev/active/1d4fd63d/external-arms/src/main.rs": "c06c861aac86a8c12c500dd6d73eb61f7b5d54c677e8d9376c5ca762c7916bdd",
+        "dev/active/6fb89a3c/survey/Makefile": "8f95c37394fc19c40c72be685a92eed6fda477b376834d096210ad8b349f9c0b",
+        "dev/active/6fb89a3c/survey/bitshuffle_transpose_arm.c": "1403edeee5e714f4654da71fd18362f6bf4d170865f220bb58dfd68572acd6d2",
+        "dev/active/6fb89a3c/survey/build-evidence.json": "814e6ca25edf6720a1d9a3b1c6fb5321e6069a9d16d53bccc2ec82e4150211a9",
+        "dev/active/6fb89a3c/survey/fetch-build.sh": "141973f1fc34c5b73046b5411b7ce405f6dc0ca0545c4e1fb869da9f9e7b9f20",
+        "dev/active/6fb89a3c/survey/harness_common.h": "9d44126b93f7e19544e9dad56ca127cf5650dbe09b6faa3ee323ba5fe053bbc1",
+        "dev/active/6fb89a3c/survey/json_min.c": "26b46997af83e507246997b827258f8bf7e873535757c0ef94a16a619d05b701",
+        "dev/active/6fb89a3c/survey/json_min.h": "3f953090941f1f7437b0e97678e34bfc50ec11652648b731f8c850aa9b2862b9",
+        "dev/active/6fb89a3c/survey/m4ri_transpose_arm.c": "2944e5b68d9bfe83039c49f006592d7f4335084d01570d10c89fbe9fec68f2a7",
+        "dev/bench_results/1d4fd63d/run-transpose-lane.sh": "7726f68f4a7a428121d81d6c7635980b337b384f11a63f82e32135d07cb2a108",
+        "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "095deb55202c80bda2b2eb0b3362f524ab77891f4f05da7c549e7b3f8053e824",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "e23750a6d4a92d95d966ae8618361945b288b26407640f10926134c732300612",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "a3ebd9769d81ee2e3eeeaae991053f36a24fce7557254cbabc5a9ed5e80c1e6b",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs": "1b813b667407c019b7fa563648f05fa820b1433520068bc03864cd42f53b2c5c",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "cdef0a5aa6166a37b42f3c18318cea942ace7ca9f2538382597b980c8ced24d6",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "81a909833bc7cb149c45d7851f7eef990fa665f77d06f89c1db768c5b3933121",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "b02ee6247b1290709d62580ae605e68156ff2e8c22d3a28add609e6e291472d4",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "ead299d593daa304e8a28f64b893dd920c3acf1e6be79b9cad25ab8c026bee1a",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "089f5c4dcfd6cfe34223ca31ebf8caec75d3d03a4d96bafa0ed57be2d583f58f",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "55d228c1b14366da4a003b4ad7caa7cb05036ac8151ca1f1c5e1eda1150d907a",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "afe4cf2f5b8d5eec18da0484633c390acaf348ee49dcd38b9a22f0e5d3f523a6",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd"
+      },
+      "lifecycle_sha256": {
+        "dev/bench_results/1d4fd63d/run-transpose-lane.sh": "7726f68f4a7a428121d81d6c7635980b337b384f11a63f82e32135d07cb2a108",
+        "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "a3ebd9769d81ee2e3eeeaae991053f36a24fce7557254cbabc5a9ed5e80c1e6b",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "cdef0a5aa6166a37b42f3c18318cea942ace7ca9f2538382597b980c8ced24d6",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "81a909833bc7cb149c45d7851f7eef990fa665f77d06f89c1db768c5b3933121",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "ead299d593daa304e8a28f64b893dd920c3acf1e6be79b9cad25ab8c026bee1a",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "089f5c4dcfd6cfe34223ca31ebf8caec75d3d03a4d96bafa0ed57be2d583f58f",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "55d228c1b14366da4a003b4ad7caa7cb05036ac8151ca1f1c5e1eda1150d907a",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd"
+      },
+      "build_inputs_sha256": {
+        ".cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "crates/gf2-kernels-simd/Cargo.toml": "7fbab85ebb442fe69be9c11f687aae2db14d90e98a728613558d93db925b4d53",
+        "crates/gf2-kernels-simd/src/bch_encode.rs": "9a55049459f3745c360d59e02abfac4dbc8f92633184ef6f35112bbb6354d57d",
+        "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs": "98c9c3edd0130749ccf02ad5006ab4c73a0b56baa736dc14ee6cbf0d59f4c17e",
+        "crates/gf2-kernels-simd/src/bipedal/framework.rs": "ab00cf16b07867970f4a5c68b9d4da5079ebde3dae4a079a2e27907772632ac4",
+        "crates/gf2-kernels-simd/src/bipedal/lanes.rs": "a37362602d32ed72faf80c9cd4c42ef67ba6cf50241f677b2fb1ec4a6f06cf5e",
+        "crates/gf2-kernels-simd/src/bipedal/mod.rs": "63ab65571d4babd7cf3a889df2335320f1a2b2dd998d3d7a0a7168559750ed77",
+        "crates/gf2-kernels-simd/src/bipedal/packed5.rs": "1d3bd57360cdb08f5d5704ff7ea9dd619695eaf83b0b8afcda3eed3d2fdcf886",
+        "crates/gf2-kernels-simd/src/bipedal/packed7.rs": "e63941a14a0e76be26afb97fbbaa7d9efafa9d51df8baff4e7f2fde59744e86e",
+        "crates/gf2-kernels-simd/src/clmul_scalar.rs": "69b87a2624ce1abe10ed0aee9b8aa9b09f245c2abf46b32240966e42816e096d",
+        "crates/gf2-kernels-simd/src/fp65537.rs": "d48c830b27e53041a89ccda5e8ece19ddcb642cbe2a248f38586146f5e3cb8ac",
+        "crates/gf2-kernels-simd/src/fp_generic.rs": "6b4b7dd52ee325a982e3134e632a8e1a3b0509b5415340e39f61987a21e2fb61",
+        "crates/gf2-kernels-simd/src/fp_medium.rs": "fb46dbecb352f1a191a0d675787af2f09bcf4f1ec6f4bca5c5ff338e439a3120",
+        "crates/gf2-kernels-simd/src/fp_medium_f64.rs": "24bec2a0d131ea70b422c0ccfe9099d1e9e806858f434eb6a28f4ec5df49d13e",
+        "crates/gf2-kernels-simd/src/fp_medium_ple.rs": "719852e059106b305b00e36fbd3c87f0befed47f9c4618f8c8bcff3fe633100a",
+        "crates/gf2-kernels-simd/src/fp_small.rs": "04bc8785ba22af8c4b0fedbfebae42ff21030bc57661be3d700ff1f1a7d56944",
+        "crates/gf2-kernels-simd/src/fp_small_f32.rs": "6b5c1c3f2676f38fb2adb9349a640b1b1c3901e178b11ab021a5bfaf691e2b84",
+        "crates/gf2-kernels-simd/src/fp_small_panel.rs": "a14b813e2bb8fbfce2c5e4d84914511316b9e2bdaa859904b2c04e281e504bc0",
+        "crates/gf2-kernels-simd/src/fp_small_ple.rs": "fbd9aa0eb85280a2f0b0cb2fc5b4a867de24496d2123bb33f28b64b2f57853dd",
+        "crates/gf2-kernels-simd/src/gf2m.rs": "30a6c259fe90dabc84b94c32b61363531b2b33bd819ddcb71e112f8dab8260bb",
+        "crates/gf2-kernels-simd/src/gf2m_batch.rs": "fb534d4979366faf3d3d550bb9e088a7a06171f3fc164361e54f1acfce604fa3",
+        "crates/gf2-kernels-simd/src/gf2m_gemm.rs": "27d99ee222b5bf78ec25f59bbcf3cb94de88e92ccb8e68a9f65c60b7df6c317e",
+        "crates/gf2-kernels-simd/src/gf2m_wide.rs": "1ec1f3b214b03fd4c5bacb76a0b1a9658c200eacea804ebf6c17a2f5118ee5e0",
+        "crates/gf2-kernels-simd/src/lib.rs": "9b2aab12ba4193a44ef7d8b3eee672bb564716b0b68853e7de313d5687a3fa18",
+        "crates/gf2-kernels-simd/src/llr.rs": "efed86c90e984cc38854e5065a5f280bac7a2f5f65998aa7b750cf6258eca17b",
+        "crates/gf2-kernels-simd/src/mersenne.rs": "5118c17feb25c9278d18ed97754d4fdb08f0cf6419b1881b16b28345b8f85ac3",
+        "crates/gf2-kernels-simd/src/modem.rs": "451a767c840cfc3a8b98ef2f2a63bc5a48b613980c8bf748240476588549a3a7",
+        "crates/gf2-kernels-simd/src/prefetch.rs": "74352170691de56ad5b6f5d73678100cb015301e57de3349cb28a174bdfc0be0",
+        "crates/gf2-kernels-simd/src/transpose.rs": "9d8d5a1dae2542e522f3f6239688b3071d08cf982b351ee2b1d6b7071ab06653",
+        "crates/gf2-kernels-simd/src/x86/avx2.rs": "a957a92c53f2767722c69b703899eb04e902464af3bf8c833b6aa76f45989445",
+        "crates/gf2-kernels-simd/src/x86/bch_encode.rs": "3601c3b13e0b921cb7c7298c87e5b8ba04af92beee4fd4634fe33fe253df9f15",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs": "8269ee99f77d77af53bcf047d230d548aa23f44e469b095f91984c31c8b012f4",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs": "0ad2cf38fcbe03a5bc2e36b920056d74fd6110be59aea7de6e9d71adaa83e791",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs": "6955e532a267da21a0ef2834e684b892c6fc6143e18888d72f41fd93b27e9521",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs": "fec4243bcc2b3cf5c41eb9a1f0647bbfcee5269458427f1d1d45fb2ec990f660",
+        "crates/gf2-kernels-simd/src/x86/clmul.rs": "a4c59d76fb90bcfa4ca9ff87459b80741e88003abd7c71f8d5c4167c915b0616",
+        "crates/gf2-kernels-simd/src/x86/fp65537.rs": "28597457a5523ef7030313e31e92d6082af709f4c1fa1ac9f6d693edf57d7a50",
+        "crates/gf2-kernels-simd/src/x86/fp_generic.rs": "0a30f181d9818e32c42b2ebbfb05fd92f9f8d950b6df9ec9ff22d3951bf49d85",
+        "crates/gf2-kernels-simd/src/x86/fp_medium.rs": "29842afef301387bd9f355d1330eb666168b551c6b4563ad2e35f4780656af63",
+        "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs": "46d14e6e33e2214d77035ec75e958d01bcae02fc686666f0f2568e8605034ba7",
+        "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs": "e299296bea8891eeb9294c52eb7445006a81e86d6642f8b1681e346c48f1e6a1",
+        "crates/gf2-kernels-simd/src/x86/fp_small.rs": "7d702d3c6019af54c710b54eff92d3bf26b5a556a0dbfd42d4a2f6c58ac2e3f1",
+        "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs": "ade0e6709429fe3493b02e6c6759e07a273dedbf92cab0b391738fc53aa268e7",
+        "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs": "801c6841cd440fcf63d6f3244ce3ee1ed1a76e985e55f9225d1c6e913857c179",
+        "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs": "db5bd1f6dffe4cd2684285516615935f7936944732fb86aeac80e8d78f2766e4",
+        "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs": "3a660491c147703650de7147b8d3a7aca2cae695eb43a6ba500e391f2e186eee",
+        "crates/gf2-kernels-simd/src/x86/gf2m_common.rs": "3f3a3dd12607ac8b5259f2334e3e9b8026f7ca51ebc36158bf100df32a083881",
+        "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs": "1e705775745245d93bb5092fa7460991238c42d8dc37092fba53b888e0feddba",
+        "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs": "dda98102f4a5aa12a75734a63cde2c494a20770e7f1798ba8b56dd878d4c98c1",
+        "crates/gf2-kernels-simd/src/x86/mersenne.rs": "f1427b4284e0a7fbbf4f26dbe199d6f18bc6bc945197efedc0edeb2cd439f513",
+        "crates/gf2-kernels-simd/src/x86/mod.rs": "1e855043c73cbd52c7e65056ef1461a2eea0fab96b29aa72a2904f7ae4a67895",
+        "crates/gf2-kernels-simd/src/x86/transpose.rs": "9f796e462ef36dc826dda66a4d1b431626851a134c1b65686e8f25e30b37ad1c",
+        "dev/active/1d4fd63d/external-arms/Cargo.lock": "17d5dd27962aba6f8a257c231f535b9eebd543fb8e418c400b6c4c3844a78352",
+        "dev/active/1d4fd63d/external-arms/Cargo.toml": "0918adaafbda0c389bdb82b414ad1e951aa31ac8ffbf1058c0e4896b685605cd",
+        "dev/active/1d4fd63d/external-arms/src/main.rs": "c06c861aac86a8c12c500dd6d73eb61f7b5d54c677e8d9376c5ca762c7916bdd",
+        "dev/active/1d4fd63d/make-external-plan.py": "ce2642e84aa2f8d7b3c4255d54efe048c5b67b05b32a85bf378b37cf9cf42c70",
+        "dev/active/1d4fd63d/make-external-producing-inputs.py": "406fe70ecdc69e52760d0db934d77df9410f269cd069df5a52af29018428e7f1",
+        "dev/active/1d4fd63d/survey/bit-mapping-report.json": "504232f9c7dfe8ef248d12119aae9b403b05f94a65da35738c2f88bfbeb0948d",
+        "dev/active/1d4fd63d/survey/check-external-arms.py": "063f36cea1fe458dda3a2bb3e25126fc8810fc809d42d9e9b6e473fc0feece4b",
+        "dev/active/1d4fd63d/survey/external-arm-check.json": "835255fd3b36faef171ff413ab43e28a5d288d74403090feb57ba9626b67f6ef",
+        "dev/active/1d4fd63d/survey/verify-bit-mapping.py": "768660499a58ab88781add029f8a2843f07701ac6255501c27d462e6e6cef338",
+        "dev/active/6fb89a3c/survey/Makefile": "8f95c37394fc19c40c72be685a92eed6fda477b376834d096210ad8b349f9c0b",
+        "dev/active/6fb89a3c/survey/bitshuffle_transpose_arm.c": "1403edeee5e714f4654da71fd18362f6bf4d170865f220bb58dfd68572acd6d2",
+        "dev/active/6fb89a3c/survey/build-evidence.json": "814e6ca25edf6720a1d9a3b1c6fb5321e6069a9d16d53bccc2ec82e4150211a9",
+        "dev/active/6fb89a3c/survey/fetch-build.sh": "141973f1fc34c5b73046b5411b7ce405f6dc0ca0545c4e1fb869da9f9e7b9f20",
+        "dev/active/6fb89a3c/survey/harness_common.h": "9d44126b93f7e19544e9dad56ca127cf5650dbe09b6faa3ee323ba5fe053bbc1",
+        "dev/active/6fb89a3c/survey/json_min.c": "26b46997af83e507246997b827258f8bf7e873535757c0ef94a16a619d05b701",
+        "dev/active/6fb89a3c/survey/json_min.h": "3f953090941f1f7437b0e97678e34bfc50ec11652648b731f8c850aa9b2862b9",
+        "dev/active/6fb89a3c/survey/m4ri_transpose_arm.c": "2944e5b68d9bfe83039c49f006592d7f4335084d01570d10c89fbe9fec68f2a7",
+        "dev/bench_results/1d4fd63d/run-transpose-lane.sh": "7726f68f4a7a428121d81d6c7635980b337b384f11a63f82e32135d07cb2a108",
+        "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
+        "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "095deb55202c80bda2b2eb0b3362f524ab77891f4f05da7c549e7b3f8053e824",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "e23750a6d4a92d95d966ae8618361945b288b26407640f10926134c732300612",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "a3ebd9769d81ee2e3eeeaae991053f36a24fce7557254cbabc5a9ed5e80c1e6b",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs": "1b813b667407c019b7fa563648f05fa820b1433520068bc03864cd42f53b2c5c",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "cdef0a5aa6166a37b42f3c18318cea942ace7ca9f2538382597b980c8ced24d6",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "81a909833bc7cb149c45d7851f7eef990fa665f77d06f89c1db768c5b3933121",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "b02ee6247b1290709d62580ae605e68156ff2e8c22d3a28add609e6e291472d4",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "ead299d593daa304e8a28f64b893dd920c3acf1e6be79b9cad25ab8c026bee1a",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "089f5c4dcfd6cfe34223ca31ebf8caec75d3d03a4d96bafa0ed57be2d583f58f",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "55d228c1b14366da4a003b4ad7caa7cb05036ac8151ca1f1c5e1eda1150d907a",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "afe4cf2f5b8d5eec18da0484633c390acaf348ee49dcd38b9a22f0e5d3f523a6",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd",
+        "scripts/cargo-budget.sh": "d239d32a3febaf337ed7416243f9b138846cf4423908dd35ae1f9c21dd24ae53"
+      }
+    }
+  },
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "host": {
+    "observed_utc": "2026-09-13T13:06:33.996545161Z",
+    "hostname": "fraktaali",
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "cpu_flags": [
+      "3dnowprefetch",
+      "abm",
+      "adx",
+      "aes",
+      "aperfmperf",
+      "apic",
+      "arat",
+      "avic",
+      "avx",
+      "avx2",
+      "bmi1",
+      "bmi2",
+      "bpext",
+      "cat_l3",
+      "cdp_l3",
+      "clflush",
+      "clflushopt",
+      "clwb",
+      "clzero",
+      "cmov",
+      "cmp_legacy",
+      "constant_tsc",
+      "cpb",
+      "cpuid",
+      "cqm",
+      "cqm_llc",
+      "cqm_mbm_local",
+      "cqm_mbm_total",
+      "cqm_occup_llc",
+      "cr8_legacy",
+      "cx16",
+      "cx8",
+      "de",
+      "debug_swap",
+      "decodeassists",
+      "erms",
+      "extapic",
+      "extd_apicid",
+      "f16c",
+      "flushbyasid",
+      "fma",
+      "fpu",
+      "fsgsbase",
+      "fsrm",
+      "fxsr",
+      "fxsr_opt",
+      "ht",
+      "hw_pstate",
+      "ibpb",
+      "ibrs",
+      "ibs",
+      "invpcid",
+      "irperf",
+      "lahf_lm",
+      "lbrv",
+      "lm",
+      "mba",
+      "mca",
+      "mce",
+      "misalignsse",
+      "mmx",
+      "mmxext",
+      "monitor",
+      "movbe",
+      "msr",
+      "mtrr",
+      "mwaitx",
+      "nonstop_tsc",
+      "nopl",
+      "npt",
+      "nrip_save",
+      "nx",
+      "ospke",
+      "osvw",
+      "overflow_recov",
+      "pae",
+      "pat",
+      "pausefilter",
+      "pclmulqdq",
+      "pdpe1gb",
+      "perfctr_core",
+      "perfctr_llc",
+      "perfctr_nb",
+      "pfthreshold",
+      "pge",
+      "pku",
+      "pni",
+      "popcnt",
+      "pse",
+      "pse36",
+      "rapl",
+      "rdpid",
+      "rdpru",
+      "rdrand",
+      "rdseed",
+      "rdt_a",
+      "rdtscp",
+      "rep_good",
+      "sep",
+      "sha_ni",
+      "skinit",
+      "smap",
+      "smca",
+      "smep",
+      "ssbd",
+      "sse",
+      "sse2",
+      "sse4_1",
+      "sse4_2",
+      "sse4a",
+      "ssse3",
+      "stibp",
+      "succor",
+      "svm_lock",
+      "syscall",
+      "tce",
+      "topoext",
+      "tsc",
+      "tsc_scale",
+      "umip",
+      "user_shstk",
+      "v_spec_ctrl",
+      "v_vmsave_vmload",
+      "vaes",
+      "vgif",
+      "vmcb_clean",
+      "vme",
+      "vmmcall",
+      "vpclmulqdq",
+      "wbnoinvd",
+      "wdt",
+      "x2apic",
+      "xgetbv1",
+      "xsave",
+      "xsavec",
+      "xsaveerptr",
+      "xsaveopt",
+      "xsaves",
+      "xtopology"
+    ],
+    "os_kernel": "Linux 7.2.2-arch1-1",
+    "governors": {
+      "cpu0": "powersave",
+      "cpu1": "powersave",
+      "cpu10": "powersave",
+      "cpu11": "powersave",
+      "cpu12": "powersave",
+      "cpu13": "powersave",
+      "cpu14": "powersave",
+      "cpu15": "powersave",
+      "cpu16": "powersave",
+      "cpu17": "powersave",
+      "cpu18": "powersave",
+      "cpu19": "powersave",
+      "cpu2": "powersave",
+      "cpu20": "powersave",
+      "cpu21": "powersave",
+      "cpu22": "powersave",
+      "cpu23": "powersave",
+      "cpu3": "powersave",
+      "cpu4": "powersave",
+      "cpu5": "powersave",
+      "cpu6": "powersave",
+      "cpu7": "powersave",
+      "cpu8": "powersave",
+      "cpu9": "powersave"
+    },
+    "smt_active": true,
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "topology": {
+      "cpus": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 6,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 7,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 8,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 9,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 10,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 11,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 12,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 13,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 14,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 15,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 16,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 17,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 18,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 19,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 20,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 21,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 22,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 23,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        }
+      ],
+      "smt_active": true
+    },
+    "load_average": [
+      1.72,
+      2.25,
+      2.94
+    ],
+    "available_memory_kib": 43835072
+  },
+  "lock": {
+    "lock_path": "/tmp/gf2-ccx1.lock",
+    "holder_pid": 1743729,
+    "observation": "inherited-fd-and-independent-flock-conflict"
+  },
+  "workers": {
+    "environment_rayon_threads": "1",
+    "runner_threads": 1
+  },
+  "execution_log": {
+    "path": "execution.log",
+    "sha256": "ad0a4d38102e4867c5ee4e48dde6e5471370fbb8e021408f7fdaaed940ae5f98",
+    "sessions": 1,
+    "resumed": false
+  },
+  "checkpoints": {
+    "manifest_path": "checkpoints/manifest.json",
+    "manifest_sha256": "efae1aad3a7d71eac8701acacadb577399b6cfe0061d6095282a7c0776cb9289"
+  },
+  "arms": {
+    "external-bitshuffle": {
+      "build": "external",
+      "description": "Bitshuffle 0.5.2 bshuf_bitshuffle (commit 52aec3b80d05606c090956aecfe868489d96b95c, MIT, gcc -O3 -march=native -fPIC, compile-time AVX2 route) over 64 eight-byte elements into a preallocated output; the executable 6fb89a3c pinned, checked byte for byte against its build-evidence.json before this run",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/6fb89a3c/survey/bitshuffle_transpose_arm",
+      "executable_sha256": "74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "external-m4ri": {
+      "build": "external",
+      "description": "M4RI 20260122 mzd_transpose (release tarball, GPL-2.0-or-later, gcc -O3 -march=native -fPIC, no runtime dispatch), reusing a preallocated output; the executable 6fb89a3c pinned, checked byte for byte against its build-evidence.json before this run",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/6fb89a3c/survey/m4ri_transpose_arm",
+      "executable_sha256": "5cdd572ebf07455d13bd3c627af447a8d75654e69012b37f1a8e10ea38ab84f0",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "gf2-avx2-ymm6": {
+      "build": "conservative-portable",
+      "description": "the avx2-ymm6 lane: all six mask-shift-XOR stages in YMM registers, no stack scratch",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/external-arms/target/release/transpose-lane-external-arm",
+      "executable_sha256": "06f6bd9855f6abdd9b3b87fc47b74c3deaa8f0d9c6926c2568f4b29949e1adc1",
+      "arguments": [],
+      "environment": {
+        "GF2_TRANSPOSE_LANE": "avx2-ymm6",
+        "RAYON_NUM_THREADS": "1"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "lane-avx2-ymm6-block-64-vs-m4ri",
+      "key": "lane-avx2-ymm6-block-64-vs-m4ri",
+      "role": "confirmatory",
+      "baseline_arm": "gf2-avx2-ymm6",
+      "candidate_arm": "external-m4ri",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743757,
+            "windows": [
+              {
+                "calls": 2872777,
+                "elapsed_ns": 100202380
+              },
+              {
+                "calls": 2872777,
+                "elapsed_ns": 100247410
+              },
+              {
+                "calls": 2872777,
+                "elapsed_ns": 100526362
+              },
+              {
+                "calls": 2872777,
+                "elapsed_ns": 100929904
+              },
+              {
+                "calls": 2872777,
+                "elapsed_ns": 100384441
+              }
+            ],
+            "ns_per_call": 34.94334610726833,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 596341894
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743753,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37289374
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37229684
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37601027
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37445546
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37648096
+              }
+            ],
+            "ns_per_call": 142.29355859809922,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 208778065
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743761,
+            "windows": [
+              {
+                "calls": 2854326,
+                "elapsed_ns": 100318811
+              },
+              {
+                "calls": 2854326,
+                "elapsed_ns": 99884248
+              },
+              {
+                "calls": 2854326,
+                "elapsed_ns": 99978869
+              },
+              {
+                "calls": 2854326,
+                "elapsed_ns": 99837798
+              },
+              {
+                "calls": 2854326,
+                "elapsed_ns": 99849088
+              }
+            ],
+            "ns_per_call": 34.9939873721502,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 595068435
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743767,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 38495641
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38461111
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38511602
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38161839
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38253780
+              }
+            ],
+            "ns_per_call": 146.15271871924364,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 212432266
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743772,
+            "windows": [
+              {
+                "calls": 2862007,
+                "elapsed_ns": 100253260
+              },
+              {
+                "calls": 2862007,
+                "elapsed_ns": 100176780
+              },
+              {
+                "calls": 2862007,
+                "elapsed_ns": 100802093
+              },
+              {
+                "calls": 2862007,
+                "elapsed_ns": 100851654
+              },
+              {
+                "calls": 2862007,
+                "elapsed_ns": 100336210
+              }
+            ],
+            "ns_per_call": 35.057989026581694,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 598048522
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743798,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 50952589
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38087149
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38211460
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38224830
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38132019
+              }
+            ],
+            "ns_per_call": 145.20404169374177,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 225997000
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743806,
+            "windows": [
+              {
+                "calls": 2868891,
+                "elapsed_ns": 100238470
+              },
+              {
+                "calls": 2868891,
+                "elapsed_ns": 100579082
+              },
+              {
+                "calls": 2868891,
+                "elapsed_ns": 101006524
+              },
+              {
+                "calls": 2868891,
+                "elapsed_ns": 100398771
+              },
+              {
+                "calls": 2868891,
+                "elapsed_ns": 100515842
+              }
+            ],
+            "ns_per_call": 35.03647994991793,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 598401824
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743802,
+            "windows": [
+              {
+                "calls": 277777,
+                "elapsed_ns": 39664638
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 39514507
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 39514037
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 39617157
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 39668408
+              }
+            ],
+            "ns_per_call": 142.62216454206072,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 219424205
+          }
+        },
+        {
+          "index": 4,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743817,
+            "windows": [
+              {
+                "calls": 2881551,
+                "elapsed_ns": 100396711
+              },
+              {
+                "calls": 2881551,
+                "elapsed_ns": 100258480
+              },
+              {
+                "calls": 2881551,
+                "elapsed_ns": 100508442
+              },
+              {
+                "calls": 2881551,
+                "elapsed_ns": 101452287
+              },
+              {
+                "calls": 2881551,
+                "elapsed_ns": 103748599
+              }
+            ],
+            "ns_per_call": 34.879980260630475,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 599288469
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743812,
+            "windows": [
+              {
+                "calls": 270270,
+                "elapsed_ns": 38843163
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38363710
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38271720
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38355521
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38363750
+              }
+            ],
+            "ns_per_call": 141.94586894586894,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 212602727
+          }
+        },
+        {
+          "index": 5,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743822,
+            "windows": [
+              {
+                "calls": 2847792,
+                "elapsed_ns": 100390320
+              },
+              {
+                "calls": 2847792,
+                "elapsed_ns": 99652317
+              },
+              {
+                "calls": 2847792,
+                "elapsed_ns": 99539217
+              },
+              {
+                "calls": 2847792,
+                "elapsed_ns": 99650847
+              },
+              {
+                "calls": 2847792,
+                "elapsed_ns": 99792147
+              }
+            ],
+            "ns_per_call": 34.99283550203105,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 594521973
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743826,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37717627
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37375615
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37258354
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37514106
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37615157
+              }
+            ],
+            "ns_per_call": 142.55408748389743,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 207921211
+          }
+        },
+        {
+          "index": 6,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743836,
+            "windows": [
+              {
+                "calls": 2877891,
+                "elapsed_ns": 100577122
+              },
+              {
+                "calls": 2877891,
+                "elapsed_ns": 100322341
+              },
+              {
+                "calls": 2877891,
+                "elapsed_ns": 100157070
+              },
+              {
+                "calls": 2877891,
+                "elapsed_ns": 100184569
+              },
+              {
+                "calls": 2877891,
+                "elapsed_ns": 100006039
+              }
+            ],
+            "ns_per_call": 34.81180107238252,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 598506855
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743830,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 38004368
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37420265
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37919629
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37979258
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37376145
+              }
+            ],
+            "ns_per_call": 144.09508012327242,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 210756527
+          }
+        },
+        {
+          "index": 7,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743842,
+            "windows": [
+              {
+                "calls": 2881139,
+                "elapsed_ns": 100360170
+              },
+              {
+                "calls": 2881139,
+                "elapsed_ns": 100430222
+              },
+              {
+                "calls": 2881139,
+                "elapsed_ns": 100204060
+              },
+              {
+                "calls": 2881139,
+                "elapsed_ns": 100655902
+              },
+              {
+                "calls": 2881139,
+                "elapsed_ns": 100290630
+              }
+            ],
+            "ns_per_call": 34.83350508253854,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 596234373
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743846,
+            "windows": [
+              {
+                "calls": 256410,
+                "elapsed_ns": 36741161
+              },
+              {
+                "calls": 256410,
+                "elapsed_ns": 36547641
+              },
+              {
+                "calls": 256410,
+                "elapsed_ns": 36461990
+              },
+              {
+                "calls": 256410,
+                "elapsed_ns": 36540631
+              },
+              {
+                "calls": 256410,
+                "elapsed_ns": 36480390
+              }
+            ],
+            "ns_per_call": 142.50860340860342,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 202815463
+          }
+        },
+        {
+          "index": 8,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743854,
+            "windows": [
+              {
+                "calls": 2775358,
+                "elapsed_ns": 99526547
+              },
+              {
+                "calls": 2775358,
+                "elapsed_ns": 100895584
+              },
+              {
+                "calls": 2775358,
+                "elapsed_ns": 100225580
+              },
+              {
+                "calls": 2775358,
+                "elapsed_ns": 99744137
+              },
+              {
+                "calls": 2775358,
+                "elapsed_ns": 100020239
+              }
+            ],
+            "ns_per_call": 36.03868005496948,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 596949476
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743850,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37673317
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37570666
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37473686
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37585206
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37639567
+              }
+            ],
+            "ns_per_call": 142.82426840251256,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 207675710
+          }
+        },
+        {
+          "index": 9,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743860,
+            "windows": [
+              {
+                "calls": 2865163,
+                "elapsed_ns": 100360691
+              },
+              {
+                "calls": 2865163,
+                "elapsed_ns": 100284611
+              },
+              {
+                "calls": 2865163,
+                "elapsed_ns": 100320490
+              },
+              {
+                "calls": 2865163,
+                "elapsed_ns": 100222230
+              },
+              {
+                "calls": 2865163,
+                "elapsed_ns": 100522572
+              }
+            ],
+            "ns_per_call": 35.01388577194386,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 594968796
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743865,
+            "windows": [
+              {
+                "calls": 270270,
+                "elapsed_ns": 39225406
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38711492
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38909324
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38564021
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38853884
+              }
+            ],
+            "ns_per_call": 143.75951455951457,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 215440662
+          }
+        },
+        {
+          "index": 10,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743873,
+            "windows": [
+              {
+                "calls": 2880555,
+                "elapsed_ns": 100084419
+              },
+              {
+                "calls": 2880555,
+                "elapsed_ns": 100183580
+              },
+              {
+                "calls": 2880555,
+                "elapsed_ns": 100332390
+              },
+              {
+                "calls": 2880555,
+                "elapsed_ns": 100082269
+              },
+              {
+                "calls": 2880555,
+                "elapsed_ns": 100542802
+              }
+            ],
+            "ns_per_call": 34.77926302396587,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 594617093
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743869,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37649277
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37595546
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37673067
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37728467
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37585856
+              }
+            ],
+            "ns_per_call": 143.0677390303127,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 208853097
+          }
+        },
+        {
+          "index": 11,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743877,
+            "windows": [
+              {
+                "calls": 2863950,
+                "elapsed_ns": 99951879
+              },
+              {
+                "calls": 2863950,
+                "elapsed_ns": 99704797
+              },
+              {
+                "calls": 2863950,
+                "elapsed_ns": 100025549
+              },
+              {
+                "calls": 2863950,
+                "elapsed_ns": 99538196
+              },
+              {
+                "calls": 2863950,
+                "elapsed_ns": 99720118
+              }
+            ],
+            "ns_per_call": 34.81908483039159,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 593130915
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743884,
+            "windows": [
+              {
+                "calls": 270270,
+                "elapsed_ns": 38809003
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38727112
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38490401
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38434901
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 38321741
+              }
+            ],
+            "ns_per_call": 142.41462611462612,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 212654967
+          }
+        },
+        {
+          "index": 12,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743888,
+            "windows": [
+              {
+                "calls": 2859772,
+                "elapsed_ns": 100264520
+              },
+              {
+                "calls": 2859772,
+                "elapsed_ns": 100382491
+              },
+              {
+                "calls": 2859772,
+                "elapsed_ns": 100099050
+              },
+              {
+                "calls": 2859772,
+                "elapsed_ns": 100221860
+              },
+              {
+                "calls": 2859772,
+                "elapsed_ns": 100389571
+              }
+            ],
+            "ns_per_call": 35.06031949400162,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 595737259
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743892,
+            "windows": [
+              {
+                "calls": 256410,
+                "elapsed_ns": 47872113
+              },
+              {
+                "calls": 256410,
+                "elapsed_ns": 47484741
+              },
+              {
+                "calls": 256410,
+                "elapsed_ns": 47546061
+              },
+              {
+                "calls": 256410,
+                "elapsed_ns": 47901953
+              },
+              {
+                "calls": 256410,
+                "elapsed_ns": 47709332
+              }
+            ],
+            "ns_per_call": 186.06658086658086,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 258537509
+          }
+        },
+        {
+          "index": 13,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743900,
+            "windows": [
+              {
+                "calls": 2878060,
+                "elapsed_ns": 100261401
+              },
+              {
+                "calls": 2878060,
+                "elapsed_ns": 100402431
+              },
+              {
+                "calls": 2878060,
+                "elapsed_ns": 100632812
+              },
+              {
+                "calls": 2878060,
+                "elapsed_ns": 100430131
+              },
+              {
+                "calls": 2878060,
+                "elapsed_ns": 100524782
+              }
+            ],
+            "ns_per_call": 34.895078976810765,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 595273517
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743896,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 38035749
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37717697
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37792037
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37919039
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 38104929
+              }
+            ],
+            "ns_per_call": 144.09283811564958,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 209831692
+          }
+        },
+        {
+          "index": 14,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743926,
+            "windows": [
+              {
+                "calls": 2877085,
+                "elapsed_ns": 100359861
+              },
+              {
+                "calls": 2877085,
+                "elapsed_ns": 100001879
+              },
+              {
+                "calls": 2877085,
+                "elapsed_ns": 100045679
+              },
+              {
+                "calls": 2877085,
+                "elapsed_ns": 100307700
+              },
+              {
+                "calls": 2877085,
+                "elapsed_ns": 100381141
+              }
+            ],
+            "ns_per_call": 34.86435054925384,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 595198657
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743931,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37677167
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37289055
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37369085
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37552256
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37404395
+              }
+            ],
+            "ns_per_call": 142.13718426642652,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 206755615
+          }
+        },
+        {
+          "index": 15,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743939,
+            "windows": [
+              {
+                "calls": 2865415,
+                "elapsed_ns": 100184230
+              },
+              {
+                "calls": 2865415,
+                "elapsed_ns": 100292290
+              },
+              {
+                "calls": 2865415,
+                "elapsed_ns": 100303091
+              },
+              {
+                "calls": 2865415,
+                "elapsed_ns": 100421331
+              },
+              {
+                "calls": 2865415,
+                "elapsed_ns": 101661358
+              }
+            ],
+            "ns_per_call": 35.00473439274939,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 596941356
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743935,
+            "windows": [
+              {
+                "calls": 277777,
+                "elapsed_ns": 39786368
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 39744138
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 39755429
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 39574517
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 39519697
+              }
+            ],
+            "ns_per_call": 143.0792974220328,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 217117651
+          }
+        },
+        {
+          "index": 16,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743970,
+            "windows": [
+              {
+                "calls": 2869511,
+                "elapsed_ns": 99693927
+              },
+              {
+                "calls": 2869511,
+                "elapsed_ns": 99905888
+              },
+              {
+                "calls": 2869511,
+                "elapsed_ns": 99799708
+              },
+              {
+                "calls": 2869511,
+                "elapsed_ns": 99827208
+              },
+              {
+                "calls": 2869511,
+                "elapsed_ns": 101019384
+              }
+            ],
+            "ns_per_call": 34.78892675441913,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 596477644
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743966,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37864757
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37400696
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37611766
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37380425
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 39255856
+              }
+            ],
+            "ns_per_call": 142.92519674566893,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 210032853
+          }
+        },
+        {
+          "index": 17,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743975,
+            "windows": [
+              {
+                "calls": 2862844,
+                "elapsed_ns": 99722958
+              },
+              {
+                "calls": 2862844,
+                "elapsed_ns": 99699317
+              },
+              {
+                "calls": 2862844,
+                "elapsed_ns": 99627277
+              },
+              {
+                "calls": 2862844,
+                "elapsed_ns": 99671907
+              },
+              {
+                "calls": 2862844,
+                "elapsed_ns": 99554826
+              }
+            ],
+            "ns_per_call": 34.815696209783,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 589777186
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743979,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37282614
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37682877
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37382285
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37523536
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37335285
+              }
+            ],
+            "ns_per_call": 142.05316598076433,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 204463673
+          }
+        },
+        {
+          "index": 18,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743987,
+            "windows": [
+              {
+                "calls": 2872605,
+                "elapsed_ns": 100356940
+              },
+              {
+                "calls": 2872605,
+                "elapsed_ns": 100169640
+              },
+              {
+                "calls": 2872605,
+                "elapsed_ns": 99989549
+              },
+              {
+                "calls": 2872605,
+                "elapsed_ns": 100179020
+              },
+              {
+                "calls": 2872605,
+                "elapsed_ns": 99878948
+              }
+            ],
+            "ns_per_call": 34.870662691181,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 593027485
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1743983,
+            "windows": [
+              {
+                "calls": 285714,
+                "elapsed_ns": 40609943
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 40605122
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 40576313
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 40888555
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 40562072
+              }
+            ],
+            "ns_per_call": 142.11806911806912,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 221755217
+          }
+        },
+        {
+          "index": 19,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1743993,
+            "windows": [
+              {
+                "calls": 2848408,
+                "elapsed_ns": 99744767
+              },
+              {
+                "calls": 2848408,
+                "elapsed_ns": 99594717
+              },
+              {
+                "calls": 2848408,
+                "elapsed_ns": 99760917
+              },
+              {
+                "calls": 2848408,
+                "elapsed_ns": 100093880
+              },
+              {
+                "calls": 2848408,
+                "elapsed_ns": 100958403
+              }
+            ],
+            "ns_per_call": 35.02339447157851,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 593746808
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1744039,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37558357
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37653516
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37831068
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37366755
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37439866
+              }
+            ],
+            "ns_per_call": 142.72224185562231,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 207964011
+          }
+        },
+        {
+          "index": 20,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744043,
+            "windows": [
+              {
+                "calls": 2853670,
+                "elapsed_ns": 99932599
+              },
+              {
+                "calls": 2853670,
+                "elapsed_ns": 99673977
+              },
+              {
+                "calls": 2853670,
+                "elapsed_ns": 99733867
+              },
+              {
+                "calls": 2853670,
+                "elapsed_ns": 99984349
+              },
+              {
+                "calls": 2853670,
+                "elapsed_ns": 99821978
+              }
+            ],
+            "ns_per_call": 34.98021074616196,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 591385106
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1744047,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37506376
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37387596
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37991178
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37550046
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37576346
+              }
+            ],
+            "ns_per_call": 142.69065994824382,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 206407353
+          }
+        },
+        {
+          "index": 21,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744057,
+            "windows": [
+              {
+                "calls": 2864918,
+                "elapsed_ns": 100145779
+              },
+              {
+                "calls": 2864918,
+                "elapsed_ns": 100533552
+              },
+              {
+                "calls": 2864918,
+                "elapsed_ns": 100154720
+              },
+              {
+                "calls": 2864918,
+                "elapsed_ns": 100167860
+              },
+              {
+                "calls": 2864918,
+                "elapsed_ns": 100255830
+              }
+            ],
+            "ns_per_call": 34.96360454295725,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 592498862
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1744053,
+            "windows": [
+              {
+                "calls": 285714,
+                "elapsed_ns": 40969395
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 41009475
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 41059005
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 41341607
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 40874945
+              }
+            ],
+            "ns_per_call": 143.53330603330605,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 223082204
+          }
+        },
+        {
+          "index": 22,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744066,
+            "windows": [
+              {
+                "calls": 2875539,
+                "elapsed_ns": 100194389
+              },
+              {
+                "calls": 2875539,
+                "elapsed_ns": 100249091
+              },
+              {
+                "calls": 2875539,
+                "elapsed_ns": 99948068
+              },
+              {
+                "calls": 2875539,
+                "elapsed_ns": 99898099
+              },
+              {
+                "calls": 2875539,
+                "elapsed_ns": 100197400
+              }
+            ],
+            "ns_per_call": 34.84368982649861,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 591498187
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1744062,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37505186
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37647737
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37566436
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37661777
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37462805
+              }
+            ],
+            "ns_per_call": 142.75294216000336,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 205878260
+          }
+        },
+        {
+          "index": 23,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744071,
+            "windows": [
+              {
+                "calls": 2851198,
+                "elapsed_ns": 99742928
+              },
+              {
+                "calls": 2851198,
+                "elapsed_ns": 99913568
+              },
+              {
+                "calls": 2851198,
+                "elapsed_ns": 100189620
+              },
+              {
+                "calls": 2851198,
+                "elapsed_ns": 99998319
+              },
+              {
+                "calls": 2851198,
+                "elapsed_ns": 99845438
+              }
+            ],
+            "ns_per_call": 35.04266206696273,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 593233496
+          },
+          "candidate": {
+            "arm": "external-m4ri",
+            "pid": 1744077,
+            "windows": [
+              {
+                "calls": 263157,
+                "elapsed_ns": 37977078
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37760148
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37712287
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37620216
+              },
+              {
+                "calls": 263157,
+                "elapsed_ns": 37580226
+              }
+            ],
+            "ns_per_call": 143.30717784440466,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "m4ri-mzd_transpose",
+            "conversion": null,
+            "elapsed_ns": 206702814
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 0.2447917693170485,
+          "lower": 0.24350978182277647,
+          "upper": 0.24531319638497023,
+          "confidence": 0.9875,
+          "alpha": 0.0125,
+          "resamples": 10000,
+          "seed": 3458516642455234145,
+          "pairs": 24
+        },
+        "decision": "regressed",
+        "margins": {
+          "improvement": 1.2,
+          "equivalence": 1.12
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "d2c4d0c2a6562458606929e88978e3709912584553d24c21363dc54ff9dda620"
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-block-64-vs-bitshuffle",
+      "key": "lane-avx2-ymm6-block-64-vs-bitshuffle",
+      "role": "confirmatory",
+      "baseline_arm": "gf2-avx2-ymm6",
+      "candidate_arm": "external-bitshuffle",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744081,
+            "windows": [
+              {
+                "calls": 2847227,
+                "elapsed_ns": 99482006
+              },
+              {
+                "calls": 2847227,
+                "elapsed_ns": 99565146
+              },
+              {
+                "calls": 2847227,
+                "elapsed_ns": 99547647
+              },
+              {
+                "calls": 2847227,
+                "elapsed_ns": 100039679
+              },
+              {
+                "calls": 2847227,
+                "elapsed_ns": 99673137
+              }
+            ],
+            "ns_per_call": 34.96916332979422,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 594006840
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744086,
+            "windows": [
+              {
+                "calls": 227272,
+                "elapsed_ns": 55349844
+              },
+              {
+                "calls": 227272,
+                "elapsed_ns": 54894421
+              },
+              {
+                "calls": 227272,
+                "elapsed_ns": 54939992
+              },
+              {
+                "calls": 227272,
+                "elapsed_ns": 54862471
+              },
+              {
+                "calls": 227272,
+                "elapsed_ns": 54810730
+              }
+            ],
+            "ns_per_call": 241.536225315921,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 291052607
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744094,
+            "windows": [
+              {
+                "calls": 2836574,
+                "elapsed_ns": 99166754
+              },
+              {
+                "calls": 2836574,
+                "elapsed_ns": 99452086
+              },
+              {
+                "calls": 2836574,
+                "elapsed_ns": 99637487
+              },
+              {
+                "calls": 2836574,
+                "elapsed_ns": 99339685
+              },
+              {
+                "calls": 2836574,
+                "elapsed_ns": 99376296
+              }
+            ],
+            "ns_per_call": 35.033916266594844,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 589091133
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744090,
+            "windows": [
+              {
+                "calls": 250000,
+                "elapsed_ns": 60471172
+              },
+              {
+                "calls": 250000,
+                "elapsed_ns": 60299361
+              },
+              {
+                "calls": 250000,
+                "elapsed_ns": 60453422
+              },
+              {
+                "calls": 250000,
+                "elapsed_ns": 60284501
+              },
+              {
+                "calls": 250000,
+                "elapsed_ns": 60348941
+              }
+            ],
+            "ns_per_call": 241.395764,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 319192772
+          }
+        },
+        {
+          "index": 2,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744128,
+            "windows": [
+              {
+                "calls": 2865371,
+                "elapsed_ns": 100079970
+              },
+              {
+                "calls": 2865371,
+                "elapsed_ns": 100689972
+              },
+              {
+                "calls": 2865371,
+                "elapsed_ns": 101515098
+              },
+              {
+                "calls": 2865371,
+                "elapsed_ns": 100307830
+              },
+              {
+                "calls": 2865371,
+                "elapsed_ns": 100361041
+              }
+            ],
+            "ns_per_call": 35.02549617484088,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 594932995
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744102,
+            "windows": [
+              {
+                "calls": 277777,
+                "elapsed_ns": 67820302
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67114268
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67162539
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67985203
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67553051
+              }
+            ],
+            "ns_per_call": 243.1916645366607,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 355571312
+          }
+        },
+        {
+          "index": 3,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744152,
+            "windows": [
+              {
+                "calls": 2861965,
+                "elapsed_ns": 100318730
+              },
+              {
+                "calls": 2861965,
+                "elapsed_ns": 100076190
+              },
+              {
+                "calls": 2861965,
+                "elapsed_ns": 100008138
+              },
+              {
+                "calls": 2861965,
+                "elapsed_ns": 100178580
+              },
+              {
+                "calls": 2861965,
+                "elapsed_ns": 100002679
+              }
+            ],
+            "ns_per_call": 34.967649848967405,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 591893799
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744156,
+            "windows": [
+              {
+                "calls": 232558,
+                "elapsed_ns": 56607931
+              },
+              {
+                "calls": 232558,
+                "elapsed_ns": 56130298
+              },
+              {
+                "calls": 232558,
+                "elapsed_ns": 56344019
+              },
+              {
+                "calls": 232558,
+                "elapsed_ns": 56333209
+              },
+              {
+                "calls": 232558,
+                "elapsed_ns": 56332740
+              }
+            ],
+            "ns_per_call": 242.23294403976644,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 297868985
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744162,
+            "windows": [
+              {
+                "calls": 2859791,
+                "elapsed_ns": 100375661
+              },
+              {
+                "calls": 2859791,
+                "elapsed_ns": 100244070
+              },
+              {
+                "calls": 2859791,
+                "elapsed_ns": 99978299
+              },
+              {
+                "calls": 2859791,
+                "elapsed_ns": 100115119
+              },
+              {
+                "calls": 2859791,
+                "elapsed_ns": 100008320
+              }
+            ],
+            "ns_per_call": 35.00784462920542,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 592437301
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744167,
+            "windows": [
+              {
+                "calls": 238095,
+                "elapsed_ns": 57766387
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57427405
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57543376
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57686696
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57799247
+              }
+            ],
+            "ns_per_call": 242.28436548436548,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 306106169
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744175,
+            "windows": [
+              {
+                "calls": 2772944,
+                "elapsed_ns": 98746752
+              },
+              {
+                "calls": 2772944,
+                "elapsed_ns": 98870693
+              },
+              {
+                "calls": 2772944,
+                "elapsed_ns": 99463576
+              },
+              {
+                "calls": 2772944,
+                "elapsed_ns": 99953618
+              },
+              {
+                "calls": 2772944,
+                "elapsed_ns": 98828183
+              }
+            ],
+            "ns_per_call": 35.65549574747993,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 587769196
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744171,
+            "windows": [
+              {
+                "calls": 227272,
+                "elapsed_ns": 55107062
+              },
+              {
+                "calls": 227272,
+                "elapsed_ns": 54840121
+              },
+              {
+                "calls": 227272,
+                "elapsed_ns": 55075653
+              },
+              {
+                "calls": 227272,
+                "elapsed_ns": 54991121
+              },
+              {
+                "calls": 227272,
+                "elapsed_ns": 54938042
+              }
+            ],
+            "ns_per_call": 241.96170667746136,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 291003567
+          }
+        },
+        {
+          "index": 6,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744199,
+            "windows": [
+              {
+                "calls": 2842232,
+                "elapsed_ns": 99713857
+              },
+              {
+                "calls": 2842232,
+                "elapsed_ns": 99658707
+              },
+              {
+                "calls": 2842232,
+                "elapsed_ns": 99506276
+              },
+              {
+                "calls": 2842232,
+                "elapsed_ns": 100123900
+              },
+              {
+                "calls": 2842232,
+                "elapsed_ns": 99566896
+              }
+            ],
+            "ns_per_call": 35.06353703708916,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 590886023
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744207,
+            "windows": [
+              {
+                "calls": 238095,
+                "elapsed_ns": 58028579
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57595066
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57517135
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57621026
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57587877
+              }
+            ],
+            "ns_per_call": 241.8995190995191,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 306117200
+          }
+        },
+        {
+          "index": 7,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744217,
+            "windows": [
+              {
+                "calls": 2875152,
+                "elapsed_ns": 99933048
+              },
+              {
+                "calls": 2875152,
+                "elapsed_ns": 100226040
+              },
+              {
+                "calls": 2875152,
+                "elapsed_ns": 99881608
+              },
+              {
+                "calls": 2875152,
+                "elapsed_ns": 99784888
+              },
+              {
+                "calls": 2875152,
+                "elapsed_ns": 100056749
+              }
+            ],
+            "ns_per_call": 34.75748343044124,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 591526496
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744213,
+            "windows": [
+              {
+                "calls": 243902,
+                "elapsed_ns": 59584417
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 59433686
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 59821489
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 59450046
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 59301276
+              }
+            ],
+            "ns_per_call": 243.7456273421292,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 315756213
+          }
+        },
+        {
+          "index": 8,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744221,
+            "windows": [
+              {
+                "calls": 2860060,
+                "elapsed_ns": 99921779
+              },
+              {
+                "calls": 2860060,
+                "elapsed_ns": 100165419
+              },
+              {
+                "calls": 2860060,
+                "elapsed_ns": 100452842
+              },
+              {
+                "calls": 2860060,
+                "elapsed_ns": 100135339
+              },
+              {
+                "calls": 2860060,
+                "elapsed_ns": 100255580
+              }
+            ],
+            "ns_per_call": 35.022139046034,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 592863033
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744227,
+            "windows": [
+              {
+                "calls": 270270,
+                "elapsed_ns": 66142583
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 65216758
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 65374839
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 65497399
+              },
+              {
+                "calls": 270270,
+                "elapsed_ns": 65371489
+              }
+            ],
+            "ns_per_call": 241.8871461871462,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 344978014
+          }
+        },
+        {
+          "index": 9,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744236,
+            "windows": [
+              {
+                "calls": 2880412,
+                "elapsed_ns": 100122379
+              },
+              {
+                "calls": 2880412,
+                "elapsed_ns": 100564762
+              },
+              {
+                "calls": 2880412,
+                "elapsed_ns": 100356151
+              },
+              {
+                "calls": 2880412,
+                "elapsed_ns": 100069799
+              },
+              {
+                "calls": 2880412,
+                "elapsed_ns": 100036609
+              }
+            ],
+            "ns_per_call": 34.75974235630181,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 592346191
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744232,
+            "windows": [
+              {
+                "calls": 277777,
+                "elapsed_ns": 67211559
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67091819
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67051927
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67129949
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67360809
+              }
+            ],
+            "ns_per_call": 241.6684930717806,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 353997393
+          }
+        },
+        {
+          "index": 10,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744240,
+            "windows": [
+              {
+                "calls": 2870788,
+                "elapsed_ns": 99872678
+              },
+              {
+                "calls": 2870788,
+                "elapsed_ns": 99755197
+              },
+              {
+                "calls": 2870788,
+                "elapsed_ns": 100036359
+              },
+              {
+                "calls": 2870788,
+                "elapsed_ns": 100258861
+              },
+              {
+                "calls": 2870788,
+                "elapsed_ns": 100105719
+              }
+            ],
+            "ns_per_call": 34.84630665865957,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 593377137
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744246,
+            "windows": [
+              {
+                "calls": 238095,
+                "elapsed_ns": 57985348
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57531776
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57946928
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57414645
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57406236
+              }
+            ],
+            "ns_per_call": 241.63370083370083,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 306249571
+          }
+        },
+        {
+          "index": 11,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744256,
+            "windows": [
+              {
+                "calls": 2874255,
+                "elapsed_ns": 100338491
+              },
+              {
+                "calls": 2874255,
+                "elapsed_ns": 100280281
+              },
+              {
+                "calls": 2874255,
+                "elapsed_ns": 100405911
+              },
+              {
+                "calls": 2874255,
+                "elapsed_ns": 100322230
+              },
+              {
+                "calls": 2874255,
+                "elapsed_ns": 100581782
+              }
+            ],
+            "ns_per_call": 34.90939078126332,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 598099303
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744250,
+            "windows": [
+              {
+                "calls": 243902,
+                "elapsed_ns": 59213445
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58812553
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58800312
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58864333
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 59123085
+              }
+            ],
+            "ns_per_call": 241.3441997195595,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 700085581
+          }
+        },
+        {
+          "index": 12,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744260,
+            "windows": [
+              {
+                "calls": 2885443,
+                "elapsed_ns": 100333101
+              },
+              {
+                "calls": 2885443,
+                "elapsed_ns": 100577142
+              },
+              {
+                "calls": 2885443,
+                "elapsed_ns": 100574452
+              },
+              {
+                "calls": 2885443,
+                "elapsed_ns": 100436221
+              },
+              {
+                "calls": 2885443,
+                "elapsed_ns": 100242830
+              }
+            ],
+            "ns_per_call": 34.80790332714942,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 597816301
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744266,
+            "windows": [
+              {
+                "calls": 285714,
+                "elapsed_ns": 69352930
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 68822918
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 69068709
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 68832458
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 68815548
+              }
+            ],
+            "ns_per_call": 240.91384391384392,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 366108669
+          }
+        },
+        {
+          "index": 13,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744297,
+            "windows": [
+              {
+                "calls": 2205705,
+                "elapsed_ns": 99487116
+              },
+              {
+                "calls": 2205705,
+                "elapsed_ns": 98701292
+              },
+              {
+                "calls": 2205705,
+                "elapsed_ns": 99342285
+              },
+              {
+                "calls": 2205705,
+                "elapsed_ns": 99300665
+              },
+              {
+                "calls": 2205705,
+                "elapsed_ns": 99014904
+              }
+            ],
+            "ns_per_call": 45.019921068320556,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 566263027
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744271,
+            "windows": [
+              {
+                "calls": 285714,
+                "elapsed_ns": 69268270
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 69068439
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 69113869
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 68898259
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 69546391
+              }
+            ],
+            "ns_per_call": 241.8987833987834,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 366315411
+          }
+        },
+        {
+          "index": 14,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744305,
+            "windows": [
+              {
+                "calls": 2855502,
+                "elapsed_ns": 99458496
+              },
+              {
+                "calls": 2855502,
+                "elapsed_ns": 99334985
+              },
+              {
+                "calls": 2855502,
+                "elapsed_ns": 99280645
+              },
+              {
+                "calls": 2855502,
+                "elapsed_ns": 99290905
+              },
+              {
+                "calls": 2855502,
+                "elapsed_ns": 99359645
+              }
+            ],
+            "ns_per_call": 34.787223052198875,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 592590173
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744301,
+            "windows": [
+              {
+                "calls": 243902,
+                "elapsed_ns": 59510147
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58884723
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58812083
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58780412
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 59236755
+              }
+            ],
+            "ns_per_call": 241.42779887003798,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 319943376
+          }
+        },
+        {
+          "index": 15,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744312,
+            "windows": [
+              {
+                "calls": 2871695,
+                "elapsed_ns": 100714853
+              },
+              {
+                "calls": 2871695,
+                "elapsed_ns": 99889248
+              },
+              {
+                "calls": 2871695,
+                "elapsed_ns": 100218180
+              },
+              {
+                "calls": 2871695,
+                "elapsed_ns": 99826218
+              },
+              {
+                "calls": 2871695,
+                "elapsed_ns": 100132930
+              }
+            ],
+            "ns_per_call": 34.86892932571182,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 596591284
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744317,
+            "windows": [
+              {
+                "calls": 285714,
+                "elapsed_ns": 70072734
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 69692123
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 68827368
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 68969458
+              },
+              {
+                "calls": 285714,
+                "elapsed_ns": 68993279
+              }
+            ],
+            "ns_per_call": 241.47671797671796,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 368419222
+          }
+        },
+        {
+          "index": 16,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744321,
+            "windows": [
+              {
+                "calls": 2878958,
+                "elapsed_ns": 100292961
+              },
+              {
+                "calls": 2878958,
+                "elapsed_ns": 100107079
+              },
+              {
+                "calls": 2878958,
+                "elapsed_ns": 100014939
+              },
+              {
+                "calls": 2878958,
+                "elapsed_ns": 100267371
+              },
+              {
+                "calls": 2878958,
+                "elapsed_ns": 100415091
+              }
+            ],
+            "ns_per_call": 34.82766021595313,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 596771086
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744327,
+            "windows": [
+              {
+                "calls": 294117,
+                "elapsed_ns": 71633143
+              },
+              {
+                "calls": 294117,
+                "elapsed_ns": 71018280
+              },
+              {
+                "calls": 294117,
+                "elapsed_ns": 71079240
+              },
+              {
+                "calls": 294117,
+                "elapsed_ns": 71668873
+              },
+              {
+                "calls": 294117,
+                "elapsed_ns": 70939760
+              }
+            ],
+            "ns_per_call": 241.66994767388488,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 378629968
+          }
+        },
+        {
+          "index": 17,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744336,
+            "windows": [
+              {
+                "calls": 2886602,
+                "elapsed_ns": 100589641
+              },
+              {
+                "calls": 2886602,
+                "elapsed_ns": 100342791
+              },
+              {
+                "calls": 2886602,
+                "elapsed_ns": 100583532
+              },
+              {
+                "calls": 2886602,
+                "elapsed_ns": 100400361
+              },
+              {
+                "calls": 2886602,
+                "elapsed_ns": 100461351
+              }
+            ],
+            "ns_per_call": 34.802633338437374,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 597926331
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744332,
+            "windows": [
+              {
+                "calls": 243902,
+                "elapsed_ns": 59423036
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58829293
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58854403
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58906684
+              },
+              {
+                "calls": 243902,
+                "elapsed_ns": 58891153
+              }
+            ],
+            "ns_per_call": 241.45416191749146,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 316229066
+          }
+        },
+        {
+          "index": 18,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744340,
+            "windows": [
+              {
+                "calls": 2881134,
+                "elapsed_ns": 100112639
+              },
+              {
+                "calls": 2881134,
+                "elapsed_ns": 100154220
+              },
+              {
+                "calls": 2881134,
+                "elapsed_ns": 100267140
+              },
+              {
+                "calls": 2881134,
+                "elapsed_ns": 100019149
+              },
+              {
+                "calls": 2881134,
+                "elapsed_ns": 100701763
+              }
+            ],
+            "ns_per_call": 34.76208326304851,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 595685139
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744346,
+            "windows": [
+              {
+                "calls": 222222,
+                "elapsed_ns": 54298838
+              },
+              {
+                "calls": 222222,
+                "elapsed_ns": 53610095
+              },
+              {
+                "calls": 222222,
+                "elapsed_ns": 53971976
+              },
+              {
+                "calls": 222222,
+                "elapsed_ns": 53714015
+              },
+              {
+                "calls": 222222,
+                "elapsed_ns": 53690724
+              }
+            ],
+            "ns_per_call": 241.7133092133092,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 289601599
+          }
+        },
+        {
+          "index": 19,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744355,
+            "windows": [
+              {
+                "calls": 2871162,
+                "elapsed_ns": 100296961
+              },
+              {
+                "calls": 2871162,
+                "elapsed_ns": 100758833
+              },
+              {
+                "calls": 2871162,
+                "elapsed_ns": 100471561
+              },
+              {
+                "calls": 2871162,
+                "elapsed_ns": 100402311
+              },
+              {
+                "calls": 2871162,
+                "elapsed_ns": 100389761
+              }
+            ],
+            "ns_per_call": 34.96922535196551,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 598451525
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744350,
+            "windows": [
+              {
+                "calls": 294117,
+                "elapsed_ns": 71359431
+              },
+              {
+                "calls": 294117,
+                "elapsed_ns": 70957209
+              },
+              {
+                "calls": 294117,
+                "elapsed_ns": 71115511
+              },
+              {
+                "calls": 294117,
+                "elapsed_ns": 71058990
+              },
+              {
+                "calls": 294117,
+                "elapsed_ns": 70958529
+              }
+            ],
+            "ns_per_call": 241.60109752241456,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 376559507
+          }
+        },
+        {
+          "index": 20,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744359,
+            "windows": [
+              {
+                "calls": 2112875,
+                "elapsed_ns": 100204060
+              },
+              {
+                "calls": 2112875,
+                "elapsed_ns": 99994359
+              },
+              {
+                "calls": 2112875,
+                "elapsed_ns": 100178140
+              },
+              {
+                "calls": 2112875,
+                "elapsed_ns": 100390081
+              },
+              {
+                "calls": 2112875,
+                "elapsed_ns": 100611562
+              }
+            ],
+            "ns_per_call": 47.42545583624209,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 573280656
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744363,
+            "windows": [
+              {
+                "calls": 250000,
+                "elapsed_ns": 60693193
+              },
+              {
+                "calls": 250000,
+                "elapsed_ns": 60559053
+              },
+              {
+                "calls": 250000,
+                "elapsed_ns": 60505832
+              },
+              {
+                "calls": 250000,
+                "elapsed_ns": 60276851
+              },
+              {
+                "calls": 250000,
+                "elapsed_ns": 60346021
+              }
+            ],
+            "ns_per_call": 242.023328,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 324565372
+          }
+        },
+        {
+          "index": 21,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744374,
+            "windows": [
+              {
+                "calls": 2410147,
+                "elapsed_ns": 100072969
+              },
+              {
+                "calls": 2410147,
+                "elapsed_ns": 100802514
+              },
+              {
+                "calls": 2410147,
+                "elapsed_ns": 100739162
+              },
+              {
+                "calls": 2410147,
+                "elapsed_ns": 101056535
+              },
+              {
+                "calls": 2410147,
+                "elapsed_ns": 100295681
+              }
+            ],
+            "ns_per_call": 41.79793265721966,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 569718177
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744369,
+            "windows": [
+              {
+                "calls": 277777,
+                "elapsed_ns": 67570441
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 66935097
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 66849207
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67134448
+              },
+              {
+                "calls": 277777,
+                "elapsed_ns": 67084579
+              }
+            ],
+            "ns_per_call": 241.50516061444972,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 357266850
+          }
+        },
+        {
+          "index": 22,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744378,
+            "windows": [
+              {
+                "calls": 2863832,
+                "elapsed_ns": 100324991
+              },
+              {
+                "calls": 2863832,
+                "elapsed_ns": 100080279
+              },
+              {
+                "calls": 2863832,
+                "elapsed_ns": 100068899
+              },
+              {
+                "calls": 2863832,
+                "elapsed_ns": 100057490
+              },
+              {
+                "calls": 2863832,
+                "elapsed_ns": 100103259
+              }
+            ],
+            "ns_per_call": 34.94628141594898,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 600384656
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744382,
+            "windows": [
+              {
+                "calls": 232558,
+                "elapsed_ns": 56949272
+              },
+              {
+                "calls": 232558,
+                "elapsed_ns": 56011828
+              },
+              {
+                "calls": 232558,
+                "elapsed_ns": 56129758
+              },
+              {
+                "calls": 232558,
+                "elapsed_ns": 56421529
+              },
+              {
+                "calls": 232558,
+                "elapsed_ns": 56449980
+              }
+            ],
+            "ns_per_call": 242.61272026763217,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 302091388
+          }
+        },
+        {
+          "index": 23,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "gf2-avx2-ymm6",
+            "pid": 1744392,
+            "windows": [
+              {
+                "calls": 2396389,
+                "elapsed_ns": 101486657
+              },
+              {
+                "calls": 2396389,
+                "elapsed_ns": 101315237
+              },
+              {
+                "calls": 2396389,
+                "elapsed_ns": 100640762
+              },
+              {
+                "calls": 2396389,
+                "elapsed_ns": 100523701
+              },
+              {
+                "calls": 2396389,
+                "elapsed_ns": 99720628
+              }
+            ],
+            "ns_per_call": 41.99683857670854,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "pinned/avx2-ymm6",
+            "conversion": {
+              "setup_ns": 0,
+              "pack_ns": 0,
+              "unpack_ns": 0,
+              "batch_fill_ns": 0,
+              "dispatch_ns": 0
+            },
+            "elapsed_ns": 570423840
+          },
+          "candidate": {
+            "arm": "external-bitshuffle",
+            "pid": 1744386,
+            "windows": [
+              {
+                "calls": 238095,
+                "elapsed_ns": 58250479
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57505356
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57582576
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57609906
+              },
+              {
+                "calls": 238095,
+                "elapsed_ns": 57514456
+              }
+            ],
+            "ns_per_call": 241.84706104706106,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "bitshuffle-bshuf_bitshuffle-avx2",
+            "conversion": null,
+            "elapsed_ns": 311060577
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 0.14468191064193728,
+          "lower": 0.14411196792527567,
+          "upper": 0.14496112091638202,
+          "confidence": 0.9875,
+          "alpha": 0.0125,
+          "resamples": 10000,
+          "seed": 10027978905441447370,
+          "pairs": 24
+        },
+        "decision": "regressed",
+        "margins": {
+          "improvement": 1.2,
+          "equivalence": 1.12
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "0c01c77b9ab51cab81bf6a6c910889e5ca63224a87668683e63b07bb201980e8"
+    }
+  ]
+}

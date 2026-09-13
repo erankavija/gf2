@@ -7,7 +7,7 @@
     "04b85d10-fb4f-467c-b6e5-869c99018adc",
     "6fb89a3c-f1a7-439d-a397-add1782afe2b"
   ],
-  "description": "Optimize measured bit transpose and bitslice conversion costs, including the layout conversion that production BCH encoding pays.\n\n## Background\n\nThe library uses a 64x64 AVX2 mask/shift/XOR transpose and retains a PSHUFB alternative. A 32x8 movemask/byte-shift candidate has different input geometry; comparisons must include tile assembly and packing. Existing BCH performance receipts and adapters provide the production evidence context.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n- [hard] REQ-07: Compare the existing 64x64 transpose, its PSHUFB alternative and movemask-based candidates against M4RI and Bitshuffle only after defining an equivalent bit mapping and including adapter costs. Freeze exact tile shapes, tails and matrix dimensions in the experiment protocol.\n\n- [hard] REQ-08: Preserve the canonical relation $\\mathrm{output}[c][r] = \\mathrm{input}[r][c]$ under little-endian bit indexing, including zero-sized matrices, non-square matrices, unaligned storage and partial boundary tiles. Run shared transpose and bitslice round-trip contracts.\n\n- [hard] REQ-09: Measure isolated transform latency, bulk throughput, packing/unpacking and the current BCH conversion/encoding consumer using the established harness. Capture the pinned current pre-change implementation under the shared protocol; historical pre-cutover receipts are context only. Generic transform feasibility does not require completion of the independent BCH scorecard campaign.\n\n- [hard] REQ-10: Attribute scratch-buffer traffic versus actual compiler spills in release assembly and profiles. Select any measured improvements through the shared transpose/bitslice abstraction and reject candidates whose complete conversion cost fails the frozen rule.\n\n",
+  "description": "Optimize measured bit transpose and bitslice conversion costs, including the layout conversion that production BCH encoding pays.\n\n## Background\n\nThe library uses a 64x64 AVX2 mask/shift/XOR transpose and retains a PSHUFB alternative. A 32x8 movemask/byte-shift candidate has different input geometry; comparisons must include tile assembly and packing. Existing BCH performance receipts and adapters provide the production evidence context.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n- [hard] REQ-07: Compare the existing 64x64 transpose, its PSHUFB alternative and movemask-based candidates against M4RI and Bitshuffle only after defining an equivalent bit mapping and including adapter costs. Freeze exact tile shapes, tails and matrix dimensions in the experiment protocol.\n\n- [hard] REQ-08: Preserve the canonical relation $\\mathrm{output}[c][r] = \\mathrm{input}[r][c]$ under little-endian bit indexing, including zero-sized matrices, non-square matrices, unaligned storage and partial boundary tiles. Run shared transpose and bitslice round-trip contracts.\n\n- [hard] REQ-09: Measure isolated transform latency, bulk throughput, packing/unpacking and the current BCH conversion/encoding consumer using the established harness. Capture the pinned current pre-change implementation under the shared protocol; historical pre-cutover receipts are context only. Generic transform feasibility does not require completion of the independent BCH scorecard campaign.\n\n- [hard] REQ-10: Attribute scratch-buffer traffic versus actual compiler spills in release assembly and profiles. Select any measured improvements through the shared transpose/bitslice abstraction and reject candidates whose complete conversion cost fails the frozen rule.\n\n\n\n## Notes\n\nSource references: [AlbrechtBard2026], [Bitshuffle2026], [Cassagne2019], [Djelic2011].",
   "documents": [
     {
       "commit": null,
@@ -15,6 +15,613 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, external confirmation",
+      "path": "dev/active/1d4fd63d/addendum-v4-external-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, external pilot",
+      "path": "dev/active/1d4fd63d/addendum-v4-external-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, transpose lane confirmation",
+      "path": "dev/active/1d4fd63d/addendum-v4-transpose-lane-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, transpose lane pilot",
+      "path": "dev/active/1d4fd63d/addendum-v4-transpose-lane-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, transpose lane selected",
+      "path": "dev/active/1d4fd63d/addendum-v4-transpose-lane-selected.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, transpose lane smoke",
+      "path": "dev/active/1d4fd63d/addendum-v4-transpose-lane-smoke.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Arm source: arms/Cargo.toml",
+      "path": "dev/active/1d4fd63d/arms/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Arm source: arms/main.rs",
+      "path": "dev/active/1d4fd63d/arms/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Derivation record, confirmation confirmation",
+      "path": "dev/active/1d4fd63d/confirmation-derivation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Arm source: external-arms/Cargo.toml",
+      "path": "dev/active/1d4fd63d/external-arms/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Arm source: external-arms/main.rs",
+      "path": "dev/active/1d4fd63d/external-arms/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Derivation record, external confirmation confirmation",
+      "path": "dev/active/1d4fd63d/external-confirmation-derivation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Producing-input manifest (external-producing-inputs)",
+      "path": "dev/active/1d4fd63d/external-producing-inputs.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "063f36cea1fe458dda3a2bb3e25126fc8810fc809d42d9e9b6e473fc0feece4b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/check-external-arms.py",
+          "resolved_path": "dev/active/1d4fd63d/survey/check-external-arms.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5eb120f74563cc739e2cf828430bae10f96fdc6581d384d8f4490c70883b929c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d4fd63d/tables.md",
+          "resolved_path": "dev/bench_results/1d4fd63d/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "835255fd3b36faef171ff413ab43e28a5d288d74403090feb57ba9626b67f6ef",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/external-arm-check.json",
+          "resolved_path": "dev/active/1d4fd63d/survey/external-arm-check.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bc4841a20e483e7cad65602183820159efe83bb978ad0bbf91ae046dab920168",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "run-validation.sh",
+          "resolved_path": "dev/active/1d4fd63d/run-validation.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3f917488a82501e59b8564b8ae5dffd25c8eee00e6e592dca2deb4e2331e5c90",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c908a5578f23a5f69d0767822e550f3f8ec6a6d852810f8ef7d23c4a5be1a84d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6417784a05a9c6b081657f90fe262be9b1a1668995cc818ebc21214bf571535f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8f432abd746d291837952d29597fac6974d87108a6e831c5bb83198dad425592",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "confirmation-derivation.txt",
+          "resolved_path": "dev/active/1d4fd63d/confirmation-derivation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a9a65ed1c01564be3d0b7b9ebaf98fe8eedb48c989acdce2ee7aa64e9a0766cf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/annotate-asm.py",
+          "resolved_path": "dev/active/1d4fd63d/survey/annotate-asm.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0467e3427e5ad6e01a3f7f789e95ed3e6dac5148a9f81e464c9469679a59180b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1d4fd63d/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "768660499a58ab88781add029f8a2843f07701ac6255501c27d462e6e6cef338",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/verify-bit-mapping.py",
+          "resolved_path": "dev/active/1d4fd63d/survey/verify-bit-mapping.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "91589dc7aac9fd05c00e39616c61ceb06f72172660a8ab5967cdaabb163d487b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "313084003e20fb3f1398e319b19fab875478a40124de08ffaac37db5615f754a",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "external-confirmation-derivation.txt",
+          "resolved_path": "dev/active/1d4fd63d/external-confirmation-derivation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a19c2053aa3834a49274929ae838a66afb704500000cd84b2471573f3d9bfeec",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/summarize.py",
+          "resolved_path": "dev/active/1d4fd63d/survey/summarize.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "08740fd75206ce6074eff03c5617f2d64ba1cdcb70862ddfe6caf5c34677df84",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d84fffd1beae91bcc49a9b93896020c96d2fecd1128d74cfa13b05c58d7265ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3174fe704ef2dfeebc4bdf32dd6f71aacd807557d46d391b48b269228af5e987",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "validation.json",
+          "resolved_path": "dev/active/1d4fd63d/validation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "504232f9c7dfe8ef248d12119aae9b403b05f94a65da35738c2f88bfbeb0948d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/bit-mapping-report.json",
+          "resolved_path": "dev/active/1d4fd63d/survey/bit-mapping-report.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "The 64x64 transpose lane family and the BCH bitslice conversion",
+      "path": "dev/active/1d4fd63d/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Freeze wrapper: freeze-confirmation.sh",
+      "path": "dev/active/1d4fd63d/freeze-confirmation.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Freeze wrapper: freeze-external-confirmation.sh",
+      "path": "dev/active/1d4fd63d/freeze-external-confirmation.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Generator: make-external-plan.py",
+      "path": "dev/active/1d4fd63d/make-external-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Generator: make-external-producing-inputs.py",
+      "path": "dev/active/1d4fd63d/make-external-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Generator: make-plan.py",
+      "path": "dev/active/1d4fd63d/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Generator: make-producing-inputs.py",
+      "path": "dev/active/1d4fd63d/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Producing-input manifest (producing-inputs)",
+      "path": "dev/active/1d4fd63d/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Correctness validation runner",
+      "path": "dev/active/1d4fd63d/run-validation.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Survey tool: annotate-asm.py",
+      "path": "dev/active/1d4fd63d/survey/annotate-asm.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Bit-mapping equivalence report across lanes and external arms",
+      "path": "dev/active/1d4fd63d/survey/bit-mapping-report.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Survey tool: check-external-arms.py",
+      "path": "dev/active/1d4fd63d/survey/check-external-arms.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "External arm digest check against 6fb89a3c build evidence",
+      "path": "dev/active/1d4fd63d/survey/external-arm-check.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Generator: make-external-addendum.py",
+      "path": "dev/active/1d4fd63d/survey/make-external-addendum.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Generator: make-pilot-addendum.py",
+      "path": "dev/active/1d4fd63d/survey/make-pilot-addendum.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Generator: make-source-evidence.py",
+      "path": "dev/active/1d4fd63d/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Source-evidence ledger for the report's code claims",
+      "path": "dev/active/1d4fd63d/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Survey tool: summarize.py",
+      "path": "dev/active/1d4fd63d/survey/summarize.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Survey tool: verify-bit-mapping.py",
+      "path": "dev/active/1d4fd63d/survey/verify-bit-mapping.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Correctness validation record at the MSRV",
+      "path": "dev/active/1d4fd63d/validation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "External confirmation: acceptance summary",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "External confirmation: acceptance summary (rendered)",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "External confirmation: execution log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "External confirmation: launcher log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "External confirmation: receipt",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "External pilot: acceptance summary",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "External pilot: acceptance summary (rendered)",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "External pilot: execution log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "External pilot: launcher log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "External pilot: receipt",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane confirmation: acceptance summary",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Transpose lane confirmation: acceptance summary (rendered)",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane confirmation: execution log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Transpose lane confirmation: launcher log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane confirmation: receipt",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane pilot: acceptance summary",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Transpose lane pilot: acceptance summary (rendered)",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane pilot: execution log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Transpose lane pilot: launcher log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane pilot: receipt",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane selected: acceptance summary",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Transpose lane selected: acceptance summary (rendered)",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane selected: execution log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Transpose lane selected: launcher log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane selected: receipt",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane smoke: acceptance summary",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Transpose lane smoke: acceptance summary (rendered)",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane smoke: execution log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Transpose lane smoke: launcher log",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Transpose lane smoke: receipt",
+      "path": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Campaign launcher for both transpose-lane families",
+      "path": "dev/bench_results/1d4fd63d/run-transpose-lane.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Generated transpose-lane receipt tables",
+      "path": "dev/bench_results/1d4fd63d/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger: transpose-lane-selection",
+      "path": "dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger: transpose-lane-smoke",
+      "path": "dev/bench_results/1d4fd63d/transpose-lane-smoke-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger: transpose-lane-vs-external",
+      "path": "dev/bench_results/1d4fd63d/transpose-lane-vs-external-family-ledger.jsonl"
     }
   ],
   "first_ready_at": "2026-09-06T19:17:21.023985170Z",
@@ -25,7 +632,23 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-13T16:55:50.828992915Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-13T16:58:47.932827290Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-13T16:56:00.468467413Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "1d4fd63d-c522-47cb-9448-fe8f5220f0ed",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -43,5 +666,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize bit transpose and bitslice conversion",
-  "updated_at": "2026-09-13T09:14:14.499170667Z"
+  "updated_at": "2026-09-13T17:03:22.113651758Z"
 }

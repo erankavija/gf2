@@ -1,0 +1,24 @@
+# command: ./dev/bench_results/1d4fd63d/run-transpose-lane.sh selected
+# started_utc: 2026-09-13T12:23:40Z
+# gf2 revision (informational): 0fac36ef8e49518d0d8320fed783975927a1585c
+# mode: selected  label: pilot
+# addendum: dev/active/1d4fd63d/addendum-v4-transpose-lane-selected.json  sha256: 215c9fea1b2ff0fca1abc8bf5ea6dfbff9e023aacc6b454941c0884189e6c93e
+# ledger: dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl  sha256: 0343b00c9920bdc7e483c2614c0a4e9e97d90b9ced8d81ac0a1e8845e54d43fb
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-selected.plan.json  sha256: bb8dd89a5a3b6cb1498f234d5653c407246f9a48959240d031ef4600e2df0636
+# exploratory pairs per cell: 24
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-selected
+# arm: 0a9c4061506e2b2f9446b313c4c8d557b8c0d2c60e90a66ba806d7e652dabe20  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/release/benchmark-acceptance
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start:  15:23:40 up 9 days, 16:52,  9 users,  load average: 1.21, 2.27, 3.37
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-selected/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/target/bench-stage/1d4fd63d-selected/execution.log
+# session 2 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions this invocation: 2
+# load_avg_end:  15:27:06 up 9 days, 16:56,  9 users,  load average: 1.77, 1.96, 3.01
+# finished_utc: 2026-09-13T12:27:06Z
