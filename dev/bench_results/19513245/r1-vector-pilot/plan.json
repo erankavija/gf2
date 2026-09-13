@@ -1,0 +1,269 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "19513245-r1-vector-pilot",
+  "issue": "19513245",
+  "label": "pilot",
+  "campaign_seed": 2026091301,
+  "addendum": "dev/active/19513245/addendum-v4-vector-pilot.json",
+  "producing_manifest": "dev/active/19513245/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "current-element": {
+      "build": "conservative-portable",
+      "description": "gf2-core FieldVec/FieldMatrix<Gf2mElement> over Gf2mField::gf256() through the entry point itself, conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-survey/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_BYTEFIELD_ROUTE": "current",
+        "GF2_BYTEFIELD_REPR": "element"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "prototype-element": {
+      "build": "conservative-portable",
+      "description": "the byte-field coefficient-table prototype over Gf2mField::gf256(), writing back through Gf2mElement, conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-survey/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_BYTEFIELD_ROUTE": "prototype",
+        "GF2_BYTEFIELD_REPR": "element"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-wide": {
+      "build": "conservative-portable",
+      "description": "gf2-core FieldVec/FieldMatrix<Gf2mWide<1,Gf256x11d>> through the entry point itself, conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-survey/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_BYTEFIELD_ROUTE": "current",
+        "GF2_BYTEFIELD_REPR": "wide"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "prototype-wide": {
+      "build": "conservative-portable",
+      "description": "the byte-field coefficient-table prototype over Gf2mWide<1,Gf256x11d>, conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-survey/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_BYTEFIELD_ROUTE": "prototype",
+        "GF2_BYTEFIELD_REPR": "wide"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "axpy-4k-element",
+      "baseline_arm": "current-element",
+      "candidate_arm": "prototype-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1101,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-128k-element",
+      "baseline_arm": "current-element",
+      "candidate_arm": "prototype-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1102,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-8m-element",
+      "baseline_arm": "current-element",
+      "candidate_arm": "prototype-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 8388608,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1103,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-2m-stream-element",
+      "baseline_arm": "current-element",
+      "candidate_arm": "prototype-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 2097152,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1104,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "region-4k-element",
+      "baseline_arm": "current-element",
+      "candidate_arm": "prototype-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 1101,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "region-128k-element",
+      "baseline_arm": "current-element",
+      "candidate_arm": "prototype-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 1102,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-4k-wide",
+      "baseline_arm": "current-wide",
+      "candidate_arm": "prototype-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1101,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-128k-wide",
+      "baseline_arm": "current-wide",
+      "candidate_arm": "prototype-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1102,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-8m-wide",
+      "baseline_arm": "current-wide",
+      "candidate_arm": "prototype-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 8388608,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1103,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-2m-stream-wide",
+      "baseline_arm": "current-wide",
+      "candidate_arm": "prototype-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 2097152,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1104,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "region-4k-wide",
+      "baseline_arm": "current-wide",
+      "candidate_arm": "prototype-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 1101,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "region-128k-wide",
+      "baseline_arm": "current-wide",
+      "candidate_arm": "prototype-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 1102,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 6
+}
