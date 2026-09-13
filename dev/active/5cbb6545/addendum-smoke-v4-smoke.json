@@ -1,0 +1,263 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "count-optimization-smoke",
+    "issue": "5cbb6545",
+    "purpose": "kernel-family",
+    "description": "Every arm identity of this issue, once, over all three case shapes, so the wire contract between benchmark-ab-runner and the arm binary is established by an execution rather than by reading code. The receipt is a throwaway: every cell is exploratory, the stage decides nothing, and its samples enter no pilot or confirmation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T12:26:47Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The candidate routes add one unsafe kernel module to gf2-kernels-simd and one selector to the canonical tuning mechanism. A tenth of the runtime at a width a consumer counts is the smallest gain that repays that: below it the choice of route stops changing what a caller of BitVec::count_ones or BitMatrix::matvec observes, and the established nibble lookup keeps the width.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.03,
+    "equivalence_rationale": "A width that gains nothing from the new boundary must not pay for it. Three percent is the largest slowdown at such a width that would still leave the boundary worth having; above it the route the width keeps is the wrong one.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A fifth of the runtime is the smallest residual gap against a pinned external implementation that would justify further kernel work rather than a reported measurement; smaller gaps are reported and left."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 3,
+    "max_added_source_lines": 900,
+    "maintenance_rationale": "The budget covers one unsafe kernel module holding the scalar POPCNT loop and the two Harley-Seal kernels, the bundle fields and resolvers that reach them, the tuning selector that carries the boundary, and the rustdoc the changed mechanism needs. It excludes the shared behavioural suite and this survey, which are test and evidence code."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/5cbb6545/smoke-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "smoke-popcount-0",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-64-words-random-aligned",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 4100
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "smoke-popcount-1",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-64-words-random-aligned",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 4101
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "smoke-popcount-2",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-64-words-random-aligned",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 4102
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "smoke-popcount-3",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "popcount-64-words-random-aligned",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 4103
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "external",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "smoke-and-0",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-64-words-random-aligned",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 4110
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "smoke-and-1",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-64-words-random-aligned",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 4111
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "smoke-and-two-pass",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "and-popcnt-64-words-random-aligned-whole-consumer",
+        "size": {
+          "words": 64,
+          "word_offset": 0
+        },
+        "seed": 4120
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "smoke-matvec",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-64-rows-4096-cols-random",
+        "size": {
+          "rows": 64,
+          "cols": 4096
+        },
+        "seed": 4130
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
