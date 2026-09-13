@@ -1,8 +1,8 @@
 libpopcnt get_cpuid(): flags=0x800020 popcnt=true avx2=true avx512_vpopcntdq=false
 host: avx2=true popcnt=true avx512vpopcntdq=false
-gf2 route words=1: legacy=scalar resolved=scalar-popcnt and_resolved=scalar
-gf2 route words=4: legacy=scalar resolved=scalar-popcnt and_resolved=scalar
-gf2 route words=7: legacy=scalar resolved=scalar-popcnt and_resolved=scalar
+gf2 route words=1: legacy=scalar resolved=scalar and_resolved=scalar
+gf2 route words=4: legacy=scalar resolved=scalar and_resolved=scalar
+gf2 route words=7: legacy=scalar resolved=scalar and_resolved=scalar
 gf2 route words=8: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
 gf2 route words=16: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
 gf2 route words=32: legacy=simd-nibble-lut resolved=simd-nibble-lut and_resolved=simd-nibble-lut
