@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-12T16:41:59.651387530Z",
   "context": {},
   "created_at": "2026-09-10T16:00:21.023569899Z",
@@ -7,7 +7,405 @@
     "eda07788-23a0-4852-939b-2cfcda36f9d1"
   ],
   "description": "Establish reproducible whole-consumer baselines for 5G NR rate-matched LDPC encoding against compatible open-source encoders, without changing production kernels.\n\n## Background\n\nBit selection for rate matching [ThreeGpp2017] (§5.4.2.1) has no public forward entry point in gf2: its rate-matched NR LDPC encoder fuses the transmitted-position gather into encoding. AFF3CT [Cassagne2019] exposes public puncture and depuncture steps, and srsRAN [Srsran2026] implements the same selection with a redundancy-version offset. Evaluated on gf2's code parameters, AFF3CT's selection rule selects gf2's positions exactly. The projects differ in deriving code parameters from the information length and rate: AFF3CT chooses the base graph itself while gf2 takes it from the caller, and for $560 < K \\le 640$ they use different base-graph-2 row counts when selecting the lifting size. The comparable operation on gf2's public API is the whole consumer: information bits in, rate-matched codeword out.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Preserve negative outcomes.\n- [hard] REQ-02: Pin the AFF3CT and srsRAN NR LDPC encoder and rate-matching paths with revision, license, build flags and selected backend, and establish from source evidence which configurations each implements as specified, including base-graph selection, lifting size, filler bits and the redundancy-version starting offset.\n- [hard] REQ-03: Validate every adapter bit-exactly against gf2's rate-matched encoder for each measured configuration, covering both base graphs, filler bits, lifting-size boundaries and the redundancy versions each arm supports. Configurations whose mother codes or selections differ between projects are recorded as non-equivalent, not timed as matched.\n- [hard] REQ-04: Commit frozen family addenda and baseline receipts for whole-consumer encode cells, including packing and conversion costs, across representative base-graph-1 and base-graph-2 block sizes and code rates. Unavailable and non-equivalent arms are recorded explicitly.\n\n## Notes\n\nPin exact source and build identities in the family addendum. This is a baseline survey; no production encoder change is part of it. Preserve unavailable, incompatible and losing arms rather than substituting a different operation.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "a6eb398a48a1655206ad748e0e6002900c8852b64596c8d025e2666a9ce14b0d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json",
+          "resolved_path": "dev/bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "04327a399529af090420082238d4fdb93a5844d64153ddd0fcd02961ce26770f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-nr-encode-confirmation.json",
+          "resolved_path": "dev/active/12fdeb5b/addendum-nr-encode-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1e4530410a6acd19ccfa63793bb88c0831f91afef75e772c554d2d59d8a4ede8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "36189577f8cb19ff39fbc259f8d9d0ccc206e1937674e982fdca07a3ad531fe7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "resolution-nr-encode-confirmation.txt",
+          "resolved_path": "dev/active/12fdeb5b/resolution-nr-encode-confirmation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d4769a1d14f421846601eab7bbb6384ceae7a0bbba50079d2c94ddff428945db",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/12fdeb5b/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "694e67433f8f5c64062c210e32f9c0e90bc656d91a10febe01025d192bd2bd46",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/execution.log",
+          "resolved_path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2cf700eb3b2e9e3f7c42a8c0a2e3a3a4dd8c696a3c278e465331760320abd647",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/12fdeb5b/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8ef48a5145c00fd34126b9d7906e7d021cf4d77a34880526baf099f1fde93fcd",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/nr-encode-validation.json",
+          "resolved_path": "dev/active/12fdeb5b/survey/nr-encode-validation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "823a4f08df2fa797a70053721b15d209acea1265625169db0d8c30307716046e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/receipt.json",
+          "resolved_path": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9314be30b86ae949b84f9e0ed8ceba99c786e7fcf95cbe97f086622e163bae4d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-nr-encode-pilot.json",
+          "resolved_path": "dev/active/12fdeb5b/addendum-nr-encode-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8e5cbf38b1b0731024ea19be7214d0f88c4c11b76582925311c17ea57c0ed245",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/12fdeb5b/tables.md",
+          "resolved_path": "dev/bench_results/12fdeb5b/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1c3f02f836743e6129dd8ac14eb88a54ac17ce2c39114a0bca13613fc11a9d48",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/build-evidence.json",
+          "resolved_path": "dev/active/12fdeb5b/survey/build-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "814343d65ac13891c3fef5da97b19759f6e3576b2fffa22b08e15bd07050abbf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0ae9b5b4aad57b5533ae02756802f63eb1384d597138ff58a97f3eb0aed9609a",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-nr-encode.txt",
+          "resolved_path": "dev/active/12fdeb5b/pilot-resolution-nr-encode.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9e2c362845d5c84bff33fdbeeee8ffab4685e0189ac7896828e496c2435974a5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "NR rate-matched encoder findings and criterion map",
+      "path": "dev/active/12fdeb5b/findings.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "04327a399529af090420082238d4fdb93a5844d64153ddd0fcd02961ce26770f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-nr-encode-confirmation.json",
+          "resolved_path": "dev/active/12fdeb5b/addendum-nr-encode-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "36189577f8cb19ff39fbc259f8d9d0ccc206e1937674e982fdca07a3ad531fe7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "resolution-nr-encode-confirmation.txt",
+          "resolved_path": "dev/active/12fdeb5b/resolution-nr-encode-confirmation.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "NR rate-matched encoder survey plan",
+      "path": "dev/active/12fdeb5b/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "NR encoder smoke family addendum",
+      "path": "dev/active/12fdeb5b/addendum-nr-encode-smoke.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "NR encoder pilot family addendum",
+      "path": "dev/active/12fdeb5b/addendum-nr-encode-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "NR encoder confirmatory family addendum",
+      "path": "dev/active/12fdeb5b/addendum-nr-encode-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "NR encoder producing-input manifest",
+      "path": "dev/active/12fdeb5b/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "NR encoder family ledger",
+      "path": "dev/active/12fdeb5b/nr-rate-matched-encode-trial-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Pilot resolution at the confirmation's corrected alpha",
+      "path": "dev/active/12fdeb5b/pilot-resolution-nr-encode.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Confirmation freeze derivation and cell selection",
+      "path": "dev/active/12fdeb5b/resolution-nr-encode-confirmation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "NR encoder source-evidence ledger",
+      "path": "dev/active/12fdeb5b/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Comparator revisions, licences, flags and selected backends",
+      "path": "dev/active/12fdeb5b/survey/build-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Bit-exact equivalence record",
+      "path": "dev/active/12fdeb5b/survey/nr-encode-validation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Pin checks and equivalence gate output",
+      "path": "dev/active/12fdeb5b/survey/nr-encode-validation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Code parameters each project derives",
+      "path": "dev/active/12fdeb5b/survey/nr-encode-parameters.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Comparator pin verification and arm build",
+      "path": "dev/active/12fdeb5b/survey/nr-encode-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "NR encoder addendum freezer",
+      "path": "dev/active/12fdeb5b/survey/freeze-addendum.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Source-evidence claim checker",
+      "path": "dev/active/12fdeb5b/survey/inspect-sources.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Build-evidence recorder",
+      "path": "dev/active/12fdeb5b/survey/record-build-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "NR encoder evidence tables",
+      "path": "dev/bench_results/12fdeb5b/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "NR encoder campaign launcher",
+      "path": "dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "NR encoder evidence-table generator",
+      "path": "dev/bench_results/12fdeb5b/summarize.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Smoke receipt",
+      "path": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Smoke acceptance summary",
+      "path": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Pilot receipt",
+      "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Pilot acceptance summary",
+      "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Pilot campaign journal",
+      "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Confirmation receipt",
+      "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Confirmation acceptance summary",
+      "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Confirmation campaign journal",
+      "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Canonical confirmation freezer, extended for cell selection and supplied resolutions",
+      "path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Bootstrap width and endpoint stability at a chosen alpha",
+      "path": "dev/active/eda07788/survey/analysis/src/bin/bootstrap-resolution.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Voided v4 confirmatory attempt: defect, abort and cells reached",
+      "path": "dev/bench_results/12fdeb5b/v4-abandoned-confirmation-attempt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Aborted confirmation campaign journal",
+      "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Aborted confirmation campaign plan",
+      "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/plan.json"
+    }
+  ],
   "first_ready_at": "2026-09-10T16:00:21.023569899Z",
   "gates_required": [
     "cargo-ci",
@@ -30,5 +428,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Establish 5G NR rate-matched encoder baselines",
-  "updated_at": "2026-09-12T16:41:59.651387530Z"
+  "updated_at": "2026-09-13T08:03:37.828901813Z"
 }
