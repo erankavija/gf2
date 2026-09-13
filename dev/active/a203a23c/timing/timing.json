@@ -1,13 +1,57 @@
 {
-  "schema": "a203a23c-cat-file-batch-timing-v1",
-  "purpose": "Wall time of the per-file and batch git cat-file mechanisms 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31 replaced, measured directly against the committed object database without writing to the repository.",
+  "schema": "a203a23c-cat-file-batch-timing-v2",
+  "purpose": "Whole-process wall time of dev/scripts/check-receipt-input-snapshots.py and dev/active/a203a23c/restore-receipt-inputs.py, in the per-file form committed at 76812a4e's parent and the batch form committed at 76812a4e, against one fixed workload.",
   "generator": "dev/active/a203a23c/timing/measure.py",
   "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
-  "command": "python3 -B dev/active/a203a23c/timing/measure.py --repetitions 5",
+  "command": "python3 -B dev/active/a203a23c/timing/measure.py --scratch <scratch-directory> --repetitions 5",
   "repetitions": 5,
-  "workload_revision": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
-  "per_file_source_revision": "a6427615adf607caca5e4adb3be917a20f18891f",
-  "batch_source_revision": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+  "sampling_plan": {
+    "declared_in": "dev/active/a203a23c/timing/README.md",
+    "repetitions_per_series": 5,
+    "statistic_of_record": [
+      "min_s",
+      "median_s"
+    ],
+    "early_stopping": "none: every series runs its full five repetitions, every repetition enters the statistics, and no repetition is dropped as an outlier",
+    "series_order": [
+      "checker_per_file",
+      "checker_batch",
+      "restoration_per_file",
+      "restoration_batch"
+    ],
+    "warm_up": "none: no repetition is discarded as a warm-up. The series order is fixed instead, so each series meets the same preceding sequence of reads on every run of this harness",
+    "interleaving": "none: a series' repetitions run consecutively, and the forms are compared across series rather than repetition by repetition"
+  },
+  "rng": {
+    "used": false,
+    "statement": "No random number generator takes part. This harness draws no random numbers and fixes the workload, the arguments and the series order as constants. Neither tool imports a random number generator in either form; the checker's only randomness-bearing import, `tempfile`, is reached solely from its `--self-test` path, which these invocations do not take. Every repetition therefore runs the same work, and the spread between repetitions is host timing noise alone."
+  },
+  "revisions": {
+    "per_file_source": "a6427615adf607caca5e4adb3be917a20f18891f",
+    "batch_source": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+    "checker_workload": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+    "restoration_base": "8cfc015de59f8e3accc51bca46d13d94b0bee267"
+  },
+  "scratch": {
+    "location": "a git-ignored directory under this repository's target/, so the restoration generator writes to the filesystem the repository itself sits on; the path is not recorded because it is checkout-specific",
+    "filesystem": {
+      "repository": {
+        "source": "/dev/sda3",
+        "fstype": "ext4",
+        "device_id": 2051
+      },
+      "scratch": {
+        "source": "/dev/sda3",
+        "fstype": "ext4",
+        "device_id": 2051
+      },
+      "same_device": true,
+      "why": "the restoration generator's real working tree is the repository's own, so the scratch clone shares its filesystem and the measured times carry no filesystem difference of the harness's making"
+    },
+    "clone": "git clone --shared --no-checkout of this repository, then git checkout --detach 8cfc015de59f8e3accc51bca46d13d94b0bee267: the working tree the restoration generator was written against, whose receipts pin 23 snapshot files the revision does not carry, and whose objects are this repository's own through the clone's alternates",
+    "reset_between_repetitions": "git reset --hard and git clean -fdx inside the clone, before each repetition and once after the last, so every repetition performs the whole restoration and nothing it writes survives",
+    "tool_sources": "git show <revision>:<path> of both tool files into the clone's working tree after each reset, outside the timed region"
+  },
   "host": {
     "hostname": "fraktaali",
     "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
@@ -41,87 +85,161 @@
     },
     "smt_active": true
   },
+  "scheduling": {
+    "requested": "dev/scripts/ccx1-bench-flock.sh requests nice -n -5 and, with --full-host, no taskset pin",
+    "requested_niceness": -5,
+    "observed_niceness": 0,
+    "niceness_note": "`nice: cannot set niceness` is the expected warning for an unprivileged user; the observed niceness is the one that applies",
+    "cpu_affinity_size": 24,
+    "load_average_at_start": [
+      0.77,
+      4.89,
+      6.31
+    ],
+    "runnable_at_start": "2/1784",
+    "mutex": "the run holds /tmp/gf2-ccx1.lock exclusively for its whole duration, so no other benchmark or build on this host overlaps it"
+  },
   "toolchain": {
     "python3": "3.14.7",
     "git": "git version 2.55.0"
   },
-  "measurements": {
-    "checker_check": {
+  "series": {
+    "checker_per_file": {
       "tool": "dev/scripts/check-receipt-input-snapshots.py",
-      "function": "check()",
-      "per_file": {
-        "repetitions_s": [
-          23.236279280041344,
-          23.340717743034475,
-          23.30975872289855,
-          23.142198830959387,
-          23.19756307103671
-        ],
-        "min_s": 23.142198830959387,
-        "median_s": 23.236279280041344
-      },
-      "batch": {
-        "repetitions_s": [
-          2.4919792029540986,
-          2.4935547510394827,
-          2.4752694109920412,
-          2.4672633729642257,
-          2.480275957030244
-        ],
-        "min_s": 2.4672633729642257,
-        "median_s": 2.480275957030244
-      }
+      "process": "python3 -B <dev/scripts/check-receipt-input-snapshots.py of the form's revision> --revision 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+      "measures": "whole process wall time, from start to exit",
+      "working_directory": "the root of this repository's checkout",
+      "workload": "every input pinned by every campaign receipt committed at the workload revision, read from this repository's object database; the checker writes nothing",
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "final_stdout": "recorded in dev/scripts/receipt-input-omissions.json:\ndev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ndev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ndev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ndev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ndev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ncheck-receipt-input-snapshots: every pinned receipt input is committed, 5 recorded as unrestorable",
+      "repetitions_s": [
+        23.238666636985727,
+        23.397998327040114,
+        23.41482152394019,
+        23.243769500986673,
+        23.36280388094019
+      ],
+      "min_s": 23.238666636985727,
+      "median_s": 23.36280388094019,
+      "source_revision": "a6427615adf607caca5e4adb3be917a20f18891f",
+      "form": "per-file"
     },
-    "restoration_sources_by_digest": {
-      "tool": "dev/active/a203a23c/restore-receipt-inputs.py",
-      "function": "sources_by_digest()",
-      "per_file": {
-        "repetitions_s": [
-          35.73050312302075,
-          38.32348661602009,
-          35.71742524893489,
-          40.79366850294173,
-          38.87853988399729
-        ],
-        "min_s": 35.71742524893489,
-        "median_s": 38.32348661602009
-      },
-      "batch": {
-        "repetitions_s": [
-          4.910646122996695,
-          3.3672856009798124,
-          3.579214320052415,
-          3.66088703495916,
-          3.3347303150221705
-        ],
-        "min_s": 3.3347303150221705,
-        "median_s": 3.579214320052415
-      }
+    "checker_batch": {
+      "tool": "dev/scripts/check-receipt-input-snapshots.py",
+      "process": "python3 -B <dev/scripts/check-receipt-input-snapshots.py of the form's revision> --revision 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+      "measures": "whole process wall time, from start to exit",
+      "working_directory": "the root of this repository's checkout",
+      "workload": "every input pinned by every campaign receipt committed at the workload revision, read from this repository's object database; the checker writes nothing",
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "final_stdout": "recorded in dev/scripts/receipt-input-omissions.json:\ndev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ndev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ndev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ndev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ndev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/receipt.json\n    dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot/inputs/producing/dev/active/c077a88b/survey/harness/Cargo.lock (producing snapshot): absent from the commit\ncheck-receipt-input-snapshots: every pinned receipt input is committed, 5 recorded as unrestorable",
+      "repetitions_s": [
+        2.5768191809765995,
+        2.5875502210110426,
+        2.6013366100378335,
+        2.5610250800382346,
+        2.6005064350320026
+      ],
+      "min_s": 2.5610250800382346,
+      "median_s": 2.5875502210110426,
+      "source_revision": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+      "form": "batch"
     },
-    "restoration_proxy_total": {
+    "restoration_per_file": {
       "tool": "dev/active/a203a23c/restore-receipt-inputs.py",
-      "function": "check() + sources_by_digest(), summed per repetition",
-      "per_file": {
-        "repetitions_s": [
-          58.9667824030621,
-          61.664204359054565,
-          59.02718397183344,
-          63.935867333901115,
-          62.076102955034
-        ],
-        "min_s": 58.9667824030621,
-        "median_s": 61.664204359054565
+      "process": "python3 -B dev/active/a203a23c/restore-receipt-inputs.py 8cfc015de59f8e3accc51bca46d13d94b0bee267",
+      "measures": "whole process wall time, from start to exit: the checker load, the committed-object listing, the check, the digest index over every file the base revision tracks, the pinned-file read that assembles the pins, and the copy-and-stage tail",
+      "working_directory": "the root of the scratch clone",
+      "workload": "the snapshot files the base revision's committed receipts pin and the base revision does not carry, restored into the scratch clone's working tree and staged there",
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "final_stdout": "{\"restored\": 18, \"unrestored\": 5}",
+      "repetitions_s": [
+        58.477225361042656,
+        58.46221478807274,
+        58.41467853297945,
+        58.54519924893975,
+        58.49196053808555
+      ],
+      "min_s": 58.41467853297945,
+      "median_s": 58.477225361042656,
+      "source_revision": "a6427615adf607caca5e4adb3be917a20f18891f",
+      "form": "per-file"
+    },
+    "restoration_batch": {
+      "tool": "dev/active/a203a23c/restore-receipt-inputs.py",
+      "process": "python3 -B dev/active/a203a23c/restore-receipt-inputs.py 8cfc015de59f8e3accc51bca46d13d94b0bee267",
+      "measures": "whole process wall time, from start to exit: the checker load, the committed-object listing, the check, the digest index over every file the base revision tracks, the pinned-file read that assembles the pins, and the copy-and-stage tail",
+      "working_directory": "the root of the scratch clone",
+      "workload": "the snapshot files the base revision's committed receipts pin and the base revision does not carry, restored into the scratch clone's working tree and staged there",
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "final_stdout": "{\"restored\": 18, \"unrestored\": 5}",
+      "repetitions_s": [
+        6.800541460048407,
+        6.766951264929958,
+        6.545712336082943,
+        6.592200578073971,
+        6.55073806096334
+      ],
+      "min_s": 6.545712336082943,
+      "median_s": 6.592200578073971,
+      "source_revision": "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31",
+      "form": "batch"
+    }
+  },
+  "published_claim": {
+    "source": "commit 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31's message: \"the repository check falls from 23.1 s to 2.6 s and the restoration from 60.2 s to 10.1 s\"",
+    "tolerance": "a figure counts as confirmed when the measured median is within 10% of it",
+    "figures": {
+      "checker_per_file": {
+        "published_s": 23.1,
+        "measured_min_s": 23.238666636985727,
+        "measured_median_s": 23.36280388094019,
+        "median_over_published": 1.011376791382692,
+        "confirmed_within_tolerance": true
       },
-      "batch": {
-        "repetitions_s": [
-          7.402625325950794,
-          5.860840352019295,
-          6.054483731044456,
-          6.1281504079233855,
-          5.815006272052415
-        ],
-        "min_s": 5.815006272052415,
-        "median_s": 6.054483731044456
+      "checker_batch": {
+        "published_s": 2.6,
+        "measured_min_s": 2.5610250800382346,
+        "measured_median_s": 2.5875502210110426,
+        "median_over_published": 0.9952116234657856,
+        "confirmed_within_tolerance": true
+      },
+      "restoration_per_file": {
+        "published_s": 60.2,
+        "measured_min_s": 58.41467853297945,
+        "measured_median_s": 58.477225361042656,
+        "median_over_published": 0.9713824810804428,
+        "confirmed_within_tolerance": true
+      },
+      "restoration_batch": {
+        "published_s": 10.1,
+        "measured_min_s": 6.545712336082943,
+        "measured_median_s": 6.592200578073971,
+        "median_over_published": 0.6526931265419773,
+        "confirmed_within_tolerance": false
       }
     }
   }
