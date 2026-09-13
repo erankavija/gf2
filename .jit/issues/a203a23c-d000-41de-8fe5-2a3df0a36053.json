@@ -433,22 +433,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-12T18:08:49.839355277Z",
+      "updated_at": "2026-09-13T07:45:40.581128940Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "passed",
-      "updated_at": "2026-09-12T18:07:03.181948984Z",
+      "status": "failed",
+      "updated_at": "2026-09-13T07:49:54.053971556Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-12T18:04:00.296493716Z",
+      "updated_at": "2026-09-13T07:47:10.936643064Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-12T18:07:08.991159692Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T07:48:42.384420939Z",
       "updated_by": "auto:executor"
     }
   },
@@ -461,5 +461,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
-  "updated_at": "2026-09-13T07:44:51.181803389Z"
+  "updated_at": "2026-09-13T07:49:54.053971556Z"
 }
