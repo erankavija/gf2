@@ -1,0 +1,139 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "selected-1d4fd63d-20260913t122340z",
+  "issue": "1d4fd63d",
+  "label": "pilot",
+  "campaign_seed": 20260913151,
+  "addendum": "dev/active/1d4fd63d/addendum-v4-transpose-lane-selected.json",
+  "producing_manifest": "dev/active/1d4fd63d/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "production": {
+      "build": "conservative-portable",
+      "description": "the 64x64 block kernel gf2_kernels_simd::transpose::detect publishes for this host, which is what BitMatrix::transpose and gf2-coding's bit-sliced BCH encoding reach: the pinned pre-change implementation",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "production"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "production-control": {
+      "build": "conservative-portable",
+      "description": "identity control: the production dispatch launched as a second arm, so the cell measures the pinned consumer against itself",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "production"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "lane-avx2-ymm6": {
+      "build": "conservative-portable",
+      "description": "the avx2-ymm6 candidate lane, named through transpose::lane: all six mask-shift-XOR stages in YMM registers with no stack scratch",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/arms/target/release/transpose-lane-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "avx2-ymm6"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "lane-avx2-ymm6-block-256-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-ymm6",
+      "case": {
+        "kind": "transpose-block",
+        "blocks": 256,
+        "seed": 20260913001
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bulk-4096-6core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-ymm6",
+      "case": {
+        "kind": "transpose-bulk",
+        "blocks": 4096,
+        "seed": 20260913002
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bitslice-absorb-m14-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-ymm6",
+      "case": {
+        "kind": "bitslice-absorb",
+        "degree": 14,
+        "modulus": 16427,
+        "designed_distance": 25,
+        "seed": 20260913003
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bitslice-unpack-m14-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-ymm6",
+      "case": {
+        "kind": "bitslice-unpack",
+        "degree": 14,
+        "modulus": 16427,
+        "designed_distance": 25,
+        "seed": 20260913004
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-matrix-transpose-4096-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-ymm6",
+      "case": {
+        "kind": "matrix-transpose",
+        "rows": 4096,
+        "cols": 4096,
+        "seed": 20260913005
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-matrix-transpose-65-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "lane-avx2-ymm6",
+      "case": {
+        "kind": "matrix-transpose",
+        "rows": 65,
+        "cols": 65,
+        "seed": 20260913006
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "bch-encode-bitslice-m14-b256-control-1core",
+      "baseline_arm": "production",
+      "candidate_arm": "production-control",
+      "case": {
+        "kind": "bch-encode-bitslice",
+        "degree": 14,
+        "modulus": 16427,
+        "designed_distance": 25,
+        "seed": 20260913019,
+        "batch": 256
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 5
+}
