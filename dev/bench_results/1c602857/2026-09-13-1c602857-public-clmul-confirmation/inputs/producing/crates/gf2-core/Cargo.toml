@@ -1,0 +1,535 @@
+[package]
+name = "gf2-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+description = "High-performance bit string manipulation primitives over GF(2)"
+license = "MIT"
+keywords = ["bitset", "gf2", "bitvec", "galois-field"]
+categories = ["algorithms", "data-structures", "mathematics", "no-std"]
+rust-version = "1.95"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(verify_lean)', 'cfg(gf2_tuning_baked)'] }
+
+[dependencies]
+# Non-optional: hosts the SSOT scalar `clmul_u64_scalar` that
+# `gf2m::barrett::clmul` delegates to. The SIMD feature now only gates
+# whether runtime detection wires up the accelerated kernel bundles.
+gf2-kernels-simd = { path = "../gf2-kernels-simd" }
+rand = { workspace = true, optional = true }
+rayon = { workspace = true, optional = true }
+image = { version = "0.25", optional = true, default-features = false, features = ["png"] }
+serde = { version = "1.0", features = ["derive"], optional = true }
+serde_json = { version = "1.0", optional = true }
+sha2 = { version = "0.10", optional = true }
+blake3 = { version = "1", optional = true }
+# Only pulled in when the `test-support` feature is enabled.
+proptest = { workspace = true, optional = true }
+
+[dev-dependencies]
+tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
+criterion = { workspace = true }
+gf2-core = { path = ".", features = ["test-support"] }
+proptest = { workspace = true }
+rand = { workspace = true }
+serde_json = { workspace = true }
+sha2 = "0.10"
+# Test-only: applies `#[serial]` to the `field::{inverse,triangular,ple}`
+# allocation-counter tests. Those tests read the thread-local
+# `field::matrix::fieldmatrix_new_count`, so the serialisation is defensive
+# belt-and-suspenders rather than strictly required. (`field::expr`'s
+# kernel-trace counters are likewise thread-local and use no serialisation.)
+serial_test = "3"
+
+[features]
+default = ["rand", "io"]
+# Opt-in to SIMD accelerated kernels. The `gf2-kernels-simd` crate is
+# always linked (it hosts the scalar `clmul_u64_scalar` SSOT); this
+# feature only gates the runtime detection / kernel dispatch paths.
+simd = []
+# Random generation functions (enabled by default for testing/examples).
+rand = ["dep:rand"]
+# Parallel algorithms with rayon
+parallel = ["dep:rayon"]
+# Matrix visualization to PNG images.
+visualization = ["image"]
+# File I/O support
+io = ["dep:serde", "dep:serde_json", "dep:blake3"]
+# Versioned tuning-profile parsing and serialization.
+tuning-profile = ["dep:serde", "dep:serde_json", "dep:sha2"]
+# Exposes the canonical field axiom test harness (`field::axiom_tests`) to
+# integration tests, benchmarks, and downstream crates. Off by default; gets
+# auto-enabled under `cargo test` via the self-dev-dependency above.
+test-support = ["dep:proptest"]
+
+[[bench]]
+name = "bitvec"
+harness = false
+
+[[bench]]
+name = "matmul"
+harness = false
+
+[[bench]]
+name = "wide_logical"
+harness = false
+
+[[bench]]
+name = "scan"
+harness = false
+
+[[bench]]
+name = "random"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "sparse"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "sparse_matmul"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "polynomial"
+harness = false
+
+[[bench]]
+name = "shifts"
+harness = false
+
+[[bench]]
+name = "rank_select"
+harness = false
+
+[[bench]]
+name = "polar"
+harness = false
+
+[[bench]]
+name = "primitive_poly"
+harness = false
+
+[[bench]]
+name = "generation"
+harness = false
+
+[[bench]]
+name = "simd_vs_scalar"
+harness = false
+
+[[bench]]
+name = "matrix_inversion"
+harness = false
+
+[[bench]]
+name = "m4rm_profile"
+harness = false
+
+[[bench]]
+name = "m4rm_components"
+harness = false
+
+[[bench]]
+name = "m4rm_gray_schedule"
+harness = false
+
+[[bench]]
+name = "rref"
+harness = false
+
+[[bench]]
+name = "rref_profile"
+harness = false
+
+[[bench]]
+name = "matrix_vector"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "matrix_transpose"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "field_clone"
+harness = false
+
+[[bench]]
+name = "fp_montgomery"
+harness = false
+
+[[bench]]
+name = "fp_specialized"
+harness = false
+required-features = ["simd"]
+
+[[bench]]
+name = "gf2m_mul_strategies"
+harness = false
+
+[[bench]]
+name = "fieldvec_dot_product"
+harness = false
+
+[[bench]]
+name = "batch_inverse"
+harness = false
+
+[[bench]]
+name = "soa_batch"
+harness = false
+required-features = ["simd"]
+
+[[bench]]
+name = "field_poly"
+harness = false
+
+[[bench]]
+name = "gf2m_wide_mul"
+harness = false
+required-features = ["simd"]
+
+[[bench]]
+name = "field_matrix"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "field_matrix_gemm"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "field_matrix_fusion"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "field_sparse_matrix"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "strassen_threshold"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "triangular"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "ple"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "inverse"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "charpoly"
+harness = false
+required-features = ["rand"]
+
+# ── Issue `6ed7f050` (story `64c88ae4`) — full-coverage criterion suite ──
+#
+# Each of these mirrors a subsection of the reference container harness
+# in `benchmarks/reference/fflas_bench.cpp`. They share matrix
+# generators with the reference harness via the SplitMix64 derivation
+# in `benches/common/seed.rs`; see issue `6ed7f050` for the
+# (operation, field, size, regime) coverage matrix.
+
+[[bench]]
+name = "fieldmatrix_gemm"
+harness = false
+required-features = ["rand"]
+
+# Issue `3d06224c` (story `cc5de315`) — Mersenne31 GEMM regression guard.
+# Single 256³ cell carved out from `fieldmatrix_gemm` so future bench-day
+# comparisons can isolate the Mersenne fast-path number without sweeping
+# the whole field matrix. See `benches/mersenne_gemm_regression.rs`.
+[[bench]]
+name = "mersenne_gemm_regression"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "fieldmatrix_gemm_delayed"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "fieldmatrix_gf2m_batch_gemm"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "fieldmatrix_ple"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "fieldmatrix_solve"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "fieldmatrix_charpoly"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "sparse_spmv"
+harness = false
+required-features = ["rand"]
+
+# ── Issue `eb57f944` — sparse × sparse matmul + sparse RREF over generic
+# fields. See `crates/gf2-core/src/field/sparse_matrix.rs`.
+
+[[bench]]
+name = "sparse_field_matmul"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "sparse_rref"
+harness = false
+required-features = ["rand"]
+
+[[bench]]
+name = "sparse_rref_scorecard"
+harness = false
+required-features = ["rand"]
+
+# ── Issue `e8fe47f5` (epic `6dc81018`) — pinned selector non-regression set ──
+[[bench]]
+name = "selector_non_regression"
+harness = false
+required-features = ["simd"]
+
+# Hand-rolled CSV emitter that writes T1-compatible rows; sister of the
+# criterion suite above. Lives under `examples/` so it builds with
+# `cargo build --release --example bench_csv_emitter`.
+[[example]]
+name = "bench_csv_emitter"
+required-features = ["rand"]
+
+# ── Issue `2a0ffb18` (story `166b2691`, epic `babcf05e` — gf2-core
+# PPC-spiral S0 measurement infrastructure) ──
+#
+# Demo driver for the SIMD-vs-scalar equivalence proptest helper at
+# `tests/simd_equiv/mod.rs`. The driver imports
+# `gf2_core::kernels::simd::maybe_simd`, which is itself
+# `#[cfg(feature = "simd")]`. Gate the integration test on the same
+# feature so a default-feature build (without `simd`) skips this target
+# entirely instead of failing to compile. Mirrors the SIMD-gated
+# `[[bench]]` entries above (`fp_specialized`, `soa_batch`,
+# `gf2m_wide_mul`).
+[[test]]
+name = "simd_equiv_demo"
+required-features = ["simd"]
+
+[[test]]
+name = "simd_equiv_dispatch_hoist"
+required-features = ["simd"]
+
+# ── Issue `ec286cee` (story `SC`, kernel C1) — GF(2^m) batch element-wise
+# multiply/square via VPCLMULQDQ-on-YMM.
+[[test]]
+name = "simd_equiv_gf2m_batch"
+required-features = ["simd"]
+
+# ── Issue `e8fe47f5` (epic `6dc81018`) — runs the pinned selector
+# non-regression harness's own `#[cfg(test)]` module, which a
+# `harness = false` bench target does not otherwise execute. Gated on the same
+# feature as the bench: the bit-backend family has two arms only under `simd`.
+[[test]]
+name = "selector_non_regression_harness"
+required-features = ["simd"]
+
+[[test]]
+name = "tuning_profile_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_envelope_v2"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_process_lifecycle"
+
+[[test]]
+name = "tuning_profile_polynomial_install"
+required-features = ["tuning-profile"]
+
+# ── Issue `fa92608b` (epic `6dc81018`) — soa_batch follow-on selector
+# cutover. Needs `parallel` in addition to `tuning-profile`: the
+# `compute::field` module the route reporter lives in is itself gated on the
+# `parallel` feature.
+[[test]]
+name = "tuning_profile_soa_batch_install"
+required-features = ["parallel", "tuning-profile"]
+
+[[test]]
+name = "tuning_profile_dense_inverse_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_charpoly_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_interpolate_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "backend_selection_profile"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
+name = "backend_selection_profile_above"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
+name = "backend_selection_tunable"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
+name = "backend_selection_resolution"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
+name = "backend_selection_baked"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
+name = "tuning_profile_matrix_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "matrix_selection_baked"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
+name = "tuning_profile_committed"
+required-features = ["tuning-profile"]
+
+# ── Issue `df385aa7` (epic `6dc81018`) — PLE route observation. One installed
+# profile per binary: `install` resolves once per process, so the below-default
+# and ceiling halves of the two PLE boundaries need separate targets.
+[[test]]
+name = "tuning_profile_ple_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_ple_install_above"
+required-features = ["tuning-profile"]
+
+# ── Issue `e8a727ff` (epic `6dc81018`) — PLE scalar-base and per-lane panel
+# width route observation, one installed profile per binary for the same
+# reason: the scalar base case, the byte-lane panel width, and the u16-lane
+# panel width each need their own install.
+[[test]]
+name = "tuning_profile_ple_scalar_base_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_ple_byte_lane_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_ple_u16_lane_install"
+required-features = ["tuning-profile"]
+
+# ── Issue `aa904331` (epic `6dc81018`) — M4RM schedule route observation ──
+#
+# One installed profile per binary, because `tuning::install` is one-shot per
+# process: the first file moves the wide-tier boundary below the conservative
+# default, the second above it.
+[[test]]
+name = "tuning_profile_m4rm_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_m4rm_wide_tier_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_triangular_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_triangular_install_above"
+
+required-features = ["tuning-profile"]
+
+# ── Issue `88441adb` (seam U6) — triangular base-case route observation ──
+#
+# One installed profile per binary. Each file observes both sides of its
+# installed base-case boundary through TRSM, TRMM, and TRTRI production entries.
+[[test]]
+name = "tuning_profile_triangular_base_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_triangular_base_install_above"
+required-features = ["tuning-profile"]
+
+# ── Issue `26ae7d6b` (epic `6dc81018`) — GEMM route observation ───────────
+#
+# One installed profile per binary: the first target moves the AXPY volume
+# boundary below the conservative default, and the second moves it above.
+[[test]]
+name = "tuning_profile_gemm_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_gemm_install_above"
+required-features = ["tuning-profile"]
+
+# ── Issue `e2744fcf` (epic `6dc81018`) — Winograd threshold route observation
+# ────────────────────────────────────────────────────────────────────────────
+# One installed profile per binary: the first target moves the threshold below
+# the conservative default, and the second moves it above that boundary.
+[[test]]
+name = "tuning_profile_winograd_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_winograd_install_above"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "gemm_tiles_baked"
+required-features = ["tuning-profile"]
+
+# ── Issue `eaae1b56` — explicit host-calibration action ─────────────────
+#
+# `harness = false` keeps calibration an explicit action. `tuning-profile`
+# supplies strict format-2 reopen/install, `parallel` supplies the SoA worker
+# gate, `simd` supplies the compared accelerated arms, and `test-support`
+# supplies the bounded effective-route witnesses required by the protocol.
+[[bench]]
+name = "tuning_calibration"
+harness = false
+required-features = ["parallel", "simd", "test-support", "tuning-profile"]
+
+# Runs the calibration harness's own `#[cfg(test)]` module, which a
+# `harness = false` bench target does not otherwise execute. It uses the exact
+# same four-feature protocol configuration as the producer.
+[[test]]
+name = "tuning_calibration_harness"
+required-features = ["parallel", "simd", "test-support", "tuning-profile"]
+
+[[test]]
+name = "ple_panel_effective_no_simd"
+required-features = ["test-support", "tuning-profile"]
