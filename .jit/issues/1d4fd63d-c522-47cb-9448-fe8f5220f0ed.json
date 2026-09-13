@@ -40,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Optimize bit transpose and bitslice conversion",
-  "updated_at": "2026-09-06T20:07:48.364114620Z"
+  "updated_at": "2026-09-13T07:16:53.739487978Z"
 }

@@ -37,7 +37,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Optimize population count and fused bit reductions",
-  "updated_at": "2026-09-06T20:07:48.742697594Z"
+  "updated_at": "2026-09-13T07:17:55.753188043Z"
 }

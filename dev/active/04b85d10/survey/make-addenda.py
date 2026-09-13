@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""Writes the protocol-v3 family addenda of the bit-storage survey (jit:04b85d10).
+"""Writes the protocol-v4 family addenda of the bit-storage survey (jit:04b85d10).
 
-One family per consumer group, one pilot addendum per family, and, once a
-pilot is published, one confirmatory addendum per family whose resolution is
-the pilot's widest relative half-width. Cell declarations live here once so
-the pilot and its confirmation cannot disagree on a workload, size, seed, core
-arm or cache state; the confirmation drops the identity-control cells and
-promotes the rest to `confirmatory`.
+One family per consumer group and one addendum per campaign: a pilot that
+sizes the family's measurement resolution at the confirmatory sample size, and,
+once that pilot is published, a confirmation whose resolution is the pilot's
+widest relative half-width. Cell declarations live here once so a pilot and its
+confirmation cannot disagree on a workload, size, seed, core arm or cache
+state; the confirmation drops the identity-control cells and promotes the rest
+to `confirmatory`.
+
+Every word a family description says about the code a cell reaches is derived
+from the cell's own declared sizes through the committed row registry
+`code-rows.json`, which `gf2-side/tests/declared_codes.rs` checks against the
+code the harness constructs. No family description names a code in free text.
 
 Usage:
   make-addenda.py pilot <frozen-utc>
@@ -24,7 +30,9 @@ import pathlib
 import sys
 
 ISSUE = "04b85d10"
+PROTOCOL_VERSION = 4
 OUT = pathlib.Path("dev/active/04b85d10")
+ROWS = OUT / "survey/code-rows.json"
 LEDGER = "dev/bench_results/04b85d10/v3-bit-storage-{family}-consumers-family-ledger.jsonl"
 
 
@@ -97,9 +105,7 @@ FAMILIES = {
             "four- and eight-word boundaries, the SIMD gain on an L2-resident buffer, "
             "and whether an any-nonzero spelling (`find_first_one().is_none()`) "
             "replaces the full count materially in an isolated DVB-T2 syndrome "
-            "buffer and in the whole `LdpcCode::is_valid_codeword` consumer. The "
-            "fused AND-popcount consumer, dense matvec, is recorded as a pinned "
-            "identity control because production exposes no alternative route."
+            "buffer and in the whole `LdpcCode::is_valid_codeword` consumer."
         ),
         "worthwhile": 1.05,
         "worthwhile_rationale": (
@@ -131,20 +137,13 @@ FAMILIES = {
     },
     "layout": {
         "id": "bit-storage-layout-consumers",
-        # "Normal-frame" below is wrong: the degree-14 BCH cells measure the
-        # mother code of the DVB-T2 short frame (normal frame: GF(2^16)). The
-        # text stays as both frozen layout addenda carry it, so this generator
-        # still reproduces them; findings.md states the correction.
         "question": (
             "Whether the current bit-layout transform routes leave a material "
             "whole-consumer gap against routes the library already registers: the "
             "detected AVX2 64x64 block transpose against the portable primitive, "
             "the packed binary BCH batch entry point's current family selection "
-            "against its registered bitslice and carry-less-multiply fold families "
-            "on the DVB-T2 normal-frame mother code, and the allocating batch entry "
-            "point against the caller-buffer one. The dense 4096-square transpose "
-            "and the DVB-T2 compatibility BCH encoder are recorded as pinned "
-            "identity controls because production exposes no alternative route."
+            "against its registered bitslice and carry-less-multiply fold families, "
+            "and the allocating batch entry point against the caller-buffer one."
         ),
         "worthwhile": 1.10,
         "worthwhile_rationale": (
@@ -173,6 +172,13 @@ FAMILIES = {
             cell("layout-bch-encode-caller-buffer-m14-b256-1core", "improvement",
                  "bch-encode-batch-alloc", {"degree": 14, "batch": 256}, 304,
                  metric="whole-consumer", conversion=True),
+            cell("layout-bch-encode-bitslice-m16-b256-1core", "improvement", "bch-encode-batch",
+                 {"degree": 16, "batch": 256}, 303, metric="whole-consumer", conversion=True),
+            cell("layout-bch-encode-fold-m16-b256-1core", "improvement", "bch-encode-batch",
+                 {"degree": 16, "batch": 256}, 303, metric="whole-consumer", conversion=True),
+            cell("layout-bch-encode-caller-buffer-m16-b256-1core", "improvement",
+                 "bch-encode-batch-alloc", {"degree": 16, "batch": 256}, 304,
+                 metric="whole-consumer", conversion=True),
             cell("layout-dense-transpose-4096-control-1core", "non-regression", "dense-transpose",
                  {"rows": 4096, "cols": 4096}, 302, metric="whole-consumer", conversion=True),
             cell("layout-dvb-bch-encode-7200-control-1core", "non-regression", "dvb-bch-encode",
@@ -181,9 +187,25 @@ FAMILIES = {
     },
 }
 
+# Cells each family campaigns under protocol version 4. A family absent here
+# has no version-4 campaign, and its version-3 receipts stay its evidence.
+V4_SCOPE = {
+    "count": [
+        "count-ldpc-check-64800-1core",
+    ],
+    "layout": [
+        "layout-bch-encode-bitslice-m14-b256-1core",
+        "layout-bch-encode-fold-m14-b256-1core",
+        "layout-bch-encode-caller-buffer-m14-b256-1core",
+        "layout-bch-encode-bitslice-m16-b256-1core",
+        "layout-bch-encode-fold-m16-b256-1core",
+        "layout-bch-encode-caller-buffer-m16-b256-1core",
+    ],
+}
+
 COMMON = {
-    "schema": "zen3-benchmark-addendum-v3",
-    "protocol": {"id": "zen3-benchmark-protocol", "version": 3},
+    "schema": f"zen3-benchmark-addendum-v{PROTOCOL_VERSION}",
+    "protocol": {"id": "zen3-benchmark-protocol", "version": PROTOCOL_VERSION},
 }
 
 BUDGET = {
@@ -199,27 +221,91 @@ BUDGET = {
 }
 
 
-def family_block(spec, mode):
+def rows():
+    with open(ROWS, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def row_by(group, key, value):
+    for row in group:
+        if row[key] == value:
+            return row
+    raise SystemExit(f"the row registry carries no row with {key} {value}")
+
+
+def codes_clause(cells, registry):
+    """Names each code the declared cells reach, from the registry row."""
+    named = []
+    for declared in cells:
+        identity = declared["workload"]["identity"]
+        size = declared["workload"]["size"]
+        if identity.startswith("bch-encode-batch"):
+            row = row_by(registry["packed_bch_mother_codes"], "degree", size["degree"])
+            label = (
+                f"{row['label']}, GF(2^{row['degree']}) of mother-code length "
+                f"{row['length']} and designed distance {row['designed_distance']}"
+            )
+        elif identity == "dvb-bch-encode":
+            row = row_by(registry["dvb_t2_bch_codes"], "length", size["n"])
+            label = f"{row['label']} of length {row['length']} at rate {row['rate']}"
+        elif identity in ("ldpc-syndrome", "ldpc-codeword-check"):
+            row = row_by(registry["dvb_t2_ldpc_codes"], "length", size["n"])
+            label = f"{row['label']} of length {row['length']} at rate {row['rate']}"
+        else:
+            continue
+        if label not in named:
+            named.append(label)
+    if not named:
+        return "The declared cells reach no code."
+    return "The declared cells reach " + "; ".join(named) + "."
+
+
+def is_control(declared):
+    return declared["cell_id"].split("-")[-2] == "control"
+
+
+def family_block(spec, mode, cells, registry):
+    controls = [declared["cell_id"] for declared in cells if is_control(declared)]
+    if mode == "pilot":
+        role = "Exploratory pilot"
+        closing = (
+            "Every cell is exploratory: the pilot sizes the measurement resolution of "
+            "the cells it declares at the confirmatory sample size, records their "
+            "pinned pre-change baseline latencies, and decides nothing."
+        )
+        if controls:
+            closing += (
+                " Its identity controls, "
+                + ", ".join(f"`{name}`" for name in controls)
+                + ", pair the production route against itself because production "
+                "exposes no alternative route, and stay in the pilot."
+            )
+    else:
+        role = "Confirmatory family"
+        closing = (
+            "Every cell is confirmatory on fresh samples; identity controls stay in "
+            "the pilot. A pass records a material gap between two current production "
+            "routes; the issue adopts nothing and names the downstream issue that "
+            "tests the candidate."
+        )
     return {
         "id": spec["id"],
         "issue": ISSUE,
         "purpose": "consumer-family",
         "description": (
-            f"{'Exploratory pilot' if mode == 'pilot' else 'Confirmatory family'} of "
-            f"issue {ISSUE}, protocol version 3. Question: {spec['question']} "
-            + (
-                "Every cell is exploratory: the pilot sizes the family's measurement "
-                "resolution at the confirmatory sample size, records the pinned "
-                "pre-change baseline latencies, and decides nothing."
-                if mode == "pilot"
-                else
-                "Every cell is confirmatory on fresh samples; identity controls stay in "
-                "the pilot. A pass records a material gap between two current production "
-                "routes; the issue adopts nothing and names the downstream issue that tests "
-                "the candidate."
-            )
+            f"{role} of issue {ISSUE}, protocol version {PROTOCOL_VERSION}. Question: "
+            f"{spec['question']} {codes_clause(cells, registry)} {closing}"
         ),
     }
+
+
+def scoped_cells(key, spec):
+    scope = V4_SCOPE[key]
+    declared = {cell["cell_id"]: cell for cell in spec["cells"]}
+    missing = [name for name in scope if name not in declared]
+    if missing:
+        raise SystemExit(f"{key}: the version-4 scope names undeclared cells {missing}")
+    return [dict(declared[name]) for name in scope]
 
 
 def write(path, document):
@@ -228,10 +314,30 @@ def write(path, document):
     print(f"{path} sha256 {hashlib.sha256(text.encode('utf-8')).hexdigest()}")
 
 
+def shared_blocks(key, spec, cells, registry, mode):
+    document = dict(COMMON)
+    document["family"] = family_block(spec, mode, cells, registry)
+    document["complexity_budget"] = BUDGET
+    document["family_wise"] = {
+        "alpha": 0.05,
+        "prior_confirmatory_trials": 0,
+        "prior_trials": [],
+        "ledger_path": LEDGER.format(family=key),
+    }
+    document["search_budget"] = {
+        "max_pilot_trials_per_cell": 1,
+        "max_confirmatory_attempts_per_candidate": 1,
+    }
+    document["holdout"] = {"required": False, "cells": []}
+    return document
+
+
 def pilot(frozen_utc):
-    for key, spec in FAMILIES.items():
-        document = dict(COMMON)
-        document["family"] = family_block(spec, "pilot")
+    registry = rows()
+    for key in V4_SCOPE:
+        spec = FAMILIES[key]
+        cells = scoped_cells(key, spec)
+        document = shared_blocks(key, spec, cells, registry, "pilot")
         document["frozen"] = {"frozen_utc": frozen_utc}
         document["effect"] = {
             "worthwhile_speedup": spec["worthwhile"],
@@ -248,23 +354,13 @@ def pilot(frozen_utc):
                 "comparator-gap objective is exercised and no threshold applies."
             ),
         }
-        document["complexity_budget"] = BUDGET
-        document["family_wise"] = {
-            "alpha": 0.05,
-            "prior_confirmatory_trials": 0,
-            "prior_trials": [],
-            "ledger_path": LEDGER.format(family=key),
-        }
-        document["search_budget"] = {
-            "max_pilot_trials_per_cell": 1,
-            "max_confirmatory_attempts_per_candidate": 1,
-        }
-        document["holdout"] = {"required": False, "cells": []}
-        document["cells"] = [dict(c) for c in spec["cells"]]
-        write(OUT / f"addendum-bit-storage-{key}-v3-pilot.json", document)
+        document["cells"] = cells
+        write(OUT / f"addendum-bit-storage-{key}-v{PROTOCOL_VERSION}-pilot.json", document)
 
 
-def confirmation(key, frozen_utc, pilot_dir, resolution, worthwhile=None, equivalence=None, moved=""):
+def confirmation(key, frozen_utc, pilot_dir, resolution, worthwhile=None, equivalence=None,
+                 moved=""):
+    registry = rows()
     spec = dict(FAMILIES[key])
     resolution = float(resolution)
     if worthwhile is not None:
@@ -279,8 +375,14 @@ def confirmation(key, frozen_utc, pilot_dir, resolution, worthwhile=None, equiva
             raise SystemExit(
                 f"{key}: margin {margin} does not strictly exceed 1 + resolution {resolution}"
             )
-    document = dict(COMMON)
-    document["family"] = family_block(spec, "confirmation")
+    cells = []
+    for declared in scoped_cells(key, spec):
+        if is_control(declared):
+            continue
+        promoted = dict(declared)
+        promoted["role"] = "confirmatory"
+        cells.append(promoted)
+    document = shared_blocks(key, spec, cells, registry, "confirmation")
     document["frozen"] = {"frozen_utc": frozen_utc}
     document["effect"] = {
         "worthwhile_speedup": spec["worthwhile"],
@@ -297,31 +399,12 @@ def confirmation(key, frozen_utc, pilot_dir, resolution, worthwhile=None, equiva
             "comparator-gap objective is exercised and no threshold applies."
         ),
     }
-    document["complexity_budget"] = BUDGET
-    document["family_wise"] = {
-        "alpha": 0.05,
-        "prior_confirmatory_trials": 0,
-        "prior_trials": [],
-        "ledger_path": LEDGER.format(family=key),
-    }
-    document["search_budget"] = {
-        "max_pilot_trials_per_cell": 1,
-        "max_confirmatory_attempts_per_candidate": 1,
-    }
-    document["holdout"] = {"required": False, "cells": []}
-    cells = []
-    for declared in spec["cells"]:
-        if declared["cell_id"].split("-")[-2] == "control":
-            continue
-        promoted = dict(declared)
-        promoted["role"] = "confirmatory"
-        cells.append(promoted)
     document["cells"] = cells
-    write(OUT / f"addendum-bit-storage-{key}-v3-confirmation.json", document)
+    write(OUT / f"addendum-bit-storage-{key}-v{PROTOCOL_VERSION}-confirmation.json", document)
 
 
 def main():
-    if len(sys.argv) >= 3 and sys.argv[1] == "pilot" and len(sys.argv) == 3:
+    if len(sys.argv) == 3 and sys.argv[1] == "pilot":
         pilot(sys.argv[2])
     elif len(sys.argv) in (6, 9) and sys.argv[1] == "confirmation":
         confirmation(*sys.argv[2:])

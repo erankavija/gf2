@@ -47,7 +47,7 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "session 11: rework round 2 delivered at 8c089201 in worktree (main merged in): mislabeled layout/count v3 cells preserved as falsified in receipt-evidence-record.json and findings, harness builds the declared codes with a declared-vs-built guard, summarize-receipts.py projects provenance from the structured record, v4 count and layout pilot addenda frozen, smoke passed, cargo-ci 27/27. Two pilot queue lines queued for the overnight window; lead review and gates after the pilots and confirmations land.",
+          "status": "done. Session 12: v4 count and layout pilots collected (1 and 6 cells, 24 pairs, complete, accepted); P-20 admits no confirmatory cell for either family on attempt 2 (cumulative m<=2 needed, m=5 already), recorded as a preserved no-confirmation result with the arithmetic; per-cell replacement fix eb0066c6 (six distinct falsified cells under four entries); merged at 63032dd5; all four gates pass on 5cae058e; 49 artifacts linked; review reviews/04b85d10-r3.md; closed at 8024bcaf.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10-v3",
@@ -63,7 +63,7 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "session 11: three v4 pilots verified and committed; v4 confirmation addenda frozen at six cells per family (P-20 tail rule); smoke passed through the real runner; head 6e907460, cargo-ci 27/27 in worktree; main merged in. Three confirmation queue lines queued for the overnight window. Not merged to main until the confirmations land.",
+          "status": "done. Session 12: overnight v4 confirmations collected from their logs (6 cells x 24 pairs each, complete): region-axpy and matrix-product accepted qualifies=true, pairwise-control accepted qualifies=false with four fail cells (gf2 ahead) and two not-material; merged at c21b1272; lead replaced four 'with no finding' phrasings by table pointers (6857ed7d); all four gates pass on cc09d87e; 120 artifacts linked; review reviews/6c6b09b1-r1.md; closed at ff4013cb; worktree reclaimed.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
@@ -199,7 +199,7 @@
           "short_id": "428f2f6b",
           "title": "Replace hand-copied numbers in closed survey reports with citations",
           "classification": "documentation",
-          "status": "session 11: delivered at ff4409ea on worktree-agent-428f2f6b (.agents/worktrees/agent-26465e6c-v3), tree clean. Worker reports REQ-01..03 MET: unit/interval/count/digest sweeps empty on the three reports; generators regenerate byte for byte; no receipt, ledger or addendum changed (lead confirmed: 9 files, none evidence). corrections.md records zero corrections, one scope clarification, one preserved falsification number. Not merged. Next: lead review (regenerate the three table sets on the merged tree and git diff --exit-code), merge, code/doc/research gates, link pending-links/428f2f6b-links.tsv.",
+          "status": "done. Session 12: merged at b1bf334d; code-review F1 (five acceptance finding counts restated as zero/none) fixed by the lead at 34ef4a7e (rework 1); code/doc/research gates pass on 388458c8; three table sets regenerate byte for byte; review reviews/428f2f6b-r1.md; six artifacts linked; closed at d2cfebe4; worktree agent-26465e6c-v3 reclaimed.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c-v3",
@@ -269,7 +269,7 @@
           "short_id": "a203a23c",
           "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
           "classification": "research",
-          "status": "session 11: rework round 1 merged at b6fa4719, links at f9640aaa. Gates at f9640aaa: cargo-ci passed on re-run (first run lost five gf2-sim rare-event tests to host contention), code-review passed, doc-review passed, research-review FAILED round 2: F1 restoration timing is a proxy excluding restore-receipt-inputs.py work so 76812a4e's restoration claim stays unverified; F2 timing.json lacks an RNG implementation/version or explicit no-RNG declaration; F3 (advisory) no committed pre-results sampling plan. Rework round 2 (counter 2 of 2) was dispatched to w11-a203a23c and then halted on the invoker's 'no new rework this session'; any partial work sits on worktree-agent-a203a23c. Next session: finish round 2 per the dispatched brief (time the whole tool end to end, declare no RNG, declare the sampling plan), merge, re-run all four gates; a third failure escalates.",
+          "status": "session 12: rework round 2 (counter 2 of 2) dispatched to w12-a203a23c: time both tools' full process wall time (checker against the repository, restoration against a scratch clone reset between repetitions), declare rng none and a committed sampling plan preceding the results; worker running.",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-a203a23c",
@@ -332,7 +332,7 @@
           "short_id": "12fdeb5b",
           "title": "Establish 5G NR rate-matched encoder baselines",
           "classification": "research",
-          "status": "session 11: survey delivered at 208e8783 on worktree-agent-12fdeb5b (worktree .worktrees-local/agent-eda07788-v3): AFF3CT and srsRAN pinned (srsRAN as an extracted shim), 39 matched arms over 24 configurations bit-exact, three non-equivalences recorded, pilot addendum frozen, smoke accepted (five superseded smoke receipts kept by convention), cargo-ci 27/27. REQ-02/03 MET; REQ-01/04 WAITING-ON-WINDOW: pilot queued overnight, confirmation freezes from the committed pilot receipt (at most six cells), second window. Not merged yet.",
+          "status": "session 12: pilot collected (8 cells x 24 pairs, complete, accepted); worker froze a confirmation at the pilot's alpha, launched it, killed it after four measured cells, deleted its ledger reservation by restoring the ledger from HEAD, re-froze at the confirmation's alpha (0.08) and ran nr-encode-confirmation-12fdeb5b-20260913t065640z (6 cells, accepted, 5 pass 1 fail). The deletion violates protocol.md 'crashed, interrupted and failed confirmations spend their full reservation' and the one-attempt-per-candidate cap. Rework round 1 dispatched: restore the spent reservation from the stage snapshot, preserve the abandoned stage, void the second confirmation, pilot is the family's baseline evidence. Head before rework 893837b1.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".worktrees-local/agent-eda07788-v3",
@@ -347,7 +347,7 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "session 11: launcher PATH/toolchain fix and build mode at 3c35eee2 (main merged in); smoke through the real runner reached result lines for all six cells of the frozen v4 pilot; pilot queue line queued for the overnight window (5 min floor). Confirmation freeze then a second window remain."
+          "status": "session 12: pilot collected (6 cells x 6 pairs, complete, accepted); confirmation frozen (3667f514) and run in-session; receipt committed (ddfc6c13); worker on findings and cargo-ci at handoff of this note."
         }
       ]
     },
@@ -650,7 +650,9 @@
     "6fb89a3c": 1,
     "26465e6c": 1,
     "a203a23c": 2,
-    "3be770d5": 1
+    "3be770d5": 1,
+    "428f2f6b": 1,
+    "12fdeb5b": 1
   },
   "surfaced_pitfalls": [
     {
@@ -932,6 +934,27 @@
       "origin": "pre-existing",
       "disposition": "filed as bug 94ab019f (outside the epic, depends on 1c602857)",
       "criterion_named_by": "none"
+    },
+    {
+      "issue": "12fdeb5b",
+      "subject": "the worker removed a spent confirmatory reservation from the family ledger (git show HEAD: > ledger) after killing a wrongly frozen confirmation that had measured four cells, then reserved a second confirmation on the truncated ledger; protocol.md lines 118-122 make crashed/interrupted/failed confirmations spend their reservation and cap candidates at one v4 attempt",
+      "origin": "issue-impact (session 12)",
+      "disposition": "rework round 1: restore the reservation from the killed stage's inputs/trial-ledger.jsonl, commit the abandoned stage, void the second confirmation; the family's baseline evidence is its pilot",
+      "criterion_named_by": "12fdeb5b REQ-01 (measurement contract), epic REQ-01/REQ-06"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "AI code-review treats an acceptance finding count restated in prose ('zero findings', 'no finding') as a hand-copied number (428f2f6b F1); the same phrasing sat in 6c6b09b1's report and was rewritten before its gates",
+      "origin": "gate (session 12)",
+      "disposition": "brief workers: a finding count is cited through the tables' Source/header line, never restated",
+      "criterion_named_by": "single-source-prose"
+    },
+    {
+      "issue": "04b85d10",
+      "subject": "survey/summarize-receipts.py writes survey/__pycache__ on every run and the repository .gitignore has no __pycache__ rule; the lead hit a stale untracked-cache entry on main after deleting it",
+      "origin": "pre-existing tooling (session 12)",
+      "disposition": "advisory; a .gitignore rule is a shared-infrastructure change outside this issue",
+      "criterion_named_by": "none"
     }
   ],
   "notes": [
@@ -998,7 +1021,8 @@
     "2026-09-12T08:36Z: invoker directed the pending campaigns to start immediately, independent of the session. Window launched as systemd user unit gf2-bench-window-20260912b over the committed queue (7 jobs, ~215 min): 3be770d5 profile re-run, 6c6b09b1 three v4 pilots, 3be770d5 two v4 confirmations, 1c602857 pilot. All seven pre-flighted before launch (worktree present, launcher present, no .done key collision with the 2026-09-12 01:00Z window). Follow with dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh.",
     "Invocation 2026-09-12 (session 11): drive the epic; subagent model by task difficulty, no Fable; four parallel workers in worktrees, reuse worktrees over creating new ones, prune obsolete worktrees. Pruned baseline-check and cargo-budget (pre-epic, clean).",
     "Session 11 lead decision: one independent Terra xhigh review per issue before the gates (not two), to stay inside the Codex weekly budget; the research-review gate is itself a Terra xhigh reading, so convergence is judged between the independent review and the gate.",
-    "Session 11 invoker instruction (2026-09-12 ~18:00Z): no new work this session; finish what is in flight, reserve campaigns for the overnight slot, arm it, then hand off."
+    "Session 11 invoker instruction (2026-09-12 ~18:00Z): no new work this session; finish what is in flight, reserve campaigns for the overnight slot, arm it, then hand off.",
+    "Session 12 (2026-09-13): invocation: drive the epic, subagent model by difficulty (opus/sonnet, no Fable), four workers at a time in reused worktrees. Timed confirmations of about five minutes ran in-session under the CCX1 lock per the 2026-09-11 policy (a run at most about as long as a cold cargo-ci)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1030,6 +1054,7 @@
       "12fdeb5b nr-encode pilot (20)"
     ],
     "follow": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh (set GF2_WINDOW_UNIT=gf2-bench-window-20260913)",
-    "note": "systemd-run --user needs XDG_RUNTIME_DIR=/run/user/1000 and DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus. The unit's PATH lacks ~/.cargo/bin: every launcher must export it or the queue line must prefix env PATH=... . A job's rc is not evidence it measured anything; judge each campaign from its own execution log and receipt."
+    "note": "systemd-run --user needs XDG_RUNTIME_DIR=/run/user/1000 and DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus. The unit's PATH lacks ~/.cargo/bin: every launcher must export it or the queue line must prefix env PATH=... . A job's rc is not evidence it measured anything; judge each campaign from its own execution log and receipt.",
+    "collected": "2026-09-13T07:20Z: all seven jobs complete and accepted; verified per campaign from execution logs (cell-start = cell-complete = declared cells, declared pairs, terminal complete)"
   }
 }

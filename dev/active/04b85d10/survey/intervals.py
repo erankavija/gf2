@@ -36,16 +36,22 @@ def median_coverage(n, j):
     return 1.0 - 2.0 * tail
 
 
-def median_interval(values, level=0.95):
-    """Returns (median, lower, upper, coverage) of `values`."""
-    ordered = sorted(values)
-    n = len(ordered)
+def median_rank(n, level=0.95):
+    """Returns (j, coverage) of the narrowest [X_(j), X_(n+1-j)] reaching `level`."""
     if n == 0 or median_coverage(n, 1) < level:
         raise ValueError(f"{n} values cannot give a {level:.0%} median interval")
     j = 1
     while j + 1 <= n // 2 and median_coverage(n, j + 1) >= level:
         j += 1
-    return statistics.median(ordered), ordered[j - 1], ordered[n - j], median_coverage(n, j)
+    return j, median_coverage(n, j)
+
+
+def median_interval(values, level=0.95):
+    """Returns (median, lower, upper, coverage) of `values`."""
+    ordered = sorted(values)
+    n = len(ordered)
+    j, coverage = median_rank(n, level)
+    return statistics.median(ordered), ordered[j - 1], ordered[n - j], coverage
 
 
 def wilson_interval(successes, trials, z=Z_95):

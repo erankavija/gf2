@@ -415,6 +415,12 @@
       "doc_type": "report",
       "label": "cat-file batch timing record",
       "path": "dev/active/a203a23c/timing/timing.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "cat-file batch timing record, superseded tmpfs run",
+      "path": "dev/active/a203a23c/timing/timing-tmpfs-superseded.json"
     }
   ],
   "first_ready_at": "2026-09-11T17:50:04.437172198Z",
@@ -455,5 +461,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
-  "updated_at": "2026-09-12T18:08:49.839355277Z"
+  "updated_at": "2026-09-13T07:44:51.181803389Z"
 }

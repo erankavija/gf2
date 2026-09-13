@@ -1,0 +1,54 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "pilot-v4-count-04b85d10-20260913t010111z",
+  "issue": "04b85d10",
+  "label": "pilot",
+  "campaign_seed": 20260910,
+  "addendum": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json",
+  "producing_manifest": "dev/active/04b85d10/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "count-ones": {
+      "build": "conservative-portable",
+      "description": "zero test spelled as a full population count",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "count-ones"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "find-first-one": {
+      "build": "conservative-portable",
+      "description": "zero test spelled as a first-set-bit search",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-04b85d10-v3/target/consumer-profile-04b85d10/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "find-first-one"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "count-ldpc-check-64800-1core",
+      "baseline_arm": "count-ones",
+      "candidate_arm": "find-first-one",
+      "case": {
+        "workload": "ldpc-codeword-check",
+        "size": {
+          "n": 64800
+        },
+        "seed": 203
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 3
+}
