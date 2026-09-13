@@ -1,0 +1,70 @@
+{
+  "schema": "04b85d10-code-rows-v1",
+  "purpose": "Declared code rows of the bit-storage consumer survey. One row per code a cell can name, so a cell's declared sizes, the code the harness constructs and the words an addendum uses for that code all resolve here.",
+  "provenance": {
+    "workload_selection": "dev/active/4e732b56/workload-selection.md",
+    "section": "2. Benchmark codes",
+    "harness": "dev/active/04b85d10/survey/gf2-side/src/lib.rs",
+    "checked_by": "dev/active/04b85d10/survey/gf2-side/tests/declared_codes.rs"
+  },
+  "packed_bch_mother_codes": [
+    {
+      "degree": 8,
+      "modulus": 285,
+      "designed_distance": 9,
+      "length": 255,
+      "corpus_row": "B3",
+      "dvb_t2_frame": null,
+      "label": "the degree-8 mother code of corpus row B3",
+      "field_label": "corpus row B3 mother field"
+    },
+    {
+      "degree": 14,
+      "modulus": 16427,
+      "designed_distance": 25,
+      "length": 16383,
+      "corpus_row": "T2S",
+      "dvb_t2_frame": "short",
+      "label": "the mother code of the DVB-T2 short frame",
+      "field_label": "short-frame mother field"
+    },
+    {
+      "degree": 16,
+      "modulus": 65581,
+      "designed_distance": 25,
+      "length": 65535,
+      "corpus_row": "T2N",
+      "dvb_t2_frame": "normal",
+      "label": "the mother code of the DVB-T2 normal frame",
+      "field_label": "normal-frame mother field"
+    }
+  ],
+  "dvb_t2_bch_codes": [
+    {
+      "length": 7200,
+      "dvb_t2_frame": "short",
+      "rate": "1/2",
+      "label": "the DVB-T2 short-frame compatibility BCH code"
+    },
+    {
+      "length": 32400,
+      "dvb_t2_frame": "normal",
+      "rate": "1/2",
+      "label": "the DVB-T2 normal-frame compatibility BCH code"
+    }
+  ],
+  "dvb_t2_ldpc_codes": [
+    {
+      "length": 16200,
+      "dvb_t2_frame": "short",
+      "rate": "1/2",
+      "label": "the DVB-T2 short-frame LDPC code"
+    },
+    {
+      "length": 64800,
+      "dvb_t2_frame": "normal",
+      "rate": "1/2",
+      "label": "the DVB-T2 normal-frame LDPC code"
+    }
+  ]
+}

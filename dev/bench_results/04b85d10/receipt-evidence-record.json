@@ -1,0 +1,222 @@
+{
+  "schema": "04b85d10-receipt-evidence-record-v1",
+  "purpose": "Derivation and contradiction record of the bit-storage consumer receipts. `dev/active/04b85d10/survey/summarize-receipts.py` projects this file, so the receipt tables carry no provenance or correction text of their own.",
+  "receipts": [
+    "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot",
+    "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation",
+    "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot",
+    "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation",
+    "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot",
+    "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation",
+    "dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot",
+    "dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot"
+  ],
+  "seed_derivation": [
+    {
+      "seed": "fixture",
+      "source": "the addendum cell's `workload.seed`",
+      "derivation": "`gf2_core` `BitVec::random_seeded` and `BitMatrix::random_seeded` turn it, and the per-row, per-block and per-bank offsets of it that `prepare` defines, into fixture words through `rand::rngs::StdRng::seed_from_u64` and `Rng::fill`",
+      "algorithm": "ChaCha12, whose 32-byte key `seed_from_u64` expands from the seed with PCG32",
+      "pinned_by": "the crate versions each receipt's snapshotted harness lockfile resolves",
+      "cites": [
+        "dev/active/04b85d10/survey/gf2-side/src/lib.rs"
+      ],
+      "unseeded_workloads": [
+        "zero-test",
+        "field-id-hint"
+      ],
+      "unseeded_note": "a deterministic fixture that draws nothing"
+    },
+    {
+      "seed": "order and bootstrap",
+      "source": "the acceptance interval's `seed`",
+      "derivation": "SplitMix64 over the campaign seed XOR the first eight bytes of the SHA-256 of the cell key seeds the generator that counterbalances the pair order and draws the bootstrap resamples",
+      "algorithm": "xoshiro256**",
+      "pinned_by": "the `abtest.rs` digest each receipt heading names",
+      "cites": [
+        "dev/tools/tuning-campaign-support/src/abtest.rs"
+      ],
+      "unseeded_workloads": [],
+      "unseeded_note": null
+    }
+  ],
+  "probe_semantics": [
+    {
+      "workloads": [],
+      "probe": "setup",
+      "times": "one-shot fixture or code construction"
+    },
+    {
+      "workloads": [
+        "bch-encode-batch",
+        "bch-encode-batch-alloc",
+        "bch-encode-batch-parallel"
+      ],
+      "probe": "pack",
+      "times": "one `encode_workspace()` construction, the caller-side preparation the route borrows, because the families pack messages inside the timed call"
+    },
+    {
+      "workloads": [
+        "bch-encode-batch",
+        "bch-encode-batch-alloc",
+        "bch-encode-batch-parallel",
+        "dvb-bch-encode"
+      ],
+      "probe": "batch_fill",
+      "times": "regeneration of the batch with the fixture generator, a harness cost a consumer replaces with a copy of its own data"
+    },
+    {
+      "workloads": [
+        "bch-encode-batch",
+        "bch-encode-batch-alloc"
+      ],
+      "probe": "dispatch",
+      "times": "the family selection `encode_batch_into` performs per call"
+    },
+    {
+      "workloads": [
+        "ldpc-syndrome",
+        "ldpc-codeword-check"
+      ],
+      "probe": "unpack",
+      "times": "allocating a `BitVec` with one bit of capacity per check and appending one bit per check, the output construction of the CSR matvec"
+    },
+    {
+      "workloads": [
+        "dense-matvec"
+      ],
+      "probe": "unpack",
+      "times": "allocating the output vector and appending one bit per row"
+    },
+    {
+      "workloads": [
+        "dense-rref",
+        "dense-matvec",
+        "dense-transpose"
+      ],
+      "probe": "dispatch",
+      "times": "the route selection the consumer performs per call"
+    }
+  ],
+  "contradictions": [
+    {
+      "id": "layout-v3-declared-mother-code",
+      "class": "declared-workload-mismatch",
+      "status": "falsified",
+      "declared_in": [
+        "dev/active/04b85d10/addendum-bit-storage-layout-v3-pilot.json",
+        "dev/active/04b85d10/addendum-bit-storage-layout-v3-confirmation.json"
+      ],
+      "receipts": [
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot",
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation"
+      ],
+      "cells": [
+        "layout-bch-encode-bitslice-m14-b256-1core",
+        "layout-bch-encode-fold-m14-b256-1core",
+        "layout-bch-encode-caller-buffer-m14-b256-1core"
+      ],
+      "declared": "the family description names the DVB-T2 normal-frame mother code as the code the packed BCH cells measure",
+      "measured": "the cells declare mother-field degree 14 and the harness builds the mother code of the DVB-T2 short frame; the normal frame's mother field is GF(2^16)",
+      "evidence": [
+        "dev/active/4e732b56/workload-selection.md",
+        "dev/active/04b85d10/survey/code-rows.json"
+      ],
+      "withdrawn": "every conclusion that reads these three cells as evidence about the normal-frame mother code",
+      "stands": "the three cells measure the short-frame mother code, and their arms, seeds, medians and intervals are that code's evidence",
+      "replacement": {
+        "layout-bch-encode-bitslice-m14-b256-1core": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json",
+        "layout-bch-encode-fold-m14-b256-1core": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json",
+        "layout-bch-encode-caller-buffer-m14-b256-1core": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json"
+      },
+      "no_replacement_rationale": null
+    },
+    {
+      "id": "ldpc-setup-probe-code",
+      "class": "probe-measures-another-workload",
+      "status": "falsified",
+      "declared_in": [
+        "dev/active/04b85d10/addendum-bit-storage-logical-v3-pilot.json",
+        "dev/active/04b85d10/addendum-bit-storage-count-v3-pilot.json",
+        "dev/active/04b85d10/addendum-bit-storage-count-v3-confirmation.json"
+      ],
+      "receipts": [
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot",
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot",
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation"
+      ],
+      "cells": [
+        "logical-ldpc-syndrome-64800-control-1core",
+        "count-ldpc-check-64800-1core"
+      ],
+      "declared": "a whole-consumer cell of the DVB-T2 normal-frame LDPC code whose `setup` probe times the construction of the code it measures",
+      "measured": "the snapshotted harness constructs the DVB-T2 short-frame code in the `setup` probe at every declared length, so the reported `setup` figure is the short code's construction",
+      "evidence": [
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/inputs/producing/dev/active/04b85d10/survey/gf2-side/src/lib.rs"
+      ],
+      "withdrawn": "the reported `setup` probe of these cells as a figure for the normal-frame code",
+      "stands": "the timed body of each cell builds the declared normal-frame code, so the per-arm medians, speedups and intervals are that consumer's evidence",
+      "replacement": {
+        "logical-ldpc-syndrome-64800-control-1core": null,
+        "count-ldpc-check-64800-1core": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json"
+      },
+      "no_replacement_rationale": "`logical-ldpc-syndrome-64800-control-1core` is a pilot-only identity control: it pairs the consumer against itself to size the family's resolution and to record the pinned baseline latency, and that timed body stands, so no confirmatory or ranked conclusion rests on its withdrawn probe"
+    },
+    {
+      "id": "ldpc-unpack-probe-width",
+      "class": "probe-measures-another-workload",
+      "status": "falsified",
+      "declared_in": [
+        "dev/active/04b85d10/addendum-bit-storage-logical-v3-pilot.json",
+        "dev/active/04b85d10/addendum-bit-storage-count-v3-pilot.json",
+        "dev/active/04b85d10/addendum-bit-storage-count-v3-confirmation.json"
+      ],
+      "receipts": [
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot",
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot",
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation"
+      ],
+      "cells": [
+        "logical-ldpc-syndrome-64800-control-1core",
+        "count-ldpc-check-64800-1core"
+      ],
+      "declared": "an `unpack` probe that times the syndrome output the CSR matvec builds, one bit per check",
+      "measured": "the snapshotted harness appends 32448 bits, the 507-word rounding of the check count, where the normal-frame syndrome has 32400",
+      "evidence": [
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation/inputs/producing/dev/active/04b85d10/survey/gf2-side/src/lib.rs"
+      ],
+      "withdrawn": "the reported `unpack` probe of these cells as the syndrome output's cost",
+      "stands": "the timed body appends one bit per check, so the per-arm medians, speedups and intervals are unaffected",
+      "replacement": {
+        "logical-ldpc-syndrome-64800-control-1core": null,
+        "count-ldpc-check-64800-1core": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json"
+      },
+      "no_replacement_rationale": "`logical-ldpc-syndrome-64800-control-1core` is a pilot-only identity control: it pairs the consumer against itself to size the family's resolution and to record the pinned baseline latency, and that timed body stands, so no confirmatory or ranked conclusion rests on its withdrawn probe"
+    },
+    {
+      "id": "rref-dispatch-probe-route",
+      "class": "probe-measures-another-workload",
+      "status": "falsified",
+      "declared_in": [
+        "dev/active/04b85d10/addendum-bit-storage-logical-v3-pilot.json"
+      ],
+      "receipts": [
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot"
+      ],
+      "cells": [
+        "logical-dense-rref-1024-control-1core"
+      ],
+      "declared": "a `dispatch` probe that times the route selection `rref` performs per call",
+      "measured": "the snapshotted harness times `select_backend_for_size`, while `rref` resolves its XOR kernel through `resolve_xor_inplace`",
+      "evidence": [
+        "dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot/inputs/producing/dev/active/04b85d10/survey/gf2-side/src/lib.rs"
+      ],
+      "withdrawn": "the reported `dispatch` probe of this cell as the RREF consumer's route selection",
+      "stands": "the probe reports below one nanosecond per call and rounds to zero, so the receipt publishes no figure that rests on it; the cell's medians and interval are the pinned RREF consumer's evidence",
+      "replacement": {
+        "logical-dense-rref-1024-control-1core": null
+      },
+      "no_replacement_rationale": "`logical-dense-rref-1024-control-1core` is a pilot-only identity control whose withdrawn probe rounds to zero, so no published figure rests on it"
+    }
+  ]
+}
