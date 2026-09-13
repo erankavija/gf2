@@ -35,11 +35,16 @@ import pathlib
 import subprocess
 import sys
 
+# (receipt directory, section title, family). The lane-selection family
+# compares gf2 lanes against each other; the comparator family compares them
+# against M4RI and Bitshuffle. Each has its own ledger and its own resolution.
 RECEIPT_ORDER = [
-    ("2026-09-13-1d4fd63d-transpose-lane-smoke", "Smoke"),
-    ("2026-09-13-1d4fd63d-transpose-lane-pilot", "Ranking stage"),
-    ("2026-09-13-1d4fd63d-transpose-lane-selected", "Selected-lane stage"),
-    ("2026-09-13-1d4fd63d-transpose-lane-confirmation", "Confirmation"),
+    ("2026-09-13-1d4fd63d-transpose-lane-smoke", "Smoke", "selection"),
+    ("2026-09-13-1d4fd63d-transpose-lane-pilot", "Lane ranking stage", "selection"),
+    ("2026-09-13-1d4fd63d-transpose-lane-selected", "Selected-lane stage", "selection"),
+    ("2026-09-13-1d4fd63d-transpose-lane-confirmation", "Lane confirmation", "selection"),
+    ("2026-09-13-1d4fd63d-external-pilot", "Comparator pilot", "external"),
+    ("2026-09-13-1d4fd63d-external-confirmation", "Comparator confirmation", "external"),
 ]
 
 
@@ -255,8 +260,8 @@ def probes_block(entry, lines):
     lines.append("")
 
 
-def resolution_block(entries, lines):
-    lines.append("## Resolution of the confirmatory stage")
+def resolution_block(entries, lines, title, pilot_suffix, confirmation_suffix):
+    lines.append(f"## {title}")
     lines.append("")
     lines.append(
         "The frozen measurement resolution is the widest relative bootstrap "
@@ -265,15 +270,9 @@ def resolution_block(entries, lines):
         "acceptance summary."
     )
     lines.append("")
-    pilot = next(
-        entry
-        for entry in entries
-        if entry["name"].endswith("transpose-lane-selected")
-    )
+    pilot = next(entry for entry in entries if entry["name"].endswith(pilot_suffix))
     confirmation = next(
-        entry
-        for entry in entries
-        if entry["name"].endswith("transpose-lane-confirmation")
+        entry for entry in entries if entry["name"].endswith(confirmation_suffix)
     )
     lines.append("| Cell | Estimate | Lower | Upper | Relative half-width |")
     lines.append("|---|---:|---:|---:|---:|")
@@ -294,23 +293,32 @@ def resolution_block(entries, lines):
     lines.append(f"Widest relative half-width: {widest:.6f}.")
     lines.append("")
     effect = confirmation["addendum"]["effect"]
+    declared = [
+        (label, effect[field])
+        for label, field in (
+            ("worthwhile speedup", "worthwhile_speedup"),
+            ("equivalence margin", "equivalence_margin"),
+            ("material-gap threshold", "material_gap_threshold"),
+        )
+        if effect[field] is not None
+    ]
+    margins = ", ".join(f"{label} {fmt(value, 3)}" for label, value in declared)
     lines.append(
-        f"Frozen resolution: {fmt(effect['measurement_resolution'], 3)}. "
-        f"Worthwhile speedup {fmt(effect['worthwhile_speedup'], 3)} and equivalence "
-        f"margin {fmt(effect['equivalence_margin'], 3)}, each strictly above one plus "
-        "that resolution."
+        f"Frozen resolution: {fmt(effect['measurement_resolution'], 3)}. The margins "
+        f"this addendum declares are {margins}; each is strictly above one plus that "
+        "resolution, which is what P-03 requires of a margin the family can resolve."
     )
     lines.append("")
 
 
-def tail_support_block(entries, lines):
+def tail_support_block(entries, lines, title, confirmation_suffix):
     confirmation = next(
-        entry for entry in entries if entry["name"].endswith("transpose-lane-confirmation")
+        entry for entry in entries if entry["name"].endswith(confirmation_suffix)
     )
     family = confirmation["summary"]["family"]
     resamples = family["bootstrap_resamples"]
     alpha = family["family_alpha"] / family["comparisons"]
-    lines.append("## Tail support and the family's remaining budget")
+    lines.append(f"## {title}")
     lines.append("")
     lines.append(
         "P-20 accepts a confirmatory cell only where each bootstrap tail holds at "
@@ -433,7 +441,7 @@ def main():
     output = pathlib.Path(
         sys.argv[1] if len(sys.argv) > 1 else root / "dev/bench_results/1d4fd63d/tables.md"
     )
-    entries = [read_receipt(root, name) for name, _ in RECEIPT_ORDER]
+    entries = [read_receipt(root, name) for name, _, _ in RECEIPT_ORDER]
 
     lines = [
         "# Transpose-lane receipt tables (jit:1d4fd63d)",
@@ -447,10 +455,34 @@ def main():
         "the short form is repeated with each block.",
         "",
     ]
-    resolution_block(entries, lines)
-    tail_support_block(entries, lines)
+    resolution_block(
+        entries,
+        lines,
+        "Resolution of the lane confirmation",
+        "transpose-lane-selected",
+        "transpose-lane-confirmation",
+    )
+    tail_support_block(
+        entries,
+        lines,
+        "Tail support and remaining budget of the lane-selection family",
+        "transpose-lane-confirmation",
+    )
+    resolution_block(
+        entries,
+        lines,
+        "Resolution of the comparator confirmation",
+        "1d4fd63d-external-pilot",
+        "1d4fd63d-external-confirmation",
+    )
+    tail_support_block(
+        entries,
+        lines,
+        "Tail support and remaining budget of the comparator family",
+        "1d4fd63d-external-confirmation",
+    )
     conversion_share_block(entries, lines)
-    for entry, (_, title) in zip(entries, RECEIPT_ORDER):
+    for entry, (_, title, _family) in zip(entries, RECEIPT_ORDER):
         heading_block(entry, title, lines)
         cells_block(entry, lines)
         probes_block(entry, lines)
