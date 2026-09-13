@@ -37,6 +37,7 @@ fn main() {
             let input: [u64; 64] = splitmix_words(64, seed).try_into().expect("64 words");
             let fns = transpose::detect().unwrap_or(transpose::TransposeFns {
                 transpose_64x64: transpose::transpose_64x64_scalar,
+                lane: transpose::TransposeLane::Scalar,
                 name: "scalar-bit-twiddle",
             });
             let mut output = [0u64; 64];

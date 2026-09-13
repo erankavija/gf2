@@ -1,0 +1,36 @@
+{
+  "schema": "1d4fd63d-external-arm-check-v1",
+  "source_of_pins": "dev/active/6fb89a3c/survey/build-evidence.json",
+  "rebuilt_by": "dev/active/6fb89a3c/survey/fetch-build.sh",
+  "m4ri": {
+    "version": "20260122",
+    "source": {
+      "kind": "release-tarball",
+      "archive": "m4ri-20260122.tar.gz",
+      "sha256": "7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404"
+    }
+  },
+  "bitshuffle": {
+    "version": "0.5.2",
+    "source": {
+      "commit": "52aec3b80d05606c090956aecfe868489d96b95c",
+      "describe": "0.5.2",
+      "tree_status": ""
+    }
+  },
+  "passed": true,
+  "arms": {
+    "m4ri_transpose_arm": {
+      "pinned_by": "dev/active/6fb89a3c/survey/build-evidence.json",
+      "pinned_sha256": "5cdd572ebf07455d13bd3c627af447a8d75654e69012b37f1a8e10ea38ab84f0",
+      "observed_sha256": "5cdd572ebf07455d13bd3c627af447a8d75654e69012b37f1a8e10ea38ab84f0",
+      "agrees": true
+    },
+    "bitshuffle_transpose_arm": {
+      "pinned_by": "dev/active/6fb89a3c/survey/build-evidence.json",
+      "pinned_sha256": "74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b",
+      "observed_sha256": "74aff01dd5f9c8e7f49bb60bc3ddfa5279bf81329e32079f9f41be6fd9715a1b",
+      "agrees": true
+    }
+  }
+}
