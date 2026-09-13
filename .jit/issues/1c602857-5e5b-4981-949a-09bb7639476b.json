@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-12T08:16:27.169589646Z",
   "context": {},
   "created_at": "2026-09-10T16:45:41.029543432Z",
@@ -7,7 +7,238 @@
     "c7113c5a-94da-462f-954e-3b7894bb95df"
   ],
   "description": "The public wide carry-less multiplication functions in gf2-core run the portable scalar schoolbook for every operand width, bypassing the capability-dispatched kernels that gf2's own wide-field arithmetic already uses.\n\n## Background\n\n`gf2m::wide::clmul_wide` delegates to `clmul_wide_slice`, which multiplies every word pair through the portable bit-by-bit carry-less product. The dispatching helper that selects the PCLMULQDQ kernels for 4-word and 9-word operands is crate-private and serves wide-field multiplication and the wide Barrett reducer, so a caller of the documented public long-product API never reaches an accelerated path. An exploratory measurement at four words found the public path far slower than the dispatched kernel. The `Gf2mWide::mul_ref` rustdoc also names the public function as its mechanism, although its body uses the private helper.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n- [hard] REQ-02: The public wide carry-less product functions reach the same capability-dispatched kernels as gf2's internal wide-field multiplication on hosts that support them and keep the tested portable scalar fallback elsewhere, through one canonical dispatch path shared by public and internal callers.\n- [hard] REQ-03: The shared carry-less product conformance suite covers the public functions at dispatched and non-dispatched widths with random and adversarial operands, comparing complete double-width outputs against the portable oracle, including the scalar fallback.\n- [hard] REQ-04: A frozen before/after receipt measures the public path at dispatched and non-dispatched widths, including dispatch overhead at small widths, and production adoption follows the frozen non-regression rule.\n- [hard] REQ-05: The rustdoc of the public functions and of `Gf2mWide::mul_ref` states the mechanism and complexity each actually uses.\n\n## Notes\n\nSurfaced by the polynomial-multiplication baseline survey, whose source evidence records the call paths. No multiplication algorithm change is part of this task.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7e7f088ce6dd93eb662427aa848cb7a2a698c71cf399db4af2033ead81cf18e3",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "conformance-before-routing.txt",
+          "resolved_path": "dev/active/1c602857/conformance-before-routing.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d29bfd4c9ed4085c49cdadb10d0c2976e6096fa9f0ab5b7f6b1ad70f93938521",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "confirmation-derivation.txt",
+          "resolved_path": "dev/active/1c602857/confirmation-derivation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b494cbf3e1b8d9fc9600bd14faa9ac247987efc861a4ba3ab28f7ed4e05f7074",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "run-public-clmul.sh",
+          "resolved_path": "dev/active/1c602857/run-public-clmul.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d2b1e51a6d9e52255aa324bbfbbd2c4e1b04e99658e53e57a122b5cf17558232",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-public-clmul-pilot.json",
+          "resolved_path": "dev/active/1c602857/addendum-v4-public-clmul-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "21e169cd903d51f3fe4a6fe8de823ea55e4e417e38c913d5317e21d225d2411d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "validation.json",
+          "resolved_path": "dev/active/1c602857/validation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7dab134522e18356c71a807e5c783bd026f194619ba22d0999a335ad3ecd67e7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/execution.log",
+          "resolved_path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d467becbfb922df7d8c2dc27267a254228dc37974abf328421ab1c1d3d124ae9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "producing-inputs.json",
+          "resolved_path": "dev/active/1c602857/producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6158e6e86fc01b3d83c0df06ee41bb2c2cc3a8647226dcfb02eb5341380c678a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-public-clmul-confirmation.json",
+          "resolved_path": "dev/active/1c602857/addendum-v4-public-clmul-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f307ad571b92d2ef7184bb189671883958aa8d7149e85413b5ebe645af5a7448",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8679252d7856b1112677d734a8fa47bd34627dd86af408d612bc577c52bc8f0e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "make-plan.py",
+          "resolved_path": "dev/active/1c602857/make-plan.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0dfe283ff55d73ab2e3466d20ba11a53298e2e4a860b60acceb8f9c818eddb20",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/acceptance-summary.json",
+          "resolved_path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/acceptance-summary.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fd6a97b8c43e6a3620f2c8a6ab8ecc2d02f70aa5cf49227e6aacd674c8344a86",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "34300e46f58f4490396db32b4faf652630b792eda691f17ea363263ca2efc12d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "abdb3e975e203a4e3734f6c57aaffcd84d3caa46127c503ceab9dac14c44c972",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/acceptance-summary.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Findings: v4 public-clmul dispatch routing and confirmed result",
+      "path": "dev/active/1c602857/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "v4 pilot addendum",
+      "path": "dev/active/1c602857/addendum-v4-public-clmul-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "v4 confirmation addendum (frozen)",
+      "path": "dev/active/1c602857/addendum-v4-public-clmul-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Producing-input closure for the clmul arm",
+      "path": "dev/active/1c602857/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Conformance suite pass record (post-routing)",
+      "path": "dev/active/1c602857/validation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Conformance suite failure record (pre-routing)",
+      "path": "dev/active/1c602857/conformance-before-routing.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Confirmation resolution/margin derivation record",
+      "path": "dev/active/1c602857/confirmation-derivation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Pilot receipt",
+      "path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Pilot acceptance summary",
+      "path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Pilot execution log",
+      "path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Confirmation receipt",
+      "path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Confirmation acceptance summary",
+      "path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Confirmation execution log",
+      "path": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Family trial ledger",
+      "path": "dev/bench_results/1c602857/public-clmul-dispatch-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Launcher: pilot/confirmation/build modes",
+      "path": "dev/active/1c602857/run-public-clmul.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Conformance validation runner",
+      "path": "dev/active/1c602857/run-validation.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Producing-input snapshot generator",
+      "path": "dev/active/1c602857/make-producing-inputs.py"
+    }
+  ],
   "first_ready_at": "2026-09-10T16:45:41.029543432Z",
   "gates_required": [
     "cargo-ci",
@@ -26,5 +257,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Route the public wide carry-less product through capability dispatch",
-  "updated_at": "2026-09-12T08:16:27.169589646Z"
+  "updated_at": "2026-09-13T07:53:18.667702079Z"
 }
