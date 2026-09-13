@@ -109,6 +109,17 @@ impl Counts {
     }
 }
 
+/// Reports one counted section as a JSON record on standard output, so a run
+/// captured with `--nocapture` is a machine-readable census beside the
+/// assertions. The record carries only what this run observed.
+fn report(phase: &str, case: &str, counts: Counts) {
+    println!(
+        "{{\"schema\":\"ldpc-decode-allocation-census-v1\",\"phase\":\"{phase}\",\"case\":\"{case}\",\
+\"allocations\":{},\"reallocations\":{},\"deallocations\":{},\"bytes_requested\":{}}}",
+        counts.allocations, counts.reallocations, counts.deallocations, counts.bytes
+    );
+}
+
 /// Runs `body` with this thread's counters recording, and returns its value
 /// beside them.
 fn count<T>(body: impl FnOnce() -> T) -> (T, Counts) {
@@ -184,6 +195,11 @@ fn steady_state_decoding_allocates_nothing() {
                 for repeat in 0..3 {
                     let (_, counts) =
                         count(|| decoder.decode_codeword_into(&llrs, 8, &mut codeword));
+                    report(
+                        "steady-state",
+                        &format!("{context}, decode {repeat}"),
+                        counts,
+                    );
                     assert!(
                         counts.is_zero(),
                         "steady-state decode {repeat} of {context} requested {counts:?}"
@@ -207,6 +223,11 @@ fn construction_and_workspace_growth_are_counted_separately() {
     let code_for_build = code.clone();
     let (mut decoder, construction) =
         count(move || LdpcDecoder::with_config(code_for_build, config));
+    report(
+        "construction",
+        "dvb-t2-short-r12, NormalizedMinSum(0.75)",
+        construction,
+    );
     assert!(
         construction.allocations > 0,
         "constructing a decoder allocates its layout and message arrays"
@@ -215,6 +236,11 @@ fn construction_and_workspace_growth_are_counted_separately() {
     // An empty buffer: the first decode grows it to the codeword length.
     let mut codeword = BitVec::new();
     let (_, growth) = count(|| decoder.decode_codeword_into(&llrs, 6, &mut codeword));
+    report(
+        "workspace-growth",
+        "dvb-t2-short-r12, NormalizedMinSum(0.75)",
+        growth,
+    );
     assert!(
         growth.allocations + growth.reallocations > 0,
         "the first decode into an empty buffer grows it"
@@ -223,6 +249,11 @@ fn construction_and_workspace_growth_are_counted_separately() {
 
     // With the buffer prepared, the next decode allocates nothing.
     let (_, steady) = count(|| decoder.decode_codeword_into(&llrs, 6, &mut codeword));
+    report(
+        "steady-state",
+        "dvb-t2-short-r12, NormalizedMinSum(0.75), prepared buffer",
+        steady,
+    );
     assert!(steady.is_zero(), "prepared decode requested {steady:?}");
 }
 
@@ -240,6 +271,7 @@ fn decoding_after_reset_allocates_nothing() {
         decoder.reset();
         decoder.decode_codeword_into(&llrs, 8, &mut codeword);
     });
+    report("steady-state-after-reset", "nr-bg2-z8, MinSum", counts);
     assert!(counts.is_zero(), "decode after reset requested {counts:?}");
 }
 
@@ -255,6 +287,11 @@ fn owning_entry_points_allocate_what_they_return() {
     decoder.decode_codeword_into(&llrs, 6, &mut codeword);
 
     let (result, counts) = count(|| decoder.decode_to_codeword(&llrs, 6));
+    report(
+        "owning-decode-to-codeword",
+        "dvb-t2-short-r12, NormalizedMinSum(0.75)",
+        counts,
+    );
     assert_eq!(result.decoded_bits.len(), code.n());
     assert!(
         counts.allocations > 0,
@@ -265,6 +302,11 @@ fn owning_entry_points_allocate_what_they_return() {
     // later call is the one that shows the per-call cost.
     decoder.decode_iterative(&llrs, 6);
     let (message, counts) = count(|| decoder.decode_iterative(&llrs, 6));
+    report(
+        "owning-decode-iterative",
+        "dvb-t2-short-r12, NormalizedMinSum(0.75)",
+        counts,
+    );
     assert_eq!(message.decoded_bits.len(), code.k());
     assert!(
         counts.allocations > 0,

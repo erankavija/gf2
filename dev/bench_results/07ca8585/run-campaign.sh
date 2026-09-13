@@ -110,6 +110,10 @@ case "$ACTION" in
   [[ ! -e "$PLAN" ]] || { echo "existing plan: $PLAN" >&2; exit 2; }
   check_arms
   mkdir -p "$(dirname "$PLAN")"
+  # Family ledger genesis: created empty once, never rewritten. `noclobber`
+  # makes a second prepare of the same family leave the existing chain alone.
+  LEDGER=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["family_wise"]["ledger_path"])' "$ADDENDUM")
+  [[ -f "$LEDGER" ]] || (set -o noclobber; : > "$LEDGER")
   ./scripts/cargo-budget.sh cargo +1.95 build --offline --release -p tuning-campaign-support \
     --bin benchmark-ab-runner --bin benchmark-acceptance
   python3 "$SURVEY/make-plan.py" --family "$FAMILY_ID" --label "$MODE" \

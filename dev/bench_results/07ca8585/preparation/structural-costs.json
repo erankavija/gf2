@@ -1,0 +1,207 @@
+{
+  "schema": "ldpc-update-structural-costs-v1",
+  "before_source": {
+    "path": "dev/bench_results/3be770d5/preparation/structural-costs.json",
+    "generator": "dev/active/3be770d5/survey/edge-costs.py"
+  },
+  "codes": {
+    "dvb-t2-r12": {
+      "alist_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+      "n": 64800,
+      "m": 32400,
+      "edges": 226799,
+      "check_degree_histogram": [
+        [
+          6,
+          1
+        ],
+        [
+          7,
+          32399
+        ]
+      ],
+      "variable_degree_histogram": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          32399
+        ],
+        [
+          3,
+          19440
+        ],
+        [
+          8,
+          12960
+        ]
+      ],
+      "before_per_iteration": {
+        "check_inputs_gathered": 1360788,
+        "check_position_search_comparisons": 4082382,
+        "min_sum_calls": 226799,
+        "min_sum_input_vec_allocations": 226799,
+        "variable_edge_reads": 453598,
+        "variable_position_search_comparisons": 1814386,
+        "syndrome_bits_pushed": 97200,
+        "syndrome_bitvec_allocations": 2,
+        "syndrome_edge_bit_reads": 226799
+      },
+      "after_per_iteration": {
+        "check_inputs_read": 453598,
+        "check_outputs_written": 226799,
+        "check_position_search_comparisons": 0,
+        "min_sum_reduction_calls": 32400,
+        "min_sum_input_vec_allocations": 0,
+        "variable_edge_reads": 453598,
+        "variable_index_loads": 453598,
+        "variable_position_search_comparisons": 0,
+        "hard_decision_writes": 64800,
+        "syndrome_edge_bit_reads_at_most": 226799,
+        "syndrome_bitvec_allocations": 0
+      },
+      "aff3ct_per_iteration": {
+        "check_indexed_reads": 453598,
+        "check_indexed_writes": 226799,
+        "variable_sequential_reads": 453598,
+        "variable_writes": 226799,
+        "posterior_reads": 226799,
+        "syndrome_edge_reads_at_most": 226799,
+        "allocations": 0
+      }
+    },
+    "nr-bg1-z384": {
+      "alist_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+      "n": 26112,
+      "m": 17664,
+      "edges": 121344,
+      "check_degree_histogram": [
+        [
+          3,
+          384
+        ],
+        [
+          4,
+          1920
+        ],
+        [
+          5,
+          6912
+        ],
+        [
+          6,
+          3072
+        ],
+        [
+          7,
+          1920
+        ],
+        [
+          8,
+          768
+        ],
+        [
+          9,
+          768
+        ],
+        [
+          10,
+          384
+        ],
+        [
+          19,
+          1536
+        ]
+      ],
+      "variable_degree_histogram": [
+        [
+          1,
+          16128
+        ],
+        [
+          4,
+          384
+        ],
+        [
+          5,
+          384
+        ],
+        [
+          6,
+          768
+        ],
+        [
+          7,
+          1536
+        ],
+        [
+          8,
+          1152
+        ],
+        [
+          9,
+          384
+        ],
+        [
+          10,
+          1536
+        ],
+        [
+          11,
+          1152
+        ],
+        [
+          12,
+          1536
+        ],
+        [
+          13,
+          384
+        ],
+        [
+          28,
+          384
+        ],
+        [
+          30,
+          384
+        ]
+      ],
+      "before_per_iteration": {
+        "check_inputs_gathered": 994560,
+        "check_position_search_comparisons": 4516992,
+        "min_sum_calls": 121344,
+        "min_sum_input_vec_allocations": 121344,
+        "variable_edge_reads": 242688,
+        "variable_position_search_comparisons": 1237248,
+        "syndrome_bits_pushed": 43776,
+        "syndrome_bitvec_allocations": 2,
+        "syndrome_edge_bit_reads": 121344
+      },
+      "after_per_iteration": {
+        "check_inputs_read": 242688,
+        "check_outputs_written": 121344,
+        "check_position_search_comparisons": 0,
+        "min_sum_reduction_calls": 17664,
+        "min_sum_input_vec_allocations": 0,
+        "variable_edge_reads": 242688,
+        "variable_index_loads": 242688,
+        "variable_position_search_comparisons": 0,
+        "hard_decision_writes": 26112,
+        "syndrome_edge_bit_reads_at_most": 121344,
+        "syndrome_bitvec_allocations": 0
+      },
+      "aff3ct_per_iteration": {
+        "check_indexed_reads": 242688,
+        "check_indexed_writes": 121344,
+        "variable_sequential_reads": 242688,
+        "variable_writes": 121344,
+        "posterior_reads": 121344,
+        "syndrome_edge_reads_at_most": 121344,
+        "allocations": 0
+      }
+    }
+  }
+}
