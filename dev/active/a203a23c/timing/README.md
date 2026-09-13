@@ -76,6 +76,39 @@ records it beside the samples.
 - Warm-up: none. No repetition is discarded as a warm-up; the fixed series
   order gives each series the same preceding sequence of reads on every run.
 
+## Result
+
+`timing.json` carries the samples and the statistics of record. A series' five
+wall times are at `series.<name>.repetitions_s`, its minimum at
+`series.<name>.min_s` and its median at `series.<name>.median_s`, for each of
+`checker_per_file`, `checker_batch`, `restoration_per_file` and
+`restoration_batch`. Every series also records the process it runs, its working
+directory, its workload, the source revision of its form, and the exit code of
+every repetition at `series.<name>.exit_codes`, all of which are 0. The two
+restoration series agree on the work performed: the counts of restored and
+unrestored pinned files their last repetition prints are at
+`series.<name>.final_stdout`.
+
+`published_claim.figures.<name>` sets each figure of commit `76812a4e`'s
+message beside the median this record measures for it, as `published_s`,
+`measured_median_s`, their ratio, and `confirmed_within_tolerance`, which holds
+when the median lies within 10 % of the published figure. Three of the four
+figures are confirmed: `checker_per_file`, `checker_batch` and
+`restoration_per_file`. The batch restoration figure is not.
+
+### Superseded observation
+
+Commit `76812a4e`'s message states that "the repository check falls from 23.1 s
+to 2.6 s and the restoration from 60.2 s to 10.1 s". The 10.1 s of that
+sentence rests on an observation that was never committed, and the whole-process
+median at `series.restoration_batch.median_s` falls well below it; their ratio
+is at `published_claim.figures.restoration_batch.median_over_published`. The
+10.1 s figure is preserved here and at
+`published_claim.figures.restoration_batch.published_s` as that superseded
+uncommitted observation. `timing.json` is the claim of record: the batch form
+of the restoration generator is faster than the commit message reports, and the
+direction and the order of magnitude of the reduction the commit claims hold.
+
 ## Provenance
 
 `timing.json` records the source revision of each form, the workload revision,
