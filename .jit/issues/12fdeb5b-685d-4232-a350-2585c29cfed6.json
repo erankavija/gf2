@@ -404,8 +404,16 @@
       "doc_type": "report",
       "label": "Aborted confirmation campaign plan",
       "path": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "12fdeb5b lead review round 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/12fdeb5b-r2.md"
     }
   ],
+  "done_at": "2026-09-13T08:40:59.662999180Z",
   "first_ready_at": "2026-09-10T16:00:21.023569899Z",
   "gates_required": [
     "cargo-ci",
@@ -416,22 +424,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-13T08:07:53.189392044Z",
+      "updated_at": "2026-09-13T08:35:54.815549990Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-13T08:07:59.790743824Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T08:38:17.793342267Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-13T08:07:09.796822172Z",
+      "updated_at": "2026-09-13T08:38:13.730499589Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-13T08:08:56.894734395Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T08:40:03.487074315Z",
       "updated_by": "auto:executor"
     }
   },
@@ -447,7 +455,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Establish 5G NR rate-matched encoder baselines",
-  "updated_at": "2026-09-13T08:09:36.681669094Z"
+  "updated_at": "2026-09-13T08:40:59.662999180Z"
 }
