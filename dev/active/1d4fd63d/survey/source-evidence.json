@@ -1,0 +1,204 @@
+{
+  "schema": "transpose-lane-source-evidence-v1",
+  "issue": "1d4fd63d",
+  "projects": {
+    "gf2": {
+      "revision": "95bc447e4efae97d2086d3b843f0fce34a05e353",
+      "revision_kind": "git commit (informational navigation metadata; the receipts pin these files by content digest)"
+    }
+  },
+  "claims": {
+    "lane-enumeration": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 62,
+      "text": "pub enum TransposeLane {",
+      "occurrence": 0,
+      "why": "Every implementation of the 64x64 block contract is a variant here, so the family the campaign measures is the family the library publishes."
+    },
+    "lane-entry-point": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 168,
+      "text": "pub fn lane(lane: TransposeLane) -> Option<Transpose64x64Fn> {",
+      "occurrence": 0,
+      "why": "The one way to reach a specific lane. A candidate arm names its lane here rather than through a private entry point of its own."
+    },
+    "lane-feature-gate": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 176,
+      "text": "                if !is_x86_feature_detected!(\"avx2\") {",
+      "occurrence": 0,
+      "why": "An AVX2 lane is published only after the runtime feature test, which is the whole safety contract of each unsafe kernel."
+    },
+    "production-preference": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 125,
+      "text": "pub const PRODUCTION_PREFERENCE: [TransposeLane; 2] =",
+      "occurrence": 0,
+      "why": "The order `detect` resolves the production lane in. Adopting a lane is an edit to this constant and to nothing else."
+    },
+    "detect-resolves-preference": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/transpose.rs",
+      "line": 216,
+      "text": "pub fn detect() -> Option<TransposeFns> {",
+      "occurrence": 0,
+      "why": "The dispatch every production consumer reaches; the campaign's baseline arm calls it."
+    },
+    "ymm6-kernel": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+      "line": 221,
+      "text": "pub(crate) unsafe fn transpose_64x64_avx2_ymm6(input: &[u64; 64], output: &mut [u64; 64]) {",
+      "occurrence": 0,
+      "why": "The candidate that runs all six stages in YMM registers and declares no stack scratch."
+    },
+    "movemask-kernel": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+      "line": 345,
+      "text": "pub(crate) unsafe fn transpose_64x64_avx2_movemask(input: &[u64; 64], output: &mut [u64; 64]) {",
+      "occurrence": 0,
+      "why": "The movemask candidate. Its byte transpose is the tile assembly and its bit-plane extraction the packing that the 32x8 geometry needs to answer the same 64x64 contract, so both are inside every cell that times it."
+    },
+    "pshufb-kernel": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+      "line": 147,
+      "text": "pub(crate) unsafe fn transpose_64x64_avx2_pshufb(input: &[u64; 64], output: &mut [u64; 64]) {",
+      "occurrence": 0,
+      "why": "The PSHUFB candidate the issue names."
+    },
+    "incumbent-declares-scratch": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+      "line": 56,
+      "text": "    let mut buf: [u64; 64] = *input;",
+      "occurrence": 0,
+      "why": "The incumbent lane's declared 512-byte local. Its frame traffic is an intentional scratch, not a compiler spill."
+    },
+    "movemask-declares-planes": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+      "line": 347,
+      "text": "    let mut planes = [[0u8; 64]; 8];",
+      "occurrence": 0,
+      "why": "The movemask lane's declared byte-plane array, the second intentional scratch of the family."
+    },
+    "asm-incumbent-block-copy": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt",
+      "line": 1431,
+      "text": "; block copies (memcpy)                   2",
+      "occurrence": 0,
+      "why": "The incumbent lane copies the block into its declared local and back out; the annotation counts both calls from the disassembly itself."
+    },
+    "asm-ymm6-no-block-copy": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt",
+      "line": 1447,
+      "text": "; block copies (memcpy)                   0",
+      "occurrence": 0,
+      "why": "The candidate copies no block. Its remaining frame traffic belongs to no declared buffer, so it is register pressure rather than scratch."
+    },
+    "matrix-transpose-driver": {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1285,
+      "text": "    pub fn transpose_with_block_kernel(",
+      "occurrence": 0,
+      "why": "The tiling driver of `BitMatrix::transpose` with its block primitive as an argument. The whole-matrix cells drive the production tiling, output allocation, zero padding and tail mask through it."
+    },
+    "matrix-transpose-delegates": {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1241,
+      "text": "        self.transpose_with_block_kernel(Self::resolved_block_kernel())",
+      "occurrence": 0,
+      "why": "`BitMatrix::transpose` is that driver at the resolved kernel, so a cell and the production entry point run the same code."
+    },
+    "bch-bundle-transpose-field": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "line": 218,
+      "text": "    pub transpose_lane_block: crate::transpose::Transpose64x64Fn,",
+      "occurrence": 0,
+      "why": "The bit-sliced BCH bundle reaches the transpose through this field, which is what a conversion cell substitutes a lane into."
+    },
+    "bch-bundle-uses-dispatch": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "line": 447,
+      "text": "    let transpose = crate::transpose::detect()?;",
+      "occurrence": 0,
+      "why": "The accelerated bundle takes the production dispatch's lane rather than a second wrapper around the same kernel."
+    },
+    "absorb-block-transposes": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "line": 266,
+      "text": "        (self.transpose_lane_block)(windows, &mut slices);",
+      "occurrence": 0,
+      "why": "The packing half of the conversion: one block transpose bit-slices a lane group's message window before the recurrence consumes it."
+    },
+    "unpack-parity-transposes": {
+      "project": "gf2",
+      "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "line": 310,
+      "text": "            (self.transpose_lane_block)(&block, &mut lanes);",
+      "occurrence": 0,
+      "why": "The unpacking half: one block transpose per parity word reads the reduced register back as packed per-frame parity."
+    },
+    "bitslice-family-admission": {
+      "project": "gf2",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 754,
+      "text": "            batch_len >= selectors.bitslice_interleaved_min_batch()",
+      "occurrence": 0,
+      "why": "The bit-sliced family is admitted by the active profile's minimum batch. The whole-consumer control calls the family entry point directly, so it measures that family whatever the profile admits."
+    },
+    "bitslice-min-batch-conservative": {
+      "project": "gf2",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 718,
+      "text": "pub const BITSLICE_INTERLEAVED_MIN_BATCH: usize = usize::MAX;",
+      "occurrence": 0,
+      "why": "Under the conservative profile no batch length selects the bit-sliced family, so the consumer the conversion sits inside is reached by installing a profile or by naming the family, not by the default walk."
+    },
+    "arm-selects-lane-by-environment": {
+      "project": "gf2",
+      "path": "dev/active/1d4fd63d/arms/src/main.rs",
+      "line": 68,
+      "text": "        let requested = std::env::var(\"GF2_TRANSPOSE_LANE\")",
+      "occurrence": 0,
+      "why": "One executable serves every arm; the lane is the only difference between a baseline and a candidate child."
+    },
+    "arm-baseline-is-production-dispatch": {
+      "project": "gf2",
+      "path": "dev/active/1d4fd63d/arms/src/main.rs",
+      "line": 70,
+      "text": "        if requested == \"production\" {",
+      "occurrence": 0,
+      "why": "The baseline arm runs whatever `detect` publishes, so it is the pinned pre-change implementation rather than a lane named to imitate it."
+    },
+    "arm-warm-pass": {
+      "project": "gf2",
+      "path": "dev/active/1d4fd63d/arms/src/main.rs",
+      "line": 563,
+      "text": "    for bank in 0..banks {",
+      "occurrence": 0,
+      "why": "The declared warm policy: one untimed pass of the timed body over every bank, before calibration, in both arms."
+    },
+    "arm-control-reports-dispatched-lane": {
+      "project": "gf2",
+      "path": "dev/active/1d4fd63d/arms/src/main.rs",
+      "line": 502,
+      "text": "        Case::BchEncodeBitslice { .. } => format!(",
+      "occurrence": 0,
+      "why": "The whole-consumer control reports the dispatched lane whatever the arm names, which is what makes it an identity control."
+    }
+  }
+}

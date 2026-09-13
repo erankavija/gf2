@@ -1,0 +1,102 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "transpose-lane-vs-external",
+    "issue": "1d4fd63d",
+    "purpose": "kernel-family",
+    "description": "Whether a material gap separates the avx2-ymm6 64x64 bit-block transpose lane from the two external comparators at the kernel geometry 6fb89a3c froze: one 64x64 block per call into a preallocated output, with no tail and no geometry adapter, because one block of 64 eight-byte elements is the canonical gf2 layout for both comparators. The baseline arm of each cell is the avx2-ymm6 lane and the candidate is the external arm, so the speedup of medians is median(gf2) / median(external) and a value above one means the external arm is ahead; improved means a material gap in the external arm's favour that needs attribution and regressed means gf2 is materially ahead. The gf2 arm selects its lane from GF2_TRANSPOSE_LANE through the public transpose::lane. The external arms are 6fb89a3c's pinned executables, rebuilt by its committed fetch-build.sh and checked byte for byte against its committed build-evidence.json before any timed run: M4RI 20260122 mzd_transpose into a preallocated output, and Bitshuffle 0.5.2 bshuf_bitshuffle over 64 eight-byte elements. Every arm reads the same fixture, 64 words of SplitMix64 seeded at the cell's seed, and this issue's verify-bit-mapping.py checks every one of them against naive bit arithmetic at five seeds before any timing. Adapter costs are zero at this geometry and are not hidden: the geometries that do pay an adapter, 63 and 65 rows, are 6fb89a3c's own consumer cells and that survey carries them. Two confirmatory cells decide the question on fresh samples; this family adopts no implementation and selects nothing."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T13:02:10Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "Comparator-gap cells only. This family adopts no implementation and selects nothing, so no worthwhile-speedup threshold applies and none is declared; the lane gf2 publishes is decided by the transpose-lane-selection family.",
+    "measurement_resolution": 0.11,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/receipt.json",
+      "sha256": "40237fc93051d234137acc19c8e8eb887ac2af3d4002f463010005313165f3c0"
+    },
+    "equivalence_margin": 1.12,
+    "equivalence_rationale": "The family's measured resolution does not admit the ten percent margin the pilot declared, so this is the smallest two-decimal margin that lies strictly outside it. The resolution is set by one cell alone, the production lane against Bitshuffle, whose gf2 per-execution values are a tight mode with occasional excursions well above it, so the median of a 24-pair sample moves and that cell's relative bootstrap half-width is several times every other cell's; the derivation record beside this addendum lists all eight. The decisions this margin governs are unaffected in direction: every cell's interval lies far from both margins.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A twenty percent gap in a nanosecond-scale block transpose is the smallest difference worth attributing to a named cause (the tile kernel, the instruction mix, the output handling) rather than to host noise. It is the threshold 6fb89a3c froze for the same comparison, kept so the two surveys' comparator-gap decisions are read under one rule."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This family surveys external comparators and changes no production line; its whole diff is under dev/."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/1d4fd63d/transpose-lane-vs-external-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "lane-avx2-ymm6-block-64-vs-m4ri",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-block-64-vs-bitshuffle",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "transpose-64-word-kernel",
+        "size": {
+          "n": 64
+        },
+        "seed": 20260913304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

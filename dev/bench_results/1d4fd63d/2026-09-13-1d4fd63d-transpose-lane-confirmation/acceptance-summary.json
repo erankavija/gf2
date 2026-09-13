@@ -1,0 +1,211 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "34f0ab4be8a3f9ffcbb453a0833cb1aa258bac384fc0df394086894dc82bf414",
+  "campaign_id": "confirmation-1d4fd63d-20260913t122951z",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "transpose-lane-selection",
+    "comparisons": 6,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.9958333333333333,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "lane-avx2-ymm6-block-256-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.2456491292839362,
+        "lower": 1.2330231928124071,
+        "upper": 1.2553205470746194,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 9079016753759899061,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.08
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bulk-4096-6core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "physical-cores-6",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.2239208529969876,
+        "lower": 1.206606704391038,
+        "upper": 1.242909803101392,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 5872968074447798716,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.08
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bitslice-absorb-m14-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-material",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.0225823433794847,
+        "lower": 1.0191603784769414,
+        "upper": 1.0238677708321986,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 10955269814787792606,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.08
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bitslice-unpack-m14-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.1970499346562127,
+        "lower": 1.1827060837976044,
+        "upper": 1.268748456933684,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 15826152255165136201,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.08
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-matrix-transpose-4096-1core",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "not-material",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.0904962717948552,
+        "lower": 1.0856947958181418,
+        "upper": 1.0958753760108118,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 3676265922290399632,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.08
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-matrix-transpose-65-1core",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.1139958224988882,
+        "lower": 1.0946578309479427,
+        "upper": 1.1524376545105832,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 16649998153711078547,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.08
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}
