@@ -40,6 +40,7 @@ FAMILIES = {
         "ledger": "dev/bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl",
         "sweep": families.popcount_sweep,
         "sweep2": families.popcount_sweep2,
+        "pilot": families.popcount_pilot,
     },
     "fused": {
         "id": families.FUSED_FAMILY,
@@ -47,6 +48,7 @@ FAMILIES = {
         "ledger": "dev/bench_results/5cbb6545/fused-count-consumers-family-ledger.jsonl",
         "sweep": families.fused_sweep,
         "sweep2": families.fused_sweep2,
+        "pilot": families.fused_pilot,
     },
     "smoke": {
         "id": "count-optimization-smoke",
@@ -100,6 +102,37 @@ SWEEP2_DESCRIPTION = {
         "first sweep bracketed between 128 and 512 words. Every cell is "
         "exploratory: the stage places the boundary a later pilot and "
         "confirmation decide, and its samples enter no confirmation."
+    ),
+}
+
+
+PILOT_DESCRIPTION = {
+    "popcount": (
+        "Every population-count route this issue adopts, measured at the "
+        "widths its dispatcher distinguishes: the route ops::popcount took "
+        "before the change against the route it takes after, at four words "
+        "where the scalar POPCNT kernel replaces the bit-twiddle count, at "
+        "eight and 128 words where the established nibble lookup is retained "
+        "and must not pay for the new boundary, and at 1024 and 16384 words "
+        "where the Harley-Seal carry-save loop replaces it. One further cell "
+        "measures what is left of the gap to libpopcnt, the pinned external "
+        "implementation that led this workload before the change. Every cell "
+        "is exploratory: this stage fixes the measurement resolution the "
+        "confirmation freezes against, and its samples enter no confirmation."
+    ),
+    "fused": (
+        "The fused AND-population-count route a consumer reaches, measured "
+        "either side of the adopted boundary and inside two whole "
+        "matrix-vector products: 128 words where the established fused nibble "
+        "lookup is retained, 512 and 4096 words where the fused carry-save "
+        "loop replaces it, the same 4096-word reduction against the two-pass "
+        "route a gf2-core consumer has without a fused kernel (a temporary "
+        "copy, an in-place AND and a separate count inside every call), and "
+        "1024-row products at 16384 and 4096 columns, whose strides fall "
+        "either side of the boundary, each timed with its output allocation. "
+        "Every cell is exploratory: this stage fixes the measurement "
+        "resolution the confirmation freezes against, and its samples enter "
+        "no confirmation."
     ),
 }
 
@@ -225,7 +258,7 @@ def main():
     directory = sys.argv[3] if len(sys.argv) == 4 else os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))
     )
-    if stage not in ("sweep", "sweep2", "smoke"):
+    if stage not in ("sweep", "sweep2", "pilot", "smoke"):
         raise SystemExit(f"stage {stage!r} has no generated table yet")
     for key, family in FAMILIES.items():
         if stage not in family:
@@ -234,6 +267,7 @@ def main():
         description = {
             "sweep": SWEEP_DESCRIPTION.get(key),
             "sweep2": SWEEP2_DESCRIPTION.get(key),
+            "pilot": PILOT_DESCRIPTION.get(key),
             "smoke": SMOKE_DESCRIPTION,
         }[stage]
         document = addendum(key, stage, frozen_utc, cells, description)

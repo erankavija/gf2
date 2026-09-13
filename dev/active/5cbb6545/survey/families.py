@@ -313,3 +313,151 @@ def fused_sweep2():
         )
         for words in (160, 192, 224, 256, 320, 384)
     ]
+
+
+#: The adopted carry-save boundary: the first swept width at which the
+#: carry-save population count clears this family's worthwhile margin over the
+#: per-vector nibble lookup, and at which the fused carry-save kernel is
+#: already materially faster.
+CSA_MIN_WORDS = 256
+
+
+def popcount_pilot():
+    """The cells the population-count confirmation decides.
+
+    Two widths keep the established route and must not pay for the new
+    boundary, two take the carry-save loop, one takes the scalar POPCNT
+    kernel, and one measures what is left of the gap to the pinned external
+    implementation that led this family before the change.
+    """
+    seed = 5300
+    cells = [
+        cell(
+            "popcount-w4-dispatch",
+            "legacy-dispatch",
+            "resolved-dispatch",
+            popcount_case(4, seed + 4),
+            "improvement",
+            "exploratory",
+            "popcount-4-words-random-aligned",
+        ),
+        cell(
+            "popcount-w8-dispatch",
+            "legacy-dispatch",
+            "resolved-dispatch",
+            popcount_case(8, seed + 8),
+            "non-regression",
+            "exploratory",
+            "popcount-8-words-random-aligned",
+        ),
+        cell(
+            "popcount-w128-dispatch",
+            "legacy-dispatch",
+            "resolved-dispatch",
+            popcount_case(128, seed + 128),
+            "non-regression",
+            "exploratory",
+            "popcount-128-words-random-aligned",
+        ),
+        cell(
+            "popcount-w1024-dispatch",
+            "legacy-dispatch",
+            "resolved-dispatch",
+            popcount_case(1024, seed + 1024),
+            "improvement",
+            "exploratory",
+            "popcount-1024-words-random-aligned",
+        ),
+        cell(
+            "popcount-w16384-dispatch",
+            "legacy-dispatch",
+            "resolved-dispatch",
+            popcount_case(16384, seed + 16384),
+            "improvement",
+            "exploratory",
+            "popcount-16384-words-random-aligned",
+        ),
+        cell(
+            "popcount-w16384-vs-libpopcnt",
+            "resolved-dispatch",
+            "libpopcnt",
+            popcount_case(16384, seed + 16384),
+            "comparator-gap",
+            "exploratory",
+            "popcount-16384-words-random-aligned",
+        ),
+    ]
+    return cells
+
+
+def fused_pilot():
+    """The cells the fused-consumer confirmation decides.
+
+    One width keeps the established fused lookup, two take the fused
+    carry-save loop, one measures the fused route against the two-pass route a
+    gf2-core consumer has without it, and two measure whole matrix-vector
+    products whose strides fall either side of the boundary.
+    """
+    seed = 6300
+    return [
+        cell(
+            "and-w128-fused",
+            "and-legacy-fused",
+            "and-resolved-fused",
+            and_case(128, seed + 128),
+            "non-regression",
+            "exploratory",
+            "and-popcnt-128-words-random-aligned",
+        ),
+        cell(
+            "and-w512-fused",
+            "and-legacy-fused",
+            "and-resolved-fused",
+            and_case(512, seed + 512),
+            "improvement",
+            "exploratory",
+            "and-popcnt-512-words-random-aligned",
+        ),
+        cell(
+            "and-w4096-fused",
+            "and-legacy-fused",
+            "and-resolved-fused",
+            and_case(4096, seed + 4096),
+            "improvement",
+            "exploratory",
+            "and-popcnt-4096-words-random-aligned",
+        ),
+        cell(
+            "and-w4096-vs-two-pass",
+            "and-two-pass",
+            "and-resolved-fused",
+            and_case(4096, seed + 4096, whole_consumer=True),
+            "improvement",
+            "exploratory",
+            "and-popcnt-4096-words-random-aligned-whole-consumer",
+            metric_kind="whole-consumer",
+            conversion_costs_included=True,
+        ),
+        cell(
+            "matvec-1024x16384",
+            "matvec-legacy",
+            "matvec-resolved",
+            matvec_case(1024, 16384, seed + 1),
+            "improvement",
+            "exploratory",
+            "matvec-1024-rows-16384-cols-random",
+            metric_kind="whole-consumer",
+            conversion_costs_included=True,
+        ),
+        cell(
+            "matvec-1024x4096",
+            "matvec-legacy",
+            "matvec-resolved",
+            matvec_case(1024, 4096, seed + 2),
+            "non-regression",
+            "exploratory",
+            "matvec-1024-rows-4096-cols-random",
+            metric_kind="whole-consumer",
+            conversion_costs_included=True,
+        ),
+    ]
