@@ -11999,3 +11999,10 @@
 {"fields":["documents"],"id":"c56ccb53-1b98-448d-b848-cf829b810574","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-13T08:40:47.548811009Z","type":"issue_updated","updated_by":"doc-add"}
 {"from":"in_progress","id":"74736ed7-ff56-4100-906b-abe0a5fec203","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-13T08:40:59.662999180Z","to":"done","type":"issue_state_changed"}
 {"id":"02a58215-d2c4-4a01-b940-a60c9f44f75e","issue_id":"12fdeb5b-685d-4232-a350-2585c29cfed6","timestamp":"2026-09-13T08:40:59.662999180Z","type":"issue_completed"}
+{"gate_key":"cargo-ci","id":"7652cee4-a407-49e5-9411-4627bec8d08a","issue_id":"a203a23c-d000-41de-8fe5-2a3df0a36053","timestamp":"2026-09-13T08:58:38.656781076Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"a0f97d43-4c5e-4daa-a939-e3ad8bd60511","issue_id":"a203a23c-d000-41de-8fe5-2a3df0a36053","timestamp":"2026-09-13T09:00:31.774183819Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"5a3ade7a-e5cb-485c-84a1-a5ff0cfa9142","issue_id":"a203a23c-d000-41de-8fe5-2a3df0a36053","timestamp":"2026-09-13T09:02:19.274597323Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"74634635-bd64-43a1-b728-84266ae37084","issue_id":"a203a23c-d000-41de-8fe5-2a3df0a36053","timestamp":"2026-09-13T09:02:26.889016207Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"cb64472d-5d73-4f6d-92e9-bd08ea9eed8a","issue_id":"a203a23c-d000-41de-8fe5-2a3df0a36053","timestamp":"2026-09-13T09:02:59.803017633Z","type":"issue_updated","updated_by":"doc-add"}
+{"from":"in_progress","id":"dd787057-ae55-4a50-8519-30f723e1c1f8","issue_id":"a203a23c-d000-41de-8fe5-2a3df0a36053","timestamp":"2026-09-13T09:03:11.736966181Z","to":"done","type":"issue_state_changed"}
+{"id":"795f61bc-70b3-40b6-959e-b1f2b770e55c","issue_id":"a203a23c-d000-41de-8fe5-2a3df0a36053","timestamp":"2026-09-13T09:03:11.736966181Z","type":"issue_completed"}

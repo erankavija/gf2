@@ -421,8 +421,16 @@
       "doc_type": "report",
       "label": "cat-file batch timing record, superseded tmpfs run",
       "path": "dev/active/a203a23c/timing/timing-tmpfs-superseded.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "a203a23c lead review round 3",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/a203a23c-r3.md"
     }
   ],
+  "done_at": "2026-09-13T09:03:11.736966181Z",
   "first_ready_at": "2026-09-11T17:50:04.437172198Z",
   "gates_required": [
     "cargo-ci",
@@ -433,22 +441,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-13T08:23:35.394070319Z",
+      "updated_at": "2026-09-13T08:58:38.656781076Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-13T08:27:13.580781679Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T09:02:19.274597323Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-13T08:25:48.320943424Z",
+      "updated_at": "2026-09-13T09:00:31.774183819Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-09-13T08:27:09.686396047Z",
+      "updated_at": "2026-09-13T09:02:26.889016207Z",
       "updated_by": "auto:executor"
     }
   },
@@ -459,7 +467,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
-  "updated_at": "2026-09-13T08:27:13.580781679Z"
+  "updated_at": "2026-09-13T09:03:11.736966181Z"
 }
