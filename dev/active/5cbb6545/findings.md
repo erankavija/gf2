@@ -99,7 +99,8 @@ Harley-Seal carry-save accumulation [Mula2018] and pinned libpopcnt
 |---|---|---|
 | below the bit-backend SIMD threshold | the scalar backend's portable count (`ops-scalar-retained`, `scalar-count-ones`) | REQ-10: a no-win region retains its established implementation. Tables § Cells: `popcount-confirmation`, row `popcount-w4-dispatch`, decision `regressed`, outcome **fail** |
 | at and above that threshold | the established AVX2 nibble lookup (`ops-nibble-resolver`, `ops-route-report`, `legacy-bundle-popcount`) | P-20 and the measurement contract: `popcount-confirmation` records `qualifies: false`, so passing cells do not authorize a partial family adoption |
-| every width, fused consumers | the established fused nibble kernel (`ops-fused-nibble-resolver`, `matvec-established-fused`) | P-20 and the measurement contract: `fused-confirmation` records `qualifies: false`; the existing matrix path already counts the row intersection without a temporary buffer |
+| below the bit-backend SIMD threshold, fused consumers | the scalar fused fallback (`backend-simd-threshold`) | REQ-10: the automatic route retains its established implementation |
+| at and above that threshold, fused consumers | the established fused nibble kernel (`ops-fused-nibble-resolver`, `matvec-established-fused`) | P-20 and the measurement contract: `fused-confirmation` records `qualifies: false`; the SIMD matrix path already counts the row intersection without a temporary buffer |
 | direct comparator calls only | scalar `POPCNT` and the unfused and fused carry-save kernels (`bundle-scalar-popcnt-comparator`, `bundle-csa-comparator`, `bundle-fused-csa-comparator`) | Negative results remain reproducible without placing a nonqualifying candidate in an automatic production route |
 
 The candidate kernels stay in the bundle as measured direct comparators that no
@@ -237,11 +238,12 @@ its *external build* line. The external sources live under the primary checkout'
 
 `BitVec::count_ones` uses the established backend dispatch for the buffer it
 holds (`bitvec-count-ones`). `ops::resolve_popcount` and
-`ops::resolve_and_popcount` expose the same established selection for callers
-that hoist a function pointer out of a loop (`ops-nibble-resolver`,
-`ops-fused-nibble-resolver`). `BitMatrix::matvec` loads the bundle once and calls
-its established fused nibble kernel for each row (`matvec-entry`,
-`matvec-established-fused`).
+`ops::resolve_and_popcount` expose the same scalar-below-threshold and
+nibble-at-or-above-threshold selection for callers that hoist a function
+pointer out of a loop (`backend-simd-threshold`, `ops-nibble-resolver`,
+`ops-fused-nibble-resolver`). `BitMatrix::matvec` uses scalar row parity below
+that boundary; its SIMD path loads the bundle once and calls the established
+fused nibble kernel for each row (`matvec-entry`, `matvec-established-fused`).
 
 The only automatic boundary is the bit-backend SIMD threshold
 (`backend-simd-threshold`). There is no carry-save tuning field or 256-word
