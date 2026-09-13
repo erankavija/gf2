@@ -36,9 +36,9 @@ CLAIMS = [
     ("bitvec-count-ones", BITVEC, 602, "crate::kernels::ops::popcount(&self.data)",
      "BitVec::count_ones is the unfused public entry point: it resolves one route per call",
      "entry-point"),
-    ("matvec-entry", MATRIX, 1498, "pub fn matvec(&self, x: &crate::BitVec)",
+    ("matvec-entry", MATRIX, 1538, "pub fn matvec(&self, x: &crate::BitVec)",
      "BitMatrix::matvec is the fused public entry point", "entry-point"),
-    ("matvec-resolve-once", MATRIX, 1564, "let and_popcount = crate::kernels::ops::resolve_and_popcount(self.stride_words)",
+    ("matvec-resolve-once", MATRIX, 1604, "let and_popcount = crate::kernels::ops::resolve_and_popcount(self.stride_words)",
      "the product resolves the fused route once for the stride it repeats, so a row pays no "
      "resolution", "entry-point"),
     ("ops-scalar-retained", OPS, 341, "SelectedBackend::Scalar => scalar_popcount",
@@ -64,7 +64,7 @@ CLAIMS = [
     ("tuning-csa-selector", TUNING, 561, "popcount_csa_min_words: usize",
      "the canonical tuning mechanism carries the boundary as a bit-backend selector, which is "
      "how the sweeps moved it", "tuning"),
-    ("core-simd-optional", CORE_MANIFEST, 54, "simd = []",
+    ("core-simd-optional", CORE_MANIFEST, 56, "simd = []",
      "the kernel routes are reachable only through a non-default feature of gf2-core",
      "feature"),
     ("scalar-count-ones", SCALAR, 105, "buf.iter().map(|w| w.count_ones() as u64).sum()",

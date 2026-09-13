@@ -1,6 +1,6 @@
 {
   "schema": "count-optimization-source-evidence-v1",
-  "commit": "b8a80d09afac359aa3b58d038bbfbc51ba2b0650",
+  "commit": "28559fd225622c31a85f6182231ffd96e579d18e",
   "note": "The commit is navigation metadata; the producing manifests of the campaigns pin the source bytes the receipts measured. Lines under crates/gf2-kernels-simd/src/x86/asm/ are the committed artefacts dev/scripts/regen-asm.sh writes from the compiler, and each artefact's header names the revision and toolchain it was recorded from.",
   "claims": [
     {
@@ -14,7 +14,7 @@
     {
       "id": "matvec-entry",
       "path": "crates/gf2-core/src/matrix.rs",
-      "line": 1498,
+      "line": 1538,
       "text": "pub fn matvec(&self, x: &crate::BitVec) -> crate::BitVec {",
       "topic": "entry-point",
       "why": "BitMatrix::matvec is the fused public entry point"
@@ -22,7 +22,7 @@
     {
       "id": "matvec-resolve-once",
       "path": "crates/gf2-core/src/matrix.rs",
-      "line": 1564,
+      "line": 1604,
       "text": "let and_popcount = crate::kernels::ops::resolve_and_popcount(self.stride_words);",
       "topic": "entry-point",
       "why": "the product resolves the fused route once for the stride it repeats, so a row pays no resolution"
@@ -94,7 +94,7 @@
     {
       "id": "core-simd-optional",
       "path": "crates/gf2-core/Cargo.toml",
-      "line": 54,
+      "line": 56,
       "text": "simd = []",
       "topic": "feature",
       "why": "the kernel routes are reachable only through a non-default feature of gf2-core"

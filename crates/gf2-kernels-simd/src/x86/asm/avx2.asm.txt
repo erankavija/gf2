@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : e3f330a8
-; regenerated   : 2026-09-13T12:08:05Z
+; commit        : 28559fd2
+; regenerated   : 2026-09-13T17:28:44Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,7 +18,7 @@
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_xor_into
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.05s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_xor_into:
 	cmp rcx, rsi
@@ -393,7 +393,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 	mov r8d, 4
 	sub r8, rax
 	neg rax
-	lea rcx, [rip + .Lanon.d1fd480baa2181a7adbf17861aaefae9.146]
+	lea rcx, [rip + .Lanon.06cf13f5dae707bc39314dd521e2afad.146]
 	mov rdi, rax
 	mov rdx, rsi
 	mov rsi, r8
@@ -491,7 +491,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 	mov r8d, 4
 	sub r8, rax
 	neg rax
-	lea rcx, [rip + .Lanon.d1fd480baa2181a7adbf17861aaefae9.147]
+	lea rcx, [rip + .Lanon.06cf13f5dae707bc39314dd521e2afad.147]
 	mov rdi, rax
 	mov rdx, rsi
 	mov rsi, r8
@@ -502,7 +502,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_shift_left_words
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 	push r15
@@ -597,14 +597,14 @@ gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 	pop r15
 	jmp qword ptr [rip + memset@GOTPCREL]
 .LBB79_16:
-	lea rdx, [rip + .Lanon.d1fd480baa2181a7adbf17861aaefae9.149]
+	lea rdx, [rip + .Lanon.06cf13f5dae707bc39314dd521e2afad.149]
 	mov rdi, rax
 	mov rsi, rbx
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
 .LBB79_15:
 	not rdx
 	add rdx, r10
-	lea rax, [rip + .Lanon.d1fd480baa2181a7adbf17861aaefae9.148]
+	lea rax, [rip + .Lanon.06cf13f5dae707bc39314dd521e2afad.148]
 	mov rdi, rdx
 	mov rsi, rbx
 	mov rdx, rax
@@ -701,7 +701,7 @@ gf2_kernels_simd::x86::avx2::avx2_shift_right_words:
 	vzeroupper
 	ret
 .LBB81_20:
-	lea rdx, [rip + .Lanon.d1fd480baa2181a7adbf17861aaefae9.150]
+	lea rdx, [rip + .Lanon.06cf13f5dae707bc39314dd521e2afad.150]
 	mov rdi, rax
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
@@ -748,7 +748,7 @@ gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build4:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8:
 	vxorps xmm0, xmm0, xmm0
@@ -790,7 +790,7 @@ gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4:
 	push r15
