@@ -14,7 +14,7 @@
 //! };
 //!
 //! let mut selectors = CoreSelectors::CONSERVATIVE.clone();
-//! selectors.bit_backend = BitBackendSelectors::try_new(16).unwrap();
+//! selectors.bit_backend = BitBackendSelectors::try_new(16, 64).unwrap();
 //! let id = ProfileId::parse("example").unwrap();
 //! let prepared = PreparedEnvelope::compiled(
 //!     id.clone(),
@@ -274,6 +274,8 @@ impl ProfileFamily {
 pub enum ProfileField {
     /// The SIMD word-count threshold.
     SimdMinWords,
+    /// The carry-save population-count word-count threshold.
+    PopcountCsaMinWords,
     /// The Karatsuba degree threshold.
     KaratsubaMinDegree,
     /// The Karatsuba output-length ceiling.
@@ -362,6 +364,7 @@ impl ProfileField {
     const fn as_str(self) -> &'static str {
         match self {
             Self::SimdMinWords => "simd_min_words",
+            Self::PopcountCsaMinWords => "popcount_csa_min_words",
             Self::KaratsubaMinDegree => "karatsuba_min_degree",
             Self::KaratsubaMaxOutLen => "karatsuba_max_out_len",
             Self::DivRemFastMinLen => "div_rem_fast_min_len",
@@ -555,16 +558,23 @@ impl std::error::Error for ProfileError {}
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BitBackendSelectors {
     simd_min_words: usize,
+    popcount_csa_min_words: usize,
 }
 
 impl BitBackendSelectors {
     /// Builds a validated bit-backend selector family.
     ///
     /// Every `usize` word count is admissible, including zero, because zero
-    /// means that SIMD is eligible for every buffer when the feature is
-    /// available.
-    pub fn try_new(simd_min_words: usize) -> Result<Self, ProfileError> {
-        Ok(Self { simd_min_words })
+    /// means that the gated route is eligible for every buffer when the
+    /// feature is available.
+    pub fn try_new(
+        simd_min_words: usize,
+        popcount_csa_min_words: usize,
+    ) -> Result<Self, ProfileError> {
+        Ok(Self {
+            simd_min_words,
+            popcount_csa_min_words,
+        })
     }
 
     /// Returns the profile's minimum word count for the SIMD backend.
@@ -575,6 +585,20 @@ impl BitBackendSelectors {
     /// `dev/active/220cab0b/design.md`.
     pub fn simd_min_words(&self) -> usize {
         self.simd_min_words
+    }
+
+    /// Returns the profile's minimum word count for the carry-save
+    /// population-count route.
+    ///
+    /// At or above this many words `kernels::ops::resolve_popcount` and
+    /// `resolve_and_popcount` take the Harley-Seal kernels of
+    /// `gf2-kernels-simd`; below it they take the per-vector nibble lookup.
+    /// [`CoreTuningCodec`] encodes this field in the core section, and
+    /// [`active`] exposes its installed or conservative value. Like
+    /// [`Self::simd_min_words`], the routing boundary itself reads a
+    /// compile-time constant, per DEC-G in `dev/active/220cab0b/design.md`.
+    pub fn popcount_csa_min_words(&self) -> usize {
+        self.popcount_csa_min_words
     }
 }
 
@@ -1250,6 +1274,7 @@ impl CoreSelectors {
     pub const CONSERVATIVE: Self = Self {
         bit_backend: BitBackendSelectors {
             simd_min_words: crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT,
+            popcount_csa_min_words: crate::kernels::backend::POPCOUNT_CSA_MIN_WORDS_DEFAULT,
         },
         bit_matrix: BitMatrixSelectors {
             matvec_simd_min_words: crate::matrix::MATVEC_SIMD_MIN_WORDS,
@@ -1462,7 +1487,7 @@ struct CorePresence {
 impl CorePresence {
     const COMPLETE: Self = Self {
         families: (1 << 12) - 1,
-        fields: (1 << 37) - 1,
+        fields: (1 << 38) - 1,
     };
 
     const fn family(self, bit: u16) -> bool {
@@ -1606,6 +1631,12 @@ impl SectionCodec<CoreTuning> for CoreTuningCodec {
                     .selectors
                     .bit_backend
                     .simd_min_words,
+            ),
+            section_optional(bit_backend.popcount_csa_min_words)?.unwrap_or(
+                CoreTuning::CONSERVATIVE
+                    .selectors
+                    .bit_backend
+                    .popcount_csa_min_words,
             ),
         )
         .map_err(core_section_error)?;
@@ -1877,7 +1908,11 @@ fn core_presence(selectors: &JsonSelectors) -> CorePresence {
             }
         };
     }
-    family!(bit_backend, 1 << 0, [simd_min_words => 1 << 0]);
+    family!(
+        bit_backend,
+        1 << 0,
+        [simd_min_words => 1 << 0, popcount_csa_min_words => 1 << 37]
+    );
     family!(
         bit_matrix,
         1 << 1,
@@ -1989,7 +2024,10 @@ fn encode_core_body(
     family!(
         "bit_backend",
         1 << 0,
-        ["simd_min_words" => 1 << 0 => selectors.bit_backend.simd_min_words]
+        [
+            "simd_min_words" => 1 << 0 => selectors.bit_backend.simd_min_words,
+            "popcount_csa_min_words" => 1 << 37 => selectors.bit_backend.popcount_csa_min_words,
+        ]
     );
     family!(
         "bit_matrix",
@@ -2237,6 +2275,7 @@ struct JsonSelectors {
 #[serde(default, deny_unknown_fields)]
 struct JsonBitBackend {
     simd_min_words: Present<usize>,
+    popcount_csa_min_words: Present<usize>,
 }
 
 #[cfg(feature = "tuning-profile")]

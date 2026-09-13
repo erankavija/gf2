@@ -154,10 +154,10 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
         "soa_batch.parallel_min_len".to_owned(),
         "triangular.trsm_blocked_min_dim".to_owned(),
     ]);
-    assert_eq!(inventory.len(), 37);
+    assert_eq!(inventory.len(), 38);
     assert_eq!(stated, expected);
     assert!(stated.is_subset(&inventory));
-    assert_eq!(inventory.difference(&stated).count(), 21);
+    assert_eq!(inventory.difference(&stated).count(), 22);
 
     let assembly = prepared.verified_assembly().unwrap().provenance.clone();
     assert_eq!(
