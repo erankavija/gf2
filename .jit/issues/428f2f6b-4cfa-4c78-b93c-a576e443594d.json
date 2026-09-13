@@ -5,7 +5,55 @@
   "created_at": "2026-09-10T23:15:37.767223274Z",
   "dependencies": [],
   "description": "The findings reports of three closed benchmark surveys restate figures that live in generated tables, receipts and acceptance summaries; those hand-maintained copies go stale when the evidence or its projection changes.\n\n## Background\n\nThe project invariant single-source-prose requires every fact with a single source of truth to reach prose by projection or citation; a hand-maintained copy is a staleness defect. The reports `dev/active/c077a88b/findings.md` (compatible LDPC decoder arms), `dev/active/1d0da41f/findings.md` (YMM carry-less multiplication repair) and `dev/active/eda07788/findings.md` (shift and coding-permutation baselines) copy speedups, intervals, per-call times, ratios and resolution figures from their generated tables and receipts into prose and hand-typed tables.\n\n## Success Criteria\n\n- [hard] REQ-01: The three reports restate no number held by a generated table, receipt, acceptance summary, ledger or other committed artifact; each quantitative statement is a conclusion with a pointer to its authoritative location.\n- [hard] REQ-02: Every results table the reports rely on is written by a committed generator from committed evidence, and regenerating it from a clean checkout reproduces the committed file byte for byte.\n- [hard] REQ-03: No receipt, ledger, addendum or other measurement evidence changes, and every conclusion the reports stated before the change remains stated or is corrected with the correction recorded.\n\n## Notes\n\nDocumentation and generator work only; no production code or measurement changes.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "c077a88b quantitative-statement inventory",
+      "path": "dev/active/428f2f6b/inventory-c077a88b.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "1d0da41f quantitative-statement inventory",
+      "path": "dev/active/428f2f6b/inventory-1d0da41f.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "eda07788 quantitative-statement inventory",
+      "path": "dev/active/428f2f6b/inventory-eda07788.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Citation-pass corrections record",
+      "path": "dev/active/428f2f6b/corrections.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "YMM dispatch table generator",
+      "path": "dev/active/1d0da41f/survey/summarize.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "YMM carry-less dispatch evidence tables",
+      "path": "dev/bench_results/1d0da41f/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "428f2f6b lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/428f2f6b-r1.md"
+    }
+  ],
+  "done_at": "2026-09-13T06:48:25.651535012Z",
   "first_ready_at": "2026-09-10T23:15:37.767223274Z",
   "gates_required": [
     "code-review",
@@ -14,18 +62,18 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-13T06:40:22.080941009Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T06:47:21.683228996Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-13T06:39:46.916025112Z",
+      "updated_at": "2026-09-13T06:46:32.590362176Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-09-13T06:42:37.108583891Z",
+      "updated_at": "2026-09-13T06:47:20.393856226Z",
       "updated_by": "auto:executor"
     }
   },
@@ -36,7 +84,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Replace hand-copied numbers in closed survey reports with citations",
-  "updated_at": "2026-09-13T06:42:37.108583891Z"
+  "updated_at": "2026-09-13T06:48:25.651535012Z"
 }
