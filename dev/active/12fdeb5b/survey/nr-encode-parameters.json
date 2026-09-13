@@ -863,6 +863,78 @@
         "n_short": 2600,
         "supports_avx2": true
       }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 1,
+        "index_list": 1,
+        "k_ldpc": 2112,
+        "lifting_factor": 96,
+        "n_ldpc": 6528
+      },
+      "configuration": "bg1-n2560-k2048-rv3",
+      "gf2": {
+        "base_graph": 1,
+        "effective_rate": 0.8,
+        "full_k": 2112,
+        "full_n": 6528,
+        "kb": 22,
+        "kb_for_z_selection": 22,
+        "lifting_factor": 96,
+        "nb": 68,
+        "num_punctured_parity": 3712,
+        "num_punctured_systematic": 192,
+        "num_shortened": 64,
+        "target_k": 2048,
+        "target_n": 2560
+      },
+      "redundancy_version": 3,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 1,
+        "k_ldpc": 2112,
+        "lifting_factor": 96,
+        "n_full": 6528,
+        "n_short": 6336,
+        "supports_avx2": true
+      }
+    },
+    {
+      "aff3ct": {
+        "accepted": true,
+        "base_graph": 2,
+        "index_list": 6,
+        "k_ldpc": 520,
+        "lifting_factor": 52,
+        "n_ldpc": 2704
+      },
+      "configuration": "bg2-n1024-k400-rv3",
+      "gf2": {
+        "base_graph": 2,
+        "effective_rate": 0.390625,
+        "full_k": 520,
+        "full_n": 2704,
+        "kb": 10,
+        "kb_for_z_selection": 8,
+        "lifting_factor": 52,
+        "nb": 52,
+        "num_punctured_parity": 1456,
+        "num_punctured_systematic": 104,
+        "num_shortened": 120,
+        "target_k": 400,
+        "target_n": 1024
+      },
+      "redundancy_version": 3,
+      "srsran": {
+        "accepted": true,
+        "base_graph": 2,
+        "k_ldpc": 520,
+        "lifting_factor": 52,
+        "n_full": 2704,
+        "n_short": 2600,
+        "supports_avx2": true
+      }
     }
   ],
   "schema": "nr-encode-parameters-v1"

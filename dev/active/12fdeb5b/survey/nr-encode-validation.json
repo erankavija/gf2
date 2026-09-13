@@ -1033,6 +1033,86 @@
       "redundancy_version": 2,
       "target_k": 400,
       "target_n": 1024
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 2560,
+          "derivation": {
+            "base_graph": 1,
+            "k_ldpc": 2112,
+            "lifting_factor": 96,
+            "n_mother": 6528
+          },
+          "detail": "srsRAN selects from the redundancy-version 3 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z",
+          "differing_parameter": "redundancy_version",
+          "messages_compared": 10,
+          "messages_identical": 1,
+          "min_identical_positions": 1240,
+          "selected_backend": "avx2",
+          "status": "non-equivalent"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 2560,
+          "detail": "AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 3",
+          "differing_parameter": "redundancy_version",
+          "messages_compared": 0,
+          "messages_identical": 0,
+          "min_identical_positions": 0,
+          "status": "unavailable"
+        }
+      ],
+      "base_graph": 1,
+      "configuration": "bg1-n2560-k2048-rv3",
+      "filler_bits": 64,
+      "lifting_factor": 96,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 192,
+      "redundancy_version": 3,
+      "target_k": 2048,
+      "target_n": 2560
+    },
+    {
+      "arms": [
+        {
+          "arm": "srsran",
+          "codeword_bits": 1024,
+          "derivation": {
+            "base_graph": 2,
+            "k_ldpc": 520,
+            "lifting_factor": 52,
+            "n_mother": 2704
+          },
+          "detail": "srsRAN selects from the redundancy-version 3 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z",
+          "differing_parameter": "redundancy_version",
+          "messages_compared": 10,
+          "messages_identical": 1,
+          "min_identical_positions": 495,
+          "selected_backend": "avx2",
+          "status": "non-equivalent"
+        },
+        {
+          "arm": "aff3ct",
+          "codeword_bits": 1024,
+          "detail": "AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 3",
+          "differing_parameter": "redundancy_version",
+          "messages_compared": 0,
+          "messages_identical": 0,
+          "min_identical_positions": 0,
+          "status": "unavailable"
+        }
+      ],
+      "base_graph": 2,
+      "configuration": "bg2-n1024-k400-rv3",
+      "filler_bits": 120,
+      "lifting_factor": 52,
+      "modulation_order": 1,
+      "punctured_systematic_bits": 104,
+      "redundancy_version": 3,
+      "target_k": 400,
+      "target_n": 1024
     }
   ],
   "schema": "nr-encode-validation-v1"
