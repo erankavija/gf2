@@ -3,17 +3,29 @@
 > **Diátaxis Type:** Explanation
 
 Survey for `c077a88b`. No production kernel changes are included. The
-[generated tables](../../bench_results/c077a88b/tables.md) are the numerical
-projection of the quality reports and finalized campaign receipts. The
+[generated tables](../../bench_results/c077a88b/tables.md), written by
+[`survey/summarize.py`](survey/summarize.py) from the committed quality record
+and the finalized campaign receipts, are the numerical projection of this
+survey; regenerating them reproduces the committed file byte for byte. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
 and [frozen protocol](../f547c394/protocol.md) govern both families.
 
+This report carries the argument and cites the evidence: it states no measured
+or derived value. Every figure lives in `tables.md`, in the receipts and
+summaries themselves, or in the survey's evidence files, and each pointer names
+the `tables.md` section and the row that carries it. A number appears below
+only when it identifies a cell, names a workload size, names a protocol or
+addendum constant that fixes the design before measurement, or belongs to a
+citation key or version pin.
+
 The matched confirmation is independently accepted: AFF3CT flooding f32 is
 slower in the DVB whole-call comparison, while NR has no material gap under
-the frozen margins. The accepted quality pilot retains every predeclared
-candidate and its P-19 admission failure. No candidate is eligible for quality
-confirmation or fastest-arm selection. The numerical estimates and uncertainty
-are projected in the linked tables; no production implementation is adopted.
+the frozen margins (tables "Matched-algorithm timing", rows
+`dvb-t2-r12-matched-single-core` and `nr-bg1-z384-matched-single-core`). The
+accepted quality pilot retains every predeclared candidate and its P-19
+admission failure (tables "Quality-compatible timing", `Outcome` column of
+every row). No candidate is eligible for quality confirmation or fastest-arm
+selection, and no production implementation is adopted.
 
 ## Question and method
 
@@ -66,8 +78,10 @@ check. Dynamic OAI release history is not independently verified as latest.
 ## What AFF3CT actually compiled and selected
 
 The observed AFF3CT executable reports **AVX2**, multiple precisions and
-version v4.7.0. The actual compile record contains `-std=gnu++11`, `-O3`,
-`-march=native` and `-funroll-loops`, together with its ABI definitions.
+version v4.7.0, and the compile record it was built from contains
+`-std=gnu++11`, `-O3`, `-march=native` and `-funroll-loops` together with its
+ABI definitions; both come from
+[build-identity.json](../../bench_results/c077a88b/v3-preparation/build-identity.json).
 The shim compiles against these definitions and obtains its backend name
 from `mipp::InstructionFullType`. Every validation row records the decoder
 class, observed backend and native wave size; these are not inferred from
@@ -119,7 +133,8 @@ compares adjacency sets, including the parity staircase orientation.
 
 The fixed-point DVB arm's additional frame failures contradict the premise
 that the nominal widest supported mode is automatically an admissible fastest
-arm. The failed quality comparison is preserved, not removed by changing
+arm (tables "Quality on identical recorded inputs", the `dvb-t2-r12` i16 rows
+against the f32 rows of the same code). The failed quality comparison is preserved, not removed by changing
 normalization or the tolerance after measurement. The NR result is assessed
 separately. Quality tolerance is frozen in each family addendum.
 
@@ -127,7 +142,9 @@ separately. Quality tolerance is frozen in each family addendum.
 
 Matched calls decode one frame. Quality-compatible calls process the same
 sixteen-frame batch in both arms: gf2 serially, AFF3CT through native scalar,
-eight-frame or sixteen-frame waves. The declared warm cache policy fixes fixture bank zero: the first recorded
+eight-frame or sixteen-frame waves (tables "Quality-compatible timing",
+`Useful frames/call` column; "Quality on identical recorded inputs",
+`Native wave` column). The declared warm cache policy fixes fixture bank zero: the first recorded
 frame for matched latency, and the first sixteen recorded frames (both
 codeword classes) for batch throughput. The full bundles supply quality
 validation. A warm pass traverses the same timed working set, and the
@@ -152,7 +169,8 @@ Quality is a single deterministic replay of each full recorded bundle,
 prepared under the CPU budget on one CPU with the shared host-budget lock.
 Timed measurement uses the exclusive full-host lock. Timed children read those exact quality objects. Fresh timing processes
 do not constitute new BER/FER samples. Counts, iteration distributions and process RSS appear in the generated quality
-table. FER uses Wilson intervals. BER uses the protocol's Hoeffding interval on
+table (tables "Quality on identical recorded inputs", one row per code and arm).
+FER uses Wilson intervals. BER uses the protocol's Hoeffding interval on
 independent frame error fractions, allowing arbitrary bit dependence within a
 frame. Quality admission uses the protocol's paired same-frame FER bound with
 its ledger-derived comparison confidence. Each prepared report retains the exact
@@ -189,10 +207,11 @@ remain historical evidence, not v3 claims. Earlier missing-quality, asymmetric
 setup and encoder-construction failures remain visible, together with the r4
 recorded-AList pilots. None supplies v3 resolution evidence.
 
-Four of those v1 pilots — the r3 and r4 matched-algorithm and quality-compatible
-pilots — carry an acceptance summary recording them as accepted that a fresh
-checkout does not reproduce, for two reasons the
-[re-evaluation record](../a203a23c/receipt-reevaluation.json) states per receipt.
+The r3 and r4 matched-algorithm and quality-compatible pilots carry an
+acceptance summary recording them as accepted that a fresh checkout does not
+reproduce, for two reasons the
+[re-evaluation record](../a203a23c/receipt-reevaluation.json) states per
+receipt; that record enumerates them.
 Their snapshot of the standalone harness lockfile was never committed and the
 harness has since resolved its dependencies again, so no content of this
 repository carries the pinned digest;
@@ -204,7 +223,7 @@ reports a P-23 campaign-start mismatch. Both are properties of how the v1
 evidence was recorded, not of the measurements: the receipts, their checkpoints
 and their summaries are unchanged. Every v3 campaign this survey's conclusions
 rest on reproduces its committed verdict on a fresh checkout, so no conclusion
-here changes; what the four v1 pilots lose is the ability to re-derive their own
+here changes; what those v1 pilots lose is the ability to re-derive their own
 superseded verdicts from the repository.
 
 The canonical matched and quality-family ledgers retain retrospective entries
@@ -219,9 +238,11 @@ serialized full-host sessions, finalization and independent acceptance. The
 freeze script derives the conservative widest pilot relative interval half-width
 from the independently accepted v3 pilot and pins its exact receipt, addendum and
 ledger snapshots. The matched confirmation retains its frozen two-cell design. The accepted
-quality pilot preserves all six P-19 notes and every predeclared candidate; no
-candidate satisfies the quality admission rule, so the eligible shortlist is
-empty and no quality confirmation or fastest-candidate selection is made.
+quality pilot preserves a P-19 note for every predeclared candidate
+([acceptance summary](../../bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot/acceptance-summary.json),
+`findings`); no candidate satisfies the quality admission rule, so the eligible
+shortlist is empty and no quality confirmation or fastest-candidate selection
+is made.
 
 ## Criterion status
 
@@ -235,10 +256,13 @@ finding.
 
 Both v3 pilots and the matched confirmation are independently accepted. The
 quality pilot closes the bounded survey with no admissible candidate; its timing
-intervals remain exploratory, including the broad NR scalar interval. The
+intervals remain exploratory, the widest being the NR scalar cell (tables
+"Quality-compatible timing", row `nr-bg1-z384-f32-scalar-pilot`). The
 matched confirmation uses fresh samples and the exact published pilot-derived
 addendum. Its ledger-derived confidence and outcomes appear in the generated
-tables: the DVB candidate regresses, and NR has no material comparator gap.
+tables: the DVB candidate regresses and the NR comparator gap is not material
+(tables "Matched-algorithm timing", `Speedup [family interval]`, `Confidence`
+and `Outcome` columns of the confirmation block).
 Receipt acceptance establishes valid evidence; these outcomes authorize no
 production adoption.
 
@@ -256,7 +280,7 @@ complete shared suite and lint evidence reside in the v3 preparation directory.
 |---|---|---|
 | REQ-01 | MET | Accepted protocol-v3 pilots and matched confirmation with exact contract, addendum, source and ledger snapshots; Rust 1.95 release arms and serialized full-host timing. Negative outcomes remain visible; no production kernel change requires before/after measurement. |
 | REQ-02 | MET | Pinned matched f32 flooding NMS confirmation and supported layered f32 SIMD pilot arms use identical recorded inputs with labeled settings and observed backends. Matched NMS SIMD remains unavailable in the pinned C++11 build. |
-| REQ-03 | MET — negative result | Completed capability screen, six-candidate timed pilot and full-corpus per-frame quality accounting. All six P-19 admission failures remain visible. The eligible shortlist is empty; no fastest quality-compatible arm is asserted or confirmed. |
+| REQ-03 | MET — negative result | Completed capability screen, six-candidate timed pilot and full-corpus per-frame quality accounting. Every candidate's P-19 admission failure remains visible (tables "Quality-compatible timing", `Outcome` column). The eligible shortlist is empty; no fastest quality-compatible arm is asserted or confirmed. |
 | REQ-04 | MET | Pinned sources, maintained-upstream observations, xdsopl matrix identity and preserved OAI/srsRAN build failures. |
 | REQ-05 | MET | Validated mother-code and information-window adapters; explicit unexpressible or unverified puncturing, filler, rate-matching and stopping contracts. |
 | REQ-06 | MET | Frozen baseline and adapter evidence, accepted v3 pilots and matched confirmation, rejected acceptance evidence, unavailable arms and immutable superseded v1 history are preserved. The negative quality result supplies no eligible confirmation shortlist. |

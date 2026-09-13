@@ -1,0 +1,24 @@
+# Post-processing for the byte-field survey (jit:6c6b09b1): family-ledger
+# genesis and checks, pilot resolution derivations and the interval tables.
+#
+# It reads committed receipts and ledgers through the shared campaign
+# tooling, so every encoding and every bootstrap it uses is the canonical
+# one. Nothing here runs during a timed campaign.
+
+[workspace]
+
+[package]
+name = "byte-field-analysis"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+serde_json = "1.0"
+sha2 = "0.10"
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+
+[[bin]]
+name = "survey-analysis"
+path = "src/main.rs"
