@@ -120,13 +120,15 @@ pub(crate) mod simd {
         FNS.get_or_init(gf2_kernels_simd::detect).as_ref()
     }
 
-    /// Returns the best available 64×64 bit-block transpose kernels, if any.
+    /// Returns the production 64×64 bit-block transpose kernels, if any.
     ///
-    /// On x86_64 with AVX2 this returns the measured production
-    /// bit-twiddle lane; otherwise the scalar Hacker's Delight
-    /// bit-twiddle lane is published (always available). Returns `None`
-    /// only if the host platform has no implementation at all (currently
-    /// impossible on supported targets).
+    /// This whole module is compiled only under this crate's `simd` cargo
+    /// feature, which is not one of its defaults; without it
+    /// [`BitMatrix::transpose`](crate::matrix::BitMatrix::transpose) calls
+    /// the portable kernel directly. The lane published here is the first
+    /// entry of `gf2_kernels_simd::transpose::PRODUCTION_PREFERENCE` whose
+    /// processor feature the host has, which ends at the scalar lane and so
+    /// returns `None` on no supported target.
     ///
     /// The returned [`TransposeFns::transpose_64x64`] operates on
     /// fixed-size `&[u64; 64]` blocks; callers tile arbitrary

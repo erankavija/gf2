@@ -17,6 +17,10 @@ default = []
 # Feature toggles for building specific backends; detection is runtime.
 avx2 = []
 avx512 = []
+# Publishes the shared kernel contracts (`transpose::contract`) that this
+# crate's own tests run, so `gf2-core`'s integration tests drive every lane
+# through one copy of the cases instead of restating them.
+test-support = []
 
 [dev-dependencies]
 # Shared workspace deterministic LCG lives in gf2-core::test_rng so the
