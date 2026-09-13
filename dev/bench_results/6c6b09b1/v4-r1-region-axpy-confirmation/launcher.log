@@ -1,0 +1,18 @@
+# command: dev/bench_results/6c6b09b1/run-byte-field-v4.sh window region-axpy-confirmation
+# started_utc: 2026-09-13T01:05:16Z
+# gf2 revision (informational): 6e9074604489ecaa860b5142281ec7c5ddd17251
+# addendum: dev/active/6c6b09b1/addendum-v4-region-axpy-confirmation.json sha256 0c725246b4177c2a8e0cc5cf5be9dbc1fc26ea923f2b20876e086f8d012f36d2
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-confirmation.plan.json sha256 1ad19cf57550b68ea595296d04ad5ec7ae8c47db6c1bfe5bdfcd2ed5b2498ad9
+# build record: dev/active/6c6b09b1/conformance-v4/build-record.txt sha256 71061b546cb7f86397998d05367925acf48c6c5019ac516aa0203f2917e2997f
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 1.04 0.78 0.46
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-confirmation/execution.log
+# session 1 exit: 3 at 2026-09-13T01:06:52Z load 1.06 0.88 0.53
+# session 2 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-campaigns/6c6b09b1-v4-r1-region-axpy-confirmation/execution.log
+# session 2 exit: 0 at 2026-09-13T01:08:14Z load 1.11 0.95 0.59
+journal: 6 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/receipt.json

@@ -1,0 +1,154 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "6c6b09b1-v4-r1-pairwise-control-confirmation",
+  "issue": "6c6b09b1",
+  "label": "confirmation",
+  "campaign_seed": 2026091203,
+  "addendum": "dev/active/6c6b09b1/addendum-v4-pairwise-control-confirmation.json",
+  "producing_manifest": "dev/active/6c6b09b1/survey/producing-inputs-v4.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-batch": {
+      "build": "native",
+      "description": "gf2-core gf2m::batch::batch_mul on u64 lanes over Gf2mField::gf256(), built with -C target-cpu=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-survey/release/gf2-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_GF2_REPR": "element"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "m4rie": {
+      "build": "external",
+      "description": "M4RIE 20250128 over M4RI 20260122 through the C shim, gcc -O3 -march=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-survey/release/ext-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_BACKEND": "m4rie",
+        "GF2_SURVEY_VARIANT": "default"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gfcomplete": {
+      "build": "external",
+      "description": "GF-Complete ceph/gf-complete@a6862d10 w=8 default configuration through the C shim, gcc -O3 -march=native",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1/target/6c6b09b1-survey/release/ext-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_BACKEND": "gf-complete",
+        "GF2_SURVEY_VARIANT": "default"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "pairwise-4k-batch-vs-m4rie",
+      "baseline_arm": "gf2-batch",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 501,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch-vs-m4rie",
+      "baseline_arm": "gf2-batch",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 502,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch-vs-m4rie",
+      "baseline_arm": "gf2-batch",
+      "candidate_arm": "m4rie",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 502,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "pairwise-4k-batch-vs-gfcomplete",
+      "baseline_arm": "gf2-batch",
+      "candidate_arm": "gfcomplete",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 501,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch-vs-gfcomplete",
+      "baseline_arm": "gf2-batch",
+      "candidate_arm": "gfcomplete",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 502,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch-vs-gfcomplete",
+      "baseline_arm": "gf2-batch",
+      "candidate_arm": "gfcomplete",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 502,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 3
+}

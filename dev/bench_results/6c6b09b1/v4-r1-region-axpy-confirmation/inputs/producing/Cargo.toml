@@ -1,0 +1,77 @@
+[workspace]
+members = [
+	"crates/gf2-core",
+	"crates/gf2-coding",
+	"crates/gf2-stats",
+	"crates/gf2-algebra",
+	"crates/gf2-kernels-simd",
+	"crates/gf2-sim",
+	"dev/tools/tuning-campaign-support",
+]
+# HIP crate excluded from default workspace — requires ROCm/hipcc.
+# Build explicitly: cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml
+#
+# `dev/research/f3_bipedal` is a standalone non-workspace prototype with
+# its own `[workspace]` table; it is consumed as a path dev-dependency by
+# `gf2-kernels-simd` for the b17bec62 SSOT-scalar-reference proptests
+# (success criterion 3) and must be excluded here so Cargo does not flag
+# it as a nested workspace root when resolving the dev-dep path.
+exclude = [
+	"crates/gf2-kernels-hip",
+	"dev/research/f3_bipedal",
+	"dev/research/permanent_gpu_crossover",
+]
+resolver = "2"
+
+[workspace.dependencies]
+criterion = "0.5"
+num-bigint = "0.4"
+proptest = "1.0"
+rand = "0.8"
+# `gf2-coding`'s optional `rand_chacha = "0.3"` is the sole exception: it
+# remains in the `rand` 0.8 ecosystem and migrates when `gf2-coding` moves to
+# `rand` 0.9.
+rand_chacha = "0.9"
+rand_core = "0.9"
+rayon = "1.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+trybuild = "1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+# Gate build profile. `release` is tuned for benchmark receipts, where
+# generated-code speed is the product; the gate pays that tuning on every run
+# and gets nothing back for it. This profile trades runtime for compile
+# parallelism and is used by `scripts/cargo-ci.sh` for workspace test builds.
+#
+# Measured 2026-08-31, full workspace with --all-features on a 24-thread host,
+# cold build in a fresh worktree, against the same tree under `release`:
+#
+#   profile                        build     suite     slowest test
+#   release   (thin LTO, cgu 1)     433 s   28.98 s        3.754 s
+#   thin LTO, cgu 16                346 s   28.91 s        3.743 s
+#   this      (no LTO,   cgu 16)    153 s   31.08 s        4.899 s
+#
+# LTO dominates both directions: it costs most of the build and buys most of
+# the runtime, while codegen-units alone recovers only 20%. Dropping it is
+# worth 280 s per fresh worktree for 2.1 s of suite time.
+#
+# Benchmarks, receipts, and any published performance number stay on `release`.
+# `cargo bench` uses the bench profile and the wrappers under `dev/scripts/`
+# pass `--release` explicitly, so nothing here reaches them — a receipt built
+# without LTO would understate this workspace by roughly 30% on the permanent
+# kernels. See `@/inv/benchmark-backed-performance`.
+[profile.ci-test]
+inherits = "release"
+lto = false
+codegen-units = 16
+# Tests that assert a `debug_assert!` fires are `cfg(debug_assertions)`-gated,
+# so an optimized profile compiles them out. Before this profile existed they
+# ran in exactly one place — the dev-profile `baked-core` step — and nowhere
+# else in the gate, because every other test step was `--release`. Keeping
+# assertions on makes that coverage deliberate instead of incidental, and lets
+# `baked-core` run optimized like the rest.
+debug-assertions = true
