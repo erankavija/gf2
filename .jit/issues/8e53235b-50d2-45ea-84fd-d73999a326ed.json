@@ -2,7 +2,9 @@
   "assignee": null,
   "context": {},
   "created_at": "2026-09-13T16:54:59.469347992Z",
-  "dependencies": [],
+  "dependencies": [
+    "1d4fd63d-c522-47cb-9448-fe8f5220f0ed"
+  ],
   "description": "Replace the bit-serial systematic codeword assembly of packed BCH batch encoding with word copies and shifted parity placement, so the per-batch write cost every encoding family pays stops dominating the consumer.\n\n## Background\n\n`encode_batch_into` writes each systematic codeword through `packed_write_codeword` one bit at a time. The 04b85d10 profile ranks that write as the largest remaining share of the packed BCH consumer on the DVB-T2 short-frame mother code (`dev/active/04b85d10/findings.md`, § Ranked candidate experiments, entry 1), and the 1d4fd63d conversion-share table bounds what any faster bit-slice conversion can give the same consumer (`dev/bench_results/1d4fd63d/tables.md`, § Conversion share of the whole BCH consumer). This is a bit-layout packing change in gf2-coding, not a transpose lane.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfies the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md): a frozen family addendum, a pilot, a confirmation frozen by the canonical freezer from the committed pilot receipt, and before/after receipts of the pinned pre-change consumer, with negative outcomes preserved as recorded.\n- [hard] REQ-02: Produces codewords identical to the bit-serial reference for every dimension, redundancy and batch boundary the existing encoding tests cover, including partial words at 1, 63, 64 and 65 bits and zero tail padding.\n- [hard] REQ-03: Lands through the existing encoding entry points with no private parallel path; the whole-consumer cell decides adoption under the frozen rules, and a no-win outcome retains the established assembly.\n\n## Notes\n\nSurfaced by 1d4fd63d (follow-up 3 of its report) from 04b85d10's ranked candidate experiments.",
   "documents": [],
   "first_ready_at": "2026-09-13T16:54:59.469347992Z",
@@ -19,7 +21,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "backlog",
   "title": "Assemble packed systematic BCH codewords word-wise",
-  "updated_at": "2026-09-13T16:54:59.469347992Z"
+  "updated_at": "2026-09-13T16:57:27.448105782Z"
 }

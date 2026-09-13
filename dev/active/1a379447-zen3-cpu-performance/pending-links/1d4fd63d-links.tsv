@@ -1,0 +1,68 @@
+dev/active/1d4fd63d/addendum-v4-external-confirmation.json	specification	Frozen v4 addendum, external confirmation
+dev/active/1d4fd63d/addendum-v4-external-pilot.json	specification	Frozen v4 addendum, external pilot
+dev/active/1d4fd63d/addendum-v4-transpose-lane-confirmation.json	specification	Frozen v4 addendum, transpose lane confirmation
+dev/active/1d4fd63d/addendum-v4-transpose-lane-pilot.json	specification	Frozen v4 addendum, transpose lane pilot
+dev/active/1d4fd63d/addendum-v4-transpose-lane-selected.json	specification	Frozen v4 addendum, transpose lane selected
+dev/active/1d4fd63d/addendum-v4-transpose-lane-smoke.json	specification	Frozen v4 addendum, transpose lane smoke
+dev/active/1d4fd63d/arms/Cargo.toml	benchmark	Arm source: arms/Cargo.toml
+dev/active/1d4fd63d/arms/src/main.rs	benchmark	Arm source: arms/main.rs
+dev/active/1d4fd63d/confirmation-derivation.txt	reference	Derivation record, confirmation confirmation
+dev/active/1d4fd63d/external-arms/Cargo.toml	benchmark	Arm source: external-arms/Cargo.toml
+dev/active/1d4fd63d/external-arms/src/main.rs	benchmark	Arm source: external-arms/main.rs
+dev/active/1d4fd63d/external-confirmation-derivation.txt	reference	Derivation record, external confirmation confirmation
+dev/active/1d4fd63d/external-producing-inputs.json	reference	Producing-input manifest (external-producing-inputs)
+dev/active/1d4fd63d/findings.md	report	The 64x64 transpose lane family and the BCH bitslice conversion
+dev/active/1d4fd63d/freeze-confirmation.sh	reference	Freeze wrapper: freeze-confirmation.sh
+dev/active/1d4fd63d/freeze-external-confirmation.sh	reference	Freeze wrapper: freeze-external-confirmation.sh
+dev/active/1d4fd63d/make-external-plan.py	reference	Generator: make-external-plan.py
+dev/active/1d4fd63d/make-external-producing-inputs.py	reference	Generator: make-external-producing-inputs.py
+dev/active/1d4fd63d/make-plan.py	reference	Generator: make-plan.py
+dev/active/1d4fd63d/make-producing-inputs.py	reference	Generator: make-producing-inputs.py
+dev/active/1d4fd63d/producing-inputs.json	reference	Producing-input manifest (producing-inputs)
+dev/active/1d4fd63d/run-validation.sh	reference	Correctness validation runner
+dev/active/1d4fd63d/survey/annotate-asm.py	reference	Survey tool: annotate-asm.py
+dev/active/1d4fd63d/survey/bit-mapping-report.json	reference	Bit-mapping equivalence report across lanes and external arms
+dev/active/1d4fd63d/survey/check-external-arms.py	reference	Survey tool: check-external-arms.py
+dev/active/1d4fd63d/survey/external-arm-check.json	reference	External arm digest check against 6fb89a3c build evidence
+dev/active/1d4fd63d/survey/make-external-addendum.py	reference	Generator: make-external-addendum.py
+dev/active/1d4fd63d/survey/make-pilot-addendum.py	reference	Generator: make-pilot-addendum.py
+dev/active/1d4fd63d/survey/make-source-evidence.py	reference	Generator: make-source-evidence.py
+dev/active/1d4fd63d/survey/source-evidence.json	reference	Source-evidence ledger for the report's code claims
+dev/active/1d4fd63d/survey/summarize.py	reference	Survey tool: summarize.py
+dev/active/1d4fd63d/survey/verify-bit-mapping.py	reference	Survey tool: verify-bit-mapping.py
+dev/active/1d4fd63d/validation.json	reference	Correctness validation record at the MSRV
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/acceptance-summary.json	benchmark	External confirmation: acceptance summary
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/acceptance-summary.md	benchmark	External confirmation: acceptance summary (rendered)
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/execution.log	benchmark	External confirmation: execution log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/launcher.log	benchmark	External confirmation: launcher log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/receipt.json	benchmark	External confirmation: receipt
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/acceptance-summary.json	benchmark	External pilot: acceptance summary
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/acceptance-summary.md	benchmark	External pilot: acceptance summary (rendered)
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/execution.log	benchmark	External pilot: execution log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/launcher.log	benchmark	External pilot: launcher log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/receipt.json	benchmark	External pilot: receipt
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/acceptance-summary.json	benchmark	Transpose lane confirmation: acceptance summary
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/acceptance-summary.md	benchmark	Transpose lane confirmation: acceptance summary (rendered)
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/execution.log	benchmark	Transpose lane confirmation: execution log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/launcher.log	benchmark	Transpose lane confirmation: launcher log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/receipt.json	benchmark	Transpose lane confirmation: receipt
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/acceptance-summary.json	benchmark	Transpose lane pilot: acceptance summary
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/acceptance-summary.md	benchmark	Transpose lane pilot: acceptance summary (rendered)
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/execution.log	benchmark	Transpose lane pilot: execution log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/launcher.log	benchmark	Transpose lane pilot: launcher log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/receipt.json	benchmark	Transpose lane pilot: receipt
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/acceptance-summary.json	benchmark	Transpose lane selected: acceptance summary
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/acceptance-summary.md	benchmark	Transpose lane selected: acceptance summary (rendered)
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/execution.log	benchmark	Transpose lane selected: execution log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/launcher.log	benchmark	Transpose lane selected: launcher log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/receipt.json	benchmark	Transpose lane selected: receipt
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/acceptance-summary.json	benchmark	Transpose lane smoke: acceptance summary
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/acceptance-summary.md	benchmark	Transpose lane smoke: acceptance summary (rendered)
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/execution.log	benchmark	Transpose lane smoke: execution log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/launcher.log	benchmark	Transpose lane smoke: launcher log
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/receipt.json	benchmark	Transpose lane smoke: receipt
+dev/bench_results/1d4fd63d/run-transpose-lane.sh	benchmark	Campaign launcher for both transpose-lane families
+dev/bench_results/1d4fd63d/tables.md	reference	Generated transpose-lane receipt tables
+dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl	benchmark	Append-only family ledger: transpose-lane-selection
+dev/bench_results/1d4fd63d/transpose-lane-smoke-family-ledger.jsonl	benchmark	Append-only family ledger: transpose-lane-smoke
+dev/bench_results/1d4fd63d/transpose-lane-vs-external-family-ledger.jsonl	benchmark	Append-only family ledger: transpose-lane-vs-external

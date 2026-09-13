@@ -25,7 +25,18 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-13T16:55:50.828992915Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-13T16:56:00.468467413Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "1d4fd63d-c522-47cb-9448-fe8f5220f0ed",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -43,5 +54,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize bit transpose and bitslice conversion",
-  "updated_at": "2026-09-13T09:14:14.499170667Z"
+  "updated_at": "2026-09-13T16:56:00.468467413Z"
 }

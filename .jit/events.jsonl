@@ -12063,3 +12063,7 @@
 {"from":"ready","id":"a214ceb6-a533-48a7-98e0-f10d836cf314","issue_id":"19513245-7fb9-4490-8e41-d9c01405db01","timestamp":"2026-09-13T16:43:24.610227001Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"6f8f2eb3-a653-43ad-a46e-ba54fced367f","issue_id":"19513245-7fb9-4490-8e41-d9c01405db01","timestamp":"2026-09-13T16:43:24.610227001Z","type":"issue_claimed"}
 {"id":"529ff68a-37a0-4e26-ae24-667117c9e92b","issue_id":"8e53235b-50d2-45ea-84fd-d73999a326ed","priority":"normal","timestamp":"2026-09-13T16:54:59.469347992Z","title":"Assemble packed systematic BCH codewords word-wise","type":"issue_created"}
+{"gate_key":"asm-artefact-present","id":"fe78857f-6e68-4adb-9e17-48ad18610ba9","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T16:55:50.828992915Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"28baea06-b804-4a2d-adc6-d47e6203bd20","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T16:56:00.468467413Z","type":"gate_failed","updated_by":"auto:executor"}
+{"from":"ready","id":"ad76b18e-cdcd-44fb-ab5d-eb6745a0d413","issue_id":"8e53235b-50d2-45ea-84fd-d73999a326ed","timestamp":"2026-09-13T16:57:27.448105782Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"7d74123b-07ed-4877-951b-9c76eac3fbe4","issue_id":"8e53235b-50d2-45ea-84fd-d73999a326ed","timestamp":"2026-09-13T16:57:27.448105782Z","type":"issue_updated","updated_by":"dependency-add"}
