@@ -349,7 +349,7 @@
           "short_id": "5cbb6545",
           "title": "Optimize population count and fused bit reductions",
           "classification": "implementation",
-          "status": "session 15: rework round 1 restored established scalar/nibble production behavior, removed the unsupported CSA selector/cutoff, added exact 255/256/257 retained-route coverage, and reconciled the preserved nonqualifying receipts. Round-2 review confirms every substantive criterion but FAILs on one narrow provenance defect: source-evidence.json records the prior source commit while its generator emits HEAD. Sol xhigh rework round 2 is making that revision explicit and reproducible without measurements.",
+          "status": "done. Session 15: two Sol xhigh rework rounds restored established scalar/nibble production behavior for the two nonqualifying families, removed the unsupported CSA selector/cutoff, added exact 255/256/257 retained-route coverage, and made source evidence byte-reproducible from an explicit validated revision. Independent reviews r1/r2 FAIL and r3 PASS; merged at 8aaac33e. Cargo CI passed 5998 tests with all 27 steps green; code, doc, research, and asm gates pass. Gate advisories on CSA block units, fused scalar fallback, and single-core scope were fixed before closure at 608cd1b9; latest doc and research reviews have zero findings. Worktree reclaimed.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-5cbb6545",
@@ -358,6 +358,19 @@
             "attempt": 3,
             "rework_round": 2,
             "session": 15
+          },
+          "merge_commit": "8aaac33e",
+          "reviews": [
+            "reviews/5cbb6545-r1.md",
+            "reviews/5cbb6545-r2.md",
+            "reviews/5cbb6545-r3.md"
+          ],
+          "gates": {
+            "cargo-ci": "passed 8181e129 (5998 passed, 0 failed, 248 skipped; all 27 steps green)",
+            "asm-artefact-present": "passed 8181e129",
+            "code-review": "passed with zero findings after public rustdoc correction",
+            "doc-review": "passed with zero findings after route and scope corrections",
+            "research-review": "passed with zero findings after evidence repin and scope correction"
           }
         },
         {
