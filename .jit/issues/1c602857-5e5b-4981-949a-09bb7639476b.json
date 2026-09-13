@@ -272,17 +272,17 @@
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-13T09:08:41.565978108Z",
+      "updated_at": "2026-09-13T11:51:02.519014298Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-13T09:06:28.397948144Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T11:48:41.303258906Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-13T09:09:11.987709002Z",
+      "status": "passed",
+      "updated_at": "2026-09-13T11:51:58.067661950Z",
       "updated_by": "auto:executor"
     }
   },
@@ -296,5 +296,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Route the public wide carry-less product through capability dispatch",
-  "updated_at": "2026-09-13T11:46:06.192721251Z"
+  "updated_at": "2026-09-13T11:51:58.067661950Z"
 }
