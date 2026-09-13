@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Wire-contract smoke of this issue's arms (jit:07ca8585). Times nothing that
+# any conclusion rests on and publishes no receipt: every output lands under
+# `target/`, which is not committed.
+#
+# It runs the real `benchmark-ab-runner` over a throwaway one-pair plan whose
+# cells cover every arm the campaigns use: the before and after gf2 arms in one
+# cell, and the after gf2 and AFF3CT arms in the other. A campaign is queued
+# only after this passes, because reading the arm sources does not establish the
+# wire contract between the runner and a child.
+#
+# Usage (from the worktree root): run-smoke.sh
+set -euo pipefail
+repo=$(git rev-parse --show-toplevel)
+[[ "$PWD" == "$repo" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
+export PATH="$HOME/.cargo/bin:$PATH" RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
+SURVEY=dev/active/07ca8585/survey
+SCRATCH=$repo/target/ldpc-update-smoke
+RUNNER=$repo/target/release/benchmark-ab-runner
+ACCEPTANCE=$repo/target/release/benchmark-acceptance
+
+rm -rf "$SCRATCH"
+mkdir -p "$SCRATCH"
+./scripts/cargo-budget.sh cargo +1.95 build --offline --release -p tuning-campaign-support \
+  --bin benchmark-ab-runner --bin benchmark-acceptance
+
+for family in single-worker comparator-single-worker; do
+  python3 - "$family" "$SCRATCH" <<'PY'
+import json, pathlib, sys
+
+family, scratch = sys.argv[1], pathlib.Path(sys.argv[2])
+source = pathlib.Path(f"dev/active/07ca8585/addendum-ldpc-update-{family}-pilot.json")
+addendum = json.loads(source.read_text())
+addendum["family"]["id"] = f"{addendum['family']['id'][:-3]}-smoke-v1"
+addendum["family"]["description"] = (
+    "Throwaway wire-contract smoke of the arms this issue measures. It publishes no receipt "
+    "and supports no performance claim."
+)
+addendum["family_wise"]["ledger_path"] = str(scratch / f"{family}-ledger.jsonl")
+addendum["cells"] = [cell for cell in addendum["cells"] if cell["cell_id"].startswith("dvb-t2-r12-")]
+path = scratch / f"{family}-addendum.json"
+path.write_text(json.dumps(addendum, indent=2) + "\n")
+pathlib.Path(addendum["family_wise"]["ledger_path"]).touch()
+print(path)
+PY
+  python3 "$SURVEY/make-plan.py" --family "ldpc-update-${family}-smoke-v1" --label pilot \
+    --addendum "$SCRATCH/$family-addendum.json" \
+    --before-dir "$repo/target/ldpc-throughput-before/release" \
+    --after-dir "$repo/target/ldpc-throughput/release" \
+    --bundles-dir "$repo/target/ldpc-inputs" \
+    --quality-dir "$repo/dev/bench_results/c077a88b/v3-preparation/quality" \
+    --campaign-id "07ca8585-smoke-$family" --pilot-pairs 1 \
+    --max-cells-per-session 1 --output "$SCRATCH/$family.plan.json"
+  CARGO_CI_NO_LOCK=1 GF2_BENCH=1 dev/scripts/ccx1-bench-flock.sh --full-host \
+    "$RUNNER" run "$SCRATCH/$family-stage" "$SCRATCH/$family.plan.json"
+  "$RUNNER" finalize "$SCRATCH/$family-stage" "$SCRATCH/$family-out"
+  "$ACCEPTANCE" "$SCRATCH/$family-out"
+done
+echo "smoke complete: $SCRATCH"
