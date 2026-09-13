@@ -118,10 +118,12 @@ impl TransposeLane {
 ///
 /// The first entry whose [`lane`] is available on the host wins.
 /// [`TransposeLane::Scalar`] is last and always available, so the walk always
-/// ends in a usable kernel. The order above it is a measured choice: the
-/// `transpose-lane` family of issue `1d4fd63d` compares the AVX2 candidates
-/// against each other, and `dev/active/1d4fd63d/findings.md` names the receipt
-/// that put this entry first.
+/// ends in a usable kernel. The order above it is unchanged by the evidence
+/// so far: the `transpose-lane-selection` family of issue `1d4fd63d` measured
+/// every AVX2 candidate against this entry, its confirmation receipt qualified
+/// no candidate for production selection under the frozen rule, and
+/// `dev/active/1d4fd63d/findings.md` (§ Adoption) states that rule and names
+/// the receipt. Issue `63bad95d` owns the calibration of this selector.
 pub const PRODUCTION_PREFERENCE: [TransposeLane; 2] =
     [TransposeLane::Avx2BitTwiddle, TransposeLane::Scalar];
 
