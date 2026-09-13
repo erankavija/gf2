@@ -27,6 +27,10 @@ STAGES = {
     "fused-sweep2": families.fused_sweep2,
     "popcount-pilot": families.popcount_pilot,
     "fused-pilot": families.fused_pilot,
+    # A confirmation measures the cells its pilot measured; the freezer copies
+    # them into the confirmation addendum with the confirmatory role.
+    "popcount-confirmation": families.popcount_pilot,
+    "fused-confirmation": families.fused_pilot,
     "smoke-smoke": families.smoke,
 }
 
