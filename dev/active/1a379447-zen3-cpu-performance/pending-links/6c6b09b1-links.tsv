@@ -1,0 +1,35 @@
+dev/active/6c6b09b1/findings.md	report	Byte-field vector and matrix comparison arms
+dev/active/6c6b09b1/addendum-v4-region-axpy-pilot.json	specification	Byte-field region-axpy v4 pilot addendum
+dev/active/6c6b09b1/addendum-v4-matrix-product-pilot.json	specification	Byte-field matrix-product v4 pilot addendum
+dev/active/6c6b09b1/addendum-v4-pairwise-control-pilot.json	specification	Byte-field pairwise-control v4 pilot addendum
+dev/active/6c6b09b1/addendum-v4-region-axpy-confirmation.json	specification	Byte-field region-axpy v4 confirmation addendum
+dev/active/6c6b09b1/addendum-v4-matrix-product-confirmation.json	specification	Byte-field matrix-product v4 confirmation addendum
+dev/active/6c6b09b1/addendum-v4-pairwise-control-confirmation.json	specification	Byte-field pairwise-control v4 confirmation addendum
+dev/active/6c6b09b1/addendum-v3-region-axpy-pilot.json	specification	Byte-field region-axpy v3 pilot addendum, superseded by v4
+dev/active/6c6b09b1/addendum-v3-matrix-product-pilot.json	specification	Byte-field matrix-product v3 pilot addendum, superseded by v4
+dev/active/6c6b09b1/addendum-v3-pairwise-control-pilot.json	specification	Byte-field pairwise-control v3 pilot addendum, superseded by v4
+dev/active/6c6b09b1/addendum-byte-field-arms.json	specification	Byte-field v1 confirmation addendum, superseded, never ran
+dev/active/6c6b09b1/addendum-byte-field-arms-pilot.json	specification	Byte-field v1 pilot addendum, superseded
+dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/receipt.json	benchmark	Byte-field region-axpy v4 pilot receipt
+dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot/receipt.json	benchmark	Byte-field matrix-product v4 pilot receipt
+dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/receipt.json	benchmark	Byte-field pairwise-control v4 pilot receipt
+dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/receipt.json	benchmark	Byte-field v1 pilot receipt, superseded history
+dev/bench_results/6c6b09b1/tables.md	benchmark	Byte-field survey tables
+dev/bench_results/6c6b09b1/v3-region-axpy-family-ledger.jsonl	report	Byte-field region-axpy family ledger
+dev/bench_results/6c6b09b1/v3-matrix-product-family-ledger.jsonl	report	Byte-field matrix-product family ledger
+dev/bench_results/6c6b09b1/v3-pairwise-control-family-ledger.jsonl	report	Byte-field pairwise-control family ledger
+dev/bench_results/6c6b09b1/v3-region-axpy-ledger-origin.json	report	Byte-field region-axpy ledger genesis derivation
+dev/bench_results/6c6b09b1/v3-matrix-product-ledger-origin.json	report	Byte-field matrix-product ledger genesis derivation
+dev/bench_results/6c6b09b1/v3-pairwise-control-ledger-origin.json	report	Byte-field pairwise-control ledger genesis derivation
+dev/bench_results/6c6b09b1/v3-r1-void-attempts.json	report	Byte-field void ledger attempts
+dev/bench_results/6c6b09b1/run-byte-field-v4.sh	notes	Byte-field v4 campaign launcher
+dev/bench_results/6c6b09b1/run-byte-field-v4.test.sh	notes	Byte-field v4 launcher outcome guards
+dev/bench_results/6c6b09b1/run-byte-field.sh	notes	Byte-field v1 campaign launcher, superseded
+dev/active/6c6b09b1/survey/smoke-arms.sh	test	Byte-field arm wire smoke through the real runner
+dev/active/6c6b09b1/survey/make-confirmation-addenda.py	notes	Byte-field confirmation freeze
+dev/active/6c6b09b1/survey/make-confirmation-addenda.test.sh	test	Byte-field confirmation freeze reproducibility guards
+dev/active/6c6b09b1/survey/source-evidence.json	reference	Byte-field source-claim evidence
+dev/active/6c6b09b1/survey/producing-inputs-v4.json	reference	Byte-field v4 producing-input closure
+dev/active/6c6b09b1/survey/ext-prefix.sha256	reference	Byte-field external prefix digests
+dev/active/6c6b09b1/arm-provenance.txt	reference	Byte-field v1 arm provenance, superseded
+dev/active/6c6b09b1/producing-inputs.json	reference	Byte-field v1 producing-input closure, superseded

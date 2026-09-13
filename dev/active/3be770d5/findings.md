@@ -226,28 +226,40 @@ repeats the check on the census the first profile session records.
 
 ## Lever ranking
 
-Each lever removes a set of profile categories. Its predicted single-worker
-speedup is at least $1/(1-s_{\text{lo}})$, where $s_{\text{lo}}$ is the lower
-Wilson bound of the removed share; a later confirmed speedup whose upper
-bound falls below that value refutes the attribution. Levers rank by
-$s_{\text{lo}}$, taking the smaller of the two codes' bounds; a lever no
-category isolates takes no rank and carries a labelled basis. The ranks, the
-shares, the intervals and the implied speedups are in the tables' "Lever
-ranking" section, derived from [levers.json](survey/levers.json) and the
-profile summary. Downstream work: `07ca8585` (allocation and edge traversal),
+Each lever removes a set of profile categories. The measured evidence is that
+removed share with its Wilson interval, and levers rank by $s_{\text{lo}}$, the
+smaller of the two codes' lower bounds; a lever no category isolates takes no
+rank and carries a labelled basis.
+
+Beside each rank the tables carry an Amdahl ceiling, $1/(1-s_{\text{lo}})$. It
+is a labelled estimate of the single-worker speedup that would follow if the
+removed categories vanished at no replacement cost and nothing else changed,
+and it is a ceiling rather than a floor: a real change pays for its
+replacement work and shifts what remains, so a measured speedup below the
+ceiling refutes nothing.
+
+What refutes an attribution is the profile rather than the clock. After the
+change the same record cases are sampled again and the removed categories
+pooled again; the attribution holds when the post-change share's Wilson upper
+bound lies below the pre-change share's Wilson lower bound, and is refuted
+when it does not. Throughput is the separate question, decided by a matched
+confirmation family under the protocol, against no predicted lower bound. The
+ranks, shares, intervals and ceilings are in the tables' "Lever ranking"
+section, derived from [levers.json](survey/levers.json) and the profile
+summary. Downstream work: `07ca8585` (allocation and edge traversal),
 `f63a2464` (quantized, layered, QC-aware) and `ed3d490e` (inter-frame SIMD).
 
 | Lever | gf2 mechanism (source evidence) | Removed categories | Falsifiable workload experiment |
 |---|---|---|---|
-| Allocation removal | per-edge `Vec<f32>` in `boxplus_minsum_n`; per-iteration syndrome vectors | `allocator`, `min-sum-input-vec` | Census of the changed decoder shows zero steady-state allocations; single-worker steady cells meet the prediction. |
-| Canonical edge indexing | linear `find_check_position` and `check_to_var_message` scans | `edge-position-search` | Precomputed edge index with unchanged arithmetic; NR gains more than DVB, as the structural counts predict, or the attribution is refuted. |
-| Flat check/variable-major layout | `Vec<Vec<Llr>>` messages, `Vec<Vec<usize>>` neighbors | none isolated: labelled estimate from counters | Flat arrays with identical arithmetic; L1d misses per frame fall and the twelve-worker per-worker slowdown shrinks, else refuted. |
-| Shared min/second-min/sign | one reduction over d_c - 1 gathered inputs per output edge | upper bound from `check-node-loop`, `min-sum-reduction`, `min-sum-dispatch` | Two-pass check update with the signed-zero rule settled; cycles per frame fall at least by the structural gather ratio times the measured share. |
-| Inter-frame SIMD | none today | none: comparator estimate | AFF3CT's layered f32 scalar-to-INTER ratio in the fastest-compatible cells bounds the gain; a gf2 lane-batched decoder is refuted if it falls below the matched-scalar gap closed by the scalar levers. |
+| Allocation removal | per-edge `Vec<f32>` in `boxplus_minsum_n`; per-iteration syndrome vectors | `allocator`, `min-sum-input-vec` | Census of the changed decoder shows zero steady-state allocations, and the re-sampled `allocator` and `min-sum-input-vec` share falls by the interval rule. |
+| Canonical edge indexing | linear `find_check_position` and `check_to_var_message` scans | `edge-position-search` | Precomputed edge index with unchanged arithmetic; the re-sampled `edge-position-search` share falls by the interval rule, and falls further on NR than on DVB, as the structural counts imply. |
+| Flat check/variable-major layout | `Vec<Vec<Llr>>` messages, `Vec<Vec<usize>>` neighbors | none isolated: labelled estimate from counters | Flat arrays with identical arithmetic; the L1d miss ratio at twelve workers falls against its interval here, and gf2's per-worker slowdown interval at twelve workers no longer lies above AFF3CT's, else the layout account is refuted. |
+| Shared min/second-min/sign | one reduction over d_c - 1 gathered inputs per output edge | upper bound from `check-node-loop`, `min-sum-reduction`, `min-sum-dispatch` | Two-pass check update with the signed-zero rule settled; the re-sampled `check-node-loop`, `min-sum-reduction` and `min-sum-dispatch` share falls by the interval rule, and the structural gathers per edge bound how much of it two passes can remove. |
+| Inter-frame SIMD | none today | none: comparator estimate | AFF3CT's layered f32 scalar-to-INTER ratio in the fastest-compatible cells is the comparator estimate; a gf2 lane-batched decoder is measured against the matched single-worker family, which decides whether it moves the gap. |
 | Quantized/layered decoding | none today | none: comparator estimate | Layered f32 and i16 INTER cells with iteration distributions; any adoption needs a new numerical contract and quality evidence the current corpus cannot give. |
-| QC-aware intra-frame work | none today | none: labelled estimate | Lifted-block NR update against the flat scalar update on the NR cells; refuted if it does not beat the flat layout at one worker. |
-| Batch conversion | f32-to-`Llr` copy and bit extraction per frame | `conversion-output` | Receipt pack and dispatch probes against the call time; a conversion-free path must gain at least its share. |
-| Syndrome and termination | hard-decision vector plus full syndrome each iteration | `syndrome-termination` | Soft early-exit syndrome on posteriors; gain at least the share at unchanged iteration counts. |
+| QC-aware intra-frame work | none today | none: labelled estimate | Lifted-block NR update and the flat scalar update as two arms of one matched single-worker family, which decides between them. |
+| Batch conversion | f32-to-`Llr` copy and bit extraction per frame | `conversion-output` | Receipt pack and dispatch probes against the call time; the re-sampled `conversion-output` share falls by the interval rule and the untimed pack cost stays negligible against the call. |
+| Syndrome and termination | hard-decision vector plus full syndrome each iteration | `syndrome-termination` | Soft early-exit syndrome on posteriors at unchanged iteration counts; the re-sampled `syndrome-termination` share falls by the interval rule. |
 | Degree structure | search and gather cost grow with check and variable degree | per-code shares | The NR gap exceeds the DVB gap in the single-worker cells; refuted otherwise. |
 | Dispatch | lazy kernel table and indirect call per edge; pool barriers per call | `min-sum-dispatch`, `dispatch` | Direct inlined reduction; pool dispatch probe stays negligible against the call. |
 
@@ -345,8 +357,8 @@ tests a layout explanation for that movement.
 
 The two levers that remove whole categories at the top of the single-worker
 profile are canonical edge indexing and allocation removal, in that order on
-both codes, and the shares, intervals and implied lower-bound speedups are in
-the tables' "Lever ranking" section. Dispatch, syndrome and termination follow
+both codes, and the shares, the intervals and the labelled Amdahl ceilings are
+in the tables' "Lever ranking" section. Dispatch, syndrome and termination follow
 at single-digit shares, and batch conversion is negligible at one worker,
 which is itself the answer to whether the matched gap is a conversion
 artifact.
@@ -362,8 +374,8 @@ cells and adopt nothing.
 
 The upper bound on the shared-reduction lever exceeds the ranked share of
 allocation removal on both codes. It takes no rank because its bound is an
-upper bound and the rule ranks by a lower bound; the two-pass experiment in
-the lever table is what would give it one.
+upper bound on a share and the rule ranks by a lower bound on one; the
+two-pass experiment in the lever table is what would give it a rank.
 
 ### Construction and conversion
 
@@ -391,6 +403,6 @@ and its iterations run to the cap.
 |---|---|---|
 | REQ-01 | MET | Five accepted receipts cover one worker, six and twelve physical cores and twenty-four logical CPUs on both codes, with journaled topology, affinity, observed worker counts, thread counts, SMT state and build identities; the two matched confirmations fix the decision margins. Tables "Steady-state campaigns"; placement per cell and arm in each campaign's second table. |
 | REQ-02 | MET | Nine profile sessions give measured time shares with Wilson intervals and per-session ranges for both decoders at one and twenty-four workers, over categories that include allocation, edge traversal, reduction, dispatch, conversion and syndrome work; at least three categories carry double-digit single-worker shares on both codes. The single-core against saturation test is evaluated mechanically in its own tables section. Profile "Sampled shares by category" and "Counters and time per frame". |
-| REQ-03 | MET | Every REQ-03 lever has a mechanism in the gf2 source, a removed-category set or a labelled basis, and a falsifiable workload experiment; the ranked levers carry measured lower bounds and the implied speedups. Tables "Lever ranking"; mechanisms and experiments in the lever table above. |
+| REQ-03 | MET | Every REQ-03 lever has a mechanism in the gf2 source, a removed-category set or a labelled basis, and a falsifiable workload experiment; the ranked levers carry the measured share with its Wilson interval and a labelled Amdahl ceiling, and the refutation rule is a share comparison the profile can run. Tables "Lever ranking"; mechanisms and experiments in the lever table above. |
 | REQ-04 | MET | Matched arms keep the numerical contract on identical recorded LLRs; the fastest-compatible modes are separated, labelled and reported with their P-19 notes; every cell carries iteration distributions and BER/FER counts with intervals in its receipt's quality table. Tables "Steady-state campaigns", quality table per campaign. |
 | REQ-05 | MET | Each receipt pins the contract, protocol, addendum, ledger and producing closure, and independent acceptance accepted each; the void profile series is preserved as falsified evidence rather than discarded. No production change, so no before/after pair is owed. |

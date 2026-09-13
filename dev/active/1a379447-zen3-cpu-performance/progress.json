@@ -47,7 +47,7 @@
           "short_id": "04b85d10",
           "title": "Profile bit-storage costs in production consumers",
           "classification": "research",
-          "status": "session 11: rework round 2 of 2 dispatched (w11-04b85d10, opus) on code-review F1-F3 at 4c565af6: preserve the mislabeled layout/count v3 evidence as falsified, fix the harness so declared consumer = measured consumer, freeze new v4 pilots (window), derive summarize-receipts.py prose from structured evidence.",
+          "status": "session 11: rework round 2 delivered at 8c089201 in worktree (main merged in): mislabeled layout/count v3 cells preserved as falsified in receipt-evidence-record.json and findings, harness builds the declared codes with a declared-vs-built guard, summarize-receipts.py projects provenance from the structured record, v4 count and layout pilot addenda frozen, smoke passed, cargo-ci 27/27. Two pilot queue lines queued for the overnight window; lead review and gates after the pilots and confirmations land.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-04b85d10-v3",
@@ -63,7 +63,7 @@
           "short_id": "6c6b09b1",
           "title": "Establish byte-field vector and matrix comparison arms",
           "classification": "research",
-          "status": "session 11: three v4 pilots collected (17/14/9 cells, Accepted). Worker w11-6c6b09b1 (opus) dispatched to verify, commit, freeze v4 confirmations, smoke, hand queue lines, update tables and findings, merge main, run CI.",
+          "status": "session 11: three v4 pilots verified and committed; v4 confirmation addenda frozen at six cells per family (P-20 tail rule); smoke passed through the real runner; head 6e907460, cargo-ci 27/27 in worktree; main merged in. Three confirmation queue lines queued for the overnight window. Not merged to main until the confirmations land.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6c6b09b1",
@@ -142,7 +142,7 @@
           "short_id": "6fb89a3c",
           "title": "Establish transpose and logical-buffer comparison arms",
           "classification": "research",
-          "status": "in-session work complete at ea7d77c7 or later. Three v3 re-measurement receipts committed; lead independently confirmed each campaign reaches the runner's complete record with cell-start = cell-complete = the addendum cell count (8/9/6), 48 child executions per cell, zero child diagnostics, all cells measured, verdict Accepted. Corrected measurements reproduce every withdrawn decision and leading arm. REQ-01/04/05 moved to MET on exploratory-only evidence with the lead's conditions. No window job. Awaiting merge, gates and lead review.",
+          "status": "done. Freeze-script double-count fixed (fad06995, merged at 28f96566) with a --self-test and byte-for-byte reproduction of the three frozen addenda; all four gates pass at 28f96566; lead review PASS (reviews/6fb89a3c-r2.md). Closed session 11.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-6fb89a3c-v3",
@@ -151,7 +151,16 @@
             "attempt": 4,
             "session": 9
           },
-          "merge_commit": "fbc88e61"
+          "merge_commit": "28f96566",
+          "reviews": [
+            "reviews/6fb89a3c-r2.md"
+          ],
+          "gates": {
+            "cargo-ci": "passed 28f96566",
+            "code-review": "passed 28f96566",
+            "doc-review": "passed 28f96566",
+            "research-review": "passed 28f96566"
+          }
         },
         {
           "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
@@ -190,7 +199,15 @@
           "short_id": "428f2f6b",
           "title": "Replace hand-copied numbers in closed survey reports with citations",
           "classification": "documentation",
-          "status": "pending (moved from wave 3 in session 9: no sibling dependencies)"
+          "status": "session 11: delivered at ff4409ea on worktree-agent-428f2f6b (.agents/worktrees/agent-26465e6c-v3), tree clean. Worker reports REQ-01..03 MET: unit/interval/count/digest sweeps empty on the three reports; generators regenerate byte for byte; no receipt, ledger or addendum changed (lead confirmed: 9 files, none evidence). corrections.md records zero corrections, one scope clarification, one preserved falsification number. Not merged. Next: lead review (regenerate the three table sets on the merged tree and git diff --exit-code), merge, code/doc/research gates, link pending-links/428f2f6b-links.tsv.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-26465e6c-v3",
+            "branch": "worktree-agent-428f2f6b",
+            "base": "ad76be4a",
+            "attempt": 1,
+            "session": 11
+          }
         },
         {
           "id": "a387825e",
@@ -227,7 +244,7 @@
           "short_id": "3be770d5",
           "title": "Profile the CPU LDPC throughput gap against compatible decoders",
           "classification": "research",
-          "status": "session 11: window collected (two v4 confirmations Accepted qualifies=true; profile series ran, summary failed on a one-sample listing mismatch). Worker w11-3be770d5 (opus) dispatched to verify, commit, fix the summary check, complete findings, merge main, run CI.",
+          "status": "done. Window collected and verified; merged at 6055e0c7 and 5ac7d50c (rework round 1: Amdahl ceiling labelled, share-based refutation rule); 56 artifacts linked; all four gates pass (cargo-ci and code-review at 5ac7d50c, doc-review and research-review at c034bbd8 after the invoker-approved citation append). Closed session 11.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-3be770d5",
@@ -235,6 +252,16 @@
             "base": "cd6e69d1",
             "attempt": 1,
             "session": 11
+          },
+          "merge_commit": "6055e0c7",
+          "reviews": [
+            "reviews/3be770d5-r1.md"
+          ],
+          "gates": {
+            "cargo-ci": "passed 5ac7d50c",
+            "code-review": "passed 5ac7d50c",
+            "doc-review": "passed c034bbd8",
+            "research-review": "passed c034bbd8"
           }
         },
         {
@@ -242,7 +269,7 @@
           "short_id": "a203a23c",
           "title": "Make committed receipts reproduce their verdicts on a fresh checkout",
           "classification": "research",
-          "status": "session 11: rework round 1 dispatched (w11-a203a23c, sonnet) on research-review F1 at c2e9d0d7: commit a timing artifact (invocation, host, toolchain, repetitions) for the cat-file --batch cost claim and cite it from the tools' headers.",
+          "status": "session 11: rework round 1 merged at b6fa4719, links at f9640aaa. Gates at f9640aaa: cargo-ci passed on re-run (first run lost five gf2-sim rare-event tests to host contention), code-review passed, doc-review passed, research-review FAILED round 2: F1 restoration timing is a proxy excluding restore-receipt-inputs.py work so 76812a4e's restoration claim stays unverified; F2 timing.json lacks an RNG implementation/version or explicit no-RNG declaration; F3 (advisory) no committed pre-results sampling plan. Rework round 2 (counter 2 of 2) was dispatched to w11-a203a23c and then halted on the invoker's 'no new rework this session'; any partial work sits on worktree-agent-a203a23c. Next session: finish round 2 per the dispatched brief (time the whole tool end to end, declare no RNG, declare the sampling plan), merge, re-run all four gates; a third failure escalates.",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-a203a23c",
@@ -250,7 +277,8 @@
             "base": "main at 8292a63a",
             "attempt": 2,
             "session": 11
-          }
+          },
+          "merge_commit": "b6fa4719"
         }
       ]
     },
@@ -304,14 +332,22 @@
           "short_id": "12fdeb5b",
           "title": "Establish 5G NR rate-matched encoder baselines",
           "classification": "research",
-          "status": "pending"
+          "status": "session 11: survey delivered at 208e8783 on worktree-agent-12fdeb5b (worktree .worktrees-local/agent-eda07788-v3): AFF3CT and srsRAN pinned (srsRAN as an extracted shim), 39 matched arms over 24 configurations bit-exact, three non-equivalences recorded, pilot addendum frozen, smoke accepted (five superseded smoke receipts kept by convention), cargo-ci 27/27. REQ-02/03 MET; REQ-01/04 WAITING-ON-WINDOW: pilot queued overnight, confirmation freezes from the committed pilot receipt (at most six cells), second window. Not merged yet.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".worktrees-local/agent-eda07788-v3",
+            "branch": "worktree-agent-12fdeb5b",
+            "base": "ad76be4a",
+            "attempt": 1,
+            "session": 11
+          }
         },
         {
           "id": "1c602857-5e5b-4981-949a-09bb7639476b",
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "in-session work complete at 612c9108 on worktree-agent-1c602857. REQ-02, REQ-03, REQ-05 MET; REQ-01 and REQ-04 WAITING-ON-WINDOW and REQ-04 needs two windows (pilot, then freeze from the committed pilot receipt, then confirmation). Pilot queued as window job 7. Its untimed smoke caught the same 13 ms wire defect class as 6c6b09b1, before it cost a window."
+          "status": "session 11: launcher PATH/toolchain fix and build mode at 3c35eee2 (main merged in); smoke through the real runner reached result lines for all six cells of the frozen v4 pilot; pilot queue line queued for the overnight window (5 min floor). Confirmation freeze then a second window remain."
         }
       ]
     },
@@ -595,6 +631,15 @@
       "status": "resolved",
       "raised_at": "2026-09-12T06:00Z",
       "resolution": "Invoker: 'We cannot get stuck with git hashes and such for provenance. We do HPC and we trust the caller in general. Provenance is informative.' Restoration authorized; a missing gitignored snapshot file is a bug to fix by committing the file, not a reason to invalidate a receipt. Does not relax the measurement contract, the statistical rules, the single-source-of-truth rule, or citation requirements. The 26465e6c v1 popcount pilot is left to a203a23c, which already lists it, rather than reopening a nearly-closed 26465e6c."
+    },
+    {
+      "category": "issue scope change (description)",
+      "issue": "3be770d5",
+      "question": "cites:Cassagne2019 label without [Cassagne2019] in the text failed doc-review and research-review at tier 1",
+      "recommendation": "append the key to the Notes",
+      "status": "resolved",
+      "raised_at": "2026-09-12T17:20Z",
+      "resolution": "Invoker chose to append 'Source references: [Cassagne2019].' (c034bbd8)."
     }
   ],
   "rework_counts": {
@@ -604,7 +649,8 @@
     "c7113c5a": 2,
     "6fb89a3c": 1,
     "26465e6c": 1,
-    "a203a23c": 1
+    "a203a23c": 2,
+    "3be770d5": 1
   },
   "surfaced_pitfalls": [
     {
@@ -844,6 +890,48 @@
       "origin": "invoker observation (session 10), verified",
       "disposition": "benign and consistent: GNU nice warns and still runs the command (exit status is the command's), the wrapper's own comment already calls the pin best-effort, and 146 committed evidence files carry the same warning back to 2026-05-27 — so all committed measurements are mutually comparable at NI=0. The gap is provenance, not validity: on a host where the pin succeeded, measurements would shift and nothing would flag it. Worth recording achieved niceness in the host observation.",
       "criterion_named_by": "epic REQ-01 (measurement contract) and REQ-06 (deterministic seeded execution)"
+    },
+    {
+      "issue": "6c6b09b1",
+      "subject": "in a comparator-gap cell the protocol's decision rule records `fail` (interval below the reciprocal equivalence margin, i.e. the library is materially slower than gf2) whatever the objective; the pairwise confirmation is expected to carry `fail` outcomes and not qualify",
+      "origin": "pre-existing (f547c394 decision-rule naming)",
+      "disposition": "documented in 6c6b09b1 findings.md; the final scorecard (1362381c) must read comparator-gap outcomes with this inversion",
+      "criterion_named_by": "epic REQ-05 (scorecard) reads outcomes; no criterion violated"
+    },
+    {
+      "issue": "6c6b09b1",
+      "subject": "committed receipts embed the producing checkout's absolute paths in plan.json and launcher.log; acceptance never resolves them",
+      "origin": "pre-existing, repository-wide",
+      "disposition": "advisory",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "6c6b09b1",
+      "subject": "the v1 receipt's committed acceptance summary predates the per-cell `alpha` field the current evaluator writes; verdict unchanged",
+      "origin": "pre-existing",
+      "disposition": "advisory; superseded summary left alone",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "3be770d5",
+      "subject": "`other:libc.so.6` (about 5-6% of single-worker samples) is libc code without symbols; one session's call graph attributes it to the per-edge Vec<f32> fill, so the ranked allocation share is a lower bound",
+      "origin": "issue-impact, stated in findings",
+      "disposition": "advisory",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "12fdeb5b",
+      "subject": "the worker deleted the git-ignored eda07788 AFF3CT arm build (.agents/ext/eda07788-v3 inside .worktrees-local/agent-eda07788-v3) after the lead's brief misstated where external builds live; the pinned source and library under .agents/ext/c077a88b are intact and eda07788's committed receipts carry their own snapshots; dev/active/eda07788/survey/nr-derate-build.sh rebuilds it",
+      "origin": "lead brief error",
+      "disposition": "rebuild before any eda07788 re-run (c04dd4ac's worker)",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "1c602857",
+      "subject": "crates/gf2-core/tests/tuning_conservative_cfg.rs is gated on test-support alone but needs tuning-profile; focused feature runs fail to build",
+      "origin": "pre-existing",
+      "disposition": "filed as bug 94ab019f (outside the epic, depends on 1c602857)",
+      "criterion_named_by": "none"
     }
   ],
   "notes": [
@@ -908,7 +996,9 @@
     "Session 10: merged a387825e, bdc507a3, 26465e6c, 04b85d10, 6fb89a3c, 3e59cb9a and a203a23c to main, cargo-ci green after each.",
     "Session 10 (invoker, mid-session): no more new work this session; finish what is in flight and hand off.",
     "2026-09-12T08:36Z: invoker directed the pending campaigns to start immediately, independent of the session. Window launched as systemd user unit gf2-bench-window-20260912b over the committed queue (7 jobs, ~215 min): 3be770d5 profile re-run, 6c6b09b1 three v4 pilots, 3be770d5 two v4 confirmations, 1c602857 pilot. All seven pre-flighted before launch (worktree present, launcher present, no .done key collision with the 2026-09-12 01:00Z window). Follow with dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh.",
-    "Invocation 2026-09-12 (session 11): drive the epic; subagent model by task difficulty, no Fable; four parallel workers in worktrees, reuse worktrees over creating new ones, prune obsolete worktrees. Pruned baseline-check and cargo-budget (pre-epic, clean)."
+    "Invocation 2026-09-12 (session 11): drive the epic; subagent model by task difficulty, no Fable; four parallel workers in worktrees, reuse worktrees over creating new ones, prune obsolete worktrees. Pruned baseline-check and cargo-budget (pre-epic, clean).",
+    "Session 11 lead decision: one independent Terra xhigh review per issue before the gates (not two), to stay inside the Codex weekly budget; the research-review gate is itself a Terra xhigh reading, so convergence is judged between the independent review and the gate.",
+    "Session 11 invoker instruction (2026-09-12 ~18:00Z): no new work this session; finish what is in flight, reserve campaigns for the overnight slot, arm it, then hand off."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -919,59 +1009,27 @@
     "handoff-5.md",
     "handoff-6.md",
     "handoff-7.md",
-    "handoff-8.md"
+    "handoff-8.md",
+    "handoff-9.md"
   ],
   "pending_artifact_links": {
-    "note": "Reported by session-10 workers; not linked because the issue has not closed. Doc types normalized to the jit vocabulary (specification/report/notes/research/reference/benchmark/test).",
-    "1c602857": [
-      [
-        "dev/active/1c602857/findings.md",
-        "research",
-        "1c602857 findings and criterion map"
-      ],
-      [
-        "dev/active/1c602857/addendum-v4-public-clmul-pilot.json",
-        "specification",
-        "Protocol-v4 public-clmul pilot addendum"
-      ],
-      [
-        "dev/active/1c602857/producing-inputs.json",
-        "specification",
-        "Issue-owned producing-input manifest"
-      ],
-      [
-        "dev/active/1c602857/run-public-clmul.sh",
-        "notes",
-        "Protocol-v4 public-clmul campaign launcher"
-      ],
-      [
-        "dev/active/1c602857/make-plan.py",
-        "notes",
-        "Public-clmul campaign plan generator"
-      ],
-      [
-        "dev/active/1c602857/validation.json",
-        "report",
-        "Carry-less product conformance validation"
-      ],
-      [
-        "dev/bench_results/1c602857/public-clmul-dispatch-family-ledger.jsonl",
-        "report",
-        "Public-clmul dispatch family ledger (genesis)"
-      ]
-    ],
-    "6c6b09b1": "23 entries in the session-10 worker report, plus dev/bench_results/6c6b09b1/run-byte-field-v4.test.sh (notes, 'Byte-field v4 launcher outcome guards') and dev/bench_results/6c6b09b1/v3-r1-void-attempts.json (report, 'Byte-field void ledger attempts'). The three v3 addenda link as specification with supersession in the label; the three family ledgers keep version-free labels because the v4 campaigns append to the same files.",
-    "3be770d5": "14 entries in the session-10 worker report, plus dev/bench_results/3be770d5/v3-r1-steady-profile-conditions.md (benchmark, 'Host conditions of the void first profile series'). Link the void series' repetitions.log with 'void' in the label; do NOT link its profile.md, whose every table is empty."
+    "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report."
   },
   "benchmark_window": {
-    "unit": "gf2-bench-window-20260912b",
-    "started_utc": "2026-09-12T08:36:34Z",
-    "queue_sha256": "fe2d43c99ede1fa4de1a446afb1e582a3ea3163c718c97b3eb5eeb762a2a6a26",
+    "unit": "gf2-bench-window-20260913",
+    "armed_for": "2026-09-13T04:00 Europe/Helsinki (01:00Z)",
+    "queue_sha256_prefix": "see git: dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv at 77c2fb6d",
     "jobs": 7,
-    "estimated_minutes": 215,
+    "estimated_minutes": 71,
     "state_dir": ".agents/bench-window",
-    "follow": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh [interval]",
-    "note": "systemd-run --user needs XDG_RUNTIME_DIR and DBUS_SESSION_BUS_ADDRESS set explicitly; they are unset in the agent environment. A job's rc is not evidence it measured anything — check each campaign's own execution log and receipt.",
-    "collected": "session 11, 2026-09-12T15:45Z: six of seven jobs ran (window ended 10:59:56Z). Lead verified from each campaign's own execution log: 6c6b09b1 v4 pilots region-axpy 17/17, matrix-product 14/14, pairwise-control 9/9 cells, all Accepted (exploratory); 3be770d5 v4-r1 single-worker confirmation 2/2 and multicore confirmation 6/6 cells, Accepted qualifies=true; 3be770d5 v4-r1 profile series 9/9 sessions ran but the summary step failed (rep-01 gf2-dvb-w1: 3211 listed samples against 3212 recorded). Job 7 (1c602857 pilot) died in 1 s with rc=127: `ionice: failed to execute cargo` because run-public-clmul.sh does not export ~/.cargo/bin on PATH (3be770d5's launcher does)."
+    "queue": [
+      "1c602857 public-clmul pilot (5)",
+      "04b85d10 count v4 pilot (10, env PATH prefix)",
+      "04b85d10 layout v4 pilot (15, env PATH prefix)",
+      "6c6b09b1 region-axpy/matrix-product/pairwise-control v4 confirmations (7 each)",
+      "12fdeb5b nr-encode pilot (20)"
+    ],
+    "follow": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh (set GF2_WINDOW_UNIT=gf2-bench-window-20260913)",
+    "note": "systemd-run --user needs XDG_RUNTIME_DIR=/run/user/1000 and DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus. The unit's PATH lacks ~/.cargo/bin: every launcher must export it or the queue line must prefix env PATH=... . A job's rc is not evidence it measured anything; judge each campaign from its own execution log and receipt."
   }
 }
