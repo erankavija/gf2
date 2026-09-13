@@ -248,7 +248,9 @@ def main():
            "survey records and receipts named in each section. Speedup is "
            "`median(baseline) / median(candidate)`; below 1 in a `-gap-` cell means gf2 "
            "is faster. Relative half-width is "
-           "`max(estimate - lower, upper - estimate) / estimate`.\n"]
+           "`max(estimate - lower, upper - estimate) / estimate`.\n",
+           "Regenerate, from the worktree root, with:\n",
+           "```\n" + " ".join(["dev/bench_results/12fdeb5b/summarize.py", *sys.argv[1:]]) + "\n```\n"]
     configuration_rows(out)
     validation_rows(out)
     if directories:
@@ -257,9 +259,8 @@ def main():
     else:
         out.append("## Measured cells\n")
         out.append(
-            "No receipt is committed yet. The pilot and the confirmation are window "
-            "jobs; this section fills in when their receipt directories are passed to "
-            "the generator.\n"
+            "The generator was given no receipt directory. Each directory passed on "
+            "the command line contributes one section of measured cells here.\n"
         )
     output.write_text("\n".join(out) + "\n")
     print(f"tables -> {output}")
