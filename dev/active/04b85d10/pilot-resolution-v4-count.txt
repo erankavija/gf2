@@ -1,0 +1,10 @@
+receipt dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot/receipt.json
+receipt_sha256 a06c966e3a3e600c1de547a36c9177da55cd4193ff5b7ba7bc7ee37fa0667e79
+label pilot verdict accepted findings 0
+family bit-storage-count-consumers comparisons 5 family_alpha 0.025 per-comparison confidence 0.995
+
+cell_id                                               estimate     lower     upper  rel_half
+count-ldpc-check-64800-1core                            1.0019    0.9969    1.0056    0.0050
+
+largest relative half-width: 0.004951
+rounded up to two decimals:  0.01
