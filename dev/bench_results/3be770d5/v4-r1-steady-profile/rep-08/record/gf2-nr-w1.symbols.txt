@@ -1,0 +1,33 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 8824081622
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    68.68%          1515  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    18.04%           398  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.76%            83  libc.so.6         [.] cfree
+     3.63%            80  libc.so.6         [.] malloc
+     1.54%            34  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.04%            23  libc.so.6         [.] 0x0000000000176400
+     0.91%            20  libc.so.6         [.] 0x000000000017646c
+     0.63%            14  libc.so.6         [.] 0x0000000000176466
+     0.45%            10  libc.so.6         [.] 0x0000000000176404
+     0.32%             7  libc.so.6         [.] 0x0000000000176485
+     0.27%             6  libc.so.6         [.] 0x0000000000176470
+     0.27%             6  libc.so.6         [.] 0x0000000000176497
+     0.14%             3  libc.so.6         [.] 0x0000000000176476
+     0.09%             2  libc.so.6         [.] 0x0000000000176411
+     0.09%             2  libc.so.6         [.] 0x00000000001764b2
+     0.09%             2  libc.so.6         [.] 0x00000000001764db
+     0.05%             1  [unknown]         [k] 0xffffffffad4015f4
+
+
+#
+# (Tip: To add Node.js USDT(User-Level Statically Defined Tracing): perf buildid-cache --add `which node`)
+#

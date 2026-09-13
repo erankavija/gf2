@@ -1,0 +1,10 @@
+start=2026-09-12T09:22:25Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-single-worker-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-single-worker-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-single-worker-confirmation/execution.log
+terminal=3 end=2026-09-12T09:31:12Z
+start=2026-09-12T09:31:12Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-single-worker-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-single-worker-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3be770d5/target/ldpc-steady-campaigns/v4-r1-single-worker-confirmation/execution.log
+terminal=0 end=2026-09-12T09:36:45Z

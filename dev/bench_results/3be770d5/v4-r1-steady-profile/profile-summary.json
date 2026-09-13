@@ -1,0 +1,3343 @@
+{
+  "schema": "ldpc-steady-profile-summary-v1",
+  "source": "dev/bench_results/3be770d5/v4-r1-steady-profile",
+  "sessions": 9,
+  "resolution": {
+    "resolved": true,
+    "offset_convention": "file-offset",
+    "symbol_agreement": {
+      "offset-is-address": 240,
+      "file-offset": 755
+    },
+    "addresses": 755,
+    "executable": "target/ldpc-throughput/release/ldpc-profile"
+  },
+  "records": {
+    "gf2-dvb-w1": {
+      "kind": "record",
+      "label": "gf2-dvb-w1",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 9,
+      "total_samples": 28853,
+      "session_totals": [
+        3212,
+        3213,
+        3206,
+        3208,
+        3196,
+        3210,
+        3206,
+        3200,
+        3202
+      ],
+      "categories": [
+        {
+          "category": "edge-position-search",
+          "samples": 9790,
+          "share": 0.33930613800991233,
+          "wilson_lower": 0.3338646327036095,
+          "wilson_upper": 0.34479042685192923,
+          "session_min": 0.3259375,
+          "session_max": 0.3485037406483791
+        },
+        {
+          "category": "check-node-loop",
+          "samples": 6816,
+          "share": 0.23623193428759576,
+          "wilson_lower": 0.2313660452876223,
+          "wilson_upper": 0.24116804955707236,
+          "session_min": 0.22769806612601373,
+          "session_max": 0.24517133956386292
+        },
+        {
+          "category": "allocator",
+          "samples": 4755,
+          "share": 0.1648008872560912,
+          "wilson_lower": 0.16056473760109508,
+          "wilson_upper": 0.16912628116120226,
+          "session_min": 0.1616822429906542,
+          "session_max": 0.16781035558328133
+        },
+        {
+          "category": "min-sum-reduction",
+          "samples": 2428,
+          "share": 0.08415069490174332,
+          "wilson_lower": 0.08100251874525231,
+          "wilson_upper": 0.087409587817269,
+          "session_min": 0.07704304429195259,
+          "session_max": 0.093125
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 1827,
+          "share": 0.06332097182268742,
+          "wilson_lower": 0.0605685888062872,
+          "wilson_upper": 0.06618961735569036,
+          "session_min": 0.05610972568578554,
+          "session_max": 0.06955708047411104
+        },
+        {
+          "category": "syndrome-termination",
+          "samples": 1218,
+          "share": 0.04221398121512494,
+          "wilson_lower": 0.039954132090785306,
+          "wilson_upper": 0.04459571243403556,
+          "session_min": 0.038053649407361195,
+          "session_max": 0.0496875
+        },
+        {
+          "category": "min-sum-dispatch",
+          "samples": 952,
+          "share": 0.03299483589228157,
+          "wilson_lower": 0.030995147021536152,
+          "wilson_upper": 0.03511886138590593,
+          "session_min": 0.02836658354114713,
+          "session_max": 0.03836556456643793
+        },
+        {
+          "category": "variable-node-update",
+          "samples": 911,
+          "share": 0.0315738398086854,
+          "wilson_lower": 0.029617700829848798,
+          "wilson_upper": 0.03365469373995218,
+          "session_min": 0.028473091364205255,
+          "session_max": 0.03466583385384135
+        },
+        {
+          "category": "decode-loop-other",
+          "samples": 68,
+          "share": 0.002356773992305826,
+          "wilson_lower": 0.0018596507141255465,
+          "wilson_upper": 0.002986391047591541,
+          "session_min": 0.0015586034912718205,
+          "session_max": 0.005292652552926526
+        },
+        {
+          "category": "min-sum-input-vec",
+          "samples": 44,
+          "share": 0.0015249714067861228,
+          "wilson_lower": 0.0011362467742744423,
+          "wilson_upper": 0.002046411277603958,
+          "session_min": 0.0003125,
+          "session_max": 0.002495321272613849
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 24,
+          "share": 0.0008318025855197033,
+          "wilson_lower": 0.0005590562495638617,
+          "wilson_upper": 0.0012374487107822993,
+          "session_min": 0.00031133250311332503,
+          "session_max": 0.0018738288569643974
+        },
+        {
+          "category": "message-reset",
+          "samples": 10,
+          "share": 0.0003465844106332097,
+          "wilson_lower": 0.0001882746632936423,
+          "wilson_upper": 0.0006379231329799513,
+          "session_min": 0.0,
+          "session_max": 0.000625
+        },
+        {
+          "category": "conversion-output",
+          "samples": 10,
+          "share": 0.0003465844106332097,
+          "wilson_lower": 0.0001882746632936423,
+          "wilson_upper": 0.0006379231329799513,
+          "session_min": 0.0,
+          "session_max": 0.0006238303181534623
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "non_null.rs:1720 in next",
+          "samples": 3499,
+          "share": 0.12126988528056008,
+          "wilson_lower": 0.11755355194601581,
+          "wilson_upper": 0.12508705266805692
+        },
+        {
+          "innermost": "macros.rs:384 in find_check_position",
+          "samples": 3139,
+          "share": 0.10879284649776454,
+          "wilson_lower": 0.10525191122373566,
+          "wilson_upper": 0.1124379377427568
+        },
+        {
+          "innermost": "mod.rs:612 in ptr",
+          "samples": 3076,
+          "share": 0.10660936471077531,
+          "wilson_lower": 0.10310059347511656,
+          "wilson_upper": 0.11022287325304934
+        },
+        {
+          "innermost": "index.rs:272 in index",
+          "samples": 2879,
+          "share": 0.09978165182130108,
+          "wilson_lower": 0.09637653506836565,
+          "wilson_upper": 0.1032933237082077
+        },
+        {
+          "innermost": "macros.rs:384 in check_to_var_message",
+          "samples": 2441,
+          "share": 0.08460125463556649,
+          "wilson_lower": 0.0814452473240542,
+          "wilson_upper": 0.08786785874796307
+        },
+        {
+          "innermost": "[unknown] (libc.so.6)",
+          "samples": 1827,
+          "share": 0.06332097182268742,
+          "wilson_lower": 0.0605685888062872,
+          "wilson_upper": 0.06618961735569036
+        },
+        {
+          "innermost": "mod.rs:1034 in push",
+          "samples": 1258,
+          "share": 0.043600318857657784,
+          "wilson_lower": 0.04130422184832046,
+          "wilson_upper": 0.04601792885956489
+        },
+        {
+          "innermost": "core.rs:1209 in check_node_update",
+          "samples": 1189,
+          "share": 0.04120888642428863,
+          "wilson_lower": 0.03897574118420759,
+          "wilson_upper": 0.043564181357891515
+        },
+        {
+          "innermost": "malloc (libc.so.6)",
+          "samples": 804,
+          "share": 0.027865386614910063,
+          "wilson_lower": 0.026028222128013596,
+          "wilson_upper": 0.029828253402089902
+        },
+        {
+          "innermost": "llr.rs:0 in check_node_update",
+          "samples": 791,
+          "share": 0.027414826881086887,
+          "wilson_lower": 0.025592690651487046,
+          "wilson_upper": 0.029362785369120493
+        },
+        {
+          "innermost": "macros.rs:0 in find_check_position",
+          "samples": 701,
+          "share": 0.024295567185388,
+          "wilson_lower": 0.022581342310753226,
+          "wilson_upper": 0.026136444797959235
+        },
+        {
+          "innermost": "cfree (libc.so.6)",
+          "samples": 666,
+          "share": 0.023082521748171766,
+          "wilson_lower": 0.021412262936444198,
+          "wilson_upper": 0.024879756262086845
+        },
+        {
+          "innermost": "mod.rs:1028 in push",
+          "samples": 659,
+          "share": 0.02283991266072852,
+          "wilson_lower": 0.021178594178662864,
+          "wilson_upper": 0.024628271437831896
+        },
+        {
+          "innermost": "llr.rs:91 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 547,
+          "share": 0.01895816726163657,
+          "wilson_lower": 0.017447405667219074,
+          "wilson_upper": 0.020597002636695148
+        },
+        {
+          "innermost": "llr.rs:166 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 408,
+          "share": 0.014140643953834957,
+          "wilson_lower": 0.01284150954623469,
+          "wilson_upper": 0.015569134771530466
+        },
+        {
+          "innermost": "macros.rs:180 in minsum_avx2_f32",
+          "samples": 387,
+          "share": 0.013412816691505217,
+          "wilson_lower": 0.012148766084476244,
+          "wilson_upper": 0.014806417487180062
+        },
+        {
+          "innermost": "llr.rs:174 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 382,
+          "share": 0.013239524486188611,
+          "wilson_lower": 0.011983971674025592,
+          "wilson_upper": 0.014624673624747654
+        },
+        {
+          "innermost": "f32.rs:1019 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 357,
+          "share": 0.012373063459605586,
+          "wilson_lower": 0.011160889831454834,
+          "wilson_upper": 0.01371506410290311
+        },
+        {
+          "innermost": "f32.rs:1019 in minsum_avx2_f32",
+          "samples": 297,
+          "share": 0.010293556995806329,
+          "wilson_lower": 0.00919237012299089,
+          "wilson_upper": 0.011525124536770338
+        },
+        {
+          "innermost": "bitvec.rs:291 in hard_decode",
+          "samples": 227,
+          "share": 0.00786746612137386,
+          "wilson_lower": 0.006911520114815869,
+          "wilson_upper": 0.008954438724582521
+        },
+        {
+          "innermost": "macros.rs:0 in check_to_var_message",
+          "samples": 216,
+          "share": 0.00748622326967733,
+          "wilson_lower": 0.006555086029322641,
+          "wilson_upper": 0.00854848860973302
+        },
+        {
+          "innermost": "index.rs:278 in index_mut",
+          "samples": 201,
+          "share": 0.006966346653727516,
+          "wilson_lower": 0.0060700983530534575,
+          "wilson_upper": 0.007993861467353022
+        },
+        {
+          "innermost": "core.rs:1207 in check_node_update",
+          "samples": 172,
+          "share": 0.005961251862891207,
+          "wilson_lower": 0.005136421399340296,
+          "wilson_upper": 0.006917616438344437
+        },
+        {
+          "innermost": "bitvec.rs:354 in matvec",
+          "samples": 169,
+          "share": 0.0058572765397012444,
+          "wilson_lower": 0.005040171248621652,
+          "wilson_upper": 0.006805943625333245
+        },
+        {
+          "innermost": "mod.rs:137 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 157,
+          "share": 0.005441375246941393,
+          "wilson_lower": 0.004655885742445664,
+          "wilson_upper": 0.006358537276589889
+        }
+      ]
+    },
+    "gf2-nr-w1": {
+      "kind": "record",
+      "label": "gf2-nr-w1",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 9,
+      "total_samples": 19840,
+      "session_totals": [
+        2204,
+        2201,
+        2209,
+        2203,
+        2207,
+        2207,
+        2203,
+        2206,
+        2200
+      ],
+      "categories": [
+        {
+          "category": "edge-position-search",
+          "samples": 5574,
+          "share": 0.2809475806451613,
+          "wilson_lower": 0.2747362702063159,
+          "wilson_upper": 0.2872437013613182,
+          "session_min": 0.2587380844303223,
+          "session_max": 0.2990484821024014
+        },
+        {
+          "category": "allocator",
+          "samples": 4157,
+          "share": 0.20952620967741936,
+          "wilson_lower": 0.2039197931412929,
+          "wilson_upper": 0.2152450886222312,
+          "session_min": 0.1993656547349343,
+          "session_max": 0.22529465095194923
+        },
+        {
+          "category": "check-node-loop",
+          "samples": 4001,
+          "share": 0.2016633064516129,
+          "wilson_lower": 0.196138094316984,
+          "wilson_upper": 0.2073040252662711,
+          "session_min": 0.1893973719981876,
+          "session_max": 0.21052631578947367
+        },
+        {
+          "category": "min-sum-reduction",
+          "samples": 2975,
+          "share": 0.14994959677419356,
+          "wilson_lower": 0.14504948661125408,
+          "wilson_upper": 0.15498523555561647,
+          "session_min": 0.13916591115140525,
+          "session_max": 0.16114389468906037
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 978,
+          "share": 0.04929435483870968,
+          "wilson_lower": 0.046368327980755804,
+          "wilson_upper": 0.05239488089126095,
+          "session_min": 0.04306436990027199,
+          "session_max": 0.05497501135847342
+        },
+        {
+          "category": "min-sum-dispatch",
+          "samples": 938,
+          "share": 0.047278225806451614,
+          "wilson_lower": 0.044411664705872225,
+          "wilson_upper": 0.05032006668402428,
+          "session_min": 0.04345857854232685,
+          "session_max": 0.05628688152519292
+        },
+        {
+          "category": "syndrome-termination",
+          "samples": 643,
+          "share": 0.03240927419354839,
+          "wilson_lower": 0.03003427204437223,
+          "wilson_upper": 0.034965312914887386,
+          "session_min": 0.029918404351767906,
+          "session_max": 0.034545454545454546
+        },
+        {
+          "category": "variable-node-update",
+          "samples": 491,
+          "share": 0.024747983870967744,
+          "wilson_lower": 0.022676486831758973,
+          "wilson_upper": 0.02700348369544368,
+          "session_min": 0.02224239673172946,
+          "session_max": 0.030811055731762575
+        },
+        {
+          "category": "decode-loop-other",
+          "samples": 30,
+          "share": 0.0015120967741935483,
+          "wilson_lower": 0.0010594260504989635,
+          "wilson_upper": 0.0021577664952677363,
+          "session_min": 0.00045372050816696913,
+          "session_max": 0.003173164097914778
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 22,
+          "share": 0.0011088709677419355,
+          "wilson_lower": 0.000732427010414909,
+          "wilson_upper": 0.0016784700389277391,
+          "session_min": 0.0,
+          "session_max": 0.002271694684234439
+        },
+        {
+          "category": "min-sum-input-vec",
+          "samples": 21,
+          "share": 0.001058467741935484,
+          "wilson_lower": 0.0006924373899286719,
+          "wilson_upper": 0.0016176727223609702,
+          "session_min": 0.00045310376076121433,
+          "session_max": 0.0018157058556513845
+        },
+        {
+          "category": "conversion-output",
+          "samples": 9,
+          "share": 0.00045362903225806454,
+          "wilson_lower": 0.00023868070216968027,
+          "wilson_upper": 0.0008619861654838848,
+          "session_min": 0.0,
+          "session_max": 0.0013611615245009074
+        },
+        {
+          "category": "message-reset",
+          "samples": 1,
+          "share": 5.040322580645161e-05,
+          "wilson_lower": 8.897462412003985e-06,
+          "wilson_upper": 0.0002854739088175099,
+          "session_min": 0.0,
+          "session_max": 0.00045330915684496827
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "mod.rs:612 in ptr",
+          "samples": 2788,
+          "share": 0.1405241935483871,
+          "wilson_lower": 0.13575793530306698,
+          "wilson_upper": 0.1454296296348914
+        },
+        {
+          "innermost": "macros.rs:384 in find_check_position",
+          "samples": 2307,
+          "share": 0.11628024193548388,
+          "wilson_lower": 0.11189379667579663,
+          "wilson_upper": 0.12081525153966566
+        },
+        {
+          "innermost": "non_null.rs:1720 in next",
+          "samples": 1436,
+          "share": 0.07237903225806451,
+          "wilson_lower": 0.06885568335359742,
+          "wilson_upper": 0.07606794268869628
+        },
+        {
+          "innermost": "index.rs:272 in index",
+          "samples": 1362,
+          "share": 0.0686491935483871,
+          "wilson_lower": 0.06521359414006495,
+          "wilson_upper": 0.07225179856030628
+        },
+        {
+          "innermost": "llr.rs:166 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 1034,
+          "share": 0.05211693548387097,
+          "wilson_lower": 0.049109978104494335,
+          "wilson_upper": 0.05529729924249078
+        },
+        {
+          "innermost": "mod.rs:1034 in push",
+          "samples": 999,
+          "share": 0.05035282258064516,
+          "wilson_lower": 0.04739613861308391,
+          "wilson_upper": 0.05348359593704599
+        },
+        {
+          "innermost": "[unknown] (libc.so.6)",
+          "samples": 978,
+          "share": 0.04929435483870968,
+          "wilson_lower": 0.046368327980755804,
+          "wilson_upper": 0.05239488089126095
+        },
+        {
+          "innermost": "core.rs:1209 in check_node_update",
+          "samples": 913,
+          "share": 0.046018145161290325,
+          "wilson_lower": 0.04318949469067247,
+          "wilson_upper": 0.049022563272898875
+        },
+        {
+          "innermost": "macros.rs:384 in check_to_var_message",
+          "samples": 895,
+          "share": 0.045110887096774195,
+          "wilson_lower": 0.04230990220460385,
+          "wilson_upper": 0.048087990892013384
+        },
+        {
+          "innermost": "malloc (libc.so.6)",
+          "samples": 662,
+          "share": 0.033366935483870964,
+          "wilson_lower": 0.030956878078690245,
+          "wilson_upper": 0.035957658684576496
+        },
+        {
+          "innermost": "cfree (libc.so.6)",
+          "samples": 566,
+          "share": 0.028528225806451615,
+          "wilson_lower": 0.02630143586399001,
+          "wilson_upper": 0.030937554942188125
+        },
+        {
+          "innermost": "llr.rs:0 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 529,
+          "share": 0.026663306451612905,
+          "wilson_lower": 0.024511642189358578,
+          "wilson_upper": 0.02899823194585832
+        },
+        {
+          "innermost": "range.rs:772 in next",
+          "samples": 486,
+          "share": 0.024495967741935482,
+          "wilson_lower": 0.022435263759629415,
+          "wilson_upper": 0.0267407720823082
+        },
+        {
+          "innermost": "mod.rs:1028 in push",
+          "samples": 456,
+          "share": 0.022983870967741935,
+          "wilson_lower": 0.020989210204826282,
+          "wilson_upper": 0.02516321752552115
+        },
+        {
+          "innermost": "macros.rs:0 in find_check_position",
+          "samples": 456,
+          "share": 0.022983870967741935,
+          "wilson_lower": 0.020989210204826282,
+          "wilson_upper": 0.02516321752552115
+        },
+        {
+          "innermost": "f32.rs:1019 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 447,
+          "share": 0.02253024193548387,
+          "wilson_lower": 0.02055584371738422,
+          "wilson_upper": 0.02468950157948615
+        },
+        {
+          "innermost": "llr.rs:0 in check_node_update",
+          "samples": 377,
+          "share": 0.019002016129032257,
+          "wilson_lower": 0.017193218735547418,
+          "wilson_upper": 0.020997040967612506
+        },
+        {
+          "innermost": "llr.rs:91 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 281,
+          "share": 0.014163306451612904,
+          "wilson_lower": 0.012610599982952747,
+          "wilson_upper": 0.01590411376311856
+        },
+        {
+          "innermost": "llr.rs:174 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 199,
+          "share": 0.010030241935483871,
+          "wilson_lower": 0.008735409172410698,
+          "wilson_upper": 0.011514775735314084
+        },
+        {
+          "innermost": "macros.rs:180 in position",
+          "samples": 155,
+          "share": 0.0078125,
+          "wilson_lower": 0.006679105274998272,
+          "wilson_upper": 0.009136454402394228
+        },
+        {
+          "innermost": "mod.rs:1815 in deref",
+          "samples": 142,
+          "share": 0.007157258064516129,
+          "wilson_lower": 0.0060759236695873756,
+          "wilson_upper": 0.008429405826116041
+        },
+        {
+          "innermost": "core.rs:1207 in check_node_update",
+          "samples": 130,
+          "share": 0.00655241935483871,
+          "wilson_lower": 0.005521328820918537,
+          "wilson_upper": 0.007774557430148802
+        },
+        {
+          "innermost": "macros.rs:180 in minsum_avx2_f32",
+          "samples": 119,
+          "share": 0.005997983870967742,
+          "wilson_lower": 0.005015052379968446,
+          "wilson_upper": 0.007172177563515821
+        },
+        {
+          "innermost": "bitvec.rs:354 in matvec",
+          "samples": 116,
+          "share": 0.005846774193548387,
+          "wilson_lower": 0.0048773628587913415,
+          "wilson_upper": 0.0070075062735339075
+        },
+        {
+          "innermost": "index.rs:278 in index_mut",
+          "samples": 106,
+          "share": 0.005342741935483871,
+          "wilson_lower": 0.004419718544204876,
+          "wilson_upper": 0.006457281217590308
+        }
+      ]
+    },
+    "gf2-dvb-l24": {
+      "kind": "record",
+      "label": "gf2-dvb-l24",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 9,
+      "total_samples": 2289264,
+      "session_totals": [
+        256003,
+        255406,
+        252159,
+        249607,
+        262148,
+        249991,
+        258655,
+        253188,
+        252107
+      ],
+      "categories": [
+        {
+          "category": "edge-position-search",
+          "samples": 1194162,
+          "share": 0.521635774641981,
+          "wilson_lower": 0.5209886511221697,
+          "wilson_upper": 0.5222828255508589,
+          "session_min": 0.516211484453561,
+          "session_max": 0.5302653462929338
+        },
+        {
+          "category": "check-node-loop",
+          "samples": 397573,
+          "share": 0.17366848035001642,
+          "wilson_lower": 0.17317830346886612,
+          "wilson_upper": 0.17415975241895723,
+          "session_min": 0.16666920975937258,
+          "session_max": 0.17983470014863365
+        },
+        {
+          "category": "variable-node-update",
+          "samples": 251311,
+          "share": 0.10977807714619196,
+          "wilson_lower": 0.10937377644494194,
+          "wilson_upper": 0.1101836874551868,
+          "session_min": 0.10460043187891366,
+          "session_max": 0.1145116081266552
+        },
+        {
+          "category": "allocator",
+          "samples": 235632,
+          "share": 0.1029291510284528,
+          "wilson_lower": 0.10253619205020893,
+          "wilson_upper": 0.1033234425998407,
+          "session_min": 0.09973755283275096,
+          "session_max": 0.10625503291173725
+        },
+        {
+          "category": "min-sum-reduction",
+          "samples": 104490,
+          "share": 0.04564349065900656,
+          "wilson_lower": 0.04537389070358654,
+          "wilson_upper": 0.045914615461619145,
+          "session_min": 0.043631841555152054,
+          "session_max": 0.04756571236564516
+        },
+        {
+          "category": "syndrome-termination",
+          "samples": 41570,
+          "share": 0.018158674578379778,
+          "wilson_lower": 0.017986514526879403,
+          "wilson_upper": 0.018332451717733476,
+          "session_min": 0.017956820818506032,
+          "session_max": 0.01838890736237365
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 28545,
+          "share": 0.012469073029585054,
+          "wilson_lower": 0.012326143965940572,
+          "wilson_upper": 0.012613638275720592,
+          "session_min": 0.011920747058913286,
+          "session_max": 0.013047323315844368
+        },
+        {
+          "category": "min-sum-dispatch",
+          "samples": 26399,
+          "share": 0.01153165384158402,
+          "wilson_lower": 0.011394169551902016,
+          "wilson_upper": 0.011670777459791063,
+          "session_min": 0.01113111677373087,
+          "session_max": 0.011812565092441055
+        },
+        {
+          "category": "min-sum-input-vec",
+          "samples": 2815,
+          "share": 0.0012296528491253084,
+          "wilson_lower": 0.0011850854294667933,
+          "wilson_upper": 0.001275894171430656,
+          "session_min": 0.0011640488588024358,
+          "session_max": 0.0013007919190686178
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 2448,
+          "share": 0.0010693393160421864,
+          "wilson_lower": 0.0010278307575878884,
+          "wilson_upper": 0.001112522315164971,
+          "session_min": 0.00099943543341929,
+          "session_max": 0.0011423720880419821
+        },
+        {
+          "category": "decode-loop-other",
+          "samples": 2258,
+          "share": 0.0009863432089964284,
+          "wilson_lower": 0.0009465089372268259,
+          "wilson_upper": 0.001027852199974339,
+          "session_min": 0.0009160886583465195,
+          "session_max": 0.0010375637220738745
+        },
+        {
+          "category": "conversion-output",
+          "samples": 973,
+          "share": 0.0004250274323974867,
+          "wilson_lower": 0.00039915228863737605,
+          "wilson_upper": 0.00045257917917469547,
+          "session_min": 0.00038661537569349133,
+          "session_max": 0.00047589021212806205
+        },
+        {
+          "category": "message-reset",
+          "samples": 721,
+          "share": 0.00031494838515784985,
+          "wilson_lower": 0.0002927862350480067,
+          "wilson_upper": 0.00033878750771655387,
+          "session_min": 0.0002640095043421563,
+          "session_max": 0.00036341845315188186
+        },
+        {
+          "category": "other:llr.rs",
+          "samples": 343,
+          "share": 0.0001498298142983946,
+          "wilson_lower": 0.00013479140239627417,
+          "wilson_upper": 0.0001665457527970199,
+          "session_min": 0.00011354470920808439,
+          "session_max": 0.00018944153408981075
+        },
+        {
+          "category": "other:avx2.rs",
+          "samples": 18,
+          "share": 7.862789088545489e-06,
+          "wilson_lower": 4.973813768968109e-06,
+          "wilson_upper": 1.2429767454321785e-05,
+          "session_min": 0.0,
+          "session_max": 1.201889370089781e-05
+        },
+        {
+          "category": "other:mod.rs",
+          "samples": 5,
+          "share": 2.1841080801515245e-06,
+          "wilson_lower": 9.329207716310371e-07,
+          "wilson_upper": 5.113317492858691e-06,
+          "session_min": 0.0,
+          "session_max": 7.629278117704503e-06
+        },
+        {
+          "category": "other:range.rs",
+          "samples": 1,
+          "share": 4.3682161603030494e-07,
+          "wilson_lower": 7.710974551747928e-08,
+          "wilson_upper": 2.4745614547260425e-06,
+          "session_min": 0.0,
+          "session_max": 3.915334800278772e-06
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "macros.rs:384 in check_to_var_message",
+          "samples": 510032,
+          "share": 0.2227930024671685,
+          "wilson_lower": 0.22225443001235773,
+          "wilson_upper": 0.22333250524498166
+        },
+        {
+          "innermost": "non_null.rs:1720 in next",
+          "samples": 449152,
+          "share": 0.19619930248324352,
+          "wilson_lower": 0.19568538625920842,
+          "wilson_upper": 0.19671423828030374
+        },
+        {
+          "innermost": "macros.rs:384 in find_check_position",
+          "samples": 390062,
+          "share": 0.1703875131920128,
+          "wilson_lower": 0.16990103530915096,
+          "wilson_upper": 0.17087509727378414
+        },
+        {
+          "innermost": "core.rs:1209 in check_node_update",
+          "samples": 167958,
+          "share": 0.07336768498521795,
+          "wilson_lower": 0.07303064191691554,
+          "wilson_upper": 0.07370615985668467
+        },
+        {
+          "innermost": "index.rs:272 in index",
+          "samples": 150496,
+          "share": 0.06573990592609677,
+          "wilson_lower": 0.06541960187318535,
+          "wilson_upper": 0.06606166738144806
+        },
+        {
+          "innermost": "mod.rs:612 in ptr",
+          "samples": 128296,
+          "share": 0.056042466050224005,
+          "wilson_lower": 0.0557452660992385,
+          "wilson_upper": 0.056341155948828485
+        },
+        {
+          "innermost": "cfree (libc.so.6)",
+          "samples": 56738,
+          "share": 0.02478438485032744,
+          "wilson_lower": 0.024583790103490197,
+          "wilson_upper": 0.02498657444874429
+        },
+        {
+          "innermost": "malloc (libc.so.6)",
+          "samples": 47282,
+          "share": 0.020653799649144877,
+          "wilson_lower": 0.020470369053270394,
+          "wilson_upper": 0.020838838959086062
+        },
+        {
+          "innermost": "core.rs:1219 in check_node_update",
+          "samples": 29049,
+          "share": 0.012689231124064329,
+          "wilson_lower": 0.01254505442729341,
+          "wilson_upper": 0.01283504326446278
+        },
+        {
+          "innermost": "mod.rs:1034 in push",
+          "samples": 28649,
+          "share": 0.012514502477652206,
+          "wilson_lower": 0.012371315035065805,
+          "wilson_upper": 0.012659325950265764
+        },
+        {
+          "innermost": "[unknown] (libc.so.6)",
+          "samples": 28545,
+          "share": 0.012469073029585054,
+          "wilson_lower": 0.012326143965940572,
+          "wilson_upper": 0.012613638275720592
+        },
+        {
+          "innermost": "llr.rs:174 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 27439,
+          "share": 0.011985948322255538,
+          "wilson_lower": 0.011845797816130819,
+          "wilson_upper": 0.012127736632266272
+        },
+        {
+          "innermost": "f32.rs:1019 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 26287,
+          "share": 0.011482729820588625,
+          "wilson_lower": 0.011345535881931304,
+          "wilson_upper": 0.011621563251962877
+        },
+        {
+          "innermost": "mod.rs:1028 in push",
+          "samples": 23024,
+          "share": 0.01005738088748174,
+          "wilson_lower": 0.009928945442218149,
+          "wilson_upper": 0.01018746060901719
+        },
+        {
+          "innermost": "macros.rs:0 in find_check_position",
+          "samples": 19157,
+          "share": 0.008368191698292551,
+          "wilson_lower": 0.00825101139219852,
+          "wilson_upper": 0.0084870219496768
+        },
+        {
+          "innermost": "core.rs:1207 in check_node_update",
+          "samples": 15369,
+          "share": 0.006713511416769757,
+          "wilson_lower": 0.0066085538925949455,
+          "wilson_upper": 0.0068201244394392214
+        },
+        {
+          "innermost": "llr.rs:166 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 14142,
+          "share": 0.006177531293900572,
+          "wilson_lower": 0.006076857581872268,
+          "wilson_upper": 0.006279862303204375
+        },
+        {
+          "innermost": "index.rs:278 in index_mut",
+          "samples": 13644,
+          "share": 0.00595999412911748,
+          "wilson_lower": 0.0058611129293354115,
+          "wilson_upper": 0.006060533356242578
+        },
+        {
+          "innermost": "llr.rs:91 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 12489,
+          "share": 0.005455465162602478,
+          "wilson_lower": 0.00536087396594588,
+          "wilson_upper": 0.005551716079831018
+        },
+        {
+          "innermost": "mod.rs:1815 in deref",
+          "samples": 10992,
+          "share": 0.0048015432034051115,
+          "wilson_lower": 0.004712824539810886,
+          "wilson_upper": 0.004891923782171868
+        },
+        {
+          "innermost": "macros.rs:0 in check_to_var_message",
+          "samples": 9376,
+          "share": 0.0040956394719001395,
+          "wilson_lower": 0.004013736202371332,
+          "wilson_upper": 0.004179207025655957
+        },
+        {
+          "innermost": "bitvec.rs:354 in matvec",
+          "samples": 8126,
+          "share": 0.003549612451862258,
+          "wilson_lower": 0.003473400682939656,
+          "wilson_upper": 0.0036274903375106936
+        },
+        {
+          "innermost": "macros.rs:180 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 7044,
+          "share": 0.003076971463317468,
+          "wilson_lower": 0.0030060553543468714,
+          "wilson_upper": 0.00314955527522488
+        },
+        {
+          "innermost": "macros.rs:180 in position",
+          "samples": 6952,
+          "share": 0.00303678387464268,
+          "wilson_lower": 0.0029663364266569415,
+          "wilson_upper": 0.0031088991604371462
+        },
+        {
+          "innermost": "llr.rs:0 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 6824,
+          "share": 0.002980870707790801,
+          "wilson_lower": 0.002911080545603298,
+          "wilson_upper": 0.0030523288954349107
+        }
+      ]
+    },
+    "gf2-nr-l24": {
+      "kind": "record",
+      "label": "gf2-nr-l24",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 9,
+      "total_samples": 993912,
+      "session_totals": [
+        111004,
+        110637,
+        110109,
+        109864,
+        110570,
+        109511,
+        110653,
+        111191,
+        110373
+      ],
+      "categories": [
+        {
+          "category": "edge-position-search",
+          "samples": 373060,
+          "share": 0.37534510097473417,
+          "wilson_lower": 0.37439364448243556,
+          "wilson_upper": 0.376297521042904,
+          "session_min": 0.37109517221291777,
+          "session_max": 0.3786727343040354
+        },
+        {
+          "category": "check-node-loop",
+          "samples": 252596,
+          "share": 0.2541432239473917,
+          "wilson_lower": 0.2532882396620031,
+          "wilson_upper": 0.2550001086928426,
+          "session_min": 0.2518594163737088,
+          "session_max": 0.25793708585159836
+        },
+        {
+          "category": "allocator",
+          "samples": 171785,
+          "share": 0.17283723307496035,
+          "wilson_lower": 0.17209515660753383,
+          "wilson_upper": 0.1735818384935201,
+          "session_min": 0.17078663831933985,
+          "session_max": 0.17508009903152988
+        },
+        {
+          "category": "min-sum-reduction",
+          "samples": 90874,
+          "share": 0.09143062967345197,
+          "wilson_lower": 0.0908655783814337,
+          "wilson_upper": 0.09199883918540404,
+          "session_min": 0.08926096056100677,
+          "session_max": 0.09277185751602086
+        },
+        {
+          "category": "variable-node-update",
+          "samples": 38381,
+          "share": 0.038616094785051396,
+          "wilson_lower": 0.03823907738839619,
+          "wilson_upper": 0.03899667865524185,
+          "session_min": 0.03714592587198719,
+          "session_max": 0.03989045439803971
+        },
+        {
+          "category": "min-sum-dispatch",
+          "samples": 24738,
+          "share": 0.02488952744307343,
+          "wilson_lower": 0.02458508536324093,
+          "wilson_upper": 0.025197642102091168,
+          "session_min": 0.023840013077950032,
+          "session_max": 0.02556751379216786
+        },
+        {
+          "category": "syndrome-termination",
+          "samples": 21935,
+          "share": 0.022069358253044534,
+          "wilson_lower": 0.021782382926854152,
+          "wilson_upper": 0.022360027958180977,
+          "session_min": 0.021683903282764583,
+          "session_max": 0.022627863867556684
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 15833,
+          "share": 0.015929981728764718,
+          "wilson_lower": 0.01568569888989106,
+          "wilson_upper": 0.016178006403644918,
+          "session_min": 0.015512954488126554,
+          "session_max": 0.016809304763540076
+        },
+        {
+          "category": "min-sum-input-vec",
+          "samples": 1658,
+          "share": 0.0016681557320970067,
+          "wilson_lower": 0.0015898300874601723,
+          "wilson_upper": 0.0017503334559118649,
+          "session_min": 0.0013744265637515474,
+          "session_max": 0.0018178529438364836
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 1287,
+          "share": 0.001294883249221259,
+          "wilson_lower": 0.001226086444965602,
+          "wilson_upper": 0.0013675350180317736,
+          "session_min": 0.0010755895405696106,
+          "session_max": 0.0015655719799024248
+        },
+        {
+          "category": "decode-loop-other",
+          "samples": 1134,
+          "share": 0.001140946079733417,
+          "wilson_lower": 0.0010764782754711757,
+          "wilson_upper": 0.0012092700384768115,
+          "session_min": 0.0010012378941236437,
+          "session_max": 0.0012702244964145437
+        },
+        {
+          "category": "conversion-output",
+          "samples": 313,
+          "share": 0.0003149172160110754,
+          "wilson_lower": 0.0002819129260944521,
+          "wilson_upper": 0.00035178404556890705,
+          "session_min": 0.00021689425501342032,
+          "session_max": 0.00039960402873516243
+        },
+        {
+          "category": "message-reset",
+          "samples": 217,
+          "share": 0.00021832918809713535,
+          "wilson_lower": 0.00019115097667253355,
+          "wilson_upper": 0.00024937068578336614,
+          "session_min": 0.00017214354959999275,
+          "session_max": 0.0002548605548678366
+        },
+        {
+          "category": "other:llr.rs",
+          "samples": 89,
+          "share": 8.95451508785486e-05,
+          "wilson_lower": 7.277456864283958e-05,
+          "wilson_upper": 0.00011018001486978076,
+          "session_min": 6.330831147689247e-05,
+          "session_max": 0.00011748438813226934
+        },
+        {
+          "category": "other:avx2.rs",
+          "samples": 10,
+          "share": 1.006125290770209e-05,
+          "wilson_lower": 5.465267441527446e-06,
+          "wilson_upper": 1.852213453578766e-05,
+          "session_min": 0.0,
+          "session_max": 3.6149042502236725e-05
+        },
+        {
+          "category": "other:map.rs",
+          "samples": 1,
+          "share": 1.006125290770209e-06,
+          "wilson_lower": 1.7760584124043678e-07,
+          "wilson_upper": 5.6996108978753404e-06,
+          "session_min": 0.0,
+          "session_max": 9.044044496698923e-06
+        },
+        {
+          "category": "other:mod.rs",
+          "samples": 1,
+          "share": 1.006125290770209e-06,
+          "wilson_lower": 1.7760584124043678e-07,
+          "wilson_upper": 5.6996108978753404e-06,
+          "session_min": 0.0,
+          "session_max": 8.993533649306148e-06
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "macros.rs:384 in find_check_position",
+          "samples": 176314,
+          "share": 0.17739397451685865,
+          "wilson_lower": 0.17664422255395443,
+          "wilson_upper": 0.17814622020752233
+        },
+        {
+          "innermost": "core.rs:1209 in check_node_update",
+          "samples": 105794,
+          "share": 0.1064420190117435,
+          "wilson_lower": 0.10583723311697246,
+          "wilson_upper": 0.10704984708919127
+        },
+        {
+          "innermost": "mod.rs:612 in ptr",
+          "samples": 103164,
+          "share": 0.10379590949701785,
+          "wilson_lower": 0.10319783162448347,
+          "wilson_upper": 0.1043970500065176
+        },
+        {
+          "innermost": "non_null.rs:1720 in next",
+          "samples": 102619,
+          "share": 0.10324757121354808,
+          "wilson_lower": 0.10265089844504857,
+          "wilson_upper": 0.10384731085763929
+        },
+        {
+          "innermost": "index.rs:272 in index",
+          "samples": 85169,
+          "share": 0.08569068488960793,
+          "wilson_lower": 0.08514200013523389,
+          "wilson_upper": 0.08624257223338973
+        },
+        {
+          "innermost": "macros.rs:384 in check_to_var_message",
+          "samples": 73233,
+          "share": 0.07368157341897472,
+          "wilson_lower": 0.07316960918199349,
+          "wilson_upper": 0.07419683307516932
+        },
+        {
+          "innermost": "cfree (libc.so.6)",
+          "samples": 34649,
+          "share": 0.03486123519989697,
+          "wilson_lower": 0.034502416986671086,
+          "wilson_upper": 0.03522364891152695
+        },
+        {
+          "innermost": "malloc (libc.so.6)",
+          "samples": 31522,
+          "share": 0.03171508141565853,
+          "wilson_lower": 0.03137237184958541,
+          "wilson_upper": 0.03206141079974048
+        },
+        {
+          "innermost": "llr.rs:166 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 28067,
+          "share": 0.028238918536047458,
+          "wilson_lower": 0.027915067292267334,
+          "wilson_upper": 0.028566416468394275
+        },
+        {
+          "innermost": "mod.rs:1034 in push",
+          "samples": 24003,
+          "share": 0.024150025354357327,
+          "wilson_lower": 0.02385005585993098,
+          "wilson_upper": 0.02445367314428151
+        },
+        {
+          "innermost": "core.rs:1219 in check_node_update",
+          "samples": 19057,
+          "share": 0.019173729666207874,
+          "wilson_lower": 0.018905979940456816,
+          "wilson_upper": 0.019445196153963017
+        },
+        {
+          "innermost": "mod.rs:1028 in push",
+          "samples": 18258,
+          "share": 0.018369835558882476,
+          "wilson_lower": 0.01810769295227105,
+          "wilson_upper": 0.018635701141557534
+        },
+        {
+          "innermost": "[unknown] (libc.so.6)",
+          "samples": 15833,
+          "share": 0.015929981728764718,
+          "wilson_lower": 0.01568569888989106,
+          "wilson_upper": 0.016178006403644918
+        },
+        {
+          "innermost": "f32.rs:1019 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 15615,
+          "share": 0.015710646415376815,
+          "wilson_lower": 0.015468037563288389,
+          "wilson_upper": 0.01595699879892232
+        },
+        {
+          "innermost": "macros.rs:0 in find_check_position",
+          "samples": 15303,
+          "share": 0.015396735324656508,
+          "wilson_lower": 0.015156543725207083,
+          "wilson_upper": 0.01564067288207938
+        },
+        {
+          "innermost": "llr.rs:0 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 13905,
+          "share": 0.013990172168159757,
+          "wilson_lower": 0.013761142143798148,
+          "wilson_upper": 0.01422295902315469
+        },
+        {
+          "innermost": "range.rs:772 in next",
+          "samples": 11215,
+          "share": 0.011283695135987894,
+          "wilson_lower": 0.011077924049097848,
+          "wilson_upper": 0.01149324397443763
+        },
+        {
+          "innermost": "llr.rs:174 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 9987,
+          "share": 0.010048173278922077,
+          "wilson_lower": 0.009853982041206287,
+          "wilson_upper": 0.010246151818717105
+        },
+        {
+          "innermost": "index.rs:278 in index_mut",
+          "samples": 8478,
+          "share": 0.008529930215149832,
+          "wilson_lower": 0.008351025000427975,
+          "wilson_upper": 0.008712634467890664
+        },
+        {
+          "innermost": "core.rs:1207 in check_node_update",
+          "samples": 7845,
+          "share": 0.007893052906092289,
+          "wilson_lower": 0.00772097422014974,
+          "wilson_upper": 0.008068935553082211
+        },
+        {
+          "innermost": "macros.rs:180 in position",
+          "samples": 7590,
+          "share": 0.007636490956945886,
+          "wilson_lower": 0.007467241745308206,
+          "wilson_upper": 0.007809546112841434
+        },
+        {
+          "innermost": "llr.rs:91 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 7169,
+          "share": 0.007212912209531628,
+          "wilson_lower": 0.0070484429455605815,
+          "wilson_upper": 0.007381190692002179
+        },
+        {
+          "innermost": "mod.rs:1815 in deref",
+          "samples": 6817,
+          "share": 0.006858756107180515,
+          "wilson_lower": 0.0066983946265147505,
+          "wilson_upper": 0.007022929543953991
+        },
+        {
+          "innermost": "bitvec.rs:354 in matvec",
+          "samples": 4547,
+          "share": 0.004574851697132141,
+          "wilson_lower": 0.0044440847102633595,
+          "wilson_upper": 0.004709448294570663
+        },
+        {
+          "innermost": "macros.rs:180 in gf2_kernels_simd::llr::minsum_avx2_f32_safe",
+          "samples": 4292,
+          "share": 0.004318289747985737,
+          "wilson_lower": 0.004191280469707635,
+          "wilson_upper": 0.004449130620044073
+        }
+      ]
+    },
+    "aff3ct-dvb-w1": {
+      "kind": "record",
+      "label": "aff3ct-dvb-w1",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "sessions": 9,
+      "total_samples": 17494,
+      "session_totals": [
+        1937,
+        1962,
+        1935,
+        1932,
+        1988,
+        1935,
+        1932,
+        1939,
+        1934
+      ],
+      "categories": [
+        {
+          "category": "aff3ct-min-sum-update",
+          "samples": 8534,
+          "share": 0.48782439693609236,
+          "wilson_lower": 0.4804208418714072,
+          "wilson_upper": 0.49523329804050453,
+          "session_min": 0.4723340040241449,
+          "session_max": 0.5059370160041301
+        },
+        {
+          "category": "aff3ct-variable-node",
+          "samples": 3662,
+          "share": 0.2093289127700926,
+          "wilson_lower": 0.20336445601040326,
+          "wilson_upper": 0.21542099681622046,
+          "session_min": 0.19616977225672877,
+          "session_max": 0.2459758551307847
+        },
+        {
+          "category": "aff3ct-posterior",
+          "samples": 2497,
+          "share": 0.1427346518806448,
+          "wilson_lower": 0.13762952807106035,
+          "wilson_upper": 0.14799664305310842,
+          "session_min": 0.13404689092762487,
+          "session_max": 0.15162454873646208
+        },
+        {
+          "category": "aff3ct-check-node",
+          "samples": 2321,
+          "share": 0.13267405967760376,
+          "wilson_lower": 0.12772785211435453,
+          "wilson_upper": 0.13778155198867084,
+          "session_min": 0.11925658234383067,
+          "session_max": 0.14026915113871635
+        },
+        {
+          "category": "aff3ct-syndrome",
+          "samples": 435,
+          "share": 0.024865668229107123,
+          "wilson_lower": 0.022660406577698373,
+          "wilson_upper": 0.027279550923756137,
+          "session_min": 0.01609657947686117,
+          "session_max": 0.03674948240165631
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 17,
+          "share": 0.0009717617468846462,
+          "wilson_lower": 0.0006068341391079267,
+          "wilson_upper": 0.0015558016871309822,
+          "session_min": 0.0,
+          "session_max": 0.002070393374741201
+        },
+        {
+          "category": "other:aff3ct_shim.cpp",
+          "samples": 10,
+          "share": 0.0005716245569909683,
+          "wilson_lower": 0.0003105342108539613,
+          "wilson_upper": 0.0010520029270440164,
+          "session_min": 0.0,
+          "session_max": 0.0010351966873706005
+        },
+        {
+          "category": "aff3ct-decode-loop",
+          "samples": 9,
+          "share": 0.0005144621012918715,
+          "wilson_lower": 0.00027069122022109964,
+          "wilson_upper": 0.0009775461050567453,
+          "session_min": 0.0,
+          "session_max": 0.0010351966873706005
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 5,
+          "share": 0.00028581227849548414,
+          "wilson_lower": 0.00012208790483811204,
+          "wilson_upper": 0.0006689501699592008,
+          "session_min": 0.0,
+          "session_max": 0.001006036217303823
+        },
+        {
+          "category": "other:stl_vector.h",
+          "samples": 4,
+          "share": 0.00022864982279638732,
+          "wilson_lower": 8.892092991018898e-05,
+          "wilson_upper": 0.0005878173322669909,
+          "session_min": 0.0,
+          "session_max": 0.0005175983436853002
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "Update_rule_MS.hxx:64 in aff3ct::tools::Update_rule_NMS",
+          "samples": 1748,
+          "share": 0.09991997256202126,
+          "wilson_lower": 0.09556346450261387,
+          "wilson_upper": 0.10445214696907527
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:91 in aff3ct::tools::Update_rule_NMS",
+          "samples": 1716,
+          "share": 0.09809077397965017,
+          "wilson_lower": 0.09377104134539078,
+          "wilson_upper": 0.10258697612245414
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:89 in aff3ct::tools::Update_rule_NMS",
+          "samples": 1637,
+          "share": 0.09357493997942151,
+          "wilson_lower": 0.08934803726558697,
+          "wilson_upper": 0.0979802950052674
+        },
+        {
+          "innermost": "cmath:3694 in aff3ct::tools::Update_rule_MS",
+          "samples": 1408,
+          "share": 0.08048473762432834,
+          "wilson_lower": 0.07654497773579369,
+          "wilson_upper": 0.08460869744505023
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:274 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 1074,
+          "share": 0.06139247742083,
+          "wilson_lower": 0.05793069842776352,
+          "wilson_upper": 0.06504683933795596
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:246 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 912,
+          "share": 0.05213215959757631,
+          "wilson_lower": 0.0489353276609912,
+          "wilson_upper": 0.05552564046026675
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:225 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 888,
+          "share": 0.05076026066079799,
+          "wilson_lower": 0.047604977987173114,
+          "wilson_upper": 0.05411279463120164
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:280 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 886,
+          "share": 0.050645935749399795,
+          "wilson_lower": 0.04749414487841331,
+          "wilson_upper": 0.053995028114721184
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:223 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 852,
+          "share": 0.0487024122556305,
+          "wilson_lower": 0.04561069577943056,
+          "wilson_upper": 0.0519922835846194
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:220 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 773,
+          "share": 0.04418657825540185,
+          "wilson_lower": 0.041240001102194605,
+          "wilson_upper": 0.04733329306486484
+        },
+        {
+          "innermost": "std_abs.h:82 in aff3ct::tools::Update_rule_MS",
+          "samples": 702,
+          "share": 0.04012804390076598,
+          "wilson_lower": 0.03731930458974364,
+          "wilson_upper": 0.04313870288128638
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:224 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 622,
+          "share": 0.03555504744483823,
+          "wilson_lower": 0.03291136306563503,
+          "wilson_upper": 0.038402659395784335
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:251 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 553,
+          "share": 0.03161083800160055,
+          "wilson_lower": 0.029119248145095554,
+          "wilson_upper": 0.03430808724553464
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:62 in aff3ct::tools::Update_rule_NMS",
+          "samples": 474,
+          "share": 0.027095004001371898,
+          "wilson_lower": 0.024790917910768467,
+          "wilson_upper": 0.029606732282871227
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:88 in aff3ct::tools::Update_rule_NMS",
+          "samples": 351,
+          "share": 0.02006402195038299,
+          "wilson_lower": 0.01808910814263164,
+          "wilson_upper": 0.022249665098731695
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:269 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 290,
+          "share": 0.01657711215273808,
+          "wilson_lower": 0.01478844499250916,
+          "wilson_upper": 0.01857803967902606
+        },
+        {
+          "innermost": "stl_vector.h:1254 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 277,
+          "share": 0.015834000228649822,
+          "wilson_lower": 0.014087609774623472,
+          "wilson_upper": 0.01779297733285002
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:228 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 231,
+          "share": 0.013204527266491368,
+          "wilson_lower": 0.011616685064990695,
+          "wilson_upper": 0.015006110661956677
+        },
+        {
+          "innermost": "stl_vector.h:1273 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 219,
+          "share": 0.012518577798102207,
+          "wilson_lower": 0.010974731118254175,
+          "wilson_upper": 0.014276466857251605
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:252 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 207,
+          "share": 0.011832628329713045,
+          "wilson_lower": 0.010334038167290874,
+          "wilson_upper": 0.013545562056773307
+        },
+        {
+          "innermost": "LDPC_syndrome.hxx:56 in bool aff3ct::module::Decoder_LDPC_BP::check_syndrome_soft",
+          "samples": 178,
+          "share": 0.010174917114439236,
+          "wilson_lower": 0.008791605239069685,
+          "wilson_upper": 0.011773300419010639
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:219 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 147,
+          "share": 0.008402880987767234,
+          "wilson_lower": 0.007154005586804161,
+          "wilson_upper": 0.00986760588005204
+        },
+        {
+          "innermost": "Update_rule_NMS.hxx:104 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 137,
+          "share": 0.007831256430776265,
+          "wilson_lower": 0.006628781151240955,
+          "wilson_upper": 0.009249832189413915
+        },
+        {
+          "innermost": "LDPC_syndrome.hxx:59 in bool aff3ct::module::Decoder_LDPC_BP::check_syndrome_soft",
+          "samples": 130,
+          "share": 0.007431119240882588,
+          "wilson_lower": 0.006262154691826778,
+          "wilson_upper": 0.008816359960487161
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:66 in aff3ct::tools::Update_rule_NMS",
+          "samples": 120,
+          "share": 0.00685949468389162,
+          "wilson_lower": 0.00574002955111186,
+          "wilson_upper": 0.008195486975000749
+        }
+      ]
+    },
+    "aff3ct-nr-w1": {
+      "kind": "record",
+      "label": "aff3ct-nr-w1",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "sessions": 9,
+      "total_samples": 9005,
+      "session_totals": [
+        994,
+        1022,
+        989,
+        991,
+        1013,
+        1001,
+        988,
+        1017,
+        990
+      ],
+      "categories": [
+        {
+          "category": "aff3ct-min-sum-update",
+          "samples": 4867,
+          "share": 0.5404775124930594,
+          "wilson_lower": 0.530169279715446,
+          "wilson_upper": 0.5507512252498428,
+          "session_min": 0.5171717171717172,
+          "session_max": 0.5691220988900101
+        },
+        {
+          "category": "aff3ct-variable-node",
+          "samples": 1689,
+          "share": 0.1875624652970572,
+          "wilson_lower": 0.17963372721491225,
+          "wilson_upper": 0.1957576562697512,
+          "session_min": 0.17318982387475537,
+          "session_max": 0.19447186574531095
+        },
+        {
+          "category": "aff3ct-posterior",
+          "samples": 1254,
+          "share": 0.13925596890616324,
+          "wilson_lower": 0.13225893752264462,
+          "wilson_upper": 0.14656064991290868,
+          "session_min": 0.1263573543928924,
+          "session_max": 0.15557729941291584
+        },
+        {
+          "category": "aff3ct-check-node",
+          "samples": 1094,
+          "share": 0.12148806218767351,
+          "wilson_lower": 0.11490140992456102,
+          "wilson_upper": 0.1283975168952276,
+          "session_min": 0.09889001009081735,
+          "session_max": 0.14242424242424243
+        },
+        {
+          "category": "aff3ct-syndrome",
+          "samples": 82,
+          "share": 0.009106052193225985,
+          "wilson_lower": 0.007342719108632165,
+          "wilson_upper": 0.011288029316445068,
+          "session_min": 0.003933136676499509,
+          "session_max": 0.013157894736842105
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 9,
+          "share": 0.000999444752915047,
+          "wilson_lower": 0.0005259131136941614,
+          "wilson_upper": 0.0018985339054404487,
+          "session_min": 0.0,
+          "session_max": 0.00404040404040404
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 5,
+          "share": 0.000555247084952804,
+          "wilson_lower": 0.00023719094947958824,
+          "wilson_upper": 0.0012992395542609058,
+          "session_min": 0.0,
+          "session_max": 0.0010121457489878543
+        },
+        {
+          "category": "other:aff3ct_shim.cpp",
+          "samples": 3,
+          "share": 0.0003331482509716824,
+          "wilson_lower": 0.00011330679171851066,
+          "wilson_upper": 0.0009791154543249251,
+          "session_min": 0.0,
+          "session_max": 0.0029498525073746312
+        },
+        {
+          "category": "aff3ct-decode-loop",
+          "samples": 1,
+          "share": 0.0001110494169905608,
+          "wilson_lower": 1.960321788052556e-05,
+          "wilson_upper": 0.0006288107704658521,
+          "session_min": 0.0,
+          "session_max": 0.001006036217303823
+        },
+        {
+          "category": "other:Decoder_SIHO.hxx",
+          "samples": 1,
+          "share": 0.0001110494169905608,
+          "wilson_lower": 1.960321788052556e-05,
+          "wilson_upper": 0.0006288107704658521,
+          "session_min": 0.0,
+          "session_max": 0.001006036217303823
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "Update_rule_MS.hxx:91 in aff3ct::tools::Update_rule_NMS",
+          "samples": 1158,
+          "share": 0.1285952248750694,
+          "wilson_lower": 0.12183926783419476,
+          "wilson_upper": 0.1356679232318998
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:89 in aff3ct::tools::Update_rule_NMS",
+          "samples": 877,
+          "share": 0.09739033870072182,
+          "wilson_lower": 0.09143721110519935,
+          "wilson_upper": 0.10368681975445847
+        },
+        {
+          "innermost": "cmath:3694 in aff3ct::tools::Update_rule_MS",
+          "samples": 768,
+          "share": 0.0852859522487507,
+          "wilson_lower": 0.07969248123370039,
+          "wilson_upper": 0.09123309958146779
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:62 in aff3ct::tools::Update_rule_NMS",
+          "samples": 518,
+          "share": 0.057523598001110496,
+          "wilson_lower": 0.05290049156805596,
+          "wilson_upper": 0.06252405703497996
+        },
+        {
+          "innermost": "std_abs.h:82 in aff3ct::tools::Update_rule_MS",
+          "samples": 496,
+          "share": 0.05508051082731816,
+          "wilson_lower": 0.05055544396142059,
+          "wilson_upper": 0.05998501380694768
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:225 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 460,
+          "share": 0.05108273181565797,
+          "wilson_lower": 0.04672375569442017,
+          "wilson_upper": 0.055824553435401054
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:275 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 371,
+          "share": 0.041199333703498056,
+          "wilson_lower": 0.037286163919084826,
+          "wilson_upper": 0.04550377774321731
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:66 in aff3ct::tools::Update_rule_NMS",
+          "samples": 370,
+          "share": 0.041088284286507494,
+          "wilson_lower": 0.03718045116175474,
+          "wilson_upper": 0.04538748637169887
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:251 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 364,
+          "share": 0.04042198778456413,
+          "wilson_lower": 0.036546346018840145,
+          "wilson_upper": 0.04468956674152229
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:223 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 351,
+          "share": 0.03897834536368684,
+          "wilson_lower": 0.035173486459764716,
+          "wilson_upper": 0.04317637262556684
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:280 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 348,
+          "share": 0.038645197112715156,
+          "wilson_lower": 0.034856879818714256,
+          "wilson_upper": 0.042826966880071704
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:220 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 343,
+          "share": 0.03808995002776235,
+          "wilson_lower": 0.03432937966018396,
+          "wilson_upper": 0.04224444639435935
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:64 in aff3ct::tools::Update_rule_NMS",
+          "samples": 322,
+          "share": 0.035757912270960576,
+          "wilson_lower": 0.03211640437676156,
+          "wilson_upper": 0.039795334971962644
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:274 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 305,
+          "share": 0.03387007218212104,
+          "wilson_lower": 0.03032813015550137,
+          "wilson_upper": 0.03780953900279785
+        },
+        {
+          "innermost": "stl_vector.h:1254 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 209,
+          "share": 0.023209328151027206,
+          "wilson_lower": 0.020296817857260483,
+          "wilson_upper": 0.02652845493157994
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:246 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 199,
+          "share": 0.0220988339811216,
+          "wilson_lower": 0.019260174815890617,
+          "wilson_upper": 0.025345056684464518
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:221 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 184,
+          "share": 0.02043309272626319,
+          "wilson_lower": 0.017708991559316673,
+          "wilson_upper": 0.02356617800831053
+        },
+        {
+          "innermost": "stl_vector.h:1273 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 137,
+          "share": 0.01521377012770683,
+          "wilson_lower": 0.012884479584483305,
+          "wilson_upper": 0.017956495927263026
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:269 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 126,
+          "share": 0.01399222654081066,
+          "wilson_lower": 0.011765150440450577,
+          "wilson_upper": 0.016633779653961935
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:88 in aff3ct::tools::Update_rule_NMS",
+          "samples": 126,
+          "share": 0.01399222654081066,
+          "wilson_lower": 0.011765150440450577,
+          "wilson_upper": 0.016633779653961935
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:65 in aff3ct::tools::Update_rule_NMS",
+          "samples": 112,
+          "share": 0.01243753470294281,
+          "wilson_lower": 0.01034744830239087,
+          "wilson_upper": 0.014943423988142237
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:228 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 101,
+          "share": 0.01121599111604664,
+          "wilson_lower": 0.009239829412723638,
+          "wilson_upper": 0.013608997460475648
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:224 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 100,
+          "share": 0.01110494169905608,
+          "wilson_lower": 0.009139444609449992,
+          "wilson_upper": 0.013487378134900767
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:219 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 91,
+          "share": 0.010105496946141032,
+          "wilson_lower": 0.008238537407932728,
+          "wilson_upper": 0.012390248176781265
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:252 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 87,
+          "share": 0.009661299278178789,
+          "wilson_lower": 0.007839722446599893,
+          "wilson_upper": 0.011901046622719985
+        }
+      ]
+    }
+  },
+  "stats": {
+    "gf2-dvb-w1": {
+      "kind": "stat",
+      "label": "gf2-dvb-w1",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 339186209.5625,
+          "lower": 338032822.6875,
+          "upper": 343902110.625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 3.2251189482878893,
+          "lower": 3.1758635216720497,
+          "upper": 3.2361538641275733,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.031171530273571744,
+          "lower": 0.030691446833129615,
+          "upper": 0.03170728656794357,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.00832879688416914,
+          "lower": 0.008159611352968646,
+          "upper": 0.008413263483282052,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.03986974027205125,
+          "lower": 0.039757356048754494,
+          "upper": 0.03989065029754359,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.28934860239936155,
+          "lower": 0.2888031071453659,
+          "upper": 0.2900858976987219,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 5165817123.875,
+          "lower": 5165817122.0,
+          "upper": 5165817130.75,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 1601744681.5,
+          "lower": 1596282914.5,
+          "upper": 1626586626.125,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        1
+      ]
+    },
+    "gf2-dvb-p6": {
+      "kind": "stat",
+      "label": "gf2-dvb-p6",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 439607762.5625,
+          "lower": 437901165.625,
+          "upper": 440588108.125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 2.567754691102674,
+          "lower": 2.54418610567249,
+          "upper": 2.5755066114629215,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.02567540061996505,
+          "lower": 0.025478864165137078,
+          "upper": 0.025883803892422053,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.008352776125551869,
+          "lower": 0.008265307348893617,
+          "upper": 0.008464237950544795,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.03979845953172835,
+          "lower": 0.039707673687475596,
+          "upper": 0.03987904717286614,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.2987773699691934,
+          "lower": 0.29747936164814254,
+          "upper": 0.2991324539615777,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 5165817083.875,
+          "lower": 5165817082.958333,
+          "upper": 5165817087.5625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 2011803192.0,
+          "lower": 2005747941.625,
+          "upper": 2030439941.875,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        6
+      ]
+    },
+    "gf2-dvb-p12": {
+      "kind": "stat",
+      "label": "gf2-dvb-p12",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 507637199.25,
+          "lower": 506286328.25,
+          "upper": 551695008.875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 2.4271082674677587,
+          "lower": 2.4132441009270793,
+          "upper": 2.4322314996952725,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.024928177797834686,
+          "lower": 0.024438192236295057,
+          "upper": 0.02518493888994891,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.008342923883711242,
+          "lower": 0.008270167944449342,
+          "upper": 0.008501637618638687,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.039780546763827467,
+          "lower": 0.0397289272973134,
+          "upper": 0.03983377037736773,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.3024461788042818,
+          "lower": 0.30198124484192956,
+          "upper": 0.3043797377641221,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 5165817138.46875,
+          "lower": 5165817137.15625,
+          "upper": 5165817140.46875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 2128383477.625,
+          "lower": 2123900269.4479167,
+          "upper": 2140611112.4375,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        12
+      ]
+    },
+    "gf2-dvb-l24": {
+      "kind": "stat",
+      "label": "gf2-dvb-l24",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 1288606729.8125,
+          "lower": 1281714175.625,
+          "upper": 1296437079.8125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 0.9722815741105761,
+          "lower": 0.9714298270223765,
+          "upper": 0.9845686770436501,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.021984254073555545,
+          "lower": 0.021081093925759353,
+          "upper": 0.022150268310505938,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.009024357675353423,
+          "lower": 0.00871398713318389,
+          "upper": 0.009235969783053617,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.04263557785190018,
+          "lower": 0.0425150364796149,
+          "upper": 0.04275754883041096,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.4202486944519263,
+          "lower": 0.4180330073146488,
+          "upper": 0.4223237793494668,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 5165818847.4375,
+          "lower": 5165818820.34375,
+          "upper": 5165818868.625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 5313089295.276042,
+          "lower": 5246783633.067708,
+          "upper": 5317747844.390625,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        24
+      ]
+    },
+    "gf2-nr-w1": {
+      "kind": "stat",
+      "label": "gf2-nr-w1",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 234339370.1875,
+          "lower": 233780416.4375,
+          "upper": 235328766.0625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 3.3587685518162114,
+          "lower": 3.350775148852582,
+          "upper": 3.365907220370796,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.029596418683788026,
+          "lower": 0.029471376028423993,
+          "upper": 0.030020652087206324,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.007537744544864293,
+          "lower": 0.0074321823570066455,
+          "upper": 0.007555712149543578,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.02792404513714539,
+          "lower": 0.02783150757596168,
+          "upper": 0.02807049633958225,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.2212370076395601,
+          "lower": 0.2201649558512452,
+          "upper": 0.22164676586898716,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 3706238780.625,
+          "lower": 3706238779.25,
+          "upper": 3706238781.375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 1103451674.125,
+          "lower": 1101111390.25,
+          "upper": 1106084000.375,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        1
+      ]
+    },
+    "gf2-nr-p6": {
+      "kind": "stat",
+      "label": "gf2-nr-p6",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 277800368.875,
+          "lower": 268362792.75,
+          "upper": 279785553.0,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 3.0295554495604624,
+          "lower": 3.011201676173557,
+          "upper": 3.0398836301424677,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.027280538259020135,
+          "lower": 0.026865305297284117,
+          "upper": 0.03059814112581715,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.007480824046129829,
+          "lower": 0.007427021734957429,
+          "upper": 0.007519329483955932,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.027861890291609955,
+          "lower": 0.027499930690243757,
+          "upper": 0.02791097029721771,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.2235879189854037,
+          "lower": 0.2230571838982949,
+          "upper": 0.224070799954428,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 3706238677.5833335,
+          "lower": 3706238674.5625,
+          "upper": 3706238679.0625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 1223360568.7291667,
+          "lower": 1219204129.3333333,
+          "upper": 1230817153.9583333,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        6
+      ]
+    },
+    "gf2-nr-p12": {
+      "kind": "stat",
+      "label": "gf2-nr-p12",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 305619058.0,
+          "lower": 298777411.6875,
+          "upper": 320719166.875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 3.0247350908236807,
+          "lower": 3.0087509867961066,
+          "upper": 3.0532173726193585,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.028487111267987506,
+          "lower": 0.027018356576819506,
+          "upper": 0.030103476972482515,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.007447409121637387,
+          "lower": 0.007412654287963044,
+          "upper": 0.007462811209775906,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.02793666403999681,
+          "lower": 0.02783089554638202,
+          "upper": 0.028029874856517867,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.2231008007417667,
+          "lower": 0.2217628811196435,
+          "upper": 0.22376630924356233,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 3706238691.5416665,
+          "lower": 3706238689.78125,
+          "upper": 3706238694.0520835,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 1225310177.6458333,
+          "lower": 1213879733.3229167,
+          "upper": 1231819685.3958333,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        12
+      ]
+    },
+    "gf2-nr-l24": {
+      "kind": "stat",
+      "label": "gf2-nr-l24",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 587051490.3125,
+          "lower": 584069083.3125,
+          "upper": 592729160.0,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 1.6097193266397767,
+          "lower": 1.5975163781194583,
+          "upper": 1.6265171262089133,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.028378329887388358,
+          "lower": 0.027917881746114037,
+          "upper": 0.02885927476582826,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.0073233010005731205,
+          "lower": 0.0072555785686514536,
+          "upper": 0.00734362603184062,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.03241038249347639,
+          "lower": 0.03232994229792475,
+          "upper": 0.03262710946448644,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.21520664249230773,
+          "lower": 0.21456536819036792,
+          "upper": 0.21590183789853865,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 3706240082.640625,
+          "lower": 3706240075.9895835,
+          "upper": 3706240102.5677085,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 2302413868.8229165,
+          "lower": 2278635765.9010415,
+          "upper": 2320001302.5572915,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        24
+      ]
+    },
+    "aff3ct-dvb-w1": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-w1",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 25759631.21875,
+          "lower": 25723331.9453125,
+          "upper": 26234331.078125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.377358750863554,
+          "lower": 4.335334514978821,
+          "upper": 4.387607616151967,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.004269161029101517,
+          "lower": 0.0036929109262348416,
+          "upper": 0.006544069186481219,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 6.993661346874781e-06,
+          "lower": 6.0669463460060754e-06,
+          "upper": 8.638281649479287e-06,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12160494088522278,
+          "lower": 0.12156112010720842,
+          "upper": 0.12201346994028421,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.03607017292812867,
+          "lower": 0.035973821035094375,
+          "upper": 0.0365960335159707,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 530793605.71875,
+          "lower": 530793605.703125,
+          "upper": 530793606.03125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 121258876.84375,
+          "lower": 120975632.3125,
+          "upper": 122434290.640625,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        1
+      ]
+    },
+    "aff3ct-dvb-p6": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-p6",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 28280171.2265625,
+          "lower": 27970985.8203125,
+          "upper": 28348579.7109375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.280288642185643,
+          "lower": 4.259019103206142,
+          "upper": 4.307576839530399,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.008153115629009472,
+          "lower": 0.0069341283705137875,
+          "upper": 0.008924533579001536,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 8.013113379729809e-06,
+          "lower": 7.222352297383162e-06,
+          "upper": 8.814363704530767e-06,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12156330793853198,
+          "lower": 0.12153310019421604,
+          "upper": 0.12163179555376963,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.03617467749927716,
+          "lower": 0.03610092065901551,
+          "upper": 0.03627851020072014,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 530793580.2890625,
+          "lower": 530793580.1145833,
+          "upper": 530793580.5963542,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 124008829.13020833,
+          "lower": 123223241.3046875,
+          "upper": 124628128.54947917,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        6
+      ]
+    },
+    "aff3ct-dvb-p12": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-p12",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 33169964.8359375,
+          "lower": 33008831.9453125,
+          "upper": 33562824.328125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.305539306102619,
+          "lower": 4.291396702808937,
+          "upper": 4.317103984698258,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.006724341958540079,
+          "lower": 0.006165597989431802,
+          "upper": 0.007429878281919045,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 7.497166533909639e-06,
+          "lower": 6.813859487821639e-06,
+          "upper": 8.184518684330244e-06,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12153246167179083,
+          "lower": 0.12151014265619983,
+          "upper": 0.12157906332156455,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.03612162900848319,
+          "lower": 0.035737252413657744,
+          "upper": 0.03633179133789559,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 530793589.7005208,
+          "lower": 530793587.4739583,
+          "upper": 530793590.98046875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 123281556.40494792,
+          "lower": 122951309.45182292,
+          "upper": 123687840.32291667,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        12
+      ]
+    },
+    "aff3ct-dvb-l24": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-l24",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 106414645.0859375,
+          "lower": 105754166.1328125,
+          "upper": 106915049.3359375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 1.2661102999881004,
+          "lower": 1.2626417056453918,
+          "upper": 1.2713813673313257,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.06288898129519649,
+          "lower": 0.06231992988945032,
+          "upper": 0.0633798030398016,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 1.0449915334038482e-05,
+          "lower": 1.0238697018876098e-05,
+          "upper": 1.0747791740015548e-05,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.11995792592336699,
+          "lower": 0.11993819687633131,
+          "upper": 0.12000271348954286,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.24502995555268028,
+          "lower": 0.24464520863014727,
+          "upper": 0.24608593089218597,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 530793662.0026042,
+          "lower": 530793659.32421875,
+          "upper": 530793665.2910156,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 419231769.66796875,
+          "lower": 417493661.61848956,
+          "upper": 420383438.6503906,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        24
+      ]
+    },
+    "aff3ct-nr-w1": {
+      "kind": "stat",
+      "label": "aff3ct-nr-w1",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 13204269.6796875,
+          "lower": 13145884.1328125,
+          "upper": 13581266.6875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.609750765962481,
+          "lower": 4.427082642213917,
+          "upper": 4.635262541838354,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.0063105129214955456,
+          "lower": 0.004133282146671044,
+          "upper": 0.013659514548817414,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.00011420144897633707,
+          "lower": 0.00010814999141447642,
+          "upper": 0.0001196711992861728,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12921258436421518,
+          "lower": 0.12906865357358271,
+          "upper": 0.12941675644775308,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.0712167056033007,
+          "lower": 0.07017496395899213,
+          "upper": 0.07180608092347464,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 286334682.296875,
+          "lower": 286334682.234375,
+          "upper": 286334682.765625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 62115002.921875,
+          "lower": 61773131.421875,
+          "upper": 64677961.96875,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        1
+      ]
+    },
+    "aff3ct-nr-p6": {
+      "kind": "stat",
+      "label": "aff3ct-nr-p6",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 14513111.578125,
+          "lower": 14409438.3828125,
+          "upper": 14737383.3828125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.55319437559447,
+          "lower": 4.527039958557249,
+          "upper": 4.567195221315545,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.008191159280456613,
+          "lower": 0.007095437597479824,
+          "upper": 0.009071742232521642,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.00011495161191944298,
+          "lower": 0.00011432179227612825,
+          "upper": 0.00011642684806650194,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12947523802481126,
+          "lower": 0.12933858614317306,
+          "upper": 0.12961526943332144,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.07019996475749915,
+          "lower": 0.06996370587047965,
+          "upper": 0.0709140021867277,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 286334658.0286458,
+          "lower": 286334655.7838542,
+          "upper": 286334663.8359375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 62886545.518229164,
+          "lower": 62693764.260416664,
+          "upper": 63249862.71875,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        6
+      ]
+    },
+    "aff3ct-nr-p12": {
+      "kind": "stat",
+      "label": "aff3ct-nr-p12",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 17711054.3203125,
+          "lower": 17401713.1171875,
+          "upper": 17974244.375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.5578653329483725,
+          "lower": 4.528525082174544,
+          "upper": 4.584925498692748,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.0076794280325929625,
+          "lower": 0.006529586332760956,
+          "upper": 0.00817641029246739,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.00011519409290426974,
+          "lower": 0.00011460036439936745,
+          "upper": 0.00011897127224427123,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12935256956320176,
+          "lower": 0.1293288911795911,
+          "upper": 0.12941123982403546,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.07014337696902814,
+          "lower": 0.06991762099116486,
+          "upper": 0.0704850989085218,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 286334666.0416667,
+          "lower": 286334664.77213544,
+          "upper": 286334680.13671875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 62822099.4609375,
+          "lower": 62451323.33203125,
+          "upper": 63229125.611979164,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        12
+      ]
+    },
+    "aff3ct-nr-l24": {
+      "kind": "stat",
+      "label": "aff3ct-nr-l24",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 36005756.015625,
+          "lower": 35564251.8984375,
+          "upper": 36277321.9921875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 2.375790725797915,
+          "lower": 2.374159226449373,
+          "upper": 2.3799026204272793,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.0145717314260247,
+          "lower": 0.014482460123670028,
+          "upper": 0.014894365087141651,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.00010913282332130997,
+          "lower": 0.00010686134532568366,
+          "upper": 0.00011193142183214454,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.11870679769185936,
+          "lower": 0.1186635640478671,
+          "upper": 0.11881180790118508,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.1096443940874447,
+          "lower": 0.10952738521307316,
+          "upper": 0.10996109359781207,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 286334686.23372394,
+          "lower": 286334682.76171875,
+          "upper": 286334690.3489583,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 120521850.50846355,
+          "lower": 120313614.76627605,
+          "upper": 120604669.82552083,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        24
+      ]
+    }
+  },
+  "ratios": [
+    {
+      "id": "slowdown:aff3ct-dvb-l24",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-dvb-l24",
+      "denominator": "aff3ct-dvb-w1",
+      "estimate": 4.131062443490266,
+      "lower": 4.056312500175365,
+      "upper": 4.149126103973763,
+      "seed": 115127834
+    },
+    {
+      "id": "slowdown:aff3ct-dvb-p12",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-dvb-p12",
+      "denominator": "aff3ct-dvb-w1",
+      "estimate": 1.2876723488103992,
+      "lower": 1.26539890350866,
+      "upper": 1.2985984785659273,
+      "seed": 4042062138
+    },
+    {
+      "id": "slowdown:aff3ct-dvb-p6",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-dvb-p6",
+      "denominator": "aff3ct-dvb-w1",
+      "estimate": 1.0978484507952833,
+      "lower": 1.0779833166832062,
+      "upper": 1.1013090673726615,
+      "seed": 3426829613
+    },
+    {
+      "id": "slowdown:aff3ct-nr-l24",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-nr-l24",
+      "denominator": "aff3ct-nr-w1",
+      "estimate": 2.7268267680880274,
+      "lower": 2.6477386605238578,
+      "upper": 2.747616627897177,
+      "seed": 3389267808
+    },
+    {
+      "id": "slowdown:aff3ct-nr-p12",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-nr-p12",
+      "denominator": "aff3ct-nr-w1",
+      "estimate": 1.3413126776377426,
+      "lower": 1.301046780042951,
+      "upper": 1.363255628988301,
+      "seed": 1225736422
+    },
+    {
+      "id": "slowdown:aff3ct-nr-p6",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-nr-p6",
+      "denominator": "aff3ct-nr-w1",
+      "estimate": 1.0991226270129069,
+      "lower": 1.0716870477890392,
+      "upper": 1.1124040189015,
+      "seed": 3616306065
+    },
+    {
+      "id": "slowdown:gf2-dvb-l24",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-dvb-l24",
+      "denominator": "gf2-dvb-w1",
+      "estimate": 3.7991129753612682,
+      "lower": 3.747621010257067,
+      "upper": 3.8216632595173246,
+      "seed": 2142415993
+    },
+    {
+      "id": "gap:gf2-dvb-l24",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-dvb-l24",
+      "denominator": "aff3ct-dvb-l24",
+      "estimate": 12.109298760258582,
+      "lower": 12.044528030798048,
+      "upper": 12.18492639045718,
+      "seed": 2393703480
+    },
+    {
+      "id": "slowdown:gf2-dvb-p12",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-dvb-p12",
+      "denominator": "gf2-dvb-w1",
+      "estimate": 1.496632778510591,
+      "lower": 1.4892995432572185,
+      "upper": 1.624818909798231,
+      "seed": 3279287717
+    },
+    {
+      "id": "gap:gf2-dvb-p12",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-dvb-p12",
+      "denominator": "aff3ct-dvb-p12",
+      "estimate": 15.304122321528906,
+      "lower": 15.158883152825915,
+      "upper": 16.515118390923735,
+      "seed": 1477213760
+    },
+    {
+      "id": "slowdown:gf2-dvb-p6",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-dvb-p6",
+      "denominator": "gf2-dvb-w1",
+      "estimate": 1.2960661435190097,
+      "lower": 1.2798504764192737,
+      "upper": 1.301164296938027,
+      "seed": 2301201418
+    },
+    {
+      "id": "gap:gf2-dvb-p6",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-dvb-p6",
+      "denominator": "aff3ct-dvb-p6",
+      "estimate": 15.544734826414098,
+      "lower": 15.479499160799667,
+      "upper": 15.704964009741584,
+      "seed": 4019364236
+    },
+    {
+      "id": "gap:gf2-dvb-w1",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-dvb-w1",
+      "denominator": "aff3ct-dvb-w1",
+      "estimate": 13.167355024695077,
+      "lower": 12.933108415015216,
+      "upper": 13.200622493479232,
+      "seed": 2606725087
+    },
+    {
+      "id": "slowdown:gf2-nr-l24",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-nr-l24",
+      "denominator": "gf2-nr-w1",
+      "estimate": 2.5051338571183637,
+      "lower": 2.492406985839271,
+      "upper": 2.5285468134081293,
+      "seed": 3937061443
+    },
+    {
+      "id": "gap:gf2-nr-l24",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-nr-l24",
+      "denominator": "aff3ct-nr-l24",
+      "estimate": 16.30437894590365,
+      "lower": 16.16171381382532,
+      "upper": 16.575949727439646,
+      "seed": 3899764730
+    },
+    {
+      "id": "slowdown:gf2-nr-p12",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-nr-p12",
+      "denominator": "gf2-nr-w1",
+      "estimate": 1.30417290852778,
+      "lower": 1.2766138138704728,
+      "upper": 1.368093925064098,
+      "seed": 441967002
+    },
+    {
+      "id": "gap:gf2-nr-p12",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-nr-p12",
+      "denominator": "aff3ct-nr-p12",
+      "estimate": 17.255836522927424,
+      "lower": 16.844334124022655,
+      "upper": 17.88127479940976,
+      "seed": 2223736573
+    },
+    {
+      "id": "slowdown:gf2-nr-p6",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-nr-p6",
+      "denominator": "gf2-nr-w1",
+      "estimate": 1.1854617883999856,
+      "lower": 1.1466584653054013,
+      "upper": 1.1944333890914653,
+      "seed": 2513059539
+    },
+    {
+      "id": "gap:gf2-nr-p6",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-nr-p6",
+      "denominator": "aff3ct-nr-p6",
+      "estimate": 19.141337636631746,
+      "lower": 18.438009887578133,
+      "upper": 19.32154196670622,
+      "seed": 3904264572
+    },
+    {
+      "id": "gap:gf2-nr-w1",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-nr-w1",
+      "denominator": "aff3ct-nr-w1",
+      "estimate": 17.747242056710707,
+      "lower": 17.261110125557277,
+      "upper": 17.826063870636307,
+      "seed": 2944138491
+    }
+  ],
+  "census": {
+    "dvb-t2-r12": {
+      "frames": 8,
+      "iterations": [
+        23,
+        39,
+        25,
+        50,
+        27,
+        50,
+        25,
+        21
+      ],
+      "allocations": [
+        5216425,
+        8845241,
+        5670027,
+        11340052,
+        6123629,
+        11340052,
+        5670027,
+        4762823
+      ],
+      "predicted_allocations": [
+        5216425,
+        8845241,
+        5670027,
+        11340052,
+        6123629,
+        11340052,
+        5670027,
+        4762823
+      ],
+      "matches_edges_per_iteration_plus_two_syndrome_vectors": true,
+      "allocations_equal_deallocations": true,
+      "reallocations": 0,
+      "bytes_requested": 1418478400
+    },
+    "nr-bg1-r12": {
+      "frames": 8,
+      "iterations": [
+        41,
+        45,
+        30,
+        26,
+        44,
+        33,
+        28,
+        36
+      ],
+      "allocations": [
+        4975188,
+        5460572,
+        3640382,
+        3154998,
+        5339226,
+        4004420,
+        3397690,
+        4368458
+      ],
+      "predicted_allocations": [
+        4975188,
+        5460572,
+        3640382,
+        3154998,
+        5339226,
+        4004420,
+        3397690,
+        4368458
+      ],
+      "matches_edges_per_iteration_plus_two_syndrome_vectors": true,
+      "allocations_equal_deallocations": true,
+      "reallocations": 0,
+      "bytes_requested": 1127434272
+    }
+  }
+}

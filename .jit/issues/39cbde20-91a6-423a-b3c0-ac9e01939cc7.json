@@ -20,7 +20,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Treat negative-zero LLRs consistently in the min-sum sign product",
-  "updated_at": "2026-09-11T18:17:20.198466826Z"
+  "updated_at": "2026-09-12T17:35:12.756177197Z"
 }

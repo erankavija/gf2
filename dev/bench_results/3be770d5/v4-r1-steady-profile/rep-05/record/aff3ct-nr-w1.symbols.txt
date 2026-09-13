@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 4052037481
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                                                                                                                                           
+# ........  ............  ................  .................................................................................................................................................................................................................................................
+#
+    66.73%           676  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode_single_ite(std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> >&)
+    33.07%           335  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode(float const*, unsigned long)
+     0.10%             1  libc.so.6         [.] 0x0000000000176e84
+     0.10%             1  [unknown]         [k] 0xffffffffae988595
+
+
+#
+# (Tip: To compare scalability of two workload samples use perf diff -c ratio file1 file2)
+#

@@ -1,0 +1,12 @@
+cargo-budget: 24 jobs (1 live, 24 cpus)
+gf2-nms-f32 dvb-t2-r12: exit 0
+gf2-nms-f32 nr-bg1-z384: exit 0
+aff3ct-flooding-nms-f32 dvb-t2-r12: exit 0
+aff3ct-flooding-nms-f32 nr-bg1-z384: exit 0
+aff3ct-layered-nms-f32 dvb-t2-r12: exit 0
+aff3ct-layered-nms-f32 nr-bg1-z384: exit 0
+aff3ct-layered-nms-f32-inter dvb-t2-r12: exit 0
+aff3ct-layered-nms-f32-inter nr-bg1-z384: exit 0
+aff3ct-layered-nms-i16-inter dvb-t2-r12: exit 0
+aff3ct-layered-nms-i16-inter nr-bg1-z384: exit 0
+exit=0

@@ -435,6 +435,13 @@
       "format": "markdown",
       "label": "Repeated profile launcher",
       "path": "dev/active/04b85d10/survey/run-profile.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Repeated profile popcount attribution (perf report)",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/asm/popcnt-attribution.txt"
     }
   ],
   "first_ready_at": "2026-09-06T19:59:16.619469775Z",
@@ -468,5 +475,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile bit-storage costs in production consumers",
-  "updated_at": "2026-09-12T07:56:52.510778058Z"
+  "updated_at": "2026-09-12T16:07:09.525245726Z"
 }
