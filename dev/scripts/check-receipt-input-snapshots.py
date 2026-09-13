@@ -10,6 +10,9 @@ omission takes.
 The check reads committed content only: paths come from the git index, or from
 a named revision, and bytes from the blobs they name, so the verdict is the
 verdict a fresh checkout gets whatever untracked files sit in the working tree.
+Blob bytes are read through one `git cat-file --batch` process for the whole
+run rather than one process per pinned file; `dev/active/a203a23c/timing/`
+records the cost that batching avoids.
 
 A pinned file whose content survives nowhere in the repository cannot be
 restored. `dev/scripts/receipt-input-omissions.json` registers each such file

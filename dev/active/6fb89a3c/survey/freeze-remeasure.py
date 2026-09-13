@@ -2,6 +2,7 @@
 """Freeze a family's exploratory re-measurement addendum after the warm-pass fix.
 
 Usage: dev/active/6fb89a3c/survey/freeze-remeasure.py transpose|logical|bch <frozen-utc>
+       dev/active/6fb89a3c/survey/freeze-remeasure.py --self-test
 
 The family's v3 pilot and confirmation ran gf2 arms that reported `warm`
 without the protocol's untimed pass before calibration. The re-measurement
@@ -15,10 +16,16 @@ protocol version). A candidate listed in REBUILT was rebuilt to fix its own
 warm pass; its new executable, which must match the committed build evidence,
 is a new identity for the same comparator, and the addendum states that the
 family opens no confirmatory attempt with it. The script also counts, per cell, the committed campaigns
-that started a pilot of the same question under protocol v1 or v3 and
-declares the most-sampled cell's count, this campaign included, as the search
-budget, refusing a count above the schema's cap. The addendum keeps the
-pilot's cells, seeds and margins and is written to `<stem>-v3-remeasure.json`.
+that started a pilot of the same question under protocol v1 or v3, plus this
+campaign, which a committed receipt of its own does not count a second time,
+and declares the most-sampled cell's count as the search budget, refusing a
+count above the schema's cap.
+
+Rerunning the script for a family with its frozen time reproduces that
+family's frozen addendum byte for byte, before or after its campaign has run.
+
+The addendum keeps the pilot's cells, seeds and margins and is written to
+`<stem>-v3-remeasure.json`.
 """
 from __future__ import annotations
 
@@ -27,6 +34,7 @@ import hashlib
 import json
 import pathlib
 import sys
+import tempfile
 
 ISSUE = pathlib.Path("dev/active/6fb89a3c")
 RESULTS = pathlib.Path("dev/bench_results/6fb89a3c")
@@ -90,12 +98,23 @@ def spent_candidates(family_id: str, ledger_path: str, pilot_receipt: dict,
     return names, rebuilt
 
 
-def pilot_history(family_ids: set[str]) -> dict[str, list[str]]:
-    """Committed campaigns that started each exploratory cell of these families."""
+def pilot_history(family_ids: set[str], output: pathlib.Path,
+                  results: pathlib.Path = RESULTS) -> dict[str, list[str]]:
+    """Committed campaigns other than this one that started each exploratory
+    cell of these families.
+
+    A campaign driven by this script's own output is this campaign, which the
+    caller counts once. Counting its committed receipt as well would raise
+    every cell's trial number on each rerun, so the script would stop
+    reproducing the addendum it froze. `results` defaults to the family's
+    committed results directory; self_test passes a synthetic one."""
     history: dict[str, list[str]] = collections.defaultdict(list)
-    for log in sorted(RESULTS.glob("*/execution.log")):
+    for log in sorted(results.glob("*/execution.log")):
         entries = records(log)
-        snapshot = log.parent / entries[0]["details"]["addendum"]["snapshot"]
+        declared = entries[0]["details"]["addendum"]
+        if pathlib.Path(declared["path"]) == output:
+            continue
+        snapshot = log.parent / declared["snapshot"]
         addendum = json.loads(snapshot.read_text())
         if addendum["family"]["id"] not in family_ids:
             continue
@@ -107,12 +126,56 @@ def pilot_history(family_ids: set[str]) -> dict[str, list[str]]:
     return history
 
 
+def self_test() -> int:
+    """Asserts pilot_history excludes a campaign whose declared addendum path
+    is the output the caller is about to write, while still counting a
+    distinct committed campaign of the same family."""
+    family_id = "self-test-family"
+    addendum = {"family": {"id": family_id},
+                "cells": [{"cell_id": "cell-a", "role": "exploratory"},
+                          {"cell_id": "cell-b", "role": "confirmatory"}]}
+    output = pathlib.Path("dev/active/6fb89a3c/addendum-self-test-v3-remeasure.json")
+    other_addendum = pathlib.Path("dev/active/6fb89a3c/addendum-self-test-v3-pilot.json")
+    with tempfile.TemporaryDirectory() as directory:
+        results = pathlib.Path(directory)
+
+        def campaign(name: str, addendum_path: pathlib.Path) -> None:
+            campaign_dir = results / name
+            campaign_dir.mkdir()
+            (campaign_dir / "family-addendum.json").write_text(json.dumps(addendum))
+            entries = [
+                {"event": "campaign-start",
+                 "details": {"addendum": {"path": str(addendum_path), "snapshot": "family-addendum.json"}}},
+                {"event": "cell-start", "case": {"cell_id": "cell-a"}},
+                {"event": "cell-start", "case": {"cell_id": "cell-b"}},
+            ]
+            (campaign_dir / "execution.log").write_text(
+                "\n".join(json.dumps(entry) for entry in entries) + "\n")
+
+        campaign("this-campaign", output)
+        campaign("earlier-campaign", other_addendum)
+
+        history = pilot_history({family_id}, output, results=results)
+        expected = {"cell-a": ["earlier-campaign"]}
+        if history != expected:
+            print(f"self-test: expected {expected}, observed {dict(history)} (a campaign "
+                  "started from this script's own output must not be counted, and a "
+                  "confirmatory cell must never be counted as exploratory history)",
+                  file=sys.stderr)
+            return 1
+    print("freeze-remeasure: self-test passed")
+    return 0
+
+
 def main() -> int:
+    if len(sys.argv) == 2 and sys.argv[1] == "--self-test":
+        return self_test()
     if len(sys.argv) != 3:
         print(__doc__.strip(), file=sys.stderr)
         return 2
     family, frozen_utc = sys.argv[1], sys.argv[2]
     stem = STEMS[family]
+    output = ISSUE / f"{stem}-v3-remeasure.json"
     pilot = json.loads((ISSUE / f"{stem}-v3-pilot.json").read_text())
     confirmation = json.loads((ISSUE / f"{stem}-v3-confirmation.json").read_text())
     family_id = pilot["family"]["id"]
@@ -143,7 +206,7 @@ def main() -> int:
     origin = json.loads((RESULTS / "v3-ledger-origin.json").read_text())
     predecessor = next(f["predecessor_question"] for f in origin["families"] if f["family"] == family_id)
     predecessor_id = predecessor.split()[-1]
-    history = pilot_history({family_id, predecessor_id})
+    history = pilot_history({family_id, predecessor_id}, output)
     trials = {cell["cell_id"]: len(history.get(cell["cell_id"], [])) + 1 for cell in pilot["cells"]}
     budget = max(trials.values())
     cap = json.loads(SCHEMA.read_text())["properties"]["search_budget"]["properties"]["max_pilot_trials_per_cell"]["maximum"]
@@ -201,7 +264,6 @@ def main() -> int:
     text += ",\n  \"cells\": [\n" + ",\n".join(cell_text(c) for c in document["cells"]) + "\n  ]\n}\n"
     if json.loads(text) != document:
         raise SystemExit("rendered addendum differs from the derived document")
-    output = ISSUE / f"{stem}-v3-remeasure.json"
     output.write_text(text)
     print(f"{family}: {len(document['cells'])} exploratory cells; spent candidates {', '.join(candidates)}; "
           f"pilot trials {trials}; max_pilot_trials_per_cell {budget} -> {output}")

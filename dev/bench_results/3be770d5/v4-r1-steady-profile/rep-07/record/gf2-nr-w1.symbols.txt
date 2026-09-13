@@ -1,0 +1,38 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 8812081511
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    66.45%          1464  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    19.93%           439  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.36%            74  libc.so.6         [.] malloc
+     3.09%            68  libc.so.6         [.] cfree
+     1.68%            37  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.13%            25  libc.so.6         [.] 0x0000000000176466
+     1.13%            25  libc.so.6         [.] 0x000000000017646c
+     1.00%            22  libc.so.6         [.] 0x0000000000176400
+     0.45%            10  libc.so.6         [.] 0x0000000000176497
+     0.41%             9  libc.so.6         [.] 0x0000000000176404
+     0.32%             7  libc.so.6         [.] 0x0000000000176476
+     0.27%             6  libc.so.6         [.] 0x0000000000176485
+     0.23%             5  libc.so.6         [.] 0x0000000000176470
+     0.09%             2  libc.so.6         [.] 0x0000000000176411
+     0.09%             2  libc.so.6         [.] 0x0000000000176421
+     0.09%             2  libc.so.6         [.] 0x00000000001764b2
+     0.05%             1  libc.so.6         [.] 0x00000000001765a4
+     0.05%             1  libc.so.6         [.] 0x0000000000176e2a
+     0.05%             1  [unknown]         [k] 0xffffffffad4015f4
+     0.05%             1  [unknown]         [k] 0xffffffffad401ca1
+     0.05%             1  [unknown]         [k] 0xffffffffad88f2d1
+     0.05%             1  [unknown]         [k] 0xffffffffad896892
+
+
+#
+# (Tip: List events using substring match: perf list <keyword>)
+#

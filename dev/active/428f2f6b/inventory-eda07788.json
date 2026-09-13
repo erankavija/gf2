@@ -1,0 +1,758 @@
+{
+  "schema": "citation-inventory-v1",
+  "issue": "eda07788",
+  "report": "dev/active/eda07788/findings.md",
+  "report_revision": "ad76be4a",
+  "generator": "dev/bench_results/eda07788/summarize-v3.py",
+  "generated_tables": [
+    "dev/bench_results/eda07788/tables-v3.md",
+    "dev/bench_results/eda07788/tables-nr-derate.md"
+  ],
+  "generator_state_before": "present and complete: both tables regenerate byte for byte from the committed receipts, so no new generator is needed for this issue",
+  "retention_rule": "A number stays in the report only when it identifies a cell, names a workload size, names a protocol or addendum constant that fixes the design before measurement, or belongs to a citation key, version pin or commit id. Every measured or derived value is replaced by a conclusion and a pointer.",
+  "entries": [
+    {
+      "id": "eda07788-01",
+      "line_before": 27,
+      "statement": "In the five gap cells gf2 is 2.865 to 3.128 times faster (speedups 0.3197 to 0.3491, 24 pairs each).",
+      "numbers": [
+        2.865,
+        3.128,
+        0.3197,
+        0.3491,
+        24
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-nr-derate.md",
+        "location": "Protocol-v3 confirmation, `gf2 faster by` and `Speedup [interval]` columns of the five `-gap-` rows"
+      },
+      "artifact_value": "gf2 faster by 2.865 to 3.128; speedups 0.3197 to 0.3491; 24 pairs per cell",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-02",
+      "line_before": 28,
+      "statement": "The decision records `fail`, the protocol's token for an external arm more than the 10% equivalence margin slower.",
+      "numbers": [
+        0.1
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/addendum-nr-llr-derate-confirmation.json",
+        "location": "effect.equivalence_margin"
+      },
+      "artifact_value": "1.1",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-03",
+      "line_before": 33,
+      "statement": "in the re-measurement one control interval excludes equality while both stay far inside the material-gap threshold",
+      "numbers": [
+        1.2
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 re-measurement with the repaired warm pass, rows `qam16-r12-normal-control-portable-vs-native` and `qam64-r12-normal-control-portable-vs-native`; threshold in dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-remeasure.json effect.material_gap_threshold"
+      },
+      "artifact_value": "0.9930 [0.9909, 0.9953] excludes 1; 1.0008 [0.9984, 1.0029] includes it; material_gap_threshold 1.2",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "eda07788-04",
+      "line_before": 72,
+      "statement": "xdsopl/LDPC pinned at commit `32357d8ad55a6a302c34e093759f0454e45cca56`.",
+      "numbers": [
+        "32357d8ad55a6a302c34e093759f0454e45cca56"
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/source-evidence.json",
+        "location": "commits[\"xdsopl-ldpc\"]; verified in survey/validation-output-v3.txt"
+      },
+      "artifact_value": "32357d8ad55a6a302c34e093759f0454e45cca56",
+      "agrees": true,
+      "disposition": "removed-restatement: the pin table now names the `commits` field in `source-evidence.json` and the gate that verifies it, and prints only the human-readable release tag"
+    },
+    {
+      "id": "eda07788-05",
+      "line_before": 73,
+      "statement": "AFF3CT pinned at tag `v4.7.0`, commit `e8a65c50...`, linking the static library `c077a88b` built (SHA-256 `b9605974...`, `-O3 -march=native -funroll-loops`).",
+      "numbers": [
+        "v4.7.0",
+        "e8a65c5047262d97a15563b9edc961f69b2792cc",
+        "b9605974"
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/nr-derate-validation.txt",
+        "location": "pin and static-library digest verification lines"
+      },
+      "artifact_value": "commit e8a65c5047262d97a15563b9edc961f69b2792cc verified; static library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529 verified",
+      "agrees": true,
+      "disposition": "removed-restatement: the pin table now names the `commits` field in `source-evidence.json` and the gate that verifies it, and prints only the human-readable release tag"
+    },
+    {
+      "id": "eda07788-06",
+      "line_before": 74,
+      "statement": "srsRAN_Project pinned at tag `release_25_10`, commit `d2f4b70d...`.",
+      "numbers": [
+        "release_25_10",
+        "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc"
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/source-evidence.json",
+        "location": "commits[\"srsran\"]"
+      },
+      "artifact_value": "d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc",
+      "agrees": true,
+      "disposition": "removed-restatement: the pin table now names the `commits` field in `source-evidence.json` and the gate that verifies it, and prints only the human-readable release tag"
+    },
+    {
+      "id": "eda07788-07",
+      "line_before": 76,
+      "statement": "All arms are single-core release builds from rustc 1.97.0.",
+      "numbers": [
+        "1.97.0"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Sessions and host, toolchain line"
+      },
+      "artifact_value": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+      "agrees": true,
+      "disposition": "kept-version-pin-with-pointer"
+    },
+    {
+      "id": "eda07788-08",
+      "line_before": 79,
+      "statement": "Every receipt records each session's host observation: `fraktaali`, an AMD Ryzen 9 5900X on Linux 7.2.2-arch1-1 with all 24 CPUs in the mask, SMT active and the `powersave` governor.",
+      "numbers": [
+        "5900X",
+        "7.2.2-arch1-1",
+        24
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Sessions and host"
+      },
+      "artifact_value": "fraktaali, AMD Ryzen 9 5900X 12-Core Processor, Linux 7.2.2-arch1-1, powersave, SMT active, 24 CPUs in mask",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "eda07788-09",
+      "line_before": 100,
+      "statement": "gf2's `DvbT2BitInterleaver` implements ETSI EN 302 755 v1.4.1 [Etsi2015] SS6.1.3.",
+      "numbers": [
+        "302 755",
+        "1.4.1",
+        "6.1.3"
+      ],
+      "authority": {
+        "artifact": "citation registry",
+        "location": "[Etsi2015]"
+      },
+      "artifact_value": "ETSI EN 302 755 v1.4.1",
+      "agrees": true,
+      "disposition": "kept-citation"
+    },
+    {
+      "id": "eda07788-10",
+      "line_before": 112,
+      "statement": "`PITL` writes `out[K+360q+m] = in[K+Qm+q]`.",
+      "numbers": [
+        360
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/source-evidence.json",
+        "location": "claim `xdsopl-pitl-fwd`"
+      },
+      "artifact_value": "verbatim source line with the standard's 360-bit group size",
+      "agrees": true,
+      "disposition": "kept-standard-constant"
+    },
+    {
+      "id": "eda07788-11",
+      "line_before": 120,
+      "statement": "The gate's nine `PASS` lines cover three checks. Canonical order and zero tail padding hold at lengths 0, 1, 63, 64, 65, 127 and 128. Every position of four MODCODs matches.",
+      "numbers": [
+        9,
+        3,
+        0,
+        1,
+        63,
+        64,
+        65,
+        127,
+        128,
+        4
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/validation-output-v3.txt",
+        "location": "the nine PASS lines"
+      },
+      "artifact_value": "9 PASS lines; lengths 0/1/63/64/65/127/128; four MODCOD rows",
+      "agrees": true,
+      "disposition": "kept-workload-size-with-pointer"
+    },
+    {
+      "id": "eda07788-12",
+      "line_before": 190,
+      "statement": "Every cell's relative half-width is an order below the withdrawn confirmation's widest.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Relative half-width columns of the re-measurement and of the withdrawn confirmation"
+      },
+      "artifact_value": "re-measurement widest 0.0074; withdrawn confirmation widest 0.1214",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "eda07788-13",
+      "line_before": 209,
+      "statement": "Each gf2 arm's median call falls below what the withdrawn receipts report, and the `streaming` cell falls by about the same proportion.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Per-arm call time and conversion spans, re-measurement and withdrawn confirmation and v3 pilot blocks"
+      },
+      "artifact_value": "gf2 medians 182.9-185.2 against 196.2-198.3; streaming baseline 214.3 against the pilot's 229.1",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "eda07788-14",
+      "line_before": 218,
+      "statement": "The external arm's conversion still exceeds the paired call gap in every 16-QAM Normal cell, including the `streaming` one, and in none of the 64-QAM Normal or Short FECFRAME cells.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 re-measurement, Paired conversion attribution"
+      },
+      "artifact_value": "24/24 in the two 16-QAM Normal rows and the streaming row; 0/24 in the 64-QAM Normal and Short rows",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "eda07788-15",
+      "line_before": 229,
+      "statement": "Receipt `ab94fa3f...`: three sessions, 24 fresh pairs per cell, and intervals at confidence 0.999306 with 10 000 resamples.",
+      "numbers": [
+        "ab94fa3fcb4b9f54d4d236b1e80494767f8cc3e1141b063acc1d4342eeded52d",
+        3,
+        24,
+        0.999306,
+        10000
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 confirmation (withdrawn) source line, Pairs column and Sessions and host"
+      },
+      "artifact_value": "receipt ab94fa3f..., per-comparison confidence 0.999306, 24 pairs, 3 sessions, 10000 resamples",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-16",
+      "line_before": 234,
+      "statement": "Hand-typed six-row withdrawn-confirmation table: speedup, interval, `gf2 faster by`, decision and outcome.",
+      "numbers": [
+        "0.4901 [0.4879, 0.4937] / 2.040 [2.026, 2.050]",
+        "0.4890 [0.4297, 0.4954] / 2.045 [2.018, 2.327]",
+        "1.0018 [0.9898, 1.0098]",
+        "0.4580 [0.4510, 0.4626] / 2.183 [2.162, 2.217]",
+        "0.4623 [0.4443, 0.4702] / 2.163 [2.127, 2.251]",
+        "0.9993 [0.9919, 1.0048]"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 confirmation (withdrawn), cell table"
+      },
+      "artifact_value": "every hand-typed value reproduces the generated row",
+      "agrees": true,
+      "disposition": "removed-hand-typed-table"
+    },
+    {
+      "id": "eda07788-17",
+      "line_before": 243,
+      "statement": "`regressed` means that the upper bound lies below `1/1.1`: the external arm is more than the 10% equivalence margin slower.",
+      "numbers": [
+        1.1,
+        0.1
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json",
+        "location": "effect.equivalence_margin"
+      },
+      "artifact_value": "1.1",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-18",
+      "line_before": 246,
+      "statement": "P-20 status: four reservations, six comparisons each for the two confirmations, m = 12, t = 2, attempt alpha 0.05 / (2 x 3) = 0.008333, corrected alpha 0.0006944, 10 000 x 0.0006944 / 2 = 3.47 draws per tail against the required 20; expected tail count 125/m on attempt 1 and 41.7/m on attempt 2; a six-cell confirmation could reach 20 only as a first attempt with m <= 6.",
+      "numbers": [
+        4,
+        6,
+        12,
+        2,
+        0.05,
+        0.008333,
+        0.0006944,
+        10000,
+        3.47,
+        20,
+        125,
+        41.7,
+        6
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 confirmation (withdrawn), Family accounting (P-20)"
+      },
+      "artifact_value": "family alpha 0.05, m 12, t 2, attempt alpha 0.008333, corrected alpha 0.0006944, expected draws per tail 3.47, required 20, tail condition fails",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-19",
+      "line_before": 254,
+      "statement": "The endpoint-stability half of P-20 passes: the largest endpoint shift is 0.001127 against the declared 0.04.",
+      "numbers": [
+        0.001127,
+        0.04
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/dvb-t2-v3-endpoint-stability.txt",
+        "location": "largest endpoint shift line; declared resolution in tables-v3.md Measurement resolution"
+      },
+      "artifact_value": "largest endpoint shift 0.001127 (dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl); declared resolution 0.04",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-20",
+      "line_before": 259,
+      "statement": "Controls and attribution: the portable-versus-native intervals lie within the declared resolution of 1; gf2 takes 196.2 us and 196.3 us; the external arm takes 400.2 us and 428.6 us, of which 27.6 us is unpack and 199.8 us and 197.8 us are pack; conversion spans exceed the paired call gap in 24 of 24 pairs on 16-QAM and 0 of 24 on 64-QAM; without them the external call is 0.880 and 1.040 of the paired gf2 call; 1/0.880 is about 1.14, below the 1.2 material-gap threshold.",
+      "numbers": [
+        196.2,
+        196.3,
+        400.2,
+        428.6,
+        27.6,
+        199.8,
+        197.8,
+        24,
+        0.88,
+        1.04,
+        1.14,
+        1.2
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 confirmation (withdrawn), Per-arm call time and conversion spans and Paired conversion attribution, `-native-vs-xdsopl` rows"
+      },
+      "artifact_value": "gf2-native medians 196.2 and 196.3; xdsopl medians 400.2 and 428.6; unpack 27.6; pack 199.8 and 197.8; 24/24 and 0/24; residual ratios 0.8804 and 1.0398",
+      "agrees": true,
+      "scope_note": "Every figure in this paragraph is a `-native-vs-xdsopl` row. The paired `-portable-vs-xdsopl` rows read 19/24 and 0/24, so the 24-of-24 count holds only for the native cells; the rewrite makes that scope explicit and points at the table, where both pairs of rows are visible.",
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-21",
+      "line_before": 274,
+      "statement": "Four cells contain whole executions far above their median, for example 866.8 us against 401.3 us; the flag rule catches 1 of the 1440 windows; the receipt records one-minute load averages of 0.24, 4.15 and 3.69.",
+      "numbers": [
+        4,
+        866.8,
+        401.3,
+        1,
+        1440,
+        0.24,
+        4.15,
+        3.69
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 confirmation (withdrawn), Call range column, Flagged windows column and Sessions and host"
+      },
+      "artifact_value": "range 399.0-866.8 against median 401.3; one flagged window in `qam16-r12-normal-gap-portable-vs-xdsopl` out of six cells of 240 windows; load averages 0.24, 4.15, 3.69",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-22",
+      "line_before": 279,
+      "statement": "The declared resolution 0.04 comes from pilot r2, whose widest relative half-width is 0.032632; the first v3 pilot's widest was 0.153611 at six pairs; the confirmation reaches 0.121401 in `qam16-r12-normal-gap-portable-vs-xdsopl`, whose upper bound, 0.4954, stays far below `1/1.1`.",
+      "numbers": [
+        0.04,
+        0.032632,
+        0.153611,
+        0.121401,
+        0.4954,
+        1.1
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 confirmation (withdrawn), Measurement resolution; derivations in dev/active/eda07788/pilot-resolution-v3-r2.txt and pilot-resolution-v3.txt"
+      },
+      "artifact_value": "declared 0.04; pilot r2 widest 0.032632; first v3 pilot widest 0.153611; confirmation widest 0.121401; upper bound 0.4954",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-23",
+      "line_before": 290,
+      "statement": "The identity cell reads 0.9996 [0.9905, 1.0030]. The Short FECFRAME gap cells read 0.2242 and 0.2215 at six pairs, and 0.2289 [0.2215, 0.2327] in r2 at 24 pairs. The `streaming` cell reads 0.5638 [0.5618, 0.5653].",
+      "numbers": [
+        0.9996,
+        0.9905,
+        1.003,
+        0.2242,
+        0.2215,
+        0.2289,
+        0.5638,
+        0.5618,
+        0.5653,
+        6,
+        24
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 exploratory pilots (warm cells withdrawn), rows `qam16-r12-normal-null-native-vs-native`, `qam16-r12-short-gap-native-vs-xdsopl`, `qam64-r12-short-gap-native-vs-xdsopl`, `qam16-r12-normal-streaming-gap-native-vs-xdsopl`"
+      },
+      "artifact_value": "every quoted value reproduces the generated row",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-24",
+      "line_before": 298,
+      "statement": "The v1 confirmation reads 0.4266 to 0.4583 (`fail`) in the gap cells. The v1 native intervals [0.4536, 0.4666] and [0.4289, 0.4316] exclude the v3 points 0.4901 and 0.4580. gf2's median call moved from 186.4/186.8 us to 196.2/196.3 us, and the external arm's from 406.8/434.2 us to 400.2/428.6 us.",
+      "numbers": [
+        0.4266,
+        0.4583,
+        0.4536,
+        0.4666,
+        0.4289,
+        0.4316,
+        0.4901,
+        0.458,
+        186.4,
+        186.8,
+        196.2,
+        196.3,
+        406.8,
+        434.2,
+        400.2,
+        428.6
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v1 history (immutable, superseded, warm cells withdrawn) and Protocol-v3 confirmation (withdrawn)"
+      },
+      "artifact_value": "every quoted value reproduces the generated row",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-25",
+      "line_before": 305,
+      "statement": "Git navigation shows the sources unchanged between the launch revisions `130c33f4` and `142d0774`.",
+      "numbers": [
+        "130c33f4",
+        "142d0774"
+      ],
+      "authority": {
+        "artifact": "git history",
+        "location": "revisions named in the launcher logs"
+      },
+      "artifact_value": "navigation metadata only",
+      "agrees": true,
+      "disposition": "kept-commit-id"
+    },
+    {
+      "id": "eda07788-26",
+      "line_before": 317,
+      "statement": "97 NR matrices are pinned.",
+      "numbers": [
+        97
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/source-evidence.json",
+        "location": "inventories[\"aff3ct-5g-matrix-count\"]"
+      },
+      "artifact_value": "97",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-27",
+      "line_before": 327,
+      "statement": "The lifting tables differ only for `560 < K <= 640`: AFF3CT uses 8 and gf2 uses 9.",
+      "numbers": [
+        560,
+        640,
+        8,
+        9
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/source-evidence.json",
+        "location": "claims `aff3ct-kb-560-640`, `aff3ct-kb-560-640-value`, `gf2-kb-560-640`"
+      },
+      "artifact_value": "AFF3CT Kb 8 and gf2 Kb 9 over 560 < K <= 640",
+      "agrees": true,
+      "disposition": "kept-source-claim-with-pointer"
+    },
+    {
+      "id": "eda07788-28",
+      "line_before": 334,
+      "statement": "Over eight configurations, AFF3CT's rule on gf2's parameters selects gf2's positions in 8/8. AFF3CT's own `(K, N)` derivation equals gf2's in 4/8: the three rate-1/2 BG1 configurations become BG2, and at `K = 600` AFF3CT lifts to `Z = 80` where gf2 lifts to `Z = 72`.",
+      "numbers": [
+        8,
+        4,
+        600,
+        80,
+        72
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/analysis-output-v3.txt",
+        "location": "the three tally lines and the `BG2 target_n=1200 target_k=600` block"
+      },
+      "artifact_value": "8/8 selection agreement, 4/8 derivation agreement, 7/8 lifting agreement; AFF3CT Z=80 against gf2 Z=72 at K=600",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-29",
+      "line_before": 349,
+      "statement": "gf2's `prepare_llrs` writes `FILLER_LLR = 15.0` into fillers.",
+      "numbers": [
+        15.0
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/source-evidence.json",
+        "location": "claim `gf2-filler-llr`"
+      },
+      "artifact_value": "15.0",
+      "agrees": true,
+      "disposition": "kept-source-claim-with-pointer"
+    },
+    {
+      "id": "eda07788-30",
+      "line_before": 366,
+      "statement": "It compares AFF3CT's own derivation with gf2's over twelve configurations: the 8 equivalent configurations pass on two seeded frames each; the 4 non-equivalent configurations are recorded and not timed.",
+      "numbers": [
+        12,
+        8,
+        2,
+        4
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/nr-derate-validation.txt",
+        "location": "summary line"
+      },
+      "artifact_value": "8 equivalent and passing, 4 non-equivalent (not timed), 0 failing, out of 12",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-31",
+      "line_before": 377,
+      "statement": "The six confirmatory cells span lifting sizes 22 to 96: five gap cells (BG2 `Z = 22, 52` with fillers and `Z = 72` without; BG1 `Z = 96` with fillers and `Z = 48` without) and the portable-versus-native control at BG1 `Z = 96`. The eight-cell pilot (24 pairs each, zero findings) adds an identity cell, 0.9975 [0.9948, 1.0019], and a BG1 `Z = 44` gap cell, 0.3330 [0.3327, 0.3345].",
+      "numbers": [
+        6,
+        22,
+        96,
+        52,
+        72,
+        48,
+        8,
+        24,
+        0.9975,
+        0.9948,
+        1.0019,
+        44,
+        0.333,
+        0.3327,
+        0.3345
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/addendum-nr-llr-derate-confirmation.json and addendum-nr-llr-derate-pilot.json",
+        "location": "cells[].workload.size.lifting and fillers; estimates in dev/bench_results/eda07788/tables-nr-derate.md Protocol-v3 exploratory pilot"
+      },
+      "artifact_value": "lifting 22, 52, 72, 48, 96 and the pilot's 44; identity cell 0.9975 [0.9948, 1.0019]; bg1-n1200-k900 0.3330 [0.3327, 0.3345]",
+      "agrees": true,
+      "disposition": "split: workload sizes kept, estimates removed"
+    },
+    {
+      "id": "eda07788-32",
+      "line_before": 385,
+      "statement": "At the pilot's own alpha (0.025) the widest relative half-width is 0.007809, the P-03 floor. The declared resolution uses the confirmation's corrected alpha, 0.025/6; there the pilot's data give a widest half-width of 0.025312 and a largest P-20 endpoint shift of 0.017717. The larger, rounded up, is the declared 0.03. The confirmation's own widest relative half-width is 0.014056.",
+      "numbers": [
+        0.025,
+        0.007809,
+        6,
+        0.025312,
+        0.017717,
+        0.03,
+        0.014056
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/pilot-resolution-nr-derate.txt",
+        "location": "both derivation blocks; projected in tables-nr-derate.md Measurement resolution"
+      },
+      "artifact_value": "pilot own-alpha widest 0.007809; corrected-alpha widest 0.025312; largest endpoint shift 0.017717; declared 0.03; confirmation widest 0.014056",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-33",
+      "line_before": 396,
+      "statement": "Receipt `e1041cde...`: three sessions, 24 fresh pairs per cell, zero findings. It is the family's first attempt with m = 6, so the attempt alpha is 0.025. The corrected alpha is 0.0041667, confidence 0.995833, and 20.83 draws fall in each tail.",
+      "numbers": [
+        "e1041cde377fa5742b8f613530647222bcfede7c2f47710711f6c832669de03e",
+        3,
+        24,
+        6,
+        0.025,
+        0.0041667,
+        0.995833,
+        20.83
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-nr-derate.md",
+        "location": "Protocol-v3 confirmation source line, Family accounting (P-20) and Sessions and host"
+      },
+      "artifact_value": "m 6, t 1, attempt alpha 0.025000, corrected alpha 0.0041667, confidence 0.995833, expected draws per tail 20.83, tail condition holds, 3 sessions, 24 pairs, 0 findings",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-34",
+      "line_before": 402,
+      "statement": "Hand-typed six-row NR confirmation table: speedup, interval, `gf2 faster by`, decision and outcome.",
+      "numbers": [
+        "0.3491 [0.3472, 0.3504] / 2.865 [2.854, 2.880]",
+        "0.3428 [0.3418, 0.3476] / 2.918 [2.877, 2.926]",
+        "0.3197 [0.3186, 0.3208] / 3.128 [3.117, 3.139]",
+        "0.3263 [0.3251, 0.3274] / 3.065 [3.054, 3.076]",
+        "0.3292 [0.3282, 0.3312] / 3.038 [3.019, 3.047]",
+        "0.9992 [0.9905, 1.0031]"
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-nr-derate.md",
+        "location": "Protocol-v3 confirmation, cell table"
+      },
+      "artifact_value": "every hand-typed value reproduces the generated row",
+      "agrees": true,
+      "disposition": "removed-hand-typed-table"
+    },
+    {
+      "id": "eda07788-35",
+      "line_before": 411,
+      "statement": "gf2's median call ranges from 225 ns to 1356 ns, and the adapter's from 645 ns to 4118 ns; unpack takes 71-376 ns and pack 62-365 ns; with both subtracted the rest of the external call is still 2.28 to 2.69 times gf2's paired call; gf2's untimed code construction takes 1.7 ms to 46 ms and AFF3CT's `Puncturer_5G` construction about 50 us.",
+      "numbers": [
+        225,
+        1356,
+        645,
+        4118,
+        71,
+        376,
+        62,
+        365,
+        2.28,
+        2.69,
+        1.7,
+        46,
+        50
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-nr-derate.md",
+        "location": "Protocol-v3 confirmation, Per-arm call time and adapter stages and Paired adapter attribution"
+      },
+      "artifact_value": "gf2 medians 225 to 1356 ns; adapter medians 645 to 4118 ns; unpack 71-376 ns; pack 62-365 ns; residual ratios 2.2762 to 2.6885; gf2 setup 1721.9 to 46226.1 us; AFF3CT setup 49.0 to 53.0 us",
+      "agrees": true,
+      "disposition": "removed-restatement"
+    },
+    {
+      "id": "eda07788-36",
+      "line_before": 464,
+      "statement": "148 shifts over lengths 0, 1, 63, 64, 65, 127, 128, 4096 and 64 800 match an independent zero-fill reference, and all 88 nonzero offsets differ under rotation, with offsets through `len+1`.",
+      "numbers": [
+        148,
+        0,
+        1,
+        63,
+        64,
+        65,
+        127,
+        128,
+        4096,
+        64800,
+        88
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/survey/analysis-output-v3.txt",
+        "location": "the two PASS lines"
+      },
+      "artifact_value": "148 shifts over lengths [0, 1, 63, 64, 65, 127, 128, 4096, 64800]; 88/88 nonzero offsets differ under wrap-around rotation",
+      "agrees": true,
+      "disposition": "split: lengths kept, counts removed"
+    },
+    {
+      "id": "eda07788-37",
+      "line_before": 489,
+      "statement": "All six DVB-T2 v3 cells are `not-confirmatory`, and one interval is three times the declared resolution.",
+      "numbers": [
+        6,
+        3
+      ],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 confirmation (withdrawn), Outcome and Relative half-width columns; Measurement resolution"
+      },
+      "artifact_value": "six not-confirmatory rows; widest half-width 0.121401 against the declared 0.04",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "eda07788-38",
+      "line_before": 483,
+      "statement": "The analysis binary that printed mismatched `Kb` values and a +20 filler value is also corrected.",
+      "numbers": [
+        20
+      ],
+      "authority": {
+        "artifact": "dev/active/eda07788/findings.md",
+        "location": "Falsified, contradicting and negative results"
+      },
+      "artifact_value": "falsification record of a superseded output; no committed artifact carries the value",
+      "agrees": true,
+      "disposition": "kept-falsification-record"
+    },
+    {
+      "id": "eda07788-39",
+      "line_before": 493,
+      "statement": "The re-measurement's comparator-gap estimates lie outside the withdrawn v3 intervals in most of the cells they share, and outside the `streaming` pilot cell's interval although that cell is not withdrawn.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/eda07788/tables-v3.md",
+        "location": "Protocol-v3 re-measurement, Protocol-v3 confirmation (withdrawn) and Protocol-v3 exploratory pilots, matching `-gap-` rows"
+      },
+      "artifact_value": "three of the four shared gap cells fall outside the withdrawn interval; the streaming estimate 0.5213 falls outside the pilot's [0.5618, 0.5653]",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    }
+  ],
+  "unbacked_numbers": [
+    {
+      "id": "eda07788-38",
+      "number": 20,
+      "note": "The `+20 filler value` is the superseded output of an earlier analysis binary. It is preserved as a falsification record, not as a current measurement, and no committed artifact carries it."
+    }
+  ],
+  "disagreements": []
+}

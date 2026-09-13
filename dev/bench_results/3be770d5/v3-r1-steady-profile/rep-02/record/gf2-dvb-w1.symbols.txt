@@ -1,0 +1,35 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 12600116550
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    75.33%          2373  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    10.98%           346  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.33%           105  libc.so.6         [.] malloc
+     3.11%            98  libc.so.6         [.] 0x000000000017646c
+     2.41%            76  libc.so.6         [.] cfree
+     1.62%            51  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.21%            38  libc.so.6         [.] 0x0000000000176400
+     1.05%            33  libc.so.6         [.] 0x0000000000176476
+     0.63%            20  libc.so.6         [.] 0x0000000000176404
+     0.03%             1  libc.so.6         [.] 0x0000000000176466
+     0.03%             1  libc.so.6         [.] 0x00000000001765a9
+     0.03%             1  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  [unknown]         [k] 0xffffffffad88f346
+     0.03%             1  [unknown]         [k] 0xffffffffad891c98
+     0.03%             1  [unknown]         [k] 0xffffffffad8922e9
+     0.03%             1  [unknown]         [k] 0xffffffffad8923e0
+     0.03%             1  [unknown]         [k] 0xffffffffad894ddb
+     0.03%             1  [unknown]         [k] 0xffffffffad8a8c77
+     0.03%             1  [unknown]         [k] 0xffffffffae99dd9b
+
+
+#
+# (Tip: Sample related events with: perf record -e '{cycles,instructions}:S')
+#

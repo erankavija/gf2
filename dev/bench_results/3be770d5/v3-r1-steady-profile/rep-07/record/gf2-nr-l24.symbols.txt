@@ -1,0 +1,98 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 108K of event 'cycles:u'
+# Event count (approx.): 435680030003
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    79.61%         86712  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    10.96%         11937  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.24%          3528  libc.so.6         [.] malloc
+     2.95%          3210  libc.so.6         [.] cfree
+     1.46%          1587  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     0.55%           598  libc.so.6         [.] 0x0000000000176400
+     0.27%           289  libc.so.6         [.] 0x0000000000176404
+     0.19%           203  libc.so.6         [.] 0x000000000017646c
+     0.18%           200  libc.so.6         [.] 0x0000000000176466
+     0.09%           102  libc.so.6         [.] 0x0000000000176476
+     0.07%            76  libc.so.6         [.] 0x0000000000176470
+     0.06%            69  libc.so.6         [.] 0x00000000001764db
+     0.05%            52  libc.so.6         [.] 0x0000000000176485
+     0.04%            40  libc.so.6         [.] 0x00000000001764b5
+     0.03%            37  [unknown]         [k] 0xffffffffad4015f0
+     0.02%            26  libc.so.6         [.] 0x0000000000176497
+     0.02%            26  libc.so.6         [.] 0x00000000001764b2
+     0.02%            22  libc.so.6         [.] 0x0000000000176411
+     0.02%            22  libc.so.6         [.] 0x000000000017642e
+     0.02%            19  libc.so.6         [.] 0x00000000001764ac
+     0.01%            13  libc.so.6         [.] 0x0000000000176421
+     0.01%            11  libc.so.6         [.] 0x000000000017642b
+     0.01%            11  libc.so.6         [.] 0x00000000001764a1
+     0.01%             9  libc.so.6         [.] 0x0000000000176490
+     0.01%             9  [unknown]         [k] 0xffffffffad81a4e6
+     0.01%             8  [unknown]         [k] 0xffffffffad401d22
+     0.01%             7  libc.so.6         [.] 0x0000000000176425
+     0.01%             7  [unknown]         [k] 0xffffffffad7794b3
+     0.00%             5  [unknown]         [k] 0xffffffffae98856c
+     0.00%             4  libc.so.6         [.] 0x0000000000176e00
+     0.00%             4  [unknown]         [k] 0xffffffffad4015f4
+     0.00%             4  [unknown]         [k] 0xffffffffad890bd4
+     0.00%             4  [unknown]         [k] 0xffffffffae9885b4
+     0.00%             4  [unknown]         [k] 0xffffffffae98ce54
+     0.00%             3  libc.so.6         [.] 0x0000000000176433
+     0.00%             3  [unknown]         [k] 0xffffffffad729b1c
+     0.00%             3  [unknown]         [k] 0xffffffffad779494
+     0.00%             3  [unknown]         [k] 0xffffffffad890be8
+     0.00%             3  [unknown]         [k] 0xffffffffad8968da
+     0.00%             2  libc.so.6         [.] 0x00000000000a701b
+     0.00%             2  libc.so.6         [.] 0x000000000017640b
+     0.00%             2  libc.so.6         [.] 0x00000000001765bb
+     0.00%             2  [unknown]         [k] 0xffffffffad729ae4
+     0.00%             2  [unknown]         [k] 0xffffffffae98c014
+     0.00%             2  [unknown]         [k] 0xffffffffae98ce93
+     0.00%             1  libc.so.6         [.] 0x00000000000a6f7b
+     0.00%             1  libc.so.6         [.] 0x00000000000a7640
+     0.00%             1  libc.so.6         [.] 0x00000000000a79cb
+     0.00%             1  libc.so.6         [.] 0x00000000001764c7
+     0.00%             1  libc.so.6         [.] 0x00000000001764cd
+     0.00%             1  libc.so.6         [.] 0x0000000000176e24
+     0.00%             1  libc.so.6         [.] 0x0000000000176f04
+     0.00%             1  libc.so.6         [.] 0x0000000000176f14
+     0.00%             1  [unknown]         [k] 0xffffffffad400002
+     0.00%             1  [unknown]         [k] 0xffffffffad400005
+     0.00%             1  [unknown]         [k] 0xffffffffad4015f7
+     0.00%             1  [unknown]         [k] 0xffffffffad4015f8
+     0.00%             1  [unknown]         [k] 0xffffffffad4015fa
+     0.00%             1  [unknown]         [k] 0xffffffffad4015ff
+     0.00%             1  [unknown]         [k] 0xffffffffad401d30
+     0.00%             1  [unknown]         [k] 0xffffffffad6eb594
+     0.00%             1  [unknown]         [k] 0xffffffffad6f7a80
+     0.00%             1  [unknown]         [k] 0xffffffffad6f7a97
+     0.00%             1  [unknown]         [k] 0xffffffffad7794a1
+     0.00%             1  [unknown]         [k] 0xffffffffad7c5cb4
+     0.00%             1  [unknown]         [k] 0xffffffffad7cdadd
+     0.00%             1  [unknown]         [k] 0xffffffffad7f9db2
+     0.00%             1  [unknown]         [k] 0xffffffffad7f9e03
+     0.00%             1  [unknown]         [k] 0xffffffffad8130d4
+     0.00%             1  [unknown]         [k] 0xffffffffad890c7a
+     0.00%             1  [unknown]         [k] 0xffffffffad896892
+     0.00%             1  [unknown]         [k] 0xffffffffad8968b2
+     0.00%             1  [unknown]         [k] 0xffffffffae96e3c6
+     0.00%             1  [unknown]         [k] 0xffffffffae96e3d7
+     0.00%             1  [unknown]         [k] 0xffffffffae988595
+     0.00%             1  [unknown]         [k] 0xffffffffae988b74
+     0.00%             1  [unknown]         [k] 0xffffffffae9898f4
+     0.00%             1  [unknown]         [k] 0xffffffffae98c01e
+     0.00%             1  [unknown]         [k] 0xffffffffae98c040
+     0.00%             1  [unknown]         [k] 0xffffffffae99dd7c
+     0.00%             1  [unknown]         [k] 0xffffffffae99dd84
+     0.00%             1  [unknown]         [k] 0xffffffffae99dda0
+
+
+#
+# (Tip: To show IPC for sampling periods use perf record -e '{cycles,instructions}:S' and then browse context)
+#

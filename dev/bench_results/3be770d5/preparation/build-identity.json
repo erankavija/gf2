@@ -1,0 +1,102 @@
+{
+  "schema": "ldpc-throughput-build-identity-v1",
+  "observed_utc": "2026-09-12T06:28:26+00:00",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
+  "cxx": "c++ (GCC) 16.2.1 20260810",
+  "rustflags": "-C target-cpu=native",
+  "cargo_profile": "release: opt-level 3, lto, codegen-units 1, debug line-tables-only",
+  "build_command": "CARGO_CI_NO_SCCACHE=1 GF2_AFF3CT_ROOT=<aff3ct root> CARGO_TARGET_DIR=\"$PWD/target/ldpc-throughput\" RUSTFLAGS='-C target-cpu=native' ./scripts/cargo-budget.sh cargo +1.95 build --offline --release --features aff3ct --manifest-path dev/active/3be770d5/survey/harness/Cargo.toml",
+  "aff3ct": {
+    "root": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct",
+    "commit": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+    "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+    "c077a88b_build_identity": {
+      "path": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+      "sha256": "8f42c2afbea96b763117335d3daab9c415bc84bfebe28272457bc82b65a56eea"
+    },
+    "source_archive": {
+      "path": "dev/bench_results/c077a88b/v3-preparation/source-inputs/aff3ct-source.tar.gz",
+      "sha256": "370f78e20000bc5fa0ae56c5534f6cf44c278480321a478f7b95b277ab7091fb"
+    }
+  },
+  "shim": {
+    "unit": "dev/active/3be770d5/survey/harness/cpp/throughput_shim.cpp",
+    "unit_sha256": "9db3c2a0200de22dae836dfd1d3d2c6a7b4639d531bc426aa3f8222e08f1e66e",
+    "included": "dev/active/c077a88b/survey/harness/cpp/aff3ct_shim.cpp",
+    "included_sha256": "95cf0245f13dd8c24a3e36ad2a7ffc6a2d485a7686ce2b5d2f3b7de25de70d89",
+    "flags": [
+      "-std=gnu++11",
+      "-O3",
+      "-march=native",
+      "-g1",
+      "-DNDEBUG"
+    ],
+    "definitions_source": "dev/active/3be770d5/survey/harness/build.rs AFF3CT_DEFINITIONS",
+    "build_rs_sha256": "405b98e7352fd72355c4865851b78b8a9ef0cf2e064e09ef55ed05fcc31888c9"
+  },
+  "executables": {
+    "gf2-throughput-arm": "350f2e448de11f7f8853474342a189dd805ac974b89a0ba48ef7c949ac574f69",
+    "aff3ct-throughput-arm": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+    "ldpc-profile": "2ba24e5a81aa4193ede75e51270b2c49968d8af43f942014ef323254a489f017",
+    "ldpc-plan-check": "b7f58d61e418f0e1f7b8fff9d00812859de0409017372d48117bbeb10f643707",
+    "ldpc-alloc-census": "44d5ef19daa827b2af2a5d0c9aafd60de394d41809bd794cfc3012ef6ea20006",
+    "ldpc-throughput-validate": "f932f709abd8c60b3683e8bda52e5da534f4e0f4097fb420230c5d1a900781f8"
+  },
+  "inputs": {
+    "archive": {
+      "path": "dev/bench_results/c077a88b/v3-preparation/source-inputs/recorded-inputs.tar.gz",
+      "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba"
+    },
+    "extracted_to": "target/ldpc-inputs",
+    "bundles": {
+      "dvb-t2-r12-waterfall": {
+        "code": "dvb-t2-r12",
+        "n": 64800,
+        "k": 32400,
+        "m": 32400,
+        "nnz": 226799,
+        "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+        "codewords_sha256": "4b70fec2970f72c57e55678192e01b5a72c3cdc4043e2330f9fa221f097dc44a",
+        "llrs_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+        "frames": 128,
+        "seed": 42,
+        "esn0_db": -1.2,
+        "codeword_source": "both",
+        "punctured_prefix": 0
+      },
+      "nr-bg1-z384-mother": {
+        "code": "nr-bg1-r12",
+        "n": 26112,
+        "k": 8448,
+        "m": 17664,
+        "nnz": 121344,
+        "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+        "codewords_sha256": "7bb775743d7f17a807db66663185e49f2d6ab49202ed75692d090375733296af",
+        "llrs_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+        "frames": 128,
+        "seed": 42,
+        "esn0_db": -4.3,
+        "codeword_source": "both",
+        "punctured_prefix": 0
+      }
+    },
+    "generator": "dev/active/c077a88b/survey/harness/src/bin/ldpc-make-inputs.rs",
+    "generator_sha256": "f66be20b3934eec75e92c4f9c1709f91cf9a7b0e61731783c3da84ee877b27a7",
+    "rng": "channel noise: gf2_sim::testutil::AwgnLlrSource, an in-repository SplitMix64 stream (crates/gf2-sim/src/testutil.rs) seeded with the manifest seed; random messages: the generator's own LCG seeded with seed ^ 0x6C64706D73677367. Neither uses an external RNG crate.",
+    "testutil_sha256": "1170a18fac78d57ef6802346527e1aa34722fe5b4049ebb9d8759ec3ffb24adb"
+  },
+  "prepared_quality": {
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json": "8443cdfae4e6bfb7036c8dbb10142baecacd40f911c582bf18a369aefa15559a",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json": "330e6dd7c7c90c904128328084e4ceb678fbe3a38a2ed56e7155ec4e6a2f72d0",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-dvb-t2-r12.json": "ce3b3131cb445afad9240703ee381d314dc5606fdcc60825aa1893c078aec220",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-nr-bg1-z384.json": "1e26ac7ca28a997054fca90080d2736fe41e0439ad568e8f2a862e839d0008f2",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-dvb-t2-r12.json": "82a065128d3f1400ca1be37aab75f40e270b61307e7713a0f9f808c91c95273a",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json": "fc00b05ba8e05726b733e8e6c05d4ddaff3a2ae6f9b3b5f565fdd2a786cc6ef1",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json": "29248fdeeb0f408166190f9c0c5d72b7ce8b40f09a1eb3ddb7a7c9cd437fea4d",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-nr-bg1-z384.json": "c2af6d639fc07ad0d3871a4595b81328faeba999a5ac63471e100e4fc2ed6d77",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json": "68beaf11e9139cf3a12123016215747ede3ac796663a23c51bcd3c78c5e4e5ce",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json": "12d9c0994d23424fecbbf286d5c0250a2d599a172505c08c855805ca47575fad",
+    "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6",
+    "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
+  }
+}
