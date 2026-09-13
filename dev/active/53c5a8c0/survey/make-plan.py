@@ -96,9 +96,14 @@ def main():
         lock,
     ) = sys.argv[1:9]
     holdout_declaration = sys.argv[9] if len(sys.argv) > 9 else None
-    # A smoke runs the pilot grid at the protocol's minimum pilot pair count;
-    # a confirmation uses the frozen confirmatory count.
-    pilot_pairs = 6 if label in ("pilot", "smoke") else None
+    # A smoke runs the pilot grid at the protocol's minimum pilot pair count; a
+    # confirmation uses the frozen confirmatory count. A resolution pilot
+    # raises the pair count to the protocol's pilot maximum through
+    # GF2_PILOT_PAIRS, so its intervals are estimated on the sample size the
+    # confirmation will use.
+    pilot_pairs = None
+    if label in ("pilot", "smoke"):
+        pilot_pairs = int(os.environ.get("GF2_PILOT_PAIRS", "6"))
 
     declared = list(grid.cells_of(family))
     if label not in ("pilot", "smoke"):
