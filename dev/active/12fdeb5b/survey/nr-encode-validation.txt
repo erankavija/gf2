@@ -47,4 +47,8 @@ bg1-n2560-k2048-rv1    srsran  non-equivalent  1/10 messages identical; srsRAN s
 bg1-n2560-k2048-rv1    aff3ct  unavailable     0/0 messages identical; AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 1
 bg2-n1024-k400-rv2     srsran  non-equivalent  1/10 messages identical; srsRAN selects from the redundancy-version 2 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z
 bg2-n1024-k400-rv2     aff3ct  unavailable     0/0 messages identical; AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 2
+bg1-n2560-k2048-rv3    srsran  non-equivalent  1/10 messages identical; srsRAN selects from the redundancy-version 3 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z
+bg1-n2560-k2048-rv3    aff3ct  unavailable     0/0 messages identical; AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 3
+bg2-n1024-k400-rv3     srsran  non-equivalent  1/10 messages identical; srsRAN selects from the redundancy-version 3 starting offset; gf2's rate-matched encoder has no redundancy-version parameter and always starts at 2*Z
+bg2-n1024-k400-rv3     aff3ct  unavailable     0/0 messages identical; AFF3CT's Puncturer_5G selects from position 2*Z with no redundancy-version offset, so it cannot serve redundancy version 3
 matched arms: 39
