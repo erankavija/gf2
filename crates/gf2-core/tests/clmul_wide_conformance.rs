@@ -43,6 +43,24 @@ use gf2_core::gf2m::wide::{
     clmul_wide, clmul_wide_slice, force_scalar_clmul_wide, last_clmul_wide_lane, PORTABLE_LANE,
 };
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
+use std::sync::Mutex;
+
+/// Serialises `force_scalar_clmul_wide` toggle-and-observe critical sections
+/// across this binary's concurrently-scheduled test threads.
+///
+/// The override is a single process-wide `AtomicBool`
+/// (`FORCE_SCALAR_CLMUL_WIDE`): every wide carry-less product on every thread
+/// computes the same words regardless of which lane it takes, so the override
+/// never corrupts a result, but a test that asserts *which* lane
+/// [`last_clmul_wide_lane`] reports can observe another thread's toggle
+/// mid-section under the default multi-threaded `cargo test` harness (nextest
+/// isolates each test into its own process and does not exercise this path).
+/// Every function here that forces the fallback or asserts an un-forced lane
+/// holds this lock for its whole toggle-execute-observe-restore section, the
+/// same convention `prime_route_dispatch.rs`'s `OBSERVATION_MUTEX` and
+/// `phase2_prime_sweep_proptests.rs`'s `DISPATCH_MUTEX` use for the same
+/// process-wide-toggle hazard.
+static DISPATCH_LANE_MUTEX: Mutex<()> = Mutex::new(());
 
 /// Random operand pairs drawn per width.
 const RANDOM_PAIRS: usize = 48;
@@ -226,6 +244,9 @@ fn expected_lane<const N: usize>() -> &'static str {
 /// `N`, and that forcing the portable fallback moves them onto it without
 /// changing a single output word.
 fn check_public_dispatch<const N: usize, const M: usize>(seed: u64) {
+    let _guard = DISPATCH_LANE_MUTEX
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let lane = expected_lane::<N>();
     let (a, b) = pairs::<N>(seed)[0];
 
@@ -274,6 +295,9 @@ fn check_public_dispatch<const N: usize, const M: usize>(seed: u64) {
 /// `N` for every operand pair, which is the coverage a host without
 /// PCLMULQDQ gets from its own dispatch.
 fn check_portable_fallback<const N: usize, const M: usize>(seed: u64) {
+    let _guard = DISPATCH_LANE_MUTEX
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let restore = force_scalar_clmul_wide(true);
     for (a, b) in pairs::<N>(seed) {
         let expected = bitwise_product::<N>(&a, &b);
@@ -340,6 +364,9 @@ fn public_product_reaches_capability_dispatch() {
 /// returns the same field element.
 #[test]
 fn field_multiplication_shares_the_canonical_dispatch() {
+    let _guard = DISPATCH_LANE_MUTEX
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let a = Gf2mWide::<4, Gf2m256Config>::new([
         0xDEAD_BEEF_CAFE_BABE,
         0x0123_4567_89AB_CDEF,
