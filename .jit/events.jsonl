@@ -12146,3 +12146,10 @@
 {"fields":["documents"],"id":"241a5315-ba73-42d9-a1f7-21e5ee8a5615","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:03:21.571619487Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"5e16870b-208c-4ddf-872d-35b99dd09c9a","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:03:21.844859775Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"1aff2e82-954c-4f98-80eb-5bdacb341afb","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:03:22.113651758Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"code-review","id":"89651d24-4b6b-4cc6-a771-9947ec9f1d1c","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:06:28.872876009Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"0aa12776-511b-4ebe-860a-675d18128ebd","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:06:31.516687186Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"34283305-c5bc-43de-b79b-f7e2a79ec2a4","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:07:37.791464007Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"aa5805ba-560f-4fca-ba91-15ee894ad029","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:10:59.581321887Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"711e4e83-cb1e-45c7-9d2b-f1c972d21fca","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:13:18.846982114Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"03966814-84c7-4d12-b422-edd53b0d15b0","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:28:20.757536465Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"36bc167e-4758-477b-b5c8-b49c9a23436e","issue_id":"1d4fd63d-c522-47cb-9448-fe8f5220f0ed","timestamp":"2026-09-13T17:55:15.395568381Z","type":"gate_failed","updated_by":"auto:executor"}
