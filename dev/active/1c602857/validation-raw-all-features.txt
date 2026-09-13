@@ -1,0 +1,55 @@
+cargo-budget: 12 jobs (2 live, 24 cpus)
+    Blocking waiting for file lock on build directory
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/crates/gf2-core)
+    Finished `ci-test` profile [optimized] target(s) in 10.18s
+────────────
+ Nextest run ID 39cee074-a9a6-4c67-979d-a6340f236348 with nextest profile: ci
+    Starting 4 tests across 1 binary
+        PASS [   0.004s] (1/4) gf2-core::clmul_wide_conformance field_multiplication_shares_the_canonical_dispatch
+        PASS [   0.004s] (2/4) gf2-core::clmul_wide_conformance public_product_reaches_capability_dispatch
+        PASS [   0.007s] (3/4) gf2-core::clmul_wide_conformance portable_fallback_matches_the_oracle_at_every_width
+        PASS [   0.007s] (4/4) gf2-core::clmul_wide_conformance public_product_matches_the_oracle_at_every_width
+────────────
+     Summary [   0.007s] 4 tests run: 4 passed, 0 skipped
+        PASS [   0.004s] (1/4) gf2-core::clmul_wide_conformance field_multiplication_shares_the_canonical_dispatch
+  stdout ───
+
+    running 1 test
+    test field_multiplication_shares_the_canonical_dispatch ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+
+        PASS [   0.004s] (2/4) gf2-core::clmul_wide_conformance public_product_reaches_capability_dispatch
+  stdout ───
+
+    running 1 test
+    test public_product_reaches_capability_dispatch ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+  stderr ───
+    dispatch-lane-witness N=1 lane=portable-scalar
+    dispatch-lane-witness N=2 lane=portable-scalar
+    dispatch-lane-witness N=4 lane=avx2+vpclmulqdq-ymm
+    dispatch-lane-witness N=9 lane=avx2+vpclmulqdq-ymm
+    dispatch-lane-witness N=16 lane=portable-scalar
+
+        PASS [   0.007s] (3/4) gf2-core::clmul_wide_conformance portable_fallback_matches_the_oracle_at_every_width
+  stdout ───
+
+    running 1 test
+    test portable_fallback_matches_the_oracle_at_every_width ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] (4/4) gf2-core::clmul_wide_conformance public_product_matches_the_oracle_at_every_width
+  stdout ───
+
+    running 1 test
+    test public_product_matches_the_oracle_at_every_width ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+

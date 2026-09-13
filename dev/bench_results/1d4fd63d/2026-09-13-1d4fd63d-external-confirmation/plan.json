@@ -1,0 +1,67 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "external-confirmation-1d4fd63d-20260913t130401z",
+  "issue": "1d4fd63d",
+  "label": "confirmation",
+  "campaign_seed": 20260913401,
+  "addendum": "dev/active/1d4fd63d/addendum-v4-external-confirmation.json",
+  "producing_manifest": "dev/active/1d4fd63d/external-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-avx2-ymm6": {
+      "build": "conservative-portable",
+      "description": "the avx2-ymm6 lane: all six mask-shift-XOR stages in YMM registers, no stack scratch",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/1d4fd63d/external-arms/target/release/transpose-lane-external-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_TRANSPOSE_LANE": "avx2-ymm6"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "external-m4ri": {
+      "build": "external",
+      "description": "M4RI 20260122 mzd_transpose (release tarball, GPL-2.0-or-later, gcc -O3 -march=native -fPIC, no runtime dispatch), reusing a preallocated output; the executable 6fb89a3c pinned, checked byte for byte against its build-evidence.json before this run",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/6fb89a3c/survey/m4ri_transpose_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "external-bitshuffle": {
+      "build": "external",
+      "description": "Bitshuffle 0.5.2 bshuf_bitshuffle (commit 52aec3b80d05606c090956aecfe868489d96b95c, MIT, gcc -O3 -march=native -fPIC, compile-time AVX2 route) over 64 eight-byte elements into a preallocated output; the executable 6fb89a3c pinned, checked byte for byte against its build-evidence.json before this run",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/dev/active/6fb89a3c/survey/bitshuffle_transpose_arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "lane-avx2-ymm6-block-64-vs-m4ri",
+      "baseline_arm": "gf2-avx2-ymm6",
+      "candidate_arm": "external-m4ri",
+      "case": {
+        "n": 64,
+        "seed": 20260913303
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-block-64-vs-bitshuffle",
+      "baseline_arm": "gf2-avx2-ymm6",
+      "candidate_arm": "external-bitshuffle",
+      "case": {
+        "n": 64,
+        "seed": 20260913304
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 4
+}

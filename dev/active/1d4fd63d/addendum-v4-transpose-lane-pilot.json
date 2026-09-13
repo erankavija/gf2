@@ -1,0 +1,548 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "transpose-lane-selection",
+    "issue": "1d4fd63d",
+    "purpose": "kernel-family",
+    "description": "Which 64x64 bit-block transpose lane gf2 should publish. The baseline arm of every comparison is the kernel gf2_kernels_simd::transpose::detect publishes on this host, the pinned pre-change implementation that BitMatrix::transpose and gf2-coding's bit-sliced BCH encoding reach. The candidate arms are the three other lanes of the same contract, each named through the public transpose::lane and reaching the consumers through the same abstraction the production kernel does: avx2-ymm6 is all six mask-shift-XOR stages in YMM registers with no stack scratch; avx2-pshufb is 8x8 byte tiles through a vpshufb bit-reversal lookup; avx2-movemask is an SSE byte transpose followed by vpmovmskb bit-plane extraction, which is the movemask geometry's tile assembly and packing inside the 64x64 contract. One executable serves every arm and selects its lane from GF2_TRANSPOSE_LANE, so the arms share a build, a fixture generator, a warm pass and a timing loop. Each candidate is measured on six workloads: the block kernel alone over a 256-block L2-resident run and over a 4096-block streaming run on a six-core arm; the two halves of the BCH bit-slice conversion, which are one lane group's whole message absorbed through the transpose and the bit-sliced recurrence and the reduced register read back as packed per-frame parity, both on the mother code of the DVB-T2 short frame (mother-field degree 14, corpus row T2S, resolved from dev/active/04b85d10/survey/code-rows.json); and the whole BitMatrix::transpose consumer at 4096 squared and at 65 squared, whose output allocation, tile assembly, partial boundary tiles and tail mask are inside the timed call. The 65-squared cell and the control are non-regression cells; every other cell is an improvement cell. The control cell puts the whole bit-sliced BCH batch encode of the same code at batch 256 against itself through the production family entry point, which resolves its own block kernel: it measures no lane difference and pins the consumer latency the conversion cells sit inside. This addendum is the pilot: every cell is exploratory, it ranks the candidates and fixes the measurement resolution the confirmation freezes against, and none of its samples enters a confirmation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T12:03:55Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "A published lane carries an unsafe kernel, its safety contract, its share of the shared contract cases and its section of the committed asm artefact, and the lane it replaces stays in the family as a candidate. Ten percent of the measured transform is the smallest gain worth that standing maintenance: below it a consumer cannot tell the lanes apart, and the conversion and whole-matrix cells measure the transform with its tile assembly and packing included, so the threshold applies to the complete conversion cost rather than to a kernel in isolation.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "The partial-tile geometry and the whole BCH consumer gain nothing from a faster block kernel and must not pay for one. Five percent is the smallest slowdown at those cells that would outweigh publishing a lane that wins elsewhere, so it is the margin the non-regression cells declare.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "Every cell compares two gf2 lanes of the same contract, so no comparator-gap objective is exercised and no threshold applies. The external comparators of this question are surveyed in 6fb89a3c, whose own family carries them."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 2,
+    "max_added_source_lines": 900,
+    "maintenance_rationale": "The two new candidate kernels, the lane enumeration and dispatch that replaces the per-lane entry points, the shared block and matrix contract cases every lane runs, and the rustdoc the changed mechanism needs. It excludes the committed asm artefact and its annotation, and the campaign harness under dev/, neither of which is production source."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "lane-avx2-ymm6-block-256-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-block-64x64",
+        "size": {
+          "blocks": 256
+        },
+        "seed": 20260913001
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bulk-4096-6core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-bulk-64x64",
+        "size": {
+          "blocks": 4096
+        },
+        "seed": 20260913002
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bitslice-absorb-m14-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-bitslice-absorb",
+        "size": {
+          "degree": 14
+        },
+        "seed": 20260913003
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bitslice-unpack-m14-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-bitslice-unpack",
+        "size": {
+          "degree": 14
+        },
+        "seed": 20260913004
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-matrix-transpose-4096-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitmatrix-transpose",
+        "size": {
+          "rows": 4096,
+          "cols": 4096
+        },
+        "seed": 20260913005
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-matrix-transpose-65-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitmatrix-transpose",
+        "size": {
+          "rows": 65,
+          "cols": 65
+        },
+        "seed": 20260913006
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-block-256-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-block-64x64",
+        "size": {
+          "blocks": 256
+        },
+        "seed": 20260913007
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-bulk-4096-6core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-bulk-64x64",
+        "size": {
+          "blocks": 4096
+        },
+        "seed": 20260913008
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-bitslice-absorb-m14-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-bitslice-absorb",
+        "size": {
+          "degree": 14
+        },
+        "seed": 20260913009
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-bitslice-unpack-m14-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-bitslice-unpack",
+        "size": {
+          "degree": 14
+        },
+        "seed": 20260913010
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-matrix-transpose-4096-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitmatrix-transpose",
+        "size": {
+          "rows": 4096,
+          "cols": 4096
+        },
+        "seed": 20260913011
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-pshufb-matrix-transpose-65-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitmatrix-transpose",
+        "size": {
+          "rows": 65,
+          "cols": 65
+        },
+        "seed": 20260913012
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-movemask-block-256-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-block-64x64",
+        "size": {
+          "blocks": 256
+        },
+        "seed": 20260913013
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-movemask-bulk-4096-6core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-bulk-64x64",
+        "size": {
+          "blocks": 4096
+        },
+        "seed": 20260913014
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-movemask-bitslice-absorb-m14-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-bitslice-absorb",
+        "size": {
+          "degree": 14
+        },
+        "seed": 20260913015
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-movemask-bitslice-unpack-m14-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-bitslice-unpack",
+        "size": {
+          "degree": 14
+        },
+        "seed": 20260913016
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-movemask-matrix-transpose-4096-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitmatrix-transpose",
+        "size": {
+          "rows": 4096,
+          "cols": 4096
+        },
+        "seed": 20260913017
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-movemask-matrix-transpose-65-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitmatrix-transpose",
+        "size": {
+          "rows": 65,
+          "cols": 65
+        },
+        "seed": 20260913018
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "bch-encode-bitslice-m14-b256-control-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-encode-batch-bitslice",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 20260913019
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

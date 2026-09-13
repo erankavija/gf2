@@ -1,0 +1,31 @@
+pilot receipt  dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/receipt.json
+receipt sha256 e179554ac444507e56ec8b9ff4c4db461b9bb9e6cf531984c770e69a32463bac
+campaign       selected-1d4fd63d-20260913t122340z
+verdict        accepted (label pilot)
+family         transpose-lane-selection: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+lane-avx2-ymm6-block-256-1core          24      1.2425      1.2259      1.2608    0.0147
+lane-avx2-ymm6-bulk-4096-6core          24      1.2173      1.2074      1.2329    0.0129
+lane-avx2-ymm6-bitslice-absorb-m14-1core    24      1.0237      1.0217      1.0255    0.0019
+lane-avx2-ymm6-bitslice-unpack-m14-1core    24      1.2007      1.1747       1.276    0.0627
+lane-avx2-ymm6-matrix-transpose-4096-1core    24      1.0888      1.0824      1.0954    0.0060
+lane-avx2-ymm6-matrix-transpose-65-1core    24      1.1142      1.0957      1.1258    0.0166
+bch-encode-bitslice-m14-b256-control-1core    24     0.99972     0.99885      1.0004    0.0009
+
+widest relative half-width   0.062676
+frozen measurement resolution 0.07
+replaced equivalence_margin 1.05 -> 1.08
+restated the family description for the confirmatory stage
+
+selection      6 of 7 pilot cells become confirmatory
+rationale      The identity control measures no lane difference: both of its arms run the production family entry point, which resolves its own block kernel. It pins the consumer latency the conversion cells sit inside, which is a pilot question, and a confirmatory reservation for it would spend one of the six comparisons P-20 admits on this family's first attempt on a cell whose interval is expected to contain one. The six retained cells are the ones a lane decision rests on: the block kernel in isolation and under a streaming run, both halves of the BCH bit-slice conversion, and the whole BitMatrix::transpose consumer at a dense and a partial-tile geometry.
+retained       lane-avx2-ymm6-block-256-1core
+retained       lane-avx2-ymm6-bulk-4096-6core
+retained       lane-avx2-ymm6-bitslice-absorb-m14-1core
+retained       lane-avx2-ymm6-bitslice-unpack-m14-1core
+retained       lane-avx2-ymm6-matrix-transpose-4096-1core
+retained       lane-avx2-ymm6-matrix-transpose-65-1core
+dropped        bch-encode-bitslice-m14-b256-control-1core
+margins: equivalence 1.08, material gap None
+confirmation addendum dev/active/1d4fd63d/addendum-v4-transpose-lane-confirmation.json

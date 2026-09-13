@@ -1,0 +1,232 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "transpose-lane-selection",
+    "issue": "1d4fd63d",
+    "purpose": "kernel-family",
+    "description": "Which 64x64 bit-block transpose lane gf2 should publish, at the confirmatory sample. The baseline arm is the kernel gf2_kernels_simd::transpose::detect publishes on this host, the pinned pre-change implementation that BitMatrix::transpose and gf2-coding's bit-sliced BCH encoding reach. The candidate arm is the avx2-ymm6 lane, which is all six mask-shift-XOR stages in YMM registers with no stack scratch, named through the public transpose::lane and reaching the consumers through the same abstraction the production kernel does. One executable serves both arms and selects its lane from GF2_TRANSPOSE_LANE, so the arms share a build, a fixture generator, a warm pass and a timing loop. The cells are that lane's six workloads of this family's ranking stage at the same sizes, seeds and fixtures, plus the same identity control: the block kernel alone over a 256-block L2-resident run and over a 4096-block streaming run on a six-core arm; the two halves of the BCH bit-slice conversion, which are one lane group's whole message absorbed through the transpose and the bit-sliced recurrence and the reduced register read back as packed per-frame parity, both on the mother code of the DVB-T2 short frame (mother-field degree 14, corpus row T2S, resolved from dev/active/04b85d10/survey/code-rows.json); the whole BitMatrix::transpose consumer at 4096 squared and at 65 squared, whose output allocation, tile assembly, partial boundary tiles and tail mask are inside the timed call; and the whole bit-sliced BCH batch encode of the same code at batch 256 against itself through the production family entry point, which resolves its own block kernel and so measures no lane difference. The 65-squared cell and the control are non-regression cells; every other cell is an improvement cell. The other candidate lanes are not carried: the ranking stage recorded their outcomes and this stage measures the one lane a confirmation can reach. Every cell is exploratory; this stage ranks nothing further and exists to observe, at the confirmatory sample, the measurement resolution the confirmation freezes against."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T12:23:17Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "A published lane carries an unsafe kernel, its safety contract, its share of the shared contract cases and its section of the committed asm artefact, and the lane it replaces stays in the family as a candidate. Ten percent of the measured transform is the smallest gain worth that standing maintenance: below it a consumer cannot tell the lanes apart, and the conversion and whole-matrix cells measure the transform with its tile assembly and packing included, so the threshold applies to the complete conversion cost rather than to a kernel in isolation.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "The partial-tile geometry and the whole BCH consumer gain nothing from a faster block kernel and must not pay for one. Five percent is the smallest slowdown at those cells that would outweigh publishing a lane that wins elsewhere, so it is the margin the non-regression cells declare.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "Every cell compares two gf2 lanes of the same contract, so no comparator-gap objective is exercised and no threshold applies. The external comparators of this question are surveyed in 6fb89a3c, whose own family carries them."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 2,
+    "max_added_source_lines": 900,
+    "maintenance_rationale": "The two new candidate kernels, the lane enumeration and dispatch that replaces the per-lane entry points, the shared block and matrix contract cases every lane runs, and the rustdoc the changed mechanism needs. It excludes the committed asm artefact and its annotation, and the campaign harness under dev/, neither of which is production source."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "lane-avx2-ymm6-block-256-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-block-64x64",
+        "size": {
+          "blocks": 256
+        },
+        "seed": 20260913001
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bulk-4096-6core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "transpose-bulk-64x64",
+        "size": {
+          "blocks": 4096
+        },
+        "seed": 20260913002
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bitslice-absorb-m14-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-bitslice-absorb",
+        "size": {
+          "degree": 14
+        },
+        "seed": 20260913003
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-bitslice-unpack-m14-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-bitslice-unpack",
+        "size": {
+          "degree": 14
+        },
+        "seed": 20260913004
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-matrix-transpose-4096-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitmatrix-transpose",
+        "size": {
+          "rows": 4096,
+          "cols": 4096
+        },
+        "seed": 20260913005
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-avx2-ymm6-matrix-transpose-65-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitmatrix-transpose",
+        "size": {
+          "rows": 65,
+          "cols": 65
+        },
+        "seed": 20260913006
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "bch-encode-bitslice-m14-b256-control-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bch-encode-batch-bitslice",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 20260913019
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
