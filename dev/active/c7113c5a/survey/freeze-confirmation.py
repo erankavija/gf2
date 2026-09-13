@@ -6,6 +6,7 @@ Usage:
                          --frozen-utc <YYYY-MM-DDTHH:MM:SSZ>
                          --output <addendum> --record <derivation.txt>
                          [--cell <cell-id> ...] [--selection-rationale <text>]
+                         [--resolution <float> --resolution-derivation <file>]
 
 The pilot's acceptance summary holds every cell's percentile interval at the
 pilot's ledger-derived corrected alpha, the value protocol P-03 recomputes
@@ -28,6 +29,15 @@ admits as Bonferroni comparisons; each selection needs a `--selection-rationale`
 the record carries beside the retained and dropped identifiers. The resolution
 is always derived from the whole pilot, retained cells and dropped alike, so
 narrowing the confirmation never narrows the evidence that sizes it.
+
+A family whose rule sizes the resolution from something this script cannot
+observe — the pilot's intervals recomputed at the confirmation's own corrected
+alpha, or P-20's endpoint shift between seed streams — supplies that value with
+`--resolution` and the derivation that produced it with
+`--resolution-derivation`. The supplied value must be at least the pilot-alpha
+width computed here, which stays the floor, and the record carries the
+derivation verbatim so the frozen number remains reproducible from committed
+bytes.
 """
 
 import argparse
@@ -51,9 +61,13 @@ def main():
     parser.add_argument("--cell", action="append", default=[], dest="cells")
     parser.add_argument("--selection-rationale")
     parser.add_argument("--family-description")
+    parser.add_argument("--resolution", type=float)
+    parser.add_argument("--resolution-derivation")
     args = parser.parse_args()
     if bool(args.cells) != bool(args.selection_rationale):
         raise SystemExit("a cell selection needs both --cell and --selection-rationale")
+    if (args.resolution is None) != (args.resolution_derivation is None):
+        raise SystemExit("a supplied resolution needs both a value and its derivation")
     replacements = {
         "equivalence_margin": (args.equivalence_margin, "equivalence_rationale", args.equivalence_rationale),
         "material_gap_threshold": (args.material_gap_threshold, "material_gap_rationale", args.material_gap_rationale),
@@ -99,7 +113,18 @@ def main():
         lines.append(f"{cell['cell_id']:<36}{cell['pairs']:>6}{estimate:>12.5g}{interval['lower']:>12.5g}"
                      f"{interval['upper']:>12.5g}{half:>10.4f}")
     resolution = math.ceil(widest * 100.0) / 100.0
-    lines += ["", f"widest relative half-width   {widest:.6f}", f"frozen measurement resolution {resolution:.2f}"]
+    lines += ["", f"widest relative half-width   {widest:.6f}"]
+    if args.resolution is not None:
+        if args.resolution < resolution:
+            raise SystemExit(
+                f"supplied resolution {args.resolution} is below the pilot-alpha floor {resolution}")
+        with open(args.resolution_derivation) as handle:
+            derivation = handle.read().rstrip("\n")
+        lines += [f"pilot-alpha floor            {resolution:.2f}",
+                  f"supplied resolution          {args.resolution:.2f}",
+                  f"derivation                   {args.resolution_derivation}", "", derivation, ""]
+        resolution = args.resolution
+    lines.append(f"frozen measurement resolution {resolution:.2f}")
 
     frozen = copy.deepcopy(addendum)
     effect = frozen["effect"]

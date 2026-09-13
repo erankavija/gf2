@@ -15,7 +15,32 @@ nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct    24       1.973      1.9677      1
 nr-enc-bg1-n2560-k2048-control-portable-vs-native    24     0.89314     0.88397     0.92501    0.0357
 
 widest relative half-width   0.035684
-frozen measurement resolution 0.04
+pilot-alpha floor            0.04
+supplied resolution          0.08
+derivation                   dev/active/12fdeb5b/pilot-resolution-nr-encode.txt
+
+# command: cargo run --release --manifest-path dev/active/eda07788/survey/analysis/Cargo.toml --bin bootstrap-resolution -- dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json 0.004166666666666667
+# The confirmation's corrected alpha, 0.05 / (1 * 2) / 6 for six confirmatory cells on attempt 1.
+# receipt sha256 9e2c362845d5c84bff33fdbeeee8ffab4685e0189ac7896828e496c2435974a5
+receipt dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json
+campaign nr-encode-pilot-12fdeb5b-20260913t011403z seed 20260912
+alpha 0.004166666666666667 confidence 0.995833 resamples 10000
+
+cell                                                 estimate    lower    upper  rel_half     shift
+nr-enc-bg2-n1024-k400-null-native-vs-native            1.0006   0.9985   1.0028    0.0022    0.0002
+nr-enc-bg2-n256-k121-gap-native-vs-srsran              6.9139   6.8053   6.9515    0.0157    0.0000
+nr-enc-bg2-n1440-k720-gap-native-vs-srsran            34.6559  34.3869  34.8916    0.0078    0.0004
+nr-enc-bg1-n2560-k2048-gap-native-vs-srsran           80.5605  80.1025  80.9771    0.0057    0.0000
+nr-enc-bg1-n8448-k4224-gap-native-vs-srsran          150.4391 149.6745 151.6724    0.0082    0.0002
+nr-enc-bg2-n256-k121-gap-native-vs-aff3ct              0.4724   0.4688   0.4743    0.0076    0.0001
+nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct            1.9730   1.9662   1.9827    0.0049    0.0001
+nr-enc-bg1-n2560-k2048-control-portable-vs-native      0.8931   0.8828   0.9609    0.0758    0.0016
+
+widest relative half-width: 0.075825 (nr-enc-bg1-n2560-k2048-control-portable-vs-native)
+largest endpoint shift:     0.001594 (nr-enc-bg1-n2560-k2048-control-portable-vs-native)
+larger of the two rounded up to two decimals: 0.08
+
+frozen measurement resolution 0.08
 restated equivalence_margin rationale; value 1.1 unchanged
 restated material_gap_threshold rationale; value 1.2 unchanged
 restated the family description for the confirmatory stage

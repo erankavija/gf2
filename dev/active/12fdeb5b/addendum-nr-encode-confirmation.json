@@ -11,12 +11,12 @@
     "description": "Confirmatory stage for the NR rate-matched encoder family. Its cells attribute the whole-consumer wall-clock gap between gf2 and each comparator at the frozen measurement resolution; the family proposes no production change, so no cell decides adoption. 5G NR rate-matched LDPC encoding as the whole consumer: target_k information bits in, target_n rate-matched codeword bits out, in gf2's BitVec representation. The baseline arm is gf2's BlockEncoder::encode on Nr5gRateMatchedCode, which fuses TS 38.212 Section 5.4.2.1 bit selection into the encode. The candidate arms are srsRAN Project 25.10's ldpc_encoder::encode plus ldpc_rate_matcher::rate_match and AFF3CT v4.7.0's Encoder_LDPC_QC_fast encode plus Puncturer_5G puncture, each behind a whole-consumer adapter that converts into the project's representation and back inside the timed call. Modulation is one bit per symbol, where TS 38.212 Section 5.4.2.2 interleaving is the identity, and the redundancy version is 0, the only offset gf2 and AFF3CT implement. Every timed configuration passed the committed bit-exact equivalence gate in dev/active/12fdeb5b/survey/nr-encode-validation.json. The baseline is always gf2 and the candidate is the arm whose lead needs attribution, so a speedup above 1 in a -gap- cell means the comparator is ahead and above 1 in the -control- cell means the native gf2 build is ahead of the conservative-portable control. The -null- identity cell measures the noise floor. Comparator revisions, licences, compiled units, flags and selected backends are recorded in dev/active/12fdeb5b/survey/build-evidence.json."
   },
   "frozen": {
-    "frozen_utc": "2026-09-13T06:40:47Z"
+    "frozen_utc": "2026-09-13T06:47:24Z"
   },
   "effect": {
     "worthwhile_speedup": null,
     "rationale": "Comparator-gap cells only. This issue is a baseline survey: it proposes no production change, so no worthwhile-speedup threshold applies and none is declared.",
-    "measurement_resolution": 0.04,
+    "measurement_resolution": 0.08,
     "resolution_evidence": {
       "receipt": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json",
       "sha256": "9e2c362845d5c84bff33fdbeeee8ffab4685e0189ac7896828e496c2435974a5"
