@@ -1,0 +1,84 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "b437c5cbc5d98b8c146d2add99f7f7b56ad2678ea5afc0b02bf0b55abc5ee160",
+  "campaign_id": "07ca8585-v4-r1-update-single-worker-pilot",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "ldpc-update-single-worker-v1",
+    "comparisons": 1,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-update-w1",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 6.7683511731706485,
+        "lower": 6.748482018056653,
+        "upper": 6.792194381400224,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 11143328080152916730,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.worthwhile_speedup",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-update-w1",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 10.013435581734655,
+        "lower": 9.980595620879226,
+        "upper": 10.091617212311737,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 3509867574206000766,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.worthwhile_speedup",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    }
+  ]
+}
