@@ -16,16 +16,6 @@
 /// with SHA-256 `0296a498b2dcaf303af0dc88afba2feb708deda60c24fd94236b4533cfdc138a`.
 pub(crate) const SIMD_MIN_WORDS: usize = 4;
 
-/// Baked value for `bit_backend.popcount_csa_min_words`, mirroring
-/// `crate::kernels::backend::POPCOUNT_CSA_MIN_WORDS_DEFAULT`.
-///
-/// The word count at or above which `kernels::ops::resolve_popcount` and
-/// `resolve_and_popcount` take the Harley-Seal carry-save kernels instead of
-/// the per-vector nibble lookup. Both arms of the boundary are public, so the
-/// field is sweepable; its value is the measured one the core section's
-/// conservative declaration also carries.
-pub(crate) const POPCOUNT_CSA_MIN_WORDS: usize = 256;
-
 /// Baked value for `bit_matrix.matvec_simd_min_words`, mirroring
 /// `crate::matrix::MATVEC_SIMD_MIN_WORDS`.
 ///
@@ -136,16 +126,6 @@ mod tests {
 
     fn assert_matches_conservative(baked: u64, conservative_default: u64) {
         assert_eq!(baked, conservative_default);
-    }
-
-    #[test]
-    fn popcount_csa_min_words_matches_conservative_section() {
-        assert_matches_conservative(
-            POPCOUNT_CSA_MIN_WORDS as u64,
-            CoreTuning::CONSERVATIVE
-                .bit_backend()
-                .popcount_csa_min_words() as u64,
-        );
     }
 
     #[test]

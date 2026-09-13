@@ -38,13 +38,7 @@ fn compiled(name: &str) -> CompiledProfileProvenance {
 
 fn prepared_core(value: usize) -> PreparedEnvelope {
     let mut selectors = CoreSelectors::CONSERVATIVE.clone();
-    selectors.bit_backend = BitBackendSelectors::try_new(
-        value,
-        CoreSelectors::CONSERVATIVE
-            .bit_backend
-            .popcount_csa_min_words(),
-    )
-    .unwrap();
+    selectors.bit_backend = BitBackendSelectors::try_new(value).unwrap();
     PreparedEnvelope::compiled(profile_id("process-test"), compiled("process-test"))
         .insert(CoreTuning::from_selectors(selectors))
         .unwrap()

@@ -16,12 +16,11 @@
 //!   through Harley-Seal carry-save adders before one lookup, trading fifteen
 //!   lookups for fifteen bitwise triples per block [Mula2018].
 //!
-//! The carry-save loop is not unconditional: its block is 512 bytes, so a
-//! buffer shorter than one block reaches only the per-vector remainder, and
-//! the word count at which a consumer takes it is the `bit_backend`
-//! selector `popcount_csa_min_words` of the canonical tuning mechanism, which
-//! `gf2_core::kernels::ops::resolve_popcount` reads under the non-default
-//! `simd` feature of `gf2-core`.
+//! The carry-save loop is not selected by `gf2-core`'s automatic dispatch: its
+//! confirmation receipt does not qualify under the shared measurement
+//! contract. It remains in the bundle as a measured comparator with shared
+//! correctness coverage. Its block is 512 bytes, so a buffer shorter than one
+//! block reaches only the per-vector remainder.
 
 use core::arch::x86_64::*;
 
