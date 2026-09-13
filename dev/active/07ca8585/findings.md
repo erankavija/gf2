@@ -148,10 +148,80 @@ decisions into the caller's buffer; the owning-buffer entry points
 `decode_to_codeword` and `decode_iterative` keep their signatures and delegate
 to it, so they allocate exactly the vectors they return.
 
+## What the evidence shows
+
+Every figure below lives in the [tables](../../bench_results/07ca8585/tables.md);
+this section names the conclusion and the section that carries it.
+
+### The update path
+
+The derived per-iteration counts of the two loop structures are in the tables'
+"Structural work per flooding iteration" section. The replacement performs no
+position-search comparison and no per-edge allocation on either code, reads each
+check's incoming messages exactly twice, and reaches the same per-edge indexed
+read and write counts as the compatible decoder [Cassagne2019] the predecessor
+measures against. The check degrees the two passes are linear in are in
+"Representative degree distributions".
+
+### Allocation
+
+REQ-07 holds. The tables' "Steady-state allocation counter" section projects the
+test's own run: every steady-state section, over four algorithms and both
+early-termination settings on two codes, requests no allocation, no reallocation
+and no deallocation, and construction and the first prepared decode are recorded
+separately as the phases that do allocate. The separate census of the measured
+harness, in "Allocation census of the measured harness", counts what the change
+removes from the whole-frame decode over the frozen workloads, and carries the
+behavioural check beside it: the two generations agree on the iteration count of
+every censused frame and neither makes a bit error against the frozen `c077a88b`
+per-frame evidence.
+
+### Throughput
+
+The before/after and comparator campaigns are in the tables' "Campaigns"
+section, each with its acceptance verdict, its `qualifies` flag, its finding
+count on its own Source line, its journaled placement and its per-arm iteration
+distribution. The single-worker pilot of each family is accepted and measures
+both codes; both pilots put the changed decoder ahead of the path it replaces
+and narrow the comparator gap the predecessor measured, at intervals the tables
+carry. A pilot decides nothing: it fixes the resolution its confirmation freezes.
+
 ## Adoption
 
-The frozen non-regression and worthwhile-effect rules of the family addenda
-decide adoption, and a family in which nothing qualifies keeps the established
-path and stays recorded. The campaign design, the cells, the arms and the
-outcome are in [plan.md](plan.md), and every figure is projected by the
-committed generator into [tables](../../bench_results/07ca8585/tables.md).
+Adoption is decided by the `ldpc-update-single-worker-v1` and
+`ldpc-update-multicore-v1` families against the frozen worthwhile-effect and
+non-regression margins, not by the pilots. The single-worker confirmation
+addendum is frozen from its committed pilot receipt by the canonical freezer
+([addendum](addendum-ldpc-update-single-worker.json), with its
+[derivation record](addendum-ldpc-update-single-worker-derivation.txt)), and the
+comparator single-worker confirmation likewise
+([addendum](addendum-ldpc-update-comparator-single-worker.json),
+[derivation](addendum-ldpc-update-comparator-single-worker-derivation.txt)).
+Those confirmations and the two multicore pilots exceed a working session's
+timed budget and are queued for a benchmark window; the tables gain their cells
+when they run, and a family in which nothing qualifies keeps the established
+path and stays recorded exactly as the evaluator records it.
+
+The tree carries the replacement now, on the strength of the accepted pilots'
+direction, the allocation counter and the behavioural suite. What the queued
+confirmations decide is whether that replacement clears its own frozen margins;
+until they report, no cell of this issue records an adoption.
+
+## Reproduction
+
+From the worktree root: extract the `c077a88b` recorded-input archive the
+[build identity](../../bench_results/07ca8585/preparation/build-identity.json)
+names into `target/ldpc-inputs`, build the `3be770d5` harness once from the
+working tree and once from an export of the pinned pre-change revision with the
+commands that file records, and run
+[record-preparation.py](survey/record-preparation.py). Then
+[run-smoke.sh](../../bench_results/07ca8585/run-smoke.sh) proves the wire
+contract of every arm on a throwaway plan, and
+[run-campaign.sh](../../bench_results/07ca8585/run-campaign.sh) `FAMILY MODE
+RUN_ID prepare` followed by `window` runs a campaign. The allocation evidence is
+untimed and runs outside the mutex:
+[record-alloc-census.py](survey/record-alloc-census.py) and
+[record-allocation-counter.sh](survey/record-allocation-counter.sh). A
+confirmation refuses to run until its addendum is committed and unmodified.
+[summarize.py](survey/summarize.py) regenerates the tables from the committed
+evidence and reproduces them byte for byte.
