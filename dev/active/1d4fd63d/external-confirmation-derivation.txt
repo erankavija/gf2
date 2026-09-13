@@ -1,0 +1,33 @@
+pilot receipt  dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/receipt.json
+receipt sha256 40237fc93051d234137acc19c8e8eb887ac2af3d4002f463010005313165f3c0
+campaign       external-pilot-1d4fd63d-20260913t125750z
+verdict        accepted (label pilot)
+family         transpose-lane-vs-external: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+lane-production-block-64-vs-m4ri        24     0.29467      0.2939     0.29749    0.0096
+lane-production-block-64-vs-bitshuffle    24     0.17438     0.17324     0.19235    0.1031
+lane-avx2-ymm6-block-64-vs-m4ri         24     0.24529     0.24423     0.24625    0.0043
+lane-avx2-ymm6-block-64-vs-bitshuffle    24     0.14484     0.14453     0.14535    0.0036
+lane-avx2-pshufb-block-64-vs-m4ri       24      20.307      20.234      20.412    0.0052
+lane-avx2-pshufb-block-64-vs-bitshuffle    24      11.575      11.531      11.596    0.0038
+lane-avx2-movemask-block-64-vs-m4ri     24     0.41113      0.4039     0.41766    0.0176
+lane-avx2-movemask-block-64-vs-bitshuffle    24     0.23921     0.23844     0.24618    0.0291
+
+widest relative half-width   0.103057
+frozen measurement resolution 0.11
+replaced equivalence_margin 1.1 -> 1.12
+restated the family description for the confirmatory stage
+
+selection      2 of 8 pilot cells become confirmatory
+rationale      P-20 carries twenty expected draws per bootstrap tail on this family's first attempt only up to two comparisons, so at most two cells can be confirmatory. The two retained are the lane the sibling transpose-lane-selection family measures as its candidate, against each comparator: a confirmatory comparator-gap decision about the lane gf2 would publish is the one this family exists to supply. The six dropped cells keep their pilot outcomes as exploratory evidence about the lanes that are not candidates for publication, and the resolution this addendum freezes is derived from all eight.
+retained       lane-avx2-ymm6-block-64-vs-m4ri
+retained       lane-avx2-ymm6-block-64-vs-bitshuffle
+dropped        lane-production-block-64-vs-m4ri
+dropped        lane-production-block-64-vs-bitshuffle
+dropped        lane-avx2-pshufb-block-64-vs-m4ri
+dropped        lane-avx2-pshufb-block-64-vs-bitshuffle
+dropped        lane-avx2-movemask-block-64-vs-m4ri
+dropped        lane-avx2-movemask-block-64-vs-bitshuffle
+margins: equivalence 1.12, material gap 1.2
+confirmation addendum dev/active/1d4fd63d/addendum-v4-external-confirmation.json
