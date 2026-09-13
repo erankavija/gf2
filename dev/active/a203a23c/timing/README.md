@@ -21,8 +21,8 @@ python3 -B <tool source of the form's revision> <the tool's arguments>
 The per-file form is the source committed at `76812a4e`'s parent,
 `a6427615adf607caca5e4adb3be917a20f18891f`; the batch form is the source
 committed at `76812a4e` itself. Each form's source comes out of the object
-database with `git show <revision>:<path>` into a scratch directory outside
-this repository, so running a form never rewrites this repository's checkout.
+database with `git show <revision>:<path>` into a git-ignored scratch
+directory, so running a form never rewrites this repository's checkout.
 
 Four series cover both tools in both forms:
 
@@ -41,7 +41,7 @@ Four series cover both tools in both forms:
 
 The restoration generator copies files into its working tree and stages them,
 so it runs against a `git clone --shared --no-checkout` of this repository
-placed in a session scratch directory and detached at
+placed in a git-ignored directory under `target/` and detached at
 `8cfc015de59f8e3accc51bca46d13d94b0bee267`. That is the revision the tool was
 written against: the `base_revision` of
 `dev/active/a203a23c/restored-inputs.json`, and the revision whose committed
@@ -56,7 +56,16 @@ two source files are placed into the clone after each reset, outside the timed
 region, because `restore-receipt-inputs.py` imports the checker from its own
 working tree: a form is both files of its revision together.
 
-This repository is never written. The clone is never committed.
+Placing the clone under `target/` puts it on the filesystem the repository sits
+on, which is the point of the placement rather than a convenience: the
+restoration generator's real working tree is this repository's own, so a clone
+on a different filesystem would fold a filesystem difference into the wall
+times of the series that writes. `timing.json` records the mount source, the
+filesystem type and the device id of both the repository and the scratch, and
+that the two share a device, under `scratch.filesystem`. `measure.py` refuses a
+scratch inside the repository that git does not ignore.
+
+Nothing this repository tracks is written. The clone is never committed.
 
 ## Sampling plan
 
@@ -109,6 +118,13 @@ uncommitted observation. `timing.json` is the claim of record: the batch form
 of the restoration generator is faster than the commit message reports, and the
 direction and the order of magnitude of the reduction the commit claims hold.
 
+The gap is not an artefact of where the scratch clone sits. The superseded
+tmpfs run reaches the same verdict on the same series, at
+`timing-tmpfs-superseded.json`'s `series.restoration_batch.median_s` and
+`published_claim.figures.restoration_batch.confirmed_within_tolerance`, and its
+median differs from the on-disk median by well under the distance either one
+stands from 10.1 s.
+
 ## Provenance
 
 `timing.json` records the source revision of each form, the workload revision,
@@ -133,12 +149,18 @@ timing noise.
 ```
 ./dev/scripts/ccx1-bench-flock.sh --full-host \
   python3 -B dev/active/a203a23c/timing/measure.py \
-  --scratch <scratch-directory> --repetitions 5 \
+  --scratch target/a203a23c-scratch --repetitions 5 \
   > dev/active/a203a23c/timing/timing.json
 ```
 
-`--scratch` names any directory outside this repository; it holds the clone and
-the extracted tool sources, and `timing.json` records its filesystem rather
-than its path. `ccx1-bench-flock.sh --full-host` holds this host's benchmark
-mutex exclusively without pinning to a core subset, so no other benchmark or
-build on the host overlaps the run.
+`--scratch` holds the clone and the extracted tool sources; `target/` is
+git-ignored and on the repository's own filesystem, and `timing.json` records
+that filesystem rather than the path. `ccx1-bench-flock.sh --full-host` holds
+this host's benchmark mutex exclusively without pinning to a core subset, so no
+other benchmark or build on the host overlaps the run.
+
+`timing-tmpfs-superseded.json` is an earlier run of the same harness under the
+same sampling plan whose scratch clone sat on a tmpfs instead, so its
+restoration series wrote to memory while the tool's real working tree writes to
+disk. It is superseded for that reason and kept as the record it is;
+`timing.json` is the claim of record.
