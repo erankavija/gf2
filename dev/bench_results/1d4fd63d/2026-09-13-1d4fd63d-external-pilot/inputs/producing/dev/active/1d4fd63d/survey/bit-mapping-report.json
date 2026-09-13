@@ -1,0 +1,208 @@
+{
+  "schema": "1d4fd63d-bit-mapping-v1",
+  "mapping": "word r bit c of the input is matrix entry (r, c); word c bit r of the output is the same entry; both are little-endian within the word",
+  "fixture": "64 words of SplitMix64 seeded at the case seed",
+  "passed": true,
+  "checks": [
+    {
+      "arm": "gf2:production",
+      "seed": 0,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:scalar-bit-twiddle",
+      "seed": 0,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-bit-twiddle",
+      "seed": 0,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-ymm6",
+      "seed": 0,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-pshufb",
+      "seed": 0,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-movemask",
+      "seed": 0,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "m4ri_transpose_arm",
+      "seed": 0,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "bitshuffle_transpose_arm",
+      "seed": 0,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:production",
+      "seed": 1,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:scalar-bit-twiddle",
+      "seed": 1,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-bit-twiddle",
+      "seed": 1,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-ymm6",
+      "seed": 1,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-pshufb",
+      "seed": 1,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-movemask",
+      "seed": 1,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "m4ri_transpose_arm",
+      "seed": 1,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "bitshuffle_transpose_arm",
+      "seed": 1,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:production",
+      "seed": 81985529216486895,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:scalar-bit-twiddle",
+      "seed": 81985529216486895,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-bit-twiddle",
+      "seed": 81985529216486895,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-ymm6",
+      "seed": 81985529216486895,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-pshufb",
+      "seed": 81985529216486895,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-movemask",
+      "seed": 81985529216486895,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "m4ri_transpose_arm",
+      "seed": 81985529216486895,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "bitshuffle_transpose_arm",
+      "seed": 81985529216486895,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:production",
+      "seed": 16045690984503098046,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:scalar-bit-twiddle",
+      "seed": 16045690984503098046,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-bit-twiddle",
+      "seed": 16045690984503098046,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-ymm6",
+      "seed": 16045690984503098046,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-pshufb",
+      "seed": 16045690984503098046,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-movemask",
+      "seed": 16045690984503098046,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "m4ri_transpose_arm",
+      "seed": 16045690984503098046,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "bitshuffle_transpose_arm",
+      "seed": 16045690984503098046,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:production",
+      "seed": 20260913001,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:scalar-bit-twiddle",
+      "seed": 20260913001,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-bit-twiddle",
+      "seed": 20260913001,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-ymm6",
+      "seed": 20260913001,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-pshufb",
+      "seed": 20260913001,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "gf2:avx2-movemask",
+      "seed": 20260913001,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "m4ri_transpose_arm",
+      "seed": 20260913001,
+      "agrees_with_naive": true
+    },
+    {
+      "arm": "bitshuffle_transpose_arm",
+      "seed": 20260913001,
+      "agrees_with_naive": true
+    }
+  ]
+}
