@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : e3f330a8
-; regenerated   : 2026-09-13T12:06:56Z
+; commit        : 28559fd2
+; regenerated   : 2026-09-13T17:28:20Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -20,7 +20,7 @@
 
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/crates/gf2-kernels-simd)
 
-    Finished `release` profile [optimized] target(s) in 2.56s
+    Finished `release` profile [optimized] target(s) in 2.52s
 gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	test rsi, rsi
 	je .LBB120_1
