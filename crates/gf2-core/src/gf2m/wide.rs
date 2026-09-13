@@ -3867,9 +3867,9 @@ mod tests {
 
             /// Unconditional agreement test for the N=4 multiplication path.
             ///
-            /// On SIMD hosts (VPCLMULQDQ present, Zen 3 and similar)
-            /// `Gf2mWide::<4, _>::mul` dispatches through the kernel in
-            /// `gf2-kernels-simd::gf2m_wide`. On hosts without PCLMULQDQ
+            /// When `clmul_wide_dispatch`'s dispatch predicate holds (Zen 3 and
+            /// similar hosts, `simd` enabled) `Gf2mWide::<4, _>::mul` dispatches
+            /// through the kernel in `gf2-kernels-simd::gf2m_wide`; otherwise
             /// the dispatch falls back to the pure-Rust scalar schoolbook.
             /// Either way the result must equal the independent reference
             /// implementation in `scalar_reference_mul`.
@@ -3888,9 +3888,9 @@ mod tests {
 
             /// Agreement test for the N=9 / m=571 multiplication path.
             ///
-            /// On AVX2+VPCLMULQDQ hosts this covers the new 9×9 YMM kernel in
-            /// both the initial product and Barrett's two internal products;
-            /// on non-SIMD hosts it still checks the scalar path against the
+            /// When `clmul_wide_dispatch`'s dispatch predicate holds this covers
+            /// the 9×9 YMM kernel in both the initial product and Barrett's two
+            /// internal products; otherwise it checks the scalar path against the
             /// independent shift-and-XOR reducer.
             #[test]
             fn prop_simd_matches_scalar_reference_m571(
