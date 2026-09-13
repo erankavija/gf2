@@ -303,9 +303,24 @@ def receipts(lines):
                     f"{value('pack_ns') / 1e6:.3f} | {value('dispatch_ns') / 1e3:.1f} | "
                     f"{len(reports)} | {threads} | {pinned and bool(reports)} |"
                 )
+        if not any(cell.get("decoder_quality") for cell in receipt["cells"]):
+            lines += [
+                "",
+                "This family's cells declare no decoder, so the receipt carries no per-frame "
+                "decoder quality: an isolated check-node pass decodes no frame. What stands in its "
+                "place is the matched-ness receipt above and the checksums every worker of either "
+                "arm reproduces.",
+                "",
+            ]
+            continue
+        corpus = (
+            "this issue's fixed-iteration"
+            if "fixed-iteration" in receipt["family_id"]
+            else "prepared `c077a88b`"
+        )
         lines += [
             "",
-            "Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson "
+            f"Decoder quality carried by the receipt ({corpus} evidence; FER Wilson "
             "95%, BER independent-frame Hoeffding 95%), with the iteration and early-exit "
             "distribution of each arm:",
             "",

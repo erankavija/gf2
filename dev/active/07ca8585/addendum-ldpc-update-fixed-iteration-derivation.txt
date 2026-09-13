@@ -1,0 +1,17 @@
+pilot receipt  dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot/receipt.json
+receipt sha256 41745edbc03f6329329a7ff14571475abc0304c2b819ff8ec417ca6c758b4700
+campaign       07ca8585-v4-r1-update-fixed-iteration-pilot
+verdict        accepted (label pilot)
+family         ldpc-update-fixed-iteration-v1: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+dvb-t2-r12-fixed-iteration-w1            6      2.1826      2.1447      2.2256    0.0197
+nr-bg1-z384-fixed-iteration-w1           6      1.8165      1.8016      1.8605    0.0242
+
+widest relative half-width   0.024190
+frozen measurement resolution 0.03
+replaced equivalence_margin None -> 1.06
+replaced material_gap_threshold None -> 1.12
+restated the family description for the confirmatory stage
+margins: equivalence 1.06, material gap 1.12
+confirmation addendum dev/active/07ca8585/addendum-ldpc-update-fixed-iteration.json

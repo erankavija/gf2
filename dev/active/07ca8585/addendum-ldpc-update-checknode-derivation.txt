@@ -1,0 +1,17 @@
+pilot receipt  dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-pilot/receipt.json
+receipt sha256 95f2714e313b7dda26b5998d33de50b8162dcfbb54cf9a4a460a6c40b14c986a
+campaign       07ca8585-v4-r1-update-checknode-pilot
+verdict        accepted (label pilot)
+family         ldpc-update-checknode-v1: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+dvb-t2-r12-checknode-w1                  6      2.5591      2.5542      2.5689    0.0038
+nr-bg1-z384-checknode-w1                 6       2.271      2.2611      2.2829    0.0053
+
+widest relative half-width   0.005257
+frozen measurement resolution 0.01
+replaced equivalence_margin None -> 1.02
+replaced material_gap_threshold None -> 1.04
+restated the family description for the confirmatory stage
+margins: equivalence 1.02, material gap 1.04
+confirmation addendum dev/active/07ca8585/addendum-ldpc-update-checknode.json

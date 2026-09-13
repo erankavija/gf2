@@ -148,6 +148,28 @@ Source: `preparation/quality-fixed/` (`dev/active/07ca8585/survey/arms/src/bin/l
 
 ## Campaigns
 
+### `v4-r1-07ca8585-ldpc-update-checknode-pilot`
+
+Source: `v4-r1-07ca8585-ldpc-update-checknode-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-checknode-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 check pass median ms/call | AFF3CT check pass median ms/call | gf2 check pass / AFF3CT check pass time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-checknode-w1 | single-core | 1 | 1 | 6 | 8 | 9.356 | 3.656 | 2.559 [2.554, 2.569] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-checknode-w1 | single-core | 1 | 1 | 6 | 8 | 4.306 | 1.896 | 2.271 [2.261, 2.283] | 0.975 | 0/60 | pilot |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-checknode-w1 | gf2-checknode-nms-f32-dvb-t2-r12 | 118.112 | 0.000 | 4.9 | 6 | [(2, 2)] | True |
+| dvb-t2-r12-checknode-w1 | aff3ct-checknode-nms-f32-dvb-t2-r12 | 174.479 | 0.000 | 5.0 | 6 | [(2, 2)] | True |
+| nr-bg1-z384-checknode-w1 | gf2-checknode-nms-f32-nr-bg1-z384 | 58.936 | 0.000 | 4.9 | 6 | [(2, 2)] | True |
+| nr-bg1-z384-checknode-w1 | aff3ct-checknode-nms-f32-nr-bg1-z384 | 111.215 | 0.000 | 5.0 | 6 | [(2, 2)] | True |
+
+This family's cells declare no decoder, so the receipt carries no per-frame decoder quality: an isolated check-node pass decodes no frame. What stands in its place is the matched-ness receipt above and the checksums every worker of either arm reproduces.
+
 ### `v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot`
 
 Source: `v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-comparator-single-worker-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
@@ -176,6 +198,35 @@ Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson
 | dvb-t2-r12-update-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
 | nr-bg1-z384-update-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
 | nr-bg1-z384-update-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+
+### `v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot`
+
+Source: `v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-fixed-iteration-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 after at the cap median ms/call | AFF3CT at the cap median ms/call | gf2 after at the cap / AFF3CT at the cap time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-fixed-iteration-w1 | single-core | 1 | 1 | 6 | 8 | 585.831 | 268.406 | 2.183 [2.145, 2.226] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-fixed-iteration-w1 | single-core | 1 | 1 | 6 | 8 | 241.367 | 132.873 | 1.817 [1.802, 1.86] | 0.975 | 0/60 | pilot |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-fixed-iteration-w1 | gf2-after-nms-f32-dvb-t2-r12 | 18.607 | 0.052 | 5.0 | 6 | [(2, 2)] | True |
+| dvb-t2-r12-fixed-iteration-w1 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1682.499 | 0.000 | 5.0 | 6 | [(2, 2)] | True |
+| nr-bg1-z384-fixed-iteration-w1 | gf2-after-nms-f32-nr-bg1-z384 | 13.791 | 0.020 | 4.9 | 6 | [(2, 2)] | True |
+| nr-bg1-z384-fixed-iteration-w1 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 259.453 | 0.000 | 5.0 | 6 | [(2, 2)] | True |
+
+Decoder quality carried by the receipt (this issue's fixed-iteration evidence; FER Wilson 95%, BER independent-frame Hoeffding 95%), with the iteration and early-exit distribution of each arm:
+
+| Cell | Arm | FER (errors/frames) | FER interval | BER (errors/bits) | BER interval | Iterations mean / p50 / p90 / max | Wave |
+|---|---|---|---|---|---|---|---:|
+| dvb-t2-r12-fixed-iteration-w1 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 50.000 / 50 / 50 / 50 | 1 |
+| dvb-t2-r12-fixed-iteration-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 50.000 / 50 / 50 / 50 | 1 |
+| nr-bg1-z384-fixed-iteration-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 50.000 / 50 / 50 / 50 | 1 |
+| nr-bg1-z384-fixed-iteration-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 50.000 / 50 / 50 / 50 | 1 |
 
 ### `v4-r1-07ca8585-ldpc-update-single-worker-pilot`
 
