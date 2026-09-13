@@ -1,0 +1,55 @@
+# label: prototype-pairwise-region
+# pattern: bytefield_consumer::pairwise_region
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# text symbols matching this pattern: 1
+
+## symbol at 000000000001f400, 0x00000000000000ca bytes
+000000000001f400 <bytefield_consumer::pairwise_region>:
+   1f400:	sub    $0x28,%rsp
+   1f404:	mov    %rsi,0x8(%rsp)
+   1f409:	mov    %rcx,0x10(%rsp)
+   1f40e:	cmp    %rcx,%rsi
+   1f411:	jne    1f46b <bytefield_consumer::pairwise_region+0x6b>
+   1f413:	mov    %rsi,0x18(%rsp)
+   1f418:	mov    %r9,0x20(%rsp)
+   1f41d:	cmp    %r9,%rsi
+   1f420:	jne    1f491 <bytefield_consumer::pairwise_region+0x91>
+   1f422:	test   %rsi,%rsi
+   1f425:	je     1f466 <bytefield_consumer::pairwise_region+0x66>
+   1f427:	mov    0x30(%rsp),%rax
+   1f42c:	mov    0x8(%rax),%r9
+   1f430:	mov    0x10(%rax),%rax
+   1f434:	xor    %r10d,%r10d
+   1f437:	nopw   0x0(%rax,%rax,1)
+   1f440:	movzbl (%rdi,%r10,1),%ecx
+   1f445:	movzbl (%rdx,%r10,1),%r11d
+   1f44a:	shl    $0x8,%ecx
+   1f44d:	or     %r11,%rcx
+   1f450:	cmp    %rax,%rcx
+   1f453:	jae    1f4b7 <bytefield_consumer::pairwise_region+0xb7>
+   1f455:	movzbl (%r9,%rcx,1),%ecx
+   1f45a:	mov    %cl,(%r8,%r10,1)
+   1f45e:	inc    %r10
+   1f461:	cmp    %r10,%rsi
+   1f464:	jne    1f440 <bytefield_consumer::pairwise_region+0x40>
+   1f466:	add    $0x28,%rsp
+   1f46a:	ret
+   1f46b:	lea    -0x1678e(%rip),%rcx        # 8ce4 <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x124>
+   1f472:	lea    0x633df(%rip),%r9        # 82858 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x150>
+   1f479:	lea    0x8(%rsp),%rsi
+   1f47e:	lea    0x10(%rsp),%rdx
+   1f483:	mov    $0x51,%r8d
+   1f489:	xor    %edi,%edi
+   1f48b:	call   *0x6635f(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   1f491:	lea    -0x1678c(%rip),%rcx        # 8d0c <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x14c>
+   1f498:	lea    0x633d1(%rip),%r9        # 82870 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x168>
+   1f49f:	lea    0x18(%rsp),%rsi
+   1f4a4:	lea    0x20(%rsp),%rdx
+   1f4a9:	mov    $0x4f,%r8d
+   1f4af:	xor    %edi,%edi
+   1f4b1:	call   *0x66339(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   1f4b7:	lea    0x6336a(%rip),%rdx        # 82828 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x120>
+   1f4be:	mov    %rcx,%rdi
+   1f4c1:	mov    %rax,%rsi
+   1f4c4:	call   *0x66246(%rip)        # 85710 <_DYNAMIC+0x208>

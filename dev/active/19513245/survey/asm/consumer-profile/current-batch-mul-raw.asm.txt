@@ -1,0 +1,258 @@
+# label: current-batch-mul-raw
+# pattern: gf2_core::gf2m::batch::batch_mul_raw
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# text symbols matching this pattern: 1
+
+## symbol at 0000000000040bd0, 0x00000000000003fe bytes
+0000000000040bd0 <gf2_core::gf2m::batch::batch_mul_raw>:
+   40bd0:	push   %rbp
+   40bd1:	push   %r15
+   40bd3:	push   %r14
+   40bd5:	push   %r13
+   40bd7:	push   %r12
+   40bd9:	push   %rbx
+   40bda:	sub    $0x68,%rsp
+   40bde:	mov    %r8,0x30(%rsp)
+   40be3:	mov    %rdx,0x38(%rsp)
+   40be8:	mov    %rcx,0x50(%rsp)
+   40bed:	mov    %r9,0x58(%rsp)
+   40bf2:	cmp    %r9,%rcx
+   40bf5:	jne    40d90 <gf2_core::gf2m::batch::batch_mul_raw+0x1c0>
+   40bfb:	mov    %rcx,%r11
+   40bfe:	mov    0xa8(%rsp),%rax
+   40c06:	mov    %rcx,(%rsp)
+   40c0a:	mov    %rax,0x60(%rsp)
+   40c0f:	cmp    %rax,%rcx
+   40c12:	jne    40db6 <gf2_core::gf2m::batch::batch_mul_raw+0x1e6>
+   40c18:	mov    %rsi,%r14
+   40c1b:	mov    0xa0(%rsp),%rbp
+   40c23:	cmp    $0x20,%edi
+   40c26:	mov    %r11,0x10(%rsp)
+   40c2b:	ja     40df6 <gf2_core::gf2m::batch::batch_mul_raw+0x226>
+   40c31:	mov    %edi,%eax
+   40c33:	movabs $0x100010100,%rcx
+   40c3d:	bt     %rax,%rcx
+   40c41:	jae    40df6 <gf2_core::gf2m::batch::batch_mul_raw+0x226>
+   40c47:	mov    0x44b72(%rip),%rbx        # 857c0 <_DYNAMIC+0x2b8>
+   40c4e:	mov    0x20(%rbx),%eax
+   40c51:	test   %eax,%eax
+   40c53:	jne    40dda <gf2_core::gf2m::batch::batch_mul_raw+0x20a>
+   40c59:	mov    (%rbx),%rdx
+   40c5c:	test   %rdx,%rdx
+   40c5f:	je     40df6 <gf2_core::gf2m::batch::batch_mul_raw+0x226>
+   40c65:	xor    %eax,%eax
+   40c67:	mov    %r14,%rsi
+   40c6a:	mov    %edi,%ecx
+   40c6c:	shrd   %cl,%rax,%rsi
+   40c70:	test   $0x40,%dil
+   40c74:	cmovne %rax,%rsi
+   40c78:	mov    %edi,0x1c(%rsp)
+   40c7c:	mov    %rsi,0x20(%rsp)
+   40c81:	movq   $0x0,0x28(%rsp)
+   40c8a:	cmp    $0x1,%rsi
+   40c8e:	jne    40f2e <gf2_core::gf2m::batch::batch_mul_raw+0x35e>
+   40c94:	mov    %rdx,0x40(%rsp)
+   40c99:	lea    (%rdi,%rdi,1),%eax
+   40c9c:	mov    $0x1,%edx
+   40ca1:	xor    %r9d,%r9d
+   40ca4:	mov    %eax,%ecx
+   40ca6:	shld   %cl,%rdx,%r9
+   40caa:	xor    %r11d,%r11d
+   40cad:	mov    $0x1,%ebp
+   40cb2:	shl    %cl,%rbp
+   40cb5:	test   $0x40,%al
+   40cb7:	cmovne %rbp,%r9
+   40cbb:	cmovne %r11,%rbp
+   40cbf:	xor    %r13d,%r13d
+   40cc2:	xor    %r10d,%r10d
+   40cc5:	mov    %rdi,0x48(%rsp)
+   40cca:	mov    %edi,%esi
+   40ccc:	mov    $0x1,%r15d
+   40cd2:	jmp    40ce9 <gf2_core::gf2m::batch::batch_mul_raw+0x119>
+   40cd4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   40ce0:	dec    %esi
+   40ce2:	dec    %eax
+   40ce4:	cmp    $0xffffffff,%esi
+   40ce7:	je     40d57 <gf2_core::gf2m::batch::batch_mul_raw+0x187>
+   40ce9:	mov    %eax,%ecx
+   40ceb:	and    $0x20,%cl
+   40cee:	mov    %rbp,%rbx
+   40cf1:	shrd   %cl,%r9,%rbx
+   40cf5:	mov    %r9,%r12
+   40cf8:	shr    %cl,%r12
+   40cfb:	test   $0x40,%al
+   40cfd:	cmove  %rbx,%r12
+   40d01:	bt     %eax,%r12d
+   40d05:	jae    40ce0 <gf2_core::gf2m::batch::batch_mul_raw+0x110>
+   40d07:	mov    %r14,%rbx
+   40d0a:	mov    %esi,%ecx
+   40d0c:	shl    %cl,%rbx
+   40d0f:	test   $0x40,%sil
+   40d13:	mov    %rbx,%r12
+   40d16:	cmovne %r11,%r12
+   40d1a:	xor    %edi,%edi
+   40d1c:	shld   %cl,%r14,%rdi
+   40d20:	test   $0x40,%sil
+   40d24:	cmovne %rbx,%rdi
+   40d28:	mov    $0x1,%ebx
+   40d2d:	shl    %cl,%rbx
+   40d30:	test   $0x40,%sil
+   40d34:	mov    %rbx,%r8
+   40d37:	cmovne %r11,%r8
+   40d3b:	xor    %edx,%edx
+   40d3d:	shld   %cl,%r15,%rdx
+   40d41:	test   $0x40,%sil
+   40d45:	cmovne %rbx,%rdx
+   40d49:	or     %rdx,%r10
+   40d4c:	or     %r8,%r13
+   40d4f:	xor    %rdi,%r9
+   40d52:	xor    %r12,%rbp
+   40d55:	jmp    40ce0 <gf2_core::gf2m::batch::batch_mul_raw+0x110>
+   40d57:	sub    $0x8,%rsp
+   40d5b:	mov    0x40(%rsp),%rdi
+   40d60:	mov    0x18(%rsp),%rcx
+   40d65:	mov    %rcx,%rsi
+   40d68:	mov    0x38(%rsp),%rdx
+   40d6d:	mov    0xa8(%rsp),%r8
+   40d75:	mov    %rcx,%r9
+   40d78:	push   0x50(%rsp)
+   40d7c:	push   %r14
+   40d7e:	push   %r13
+   40d80:	call   *0x60(%rsp)
+   40d84:	add    $0x88,%rsp
+   40d8b:	jmp    40f23 <gf2_core::gf2m::batch::batch_mul_raw+0x353>
+   40d90:	lea    -0x36d95(%rip),%rcx        # a002 <anon.58baeeae7d5fe476157d296c9f08f803.334.llvm.5844774155465566772+0x6e>
+   40d97:	lea    0x42712(%rip),%r9        # 834b0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x160>
+   40d9e:	lea    0x50(%rsp),%rsi
+   40da3:	lea    0x58(%rsp),%rdx
+   40da8:	mov    $0x47,%r8d
+   40dae:	xor    %edi,%edi
+   40db0:	call   *0x44a3a(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   40db6:	lea    -0x36de5(%rip),%rcx        # 9fd8 <anon.58baeeae7d5fe476157d296c9f08f803.334.llvm.5844774155465566772+0x44>
+   40dbd:	lea    0x42704(%rip),%r9        # 834c8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x178>
+   40dc4:	mov    %rsp,%rsi
+   40dc7:	lea    0x60(%rsp),%rdx
+   40dcc:	mov    $0x55,%r8d
+   40dd2:	xor    %edi,%edi
+   40dd4:	call   *0x44a16(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   40dda:	mov    %rdi,%r12
+   40ddd:	call   3fb0f <std::sync::once_lock::OnceLock<T>::initialize>
+   40de2:	mov    0x10(%rsp),%r11
+   40de7:	mov    %r12,%rdi
+   40dea:	mov    (%rbx),%rdx
+   40ded:	test   %rdx,%rdx
+   40df0:	jne    40c65 <gf2_core::gf2m::batch::batch_mul_raw+0x95>
+   40df6:	test   %r11,%r11
+   40df9:	je     40f1f <gf2_core::gf2m::batch::batch_mul_raw+0x34f>
+   40dff:	lea    -0x1(%rdi),%ecx
+   40e02:	mov    $0x1,%eax
+   40e07:	shl    %cl,%rax
+   40e0a:	mov    $0xffffffffffffffff,%rsi
+   40e11:	mov    %edi,%ecx
+   40e13:	shl    %cl,%rsi
+   40e16:	test   %rdi,%rdi
+   40e19:	je     40f68 <gf2_core::gf2m::batch::batch_mul_raw+0x398>
+   40e1f:	cmp    $0x3f,%rdi
+   40e23:	ja     40f9d <gf2_core::gf2m::batch::batch_mul_raw+0x3cd>
+   40e29:	not    %rsi
+   40e2c:	mov    %edi,%r8d
+   40e2f:	and    $0x3e,%r8d
+   40e33:	xor    %r9d,%r9d
+   40e36:	jmp    40e54 <gf2_core::gf2m::batch::batch_mul_raw+0x284>
+   40e38:	nopl   0x0(%rax,%rax,1)
+   40e40:	xor    %r13d,%r13d
+   40e43:	mov    %r13,0x0(%rbp,%r9,8)
+   40e48:	inc    %r9
+   40e4b:	cmp    %r11,%r9
+   40e4e:	je     40f1f <gf2_core::gf2m::batch::batch_mul_raw+0x34f>
+   40e54:	mov    0x38(%rsp),%rcx
+   40e59:	mov    (%rcx,%r9,8),%r10
+   40e5d:	test   %r10,%r10
+   40e60:	je     40e40 <gf2_core::gf2m::batch::batch_mul_raw+0x270>
+   40e62:	mov    0x30(%rsp),%rcx
+   40e67:	mov    (%rcx,%r9,8),%r12
+   40e6b:	mov    $0x0,%r13d
+   40e71:	test   %r12,%r12
+   40e74:	je     40e43 <gf2_core::gf2m::batch::batch_mul_raw+0x273>
+   40e76:	xor    %r13d,%r13d
+   40e79:	xor    %ecx,%ecx
+   40e7b:	cmp    $0x1,%rdi
+   40e7f:	jne    40eb6 <gf2_core::gf2m::batch::batch_mul_raw+0x2e6>
+   40e81:	jmp    40f03 <gf2_core::gf2m::batch::batch_mul_raw+0x333>
+   40e86:	cs nopw 0x0(%rax,%rax,1)
+   40e90:	mov    %r13,%rdx
+   40e93:	xor    %rbp,%rdx
+   40e96:	shl    $0x3e,%r11
+   40e9a:	sar    $0x3f,%r11
+   40e9e:	and    %r10,%r11
+   40ea1:	mov    %r11,%r13
+   40ea4:	xor    %rdx,%r13
+   40ea7:	add    %r10,%r10
+   40eaa:	xor    %rbx,%r10
+   40ead:	add    $0x2,%rcx
+   40eb1:	cmp    %rcx,%r8
+   40eb4:	je     40ef0 <gf2_core::gf2m::batch::batch_mul_raw+0x320>
+   40eb6:	bt     %rcx,%r12
+   40eba:	mov    $0x0,%ebp
+   40ebf:	cmovb  %r10,%rbp
+   40ec3:	lea    (%r10,%r10,1),%rdx
+   40ec7:	and    %rax,%r10
+   40eca:	cmovne %r14,%r10
+   40ece:	mov    %r12,%r11
+   40ed1:	shr    %cl,%r11
+   40ed4:	xor    %rdx,%r10
+   40ed7:	mov    %r10,%rbx
+   40eda:	and    %rax,%rbx
+   40edd:	je     40e90 <gf2_core::gf2m::batch::batch_mul_raw+0x2c0>
+   40edf:	mov    %r14,%rbx
+   40ee2:	jmp    40e90 <gf2_core::gf2m::batch::batch_mul_raw+0x2c0>
+   40ee4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   40ef0:	test   $0x1,%dil
+   40ef4:	mov    0xa0(%rsp),%rbp
+   40efc:	mov    0x10(%rsp),%r11
+   40f01:	je     40f17 <gf2_core::gf2m::batch::batch_mul_raw+0x347>
+   40f03:	mov    %r13,%rdx
+   40f06:	bt     %rcx,%r12
+   40f0a:	mov    $0x0,%r13d
+   40f10:	cmovb  %r10,%r13
+   40f14:	xor    %rdx,%r13
+   40f17:	and    %rsi,%r13
+   40f1a:	jmp    40e43 <gf2_core::gf2m::batch::batch_mul_raw+0x273>
+   40f1f:	add    $0x68,%rsp
+   40f23:	pop    %rbx
+   40f24:	pop    %r12
+   40f26:	pop    %r13
+   40f28:	pop    %r14
+   40f2a:	pop    %r15
+   40f2c:	pop    %rbp
+   40f2d:	ret
+   40f2e:	lea    0x1c(%rsp),%rax
+   40f33:	mov    %rax,(%rsp)
+   40f37:	mov    0x44afa(%rip),%rax        # 85a38 <_DYNAMIC+0x530>
+   40f3e:	mov    %rax,0x8(%rsp)
+   40f43:	lea    -0x3873a(%rip),%rdx        # 8810 <anon.3dbaf6b573e43554b9e68f7a69135b62.4.llvm.2861360306945365398>
+   40f4a:	lea    -0x39132(%rip),%rcx        # 7e1f <anon.3dbaf6b573e43554b9e68f7a69135b62.451.llvm.2861360306945365398>
+   40f51:	lea    0x425d0(%rip),%r9        # 83528 <anon.3dbaf6b573e43554b9e68f7a69135b62.452.llvm.2861360306945365398>
+   40f58:	lea    0x20(%rsp),%rsi
+   40f5d:	mov    %rsp,%r8
+   40f60:	xor    %edi,%edi
+   40f62:	call   *0x44b10(%rip)        # 85a78 <_DYNAMIC+0x570>
+   40f68:	movq   $0x0,0x20(%rsp)
+   40f71:	lea    0x20(%rsp),%rax
+   40f76:	mov    %rax,(%rsp)
+   40f7a:	mov    0x448cf(%rip),%rax        # 85850 <_DYNAMIC+0x348>
+   40f81:	mov    %rax,0x8(%rsp)
+   40f86:	lea    -0x38bed(%rip),%rdi        # 83a0 <anon.3dbaf6b573e43554b9e68f7a69135b62.453.llvm.2861360306945365398>
+   40f8d:	lea    0x425ac(%rip),%rdx        # 83540 <anon.3dbaf6b573e43554b9e68f7a69135b62.455.llvm.2861360306945365398>
+   40f94:	mov    %rsp,%rsi
+   40f97:	call   *0x447e3(%rip)        # 85780 <_DYNAMIC+0x278>
+   40f9d:	mov    %rdi,0x20(%rsp)
+   40fa2:	lea    0x20(%rsp),%rax
+   40fa7:	mov    %rax,(%rsp)
+   40fab:	mov    0x4489e(%rip),%rax        # 85850 <_DYNAMIC+0x348>
+   40fb2:	mov    %rax,0x8(%rsp)
+   40fb7:	lea    -0x39358(%rip),%rdi        # 7c66 <anon.3dbaf6b573e43554b9e68f7a69135b62.456.llvm.2861360306945365398>
+   40fbe:	lea    0x42593(%rip),%rdx        # 83558 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398>
+   40fc5:	mov    %rsp,%rsi
+   40fc8:	call   *0x447b2(%rip)        # 85780 <_DYNAMIC+0x278>

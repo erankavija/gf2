@@ -1,0 +1,781 @@
+# label: current-fieldvec-axpy
+# pattern: gf2_core::field::vec::FieldVec<F>::axpy
+# binary: target/19513245-survey/release/consumer-arm
+# binary sha256: e974158bb0fdf150b53286ef61bac84239436aa029cb2b3268f0c9f0b59df3d1
+# text symbols matching this pattern: 2
+
+## symbol at 000000000004f360, 0x0000000000000a86 bytes
+000000000004f360 <gf2_core::field::vec::FieldVec<F>::axpy>:
+   4f360:	push   %rbp
+   4f361:	push   %r15
+   4f363:	push   %r14
+   4f365:	push   %r13
+   4f367:	push   %r12
+   4f369:	push   %rbx
+   4f36a:	sub    $0x88,%rsp
+   4f371:	mov    %rcx,0x58(%rsp)
+   4f376:	mov    %rdi,0x50(%rsp)
+   4f37b:	mov    %rsi,0x68(%rsp)
+   4f380:	mov    %r8,0x70(%rsp)
+   4f385:	cmp    %r8,%rsi
+   4f388:	jne    4fcaf <gf2_core::field::vec::FieldVec<F>::axpy+0x94f>
+   4f38e:	test   %rsi,%rsi
+   4f391:	je     4fc31 <gf2_core::field::vec::FieldVec<F>::axpy+0x8d1>
+   4f397:	mov    %rdx,%r12
+   4f39a:	xor    %r14d,%r14d
+   4f39d:	mov    0x5fe84(%rip),%rbp        # af228 <_DYNAMIC+0x4d8>
+   4f3a4:	xor    %ecx,%ecx
+   4f3a6:	mov    %rsi,0x48(%rsp)
+   4f3ab:	jmp    4f3f6 <gf2_core::field::vec::FieldVec<F>::axpy+0x96>
+   4f3ad:	nopl   (%rax)
+   4f3b0:	and    %rcx,%r13
+   4f3b3:	mov    %rax,%rdi
+   4f3b6:	mov    0x5fb8b(%rip),%rbx        # aef48 <free@GLIBC_2.2.5>
+   4f3bd:	call   *%rbx
+   4f3bf:	mov    0x18(%rsp),%rdi
+   4f3c4:	call   *%rbx
+   4f3c6:	mov    0x60(%rsp),%rbp
+   4f3cb:	lea    0x1(%rbp),%rbx
+   4f3cf:	mov    %r15,%rdi
+   4f3d2:	call   *0x5fb70(%rip)        # aef48 <free@GLIBC_2.2.5>
+   4f3d8:	mov    0x50(%rsp),%rax
+   4f3dd:	xor    %r13,(%rax,%rbp,8)
+   4f3e1:	mov    %rbx,%rcx
+   4f3e4:	cmp    0x48(%rsp),%rbx
+   4f3e9:	mov    0x5fe38(%rip),%rbp        # af228 <_DYNAMIC+0x4d8>
+   4f3f0:	je     4fc31 <gf2_core::field::vec::FieldVec<F>::axpy+0x8d1>
+   4f3f6:	mov    0x58(%rsp),%rax
+   4f3fb:	mov    %rcx,0x60(%rsp)
+   4f400:	mov    (%rax,%rcx,8),%rbx
+   4f404:	mov    $0x10,%edi
+   4f409:	mov    $0x1,%esi
+   4f40e:	call   *0x5fb4c(%rip)        # aef60 <calloc@GLIBC_2.2.5>
+   4f414:	test   %rax,%rax
+   4f417:	je     4fd09 <gf2_core::field::vec::FieldVec<F>::axpy+0x9a9>
+   4f41d:	mov    %rax,%r15
+   4f420:	test   %rbx,%rbx
+   4f423:	je     4f460 <gf2_core::field::vec::FieldVec<F>::axpy+0x100>
+   4f425:	xor    %eax,%eax
+   4f427:	xor    %edx,%edx
+   4f429:	nopl   0x0(%rax)
+   4f430:	mov    %rbx,%rsi
+   4f433:	tzcnt  %rbx,%rcx
+   4f438:	xor    %edi,%edi
+   4f43a:	shld   %cl,%r12,%rdi
+   4f43e:	mov    %r12,%r8
+   4f441:	shl    %cl,%r8
+   4f444:	test   $0x40,%cl
+   4f447:	cmovne %r8,%rdi
+   4f44b:	cmovne %r14,%r8
+   4f44f:	xor    %rdi,%rdx
+   4f452:	xor    %r8,%rax
+   4f455:	dec    %rbx
+   4f458:	and    %rsi,%rbx
+   4f45b:	jne    4f430 <gf2_core::field::vec::FieldVec<F>::axpy+0xd0>
+   4f45d:	jmp    4f464 <gf2_core::field::vec::FieldVec<F>::axpy+0x104>
+   4f45f:	nop
+   4f460:	xor    %edx,%edx
+   4f462:	xor    %eax,%eax
+   4f464:	mov    %rdx,0x8(%r15)
+   4f468:	mov    %rax,(%r15)
+   4f46b:	mov    0x38(%rbp),%eax
+   4f46e:	test   %eax,%eax
+   4f470:	jne    4fb6a <gf2_core::field::vec::FieldVec<F>::axpy+0x80a>
+   4f476:	xor    %eax,%eax
+   4f478:	mov    $0x1,%ecx
+   4f47d:	lock cmpxchg %ecx,0x0(%rbp)
+   4f482:	jne    4fb74 <gf2_core::field::vec::FieldVec<F>::axpy+0x814>
+   4f488:	mov    0x5fd09(%rip),%rax        # af198 <_DYNAMIC+0x448>
+   4f48f:	mov    (%rax),%rax
+   4f492:	movabs $0x7fffffffffffffff,%rcx
+   4f49c:	test   %rcx,%rax
+   4f49f:	jne    4fb82 <gf2_core::field::vec::FieldVec<F>::axpy+0x822>
+   4f4a5:	xor    %r13d,%r13d
+   4f4a8:	movzbl 0x4(%rbp),%eax
+   4f4ac:	test   %al,%al
+   4f4ae:	jne    4fc43 <gf2_core::field::vec::FieldVec<F>::axpy+0x8e3>
+   4f4b4:	cmpq   $0x0,0x20(%rbp)
+   4f4b9:	mov    %r15,0x8(%rsp)
+   4f4be:	je     4f590 <gf2_core::field::vec::FieldVec<F>::axpy+0x230>
+   4f4c4:	mov    0x28(%rbp),%rdi
+   4f4c8:	mov    0x30(%rbp),%rsi
+   4f4cc:	mov    $0x1,%ecx
+   4f4d1:	movabs $0xaabd9c4e23ec51f3,%rdx
+   4f4db:	call   4b350 <core::hash::BuildHasher::hash_one>
+   4f4e0:	mov    %rax,%rsi
+   4f4e3:	shr    $0x39,%rsi
+   4f4e7:	mov    0x8(%rbp),%rcx
+   4f4eb:	mov    0x10(%rbp),%rdx
+   4f4ef:	movd   %esi,%xmm0
+   4f4f3:	punpcklbw %xmm0,%xmm0
+   4f4f7:	pshuflw $0x0,%xmm0,%xmm0
+   4f4fc:	pshufd $0x44,%xmm0,%xmm0
+   4f501:	xor    %esi,%esi
+   4f503:	and    %rdx,%rax
+   4f506:	movdqu (%rcx,%rax,1),%xmm1
+   4f50b:	movdqa %xmm1,%xmm2
+   4f50f:	pcmpeqb %xmm0,%xmm2
+   4f513:	pmovmskb %xmm2,%edi
+   4f517:	test   %edi,%edi
+   4f519:	je     4f570 <gf2_core::field::vec::FieldVec<F>::axpy+0x210>
+   4f51b:	tzcnt  %edi,%r8d
+   4f520:	add    %rax,%r8
+   4f523:	and    %rdx,%r8
+   4f526:	neg    %r8
+   4f529:	lea    (%r8,%r8,4),%r8
+   4f52d:	mov    -0x20(%rcx,%r8,8),%r9
+   4f532:	movabs $0xaabd9c4e23ec51f3,%r10
+   4f53c:	xor    %r10,%r9
+   4f53f:	mov    -0x28(%rcx,%r8,8),%r10
+   4f544:	movabs $0x35fc58b8340a29fa,%r11
+   4f54e:	xor    %r11,%r10
+   4f551:	or     %r9,%r10
+   4f554:	jne    4f562 <gf2_core::field::vec::FieldVec<F>::axpy+0x202>
+   4f556:	cmpq   $0x1,-0x18(%rcx,%r8,8)
+   4f55c:	je     4f750 <gf2_core::field::vec::FieldVec<F>::axpy+0x3f0>
+   4f562:	lea    -0x1(%rdi),%r8d
+   4f566:	and    %di,%r8w
+   4f56a:	mov    %r8d,%edi
+   4f56d:	jne    4f51b <gf2_core::field::vec::FieldVec<F>::axpy+0x1bb>
+   4f56f:	nop
+   4f570:	pcmpeqd %xmm2,%xmm2
+   4f574:	pcmpeqb %xmm2,%xmm1
+   4f578:	pmovmskb %xmm1,%edi
+   4f57c:	test   %edi,%edi
+   4f57e:	jne    4f590 <gf2_core::field::vec::FieldVec<F>::axpy+0x230>
+   4f580:	add    %rsi,%rax
+   4f583:	add    $0x10,%rax
+   4f587:	add    $0x10,%rsi
+   4f58b:	jmp    4f503 <gf2_core::field::vec::FieldVec<F>::axpy+0x1a3>
+   4f590:	mov    $0x8,%esi
+   4f595:	mov    $0x10000,%edx
+   4f59a:	xor    %ebx,%ebx
+   4f59c:	xor    %edi,%edi
+   4f59e:	xchg   %ax,%ax
+   4f5a0:	test   $0x1,%dil
+   4f5a4:	jne    4f600 <gf2_core::field::vec::FieldVec<F>::axpy+0x2a0>
+   4f5a6:	mov    %esi,%eax
+   4f5a8:	xor    %ecx,%ecx
+   4f5aa:	test   %esi,%esi
+   4f5ac:	sete   %dil
+   4f5b0:	setne  %cl
+   4f5b3:	sub    %ecx,%esi
+   4f5b5:	lea    0x8(%rax),%ecx
+   4f5b8:	cmp    $0x3f,%ecx
+   4f5bb:	ja     4f5a0 <gf2_core::field::vec::FieldVec<F>::axpy+0x240>
+   4f5bd:	mov    $0x1,%r8d
+   4f5c3:	shl    %cl,%r8
+   4f5c6:	bt     %rcx,%rdx
+   4f5ca:	jae    4f5a0 <gf2_core::field::vec::FieldVec<F>::axpy+0x240>
+   4f5cc:	mov    $0x1,%r9d
+   4f5d2:	mov    %eax,%ecx
+   4f5d4:	shl    %cl,%r9
+   4f5d7:	cmp    $0x8,%eax
+   4f5da:	cmovae %r14,%r9
+   4f5de:	or     %r9,%rbx
+   4f5e1:	mov    $0x1d,%r9d
+   4f5e7:	shl    %cl,%r9
+   4f5ea:	cmp    $0x40,%eax
+   4f5ed:	cmovae %r14,%r9
+   4f5f1:	xor    %r8,%rdx
+   4f5f4:	xor    %r9,%rdx
+   4f5f7:	jmp    4f5a0 <gf2_core::field::vec::FieldVec<F>::axpy+0x240>
+   4f5f9:	nopl   0x0(%rax)
+   4f600:	mov    $0x18,%edi
+   4f605:	call   *0x5f92d(%rip)        # aef38 <malloc@GLIBC_2.2.5>
+   4f60b:	test   %rax,%rax
+   4f60e:	je     4fc77 <gf2_core::field::vec::FieldVec<F>::axpy+0x917>
+   4f614:	mov    %rax,%rbp
+   4f617:	mov    %r13d,0x10(%rsp)
+   4f61c:	movq   $0x1d,(%rax)
+   4f623:	mov    %rbx,0x8(%rax)
+   4f627:	movl   $0x8,0x10(%rax)
+   4f62e:	mov    0x5fbf3(%rip),%r13        # af228 <_DYNAMIC+0x4d8>
+   4f635:	mov    0x28(%r13),%rdi
+   4f639:	mov    0x30(%r13),%rsi
+   4f63d:	mov    $0x1,%ecx
+   4f642:	movabs $0xaabd9c4e23ec51f3,%rdx
+   4f64c:	call   4b350 <core::hash::BuildHasher::hash_one>
+   4f651:	mov    %rax,%r15
+   4f654:	cmpq   $0x0,0x18(%r13)
+   4f659:	je     4fbd6 <gf2_core::field::vec::FieldVec<F>::axpy+0x876>
+   4f65f:	mov    0x8(%r13),%rax
+   4f663:	mov    0x10(%r13),%rdx
+   4f667:	mov    %r15,%rcx
+   4f66a:	shr    $0x39,%rcx
+   4f66e:	movd   %ecx,%xmm0
+   4f672:	punpcklbw %xmm0,%xmm0
+   4f676:	pshuflw $0x0,%xmm0,%xmm0
+   4f67b:	pshufd $0x44,%xmm0,%xmm0
+   4f680:	xor    %r8d,%r8d
+   4f683:	xor    %edi,%edi
+   4f685:	and    %rdx,%r15
+   4f688:	movdqu (%rax,%r15,1),%xmm1
+   4f68e:	movdqa %xmm1,%xmm2
+   4f692:	pcmpeqb %xmm0,%xmm2
+   4f696:	pmovmskb %xmm2,%r9d
+   4f69b:	test   %r9d,%r9d
+   4f69e:	je     4f700 <gf2_core::field::vec::FieldVec<F>::axpy+0x3a0>
+   4f6a0:	mov    %rdi,0x18(%rsp)
+   4f6a5:	tzcnt  %r9d,%r10d
+   4f6aa:	add    %r15,%r10
+   4f6ad:	and    %rdx,%r10
+   4f6b0:	neg    %r10
+   4f6b3:	lea    (%r10,%r10,4),%r10
+   4f6b7:	mov    -0x20(%rax,%r10,8),%r11
+   4f6bc:	movabs $0xaabd9c4e23ec51f3,%rdi
+   4f6c6:	xor    %rdi,%r11
+   4f6c9:	mov    -0x28(%rax,%r10,8),%r13
+   4f6ce:	movabs $0x35fc58b8340a29fa,%rdi
+   4f6d8:	xor    %rdi,%r13
+   4f6db:	or     %r11,%r13
+   4f6de:	jne    4f6ec <gf2_core::field::vec::FieldVec<F>::axpy+0x38c>
+   4f6e0:	cmpq   $0x1,-0x18(%rax,%r10,8)
+   4f6e6:	je     4f7d0 <gf2_core::field::vec::FieldVec<F>::axpy+0x470>
+   4f6ec:	lea    -0x1(%r9),%r10d
+   4f6f0:	and    %r9w,%r10w
+   4f6f4:	mov    %r10d,%r9d
+   4f6f7:	mov    0x18(%rsp),%rdi
+   4f6fc:	jne    4f6a5 <gf2_core::field::vec::FieldVec<F>::axpy+0x345>
+   4f6fe:	xchg   %ax,%ax
+   4f700:	cmp    $0x1,%r8
+   4f704:	je     4f718 <gf2_core::field::vec::FieldVec<F>::axpy+0x3b8>
+   4f706:	pmovmskb %xmm1,%esi
+   4f70a:	test   %esi,%esi
+   4f70c:	je     4f736 <gf2_core::field::vec::FieldVec<F>::axpy+0x3d6>
+   4f70e:	tzcnt  %esi,%esi
+   4f712:	add    %r15,%rsi
+   4f715:	and    %rdx,%rsi
+   4f718:	pcmpeqd %xmm2,%xmm2
+   4f71c:	pcmpeqb %xmm2,%xmm1
+   4f720:	pmovmskb %xmm1,%r8d
+   4f725:	test   %r8d,%r8d
+   4f728:	jne    4f820 <gf2_core::field::vec::FieldVec<F>::axpy+0x4c0>
+   4f72e:	mov    $0x1,%r8d
+   4f734:	jmp    4f739 <gf2_core::field::vec::FieldVec<F>::axpy+0x3d9>
+   4f736:	xor    %r8d,%r8d
+   4f739:	add    %rdi,%r15
+   4f73c:	add    $0x10,%r15
+   4f740:	add    $0x10,%rdi
+   4f744:	jmp    4f685 <gf2_core::field::vec::FieldVec<F>::axpy+0x325>
+   4f749:	nopl   0x0(%rax)
+   4f750:	lea    (%rcx,%r8,8),%rax
+   4f754:	mov    -0x10(%rax),%r15
+   4f758:	mov    -0x8(%rax),%rax
+   4f75c:	lea    0x20(%rsp),%rdi
+   4f761:	mov    %r15,%rsi
+   4f764:	call   *0x18(%rax)
+   4f767:	movdqa 0x20(%rsp),%xmm0
+   4f76d:	pcmpeqb -0x44cd5(%rip),%xmm0        # aaa0 <anon.3dbaf6b573e43554b9e68f7a69135b62.4.llvm.2861360306945365398+0x140>
+   4f775:	pmovmskb %xmm0,%eax
+   4f779:	cmp    $0xffff,%eax
+   4f77e:	jne    4fc8c <gf2_core::field::vec::FieldVec<F>::axpy+0x92c>
+   4f784:	mov    (%r15),%r8
+   4f787:	mov    0x8(%r15),%rbx
+   4f78b:	mov    0x10(%r15),%ebp
+   4f78f:	test   %r13b,%r13b
+   4f792:	jne    4f7b1 <gf2_core::field::vec::FieldVec<F>::axpy+0x451>
+   4f794:	mov    0x5f9fd(%rip),%rax        # af198 <_DYNAMIC+0x448>
+   4f79b:	mov    (%rax),%rax
+   4f79e:	movabs $0x7fffffffffffffff,%rcx
+   4f7a8:	test   %rcx,%rax
+   4f7ab:	jne    4fc0d <gf2_core::field::vec::FieldVec<F>::axpy+0x8ad>
+   4f7b1:	xor    %eax,%eax
+   4f7b3:	mov    0x5fa6e(%rip),%rcx        # af228 <_DYNAMIC+0x4d8>
+   4f7ba:	xchg   %eax,(%rcx)
+   4f7bc:	jmp    4f8dc <gf2_core::field::vec::FieldVec<F>::axpy+0x57c>
+   4f7c1:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   4f7d0:	lea    (%rax,%r10,8),%rax
+   4f7d4:	mov    -0x10(%rax),%r15
+   4f7d8:	mov    -0x8(%rax),%r13
+   4f7dc:	mov    %rbp,-0x10(%rax)
+   4f7e0:	lea    0x5c5f1(%rip),%rcx        # abdd8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xec8>
+   4f7e7:	mov    %rcx,-0x8(%rax)
+   4f7eb:	mov    0x0(%r13),%rax
+   4f7ef:	test   %rax,%rax
+   4f7f2:	je     4f7f9 <gf2_core::field::vec::FieldVec<F>::axpy+0x499>
+   4f7f4:	mov    %r15,%rdi
+   4f7f7:	call   *%rax
+   4f7f9:	cmpq   $0x0,0x8(%r13)
+   4f7fe:	mov    0x5fa23(%rip),%r13        # af228 <_DYNAMIC+0x4d8>
+   4f805:	je     4f810 <gf2_core::field::vec::FieldVec<F>::axpy+0x4b0>
+   4f807:	mov    %r15,%rdi
+   4f80a:	call   *0x5f738(%rip)        # aef48 <free@GLIBC_2.2.5>
+   4f810:	cmpb   $0x0,0x10(%rsp)
+   4f815:	je     4f8ae <gf2_core::field::vec::FieldVec<F>::axpy+0x54e>
+   4f81b:	jmp    4f8cb <gf2_core::field::vec::FieldVec<F>::axpy+0x56b>
+   4f820:	movzbl (%rax,%rsi,1),%edi
+   4f824:	test   %dil,%dil
+   4f827:	jns    4fbf8 <gf2_core::field::vec::FieldVec<F>::axpy+0x898>
+   4f82d:	and    $0x1,%dil
+   4f831:	lea    -0x10(%rsi),%r8
+   4f835:	and    %rdx,%r8
+   4f838:	mov    %cl,(%rax,%rsi,1)
+   4f83b:	mov    %cl,0x10(%rax,%r8,1)
+   4f840:	mov    0x5f9e1(%rip),%r13        # af228 <_DYNAMIC+0x4d8>
+   4f847:	movdqu 0x18(%r13),%xmm0
+   4f84d:	movzbl %dil,%ecx
+   4f851:	movd   %ecx,%xmm1
+   4f855:	shufpd $0x2,-0x4511e(%rip),%xmm1        # a740 <anon.eb89d4395b0ead844ef0b45b8b54da85.151.llvm.3643936799275306673+0x18f>
+   4f85e:	psubq  %xmm1,%xmm0
+   4f862:	movdqu %xmm0,0x18(%r13)
+   4f868:	neg    %rsi
+   4f86b:	lea    (%rsi,%rsi,4),%rcx
+   4f86f:	movabs $0xaabd9c4e23ec51f3,%rdx
+   4f879:	mov    %rdx,-0x20(%rax,%rcx,8)
+   4f87e:	movabs $0x35fc58b8340a29fa,%rdx
+   4f888:	mov    %rdx,-0x28(%rax,%rcx,8)
+   4f88d:	movq   $0x1,-0x18(%rax,%rcx,8)
+   4f896:	mov    %rbp,-0x10(%rax,%rcx,8)
+   4f89b:	lea    0x5c536(%rip),%rdx        # abdd8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xec8>
+   4f8a2:	mov    %rdx,-0x8(%rax,%rcx,8)
+   4f8a7:	cmpb   $0x0,0x10(%rsp)
+   4f8ac:	jne    4f8cb <gf2_core::field::vec::FieldVec<F>::axpy+0x56b>
+   4f8ae:	mov    0x5f8e3(%rip),%rax        # af198 <_DYNAMIC+0x448>
+   4f8b5:	mov    (%rax),%rax
+   4f8b8:	movabs $0x7fffffffffffffff,%rcx
+   4f8c2:	test   %rcx,%rax
+   4f8c5:	jne    4fbe0 <gf2_core::field::vec::FieldVec<F>::axpy+0x880>
+   4f8cb:	xor    %eax,%eax
+   4f8cd:	xchg   %eax,0x0(%r13)
+   4f8d1:	mov    $0x8,%ebp
+   4f8d6:	mov    $0x1d,%r8d
+   4f8dc:	cmp    $0x2,%eax
+   4f8df:	mov    0x8(%rsp),%r15
+   4f8e4:	je     4fba0 <gf2_core::field::vec::FieldVec<F>::axpy+0x840>
+   4f8ea:	mov    0x8(%r15),%rax
+   4f8ee:	test   %rax,%rax
+   4f8f1:	jne    4f917 <gf2_core::field::vec::FieldVec<F>::axpy+0x5b7>
+   4f8f3:	mov    $0xffffffffffffffff,%rdx
+   4f8fa:	mov    %ebp,%ecx
+   4f8fc:	shl    %cl,%rdx
+   4f8ff:	cmp    $0x40,%ebp
+   4f902:	mov    $0x0,%ecx
+   4f907:	cmovb  %rdx,%rcx
+   4f90b:	mov    (%r15),%r13
+   4f90e:	test   %rcx,%r13
+   4f911:	je     4f3c6 <gf2_core::field::vec::FieldVec<F>::axpy+0x66>
+   4f917:	mov    %ebp,%ecx
+   4f919:	dec    %ecx
+   4f91b:	mov    %r8,0x10(%rsp)
+   4f920:	je     4f930 <gf2_core::field::vec::FieldVec<F>::axpy+0x5d0>
+   4f922:	cmp    $0x7f,%ecx
+   4f925:	jbe    4f940 <gf2_core::field::vec::FieldVec<F>::axpy+0x5e0>
+   4f927:	xor    %r13d,%r13d
+   4f92a:	jmp    4f970 <gf2_core::field::vec::FieldVec<F>::axpy+0x610>
+   4f92c:	nopl   0x0(%rax)
+   4f930:	mov    (%r15),%r13
+   4f933:	jmp    4f970 <gf2_core::field::vec::FieldVec<F>::axpy+0x610>
+   4f935:	data16 cs nopw 0x0(%rax,%rax,1)
+   4f940:	mov    %ecx,%edx
+   4f942:	shr    $0x6,%edx
+   4f945:	and    $0x3f,%ecx
+   4f948:	sete   %sil
+   4f94c:	test   %edx,%edx
+   4f94e:	setne  %dil
+   4f952:	mov    (%r15,%rdx,8),%r13
+   4f956:	shr    %cl,%r13
+   4f959:	or     %sil,%dil
+   4f95c:	jne    4f970 <gf2_core::field::vec::FieldVec<F>::axpy+0x610>
+   4f95e:	neg    %cl
+   4f960:	shl    %cl,%rax
+   4f963:	or     %rax,%r13
+   4f966:	cs nopw 0x0(%rax,%rax,1)
+   4f970:	mov    $0x10,%edi
+   4f975:	mov    $0x1,%esi
+   4f97a:	call   *0x5f5e0(%rip)        # aef60 <calloc@GLIBC_2.2.5>
+   4f980:	test   %rax,%rax
+   4f983:	je     4fd19 <gf2_core::field::vec::FieldVec<F>::axpy+0x9b9>
+   4f989:	test   %rbx,%rbx
+   4f98c:	je     4f9d0 <gf2_core::field::vec::FieldVec<F>::axpy+0x670>
+   4f98e:	xor    %r15d,%r15d
+   4f991:	xor    %r8d,%r8d
+   4f994:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   4f9a0:	mov    %rbx,%rdx
+   4f9a3:	tzcnt  %rbx,%rcx
+   4f9a8:	xor    %esi,%esi
+   4f9aa:	shld   %cl,%r13,%rsi
+   4f9ae:	mov    %r13,%rdi
+   4f9b1:	shl    %cl,%rdi
+   4f9b4:	test   $0x40,%cl
+   4f9b7:	cmovne %rdi,%rsi
+   4f9bb:	cmovne %r14,%rdi
+   4f9bf:	xor    %rsi,%r8
+   4f9c2:	xor    %rdi,%r15
+   4f9c5:	dec    %rbx
+   4f9c8:	and    %rdx,%rbx
+   4f9cb:	jne    4f9a0 <gf2_core::field::vec::FieldVec<F>::axpy+0x640>
+   4f9cd:	jmp    4f9d6 <gf2_core::field::vec::FieldVec<F>::axpy+0x676>
+   4f9cf:	nop
+   4f9d0:	xor    %r8d,%r8d
+   4f9d3:	xor    %r15d,%r15d
+   4f9d6:	mov    %r8,0x8(%rax)
+   4f9da:	mov    %r15,(%rax)
+   4f9dd:	mov    %ebp,%ebx
+   4f9df:	shr    $0x6,%ebx
+   4f9e2:	cmp    $0x7f,%ebp
+   4f9e5:	mov    %rax,0x18(%rsp)
+   4f9ea:	jbe    4fa00 <gf2_core::field::vec::FieldVec<F>::axpy+0x6a0>
+   4f9ec:	cmp    $0xffffffff,%ebp
+   4f9ef:	cmovne %r14,%r15
+   4f9f3:	jmp    4fa70 <gf2_core::field::vec::FieldVec<F>::axpy+0x710>
+   4f9f5:	data16 cs nopw 0x0(%rax,%rax,1)
+   4fa00:	mov    %ebp,%ecx
+   4fa02:	and    $0x3f,%ecx
+   4fa05:	sete   %dil
+   4fa09:	test   %rbx,%rbx
+   4fa0c:	setne  %dl
+   4fa0f:	mov    %r13,%rsi
+   4fa12:	shl    %cl,%rsi
+   4fa15:	xor    %rsi,(%rax,%rbx,8)
+   4fa19:	or     %dil,%dl
+   4fa1c:	jne    4fa27 <gf2_core::field::vec::FieldVec<F>::axpy+0x6c7>
+   4fa1e:	neg    %cl
+   4fa20:	shr    %cl,%r13
+   4fa23:	xor    %r13,0x8(%rax)
+   4fa27:	cmp    $0x7f,%ebp
+   4fa2a:	jne    4fa40 <gf2_core::field::vec::FieldVec<F>::axpy+0x6e0>
+   4fa2c:	xor    %r15d,%r15d
+   4fa2f:	jmp    4fa70 <gf2_core::field::vec::FieldVec<F>::axpy+0x710>
+   4fa31:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   4fa40:	lea    0x1(%rbp),%ecx
+   4fa43:	mov    %ecx,%edi
+   4fa45:	shr    $0x6,%edi
+   4fa48:	and    $0x3f,%ecx
+   4fa4b:	sete   %dl
+   4fa4e:	test   %edi,%edi
+   4fa50:	setne  %sil
+   4fa54:	mov    (%rax,%rdi,8),%r15
+   4fa58:	shr    %cl,%r15
+   4fa5b:	or     %dl,%sil
+   4fa5e:	jne    4fa70 <gf2_core::field::vec::FieldVec<F>::axpy+0x710>
+   4fa60:	mov    0x8(%rax),%rax
+   4fa64:	neg    %cl
+   4fa66:	shl    %cl,%rax
+   4fa69:	or     %rax,%r15
+   4fa6c:	nopl   0x0(%rax)
+   4fa70:	mov    $0x10,%edi
+   4fa75:	mov    $0x1,%esi
+   4fa7a:	call   *0x5f4e0(%rip)        # aef60 <calloc@GLIBC_2.2.5>
+   4fa80:	test   %rax,%rax
+   4fa83:	je     4fd2b <gf2_core::field::vec::FieldVec<F>::axpy+0x9cb>
+   4fa89:	mov    0x10(%rsp),%r9
+   4fa8e:	test   %r9,%r9
+   4fa91:	je     4fb50 <gf2_core::field::vec::FieldVec<F>::axpy+0x7f0>
+   4fa97:	mov    %r9,%rcx
+   4fa9a:	xor    %r13d,%r13d
+   4fa9d:	xor    %edx,%edx
+   4fa9f:	nop
+   4faa0:	mov    %rcx,%rsi
+   4faa3:	tzcnt  %rcx,%rcx
+   4faa8:	xor    %edi,%edi
+   4faaa:	shld   %cl,%r15,%rdi
+   4faae:	mov    %r15,%r8
+   4fab1:	shl    %cl,%r8
+   4fab4:	test   $0x40,%cl
+   4fab7:	cmovne %r8,%rdi
+   4fabb:	cmovne %r14,%r8
+   4fabf:	xor    %rdi,%rdx
+   4fac2:	xor    %r8,%r13
+   4fac5:	lea    -0x1(%rsi),%rcx
+   4fac9:	and    %rsi,%rcx
+   4facc:	jne    4faa0 <gf2_core::field::vec::FieldVec<F>::axpy+0x740>
+   4face:	mov    %rdx,0x8(%rax)
+   4fad2:	mov    %r13,(%rax)
+   4fad5:	cmp    $0x7f,%ebp
+   4fad8:	ja     4fae6 <gf2_core::field::vec::FieldVec<F>::axpy+0x786>
+   4fada:	mov    %ebp,%ecx
+   4fadc:	shl    %cl,%r15
+   4fadf:	xor    %r15,(%rax,%rbx,8)
+   4fae3:	mov    (%rax),%r13
+   4fae6:	mov    0x8(%rsp),%r15
+   4faeb:	xor    (%r15),%r13
+   4faee:	mov    %ebp,%edx
+   4faf0:	mov    $0xffffffffffffffff,%rdi
+   4faf7:	mov    %ebp,%ecx
+   4faf9:	shl    %cl,%rdi
+   4fafc:	cmp    $0x40,%ebp
+   4faff:	mov    $0x0,%esi
+   4fb04:	cmovb  %rdi,%rsi
+   4fb08:	mov    %rdi,%rcx
+   4fb0b:	not    %rcx
+   4fb0e:	mov    $0xffffffffffffffff,%rdi
+   4fb15:	cmovae %rdi,%rcx
+   4fb19:	test   %rsi,%r13
+   4fb1c:	je     4fb2a <gf2_core::field::vec::FieldVec<F>::axpy+0x7ca>
+   4fb1e:	xor    %r9,%r13
+   4fb21:	cmp    $0x40,%ebp
+   4fb24:	jae    4fb2a <gf2_core::field::vec::FieldVec<F>::axpy+0x7ca>
+   4fb26:	btc    %rdx,%r13
+   4fb2a:	test   %rsi,%r13
+   4fb2d:	je     4f3b0 <gf2_core::field::vec::FieldVec<F>::axpy+0x50>
+   4fb33:	xor    %r9,%r13
+   4fb36:	cmp    $0x40,%ebp
+   4fb39:	jae    4f3b0 <gf2_core::field::vec::FieldVec<F>::axpy+0x50>
+   4fb3f:	btc    %rdx,%r13
+   4fb43:	jmp    4f3b0 <gf2_core::field::vec::FieldVec<F>::axpy+0x50>
+   4fb48:	nopl   0x0(%rax,%rax,1)
+   4fb50:	xor    %edx,%edx
+   4fb52:	xor    %r13d,%r13d
+   4fb55:	mov    %rdx,0x8(%rax)
+   4fb59:	mov    %r13,(%rax)
+   4fb5c:	cmp    $0x7f,%ebp
+   4fb5f:	jbe    4fada <gf2_core::field::vec::FieldVec<F>::axpy+0x77a>
+   4fb65:	jmp    4fae6 <gf2_core::field::vec::FieldVec<F>::axpy+0x786>
+   4fb6a:	call   48384 <std::sync::once_lock::OnceLock<T>::initialize>
+   4fb6f:	jmp    4f476 <gf2_core::field::vec::FieldVec<F>::axpy+0x116>
+   4fb74:	mov    %rbp,%rdi
+   4fb77:	call   *0x5f633(%rip)        # af1b0 <_DYNAMIC+0x460>
+   4fb7d:	jmp    4f488 <gf2_core::field::vec::FieldVec<F>::axpy+0x128>
+   4fb82:	call   *0x5f630(%rip)        # af1b8 <_DYNAMIC+0x468>
+   4fb88:	mov    %eax,%r13d
+   4fb8b:	xor    $0x1,%r13b
+   4fb8f:	movzbl 0x4(%rbp),%eax
+   4fb93:	test   %al,%al
+   4fb95:	je     4f4b4 <gf2_core::field::vec::FieldVec<F>::axpy+0x154>
+   4fb9b:	jmp    4fc43 <gf2_core::field::vec::FieldVec<F>::axpy+0x8e3>
+   4fba0:	mov    $0xca,%edi
+   4fba5:	mov    0x5f67c(%rip),%rsi        # af228 <_DYNAMIC+0x4d8>
+   4fbac:	mov    $0x81,%edx
+   4fbb1:	mov    $0x1,%ecx
+   4fbb6:	xor    %eax,%eax
+   4fbb8:	mov    %r8,%r13
+   4fbbb:	call   *0x5f5ff(%rip)        # af1c0 <syscall@GLIBC_2.2.5>
+   4fbc1:	mov    %r13,%r8
+   4fbc4:	mov    0x8(%r15),%rax
+   4fbc8:	test   %rax,%rax
+   4fbcb:	jne    4f917 <gf2_core::field::vec::FieldVec<F>::axpy+0x5b7>
+   4fbd1:	jmp    4f8f3 <gf2_core::field::vec::FieldVec<F>::axpy+0x593>
+   4fbd6:	call   53e10 <hashbrown::raw::RawTable<T,A>::reserve_rehash>
+   4fbdb:	jmp    4f65f <gf2_core::field::vec::FieldVec<F>::axpy+0x2ff>
+   4fbe0:	call   *0x5f5d2(%rip)        # af1b8 <_DYNAMIC+0x468>
+   4fbe6:	test   %al,%al
+   4fbe8:	jne    4f8cb <gf2_core::field::vec::FieldVec<F>::axpy+0x56b>
+   4fbee:	movb   $0x1,0x4(%r13)
+   4fbf3:	jmp    4f8cb <gf2_core::field::vec::FieldVec<F>::axpy+0x56b>
+   4fbf8:	movdqa (%rax),%xmm0
+   4fbfc:	pmovmskb %xmm0,%esi
+   4fc00:	tzcnt  %esi,%esi
+   4fc04:	movzbl (%rax,%rsi,1),%edi
+   4fc08:	jmp    4f82d <gf2_core::field::vec::FieldVec<F>::axpy+0x4cd>
+   4fc0d:	mov    %r8,%r15
+   4fc10:	call   *0x5f5a2(%rip)        # af1b8 <_DYNAMIC+0x468>
+   4fc16:	mov    %r15,%r8
+   4fc19:	test   %al,%al
+   4fc1b:	jne    4f7b1 <gf2_core::field::vec::FieldVec<F>::axpy+0x451>
+   4fc21:	mov    0x5f600(%rip),%rax        # af228 <_DYNAMIC+0x4d8>
+   4fc28:	movb   $0x1,0x4(%rax)
+   4fc2c:	jmp    4f7b1 <gf2_core::field::vec::FieldVec<F>::axpy+0x451>
+   4fc31:	add    $0x88,%rsp
+   4fc38:	pop    %rbx
+   4fc39:	pop    %r12
+   4fc3b:	pop    %r13
+   4fc3d:	pop    %r14
+   4fc3f:	pop    %r15
+   4fc41:	pop    %rbp
+   4fc42:	ret
+   4fc43:	mov    %rbp,0x20(%rsp)
+   4fc48:	mov    %r13b,0x28(%rsp)
+   4fc4d:	lea    -0x43e42(%rip),%rdi        # be12 <anon.3d0f10f65a63ea4f41181cc486c36934.85.llvm.6495976655084607520+0xdb2>
+   4fc54:	lea    0x5c00d(%rip),%rcx        # abc68 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xd58>
+   4fc5b:	lea    0x5c146(%rip),%r8        # abda8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xe98>
+   4fc62:	lea    0x20(%rsp),%rdx
+   4fc67:	mov    $0x1c,%esi
+   4fc6c:	call   *0x5f38e(%rip)        # af000 <_DYNAMIC+0x2b0>
+   4fc72:	jmp    4fd3b <gf2_core::field::vec::FieldVec<F>::axpy+0x9db>
+   4fc77:	mov    $0x8,%edi
+   4fc7c:	mov    $0x18,%esi
+   4fc81:	call   *0x5f349(%rip)        # aefd0 <_DYNAMIC+0x280>
+   4fc87:	jmp    4fd3b <gf2_core::field::vec::FieldVec<F>::axpy+0x9db>
+   4fc8c:	lea    -0x43e65(%rip),%rdi        # be2e <anon.3d0f10f65a63ea4f41181cc486c36934.85.llvm.6495976655084607520+0xdce>
+   4fc93:	lea    0x5c126(%rip),%rdx        # abdc0 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xeb0>
+   4fc9a:	mov    $0x37,%esi
+   4fc9f:	mov    0x8(%rsp),%r15
+   4fca4:	call   *0x5f5a6(%rip)        # af250 <_DYNAMIC+0x500>
+   4fcaa:	jmp    4fd3b <gf2_core::field::vec::FieldVec<F>::axpy+0x9db>
+   4fcaf:	mov    %rsi,0x78(%rsp)
+   4fcb4:	mov    %r8,0x80(%rsp)
+   4fcbc:	lea    0x78(%rsp),%rax
+   4fcc1:	mov    %rax,0x20(%rsp)
+   4fcc6:	mov    0x5f40b(%rip),%rax        # af0d8 <_DYNAMIC+0x388>
+   4fccd:	mov    %rax,0x28(%rsp)
+   4fcd2:	lea    0x80(%rsp),%rcx
+   4fcda:	mov    %rcx,0x30(%rsp)
+   4fcdf:	mov    %rax,0x38(%rsp)
+   4fce4:	lea    -0x4721c(%rip),%rcx        # 8acf <anon.fc0f47fa9653821f57d5a55292b6eb36.1.llvm.11340752617015147710+0xc3>
+   4fceb:	lea    0x5c1b6(%rip),%r9        # abea8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xf98>
+   4fcf2:	lea    0x68(%rsp),%rsi
+   4fcf7:	lea    0x70(%rsp),%rdx
+   4fcfc:	lea    0x20(%rsp),%r8
+   4fd01:	xor    %edi,%edi
+   4fd03:	call   *0x5f38f(%rip)        # af098 <_DYNAMIC+0x348>
+   4fd09:	mov    $0x8,%edi
+   4fd0e:	mov    $0x10,%esi
+   4fd13:	call   *0x5f267(%rip)        # aef80 <_DYNAMIC+0x230>
+   4fd19:	mov    $0x8,%edi
+   4fd1e:	mov    $0x10,%esi
+   4fd23:	call   *0x5f257(%rip)        # aef80 <_DYNAMIC+0x230>
+   4fd29:	jmp    4fd3b <gf2_core::field::vec::FieldVec<F>::axpy+0x9db>
+   4fd2b:	mov    $0x8,%edi
+   4fd30:	mov    $0x10,%esi
+   4fd35:	call   *0x5f245(%rip)        # aef80 <_DYNAMIC+0x230>
+   4fd3b:	ud2
+   4fd3d:	mov    %rax,%r14
+   4fd40:	mov    %rbp,%rdi
+   4fd43:	jmp    4fd66 <gf2_core::field::vec::FieldVec<F>::axpy+0xa06>
+   4fd45:	mov    %rax,%r14
+   4fd48:	mov    %r15,%rdi
+   4fd4b:	call   *0x5f1f7(%rip)        # aef48 <free@GLIBC_2.2.5>
+   4fd51:	mov    %r14,%rdi
+   4fd54:	call   a9d20 <_Unwind_Resume@plt>
+   4fd59:	mov    %rax,%r14
+   4fd5c:	cmpq   $0x0,0x8(%r13)
+   4fd61:	je     4fd6c <gf2_core::field::vec::FieldVec<F>::axpy+0xa0c>
+   4fd63:	mov    %r15,%rdi
+   4fd66:	call   *0x5f1dc(%rip)        # aef48 <free@GLIBC_2.2.5>
+   4fd6c:	mov    0x8(%rsp),%r15
+   4fd71:	mov    0x10(%rsp),%r13d
+   4fd76:	jmp    4fdae <gf2_core::field::vec::FieldVec<F>::axpy+0xa4e>
+   4fd78:	mov    %rax,%r14
+   4fd7b:	mov    0x8(%rsp),%r15
+   4fd80:	jmp    4fdae <gf2_core::field::vec::FieldVec<F>::axpy+0xa4e>
+   4fd82:	mov    %rax,%r14
+   4fd85:	mov    0x18(%rsp),%rdi
+   4fd8a:	call   *0x5f1b8(%rip)        # aef48 <free@GLIBC_2.2.5>
+   4fd90:	jmp    4fd95 <gf2_core::field::vec::FieldVec<F>::axpy+0xa35>
+   4fd92:	mov    %rax,%r14
+   4fd95:	mov    0x8(%rsp),%r15
+   4fd9a:	mov    %r15,%rdi
+   4fd9d:	call   *0x5f1a5(%rip)        # aef48 <free@GLIBC_2.2.5>
+   4fda3:	mov    %r14,%rdi
+   4fda6:	call   a9d20 <_Unwind_Resume@plt>
+   4fdab:	mov    %rax,%r14
+   4fdae:	movzbl %r13b,%edi
+   4fdb2:	call   4a400 <core::ptr::drop_in_place<std::sync::poison::mutex::MutexGuard<std::collections::hash::map::HashMap<(core::any::TypeId,usize),alloc::boxed::Box<dyn core::any::Any+core::marker::Sync+core::marker::Send>>>>>
+   4fdb7:	mov    %r15,%rdi
+   4fdba:	call   *0x5f188(%rip)        # aef48 <free@GLIBC_2.2.5>
+   4fdc0:	mov    %r14,%rdi
+   4fdc3:	call   a9d20 <_Unwind_Resume@plt>
+   4fdc8:	mov    %rax,%r14
+   4fdcb:	lea    0x20(%rsp),%rdi
+   4fdd0:	call   4a470 <core::ptr::drop_in_place<std::sync::poison::PoisonError<std::sync::poison::mutex::MutexGuard<std::collections::hash::map::HashMap<(core::any::TypeId,usize),alloc::boxed::Box<dyn core::any::Any+core::marker::Sync+core::marker::Send>>>>>>
+   4fdd5:	mov    %r15,%rdi
+   4fdd8:	call   *0x5f16a(%rip)        # aef48 <free@GLIBC_2.2.5>
+   4fdde:	mov    %r14,%rdi
+   4fde1:	call   a9d20 <_Unwind_Resume@plt>
+
+## symbol at 000000000004fdf0, 0x00000000000001e1 bytes
+000000000004fdf0 <gf2_core::field::vec::FieldVec<F>::axpy>:
+   4fdf0:	push   %rbp
+   4fdf1:	push   %r15
+   4fdf3:	push   %r14
+   4fdf5:	push   %r13
+   4fdf7:	push   %r12
+   4fdf9:	push   %rbx
+   4fdfa:	sub    $0x68,%rsp
+   4fdfe:	mov    %r8,0x48(%rsp)
+   4fe03:	mov    %rcx,0x40(%rsp)
+   4fe08:	mov    %rsi,%r15
+   4fe0b:	mov    %rsi,0x50(%rsp)
+   4fe10:	mov    %r9,0x58(%rsp)
+   4fe15:	cmp    %r9,%rsi
+   4fe18:	jne    4ff1f <gf2_core::field::vec::FieldVec<F>::axpy+0x12f>
+   4fe1e:	test   %r15,%r15
+   4fe21:	je     4fef5 <gf2_core::field::vec::FieldVec<F>::axpy+0x105>
+   4fe27:	mov    %rdi,%r12
+   4fe2a:	mov    $0x8,%r13d
+   4fe30:	mov    %rdx,0x38(%rsp)
+   4fe35:	jmp    4fe52 <gf2_core::field::vec::FieldVec<F>::axpy+0x62>
+   4fe37:	nopw   0x0(%rax,%rax,1)
+   4fe40:	add    $0x10,%r13
+   4fe44:	dec    %r15
+   4fe47:	mov    0x38(%rsp),%rdx
+   4fe4c:	je     4fef5 <gf2_core::field::vec::FieldVec<F>::axpy+0x105>
+   4fe52:	lock incq (%rdx)
+   4fe56:	jle    4ff1d <gf2_core::field::vec::FieldVec<F>::axpy+0x12d>
+   4fe5c:	mov    0x48(%rsp),%rax
+   4fe61:	mov    -0x8(%rax,%r13,1),%r14
+   4fe66:	mov    (%rax,%r13,1),%rcx
+   4fe6a:	lock incq (%r14)
+   4fe6e:	jle    4ff1d <gf2_core::field::vec::FieldVec<F>::axpy+0x12d>
+   4fe74:	mov    %rdx,0x8(%rsp)
+   4fe79:	mov    0x40(%rsp),%rsi
+   4fe7e:	mov    %rsi,0x10(%rsp)
+   4fe83:	mov    %r14,0x18(%rsp)
+   4fe88:	mov    %rcx,0x20(%rsp)
+   4fe8d:	mov    %rdx,%rdi
+   4fe90:	mov    %r14,%rdx
+   4fe93:	call   51c10 <<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul>
+   4fe98:	mov    %rax,%rbp
+   4fe9b:	mov    %rdx,%rbx
+   4fe9e:	lock decq (%r14)
+   4fea2:	jne    4feaf <gf2_core::field::vec::FieldVec<F>::axpy+0xbf>
+   4fea4:	lea    0x18(%rsp),%rdi
+   4fea9:	call   *0x5f2b9(%rip)        # af168 <_DYNAMIC+0x418>
+   4feaf:	mov    0x8(%rsp),%rax
+   4feb4:	lock decq (%rax)
+   4feb8:	jne    4fec5 <gf2_core::field::vec::FieldVec<F>::axpy+0xd5>
+   4feba:	lea    0x8(%rsp),%rdi
+   4febf:	call   *0x5f2a3(%rip)        # af168 <_DYNAMIC+0x418>
+   4fec5:	mov    %rbp,0x18(%rsp)
+   4feca:	mov    %rbx,0x20(%rsp)
+   4fecf:	cmp    %rbp,-0x8(%r12,%r13,1)
+   4fed4:	jne    4ff04 <gf2_core::field::vec::FieldVec<F>::axpy+0x114>
+   4fed6:	xor    %rbx,(%r12,%r13,1)
+   4feda:	lock decq 0x0(%rbp)
+   4fedf:	jne    4fe40 <gf2_core::field::vec::FieldVec<F>::axpy+0x50>
+   4fee5:	lea    0x18(%rsp),%rdi
+   4feea:	call   *0x5f278(%rip)        # af168 <_DYNAMIC+0x418>
+   4fef0:	jmp    4fe40 <gf2_core::field::vec::FieldVec<F>::axpy+0x50>
+   4fef5:	add    $0x68,%rsp
+   4fef9:	pop    %rbx
+   4fefa:	pop    %r12
+   4fefc:	pop    %r13
+   4fefe:	pop    %r14
+   4ff00:	pop    %r15
+   4ff02:	pop    %rbp
+   4ff03:	ret
+   4ff04:	lea    -0x44548(%rip),%rdi        # b9c3 <anon.3d0f10f65a63ea4f41181cc486c36934.85.llvm.6495976655084607520+0x963>
+   4ff0b:	lea    0x5c12e(%rip),%rdx        # ac040 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x1130>
+   4ff12:	mov    $0x53,%esi
+   4ff17:	call   *0x5f0cb(%rip)        # aefe8 <_DYNAMIC+0x298>
+   4ff1d:	ud2
+   4ff1f:	mov    %r15,0x60(%rsp)
+   4ff24:	mov    %r9,0x8(%rsp)
+   4ff29:	lea    0x60(%rsp),%rax
+   4ff2e:	mov    %rax,0x18(%rsp)
+   4ff33:	mov    0x5f19e(%rip),%rax        # af0d8 <_DYNAMIC+0x388>
+   4ff3a:	mov    %rax,0x20(%rsp)
+   4ff3f:	lea    0x8(%rsp),%rcx
+   4ff44:	mov    %rcx,0x28(%rsp)
+   4ff49:	mov    %rax,0x30(%rsp)
+   4ff4e:	lea    -0x47486(%rip),%rcx        # 8acf <anon.fc0f47fa9653821f57d5a55292b6eb36.1.llvm.11340752617015147710+0xc3>
+   4ff55:	lea    0x5bf4c(%rip),%r9        # abea8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xf98>
+   4ff5c:	lea    0x50(%rsp),%rsi
+   4ff61:	lea    0x58(%rsp),%rdx
+   4ff66:	lea    0x18(%rsp),%r8
+   4ff6b:	xor    %edi,%edi
+   4ff6d:	call   *0x5f125(%rip)        # af098 <_DYNAMIC+0x348>
+   4ff73:	mov    %rax,%rbx
+   4ff76:	jmp    4ff8c <gf2_core::field::vec::FieldVec<F>::axpy+0x19c>
+   4ff78:	mov    %rax,%rbx
+   4ff7b:	lock decq (%r14)
+   4ff7f:	jne    4ff8c <gf2_core::field::vec::FieldVec<F>::axpy+0x19c>
+   4ff81:	lea    0x18(%rsp),%rdi
+   4ff86:	call   *0x5f1dc(%rip)        # af168 <_DYNAMIC+0x418>
+   4ff8c:	mov    0x8(%rsp),%rax
+   4ff91:	lock decq (%rax)
+   4ff95:	jne    4ffc3 <gf2_core::field::vec::FieldVec<F>::axpy+0x1d3>
+   4ff97:	lea    0x8(%rsp),%rdi
+   4ff9c:	call   *0x5f1c6(%rip)        # af168 <_DYNAMIC+0x418>
+   4ffa2:	jmp    4ffc3 <gf2_core::field::vec::FieldVec<F>::axpy+0x1d3>
+   4ffa4:	call   *0x5f08e(%rip)        # af038 <_DYNAMIC+0x2e8>
+   4ffaa:	mov    %rax,%rbx
+   4ffad:	mov    0x18(%rsp),%rax
+   4ffb2:	lock decq (%rax)
+   4ffb6:	jne    4ffc3 <gf2_core::field::vec::FieldVec<F>::axpy+0x1d3>
+   4ffb8:	lea    0x18(%rsp),%rdi
+   4ffbd:	call   *0x5f1a5(%rip)        # af168 <_DYNAMIC+0x418>
+   4ffc3:	mov    %rbx,%rdi
+   4ffc6:	call   a9d20 <_Unwind_Resume@plt>
+   4ffcb:	call   *0x5f067(%rip)        # af038 <_DYNAMIC+0x2e8>

@@ -1,0 +1,363 @@
+# label: current-batch-kernel
+# pattern: gf2m_batch_mul_ymm_unroll4
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# text symbols matching this pattern: 2
+
+## symbol at 0000000000041330, 0x0000000000000005 bytes
+0000000000041330 <gf2_kernels_simd::gf2m_batch::gf2m_batch_mul_ymm_unroll4_safe>:
+   41330:	jmp    41440 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4>
+
+## symbol at 0000000000041440, 0x000000000000067a bytes
+0000000000041440 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4>:
+   41440:	push   %r15
+   41442:	push   %r14
+   41444:	push   %r13
+   41446:	push   %r12
+   41448:	push   %rbx
+   41449:	sub    $0x20,%rsp
+   4144d:	mov    %rsi,(%rsp)
+   41451:	mov    %rcx,0x8(%rsp)
+   41456:	cmp    %rcx,%rsi
+   41459:	jne    4198c <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x54c>
+   4145f:	mov    %rsi,0x10(%rsp)
+   41464:	mov    %r9,0x18(%rsp)
+   41469:	cmp    %r9,%rsi
+   4146c:	jne    419b0 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x570>
+   41472:	mov    0x60(%rsp),%ecx
+   41476:	mov    0x58(%rsp),%r10
+   4147b:	mov    $0xffffffffffffffff,%rax
+   41482:	mov    $0xffffffffffffffff,%r11
+   41489:	shl    %cl,%r11
+   4148c:	cmp    $0x40,%ecx
+   4148f:	not    %r11
+   41492:	cmove  %rax,%r11
+   41496:	vmovq  0x50(%rsp),%xmm0
+   4149c:	vinserti128 $0x1,%xmm0,%ymm0,%ymm2
+   414a2:	vmovq  %r10,%xmm1
+   414a7:	vinserti128 $0x1,%xmm1,%ymm1,%ymm3
+   414ad:	cmp    $0x8,%ecx
+   414b0:	je     41729 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x2e9>
+   414b6:	cmp    $0x10,%ecx
+   414b9:	je     415fc <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x1bc>
+   414bf:	cmp    $0x20,%ecx
+   414c2:	jne    41733 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x2f3>
+   414c8:	cmp    $0x4,%rsi
+   414cc:	jb     41733 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x2f3>
+   414d2:	vpbroadcastq %xmm1,%ymm4
+   414d7:	vmovq  %r11,%xmm5
+   414dc:	vpbroadcastq %xmm5,%ymm5
+   414e1:	xor    %eax,%eax
+   414e3:	vpbroadcastq -0x3862c(%rip),%ymm6        # 8ec0 <anon.8cfae0649b24339a7c6ff37f2bd6b634.746.llvm.13263554319387139704+0x8>
+   414ec:	vpbroadcastq -0x38655(%rip),%ymm7        # 8ea0 <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x2e0>
+   414f5:	data16 cs nopw 0x0(%rax,%rax,1)
+   41500:	cmp    %rsi,%rax
+   41503:	jae    41aa7 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x667>
+   41509:	lea    0x1(%rax),%r9
+   4150d:	cmp    %rsi,%r9
+   41510:	jae    41a6e <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x62e>
+   41516:	lea    0x2(%rax),%r9
+   4151a:	cmp    %rsi,%r9
+   4151d:	jae    41a35 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x5f5>
+   41523:	lea    0x3(%rax),%r9
+   41527:	cmp    %rsi,%r9
+   4152a:	jae    419fc <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x5bc>
+   41530:	vmovdqu 0x10(%rdi,%rax,8),%xmm8
+   41536:	vpermq $0xd4,%ymm8,%ymm8
+   4153c:	vmovdqu (%rdx,%rax,8),%xmm9
+   41541:	vmovdqu 0x10(%rdx,%rax,8),%xmm10
+   41547:	vpermq $0xd4,%ymm10,%ymm10
+   4154d:	vpclmullqlqdq %ymm10,%ymm8,%ymm8
+   41553:	vpshufd $0xe9,%ymm8,%ymm10
+   41559:	vpclmullqlqdq %ymm2,%ymm10,%ymm10
+   4155f:	vpshufd $0xe9,%ymm10,%ymm10
+   41565:	vpclmullqlqdq %ymm3,%ymm10,%ymm10
+   4156b:	vpxor  %ymm8,%ymm10,%ymm8
+   41570:	vmovq  (%rdi,%rax,8),%xmm10
+   41575:	vmovq  0x8(%rdi,%rax,8),%xmm11
+   4157b:	vinserti128 $0x1,%xmm11,%ymm10,%ymm10
+   41581:	vpermq $0xd4,%ymm9,%ymm9
+   41587:	vpclmullqlqdq %ymm9,%ymm10,%ymm9
+   4158d:	vpshufd $0xe9,%ymm9,%ymm10
+   41593:	vpclmullqlqdq %ymm2,%ymm10,%ymm10
+   41599:	vpshufd $0xe9,%ymm10,%ymm10
+   4159f:	vpclmullqlqdq %ymm3,%ymm10,%ymm10
+   415a5:	vpxor  %ymm9,%ymm10,%ymm9
+   415aa:	vpunpcklqdq %ymm8,%ymm9,%ymm8
+   415af:	vpermq $0xd8,%ymm8,%ymm8
+   415b5:	vpxor  %ymm6,%ymm8,%ymm9
+   415b9:	vpcmpgtq %ymm9,%ymm7,%ymm9
+   415be:	vpandn %ymm4,%ymm9,%ymm9
+   415c2:	vpxor  %ymm8,%ymm9,%ymm8
+   415c7:	vpxor  %ymm6,%ymm8,%ymm9
+   415cb:	vpcmpgtq %ymm9,%ymm7,%ymm9
+   415d0:	vpandn %ymm4,%ymm9,%ymm9
+   415d4:	vpxor  %ymm8,%ymm9,%ymm8
+   415d9:	vpand  %ymm5,%ymm8,%ymm8
+   415dd:	vmovdqu %ymm8,(%r8,%rax,8)
+   415e3:	lea    0x4(%rax),%r9
+   415e7:	add    $0x8,%rax
+   415eb:	cmp    %rsi,%rax
+   415ee:	mov    %r9,%rax
+   415f1:	jbe    41500 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0xc0>
+   415f7:	jmp    41736 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x2f6>
+   415fc:	cmp    $0x4,%rsi
+   41600:	jb     41733 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x2f3>
+   41606:	vpbroadcastq %xmm1,%ymm4
+   4160b:	vmovq  %r11,%xmm5
+   41610:	vpbroadcastq %xmm5,%ymm5
+   41615:	xor    %eax,%eax
+   41617:	vpbroadcastq -0x38760(%rip),%ymm6        # 8ec0 <anon.8cfae0649b24339a7c6ff37f2bd6b634.746.llvm.13263554319387139704+0x8>
+   41620:	vpbroadcastq -0x38729(%rip),%ymm7        # 8f00 <anon.8cfae0649b24339a7c6ff37f2bd6b634.746.llvm.13263554319387139704+0x48>
+   41629:	nopl   0x0(%rax)
+   41630:	cmp    %rsi,%rax
+   41633:	jae    41a81 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x641>
+   41639:	lea    0x1(%rax),%r9
+   4163d:	cmp    %rsi,%r9
+   41640:	jae    41a48 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x608>
+   41646:	lea    0x2(%rax),%r9
+   4164a:	cmp    %rsi,%r9
+   4164d:	jae    41a0f <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x5cf>
+   41653:	lea    0x3(%rax),%r9
+   41657:	cmp    %rsi,%r9
+   4165a:	jae    419d6 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x596>
+   41660:	vmovdqu 0x10(%rdi,%rax,8),%xmm8
+   41666:	vpermq $0xd4,%ymm8,%ymm8
+   4166c:	vmovdqu (%rdx,%rax,8),%xmm9
+   41671:	vmovdqu 0x10(%rdx,%rax,8),%xmm10
+   41677:	vpermq $0xd4,%ymm10,%ymm10
+   4167d:	vpclmullqlqdq %ymm10,%ymm8,%ymm8
+   41683:	vpsrldq $0x2,%ymm8,%ymm10
+   41689:	vpclmullqlqdq %ymm2,%ymm10,%ymm10
+   4168f:	vpsrldq $0x2,%ymm10,%ymm10
+   41695:	vpclmullqlqdq %ymm3,%ymm10,%ymm10
+   4169b:	vpxor  %ymm8,%ymm10,%ymm8
+   416a0:	vmovq  (%rdi,%rax,8),%xmm10
+   416a5:	vmovq  0x8(%rdi,%rax,8),%xmm11
+   416ab:	vinserti128 $0x1,%xmm11,%ymm10,%ymm10
+   416b1:	vpermq $0xd4,%ymm9,%ymm9
+   416b7:	vpclmullqlqdq %ymm9,%ymm10,%ymm9
+   416bd:	vpsrldq $0x2,%ymm9,%ymm10
+   416c3:	vpclmullqlqdq %ymm2,%ymm10,%ymm10
+   416c9:	vpsrldq $0x2,%ymm10,%ymm10
+   416cf:	vpclmullqlqdq %ymm3,%ymm10,%ymm10
+   416d5:	vpxor  %ymm9,%ymm10,%ymm9
+   416da:	vpunpcklqdq %ymm8,%ymm9,%ymm8
+   416df:	vpermq $0xd8,%ymm8,%ymm8
+   416e5:	vpxor  %ymm6,%ymm8,%ymm9
+   416e9:	vpcmpgtq %ymm9,%ymm7,%ymm9
+   416ee:	vpandn %ymm4,%ymm9,%ymm9
+   416f2:	vpxor  %ymm8,%ymm9,%ymm8
+   416f7:	vpxor  %ymm6,%ymm8,%ymm9
+   416fb:	vpcmpgtq %ymm9,%ymm7,%ymm9
+   41700:	vpandn %ymm4,%ymm9,%ymm9
+   41704:	vpxor  %ymm8,%ymm9,%ymm8
+   41709:	vpand  %ymm5,%ymm8,%ymm8
+   4170d:	vmovdqu %ymm8,(%r8,%rax,8)
+   41713:	lea    0x4(%rax),%r9
+   41717:	add    $0x8,%rax
+   4171b:	cmp    %rsi,%rax
+   4171e:	mov    %r9,%rax
+   41721:	jbe    41630 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x1f0>
+   41727:	jmp    41736 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x2f6>
+   41729:	cmp    $0x4,%rsi
+   4172d:	jae    41868 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x428>
+   41733:	xor    %r9d,%r9d
+   41736:	cmp    %rsi,%r9
+   41739:	jae    41857 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x417>
+   4173f:	and    $0x7f,%ecx
+   41742:	jmp    41766 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x326>
+   41744:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   41750:	xor    %r12,%rax
+   41753:	and    %r11,%rax
+   41756:	mov    %rax,(%r8,%r9,8)
+   4175a:	inc    %r9
+   4175d:	cmp    %r9,%rsi
+   41760:	je     41857 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x417>
+   41766:	mov    (%rdi,%r9,8),%rbx
+   4176a:	test   %rbx,%rbx
+   4176d:	je     41850 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x410>
+   41773:	mov    (%rdx,%r9,8),%r14
+   41777:	mov    $0x0,%eax
+   4177c:	test   %r14,%r14
+   4177f:	je     41756 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x316>
+   41781:	vmovq  %rbx,%xmm2
+   41786:	vmovq  %r14,%xmm3
+   4178b:	vpclmullqlqdq %xmm3,%xmm2,%xmm2
+   41791:	vmovq  %xmm2,%rax
+   41796:	vpextrq $0x1,%xmm2,%r14
+   4179c:	mov    %rax,%rbx
+   4179f:	shrd   %cl,%r14,%rbx
+   417a3:	shr    %cl,%r14
+   417a6:	test   $0x40,%cl
+   417a9:	cmovne %r14,%rbx
+   417ad:	mov    $0x0,%r15d
+   417b3:	cmove  %r14,%r15
+   417b7:	or     %rbx,%r15
+   417ba:	je     41756 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x316>
+   417bc:	vmovq  %rbx,%xmm3
+   417c1:	vpclmullqlqdq %xmm0,%xmm3,%xmm3
+   417c7:	vpextrq $0x1,%xmm3,%rax
+   417cd:	vmovq  %xmm3,%rbx
+   417d2:	shrd   %cl,%rax,%rbx
+   417d6:	shr    %cl,%rax
+   417d9:	test   $0x40,%cl
+   417dc:	cmove  %rbx,%rax
+   417e0:	vmovq  %rax,%xmm3
+   417e5:	vpclmullqlqdq %xmm1,%xmm3,%xmm3
+   417eb:	vpxor  %xmm2,%xmm3,%xmm2
+   417ef:	vpextrq $0x1,%xmm2,%r14
+   417f5:	mov    %r14,%rbx
+   417f8:	shr    %cl,%rbx
+   417fb:	test   $0x40,%cl
+   417fe:	vmovq  %xmm2,%r13
+   41803:	mov    $0x0,%eax
+   41808:	mov    %rbx,%r15
+   4180b:	cmovne %rax,%r15
+   4180f:	mov    %r13,%r12
+   41812:	shrd   %cl,%r14,%r12
+   41816:	test   $0x40,%cl
+   41819:	cmovne %rbx,%r12
+   4181d:	or     %r15,%r12
+   41820:	mov    $0x0,%r12d
+   41826:	je     4182b <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x3eb>
+   41828:	mov    %r10,%r12
+   4182b:	xor    %r13,%r12
+   4182e:	mov    %r12,%r13
+   41831:	shrd   %cl,%r14,%r13
+   41835:	test   $0x40,%cl
+   41838:	cmovne %rbx,%r13
+   4183c:	or     %r15,%r13
+   4183f:	je     41750 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x310>
+   41845:	mov    %r10,%rax
+   41848:	jmp    41750 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x310>
+   4184d:	nopl   (%rax)
+   41850:	xor    %eax,%eax
+   41852:	jmp    41756 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x316>
+   41857:	add    $0x20,%rsp
+   4185b:	pop    %rbx
+   4185c:	pop    %r12
+   4185e:	pop    %r13
+   41860:	pop    %r14
+   41862:	pop    %r15
+   41864:	vzeroupper
+   41867:	ret
+   41868:	vpbroadcastq %xmm1,%ymm4
+   4186d:	vmovq  %r11,%xmm5
+   41872:	vpbroadcastq %xmm5,%ymm5
+   41877:	xor    %eax,%eax
+   41879:	vpbroadcastq -0x389c2(%rip),%ymm6        # 8ec0 <anon.8cfae0649b24339a7c6ff37f2bd6b634.746.llvm.13263554319387139704+0x8>
+   41882:	vpbroadcastq -0x389fb(%rip),%ymm7        # 8e90 <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x2d0>
+   4188b:	nopl   0x0(%rax,%rax,1)
+   41890:	cmp    %rsi,%rax
+   41893:	jae    41a94 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x654>
+   41899:	lea    0x1(%rax),%r9
+   4189d:	cmp    %rsi,%r9
+   418a0:	jae    41a5b <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x61b>
+   418a6:	lea    0x2(%rax),%r9
+   418aa:	cmp    %rsi,%r9
+   418ad:	jae    41a22 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x5e2>
+   418b3:	lea    0x3(%rax),%r9
+   418b7:	cmp    %rsi,%r9
+   418ba:	jae    419e9 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x5a9>
+   418c0:	vmovdqu 0x10(%rdi,%rax,8),%xmm8
+   418c6:	vpermq $0xd4,%ymm8,%ymm8
+   418cc:	vmovdqu (%rdx,%rax,8),%xmm9
+   418d1:	vmovdqu 0x10(%rdx,%rax,8),%xmm10
+   418d7:	vpermq $0xd4,%ymm10,%ymm10
+   418dd:	vpclmullqlqdq %ymm10,%ymm8,%ymm8
+   418e3:	vpsrldq $0x1,%ymm8,%ymm10
+   418e9:	vpclmullqlqdq %ymm2,%ymm10,%ymm10
+   418ef:	vpsrldq $0x1,%ymm10,%ymm10
+   418f5:	vpclmullqlqdq %ymm3,%ymm10,%ymm10
+   418fb:	vpxor  %ymm8,%ymm10,%ymm8
+   41900:	vmovq  (%rdi,%rax,8),%xmm10
+   41905:	vmovq  0x8(%rdi,%rax,8),%xmm11
+   4190b:	vinserti128 $0x1,%xmm11,%ymm10,%ymm10
+   41911:	vpermq $0xd4,%ymm9,%ymm9
+   41917:	vpclmullqlqdq %ymm9,%ymm10,%ymm9
+   4191d:	vpsrldq $0x1,%ymm9,%ymm10
+   41923:	vpclmullqlqdq %ymm2,%ymm10,%ymm10
+   41929:	vpsrldq $0x1,%ymm10,%ymm10
+   4192f:	vpclmullqlqdq %ymm3,%ymm10,%ymm10
+   41935:	vpxor  %ymm9,%ymm10,%ymm9
+   4193a:	vpunpcklqdq %ymm8,%ymm9,%ymm8
+   4193f:	vpermq $0xd8,%ymm8,%ymm8
+   41945:	vpxor  %ymm6,%ymm8,%ymm9
+   41949:	vpcmpgtq %ymm9,%ymm7,%ymm9
+   4194e:	vpandn %ymm4,%ymm9,%ymm9
+   41952:	vpxor  %ymm8,%ymm9,%ymm8
+   41957:	vpxor  %ymm6,%ymm8,%ymm9
+   4195b:	vpcmpgtq %ymm9,%ymm7,%ymm9
+   41960:	vpandn %ymm4,%ymm9,%ymm9
+   41964:	vpxor  %ymm8,%ymm9,%ymm8
+   41969:	vpand  %ymm5,%ymm8,%ymm8
+   4196d:	vmovdqu %ymm8,(%r8,%rax,8)
+   41973:	lea    0x4(%rax),%r9
+   41977:	add    $0x8,%rax
+   4197b:	cmp    %rsi,%rax
+   4197e:	mov    %r9,%rax
+   41981:	jbe    41890 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x450>
+   41987:	jmp    41736 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4+0x2f6>
+   4198c:	lea    -0x37918(%rip),%rcx        # a07b <anon.832d43b041bffb08ba08230dab9b3290.33.llvm.3008366084447048847+0x1b>
+   41993:	lea    0x41bd6(%rip),%r9        # 83570 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x18>
+   4199a:	mov    %rsp,%rsi
+   4199d:	lea    0x8(%rsp),%rdx
+   419a2:	mov    $0x47,%r8d
+   419a8:	xor    %edi,%edi
+   419aa:	call   *0x43e40(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   419b0:	lea    -0x37919(%rip),%rcx        # a09e <anon.832d43b041bffb08ba08230dab9b3290.33.llvm.3008366084447048847+0x3e>
+   419b7:	lea    0x41bca(%rip),%r9        # 83588 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x30>
+   419be:	lea    0x10(%rsp),%rsi
+   419c3:	lea    0x18(%rsp),%rdx
+   419c8:	mov    $0x55,%r8d
+   419ce:	xor    %edi,%edi
+   419d0:	call   *0x43e1a(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   419d6:	lea    0x41c6b(%rip),%rdx        # 83648 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0xf0>
+   419dd:	mov    %r9,%rdi
+   419e0:	vzeroupper
+   419e3:	call   *0x43d27(%rip)        # 85710 <_DYNAMIC+0x208>
+   419e9:	lea    0x41bf8(%rip),%rdx        # 835e8 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x90>
+   419f0:	mov    %r9,%rdi
+   419f3:	vzeroupper
+   419f6:	call   *0x43d14(%rip)        # 85710 <_DYNAMIC+0x208>
+   419fc:	lea    0x41ca5(%rip),%rdx        # 836a8 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x150>
+   41a03:	mov    %r9,%rdi
+   41a06:	vzeroupper
+   41a09:	call   *0x43d01(%rip)        # 85710 <_DYNAMIC+0x208>
+   41a0f:	lea    0x41c1a(%rip),%rdx        # 83630 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0xd8>
+   41a16:	mov    %r9,%rdi
+   41a19:	vzeroupper
+   41a1c:	call   *0x43cee(%rip)        # 85710 <_DYNAMIC+0x208>
+   41a22:	lea    0x41ba7(%rip),%rdx        # 835d0 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x78>
+   41a29:	mov    %r9,%rdi
+   41a2c:	vzeroupper
+   41a2f:	call   *0x43cdb(%rip)        # 85710 <_DYNAMIC+0x208>
+   41a35:	lea    0x41c54(%rip),%rdx        # 83690 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x138>
+   41a3c:	mov    %r9,%rdi
+   41a3f:	vzeroupper
+   41a42:	call   *0x43cc8(%rip)        # 85710 <_DYNAMIC+0x208>
+   41a48:	lea    0x41bc9(%rip),%rdx        # 83618 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0xc0>
+   41a4f:	mov    %r9,%rdi
+   41a52:	vzeroupper
+   41a55:	call   *0x43cb5(%rip)        # 85710 <_DYNAMIC+0x208>
+   41a5b:	lea    0x41b56(%rip),%rdx        # 835b8 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x60>
+   41a62:	mov    %r9,%rdi
+   41a65:	vzeroupper
+   41a68:	call   *0x43ca2(%rip)        # 85710 <_DYNAMIC+0x208>
+   41a6e:	lea    0x41c03(%rip),%rdx        # 83678 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x120>
+   41a75:	mov    %r9,%rdi
+   41a78:	vzeroupper
+   41a7b:	call   *0x43c8f(%rip)        # 85710 <_DYNAMIC+0x208>
+   41a81:	lea    0x41b78(%rip),%rdx        # 83600 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0xa8>
+   41a88:	mov    %rax,%rdi
+   41a8b:	vzeroupper
+   41a8e:	call   *0x43c7c(%rip)        # 85710 <_DYNAMIC+0x208>
+   41a94:	lea    0x41b05(%rip),%rdx        # 835a0 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x48>
+   41a9b:	mov    %rax,%rdi
+   41a9e:	vzeroupper
+   41aa1:	call   *0x43c69(%rip)        # 85710 <_DYNAMIC+0x208>
+   41aa7:	lea    0x41bb2(%rip),%rdx        # 83660 <anon.3dbaf6b573e43554b9e68f7a69135b62.457.llvm.2861360306945365398+0x108>
+   41aae:	mov    %rax,%rdi
+   41ab1:	vzeroupper
+   41ab4:	call   *0x43c56(%rip)        # 85710 <_DYNAMIC+0x208>

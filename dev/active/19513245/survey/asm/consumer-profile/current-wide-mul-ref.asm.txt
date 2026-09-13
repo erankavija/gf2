@@ -1,0 +1,608 @@
+# label: current-wide-mul-ref
+# pattern: gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# text symbols matching this pattern: 1
+
+## symbol at 00000000000378d0, 0x0000000000000954 bytes
+00000000000378d0 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref>:
+   378d0:	push   %rbp
+   378d1:	push   %r15
+   378d3:	push   %r14
+   378d5:	push   %r13
+   378d7:	push   %r12
+   378d9:	push   %rbx
+   378da:	sub    $0x28,%rsp
+   378de:	mov    %rsi,%r15
+   378e1:	lock incq 0x50187(%rip)        # 87a70 <consumer_profile::ALLOCATIONS>
+   378e9:	mov    %rdi,%r14
+   378ec:	lock addq $0x10,0x50183(%rip)        # 87a78 <consumer_profile::ALLOCATED_BYTES>
+   378f5:	mov    $0x1,%edi
+   378fa:	mov    $0x10,%esi
+   378ff:	call   *0x4df1b(%rip)        # 85820 <calloc@GLIBC_2.2.5>
+   37905:	test   %rax,%rax
+   37908:	je     38167 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x897>
+   3790e:	test   %r15,%r15
+   37911:	je     37950 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x80>
+   37913:	xor    %esi,%esi
+   37915:	xor    %edx,%edx
+   37917:	xor    %r10d,%r10d
+   3791a:	nopw   0x0(%rax,%rax,1)
+   37920:	mov    %r15,%rdi
+   37923:	tzcnt  %r15,%rcx
+   37928:	xor    %r8d,%r8d
+   3792b:	shld   %cl,%r14,%r8
+   3792f:	mov    %r14,%r9
+   37932:	shl    %cl,%r9
+   37935:	test   $0x40,%cl
+   37938:	cmovne %r9,%r8
+   3793c:	cmovne %rsi,%r9
+   37940:	xor    %r8,%r10
+   37943:	xor    %r9,%rdx
+   37946:	dec    %r15
+   37949:	and    %rdi,%r15
+   3794c:	jne    37920 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x50>
+   3794e:	jmp    37955 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x85>
+   37950:	xor    %r10d,%r10d
+   37953:	xor    %edx,%edx
+   37955:	mov    %r10,0x8(%rax)
+   37959:	mov    %rax,(%rsp)
+   3795d:	mov    %rdx,(%rax)
+   37960:	mov    0x4df81(%rip),%r13        # 858e8 <_DYNAMIC+0x3e0>
+   37967:	mov    0x38(%r13),%eax
+   3796b:	test   %eax,%eax
+   3796d:	jne    3804a <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x77a>
+   37973:	mov    $0x1,%ecx
+   37978:	xor    %eax,%eax
+   3797a:	lock cmpxchg %ecx,0x0(%r13)
+   37980:	jne    38054 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x784>
+   37986:	mov    0x4df63(%rip),%rbp        # 858f0 <_DYNAMIC+0x3e8>
+   3798d:	mov    0x0(%rbp),%rax
+   37991:	shl    $1,%rax
+   37994:	test   %rax,%rax
+   37997:	jne    38066 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x796>
+   3799d:	xor    %r12d,%r12d
+   379a0:	movzbl 0x4(%r13),%eax
+   379a5:	test   %al,%al
+   379a7:	jne    38080 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x7b0>
+   379ad:	movabs $0x7fffffffffffffff,%rbx
+   379b7:	movabs $0xaabd9c4e23ec51f3,%r14
+   379c1:	cmpq   $0x0,0x20(%r13)
+   379c6:	movabs $0x35fc58b8340a29fa,%r15
+   379d0:	je     37a89 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x1b9>
+   379d6:	mov    0x28(%r13),%rdi
+   379da:	mov    0x30(%r13),%rsi
+   379de:	mov    $0x1,%ecx
+   379e3:	mov    %r14,%rdx
+   379e6:	call   37060 <core::hash::BuildHasher::hash_one>
+   379eb:	mov    %rax,%rsi
+   379ee:	shr    $0x39,%rsi
+   379f2:	mov    0x8(%r13),%rcx
+   379f6:	mov    0x10(%r13),%rdx
+   379fa:	movd   %esi,%xmm0
+   379fe:	punpcklbw %xmm0,%xmm0
+   37a02:	pshuflw $0x0,%xmm0,%xmm0
+   37a07:	pshufd $0x44,%xmm0,%xmm0
+   37a0c:	xor    %esi,%esi
+   37a0e:	pcmpeqd %xmm1,%xmm1
+   37a12:	and    %rdx,%rax
+   37a15:	movdqu (%rcx,%rax,1),%xmm2
+   37a1a:	movdqa %xmm2,%xmm3
+   37a1e:	pcmpeqb %xmm0,%xmm3
+   37a22:	pmovmskb %xmm3,%edi
+   37a26:	test   %edi,%edi
+   37a28:	je     37a70 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x1a0>
+   37a2a:	tzcnt  %edi,%r8d
+   37a2f:	add    %rax,%r8
+   37a32:	and    %rdx,%r8
+   37a35:	neg    %r8
+   37a38:	lea    (%r8,%r8,4),%r8
+   37a3c:	mov    -0x20(%rcx,%r8,8),%r9
+   37a41:	xor    %r14,%r9
+   37a44:	mov    -0x28(%rcx,%r8,8),%r10
+   37a49:	xor    %r15,%r10
+   37a4c:	or     %r9,%r10
+   37a4f:	jne    37a5d <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x18d>
+   37a51:	cmpq   $0x1,-0x18(%rcx,%r8,8)
+   37a57:	je     37c55 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x385>
+   37a5d:	lea    -0x1(%rdi),%r8d
+   37a61:	and    %di,%r8w
+   37a65:	mov    %r8d,%edi
+   37a68:	jne    37a2a <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x15a>
+   37a6a:	nopw   0x0(%rax,%rax,1)
+   37a70:	pcmpeqb %xmm1,%xmm2
+   37a74:	pmovmskb %xmm2,%edi
+   37a78:	test   %edi,%edi
+   37a7a:	jne    37a89 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x1b9>
+   37a7c:	add    %rsi,%rax
+   37a7f:	add    $0x10,%rax
+   37a83:	add    $0x10,%rsi
+   37a87:	jmp    37a12 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x142>
+   37a89:	lock incq 0x4ffdf(%rip)        # 87a70 <consumer_profile::ALLOCATIONS>
+   37a91:	lock addq $0x8,0x4ffde(%rip)        # 87a78 <consumer_profile::ALLOCATED_BYTES>
+   37a9a:	mov    $0x8,%edi
+   37a9f:	mov    $0x10000,%edx
+   37aa4:	xor    %esi,%esi
+   37aa6:	xor    %r8d,%r8d
+   37aa9:	xor    %ebp,%ebp
+   37aab:	nopl   0x0(%rax,%rax,1)
+   37ab0:	test   $0x1,%r8b
+   37ab4:	jne    37b09 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x239>
+   37ab6:	mov    %edi,%eax
+   37ab8:	xor    %ecx,%ecx
+   37aba:	test   %edi,%edi
+   37abc:	sete   %r8b
+   37ac0:	setne  %cl
+   37ac3:	sub    %ecx,%edi
+   37ac5:	lea    0x8(%rax),%ecx
+   37ac8:	cmp    $0x3f,%ecx
+   37acb:	ja     37ab0 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x1e0>
+   37acd:	mov    $0x1,%r9d
+   37ad3:	shl    %cl,%r9
+   37ad6:	bt     %rcx,%rdx
+   37ada:	jae    37ab0 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x1e0>
+   37adc:	mov    $0x1,%r10d
+   37ae2:	mov    %eax,%ecx
+   37ae4:	shl    %cl,%r10
+   37ae7:	cmp    $0x8,%eax
+   37aea:	cmovae %rsi,%r10
+   37aee:	or     %r10,%rbp
+   37af1:	mov    $0x1d,%r10d
+   37af7:	shl    %cl,%r10
+   37afa:	cmp    $0x40,%eax
+   37afd:	cmovae %rsi,%r10
+   37b01:	xor    %r9,%rdx
+   37b04:	xor    %r10,%rdx
+   37b07:	jmp    37ab0 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x1e0>
+   37b09:	lock incq 0x4ff5f(%rip)        # 87a70 <consumer_profile::ALLOCATIONS>
+   37b11:	lock addq $0x18,0x4ff5e(%rip)        # 87a78 <consumer_profile::ALLOCATED_BYTES>
+   37b1a:	mov    $0x18,%edi
+   37b1f:	call   *0x4dc2b(%rip)        # 85750 <malloc@GLIBC_2.2.5>
+   37b25:	test   %rax,%rax
+   37b28:	je     380e8 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x818>
+   37b2e:	mov    %rax,%r15
+   37b31:	mov    %r12d,0xc(%rsp)
+   37b36:	movq   $0x1d,(%rax)
+   37b3d:	mov    %rbp,0x8(%rax)
+   37b41:	movl   $0x8,0x10(%rax)
+   37b48:	mov    0x28(%r13),%rdi
+   37b4c:	mov    0x30(%r13),%rsi
+   37b50:	mov    $0x1,%ecx
+   37b55:	mov    %r14,%rdx
+   37b58:	call   37060 <core::hash::BuildHasher::hash_one>
+   37b5d:	mov    %rax,%r12
+   37b60:	cmpq   $0x0,0x18(%r13)
+   37b65:	je     380fd <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x82d>
+   37b6b:	mov    0x8(%r13),%rax
+   37b6f:	mov    0x10(%r13),%rdx
+   37b73:	mov    %r12,%rcx
+   37b76:	shr    $0x39,%rcx
+   37b7a:	movd   %ecx,%xmm0
+   37b7e:	punpcklbw %xmm0,%xmm0
+   37b82:	pshuflw $0x0,%xmm0,%xmm0
+   37b87:	pshufd $0x44,%xmm0,%xmm0
+   37b8c:	xor    %r8d,%r8d
+   37b8f:	pcmpeqd %xmm1,%xmm1
+   37b93:	xor    %edi,%edi
+   37b95:	movabs $0x35fc58b8340a29fa,%r14
+   37b9f:	and    %rdx,%r12
+   37ba2:	movdqu (%rax,%r12,1),%xmm2
+   37ba8:	movdqa %xmm2,%xmm3
+   37bac:	pcmpeqb %xmm0,%xmm3
+   37bb0:	pmovmskb %xmm3,%r9d
+   37bb5:	test   %r9d,%r9d
+   37bb8:	je     37c10 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x340>
+   37bba:	tzcnt  %r9d,%r10d
+   37bbf:	add    %r12,%r10
+   37bc2:	and    %rdx,%r10
+   37bc5:	neg    %r10
+   37bc8:	lea    (%r10,%r10,4),%r10
+   37bcc:	mov    -0x20(%rax,%r10,8),%r11
+   37bd1:	movabs $0xaabd9c4e23ec51f3,%rbx
+   37bdb:	xor    %rbx,%r11
+   37bde:	mov    -0x28(%rax,%r10,8),%rbx
+   37be3:	xor    %r14,%rbx
+   37be6:	or     %r11,%rbx
+   37be9:	jne    37bf7 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x327>
+   37beb:	cmpq   $0x1,-0x18(%rax,%r10,8)
+   37bf1:	je     37cb6 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x3e6>
+   37bf7:	lea    -0x1(%r9),%r10d
+   37bfb:	and    %r9w,%r10w
+   37bff:	mov    %r10d,%r9d
+   37c02:	jne    37bba <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x2ea>
+   37c04:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   37c10:	cmp    $0x1,%r8
+   37c14:	je     37c28 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x358>
+   37c16:	pmovmskb %xmm2,%esi
+   37c1a:	test   %esi,%esi
+   37c1c:	je     37c42 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x372>
+   37c1e:	tzcnt  %esi,%esi
+   37c22:	add    %r12,%rsi
+   37c25:	and    %rdx,%rsi
+   37c28:	pcmpeqb %xmm1,%xmm2
+   37c2c:	pmovmskb %xmm2,%r8d
+   37c31:	test   %r8d,%r8d
+   37c34:	jne    37d05 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x435>
+   37c3a:	mov    $0x1,%r8d
+   37c40:	jmp    37c45 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x375>
+   37c42:	xor    %r8d,%r8d
+   37c45:	add    %rdi,%r12
+   37c48:	add    $0x10,%r12
+   37c4c:	add    $0x10,%rdi
+   37c50:	jmp    37b9f <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x2cf>
+   37c55:	mov    %rbx,%r15
+   37c58:	lea    (%rcx,%r8,8),%rax
+   37c5c:	mov    -0x10(%rax),%r14
+   37c60:	mov    -0x8(%rax),%rax
+   37c64:	lea    0x10(%rsp),%rdi
+   37c69:	mov    %r14,%rsi
+   37c6c:	call   *0x18(%rax)
+   37c6f:	movdqa 0x10(%rsp),%xmm0
+   37c75:	pcmpeqb -0x2f37d(%rip),%xmm0        # 8900 <anon.3dbaf6b573e43554b9e68f7a69135b62.4.llvm.2861360306945365398+0xf0>
+   37c7d:	pmovmskb %xmm0,%eax
+   37c81:	cmp    $0xffff,%eax
+   37c86:	jne    38107 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x837>
+   37c8c:	mov    %rbp,%rax
+   37c8f:	mov    (%r14),%rbx
+   37c92:	mov    0x8(%r14),%rbp
+   37c96:	mov    0x10(%r14),%r14d
+   37c9a:	test   %r12b,%r12b
+   37c9d:	jne    37cab <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x3db>
+   37c9f:	mov    (%rax),%rax
+   37ca2:	test   %r15,%rax
+   37ca5:	jne    3814f <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x87f>
+   37cab:	xor    %eax,%eax
+   37cad:	xchg   %eax,0x0(%r13)
+   37cb1:	jmp    37dba <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x4ea>
+   37cb6:	lea    (%rax,%r10,8),%rax
+   37cba:	mov    -0x10(%rax),%r12
+   37cbe:	mov    -0x8(%rax),%rbx
+   37cc2:	mov    %r15,-0x10(%rax)
+   37cc6:	lea    0x4b1fb(%rip),%rcx        # 82ec8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x7c0>
+   37ccd:	mov    %rcx,-0x8(%rax)
+   37cd1:	mov    (%rbx),%rax
+   37cd4:	test   %rax,%rax
+   37cd7:	je     37cde <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x40e>
+   37cd9:	mov    %r12,%rdi
+   37cdc:	call   *%rax
+   37cde:	cmpq   $0x0,0x8(%rbx)
+   37ce3:	mov    0x4dc06(%rip),%rbx        # 858f0 <_DYNAMIC+0x3e8>
+   37cea:	je     37cf5 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x425>
+   37cec:	mov    %r12,%rdi
+   37cef:	call   *0x4da43(%rip)        # 85738 <free@GLIBC_2.2.5>
+   37cf5:	cmpb   $0x0,0xc(%rsp)
+   37cfa:	je     37d93 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x4c3>
+   37d00:	jmp    37da9 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x4d9>
+   37d05:	movzbl (%rax,%rsi,1),%edi
+   37d09:	test   %dil,%dil
+   37d0c:	jns    3813a <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x86a>
+   37d12:	and    $0x1,%dil
+   37d16:	lea    -0x10(%rsi),%r8
+   37d1a:	and    %rdx,%r8
+   37d1d:	mov    %cl,(%rax,%rsi,1)
+   37d20:	mov    %cl,0x10(%rax,%r8,1)
+   37d25:	movdqu 0x18(%r13),%xmm0
+   37d2b:	movzbl %dil,%ecx
+   37d2f:	movd   %ecx,%xmm1
+   37d33:	shufpd $0x2,-0x2f67c(%rip),%xmm1        # 86c0 <anon.eb89d4395b0ead844ef0b45b8b54da85.151.llvm.3643936799275306673+0x145>
+   37d3c:	psubq  %xmm1,%xmm0
+   37d40:	movdqu %xmm0,0x18(%r13)
+   37d46:	neg    %rsi
+   37d49:	lea    (%rsi,%rsi,4),%rcx
+   37d4d:	movabs $0xaabd9c4e23ec51f3,%rdx
+   37d57:	mov    %rdx,-0x20(%rax,%rcx,8)
+   37d5c:	movabs $0x35fc58b8340a29fa,%rdx
+   37d66:	mov    %rdx,-0x28(%rax,%rcx,8)
+   37d6b:	movq   $0x1,-0x18(%rax,%rcx,8)
+   37d74:	mov    %r15,-0x10(%rax,%rcx,8)
+   37d79:	lea    0x4b148(%rip),%rdx        # 82ec8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x7c0>
+   37d80:	mov    %rdx,-0x8(%rax,%rcx,8)
+   37d85:	mov    0x4db64(%rip),%rbx        # 858f0 <_DYNAMIC+0x3e8>
+   37d8c:	cmpb   $0x0,0xc(%rsp)
+   37d91:	jne    37da9 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x4d9>
+   37d93:	mov    (%rbx),%rax
+   37d96:	movabs $0x7fffffffffffffff,%rcx
+   37da0:	test   %rcx,%rax
+   37da3:	jne    38122 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x852>
+   37da9:	xor    %eax,%eax
+   37dab:	xchg   %eax,0x0(%r13)
+   37daf:	mov    $0x8,%r14d
+   37db5:	mov    $0x1d,%ebx
+   37dba:	cmp    $0x2,%eax
+   37dbd:	je     380b4 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x7e4>
+   37dc3:	mov    (%rsp),%r13
+   37dc7:	mov    0x8(%r13),%rax
+   37dcb:	test   %rax,%rax
+   37dce:	jne    37df4 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x524>
+   37dd0:	mov    $0xffffffffffffffff,%rdx
+   37dd7:	mov    %r14d,%ecx
+   37dda:	shl    %cl,%rdx
+   37ddd:	xor    %ecx,%ecx
+   37ddf:	cmp    $0x40,%r14d
+   37de3:	cmovb  %rdx,%rcx
+   37de7:	mov    0x0(%r13),%r12
+   37deb:	test   %rcx,%r12
+   37dee:	je     38014 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x744>
+   37df4:	mov    %r14d,%ecx
+   37df7:	dec    %ecx
+   37df9:	je     37e05 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x535>
+   37dfb:	cmp    $0x7f,%ecx
+   37dfe:	jbe    37e0b <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x53b>
+   37e00:	xor    %r12d,%r12d
+   37e03:	jmp    37e32 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x562>
+   37e05:	mov    0x0(%r13),%r12
+   37e09:	jmp    37e32 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x562>
+   37e0b:	mov    %ecx,%edx
+   37e0d:	shr    $0x6,%edx
+   37e10:	and    $0x3f,%ecx
+   37e13:	sete   %sil
+   37e17:	test   %edx,%edx
+   37e19:	setne  %dil
+   37e1d:	mov    0x0(%r13,%rdx,8),%r12
+   37e22:	shr    %cl,%r12
+   37e25:	or     %sil,%dil
+   37e28:	jne    37e32 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x562>
+   37e2a:	neg    %cl
+   37e2c:	shl    %cl,%rax
+   37e2f:	or     %rax,%r12
+   37e32:	lock incq 0x4fc36(%rip)        # 87a70 <consumer_profile::ALLOCATIONS>
+   37e3a:	lock addq $0x10,0x4fc35(%rip)        # 87a78 <consumer_profile::ALLOCATED_BYTES>
+   37e43:	mov    $0x1,%edi
+   37e48:	mov    $0x10,%esi
+   37e4d:	call   *0x4d9cd(%rip)        # 85820 <calloc@GLIBC_2.2.5>
+   37e53:	test   %rax,%rax
+   37e56:	je     38177 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x8a7>
+   37e5c:	mov    %rax,%r15
+   37e5f:	test   %rbp,%rbp
+   37e62:	je     37ea0 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x5d0>
+   37e64:	xor    %esi,%esi
+   37e66:	xor    %eax,%eax
+   37e68:	xor    %edx,%edx
+   37e6a:	nopw   0x0(%rax,%rax,1)
+   37e70:	mov    %rbp,%rdi
+   37e73:	tzcnt  %rbp,%rcx
+   37e78:	xor    %r8d,%r8d
+   37e7b:	shld   %cl,%r12,%r8
+   37e7f:	mov    %r12,%r9
+   37e82:	shl    %cl,%r9
+   37e85:	test   $0x40,%cl
+   37e88:	cmovne %r9,%r8
+   37e8c:	cmovne %rsi,%r9
+   37e90:	xor    %r8,%rdx
+   37e93:	xor    %r9,%rax
+   37e96:	dec    %rbp
+   37e99:	and    %rdi,%rbp
+   37e9c:	jne    37e70 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x5a0>
+   37e9e:	jmp    37ea4 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x5d4>
+   37ea0:	xor    %edx,%edx
+   37ea2:	xor    %eax,%eax
+   37ea4:	mov    %rdx,0x8(%r15)
+   37ea8:	mov    %rax,(%r15)
+   37eab:	mov    %r14d,%r13d
+   37eae:	shr    $0x6,%r13d
+   37eb2:	cmp    $0x7f,%r14d
+   37eb6:	jbe    37ec4 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x5f4>
+   37eb8:	xor    %ebp,%ebp
+   37eba:	cmp    $0xffffffff,%r14d
+   37ebe:	cmove  %rax,%rbp
+   37ec2:	jmp    37f21 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x651>
+   37ec4:	mov    %r14d,%ecx
+   37ec7:	and    $0x3f,%ecx
+   37eca:	sete   %al
+   37ecd:	test   %r13,%r13
+   37ed0:	setne  %dl
+   37ed3:	mov    %r12,%rsi
+   37ed6:	shl    %cl,%rsi
+   37ed9:	xor    %rsi,(%r15,%r13,8)
+   37edd:	or     %al,%dl
+   37edf:	jne    37eea <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x61a>
+   37ee1:	neg    %cl
+   37ee3:	shr    %cl,%r12
+   37ee6:	xor    %r12,0x8(%r15)
+   37eea:	cmp    $0x7f,%r14d
+   37eee:	jne    37ef4 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x624>
+   37ef0:	xor    %ebp,%ebp
+   37ef2:	jmp    37f21 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x651>
+   37ef4:	lea    0x1(%r14),%ecx
+   37ef8:	mov    %ecx,%eax
+   37efa:	shr    $0x6,%eax
+   37efd:	and    $0x3f,%ecx
+   37f00:	sete   %dl
+   37f03:	test   %eax,%eax
+   37f05:	setne  %sil
+   37f09:	mov    (%r15,%rax,8),%rbp
+   37f0d:	shr    %cl,%rbp
+   37f10:	or     %dl,%sil
+   37f13:	jne    37f21 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x651>
+   37f15:	mov    0x8(%r15),%rax
+   37f19:	neg    %cl
+   37f1b:	shl    %cl,%rax
+   37f1e:	or     %rax,%rbp
+   37f21:	lock incq 0x4fb47(%rip)        # 87a70 <consumer_profile::ALLOCATIONS>
+   37f29:	lock addq $0x10,0x4fb46(%rip)        # 87a78 <consumer_profile::ALLOCATED_BYTES>
+   37f32:	mov    $0x1,%edi
+   37f37:	mov    $0x10,%esi
+   37f3c:	call   *0x4d8de(%rip)        # 85820 <calloc@GLIBC_2.2.5>
+   37f42:	test   %rax,%rax
+   37f45:	je     38189 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x8b9>
+   37f4b:	test   %rbx,%rbx
+   37f4e:	je     3802f <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x75f>
+   37f54:	xor    %esi,%esi
+   37f56:	mov    %rbx,%rcx
+   37f59:	xor    %r12d,%r12d
+   37f5c:	xor    %edx,%edx
+   37f5e:	xchg   %ax,%ax
+   37f60:	mov    %rcx,%rdi
+   37f63:	tzcnt  %rcx,%rcx
+   37f68:	xor    %r8d,%r8d
+   37f6b:	shld   %cl,%rbp,%r8
+   37f6f:	mov    %rbp,%r9
+   37f72:	shl    %cl,%r9
+   37f75:	test   $0x40,%cl
+   37f78:	cmovne %r9,%r8
+   37f7c:	cmovne %rsi,%r9
+   37f80:	xor    %r8,%rdx
+   37f83:	xor    %r9,%r12
+   37f86:	lea    -0x1(%rdi),%rcx
+   37f8a:	and    %rdi,%rcx
+   37f8d:	jne    37f60 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x690>
+   37f8f:	mov    %rdx,0x8(%rax)
+   37f93:	mov    %r12,(%rax)
+   37f96:	cmp    $0x7f,%r14d
+   37f9a:	ja     37fa9 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x6d9>
+   37f9c:	mov    %r14d,%ecx
+   37f9f:	shl    %cl,%rbp
+   37fa2:	xor    %rbp,(%rax,%r13,8)
+   37fa6:	mov    (%rax),%r12
+   37fa9:	mov    (%rsp),%r13
+   37fad:	xor    0x0(%r13),%r12
+   37fb1:	mov    %r14d,%edx
+   37fb4:	mov    $0xffffffffffffffff,%rdi
+   37fbb:	mov    $0xffffffffffffffff,%r8
+   37fc2:	mov    %r14d,%ecx
+   37fc5:	shl    %cl,%r8
+   37fc8:	xor    %esi,%esi
+   37fca:	cmp    $0x40,%r14d
+   37fce:	cmovb  %r8,%rsi
+   37fd2:	mov    %r8,%rcx
+   37fd5:	not    %rcx
+   37fd8:	cmovae %rdi,%rcx
+   37fdc:	test   %rsi,%r12
+   37fdf:	je     37fee <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x71e>
+   37fe1:	xor    %rbx,%r12
+   37fe4:	cmp    $0x40,%r14d
+   37fe8:	jae    37fee <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x71e>
+   37fea:	btc    %rdx,%r12
+   37fee:	test   %rsi,%r12
+   37ff1:	je     38000 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x730>
+   37ff3:	xor    %rbx,%r12
+   37ff6:	cmp    $0x40,%r14d
+   37ffa:	jae    38000 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x730>
+   37ffc:	btc    %rdx,%r12
+   38000:	and    %rcx,%r12
+   38003:	mov    0x4d72e(%rip),%rbx        # 85738 <free@GLIBC_2.2.5>
+   3800a:	mov    %rax,%rdi
+   3800d:	call   *%rbx
+   3800f:	mov    %r15,%rdi
+   38012:	call   *%rbx
+   38014:	mov    %r13,%rdi
+   38017:	call   *0x4d71b(%rip)        # 85738 <free@GLIBC_2.2.5>
+   3801d:	mov    %r12,%rax
+   38020:	add    $0x28,%rsp
+   38024:	pop    %rbx
+   38025:	pop    %r12
+   38027:	pop    %r13
+   38029:	pop    %r14
+   3802b:	pop    %r15
+   3802d:	pop    %rbp
+   3802e:	ret
+   3802f:	xor    %edx,%edx
+   38031:	xor    %r12d,%r12d
+   38034:	mov    %rdx,0x8(%rax)
+   38038:	mov    %r12,(%rax)
+   3803b:	cmp    $0x7f,%r14d
+   3803f:	jbe    37f9c <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x6cc>
+   38045:	jmp    37fa9 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x6d9>
+   3804a:	call   35164 <std::sync::once_lock::OnceLock<T>::initialize>
+   3804f:	jmp    37973 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0xa3>
+   38054:	mov    0x4d88d(%rip),%rdi        # 858e8 <_DYNAMIC+0x3e0>
+   3805b:	call   *0x4d8a7(%rip)        # 85908 <_DYNAMIC+0x400>
+   38061:	jmp    37986 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0xb6>
+   38066:	call   *0x4d894(%rip)        # 85900 <_DYNAMIC+0x3f8>
+   3806c:	mov    %eax,%r12d
+   3806f:	xor    $0x1,%r12b
+   38073:	movzbl 0x4(%r13),%eax
+   38078:	test   %al,%al
+   3807a:	je     379ad <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0xdd>
+   38080:	mov    %r13,0x10(%rsp)
+   38085:	mov    %r12b,0x18(%rsp)
+   3808a:	lea    -0x2ef6b(%rip),%rdi        # 9126 <anon.8cfae0649b24339a7c6ff37f2bd6b634.746.llvm.13263554319387139704+0x26e>
+   38091:	lea    0x4adc0(%rip),%rcx        # 82e58 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x750>
+   38098:	lea    0x4adf9(%rip),%r8        # 82e98 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x790>
+   3809f:	lea    0x10(%rsp),%rdx
+   380a4:	mov    $0x1c,%esi
+   380a9:	call   *0x4d6e9(%rip)        # 85798 <_DYNAMIC+0x290>
+   380af:	jmp    38199 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x8c9>
+   380b4:	mov    0x4d82d(%rip),%rsi        # 858e8 <_DYNAMIC+0x3e0>
+   380bb:	mov    $0xca,%edi
+   380c0:	mov    $0x81,%edx
+   380c5:	mov    $0x1,%ecx
+   380ca:	xor    %eax,%eax
+   380cc:	call   *0x4d826(%rip)        # 858f8 <syscall@GLIBC_2.2.5>
+   380d2:	mov    (%rsp),%r13
+   380d6:	mov    0x8(%r13),%rax
+   380da:	test   %rax,%rax
+   380dd:	jne    37df4 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x524>
+   380e3:	jmp    37dd0 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x500>
+   380e8:	mov    $0x8,%edi
+   380ed:	mov    $0x18,%esi
+   380f2:	call   *0x4d670(%rip)        # 85768 <_DYNAMIC+0x260>
+   380f8:	jmp    38199 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x8c9>
+   380fd:	call   3a430 <hashbrown::raw::RawTable<T,A>::reserve_rehash>
+   38102:	jmp    37b6b <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x29b>
+   38107:	lea    -0x2efcc(%rip),%rdi        # 9142 <anon.8cfae0649b24339a7c6ff37f2bd6b634.746.llvm.13263554319387139704+0x28a>
+   3810e:	lea    0x4ad9b(%rip),%rdx        # 82eb0 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x7a8>
+   38115:	mov    $0x37,%esi
+   3811a:	call   *0x4d7a8(%rip)        # 858c8 <_DYNAMIC+0x3c0>
+   38120:	jmp    38199 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x8c9>
+   38122:	call   *0x4d7d8(%rip)        # 85900 <_DYNAMIC+0x3f8>
+   38128:	test   %al,%al
+   3812a:	jne    37da9 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x4d9>
+   38130:	movb   $0x1,0x4(%r13)
+   38135:	jmp    37da9 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x4d9>
+   3813a:	movdqa (%rax),%xmm0
+   3813e:	pmovmskb %xmm0,%esi
+   38142:	tzcnt  %esi,%esi
+   38146:	movzbl (%rax,%rsi,1),%edi
+   3814a:	jmp    37d12 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x442>
+   3814f:	call   *0x4d7ab(%rip)        # 85900 <_DYNAMIC+0x3f8>
+   38155:	test   %al,%al
+   38157:	jne    37cab <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x3db>
+   3815d:	movb   $0x1,0x4(%r13)
+   38162:	jmp    37cab <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x3db>
+   38167:	mov    $0x8,%edi
+   3816c:	mov    $0x10,%esi
+   38171:	call   *0x4d589(%rip)        # 85700 <_DYNAMIC+0x1f8>
+   38177:	mov    $0x8,%edi
+   3817c:	mov    $0x10,%esi
+   38181:	call   *0x4d579(%rip)        # 85700 <_DYNAMIC+0x1f8>
+   38187:	jmp    38199 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x8c9>
+   38189:	mov    $0x8,%edi
+   3818e:	mov    $0x10,%esi
+   38193:	call   *0x4d567(%rip)        # 85700 <_DYNAMIC+0x1f8>
+   38199:	ud2
+   3819b:	mov    %rax,%r13
+   3819e:	mov    %r15,%rdi
+   381a1:	jmp    381b7 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x8e7>
+   381a3:	mov    %rax,%r13
+   381a6:	cmpq   $0x0,0x8(%rbx)
+   381ab:	jne    381b4 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x8e4>
+   381ad:	mov    0xc(%rsp),%r12d
+   381b2:	jmp    38203 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x933>
+   381b4:	mov    %r12,%rdi
+   381b7:	call   *0x4d57b(%rip)        # 85738 <free@GLIBC_2.2.5>
+   381bd:	mov    0xc(%rsp),%r12d
+   381c2:	jmp    38203 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x933>
+   381c4:	mov    %rax,%r13
+   381c7:	mov    %r15,%rdi
+   381ca:	call   *0x4d568(%rip)        # 85738 <free@GLIBC_2.2.5>
+   381d0:	jmp    381d5 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x905>
+   381d2:	mov    %rax,%r13
+   381d5:	mov    (%rsp),%rdi
+   381d9:	call   *0x4d559(%rip)        # 85738 <free@GLIBC_2.2.5>
+   381df:	mov    %r13,%rdi
+   381e2:	call   81590 <_Unwind_Resume@plt>
+   381e7:	mov    %rax,%r13
+   381ea:	lea    0x10(%rsp),%rdi
+   381ef:	call   36a20 <core::ptr::drop_in_place<std::sync::poison::PoisonError<std::sync::poison::mutex::MutexGuard<std::collections::hash::map::HashMap<(core::any::TypeId,usize),alloc::boxed::Box<dyn core::any::Any+core::marker::Sync+core::marker::Send>>>>>>
+   381f4:	mov    (%rsp),%rdi
+   381f8:	jmp    38210 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref+0x940>
+   381fa:	call   *0x4d670(%rip)        # 85870 <_DYNAMIC+0x368>
+   38200:	mov    %rax,%r13
+   38203:	movzbl %r12b,%edi
+   38207:	call   369b0 <core::ptr::drop_in_place<std::sync::poison::mutex::MutexGuard<std::collections::hash::map::HashMap<(core::any::TypeId,usize),alloc::boxed::Box<dyn core::any::Any+core::marker::Sync+core::marker::Send>>>>>
+   3820c:	mov    (%rsp),%rdi
+   38210:	call   *0x4d522(%rip)        # 85738 <free@GLIBC_2.2.5>
+   38216:	mov    %r13,%rdi
+   38219:	call   81590 <_Unwind_Resume@plt>
+   3821e:	call   *0x4d64c(%rip)        # 85870 <_DYNAMIC+0x368>

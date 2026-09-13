@@ -1,0 +1,15 @@
+# Annotated release disassembly of the measured consumer routes (jit:19513245)
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# Fields: file  symbols  bytes  pattern
+current-fieldvec-axpy.asm.txt  1  481  gf2_core::field::vec::FieldVec<F>::axpy
+current-dot-product-slices.asm.txt  1  493  gf2_core::field::vec::dot_product_slices
+current-wide-mul-ref.asm.txt  1  2388  gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref
+current-batch-mul-raw.asm.txt  1  1022  gf2_core::gf2m::batch::batch_mul_raw
+current-batch-kernel.asm.txt  2  1663  gf2m_batch_mul_ymm_unroll4
+prototype-axpy-region.asm.txt  1  163  bytefield_consumer::axpy_region
+prototype-axpy-field-vec.asm.txt  2  496  bytefield_consumer::axpy_field_vec
+prototype-gemm-region.asm.txt  1  875  bytefield_consumer::gemm_region
+prototype-matvec-region.asm.txt  1  406  bytefield_consumer::matvec_region
+prototype-pairwise-region.asm.txt  1  202  bytefield_consumer::pairwise_region
+prototype-table-refill.asm.txt  1  86  CoefficientTable::refill
