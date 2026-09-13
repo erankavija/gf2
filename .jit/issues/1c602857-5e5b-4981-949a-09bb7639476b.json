@@ -255,8 +255,16 @@
       "doc_type": "report",
       "label": "Conformance validation raw log (--all-features)",
       "path": "dev/active/1c602857/validation-raw-all-features.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 3",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/1c602857-r3.md"
     }
   ],
+  "done_at": "2026-09-13T12:00:43.204262357Z",
   "first_ready_at": "2026-09-10T16:45:41.029543432Z",
   "gates_required": [
     "cargo-ci",
@@ -267,7 +275,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-13T09:11:50.148066400Z",
+      "updated_at": "2026-09-13T11:59:45.203559280Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -294,7 +302,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Route the public wide carry-less product through capability dispatch",
-  "updated_at": "2026-09-13T11:51:58.067661950Z"
+  "updated_at": "2026-09-13T12:00:43.204262357Z"
 }

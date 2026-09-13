@@ -12054,3 +12054,8 @@
 {"gate_key":"research-review","id":"1fd371bd-bf63-4782-8e45-fbd603eeb364","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T11:51:58.067661950Z","type":"gate_passed","updated_by":"auto:executor"}
 {"id":"a33c423d-2ba5-4447-9720-bc8c3f75adb7","issue_id":"94bbe5d7-48d0-4449-8a4d-37da700ef697","priority":"normal","timestamp":"2026-09-13T11:53:58.569086319Z","title":"Freeze confirmation addenda with stage-specific family prose","type":"issue_created"}
 {"fields":["dependencies"],"id":"ce343cb1-e902-46fe-a8db-9f3ac82a476d","issue_id":"1362381c-78c0-42eb-bdc9-4327f20bc343","timestamp":"2026-09-13T11:54:17.986805683Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"f5e94e5f-e163-4831-9289-0963b655f809","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T11:59:45.203559280Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"40eb1d12-91cd-4c0e-bb84-675e2be257c2","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T12:00:20.370957021Z","type":"issue_updated","updated_by":"doc-add"}
+{"from":"in_progress","id":"d0c8fcdb-69c1-4a55-a485-f058556114a7","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T12:00:43.204262357Z","to":"done","type":"issue_state_changed"}
+{"id":"411d567f-8ad6-497b-b549-7c6851bfc8b7","issue_id":"1c602857-5e5b-4981-949a-09bb7639476b","timestamp":"2026-09-13T12:00:43.204262357Z","type":"issue_completed"}
+{"from":"backlog","id":"eca02d48-1307-47b3-bb88-096405c607f8","issue_id":"94ab019f-cc91-4081-b787-39037d14fc86","timestamp":"2026-09-13T12:01:02.083896024Z","to":"ready","type":"issue_state_changed"}
