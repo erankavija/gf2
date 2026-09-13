@@ -16,7 +16,8 @@ in three families with three ledgers. Each family carries a protocol-v4 pilot
 over its whole declared breadth and a protocol-v4 confirmation over the six
 cells the protocol's confirmatory budget admits; all six receipts are
 committed, every declared cell of every one of them is measured, and the
-evaluator accepts each with no finding. gf2 loses every confirmed region
+evaluator accepts each (verdict and finding count on each receipt's header
+lines in the generated tables). gf2 loses every confirmed region
 multiply-accumulate cell and every confirmed dense-product cell to the pinned
 libraries at the family confidence, and leads four of the six confirmed
 pairwise-control cells; the generated tables carry each figure. The superseded
@@ -348,8 +349,9 @@ In each of the three pilots every declared cell starts, checkpoints and
 completes exactly once across the campaign's sessions, on the launcher's
 exploratory pair count with the frozen window count; each campaign ends in its
 own `complete` terminal record; and
-`benchmark-acceptance` recomputes each receipt to `accepted` with no finding
-and `qualifies` false, which is what an exploratory-only receipt is
+`benchmark-acceptance` recomputes each receipt to the verdict, finding count
+and `qualifies` false its header lines in the tables carry, which is what an
+exploratory-only receipt is
 (tables § `6c6b09b1-v4-r1-region-axpy-pilot`,
 § `6c6b09b1-v4-r1-matrix-product-pilot`,
 § `6c6b09b1-v4-r1-pairwise-control-pilot`, each receipt's
@@ -408,8 +410,8 @@ count, and nothing else. Every declared cell starts, checkpoints and completes
 exactly once across the campaign's sessions; each campaign ends in its own
 `complete` terminal record; no cell is flagged unstable, the flagged-window
 counts being zero throughout; and `benchmark-acceptance` built from this tree
-recomputes each receipt to the verdict, qualification and empty finding list
-its committed acceptance summary carries (tables §
+recomputes each receipt to the verdict, qualification and finding count
+its committed acceptance summary and tables header lines carry (tables §
 `6c6b09b1-v4-r1-region-axpy-confirmation`,
 § `6c6b09b1-v4-r1-matrix-product-confirmation`,
 § `6c6b09b1-v4-r1-pairwise-control-confirmation`, each receipt's
@@ -647,7 +649,8 @@ so a byte-region consumer's choice is not the same question as a kernel's.
 
 - REQ-01: met. The contract, protocol and addendum pins, the launcher and the
   ledgers are in place; the three pilot receipts and the three confirmation
-  receipts are committed, each accepted by the evaluator with no finding, and
+  receipts are committed, each accepted by the evaluator (finding count on
+  the receipt's header lines in the tables), and
   each family's ledger carries both reservations. The pairwise control's four
   `fail` cells and its `qualifies` false are recorded as the evaluator states
   them, and so is the negative version-3 outcome, with the record that says
