@@ -11,7 +11,7 @@
     "description": "Where the batched carry-less paths of gf2-core overtake the per-element paths a consumer can call instead, across a small/crossover/resident/streaming size grid. Baseline arm: the per-element path — the bundle's single carry-less multiply in a loop, FieldVec::dot_product, and Gf2mElement multiplication one pair at a time. Candidate arm: the batched path — the bundle's raw-batch kernel, FieldVec::simd_dot_product, and gf2m::batch::batch_mul. One executable serves both arms and selects the entry point from GF2_CROSSOVER_PATH, so the arms share a build, a fixture generator and a timing loop. The three operations are kept in separate cells: the raw independent 64x64 carry-less batch is not the reduced GF(2^m) element-wise batch and neither is the GF(2^m) dot product. The raw-batch cells are kernel-isolated; the two GF(2^m) consumer cells are whole-consumer, with packing, the operation and the extraction of the result inside every timed call and both arms paying the identical packing. The family calibrates a selector: its recommendation is a length threshold in the canonical tuning mechanism, which its holdout cells test at sizes that took no part in selection. This addendum is the pilot: every cell is exploratory, it fixes the measurement resolution the confirmation freezes against, and none of its samples enter a confirmation."
   },
   "frozen": {
-    "frozen_utc": "2026-09-13T12:10:40Z"
+    "frozen_utc": "2026-09-13T12:27:24Z"
   },
   "effect": {
     "worthwhile_speedup": 1.15,

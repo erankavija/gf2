@@ -39,19 +39,19 @@
       "executables": {
         "crossover-arm": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/crossover-arm",
-          "sha256": "d6411588467bc846309e664036ba6a33a5101f7fb329ee98d0c7982bdbb0beec"
+          "sha256": "6447fd8d59866f5867c30b3b9fff57237b76cc2537dcff7ba152e51397fb2a9c"
         },
         "crossover-validate": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/crossover-validate",
-          "sha256": "eb18df3fa66edc2e945e9f15420e1d9a9cec3ecba3184dc20bd11dd19780d727"
+          "sha256": "d6a97e9f8ed87e35980cd11f32ec512e9eb3a72ef8f8502ddfff929ab48268e3"
         },
         "gf2x-poly-arm": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/gf2x-poly-arm",
-          "sha256": "c48d17c57a48162647896d5389686dc5dbc183b2e48655b5800613258b62ff73"
+          "sha256": "64af22bcdbf2971afbddcbd75587987e49755a2247c93498839022b2454e5d8b"
         },
         "poly-arm": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/poly-arm",
-          "sha256": "10546435192b3d2fad90666f372938602f94e677ce7d2c8d228bd72938250f9a"
+          "sha256": "5fff5479691493b9d7467e2df4bdc92c1f69796dbd0aa09a1b56a9f4256995e1"
         },
         "stage-diagnostic": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/stage-diagnostic",
@@ -108,19 +108,19 @@
       "executables": {
         "crossover-arm": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/crossover-arm",
-          "sha256": "20a4da11316b247656e9a1ae9b4b234fbdd3e9cafbd43d7ba9054e6d91dbecec"
+          "sha256": "a2018790c9f8bdaa366b3d87d8b4c4ef49481ab44cdc95f49156a40c6c868177"
         },
         "crossover-validate": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/crossover-validate",
-          "sha256": "9130b3176668de105b3f67366091474108af002cfbf70b94ca1748deac69e6c6"
+          "sha256": "c7342e1c3744ea77d974dc8fea7f2c382e6461f69c9d20ef7e4c02659450bf25"
         },
         "gf2x-poly-arm": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/gf2x-poly-arm",
-          "sha256": "d738b2a78908993147cfb4e58be3461b8c5291ed3ac074c8458cd7ba5cecdf65"
+          "sha256": "2e94dbfe0ecdf7e5ebd2df8042c6c51949d2e47372c56bbdae8e86d3815ad04b"
         },
         "poly-arm": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/poly-arm",
-          "sha256": "b33e6264db236e342c14eb1761e6e3f9e250fcf1487fd80868f28084cdd89309"
+          "sha256": "5d66284d85896ee2c238f128c199c3ffd9c0ffc7ab10aec82f482f0b094e5602"
         },
         "stage-diagnostic": {
           "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/stage-diagnostic",
