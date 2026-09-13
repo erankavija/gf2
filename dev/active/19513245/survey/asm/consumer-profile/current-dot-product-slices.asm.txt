@@ -1,0 +1,137 @@
+# label: current-dot-product-slices
+# pattern: gf2_core::field::vec::dot_product_slices
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# text symbols matching this pattern: 1
+
+## symbol at 0000000000038420, 0x00000000000001ed bytes
+0000000000038420 <gf2_core::field::vec::dot_product_slices>:
+   38420:	push   %rbp
+   38421:	push   %r15
+   38423:	push   %r14
+   38425:	push   %r13
+   38427:	push   %r12
+   38429:	push   %rbx
+   3842a:	sub    $0x28,%rsp
+   3842e:	mov    %rcx,%rbx
+   38431:	mov    %rdx,%r14
+   38434:	mov    %rsi,%rbp
+   38437:	mov    (%rdi),%r13
+   3843a:	mov    0x8(%rdi),%rsi
+   3843e:	mov    (%rdx),%rdx
+   38441:	mov    0x8(%r14),%rcx
+   38445:	lock incq 0x0(%r13)
+   3844a:	jle    38590 <gf2_core::field::vec::dot_product_slices+0x170>
+   38450:	mov    %rdi,%r15
+   38453:	mov    %r13,(%rsp)
+   38457:	mov    %rsi,0x8(%rsp)
+   3845c:	mov    %r13,%rdi
+   3845f:	call   3a0b0 <<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul>
+   38464:	mov    %rax,%r12
+   38467:	lock decq 0x0(%r13)
+   3846c:	jne    3847d <gf2_core::field::vec::dot_product_slices+0x5d>
+   3846e:	mov    %rsp,%rdi
+   38471:	mov    %rdx,%r13
+   38474:	call   *0x4d3de(%rip)        # 85858 <_DYNAMIC+0x350>
+   3847a:	mov    %r13,%rdx
+   3847d:	mov    %r12,0x10(%rsp)
+   38482:	mov    %rdx,0x18(%rsp)
+   38487:	dec    %rbp
+   3848a:	movabs $0xfffffffffffffff,%rax
+   38494:	and    %rax,%rbp
+   38497:	dec    %rbx
+   3849a:	and    %rax,%rbx
+   3849d:	cmp    %rbp,%rbx
+   384a0:	cmovae %rbp,%rbx
+   384a4:	test   %rbx,%rbx
+   384a7:	je     38542 <gf2_core::field::vec::dot_product_slices+0x122>
+   384ad:	shl    $0x4,%rbx
+   384b1:	mov    %rbx,0x20(%rsp)
+   384b6:	xor    %ebx,%ebx
+   384b8:	jmp    384cb <gf2_core::field::vec::dot_product_slices+0xab>
+   384ba:	nopw   0x0(%rax,%rax,1)
+   384c0:	add    $0x10,%rbx
+   384c4:	cmp    %rbx,0x20(%rsp)
+   384c9:	je     38538 <gf2_core::field::vec::dot_product_slices+0x118>
+   384cb:	mov    0x10(%r15,%rbx,1),%rbp
+   384d0:	mov    0x18(%r15,%rbx,1),%rsi
+   384d5:	mov    0x10(%r14,%rbx,1),%rdx
+   384da:	mov    0x18(%r14,%rbx,1),%rcx
+   384df:	lock incq 0x0(%rbp)
+   384e4:	jle    38590 <gf2_core::field::vec::dot_product_slices+0x170>
+   384ea:	mov    %rbp,(%rsp)
+   384ee:	mov    %rsi,0x8(%rsp)
+   384f3:	mov    %rbp,%rdi
+   384f6:	call   3a0b0 <<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul>
+   384fb:	mov    %rax,%r13
+   384fe:	mov    %rdx,%r12
+   38501:	lock decq 0x0(%rbp)
+   38506:	jne    38511 <gf2_core::field::vec::dot_product_slices+0xf1>
+   38508:	mov    %rsp,%rdi
+   3850b:	call   *0x4d347(%rip)        # 85858 <_DYNAMIC+0x350>
+   38511:	mov    %r13,(%rsp)
+   38515:	mov    %r12,0x8(%rsp)
+   3851a:	cmp    %r13,0x10(%rsp)
+   3851f:	jne    38577 <gf2_core::field::vec::dot_product_slices+0x157>
+   38521:	xor    %r12,0x18(%rsp)
+   38526:	lock decq 0x0(%r13)
+   3852b:	jne    384c0 <gf2_core::field::vec::dot_product_slices+0xa0>
+   3852d:	mov    %rsp,%rdi
+   38530:	call   *0x4d322(%rip)        # 85858 <_DYNAMIC+0x350>
+   38536:	jmp    384c0 <gf2_core::field::vec::dot_product_slices+0xa0>
+   38538:	mov    0x10(%rsp),%r12
+   3853d:	mov    0x18(%rsp),%rdx
+   38542:	lock incq (%r12)
+   38547:	jle    38590 <gf2_core::field::vec::dot_product_slices+0x170>
+   38549:	mov    0x10(%rsp),%rax
+   3854e:	lock decq (%rax)
+   38552:	jne    38565 <gf2_core::field::vec::dot_product_slices+0x145>
+   38554:	lea    0x10(%rsp),%rdi
+   38559:	mov    %rdx,%rbx
+   3855c:	call   *0x4d2f6(%rip)        # 85858 <_DYNAMIC+0x350>
+   38562:	mov    %rbx,%rdx
+   38565:	mov    %r12,%rax
+   38568:	add    $0x28,%rsp
+   3856c:	pop    %rbx
+   3856d:	pop    %r12
+   3856f:	pop    %r13
+   38571:	pop    %r14
+   38573:	pop    %r15
+   38575:	pop    %rbp
+   38576:	ret
+   38577:	lea    -0x2f7f4(%rip),%rdi        # 8d8a <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x1ca>
+   3857e:	lea    0x4ac0b(%rip),%rdx        # 83190 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xa88>
+   38585:	mov    $0x53,%esi
+   3858a:	call   *0x4d1f0(%rip)        # 85780 <_DYNAMIC+0x278>
+   38590:	ud2
+   38592:	mov    %rax,%rbx
+   38595:	lock decq 0x0(%r13)
+   3859a:	jne    385f9 <gf2_core::field::vec::dot_product_slices+0x1d9>
+   3859c:	mov    %rsp,%rdi
+   3859f:	call   *0x4d2b3(%rip)        # 85858 <_DYNAMIC+0x350>
+   385a5:	jmp    385f9 <gf2_core::field::vec::dot_product_slices+0x1d9>
+   385a7:	call   *0x4d2c3(%rip)        # 85870 <_DYNAMIC+0x368>
+   385ad:	mov    %rax,%rbx
+   385b0:	jmp    385e3 <gf2_core::field::vec::dot_product_slices+0x1c3>
+   385b2:	mov    %rax,%rbx
+   385b5:	lock decq 0x0(%rbp)
+   385ba:	jne    385e3 <gf2_core::field::vec::dot_product_slices+0x1c3>
+   385bc:	mov    %rsp,%rdi
+   385bf:	call   *0x4d293(%rip)        # 85858 <_DYNAMIC+0x350>
+   385c5:	jmp    385e3 <gf2_core::field::vec::dot_product_slices+0x1c3>
+   385c7:	call   *0x4d2a3(%rip)        # 85870 <_DYNAMIC+0x368>
+   385cd:	mov    %rax,%rbx
+   385d0:	mov    (%rsp),%rax
+   385d4:	lock decq (%rax)
+   385d8:	jne    385e3 <gf2_core::field::vec::dot_product_slices+0x1c3>
+   385da:	mov    %rsp,%rdi
+   385dd:	call   *0x4d275(%rip)        # 85858 <_DYNAMIC+0x350>
+   385e3:	mov    0x10(%rsp),%rax
+   385e8:	lock decq (%rax)
+   385ec:	jne    385f9 <gf2_core::field::vec::dot_product_slices+0x1d9>
+   385ee:	lea    0x10(%rsp),%rdi
+   385f3:	call   *0x4d25f(%rip)        # 85858 <_DYNAMIC+0x350>
+   385f9:	mov    %rbx,%rdi
+   385fc:	call   81590 <_Unwind_Resume@plt>
+   38601:	call   *0x4d269(%rip)        # 85870 <_DYNAMIC+0x368>
+   38607:	call   *0x4d263(%rip)        # 85870 <_DYNAMIC+0x368>

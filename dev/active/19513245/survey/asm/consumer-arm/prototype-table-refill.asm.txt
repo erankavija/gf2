@@ -1,0 +1,35 @@
+# label: prototype-table-refill
+# pattern: CoefficientTable::refill
+# binary: target/19513245-survey/release/consumer-arm
+# binary sha256: e974158bb0fdf150b53286ef61bac84239436aa029cb2b3268f0c9f0b59df3d1
+# text symbols matching this pattern: 1
+
+## symbol at 00000000000290a0, 0x0000000000000056 bytes
+00000000000290a0 <bytefield_consumer::table::CoefficientTable::refill>:
+   290a0:	movb   $0x0,(%rdi)
+   290a3:	mov    %sil,0x1(%rdi)
+   290a7:	mov    $0x2,%eax
+   290ac:	jmp    290c6 <bytefield_consumer::table::CoefficientTable::refill+0x26>
+   290ae:	xchg   %ax,%ax
+   290b0:	movzbl -0x1(%rdi,%rax,1),%ecx
+   290b5:	xor    %sil,%cl
+   290b8:	mov    %cl,(%rdi,%rax,1)
+   290bb:	inc    %rax
+   290be:	cmp    $0x100,%rax
+   290c4:	je     290f5 <bytefield_consumer::table::CoefficientTable::refill+0x55>
+   290c6:	test   $0x1,%al
+   290c8:	jne    290b0 <bytefield_consumer::table::CoefficientTable::refill+0x10>
+   290ca:	mov    %rax,%rcx
+   290cd:	shr    $1,%rcx
+   290d0:	movzbl (%rdi,%rcx,1),%ecx
+   290d4:	mov    %ecx,%r8d
+   290d7:	add    %ecx,%r8d
+   290da:	test   %cl,%cl
+   290dc:	mov    $0x0,%ecx
+   290e1:	cmovs  %edx,%ecx
+   290e4:	xor    %r8d,%ecx
+   290e7:	mov    %cl,(%rdi,%rax,1)
+   290ea:	inc    %rax
+   290ed:	cmp    $0x100,%rax
+   290f3:	jne    290c6 <bytefield_consumer::table::CoefficientTable::refill+0x26>
+   290f5:	ret

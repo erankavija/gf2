@@ -28,6 +28,13 @@
 //! property the assessment turns on, because it separates byte-oriented
 //! *arithmetic* from byte-oriented *storage*.
 
+//! Every prototype route carries `#[inline(never)]`. A route that the
+//! compiler folded into its caller would leave no symbol in the measured
+//! executable, and the assembly artefact of this assessment has to show the
+//! code that ran; the cost is one call instruction per invocation of an
+//! `O(n)` loop, which no cell's window can resolve. A production hook would
+//! cross a crate boundary anyway.
+
 use byte_field_gf2_side::workload::ByteField;
 use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::FieldVec;
@@ -51,6 +58,7 @@ pub use table::{CoefficientTable, ProductTable};
 /// # Panics
 ///
 /// Panics if the two regions have different lengths.
+#[inline(never)]
 pub fn axpy_region(y: &mut [u8], table: &CoefficientTable, x: &[u8]) {
     assert_eq!(y.len(), x.len(), "axpy_region: length mismatch");
     for (target, source) in y.iter_mut().zip(x.iter()) {
@@ -71,6 +79,7 @@ pub fn axpy_region(y: &mut [u8], table: &CoefficientTable, x: &[u8]) {
 /// # Panics
 ///
 /// Panics if the two vectors have different lengths.
+#[inline(never)]
 pub fn axpy_field_vec<B: ByteField>(
     field: &B,
     y: &mut FieldVec<B::Elem>,
@@ -97,6 +106,7 @@ pub fn axpy_field_vec<B: ByteField>(
 /// # Panics
 ///
 /// Panics if any operand length disagrees with the declared shape.
+#[inline(never)]
 pub fn gemm_region(
     a: &[u8],
     b: &[u8],
@@ -130,6 +140,7 @@ pub fn gemm_region(
 /// # Panics
 ///
 /// Panics if any operand length disagrees with the declared shape.
+#[inline(never)]
 pub fn matvec_region(a: &[u8], x: &[u8], y: &mut [u8], m: usize, k: usize, table: &ProductTable) {
     assert_eq!(a.len(), m * k, "matvec_region: matrix shape");
     assert_eq!(x.len(), k, "matvec_region: input shape");
@@ -156,6 +167,7 @@ pub fn matvec_region(a: &[u8], x: &[u8], y: &mut [u8], m: usize, k: usize, table
 /// # Panics
 ///
 /// Panics if the three regions have different lengths.
+#[inline(never)]
 pub fn pairwise_region(x: &[u8], y: &[u8], z: &mut [u8], table: &ProductTable) {
     assert_eq!(x.len(), y.len(), "pairwise_region: operand length mismatch");
     assert_eq!(x.len(), z.len(), "pairwise_region: output length mismatch");

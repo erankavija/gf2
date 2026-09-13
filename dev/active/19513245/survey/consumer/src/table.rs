@@ -54,6 +54,11 @@ impl CoefficientTable {
 
     /// Overwrites this table with the products of `coefficient`, so a
     /// consumer that changes coefficient allocates nothing.
+    ///
+    /// `#[inline(never)]` for the same reason the routes in the crate root
+    /// carry it: the table preparation of a vector call has to appear as its
+    /// own symbol in the assembly artefact.
+    #[inline(never)]
     pub fn refill(&mut self, coefficient: u8, polynomial: u16) {
         self.entries[0] = 0;
         self.entries[1] = coefficient;

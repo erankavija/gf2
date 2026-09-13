@@ -1,0 +1,482 @@
+# Instruction mix of the measured routes (jit:19513245)
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# Each count is of instruction lines in the named symbol whose mnemonic field
+# (after any prefix) matches the class, or whose call operand is indirect.
+
+## lock-prefixed, carry-less-multiply, byte-shuffle, call, indirect-call and divide counts, symbol
+148 0 0 805 422 0 <consumer_profile::build_typed>:
+38 0 0 147 97 0 <consumer_profile::build>:
+29 0 0 78 65 0 <gf2_core::field::matrix::gemm_tiled>:
+20 0 0 234 119 6 <consumer_profile::main>:
+15 0 0 55 51 0 <std::sys::pal::unix::stack_overflow::thread_info::set_current_info>:
+12 0 0 14 14 0 <alloc::raw_vec::RawVecInner<A>::finish_grow>:
+11 0 0 55 38 0 <byte_field_gf2_side::workload::pack_matrix>:
+11 0 0 16 13 0 <gf2_core::field::vec::dot_product_slices>:
+11 0 0 35 27 0 <gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref>:
+10 0 0 169 95 0 <<std::backtrace_rs::symbolize::gimli::Cache>::with_global::<std::backtrace_rs::symbolize::gimli::resolve::{closure#1}>>:
+10 0 0 30 21 0 <consumer_profile::build_matvec::{{closure}}>:
+8 0 0 10 8 0 <<alloc::raw_vec::RawVecInner>::finish_grow>:
+8 0 0 64 47 8 <<core::cell::once::OnceCell<core::result::Result<addr2line::line::Lines, gimli::read::Error>>>::try_init::<<core::cell::once::OnceCell<core::result::Result<addr2line::line::Lines, gimli::read::Error>>>::get_or_init<<addr2line::line::LazyLines>::borrow<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>::{closure#0}>::{closure#0}, !>>:
+8 0 0 12 10 0 <gf2_core::field::vec::FieldVec<F>::axpy>:
+7 0 0 62 34 0 <<gimli::read::dwarf::Unit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>, usize>>::new>:
+6 0 0 142 51 0 <<std::backtrace_rs::symbolize::gimli::Context>::new>:
+6 0 0 20 16 0 <<std::backtrace_rs::symbolize::gimli::Mapping>::load_dwarf_package>:
+6 0 0 11 8 0 <<std::io::error::Error>::new::<&str>>:
+6 0 0 24 12 0 <core::ptr::drop_in_place<consumer_profile::build_axpy<byte_field_gf2_side::workload::RuntimeGf256>::{{closure}}>>:
+5 0 0 43 30 0 <<std::sync::once::Once>::call_once::<std::rt::cleanup::{closure#0}>::{closure#0}>:
+5 0 0 2 2 0 <<std::sys::sync::rwlock::futex::RwLock>::wake_writer_or_readers>:
+5 0 0 47 38 2 <std::rt::lang_start_internal>:
+5 0 0 9 8 0 <std::sys::env::unix::getenv::{closure#0}>:
+4 0 0 10 10 1 <<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul>:
+4 0 0 32 19 0 <<core::cell::once::OnceCell<core::result::Result<addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>>>::try_init::<<core::cell::once::OnceCell<core::result::Result<addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>>>::get_or_init<<addr2line::function::LazyFunctions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::borrow::{closure#0}>::{closure#0}, !>>:
+4 0 0 9 8 0 <<std::sys::sync::once::futex::Once>::call>:
+4 0 0 17 9 0 <consumer_profile::build_axpy::{{closure}}>:
+4 0 0 22 20 0 <std::backtrace_rs::symbolize::gimli::libs_dl_iterate_phdr::callback>:
+4 0 0 13 9 0 <std::env::args_os>:
+4 0 0 13 11 0 <std::env::current_dir>:
+4 0 0 17 14 0 <std::env::current_exe>:
+4 0 0 19 13 0 <std::sys::pal::unix::stack_overflow::imp::signal_handler>:
+3 0 0 6 3 0 <<alloc::sync::Arc<gimli::read::dwarf::Dwarf<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>::drop_slow>:
+3 0 0 7 5 0 <byte_field_gf2_side::workload::pack_vec>:
+3 0 0 135 66 0 <core::ops::function::FnOnce::call_once{{vtable.shim}}>:
+3 0 0 20 12 0 <core::ptr::drop_in_place<consumer_profile::build_matmul<byte_field_gf2_side::workload::RuntimeGf256>::{{closure}}>>:
+3 0 0 19 16 0 <std::io::stdio::print_to_buffer_if_capture_used>:
+3 0 0 13 8 0 <std::panicking::default_hook>:
+2 0 0 5 5 0 <<&[u8] as <alloc::ffi::c_str::CString>::new::SpecNewImpl>::spec_new_impl>:
+2 0 0 17 11 0 <<&std::io::stdio::Stderr as std::io::Write>::write_fmt>:
+2 0 0 17 11 0 <<&std::io::stdio::Stdout as std::io::Write>::write_fmt>:
+2 0 0 3 3 0 <<<std::sync::once::Once>::call_once_force<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::initialize<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::get_or_init<std::io::stdio::stdout::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} as core::ops::function::FnOnce<(&std::sync::once::OnceState,)>>::call_once::{shim:vtable#0}>:
+2 0 0 2 2 0 <<alloc::boxed::Box<alloc::collections::btree::node::InternalNode<u64, gimli::read::abbrev::Abbreviation>>>::new_uninit_in>:
+2 0 0 2 2 0 <<alloc::boxed::Box<alloc::collections::btree::node::LeafNode<u64, gimli::read::abbrev::Abbreviation>>>::new_uninit_in>:
+2 0 0 7 5 0 <<alloc::ffi::c_str::CString>::_from_vec_unchecked>:
+2 0 0 12 7 0 <<alloc::string::String>::from_utf8_lossy>:
+2 0 0 3 1 0 <<alloc::sync::Arc<gimli::read::abbrev::Abbreviations>>::drop_slow>:
+2 0 0 7 6 0 <<gimli::read::abbrev::Attributes>::push>:
+2 0 0 6 5 0 <<gimli::read::line::FileEntryFormat>::parse::<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>:
+2 0 0 6 4 0 <<std::backtrace_rs::symbolize::gimli::elf::Object>::parse>:
+2 0 0 5 4 0 <<std::backtrace_rs::symbolize::gimli::stash::Stash>::allocate>:
+2 0 0 12 11 0 <<std::io::error::Error as core::fmt::Display>::fmt>:
+2 0 0 30 28 0 <<std::io::error::repr_bitpacked::Repr as core::fmt::Debug>::fmt>:
+2 0 0 5 4 0 <<std::panicking::panic_handler::FormatStringPayload as core::panic::PanicPayload>::take_box>:
+2 0 0 2 2 0 <<std::panicking::panic_handler::StaticStrPayload as core::panic::PanicPayload>::take_box>:
+2 0 0 3 3 0 <<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::initialize<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::get_or_init<std::io::stdio::stdout::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}>:
+2 0 0 3 3 0 <<std::sys::sync::rwlock::futex::RwLock>::read_contended>:
+2 0 0 3 3 0 <<u8 as <[_]>::to_vec_in::ConvertVec>::to_vec::<alloc::alloc::Global>>:
+2 0 0 1 1 0 <__rustc::__rust_alloc>:
+2 0 0 3 3 0 <__rustc::__rust_realloc>:
+2 0 0 6 4 0 <__rustc::__rust_start_panic>:
+2 0 0 16 13 0 <addr2line::line::render_file::<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>:
+2 0 0 7 6 0 <alloc::fmt::format::format_inner>:
+2 0 0 6 5 0 <byte_field_gf2_side::workload::pack_into_matrix>:
+2 0 0 7 6 0 <bytefield_consumer::axpy_field_vec>:
+2 0 0 13 9 0 <core::ptr::drop_in_place::<core::result::Result<core::option::Option<alloc::boxed::Box<addr2line::unit::DwoUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>, gimli::read::Error>>>:
+2 0 0 5 4 0 <core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>>:
+2 0 0 5 4 0 <core::ptr::drop_in_place<alloc::vec::into_iter::IntoIter<gf2_core::gf2m::field::Gf2mElement_>>>:
+2 0 0 18 14 0 <core::ptr::drop_in_place<consumer_profile::build_pairwise::{{closure}}>>:
+2 0 0 7 5 0 <core::slice::sort::stable::driftsort_main::<(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset), <[(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset)]>::sort_by_key<gimli::common::DebugInfoOffset, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}, alloc::vec::Vec<(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset)>>>:
+2 0 0 7 5 0 <core::slice::sort::stable::driftsort_main::<addr2line::function::FunctionAddress, <[addr2line::function::FunctionAddress]>::sort_by_key<u64, <addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#1}>::{closure#0}, alloc::vec::Vec<addr2line::function::FunctionAddress>>>:
+2 0 0 7 5 0 <core::slice::sort::stable::driftsort_main::<addr2line::function::InlinedFunctionAddress, <[addr2line::function::InlinedFunctionAddress]>::sort_by<<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}, alloc::vec::Vec<addr2line::function::InlinedFunctionAddress>>>:
+2 0 0 7 4 0 <core::slice::sort::stable::driftsort_main::<addr2line::line::LineSequence, <[addr2line::line::LineSequence]>::sort_by_key<u64, <addr2line::line::Lines>::parse<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>::{closure#1}>::{closure#0}, alloc::vec::Vec<addr2line::line::LineSequence>>>:
+2 0 0 7 5 0 <core::slice::sort::stable::driftsort_main::<addr2line::unit::UnitRange, <[addr2line::unit::UnitRange]>::sort_by_key<u64, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#4}>::{closure#0}, alloc::vec::Vec<addr2line::unit::UnitRange>>>:
+2 0 0 10 7 0 <gf2_core::gf2m::field::Gf2mField_<V>::new_internal>:
+2 0 0 8 6 0 <hashbrown::raw::RawTable<T,A>::reserve_rehash>:
+2 0 0 13 4 0 <std::backtrace_rs::symbolize::gimli::elf::locate_build_id>:
+2 0 0 4 3 0 <std::io::stdio::try_set_output_capture>:
+2 0 0 7 7 0 <std::sys::fs::unix::canonicalize>:
+1 0 0 9 7 0 <<addr2line::lookup::LoopingLookup<core::result::Result<addr2line::frame::FrameIter<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>, addr2line::lookup::MappedLookup<core::result::Result<(core::option::Option<&addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>, core::option::Option<addr2line::frame::Location>), gimli::read::Error>, addr2line::lookup::SimpleLookup<core::result::Result<(addr2line::DebugFile, gimli::read::dwarf::UnitRef<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>), gimli::read::Error>, gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>, <addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::dwarf_and_unit::{closure#6}>, <addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::find_function_or_location::{closure#0}>, <addr2line::Context<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::find_frames::{closure#0}>>::new_lookup>:
+1 0 0 8 1 0 <<addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::find_function_or_location>:
+1 0 0 1 1 0 <<alloc::sync::Arc<std::sync::poison::mutex::Mutex<alloc::vec::Vec<u8>>>>::drop_slow>:
+1 0 0 1 1 0 <<alloc::sync::Arc<std::thread::thread::Inner, std::alloc::System>>::drop_slow>:
+1 0 0 2 2 0 <<std::sys::sync::mutex::futex::Mutex>::lock_contended>:
+1 0 0 2 2 0 <alloc::sync::Arc<T,A>::drop_slow>:
+1 0 0 12 6 0 <core::ptr::drop_in_place::<(usize, std::backtrace_rs::symbolize::gimli::Mapping)>>:
+1 0 0 3 1 0 <core::ptr::drop_in_place::<<alloc::collections::btree::map::IntoIter<_, _, _> as core::ops::drop::Drop>::drop::DropGuard<u64, core::result::Result<alloc::sync::Arc<gimli::read::abbrev::Abbreviations>, gimli::read::Error>, alloc::alloc::Global>>>:
+1 0 0 6 2 0 <core::ptr::drop_in_place::<addr2line::Context<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>:
+1 0 0 19 14 0 <core::ptr::drop_in_place::<addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>:
+1 0 0 6 4 0 <core::ptr::drop_in_place::<addr2line::unit::SupUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>:
+1 0 0 10 7 0 <core::ptr::drop_in_place::<addr2line::unit::SupUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>:
+1 0 0 4 2 0 <core::ptr::drop_in_place::<alloc::sync::ArcInner<gimli::read::dwarf::Dwarf<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>>:
+1 0 0 10 7 0 <core::ptr::drop_in_place::<alloc::vec::Vec<addr2line::unit::SupUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>>:
+1 0 0 6 2 0 <core::ptr::drop_in_place::<gimli::read::abbrev::AbbreviationsCache>>:
+1 0 0 6 4 0 <core::ptr::drop_in_place::<gimli::read::dwarf::Unit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>, usize>>>:
+1 0 0 0 0 0 <core::ptr::drop_in_place::<std::sync::nonpoison::rwlock::RwLockReadGuard<std::panicking::Hook>>>:
+1 0 0 9 7 0 <std::panic::get_backtrace_style>:
+1 0 0 0 0 0 <std::panicking::panic_count::increase>:
+1 0 0 15 10 0 <std::panicking::panic_with_hook>:
+1 0 0 2 2 0 <std::sys::backtrace::lock>:
+1 0 0 3 3 0 <std::sys::exit::unique_thread_exit>:
+1 0 0 17 8 0 <std::sys::thread_local::destructors::linux_like::register>:
+1 0 0 5 5 0 <std::sys::thread_local::guard::key::enable::run>:
+1 0 0 0 0 0 <std::sys::thread_local::native::eager::destroy::<core::cell::Cell<core::option::Option<alloc::sync::Arc<std::sync::poison::mutex::Mutex<alloc::vec::Vec<u8>>>>>>>:
+0 138 10 36 36 0 <gf2_kernels_simd::x86::gf2m_gemm::gf2m_gemm_panelized>:
+0 21 0 14 14 0 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4>:
+0 3 0 0 0 0 <gf2_kernels_simd::x86::clmul::clmul_barrett_reduce>:
+0 3 0 2 2 0 <gf2_kernels_simd::x86::clmul::clmul_batch>:
+0 1 0 2 0 0 <gf2_kernels_simd::gf2m::gf2m_mul_pclmul>:
+0 1 0 0 0 0 <gf2_kernels_simd::x86::clmul::clmul_u64>:
+0 0 0 2 1 0 <<&T as core::fmt::Debug>::fmt>:
+0 0 0 1 1 0 <<&[u8] as object::read::read_ref::ReadRef>::read_bytes_at_until>:
+0 0 0 1 1 0 <<&core::panic::location::Location as core::fmt::Display>::fmt>:
+0 0 0 2 2 0 <<&i16 as core::fmt::Debug>::fmt>:
+0 0 0 1 1 0 <<&i32 as core::fmt::Debug>::fmt>:
+0 0 0 8 2 0 <<&mut serde_json::ser::Serializer<W,F> as serde_core::ser::Serializer>::serialize_str>:
+0 0 0 1 1 0 <<&std::ffi::os_str::OsStr as core::fmt::Debug>::fmt>:
+0 0 0 22 13 0 <<&std::fs::File as std::io::Read>::read_to_string>:
+0 0 0 16 10 0 <<&str as core::str::pattern::Pattern>::is_contained_in>:
+0 0 0 1 1 0 <<&u64 as core::fmt::Debug>::fmt>:
+0 0 0 1 1 0 <<*mut core::ffi::c_void as core::fmt::Debug>::fmt>:
+0 0 0 1 0 0 <<<std::sync::once::Once>::call_once<std::rt::cleanup::{closure#0}>::{closure#0} as core::ops::function::FnOnce<(&std::sync::once::OnceState,)>>::call_once::{shim:vtable#0}>:
+0 0 0 8 6 0 <<<std::sync::once::Once>::call_once_force<<std::sync::once_lock::OnceLock<std::fs::File>>::initialize<std::sys::random::linux::getrandom::{closure#0}, std::io::error::Error>::{closure#0}>::{closure#0} as core::ops::function::FnOnce<(&std::sync::once::OnceState,)>>::call_once::{shim:vtable#0}>:
+0 0 0 1 1 0 <<<std::sync::once::Once>::call_once_force<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::initialize<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::get_or_init<std::io::stdio::cleanup::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} as core::ops::function::FnOnce<(&std::sync::once::OnceState,)>>::call_once::{shim:vtable#0}>:
+0 0 0 11 10 0 <<<std::sys::backtrace::BacktraceLock>::print::DisplayBacktrace as core::fmt::Display>::fmt>:
+0 0 0 3 3 0 <<[u8] as core::fmt::Debug>::fmt>:
+0 0 0 2 2 0 <<[u8]>::copy_within::<core::ops::range::RangeInclusive<usize>>>:
+0 0 0 23 7 0 <<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse_children>:
+0 0 0 1 1 0 <<addr2line::line::Lines>::find_location>:
+0 0 0 6 3 0 <<addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::find_function_or_location::{closure#0}>:
+0 0 0 6 6 0 <<alloc::collections::btree::map::IntoIter<u64, core::result::Result<alloc::sync::Arc<gimli::read::abbrev::Abbreviations>, gimli::read::Error>>>::dying_next>:
+0 0 0 5 4 0 <<alloc::collections::btree::map::entry::VacantEntry<u64, gimli::read::abbrev::Abbreviation>>::insert_entry>:
+0 0 0 10 10 0 <<alloc::collections::btree::node::BalancingContext<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo>>::bulk_steal_left>:
+0 0 0 9 9 0 <<alloc::collections::btree::node::BalancingContext<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo>>::bulk_steal_right>:
+0 0 0 7 6 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Internal>, alloc::collections::btree::node::marker::Edge>>::insert::<alloc::alloc::Global>>:
+0 0 0 3 3 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Internal>, alloc::collections::btree::node::marker::Edge>>::insert_fit>:
+0 0 0 8 7 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Internal>, alloc::collections::btree::node::marker::KV>>::split::<alloc::alloc::Global>>:
+0 0 0 6 5 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Leaf>, alloc::collections::btree::node::marker::Edge>>::insert::<alloc::alloc::Global>>:
+0 0 0 2 2 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Leaf>, alloc::collections::btree::node::marker::Edge>>::insert_fit>:
+0 0 0 7 6 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Leaf>, alloc::collections::btree::node::marker::Edge>>::insert_recursing::<alloc::alloc::Global, <alloc::collections::btree::map::entry::VacantEntry<u64, gimli::read::abbrev::Abbreviation>>::insert_entry::{closure#0}>>:
+0 0 0 4 3 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Leaf>, alloc::collections::btree::node::marker::KV>>::split::<alloc::alloc::Global>>:
+0 0 0 5 4 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Leaf>, alloc::collections::btree::node::marker::KV>>::split_leaf_data>:
+0 0 0 25 20 0 <<alloc::collections::btree::node::Handle<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::collections::btree::node::marker::Leaf>, alloc::collections::btree::node::marker::KV>>::remove_leaf_kv::<<alloc::collections::btree::map::entry::OccupiedEntry<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo>>::remove_kv::{closure#0}, alloc::alloc::Global>>:
+0 0 0 3 2 0 <<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Internal>>::push>:
+0 0 0 3 2 0 <<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Mut, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Leaf>>::push_with_handle>:
+0 0 0 4 3 0 <<alloc::collections::btree::node::NodeRef<alloc::collections::btree::node::marker::Owned, u64, gimli::read::abbrev::Abbreviation, alloc::collections::btree::node::marker::Internal>>::new_internal::<alloc::alloc::Global>>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<&addr2line::function::InlinedFunction<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<(*mut u8, unsafe extern "C" fn(*mut u8)), std::alloc::System>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<addr2line::function::InlinedFunction<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<addr2line::function::LazyFunction<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<addr2line::line::LineSequence>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<addr2line::unit::SupUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<alloc::vec::Vec<u8>>>::grow_one>:
+0 0 0 2 2 0 <<alloc::raw_vec::RawVec<gimli::read::abbrev::Abbreviation>>::grow_one>:
+0 0 0 2 2 0 <<alloc::raw_vec::RawVec<gimli::read::abbrev::AttributeSpecification>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<gimli::read::line::FileEntry<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>, usize>>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<gimli::read::line::FileEntryFormat>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<std::backtrace_rs::symbolize::gimli::Library>>::grow_one>:
+0 0 0 2 1 0 <<alloc::raw_vec::RawVec<std::backtrace_rs::symbolize::gimli::mmap::Mmap>>::grow_one>:
+0 0 0 8 6 0 <<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>>:
+0 0 0 2 2 0 <<alloc::raw_vec::RawVecInner<std::alloc::System>>::finish_grow>:
+0 0 0 1 0 0 <<alloc::raw_vec::RawVecInner<std::alloc::System>>::grow_amortized>:
+0 0 0 1 1 0 <<alloc::raw_vec::RawVecInner>::grow_amortized>:
+0 0 0 3 0 0 <<alloc::string::String as core::fmt::Write>::write_char>:
+0 0 0 6 3 0 <<alloc::string::String as core::fmt::Write>::write_str>:
+0 0 0 2 1 0 <<alloc::vec::Vec<u8> as std::io::Write>::write>:
+0 0 0 2 1 0 <<alloc::vec::Vec<u8> as std::io::Write>::write_all>:
+0 0 0 3 1 0 <<alloc::vec::Vec<u8> as std::io::Write>::write_all_vectored>:
+0 0 0 11 8 0 <<alloc::vec::Vec<u8> as std::io::Write>::write_fmt>:
+0 0 0 3 1 0 <<alloc::vec::Vec<u8> as std::io::Write>::write_vectored>:
+0 0 0 5 4 0 <<char as core::fmt::Debug>::fmt>:
+0 0 0 1 1 0 <<char as core::fmt::Display>::fmt>:
+0 0 0 2 2 0 <<char>::escape_debug_ext>:
+0 0 0 9 9 0 <<core::bstr::ByteStr as core::fmt::Display>::fmt>:
+0 0 0 26 13 0 <<core::cell::once::OnceCell<core::result::Result<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>>>::try_init::<<core::cell::once::OnceCell<core::result::Result<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>>>::get_or_init<<addr2line::function::LazyFunction<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::borrow::{closure#0}>::{closure#0}, !>>:
+0 0 0 2 1 0 <<core::cell::once::OnceCell<core::result::Result<core::option::Option<alloc::boxed::Box<addr2line::unit::DwoUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>, gimli::read::Error>>>::try_init::<<core::cell::once::OnceCell<core::result::Result<core::option::Option<alloc::boxed::Box<addr2line::unit::DwoUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>, gimli::read::Error>>>::get_or_init<<addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::dwarf_and_unit::{closure#2}>::{closure#0}, !>>:
+0 0 0 2 1 0 <<core::cell::once::OnceCell<core::result::Result<core::option::Option<alloc::boxed::Box<addr2line::unit::DwoUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>, gimli::read::Error>>>::try_init::<<core::cell::once::OnceCell<core::result::Result<core::option::Option<alloc::boxed::Box<addr2line::unit::DwoUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>, gimli::read::Error>>>::get_or_init<<addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::dwarf_and_unit::{closure#4}>::{closure#0}, !>>:
+0 0 0 3 3 0 <<core::fmt::Formatter>::debug_struct_field1_finish>:
+0 0 0 4 4 0 <<core::fmt::Formatter>::pad>:
+0 0 0 1 1 0 <<core::fmt::Formatter>::pad_integral::write_prefix>:
+0 0 0 9 6 0 <<core::fmt::Formatter>::pad_integral>:
+0 0 0 5 5 0 <<core::fmt::builders::DebugList>::entry>:
+0 0 0 9 9 0 <<core::fmt::builders::DebugStruct>::field>:
+0 0 0 1 1 0 <<core::fmt::builders::PadAdapter as core::fmt::Write>::write_char>:
+0 0 0 2 2 0 <<core::fmt::builders::PadAdapter as core::fmt::Write>::write_str>:
+0 0 0 5 4 0 <<core::iter::sources::from_fn::FromFn<<rustc_demangle::v0::HexNibbles>::try_parse_str_chars::{closure#2}> as core::iter::traits::iterator::Iterator>::next>:
+0 0 0 1 1 0 <<core::num::error::ParseIntError as core::fmt::Debug>::fmt>:
+0 0 0 2 1 0 <<core::ops::range::Range<usize> as core::fmt::Debug>::fmt>:
+0 0 0 3 3 0 <<core::str::iter::SplitInternal<char>>::next>:
+0 0 0 12 11 0 <<core::str::lossy::Debug as core::fmt::Debug>::fmt>:
+0 0 0 3 3 0 <<core::str::pattern::CharSearcher as core::str::pattern::Searcher>::next_match>:
+0 0 0 3 3 0 <<core::str::pattern::StrSearcher as core::str::pattern::Searcher>::next>:
+0 0 0 6 6 0 <<core::str::pattern::StrSearcher>::new>:
+0 0 0 5 5 0 <<f64 as zmij::private::Sealed>::write_to_zmij_buffer>:
+0 0 0 3 2 0 <<gimli::read::abbrev::Abbreviation>::new>:
+0 0 0 7 6 0 <<gimli::read::abbrev::Abbreviations>::insert>:
+0 0 0 1 1 0 <<gimli::read::abbrev::Attributes as core::ops::deref::Deref>::deref>:
+0 0 0 0 0 1 <<gimli::read::aranges::ArangeHeader<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>, usize>>::parse>:
+0 0 0 11 0 0 <<gimli::read::unit::Attribute<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::value>:
+0 0 0 2 1 0 <<gimli::read::unit::EntriesCursor<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::next_entry>:
+0 0 0 1 1 0 <<i32 as core::fmt::Debug>::fmt>:
+0 0 0 1 1 0 <<i32 as core::fmt::Display>::fmt>:
+0 0 0 5 5 0 <<rustc_demangle::Demangle as core::fmt::Display>::fmt>:
+0 0 0 1 0 0 <<rustc_demangle::DemangleStyle as core::fmt::Display>::fmt>:
+0 0 0 1 1 0 <<rustc_demangle::SizeLimitedFmtAdapter<&mut core::fmt::Formatter> as core::fmt::Write>::write_char>:
+0 0 0 19 19 0 <<rustc_demangle::legacy::Demangle as core::fmt::Display>::fmt>:
+0 0 0 2 2 0 <<rustc_demangle::v0::HexNibbles>::try_parse_uint>:
+0 0 0 7 7 4 <<rustc_demangle::v0::Ident as core::fmt::Display>::fmt>:
+0 0 0 1 0 0 <<rustc_demangle::v0::Parser>::backref>:
+0 0 0 1 1 0 <<rustc_demangle::v0::Parser>::hex_nibbles>:
+0 0 0 3 3 0 <<rustc_demangle::v0::Parser>::ident>:
+0 0 0 1 0 0 <<rustc_demangle::v0::Parser>::opt_integer_62>:
+0 0 0 7 4 0 <<rustc_demangle::v0::Printer>::in_binder::<<rustc_demangle::v0::Printer>::print_type::{closure#0}>>:
+0 0 0 8 4 0 <<rustc_demangle::v0::Printer>::in_binder::<<rustc_demangle::v0::Printer>::print_type::{closure#1}>>:
+0 0 0 3 1 0 <<rustc_demangle::v0::Printer>::print_backref::<<rustc_demangle::v0::Printer>::print_const::{closure#6}>>:
+0 0 0 3 1 0 <<rustc_demangle::v0::Printer>::print_backref::<<rustc_demangle::v0::Printer>::print_path::{closure#1}>>:
+0 0 0 3 1 0 <<rustc_demangle::v0::Printer>::print_backref::<<rustc_demangle::v0::Printer>::print_type>>:
+0 0 0 35 20 0 <<rustc_demangle::v0::Printer>::print_const>:
+0 0 0 13 9 0 <<rustc_demangle::v0::Printer>::print_const_str_literal>:
+0 0 0 8 5 0 <<rustc_demangle::v0::Printer>::print_const_uint>:
+0 0 0 5 5 0 <<rustc_demangle::v0::Printer>::print_lifetime_from_index>:
+0 0 0 10 6 0 <<rustc_demangle::v0::Printer>::print_pat>:
+0 0 0 36 24 0 <<rustc_demangle::v0::Printer>::print_path>:
+0 0 0 7 2 0 <<rustc_demangle::v0::Printer>::print_path_maybe_open_generics>:
+0 0 0 6 5 0 <<rustc_demangle::v0::Printer>::print_quoted_escaped_chars::<core::iter::sources::once::Once<char>>>:
+0 0 0 2 1 0 <<rustc_demangle::v0::Printer>::print_sep_list::<<rustc_demangle::v0::Printer>::print_const::{closure#2}>>:
+0 0 0 2 1 0 <<rustc_demangle::v0::Printer>::print_sep_list::<<rustc_demangle::v0::Printer>::print_const::{closure#3}>>:
+0 0 0 8 5 0 <<rustc_demangle::v0::Printer>::print_sep_list::<<rustc_demangle::v0::Printer>::print_const::{closure#5}>>:
+0 0 0 10 6 0 <<rustc_demangle::v0::Printer>::print_sep_list::<<rustc_demangle::v0::Printer>::print_dyn_trait>>:
+0 0 0 6 2 0 <<rustc_demangle::v0::Printer>::print_sep_list::<<rustc_demangle::v0::Printer>::print_generic_arg>>:
+0 0 0 2 1 0 <<rustc_demangle::v0::Printer>::print_sep_list::<<rustc_demangle::v0::Printer>::print_type>>:
+0 0 0 17 12 0 <<rustc_demangle::v0::Printer>::print_type::{closure#0}>:
+0 0 0 32 17 0 <<rustc_demangle::v0::Printer>::print_type>:
+0 0 0 2 1 0 <<rustc_demangle::v0::Printer>::skipping_printing::<<rustc_demangle::v0::Printer>::print_path::{closure#0}>>:
+0 0 0 6 5 0 <<serde_json::error::Error as core::fmt::Debug>::fmt>:
+0 0 0 4 1 0 <<serde_json::ser::Compound<W,F> as serde_core::ser::SerializeMap>::end>:
+0 0 0 4 1 0 <<serde_json::ser::Compound<W,F> as serde_core::ser::SerializeMap>::serialize_key>:
+0 0 0 4 1 0 <<serde_json::ser::PrettyFormatter as serde_json::ser::Formatter>::end_array>:
+0 0 0 13 13 0 <<std::backtrace_rs::print::BacktraceFrameFmt>::print_raw_with_column>:
+0 0 0 2 2 0 <<std::backtrace_rs::symbolize::Symbol>::name>:
+0 0 0 4 4 0 <<std::backtrace_rs::symbolize::SymbolName as core::fmt::Display>::fmt>:
+0 0 0 52 33 0 <<std::backtrace_rs::symbolize::gimli::Mapping>::new_debug>:
+0 0 0 1 1 0 <<std::backtrace_rs::symbolize::gimli::elf::Object>::search_symtab>:
+0 0 0 10 7 0 <<std::backtrace_rs::symbolize::gimli::elf::Object>::section>:
+0 0 0 3 0 0 <<std::backtrace_rs::symbolize::gimli::parse_running_mmaps::MapsEntry as core::str::traits::FromStr>::from_str>:
+0 0 0 1 1 0 <<std::ffi::os_str::OsString as core::fmt::Debug>::fmt>:
+0 0 0 8 8 0 <<std::io::buffered::bufwriter::BufWriter<std::io::stdio::StdoutRaw>>::write_all_cold>:
+0 0 0 2 1 0 <<std::io::default_write_fmt::Adapter<alloc::vec::Vec<u8>> as core::fmt::Write>::write_char>:
+0 0 0 2 1 0 <<std::io::default_write_fmt::Adapter<alloc::vec::Vec<u8>> as core::fmt::Write>::write_str>:
+0 0 0 7 6 0 <<std::io::default_write_fmt::Adapter<std::io::cursor::Cursor<&mut [u8]>> as core::fmt::Write>::write_char>:
+0 0 0 7 6 0 <<std::io::default_write_fmt::Adapter<std::io::cursor::Cursor<&mut [u8]>> as core::fmt::Write>::write_str>:
+0 0 0 11 9 0 <<std::io::default_write_fmt::Adapter<std::io::stdio::StderrLock> as core::fmt::Write>::write_char>:
+0 0 0 11 9 0 <<std::io::default_write_fmt::Adapter<std::io::stdio::StderrLock> as core::fmt::Write>::write_str>:
+0 0 0 7 6 0 <<std::io::default_write_fmt::Adapter<std::io::stdio::StdoutLock> as core::fmt::Write>::write_char>:
+0 0 0 7 6 0 <<std::io::default_write_fmt::Adapter<std::io::stdio::StdoutLock> as core::fmt::Write>::write_str>:
+0 0 0 1 0 0 <<std::io::default_write_fmt::Adapter<std::sys::stdio::unix::Stderr> as core::fmt::Write>::write_char>:
+0 0 0 9 8 0 <<std::io::default_write_fmt::Adapter<std::sys::stdio::unix::Stderr> as core::fmt::Write>::write_str>:
+0 0 0 19 18 0 <<std::io::stdio::StdoutLock as std::io::Write>::write_all>:
+0 0 0 3 2 0 <<std::panicking::panic_handler::FormatStringPayload as core::panic::PanicPayload>::get>:
+0 0 0 2 2 0 <<std::path::Component as core::cmp::PartialEq>::eq>:
+0 0 0 12 6 0 <<std::path::Components as core::iter::traits::double_ended::DoubleEndedIterator>::next_back>:
+0 0 0 4 4 0 <<std::path::Components as core::iter::traits::iterator::Iterator>::next>:
+0 0 0 5 2 0 <<std::path::Components>::as_path>:
+0 0 0 2 2 0 <<std::path::Components>::parse_next_component_back>:
+0 0 0 4 3 0 <<std::path::Path>::_strip_prefix>:
+0 0 0 9 6 0 <<std::path::PathBuf>::_set_extension>:
+0 0 0 7 7 0 <<std::path::StripPrefixError as core::fmt::Debug>::fmt>:
+0 0 0 8 6 0 <<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<std::fs::File>>::initialize<std::sys::random::linux::getrandom::{closure#0}, std::io::error::Error>::{closure#0}>::{closure#0}>:
+0 0 0 1 1 0 <<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::initialize<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::get_or_init<std::io::stdio::cleanup::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}>:
+0 0 0 4 2 0 <<std::sync::once_lock::OnceLock<std::fs::File>>::initialize::<std::sys::random::linux::getrandom::{closure#0}, std::io::error::Error>>:
+0 0 0 1 1 0 <<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::initialize::<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::get_or_init<std::io::stdio::cleanup::{closure#0}>::{closure#0}, !>>:
+0 0 0 1 1 0 <<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::initialize::<<std::sync::once_lock::OnceLock<std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>>>::get_or_init<std::io::stdio::stdout::{closure#0}>::{closure#0}, !>>:
+0 0 0 1 1 0 <<std::sync::poison::PoisonError<T> as core::fmt::Debug>::fmt>:
+0 0 0 4 2 0 <<std::sys::backtrace::_print_fmt::{closure#0} as core::ops::function::FnOnce<(&mut core::fmt::Formatter, std::backtrace_rs::types::BytesOrWideString)>>::call_once::{shim:vtable#0}>:
+0 0 0 3 3 0 <<std::sys::fs::unix::File>::open_c>:
+0 0 0 5 5 0 <<std::sys::os_str::bytes::Slice>::check_public_boundary::slow_path>:
+0 0 0 9 6 0 <<std::sys::pal::unix::time::Timespec>::now>:
+0 0 0 2 1 0 <<std::sys::pal::unix::time::Timespec>::sub_timespec>:
+0 0 0 2 2 0 <<std::sys::stdio::unix::Stderr as std::io::Write>::write>:
+0 0 0 3 3 0 <<std::sys::stdio::unix::Stderr as std::io::Write>::write_all>:
+0 0 0 5 5 0 <<std::sys::stdio::unix::Stderr as std::io::Write>::write_all_vectored>:
+0 0 0 11 8 0 <<std::sys::stdio::unix::Stderr as std::io::Write>::write_fmt>:
+0 0 0 2 2 0 <<std::sys::stdio::unix::Stderr as std::io::Write>::write_vectored>:
+0 0 0 1 1 0 <<std::thread::id::ThreadId>::new::exhausted>:
+0 0 0 9 8 0 <<str as core::fmt::Debug>::fmt>:
+0 0 0 2 1 0 <<str>::trim_start_matches::<&str>>:
+0 0 0 5 5 0 <<u128>::_fmt_inner>:
+0 0 0 1 1 0 <<u32 as core::fmt::Display>::fmt>:
+0 0 0 1 1 0 <<u32 as itoa::Unsigned>::fmt>:
+0 0 0 1 1 0 <<u64 as core::fmt::Display>::fmt>:
+0 0 0 1 1 0 <<u64 as core::fmt::LowerHex>::fmt>:
+0 0 0 1 1 0 <<u64 as itoa::Unsigned>::fmt>:
+0 0 0 1 1 0 <<u8 as core::fmt::Display>::fmt>:
+0 0 0 1 1 0 <<u8 as core::fmt::LowerHex>::fmt>:
+0 0 0 1 1 0 <<u8 as core::fmt::UpperHex>::fmt>:
+0 0 0 1 1 0 <<usize as core::fmt::Debug>::fmt>:
+0 0 0 2 1 0 <__do_global_dtors_aux>:
+0 0 0 1 1 0 <__rustc::__rust_alloc_error_handler>:
+0 0 0 6 5 0 <__rustc::__rust_drop_panic>:
+0 0 0 6 5 0 <__rustc::__rust_foreign_exception>:
+0 0 0 3 3 0 <__rustc::__rust_panic_cleanup>:
+0 0 0 1 1 0 <__rustc::rust_begin_unwind>:
+0 0 0 4 2 0 <__rustc::rust_panic>:
+0 0 0 1 1 0 <_init>:
+0 0 0 1 1 0 <_start>:
+0 0 0 3 0 0 <addr2line::function::name_attr::<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>:
+0 0 0 8 1 0 <addr2line::function::name_entry::<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>:
+0 0 0 9 6 0 <addr2line::line::path_push>:
+0 0 0 1 1 0 <alloc::alloc::handle_alloc_error>:
+0 0 0 8 4 0 <alloc::raw_vec::RawVec<T,A>::grow_one>:
+0 0 0 6 4 0 <alloc::raw_vec::RawVecInner<A>::reserve::do_reserve_and_handle>:
+0 0 0 1 1 0 <alloc::raw_vec::capacity_overflow>:
+0 0 0 2 2 0 <alloc::raw_vec::handle_error>:
+0 0 0 1 1 0 <bytefield_consumer::axpy_region>:
+0 0 0 8 8 0 <bytefield_consumer::gemm_region>:
+0 0 0 6 6 0 <bytefield_consumer::matrix_to_region>:
+0 0 0 5 5 0 <bytefield_consumer::matvec_region>:
+0 0 0 3 3 0 <bytefield_consumer::pairwise_region>:
+0 0 0 14 6 0 <consumer_profile::build_matmul::{{closure}}>:
+0 0 0 3 3 0 <consumer_profile::build_pairwise::{{closure}}>:
+0 0 0 1 1 0 <core::cell::panic_already_borrowed>:
+0 0 0 3 3 0 <core::fmt::write>:
+0 0 0 2 0 0 <core::hash::BuildHasher::hash_one>:
+0 0 0 1 1 0 <core::option::expect_failed>:
+0 0 0 1 1 0 <core::option::unwrap_failed>:
+0 0 0 1 1 0 <core::panicking::assert_failed::<i16, i16>>:
+0 0 0 1 1 0 <core::panicking::assert_failed::<i32, i32>>:
+0 0 0 1 1 0 <core::panicking::assert_failed::<u64, u64>>:
+0 0 0 1 1 0 <core::panicking::assert_failed::<usize, usize>>:
+0 0 0 1 1 0 <core::panicking::assert_failed>:
+0 0 0 2 2 0 <core::panicking::assert_failed_inner>:
+0 0 0 1 1 0 <core::panicking::panic>:
+0 0 0 1 1 0 <core::panicking::panic_bounds_check>:
+0 0 0 1 1 0 <core::panicking::panic_cannot_unwind>:
+0 0 0 1 1 0 <core::panicking::panic_const::panic_const_div_by_zero>:
+0 0 0 1 1 0 <core::panicking::panic_const::panic_const_rem_by_zero>:
+0 0 0 1 1 0 <core::panicking::panic_fmt>:
+0 0 0 1 1 0 <core::panicking::panic_in_cleanup>:
+0 0 0 1 1 0 <core::panicking::panic_nounwind>:
+0 0 0 2 2 0 <core::panicking::panic_nounwind_fmt>:
+0 0 0 1 1 0 <core::panicking::panic_nounwind_nobacktrace>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<addr2line::function::LazyFunction<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>:
+0 0 0 6 3 0 <core::ptr::drop_in_place::<addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>:
+0 0 0 2 2 0 <core::ptr::drop_in_place::<alloc::boxed::Box<[addr2line::function::LazyFunction<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>]>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<alloc::boxed::Box<[alloc::string::String]>>>:
+0 0 0 5 4 0 <core::ptr::drop_in_place::<alloc::boxed::Box<panic_unwind::imp::Exception>>>:
+0 0 0 2 2 0 <core::ptr::drop_in_place::<alloc::vec::Vec<addr2line::function::LazyFunction<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<alloc::vec::Vec<addr2line::line::LineSequence>>>:
+0 0 0 5 2 0 <core::ptr::drop_in_place::<alloc::vec::Vec<addr2line::unit::ResUnit<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<alloc::vec::Vec<alloc::string::String>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<alloc::vec::Vec<std::ffi::os_str::OsString>>>:
+0 0 0 3 3 0 <core::ptr::drop_in_place::<core::option::Option<gimli::read::line::IncompleteLineProgram<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>, usize>>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<core::result::Result<&core::result::Result<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>, (&core::result::Result<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>, core::result::Result<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>)>>>:
+0 0 0 3 3 0 <core::ptr::drop_in_place::<core::result::Result<&core::result::Result<addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>, (&core::result::Result<addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>, core::result::Result<addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>)>>>:
+0 0 0 3 3 0 <core::ptr::drop_in_place::<core::result::Result<&core::result::Result<addr2line::line::Lines, gimli::read::Error>, (&core::result::Result<addr2line::line::Lines, gimli::read::Error>, core::result::Result<addr2line::line::Lines, gimli::read::Error>)>>>:
+0 0 0 5 4 0 <core::ptr::drop_in_place::<core::result::Result<(), std::io::error::Error>>>:
+0 0 0 3 3 0 <core::ptr::drop_in_place::<core::result::Result<addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>, gimli::read::Error>>>:
+0 0 0 3 3 0 <core::ptr::drop_in_place::<core::result::Result<addr2line::line::Lines, gimli::read::Error>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<core::result::Result<std::sync::poison::mutex::MutexGuard<()>, std::sync::poison::PoisonError<std::sync::poison::mutex::MutexGuard<()>>>>>:
+0 0 0 8 8 0 <core::ptr::drop_in_place::<gimli::read::abbrev::Abbreviations>>:
+0 0 0 3 3 0 <core::ptr::drop_in_place::<gimli::read::line::LineRows<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>, gimli::read::line::IncompleteLineProgram<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>, usize>, usize>>>:
+0 0 0 3 2 0 <core::ptr::drop_in_place::<panic_unwind::imp::Exception>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<std::backtrace_rs::backtrace::libunwind::Bomb>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<std::backtrace_rs::symbolize::gimli::Library>>:
+0 0 0 3 3 0 <core::ptr::drop_in_place::<std::backtrace_rs::symbolize::gimli::stash::Stash>>:
+0 0 0 11 10 0 <core::ptr::drop_in_place::<std::io::buffered::linewriter::LineWriter<std::io::stdio::StdoutRaw>>>:
+0 0 0 5 4 0 <core::ptr::drop_in_place::<std::io::default_write_fmt::Adapter<std::io::cursor::Cursor<&mut [u8]>>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<std::io::error::Custom>>:
+0 0 0 5 4 0 <core::ptr::drop_in_place::<std::io::error::Error>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<std::sync::poison::mutex::MutexGuard<alloc::vec::Vec<u8>>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place::<std::sys::backtrace::BacktraceLock>>:
+0 0 0 3 2 0 <core::ptr::drop_in_place<alloc::boxed::Box<dyn core::ops::function::FnMut<()>+Output = ()>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place<alloc::sync::ArcInner<gf2_core::gf2m::field::FieldParams_>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place<alloc::vec::Vec<alloc::string::String>>>:
+0 0 0 2 2 0 <core::ptr::drop_in_place<alloc::vec::Vec<consumer_profile::Record>>>:
+0 0 0 5 2 0 <core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::field::vec::FieldVec<gf2_core::gf2m::field::Gf2mElement_>>>>:
+0 0 0 5 2 0 <core::ptr::drop_in_place<alloc::vec::into_iter::IntoIter<gf2_core::field::vec::FieldVec<gf2_core::gf2m::field::Gf2mElement_>>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place<alloc::vec::into_iter::IntoIter<gf2_core::field::vec::FieldVec<gf2_core::gf2m::wide::Gf2mWide<1_usize,byte_field_gf2_side::workload::Gf256x11d>>>>>:
+0 0 0 5 5 0 <core::ptr::drop_in_place<consumer_profile::build_axpy<byte_field_gf2_side::workload::WideGf256>::{{closure}}>>:
+0 0 0 10 10 0 <core::ptr::drop_in_place<consumer_profile::build_matmul<byte_field_gf2_side::workload::WideGf256>::{{closure}}>>:
+0 0 0 4 1 0 <core::ptr::drop_in_place<consumer_profile::build_matvec<byte_field_gf2_side::workload::RuntimeGf256>::{{closure}}>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place<consumer_profile::build_matvec<byte_field_gf2_side::workload::WideGf256>::{{closure}}>>:
+0 0 0 7 6 0 <core::ptr::drop_in_place<serde_json::error::Error>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place<std::env::Args>>:
+0 0 0 5 4 0 <core::ptr::drop_in_place<std::io::error::Error>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place<std::sync::poison::PoisonError<std::sync::poison::mutex::MutexGuard<std::collections::hash::map::HashMap<(core::any::TypeId,usize),alloc::boxed::Box<dyn core::any::Any+core::marker::Sync+core::marker::Send>>>>>>:
+0 0 0 1 1 0 <core::ptr::drop_in_place<std::sync::poison::mutex::MutexGuard<std::collections::hash::map::HashMap<(core::any::TypeId,usize),alloc::boxed::Box<dyn core::any::Any+core::marker::Sync+core::marker::Send>>>>>:
+0 0 0 1 1 0 <core::result::unwrap_failed>:
+0 0 0 1 1 0 <core::slice::copy_from_slice_impl::len_mismatch_fail>:
+0 0 0 2 2 0 <core::slice::index::range::<core::ops::range::RangeInclusive<usize>>>:
+0 0 0 3 3 0 <core::slice::index::slice_index_fail>:
+0 0 0 2 2 0 <core::slice::memchr::memrchr>:
+0 0 0 3 0 0 <core::slice::sort::shared::pivot::median3_rec::<(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset), <[(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset)]>::sort_by_key<gimli::common::DebugInfoOffset, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}>>:
+0 0 0 3 0 0 <core::slice::sort::shared::pivot::median3_rec::<addr2line::function::FunctionAddress, <[addr2line::function::FunctionAddress]>::sort_by_key<u64, <addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#1}>::{closure#0}>>:
+0 0 0 3 0 0 <core::slice::sort::shared::pivot::median3_rec::<addr2line::function::InlinedFunctionAddress, <[addr2line::function::InlinedFunctionAddress]>::sort_by<<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}>>:
+0 0 0 3 0 0 <core::slice::sort::shared::pivot::median3_rec::<addr2line::line::LineSequence, <[addr2line::line::LineSequence]>::sort_by_key<u64, <addr2line::line::Lines>::parse<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>::{closure#1}>::{closure#0}>>:
+0 0 0 3 0 0 <core::slice::sort::shared::pivot::median3_rec::<addr2line::unit::UnitRange, <[addr2line::unit::UnitRange]>::sort_by_key<u64, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#4}>::{closure#0}>>:
+0 0 0 3 0 0 <core::slice::sort::shared::pivot::median3_rec::<std::backtrace_rs::symbolize::gimli::elf::ParsedSym, <[std::backtrace_rs::symbolize::gimli::elf::ParsedSym]>::sort_unstable_by_key<u64, <std::backtrace_rs::symbolize::gimli::elf::Object>::parse::{closure#3}>::{closure#0}>>:
+0 0 0 3 0 0 <core::slice::sort::shared::pivot::median3_rec>:
+0 0 0 1 1 0 <core::slice::sort::shared::smallsort::panic_on_ord_violation>:
+0 0 0 3 2 0 <core::slice::sort::shared::smallsort::small_sort_general::<std::backtrace_rs::symbolize::gimli::elf::ParsedSym, <[std::backtrace_rs::symbolize::gimli::elf::ParsedSym]>::sort_unstable_by_key<u64, <std::backtrace_rs::symbolize::gimli::elf::Object>::parse::{closure#3}>::{closure#0}>>:
+0 0 0 1 1 0 <core::slice::sort::shared::smallsort::sort8_stable::<(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset), <[(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset)]>::sort_by_key<gimli::common::DebugInfoOffset, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}>>:
+0 0 0 6 6 1 <core::slice::sort::stable::drift::sort::<(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset), <[(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset)]>::sort_by_key<gimli::common::DebugInfoOffset, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}>>:
+0 0 0 6 6 1 <core::slice::sort::stable::drift::sort::<addr2line::function::FunctionAddress, <[addr2line::function::FunctionAddress]>::sort_by_key<u64, <addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#1}>::{closure#0}>>:
+0 0 0 6 6 1 <core::slice::sort::stable::drift::sort::<addr2line::function::InlinedFunctionAddress, <[addr2line::function::InlinedFunctionAddress]>::sort_by<<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}>>:
+0 0 0 6 6 1 <core::slice::sort::stable::drift::sort::<addr2line::line::LineSequence, <[addr2line::line::LineSequence]>::sort_by_key<u64, <addr2line::line::Lines>::parse<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>::{closure#1}>::{closure#0}>>:
+0 0 0 6 6 1 <core::slice::sort::stable::drift::sort::<addr2line::unit::UnitRange, <[addr2line::unit::UnitRange]>::sort_by_key<u64, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#4}>::{closure#0}>>:
+0 0 0 12 7 0 <core::slice::sort::stable::quicksort::quicksort::<(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset), <[(gimli::common::DebugInfoOffset, gimli::common::DebugArangesOffset)]>::sort_by_key<gimli::common::DebugInfoOffset, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}>>:
+0 0 0 10 7 0 <core::slice::sort::stable::quicksort::quicksort::<addr2line::function::FunctionAddress, <[addr2line::function::FunctionAddress]>::sort_by_key<u64, <addr2line::function::Functions<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#1}>::{closure#0}>>:
+0 0 0 12 7 0 <core::slice::sort::stable::quicksort::quicksort::<addr2line::function::InlinedFunctionAddress, <[addr2line::function::InlinedFunctionAddress]>::sort_by<<addr2line::function::Function<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#0}>::{closure#0}>>:
+0 0 0 10 7 0 <core::slice::sort::stable::quicksort::quicksort::<addr2line::line::LineSequence, <[addr2line::line::LineSequence]>::sort_by_key<u64, <addr2line::line::Lines>::parse<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>::{closure#1}>::{closure#0}>>:
+0 0 0 10 7 0 <core::slice::sort::stable::quicksort::quicksort::<addr2line::unit::UnitRange, <[addr2line::unit::UnitRange]>::sort_by_key<u64, <addr2line::unit::ResUnits<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>::parse::{closure#4}>::{closure#0}>>:
+0 0 0 2 0 0 <core::slice::sort::unstable::quicksort::quicksort::<std::backtrace_rs::symbolize::gimli::elf::ParsedSym, <[std::backtrace_rs::symbolize::gimli::elf::ParsedSym]>::sort_unstable_by_key<u64, <std::backtrace_rs::symbolize::gimli::elf::Object>::parse::{closure#3}>::{closure#0}>>:
+0 0 0 4 2 0 <core::slice::sort::unstable::quicksort::quicksort>:
+0 0 0 1 1 0 <core::str::slice_error_fail>:
+0 0 0 8 8 0 <core::str::slice_error_fail_rt>:
+0 0 0 3 3 0 <core::unicode::printable::is_printable>:
+0 0 0 7 6 0 <gf2_core::gf2m::batch::batch_mul_raw>:
+0 0 0 4 4 0 <gf2_kernels_simd::gf2m_batch::detect>:
+0 0 0 4 4 0 <gf2_kernels_simd::gf2m_gemm::detect>:
+0 0 0 2 1 0 <gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_square_ymm_unroll4>:
+0 0 0 2 1 0 <gimli::read::line::parse_directory_v5::<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>:
+0 0 0 2 1 0 <gimli::read::line::parse_file_v5::<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>:
+0 0 0 2 0 0 <gimli::read::unit::parse_attribute::<gimli::read::endian_slice::EndianSlice<gimli::endianity::LittleEndian>>>:
+0 0 0 1 1 0 <main>:
+0 0 0 4 4 0 <miniz_oxide::inflate::core::apply_match>:
+0 0 0 22 16 0 <miniz_oxide::inflate::core::decompress>:
+0 0 0 2 1 0 <miniz_oxide::inflate::core::decompress_fast>:
+0 0 0 1 1 0 <miniz_oxide::inflate::core::init_tree>:
+0 0 0 6 6 0 <miniz_oxide::inflate::core::transfer>:
+0 0 0 3 2 0 <panic_unwind::imp::panic::exception_cleanup>:
+0 0 0 8 8 0 <rust_eh_personality>:
+0 0 0 12 9 0 <rustc_demangle::demangle>:
+0 0 0 16 4 0 <serde_core::ser::SerializeMap::serialize_entry>:
+0 0 0 13 2 0 <std::alloc::default_alloc_error_hook>:
+0 0 0 2 2 0 <std::alloc::rust_oom::{closure#0}>:
+0 0 0 1 1 0 <std::alloc::rust_oom>:
+0 0 0 3 2 0 <std::backtrace_rs::backtrace::libunwind::trace::trace_fn>:
+0 0 0 9 7 0 <std::backtrace_rs::symbolize::gimli::elf::debug_path_exists>:
+0 0 0 2 2 0 <std::backtrace_rs::symbolize::gimli::elf::decompress_zlib>:
+0 0 0 21 16 0 <std::backtrace_rs::symbolize::gimli::mmap>:
+0 0 0 9 6 0 <std::fs::write::inner>:
+0 0 0 5 4 0 <std::io::default_read_to_end::small_probe_read::<&std::fs::File>>:
+0 0 0 6 3 0 <std::io::stdio::_eprint>:
+0 0 0 7 3 0 <std::io::stdio::_print>:
+0 0 0 10 4 0 <std::panicking::default_hook::{closure#0}>:
+0 0 0 4 3 0 <std::panicking::panic_handler::{closure#0}>:
+0 0 0 2 2 0 <std::panicking::payload_as_str>:
+0 0 0 1 0 0 <std::process::abort>:
+0 0 0 2 0 0 <std::process::exit>:
+0 0 0 1 1 0 <std::rt::cleanup>:
+0 0 0 3 1 0 <std::rt::handle_rt_panic::<isize>>:
+0 0 0 1 0 0 <std::rt::lang_start::{{closure}}>:
+0 0 0 3 1 0 <std::rt::lang_start_internal::{closure#0}::{closure#0}::{closure#1}>:
+0 0 0 13 13 0 <std::sync::once::Once::call_once_force::{{closure}}>:
+0 0 0 6 6 0 <std::sync::once_lock::OnceLock<T>::initialize>:
+0 0 0 1 1 0 <std::sys::backtrace::__rust_begin_short_backtrace>:
+0 0 0 1 0 0 <std::sys::backtrace::__rust_end_short_backtrace::<std::alloc::rust_oom::{closure#0}, !>>:
+0 0 0 1 0 0 <std::sys::backtrace::__rust_end_short_backtrace::<std::panicking::panic_handler::{closure#0}, !>>:
+0 0 0 9 5 0 <std::sys::backtrace::_print_fmt::{closure#1}::{closure#0}>:
+0 0 0 5 2 0 <std::sys::backtrace::_print_fmt::{closure#1}>:
+0 0 0 3 3 0 <std::sys::backtrace::output_filename>:
+0 0 0 2 1 0 <std::sys::exit::exit>:
+0 0 0 7 5 0 <std::sys::fs::metadata>:
+0 0 0 5 5 0 <std::sys::fs::unix::try_statx>:
+0 0 0 4 2 0 <std::sys::helpers::small_c_string::run_with_cstr_allocating::<std::path::PathBuf>>:
+0 0 0 4 2 0 <std::sys::helpers::small_c_string::run_with_cstr_allocating::<std::sys::fs::unix::File>>:
+0 0 0 6 5 0 <std::sys::helpers::small_c_string::run_with_cstr_allocating::<std::sys::fs::unix::FileAttr>>:
+0 0 0 1 1 0 <std::sys::pal::unix::abort_internal>:
+0 0 0 23 19 0 <std::sys::pal::unix::stack_overflow::imp::make_handler>:
+0 0 0 31 25 0 <std::sys::random::linux::getrandom>:
+0 0 0 1 0 0 <std::sys::random::linux::hashmap_random_keys>:
+0 0 0 24 21 0 <std::thread::current::with_current_name::<std::panicking::default_hook::{closure#0}::{closure#0}, ()>::{closure#0}>:
+0 0 0 1 0 0 <std_detect::detect::cache::detect_and_initialize>:
