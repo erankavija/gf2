@@ -185,3 +185,92 @@ pub fn matrix_to_region<B: ByteField>(matrix: &FieldMatrix<B::Elem>, bytes: &mut
         }
     }
 }
+
+/// GF(2^8) modulo `x^8 + x^4 + x^3 + x + 1` (0x11B) as a compile-time
+/// configuration.
+///
+/// The byte-field comparison survey declares
+/// [`Gf256x11d`](byte_field_gf2_side::workload::Gf256x11d) because 0x11D is
+/// the field every compared library implements. 0x11B is the second
+/// polynomial a byte-oriented GF(2^8) design has to serve, and gf2 ships no
+/// GF(2^8) configuration for it either, so the validation declares it here:
+/// the prototype's table is built from the field's own reduction polynomial
+/// and must therefore be correct for both, and 0x11B additionally exercises
+/// a gf2-core multiplication route that 0x11D does not, because 0x11B is
+/// irreducible without being primitive and so builds no log/antilog tables.
+pub struct Gf256x11b;
+
+impl gf2_core::gf2m::Gf2mWideConfig<1> for Gf256x11b {
+    const M: usize = 8;
+    const MODULUS: [u64; 1] = [0x1B];
+    const NAME: &'static str = "Gf256x11b";
+}
+
+/// The compile-time GF(2^8) element over 0x11B.
+pub type WideElement11b = gf2_core::gf2m::Gf2mWide<1, Gf256x11b>;
+
+/// [`ByteField`] over [`Gf256x11b`], so the validation drives the same
+/// generic prototype route the 0x11D arms drive.
+pub struct WideGf256x11b;
+
+impl ByteField for WideGf256x11b {
+    type Elem = WideElement11b;
+    const NAME: &'static str = "Gf2mWide<1,Gf256x11b>";
+
+    fn polynomial(&self) -> u32 {
+        use gf2_core::gf2m::Gf2mWideConfig;
+        (1 << Gf256x11b::M) | Gf256x11b::MODULUS[0] as u32
+    }
+
+    fn element(&self, byte: u8) -> Self::Elem {
+        WideElement11b::from_u64(u64::from(byte))
+    }
+
+    fn byte(element: &Self::Elem) -> u8 {
+        (element.words()[0] & 0xFF) as u8
+    }
+
+    fn gemm_route() -> &'static str {
+        // The validation never times a product, so no route is observed
+        // here; the arm reports the route of the field it measures.
+        "validation-only"
+    }
+}
+
+/// `Gf2mElement` over a runtime GF(2^8) field of any reduction polynomial,
+/// so the validation covers 0x11B as well as
+/// [`RuntimeGf256`](byte_field_gf2_side::workload::RuntimeGf256)'s 0x11D.
+pub struct RuntimeGf256Any {
+    /// The runtime field.
+    pub field: gf2_core::gf2m::Gf2mField,
+}
+
+impl RuntimeGf256Any {
+    /// Builds the degree-8 field of `polynomial`.
+    pub fn new(polynomial: u64) -> Self {
+        RuntimeGf256Any {
+            field: gf2_core::gf2m::Gf2mField::new(8, polynomial),
+        }
+    }
+}
+
+impl ByteField for RuntimeGf256Any {
+    type Elem = gf2_core::gf2m::Gf2mElement;
+    const NAME: &'static str = "Gf2mElement";
+
+    fn polynomial(&self) -> u32 {
+        self.field.primitive_polynomial() as u32
+    }
+
+    fn element(&self, byte: u8) -> Self::Elem {
+        self.field.element(u64::from(byte))
+    }
+
+    fn byte(element: &Self::Elem) -> u8 {
+        (element.value() & 0xFF) as u8
+    }
+
+    fn gemm_route() -> &'static str {
+        "validation-only"
+    }
+}
