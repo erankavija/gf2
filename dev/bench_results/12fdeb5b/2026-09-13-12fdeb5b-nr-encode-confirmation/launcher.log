@@ -1,0 +1,50 @@
+# command: dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh confirmation
+# started_utc: 2026-09-13T06:56:41Z
+# gf2 revision (informational): 6ac2af60608f9e0bd7be6921b1e3de88ce1eda29
+# mode: confirmation
+# addendum: dev/active/12fdeb5b/addendum-nr-encode-confirmation.json
+# addendum sha256: 04327a399529af090420082238d4fdb93a5844d64153ddd0fcd02961ce26770f
+# campaign: nr-encode-confirmation-12fdeb5b-20260913t065640z
+# stage: /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/nr-encode-campaigns/nr-encode-confirmation-12fdeb5b-20260913t065640z
+# external staging: /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b
+# aff3ct root: /home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct
+# aff3ct conf: /home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/conf
+# aff3ct static library sha256: b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529
+# srsran root: /home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/srsran
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# c++: c++ (GCC) 16.2.1 20260810
+# arm digests:
+#   b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-native/release/gf2-nr-encode-arm
+#   28e910e970754c4f90a09dca80582590b1335b345aa11dc36ee25fad95c9933f  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-portable/release/gf2-nr-encode-arm
+#   869e26351e37641acfa6bc74f527264c2dc57c42252b309689535993254b52e1  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-native/release/srsran-nr-encode-arm
+#   11f3b00e0015d7bc2592576ce3c30b43b7ed74d6665e572c73bf61ceb882703e  /home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/.agents/ext/12fdeb5b/target-nr-encode-native/release/aff3ct-nr-encode-arm
+# survey source digests:
+#   d79b90f81cceffe985ffe0581a8851f40e09d98fe54fa2170b18f3b3d03b451f  dev/active/12fdeb5b/survey/nr-encode-build.sh
+#   71598a64faa6267426be25437e75f2c72c4fe6048508842ca016b34ecdfa06d5  dev/active/12fdeb5b/survey/nr-encode/cpp/aff3ct_encode_shim.cpp
+#   984b1c2316eb413ee909534077591842356baf87e8bb83575c8395ab651deb45  dev/active/12fdeb5b/survey/nr-encode/cpp/srsran_encode_shim.cpp
+#   e5b1ecb40adce8e45cf741cefee6b4686b1c31d8a1d04818d0351cf62175f65f  dev/active/12fdeb5b/survey/nr-encode/src/lib.rs
+#   1734f5c84c55fedab1370fd1fd36796e51f7711b8f94c926357b5583113f2985  dev/active/12fdeb5b/survey/nr-encode/src/aff3ct.rs
+#   af54d4b47e6ced2ec73c9acdcc626ac59f2365c6f20c1f5e4b619814235a6e9f  dev/active/12fdeb5b/survey/nr-encode/src/srsran.rs
+#   a8f516ef388b11b8605b029e041f995d0f42f7bad2e3fe958fcc47be0076d9f8  dev/active/12fdeb5b/survey/nr-encode/src/bin/arm_common.rs
+#   6bd5f3dd5c7de82eb7df845c610e0b388aca9fa4f47e037516dbfba0f0fca952  dev/active/12fdeb5b/survey/nr-encode/src/bin/gf2-nr-encode-arm.rs
+#   bbbc5863cdae430f4da5eccef3517a26bd76ef1e5764142a43b7ce7030d3bc3c  dev/active/12fdeb5b/survey/nr-encode/src/bin/srsran-nr-encode-arm.rs
+#   0bca87b9ed7141e08b4b66b428a1d7ac707f1456821fa0851a02051f1463ac70  dev/active/12fdeb5b/survey/nr-encode/src/bin/aff3ct-nr-encode-arm.rs
+#   2c688b046b6eff94abdc5f74bcaa56520dfcaee901cfd05e9190b69d9019fcf0  dev/active/12fdeb5b/survey/nr-encode/Cargo.toml
+#   0945e33f8d84acc1818daaaf5b95e00ead3b263cecdd04a2ae76d3a38a832c21  dev/active/12fdeb5b/survey/nr-encode/Cargo.lock
+#   03ad35057e4e3ff45949b3ea71c624a6773ce8b0075fc17546c7b7f9638e7ad0  dev/active/12fdeb5b/survey/nr-encode/build.rs
+#   1c3f02f836743e6129dd8ac14eb88a54ac17ce2c39114a0bca13613fc11a9d48  dev/active/12fdeb5b/survey/build-evidence.json
+#   8ef48a5145c00fd34126b9d7906e7d021cf4d77a34880526baf099f1fde93fcd  dev/active/12fdeb5b/survey/nr-encode-validation.json
+#   b4dfc339264624cd7bc237ee548e7bef1d8fa9eda53d1cec82f744cfe5c82f04  dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh
+# load_avg_start:  09:56:41 up 9 days, 11:25,  8 users,  load average: 2.09, 8.66, 7.37
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/nr-encode-campaigns/nr-encode-confirmation-12fdeb5b-20260913t065640z/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/nr-encode-campaigns/nr-encode-confirmation-12fdeb5b-20260913t065640z/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3/target/nr-encode-campaigns/nr-encode-confirmation-12fdeb5b-20260913t065640z/execution.log
+# session 3 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions: 3
+# load_avg_end:  10:00:36 up 9 days, 11:29,  8 users,  load average: 1.54, 5.29, 6.31
+# finished_utc: 2026-09-13T07:00:36Z
