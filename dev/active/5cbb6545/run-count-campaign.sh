@@ -11,6 +11,8 @@
 #                                 runner, into a throwaway receipt under
 #                                 target/, so the wire contract is established
 #                                 by an execution before a committed campaign.
+#   popcount-sweep2, fused-sweep2 exploratory refinements that narrow the
+#                                 crossover each first sweep bracketed.
 #   popcount-sweep, fused-sweep   exploratory crossover searches. Every cell is
 #                                 exploratory, so the stage decides nothing and
 #                                 spends no confirmatory comparison; it fixes
@@ -63,6 +65,8 @@ SUFFIX=${3:-}
 case "$STAGE_NAME" in
   popcount-sweep)       FAMILY=popcount; KIND=sweep;        LABEL=pilot;        SEED=20260913101 ;;
   fused-sweep)          FAMILY=fused;    KIND=sweep;        LABEL=pilot;        SEED=20260913102 ;;
+  popcount-sweep2)      FAMILY=popcount; KIND=sweep2;       LABEL=pilot;        SEED=20260913111 ;;
+  fused-sweep2)         FAMILY=fused;    KIND=sweep2;       LABEL=pilot;        SEED=20260913112 ;;
   popcount-pilot)       FAMILY=popcount; KIND=pilot;        LABEL=pilot;        SEED=20260913201 ;;
   fused-pilot)          FAMILY=fused;    KIND=pilot;        LABEL=pilot;        SEED=20260913202 ;;
   popcount-confirmation) FAMILY=popcount; KIND=confirmation; LABEL=confirmation; SEED=20260913301 ;;
@@ -71,7 +75,8 @@ case "$STAGE_NAME" in
   build) ;;
   *)
     echo "usage: $0 <stage> [date-utc] [suffix] | build" >&2
-    echo "stages: popcount-sweep fused-sweep popcount-pilot fused-pilot" >&2
+    echo "stages: smoke popcount-sweep fused-sweep popcount-sweep2 fused-sweep2" >&2
+    echo "        popcount-pilot fused-pilot" >&2
     echo "        popcount-confirmation fused-confirmation" >&2
     exit 2
     ;;

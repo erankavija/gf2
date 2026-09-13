@@ -1,0 +1,382 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "popcount-sweep-5cbb6545-20260913t123255z",
+  "issue": "5cbb6545",
+  "label": "pilot",
+  "campaign_seed": 20260913101,
+  "addendum": "dev/active/5cbb6545/addendum-popcount-v4-sweep.json",
+  "producing_manifest": "dev/active/5cbb6545/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "legacy-dispatch": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing the route ops::popcount took before this issue: the scalar backend below eight words, the AVX2 nibble-lookup kernel of the detected bundle at or above.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "legacy-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "scalar-popcnt": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's popcnt_words called directly: one POPCNT instruction per word, with no vector state.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "scalar-popcnt"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "nibble-lut": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_popcnt called directly: one VPSHUFB nibble lookup per vector summed by VPSADBW, with no size threshold.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "nibble-lut"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "csa": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_popcnt_csa called directly: sixteen vectors folded through fifteen carry-save adders per 512-byte block before one nibble lookup.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "csa"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "libpopcnt": {
+      "build": "external",
+      "description": "libpopcnt v4.2 popcnt() compiled -O3 as its README recommends, with its own CPUID dispatch.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "libpopcnt"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "mula-avx2-harley-seal": {
+      "build": "external",
+      "description": "Mula's popcnt_AVX2_harley_seal compiled with the sse-popcount Makefile's AVX2 flags; it loads through const __m256i* and therefore takes only vector-aligned windows.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "mula-avx2-harley-seal"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "sweep-popcount-w1-scalar-popcnt",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "words": 1,
+        "seed": 5101,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w2-scalar-popcnt",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "words": 2,
+        "seed": 5102,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w4-scalar-popcnt",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "words": 4,
+        "seed": 5104,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w7-scalar-popcnt",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "scalar-popcnt",
+      "case": {
+        "op": "popcount",
+        "words": 7,
+        "seed": 5107,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w8-nibble-vs-scalar",
+      "baseline_arm": "scalar-popcnt",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "words": 8,
+        "seed": 5108,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w12-nibble-vs-scalar",
+      "baseline_arm": "scalar-popcnt",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "words": 12,
+        "seed": 5112,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w16-nibble-vs-scalar",
+      "baseline_arm": "scalar-popcnt",
+      "candidate_arm": "nibble-lut",
+      "case": {
+        "op": "popcount",
+        "words": 16,
+        "seed": 5116,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w16-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 16,
+        "seed": 5116,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w32-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 32,
+        "seed": 5132,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w64-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 64,
+        "seed": 5164,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w96-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 96,
+        "seed": 5196,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w128-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 128,
+        "seed": 5228,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w256-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 256,
+        "seed": 5356,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 1024,
+        "seed": 6124,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 16384,
+        "seed": 21484,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-off3-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 1024,
+        "seed": 6124,
+        "pattern": "random",
+        "word_offset": 3
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-ones-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 1024,
+        "seed": 6124,
+        "pattern": "all_one",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-zeros-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 1024,
+        "seed": 6124,
+        "pattern": "all_zero",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-vs-libpopcnt",
+      "baseline_arm": "csa",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "words": 1024,
+        "seed": 6124,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w1024-vs-mula-avx2-harley-seal",
+      "baseline_arm": "csa",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "words": 1024,
+        "seed": 6124,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-vs-libpopcnt",
+      "baseline_arm": "csa",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "words": 16384,
+        "seed": 21484,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w16384-vs-mula-avx2-harley-seal",
+      "baseline_arm": "csa",
+      "candidate_arm": "mula-avx2-harley-seal",
+      "case": {
+        "op": "popcount",
+        "words": 16384,
+        "seed": 21484,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-popcount-w1m-streaming-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 1048576,
+        "seed": 5101,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 8
+}

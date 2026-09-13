@@ -13,6 +13,9 @@ Stages:
   references over alignment offsets and bit patterns. Every cell is
   exploratory, so the stage decides nothing and spends no confirmatory
   comparison; its receipt is not resolution evidence.
+- `sweep2` narrows the crossover each `sweep` bracketed, over the word counts
+  between the last width the established lookup wins and the first width the
+  carry-save loop clears the family's worthwhile margin.
 - `pilot` measures exactly the cells the confirmation will decide, so the
   frozen measurement resolution comes from the same workloads.
 - `smoke` names every arm identity once, over all three case shapes, so the
@@ -276,3 +279,37 @@ def smoke():
         )
     )
     return cells
+
+
+def popcount_sweep2():
+    """Narrows the population-count crossover the first sweep bracketed."""
+    seed = 5200
+    return [
+        cell(
+            f"sweep2-popcount-w{words}-csa",
+            "nibble-lut",
+            "csa",
+            popcount_case(words, seed + words),
+            "improvement",
+            "exploratory",
+            f"popcount-{words}-words-random-aligned",
+        )
+        for words in (160, 192, 224, 256, 320, 384)
+    ]
+
+
+def fused_sweep2():
+    """Narrows the fused crossover the first sweep bracketed."""
+    seed = 6200
+    return [
+        cell(
+            f"sweep2-and-w{words}-csa",
+            "and-legacy-fused",
+            "and-csa-fused",
+            and_case(words, seed + words),
+            "improvement",
+            "exploratory",
+            f"and-popcnt-{words}-words-random-aligned",
+        )
+        for words in (160, 192, 224, 256, 320, 384)
+    ]

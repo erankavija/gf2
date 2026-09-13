@@ -39,12 +39,14 @@ FAMILIES = {
         "purpose": "kernel-family",
         "ledger": "dev/bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl",
         "sweep": families.popcount_sweep,
+        "sweep2": families.popcount_sweep2,
     },
     "fused": {
         "id": families.FUSED_FAMILY,
         "purpose": "consumer-family",
         "ledger": "dev/bench_results/5cbb6545/fused-count-consumers-family-ledger.jsonl",
         "sweep": families.fused_sweep,
+        "sweep2": families.fused_sweep2,
     },
     "smoke": {
         "id": "count-optimization-smoke",
@@ -77,6 +79,27 @@ SWEEP_DESCRIPTION = {
         "separate count inside every call. Every cell is exploratory: this "
         "stage fixes the boundary a later pilot and confirmation decide, and "
         "its samples enter no confirmation."
+    ),
+}
+
+
+SWEEP2_DESCRIPTION = {
+    "popcount": (
+        "The word counts between the last width at which the established "
+        "per-vector nibble lookup wins and the first width at which the "
+        "Harley-Seal carry-save loop clears this family's worthwhile margin, "
+        "which the first sweep bracketed between 128 and 256 words. Same two "
+        "arms, same fixture generator, same timed loop. Every cell is "
+        "exploratory: the stage places the boundary a later pilot and "
+        "confirmation decide, and its samples enter no confirmation."
+    ),
+    "fused": (
+        "The word counts between the last width at which the established "
+        "fused nibble lookup wins and the first width at which the fused "
+        "Harley-Seal loop clears this family's worthwhile margin, which the "
+        "first sweep bracketed between 128 and 512 words. Every cell is "
+        "exploratory: the stage places the boundary a later pilot and "
+        "confirmation decide, and its samples enter no confirmation."
     ),
 }
 
@@ -202,13 +225,17 @@ def main():
     directory = sys.argv[3] if len(sys.argv) == 4 else os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))
     )
-    if stage not in ("sweep", "smoke"):
+    if stage not in ("sweep", "sweep2", "smoke"):
         raise SystemExit(f"stage {stage!r} has no generated table yet")
     for key, family in FAMILIES.items():
         if stage not in family:
             continue
         cells = family[stage]()
-        description = SWEEP_DESCRIPTION[key] if stage == "sweep" else SMOKE_DESCRIPTION
+        description = {
+            "sweep": SWEEP_DESCRIPTION.get(key),
+            "sweep2": SWEEP2_DESCRIPTION.get(key),
+            "smoke": SMOKE_DESCRIPTION,
+        }[stage]
         document = addendum(key, stage, frozen_utc, cells, description)
         path = os.path.join(directory, f"addendum-{key}-v4-{stage}.json")
         with open(path, "w") as handle:
