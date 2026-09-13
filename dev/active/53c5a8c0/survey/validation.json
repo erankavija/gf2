@@ -1,0 +1,145 @@
+{
+  "schema": "clmul-crossover-validation-merged-v1",
+  "issue": "53c5a8c0",
+  "passed": true,
+  "variants": {
+    "conservative": {
+      "checks": [
+        {
+          "cases": 2410,
+          "failures": [],
+          "name": "raw-batch-paths-match-the-oracle"
+        },
+        {
+          "cases": 18,
+          "failures": [],
+          "name": "dot-product-paths-match-the-oracle"
+        },
+        {
+          "cases": 2410,
+          "failures": [],
+          "name": "batch-mul-paths-match-the-oracle"
+        },
+        {
+          "cases": 45,
+          "failures": [],
+          "name": "long-products-match-the-oracle"
+        },
+        {
+          "cases": 4,
+          "failures": [],
+          "name": "wide-field-products-match-the-oracle"
+        },
+        {
+          "cases": 9,
+          "failures": [],
+          "name": "stage-decomposition-composes-to-the-consumer"
+        }
+      ],
+      "executables": {
+        "crossover-arm": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/crossover-arm",
+          "sha256": "d6411588467bc846309e664036ba6a33a5101f7fb329ee98d0c7982bdbb0beec"
+        },
+        "crossover-validate": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/crossover-validate",
+          "sha256": "eb18df3fa66edc2e945e9f15420e1d9a9cec3ecba3184dc20bd11dd19780d727"
+        },
+        "gf2x-poly-arm": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/gf2x-poly-arm",
+          "sha256": "c48d17c57a48162647896d5389686dc5dbc183b2e48655b5800613258b62ff73"
+        },
+        "poly-arm": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/poly-arm",
+          "sha256": "10546435192b3d2fad90666f372938602f94e677ce7d2c8d228bd72938250f9a"
+        },
+        "stage-diagnostic": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release/stage-diagnostic",
+          "sha256": "bce4ca22f9961e1578cdca26aa2434f87e4261acb07f50c5552c748bb2f40251"
+        }
+      },
+      "gf2_selected_paths": {
+        "clmul_batch": "clmul_batch:pclmulqdq-scalar-xmm",
+        "wide_4w": "avx2+vpclmulqdq-ymm",
+        "wide_9w": "avx2+vpclmulqdq-ymm"
+      },
+      "gf2x": {
+        "library": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-native/lib/libgf2x.so.3.0.0",
+        "selected_path": "gf2x_mul_r library=/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-native/lib/libgf2x.so.3.0.0 sha256=6a665350df638fa14f1fb5ee2458a33f3a956438cc6f01254c189defc6c2c86a cflags=-O3 -march=native -Wall -W -msse2 -msse3 -mssse3 -msse4.1 -mpclmul",
+        "sha256": "6a665350df638fa14f1fb5ee2458a33f3a956438cc6f01254c189defc6c2c86a"
+      },
+      "issue": "53c5a8c0",
+      "passed": true,
+      "schema": "clmul-crossover-validation-v1"
+    },
+    "native": {
+      "checks": [
+        {
+          "cases": 2410,
+          "failures": [],
+          "name": "raw-batch-paths-match-the-oracle"
+        },
+        {
+          "cases": 18,
+          "failures": [],
+          "name": "dot-product-paths-match-the-oracle"
+        },
+        {
+          "cases": 2410,
+          "failures": [],
+          "name": "batch-mul-paths-match-the-oracle"
+        },
+        {
+          "cases": 45,
+          "failures": [],
+          "name": "long-products-match-the-oracle"
+        },
+        {
+          "cases": 4,
+          "failures": [],
+          "name": "wide-field-products-match-the-oracle"
+        },
+        {
+          "cases": 9,
+          "failures": [],
+          "name": "stage-decomposition-composes-to-the-consumer"
+        }
+      ],
+      "executables": {
+        "crossover-arm": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/crossover-arm",
+          "sha256": "20a4da11316b247656e9a1ae9b4b234fbdd3e9cafbd43d7ba9054e6d91dbecec"
+        },
+        "crossover-validate": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/crossover-validate",
+          "sha256": "9130b3176668de105b3f67366091474108af002cfbf70b94ca1748deac69e6c6"
+        },
+        "gf2x-poly-arm": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/gf2x-poly-arm",
+          "sha256": "d738b2a78908993147cfb4e58be3461b8c5291ed3ac074c8458cd7ba5cecdf65"
+        },
+        "poly-arm": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/poly-arm",
+          "sha256": "b33e6264db236e342c14eb1761e6e3f9e250fcf1487fd80868f28084cdd89309"
+        },
+        "stage-diagnostic": {
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-native/release/stage-diagnostic",
+          "sha256": "ac2ac2cc6fcb8c67e34d344f86909ab70508825542cf2ce3a3b157d42af8f8f6"
+        }
+      },
+      "gf2_selected_paths": {
+        "clmul_batch": "clmul_batch:pclmulqdq-scalar-xmm",
+        "wide_4w": "avx2+vpclmulqdq-ymm",
+        "wide_9w": "avx2+vpclmulqdq-ymm"
+      },
+      "gf2x": {
+        "library": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-native/lib/libgf2x.so.3.0.0",
+        "selected_path": "gf2x_mul_r library=/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-native/lib/libgf2x.so.3.0.0 sha256=6a665350df638fa14f1fb5ee2458a33f3a956438cc6f01254c189defc6c2c86a cflags=-O3 -march=native -Wall -W -msse2 -msse3 -mssse3 -msse4.1 -mpclmul",
+        "sha256": "6a665350df638fa14f1fb5ee2458a33f3a956438cc6f01254c189defc6c2c86a"
+      },
+      "issue": "53c5a8c0",
+      "passed": true,
+      "schema": "clmul-crossover-validation-v1"
+    }
+  }
+}
