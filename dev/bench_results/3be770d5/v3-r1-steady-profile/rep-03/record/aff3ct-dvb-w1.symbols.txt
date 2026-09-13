@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 7740071595
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                                                                                                                                           
+# ........  ............  ................  .................................................................................................................................................................................................................................................
+#
+    62.33%          1206  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode_single_ite(std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> >&)
+    37.47%           725  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode(float const*, unsigned long)
+     0.05%             1  libc.so.6         [.] 0x0000000000176e84
+     0.05%             1  libc.so.6         [.] 0x0000000000176e8e
+     0.05%             1  [unknown]         [k] 0xffffffffad890bd4
+     0.05%             1  [unknown]         [k] 0xffffffffad892417
+
+
+#
+# (Tip: Add -I to perf record to sample register values, which will be visible in perf report sample context.)
+#

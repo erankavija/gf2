@@ -1,0 +1,29 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 12468115329
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    75.59%          2356  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    11.39%           355  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.59%           112  libc.so.6         [.] 0x000000000017646c
+     2.73%            85  libc.so.6         [.] cfree
+     2.44%            76  libc.so.6         [.] malloc
+     1.70%            53  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.06%            33  libc.so.6         [.] 0x0000000000176476
+     0.90%            28  libc.so.6         [.] 0x0000000000176400
+     0.45%            14  libc.so.6         [.] 0x0000000000176404
+     0.06%             2  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  libc.so.6         [.] 0x0000000000176433
+     0.03%             1  libc.so.6         [.] 0x0000000000176f04
+     0.03%             1  [unknown]         [k] 0xffffffffad88fe14
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#

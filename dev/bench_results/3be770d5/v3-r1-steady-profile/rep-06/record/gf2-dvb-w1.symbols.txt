@@ -1,0 +1,33 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 12472115366
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    74.95%          2337  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    12.22%           381  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     4.04%           126  libc.so.6         [.] 0x000000000017646c
+     2.57%            80  libc.so.6         [.] malloc
+     2.15%            67  libc.so.6         [.] cfree
+     1.60%            50  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     0.93%            29  libc.so.6         [.] 0x0000000000176476
+     0.87%            27  libc.so.6         [.] 0x0000000000176400
+     0.42%            13  libc.so.6         [.] 0x0000000000176404
+     0.03%             1  libc.so.6         [.] 0x0000000000176466
+     0.03%             1  libc.so.6         [.] 0x0000000000176470
+     0.03%             1  libc.so.6         [.] 0x0000000000176e00
+     0.03%             1  [unknown]         [k] 0xffffffffad892f0f
+     0.03%             1  [unknown]         [k] 0xffffffffad896874
+     0.03%             1  [unknown]         [k] 0xffffffffae96e3d7
+     0.03%             1  [unknown]         [k] 0xffffffffae98ce93
+     0.03%             1  [unknown]         [k] 0xffffffffae99dd9b
+
+
+#
+# (Tip: To see call chains by final symbol taking CPU time (bottom up) use perf report -G)
+#

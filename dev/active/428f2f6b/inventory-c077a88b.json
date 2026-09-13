@@ -1,0 +1,277 @@
+{
+  "schema": "citation-inventory-v1",
+  "issue": "c077a88b",
+  "report": "dev/active/c077a88b/findings.md",
+  "report_revision": "ad76be4a",
+  "generator": "dev/active/c077a88b/survey/summarize.py",
+  "generated_tables": [
+    "dev/bench_results/c077a88b/tables.md"
+  ],
+  "generator_state_before": "present and complete: tables.md regenerates byte for byte from the committed quality record and receipts, so no new generator is needed for this issue",
+  "retention_rule": "A number stays in the report only when it identifies a cell, names a workload size, names a protocol or addendum constant that fixes the design before measurement, or belongs to a citation key, version pin or commit id. Every measured or derived value is replaced by a conclusion and a pointer.",
+  "entries": [
+    {
+      "id": "c077a88b-01",
+      "line_before": 11,
+      "statement": "AFF3CT flooding f32 is slower in the DVB whole-call comparison, while NR has no material gap under the frozen margins.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/tables.md",
+        "location": "Matched-algorithm timing, rows `dvb-t2-r12-matched-single-core` and `nr-bg1-z384-matched-single-core`"
+      },
+      "artifact_value": "dvb-t2-r12-matched-single-core: regressed, fail; nr-bg1-z384-matched-single-core: not-worse, not-material",
+      "agrees": true,
+      "disposition": "conclusion-needs-row-pointer"
+    },
+    {
+      "id": "c077a88b-02",
+      "line_before": 13,
+      "statement": "The accepted quality pilot retains every predeclared candidate and its P-19 admission failure. No candidate is eligible for quality confirmation or fastest-arm selection.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/tables.md",
+        "location": "Quality-compatible timing, Outcome column of every row"
+      },
+      "artifact_value": "six rows, each `pilot; quality admission unestablished (P-19)`",
+      "agrees": true,
+      "disposition": "conclusion-needs-row-pointer"
+    },
+    {
+      "id": "c077a88b-03",
+      "line_before": 22,
+      "statement": "the DVB-T2 normal rate-1/2 code and NR BG1 lifting-384 mother code",
+      "numbers": ["1/2", 384],
+      "authority": {
+        "artifact": "dev/active/c077a88b/addendum-ldpc-matched-algorithm.json",
+        "location": "cells[].workload"
+      },
+      "artifact_value": "dvb-t2-r12 and nr-bg1-z384",
+      "agrees": true,
+      "disposition": "kept-workload-size"
+    },
+    {
+      "id": "c077a88b-04",
+      "line_before": 35,
+      "statement": "Both arms score codeword positions $0 \\ldots K-1$.",
+      "numbers": [0, "K-1"],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/source-evidence.json",
+        "location": "information-window claims"
+      },
+      "artifact_value": "information window, one 0/1 byte per bit",
+      "agrees": true,
+      "disposition": "kept-workload-definition"
+    },
+    {
+      "id": "c077a88b-05",
+      "line_before": 53,
+      "statement": "AFF3CT v4.7.0; MIT.",
+      "numbers": ["v4.7.0"],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+        "location": "AFF3CT pin and runtime version output"
+      },
+      "artifact_value": "v4.7.0",
+      "agrees": true,
+      "disposition": "kept-version-pin"
+    },
+    {
+      "id": "c077a88b-06",
+      "line_before": 54,
+      "statement": "srsRAN Project release_25_10; AGPL-3.0. OpenAirInterface 2026.w36.",
+      "numbers": ["release_25_10", "3.0", "2026.w36"],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+        "location": "pins; upstream-status.json for the maintained-upstream observation"
+      },
+      "artifact_value": "release_25_10 and 2026.w36",
+      "agrees": true,
+      "disposition": "kept-version-pin"
+    },
+    {
+      "id": "c077a88b-07",
+      "line_before": 68,
+      "statement": "The observed AFF3CT executable reports AVX2, multiple precisions and version v4.7.0. The actual compile record contains `-std=gnu++11`, `-O3`, `-march=native` and `-funroll-loops`.",
+      "numbers": ["v4.7.0", 11, 3],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+        "location": "compile record and runtime version output"
+      },
+      "artifact_value": "the recorded compile flags and runtime version banner",
+      "agrees": true,
+      "disposition": "kept-version-pin-needs-pointer"
+    },
+    {
+      "id": "c077a88b-08",
+      "line_before": 74,
+      "statement": "The Rust release arms use Rust 1.95 and the native flags recorded with their exact executable identities.",
+      "numbers": ["1.95"],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+        "location": "Rust arm identities"
+      },
+      "artifact_value": "Rust 1.95 release arms",
+      "agrees": true,
+      "disposition": "kept-version-pin"
+    },
+    {
+      "id": "c077a88b-09",
+      "line_before": 106,
+      "statement": "Matched: f32 NMS factor 0.75. i16 adapter scales LLRs by 16, rounds with `floor(x + 0.5)` and clips to its signed limit. srsRAN hard-codes NMS factor 0.8 and int8 LLRs.",
+      "numbers": [0.75, 16, 0.5, 0.8, 8],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/source-evidence.json",
+        "location": "normalization and quantization claims"
+      },
+      "artifact_value": "recorded source locations for each constant",
+      "agrees": true,
+      "disposition": "kept-adapter-constant-with-pointer"
+    },
+    {
+      "id": "c077a88b-10",
+      "line_before": 107,
+      "statement": "Cap 50, syndrome depth 1; the first passing iteration terminates.",
+      "numbers": [50, 1],
+      "authority": {
+        "artifact": "dev/active/c077a88b/addendum-ldpc-matched-algorithm.json",
+        "location": "cells[].decoder settings; projected in tables.md quality table settings"
+      },
+      "artifact_value": "iteration_cap 50, stopping kind syndrome",
+      "agrees": true,
+      "disposition": "kept-frozen-setting"
+    },
+    {
+      "id": "c077a88b-11",
+      "line_before": 120,
+      "statement": "The fixed-point DVB arm's additional frame failures contradict the premise that the nominal widest supported mode is automatically an admissible fastest arm.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/tables.md",
+        "location": "Quality on identical recorded inputs, `dvb-t2-r12` rows for `aff3ct-layered-nms-i16-inter` and `aff3ct-flooding-nms-i16` against the f32 rows"
+      },
+      "artifact_value": "11/128 frame errors for both i16 arms against 2/128 for the f32 arms",
+      "agrees": true,
+      "disposition": "conclusion-needs-row-pointer"
+    },
+    {
+      "id": "c077a88b-12",
+      "line_before": 128,
+      "statement": "Quality-compatible calls process the same sixteen-frame batch in both arms; AFF3CT through native scalar, eight-frame or sixteen-frame waves.",
+      "numbers": [16, 8],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/tables.md",
+        "location": "Quality-compatible timing, `Useful frames/call` column; Quality on identical recorded inputs, `Native wave` column"
+      },
+      "artifact_value": "16 useful frames per call; native waves 1, 8 and 16",
+      "agrees": true,
+      "disposition": "kept-workload-size-with-pointer"
+    },
+    {
+      "id": "c077a88b-13",
+      "line_before": 130,
+      "statement": "The declared warm cache policy fixes fixture bank zero: the first recorded frame for matched latency, and the first sixteen recorded frames for batch throughput. The canonical timing library calibrates and records the protocol's five windows.",
+      "numbers": [0, 1, 16, 5],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json",
+        "location": "settings.windows_per_execution; cells[].pairs[].windows"
+      },
+      "artifact_value": "windows_per_execution 5",
+      "agrees": true,
+      "disposition": "kept-frozen-setting"
+    },
+    {
+      "id": "c077a88b-14",
+      "line_before": 156,
+      "statement": "FER uses Wilson intervals. BER uses the protocol's Hoeffding interval on independent frame error fractions.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/tables.md",
+        "location": "Quality on identical recorded inputs, header note and interval columns"
+      },
+      "artifact_value": "FER Wilson 95%, BER independent-frame Hoeffding 95%",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "c077a88b-15",
+      "line_before": 192,
+      "statement": "Four of those v1 pilots - the r3 and r4 matched-algorithm and quality-compatible pilots - carry an acceptance summary recording them as accepted that a fresh checkout does not reproduce.",
+      "numbers": [4],
+      "authority": {
+        "artifact": "dev/active/a203a23c/receipt-reevaluation.json",
+        "location": "per-receipt re-evaluation entries"
+      },
+      "artifact_value": "the r3 and r4 matched-algorithm and quality-compatible pilots",
+      "agrees": true,
+      "disposition": "kept-enumeration-with-pointer"
+    },
+    {
+      "id": "c077a88b-16",
+      "line_before": 222,
+      "statement": "The accepted quality pilot preserves all six P-19 notes and every predeclared candidate; no candidate satisfies the quality admission rule.",
+      "numbers": [6],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot/acceptance-summary.json",
+        "location": "findings (six P-19 entries, one per cell)"
+      },
+      "artifact_value": "six P-19 findings over six cells",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "c077a88b-17",
+      "line_before": 240,
+      "statement": "Its ledger-derived confidence and outcomes appear in the generated tables: the DVB candidate regresses, and NR has no material comparator gap.",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/tables.md",
+        "location": "Matched-algorithm timing, ledger-derived attempt alpha line and the two confirmation rows"
+      },
+      "artifact_value": "dvb-t2-r12-matched-single-core fail; nr-bg1-z384-matched-single-core not-material",
+      "agrees": true,
+      "disposition": "conclusion-needs-row-pointer"
+    },
+    {
+      "id": "c077a88b-18",
+      "line_before": 233,
+      "statement": "the quality pilot closes the bounded survey with no admissible candidate; its timing intervals remain exploratory, including the broad NR scalar interval",
+      "numbers": [],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/tables.md",
+        "location": "Quality-compatible timing, row `nr-bg1-z384-f32-scalar-pilot`"
+      },
+      "artifact_value": "23.52 [18.47, 24.3], the widest interval of the pilot",
+      "agrees": true,
+      "disposition": "conclusion-needs-row-pointer"
+    },
+    {
+      "id": "c077a88b-19",
+      "line_before": 259,
+      "statement": "REQ-03 MET - negative result: completed capability screen, six-candidate timed pilot and full-corpus per-frame quality accounting. All six P-19 admission failures remain visible.",
+      "numbers": [6],
+      "authority": {
+        "artifact": "dev/bench_results/c077a88b/tables.md",
+        "location": "Quality-compatible timing, the six pilot rows"
+      },
+      "artifact_value": "six cells, each carrying a P-19 note",
+      "agrees": true,
+      "disposition": "conclusion-with-pointer"
+    },
+    {
+      "id": "c077a88b-20",
+      "line_before": 266,
+      "statement": "Six/twelve physical-core and 24-logical-CPU orchestration are outside these single-instance cells.",
+      "numbers": [6, 12, 24],
+      "authority": {
+        "artifact": "dev/active/c077a88b/addendum-ldpc-matched-algorithm.json",
+        "location": "cells[].workers and core_arm; host topology in the receipt"
+      },
+      "artifact_value": "single-worker cells on a 24-CPU, 12-core host",
+      "agrees": true,
+      "disposition": "kept-workload-size"
+    }
+  ],
+  "unbacked_numbers": [],
+  "disagreements": [],
+  "note": "This report already restated no speedup, interval, per-call time or ratio: its numbers were version pins, workload sizes, frozen settings and counts of declared cells. The work on this report is to attach a section-and-row pointer to each conclusion that rests on the generated tables."
+}

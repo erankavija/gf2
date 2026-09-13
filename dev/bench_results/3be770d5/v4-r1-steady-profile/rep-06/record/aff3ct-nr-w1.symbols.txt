@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 4004037037
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                                                                                                                                           
+# ........  ............  ................  .................................................................................................................................................................................................................................................
+#
+    65.83%           659  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode_single_ite(std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> >&)
+    33.87%           339  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode(float const*, unsigned long)
+     0.10%             1  libc.so.6         [.] 0x0000000000176e8e
+     0.10%             1  [unknown]         [k] 0xffffffffad401cb2
+     0.10%             1  [unknown]         [k] 0xffffffffad896900
+
+
+#
+# (Tip: Show estimate cycles per function and IPC in annotate use perf record -b ... ; perf report --total-cycles)
+#

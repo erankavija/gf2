@@ -1,0 +1,29 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 12500115625
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    75.10%          2347  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    10.30%           322  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.94%           123  libc.so.6         [.] 0x000000000017646c
+     3.49%           109  libc.so.6         [.] malloc
+     2.72%            85  libc.so.6         [.] cfree
+     1.60%            50  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.34%            42  libc.so.6         [.] 0x0000000000176400
+     0.99%            31  libc.so.6         [.] 0x0000000000176476
+     0.38%            12  libc.so.6         [.] 0x0000000000176404
+     0.03%             1  libc.so.6         [.] 0x0000000000176470
+     0.03%             1  libc.so.6         [.] 0x00000000001765b3
+     0.03%             1  libc.so.6         [.] 0x0000000000176ee5
+     0.03%             1  [unknown]         [k] 0xffffffffad4015f4
+
+
+#
+# (Tip: Use --symfs <dir>[,layout] if your symbol files are in non-standard locations.)
+#

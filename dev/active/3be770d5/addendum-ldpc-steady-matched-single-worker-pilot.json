@@ -1,0 +1,183 @@
+{
+  "schema": "zen3-benchmark-addendum-v3",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 3
+  },
+  "family": {
+    "id": "ldpc-steady-matched-single-worker-v1",
+    "issue": "3be770d5",
+    "purpose": "decoder-family",
+    "description": "Exploratory pilot of the per-core steady-state gap: gf2-coding against AFF3CT v4.7.0, both f32 flooding normalized min-sum at factor 0.75, iteration cap 50 and syndrome stopping, on bit-identical parity-check matrices and recorded LLRs, one worker each. It observes the measurement resolution that the confirmatory addendum of this family freezes; it decides nothing. Steady-state operation version 1: every worker is a thread pinned to one resolved CPU and owns one decoder built before timing (gf2: a decoder over a clone of the recorded-AList code; AFF3CT: its own clone() of one decoder built from the same AList through the c077a88b shim). AList parsing and construction are reported as setup, outside the timed windows. A timed call makes every worker decode the first 8 recorded frames of fixture bank zero, including conversion of the recorded f32 LLRs, the dispatch to the workers and extraction of the information-window decisions; per-worker work is identical, so a call measures saturation without a load-imbalance tail. Throughput is workers times 8 frames per call. The c077a88b prepared 128-frame quality evidence is reused without resampling, and every timed execution checks each worker's per-frame bit errors against it and fails on any difference. Arms report observed per-worker affinity, CPUs and process thread counts; no nested pool is declared."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-11T17:43:21Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "A pilot observes the resolution that later fixes this family's margins; declaring them here would defeat the observation.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "A pilot decides nothing, so it declares no equivalence margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "A confirmatory addendum fixes the material-gap threshold from this pilot's observed resolution."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": null,
+    "maintenance_rationale": "A profiling survey adopts nothing into production, so it budgets no new unsafe kernel and no production source."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/3be770d5/v3-steady-matched-single-worker-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-matched-w1",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-matched-w1",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    }
+  ]
+}

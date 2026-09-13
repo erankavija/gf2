@@ -1,0 +1,29 @@
+{
+  "pilot_receipt": "dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-multicore-pilot/receipt.json",
+  "receipt_sha256": "ee9b3fe30d5e62096ad52e045862c47b77903089cfd8f32401027707a8ec8483",
+  "acceptance_summary_sha256": "f236018d9adfabb1ed0448a2ae09fa945194899c60be5a1ed046c92a26341a1f",
+  "pilot_addendum": {
+    "path": "dev/active/3be770d5/addendum-ldpc-steady-matched-multicore-pilot.json",
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "f1c83c6bd5611eb8a733fba21fbd8b5d30fd397ef937dfe4b9a4035aeed76fe5"
+  },
+  "pilot_ledger": {
+    "path": "dev/bench_results/3be770d5/v3-steady-matched-multicore-family-ledger.jsonl",
+    "snapshot": "inputs/trial-ledger.jsonl",
+    "sha256": "beda4b285b2cf64daad446af6cce42f72d32c6053a06e8b53274f6f51cf378b7"
+  },
+  "pilot_corrected_alpha": 0.025,
+  "cell_relative_half_widths": {
+    "dvb-t2-r12-matched-p6": 0.11988546922243769,
+    "dvb-t2-r12-matched-p12": 0.03790862638233769,
+    "dvb-t2-r12-matched-l24": 0.015474457704267724,
+    "nr-bg1-z384-matched-p6": 0.027590771516119245,
+    "nr-bg1-z384-matched-p12": 0.10674666936094916,
+    "nr-bg1-z384-matched-l24": 0.05323378665784875
+  },
+  "observed_resolution": 0.11988546922243769,
+  "frozen_resolution": 0.12,
+  "rule": "ceil(widest relative half-width x 200) / 200; equivalence 1 + 2r; material gap 1 + 4r",
+  "pilot_protocol_version": 3,
+  "confirmation_protocol_version": 4
+}

@@ -1,0 +1,32 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 12808118474
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    75.08%          2404  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    11.24%           360  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.69%           118  libc.so.6         [.] 0x000000000017646c
+     3.06%            98  libc.so.6         [.] malloc
+     2.25%            72  libc.so.6         [.] cfree
+     1.69%            54  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.41%            45  libc.so.6         [.] 0x0000000000176400
+     0.97%            31  libc.so.6         [.] 0x0000000000176476
+     0.41%            13  libc.so.6         [.] 0x0000000000176404
+     0.03%             1  libc.so.6         [.] 0x0000000000176f0a
+     0.03%             1  [unknown]         [k] 0xffffffffad4015f0
+     0.03%             1  [unknown]         [k] 0xffffffffad729ae4
+     0.03%             1  [unknown]         [k] 0xffffffffad890bd4
+     0.03%             1  [unknown]         [k] 0xffffffffad894abb
+     0.03%             1  [unknown]         [k] 0xffffffffad8968b2
+     0.03%             1  [unknown]         [k] 0xffffffffae99dd9b
+
+
+#
+# (Tip: To not record events from perf itself add --exclude-perf)
+#

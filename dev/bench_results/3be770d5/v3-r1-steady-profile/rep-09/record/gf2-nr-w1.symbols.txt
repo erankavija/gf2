@@ -1,0 +1,37 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 8688080364
+#
+# Overhead       Samples  Shared Object     Symbol                                                 
+# ........  ............  ................  .......................................................
+#
+    68.19%          1481  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+    20.53%           446  ldpc-profile      [.] gf2_kernels_simd::llr::minsum_avx2_f32_safe
+     3.04%            66  libc.so.6         [.] malloc
+     2.39%            52  libc.so.6         [.] cfree
+     1.24%            27  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcCode::is_valid_codeword
+     1.01%            22  libc.so.6         [.] 0x0000000000176466
+     0.97%            21  libc.so.6         [.] 0x0000000000176400
+     0.83%            18  libc.so.6         [.] 0x000000000017646c
+     0.41%             9  libc.so.6         [.] 0x0000000000176476
+     0.32%             7  libc.so.6         [.] 0x0000000000176404
+     0.28%             6  libc.so.6         [.] 0x0000000000176497
+     0.18%             4  libc.so.6         [.] 0x00000000001764db
+     0.14%             3  libc.so.6         [.] 0x0000000000176411
+     0.09%             2  libc.so.6         [.] 0x0000000000176470
+     0.09%             2  libc.so.6         [.] 0x0000000000176485
+     0.05%             1  libc.so.6         [.] 0x0000000000176425
+     0.05%             1  libc.so.6         [.] 0x000000000017642b
+     0.05%             1  libc.so.6         [.] 0x0000000000176488
+     0.05%             1  libc.so.6         [.] 0x00000000001764b5
+     0.05%             1  [unknown]         [k] 0xffffffffad896874
+     0.05%             1  [unknown]         [k] 0xffffffffad8968d6
+
+
+#
+# (Tip: To set sampling period of individual events use perf record -e cpu/cpu-cycles,period=100001/,cpu/branches,period=10001/ ...)
+#
