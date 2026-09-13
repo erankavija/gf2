@@ -190,10 +190,12 @@ def main():
             CROSSOVER_EFFECT,
             CROSSOVER_BUDGET,
             "dev/bench_results/53c5a8c0/gf2m-clmul-crossover-ledger.jsonl",
-            "selector-calibration",
-            # The pilot declares no holdout cell: a holdout confirms a selector
-            # the pilot has not yet calibrated. The confirmation addendum adds
-            # the holdout cells from the committed declaration.
+            # The pilot stage is an exploratory consumer grid, not a
+            # calibration: a holdout confirms a selector, and the pilot has
+            # calibrated none. The confirmation stage carries the
+            # selector-calibration purpose together with the holdout cells the
+            # committed declaration fixes.
+            "consumer-family",
             {"required": False, "cells": []},
         ),
         (
