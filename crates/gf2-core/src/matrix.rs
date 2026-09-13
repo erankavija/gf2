@@ -1501,8 +1501,8 @@ impl BitMatrix {
         match matvec_route(self.stride_words) {
             MatvecRoute::Simd => {
                 #[cfg(feature = "simd")]
-                if let Some(fns) = crate::simd::maybe_simd() {
-                    return self.matvec_simd(x, fns);
+                if crate::simd::maybe_simd().is_some() {
+                    return self.matvec_simd(x);
                 }
                 self.matvec_scalar(x)
             }
@@ -1548,16 +1548,24 @@ impl BitMatrix {
         acc.count_ones() & 1 == 1
     }
 
+    /// Row parities through one fused AND-population-count kernel resolved
+    /// once for this matrix's stride.
+    ///
+    /// The kernel counts each row's intersection with `x` without a temporary
+    /// buffer or a second pass, and `kernels::ops::resolve_and_popcount`
+    /// chooses between the per-vector nibble lookup and the Harley-Seal
+    /// carry-save loop at the stride the whole product repeats.
     #[cfg(feature = "simd")]
     #[inline(never)]
-    fn matvec_simd(&self, x: &crate::BitVec, fns: &gf2_kernels_simd::LogicalFns) -> crate::BitVec {
+    fn matvec_simd(&self, x: &crate::BitVec) -> crate::BitVec {
         let x_words = x.words();
         debug_assert_eq!(x_words.len(), self.stride_words);
 
+        let and_popcount = crate::kernels::ops::resolve_and_popcount(self.stride_words);
         let mut y = crate::BitVec::with_capacity(self.rows);
 
         for row in self.data.chunks_exact(self.stride_words).take(self.rows) {
-            y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);
+            y.push_bit(and_popcount(row, x_words) & 1 == 1);
         }
 
         y

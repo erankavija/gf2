@@ -29,6 +29,10 @@ proptest = { workspace = true, optional = true }
 
 [dev-dependencies]
 tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
+# The shared population-count suite calls each kernel of the detected bundle
+# directly, including routes a default build's compile-time thresholds do not
+# select.
+gf2-kernels-simd = { path = "../gf2-kernels-simd" }
 criterion = { workspace = true }
 gf2-core = { path = ".", features = ["test-support"] }
 proptest = { workspace = true }
