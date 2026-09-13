@@ -14,8 +14,8 @@ for both forms of both tools, against one fixed workload. The per-file form is
 the source committed at 76812a4e's parent, a6427615adf607caca5e4adb3be917a20f18891f;
 the batch form is the source committed at 76812a4e itself. Each form's source
 is read out of the object database with `git show <revision>:<path>` into a
-scratch directory outside this repository, so the repository's own checkout is
-never rewritten to run either form.
+git-ignored scratch directory, so the repository's own checkout is never
+rewritten to run either form.
 
 Four series run in the fixed order the sampling plan declares:
 
@@ -33,7 +33,10 @@ Four series run in the fixed order the sampling plan declares:
    clone is reset with `git reset --hard` and `git clean -fdx` before every
    repetition, so every repetition performs the whole restoration, and the
    form's two source files are placed into the clone afterwards, outside the
-   timed region. Nothing is written to this repository.
+   timed region. The scratch directory sits on the filesystem the repository
+   sits on, since the tool's real working tree is the repository's own and a
+   scratch elsewhere would put a filesystem difference into the wall times.
+   Nothing this repository tracks is written.
 
 The per-file and batch forms of the restoration generator differ in the checker
 they load as well as in their own source: `restore-receipt-inputs.py` imports
@@ -143,6 +146,31 @@ def source_of(root: Path, revision: str, path: str, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_bytes(git(root, "show", f"{revision}:{path}"))
     destination.chmod(0o755)
+
+
+def filesystem_of(path: Path) -> dict:
+    """Names the filesystem `path` sits on and the device it is mounted from."""
+    header, values = run(
+        "df", "--output=source,fstype", str(path)
+    ).splitlines()[:2]
+    del header
+    source, fstype = values.split()
+    return {"source": source, "fstype": fstype, "device_id": os.stat(path).st_dev}
+
+
+def check_scratch(root: Path, scratch: Path) -> None:
+    """Requires a scratch inside the repository to be one git ignores."""
+    if not scratch.is_relative_to(root):
+        return
+    relative = scratch.relative_to(root)
+    ignored = subprocess.run(
+        ["git", "-C", str(root), "check-ignore", "-q", str(relative)]
+    )
+    if ignored.returncode != 0:
+        raise SystemExit(
+            f"--scratch names {relative} inside this repository, which git does "
+            "not ignore; the clone would reach the repository's status"
+        )
 
 
 def prepare_clone(root: Path, clone: Path, revision: str) -> None:
@@ -356,7 +384,8 @@ def main() -> int:
     parser.add_argument(
         "--scratch",
         required=True,
-        help="directory outside this repository for the clone and the tool sources",
+        help="directory for the clone and the tool sources; inside this "
+        "repository it must be a path git ignores",
     )
     parser.add_argument(
         "--repetitions",
@@ -368,8 +397,8 @@ def main() -> int:
 
     root = repo_root()
     scratch = Path(arguments.scratch).resolve()
-    if scratch.is_relative_to(root):
-        raise SystemExit("--scratch must name a directory outside this repository")
+    scratch.mkdir(parents=True, exist_ok=True)
+    check_scratch(root, scratch)
     repetitions = arguments.repetitions
 
     batch_revision = BATCH_REVISION
@@ -433,12 +462,22 @@ def main() -> int:
         },
         "scratch": {
             "location": (
-                "a session scratch directory outside this repository; its path "
-                "is not recorded because it is checkout-specific"
+                "a git-ignored directory under this repository's target/, so "
+                "the restoration generator writes to the filesystem the "
+                "repository itself sits on; the path is not recorded because "
+                "it is checkout-specific"
             ),
-            "filesystem": run(
-                "stat", "-f", "-c", "%T", str(scratch)
-            ).strip(),
+            "filesystem": {
+                "repository": filesystem_of(root),
+                "scratch": filesystem_of(scratch),
+                "same_device": os.stat(root).st_dev == os.stat(scratch).st_dev,
+                "why": (
+                    "the restoration generator's real working tree is the "
+                    "repository's own, so the scratch clone shares its "
+                    "filesystem and the measured times carry no filesystem "
+                    "difference of the harness's making"
+                ),
+            },
             "clone": (
                 "git clone --shared --no-checkout of this repository, then "
                 f"git checkout --detach {RESTORE_BASE_REVISION}: the working "
