@@ -43,10 +43,19 @@ they load as well as in their own source: `restore-receipt-inputs.py` imports
 `dev/scripts/check-receipt-input-snapshots.py` from its working tree, so both
 files of the form's revision are placed in the clone together.
 
+Each record also carries an assessment of the figures 76812a4e's own message
+publishes. This script holds none of them: it cites that commit by identity and
+reads every figure out of the commit message at assessment time, refusing to
+assess if the sentence the message carries is not in the shape the pattern
+names. `--assess` rebuilds that block alone on an already committed record, so
+an assessment can be re-derived without measuring anything again.
+
 Usage:
   dev/active/a203a23c/timing/measure.py --scratch <directory> [--repetitions N]
+  dev/active/a203a23c/timing/measure.py --assess <record.json>
 
-Prints one JSON record to stdout. Run from the repository root under
+Measuring prints one JSON record to stdout; `--assess` rewrites the named
+record in place. Run from the repository root, and run a measurement under
 `dev/scripts/ccx1-bench-flock.sh --full-host` so host contention does not
 distort the wall times; see dev/active/a203a23c/timing/README.md.
 """
@@ -56,6 +65,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import statistics
 import subprocess
@@ -110,16 +120,11 @@ RNG = {
     ),
 }
 
-PUBLISHED_FIGURES_S = {
-    "checker_per_file": 23.1,
-    "checker_batch": 2.6,
-    "restoration_per_file": 60.2,
-    "restoration_batch": 10.1,
-}
-PUBLISHED_SOURCE = (
-    "commit 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31's message: "
-    '"the repository check falls from 23.1 s to 2.6 s and the restoration '
-    'from 60.2 s to 10.1 s"'
+PUBLISHED_CLAIM_REVISION = BATCH_REVISION
+PUBLISHED_SENTENCE = re.compile(
+    r"the repository check falls from (?P<checker_per_file>[0-9.]+) s to "
+    r"(?P<checker_batch>[0-9.]+) s and the restoration from "
+    r"(?P<restoration_per_file>[0-9.]+) s to (?P<restoration_batch>[0-9.]+) s"
 )
 CONFIRMATION_TOLERANCE = 0.10
 
@@ -347,10 +352,36 @@ def collect_toolchain() -> dict:
     }
 
 
-def compare_to_published(series: dict) -> dict:
-    """Sets each published figure beside the figure this run measures for it."""
+def published_figures(root: Path) -> tuple[dict, str]:
+    """Reads the assessed figures out of the cited commit's own message.
+
+    This tool holds no figure of its own: it cites commit
+    `PUBLISHED_CLAIM_REVISION` by identity and derives every published second
+    from the sentence that commit's message carries, failing loudly if that
+    sentence is not there in the shape `PUBLISHED_SENTENCE` names.
+    """
+    message = git(
+        root, "show", "-s", "--format=%B", PUBLISHED_CLAIM_REVISION
+    ).decode()
+    sentence = PUBLISHED_SENTENCE.search(" ".join(message.split()))
+    if sentence is None:
+        raise SystemExit(
+            f"commit {PUBLISHED_CLAIM_REVISION}'s message does not carry the "
+            f"sentence this assessment reads: {PUBLISHED_SENTENCE.pattern}"
+        )
+    figures = {name: float(value) for name, value in sentence.groupdict().items()}
+    if set(figures) != set(SERIES_ORDER):
+        raise SystemExit(
+            "the assessed sentence names "
+            f"{sorted(figures)}, not the series {sorted(SERIES_ORDER)}"
+        )
+    return figures, f'commit {PUBLISHED_CLAIM_REVISION}\'s message: "{sentence.group()}"'
+
+
+def compare_to_published(series: dict, figures: dict) -> dict:
+    """Sets each published figure beside the figure a record measures for it."""
     comparison = {}
-    for name, published in PUBLISHED_FIGURES_S.items():
+    for name, published in figures.items():
         measured = series[name]
         comparison[name] = {
             "published_s": published,
@@ -361,6 +392,35 @@ def compare_to_published(series: dict) -> dict:
             <= CONFIRMATION_TOLERANCE * published,
         }
     return comparison
+
+
+def published_claim(root: Path, series: dict) -> dict:
+    """Builds the assessment block from the cited commit and a record's series."""
+    figures, source = published_figures(root)
+    return {
+        "source": source,
+        "derivation": (
+            "read from that commit's own message at assessment time and "
+            "matched with the pattern "
+            f"{PUBLISHED_SENTENCE.pattern!r}; "
+            "dev/active/a203a23c/timing/measure.py carries no figure of its own"
+        ),
+        "tolerance": (
+            f"a figure counts as confirmed when the measured median is "
+            f"within {CONFIRMATION_TOLERANCE:.0%} of it"
+        ),
+        "figures": compare_to_published(series, figures),
+    }
+
+
+def assess(root: Path, record_path: Path) -> int:
+    """Rewrites one committed record's `published_claim`, leaving the rest alone."""
+    record = json.loads(record_path.read_text())
+    if "series" not in record:
+        raise SystemExit(f"{record_path} carries no series to assess")
+    record["published_claim"] = published_claim(root, record["series"])
+    record_path.write_text(json.dumps(record, indent=2) + "\n")
+    return 0
 
 
 def sanitized_command(scratch_flag: str) -> str:
@@ -383,7 +443,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--scratch",
-        required=True,
         help="directory for the clone and the tool sources; inside this "
         "repository it must be a path git ignores",
     )
@@ -393,9 +452,19 @@ def main() -> int:
         default=SAMPLING_PLAN["repetitions_per_series"],
         help="repetitions per series; the sampling plan fixes this at 5",
     )
+    parser.add_argument(
+        "--assess",
+        metavar="RECORD",
+        help="rewrite this committed record's published_claim from the cited "
+        "commit's message and the record's own series, measuring nothing",
+    )
     arguments = parser.parse_args()
 
     root = repo_root()
+    if arguments.assess is not None:
+        return assess(root, Path(arguments.assess))
+    if arguments.scratch is None:
+        parser.error("--scratch is required unless --assess names a record")
     scratch = Path(arguments.scratch).resolve()
     scratch.mkdir(parents=True, exist_ok=True)
     check_scratch(root, scratch)
@@ -500,14 +569,7 @@ def main() -> int:
         "scheduling": scheduling,
         "toolchain": collect_toolchain(),
         "series": series,
-        "published_claim": {
-            "source": PUBLISHED_SOURCE,
-            "tolerance": (
-                f"a figure counts as confirmed when the measured median is "
-                f"within {CONFIRMATION_TOLERANCE:.0%} of it"
-            ),
-            "figures": compare_to_published(series),
-        },
+        "published_claim": published_claim(root, series),
     }
     print(json.dumps(record, indent=2))
     return 0
