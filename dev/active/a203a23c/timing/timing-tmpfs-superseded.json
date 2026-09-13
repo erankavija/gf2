@@ -198,6 +198,7 @@
   },
   "published_claim": {
     "source": "commit 76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31's message: \"the repository check falls from 23.1 s to 2.6 s and the restoration from 60.2 s to 10.1 s\"",
+    "derivation": "read from that commit's own message at assessment time and matched with the pattern 'the repository check falls from (?P<checker_per_file>[0-9.]+) s to (?P<checker_batch>[0-9.]+) s and the restoration from (?P<restoration_per_file>[0-9.]+) s to (?P<restoration_batch>[0-9.]+) s'; dev/active/a203a23c/timing/measure.py carries no figure of its own",
     "tolerance": "a figure counts as confirmed when the measured median is within 10% of it",
     "figures": {
       "checker_per_file": {

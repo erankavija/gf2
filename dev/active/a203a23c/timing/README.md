@@ -98,32 +98,41 @@ restoration series agree on the work performed: the counts of restored and
 unrestored pinned files their last repetition prints are at
 `series.<name>.final_stdout`.
 
-`published_claim.figures.<name>` sets each figure of commit `76812a4e`'s
-message beside the median this record measures for it, as `published_s`,
-`measured_median_s`, their ratio, and `confirmed_within_tolerance`, which holds
-when the median lies within 10 % of the published figure. Three of the four
-figures are confirmed: `checker_per_file`, `checker_batch` and
-`restoration_per_file`. The batch restoration figure is not.
+`published_claim` holds the assessment. Its figures are not written into
+`measure.py`: the tool cites commit `76812a4e` by identity, reads the sentence
+that commit's message carries, and fails rather than assess if the message no
+longer carries it — `published_claim.source` quotes the sentence it read and
+`published_claim.derivation` names the pattern it read it with. For each series,
+`published_claim.figures.<name>` then sets that commit's figure beside the
+median the record measures, as `published_s`, `measured_median_s`, their ratio,
+and `confirmed_within_tolerance`, which holds within the margin
+`published_claim.tolerance` states. Three of the four figures are confirmed:
+`checker_per_file`, `checker_batch` and `restoration_per_file`. The batch
+restoration figure is not.
+
+`measure.py --assess <record.json>` rebuilds that block alone on a committed
+record, re-deriving the assessment from the commit message without measuring
+anything.
 
 ### Superseded observation
 
-Commit `76812a4e`'s message states that "the repository check falls from 23.1 s
-to 2.6 s and the restoration from 60.2 s to 10.1 s". The 10.1 s of that
-sentence rests on an observation that was never committed, and the whole-process
-median at `series.restoration_batch.median_s` falls well below it; their ratio
-is at `published_claim.figures.restoration_batch.median_over_published`. The
-10.1 s figure is preserved here and at
-`published_claim.figures.restoration_batch.published_s` as that superseded
-uncommitted observation. `timing.json` is the claim of record: the batch form
-of the restoration generator is faster than the commit message reports, and the
-direction and the order of magnitude of the reduction the commit claims hold.
+The batch restoration figure of the sentence quoted at
+`published_claim.source` rests on an observation that was never committed, and
+the whole-process median at `series.restoration_batch.median_s` falls well below
+it; their ratio is at
+`published_claim.figures.restoration_batch.median_over_published`. That figure
+is preserved at `published_claim.figures.restoration_batch.published_s` as the
+superseded uncommitted observation. `timing.json` is the claim of record: the
+batch form of the restoration generator is faster than the commit message
+reports, and the direction and the order of magnitude of the reduction the
+commit claims hold.
 
 The gap is not an artefact of where the scratch clone sits. The superseded
 tmpfs run reaches the same verdict on the same series, at
 `timing-tmpfs-superseded.json`'s `series.restoration_batch.median_s` and
 `published_claim.figures.restoration_batch.confirmed_within_tolerance`, and its
 median differs from the on-disk median by well under the distance either one
-stands from 10.1 s.
+stands from the published figure.
 
 ## Provenance
 
@@ -151,6 +160,13 @@ timing noise.
   python3 -B dev/active/a203a23c/timing/measure.py \
   --scratch target/a203a23c-scratch --repetitions 5 \
   > dev/active/a203a23c/timing/timing.json
+```
+
+To re-derive an existing record's assessment without measuring anything:
+
+```
+python3 -B dev/active/a203a23c/timing/measure.py \
+  --assess dev/active/a203a23c/timing/timing.json
 ```
 
 `--scratch` holds the clone and the extracted tool sources; `target/` is
