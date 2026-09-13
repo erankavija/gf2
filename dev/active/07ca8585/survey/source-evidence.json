@@ -1,0 +1,206 @@
+{
+  "schema": "ldpc-update-source-evidence-v1",
+  "note": "`before` claims are read from the revision named on the command line, the update path this issue replaces; `after` claims are read from the working tree. Revisions are navigation metadata: the receipts pin the measured bytes.",
+  "claims": [
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1173,
+      "text": "for (pos, &_var) in neighbors.iter().enumerate() {",
+      "lever": "reduction",
+      "why": "the min-sum check update computes one output position at a time"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1177,
+      "text": "for (other_pos, &other_var) in neighbors.iter().enumerate() {",
+      "lever": "reduction",
+      "why": "each output re-gathers the other d_c - 1 inputs, so a check costs d_c (d_c - 1) gathers"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1179,
+      "text": "let var_check_pos = self.find_check_position(other_var, check);",
+      "lever": "edge-indexing",
+      "why": "every gathered input is located by a search of the variable's check list"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1189,
+      "text": "Llr::boxplus_minsum_n(&self.temp_inputs)",
+      "lever": "reduction",
+      "why": "one reduction per output edge instead of a shared minimum, second minimum and sign per check"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1293,
+      "text": ".position(|&check| check == target_check)",
+      "lever": "edge-indexing",
+      "why": "find_check_position is a linear scan over the variable's checks"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1302,
+      "text": ".position(|&v| v == var)",
+      "lever": "edge-indexing",
+      "why": "check_to_var_message scans the check's variable list; the variable update calls it twice per edge"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1275,
+      "text": "belief = Llr::new(belief.value() + self.check_to_var_message(var, pos).value());",
+      "lever": "edge-indexing",
+      "why": "the variable-node sum reads check-to-variable messages through that search"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 913,
+      "text": "check_to_var: Vec<Vec<Llr>>,",
+      "lever": "layout",
+      "why": "one heap vector per check: a jagged, pointer-chased message layout"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 915,
+      "text": "var_to_check: Vec<Vec<Llr>>,",
+      "lever": "layout",
+      "why": "one heap vector per variable"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 917,
+      "text": "check_neighbors: Vec<Vec<usize>>,",
+      "lever": "layout",
+      "why": "eight-byte neighbour indices in per-node vectors"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1372,
+      "text": "fn hard_decode(&self) -> BitVec {",
+      "lever": "allocation",
+      "why": "every syndrome check builds a fresh hard-decision vector"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 141,
+      "text": "let syndrome = self.syndrome(codeword);",
+      "lever": "allocation",
+      "why": "the syndrome is materialised in a new vector before its ones are counted"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-core/src/sparse.rs",
+      "line": 1369,
+      "text": "let mut y = BitVec::with_capacity(self.rows);",
+      "lever": "allocation",
+      "why": "the syndrome matvec allocates its output"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 392,
+      "text": "let f32_vals: Vec<f32> = llrs.iter().map(|l| l.0).collect();",
+      "lever": "allocation",
+      "why": "a heap allocation and copy per min-sum call, that is per edge per iteration"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 393,
+      "text": "let result = (fns.minsum_fn)(&f32_vals);",
+      "lever": "dispatch",
+      "why": "an indirect call per edge per iteration"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 406,
+      "text": ".map(|llr| if llr.0 >= 0.0 { 1.0 } else { -1.0 })",
+      "lever": "numerical-contract",
+      "why": "the supported scalar reference's sign rule: negative zero counts as positive"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 412,
+      "text": ".fold(f32::INFINITY, f32::min);",
+      "lever": "numerical-contract",
+      "why": "the supported scalar reference's magnitude rule: f32::min skips a NaN input"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-kernels-simd/src/llr.rs",
+      "line": 150,
+      "text": "vec_sign = _mm256_xor_ps(vec_sign, signs);",
+      "lever": "numerical-contract",
+      "why": "the AVX2 kernel's vector lanes take the IEEE sign bit, so negative zero counts as negative there"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-kernels-simd/src/llr.rs",
+      "line": 174,
+      "text": "if val < 0.0 {",
+      "lever": "numerical-contract",
+      "why": "the AVX2 kernel's scalar tail counts negative zero as positive, so the two halves of one kernel disagree"
+    },
+    {
+      "generation": "before",
+      "project": "gf2",
+      "commit": "e479a99cb38fad4856d3c3c773763ca8ff68fa14",
+      "path": "crates/gf2-kernels-simd/src/llr.rs",
+      "line": 139,
+      "text": "let chunks = n / 8;",
+      "lever": "numerical-contract",
+      "why": "only whole groups of eight inputs reach the vector lanes, so the disagreement needs nine or more inputs"
+    }
+  ]
+}
