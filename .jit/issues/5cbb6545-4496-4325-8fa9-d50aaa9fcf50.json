@@ -41,115 +41,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "dde29202052764bc14c5e4852351891a9cf100b21388a713dad7ffd24ef87cb8",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/5cbb6545/smoke-launcher.log",
-          "resolved_path": "dev/bench_results/5cbb6545/smoke-launcher.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../f547c394/protocol.md",
-          "resolved_path": "dev/active/f547c394/protocol.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7581af96babe2b99350a6b510850f4d38cd3182932832a51d1724eee8c35058a",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "validation.json",
-          "resolved_path": "dev/active/5cbb6545/validation.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "33854c791d4702b5ae4a820bee3ee348450957fa098199dd178c0e92864bf28d",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/source-evidence.json",
-          "resolved_path": "dev/active/5cbb6545/survey/source-evidence.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../f547c394/amendment-v4.md",
-          "resolved_path": "dev/active/f547c394/amendment-v4.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ee64538a1ef1f7464a128f9bed19ecf63453b4a50a49edb61e7b4b2411de8975",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "producing-inputs.json",
-          "resolved_path": "dev/active/5cbb6545/producing-inputs.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a6aea82161d129d505b03a252671da750c6b2954f3ce308234239201509b279f",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "run-count-campaign.sh",
-          "resolved_path": "dev/active/5cbb6545/run-count-campaign.sh"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "597c9c93dad89401d5f7b6b407cf02d2944499fdb862da5929a487bd85f7f7ca",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/5cbb6545/fused-count-consumers-family-ledger.jsonl",
-          "resolved_path": "dev/bench_results/5cbb6545/fused-count-consumers-family-ledger.jsonl"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "05832d72be0e42950d598941f2890d4fc786409481e5f4f36b394f390e29946e",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "pilot-resolution-popcount.txt",
-          "resolved_path": "dev/active/5cbb6545/pilot-resolution-popcount.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "f764af6bcb6a8b6c71a0e3d869f03bb3b0d8a605df50701467985b7a227c827b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/observe-clock.py",
-          "resolved_path": "dev/active/5cbb6545/survey/observe-clock.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "34318c9e7c5db58f049b4af38cf85979ce26a904eed1d1b0839cd83e730099b9",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "pilot-resolution-fused.txt",
-          "resolved_path": "dev/active/5cbb6545/pilot-resolution-fused.txt"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "d09a6267e27f19246222b09c6577466c953790e0a4f7eff2602c8990fd3d0099",
           "is_shared": false,
           "mime_type": null,
           "original_path": "make-producing-inputs.py",
           "resolved_path": "dev/active/5cbb6545/make-producing-inputs.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "089883c3439913cb79064908b0e9dd98686ebb800124939bf3dbf335566da43f",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/5cbb6545/tables.md",
-          "resolved_path": "dev/bench_results/5cbb6545/tables.md"
         },
         {
           "asset_type": "local",
@@ -161,11 +57,115 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "469ae77561da0f92df63d1e3c79a60c29dfc60fea3a9d9467cd36ae7601a8444",
+          "content_hash": "a6aea82161d129d505b03a252671da750c6b2954f3ce308234239201509b279f",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../bench_results/5cbb6545/smoke-family-ledger.jsonl",
-          "resolved_path": "dev/bench_results/5cbb6545/smoke-family-ledger.jsonl"
+          "original_path": "run-count-campaign.sh",
+          "resolved_path": "dev/active/5cbb6545/run-count-campaign.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "34318c9e7c5db58f049b4af38cf85979ce26a904eed1d1b0839cd83e730099b9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-fused.txt",
+          "resolved_path": "dev/active/5cbb6545/pilot-resolution-fused.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "05832d72be0e42950d598941f2890d4fc786409481e5f4f36b394f390e29946e",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "pilot-resolution-popcount.txt",
+          "resolved_path": "dev/active/5cbb6545/pilot-resolution-popcount.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dde29202052764bc14c5e4852351891a9cf100b21388a713dad7ffd24ef87cb8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/5cbb6545/smoke-launcher.log",
+          "resolved_path": "dev/bench_results/5cbb6545/smoke-launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "089883c3439913cb79064908b0e9dd98686ebb800124939bf3dbf335566da43f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/5cbb6545/tables.md",
+          "resolved_path": "dev/bench_results/5cbb6545/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "597c9c93dad89401d5f7b6b407cf02d2944499fdb862da5929a487bd85f7f7ca",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/5cbb6545/fused-count-consumers-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/5cbb6545/fused-count-consumers-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ee64538a1ef1f7464a128f9bed19ecf63453b4a50a49edb61e7b4b2411de8975",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "producing-inputs.json",
+          "resolved_path": "dev/active/5cbb6545/producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7581af96babe2b99350a6b510850f4d38cd3182932832a51d1724eee8c35058a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "validation.json",
+          "resolved_path": "dev/active/5cbb6545/validation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f764af6bcb6a8b6c71a0e3d869f03bb3b0d8a605df50701467985b7a227c827b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/observe-clock.py",
+          "resolved_path": "dev/active/5cbb6545/survey/observe-clock.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "33854c791d4702b5ae4a820bee3ee348450957fa098199dd178c0e92864bf28d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/5cbb6545/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b9bf1c2fa94ec69683b45f25377cadfaba6f7af3852d98986cac1a2dede7d817",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl"
         },
         {
           "asset_type": "local",
@@ -177,11 +177,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "b9bf1c2fa94ec69683b45f25377cadfaba6f7af3852d98986cac1a2dede7d817",
+          "content_hash": "469ae77561da0f92df63d1e3c79a60c29dfc60fea3a9d9467cd36ae7601a8444",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl",
-          "resolved_path": "dev/bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl"
+          "original_path": "../../bench_results/5cbb6545/smoke-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/5cbb6545/smoke-family-ledger.jsonl"
         }
       ],
       "commit": null,
@@ -240,5 +240,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize population count and fused bit reductions",
-  "updated_at": "2026-09-13T19:37:10.308030041Z"
+  "updated_at": "2026-09-13T19:38:18.182625559Z"
 }
