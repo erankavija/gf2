@@ -24,7 +24,7 @@ import sys
 # decision. A documentation-only commit followed that source commit, so select
 # the source revision explicitly and reject generation if any claimed source
 # path differs from it.
-SOURCE_REVISION = "c4288da38db2b8a82263878990c21e97f9b45da7"
+SOURCE_REVISION = "af0dacfa5aa0c2986f6dda6883f99109c4b6a4c4"
 
 OPS = "crates/gf2-core/src/kernels/ops.rs"
 BACKEND = "crates/gf2-core/src/kernels/backend.rs"
@@ -52,10 +52,10 @@ CLAIMS = [
     ("ops-scalar-retained", OPS, 387, "SCALAR_BACKEND.popcount(buf)",
      "below the bit-backend SIMD threshold the public dispatcher retains the scalar backend's "
      "portable count", "retained-route"),
-    ("ops-nibble-resolver", OPS, 326, "backend.popcnt_fn",
+    ("ops-nibble-resolver", OPS, 328, "backend.popcnt_fn",
      "the fixed-width resolver retains the bundle's established nibble-lookup function at every "
      "SIMD width", "retained-route"),
-    ("ops-fused-nibble-resolver", OPS, 362, "backend.and_popcnt_fn",
+    ("ops-fused-nibble-resolver", OPS, 366, "backend.and_popcnt_fn",
      "the fused resolver retains the bundle's established nibble-lookup function at every SIMD "
      "width", "retained-route"),
     ("ops-route-report", OPS, 245, "PopcountRoute::SimdNibbleLut",
