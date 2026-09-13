@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-13T11:53:58.569086319Z",
+  "dependencies": [],
+  "description": "The canonical confirmation freezer copies the pilot addendum's family description into the confirmation unless the caller restates it, so a frozen confirmation can describe itself as the pilot.\n\n## Background\n\n`dev/active/c7113c5a/survey/freeze-confirmation.py` derives a confirmation addendum from a committed pilot receipt. Its `--family-description` option restates the family prose; without it the confirmation carries the pilot's description verbatim. The 1c602857 confirmation addendum ends with the pilot's own stage sentence (\"This addendum is the pilot: every cell is exploratory\") while every cell carries the `confirmatory` role, which the research-review gate reported as an advisory finding in two rounds. The receipt pins the frozen bytes, so the committed addendum stays as evidence; the defect is the freezer default.\n\n## Success Criteria\n\n- [hard] REQ-01: The freezer refuses to write a confirmation addendum whose family description names the pilot stage or exploratory cells, unless the caller restates the description; the refusal names the offending sentence.\n- [hard] REQ-02: The derivation record states the family description the confirmation carries and whether it was restated or inherited.\n- [hard] REQ-03: The freezer's own tests cover the refusal and the restatement path, and every committed confirmation addendum frozen after this change validates against the rule.\n\n## Notes\n\nSurfaced by the 1c602857 research review (advisory A1). Committed addenda frozen before this change keep their bytes; their receipts pin them.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-13T11:53:58.569086319Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "94bbe5d7-48d0-4449-8a4d-37da700ef697",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Freeze confirmation addenda with stage-specific family prose",
+  "updated_at": "2026-09-13T11:53:58.569086319Z"
+}

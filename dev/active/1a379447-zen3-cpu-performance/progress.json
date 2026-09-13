@@ -374,7 +374,7 @@
           "short_id": "1c602857",
           "title": "Route the public wide carry-less product through capability dispatch",
           "classification": "implementation",
-          "status": "session 13: round-2 rework (counter 2 of 2) resumed by w13-1c602857 (sonnet): 164dd895 closes doc-review F1 (exact dispatch predicate); the per-feature-set validation record for research-review F2 was run but uncommitted when session 12 died; worker commits it, cites it from findings.md, merges main, runs cargo-ci.",
+          "status": "session 13: round 2 merged at c1cd9256 (worker commits db720448, 1016092b plus lead commit 529662f0 citing the predicate from four test doc-comments); links at e479a99c; code-review, doc-review and research-review pass on e479a99c (research-review A1 advisory: the frozen confirmation addendum's family prose still calls itself the pilot); cargo-ci running.",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-1c602857",
@@ -383,7 +383,10 @@
             "attempt": 3,
             "rework_round": 2,
             "session": 13
-          }
+          },
+          "reviews": [
+            "reviews/1c602857-r3.md"
+          ]
         }
       ]
     },
@@ -395,7 +398,16 @@
           "short_id": "07ca8585",
           "title": "Remove allocation and repeated edge traversal from LDPC updates",
           "classification": "implementation",
-          "status": "pending"
+          "status": "session 13: dispatched to w13-07ca8585 (opus) in the reused .agents/worktrees/agent-1c602857 directory on branch worktree-agent-07ca8585 (base e479a99c) with the worker brief; ready since 3be770d5 closed, on the critical path to f63a2464, ed3d490e and 1362381c.",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-1c602857 (reused directory)",
+            "branch": "worktree-agent-07ca8585",
+            "base": "e479a99c",
+            "attempt": 1,
+            "rework_round": null,
+            "session": 13
+          }
         },
         {
           "id": "63bad95d-0e69-459b-840b-c37521036f52",
@@ -1040,6 +1052,13 @@
       "origin": "gate infrastructure (session 12)",
       "disposition": "resolved at 33f08f02 on the invoker's approval",
       "criterion_named_by": "none"
+    },
+    {
+      "issue": "1c602857",
+      "subject": "the frozen confirmation addendum's family description ends with the pilot's own sentence ('This addendum is the pilot: every cell is exploratory'); the canonical freezer copies the pilot prose unless --family-description is passed, so every confirmation frozen without it carries a false stage statement (research-review A1, advisory, present in two rounds)",
+      "origin": "issue-impact (freezer default)",
+      "disposition": "advisory; the receipt pins the addendum bytes so the frozen file stays; worker brief amended to require --family-description; freezer default change filed as an epic task",
+      "criterion_named_by": "none in 1a379447"
     }
   ],
   "notes": [
