@@ -814,11 +814,20 @@ mod tests {
     const BATCHES: &[usize] = &[0, 1, 63, 64, 65, 255, 256, 257];
 
     fn check_bundle(fns: &BchEncodeFns) {
+        check_bundle_over(fns, DIMENSIONS, REDUNDANCIES, BATCHES);
+    }
+
+    fn check_bundle_over(
+        fns: &BchEncodeFns,
+        dimensions: &[usize],
+        redundancies: &[usize],
+        batches: &[usize],
+    ) {
         let mut seeded = Seeded(0x2b69_68d3_0000_0001);
-        for &dimension in DIMENSIONS {
-            for &redundancy in REDUNDANCIES {
+        for &dimension in dimensions {
+            for &redundancy in redundancies {
                 let low = seeded.bits(redundancy);
-                for &batch in BATCHES {
+                for &batch in batches {
                     let messages: Vec<Vec<u64>> =
                         (0..batch).map(|_| seeded.bits(dimension)).collect();
                     let produced = bitslice_parity(fns, &messages, dimension, &low, redundancy);
@@ -860,6 +869,40 @@ mod tests {
             "scalar",
             "the portable bundle needs no processor feature"
         );
+    }
+
+    /// The bundle with one named lane of [`crate::transpose`]'s family
+    /// substituted for the transpose primitive, so the bit-slicing contract
+    /// runs over every lane instead of only the dispatched one.
+    fn bundle_with_lane(lane: crate::transpose::TransposeLane) -> Option<BchEncodeFns> {
+        crate::transpose::lane(lane).map(|transpose_lane_block| BchEncodeFns {
+            transpose_lane_block,
+            name: lane.name(),
+            ..scalar()
+        })
+    }
+
+    /// Every lane answers the bit-slicing round trip, not just the block
+    /// contract: a message batch slices through `absorb_block` and comes back
+    /// through `unpack_parity` as the per-frame reference's parity.
+    ///
+    /// The grid is trimmed to the boundaries that exercise a partial lane
+    /// group, a partial degree block and a partial parity word, because the
+    /// full grid runs once per lane here.
+    #[test]
+    fn every_transpose_lane_bit_slices_and_unpacks_the_same_parity() {
+        const LANE_DIMENSIONS: &[usize] = &[0, 1, 63, 64, 65];
+        const LANE_REDUNDANCIES: &[usize] = &[1, 63, 64, 65];
+        const LANE_BATCHES: &[usize] = &[0, 1, 63, 64, 65];
+        let mut ran = 0usize;
+        for lane in crate::transpose::TransposeLane::ALL {
+            let Some(fns) = bundle_with_lane(lane) else {
+                continue;
+            };
+            check_bundle_over(&fns, LANE_DIMENSIONS, LANE_REDUNDANCIES, LANE_BATCHES);
+            ran += 1;
+        }
+        assert!(ran > 0, "the scalar lane is available on every host");
     }
 
     #[test]

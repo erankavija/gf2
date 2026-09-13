@@ -1238,22 +1238,57 @@ impl BitMatrix {
     /// O(rows · cols / 64) — linear in the bit count up to a small
     /// constant.
     pub fn transpose(&self) -> Self {
+        self.transpose_with_block_kernel(Self::resolved_block_kernel())
+    }
+
+    /// The 64×64 block kernel [`Self::transpose`] resolves.
+    ///
+    /// Under this crate's `simd` cargo feature, which is not one of its
+    /// defaults, that is the lane `gf2_kernels_simd::transpose::detect`
+    /// publishes for the host's processor features. Without the feature the
+    /// portable kernel is called directly and no detection happens.
+    fn resolved_block_kernel() -> gf2_kernels_simd::transpose::Transpose64x64Fn {
+        #[cfg(feature = "simd")]
+        {
+            match crate::simd::maybe_transpose() {
+                Some(fns) => fns.transpose_64x64,
+                None => gf2_kernels_simd::transpose::transpose_64x64_scalar,
+            }
+        }
+        #[cfg(not(feature = "simd"))]
+        {
+            gf2_kernels_simd::transpose::transpose_64x64_scalar
+        }
+    }
+
+    /// [`Self::transpose`] driven by one caller-chosen 64×64 block kernel.
+    ///
+    /// [`Self::transpose`] is this function at the kernel
+    /// [`resolved_block_kernel`](Self::resolved_block_kernel) returns, so the
+    /// tiling, the output allocation, the zero padding of a partial input
+    /// tile and the output tail mask are the same work either way and only
+    /// the block primitive differs. A caller names a kernel through
+    /// `gf2_kernels_simd::transpose::lane`, which is what pins a lane for a
+    /// benchmark arm or a contract case without a process-global override.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::matrix::BitMatrix;
+    /// use gf2_kernels_simd::transpose::{lane, TransposeLane};
+    ///
+    /// let mut m = BitMatrix::zeros(2, 3);
+    /// m.set(0, 1, true);
+    /// let scalar = lane(TransposeLane::Scalar).expect("always available");
+    /// assert_eq!(m.transpose_with_block_kernel(scalar), m.transpose());
+    /// ```
+    pub fn transpose_with_block_kernel(
+        &self,
+        transpose_64x64: gf2_kernels_simd::transpose::Transpose64x64Fn,
+    ) -> Self {
         if self.rows == 0 || self.cols == 0 {
             return Self::zeros(self.cols, self.rows);
         }
-
-        // Resolve the dispatched 64×64 transpose kernel once. When the
-        // `simd` feature is off, fall back to the always-available
-        // scalar primitive directly.
-        #[cfg(feature = "simd")]
-        let transpose_64x64: fn(&[u64; 64], &mut [u64; 64]) = match crate::simd::maybe_transpose() {
-            Some(fns) => fns.transpose_64x64,
-            None => gf2_kernels_simd::transpose::transpose_64x64_scalar,
-        };
-        #[cfg(not(feature = "simd"))]
-        let transpose_64x64: fn(&[u64; 64], &mut [u64; 64]) =
-            gf2_kernels_simd::transpose::transpose_64x64_scalar;
-
         self.transpose_blocked(transpose_64x64)
     }
 

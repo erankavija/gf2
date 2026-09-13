@@ -1,0 +1,43 @@
+# gf2-side arm of the transpose-lane-versus-external receipts (jit:1d4fd63d).
+#
+# A standalone workspace, so the receipt adds no target, feature or dependency
+# to the production workspace and consumes gf2-kernels-simd exactly as an
+# external user would. It enables no `test-support` feature: pinning a lane
+# needs none, because the arm names one through the public
+# `gf2_kernels_simd::transpose::lane`.
+#
+# The external arms of these cells are 6fb89a3c's pinned executables, built
+# from its committed sources by its own `fetch-build.sh` and checked against
+# its committed `build-evidence.json` before any timed run. This crate supplies
+# only the gf2 side, and its fixed-case body is 6fb89a3c's gf2 transpose arm's:
+# one 64x64 block per timed call into a preallocated output, from the same
+# SplitMix64 fixture, so a cell here measures the same operation that survey's
+# kernel cells measure and adds only the choice of lane.
+#
+# Child-v2 framing and window timing come from `tuning-campaign-support`; this
+# crate restates neither.
+
+[workspace]
+
+[package]
+name = "transpose-lane-external-arms"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[[bin]]
+name = "transpose-lane-external-arm"
+path = "src/main.rs"
+
+[dependencies]
+gf2-kernels-simd = { path = "../../../../crates/gf2-kernels-simd" }
+tuning-campaign-support = { path = "../../../../dev/tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+# The workspace release profile verbatim, so the arm build is the one a
+# production receipt measures rather than a differently optimized build.
+[profile.release]
+lto = "thin"
+codegen-units = 1
