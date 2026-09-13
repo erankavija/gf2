@@ -19,6 +19,8 @@ import families
 STAGES = {
     "popcount-sweep": families.popcount_sweep,
     "fused-sweep": families.fused_sweep,
+    "popcount-sweep2": families.popcount_sweep2,
+    "fused-sweep2": families.fused_sweep2,
     "smoke-smoke": families.smoke,
 }
 
