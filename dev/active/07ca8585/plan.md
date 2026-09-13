@@ -52,15 +52,32 @@ Workloads are the frozen DVB-T2 and NR bundles `c077a88b` recorded, at the
 identities and digests the `3be770d5` addenda pin. No workload is added and
 none is re-recorded.
 
-REQ-10's three granularities are three metric kinds over those same workloads:
+REQ-10 names three granularities over those same workloads. One of them is
+measured; the other two are blocked, and the block is a property of the
+evidence base rather than a choice:
 
-- **check-node updates** — one flooding check-node update pass over a prepared
-  message array, reported as an isolated kernel.
-- **full iterations** — decoding at the iteration cap with syndrome stopping
-  disabled, so the arms perform an equal, declared number of iterations.
 - **full decoding** — the `3be770d5` steady-state operation unchanged: per-worker
   batches of recorded frames through a reused decoder, including conversion,
-  dispatch and decision extraction, with syndrome stopping on.
+  dispatch and decision extraction, with syndrome stopping on. This is what the
+  families above measure.
+- **full iterations** — decoding at the iteration cap with syndrome stopping
+  disabled, so both arms perform an equal, declared number of iterations. The
+  measured harness reports the prepared `c077a88b` quality evidence and refuses
+  an arm whose settings differ from the settings that evidence was produced
+  under, and that evidence is produced under syndrome stopping. A fixed-stopping
+  cell therefore needs its own prepared quality corpus, with its own predeclared
+  tolerance and its own BER and FER sample counts, which is a quality
+  preparation campaign rather than a cell of this family.
+- **check-node updates** — one flooding check-node update pass over a prepared
+  message array, reported as an isolated kernel. Neither the measured harness nor
+  the pinned AFF3CT shim exposes the update rule outside a whole decode, so this
+  needs a new arm on each side: a gf2 binary that times the update pass alone,
+  and a shim entry point that instantiates AFF3CT's update rule over the same
+  prepared array. Without the second, the comparison would not be matched.
+
+Both blocked granularities are reported as unmet rather than approximated by a
+whole-decode cell relabelled, because a whole-decode cell measures the
+termination rule and the conversion as well as the update.
 
 Scaling arms are one worker and the physical-core and SMT arms the protocol
 resolver returns at run time. Allocation counts, degree distributions and the

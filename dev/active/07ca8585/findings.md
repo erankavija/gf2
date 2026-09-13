@@ -186,6 +186,18 @@ both codes; both pilots put the changed decoder ahead of the path it replaces
 and narrow the comparator gap the predecessor measured, at intervals the tables
 carry. A pilot decides nothing: it fixes the resolution its confirmation freezes.
 
+### What REQ-10 does not cover yet
+
+REQ-10 asks for matched comparisons at three granularities. Full decoding is
+measured, at one worker on both codes, by an accepted comparator pilot whose
+confirmation is frozen and queued. The other two are **not delivered**, for the
+reasons the [plan](plan.md) states: a fixed-iteration cell needs its own prepared
+quality corpus, because the harness refuses an arm whose settings differ from the
+settings the reused `c077a88b` evidence was produced under, and an isolated
+check-node cell needs a new arm on each side, because neither the harness nor the
+pinned AFF3CT shim exposes the update rule outside a whole decode. Neither is
+approximated by relabelling a whole-decode cell.
+
 ## Adoption
 
 Adoption is decided by the `ldpc-update-single-worker-v1` and
