@@ -153,9 +153,14 @@ The order is smoke, then pilot, then freeze, then confirmation:
    cap for a family with no ledger history under P-20.
 
 The confirmatory cells span both base graphs, filler and filler-free codes and
-both comparators: three srsRAN gap cells, two AFF3CT gap cells and the
-portable-versus-native build control. The exact cell list freezes with the
-confirmatory addendum, after the pilot receipt is committed.
+both comparators: four srsRAN gap cells and two AFF3CT gap cells. The cap
+spends every comparison on a comparator gap, so the identity floor and the
+portable-versus-native build control keep exploratory standing in the pilot;
+they answer questions about the harness and the build rather than attributing a
+gap. [`addendum-nr-encode-confirmation.json`](addendum-nr-encode-confirmation.json)
+is the frozen list and
+[`resolution-nr-encode-confirmation.txt`](resolution-nr-encode-confirmation.txt)
+records the selection.
 
 ## What this survey does not measure
 

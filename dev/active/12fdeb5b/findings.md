@@ -151,22 +151,78 @@ a campaign whose receipt is present. All five are accepted with zero findings
 and all five spend zero comparisons, so the accounting shows every attempt
 without touching the family's error budget.
 
-The [pilot](addendum-nr-encode-pilot.json) is frozen: eight exploratory cells
-over both base graphs, both comparators, the build control and the identity
-floor, at the protocol's confirmatory pair count. It is a window job and has
-not run. **WAITING-ON-WINDOW.**
+The [pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json)
+is an accepted eight-cell exploratory campaign over both base graphs, both
+comparators, the build control and the identity floor, at the protocol's
+confirmatory pair count. Every cell carries the `pilot` outcome and decides
+nothing; the campaign exists to size the family's measurement resolution.
 
-The confirmatory addendum is not frozen and cannot be: its
-`measurement_resolution` must cite the committed pilot receipt by path and
-digest, so it freezes in a later window after the pilot receipt is committed.
-It will declare at most six confirmatory cells, the P-20 cap for a family with
-no ledger history, spanning both base graphs, filler and filler-free codes,
-both comparators and the build control. **WAITING-ON-WINDOW.**
+The [confirmatory addendum](addendum-nr-encode-confirmation.json) declares six
+of those eight cells. Six is the largest set P-20 admits for a family with no
+ledger history: each bootstrap tail holds `bootstrap_resamples` times the
+corrected alpha over two expected draws, and the rule requires twenty. The two
+dropped cells are the identity controls, which answer a question about the
+harness rather than attributing a comparator gap; the retained six are every
+gf2-versus-comparator pair the pilot measured. The arithmetic, the rationale
+and both lists are in
+[`resolution-nr-encode-confirmation.txt`](resolution-nr-encode-confirmation.txt).
 
-The resolution rule the confirmation will use is `eda07788`'s: compute the
-pilot's widest relative bootstrap half-width at the confirmation's corrected
-alpha, not at the pilot's own, because the DVB-T2 family's use of the pilot's
-own alpha was contradicted by a threefold wider confirmation interval.
+The resolution rule is `eda07788`'s: the pilot's widest relative bootstrap
+half-width recomputed at the confirmation's corrected alpha, not at the pilot's
+own, because the DVB-T2 family's use of the pilot's own alpha was contradicted
+by a threefold wider confirmation interval. P-20's endpoint shift between seed
+streams is taken alongside it and the larger of the two is rounded up.
+[`pilot-resolution-nr-encode.txt`](pilot-resolution-nr-encode.txt) is that
+derivation, the committed output of `eda07788`'s `bootstrap-resolution` over
+this survey's pilot receipt. The freeze refuses a resolution below the width at
+the pilot's own alpha, and refuses margins that do not strictly exceed one plus
+the frozen value.
+
+The [confirmation](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json)
+is accepted with no findings and does not qualify for production selection,
+which is the standing a survey proposing no change should reach. Every declared
+cell is measured at the protocol's confirmatory pair count, none reports an
+unresolved setting, and none exceeds the flagged-window fraction. Its own
+widest relative half-width, in the summary table of the "Confirmation campaign"
+section of the [tables](../../bench_results/12fdeb5b/tables.md), sits far inside
+the declared resolution, which the dropped portable-build control sized.
+
+## Measured outcomes
+
+Every figure below is a pointer. The cell rows are the "Confirmation campaign"
+section of the [tables](../../bench_results/12fdeb5b/tables.md) and the cell
+entries of the
+[acceptance summary](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md);
+the exploratory rows that sized them are the "Pilot campaign" section of the
+same tables.
+
+**srsRAN is ahead on every configuration measured, by a margin that grows with
+block length.** All four `-gap-native-vs-srsran` cells pass: each interval lies
+entirely above the material-gap threshold, and the smallest base-graph-2
+configuration and the largest base-graph-1 configuration bound the range. The
+gap is a whole-consumer one and includes each arm's representation conversion,
+which the "Per-arm call time and adapter stages" table decomposes descriptively
+per arm; those medians carry no interval and decide nothing.
+
+**AFF3CT splits.** `nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct` passes: AFF3CT
+is materially ahead on the larger base-graph-1 configuration.
+`nr-enc-bg2-n256-k121-gap-native-vs-aff3ct` is a **`fail`**: the evaluator
+records the decision `regressed`, meaning AFF3CT is materially slower than gf2
+on the smallest base-graph-2 configuration. The tables' "gf2 faster by (gap
+cells)" column reports the reciprocal of that cell's interval. The outcome is
+recorded as the evaluator states it and is not reinterpreted.
+
+**The identity floor and the build control are settled at exploratory
+standing.** The pilot's `-null-` cell reads the noise floor between two
+launches of the same executable, and its `-control-portable-vs-native` cell
+compares the conservative-portable build with the native one and is
+`inconclusive` at the pilot's alpha. Neither is confirmatory, so neither
+supports a claim about gf2's build targeting; the portable control is also the
+cell whose width sizes the family's resolution.
+
+Every cell is a comparator-gap cell about a whole-consumer operation. None
+measures a kernel, none proposes a change, and the family's
+`worthwhile_speedup` stays undeclared, so no cell can qualify for adoption.
 
 ## Negative, unavailable and recorded outcomes
 
@@ -183,12 +239,27 @@ own alpha was contradicted by a threefold wider confirmation interval.
   point, so timing a harness re-implementation would time the harness.
 - The survey proposes no production change, so its addenda declare no
   worthwhile speedup and adopt nothing.
+- One confirmatory cell is a `fail`: AFF3CT is materially slower than gf2 on
+  the smallest base-graph-2 configuration. It stays in the confirmation and in
+  the tables under the outcome the evaluator assigned.
+- gf2 is behind srsRAN on every configuration this survey measures. That is the
+  survey's principal result, and it stands whether or not any later issue acts
+  on it.
 
 ## Reproduction
 
 ```
+dev/active/12fdeb5b/survey/freeze-addendum.py smoke|pilot <addendum>
+dev/active/12fdeb5b/survey/freeze-addendum.py confirmation <addendum> <pilot-receipt-dir>
 dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh smoke|pilot|confirmation
 ```
+
+The freezer's confirmation mode delegates to the canonical
+`dev/active/c7113c5a/survey/freeze-confirmation.py`, supplying this family's
+cell selection, its prose and the resolution derived at the confirmation's
+corrected alpha; the survey owns no freezing logic of its own. The confirmation
+launcher refuses an addendum, or a pinned pilot receipt, whose bytes differ
+from the committed ones.
 
 The launcher resolves the shared comparator source trees under the primary
 checkout through the common git directory, so any worktree of this repository
@@ -205,10 +276,10 @@ tables from the committed records and receipts.
 
 | Criterion | Standing | Evidence |
 |---|---|---|
-| REQ-01 | partially met, WAITING-ON-WINDOW | The smoke receipt is accepted with zero findings under protocol version 4 and pins the contract, protocol, schema and addendum by digest. The pilot and confirmation receipts follow in later windows. |
+| REQ-01 | met | The smoke, [pilot](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json) and [confirmation](../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json) receipts are accepted with zero findings under protocol version 4, each pinning the contract, protocol, schema and its addendum by digest. The `fail` cell and the exploratory `inconclusive` control stay recorded under the outcomes the evaluator assigned. |
 | REQ-02 | met | [build evidence](survey/build-evidence.json), [source-evidence ledger](survey/source-evidence.json), [plan](plan.md) |
 | REQ-03 | met | [validation record](survey/nr-encode-validation.json), projected in the tables |
-| REQ-04 | partially met, WAITING-ON-WINDOW | The pilot addendum is frozen and the smoke receipt is committed; the pilot and confirmation receipts are window jobs. Unavailable and non-equivalent arms are already recorded. |
+| REQ-04 | met | The [pilot](addendum-nr-encode-pilot.json) and [confirmatory](addendum-nr-encode-confirmation.json) addenda are frozen and their receipts committed, over base-graph-1 and base-graph-2 block sizes and rates, with conversion costs inside every timed call. Unavailable and non-equivalent arms are recorded in the ["Bit-exact equivalence outcomes"](../../bench_results/12fdeb5b/tables.md) table and in *Where the projects diverge*. |
 
 ## Citations
 
