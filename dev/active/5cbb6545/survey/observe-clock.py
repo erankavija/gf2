@@ -26,6 +26,9 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from families import bytes_per_call  # noqa: E402
+
 SCHEMA = "count-clock-observation-v1"
 #: Plan constants of this observation: the child's fresh-case sentinel, the
 #: wrapper every timed session on this host runs under, and the counters read.
@@ -45,18 +48,6 @@ def revision():
     return subprocess.run(
         ["git", "rev-parse", "HEAD"], check=True, capture_output=True, text=True
     ).stdout.strip()
-
-
-def bytes_per_call(case):
-    """Useful bytes one call of this case reads, from the case itself."""
-    if case["op"] == "popcount":
-        return case["words"] * 8
-    if case["op"] == "and_popcnt":
-        return case["words"] * 8 * 2
-    if case["op"] == "matvec":
-        row_bytes = (case["cols"] + 63) // 64 * 8
-        return case["rows"] * (row_bytes + row_bytes)
-    raise SystemExit(f"unknown case op {case['op']!r}")
 
 
 def request(cell, arm, case, cache_state, role, settings, cpus, workers):
