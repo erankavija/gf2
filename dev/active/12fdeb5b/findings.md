@@ -232,6 +232,26 @@ unmeasured, and the abort. No figure in this survey comes from it. The rule
 reaches an attempt whose results are unread; an attempt whose results are read
 spends its reservation, so it cannot retire a losing measurement.
 
+The rule postdates both campaigns. Protocol v4 carried no voided-attempt
+paragraph when either ran: the rule it carried spends the reservation of every
+interrupted or failed confirmation, and under that rule the aborted attempt
+spends the family's comparisons and both candidates' single attempt, which
+leaves the re-run outside the one-attempt cap. Both stages pin the protocol
+snapshot that precedes the rule — `inputs/protocol.md` in the aborted stage and
+in the confirmation receipt is the same file, and it differs from the current
+[protocol](../f547c394/protocol.md) — so the re-run's status as a permitted
+retry was not preregistered. The amendment records the rule without a version
+change, which acceptance is indifferent to, but that does not make the rule
+prior to the measurement.
+
+The re-run's standing as the family's confirmation therefore rests on **DEC-01**
+of this issue, the invoker's recorded decision that the aborted attempt is
+voided and the re-run is the valid confirmation, and not on a retry the frozen
+protocol permitted in advance. A reader who rejects that decision should read
+the confirmation's cells as measured data whose confirmatory standing is
+unestablished; the pilot's exploratory rows, which no decision is needed to
+read, carry the same comparisons at their own standing.
+
 ## Measured outcomes
 
 Every figure below is a pointer. The cell rows are the "Confirmation campaign"
