@@ -1,0 +1,21 @@
+; Assembly evidence for f1a896f0: opt-in block-CSR sparse matvec prefetch.
+;
+; Command:
+;   cd /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-f1a896f0 &&
+;   objdump -d --demangle target/agent-f1a896f0/release/deps/sparse-6a327f0e9389e1aa |
+;   awk '/<gf2_core::sparse::SpBitMatrixBlockCsr::matvec_with_prefetch_distance>:/,/^$/' |
+;   grep -i -C 5 'prefetcht\|prefetchw\|prefetchnta'
+;
+; Relevant emitted inner-loop excerpt:
+;
+;  1d701a: 73 17                 jae    1d7033 <...+0x2f3>
+;  1d701c: 4c 39 ff              cmp    %r15,%rdi
+;  1d701f: 0f 83 11 04 00 00     jae    1d7436 <...+0x6f6>
+;  1d7025: 48 8b 7c fd 00        mov    0x0(%rbp,%rdi,8),%rdi
+;  1d702a: 48 c1 ef 06           shr    $0x6,%rdi
+;  1d702e: 41 0f 18 0c fe        prefetcht0 (%r14,%rdi,8)
+;  1d7033: 4c 39 f9              cmp    %r15,%rcx
+;  1d7036: 0f 83 cc 03 00 00     jae    1d7408 <...+0x6c8>
+;  1d703c: 4c 8b 44 cd 00        mov    0x0(%rbp,%rcx,8),%r8
+;  1d7041: 4c 89 c7              mov    %r8,%rdi
+;  1d7044: 48 c1 ef 06           shr    $0x6,%rdi

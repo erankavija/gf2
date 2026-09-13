@@ -1,0 +1,73 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "bit-storage-count-consumers",
+    "issue": "04b85d10",
+    "purpose": "consumer-family",
+    "description": "Exploratory pilot of issue 04b85d10, protocol version 4. Question: Where population counts and the fused reductions built on them cost material time in current consumers: the scalar/SIMD dispatch at the four- and eight-word boundaries, the SIMD gain on an L2-resident buffer, and whether an any-nonzero spelling (`find_first_one().is_none()`) replaces the full count materially in an isolated DVB-T2 syndrome buffer and in the whole `LdpcCode::is_valid_codeword` consumer. The declared cells reach the DVB-T2 normal-frame LDPC code of length 64800 at rate 1/2. Every cell is exploratory: the pilot sizes the measurement resolution of the cells it declares at the confirmatory sample size, records their pinned pre-change baseline latencies, and decides nothing."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This issue is a profile: it selects experiments and adopts no implementation, so its budget for production change is zero unsafe kernels and zero added production lines. A passing improvement cell confirms a candidate's materiality for its downstream issue; it selects nothing here."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-12T15:58:34Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.05,
+    "rationale": "A population-count route or an any-nonzero spelling is a one-line consumer change; five percent of the count is the smallest gain such a change can claim in a syndrome or weight consumer, and the whole-consumer cell decides whether the count is a material share at all. The pilot carries the margin so its recorded decisions are computed under the rule the confirmation uses; pilot cells never pass.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "A spelling at most five percent slower than the current count is not worse for a consumer whose count share is below one; the margin equals the worthwhile threshold.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell compares gf2 against an external comparator, so no comparator-gap objective is exercised and no threshold applies."
+  },
+  "cells": [
+    {
+      "cell_id": "count-ldpc-check-64800-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "ldpc-codeword-check",
+        "size": {
+          "n": 64800
+        },
+        "seed": 203
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
