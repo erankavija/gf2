@@ -1,0 +1,112 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "pilot-6c6b09b1-20260907t195857z",
+  "issue": "6c6b09b1",
+  "label": "pilot",
+  "campaign_seed": 20260907,
+  "addendum": "dev/active/6c6b09b1/addendum-byte-field-arms-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2": {
+      "build": "native",
+      "description": "gf2-core consumer entry points over GF(2^8) modulo 0x11D",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/survey-target/release/gf2-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "ext-isal": {
+      "build": "external",
+      "description": "ISA-L gf_vect_mad and ec_encode_data, runtime-dispatched kernels",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/survey-target/release/ext-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_BACKEND": "isa-l",
+        "GF2_SURVEY_VARIANT": "default"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "ext-gfcomplete": {
+      "build": "external",
+      "description": "GF-Complete w=8 default region kernel and elementwise multiply",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/survey-target/release/ext-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_BACKEND": "gf-complete",
+        "GF2_SURVEY_VARIANT": "default"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "ext-m4rie": {
+      "build": "external",
+      "description": "M4RIE mzed_add_multiple_of_row and mzed_mul, Newton-John tables",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/survey-target/release/ext-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_SURVEY_BACKEND": "m4rie",
+        "GF2_SURVEY_VARIANT": "default"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "axpy-isal-l2-1core",
+      "baseline_arm": "gf2",
+      "candidate_arm": "ext-isal",
+      "case": {
+        "bytes": 131072,
+        "k": 0,
+        "metric": "kernel-isolated",
+        "n": 0,
+        "operation": "axpy",
+        "poly": 285,
+        "rows": 0,
+        "seed": 11,
+        "workers": 1
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "matmul-m4rie-n128-1core",
+      "baseline_arm": "gf2",
+      "candidate_arm": "ext-m4rie",
+      "case": {
+        "bytes": 0,
+        "k": 0,
+        "metric": "kernel-isolated",
+        "n": 128,
+        "operation": "matmul",
+        "poly": 285,
+        "rows": 0,
+        "seed": 12,
+        "workers": 1
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "pairwise-gfcomplete-l2-1core",
+      "baseline_arm": "gf2",
+      "candidate_arm": "ext-gfcomplete",
+      "case": {
+        "bytes": 131072,
+        "k": 0,
+        "metric": "kernel-isolated",
+        "n": 0,
+        "operation": "pairwise",
+        "poly": 285,
+        "rows": 0,
+        "seed": 13,
+        "workers": 1
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 2
+}

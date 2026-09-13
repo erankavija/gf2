@@ -1,0 +1,18 @@
+backend   isa-l/default -> isa-l/runtime-dispatched-simd (2.32.1)
+ok        isa-l/default region multiply-XOR through the wrapper
+unsupported isa-l/default dense matmul: isa-l/runtime-dispatched-simd carries no dense GF(2^8) matrix type
+ok        isa-l/default generator encode through the wrapper
+backend   gf-complete/default -> gf-complete/default (ceph/gf-complete@a6862d10c9db)
+ok        gf-complete/default region multiply-XOR through the wrapper
+unsupported gf-complete/default dense matmul: gf-complete/default carries no dense GF(2^8) matrix type
+unsupported gf-complete/default generator encode: the backend does not provide generator table preparation
+backend   gf-complete/split-table-simd -> gf-complete/split-table-4-8-simd (ceph/gf-complete@a6862d10c9db)
+ok        gf-complete/split-table-simd region multiply-XOR through the wrapper
+unsupported gf-complete/split-table-simd dense matmul: gf-complete/split-table-4-8-simd carries no dense GF(2^8) matrix type
+unsupported gf-complete/split-table-simd generator encode: the backend does not provide generator table preparation
+backend   m4rie/default -> m4rie/newton-john (20250128)
+ok        m4rie/default row region multiply-XOR through the wrapper
+ok        m4rie/default dense matmul through the wrapper
+unsupported m4rie/default generator encode: the backend does not provide generator table preparation
+
+every external adapter agrees with the independent reference

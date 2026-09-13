@@ -1,0 +1,49 @@
+backend   isa-l -> isa-l/runtime-dispatched-simd (2.32.1)
+ok        isa-l multiplication table under 0x11D
+note      isa-l region multiply-XOR under 0x11D: region lengths below the backend minimum are rejected (len=1)
+ok        isa-l region multiply-XOR under 0x11D
+unsupported isa-l row region multiply-XOR under 0x11D: the backend carries no dense GF(2^8) matrix type
+ok        isa-l region multiply-assign under 0x11D
+unsupported isa-l arbitrary pairwise multiply under 0x11D: the backend's region API assumes one reused coefficient
+unsupported isa-l dense matmul under 0x11D: the backend carries no dense GF(2^8) matrix type
+ok        isa-l generator encode under 0x11D
+backend   gf-complete-default -> gf-complete/default (ceph/gf-complete@a6862d10c9db)
+ok        gf-complete-default multiplication table under 0x11D
+ok        gf-complete-default region multiply-XOR under 0x11D
+unsupported gf-complete-default row region multiply-XOR under 0x11D: the backend carries no dense GF(2^8) matrix type
+ok        gf-complete-default region multiply-assign under 0x11D
+ok        gf-complete-default arbitrary pairwise multiply under 0x11D
+unsupported gf-complete-default dense matmul under 0x11D: the backend carries no dense GF(2^8) matrix type
+unsupported gf-complete-default generator encode under 0x11D: the backend offers no generator-matrix region encode
+backend   gf-complete-split-table-simd -> gf-complete/split-table-4-8-simd (ceph/gf-complete@a6862d10c9db)
+ok        gf-complete-split-table-simd multiplication table under 0x11D
+ok        gf-complete-split-table-simd region multiply-XOR under 0x11D
+unsupported gf-complete-split-table-simd row region multiply-XOR under 0x11D: the backend carries no dense GF(2^8) matrix type
+ok        gf-complete-split-table-simd region multiply-assign under 0x11D
+ok        gf-complete-split-table-simd arbitrary pairwise multiply under 0x11D
+unsupported gf-complete-split-table-simd dense matmul under 0x11D: the backend carries no dense GF(2^8) matrix type
+unsupported gf-complete-split-table-simd generator encode under 0x11D: the backend offers no generator-matrix region encode
+backend   gf-complete-table -> gf-complete/full-table (ceph/gf-complete@a6862d10c9db)
+ok        gf-complete-table multiplication table under 0x11D
+ok        gf-complete-table region multiply-XOR under 0x11D
+unsupported gf-complete-table row region multiply-XOR under 0x11D: the backend carries no dense GF(2^8) matrix type
+ok        gf-complete-table region multiply-assign under 0x11D
+ok        gf-complete-table arbitrary pairwise multiply under 0x11D
+unsupported gf-complete-table dense matmul under 0x11D: the backend carries no dense GF(2^8) matrix type
+unsupported gf-complete-table generator encode under 0x11D: the backend offers no generator-matrix region encode
+backend   m4rie -> m4rie/newton-john (20250128)
+ok        m4rie multiplication table under 0x11D
+unsupported m4rie region multiply-XOR under 0x11D: the backend has no free-standing region API; its row form is checked separately
+ok        m4rie row region multiply-XOR under 0x11D
+unsupported m4rie region multiply-assign under 0x11D: the backend offers no region multiply-assign
+unsupported m4rie arbitrary pairwise multiply under 0x11D: the backend's region API assumes one reused coefficient
+ok        m4rie dense matmul under 0x11D
+unsupported m4rie generator encode under 0x11D: the backend offers no generator-matrix region encode
+unsupported isa-l under 0x11B: ISA-L compiles in GF(2^8) modulo 0x11D and accepts no other polynomial
+backend   gf-complete under 0x11B -> gf-complete/default (ceph/gf-complete@a6862d10c9db)
+ok        gf-complete multiplication table under 0x11B
+backend   m4rie under 0x11B -> m4rie/newton-john (20250128)
+ok        m4rie multiplication table under 0x11B
+ok        0x11B and 0x11D are distinct fields: 2 * 128 is 29 under 0x11D and 27 under 0x11B
+
+39 checks, 0 failures

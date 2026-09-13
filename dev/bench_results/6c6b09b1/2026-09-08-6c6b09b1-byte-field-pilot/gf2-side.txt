@@ -1,0 +1,11 @@
+field     Gf2mField::gf256() = GF(2^8) modulo 0x11D
+ok        gf2 multiplication table under 0x11D
+ok        gf2 multiplication table under 0x11B
+ok        FieldVec byte round trip over the boundary lengths
+ok        FieldVec::axpy against the independent scalar reference
+ok        gf2m::batch::batch_mul against the independent scalar reference
+ok        field::matrix::gemm, square 16
+ok        field::matrix::gemm, generator 3x6 by 6x512
+ok        0x11B and 0x11D are distinct fields in gf2 too: 2 * 128 is 29 under 0x11D and 27 under 0x11B
+
+8 checks, 0 failures
