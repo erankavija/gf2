@@ -55,10 +55,12 @@ Three families answer it, one per consumer group and per downstream issue.
 All eight receipts are accepted with zero findings, and none qualifies for
 production selection (tables § each receipt's heading, *verdict* and
 *qualifies*): every family's confirmation records at least one cell that is
-not material, and this issue adopts nothing in any case. Four cells carry a
-recorded contradiction between what their addendum declares and what the
-receipt measures; the conclusions those cells support are withdrawn below.
-The two v4 pilots measure the replacement cells. Every v4 cell is
+not material, and this issue adopts nothing in any case. Four recorded
+contradictions cover six cells whose measurement differs from what their
+addendum declares; the conclusions those cells support are withdrawn below.
+The two v4 pilots re-measure the four of them that owe a replacement, and the
+two pilot-only identity controls among them owe none
+([Recorded contradictions](#recorded-contradictions)). Every v4 cell is
 exploratory, so it ranks a candidate and confirms nothing
 ([Confirmation admissibility](#confirmation-admissibility)).
 
@@ -212,7 +214,8 @@ margin test would pass. The tail rule alone bars confirmation.
 
 ### Recorded contradictions
 
-Four cells measure something their addendum declares differently. The
+Six cells measure something their addendum declares differently, under four
+recorded entries. The
 [evidence record](../../bench_results/04b85d10/receipt-evidence-record.json)
 carries each one with the artifacts that declare it, the snapshot that shows
 what ran, what the cell falsifies and what it still supports;
@@ -234,10 +237,15 @@ column. The receipts and the frozen addenda keep their bytes.
   identity control. That probe reports below one nanosecond per call and
   rounds to zero, so no published figure rests on it.
 
-The two version-4 pilots measure the withdrawn cells again, as exploratory
-cells that rank candidates
-([Confirmation admissibility](#confirmation-admissibility)).
-The harness builds every
+The evidence record names a replacement for each withdrawn cell separately.
+The two version-4 pilots re-measure the three layout packed BCH cells and the
+count LDPC validity-check cell, as exploratory cells that rank candidates
+([Confirmation admissibility](#confirmation-admissibility)). The two
+pilot-only identity controls, `logical-ldpc-syndrome-64800-control-1core` and
+`logical-dense-rref-1024-control-1core`, are not re-measured and owe no
+replacement: each pairs its consumer against itself, its timed body stands,
+and no confirmatory or ranked conclusion rests on the probe the record
+withdraws. The harness builds every
 code from one registry, [`survey/code-rows.json`](survey/code-rows.json), whose
 rows `survey/gf2-side/tests/declared_codes.rs` checks against the code the
 harness constructs and against every addendum's declared cells and family
@@ -598,9 +606,10 @@ the family's margin, on 64-word rows (the not-material rows above); the
 per-message field-identity allocation in the BCH batch prologue (sweep rows
 `field-id-hint`); and the DVB-T2 compatibility encoder, which reaches no
 packed kernel and is not this issue's campaign. Preserved falsifications: the
-four cells of the
+six cells of the
 [recorded contradictions](#recorded-contradictions), whose receipts keep their
-bytes beside the record that states what each one measured. Preserved
+bytes beside the record that states what each one measured and which
+replacement, if any, it is owed. Preserved
 no-confirmation result: the count and layout families reach the end of their
 admissible confirmatory budget, so their replacement evidence stays
 exploratory; [Confirmation admissibility](#confirmation-admissibility) gives
@@ -614,9 +623,10 @@ the arithmetic that bounds it.
   and checkpoints; confirmations use fresh samples with resolution evidence
   from distinct pilots; negative, not-material and falsified outcomes are
   retained, the last with the contradiction beside them. No production change
-  is adopted, so no before/after evidence is owed here. Four cells carry a
-  recorded contradiction; the two v4 pilots measure their replacements under
-  the addenda that name the codes and probes correctly, and no confirmation
+  is adopted, so no before/after evidence is owed here. Six cells carry a
+  recorded contradiction, each with its own replacement or its own reason for
+  owing none; the two v4 pilots measure the four replacements under
+  addenda that name the codes and probes correctly, and no confirmation
   follows, because the protocol's tail rule admits no confirmatory cell for
   either family ([Confirmation admissibility](#confirmation-admissibility)).
   That bound is a preserved outcome of the campaign, recorded with its

@@ -124,7 +124,12 @@
       ],
       "withdrawn": "every conclusion that reads these three cells as evidence about the normal-frame mother code",
       "stands": "the three cells measure the short-frame mother code, and their arms, seeds, medians and intervals are that code's evidence",
-      "replacement": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json"
+      "replacement": {
+        "layout-bch-encode-bitslice-m14-b256-1core": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json",
+        "layout-bch-encode-fold-m14-b256-1core": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json",
+        "layout-bch-encode-caller-buffer-m14-b256-1core": "dev/active/04b85d10/addendum-bit-storage-layout-v4-pilot.json"
+      },
+      "no_replacement_rationale": null
     },
     {
       "id": "ldpc-setup-probe-code",
@@ -151,7 +156,11 @@
       ],
       "withdrawn": "the reported `setup` probe of these cells as a figure for the normal-frame code",
       "stands": "the timed body of each cell builds the declared normal-frame code, so the per-arm medians, speedups and intervals are that consumer's evidence",
-      "replacement": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json"
+      "replacement": {
+        "logical-ldpc-syndrome-64800-control-1core": null,
+        "count-ldpc-check-64800-1core": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json"
+      },
+      "no_replacement_rationale": "`logical-ldpc-syndrome-64800-control-1core` is a pilot-only identity control: it pairs the consumer against itself to size the family's resolution and to record the pinned baseline latency, and that timed body stands, so no confirmatory or ranked conclusion rests on its withdrawn probe"
     },
     {
       "id": "ldpc-unpack-probe-width",
@@ -178,7 +187,11 @@
       ],
       "withdrawn": "the reported `unpack` probe of these cells as the syndrome output's cost",
       "stands": "the timed body appends one bit per check, so the per-arm medians, speedups and intervals are unaffected",
-      "replacement": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json"
+      "replacement": {
+        "logical-ldpc-syndrome-64800-control-1core": null,
+        "count-ldpc-check-64800-1core": "dev/active/04b85d10/addendum-bit-storage-count-v4-pilot.json"
+      },
+      "no_replacement_rationale": "`logical-ldpc-syndrome-64800-control-1core` is a pilot-only identity control: it pairs the consumer against itself to size the family's resolution and to record the pinned baseline latency, and that timed body stands, so no confirmatory or ranked conclusion rests on its withdrawn probe"
     },
     {
       "id": "rref-dispatch-probe-route",
@@ -200,7 +213,10 @@
       ],
       "withdrawn": "the reported `dispatch` probe of this cell as the RREF consumer's route selection",
       "stands": "the probe reports below one nanosecond per call and rounds to zero, so the receipt publishes no figure that rests on it; the cell's medians and interval are the pinned RREF consumer's evidence",
-      "replacement": null
+      "replacement": {
+        "logical-dense-rref-1024-control-1core": null
+      },
+      "no_replacement_rationale": "`logical-dense-rref-1024-control-1core` is a pilot-only identity control whose withdrawn probe rounds to zero, so no published figure rests on it"
     }
   ]
 }
