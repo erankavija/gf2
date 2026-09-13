@@ -1,0 +1,212 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "public-clmul-wide-dispatch",
+    "issue": "1c602857",
+    "purpose": "kernel-family",
+    "description": "The public wide carry-less product API of gf2-core against the portable schoolbook it ran before this issue routed it through the capability dispatch that Gf2mWide multiplication and the wide Barrett reducer already used. Baseline arm: clmul_wide_slice_portable, which is the pre-change public path word for word — a zeroed 2N-word destination followed by the accumulating bit-by-bit schoolbook. Candidate arm: clmul_wide and clmul_wide_slice as this issue leaves them. One executable serves both arms and selects the entry point from GF2_CLMUL_PATH, so the arms share a build, a fixture generator and a timing loop. Cells: the owned form at the two dispatched widths (4 words for GF(2^256), 9 words for GF(2^571)), the XOR-accumulating slice form at 4 words, where a dispatched product costs a scratch buffer and one XOR pass, and the dispatch decision at three widths without a kernel (1, 2 and 16 words), which is the small-width dispatch overhead the change must not charge. Every cell times the unreduced product alone; field reduction is outside every window. No multiplication algorithm changes: the candidate reaches the kernels that already existed. This addendum is the pilot: every cell is exploratory, it fixes the measurement resolution the confirmation freezes against, and none of its samples enter a confirmation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T06:35:49Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The change adds no kernel, no unsafe code and no algorithm; it deletes a second product path and leaves one. Its maintenance cost is therefore at or below zero, so the smallest gain worth keeping is set by what a consumer of the public API can observe rather than by a complexity trade. Ten percent is that floor: below it the choice of entry point stops mattering to a caller, and the confirmation freezes a pilot-derived measurement resolution strictly below it.",
+    "measurement_resolution": 0.02,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/receipt.json",
+      "sha256": "095e22ee8d767e94118ec8b8c4058ca4aa510a29790c1b7920099d464cf8d743"
+    },
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "The widths without a kernel gain nothing from the routing and must not pay for it. Five percent is the smallest slowdown at those widths that would outweigh keeping one product path instead of two, so it is the margin the non-regression cells declare.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A quarter of the runtime is the smallest residual gap between the public path and the kernel it now reaches that would justify further work on the routing itself rather than on the kernels; smaller gaps are the cost of the generic entry point and are reported, not chased."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 400,
+    "maintenance_rationale": "The routing replaces two product paths with one dispatch and adds the portable entry point the fallback, the conformance oracle and this family's baseline arm all call. The budget covers that plus the rustdoc the changed mechanism needs; it excludes the conformance suite, which is test code."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/1c602857/public-clmul-dispatch-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "clmul-wide-4w-owned",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "clmul-wide-4-words-owned-unreduced",
+        "size": {
+          "words": 4,
+          "inner": 64
+        },
+        "seed": 1001
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "clmul-wide-9w-owned",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "clmul-wide-9-words-owned-unreduced",
+        "size": {
+          "words": 9,
+          "inner": 64
+        },
+        "seed": 1002
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "clmul-wide-4w-accumulate",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "clmul-wide-4-words-accumulated-unreduced",
+        "size": {
+          "words": 4,
+          "inner": 64
+        },
+        "seed": 1003
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "clmul-wide-1w-dispatch-overhead",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "clmul-wide-1-word-owned-unreduced",
+        "size": {
+          "words": 1,
+          "inner": 64
+        },
+        "seed": 1004
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "clmul-wide-2w-dispatch-overhead",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "clmul-wide-2-words-owned-unreduced",
+        "size": {
+          "words": 2,
+          "inner": 64
+        },
+        "seed": 1005
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "clmul-wide-16w-dispatch-overhead",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "clmul-wide-16-words-owned-unreduced",
+        "size": {
+          "words": 16,
+          "inner": 64
+        },
+        "seed": 1006
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

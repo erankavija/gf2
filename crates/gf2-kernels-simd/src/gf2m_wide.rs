@@ -1,8 +1,10 @@
 //! SIMD kernels for fixed-size multi-word carry-less multiplication.
 //!
-//! This module exposes dispatch for the 4×4 schoolbook multiply powering
-//! `Gf2mWide<4>` (GF(2^256)) and the 9×9 multiply powering
-//! `Gf2mWide<9>` at m=571.
+//! This module exposes dispatch for the 4×4 schoolbook multiply of
+//! GF(2^256) operands and the 9×9 multiply of GF(2^571) operands. Every
+//! `gf2-core` carry-less product of those widths — `Gf2mWide<4>` and
+//! `Gf2mWide<9>` multiplication, the wide Barrett reducer and the public
+//! long-product API — reaches them through one dispatch in that crate.
 //!
 //! The kernels produce only the **unreduced** carry-less product. Barrett
 //! reduction is performed by the caller in
@@ -23,7 +25,8 @@
 //!    schoolbook in 41 instructions. Primary path on Zen 3.
 //! 2. **PCLMULQDQ + SSE4.1** (XMM, 128-bit) — 1 clmul per instruction,
 //!    one instruction per scalar word product. Universal x86_64 fallback.
-//! 3. `None` — callers fall back to pure-Rust `clmul_wide` in `gf2-core`.
+//! 3. `None` — callers fall back to the pure-Rust
+//!    `clmul_wide_slice_portable` in `gf2-core`.
 //!
 //! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
 //! is AVX2-only (Zen 3); the required `_mm512_*` carry-less-multiply and
@@ -187,7 +190,7 @@ fn clmul_wide9_ymm_safe(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
 /// one bit-by-bit reference implementation of wide carry-less schoolbook.
 #[cfg(test)]
 pub(crate) mod test_helpers {
-    /// Scalar reference matching `gf2_core::gf2m::wide::clmul_wide_slice::<N>`:
+    /// Scalar reference matching `gf2_core::gf2m::wide::clmul_wide_slice_portable::<N>`:
     /// the schoolbook built on the workspace-wide bit-by-bit carry-less
     /// 64×64 multiply SSOT (`crate::clmul_u64_scalar`).
     pub(crate) fn scalar_ref<const N: usize>(a: &[u64; N], b: &[u64; N]) -> Vec<u64> {
