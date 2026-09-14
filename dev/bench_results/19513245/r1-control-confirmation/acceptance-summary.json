@@ -1,0 +1,113 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "6b840723c8b78b80002e76accb90f7c639dbd7f053129b6eb280c7131e37589f",
+  "campaign_id": "19513245-r1-control-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": true,
+  "family": {
+    "family_id": "bytefield-consumer-control",
+    "comparisons": 3,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.9916666666666667,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "pairwise-4k-batch",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 2.3220002513562696,
+        "lower": 2.3101237607185037,
+        "upper": 2.3299265485129457,
+        "confidence": 0.9916666666666667,
+        "alpha": 0.008333333333333333,
+        "resamples": 10000,
+        "seed": 1549526155690283331,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.3,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 2.2951581024287098,
+        "lower": 2.2883251770778528,
+        "upper": 2.3251603577100473,
+        "confidence": 0.9916666666666667,
+        "alpha": 0.008333333333333333,
+        "resamples": 10000,
+        "seed": 6286928041187591591,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.3,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 3.5389665066189733,
+        "lower": 3.4860837302650314,
+        "upper": 3.623493215013364,
+        "confidence": 0.9916666666666667,
+        "alpha": 0.008333333333333333,
+        "resamples": 10000,
+        "seed": 1506568934414537866,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.3,
+        "equivalence": 1.15
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}
