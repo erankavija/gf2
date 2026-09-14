@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-14T23:53:27.866464775Z",
   "context": {},
   "created_at": "2026-09-13T11:40:06.951560552Z",
   "dependencies": [
@@ -32,7 +33,7 @@
     "type:planning"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "planning: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-13T11:40:06.951560552Z"
+  "updated_at": "2026-09-14T23:53:27.866464775Z"
 }
