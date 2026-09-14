@@ -1,0 +1,11 @@
+# Build record of the byte-field consumer campaigns (jit:19513245)
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# arm RUSTFLAGS: <unset> (conservative-portable)
+# executables the plans name (sha256, path relative to the repository root):
+e974158bb0fdf150b53286ef61bac84239436aa029cb2b3268f0c9f0b59df3d1  target/19513245-survey/release/consumer-arm
+3bfac045006f0ba6ea72f93cb59a8035b7829c3ee67613c5d7e61e296ee40d42  target/19513245-survey/release/consumer-verify
+e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc  target/19513245-survey/release/consumer-profile
+0ee3251154e02bf2ea836b1ad5fc2c3076b6e1d4e8dd969c63d8707d0e71dc93  target/19513245-survey/release/consumer-field-laws
+e8a56d8b53655c3ec721f1fa5126033d34393027df66b84b2163d0bd7753e21c  target/19513245-survey/release/survey-analysis
+5a544af0de11b1aae4e822e2a3caa645137376091ef192fd96829858d3dc17d2  target/release/benchmark-ab-runner
+9a685d57ba3340eb7d3b54d7d0c73b05feaeb74de3e36ac24f6d33e2676f835e  target/release/benchmark-acceptance

@@ -1,0 +1,92 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "19513245-r1-control-confirmation",
+  "issue": "19513245",
+  "label": "confirmation",
+  "campaign_seed": 2026091313,
+  "addendum": "dev/active/19513245/addendum-v4-control-confirmation.json",
+  "producing_manifest": "dev/active/19513245/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "current-batch": {
+      "build": "conservative-portable",
+      "description": "gf2-core gf2m::batch::batch_mul on u64 lanes over Gf2mField::gf256(), conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-survey/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_BYTEFIELD_ROUTE": "current",
+        "GF2_BYTEFIELD_REPR": "batch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "prototype-batch": {
+      "build": "conservative-portable",
+      "description": "the byte-field full-table prototype on byte regions over the same field, conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-survey/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_BYTEFIELD_ROUTE": "prototype",
+        "GF2_BYTEFIELD_REPR": "batch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "pairwise-4k-batch",
+      "baseline_arm": "current-batch",
+      "candidate_arm": "prototype-batch",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1301,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch",
+      "baseline_arm": "current-batch",
+      "candidate_arm": "prototype-batch",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 1302,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch",
+      "baseline_arm": "current-batch",
+      "candidate_arm": "prototype-batch",
+      "case": {
+        "operation": "pairwise",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 1302,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 3
+}

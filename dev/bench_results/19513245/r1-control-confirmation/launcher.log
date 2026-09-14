@@ -1,0 +1,14 @@
+# command: ./dev/bench_results/19513245/run-consumer-bytefield.sh window control-confirmation
+# started_utc: 2026-09-13T17:50:06Z
+# gf2 revision (informational): 467f4fb8f191c31d33a44444a345b93b52675ae1
+# addendum: dev/active/19513245/addendum-v4-control-confirmation.json sha256 15af9d6e2714fa0cea5cc335d29211339551299ea3b566c344b8cb9425c076c1
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-control-confirmation.plan.json sha256 15ceaedfab6a5fa8f8d8cbaa7309fb09c8f04dd3f48a4c83e2ace1d1074d15c9
+# build record: dev/active/19513245/conformance/build-record.txt sha256 0dc444701e0873e8d85ffbf04d58b357a40939edcfcce01d54115339233096b8
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 3.00 2.31 2.92
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-control-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-control-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-control-confirmation/execution.log
+# session 1 exit: 0 at 2026-09-13T17:53:05Z load 1.26 1.87 2.65
+journal: 3 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/19513245/r1-control-confirmation/receipt.json

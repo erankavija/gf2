@@ -1,0 +1,22 @@
+# command: dev/bench_results/19513245/run-consumer-bytefield.sh window matrix-confirmation
+# started_utc: 2026-09-14T02:00:38Z
+# gf2 revision (informational): 467f4fb8f191c31d33a44444a345b93b52675ae1
+# addendum: dev/active/19513245/addendum-v4-matrix-confirmation.json sha256 1dbcc848b353335afadf8c0a2c24596479a9c8c68314be1a5d5041148bc37cbc
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation.plan.json sha256 718953bdcb59f75c1f53d83a2fc82e302a4cfa021dcf371ea730cacf86ab341f
+# build record: dev/active/19513245/conformance/build-record.txt sha256 0dc444701e0873e8d85ffbf04d58b357a40939edcfcce01d54115339233096b8
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 5.74 9.21 9.40
+# session 1 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation/execution.log
+# session 1 exit: 3 at 2026-09-14T02:02:51Z load 1.72 6.37 8.32
+# session 2 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation/execution.log
+# session 2 exit: 3 at 2026-09-14T02:03:45Z load 1.37 5.49 7.90
+# session 3 command: GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-19513245/target/19513245-campaigns/19513245-r1-matrix-confirmation/execution.log
+# session 3 exit: 0 at 2026-09-14T02:04:53Z load 1.40 4.64 7.43
+journal: 6 cells with pairs
+GF2_BENCHMARK_RECEIPT=dev/bench_results/19513245/r1-matrix-confirmation/receipt.json
