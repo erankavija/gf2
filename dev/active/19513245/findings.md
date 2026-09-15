@@ -24,10 +24,10 @@ The evidence has three layers, each in its own place:
 - a **profile** of both routes on every consumer, which says how a cost is
   composed: the route selected at run time, allocation counts, coefficient
   reuse counts, table preparation, the conversion probes and hardware
-  counters. This evidence is not published with this receipt set: its
-  scheduled, resumable profile campaign and exact output path are recorded in
-  [Profile completion](#profile-completion), rather than being inferred from
-  the A/B receipts;
+  counters. Its nine-session result is the generated
+  [profile summary](../../bench_results/19513245/r1-consumer-profile/profile-summary.md),
+  and [Profile completion](#profile-completion) records its completeness and
+  attribution rather than inferring profile facts from the A/B receipts;
 - three **A/B campaign families** under
   [protocol version 4](../f547c394/protocol.md) and the
   [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md),
@@ -37,11 +37,14 @@ The evidence has three layers, each in its own place:
 - the **generated code** of both routes under
   [`survey/asm/`](survey/asm), which explains the limits the campaigns measure.
 
-This report states no measured value. Each conclusion points to its source: a
-section of the generated tables, written "tables § `<receipt>`, row `<cell>`";
-a row of the profile summary, written "profile § `<section>`, row `<case>`"; a
-file of committed evidence; or a claim ID in backticks, which resolves in
-[`survey/source-evidence.json`](survey/source-evidence.json).
+This report does not duplicate the generated evidence tables. Each conclusion
+points to its source: a section of the generated tables, written "tables §
+`<receipt>`, row `<cell>`"; a row of the profile summary, written "profile §
+`<section>`, row `<case>`"; a file of committed evidence; or a claim ID in
+backticks, which resolves in
+[`survey/source-evidence.json`](survey/source-evidence.json). Percentages in
+the profile discussion are descriptive quotients of the generated probe and
+route medians; the A/B receipts, not those quotients, decide adoption.
 
 | Command | Output |
 |---|---|
@@ -388,14 +391,74 @@ and why.
 
 ### Profile: how each route's cost is composed
 
-The profile campaign is pending its scheduled benchmark window. It measures
-both routes on every consumer, including `FieldMatrix::matvec`, which no
-campaign cell measures. Its generated summary will report the observed route,
-wall-time session interval, exact allocations, coefficient reuse, table
-preparation, conversion probes and hardware counters for the cases in
-`survey/counter-cases.txt`. Until those immutable session records exist, this
-report makes no profile-derived claim about a consumer's allocation, conversion
-or counter share.
+The completed profile measures both routes on every consumer, including
+`FieldMatrix::matvec`, which no A/B campaign cell measures. Every route row is
+the median of nine independently locked sessions with the 96.1% order-statistic
+interval the summary states. Allocation and reuse counts agree across all nine
+sessions. Every selected-path string and polynomial also agrees: the current
+matrix routes reach the host's VPCLMULQDQ batch or GEMM kernel where the library
+has a batch hook, while `FieldVec::axpy` and `FieldMatrix::matvec` remain on
+their scalar element chains (profile § Routes, all rows; each `rep-*/cases.json`).
+
+**Vector and region attribution.** A prototype vector call builds a 256-byte
+coefficient table in about 150 ns and reuses it for every element: 4,096 or
+131,072 products in the profiled shapes. Charging that preparation to one call
+accounts for less than 1% of either element-representation call and about 8%
+and 0.3% of the 4 KiB and 128 KiB wide-representation calls, respectively. The
+current and prototype element-vector routes allocate nothing. The wide current
+route instead records 10,214 allocations for 4,096 elements and 327,956 for
+131,072 elements, while its prototype records none. The first-session counter
+sample at 128 KiB accordingly attributes about 76 times as many instructions
+and 110 times as many cycles per call to the wide current route; the counter is
+a single descriptive observation, not an estimate (profile § Allocation,
+reuse and conversion, rows `axpy-*`; profile § Hardware counters, rows
+`axpy-128k-wide-*`).
+
+At a byte-region boundary, the current element route's separately probed pack
+and unpack operations sum to about half of its call median at both 4 KiB and
+128 KiB. Those operations are only about 1% of the wide route, whose allocation
+heavy arithmetic remains the larger cost. The prototype starts and ends on the
+region and has no conversion step in either representation. This separates the
+region result from the vector result: conversion explains a material share of
+the former for `Gf2mElement`, but it does not explain the in-place vector win or
+the wide-representation result (profile § Routes and § Allocation, reuse and
+conversion, rows `region-*`).
+
+**Matrix attribution.** The current element product selects per-output-cell
+VPCLMULQDQ batch dot products and the wide product selects the whole-product
+VPCLMULQDQ GEMM. Both allocate exactly five blocks per call; at n = 256 those
+blocks total 2,103,296 and 2,621,440 bytes, respectively. The prototype kernel
+allocates nothing. Its field-wide 64 KiB product table takes about 36--37 µs to
+prepare: if paid by one operation, that is about 43--44% of an n = 64 kernel
+call and less than 1% of an n = 256 call. A production design must therefore
+cache it per field rather than rebuild it per product. At the whole
+`FieldMatrix` boundary, the prototype's conversion probes sum to about 4.7% of
+the element call median and 0.7% of the wide call median. The paired receipt,
+which is authoritative for the comparison, independently puts the whole-call
+penalty at 5.0% and 0.7% while retaining a qualifying win (profile § Routes and
+§ Allocation, reuse and conversion, rows `matmul-*`; tables §
+`19513245-r1-matrix-confirmation` § Whole-consumer over kernel-isolated).
+
+The matrix traversal reuses each left-hand coefficient across one output row,
+256 products at the profiled n = 256, whereas row-major `matvec` and the
+pairwise control reuse no coefficient and use the complete product table.
+`FieldMatrix::matvec` confirms that the current route is the scalar dot-product
+chain: the element route allocates one output block and the wide route records
+192,429 allocations for the n = 256 call; both prototype routes allocate none.
+This result identifies an unconfirmed candidate, but it is not an adoption
+result because this issue has no `matvec` A/B cell (profile §
+Routes and § Allocation, reuse and conversion, rows `matvec-*`).
+
+**No-reuse control.** The pairwise current route reaches the VPCLMULQDQ batch
+kernel, and the prototype still has the lower descriptive route median once a
+field-wide table exists. Preparation is not free: one 64 KiB table build is
+about 62% of the 128 KiB prototype call and far larger than its 4 KiB call, so
+the profile supports a field-cached table, not per-call construction. At the
+128 KiB byte boundary, widening and narrowing account for about one third of
+the current call. The qualifying paired control receipt establishes the
+persistent-table comparison; the profile only explains its cost composition
+(profile § Routes and § Allocation, reuse and conversion, rows `pairwise-*`;
+tables § `19513245-r1-control-confirmation`).
 
 ### Pilots
 
@@ -483,24 +546,48 @@ change to pair with a crate-local assembly artifact.
 
 ## Profile completion
 
-REQ-02 remains pending the scheduled profile campaign. Its output directory is
-`dev/bench_results/19513245/r1-consumer-profile`; its append-only
-`repetitions.log`, nine `rep-*/cases.json` records, host record, counter files
-and generated `profile-summary.md` are the authority. The command is
+REQ-02's profile is complete under
+`dev/bench_results/19513245/r1-consumer-profile`. The append-only
+[`repetitions.log`](../../bench_results/19513245/r1-consumer-profile/repetitions.log)
+records nine starts, nine completions and the terminal `series done`, with no
+discarded or unfinished session. Every `rep-*/cases.json` contains each of the
+38 unique ladder cases exactly once, with no missing or extra case. The first
+session carries both a call count and a user-mode perf CSV for each of the 14
+cases declared in `survey/counter-cases.txt`; every CSV contains cycles,
+instructions, branches, branch misses, cache references and cache misses.
+
+All sessions record the same `consumer-profile` SHA-256. It matches the digest
+in the [host record](../../bench_results/19513245/r1-consumer-profile/host.txt),
+[`conformance/build-record.txt`](conformance/build-record.txt) and
+[`survey/asm/consumer-profile/index.txt`](survey/asm/consumer-profile/index.txt).
+The host record's `consumer-arm` digest likewise matches the build record and
+its assembly index. The generated
+[`profile-summary.md`](../../bench_results/19513245/r1-consumer-profile/profile-summary.md)
+is a byte-for-byte regeneration from the nine structured records and the
+committed summarizer. The command recorded for reproduction is
 `env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/19513245/survey/run-profile.sh dev/bench_results/19513245/r1-consumer-profile`
-from this worktree's root, only with `GF2_BENCH_WINDOW=1` in the benchmark
-window. It is resumable and rejects a changed profile executable. Once it has
-completed, regenerate the evidence table and revise this section from the
-resulting structured records; do not infer profile costs from the A/B receipts.
+from the worktree root, with `GF2_BENCH_WINDOW=1` inside the benchmark window;
+the campaign remains resumable and rejects a changed profile executable.
 
 ## Decision
 
-The qualifying confirmation receipts establish that the table prototype merits
-the scheduled profile, but they do not authorize a production API, storage
-redesign or implementation change. The frozen decision for this evidence set is
-**no-proceed to shipping**: retain the established production routes while
-REQ-02 is pending. A later positive production proposal requires the completed
-profile, a reviewed library-layer design and explicitly tracked implementation
-scope before any production code is shipped. The region workload remains a
-separate demonstrated shape; it does not imply a `FieldVec` or `FieldMatrix`
-storage redesign.
+The frozen decision for this evidence set is **proceed to a reviewed,
+library-layer design; do not proceed directly to shipping**. All three
+confirmation families qualify, and the completed profile attributes the
+consumer gains to concrete costs and paths rather than to a region
+microbenchmark. The design target is a byte product table cached per field or
+compile-time field configuration, plus canonical `FieldVec`/`FieldMatrix`
+hooks that preserve the representations callers already hold. The confirmed
+implementation candidates are
+`FieldVec::axpy` and dense `FieldMatrix` product; `matvec` needs its own paired
+evidence before production adoption, and the pairwise family remains a control
+rather than an independent adoption decision.
+
+This issue ships no production API, unsafe kernel or storage change. A positive
+production proposal must first receive architecture review and explicit JIT
+implementation scope, preserve a tested scalar fallback, and retain the shared
+field/backend conformance over both 0x11B and 0x11D. The public byte-region API
+and a byte-packed `FieldVec` or `FieldMatrix` redesign remain deferred: the
+profile shows that the confirmed consumers can reach byte-oriented arithmetic
+without changing their storage boundary, and the region workload remains a
+separate demonstrated shape.
