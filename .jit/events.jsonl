@@ -12286,3 +12286,6 @@
 {"fields":["documents"],"id":"b7331597-fad3-4c3c-b7b5-83621ea174ba","issue_id":"8ed3ac58-48a7-4a3b-8a4d-475e23eadcdd","timestamp":"2026-09-15T00:36:38.324352819Z","type":"issue_updated","updated_by":"doc-update"}
 {"fields":["documents"],"id":"5b26fa2b-1cad-414b-82d6-35aaa5c9e740","issue_id":"8ed3ac58-48a7-4a3b-8a4d-475e23eadcdd","timestamp":"2026-09-15T00:36:38.607371395Z","type":"issue_updated","updated_by":"doc-update"}
 {"id":"971a1096-a6ab-44db-84a5-c5b9e00548a2","issue_id":"c5e01de3-c6ae-4a0a-80c5-646d744aff80","priority":"normal","timestamp":"2026-09-15T00:38:53.630653249Z","title":"Name attempt alpha correctly in acceptance summaries","type":"issue_created"}
+{"fields":["documents"],"id":"4786632a-44d8-4dc0-b5d0-ca0c39d6dcfd","issue_id":"53c5a8c0-ad93-4fdb-8319-aea18c3c257c","timestamp":"2026-09-15T00:39:53.405701432Z","type":"issue_updated","updated_by":"doc-add"}
+{"from":"in_progress","id":"6746b88e-be4e-4e0f-93bc-d7a1e5ff8f9f","issue_id":"53c5a8c0-ad93-4fdb-8319-aea18c3c257c","timestamp":"2026-09-15T00:40:07.609840453Z","to":"done","type":"issue_state_changed"}
+{"id":"532b9457-7cad-4c1b-a65e-811026b234ba","issue_id":"53c5a8c0-ad93-4fdb-8319-aea18c3c257c","timestamp":"2026-09-15T00:40:07.609840453Z","type":"issue_completed"}

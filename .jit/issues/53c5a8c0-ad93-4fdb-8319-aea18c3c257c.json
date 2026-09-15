@@ -566,8 +566,16 @@
       "doc_type": "benchmark",
       "label": "Polynomial confirmation receipt",
       "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/receipt.json"
+    },
+    {
+      "commit": "65c9a387",
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review verdict",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/53c5a8c0-r1.md"
     }
   ],
+  "done_at": "2026-09-15T00:40:07.609840453Z",
   "first_ready_at": "2026-09-06T19:59:36.095902220Z",
   "gates_required": [
     "cargo-ci",
@@ -610,7 +618,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
-  "updated_at": "2026-09-15T00:35:46.863103908Z"
+  "updated_at": "2026-09-15T00:40:07.609840453Z"
 }
