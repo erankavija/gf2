@@ -265,6 +265,13 @@
       "format": "markdown",
       "label": "Mid-range buffer breakdown manifest",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
+    },
+    {
+      "commit": "HEAD",
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Mid-range buffer adversarial plan review",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/review.md"
     }
   ],
   "first_ready_at": "2026-09-13T11:40:06.478865369Z",
@@ -293,5 +300,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "planning: Profile and optimize mid-range buffer operations (8-64 words)",
-  "updated_at": "2026-09-15T00:36:38.030754973Z"
+  "updated_at": "2026-09-15T00:41:02.022217690Z"
 }
