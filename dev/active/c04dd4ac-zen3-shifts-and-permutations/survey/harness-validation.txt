@@ -1,0 +1,22 @@
+# DVB-T2 interleaver profile non-timed harness validation (jit:9fb40c83)
+# validated_utc: 2026-09-15T01:50:24Z
+# command: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/build-dvb-harness.sh
+# timing: none; the command builds release binaries and runs semantic validators only
+# rustc: 1.95.0 (59807616e 2026-04-14); LLVM 22.1.2; x86_64-unknown-linux-gnu
+# xdsopl: 32357d8ad55a6a302c34e093759f0454e45cca56
+PASS canonical bit order: 128/128 bits round-trip, lengths 0/1/63/64/65/127/128 preserved with zero tail padding
+PASS qam16-r12-normal: 64800/64800 positions match
+PASS qam64-r12-normal: 64800/64800 positions match
+PASS qam16-r12-short: 16200/16200 positions match
+PASS qam64-r12-short: 16200/16200 positions match
+PASS qam16-r12-normal: 2 banks of 64800 bits, both timed arms agree bit-for-bit
+PASS qam64-r12-normal: 2 banks of 64800 bits, both timed arms agree bit-for-bit
+PASS qam16-r12-short: 2 banks of 16200 bits, both timed arms agree bit-for-bit
+PASS qam64-r12-short: 2 banks of 16200 bits, both timed arms agree bit-for-bit
+PASS qam16-r12-normal: direct, simulation-stage, xdsopl packed adapter and deterministic BICM consumer agree on declared boundaries
+PASS qam64-r12-normal: direct, simulation-stage, xdsopl packed adapter and deterministic BICM consumer agree on declared boundaries
+PASS qam16-r12-short: direct, simulation-stage, xdsopl packed adapter and deterministic BICM consumer agree on declared boundaries
+PASS qam64-r12-short: direct, simulation-stage, xdsopl packed adapter and deterministic BICM consumer agree on declared boundaries
+# dvb-profile-arm sha256: ad922ee2fca2ec366ae9ecce7264d3bc1922629a7e144758bddc438372ef6671
+# dvb-profile sha256: a9cf1642a44a9685722e52e1ce9af9f7a4f98803f24ed3d26251ac8a1d8fa83d
+# validate-permutation-equivalence sha256: 4032a9a7c05078ea0284365efe9deb46313af4009b23780996276ab57c00a7e8

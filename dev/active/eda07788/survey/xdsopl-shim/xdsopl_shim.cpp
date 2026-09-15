@@ -36,6 +36,12 @@ void forward(const int32_t* input, int32_t* output)
     Interleaver::fwd(output, mutable_input.data());
 }
 
+template <typename Interleaver>
+void forward_mut(int32_t* input, int32_t* output)
+{
+    Interleaver::fwd(output, input);
+}
+
 } // namespace
 
 extern "C" void xdsopl_pctitl_qam16_r12_normal_fwd(const int32_t* in,
@@ -60,4 +66,28 @@ extern "C" void xdsopl_pctitl_qam64_r12_short_fwd(const int32_t* in,
                                                     int32_t* out)
 {
     forward<Qam64Short>(in, out);
+}
+
+extern "C" void xdsopl_pctitl_qam16_r12_normal_fwd_mut(int32_t* in,
+                                                         int32_t* out)
+{
+    forward_mut<Qam16Normal>(in, out);
+}
+
+extern "C" void xdsopl_pctitl_qam64_r12_normal_fwd_mut(int32_t* in,
+                                                         int32_t* out)
+{
+    forward_mut<Qam64Normal>(in, out);
+}
+
+extern "C" void xdsopl_pctitl_qam16_r12_short_fwd_mut(int32_t* in,
+                                                        int32_t* out)
+{
+    forward_mut<Qam16Short>(in, out);
+}
+
+extern "C" void xdsopl_pctitl_qam64_r12_short_fwd_mut(int32_t* in,
+                                                        int32_t* out)
+{
+    forward_mut<Qam64Short>(in, out);
 }
