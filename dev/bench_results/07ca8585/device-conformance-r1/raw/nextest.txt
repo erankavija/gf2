@@ -1,0 +1,5 @@
+cargo-nextest 0.9.133 (65e806bd5 2026-04-14)
+release: 0.9.133
+commit-hash: 65e806bd589d12c4341d3696a02a9788bd437c3c
+commit-date: 2026-04-14
+host: x86_64-unknown-linux-gnu
