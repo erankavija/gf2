@@ -1,0 +1,27 @@
+# Shared field-law suite over the GF(2^8) element types this assessment
+# measures (jit:19513245).
+#
+# A separate standalone workspace because the suite needs gf2-core's
+# `test-support` feature, which the measured arm must not enable: this
+# crate's feature unification never reaches the arm's build.
+
+[workspace]
+
+[package]
+name = "bytefield-consumer-field-laws"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+byte-field-gf2-side = { path = "../../../6c6b09b1/survey/gf2-side" }
+bytefield-consumer = { path = "../consumer" }
+gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "test-support"] }
+
+[[bin]]
+name = "consumer-field-laws"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 3

@@ -1,0 +1,7 @@
+# label: current-wide-mul-ref
+# pattern: gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref
+# binary: target/19513245-survey/release/consumer-arm
+# binary sha256: e974158bb0fdf150b53286ef61bac84239436aa029cb2b3268f0c9f0b59df3d1
+# text symbols matching this pattern: 0
+# no symbol of this pattern survives in the measured binary: the routine was
+# inlined into its caller, and this file records that rather than a silent gap.

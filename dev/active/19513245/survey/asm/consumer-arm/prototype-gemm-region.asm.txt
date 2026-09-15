@@ -1,0 +1,215 @@
+# label: prototype-gemm-region
+# pattern: bytefield_consumer::gemm_region
+# binary: target/19513245-survey/release/consumer-arm
+# binary sha256: e974158bb0fdf150b53286ef61bac84239436aa029cb2b3268f0c9f0b59df3d1
+# text symbols matching this pattern: 1
+
+## symbol at 0000000000028c60, 0x000000000000036b bytes
+0000000000028c60 <bytefield_consumer::gemm_region>:
+   28c60:	push   %rbp
+   28c61:	push   %r15
+   28c63:	push   %r14
+   28c65:	push   %r13
+   28c67:	push   %r12
+   28c69:	push   %rbx
+   28c6a:	sub    $0x68,%rsp
+   28c6e:	mov    %r8,(%rsp)
+   28c72:	mov    %rdx,0x18(%rsp)
+   28c77:	mov    0xa8(%rsp),%r12
+   28c7f:	mov    0xa0(%rsp),%r14
+   28c87:	mov    %rsi,0x38(%rsp)
+   28c8c:	mov    %r12,%rax
+   28c8f:	imul   %r14,%rax
+   28c93:	mov    %rax,0x40(%rsp)
+   28c98:	cmp    %rax,%rsi
+   28c9b:	jne    28f3f <bytefield_consumer::gemm_region+0x2df>
+   28ca1:	mov    0xb0(%rsp),%r13
+   28ca9:	mov    %rcx,0x48(%rsp)
+   28cae:	mov    %r13,%rax
+   28cb1:	imul   %r12,%rax
+   28cb5:	mov    %rax,0x50(%rsp)
+   28cba:	cmp    %rax,%rcx
+   28cbd:	jne    28f65 <bytefield_consumer::gemm_region+0x305>
+   28cc3:	mov    %r9,0x58(%rsp)
+   28cc8:	mov    %r13,%rax
+   28ccb:	imul   %r14,%rax
+   28ccf:	mov    %rax,0x60(%rsp)
+   28cd4:	cmp    %rax,%r9
+   28cd7:	jne    28f8b <bytefield_consumer::gemm_region+0x32b>
+   28cdd:	mov    %rsi,%rbx
+   28ce0:	mov    %rdi,%r15
+   28ce3:	mov    (%rsp),%rdi
+   28ce7:	xor    %esi,%esi
+   28ce9:	mov    %r9,%rdx
+   28cec:	mov    %r9,0x8(%rsp)
+   28cf1:	mov    %rcx,0x10(%rsp)
+   28cf6:	call   *0x8626c(%rip)        # aef68 <memset@GLIBC_2.2.5>
+   28cfc:	mov    0x10(%rsp),%rcx
+   28d01:	mov    0x8(%rsp),%r8
+   28d06:	test   %r14,%r14
+   28d09:	je     28ef4 <bytefield_consumer::gemm_region+0x294>
+   28d0f:	test   %r12,%r12
+   28d12:	je     28e7e <bytefield_consumer::gemm_region+0x21e>
+   28d18:	mov    0xb8(%rsp),%rax
+   28d20:	mov    0x10(%rax),%rdx
+   28d24:	test   %r13,%r13
+   28d27:	je     28e9f <bytefield_consumer::gemm_region+0x23f>
+   28d2d:	mov    0x8(%rax),%rax
+   28d31:	mov    %rax,0x30(%rsp)
+   28d36:	mov    %r13,%r10
+   28d39:	and    $0xfffffffffffffffe,%r10
+   28d3d:	mov    (%rsp),%rax
+   28d41:	lea    0x1(%rax),%r11
+   28d45:	mov    0x18(%rsp),%rax
+   28d4a:	inc    %rax
+   28d4d:	mov    %rax,0x20(%rsp)
+   28d52:	xor    %edi,%edi
+   28d54:	jmp    28d81 <bytefield_consumer::gemm_region+0x121>
+   28d56:	cs nopw 0x0(%rax,%rax,1)
+   28d60:	add    %r13,%r11
+   28d63:	mov    0x28(%rsp),%rsi
+   28d68:	mov    %rsi,%rdi
+   28d6b:	mov    0xa0(%rsp),%rax
+   28d73:	cmp    %rax,%rsi
+   28d76:	mov    0x8(%rsp),%r8
+   28d7b:	je     28ef4 <bytefield_consumer::gemm_region+0x294>
+   28d81:	lea    0x1(%rdi),%rax
+   28d85:	mov    %rdi,%rbp
+   28d88:	imul   %r13,%rbp
+   28d8c:	mov    %rax,%rsi
+   28d8f:	imul   %r13,%rsi
+   28d93:	cmp    %rbp,%rsi
+   28d96:	jb     28f2c <bytefield_consumer::gemm_region+0x2cc>
+   28d9c:	cmp    %r8,%rsi
+   28d9f:	ja     28f2c <bytefield_consumer::gemm_region+0x2cc>
+   28da5:	mov    %rax,0x28(%rsp)
+   28daa:	add    (%rsp),%rbp
+   28dae:	imul   %r12,%rdi
+   28db2:	mov    0x20(%rsp),%r14
+   28db7:	xor    %r9d,%r9d
+   28dba:	jmp    28de0 <bytefield_consumer::gemm_region+0x180>
+   28dbc:	nopl   0x0(%rax)
+   28dc0:	xor    %esi,%esi
+   28dc2:	add    0x18(%rsp),%r9
+   28dc7:	movzbl (%r9,%rsi,1),%r9d
+   28dcc:	movzbl (%rax,%r9,1),%eax
+   28dd1:	xor    %al,0x0(%rbp,%rsi,1)
+   28dd5:	add    %r13,%r14
+   28dd8:	mov    %r8,%r9
+   28ddb:	cmp    %r12,%r8
+   28dde:	je     28d60 <bytefield_consumer::gemm_region+0x100>
+   28de0:	lea    (%r9,%rdi,1),%r8
+   28de4:	cmp    %rbx,%r8
+   28de7:	jae    28fb8 <bytefield_consumer::gemm_region+0x358>
+   28ded:	movzbl (%r15,%r8,1),%eax
+   28df2:	shl    $0x8,%eax
+   28df5:	lea    0x100(%rax),%rsi
+   28dfc:	cmp    %rdx,%rsi
+   28dff:	ja     28f03 <bytefield_consumer::gemm_region+0x2a3>
+   28e05:	lea    0x1(%r9),%r8
+   28e09:	imul   %r13,%r9
+   28e0d:	mov    %r8,%rsi
+   28e10:	imul   %r13,%rsi
+   28e14:	cmp    %r9,%rsi
+   28e17:	jb     28f13 <bytefield_consumer::gemm_region+0x2b3>
+   28e1d:	cmp    %rcx,%rsi
+   28e20:	ja     28f13 <bytefield_consumer::gemm_region+0x2b3>
+   28e26:	add    0x30(%rsp),%rax
+   28e2b:	cmp    $0x1,%r13
+   28e2f:	je     28dc0 <bytefield_consumer::gemm_region+0x160>
+   28e31:	mov    %r12,%rcx
+   28e34:	xor    %esi,%esi
+   28e36:	cs nopw 0x0(%rax,%rax,1)
+   28e40:	movzbl -0x1(%r14,%rsi,1),%r12d
+   28e46:	movzbl (%rax,%r12,1),%r12d
+   28e4b:	xor    %r12b,-0x1(%r11,%rsi,1)
+   28e50:	movzbl (%r14,%rsi,1),%r12d
+   28e55:	movzbl (%rax,%r12,1),%r12d
+   28e5a:	xor    %r12b,(%r11,%rsi,1)
+   28e5e:	add    $0x2,%rsi
+   28e62:	cmp    %rsi,%r10
+   28e65:	jne    28e40 <bytefield_consumer::gemm_region+0x1e0>
+   28e67:	test   $0x1,%r13b
+   28e6b:	mov    %rcx,%r12
+   28e6e:	mov    0x10(%rsp),%rcx
+   28e73:	jne    28dc2 <bytefield_consumer::gemm_region+0x162>
+   28e79:	jmp    28dd5 <bytefield_consumer::gemm_region+0x175>
+   28e7e:	xor    %ebp,%ebp
+   28e80:	mov    %r13,%rax
+   28e83:	add    %rbp,%rax
+   28e86:	jb     28f26 <bytefield_consumer::gemm_region+0x2c6>
+   28e8c:	cmp    %r8,%rax
+   28e8f:	ja     28f26 <bytefield_consumer::gemm_region+0x2c6>
+   28e95:	mov    %rax,%rbp
+   28e98:	dec    %r14
+   28e9b:	jne    28e80 <bytefield_consumer::gemm_region+0x220>
+   28e9d:	jmp    28ef4 <bytefield_consumer::gemm_region+0x294>
+   28e9f:	xor    %r8d,%r8d
+   28ea2:	xor    %ecx,%ecx
+   28ea4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   28eb0:	inc    %rcx
+   28eb3:	xor    %edi,%edi
+   28eb5:	data16 cs nopw 0x0(%rax,%rax,1)
+   28ec0:	lea    (%r8,%rdi,1),%rax
+   28ec4:	cmp    %rbx,%rax
+   28ec7:	jae    28fb1 <bytefield_consumer::gemm_region+0x351>
+   28ecd:	movzbl (%r15,%rdi,1),%eax
+   28ed2:	shl    $0x8,%eax
+   28ed5:	lea    0x100(%rax),%rsi
+   28edc:	cmp    %rdx,%rsi
+   28edf:	ja     28f03 <bytefield_consumer::gemm_region+0x2a3>
+   28ee1:	inc    %rdi
+   28ee4:	cmp    %rdi,%r12
+   28ee7:	jne    28ec0 <bytefield_consumer::gemm_region+0x260>
+   28ee9:	add    %r12,%r8
+   28eec:	add    %r12,%r15
+   28eef:	cmp    %r14,%rcx
+   28ef2:	jne    28eb0 <bytefield_consumer::gemm_region+0x250>
+   28ef4:	add    $0x68,%rsp
+   28ef8:	pop    %rbx
+   28ef9:	pop    %r12
+   28efb:	pop    %r13
+   28efd:	pop    %r14
+   28eff:	pop    %r15
+   28f01:	pop    %rbp
+   28f02:	ret
+   28f03:	lea    0x820ae(%rip),%rcx        # aafb8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xa8>
+   28f0a:	mov    %rax,%rdi
+   28f0d:	call   *0x86195(%rip)        # af0a8 <_DYNAMIC+0x358>
+   28f13:	mov    %rcx,%rdx
+   28f16:	lea    0x82083(%rip),%rcx        # aafa0 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x90>
+   28f1d:	mov    %r9,%rdi
+   28f20:	call   *0x86182(%rip)        # af0a8 <_DYNAMIC+0x358>
+   28f26:	add    %rbp,%r13
+   28f29:	mov    %r13,%rsi
+   28f2c:	lea    0x8209d(%rip),%rcx        # aafd0 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xc0>
+   28f33:	mov    %rbp,%rdi
+   28f36:	mov    %r8,%rdx
+   28f39:	call   *0x86169(%rip)        # af0a8 <_DYNAMIC+0x358>
+   28f3f:	lea    -0x1e06a(%rip),%rcx        # aedc <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0xdc>
+   28f46:	lea    0x81ff3(%rip),%r9        # aaf40 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x30>
+   28f4d:	lea    0x38(%rsp),%rsi
+   28f52:	lea    0x40(%rsp),%rdx
+   28f57:	mov    $0x3f,%r8d
+   28f5d:	xor    %edi,%edi
+   28f5f:	call   *0x86133(%rip)        # af098 <_DYNAMIC+0x348>
+   28f65:	lea    -0x1e10c(%rip),%rcx        # ae60 <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x60>
+   28f6c:	lea    0x81fe5(%rip),%r9        # aaf58 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x48>
+   28f73:	lea    0x48(%rsp),%rsi
+   28f78:	lea    0x50(%rsp),%rdx
+   28f7d:	mov    $0x41,%r8d
+   28f83:	xor    %edi,%edi
+   28f85:	call   *0x8610d(%rip)        # af098 <_DYNAMIC+0x348>
+   28f8b:	lea    -0x1e097(%rip),%rcx        # aefb <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0xfb>
+   28f92:	lea    0x81fd7(%rip),%r9        # aaf70 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x60>
+   28f99:	lea    0x58(%rsp),%rsi
+   28f9e:	lea    0x60(%rsp),%rdx
+   28fa3:	mov    $0x33,%r8d
+   28fa9:	xor    %edi,%edi
+   28fab:	call   *0x860e7(%rip)        # af098 <_DYNAMIC+0x348>
+   28fb1:	cmp    %r8,%rbx
+   28fb4:	cmova  %rbx,%r8
+   28fb8:	lea    0x81fc9(%rip),%rdx        # aaf88 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x78>
+   28fbf:	mov    %r8,%rdi
+   28fc2:	mov    %rbx,%rsi
+   28fc5:	call   *0x85fc5(%rip)        # aef90 <_DYNAMIC+0x240>

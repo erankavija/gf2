@@ -1,0 +1,268 @@
+[
+  {
+    "id": "axpy-4k-element-current",
+    "consumer": "axpy-vector",
+    "route": "current",
+    "repr": "element",
+    "size": 4096
+  },
+  {
+    "id": "axpy-4k-element-prototype",
+    "consumer": "axpy-vector",
+    "route": "prototype",
+    "repr": "element",
+    "size": 4096
+  },
+  {
+    "id": "axpy-128k-element-current",
+    "consumer": "axpy-vector",
+    "route": "current",
+    "repr": "element",
+    "size": 131072
+  },
+  {
+    "id": "axpy-128k-element-prototype",
+    "consumer": "axpy-vector",
+    "route": "prototype",
+    "repr": "element",
+    "size": 131072
+  },
+  {
+    "id": "region-4k-element-current",
+    "consumer": "axpy-region",
+    "route": "current",
+    "repr": "element",
+    "size": 4096
+  },
+  {
+    "id": "region-4k-element-prototype",
+    "consumer": "axpy-region",
+    "route": "prototype",
+    "repr": "element",
+    "size": 4096
+  },
+  {
+    "id": "region-128k-element-current",
+    "consumer": "axpy-region",
+    "route": "current",
+    "repr": "element",
+    "size": 131072
+  },
+  {
+    "id": "region-128k-element-prototype",
+    "consumer": "axpy-region",
+    "route": "prototype",
+    "repr": "element",
+    "size": 131072
+  },
+  {
+    "id": "matmul-n64-element-current",
+    "consumer": "gemm",
+    "route": "current",
+    "repr": "element",
+    "size": 64
+  },
+  {
+    "id": "matmul-n64-element-prototype",
+    "consumer": "gemm",
+    "route": "prototype",
+    "repr": "element",
+    "size": 64
+  },
+  {
+    "id": "matmul-n256-element-current",
+    "consumer": "gemm",
+    "route": "current",
+    "repr": "element",
+    "size": 256
+  },
+  {
+    "id": "matmul-n256-element-prototype",
+    "consumer": "gemm",
+    "route": "prototype",
+    "repr": "element",
+    "size": 256
+  },
+  {
+    "id": "matmul-whole-n256-element-current",
+    "consumer": "gemm-whole",
+    "route": "current",
+    "repr": "element",
+    "size": 256
+  },
+  {
+    "id": "matmul-whole-n256-element-prototype",
+    "consumer": "gemm-whole",
+    "route": "prototype",
+    "repr": "element",
+    "size": 256
+  },
+  {
+    "id": "matvec-n256-element-current",
+    "consumer": "matvec",
+    "route": "current",
+    "repr": "element",
+    "size": 256
+  },
+  {
+    "id": "matvec-n256-element-prototype",
+    "consumer": "matvec",
+    "route": "prototype",
+    "repr": "element",
+    "size": 256
+  },
+  {
+    "id": "axpy-4k-wide-current",
+    "consumer": "axpy-vector",
+    "route": "current",
+    "repr": "wide",
+    "size": 4096
+  },
+  {
+    "id": "axpy-4k-wide-prototype",
+    "consumer": "axpy-vector",
+    "route": "prototype",
+    "repr": "wide",
+    "size": 4096
+  },
+  {
+    "id": "axpy-128k-wide-current",
+    "consumer": "axpy-vector",
+    "route": "current",
+    "repr": "wide",
+    "size": 131072
+  },
+  {
+    "id": "axpy-128k-wide-prototype",
+    "consumer": "axpy-vector",
+    "route": "prototype",
+    "repr": "wide",
+    "size": 131072
+  },
+  {
+    "id": "region-4k-wide-current",
+    "consumer": "axpy-region",
+    "route": "current",
+    "repr": "wide",
+    "size": 4096
+  },
+  {
+    "id": "region-4k-wide-prototype",
+    "consumer": "axpy-region",
+    "route": "prototype",
+    "repr": "wide",
+    "size": 4096
+  },
+  {
+    "id": "region-128k-wide-current",
+    "consumer": "axpy-region",
+    "route": "current",
+    "repr": "wide",
+    "size": 131072
+  },
+  {
+    "id": "region-128k-wide-prototype",
+    "consumer": "axpy-region",
+    "route": "prototype",
+    "repr": "wide",
+    "size": 131072
+  },
+  {
+    "id": "matmul-n64-wide-current",
+    "consumer": "gemm",
+    "route": "current",
+    "repr": "wide",
+    "size": 64
+  },
+  {
+    "id": "matmul-n64-wide-prototype",
+    "consumer": "gemm",
+    "route": "prototype",
+    "repr": "wide",
+    "size": 64
+  },
+  {
+    "id": "matmul-n256-wide-current",
+    "consumer": "gemm",
+    "route": "current",
+    "repr": "wide",
+    "size": 256
+  },
+  {
+    "id": "matmul-n256-wide-prototype",
+    "consumer": "gemm",
+    "route": "prototype",
+    "repr": "wide",
+    "size": 256
+  },
+  {
+    "id": "matmul-whole-n256-wide-current",
+    "consumer": "gemm-whole",
+    "route": "current",
+    "repr": "wide",
+    "size": 256
+  },
+  {
+    "id": "matmul-whole-n256-wide-prototype",
+    "consumer": "gemm-whole",
+    "route": "prototype",
+    "repr": "wide",
+    "size": 256
+  },
+  {
+    "id": "matvec-n256-wide-current",
+    "consumer": "matvec",
+    "route": "current",
+    "repr": "wide",
+    "size": 256
+  },
+  {
+    "id": "matvec-n256-wide-prototype",
+    "consumer": "matvec",
+    "route": "prototype",
+    "repr": "wide",
+    "size": 256
+  },
+  {
+    "id": "pairwise-4k-batch-current",
+    "consumer": "pairwise",
+    "route": "current",
+    "repr": "batch",
+    "size": 4096
+  },
+  {
+    "id": "pairwise-4k-batch-prototype",
+    "consumer": "pairwise",
+    "route": "prototype",
+    "repr": "batch",
+    "size": 4096
+  },
+  {
+    "id": "pairwise-128k-batch-current",
+    "consumer": "pairwise",
+    "route": "current",
+    "repr": "batch",
+    "size": 131072
+  },
+  {
+    "id": "pairwise-128k-batch-prototype",
+    "consumer": "pairwise",
+    "route": "prototype",
+    "repr": "batch",
+    "size": 131072
+  },
+  {
+    "id": "pairwise-region-128k-batch-current",
+    "consumer": "pairwise-region",
+    "route": "current",
+    "repr": "batch",
+    "size": 131072
+  },
+  {
+    "id": "pairwise-region-128k-batch-prototype",
+    "consumer": "pairwise-region",
+    "route": "prototype",
+    "repr": "batch",
+    "size": 131072
+  }
+]

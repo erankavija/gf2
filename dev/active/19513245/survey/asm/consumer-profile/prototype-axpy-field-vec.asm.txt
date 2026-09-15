@@ -1,0 +1,132 @@
+# label: prototype-axpy-field-vec
+# pattern: bytefield_consumer::axpy_field_vec
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# text symbols matching this pattern: 2
+
+## symbol at 0000000000033b90, 0x000000000000008f bytes
+0000000000033b90 <bytefield_consumer::axpy_field_vec>:
+   33b90:	sub    $0x18,%rsp
+   33b94:	mov    %rsi,0x8(%rsp)
+   33b99:	mov    %r8,0x10(%rsp)
+   33b9e:	cmp    %r8,%rsi
+   33ba1:	jne    33be9 <bytefield_consumer::axpy_field_vec+0x59>
+   33ba3:	test   %rsi,%rsi
+   33ba6:	je     33be4 <bytefield_consumer::axpy_field_vec+0x54>
+   33ba8:	lea    0x0(,%rsi,8),%rax
+   33bb0:	xor    %r8d,%r8d
+   33bb3:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   33bc0:	cmp    %r8,%rsi
+   33bc3:	je     33c0f <bytefield_consumer::axpy_field_vec+0x7f>
+   33bc5:	movzbl (%rcx,%r8,8),%r9d
+   33bca:	movzbl (%rdx,%r9,1),%r9d
+   33bcf:	xor    (%rdi,%r8,8),%r9b
+   33bd3:	movzbl %r9b,%r9d
+   33bd7:	mov    %r9,(%rdi,%r8,8)
+   33bdb:	inc    %r8
+   33bde:	add    $0xfffffffffffffff8,%rax
+   33be2:	jne    33bc0 <bytefield_consumer::axpy_field_vec+0x30>
+   33be4:	add    $0x18,%rsp
+   33be8:	ret
+   33be9:	lea    -0x2aaf4(%rip),%rcx        # 90fc <anon.8cfae0649b24339a7c6ff37f2bd6b634.746.llvm.13263554319387139704+0x244>
+   33bf0:	lea    0x4f101(%rip),%r9        # 82cf8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x5f0>
+   33bf7:	lea    0x8(%rsp),%rsi
+   33bfc:	lea    0x10(%rsp),%rdx
+   33c01:	mov    $0x3f,%r8d
+   33c07:	xor    %edi,%edi
+   33c09:	call   *0x51be1(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   33c0f:	lea    0x4f0fa(%rip),%rdx        # 82d10 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x608>
+   33c16:	mov    %rsi,%rdi
+   33c19:	call   *0x51af1(%rip)        # 85710 <_DYNAMIC+0x208>
+
+## symbol at 0000000000033c20, 0x0000000000000161 bytes
+0000000000033c20 <bytefield_consumer::axpy_field_vec>:
+   33c20:	push   %rbp
+   33c21:	push   %r15
+   33c23:	push   %r14
+   33c25:	push   %r13
+   33c27:	push   %r12
+   33c29:	push   %rbx
+   33c2a:	sub    $0x38,%rsp
+   33c2e:	mov    %rsi,0x8(%rsp)
+   33c33:	mov    %rdx,0x28(%rsp)
+   33c38:	mov    %r9,0x30(%rsp)
+   33c3d:	cmp    %r9,%rdx
+   33c40:	jne    33d30 <bytefield_consumer::axpy_field_vec+0x110>
+   33c46:	mov    %rdx,%rbx
+   33c49:	test   %rdx,%rdx
+   33c4c:	je     33d08 <bytefield_consumer::axpy_field_vec+0xe8>
+   33c52:	mov    %rcx,%r10
+   33c55:	mov    %rbx,%rsi
+   33c58:	shl    $0x4,%rsi
+   33c5c:	mov    (%rdi),%rdx
+   33c5f:	mov    $0xffffffffffffffff,%r12
+   33c66:	xor    %r14d,%r14d
+   33c69:	mov    %rcx,0x20(%rsp)
+   33c6e:	mov    %rbx,0x18(%rsp)
+   33c73:	mov    %rsi,0x10(%rsp)
+   33c78:	jmp    33c94 <bytefield_consumer::axpy_field_vec+0x74>
+   33c7a:	nopw   0x0(%rax,%rax,1)
+   33c80:	add    $0x10,%r14
+   33c84:	mov    %rbp,%rdx
+   33c87:	mov    %rbp,0x0(%r13)
+   33c8b:	mov    %r15,0x8(%r13)
+   33c8f:	cmp    %r14,%rsi
+   33c92:	je     33d08 <bytefield_consumer::axpy_field_vec+0xe8>
+   33c94:	inc    %r12
+   33c97:	cmp    %r12,%rbx
+   33c9a:	je     33d56 <bytefield_consumer::axpy_field_vec+0x136>
+   33ca0:	mov    0x8(%rsp),%rax
+   33ca5:	lea    (%rax,%r14,1),%r13
+   33ca9:	movzbl 0x8(%r8,%r14,1),%eax
+   33caf:	movzbl (%r10,%rax,1),%eax
+   33cb4:	xor    0x8(%r13),%al
+   33cb8:	movzbl %al,%r15d
+   33cbc:	movzbl 0x80(%rdx),%ecx
+   33cc3:	mov    %r15,%rax
+   33cc6:	shr    %cl,%rax
+   33cc9:	test   %rax,%rax
+   33ccc:	jne    33d17 <bytefield_consumer::axpy_field_vec+0xf7>
+   33cce:	lock incq (%rdx)
+   33cd2:	jle    33d69 <bytefield_consumer::axpy_field_vec+0x149>
+   33cd8:	mov    %rdx,%rbp
+   33cdb:	mov    0x0(%r13),%rax
+   33cdf:	lock decq (%rax)
+   33ce3:	jne    33c80 <bytefield_consumer::axpy_field_vec+0x60>
+   33ce5:	mov    %r13,%rdi
+   33ce8:	mov    %r8,%rbx
+   33ceb:	call   *0x51b67(%rip)        # 85858 <_DYNAMIC+0x350>
+   33cf1:	mov    0x10(%rsp),%rsi
+   33cf6:	mov    0x20(%rsp),%r10
+   33cfb:	mov    %rbx,%r8
+   33cfe:	mov    0x18(%rsp),%rbx
+   33d03:	jmp    33c80 <bytefield_consumer::axpy_field_vec+0x60>
+   33d08:	add    $0x38,%rsp
+   33d0c:	pop    %rbx
+   33d0d:	pop    %r12
+   33d0f:	pop    %r13
+   33d11:	pop    %r14
+   33d13:	pop    %r15
+   33d15:	pop    %rbp
+   33d16:	ret
+   33d17:	lea    -0x2b27e(%rip),%rdi        # 8aa0 <anon.d62261618184f8c0bbf8082feb5cf93d.9.llvm.6486907855749451038>
+   33d1e:	lea    0x4e9e3(%rip),%rdx        # 82708 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038>
+   33d25:	mov    $0x41,%esi
+   33d2a:	call   *0x51a50(%rip)        # 85780 <_DYNAMIC+0x278>
+   33d30:	lea    -0x2ac3b(%rip),%rcx        # 90fc <anon.8cfae0649b24339a7c6ff37f2bd6b634.746.llvm.13263554319387139704+0x244>
+   33d37:	lea    0x4efba(%rip),%r9        # 82cf8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x5f0>
+   33d3e:	lea    0x28(%rsp),%rsi
+   33d43:	lea    0x30(%rsp),%rdx
+   33d48:	mov    $0x3f,%r8d
+   33d4e:	xor    %edi,%edi
+   33d50:	call   *0x51a9a(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   33d56:	lea    0x4efb3(%rip),%rdx        # 82d10 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x608>
+   33d5d:	mov    %rbx,%rdi
+   33d60:	mov    %rbx,%rsi
+   33d63:	call   *0x519a7(%rip)        # 85710 <_DYNAMIC+0x208>
+   33d69:	ud2
+   33d6b:	mov    0x8(%rsp),%rcx
+   33d70:	mov    %rbp,(%rcx,%r14,1)
+   33d74:	mov    %r15,0x8(%rcx,%r14,1)
+   33d79:	mov    %rax,%rdi
+   33d7c:	call   81590 <_Unwind_Resume@plt>
