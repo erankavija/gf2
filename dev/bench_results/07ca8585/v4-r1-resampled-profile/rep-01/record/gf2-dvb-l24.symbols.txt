@@ -1,0 +1,33 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 15K of event 'cycles:u'
+# Event count (approx.): 63768589854
+#
+# Overhead       Samples  Shared Object     Symbol                                                  
+# ........  ............  ................  ........................................................
+#
+    99.72%         15898  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.18%            28  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.01%             2  libc.so.6         [.] 0x0000000000176e8e
+     0.01%             1  libc.so.6         [.] 0x00000000001765a9
+     0.01%             1  libc.so.6         [.] 0x00000000001765c5
+     0.01%             1  libc.so.6         [.] 0x00000000001765ca
+     0.01%             1  libc.so.6         [.] 0x0000000000176e89
+     0.01%             1  libc.so.6         [.] 0x0000000000176e93
+     0.01%             1  [unknown]         [k] 0xffffffffad4015f4
+     0.01%             1  [unknown]         [k] 0xffffffffad779494
+     0.01%             1  [unknown]         [k] 0xffffffffad88fe45
+     0.01%             1  [unknown]         [k] 0xffffffffad890be8
+     0.01%             1  [unknown]         [k] 0xffffffffad890c88
+     0.01%             1  [unknown]         [k] 0xffffffffad8a8b85
+     0.01%             1  [unknown]         [k] 0xffffffffae96e3d7
+     0.01%             1  [unknown]         [k] 0xffffffffae96e539
+     0.01%             1  [unknown]         [k] 0xffffffffae989937
+
+
+#
+# (Tip: For tracepoint events, try: perf report -s trace_fields)
+#

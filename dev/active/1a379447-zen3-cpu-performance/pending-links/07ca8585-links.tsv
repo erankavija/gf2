@@ -22,3 +22,38 @@ dev/bench_results/07ca8585/v4-update-single-worker-family-ledger.jsonl	benchmark
 dev/bench_results/07ca8585/v4-update-comparator-single-worker-family-ledger.jsonl	benchmark	Append-only family ledger, comparator single-worker family
 dev/bench_results/07ca8585/run-campaign.sh	benchmark	Campaign launcher for the min-sum update families
 dev/bench_results/07ca8585/run-smoke.sh	benchmark	Wire-contract smoke of the min-sum update arms
+dev/active/07ca8585/addendum-ldpc-update-checknode-pilot.json	specification	Pilot addendum, isolated check-node comparator family
+dev/active/07ca8585/addendum-ldpc-update-checknode.json	specification	Frozen v4 addendum, isolated check-node confirmation
+dev/active/07ca8585/addendum-ldpc-update-checknode-derivation.txt	reference	Derivation of the isolated check-node confirmation addendum
+dev/active/07ca8585/addendum-ldpc-update-fixed-iteration-pilot.json	specification	Pilot addendum, fixed-iteration comparator family
+dev/active/07ca8585/addendum-ldpc-update-fixed-iteration.json	specification	Frozen v4 addendum, fixed-iteration confirmation
+dev/active/07ca8585/addendum-ldpc-update-fixed-iteration-derivation.txt	reference	Derivation of the fixed-iteration confirmation addendum
+dev/bench_results/07ca8585/preparation/kernel-build-identity.json	benchmark	Build identity of the isolated arms, fixed corpus, and profile executables
+dev/bench_results/07ca8585/preparation/checknode-parity.jsonl	benchmark	Bit-identity receipt for the isolated gf2 and AFF3CT check-node arms
+dev/bench_results/07ca8585/preparation/gpu-byte-identity.md	benchmark	gfx1030 byte-identity verification of the canonical LDPC edge layout
+dev/bench_results/07ca8585/preparation/quality-fixed/gf2-nms-f32-dvb-t2-r12.json	benchmark	Prepared fixed-iteration gf2 DVB-T2 quality evidence
+dev/bench_results/07ca8585/preparation/quality-fixed/gf2-nms-f32-nr-bg1-z384.json	benchmark	Prepared fixed-iteration gf2 NR quality evidence
+dev/bench_results/07ca8585/preparation/quality-fixed/aff3ct-flooding-nms-f32-dvb-t2-r12.json	benchmark	Prepared fixed-iteration AFF3CT DVB-T2 quality evidence
+dev/bench_results/07ca8585/preparation/quality-fixed/aff3ct-flooding-nms-f32-nr-bg1-z384.json	benchmark	Prepared fixed-iteration AFF3CT NR quality evidence
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-confirmation/receipt.json	benchmark	Accepted qualifying before-after single-worker confirmation receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-confirmation/acceptance-summary.json	benchmark	Acceptance summary for the before-after single-worker confirmation
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-multicore-pilot/receipt.json	benchmark	Accepted nonqualifying before-after multicore scaling pilot receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-multicore-pilot/acceptance-summary.json	benchmark	Acceptance summary for the before-after multicore scaling pilot
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/receipt.json	benchmark	Accepted matched AFF3CT full-decoding confirmation receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/acceptance-summary.json	benchmark	Acceptance summary for the matched AFF3CT full-decoding confirmation
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-multicore-pilot/receipt.json	benchmark	Accepted nonqualifying matched AFF3CT scaling pilot receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-multicore-pilot/acceptance-summary.json	benchmark	Acceptance summary for the matched AFF3CT scaling pilot
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-pilot/receipt.json	benchmark	Accepted isolated check-node comparator pilot receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-pilot/acceptance-summary.json	benchmark	Acceptance summary for the isolated check-node comparator pilot
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/receipt.json	benchmark	Accepted qualifying isolated check-node confirmation receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/acceptance-summary.json	benchmark	Acceptance summary for the isolated check-node confirmation
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot/receipt.json	benchmark	Accepted fixed-iteration comparator pilot receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot/acceptance-summary.json	benchmark	Acceptance summary for the fixed-iteration comparator pilot
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/receipt.json	benchmark	Accepted qualifying fixed-iteration confirmation receipt
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/acceptance-summary.json	benchmark	Acceptance summary for the fixed-iteration confirmation
+dev/bench_results/07ca8585/v4-update-multicore-family-ledger.jsonl	benchmark	Append-only before-after multicore family ledger
+dev/bench_results/07ca8585/v4-update-comparator-multicore-family-ledger.jsonl	benchmark	Append-only matched AFF3CT multicore family ledger
+dev/bench_results/07ca8585/v4-r1-resampled-profile/profile.md	benchmark	Resolved re-sampled LDPC profile report for the canonical update
+dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json	benchmark	Machine-readable re-sampled LDPC profile summary
+dev/bench_results/07ca8585/v4-r1-resampled-profile/repetitions.log	benchmark	Append-only execution log for the re-sampled LDPC profile
+dev/bench_results/07ca8585/v4-r1-resampled-profile/attribution.tsv	benchmark	Address-attribution ledger for the re-sampled LDPC profile

@@ -1,0 +1,38 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 16K of event 'cycles:u'
+# Event count (approx.): 64704598512
+#
+# Overhead       Samples  Shared Object     Symbol                                                  
+# ........  ............  ................  ........................................................
+#
+    99.57%         16106  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.24%            39  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.02%             4  libc.so.6         [.] 0x00000000001765ca
+     0.02%             3  libc.so.6         [.] 0x00000000001765c0
+     0.02%             3  libc.so.6         [.] 0x0000000000176e8e
+     0.02%             3  libc.so.6         [.] 0x0000000000176e93
+     0.02%             3  [unknown]         [k] 0xffffffffad4015f0
+     0.01%             1  libc.so.6         [.] 0x00000000001765a9
+     0.01%             1  libc.so.6         [.] 0x00000000001765b3
+     0.01%             1  libc.so.6         [.] 0x0000000000176e89
+     0.01%             1  [unknown]         [k] 0xffffffffad7794a1
+     0.01%             1  [unknown]         [k] 0xffffffffad7794b3
+     0.01%             1  [unknown]         [k] 0xffffffffad81a4d4
+     0.01%             1  [unknown]         [k] 0xffffffffad88fe14
+     0.01%             1  [unknown]         [k] 0xffffffffad892f0f
+     0.01%             1  [unknown]         [k] 0xffffffffad896883
+     0.01%             1  [unknown]         [k] 0xffffffffad8968b2
+     0.01%             1  [unknown]         [k] 0xffffffffad8968da
+     0.01%             1  [unknown]         [k] 0xffffffffad8a8b44
+     0.01%             1  [unknown]         [k] 0xffffffffae98856c
+     0.01%             1  [unknown]         [k] 0xffffffffae989906
+     0.01%             1  [unknown]         [k] 0xffffffffae99de3c
+
+
+#
+# (Tip: To set sampling period of individual events use perf record -e cpu/cpu-cycles,period=100001/,cpu/branches,period=10001/ ...)
+#

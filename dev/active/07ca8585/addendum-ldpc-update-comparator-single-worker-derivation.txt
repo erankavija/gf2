@@ -1,0 +1,17 @@
+pilot receipt  dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot/receipt.json
+receipt sha256 35cee71e99360b3d25cf81e6959734ef1f11480f860e1901403f12a82fd60fd3
+campaign       07ca8585-v4-r1-update-comparator-single-worker-pilot
+verdict        accepted (label pilot)
+family         ldpc-update-comparator-single-worker-v1: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+dvb-t2-r12-update-w1                     6      1.8429      1.8346        1.86    0.0093
+nr-bg1-z384-update-w1                    6      1.6572      1.6401      1.7097    0.0316
+
+widest relative half-width   0.031631
+frozen measurement resolution 0.04
+replaced equivalence_margin None -> 1.08
+replaced material_gap_threshold None -> 1.16
+restated the family description for the confirmatory stage
+margins: equivalence 1.08, material gap 1.16
+confirmation addendum dev/active/07ca8585/addendum-ldpc-update-comparator-single-worker.json

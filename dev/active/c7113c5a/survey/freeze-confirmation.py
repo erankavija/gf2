@@ -16,7 +16,8 @@ max(|s - l|, |u - s|) / s over the pilot's cells, rounded up to two decimals,
 becomes the frozen measurement resolution; the pilot receipt is pinned by path
 and SHA-256 as its evidence. Every retained cell keeps its pilot declaration
 with the confirmatory role. A margin the pilot's resolution invalidates may be
-replaced, with its new rationale, through the margin options, and a margin the
+replaced, with its new rationale, through the margin options, and a family whose
+pilot declares no worthwhile speedup fixes one the same way, and a margin the
 confirmation keeps may restate its rationale alone; the record names every
 replaced value and every restated rationale. `--family-description` restates
 the family prose the confirmation stage carries. The script refuses to write an
@@ -68,6 +69,8 @@ def main():
     parser.add_argument("--frozen-utc", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--record", required=True)
+    parser.add_argument("--worthwhile-speedup", type=float)
+    parser.add_argument("--worthwhile-rationale")
     parser.add_argument("--equivalence-margin", type=float)
     parser.add_argument("--equivalence-rationale")
     parser.add_argument("--material-gap-threshold", type=float)
@@ -85,6 +88,7 @@ def main():
     if (args.resolution is None) != (args.resolution_derivation is None):
         raise SystemExit("a supplied resolution needs both a value and its derivation")
     replacements = {
+        "worthwhile_speedup": (args.worthwhile_speedup, "rationale", args.worthwhile_rationale),
         "equivalence_margin": (args.equivalence_margin, "equivalence_rationale", args.equivalence_rationale),
         "material_gap_threshold": (args.material_gap_threshold, "material_gap_rationale", args.material_gap_rationale),
     }
