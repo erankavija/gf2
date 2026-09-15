@@ -206,14 +206,16 @@ field.
 The 0x11B incompatibility bounds what can be inherited, and it is a property
 of the fields rather than of any implementation. 0x11B and 0x11D are distinct
 fields on the same byte carrier. `Gf2mField::gf256()` builds 0x11D
-(`gf256-polynomial`); gf2 ships no GF(2^8) field modulo 0x11B, and ISA-L
-implements no polynomial but 0x11D, so a 0x11B consumer inherits GF-Complete
-and M4RIE baselines from `6c6b09b1` and no ISA-L baseline at all, and reaching
-ISA-L would need an isomorphism adapter that neither survey builds or times.
+(`gf256-polynomial`), while the public `Gf2mField::new(8, 0x11B)` constructs a
+0x11B field; the survey finds no production consumer configured with that
+field. ISA-L implements no polynomial but 0x11D, so a 0x11B consumer inherits
+GF-Complete and M4RIE baselines from `6c6b09b1` and no ISA-L baseline at all,
+and reaching ISA-L would need an isomorphism adapter that neither survey builds
+or times.
 The prototype is not bounded that way: it builds its table from the field's own
 reduction polynomial, so it serves 0x11B and 0x11D alike, and the validation
-covers every byte coefficient over both. No cell measures 0x11B, because there
-is no 0x11B consumer in gf2 to measure and no 0x11B external baseline to
+covers every byte coefficient over both. No cell measures 0x11B, because the
+survey identifies no production consumer configured with it and no 0x11B external baseline to
 compare against.
 
 One documentation defect sits exactly here and is not this issue's to fix: the
