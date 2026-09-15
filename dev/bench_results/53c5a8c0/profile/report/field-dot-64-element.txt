@@ -1,0 +1,25 @@
+# cycle samples of field-dot-64-element (gf2 arm, cell field-dot-64)
+# recorded by run-profile.sh at 4000 Hz over 5209 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1459374694
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                     IPC   [IPC Coverage]
+# ........  ............  ....................  .........................................................................................  ....................
+#
+     8.35%           102  profile-arm           [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul                -      -            
+    27.64%           336  profile-arm           [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run  -      -            
+    17.72%           216  profile-arm           [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>         -      -            
+    46.00%           561  profile-arm           [.] gf2_kernels_simd::x86::clmul::clmul_barrett_reduce                                     -      -            
+
+
+#
+# (Tip: For a higher level overview, try: perf report --sort comm,dso)
+#
