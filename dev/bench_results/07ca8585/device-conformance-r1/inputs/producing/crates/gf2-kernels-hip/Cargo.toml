@@ -1,0 +1,41 @@
+[workspace]
+
+[package]
+name = "gf2-kernels-hip"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+description = "HIP/ROCm GPU kernels for gf2 — BCJR batch decoder"
+publish = false
+
+[features]
+# Enable per-prime permanent kernels (permanent_bipedal{3,5,7}).
+# Requires hipcc and a compatible AMD GPU (gfx1030).
+hip = []
+
+[dependencies]
+gf2-core = { path = "../gf2-core" }
+tracing = "0.1"
+
+[build-dependencies]
+cc = "1"
+
+[dev-dependencies]
+gf2-algebra = { path = "../gf2-algebra" }
+gf2-coding = { path = "../gf2-coding", features = ["hip"] }
+proptest = "1.0"
+criterion = "0.5"
+# Used by the `launch_chacha20_awgn` unit tests to confirm the host key
+# derivation matches `rand_chacha 0.9`'s `ChaCha20Rng::seed_from_u64`. (The full
+# GPU byte-identity + 1-ulp regression lives in `gf2-sim`'s `gpu::awgn` tests,
+# where it can call the real `gf2_sim::parallel::worker_offset` rather than
+# duplicating the seek scheme — this crate is upstream of `gf2-sim`.)
+# This crate is excluded from the workspace because it requires ROCm/hipcc, so
+# it cannot inherit the workspace's rand 0.9 dependency pins.
+rand = "0.9"
+rand_chacha = "0.9"
+rand_core = "0.9"
+
+[[bench]]
+name = "gpu_vs_cpu_gray_qam"
+harness = false
