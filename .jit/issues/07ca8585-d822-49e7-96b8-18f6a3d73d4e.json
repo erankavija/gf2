@@ -378,7 +378,18 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-15T01:15:24.734590684Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-15T01:19:16.092303038Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "07ca8585-d822-49e7-96b8-18f6a3d73d4e",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -392,5 +403,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Remove allocation and repeated edge traversal from LDPC updates",
-  "updated_at": "2026-09-15T01:10:10.251014895Z"
+  "updated_at": "2026-09-15T01:19:16.092303038Z"
 }
