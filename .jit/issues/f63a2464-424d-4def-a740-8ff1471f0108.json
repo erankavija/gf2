@@ -40,7 +40,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Evaluate quantized layered and QC-aware LDPC candidates",
-  "updated_at": "2026-09-13T17:01:24.482989024Z"
+  "updated_at": "2026-09-15T02:49:19.848245453Z"
 }

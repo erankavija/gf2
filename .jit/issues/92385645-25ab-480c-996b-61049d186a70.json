@@ -6,7 +6,7 @@
   "dependencies": [
     "30c3aef1-9272-425d-8ac5-276cca22a8c7"
   ],
-  "description": "Identify and prove the M4RI operation that is mathematically and operationally comparable with one dense mid-range consumer.\n\n## Background\n\nExisting M4RI evidence covers transpose and BCH-generator framing, neither of which substitutes for dense `BitMatrix::matvec`. A useful comparator must match a real consuming operation and charge construction, conversion, execution, and output costs.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed operation-match specification pins the M4RI revision, license, build flags, exact operation, dimensions, representation mapping, output semantics, and reproducible commands.\n- [hard] REQ-02: A semantic probe demonstrates an equivalent dense consumer result with adapter costs identified, or records with evidence that no matched M4RI operation exists within the declared search budget.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.",
+  "description": "Identify and prove the M4RI operation that is mathematically and operationally comparable with one dense mid-range consumer.\n\n## Background\n\nExisting M4RI evidence covers transpose and BCH-generator framing, neither of which substitutes for dense `BitMatrix::matvec`. A useful comparator must match a real consuming operation and charge construction, conversion, execution, and output costs.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed operation-match specification pins the M4RI revision, license, build flags, exact operation, dimensions, representation mapping, output semantics, and reproducible commands.\n- [hard] REQ-02: A semantic probe demonstrates an equivalent dense consumer result with adapter costs identified, or records with evidence that no matched M4RI operation exists within the declared search budget.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.\n\nSource reference: [AlbrechtBard2026].",
   "documents": [
     {
       "assets": [
@@ -71,5 +71,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T02:47:17.256486544Z"
+  "updated_at": "2026-09-15T03:00:59.708447270Z"
 }

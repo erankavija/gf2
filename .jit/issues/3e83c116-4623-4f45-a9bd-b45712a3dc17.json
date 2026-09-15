@@ -6,7 +6,7 @@
   "dependencies": [
     "30c3aef1-9272-425d-8ac5-276cca22a8c7"
   ],
-  "description": "Establish the exact ISA-L XOR arm that can be compared with the canonical mid-range logical operation, including its build and representation adapter contract.\n\n## Background\n\nISA-L's public dispatched `xor_gen` route requires NASM; the earlier base-only build is useful context but is not SIMD evidence. The qualification must either reproduce the dispatched route on a prepared host or preserve its unavailability explicitly, while keeping `xor_gen_base` labelled as a scalar base arm.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed comparator specification pins the ISA-L revision, license, build flags, NASM version or observed absence, selected symbol, input/output semantics, and reproducible build commands.\n- [hard] REQ-02: A semantic probe demonstrates matching LSB-first XOR behavior and accounts for destination setup, pointer arrays, alignment, conversion, and output costs, or records why no comparable dispatched arm is available.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.",
+  "description": "Establish the exact ISA-L XOR arm that can be compared with the canonical mid-range logical operation, including its build and representation adapter contract.\n\n## Background\n\nISA-L's public dispatched `xor_gen` route requires NASM; the earlier base-only build is useful context but is not SIMD evidence. The qualification must either reproduce the dispatched route on a prepared host or preserve its unavailability explicitly, while keeping `xor_gen_base` labelled as a scalar base arm.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed comparator specification pins the ISA-L revision, license, build flags, NASM version or observed absence, selected symbol, input/output semantics, and reproducible build commands.\n- [hard] REQ-02: A semantic probe demonstrates matching LSB-first XOR behavior and accounts for destination setup, pointer arrays, alignment, conversion, and output costs, or records why no comparable dispatched arm is available.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.\n\nSource reference: [IsaL2026].",
   "documents": [
     {
       "commit": "2bde939a",
@@ -40,14 +40,34 @@
     "asm-artefact-present"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-15T02:55:56.302723115Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T02:59:56.063926526Z",
+      "updated_by": "auto:executor"
+    },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-15T02:46:56.720556577Z",
+      "status": "passed",
+      "updated_at": "2026-09-15T02:51:58.318156810Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T02:55:18.373803020Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
       "status": "passed",
-      "updated_at": "2026-09-15T02:44:55.605693520Z",
+      "updated_at": "2026-09-15T02:50:03.338845915Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-15T02:59:57.596118822Z",
       "updated_by": "auto:executor"
     }
   },
@@ -64,5 +84,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify the ISA-L XOR comparator",
-  "updated_at": "2026-09-15T02:47:16.403008242Z"
+  "updated_at": "2026-09-15T03:00:35.521850629Z"
 }
