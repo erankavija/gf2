@@ -80,37 +80,37 @@
   "gates_status": {
     "asm-artefact-present": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:35:09.008743686Z",
+      "updated_at": "2026-09-15T04:01:52.460060554Z",
       "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:40:41.195282690Z",
+      "updated_at": "2026-09-15T03:55:39.895627358Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:31:29.036844133Z",
+      "updated_at": "2026-09-15T03:58:21.901640439Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:39:56.423625141Z",
+      "updated_at": "2026-09-15T03:54:46.251370009Z",
       "updated_by": "auto:executor"
     },
     "holistic-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:43:41.837065713Z",
+      "updated_at": "2026-09-15T04:04:42.885543843Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:38:05.125947595Z",
+      "updated_at": "2026-09-15T03:52:31.327185159Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:34:57.055070785Z",
+      "updated_at": "2026-09-15T04:01:48.944702069Z",
       "updated_by": "auto:executor"
     }
   },
@@ -127,5 +127,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T03:51:52.998714678Z"
+  "updated_at": "2026-09-15T04:04:42.885543843Z"
 }
