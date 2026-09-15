@@ -18,17 +18,22 @@ This qualification's runner repeats only that M4RI build, with the following
 exact configure and identity-qualified installation path:
 
 ```text
-CFLAGS='-O3 -march=native -fPIC' ./configure --prefix=<ext>/prefix-qualified-v1 --disable-static
+CC=<resolved-gcc> CFLAGS='-O3 -march=native -fPIC' CPPFLAGS='' LDFLAGS='' \
+  LIBS='' CONFIG_SITE=/dev/null ./configure \
+  --prefix=<ext>/prefix-qualified-v2 --disable-static
 make -j"${CARGO_BUILD_JOBS:-1}"
 make install
 ```
 
 The probe builds with `gcc -std=c11 -O3 -march=native -Wall -Wextra -Werror`
-and links `<ext>/prefix-qualified-v1/lib/libm4ri.so` using its matching headers.
+and links `<ext>/prefix-qualified-v2/lib/libm4ri.so` using its matching headers.
 The runner always verifies the archive digest. A retained build is reused only
-when its provenance record matches that archive, the current compiler identity,
-the exact build and configure flags, and the installed library digest; an
-incomplete or mismatched cache fails closed. The source
+when its provenance record matches that archive, the exact resolved GCC
+executable and identity, the build and configure flags, the explicitly empty
+`CPPFLAGS`, `LDFLAGS`, and `LIBS`, `CONFIG_SITE=/dev/null`, and the installed
+library digest. The configure/build subprocess overwrites ambient `CC` and
+these Autoconf inputs and clears ambient tool overrides; an incomplete or
+mismatched cache fails closed. The source
 archive digest, installed library digest, compiler version and actual host
 features belong in any later timed receipt; this qualification names no
 measured arm or speed claim.
