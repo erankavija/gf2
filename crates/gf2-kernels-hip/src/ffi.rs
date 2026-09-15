@@ -7,6 +7,27 @@ use std::ffi::c_void;
 use std::os::raw::c_int;
 
 extern "C" {
+    /// Evaluates the host side of the host/device min-sum numerical contract.
+    ///
+    /// `values` points to `length` host `f32` values. `excluded` is omitted
+    /// from the reduction. The algorithm and parameters use the same encoding
+    /// as [`launch_ldpc_check_update`]. This private oracle exercises the exact
+    /// primitives compiled into the device kernel without launching a GPU.
+    ///
+    /// # Safety
+    ///
+    /// `values` must point to `length` initialized `f32` values and
+    /// `excluded` must be a valid index in that slice.
+    #[cfg(test)]
+    pub fn gf2_ldpc_min_sum_contract_reduce(
+        values: *const f32,
+        length: c_int,
+        excluded: c_int,
+        algorithm: c_int,
+        alpha: f32,
+        beta: f32,
+    ) -> f32;
+
     /// Launch batched BCJR forward-backward kernel.
     ///
     /// # Arguments
