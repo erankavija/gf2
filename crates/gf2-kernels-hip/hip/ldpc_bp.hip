@@ -47,16 +47,14 @@
 // "per-edge ordered accumulation into a per-edge scratch followed by an ordered
 // reduction" contract).
 //
-// The min-sum-family sign is taken from the value's SIGN BIT
-// (`signbit(lv) ? -1 : +1`) so that `-0.0` counts as NEGATIVE, matching the CPU
-// default build's AVX2 vectorized min-sum lanes (`gf2-kernels-simd/src/llr.rs`),
-// whose dominant vectorized path keys the sign on the sign bit (the SIMD scalar
-// remainder uses `< 0.0`, but the vectorized lanes dominate for n=64800, and
-// the byte-identity test compares against the CPU with `simd` on). A `-0.0` v2c
-// message is rare (needs `belief == incoming`); aligning on the sign bit removes
-// that latent bit-flip. The min magnitude is `min(|lv|)` and the sign is a
-// product of `±1`, both exactly representable in f32 and order-independent, so
-// the min-sum family is reproduced exactly regardless of gather order; only the
+// The min-sum family follows `gf2_coding::ldpc::min_sum_check_row`, the CPU
+// decoder's supported scalar contract. Sign is selected by `lv >= 0.0f`, so
+// either zero counts as positive and NaN counts as negative. Magnitude starts
+// at infinity and changes only for `fabsf(lv) < minmag`, so NaN is skipped and
+// an all-NaN reduction has infinite magnitude. The host contract oracle below
+// calls the same host/device primitives as the kernel, which lets conformance
+// tests cover these edge cases without claiming a GPU launch on an unavailable
+// device. The sign product (`±1`) and minimum are order-independent; only the
 // SumProduct `tanh`/`atanh` path is order-sensitive (handled above).
 //
 // # Flat, standard-agnostic graph layout (uploaded once by the host wrapper)
@@ -110,6 +108,61 @@ __device__ __forceinline__ float max_tanh_product() {
 // `frame_done == nullptr` (early termination off) no frame is ever frozen.
 __device__ __forceinline__ bool frame_frozen(const uint8_t* frame_done, int b) {
     return frame_done != nullptr && frame_done[b] != 0u;
+}
+
+struct LdpcMinSumReduction {
+    float sign;
+    float minmag;
+    bool any;
+};
+
+// These primitives compile for both host and device. The check kernel and the
+// host oracle used by Rust conformance tests therefore exercise one numerical
+// implementation rather than parallel restatements of the edge-case rules.
+__host__ __device__ __forceinline__ LdpcMinSumReduction ldpc_min_sum_begin() {
+    return {1.0f, INFINITY, false};
+}
+
+__host__ __device__ __forceinline__ void ldpc_min_sum_accumulate(
+    LdpcMinSumReduction* reduction,
+    float value) {
+    reduction->sign *= value >= 0.0f ? 1.0f : -1.0f;
+    float magnitude = fabsf(value);
+    if (magnitude < reduction->minmag) reduction->minmag = magnitude;
+    reduction->any = true;
+}
+
+__host__ __device__ __forceinline__ float ldpc_min_sum_finish(
+    const LdpcMinSumReduction& reduction,
+    int algorithm,
+    float alpha,
+    float beta) {
+    if (!reduction.any) return 0.0f;
+    if (algorithm == LDPC_ALG_NORM_MIN_SUM) {
+        return alpha * (reduction.sign * reduction.minmag);
+    }
+    if (algorithm == LDPC_ALG_OFFSET_MIN_SUM) {
+        float magnitude = reduction.minmag - beta;
+        if (magnitude < 0.0f) magnitude = 0.0f;
+        return reduction.sign * magnitude;
+    }
+    return reduction.sign * reduction.minmag;
+}
+
+// Private host oracle for the Rust backend-conformance suite. It invokes the
+// exact host/device helpers used below and does not launch or require a GPU.
+extern "C" float gf2_ldpc_min_sum_contract_reduce(
+    const float* values,
+    int length,
+    int excluded,
+    int algorithm,
+    float alpha,
+    float beta) {
+    LdpcMinSumReduction reduction = ldpc_min_sum_begin();
+    for (int index = 0; index < length; ++index) {
+        if (index != excluded) ldpc_min_sum_accumulate(&reduction, values[index]);
+    }
+    return ldpc_min_sum_finish(reduction, algorithm, alpha, beta);
 }
 
 // ---------------------------------------------------------------------------
@@ -171,36 +224,16 @@ extern "C" __global__ void ldpc_check_update_kernel(
             }
             c2v[base + (long long)e] = msg;
         } else {
-            // Min-sum family: sign product * min magnitude. The sign is keyed on
-            // the SIGN BIT (so -0.0 is negative), matching the CPU default
-            // build's AVX2 vectorized min-sum lanes; both the sign product
-            // (±1) and the min magnitude are exactly representable and
-            // order-independent.
-            float sign = 1.0f;
-            float minmag = INFINITY;
-            bool any = false;
+            // Min-sum family: sign product * min magnitude, using the shared
+            // host/device implementation of the CPU scalar contract.
+            LdpcMinSumReduction reduction = ldpc_min_sum_begin();
             for (int o = start; o < end; ++o) {
                 if (o == e) continue;
                 int f = check_edge_to_var_edge[o];
                 float lv = v2c[base + (long long)f];
-                sign *= signbit(lv) ? -1.0f : 1.0f;
-                float mag = fabsf(lv);
-                if (mag < minmag) minmag = mag;
-                any = true;
+                ldpc_min_sum_accumulate(&reduction, lv);
             }
-            float msg;
-            if (!any) {
-                msg = 0.0f;
-            } else if (algorithm == LDPC_ALG_NORM_MIN_SUM) {
-                msg = alpha * (sign * minmag);
-            } else if (algorithm == LDPC_ALG_OFFSET_MIN_SUM) {
-                float om = minmag - beta;
-                if (om < 0.0f) om = 0.0f;
-                msg = sign * om;
-            } else {
-                // LDPC_ALG_MIN_SUM
-                msg = sign * minmag;
-            }
+            float msg = ldpc_min_sum_finish(reduction, algorithm, alpha, beta);
             c2v[base + (long long)e] = msg;
         }
     }
