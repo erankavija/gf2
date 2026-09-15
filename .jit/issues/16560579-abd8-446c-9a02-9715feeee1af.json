@@ -8,6 +8,7 @@
   ],
   "description": "After the plan-review checkpoint passes, decompose the plan for Optimize arbitrary-offset shifts and coding permutations (c04dd4ac) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
   "documents": [],
+  "done_at": "2026-09-15T01:08:03.120752699Z",
   "first_ready_at": "2026-09-15T00:50:32.758509917Z",
   "gates_required": [
     "coverage-preview",
@@ -15,14 +16,14 @@
   ],
   "gates_status": {
     "breakdown-review": {
-      "status": "pending",
-      "updated_at": "2026-09-13T11:40:06.951560552Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-15T01:06:30.619679950Z",
+      "updated_by": "auto:executor"
     },
     "coverage-preview": {
-      "status": "pending",
-      "updated_at": "2026-09-13T11:40:06.951560552Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-15T01:03:41.813844712Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "16560579-abd8-446c-9a02-9715feeee1af",
@@ -39,7 +40,7 @@
     "brackets:c04dd4ac"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "done",
   "title": "breakdown: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-15T00:53:47.660100411Z"
+  "updated_at": "2026-09-15T01:08:03.120752699Z"
 }

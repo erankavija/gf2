@@ -35,7 +35,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-15T00:58:16.621988678Z"
+  "updated_at": "2026-09-15T01:08:47.545590059Z"
 }
