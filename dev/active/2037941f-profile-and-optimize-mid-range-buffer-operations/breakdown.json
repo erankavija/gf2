@@ -238,7 +238,7 @@
   {
     "key": "logical-measurement-harness",
     "title": "Implement the logical-buffer measurement harness",
-    "description": "Implement the bounded resumable harness required by the frozen logical-buffer addendum without changing production selection.\n\n## Background\n\nThe harness reuses the canonical campaign support and benchmark lock discipline. It observes runtime host and selected-route provenance, opens the authoritative append-only log before work, checkpoints completed cells, and keeps harness dispatch outside timed windows where the protocol requires it.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen isolated XOR and whole-consumer cells with exact validation of outputs, zero tails, unaligned views, and 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A release-mode smoke run completes through the repository benchmark wrapper without changing the canonical dispatcher or production thresholds.\n\n## Notes\n\nThe harness may extend an established benchmark target when that preserves its behavioral identity; otherwise it uses one story-specific target.",
+    "description": "Implement the bounded resumable harness required by the frozen logical-buffer addendum without changing production selection.\n\n## Background\n\nThe harness reuses the canonical campaign support and benchmark lock discipline. Its smoke validation is deterministic and non-timed: it validates cells, semantics, logging, resume, and output shape but cannot collect receipt samples. Every timed sample is queued only after the frozen addendum is committed and runs on the prepared host inside the benchmark window under the shared measurement contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen isolated XOR and whole-consumer cells with exact validation of outputs, zero tails, unaligned views, and 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A deterministic non-timed release smoke validates cell generation, semantics, append-only logging, checkpoint/resume, and output schema while emitting zero receipt samples.\n- [hard] REQ-04: Timed execution refuses unfrozen inputs and queues every sample only after the committed addendum exists for execution inside the prepared-host benchmark window under the contract.\n\n## Notes\n\nThe harness may extend an established benchmark target when that preserves its behavioral identity; otherwise it uses one story-specific target.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -267,6 +267,7 @@
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
+        "shared-file-serialization",
         "logical-buffer-protocol"
       ],
       "produces_contracts": [
@@ -283,7 +284,7 @@
       ],
       "terminal": {
         "consumer_family": "Logical-buffer benchmark operator",
-        "test_boundary": "Release smoke receipt plus semantic fixtures",
+        "test_boundary": "Deterministic non-timed smoke validation",
         "worker_sized_reason": "One benchmark target against a frozen cell schema",
         "footprint": {
           "creates": [
@@ -299,7 +300,7 @@
   {
     "key": "parity-measurement-harness",
     "title": "Implement the dense-parity measurement harness",
-    "description": "Implement the bounded resumable harness required by the frozen dense-parity addendum without changing production selection.\n\n## Background\n\nThe harness reuses canonical campaign support and separately reports allocated whole-`matvec`, scalar reference, selected production, candidate, and externally adapted observations. Runtime route provenance and output validation are mandatory.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen stride-boundary cells with output allocation included and validates exact parity results plus 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A release-mode smoke run completes through the repository benchmark wrapper without changing the current fused AND-popcount production path.\n\n## Notes\n\nThe scalar four-accumulator route is a semantic/reference arm, not a proposed public API.",
+    "description": "Implement the bounded resumable harness required by the frozen dense-parity addendum without changing production selection.\n\n## Background\n\nThe harness reuses canonical campaign support and separately reports allocated whole-`matvec`, scalar reference, selected production, candidate, and externally adapted observations. Its smoke validation is deterministic and non-timed: it validates cells, semantics, logging, resume, and output shape but cannot collect receipt samples. Every timed sample is queued only after the frozen addendum is committed and runs on the prepared host inside the benchmark window under the shared measurement contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen stride-boundary cells with output allocation included and validates exact parity results plus 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A deterministic non-timed release smoke validates cell generation, parity semantics, append-only logging, checkpoint/resume, and output schema while emitting zero receipt samples.\n- [hard] REQ-04: Timed execution refuses unfrozen inputs and queues every sample only after the committed addendum exists for execution inside the prepared-host benchmark window under the contract.\n\n## Notes\n\nThe scalar four-accumulator route is a semantic/reference arm, not a proposed public API.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -321,13 +322,15 @@
       "tdd-reminder"
     ],
     "depends_on": [
-      "dense-parity-protocol"
+      "dense-parity-protocol",
+      "logical-measurement-harness"
     ],
     "planning": {
       "outcome": "Resumable dense-parity harness reproduces the frozen cells without production changes",
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
+        "shared-file-serialization",
         "dense-parity-protocol"
       ],
       "produces_contracts": [
@@ -344,7 +347,7 @@
       ],
       "terminal": {
         "consumer_family": "Dense-parity benchmark operator",
-        "test_boundary": "Release smoke receipt plus parity fixtures",
+        "test_boundary": "Deterministic non-timed smoke validation",
         "worker_sized_reason": "One benchmark target against a frozen cell schema",
         "footprint": {
           "creates": [
@@ -579,9 +582,9 @@
     }
   },
   {
-    "key": "candidate-experiment-selection",
-    "title": "Freeze the profile-led candidate portfolio",
-    "description": "Turn the current baselines and profiles into a bounded portfolio of confirmatory candidate experiments before any candidate samples are collected.\n\n## Background\n\nThe portfolio covers an unroll-factor family, a consumer-specific dispatch alternative, a private BitSlice zero-copy prototype, and at most one profile-justified fusion distinct from the retained fused AND-popcount route. It keeps the 64-word generic-hoist no-win and generic carry-save no-win out of the search unless their contracts materially differ.\n\n## Success Criteria\n\n- [hard] REQ-01: The portfolio names each exact candidate, target cell family, rationale from current profiles, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: A missing profile signal is recorded as a no-candidate outcome rather than replaced with an unmeasured optimization, and preserved no-win routes remain excluded.\n- [hard] REQ-03: The BitSlice arm is explicitly a private measurement prototype with no new public borrowed-word API or production semantics.\n\n## Notes\n\nThe portfolio is an experimental selection contract, not a production adoption decision.",
+    "key": "logical-candidate-selection",
+    "title": "Freeze the logical candidate portfolio",
+    "description": "Turn the current logical baselines and profiles into a bounded portfolio for the XOR unroll and consumer-specific dispatch experiments before candidate samples are collected.\n\n## Background\n\nThe portfolio names a finite unroll-factor family and at most one measured unhoisted consumer with a materially different call contract. It keeps the 64-word generic-hoist no-win and already-hoisted algorithm loops out of the search. ISA-L remains an external comparison under its qualified symbol and adapter contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The portfolio names each exact logical candidate, target cells, rationale from current profiles, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: A missing profile signal is recorded as a no-candidate outcome rather than replaced with an unmeasured optimization, and the preserved generic-hoist no-win remains excluded.\n- [hard] REQ-03: Candidate scopes use the canonical logical-buffer and dispatch authority without pre-authorizing a production change.\n\n## Notes\n\nThis is an experimental selection contract, not a production adoption decision.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -605,20 +608,18 @@
     "depends_on": [
       "isolated-xor-baseline",
       "row-xor-baseline",
-      "coding-route-baseline",
-      "dense-matvec-baseline"
+      "coding-route-baseline"
     ],
     "planning": {
-      "outcome": "Bounded profile-led experiment portfolio frozen before candidate runs",
+      "outcome": "Bounded logical experiment portfolio frozen before candidate runs",
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
         "preserved-no-win-boundaries",
-        "logical-buffer-protocol",
-        "dense-parity-protocol"
+        "logical-buffer-protocol"
       ],
       "produces_contracts": [
-        "candidate-experiment-portfolio"
+        "logical-candidate-portfolio"
       ],
       "source_refs": [
         "REQ-02",
@@ -627,16 +628,132 @@
         "REQ-06",
         "INV-SCOPE-VERDICT",
         "INV-CLAIM-MEASURE-BEFORE-SELECTION",
-        "INV-CLAIM-REQ-02",
-        "INV-OWNER-DECISION"
+        "INV-CLAIM-REQ-02"
       ],
       "terminal": {
-        "consumer_family": "Mid-range experiment portfolio",
+        "consumer_family": "Logical experiment portfolio",
         "test_boundary": "Profile-to-candidate traceability review",
         "worker_sized_reason": "One bounded selection record over completed baseline evidence",
         "footprint": {
           "creates": [
-            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/candidate-portfolio.md"
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-candidate-portfolio.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "zero-copy-candidate-selection",
+    "title": "Freeze the private zero-copy candidate",
+    "description": "Turn the relevant logical consumer baselines into one bounded private BitSlice copy-avoidance experiment before prototype samples are collected.\n\n## Background\n\nBitSlice remains a bit view and the experiment may use only a private measurement prototype. The portfolio fixes one measured consumer, copy-inclusive comparator, offset/alignment cases, complexity budget, and stop rule without authorizing public borrowed-word API or production semantics.\n\n## Success Criteria\n\n- [hard] REQ-01: The portfolio names one exact private prototype, consumer cell, baseline, offset/alignment cases, profile rationale, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: A missing consumer signal is recorded as a no-candidate outcome and leaves production unchanged.\n- [hard] REQ-03: No public borrowed-word API, shared-infrastructure change, or production route is authorized by the portfolio.\n\n## Notes\n\nThis is an experimental selection contract, not an architecture or production adoption decision.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "isolated-xor-baseline",
+      "coding-route-baseline"
+    ],
+    "planning": {
+      "outcome": "One private zero-copy experiment fixed without public API authority",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "logical-buffer-protocol"
+      ],
+      "produces_contracts": [
+        "zero-copy-candidate-portfolio"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-02",
+        "INV-OWNER-DECISION"
+      ],
+      "terminal": {
+        "consumer_family": "Private zero-copy experiment",
+        "test_boundary": "Profile-to-prototype traceability review",
+        "worker_sized_reason": "One bounded prototype selection over completed consumer evidence",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/zero-copy-candidate.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "parity-candidate-selection",
+    "title": "Freeze the dense-parity candidate portfolio",
+    "description": "Turn the current dense-matvec baseline and profile into a bounded fusion experiment before candidate samples are collected.\n\n## Background\n\nThe portfolio admits at most one profile-justified fusion distinct from the retained fused AND-popcount route. It keeps the generic carry-save no-win out of the search. M4RI remains an external matched-operation comparison under its qualified adapter contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The portfolio names at most one exact fusion candidate, target cells, rationale from current profiles, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: A missing profile signal is recorded as a no-candidate outcome, and the selected fused AND-popcount plus rejected generic carry-save routes remain prior evidence.\n- [hard] REQ-03: Candidate scope uses the canonical matvec and kernel boundary without pre-authorizing a production change.\n\n## Notes\n\nThis is an experimental selection contract, not a production adoption decision.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "dense-matvec-baseline"
+    ],
+    "planning": {
+      "outcome": "Bounded dense-parity experiment portfolio frozen before candidate runs",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "preserved-no-win-boundaries",
+        "dense-parity-protocol"
+      ],
+      "produces_contracts": [
+        "parity-candidate-portfolio"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-SCOPE-VERDICT",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-02"
+      ],
+      "terminal": {
+        "consumer_family": "Dense-parity experiment portfolio",
+        "test_boundary": "Profile-to-candidate traceability review",
+        "worker_sized_reason": "One bounded fusion selection over completed matvec evidence",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/parity-candidate-portfolio.md"
           ]
         }
       }
@@ -667,7 +784,7 @@
       "asm-artefact-present"
     ],
     "depends_on": [
-      "candidate-experiment-selection"
+      "logical-candidate-selection"
     ],
     "planning": {
       "outcome": "ISA-L XOR comparison published with semantic and cost parity",
@@ -677,7 +794,7 @@
         "isal-comparator-spec",
         "logical-buffer-protocol",
         "logical-measurement-interface",
-        "candidate-experiment-portfolio"
+        "logical-candidate-portfolio"
       ],
       "source_refs": [
         "REQ-03",
@@ -722,7 +839,7 @@
       "asm-artefact-present"
     ],
     "depends_on": [
-      "candidate-experiment-selection"
+      "parity-candidate-selection"
     ],
     "planning": {
       "outcome": "M4RI dense comparison published for the matched consuming operation",
@@ -732,7 +849,7 @@
         "m4ri-comparator-spec",
         "dense-parity-protocol",
         "parity-measurement-interface",
-        "candidate-experiment-portfolio"
+        "parity-candidate-portfolio"
       ],
       "source_refs": [
         "REQ-03",
@@ -755,7 +872,7 @@
   {
     "key": "xor-unroll-study",
     "title": "Measure the XOR unroll portfolio",
-    "description": "Implement only the predeclared private unroll variants and compare them with the established scalar and selected SIMD XOR kernels.\n\n## Background\n\nUnroll factors are experimental arms, not production routes. The study uses the frozen cell family and complexity budget, compiles intrinsic-bearing variants with Rust 1.95, preserves scalar fallback semantics, and keeps unsafe code inside `gf2-kernels-simd`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each predeclared unroll arm has shared equivalence coverage for aligned, offset, empty, and 0/1/63/64/65 boundary cases before timed measurement.\n- [hard] REQ-02: The receipt reports raw samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile explanations for each arm.\n- [hard] REQ-03: No candidate enters production in this issue, and negative or inconclusive arms remain preserved.\n\n## Notes\n\nPrivate experimental symbols must not create a second public dispatch abstraction.",
+    "description": "Implement only the predeclared private unroll variants and compare them with the established scalar and selected SIMD XOR kernels.\n\n## Background\n\nUnroll factors are experimental arms, not production routes. The study uses the frozen cell family and complexity budget, compiles intrinsic-bearing variants with Rust 1.95, retains runtime feature gating plus the tested scalar fallback, and keeps unsafe code inside `gf2-kernels-simd`. Every new unsafe boundary requires an explicit safety contract.\n\n## Success Criteria\n\n- [hard] REQ-01: Each predeclared unroll arm has shared equivalence coverage for aligned, offset, empty, and 0/1/63/64/65 boundary cases before timed measurement.\n- [hard] REQ-02: The receipt reports raw samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile explanations for each arm.\n- [hard] REQ-03: No candidate enters production in this issue, and negative or inconclusive arms remain preserved.\n- [hard] REQ-04: Every new unsafe boundary is isolated to `gf2-kernels-simd` and carries an explicit safety contract covering pointer validity, slice lengths, aliasing, required target features, runtime gating, and scalar fallback reachability.\n\n## Notes\n\nPrivate experimental symbols must not create a second public dispatch abstraction.",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -778,14 +895,15 @@
       "tdd-reminder"
     ],
     "depends_on": [
-      "candidate-experiment-selection"
+      "logical-candidate-selection"
     ],
     "planning": {
       "outcome": "Predeclared XOR unroll arms measured without production adoption",
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
-        "candidate-experiment-portfolio",
+        "shared-file-serialization",
+        "logical-candidate-portfolio",
         "logical-buffer-protocol",
         "logical-measurement-interface"
       ],
@@ -838,15 +956,16 @@
       "tdd-reminder"
     ],
     "depends_on": [
-      "candidate-experiment-selection"
+      "xor-unroll-study"
     ],
     "planning": {
       "outcome": "Profile-selected dispatch experiment measured without reopening the generic 64-word no-win",
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
+        "shared-file-serialization",
         "preserved-no-win-boundaries",
-        "candidate-experiment-portfolio",
+        "logical-candidate-portfolio",
         "logical-buffer-protocol",
         "logical-measurement-interface"
       ],
@@ -898,14 +1017,16 @@
       "tdd-reminder"
     ],
     "depends_on": [
-      "candidate-experiment-selection"
+      "zero-copy-candidate-selection",
+      "consumer-dispatch-study"
     ],
     "planning": {
       "outcome": "Private BitSlice copy-avoidance evidence recorded without public API change",
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
-        "candidate-experiment-portfolio",
+        "shared-file-serialization",
+        "zero-copy-candidate-portfolio",
         "logical-buffer-protocol",
         "logical-measurement-interface"
       ],
@@ -934,7 +1055,7 @@
   {
     "key": "matvec-fusion-study",
     "title": "Measure the profile-selected matvec fusion",
-    "description": "Implement at most one profile-justified dense-matvec fusion experiment that is distinct from the selected fused AND-popcount route.\n\n## Background\n\nThe current AVX2 path already fuses AND with population accumulation, and the generic carry-save comparator is already unselected. If the baseline exposes no distinct material fusion opportunity within budget, the study records a no-candidate result rather than relabelling either established route.\n\n## Success Criteria\n\n- [hard] REQ-01: The candidate is traceable to a measured cost center and has shared exact-output coverage for scalar fallback plus aligned, offset, and 0/1/63/64/65 boundary cases.\n- [hard] REQ-02: The receipt reports allocated whole-`matvec` samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile attribution.\n- [hard] REQ-03: The current fused AND-popcount path remains the baseline rather than a new candidate, no production selection changes here, and a no-candidate or losing outcome is preserved.\n\n## Notes\n\nAny intrinsic-bearing experiment must compile and test with Rust 1.95 and remain inside the SIMD kernel crate.",
+    "description": "Implement at most one profile-justified dense-matvec fusion experiment that is distinct from the selected fused AND-popcount route.\n\n## Background\n\nThe current AVX2 path already fuses AND with population accumulation, and the generic carry-save comparator is already unselected. If the baseline exposes no distinct material fusion opportunity within budget, the study records a no-candidate result rather than relabelling either established route. Any intrinsic arm retains runtime feature gating plus the tested scalar fallback, and every new unsafe boundary requires an explicit safety contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The candidate is traceable to a measured cost center and has shared exact-output coverage for scalar fallback plus aligned, offset, and 0/1/63/64/65 boundary cases.\n- [hard] REQ-02: The receipt reports allocated whole-`matvec` samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile attribution.\n- [hard] REQ-03: The current fused AND-popcount path remains the baseline rather than a new candidate, no production selection changes here, and a no-candidate or losing outcome is preserved.\n- [hard] REQ-04: Every new unsafe boundary is isolated to `gf2-kernels-simd` and carries an explicit safety contract covering pointer validity, slice lengths, aliasing, required target features, runtime gating, and scalar fallback reachability.\n\n## Notes\n\nAny intrinsic-bearing experiment must compile and test with Rust 1.95 and remain inside the SIMD kernel crate.",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -957,15 +1078,17 @@
       "tdd-reminder"
     ],
     "depends_on": [
-      "candidate-experiment-selection"
+      "parity-candidate-selection",
+      "logical-production-adoption"
     ],
     "planning": {
       "outcome": "One distinct profile-led matvec fusion measured or a no-candidate result preserved",
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
+        "shared-file-serialization",
         "preserved-no-win-boundaries",
-        "candidate-experiment-portfolio",
+        "parity-candidate-portfolio",
         "dense-parity-protocol",
         "parity-measurement-interface"
       ],
@@ -1018,7 +1141,6 @@
     ],
     "depends_on": [
       "isal-xor-comparison",
-      "xor-unroll-study",
       "consumer-dispatch-study"
     ],
     "planning": {
@@ -1027,7 +1149,7 @@
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
         "preserved-no-win-boundaries",
-        "candidate-experiment-portfolio",
+        "logical-candidate-portfolio",
         "logical-buffer-protocol"
       ],
       "produces_contracts": [
@@ -1086,7 +1208,7 @@
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
         "preserved-no-win-boundaries",
-        "candidate-experiment-portfolio",
+        "parity-candidate-portfolio",
         "dense-parity-protocol"
       ],
       "produces_contracts": [
@@ -1115,7 +1237,7 @@
   {
     "key": "zero-copy-adoption-selection",
     "title": "Select the zero-copy integration outcome",
-    "description": "Apply the frozen adoption rules to the private BitSlice prototype and decide whether any separately designed production integration is justified.\n\n## Background\n\nBitSlice remains a bit view and no new public borrowed-word API is authorized by this plan. A qualifying consumer gain may justify a private integration design; if realizing it requires a lasting public API or shared infrastructure change, that choice belongs to the owner and cannot be assumed.\n\n## Success Criteria\n\n- [hard] REQ-01: The decision applies the predeclared worthwhile-effect, equivalence-margin, complexity, and whole-consumer rules to the private prototype evidence.\n- [hard] REQ-02: A qualifying result names one bounded private integration target, while a non-qualifying result preserves the no-win and leaves production unchanged.\n- [hard] REQ-03: Any need for a public borrowed-word API is identified as an explicit owner decision with alternatives and trade-offs, not embedded in the selected outcome.\n\n## Notes\n\nThis issue selects whether design work is warranted; it does not design or implement the integration.",
+    "description": "Apply the frozen adoption rules to the private BitSlice prototype and decide whether an integration through existing private abstractions is justified.\n\n## Background\n\nBitSlice remains a bit view and no new public borrowed-word API is authorized by this story. A qualifying consumer gain may justify a private integration design. If realizing it requires a lasting public API or shared-infrastructure change, this branch closes as no-adoption, records the pending owner decision for a later explicitly authorized container, and does not block story completion.\n\n## Success Criteria\n\n- [hard] REQ-01: The decision applies the predeclared worthwhile-effect, equivalence-margin, complexity, and whole-consumer rules to the private prototype evidence.\n- [hard] REQ-02: A qualifying existing-abstraction result names one bounded private integration target, while a non-qualifying result preserves the no-win and leaves production unchanged.\n- [hard] REQ-03: Evidence requiring a public borrowed-word API or shared infrastructure resolves here to no-adoption plus a pending owner decision for later work, without waiting for that decision.\n\n## Notes\n\nThis issue selects whether private design work is warranted; it does not design or implement the integration.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -1142,7 +1264,7 @@
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
-        "candidate-experiment-portfolio",
+        "zero-copy-candidate-portfolio",
         "logical-buffer-protocol"
       ],
       "produces_contracts": [
@@ -1201,6 +1323,7 @@
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
+        "shared-file-serialization",
         "preserved-no-win-boundaries",
         "logical-adoption-decision"
       ],
@@ -1261,6 +1384,7 @@
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
+        "shared-file-serialization",
         "preserved-no-win-boundaries",
         "parity-adoption-decision"
       ],
@@ -1291,7 +1415,7 @@
   {
     "key": "zero-copy-integration-design",
     "title": "Design the qualifying zero-copy integration",
-    "description": "Produce the bounded integration design only when the private BitSlice experiment qualifies under the frozen adoption rule.\n\n## Background\n\nThe plan fixes BitSlice as a bit view and authorizes no new public borrowed-word API. A qualifying result may be designed through existing private storage and kernel boundaries. If the only viable route changes public API or shared infrastructure, the design records alternatives and obtains an explicit owner decision before declaring an implementable contract. A no-adoption decision produces a closed no-change design record.\n\n## Success Criteria\n\n- [hard] REQ-01: The design maps the qualifying evidence to one bounded consumer integration through existing canonical abstractions, or records the no-adoption outcome without proposing code.\n- [hard] REQ-02: Alignment, bit offset, logical length, tail masking, safety, scalar fallback, and complexity contracts are explicit for any implementable private route.\n- [hard] REQ-03: Any lasting public borrowed-word API or shared-infrastructure proposal remains unselected until an owner decision is recorded with alternatives and trade-offs.\n\n## Notes\n\nThis is a design-only issue; it makes no production change.",
+    "description": "Produce a bounded integration design only for a private BitSlice experiment that qualifies through existing abstractions.\n\n## Background\n\nThe plan fixes BitSlice as a bit view and authorizes no new public borrowed-word API. A qualifying existing-abstraction result may be designed through current private storage and kernel boundaries. A result requiring public API or shared infrastructure closes as a no-change design record with a pending owner decision for a later explicitly authorized container; this issue never waits for that authority.\n\n## Success Criteria\n\n- [hard] REQ-01: The design maps qualifying evidence to one bounded private consumer integration through existing canonical abstractions, or emits a closed no-adoption record without proposing code.\n- [hard] REQ-02: Alignment, bit offset, logical length, tail masking, safety, scalar fallback, and complexity contracts are explicit for any implementable private route.\n- [hard] REQ-03: Any public borrowed-word API or shared-infrastructure requirement terminates this story branch as no-adoption plus a pending owner decision, with no implementable contract for that route.\n\n## Notes\n\nThis is a design-only issue; it makes no production change and cannot block on ungranted authority.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -1345,8 +1469,8 @@
   },
   {
     "key": "zero-copy-production-adoption",
-    "title": "Implement the approved zero-copy outcome",
-    "description": "Apply the zero-copy integration contract when it authorizes a bounded production path; otherwise preserve the recorded no-change outcome.\n\n## Background\n\nThe implementation stays within existing canonical storage and dispatch boundaries unless a separate explicit owner decision has authorized a lasting public API. A blocked or rejected public-API proposal cannot be smuggled into this issue through test-only accessors or duplicated private abstractions.\n\n## Success Criteria\n\n- [hard] REQ-01: The approved private integration is implemented exactly for its bounded consumer, or the no-adoption contract leaves production unchanged.\n- [hard] REQ-02: Shared semantic coverage proves correct offset handling, alignment behavior, logical length, zero tail padding, and 0/1/63/64/65 boundary results.\n- [hard] REQ-03: No public borrowed-word API, second buffer abstraction, or dispatch bypass appears without the recorded owner authorization required by the design contract.\n\n## Notes\n\nBefore/after performance confirmation is intentionally separate from this code change.",
+    "title": "Implement the approved private zero-copy outcome",
+    "description": "Apply the zero-copy integration contract only when it authorizes a bounded path through existing private abstractions; otherwise preserve the recorded no-change outcome.\n\n## Background\n\nThis story never implements a public borrowed-word API or shared-infrastructure change, even if a pending owner decision is recorded for later work. A public/shared requirement is a terminal no-adoption outcome here and cannot be smuggled into production through test-only accessors, duplicated abstractions, or a later owner response outside this graph.\n\n## Success Criteria\n\n- [hard] REQ-01: The approved existing-abstraction integration is implemented exactly for its bounded consumer, or the no-adoption contract leaves production unchanged.\n- [hard] REQ-02: Shared semantic coverage proves correct offset handling, alignment behavior, logical length, zero tail padding, and 0/1/63/64/65 boundary results.\n- [hard] REQ-03: No public borrowed-word API, shared-infrastructure change, second buffer abstraction, or dispatch bypass is implemented by this story branch.\n\n## Notes\n\nBefore/after performance confirmation is intentionally separate from this code change; later public/shared work requires a separately authorized container.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -1371,7 +1495,7 @@
       "zero-copy-integration-design"
     ],
     "planning": {
-      "outcome": "Approved zero-copy design reflected in one bounded production consumer",
+      "outcome": "Approved existing-abstraction zero-copy design reflected in one bounded consumer",
       "contract_refs": [
         "measurement-evidence-contract",
         "canonical-buffer-boundary",
@@ -1387,7 +1511,7 @@
         "INV-OWNER-DECISION"
       ],
       "terminal": {
-        "consumer_family": "Approved zero-copy consumer",
+        "consumer_family": "Approved private zero-copy consumer",
         "test_boundary": "Bit-view boundary semantic suite",
         "worker_sized_reason": "One design-fixed integration with no public API expansion",
         "footprint": {
@@ -1504,8 +1628,8 @@
   },
   {
     "key": "zero-copy-adoption-confirmation",
-    "title": "Confirm the zero-copy production outcome",
-    "description": "Run holdout confirmation for an approved zero-copy production integration, or publish the final no-change verdict.\n\n## Background\n\nOnly a qualifying and architecture-approved integration receives before/after measurement. The confirmation includes copying, offset handling, masking, dispatch, setup, and output costs in the same whole-consumer boundary used by the prototype.\n\n## Success Criteria\n\n- [hard] REQ-01: Any adopted integration has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results.\n- [hard] REQ-02: Whole-consumer benefit survives all adapter costs and semantic checks; otherwise the integration is not accepted and the contradictory evidence remains committed.\n- [hard] REQ-03: The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, profiles, and exact commands by content identity, while a no-adoption path records why no after measurement is applicable.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "title": "Confirm the private zero-copy production outcome",
+    "description": "Run holdout confirmation for an approved private zero-copy integration through existing abstractions, or publish the final no-change verdict.\n\n## Background\n\nOnly a qualifying private integration receives before/after measurement. A public-API or shared-infrastructure requirement is already a terminal no-adoption outcome and receives no implementation or timed confirmation in this story. Private-route confirmation includes copying, offset handling, masking, dispatch, setup, and output costs in the same whole-consumer boundary used by the prototype.\n\n## Success Criteria\n\n- [hard] REQ-01: Any adopted private integration has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results.\n- [hard] REQ-02: Whole-consumer benefit survives all adapter costs and semantic checks; otherwise the integration is not accepted and the contradictory evidence remains committed.\n- [hard] REQ-03: The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, profiles, and exact commands by content identity, while any no-adoption path records why no after measurement is applicable.\n- [hard] REQ-04: A public/shared requirement produces no timed samples in this issue and remains only a pending owner decision for a separately authorized container.\n\n## Notes\n\nRun private-route confirmation only in the benchmark window on the prepared host under the full-host wrapper.",
     "type": "task",
     "priority": "high",
     "labels": [
