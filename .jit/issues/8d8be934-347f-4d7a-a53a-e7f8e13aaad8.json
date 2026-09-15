@@ -274,15 +274,16 @@
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/review.md"
     }
   ],
+  "done_at": "2026-09-15T00:49:03.800525911Z",
   "first_ready_at": "2026-09-13T11:40:06.478865369Z",
   "gates_required": [
     "plan-review"
   ],
   "gates_status": {
     "plan-review": {
-      "status": "pending",
-      "updated_at": "2026-09-13T11:40:06.478865369Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-15T00:45:07.704237653Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "8d8be934-347f-4d7a-a53a-e7f8e13aaad8",
@@ -298,7 +299,7 @@
     "type:planning"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "planning: Profile and optimize mid-range buffer operations (8-64 words)",
-  "updated_at": "2026-09-15T00:41:16.067737528Z"
+  "updated_at": "2026-09-15T00:49:03.800525911Z"
 }
