@@ -403,24 +403,29 @@
     "asm-artefact-present"
   ],
   "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-15T02:40:49.978065916Z",
+      "updated_by": "auto:executor"
+    },
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-09-15T02:11:00.087340207Z",
+      "status": "passed",
+      "updated_at": "2026-09-15T02:30:42.242226655Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T01:36:54.561220902Z",
+      "updated_at": "2026-09-15T02:34:23.729735936Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T01:40:27.811277776Z",
+      "updated_at": "2026-09-15T02:36:32.260531157Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-15T01:45:14.982205448Z",
+      "status": "passed",
+      "updated_at": "2026-09-15T02:40:48.125033042Z",
       "updated_by": "auto:executor"
     }
   },
@@ -437,5 +442,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Remove allocation and repeated edge traversal from LDPC updates",
-  "updated_at": "2026-09-15T02:11:00.087340207Z"
+  "updated_at": "2026-09-15T02:40:49.978065916Z"
 }
