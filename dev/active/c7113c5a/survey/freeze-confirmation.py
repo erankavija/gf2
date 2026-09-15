@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Freeze a c7113c5a confirmation addendum from its accepted v3 pilot.
+"""Freeze a confirmation addendum from its accepted pilot.
 
 Usage:
   freeze-confirmation.py --pilot-addendum <json> --pilot <receipt-dir>
@@ -7,6 +7,7 @@ Usage:
                          --output <addendum> --record <derivation.txt>
                          [--cell <cell-id> ...] [--selection-rationale <text>]
                          [--resolution <float> --resolution-derivation <file>]
+                         [--holdout-cells <declaration.json>] [--purpose <purpose>]
 
 The pilot's acceptance summary holds every cell's percentile interval at the
 pilot's ledger-derived corrected alpha, the value protocol P-03 recomputes
@@ -23,6 +24,19 @@ the family prose the confirmation stage carries. The script refuses to write an
 addendum whose margins do not strictly exceed one plus that resolution, and it
 writes the derivation record beside the addendum so the frozen number is
 reproducible from committed bytes.
+
+A family that calibrates a selector confirms it on holdout cells, which are
+fresh samples that took no part in selection and therefore appear in no pilot
+cell. `--holdout-cells` names a committed declaration whose `addendum_cells`
+are appended with the holdout role and listed under `holdout.cells`, and
+`--purpose` restates the family purpose the confirmation stage carries, since a
+pilot that has calibrated nothing is not itself a calibration. The record names
+the declaration, its digest and every holdout identifier, so the confirmation's
+holdout is as reproducible from committed bytes as its resolution. The
+declaration must predate the pilot receipt for its cells to be a holdout at
+all; that ordering is the executor's to establish and the record states the
+declaration's digest so a reviewer can check it against the commit that
+introduced it.
 
 By default every pilot cell becomes confirmatory. `--cell` selects a subset,
 for a family whose pilot carries more cells than P-20's tail-support bound
@@ -66,6 +80,8 @@ def main():
     parser.add_argument("--family-description")
     parser.add_argument("--resolution", type=float)
     parser.add_argument("--resolution-derivation")
+    parser.add_argument("--holdout-cells")
+    parser.add_argument("--purpose")
     args = parser.parse_args()
     if bool(args.cells) != bool(args.selection_rationale):
         raise SystemExit("a cell selection needs both --cell and --selection-rationale")
@@ -167,6 +183,37 @@ def main():
         lines += [f"dropped        {cell_id}" for cell_id in dropped]
     for cell in frozen["cells"]:
         cell["role"] = "confirmatory"
+    if args.purpose:
+        lines.append(f"restated purpose {frozen['family']['purpose']} -> {args.purpose}")
+        frozen["family"]["purpose"] = args.purpose
+    if args.holdout_cells:
+        with open(args.holdout_cells, "rb") as handle:
+            declaration_bytes = handle.read()
+        declaration = json.loads(declaration_bytes)
+        if declaration["family"] != frozen["family"]["id"]:
+            raise SystemExit("the holdout declaration belongs to another family")
+        pilot_ids = {cell["cell_id"] for cell in addendum["cells"]}
+        holdout_cells = []
+        for cell in declaration["addendum_cells"]:
+            if cell["cell_id"] in pilot_ids:
+                raise SystemExit(
+                    f"holdout cell {cell['cell_id']} is also a pilot cell, so its"
+                    " samples took part in selection")
+            cell = copy.deepcopy(cell)
+            cell["role"] = "holdout"
+            holdout_cells.append(cell)
+        frozen["cells"] += holdout_cells
+        frozen["holdout"] = {
+            "required": True,
+            "cells": [cell["cell_id"] for cell in holdout_cells],
+        }
+        lines += [
+            "",
+            f"holdout declaration {args.holdout_cells}",
+            f"declaration sha256  {hashlib.sha256(declaration_bytes).hexdigest()}",
+        ]
+        lines += [f"holdout cell        {cell['cell_id']}" for cell in holdout_cells]
+        lines.append(f"holdout rationale   {declaration['rationale']}")
     with open(args.output, "w") as handle:
         json.dump(frozen, handle, indent=2, ensure_ascii=False)
         handle.write("\n")

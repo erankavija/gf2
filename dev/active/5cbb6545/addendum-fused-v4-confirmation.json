@@ -1,0 +1,212 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "fused-count-consumers",
+    "issue": "5cbb6545",
+    "purpose": "consumer-family",
+    "description": "The fused AND-population-count route a consumer reaches, measured either side of the adopted boundary and inside two whole matrix-vector products: 128 words where the established fused nibble lookup is retained, 512 and 4096 words where the fused carry-save loop replaces it, the same 4096-word reduction against the two-pass route a gf2-core consumer has without a fused kernel (a temporary copy, an in-place AND and a separate count inside every call), and 1024-row products at 16384 and 4096 columns, whose strides fall either side of the boundary, each timed with its output allocation. Every cell is exploratory: this stage fixes the measurement resolution the confirmation freezes against, and its samples enter no confirmation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T13:16:34Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The candidate routes add one unsafe kernel module to gf2-kernels-simd and one selector to the canonical tuning mechanism. A tenth of the runtime at a width a consumer counts is the smallest gain that repays that: below it the choice of route stops changing what a caller of BitVec::count_ones or BitMatrix::matvec observes, and the established nibble lookup keeps the width.",
+    "measurement_resolution": 0.03,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot-r2/receipt.json",
+      "sha256": "9a435ae1f563a82faa69e1867fdd3780584a8156570980bd345fa623cae70a0f"
+    },
+    "equivalence_margin": 1.04,
+    "equivalence_rationale": "A width that gains nothing from the new boundary must not pay for it. The pilot resolves this family's whole-consumer cells to three percent, so three percent cannot separate a route that costs nothing from one that costs something; four percent is the smallest slowdown this pilot can distinguish from none, and it stays below the gain the boundary buys at every width that crosses it.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A fifth of the runtime is the smallest residual gap against a pinned external implementation that would justify further kernel work rather than a reported measurement; smaller gaps are reported and left."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 3,
+    "max_added_source_lines": 900,
+    "maintenance_rationale": "The budget covers one unsafe kernel module holding the scalar POPCNT loop and the two Harley-Seal kernels, the bundle fields and resolvers that reach them, the tuning selector that carries the boundary, and the rustdoc the changed mechanism needs. It excludes the shared behavioural suite and this survey, which are test and evidence code."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/5cbb6545/fused-count-consumers-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "and-w128-fused",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "and-popcnt-128-words-random-aligned",
+        "size": {
+          "words": 128,
+          "word_offset": 0
+        },
+        "seed": 6428
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-w512-fused",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "and-popcnt-512-words-random-aligned",
+        "size": {
+          "words": 512,
+          "word_offset": 0
+        },
+        "seed": 6812
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-w4096-fused",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "and-popcnt-4096-words-random-aligned",
+        "size": {
+          "words": 4096,
+          "word_offset": 0
+        },
+        "seed": 10396
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-w4096-vs-two-pass",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "and-popcnt-4096-words-random-aligned-whole-consumer",
+        "size": {
+          "words": 4096,
+          "word_offset": 0
+        },
+        "seed": 10396
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-1024x16384",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "matvec-1024-rows-16384-cols-random",
+        "size": {
+          "rows": 1024,
+          "cols": 16384
+        },
+        "seed": 6301
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-1024x4096",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "matvec-1024-rows-4096-cols-random",
+        "size": {
+          "rows": 1024,
+          "cols": 4096
+        },
+        "seed": 6302
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

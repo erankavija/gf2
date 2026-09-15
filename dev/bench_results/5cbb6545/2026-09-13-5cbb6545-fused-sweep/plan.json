@@ -1,0 +1,185 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "fused-sweep-5cbb6545-20260913t124244z",
+  "issue": "5cbb6545",
+  "label": "pilot",
+  "campaign_seed": 20260913102,
+  "addendum": "dev/active/5cbb6545/addendum-fused-v4-sweep.json",
+  "producing_manifest": "dev/active/5cbb6545/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "and-legacy-fused": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_and_popcnt called directly, as BitMatrix::matvec reached it before this issue.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "and-legacy-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-csa-fused": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_and_popcnt_csa called directly: the same carry-save block with each bit-plane ANDed from the two operands as it is loaded.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "and-csa-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-two-pass": {
+      "build": "conservative-portable",
+      "description": "The whole route a gf2-core consumer has without a fused kernel: a temporary copy of the left operand, ops::and_inplace and ops::popcount, all inside every timed call.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "and-two-pass"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "sweep-and-w8-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 8,
+        "seed_lhs": 6108,
+        "seed_rhs": 13825,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-and-w16-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 16,
+        "seed_lhs": 6116,
+        "seed_rhs": 13833,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-and-w32-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 32,
+        "seed_lhs": 6132,
+        "seed_rhs": 13849,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-and-w64-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 64,
+        "seed_lhs": 6164,
+        "seed_rhs": 13881,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-and-w96-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 96,
+        "seed_lhs": 6196,
+        "seed_rhs": 13913,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-and-w128-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 128,
+        "seed_lhs": 6228,
+        "seed_rhs": 13945,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-and-w512-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 512,
+        "seed_lhs": 6612,
+        "seed_rhs": 14329,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-and-w4096-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 4096,
+        "seed_lhs": 10196,
+        "seed_rhs": 17913,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep-and-w4096-vs-two-pass",
+      "baseline_arm": "and-two-pass",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 4096,
+        "seed_lhs": 10196,
+        "seed_rhs": 17913,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": true
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 8
+}

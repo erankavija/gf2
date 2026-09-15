@@ -31,8 +31,11 @@ proptest = { workspace = true, optional = true }
 tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
 criterion = { workspace = true }
 gf2-core = { path = ".", features = ["test-support"] }
-# The shared 64x64 block contracts that `tests/transpose_lane_contract.rs`
-# runs over every lane live behind this feature of the kernel crate.
+# The shared population-count suite calls each kernel of the detected bundle
+# directly, including routes a default build's compile-time thresholds do not
+# select; the shared 64x64 block contracts that
+# `tests/transpose_lane_contract.rs` runs over every lane live behind the kernel
+# crate's `test-support` feature.
 gf2-kernels-simd = { path = "../gf2-kernels-simd", features = ["test-support"] }
 proptest = { workspace = true }
 rand = { workspace = true }

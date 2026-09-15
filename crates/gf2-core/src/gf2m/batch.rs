@@ -18,8 +18,15 @@
 //!   across 4 elements per outer iteration.
 //!
 //! * **Single multiplications** still use [`crate::gf2m::Gf2mField`]
-//!   directly — the batch kernel's setup overhead outweighs its YMM
-//!   throughput advantage for `n < ~32` elements.
+//!   directly: one product has no batch to amortise the kernel's setup over.
+//!   The batched path's advantage does not, however, begin only at some larger
+//!   length. The `jit:53c5a8c0` confirmation records the batched product as
+//!   materially faster than the per-element loop at a batch of eight, and that
+//!   study's pilot extends the same direction at thirty-two and at a thousand
+//!   and twenty-four; the cell `field-batch-mul-8` and its interval are in
+//!   `dev/bench_results/53c5a8c0/tables.md`, and the explanation is
+//!   `dev/active/53c5a8c0/findings.md`. Batches shorter than eight are
+//!   unmeasured, so this module states no boundary below that.
 //!
 //! # Restrictions
 //!

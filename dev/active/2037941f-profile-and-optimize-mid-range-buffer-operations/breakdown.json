@@ -1,0 +1,1756 @@
+[
+  {
+    "key": "isal-comparator-qualification",
+    "title": "Qualify the ISA-L XOR comparator",
+    "description": "Establish the exact ISA-L XOR arm that can be compared with the canonical mid-range logical operation, including its build and representation adapter contract.\n\n## Background\n\nISA-L's public dispatched `xor_gen` route requires NASM; the earlier base-only build is useful context but is not SIMD evidence. The qualification must either reproduce the dispatched route on a prepared host or preserve its unavailability explicitly, while keeping `xor_gen_base` labelled as a scalar base arm.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed comparator specification pins the ISA-L revision, license, build flags, NASM version or observed absence, selected symbol, input/output semantics, and reproducible build commands.\n- [hard] REQ-02: A semantic probe demonstrates matching LSB-first XOR behavior and accounts for destination setup, pointer arrays, alignment, conversion, and output costs, or records why no comparable dispatched arm is available.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-03",
+      "satisfies:REQ-06",
+      "cites:IsaL2026"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "ISA-L comparator semantics and dispatched-route availability fixed before protocol freezing",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "external-comparator-boundary"
+      ],
+      "produces_contracts": [
+        "isal-comparator-spec"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "REQ-06",
+        "INV-CLAIM-REQ-03",
+        "INV-PRIOR-ART",
+        "INV-FROZEN-QUESTIONS"
+      ],
+      "terminal": {
+        "consumer_family": "ISA-L XOR comparison arm",
+        "test_boundary": "Reproducible semantic adapter probe",
+        "worker_sized_reason": "One external comparator qualification with a bounded semantic probe",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"
+          ],
+          "uncertainty": "A small probe may live beside the comparator document or in its eventual receipt directory depending on the existing external-build harness."
+        }
+      }
+    }
+  },
+  {
+    "key": "m4ri-operation-qualification",
+    "title": "Qualify a matched M4RI consumer operation",
+    "description": "Identify and prove the M4RI operation that is mathematically and operationally comparable with one dense mid-range consumer.\n\n## Background\n\nExisting M4RI evidence covers transpose and BCH-generator framing, neither of which substitutes for dense `BitMatrix::matvec`. A useful comparator must match a real consuming operation and charge construction, conversion, execution, and output costs.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed operation-match specification pins the M4RI revision, license, build flags, exact operation, dimensions, representation mapping, output semantics, and reproducible commands.\n- [hard] REQ-02: A semantic probe demonstrates an equivalent dense consumer result with adapter costs identified, or records with evidence that no matched M4RI operation exists within the declared search budget.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-03",
+      "satisfies:REQ-06",
+      "cites:AlbrechtBard2026"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "M4RI operation equivalence and adapter boundary fixed before protocol freezing",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "external-comparator-boundary"
+      ],
+      "produces_contracts": [
+        "m4ri-comparator-spec"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "REQ-06",
+        "INV-CLAIM-REQ-03",
+        "INV-PRIOR-ART",
+        "INV-FROZEN-QUESTIONS"
+      ],
+      "terminal": {
+        "consumer_family": "M4RI dense consumer arm",
+        "test_boundary": "Matched-operation semantic probe",
+        "worker_sized_reason": "One external operation match with a bounded adapter proof",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
+          ],
+          "uncertainty": "A small probe may live beside the operation-match document or in its eventual receipt directory depending on the existing external-build harness."
+        }
+      }
+    }
+  },
+  {
+    "key": "logical-buffer-protocol",
+    "title": "Freeze the logical-buffer measurement addendum",
+    "description": "Freeze the confirmatory protocol for isolated XOR and the selected unhoisted production routes before candidate measurements begin.\n\n## Background\n\nThe protocol covers 8, 9, 63, 64, and 65 words, deliberately offset views, neighboring sizes, relevant cache regimes, and both isolated and whole-consumer costs. It uses a public `row_xor` route plus one coding or elimination route whose actual stride lies in the story band. The ISA-L arm follows the qualified comparator specification and remains explicitly base-only if dispatched SIMD is unavailable.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins operations, input identities, alignments, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated throughput from whole-consumer benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The addendum excludes the preserved 64-word generic dispatch-hoist no-win from the candidate search unless a materially different consumer contract is demonstrated.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-02",
+      "satisfies:REQ-03",
+      "satisfies:REQ-06",
+      "cites:IsaL2026"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "isal-comparator-qualification"
+    ],
+    "planning": {
+      "outcome": "Logical-buffer confirmation rules frozen before baseline or candidate sampling",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "preserved-no-win-boundaries",
+        "external-comparator-boundary",
+        "isal-comparator-spec"
+      ],
+      "produces_contracts": [
+        "logical-buffer-protocol"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-02",
+        "REQ-03",
+        "REQ-06",
+        "INV-SCOPE-VERDICT",
+        "INV-CLAIM-CLASSIFICATION",
+        "INV-CLAIM-BUFFER-OVERHEAD",
+        "INV-CLAIM-PRODUCTION-CONSUMERS",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-01",
+        "INV-CLAIM-REQ-02",
+        "INV-CLAIM-REQ-06",
+        "INV-FROZEN-QUESTIONS"
+      ],
+      "terminal": {
+        "consumer_family": "Mid-range logical-buffer campaign",
+        "test_boundary": "Protocol completeness review before sampling",
+        "worker_sized_reason": "One family addendum over already inventoried logical routes",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "dense-parity-protocol",
+    "title": "Freeze the dense-parity measurement addendum",
+    "description": "Freeze the confirmatory protocol for dense `BitMatrix::matvec` and its qualified M4RI comparison before candidate measurements begin.\n\n## Background\n\nThe protocol covers row strides of 8, 9, 63, 64, and 65 words, neighboring dimensions, relevant cache regimes, output allocation, and adapter costs. The current fused AND-popcount route is the production baseline; the already rejected generic carry-save comparator is not a fresh candidate.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins matrices, vectors, dimensions, density, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated kernel observations from allocated whole-`matvec` benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The M4RI arm follows the matched-operation specification and charges construction, conversion, execution, and output costs without substituting transpose evidence.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-02",
+      "satisfies:REQ-03",
+      "satisfies:REQ-06",
+      "cites:AlbrechtBard2026"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "m4ri-operation-qualification"
+    ],
+    "planning": {
+      "outcome": "Dense-parity confirmation rules frozen before baseline or candidate sampling",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "preserved-no-win-boundaries",
+        "external-comparator-boundary",
+        "m4ri-comparator-spec"
+      ],
+      "produces_contracts": [
+        "dense-parity-protocol"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-02",
+        "REQ-03",
+        "REQ-06",
+        "INV-CLAIM-PRODUCTION-CONSUMERS",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-01",
+        "INV-CLAIM-REQ-02",
+        "INV-CLAIM-REQ-03",
+        "INV-CLAIM-REQ-06",
+        "INV-FROZEN-QUESTIONS"
+      ],
+      "terminal": {
+        "consumer_family": "Dense-parity campaign",
+        "test_boundary": "Protocol completeness review before sampling",
+        "worker_sized_reason": "One family addendum over the existing dense matvec route",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "logical-measurement-harness",
+    "title": "Implement the logical-buffer measurement harness",
+    "description": "Implement the bounded resumable harness required by the frozen logical-buffer addendum without changing production selection.\n\n## Background\n\nThe harness reuses the canonical campaign support and benchmark lock discipline. Its smoke validation is deterministic and non-timed: it validates cells, semantics, logging, resume, and output shape but cannot collect receipt samples. Every timed sample is queued only after the frozen addendum is committed and runs on the prepared host inside the benchmark window under the shared measurement contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen isolated XOR and whole-consumer cells with exact validation of outputs, zero tails, unaligned views, and 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A deterministic non-timed release smoke validates cell generation, semantics, append-only logging, checkpoint/resume, and output schema while emitting zero receipt samples.\n- [hard] REQ-04: Timed execution refuses unfrozen inputs and queues every sample only after the committed addendum exists for execution inside the prepared-host benchmark window under the contract.\n\n## Notes\n\nThe harness may extend an established benchmark target when that preserves its behavioral identity; otherwise it uses one story-specific target.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "logical-buffer-protocol"
+    ],
+    "planning": {
+      "outcome": "Resumable logical-buffer harness reproduces the frozen cells without production changes",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "shared-file-serialization",
+        "logical-buffer-protocol"
+      ],
+      "produces_contracts": [
+        "logical-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04",
+        "REQ-06",
+        "INV-CONSUMER-SWEEP",
+        "INV-PRODUCTION-SOURCE",
+        "INV-TESTS-BENCHMARKS-DOCS",
+        "INV-ARCHITECTURE-INVARIANTS-MSRV"
+      ],
+      "terminal": {
+        "consumer_family": "Logical-buffer benchmark operator",
+        "test_boundary": "Deterministic non-timed smoke validation",
+        "worker_sized_reason": "One benchmark target against a frozen cell schema",
+        "footprint": {
+          "creates": [
+            "crates/gf2-core/benches/mid_range_logical.rs"
+          ],
+          "touches": [
+            "crates/gf2-core/Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "parity-measurement-harness",
+    "title": "Implement the dense-parity measurement harness",
+    "description": "Implement the bounded resumable harness required by the frozen dense-parity addendum without changing production selection.\n\n## Background\n\nThe harness reuses canonical campaign support and separately reports allocated whole-`matvec`, scalar reference, selected production, candidate, and externally adapted observations. Its smoke validation is deterministic and non-timed: it validates cells, semantics, logging, resume, and output shape but cannot collect receipt samples. Every timed sample is queued only after the frozen addendum is committed and runs on the prepared host inside the benchmark window under the shared measurement contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen stride-boundary cells with output allocation included and validates exact parity results plus 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A deterministic non-timed release smoke validates cell generation, parity semantics, append-only logging, checkpoint/resume, and output schema while emitting zero receipt samples.\n- [hard] REQ-04: Timed execution refuses unfrozen inputs and queues every sample only after the committed addendum exists for execution inside the prepared-host benchmark window under the contract.\n\n## Notes\n\nThe scalar four-accumulator route is a semantic/reference arm, not a proposed public API.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "dense-parity-protocol",
+      "logical-measurement-harness"
+    ],
+    "planning": {
+      "outcome": "Resumable dense-parity harness reproduces the frozen cells without production changes",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "shared-file-serialization",
+        "dense-parity-protocol"
+      ],
+      "produces_contracts": [
+        "parity-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04",
+        "REQ-06",
+        "INV-CONSUMER-SWEEP",
+        "INV-PRODUCTION-SOURCE",
+        "INV-TESTS-BENCHMARKS-DOCS",
+        "INV-ARCHITECTURE-INVARIANTS-MSRV"
+      ],
+      "terminal": {
+        "consumer_family": "Dense-parity benchmark operator",
+        "test_boundary": "Deterministic non-timed smoke validation",
+        "worker_sized_reason": "One benchmark target against a frozen cell schema",
+        "footprint": {
+          "creates": [
+            "crates/gf2-core/benches/mid_range_parity.rs"
+          ],
+          "touches": [
+            "crates/gf2-core/Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "isolated-xor-baseline",
+    "title": "Record the isolated XOR baseline",
+    "description": "Run the frozen isolated XOR cells on the prepared Ryzen 9 5900X and commit the current pre-change evidence.\n\n## Background\n\nThe baseline includes 8, 9, 63, 64, and 65 words, deliberately offset slices, neighboring sizes, declared cache regimes, and selected-route provenance. Earlier exploratory receipts guide prioritization but do not replace this current baseline.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt contains raw samples, exact commands, frozen input identities, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for each isolated XOR cell.\n- [hard] REQ-02: Output validation proves exact XOR semantics for aligned and offset cells, and the receipt distinguishes dispatch-inclusive public calls from resolved-function observations.\n- [hard] REQ-03: Annotated release assembly and profiles attribute observed costs to dispatch, call overhead, instruction mix, spills, cache traffic, or bandwidth without claiming an unsearched optimum.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "logical-measurement-harness"
+    ],
+    "planning": {
+      "outcome": "Current isolated XOR baseline published with assembly-backed cost attribution",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "logical-buffer-protocol",
+        "logical-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-BUFFER-OVERHEAD",
+        "INV-CLAIM-REQ-01",
+        "INV-CLAIM-REQ-05",
+        "INV-CLAIM-REQ-06",
+        "INV-PRIOR-ART"
+      ],
+      "terminal": {
+        "consumer_family": "Isolated logical XOR cells",
+        "test_boundary": "Frozen-cell receipt acceptance",
+        "worker_sized_reason": "One bounded baseline campaign using an existing harness interface",
+        "footprint": {
+          "uncertainty": "The final receipt is created under dev/bench_results/<created-issue-short-id>/ after batch creation assigns this issue an identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "row-xor-baseline",
+    "title": "Record the row-XOR consumer baseline",
+    "description": "Run the frozen public `BitMatrix::row_xor` consumer cells and commit the current pre-change evidence.\n\n## Background\n\nThis is the primary unhoisted row-operation route. It is measured at actual mid-range row strides with whole-call costs, output validation, and neighboring sizes; already-hoisted algorithm loops remain controls rather than generic-hoist candidates.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt contains raw samples, exact commands, frozen matrix inputs, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for the row-XOR cells.\n- [hard] REQ-02: Exact row semantics, canonical bit indexing, and zero tail padding hold for the declared boundary and offset cases.\n- [hard] REQ-03: Profiles attribute material time to public dispatch, row access, XOR execution, memory traffic, or downstream work and identify any candidate signal within the frozen search budget.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "logical-measurement-harness"
+    ],
+    "planning": {
+      "outcome": "Public row-XOR baseline published with consumer-level cost attribution",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "preserved-no-win-boundaries",
+        "logical-buffer-protocol",
+        "logical-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-PRODUCTION-CONSUMERS",
+        "INV-CONSUMER-SWEEP",
+        "INV-PRODUCTION-SOURCE",
+        "INV-CLAIM-REQ-04",
+        "INV-CLAIM-REQ-05"
+      ],
+      "terminal": {
+        "consumer_family": "Public row-XOR route",
+        "test_boundary": "Frozen-consumer receipt acceptance",
+        "worker_sized_reason": "One bounded production-consumer baseline with fixed inputs",
+        "footprint": {
+          "uncertainty": "The final receipt is created under dev/bench_results/<created-issue-short-id>/ after batch creation assigns this issue an identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "coding-route-baseline",
+    "title": "Record the coding-route logical baseline",
+    "description": "Select the frozen coding or elimination route whose actual row stride lies in the mid-range band, then record its current whole-consumer baseline.\n\n## Background\n\nCandidate routes include OSD syndrome/candidate work and coding materialization paths that call matrix parity or `row_xor`; the addendum names exactly one primary route after confirming its runtime stride. Setup, cloning, dispatch, and output costs remain inside the declared whole-consumer boundary.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt identifies the selected production route, proves its actual stride is 8--64 words, and records raw samples, exact commands, input identities, append-only execution log, runtime provenance, and statistical interpretation.\n- [hard] REQ-02: Seeded results match the canonical implementation for the declared boundary cases and remain deterministic under the measured execution configuration.\n- [hard] REQ-03: Profiles attribute the route's material cost centers and state whether logical-buffer work is large enough to justify candidate confirmation.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-coding",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "logical-measurement-harness"
+    ],
+    "planning": {
+      "outcome": "One actual mid-range coding route has a reproducible whole-consumer baseline",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "logical-buffer-protocol",
+        "logical-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-PRODUCTION-CONSUMERS",
+        "INV-CONSUMER-SWEEP",
+        "INV-PRODUCTION-SOURCE"
+      ],
+      "terminal": {
+        "consumer_family": "Selected coding logical route",
+        "test_boundary": "Frozen-consumer receipt acceptance",
+        "worker_sized_reason": "One preselected route with bounded seeded workloads",
+        "footprint": {
+          "uncertainty": "The addendum selects the exact coding route before this issue runs; its receipt path is allocated from the created issue identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "dense-matvec-baseline",
+    "title": "Record the dense-matvec baseline",
+    "description": "Run the frozen allocated `BitMatrix::matvec` cells and commit the current fused AND-popcount production baseline.\n\n## Background\n\nThe measurement covers row strides of 8, 9, 63, 64, and 65 words plus neighboring dimensions and declared cache regimes. The scalar four-accumulator route is a semantic/reference arm; the retained fused SIMD route is the production comparator.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt contains raw samples, exact commands, frozen matrix/vector identities, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for the dense-matvec cells.\n- [hard] REQ-02: Exact parity output, canonical bit indexing, zero tail padding, and declared boundary semantics match the scalar reference.\n- [hard] REQ-03: Annotated release assembly and profiles attribute observed costs to allocation, fused kernel work, dependencies, instruction mix, spills, cache traffic, or bandwidth.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "parity-measurement-harness"
+    ],
+    "planning": {
+      "outcome": "Current allocated dense-matvec baseline published with assembly-backed cost attribution",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "preserved-no-win-boundaries",
+        "dense-parity-protocol",
+        "parity-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-PRODUCTION-CONSUMERS",
+        "INV-CLAIM-REQ-04",
+        "INV-CLAIM-REQ-05",
+        "INV-CONSUMER-SWEEP",
+        "INV-PRODUCTION-SOURCE"
+      ],
+      "terminal": {
+        "consumer_family": "Dense BitMatrix matvec route",
+        "test_boundary": "Frozen-matvec receipt acceptance",
+        "worker_sized_reason": "One bounded production-consumer baseline with fixed matrices",
+        "footprint": {
+          "uncertainty": "The final receipt is created under dev/bench_results/<created-issue-short-id>/ after batch creation assigns this issue an identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "logical-candidate-selection",
+    "title": "Freeze the logical candidate portfolio",
+    "description": "Turn the current logical baselines and profiles into a bounded portfolio for the XOR unroll and consumer-specific dispatch experiments before candidate samples are collected.\n\n## Background\n\nThe portfolio names a finite unroll-factor family and at most one measured unhoisted consumer with a materially different call contract. It keeps the 64-word generic-hoist no-win and already-hoisted algorithm loops out of the search. ISA-L remains an external comparison under its qualified symbol and adapter contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The portfolio names each exact logical candidate, target cells, rationale from current profiles, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: A missing profile signal is recorded as a no-candidate outcome rather than replaced with an unmeasured optimization, and the preserved generic-hoist no-win remains excluded.\n- [hard] REQ-03: Candidate scopes use the canonical logical-buffer and dispatch authority without pre-authorizing a production change.\n\n## Notes\n\nThis is an experimental selection contract, not a production adoption decision.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "isolated-xor-baseline",
+      "row-xor-baseline",
+      "coding-route-baseline"
+    ],
+    "planning": {
+      "outcome": "Bounded logical experiment portfolio frozen before candidate runs",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "preserved-no-win-boundaries",
+        "logical-buffer-protocol"
+      ],
+      "produces_contracts": [
+        "logical-candidate-portfolio"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-SCOPE-VERDICT",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-02"
+      ],
+      "terminal": {
+        "consumer_family": "Logical experiment portfolio",
+        "test_boundary": "Profile-to-candidate traceability review",
+        "worker_sized_reason": "One bounded selection record over completed baseline evidence",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-candidate-portfolio.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "zero-copy-candidate-selection",
+    "title": "Freeze the private zero-copy candidate",
+    "description": "Turn the relevant logical consumer baselines into one bounded private BitSlice copy-avoidance experiment before prototype samples are collected.\n\n## Background\n\nBitSlice remains a bit view and the experiment may use only a private measurement prototype. The portfolio fixes one measured consumer, copy-inclusive comparator, offset/alignment cases, complexity budget, and stop rule without authorizing public borrowed-word API or production semantics.\n\n## Success Criteria\n\n- [hard] REQ-01: The portfolio names one exact private prototype, consumer cell, baseline, offset/alignment cases, profile rationale, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: A missing consumer signal is recorded as a no-candidate outcome and leaves production unchanged.\n- [hard] REQ-03: No public borrowed-word API, shared-infrastructure change, or production route is authorized by the portfolio.\n\n## Notes\n\nThis is an experimental selection contract, not an architecture or production adoption decision.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "isolated-xor-baseline",
+      "coding-route-baseline"
+    ],
+    "planning": {
+      "outcome": "One private zero-copy experiment fixed without public API authority",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "logical-buffer-protocol"
+      ],
+      "produces_contracts": [
+        "zero-copy-candidate-portfolio"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-02",
+        "INV-OWNER-DECISION"
+      ],
+      "terminal": {
+        "consumer_family": "Private zero-copy experiment",
+        "test_boundary": "Profile-to-prototype traceability review",
+        "worker_sized_reason": "One bounded prototype selection over completed consumer evidence",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/zero-copy-candidate.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "parity-candidate-selection",
+    "title": "Freeze the dense-parity candidate portfolio",
+    "description": "Turn the current dense-matvec baseline and profile into a bounded fusion experiment before candidate samples are collected.\n\n## Background\n\nThe portfolio admits at most one profile-justified fusion distinct from the retained fused AND-popcount route. It keeps the generic carry-save no-win out of the search. M4RI remains an external matched-operation comparison under its qualified adapter contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The portfolio names at most one exact fusion candidate, target cells, rationale from current profiles, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: A missing profile signal is recorded as a no-candidate outcome, and the selected fused AND-popcount plus rejected generic carry-save routes remain prior evidence.\n- [hard] REQ-03: Candidate scope uses the canonical matvec and kernel boundary without pre-authorizing a production change.\n\n## Notes\n\nThis is an experimental selection contract, not a production adoption decision.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "dense-matvec-baseline"
+    ],
+    "planning": {
+      "outcome": "Bounded dense-parity experiment portfolio frozen before candidate runs",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "preserved-no-win-boundaries",
+        "dense-parity-protocol"
+      ],
+      "produces_contracts": [
+        "parity-candidate-portfolio"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-SCOPE-VERDICT",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-02"
+      ],
+      "terminal": {
+        "consumer_family": "Dense-parity experiment portfolio",
+        "test_boundary": "Profile-to-candidate traceability review",
+        "worker_sized_reason": "One bounded fusion selection over completed matvec evidence",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/parity-candidate-portfolio.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "isal-xor-comparison",
+    "title": "Measure the ISA-L XOR comparison",
+    "description": "Execute the frozen ISA-L comparison against equivalent gf2 XOR cells and publish both isolated and adapter-inclusive observations.\n\n## Background\n\nThe dispatched ISA-L route is used only when the qualified build has NASM and exposes the public SIMD path. Otherwise the receipt labels `xor_gen_base` as a scalar base arm and preserves dispatched-route unavailability. No external arm is called a competitive baseline without measured compatibility.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt contains raw samples, exact external build and run commands, content-pinned inputs, runtime selected-symbol evidence, statistical interpretation, and all setup, adapter, conversion, and output costs.\n- [hard] REQ-02: Semantically equivalent output is demonstrated for the frozen aligned, offset, and boundary cells, with isolated throughput reported separately from consumer relevance.\n- [hard] REQ-03: Losing, inconclusive, base-only, or unavailable cells remain in the committed evidence without triggering production adoption.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-03",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06",
+      "cites:IsaL2026"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "logical-candidate-selection"
+    ],
+    "planning": {
+      "outcome": "ISA-L XOR comparison published with semantic and cost parity",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "external-comparator-boundary",
+        "isal-comparator-spec",
+        "logical-buffer-protocol",
+        "logical-measurement-interface",
+        "logical-candidate-portfolio"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-03",
+        "INV-PRIOR-ART",
+        "INV-FROZEN-QUESTIONS"
+      ],
+      "terminal": {
+        "consumer_family": "ISA-L XOR comparator",
+        "test_boundary": "Frozen external-comparison receipt acceptance",
+        "worker_sized_reason": "One qualified external arm over fixed XOR cells",
+        "footprint": {
+          "uncertainty": "The final receipt is created under dev/bench_results/<created-issue-short-id>/ after batch creation assigns this issue an identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "m4ri-dense-comparison",
+    "title": "Measure the M4RI dense comparison",
+    "description": "Execute the frozen M4RI matched-operation comparison against the dense gf2 consumer and publish both operation and adapter-inclusive observations.\n\n## Background\n\nOnly the qualified consuming operation is measured. Transpose or BCH-generator results are not substitutes. Matrix construction, representation conversion, execution, and output materialization stay visible in the whole-consumer arm.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt contains raw samples, exact external build and run commands, content-pinned matrices, runtime path evidence, statistical interpretation, and all construction, adapter, conversion, and output costs.\n- [hard] REQ-02: Semantically equivalent output is demonstrated for the frozen dimensions and boundary cells, with isolated operation throughput reported separately from consumer benefit.\n- [hard] REQ-03: Losing, inconclusive, unmatched, or unavailable cells remain in the committed evidence without triggering production adoption.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-03",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06",
+      "cites:AlbrechtBard2026"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "parity-candidate-selection"
+    ],
+    "planning": {
+      "outcome": "M4RI dense comparison published for the matched consuming operation",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "external-comparator-boundary",
+        "m4ri-comparator-spec",
+        "dense-parity-protocol",
+        "parity-measurement-interface",
+        "parity-candidate-portfolio"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-03",
+        "INV-PRIOR-ART",
+        "INV-FROZEN-QUESTIONS"
+      ],
+      "terminal": {
+        "consumer_family": "M4RI dense comparator",
+        "test_boundary": "Frozen external-comparison receipt acceptance",
+        "worker_sized_reason": "One qualified external operation over fixed matrix cells",
+        "footprint": {
+          "uncertainty": "The final receipt is created under dev/bench_results/<created-issue-short-id>/ after batch creation assigns this issue an identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "xor-unroll-study",
+    "title": "Measure the XOR unroll portfolio",
+    "description": "Implement only the predeclared private unroll variants and compare them with the established scalar and selected SIMD XOR kernels.\n\n## Background\n\nUnroll factors are experimental arms, not production routes. The study uses the frozen cell family and complexity budget, compiles intrinsic-bearing variants with Rust 1.95, retains runtime feature gating plus the tested scalar fallback, and keeps unsafe code inside `gf2-kernels-simd`. Every new unsafe boundary requires an explicit safety contract.\n\n## Success Criteria\n\n- [hard] REQ-01: Each predeclared unroll arm has shared equivalence coverage for aligned, offset, empty, and 0/1/63/64/65 boundary cases before timed measurement.\n- [hard] REQ-02: The receipt reports raw samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile explanations for each arm.\n- [hard] REQ-03: No candidate enters production in this issue, and negative or inconclusive arms remain preserved.\n- [hard] REQ-04: Every new unsafe boundary is isolated to `gf2-kernels-simd` and carries an explicit safety contract covering pointer validity, slice lengths, aliasing, required target features, runtime gating, and scalar fallback reachability.\n\n## Notes\n\nPrivate experimental symbols must not create a second public dispatch abstraction.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-kernels-simd",
+      "component:benchmarks",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "logical-candidate-selection"
+    ],
+    "planning": {
+      "outcome": "Predeclared XOR unroll arms measured without production adoption",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "shared-file-serialization",
+        "logical-candidate-portfolio",
+        "logical-buffer-protocol",
+        "logical-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-02",
+        "INV-ARCHITECTURE-INVARIANTS-MSRV"
+      ],
+      "terminal": {
+        "consumer_family": "XOR unroll candidates",
+        "test_boundary": "Shared XOR equivalence suite",
+        "worker_sized_reason": "One bounded variant family under a frozen experiment contract",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-simd/src/x86/avx2.rs",
+            "crates/gf2-core/benches/mid_range_logical.rs",
+            "crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs"
+          ],
+          "uncertainty": "Experimental symbols may instead be isolated in a sibling module if the existing AVX2 file cannot keep them test-only."
+        }
+      }
+    }
+  },
+  {
+    "key": "consumer-dispatch-study",
+    "title": "Measure the consumer-specific dispatch candidate",
+    "description": "Implement the one predeclared consumer-specific dispatch experiment and compare it with the current public-call path.\n\n## Background\n\nThe experiment targets a measured unhoisted consumer and must have a materially different call contract from the preserved 64-word generic-hoist no-win. Already-hoisted M4RM, RREF, Gauss, Strassen, and degenerate multiply loops remain controls, not migration targets.\n\n## Success Criteria\n\n- [hard] REQ-01: The candidate is bounded to the profile-identified unhoisted consumer and has shared semantic coverage across selected worker counts, fallbacks, offset views, and boundary sizes.\n- [hard] REQ-02: The receipt reports dispatch-inclusive whole-consumer samples, adjusted confidence bounds, equivalence results, complexity accounting, assembly, and profile attribution.\n- [hard] REQ-03: The 64-word generic-hoist no-win remains unchanged, no production helper lands in this issue, and negative evidence is retained.\n\n## Notes\n\nThe experiment may bind an existing resolver privately; it must not introduce a parallel dispatch authority.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "xor-unroll-study"
+    ],
+    "planning": {
+      "outcome": "Profile-selected dispatch experiment measured without reopening the generic 64-word no-win",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "shared-file-serialization",
+        "preserved-no-win-boundaries",
+        "logical-candidate-portfolio",
+        "logical-buffer-protocol",
+        "logical-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-SCOPE-VERDICT",
+        "INV-CLAIM-BUFFER-OVERHEAD",
+        "INV-PRODUCTION-SOURCE"
+      ],
+      "terminal": {
+        "consumer_family": "Profile-selected unhoisted route",
+        "test_boundary": "Shared consumer equivalence suite",
+        "worker_sized_reason": "One measured call boundary with a fixed consumer scope",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/benches/mid_range_logical.rs"
+          ],
+          "uncertainty": "The private experiment touches the single production-consumer module selected by the frozen candidate portfolio."
+        }
+      }
+    }
+  },
+  {
+    "key": "bitslice-zero-copy-study",
+    "title": "Measure a private BitSlice zero-copy prototype",
+    "description": "Prototype zero-copy access privately inside the measurement harness and test whether avoided copying benefits a real mid-range consumer.\n\n## Background\n\n`BitSlice` remains an offset bit view with bit accessors, not a borrowed-word API. This study does not add public methods, change layout, or adopt a production path. Its adapter must make alignment, bit offset, logical length, and tail masking costs visible.\n\n## Success Criteria\n\n- [hard] REQ-01: A private prototype covers the predeclared consumer cell without exposing a new public borrowed-word surface or bypassing canonical logical semantics.\n- [hard] REQ-02: Exact results hold for empty, aligned, deliberately offset, and 0/1/63/64/65 boundary cases with zero tail padding.\n- [hard] REQ-03: The receipt reports copy-inclusive and prototype costs, adjusted confidence bounds, equivalence results, complexity accounting, and preserved negative or inconclusive outcomes.\n\n## Notes\n\nOnly qualifying consumer evidence can reach a separately reviewed integration design; this issue itself cannot authorize API work.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "zero-copy-candidate-selection",
+      "consumer-dispatch-study"
+    ],
+    "planning": {
+      "outcome": "Private BitSlice copy-avoidance evidence recorded without public API change",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "shared-file-serialization",
+        "zero-copy-candidate-portfolio",
+        "logical-buffer-protocol",
+        "logical-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-02",
+        "INV-PRODUCTION-SOURCE",
+        "INV-OWNER-DECISION"
+      ],
+      "terminal": {
+        "consumer_family": "BitSlice copy-avoidance prototype",
+        "test_boundary": "Boundary-semantic prototype suite",
+        "worker_sized_reason": "One private prototype against one frozen consumer cell",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/benches/mid_range_logical.rs"
+          ],
+          "uncertainty": "The prototype may use a test-only module under crates/gf2-core without modifying the public BitSlice implementation."
+        }
+      }
+    }
+  },
+  {
+    "key": "matvec-fusion-study",
+    "title": "Measure the profile-selected matvec fusion",
+    "description": "Implement at most one profile-justified dense-matvec fusion experiment that is distinct from the selected fused AND-popcount route.\n\n## Background\n\nThe current AVX2 path already fuses AND with population accumulation, and the generic carry-save comparator is already unselected. If the baseline exposes no distinct material fusion opportunity within budget, the study records a no-candidate result rather than relabelling either established route. Any intrinsic arm retains runtime feature gating plus the tested scalar fallback, and every new unsafe boundary requires an explicit safety contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The candidate is traceable to a measured cost center and has shared exact-output coverage for scalar fallback plus aligned, offset, and 0/1/63/64/65 boundary cases.\n- [hard] REQ-02: The receipt reports allocated whole-`matvec` samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile attribution.\n- [hard] REQ-03: The current fused AND-popcount path remains the baseline rather than a new candidate, no production selection changes here, and a no-candidate or losing outcome is preserved.\n- [hard] REQ-04: Every new unsafe boundary is isolated to `gf2-kernels-simd` and carries an explicit safety contract covering pointer validity, slice lengths, aliasing, required target features, runtime gating, and scalar fallback reachability.\n\n## Notes\n\nAny intrinsic-bearing experiment must compile and test with Rust 1.95 and remain inside the SIMD kernel crate.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-kernels-simd",
+      "component:gf2-core",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "parity-candidate-selection",
+      "logical-production-adoption"
+    ],
+    "planning": {
+      "outcome": "One distinct profile-led matvec fusion measured or a no-candidate result preserved",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "shared-file-serialization",
+        "preserved-no-win-boundaries",
+        "parity-candidate-portfolio",
+        "dense-parity-protocol",
+        "parity-measurement-interface"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-02",
+        "INV-PRODUCTION-SOURCE",
+        "INV-ARCHITECTURE-INVARIANTS-MSRV"
+      ],
+      "terminal": {
+        "consumer_family": "Dense-matvec fusion candidate",
+        "test_boundary": "Shared matvec equivalence suite",
+        "worker_sized_reason": "At most one profile-selected fusion under fixed measurement rules",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-simd/src/x86/avx2.rs",
+            "crates/gf2-core/benches/mid_range_parity.rs",
+            "crates/gf2-core/tests/simd_equiv_matvec.rs"
+          ],
+          "uncertainty": "A no-candidate outcome changes only the receipt; a selected private arm remains bounded to the existing matvec kernel surface."
+        }
+      }
+    }
+  },
+  {
+    "key": "logical-adoption-selection",
+    "title": "Select the logical-buffer production outcome",
+    "description": "Apply the frozen adoption rules to the unroll, consumer-specific dispatch, and ISA-L comparison evidence, producing one auditable logical-buffer outcome.\n\n## Background\n\nSelection uses confidence-bound whole-consumer benefit, equivalence non-regression, maintenance complexity, and declared dispatch domain. External throughput alone cannot select a production route, and the established implementation remains when no candidate qualifies.\n\n## Success Criteria\n\n- [hard] REQ-01: The decision evaluates each candidate against the predeclared worthwhile-effect, equivalence-margin, complexity, and multiple-comparison rules using only confirmatory evidence.\n- [hard] REQ-02: At most one bounded production change is selected with its exact dispatch domain and required before/after cells, or a no-adoption outcome preserves the established route and all losing evidence.\n- [hard] REQ-03: The preserved 64-word generic-hoist no-win is not reopened without a materially different consumer contract.\n\n## Notes\n\nThe decision record is the only authority consumed by the conditional adoption task.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "isal-xor-comparison",
+      "consumer-dispatch-study"
+    ],
+    "planning": {
+      "outcome": "Logical-buffer candidate evidence resolves to one bounded adoption decision",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "preserved-no-win-boundaries",
+        "logical-candidate-portfolio",
+        "logical-buffer-protocol"
+      ],
+      "produces_contracts": [
+        "logical-adoption-decision"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-06",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-02",
+        "INV-CLAIM-REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "Logical-buffer adoption authority",
+        "test_boundary": "Frozen-rule decision audit",
+        "worker_sized_reason": "One family decision over completed confirmatory receipts",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-adoption-decision.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "parity-adoption-selection",
+    "title": "Select the dense-parity production outcome",
+    "description": "Apply the frozen adoption rules to the profile-selected fusion and M4RI comparison evidence, producing one auditable dense-parity outcome.\n\n## Background\n\nSelection uses confidence-bound allocated whole-consumer benefit, exact parity equivalence, maintenance complexity, and declared dispatch domain. M4RI isolated throughput cannot select an incompatible production route, and the current fused AND-popcount implementation remains when no candidate qualifies.\n\n## Success Criteria\n\n- [hard] REQ-01: The decision evaluates each eligible candidate against the predeclared worthwhile-effect, equivalence-margin, complexity, and multiple-comparison rules using only confirmatory evidence.\n- [hard] REQ-02: At most one bounded production change is selected with its exact dispatch domain and required before/after cells, or a no-adoption outcome preserves the established route and all losing evidence.\n- [hard] REQ-03: The existing fused AND-popcount and rejected generic carry-save routes remain prior evidence rather than being presented as new optimization work.\n\n## Notes\n\nThe decision record is the only authority consumed by the conditional adoption task.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "m4ri-dense-comparison",
+      "matvec-fusion-study"
+    ],
+    "planning": {
+      "outcome": "Dense-parity candidate evidence resolves to one bounded adoption decision",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "preserved-no-win-boundaries",
+        "parity-candidate-portfolio",
+        "dense-parity-protocol"
+      ],
+      "produces_contracts": [
+        "parity-adoption-decision"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-06",
+        "INV-CLAIM-MEASURE-BEFORE-SELECTION",
+        "INV-CLAIM-REQ-02",
+        "INV-CLAIM-REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "Dense-parity adoption authority",
+        "test_boundary": "Frozen-rule decision audit",
+        "worker_sized_reason": "One family decision over completed confirmatory receipts",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/parity-adoption-decision.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "zero-copy-adoption-selection",
+    "title": "Select the zero-copy integration outcome",
+    "description": "Apply the frozen adoption rules to the private BitSlice prototype and decide whether an integration through existing private abstractions is justified.\n\n## Background\n\nBitSlice remains a bit view and no new public borrowed-word API is authorized by this story. A qualifying consumer gain may justify a private integration design. If realizing it requires a lasting public API or shared-infrastructure change, this branch closes as no-adoption, records the pending owner decision for a later explicitly authorized container, and does not block story completion.\n\n## Success Criteria\n\n- [hard] REQ-01: The decision applies the predeclared worthwhile-effect, equivalence-margin, complexity, and whole-consumer rules to the private prototype evidence.\n- [hard] REQ-02: A qualifying existing-abstraction result names one bounded private integration target, while a non-qualifying result preserves the no-win and leaves production unchanged.\n- [hard] REQ-03: Evidence requiring a public borrowed-word API or shared infrastructure resolves here to no-adoption plus a pending owner decision for later work, without waiting for that decision.\n\n## Notes\n\nThis issue selects whether private design work is warranted; it does not design or implement the integration.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "bitslice-zero-copy-study"
+    ],
+    "planning": {
+      "outcome": "Private zero-copy evidence resolves to design eligibility or preserved no-adoption",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "zero-copy-candidate-portfolio",
+        "logical-buffer-protocol"
+      ],
+      "produces_contracts": [
+        "zero-copy-adoption-decision"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-06",
+        "INV-CLAIM-REQ-02",
+        "INV-CLAIM-REQ-04",
+        "INV-OWNER-DECISION"
+      ],
+      "terminal": {
+        "consumer_family": "Zero-copy integration authority",
+        "test_boundary": "Frozen-rule decision audit",
+        "worker_sized_reason": "One bounded decision over one private prototype receipt",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/zero-copy-adoption-decision.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "logical-production-adoption",
+    "title": "Implement the selected logical-buffer outcome",
+    "description": "Apply the logical-buffer adoption decision through the existing core dispatcher and isolated SIMD kernel boundary.\n\n## Background\n\nWhen no candidate qualifies, this issue verifies that production remains unchanged and records that disposition. When one candidate qualifies, the change is limited to its declared dispatch domain, keeps Rust 1.95 compatibility, preserves scalar fallback, and does not create a second buffer or dispatch abstraction.\n\n## Success Criteria\n\n- [hard] REQ-01: The selected outcome is reflected exactly in production code, or the no-adoption decision leaves production behavior and selection unchanged.\n- [hard] REQ-02: Shared scalar/SIMD semantic suites cover empty, aligned, offset, and 0/1/63/64/65 boundary cases with canonical indexing and zero tails.\n- [hard] REQ-03: Any unsafe intrinsic code stays in `gf2-kernels-simd` with an explicit safety contract, annotated release assembly is committed for modified SIMD symbols, and Rust 1.95 builds the affected path.\n\n## Notes\n\nBefore/after performance confirmation is intentionally separate from this code change.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "logical-adoption-selection"
+    ],
+    "planning": {
+      "outcome": "Selected logical-buffer decision reflected through the canonical production boundary",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "shared-file-serialization",
+        "preserved-no-win-boundaries",
+        "logical-adoption-decision"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-04",
+        "INV-ARCHITECTURE-INVARIANTS-MSRV"
+      ],
+      "terminal": {
+        "consumer_family": "Canonical logical-buffer route",
+        "test_boundary": "Shared backend semantic suites",
+        "worker_sized_reason": "At most one selected production change with a fixed domain",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/kernels/ops.rs",
+            "crates/gf2-core/src/kernels/backend.rs",
+            "crates/gf2-kernels-simd/src/x86/avx2.rs",
+            "crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs"
+          ],
+          "uncertainty": "The no-adoption path touches no production files; an adopted path uses only the subset named by the decision contract."
+        }
+      }
+    }
+  },
+  {
+    "key": "parity-production-adoption",
+    "title": "Implement the selected dense-parity outcome",
+    "description": "Apply the dense-parity adoption decision through the existing `BitMatrix::matvec` and isolated SIMD kernel boundary.\n\n## Background\n\nWhen no candidate qualifies, this issue verifies that the fused AND-popcount production path remains unchanged and records that disposition. A qualifying change is limited to its declared route, retains scalar fallback, and cannot relabel the already selected fusion as new work.\n\n## Success Criteria\n\n- [hard] REQ-01: The selected outcome is reflected exactly in production code, or the no-adoption decision leaves `matvec` behavior and selection unchanged.\n- [hard] REQ-02: Shared scalar/SIMD suites prove exact outputs for empty, aligned, offset, and 0/1/63/64/65 boundary cases with canonical indexing and zero tails.\n- [hard] REQ-03: Any unsafe intrinsic code stays in `gf2-kernels-simd` with an explicit safety contract, annotated release assembly is committed for modified SIMD symbols, and Rust 1.95 builds the affected path.\n\n## Notes\n\nBefore/after performance confirmation is intentionally separate from this code change.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "parity-adoption-selection"
+    ],
+    "planning": {
+      "outcome": "Selected dense-parity decision reflected through the canonical production boundary",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "shared-file-serialization",
+        "preserved-no-win-boundaries",
+        "parity-adoption-decision"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-04",
+        "INV-ARCHITECTURE-INVARIANTS-MSRV"
+      ],
+      "terminal": {
+        "consumer_family": "Canonical dense-matvec route",
+        "test_boundary": "Shared matvec semantic suites",
+        "worker_sized_reason": "At most one selected production change with a fixed domain",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/matrix.rs",
+            "crates/gf2-kernels-simd/src/x86/avx2.rs",
+            "crates/gf2-core/tests/simd_equiv_matvec.rs",
+            "crates/gf2-core/tests/popcount_routes.rs"
+          ],
+          "uncertainty": "The no-adoption path touches no production files; an adopted path uses only the subset named by the decision contract."
+        }
+      }
+    }
+  },
+  {
+    "key": "zero-copy-integration-design",
+    "title": "Design the qualifying zero-copy integration",
+    "description": "Produce a bounded integration design only for a private BitSlice experiment that qualifies through existing abstractions.\n\n## Background\n\nThe plan fixes BitSlice as a bit view and authorizes no new public borrowed-word API. A qualifying existing-abstraction result may be designed through current private storage and kernel boundaries. A result requiring public API or shared infrastructure closes as a no-change design record with a pending owner decision for a later explicitly authorized container; this issue never waits for that authority.\n\n## Success Criteria\n\n- [hard] REQ-01: The design maps qualifying evidence to one bounded private consumer integration through existing canonical abstractions, or emits a closed no-adoption record without proposing code.\n- [hard] REQ-02: Alignment, bit offset, logical length, tail masking, safety, scalar fallback, and complexity contracts are explicit for any implementable private route.\n- [hard] REQ-03: Any public borrowed-word API or shared-infrastructure requirement terminates this story branch as no-adoption plus a pending owner decision, with no implementable contract for that route.\n\n## Notes\n\nThis is a design-only issue; it makes no production change and cannot block on ungranted authority.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "zero-copy-adoption-selection"
+    ],
+    "planning": {
+      "outcome": "Qualifying zero-copy evidence receives a bounded design or closes as no-adoption",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "zero-copy-adoption-decision"
+      ],
+      "produces_contracts": [
+        "zero-copy-integration-contract"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-06",
+        "INV-CLAIM-REQ-02",
+        "INV-CLAIM-REQ-04",
+        "INV-OWNER-DECISION"
+      ],
+      "terminal": {
+        "consumer_family": "Qualifying zero-copy route",
+        "test_boundary": "Architecture-contract design review",
+        "worker_sized_reason": "One evidence-gated design with a bounded consumer target",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/zero-copy-integration-design.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "zero-copy-production-adoption",
+    "title": "Implement the approved private zero-copy outcome",
+    "description": "Apply the zero-copy integration contract only when it authorizes a bounded path through existing private abstractions; otherwise preserve the recorded no-change outcome.\n\n## Background\n\nThis story never implements a public borrowed-word API or shared-infrastructure change, even if a pending owner decision is recorded for later work. A public/shared requirement is a terminal no-adoption outcome here and cannot be smuggled into production through test-only accessors, duplicated abstractions, or a later owner response outside this graph.\n\n## Success Criteria\n\n- [hard] REQ-01: The approved existing-abstraction integration is implemented exactly for its bounded consumer, or the no-adoption contract leaves production unchanged.\n- [hard] REQ-02: Shared semantic coverage proves correct offset handling, alignment behavior, logical length, zero tail padding, and 0/1/63/64/65 boundary results.\n- [hard] REQ-03: No public borrowed-word API, shared-infrastructure change, second buffer abstraction, or dispatch bypass is implemented by this story branch.\n\n## Notes\n\nBefore/after performance confirmation is intentionally separate from this code change; later public/shared work requires a separately authorized container.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present",
+      "tdd-reminder"
+    ],
+    "depends_on": [
+      "zero-copy-integration-design"
+    ],
+    "planning": {
+      "outcome": "Approved existing-abstraction zero-copy design reflected in one bounded consumer",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "zero-copy-adoption-decision",
+        "zero-copy-integration-contract"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-ARCHITECTURE-INVARIANTS-MSRV",
+        "INV-OWNER-DECISION"
+      ],
+      "terminal": {
+        "consumer_family": "Approved private zero-copy consumer",
+        "test_boundary": "Bit-view boundary semantic suite",
+        "worker_sized_reason": "One design-fixed integration with no public API expansion",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/bitslice.rs",
+            "crates/gf2-core/src/bitvec.rs"
+          ],
+          "uncertainty": "The no-adoption path touches no production files; a private adopted path touches only the consumer and storage module named by the design contract."
+        }
+      }
+    }
+  },
+  {
+    "key": "logical-adoption-confirmation",
+    "title": "Confirm the logical-buffer production outcome",
+    "description": "Run holdout confirmation for the selected logical-buffer outcome against the pinned current baseline, or publish the final no-change verdict.\n\n## Background\n\nA production change requires dispatch-inclusive before/after evidence on the exact declared domain plus neighboring non-regression cells. A no-adoption decision still preserves the complete candidate record and explains why the current route remains selected.\n\n## Success Criteria\n\n- [hard] REQ-01: Any production change has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results for primary and neighboring cells.\n- [hard] REQ-02: Whole-consumer cells demonstrate the predeclared worthwhile benefit without regression outside the selected domain; otherwise the change is not accepted and the contradictory evidence remains committed.\n- [hard] REQ-03: The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, assembly, profiles, and exact commands by content identity.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-02",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "logical-production-adoption"
+    ],
+    "planning": {
+      "outcome": "Logical-buffer adoption receives holdout evidence or closes with preserved no-change",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "logical-buffer-protocol",
+        "logical-measurement-interface",
+        "logical-adoption-decision"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-05",
+        "INV-CLAIM-REQ-06"
+      ],
+      "terminal": {
+        "consumer_family": "Selected logical production route",
+        "test_boundary": "Holdout receipt acceptance",
+        "worker_sized_reason": "One selected route with a frozen confirmation matrix",
+        "footprint": {
+          "uncertainty": "The final receipt is created under dev/bench_results/<created-issue-short-id>/ after batch creation assigns this issue an identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "parity-adoption-confirmation",
+    "title": "Confirm the dense-parity production outcome",
+    "description": "Run holdout confirmation for the selected dense-parity outcome against the pinned current baseline, or publish the final no-change verdict.\n\n## Background\n\nA production change requires allocated whole-`matvec` before/after evidence on the exact declared domain plus neighboring non-regression cells. A no-adoption decision preserves the complete fusion and M4RI record and explains why the current fused AND-popcount route remains selected.\n\n## Success Criteria\n\n- [hard] REQ-01: Any production change has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results for primary and neighboring cells.\n- [hard] REQ-02: Allocated whole-`matvec` cells demonstrate the predeclared worthwhile benefit without regression outside the selected domain; otherwise the change is not accepted and contradictory evidence remains committed.\n- [hard] REQ-03: The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, assembly, profiles, and exact commands by content identity.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-02",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "parity-production-adoption"
+    ],
+    "planning": {
+      "outcome": "Dense-parity adoption receives holdout evidence or closes with preserved no-change",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "dense-parity-protocol",
+        "parity-measurement-interface",
+        "parity-adoption-decision"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-05",
+        "INV-CLAIM-REQ-06"
+      ],
+      "terminal": {
+        "consumer_family": "Selected dense-parity route",
+        "test_boundary": "Holdout receipt acceptance",
+        "worker_sized_reason": "One selected route with a frozen confirmation matrix",
+        "footprint": {
+          "uncertainty": "The final receipt is created under dev/bench_results/<created-issue-short-id>/ after batch creation assigns this issue an identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "zero-copy-adoption-confirmation",
+    "title": "Confirm the private zero-copy production outcome",
+    "description": "Run holdout confirmation for an approved private zero-copy integration through existing abstractions, or publish the final no-change verdict.\n\n## Background\n\nOnly a qualifying private integration receives before/after measurement. A public-API or shared-infrastructure requirement is already a terminal no-adoption outcome and receives no implementation or timed confirmation in this story. Private-route confirmation includes copying, offset handling, masking, dispatch, setup, and output costs in the same whole-consumer boundary used by the prototype.\n\n## Success Criteria\n\n- [hard] REQ-01: Any adopted private integration has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results.\n- [hard] REQ-02: Whole-consumer benefit survives all adapter costs and semantic checks; otherwise the integration is not accepted and the contradictory evidence remains committed.\n- [hard] REQ-03: The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, profiles, and exact commands by content identity, while any no-adoption path records why no after measurement is applicable.\n- [hard] REQ-04: A public/shared requirement produces no timed samples in this issue and remains only a pending owner decision for a separately authorized container.\n\n## Notes\n\nRun private-route confirmation only in the benchmark window on the prepared host under the full-host wrapper.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "zero-copy-production-adoption"
+    ],
+    "planning": {
+      "outcome": "Zero-copy adoption receives holdout evidence or closes with preserved no-change",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "logical-buffer-protocol",
+        "logical-measurement-interface",
+        "zero-copy-adoption-decision",
+        "zero-copy-integration-contract"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-OWNER-DECISION"
+      ],
+      "terminal": {
+        "consumer_family": "Approved zero-copy route",
+        "test_boundary": "Holdout receipt acceptance",
+        "worker_sized_reason": "One approved route with a frozen confirmation matrix",
+        "footprint": {
+          "uncertainty": "The final receipt is created under dev/bench_results/<created-issue-short-id>/ after batch creation assigns this issue an identifier."
+        }
+      }
+    }
+  },
+  {
+    "key": "story-evidence-synthesis",
+    "title": "Publish the mid-range evidence synthesis",
+    "description": "Publish the final story-level evidence index and criterion interpretation without duplicating the raw receipts.\n\n## Background\n\nThe synthesis links the frozen protocols, baseline and candidate receipts, external comparisons, adoption decisions, holdout confirmations, annotated assembly, and profiles. It preserves negative, unavailable, inconclusive, and contradictory outcomes and states which production routes remain selected.\n\n## Success Criteria\n\n- [hard] REQ-01: A concise findings document maps each story criterion to content-pinned artifacts and distinguishes isolated throughput from measured consumer benefit.\n- [hard] REQ-02: Every empirical claim names its sample count, confidence interval or equivalence result, producing identity, host, and toolchain; raw data remain linked rather than copied.\n- [hard] REQ-03: Residual gaps have a measured limit, preserved experiment, or tracked falsifiable follow-up within the frozen search budget, and no finite search is described as an absolute optimum.\n- [hard] REQ-04: The selected or retained production routes and all no-win outcomes are stated consistently with the canonical buffer boundary and external-comparison rules.\n\n## Notes\n\nPermanent documentation changes are required only when the final selected production behavior changes a user-facing contract.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-02",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04",
+      "satisfies:REQ-05",
+      "satisfies:REQ-06"
+    ],
+    "gates": [
+      "repo-validate",
+      "doc-review",
+      "holistic-review",
+      "cargo-ci",
+      "code-review",
+      "research-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "logical-adoption-confirmation",
+      "parity-adoption-confirmation",
+      "zero-copy-adoption-confirmation"
+    ],
+    "planning": {
+      "outcome": "Story evidence mapped to criteria with selected routes and preserved no-wins",
+      "contract_refs": [
+        "measurement-evidence-contract",
+        "canonical-buffer-boundary",
+        "preserved-no-win-boundaries",
+        "external-comparator-boundary",
+        "logical-adoption-decision",
+        "parity-adoption-decision",
+        "zero-copy-adoption-decision",
+        "zero-copy-integration-contract"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-02",
+        "REQ-03",
+        "REQ-04",
+        "REQ-05",
+        "REQ-06",
+        "INV-CLAIM-REQ-01",
+        "INV-CLAIM-REQ-02",
+        "INV-CLAIM-REQ-03",
+        "INV-CLAIM-REQ-04",
+        "INV-CLAIM-REQ-05",
+        "INV-CLAIM-REQ-06",
+        "INV-TESTS-BENCHMARKS-DOCS",
+        "INV-PRIOR-ART",
+        "INV-ARCHITECTURE-INVARIANTS-MSRV"
+      ],
+      "terminal": {
+        "consumer_family": "Story evidence readers",
+        "test_boundary": "Criterion-to-artifact review",
+        "worker_sized_reason": "One concise synthesis over already reviewed durable artifacts",
+        "footprint": {
+          "creates": [
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/findings.md"
+          ]
+        }
+      }
+    }
+  }
+]

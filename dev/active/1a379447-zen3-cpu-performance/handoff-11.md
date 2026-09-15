@@ -1,6 +1,6 @@
 # Handoff — Maximize Zen 3 CPU throughput against open-source baselines (1a379447) — session 14
 
-**Date:** 2026-09-13T18:05Z (draft; the closing section is updated as the four workers report)
+**Date:** 2026-09-13T18:05Z (draft), closing section 2026-09-13T18:45Z
 **Session number:** 14
 **Prior handoffs:** [session 1](handoff.md), [session 2](handoff-2.md), [session 3](handoff-3.md), [session 4](handoff-4.md), [session 6 halt](handoff-5.md), [session 7](handoff-6.md), [session 9](handoff-7.md), [session 10](handoff-8.md), [session 11](handoff-9.md), [session 13](handoff-10.md). Session 12 wrote no handoff.
 
@@ -74,4 +74,9 @@
 
 ## Closing section
 
-(updated at session end)
+- **Invoker rulings after the draft (18:15Z onward):** the host must not be locked during an active session; all measurement runs in an overnight slot; locking is disabled; every running measurement was killed; the workers must stop right away and terminate gracefully; the overnight run is armed.
+- **Lock discipline (07fb19ee on main):** `scripts/cargo-budget.sh` runs its command unlocked and unbudgeted unless `GF2_BENCH_WINDOW=1`; `dev/scripts/ccx1-bench-flock.sh` refuses (exit 3) outside the window; `bench-window/run-window.sh` exports the flag; AGENTS.md and worker-brief.md state the rule; the ten-minute in-session allowance is withdrawn. Worker worktrees that have not merged main still carry the old wrappers; the window exports the flag, so they run there unchanged.
+- **Killed:** the 53c5a8c0 profile session (10 of 24 rows recorded, resumable per row) and the 19513245 vector confirmation (twice; its checkpoints persist and `window` resumes it). Its control confirmation had completed (receipt uncommitted in the worktree at kill time; the worker was told to commit it).
+- **Window armed:** transient user timer `gf2-bench-window-20260914`, 2026-09-14 04:00 Europe/Helsinki (01:00Z), `--setenv=PATH=~/.cargo/bin:...`, working directory the primary checkout. Queue on main (`bench-window/queue.tsv`, 18 lines: 8 collected earlier and skipped by their `.done` keys, 10 new): 07ca8585 single-worker and comparator single-worker confirmations, multicore and comparator multicore pilots, check-node and fixed-iteration confirmations, profile re-sampling series; 19513245 vector and matrix confirmations; 53c5a8c0 profile remainder. About 155 estimated minutes. **First thing next session: collect it** with `bench-window/follow-window.sh` (`GF2_WINDOW_UNIT=gf2-bench-window-20260914`), judging each campaign from its own execution log and receipt, then freeze/summarize per issue (07ca8585's confirmations were frozen by the worker; 19513245's were frozen from committed pilots; the profile needs `summarize-profile.py` on the worker branch).
+- **1d4fd63d cargo-ci:** failed at 89735528 on the known contention flake (`accepted_complete_experiment_measures_defaults_and_reopens_only_its_27_leaves`, TIMEOUT 15 s under load 11); the manual `./scripts/cargo-ci.sh` at the same tree passed every other step. Re-run the gate on a quiet host (unlocked now), then close and reclaim.
+- **Workers:** told at 18:40Z to commit everything (wip commits allowed), write their links tables, report under 2000 characters and halt. Their final reports, if received before the session ended, are appended below; otherwise the branches and worktrees hold the state and `git status` in each worktree shows what was left uncommitted.

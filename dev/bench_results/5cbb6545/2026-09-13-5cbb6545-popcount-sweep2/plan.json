@@ -1,0 +1,117 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "popcount-sweep2-5cbb6545-20260913t124628z",
+  "issue": "5cbb6545",
+  "label": "pilot",
+  "campaign_seed": 20260913111,
+  "addendum": "dev/active/5cbb6545/addendum-popcount-v4-sweep2.json",
+  "producing_manifest": "dev/active/5cbb6545/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "nibble-lut": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_popcnt called directly: one VPSHUFB nibble lookup per vector summed by VPSADBW, with no size threshold.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "nibble-lut"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "csa": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_popcnt_csa called directly: sixteen vectors folded through fifteen carry-save adders per 512-byte block before one nibble lookup.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "csa"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "sweep2-popcount-w160-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 160,
+        "seed": 5360,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-popcount-w192-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 192,
+        "seed": 5392,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-popcount-w224-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 224,
+        "seed": 5424,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-popcount-w256-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 256,
+        "seed": 5456,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-popcount-w320-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 320,
+        "seed": 5520,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-popcount-w384-csa",
+      "baseline_arm": "nibble-lut",
+      "candidate_arm": "csa",
+      "case": {
+        "op": "popcount",
+        "words": 384,
+        "seed": 5584,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 8
+}

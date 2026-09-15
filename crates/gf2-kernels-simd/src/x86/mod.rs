@@ -33,6 +33,8 @@ pub(crate) mod gf2m_common;
 pub(crate) mod gf2m_gemm;
 pub(crate) mod gf2m_wide;
 pub(crate) mod mersenne;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub(crate) mod popcount;
 pub(crate) mod transpose;
 
 #[allow(dead_code)]

@@ -1,0 +1,128 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "popcount-pilot-5cbb6545-20260913t125443z",
+  "issue": "5cbb6545",
+  "label": "pilot",
+  "campaign_seed": 20260913201,
+  "addendum": "dev/active/5cbb6545/addendum-popcount-v4-pilot.json",
+  "producing_manifest": "dev/active/5cbb6545/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "legacy-dispatch": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing the route ops::popcount took before this issue: the scalar backend below eight words, the AVX2 nibble-lookup kernel of the detected bundle at or above.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "legacy-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "resolved-dispatch": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing ops::popcount as this issue leaves it: one route resolved for the buffer's width from the compile-time bit-backend boundaries.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "resolved-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "libpopcnt": {
+      "build": "external",
+      "description": "libpopcnt v4.2 popcnt() compiled -O3 as its README recommends, with its own CPUID dispatch.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "libpopcnt"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-w4-dispatch",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "case": {
+        "op": "popcount",
+        "words": 4,
+        "seed": 5304,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "popcount-w8-dispatch",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "case": {
+        "op": "popcount",
+        "words": 8,
+        "seed": 5308,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "popcount-w128-dispatch",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "case": {
+        "op": "popcount",
+        "words": 128,
+        "seed": 5428,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "popcount-w1024-dispatch",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "case": {
+        "op": "popcount",
+        "words": 1024,
+        "seed": 6324,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "popcount-w16384-dispatch",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "case": {
+        "op": "popcount",
+        "words": 16384,
+        "seed": 21684,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "popcount-w16384-vs-libpopcnt",
+      "baseline_arm": "resolved-dispatch",
+      "candidate_arm": "libpopcnt",
+      "case": {
+        "op": "popcount",
+        "words": 16384,
+        "seed": 21684,
+        "pattern": "random",
+        "word_offset": 0
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 8
+}

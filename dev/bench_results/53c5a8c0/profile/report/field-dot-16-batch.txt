@@ -1,0 +1,33 @@
+# cycle samples of field-dot-16-batch (gf2 arm, cell field-dot-16-holdout)
+# recorded by run-profile.sh at 4000 Hz over 14997 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1546939842
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                     IPC   [IPC Coverage]
+# ........  ............  ....................  .........................................................................................  ....................
+#
+     1.16%            18  libc.so.6             [.] cfree                                                                                  -      -            
+     1.05%            15  libc.so.6             [.] malloc                                                                                 -      -            
+     5.94%            80  libc.so.6             [.] 0x0000000000176e84                                                                     -      -            
+     6.66%            88  libc.so.6             [.] 0x0000000000176e89                                                                     -      -            
+     7.36%            99  libc.so.6             [.] 0x0000000000176e8e                                                                     -      -            
+     8.17%           110  libc.so.6             [.] 0x0000000000176e93                                                                     -      -            
+     0.46%             6  libc.so.6             [.] 0x0000000000176eb3                                                                     -      -            
+    23.44%           319  profile-arm           [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run  -      -            
+    24.42%           327  profile-arm           [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>         -      -            
+    11.73%           163  profile-arm           [.] gf2_core::field::vec::FieldVec<gf2_core::gf2m::field::Gf2mElement_>::simd_dot_product  -      -            
+     5.40%            74  profile-arm           [.] gf2_kernels_simd::x86::clmul::clmul_batch                                              -      -            
+     1.61%            21  profile-arm           [.] gf2_kernels_simd::x86::clmul::clmul_u64                                                -      -            
+
+
+#
+# (Tip: To measure approximate function latency with Processor Trace use perf record -e intel_pt// ... ; perf script --call-ret-trace)
+#

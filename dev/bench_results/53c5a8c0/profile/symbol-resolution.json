@@ -1,0 +1,66 @@
+{
+  "entries": [
+    {
+      "note": null,
+      "object": "libc.so.6",
+      "object_path": "/usr/lib/libc.so.6",
+      "object_sha256": "e221b10fee9ee4776d8f0f1701253bc06817f7a4dbe6c5292487277d0bf8ffff",
+      "offset": "0x176e68",
+      "offset_into_symbol": "0x68",
+      "symbol": "__memset_avx2_unaligned_erms",
+      "symbol_size": 390
+    },
+    {
+      "note": null,
+      "object": "libc.so.6",
+      "object_path": "/usr/lib/libc.so.6",
+      "object_sha256": "e221b10fee9ee4776d8f0f1701253bc06817f7a4dbe6c5292487277d0bf8ffff",
+      "offset": "0x176e84",
+      "offset_into_symbol": "0x84",
+      "symbol": "__memset_avx2_unaligned_erms",
+      "symbol_size": 390
+    },
+    {
+      "note": null,
+      "object": "libc.so.6",
+      "object_path": "/usr/lib/libc.so.6",
+      "object_sha256": "e221b10fee9ee4776d8f0f1701253bc06817f7a4dbe6c5292487277d0bf8ffff",
+      "offset": "0x176e89",
+      "offset_into_symbol": "0x89",
+      "symbol": "__memset_avx2_unaligned_erms",
+      "symbol_size": 390
+    },
+    {
+      "note": null,
+      "object": "libc.so.6",
+      "object_path": "/usr/lib/libc.so.6",
+      "object_sha256": "e221b10fee9ee4776d8f0f1701253bc06817f7a4dbe6c5292487277d0bf8ffff",
+      "offset": "0x176e8e",
+      "offset_into_symbol": "0x8e",
+      "symbol": "__memset_avx2_unaligned_erms",
+      "symbol_size": 390
+    },
+    {
+      "note": null,
+      "object": "libc.so.6",
+      "object_path": "/usr/lib/libc.so.6",
+      "object_sha256": "e221b10fee9ee4776d8f0f1701253bc06817f7a4dbe6c5292487277d0bf8ffff",
+      "offset": "0x176e93",
+      "offset_into_symbol": "0x93",
+      "symbol": "__memset_avx2_unaligned_erms",
+      "symbol_size": 390
+    },
+    {
+      "note": null,
+      "object": "libc.so.6",
+      "object_path": "/usr/lib/libc.so.6",
+      "object_sha256": "e221b10fee9ee4776d8f0f1701253bc06817f7a4dbe6c5292487277d0bf8ffff",
+      "offset": "0x176eb3",
+      "offset_into_symbol": "0xb3",
+      "symbol": "__memset_avx2_unaligned_erms",
+      "symbol_size": 390
+    }
+  ],
+  "objdump": "GNU objdump (GNU Binutils) 2.47",
+  "schema": "clmul-crossover-symbol-resolution-v1"
+}

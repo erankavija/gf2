@@ -1,0 +1,212 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "wide-polynomial-competitiveness",
+    "issue": "53c5a8c0",
+    "purpose": "consumer-family",
+    "description": "How the current gf2 long product and the whole-consumer wide GF(2^m) field product compare with the pinned gf2x 1.3.0 build across operand widths, and where along that grid the comparison changes direction. Baseline arm: gf2 — the public clmul_wide_slice, which routes through routes through the crate's capability dispatch and overwrites a fresh destination as an external long-product library does, and Gf2mWide::mul_ref, which composes that dispatch with BarrettReducerWide. The accumulating clmul_wide_slice form is not measured here: timing a destination clear and an XOR accumulation against a library that performs neither would not be an equivalent operation. Candidate arm: gf2x_mul_r from the pinned build, composed with the same gf2 reducer where the cell is a field product, so the two arms differ in the product stage alone. A speedup of medians below one means gf2 is faster. The whole-consumer wide-field cells are the composed operation no earlier receipt measured: they carry the operand masking, the product and the field reduction inside the timed call. The raw independent carry-less batch has no external equivalent — gf2x exposes no batch entry point — so its cell composes one single-word gf2x call per product and is recorded as a composed arm bounding what a consumer reaching gf2x through its public API pays, not as an equivalent operation and not as a gf2x basecase rate. The study adopts no gf2x dependency and changes no gf2 multiplication. This addendum is the pilot: every cell is exploratory, it fixes the measurement resolution the confirmation freezes against, and none of its samples enter a confirmation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T13:12:48Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.15,
+    "rationale": "No cell of this family adopts anything: it measures a comparator gap under the study's exclusion of a gf2x dependency and of any gf2 multiplication change. The threshold is declared because the schema requires one for every family, and it is set at the same fifteen percent the crossover family uses so a reader comparing the two families reads one scale.",
+    "measurement_resolution": 0.07,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-pilot/receipt.json",
+      "sha256": "188b0fe2004f968f548be090b8022df234a7fd7233f5290be6c30185532678df"
+    },
+    "equivalence_margin": 1.08,
+    "equivalence_rationale": "The pilot's widest relative half-width puts one plus the measurement resolution above the five percent the pilot declared, so five percent can no longer be distinguished from measurement noise at this family's corrected confidence. Eight percent is the smallest two-decimal margin strictly above one plus that resolution, and it keeps the meaning the declaration had: a cell inside it establishes parity at that width rather than a direction.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A gap of a quarter is the smallest one worth attributing to an algorithm or an instruction mix rather than to call overhead, so it is the threshold at which a comparator-gap cell asks for attribution."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "The family adopts nothing. gf2x is GPL-3.0-or-later in the measured configuration and gf2 is MIT, and the study's scope excludes both a dependency on it and any change to gf2 multiplication, so no source line is available to spend."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/53c5a8c0/wide-polynomial-competitiveness-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "wide-field-256-composed",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "wide-field-mul-small",
+        "size": {
+          "words": 4,
+          "inner": 64
+        },
+        "seed": 5401
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "wide-field-571-composed",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "wide-field-mul-small",
+        "size": {
+          "words": 9,
+          "inner": 32
+        },
+        "seed": 5402
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-4w",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-small",
+        "size": {
+          "words": 4,
+          "inner": 64
+        },
+        "seed": 5411
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-9w",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-small",
+        "size": {
+          "words": 9,
+          "inner": 64
+        },
+        "seed": 5412
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "poly-16w",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "poly-mul-crossover",
+        "size": {
+          "words": 16,
+          "inner": 16
+        },
+        "seed": 5413
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "raw-batch-1024-composed",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "raw-batch-resident",
+        "size": {
+          "count": 1024,
+          "inner": 1
+        },
+        "seed": 5421
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

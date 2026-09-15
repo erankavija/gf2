@@ -37,6 +37,15 @@ pub mod transpose;
 pub use clmul_scalar::clmul_u64_scalar;
 pub use prefetch::prefetch_read_l1;
 
+/// Words one Harley-Seal carry-save block of [`LogicalFns::popcnt_csa_fn`]
+/// folds: sixteen 256-bit vectors, 512 bytes.
+///
+/// A buffer shorter than one block reaches only the carry-save kernel's
+/// per-vector remainder loop, so a tuning selector that routes to that kernel
+/// below this width can win nothing.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub const POPCOUNT_CSA_BLOCK_WORDS: usize = x86::popcount::CSA_BLOCK_WORDS;
+
 /// Register-tiled M4RM 8×4 C-update function.
 ///
 /// `c_block` contains eight contiguous output rows with `stride_words` words per
@@ -93,6 +102,31 @@ pub struct LogicalFns {
     pub not_fn: fn(&mut [u64]),
     pub popcnt_fn: fn(&[u64]) -> u64,
     pub and_popcnt_fn: fn(&[u64], &[u64]) -> u64,
+    /// Counts set bits one word at a time with the scalar `POPCNT`
+    /// instruction when the host reports it, and with the portable
+    /// `u64::count_ones` lowering otherwise.
+    ///
+    /// This route holds no vector state. It is the measured scalar comparator
+    /// of the count family: no `gf2-core` route selects it, because a resolved
+    /// call to it loses to the scalar backend's portable count at the widths
+    /// where it would apply (`dev/active/5cbb6545/findings.md`). `gf2-core`'s
+    /// `tests/popcount_routes.rs` holds it to the same counts as every other
+    /// route.
+    pub popcnt_scalar_fn: fn(&[u64]) -> u64,
+    /// Counts set bits through a Harley-Seal carry-save loop over 512-byte
+    /// blocks, counting every block remainder through the per-vector nibble
+    /// lookup [Mula2018].
+    ///
+    /// This is a measured comparator and is not selected by `gf2-core`'s
+    /// automatic dispatch because its confirmation receipt does not qualify.
+    pub popcnt_csa_fn: fn(&[u64]) -> u64,
+    /// Counts the set bits of `lhs & rhs` through the same carry-save loop as
+    /// [`Self::popcnt_csa_fn`], with each bit-plane ANDed from the two
+    /// operands as it is loaded, so no temporary buffer exists.
+    ///
+    /// This is a measured comparator and is not selected by `gf2-core`'s
+    /// automatic dispatch because its confirmation receipt does not qualify.
+    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,
     pub find_first_one_fn: fn(&[u64]) -> Option<usize>,
     pub find_first_zero_fn: fn(&[u64]) -> Option<usize>,
     pub shift_left_words_fn: fn(&mut [u64], usize),

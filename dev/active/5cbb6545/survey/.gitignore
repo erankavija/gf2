@@ -1,0 +1,6 @@
+# The harness crate's lock file pins the dependency graph a receipt was
+# taken against, so it is committed despite the repository-wide rule.
+!gf2-side/Cargo.lock
+
+# Python bytecode from the survey scripts.
+__pycache__/
