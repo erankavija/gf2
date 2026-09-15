@@ -368,6 +368,30 @@
       "doc_type": "benchmark",
       "label": "Address-attribution ledger for the re-sampled LDPC profile",
       "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/attribution.tsv"
+    },
+    {
+      "commit": "b928955118b0a8f5bb95b39fe5660a787aaec9f9",
+      "doc_type": "validation",
+      "label": "Current-source GPU conformance receipt runner",
+      "path": "dev/active/07ca8585/survey/run-device-conformance.py"
+    },
+    {
+      "commit": "b928955118b0a8f5bb95b39fe5660a787aaec9f9",
+      "doc_type": "benchmark",
+      "label": "gfx1030 current-source device conformance summary",
+      "path": "dev/bench_results/07ca8585/device-conformance-r1/summary.md"
+    },
+    {
+      "commit": "b928955118b0a8f5bb95b39fe5660a787aaec9f9",
+      "doc_type": "benchmark",
+      "label": "Hash-verified current-source device conformance receipt",
+      "path": "dev/bench_results/07ca8585/device-conformance-r1/receipt.json"
+    },
+    {
+      "commit": "b928955118b0a8f5bb95b39fe5660a787aaec9f9",
+      "doc_type": "benchmark",
+      "label": "Append-only current-source device conformance log",
+      "path": "dev/bench_results/07ca8585/device-conformance-r1/execution.log"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:24.786303643Z",
@@ -413,5 +437,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Remove allocation and repeated edge traversal from LDPC updates",
-  "updated_at": "2026-09-15T01:45:14.982205448Z"
+  "updated_at": "2026-09-15T02:08:31.596066986Z"
 }
