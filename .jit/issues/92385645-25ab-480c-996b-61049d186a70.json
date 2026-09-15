@@ -65,6 +65,13 @@
       "format": "markdown",
       "label": "Lead review round 1",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/92385645-r1.md"
+    },
+    {
+      "commit": "ce3e1957",
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Independent M4RI rework review round 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/92385645-r2.md"
     }
   ],
   "first_ready_at": "2026-09-15T00:55:29.092843264Z",
@@ -127,5 +134,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T04:04:42.885543843Z"
+  "updated_at": "2026-09-15T04:15:33.816133961Z"
 }

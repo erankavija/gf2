@@ -7,7 +7,41 @@
     "3e83c116-4623-4f45-a9bd-b45712a3dc17"
   ],
   "description": "Freeze the confirmatory protocol for isolated XOR and the selected unhoisted production routes before candidate measurements begin.\n\n## Background\n\nThe protocol covers 8, 9, 63, 64, and 65 words, deliberately offset views, neighboring sizes, relevant cache regimes, and both isolated and whole-consumer costs. It uses a public `row_xor` route plus one coding or elimination route whose actual stride lies in the story band. The ISA-L arm follows the qualified comparator specification and remains explicitly base-only if dispatched SIMD is unavailable.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins operations, input identities, alignments, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated throughput from whole-consumer benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The addendum excludes the preserved 64-word generic dispatch-hoist no-win from the candidate search unless a materially different consumer contract is demonstrated.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "adff007c618c3ccc1b28d3a65755cb438ab854762156070fdfbf99c55831b613",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-comparator.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"
+        }
+      ],
+      "commit": "1c80073f1e5a84502e136f945ce448145fb10c1d",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Logical-buffer measurement addendum",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+    }
+  ],
   "first_ready_at": "2026-09-15T03:18:34.802632305Z",
   "gates_required": [
     "repo-validate",
@@ -18,7 +52,33 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-15T04:11:25.097526589Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T04:14:41.600285575Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T04:09:06.152997579Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-09-15T04:05:55.233374947Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-15T04:14:49.746197922Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "3ea122df-f38e-4ce7-8c8b-4b594a8cf139",
   "labels": [
     "type:task",
@@ -34,5 +94,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the logical-buffer measurement addendum",
-  "updated_at": "2026-09-15T03:44:58.967599734Z"
+  "updated_at": "2026-09-15T04:14:49.746197922Z"
 }
