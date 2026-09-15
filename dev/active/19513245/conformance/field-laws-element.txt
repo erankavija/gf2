@@ -1,0 +1,9 @@
+cargo-budget: a --full-host bench run holds or is waiting for /tmp/gf2-ccx1.lock; waiting up to 1800s
+cargo-budget: 24 jobs (1 live, 24 cpus)
+    Finished `ci-test` profile [optimized] target(s) in 0.08s
+────────────
+ Nextest run ID a0f5c420-d135-4afa-a3a4-c7eb0e58c5f1 with nextest profile: ci
+    Starting 1 test across 88 binaries (2690 tests skipped)
+        PASS [   0.014s] (1/1) gf2-core field::axiom_tests::test_gf2_8_field_axioms
+────────────
+     Summary [   0.022s] 1 test run: 1 passed, 2690 skipped

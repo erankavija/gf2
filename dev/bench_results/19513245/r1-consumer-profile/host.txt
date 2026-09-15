@@ -1,0 +1,177 @@
+# consumer profile host record - produced by run-profile.sh
+# generated_utc: 2026-09-15T01:00:00Z
+# gf2 revision (informational): d7f61bbd81e44b7266924e07536c7235ecac4d5f
+
+## uname
+Linux fraktaali 7.2.2-arch1-1 #1 SMP PREEMPT_DYNAMIC Fri, 28 Aug 2026 16:09:39 +0000 x86_64 GNU/Linux
+
+## rustc
+rustc 1.95.0 (59807616e 2026-04-14)
+binary: rustc
+commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860
+commit-date: 2026-04-14
+host: x86_64-unknown-linux-gnu
+release: 1.95.0
+LLVM version: 22.1.2
+
+## RUSTFLAGS
+<unset>
+
+## perf
+perf version 7.2.4-1
+
+## lscpu
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  24
+On-line CPU(s) list:                     0-23
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 9 5900X 12-Core Processor
+CPU family:                              25
+Model:                                   33
+Thread(s) per core:                      2
+Core(s) per socket:                      12
+Socket(s):                               1
+Stepping:                                2
+Microcode version:                       0xa201211
+Frequency boost:                         enabled
+CPU(s) scaling MHz:                      68%
+CPU max MHz:                             4954.5649
+CPU min MHz:                             567.0890
+BogoMIPS:                                7399.51
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap
+L1d cache:                               384 KiB (12 instances)
+L1i cache:                               384 KiB (12 instances)
+L2 cache:                                6 MiB (12 instances)
+L3 cache:                                64 MiB (2 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-23
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Mitigation; Clear CPU buffers
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+## cache topology of cpu0
+index0 level=1 type=Data size=32K shared=0,12
+index1 level=1 type=Instruction size=32K shared=0,12
+index2 level=2 type=Unified size=512K shared=0,12
+index3 level=3 type=Unified size=32768K shared=0-5,12-17
+
+## governors
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu10/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu11/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu12/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu13/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu14/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu15/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu16/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu17/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu18/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu19/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu20/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu21/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu22/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu23/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu8/cpufreq/scaling_governor powersave
+/sys/devices/system/cpu/cpu9/cpufreq/scaling_governor powersave
+
+## smt
+on
+
+## perf_event_paranoid
+2
+
+## load average at start
+ 04:00:00 up 11 days,  5:29, 12 users,  load average: 1.11, 1.19, 1.17
+
+## harness executables
+e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc consumer-profile
+e974158bb0fdf150b53286ef61bac84239436aa029cb2b3268f0c9f0b59df3d1 consumer-arm
+3bfac045006f0ba6ea72f93cb59a8035b7829c3ee67613c5d7e61e296ee40d42 consumer-verify
+
+## harness sources
+70f96dac34271197be223a9e28c19146a51f5f6cc76e09d940874a2706993c1e  dev/active/19513245/survey/asm/consumer-arm/current-batch-kernel.asm.txt
+b07ad3b8fa0f2dfef4512833222a757416c25061bfc99c2ebf4319ae2aef5c8b  dev/active/19513245/survey/asm/consumer-arm/current-batch-mul-raw.asm.txt
+39e1eacf93a483520c3538eb8892bfdbaf0afa16dd5bf3bf9738260388371cef  dev/active/19513245/survey/asm/consumer-arm/current-dot-product-slices.asm.txt
+618fc93c5edb5897c41966ab2bdd39b4e8325de3a9c4f4a30cb54f2aaaa8ae8c  dev/active/19513245/survey/asm/consumer-arm/current-fieldvec-axpy.asm.txt
+ade6a88388d789b9b37e2f63bb797b8b21eb39bb5e7ce495acb97134b79d7d7f  dev/active/19513245/survey/asm/consumer-arm/current-wide-mul-ref.asm.txt
+7573b98874036b17b7ae46c8c753917f6557c644e0654127b25adb41876f307e  dev/active/19513245/survey/asm/consumer-arm/index.txt
+f7fc6910228f420af73b8fb4183b82df9afe59b8a1c87f2e2a71f8d4db25d3d6  dev/active/19513245/survey/asm/consumer-arm/instruction-mix.txt
+4a5d0b73f7300efa19d26c9f1da48f2600f086c562849979269b7fc32b15c721  dev/active/19513245/survey/asm/consumer-arm/prototype-axpy-field-vec.asm.txt
+7a93839b6b997b3f713e76f5d6d8bcbfe3a916073b5b5de73ae792279ed4e7ca  dev/active/19513245/survey/asm/consumer-arm/prototype-axpy-region.asm.txt
+d20fc0bb7da26ce8bcc0f0247ce9b98a007c9170d9e2a267b4c6b93b0663f0fc  dev/active/19513245/survey/asm/consumer-arm/prototype-gemm-region.asm.txt
+e6951360d0067166e8e9de8ebddce9b9717a23a9aa2e7435f1085deb5aab2eec  dev/active/19513245/survey/asm/consumer-arm/prototype-matvec-region.asm.txt
+4828d25b8edbcb8a240f770c8c2340825631194738bc5abca918474f26925bc9  dev/active/19513245/survey/asm/consumer-arm/prototype-pairwise-region.asm.txt
+b3e1f82170c3abef918721050ceba4b30bb1bea641a0bf7213ece49650df27b6  dev/active/19513245/survey/asm/consumer-arm/prototype-table-refill.asm.txt
+53a128ccafd87daa0032ea83cfeecc94302c6f17b3fee7c8f06e12e4388ee4dc  dev/active/19513245/survey/asm/consumer-arm/symbols.txt
+f0c00332570e58247894fde769205488252f4ab0589059e332a54e3302aa1c1e  dev/active/19513245/survey/asm/consumer-profile/current-batch-kernel.asm.txt
+2eaaa206e0532e9c216bb6fd03b8e16e085b3ef0d9e52181c6d34330879270eb  dev/active/19513245/survey/asm/consumer-profile/current-batch-mul-raw.asm.txt
+212dea40beddb285cbef7af0738a520552e7f234189886bdb3c00784a6db8f82  dev/active/19513245/survey/asm/consumer-profile/current-dot-product-slices.asm.txt
+95e9582adb86c958f4ae0c6069f9503d320a8fa61a18c7e96e9cb34a091951df  dev/active/19513245/survey/asm/consumer-profile/current-fieldvec-axpy.asm.txt
+6a3b63c54a6a031c861d9f0977072838a5b851618a34b15a66d3935c6cac5ad3  dev/active/19513245/survey/asm/consumer-profile/current-wide-mul-ref.asm.txt
+1034fc42eddb31f51c5ac072e0080a0d7453a9cc6e059024b7b5c4b40874bb4d  dev/active/19513245/survey/asm/consumer-profile/index.txt
+1a5bdd984ed98a66adbcb4bb8366a76990646f72726457cd52982a4c131356db  dev/active/19513245/survey/asm/consumer-profile/instruction-mix.txt
+07e7653dcc4ad1b41b4d136dbf1c54a2ac1c478e2aac13ae232730eb2d0fd5f1  dev/active/19513245/survey/asm/consumer-profile/prototype-axpy-field-vec.asm.txt
+de081411c3e8e22743b258d56bbd97ed5fd2fca4e7a360d76d95caa8586dba65  dev/active/19513245/survey/asm/consumer-profile/prototype-axpy-region.asm.txt
+20c3d15267ecd4b9a1e5cbfb3f785302b62c1b4bf7e31bacb7d4cf600c0616ab  dev/active/19513245/survey/asm/consumer-profile/prototype-gemm-region.asm.txt
+503faa4ae9da9fb66a66e018ecc3bce3130a9689aa173f4076adde29ad97e48d  dev/active/19513245/survey/asm/consumer-profile/prototype-matvec-region.asm.txt
+cdfc6fef39ea020ba096cfd582f536df73d6709f68f32868cac5f7a37a35e60d  dev/active/19513245/survey/asm/consumer-profile/prototype-pairwise-region.asm.txt
+76e274bffe0db16e711e4c0228b438fa2ae7a01f2f1c0df0f315213e71063622  dev/active/19513245/survey/asm/consumer-profile/prototype-table-refill.asm.txt
+6239cf752630f5a51172f30b845c49733f240ede855ba9b1e37ee7d6a639dc62  dev/active/19513245/survey/asm/consumer-profile/symbols.txt
+66dcdbeab5fc6b24b4f56749cae48b9953383821d1feb07e2168d608eb1f7cdc  dev/active/19513245/survey/asm-symbols.txt
+3f37e4fd6b184cbad19f4f234ca1e7fa344e5e3a737b42828526a00e20864316  dev/active/19513245/survey/consumer/Cargo.lock
+8bd25d571eb9a442706f0a528a4fe50b1f7a26673a5e2aace6cdc99aad79a86c  dev/active/19513245/survey/consumer/Cargo.toml
+60422b1d384f59309c774dd00160d802666b0fcc1293f414c8f6d3b2130aebfc  dev/active/19513245/survey/consumer/src/bin/consumer-arm.rs
+d7ed873241bc876e6acb8d41e8ba4229d7144f63f4da63b9c7b60155b95caa62  dev/active/19513245/survey/consumer/src/bin/consumer-profile.rs
+1418412399ad226923f32b9fec3d75da59a24d6bdc2d7716d6c5b37ab1ace6de  dev/active/19513245/survey/consumer/src/bin/consumer-verify.rs
+d9dd2d365f6f618987b700440b21a774804660a7f21c858d3586b232ffa552b5  dev/active/19513245/survey/consumer/src/lib.rs
+77c90596e3e2d7a033551ef28a3b55b26ab4640bcff4f5aabfa4e1efc21e3262  dev/active/19513245/survey/consumer/src/table.rs
+9acabb04015e99631cff2a12a27448cad8c0ad269e18ebd84a211aaaadbc8c77  dev/active/19513245/survey/counter-cases.txt
+3797e37a51c94fa19799812d88e22d8896a622d3e30e817d18d4410178afa1b2  dev/active/19513245/survey/disassemble.sh
+b5da597650e4f08e985c2e07f3bcba89d5dd6a5972072cada9f00c1b34360d33  dev/active/19513245/survey/field-laws/Cargo.lock
+440fb02a55fba24bfb19971439143056c3d6d21507df43393ded4e570e071ece  dev/active/19513245/survey/field-laws/Cargo.toml
+8735253dd12a6dc5f59b53ca2e1a9b56dcc7cdc2cdb0aab62b40b2b4ce4c79f9  dev/active/19513245/survey/field-laws/src/main.rs
+c7fec74c4d1a465ee87a1472bc83a6504fda87cfbbb3e403d1d75500c1e3a783  dev/active/19513245/survey/freeze-confirmations.sh
+4c82f4d58ee1d2ddec7c07359ec2d2239748f0f50f03fe428fc0c1f14d410439  dev/active/19513245/survey/make-addenda.py
+9646f11600ff6eb049acbb5aef6c1b4df0d24e292beb84ca575995d9e9e24b9c  dev/active/19513245/survey/make-plan.py
+d04c486efec8fc79a5bc23678aba399ce2fc50767afbd647119cb1df2e604a0b  dev/active/19513245/survey/make-producing-inputs.py
+71f8945d2ac8e2d3fdb726f0712770f6afe81ebcc9ca94810b775216b10ed01f  dev/active/19513245/survey/make-source-evidence.py
+bef9097066c65d28ccc5114c3c0b263660ce5a83600a0bc5f31a0b8fd77fec3e  dev/active/19513245/survey/msrv-intrinsics.rs
+b75855be6807fb7a282b2e4a23dd1187045a1eed4c6e40775dae30ae7d3c5023  dev/active/19513245/survey/producing-inputs.json
+a77c9f62c2f16a571a007d5a0c54f3fb581b9913c736778ed0d9e07b6f56b50d  dev/active/19513245/survey/run-profile.sh
+bad84193f23a34e3289de65791aaea0227ecb19569fb440555ac44152d9dc5f4  dev/active/19513245/survey/smoke-arms.sh
+3d398050a982179f28153ccce01c36b7b723feca8714749fcd6b89d852276ecf  dev/active/19513245/survey/source-evidence.json
+485467ebd0e2889f14db7ea2b472e14fde14ed605259cbe38336337fbddcdfa8  dev/active/19513245/survey/summarize-profile.py
+66c2f2b980e7c4be49a37e30ea9b9a24e296ce664299c34b5f7f3e0ecd462107  dev/active/19513245/survey/sweep.sh
+
+## production crate sources
+2ece6eb815336e3e31518dfd40b8b222a17f01d44bc810c9b710a0773e22cf18 (sha256 over the sorted per-file digest list)
+
+## load average at end
+ 04:01:29 up 11 days,  5:30, 12 users,  load average: 1.40, 1.23, 1.19
+# finished_utc: 2026-09-15T01:01:29Z

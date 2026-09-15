@@ -1,0 +1,128 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "bytefield-consumer-control",
+    "issue": "19513245",
+    "purpose": "consumer-family",
+    "description": "Confirmatory stage of issue 19513245, protocol version 4: every cell of this addendum is confirmatory and spends one comparison of its family's budget. The addendum is frozen from the family's own committed exploratory pilot receipt, which the effect rule pins by content and which supplies the measurement resolution; the margins are the ones declared with that pilot, unchanged. The cells are the pilot's own cells with the role changed, so each measures the workload, size, seed, cache state, metric kind and arms its pilot measured, on fresh samples at the protocol's confirmatory pair count. Question: how much of any vector or matrix result belongs to coefficient reuse rather than to byte arithmetic as such? Arbitrary independent multiplication z[i] = x[i]*y[i] reuses no coefficient, so its byte-oriented route can amortise no coefficient table and reaches the full 256-by-256 table instead, while the current route is gf2m::batch::batch_mul on u64 lanes, the one gf2 GF(2^8) consumer that already dispatches to a carry-less-multiply batch kernel. Cells at 4 KiB and 128 KiB kernel-isolated and at 128 KiB from and to a byte region. This family is the control: it shares no cell with the reuse families and decides no adoption of its own. Every cell works in GF(2^8) modulo 0x11D (x^8+x^4+x^3+x^2+1), the field Gf2mField::gf256() builds and the field the byte-field comparison survey 6c6b09b1 measured every pinned library in, so a cell of this assessment and a cell of that survey at the same shape describe the same arithmetic. The prototype builds its table from the field's own reduction polynomial and is validated over 0x11B as well; no cell measures 0x11B, because gf2 ships no GF(2^8) field modulo 0x11B and the comparison survey has no ISA-L baseline for one. A cell identifier ends in the representation the consumer holds: element = FieldVec/FieldMatrix<Gf2mElement> over Gf2mField::gf256(); wide = FieldVec/FieldMatrix<Gf2mWide<1,Gf256x11d>>, the survey's 0x11D Gf2mWideConfig; batch = the u64 lanes gf2m::batch::batch_mul reads. The baseline arm is that representation's current gf2-core route and the candidate arm is the byte-field prototype over the same field, both from one executable that selects the route from its environment, so the two arms of a pair share a build identity and differ only in the route. Both arms are conservative-portable builds with no target-cpu setting, because that is the build a gf2 consumer gets: the carry-less-multiply kernels the current routes reach are dispatched at run time and are present in such a build, while a -march=native build would give the prototype's scalar loop an auto-vectorisation no shipped library provides. The prototype is byte-oriented GF(2^8) arithmetic: the products of one fixed coefficient with all 256 field elements are a 256-byte table, so multiplying by a reused coefficient costs one indexed load and accumulating costs one XOR, whatever width the element is stored in. A vector cell prepares that table inside the timed call, because the consumer passes a new coefficient with every call. A matrix or control cell reaches the full 256-by-256 table instead, which depends on the field alone; it is prepared during preparation and reported as setup, because a production design would build it once per field. The prototype is safe scalar Rust and uses no intrinsic. Operands come from SplitMix64 [Steele2014] as implemented in tuning-campaign-support 0.1.0 (dev/tools/tuning-campaign-support/src/abtest.rs), seeded with the cell's workload seed and read through OperandStream in dev/active/6c6b09b1/survey/arm-common/src/lib.rs: each operand byte is the low byte of one output, and the fixed coefficient of a region or vector cell is the next output's low byte with its low bit set, so no cell measures the zero coefficient (the validation covers that case and every other byte coefficient). Every cell is single-core: FieldVec::axpy, field::matrix::gemm and gf2m::batch::batch_mul have no parallel form in these builds and neither has the prototype, so a 6-, 12- or 24-CPU arm would time a harness thread pool rather than either route, and none is declared."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T17:49:41Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.3,
+    "rationale": "Adopting the prototype means gf2-core carries a second GF(2^8) multiplication implementation: a table type with a lifecycle the consumer has to manage, a dispatch branch in each consumer that uses it, and a conformance surface over every byte coefficient of every supported polynomial. Thirty percent of the consumer's measured runtime is the smallest return that repays that permanent second path, and it is the point at which a consumer whose work is dominated by these calls sees the change. The threshold is a complexity judgement, not a measurement one: the confirmation freezes a pilot-derived resolution far below it.",
+    "measurement_resolution": 0.04,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/19513245/r1-control-pilot/receipt.json",
+      "sha256": "5e7a93870e0bd3026b17985e5949d65d9f6e3c76ee3ecc4936ad9486778f6392"
+    },
+    "equivalence_margin": 1.15,
+    "equivalence_rationale": "Within fifteen percent the two routes are interchangeable for a consumer, which is the band in which this assessment would report a route as no improvement rather than as a regression. The confirmation freezes a pilot-derived resolution strictly below this margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell is a comparator-gap cell: every cell compares two gf2 routes over the same field rather than gf2 against an external library, so no material-gap threshold applies. The external gap at these shapes is the committed evidence of the byte-field comparison survey 6c6b09b1."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 400,
+    "maintenance_rationale": "The prototype is safe scalar Rust: a table type, one hook override per consumer and the table lifecycle around them. Four hundred lines with their rustdoc and their conformance hooks is what that shape costs at this repository's documentation density, and no new unsafe kernel is allowed, because a vectorised successor would be a separate proposal with its own feasibility evidence. This issue adopts nothing, so the budget bounds the proposal a positive outcome would put up for review."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/19513245/control-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "pairwise-4k-batch",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-4096-bytes",
+        "size": {
+          "bytes": 4096
+        },
+        "seed": 1301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-128k-batch",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 1302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "pairwise-128k-whole-batch",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-pairwise-multiply-131072-bytes",
+        "size": {
+          "bytes": 131072
+        },
+        "seed": 1302
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

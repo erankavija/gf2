@@ -1,0 +1,7 @@
+# MSRV feasibility of a vectorised byte-field successor (jit:19513245)
+# rustc: rustc 1.95.0 (59807616e 2026-04-14)
+# source: dev/active/19513245/survey/msrv-intrinsics.rs
+# command: rustc --edition 2021 -O --crate-type lib --emit metadata
+# result: compiled, metadata sha256 34c24e3f880832d83e4f195593302ed593105c97c78cb2790dbfc500e0944246
+# the measured prototype itself names no intrinsic; the arm's own
+# compile at this toolchain is its MSRV evidence.

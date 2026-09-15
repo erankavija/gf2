@@ -1,0 +1,15 @@
+ok        coefficient and full multiplication tables against the bit-by-bit oracle, all 256 coefficients by all 256 values, polynomials 0x11D and 0x11B (262146 checks)
+ok        region multiply-accumulate for every byte coefficient over 0x11D and 0x11B, with the zero and one coefficients checked for their defining property (516 checks)
+ok        empty, single-element, word-boundary and odd tail lengths on the region route, the in-place vector route and FieldVec::axpy (27 checks)
+ok        regions at every source and destination byte offset from 0 to 7 (64 checks)
+ok        the overlap contract: destination is &mut and source is &, so no route admits an aliasing call; both leave the source unmodified (2 checks)
+ok        the in-place vector route against FieldVec::axpy for Gf2mElement and Gf2mWide<1,_> over 0x11D and 0x11B (28 checks)
+ok        the dense product and the matrix-vector product against gemm and matvec (12 checks)
+ok        the arbitrary pairwise route against gf2m::batch::batch_mul (6 checks)
+observed  gf2m batch kernel available: true
+observed  gf2m whole-gemm kernel available: true
+observed  FieldMatrix<Gf2mElement> gemm route: per-cell-batch-dot/vpclmulqdq-batch
+observed  FieldMatrix<Gf2mWide<1,Gf256x11d>> gemm route: whole-gemm/vpclmulqdq-gemm
+observed  Gf2mField::gf256() log/antilog tables: false
+observed  Gf2mField::new(8, 0x11B) log/antilog tables: false
+PASSED    every check held

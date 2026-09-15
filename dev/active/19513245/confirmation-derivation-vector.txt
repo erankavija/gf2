@@ -1,0 +1,40 @@
+pilot receipt  dev/bench_results/19513245/r1-vector-pilot/receipt.json
+receipt sha256 f472c7f48cef6c743e8c29ccbc29460f704869c274572f1908ed5909b70cddcb
+campaign       19513245-r1-vector-pilot
+verdict        accepted (label pilot)
+family         bytefield-consumer-vector: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+axpy-4k-element                         12      2.4287      2.4141      2.4404    0.0060
+axpy-128k-element                       12      2.4287      2.4239      2.4355    0.0028
+axpy-8m-element                         12      2.1886      2.1825       2.194    0.0028
+axpy-2m-stream-element                  12       2.448      2.4418      2.4561    0.0033
+region-4k-element                       12      51.229      51.076      51.415    0.0036
+region-128k-element                     12      58.622      58.477      58.678    0.0025
+axpy-4k-wide                            12      102.28      100.96       103.4    0.0129
+axpy-128k-wide                          12      108.27      106.91      111.38    0.0287
+axpy-8m-wide                            12      81.296      79.846      82.011    0.0178
+axpy-2m-stream-wide                     12      79.051      78.899      81.294    0.0284
+region-4k-wide                          12      141.41      141.14      141.68    0.0019
+region-128k-wide                        12      162.16      161.62      162.35    0.0033
+
+widest relative half-width   0.028681
+frozen measurement resolution 0.03
+restated the family description for the confirmatory stage
+
+selection      6 of 12 pilot cells become confirmatory
+rationale      The confirmatory budget of a family's first attempt admits six cells, so the confirmation spends them on the sweep that answers the question and leaves the rest of the pilot's breadth as exploratory evidence. The six are the whole warm cache sweep of the element representation, the 128 KiB vector cell of the wide representation, and both 128 KiB region cells: between them they cover both shapes, both element representations and the three warm cache regimes. The streaming regime, the 4 KiB and 8 MiB wide cells and the 4 KiB region cells keep the pilot's exploratory strength.
+retained       axpy-4k-element
+retained       axpy-128k-element
+retained       axpy-8m-element
+retained       region-128k-element
+retained       axpy-128k-wide
+retained       region-128k-wide
+dropped        axpy-2m-stream-element
+dropped        region-4k-element
+dropped        axpy-4k-wide
+dropped        axpy-8m-wide
+dropped        axpy-2m-stream-wide
+dropped        region-4k-wide
+margins: equivalence 1.15, material gap None
+confirmation addendum dev/active/19513245/addendum-v4-vector-confirmation.json

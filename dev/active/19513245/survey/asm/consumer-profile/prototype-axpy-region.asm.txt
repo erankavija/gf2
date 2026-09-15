@@ -1,0 +1,46 @@
+# label: prototype-axpy-region
+# pattern: bytefield_consumer::axpy_region
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# text symbols matching this pattern: 1
+
+## symbol at 000000000001ee40, 0x00000000000000a3 bytes
+000000000001ee40 <bytefield_consumer::axpy_region>:
+   1ee40:	sub    $0x18,%rsp
+   1ee44:	mov    %rsi,0x8(%rsp)
+   1ee49:	mov    %r8,0x10(%rsp)
+   1ee4e:	cmp    %r8,%rsi
+   1ee51:	jne    1eebd <bytefield_consumer::axpy_region+0x7d>
+   1ee53:	test   %rsi,%rsi
+   1ee56:	je     1eeb8 <bytefield_consumer::axpy_region+0x78>
+   1ee58:	cmp    $0x1,%rsi
+   1ee5c:	jne    1ee62 <bytefield_consumer::axpy_region+0x22>
+   1ee5e:	xor    %eax,%eax
+   1ee60:	jmp    1eead <bytefield_consumer::axpy_region+0x6d>
+   1ee62:	movabs $0x7ffffffffffffffe,%r8
+   1ee6c:	and    %rsi,%r8
+   1ee6f:	xor    %eax,%eax
+   1ee71:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   1ee80:	movzbl (%rcx,%rax,1),%r9d
+   1ee85:	movzbl (%rdx,%r9,1),%r9d
+   1ee8a:	xor    %r9b,(%rdi,%rax,1)
+   1ee8e:	movzbl 0x1(%rcx,%rax,1),%r9d
+   1ee94:	movzbl (%rdx,%r9,1),%r9d
+   1ee99:	xor    %r9b,0x1(%rdi,%rax,1)
+   1ee9e:	add    $0x2,%rax
+   1eea2:	cmp    %rax,%r8
+   1eea5:	jne    1ee80 <bytefield_consumer::axpy_region+0x40>
+   1eea7:	test   $0x1,%sil
+   1eeab:	je     1eeb8 <bytefield_consumer::axpy_region+0x78>
+   1eead:	movzbl (%rcx,%rax,1),%ecx
+   1eeb1:	movzbl (%rdx,%rcx,1),%ecx
+   1eeb5:	xor    %cl,(%rdi,%rax,1)
+   1eeb8:	add    $0x18,%rsp
+   1eebc:	ret
+   1eebd:	lea    -0x16284(%rip),%rcx        # 8c40 <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x80>
+   1eec4:	lea    0x63855(%rip),%r9        # 82720 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x18>
+   1eecb:	lea    0x8(%rsp),%rsi
+   1eed0:	lea    0x10(%rsp),%rdx
+   1eed5:	mov    $0x39,%r8d
+   1eedb:	xor    %edi,%edi
+   1eedd:	call   *0x6690d(%rip)        # 857f0 <_DYNAMIC+0x2e8>

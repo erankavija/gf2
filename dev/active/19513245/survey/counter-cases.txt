@@ -1,0 +1,19 @@
+# Cases whose hardware counters the profile records (jit:19513245).
+#
+# One line per case identifier of the `consumer-profile` ladder. These are the
+# routes the findings explain: the vector and region shapes on both element
+# representations, the two dense-product paths, and the control.
+axpy-128k-element-current
+axpy-128k-element-prototype
+axpy-128k-wide-current
+axpy-128k-wide-prototype
+region-128k-element-current
+region-128k-element-prototype
+matmul-n256-element-current
+matmul-n256-element-prototype
+matmul-n256-wide-current
+matmul-n256-wide-prototype
+matvec-n256-element-current
+matvec-n256-element-prototype
+pairwise-128k-batch-current
+pairwise-128k-batch-prototype

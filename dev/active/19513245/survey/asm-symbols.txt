@@ -1,0 +1,19 @@
+# Routines whose generated code this assessment cites (jit:19513245).
+# Fields: label|demangled symbol substring
+#
+# A prototype route carries #[inline(never)] so it survives as its own symbol;
+# a gf2-core routine survives because it is reached through a generic
+# instantiation or a function pointer. A routine that does not appear was
+# inlined into its caller, and its file records that rather than leaving a
+# silent gap.
+current-fieldvec-axpy|gf2_core::field::vec::FieldVec<F>::axpy
+current-dot-product-slices|gf2_core::field::vec::dot_product_slices
+current-wide-mul-ref|gf2_core::gf2m::wide::Gf2mWide<_,Cfg>::mul_ref
+current-batch-mul-raw|gf2_core::gf2m::batch::batch_mul_raw
+current-batch-kernel|gf2m_batch_mul_ymm_unroll4
+prototype-axpy-region|bytefield_consumer::axpy_region
+prototype-axpy-field-vec|bytefield_consumer::axpy_field_vec
+prototype-gemm-region|bytefield_consumer::gemm_region
+prototype-matvec-region|bytefield_consumer::matvec_region
+prototype-pairwise-region|bytefield_consumer::pairwise_region
+prototype-table-refill|CoefficientTable::refill

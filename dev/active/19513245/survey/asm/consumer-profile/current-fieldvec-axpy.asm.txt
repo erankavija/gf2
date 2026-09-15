@@ -1,0 +1,121 @@
+# label: current-fieldvec-axpy
+# pattern: gf2_core::field::vec::FieldVec<F>::axpy
+# binary: target/19513245-survey/release/consumer-profile
+# binary sha256: e4703abb62b930772549c9b9e34691f28132f9da20b29b1f203fdf3d3d7768dc
+# text symbols matching this pattern: 1
+
+## symbol at 0000000000038230, 0x00000000000001e1 bytes
+0000000000038230 <gf2_core::field::vec::FieldVec<F>::axpy>:
+   38230:	push   %rbp
+   38231:	push   %r15
+   38233:	push   %r14
+   38235:	push   %r13
+   38237:	push   %r12
+   38239:	push   %rbx
+   3823a:	sub    $0x68,%rsp
+   3823e:	mov    %r8,0x48(%rsp)
+   38243:	mov    %rcx,0x40(%rsp)
+   38248:	mov    %rsi,%r15
+   3824b:	mov    %rsi,0x50(%rsp)
+   38250:	mov    %r9,0x58(%rsp)
+   38255:	cmp    %r9,%rsi
+   38258:	jne    3835f <gf2_core::field::vec::FieldVec<F>::axpy+0x12f>
+   3825e:	test   %r15,%r15
+   38261:	je     38335 <gf2_core::field::vec::FieldVec<F>::axpy+0x105>
+   38267:	mov    %rdi,%r12
+   3826a:	mov    $0x8,%r13d
+   38270:	mov    %rdx,0x38(%rsp)
+   38275:	jmp    38292 <gf2_core::field::vec::FieldVec<F>::axpy+0x62>
+   38277:	nopw   0x0(%rax,%rax,1)
+   38280:	add    $0x10,%r13
+   38284:	dec    %r15
+   38287:	mov    0x38(%rsp),%rdx
+   3828c:	je     38335 <gf2_core::field::vec::FieldVec<F>::axpy+0x105>
+   38292:	lock incq (%rdx)
+   38296:	jle    3835d <gf2_core::field::vec::FieldVec<F>::axpy+0x12d>
+   3829c:	mov    0x48(%rsp),%rax
+   382a1:	mov    -0x8(%rax,%r13,1),%r14
+   382a6:	mov    (%rax,%r13,1),%rcx
+   382aa:	lock incq (%r14)
+   382ae:	jle    3835d <gf2_core::field::vec::FieldVec<F>::axpy+0x12d>
+   382b4:	mov    %rdx,0x8(%rsp)
+   382b9:	mov    0x40(%rsp),%rsi
+   382be:	mov    %rsi,0x10(%rsp)
+   382c3:	mov    %r14,0x18(%rsp)
+   382c8:	mov    %rcx,0x20(%rsp)
+   382cd:	mov    %rdx,%rdi
+   382d0:	mov    %r14,%rdx
+   382d3:	call   3a0b0 <<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul>
+   382d8:	mov    %rax,%rbp
+   382db:	mov    %rdx,%rbx
+   382de:	lock decq (%r14)
+   382e2:	jne    382ef <gf2_core::field::vec::FieldVec<F>::axpy+0xbf>
+   382e4:	lea    0x18(%rsp),%rdi
+   382e9:	call   *0x4d569(%rip)        # 85858 <_DYNAMIC+0x350>
+   382ef:	mov    0x8(%rsp),%rax
+   382f4:	lock decq (%rax)
+   382f8:	jne    38305 <gf2_core::field::vec::FieldVec<F>::axpy+0xd5>
+   382fa:	lea    0x8(%rsp),%rdi
+   382ff:	call   *0x4d553(%rip)        # 85858 <_DYNAMIC+0x350>
+   38305:	mov    %rbp,0x18(%rsp)
+   3830a:	mov    %rbx,0x20(%rsp)
+   3830f:	cmp    %rbp,-0x8(%r12,%r13,1)
+   38314:	jne    38344 <gf2_core::field::vec::FieldVec<F>::axpy+0x114>
+   38316:	xor    %rbx,(%r12,%r13,1)
+   3831a:	lock decq 0x0(%rbp)
+   3831f:	jne    38280 <gf2_core::field::vec::FieldVec<F>::axpy+0x50>
+   38325:	lea    0x18(%rsp),%rdi
+   3832a:	call   *0x4d528(%rip)        # 85858 <_DYNAMIC+0x350>
+   38330:	jmp    38280 <gf2_core::field::vec::FieldVec<F>::axpy+0x50>
+   38335:	add    $0x68,%rsp
+   38339:	pop    %rbx
+   3833a:	pop    %r12
+   3833c:	pop    %r13
+   3833e:	pop    %r14
+   38340:	pop    %r15
+   38342:	pop    %rbp
+   38343:	ret
+   38344:	lea    -0x2f5c1(%rip),%rdi        # 8d8a <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x1ca>
+   3834b:	lea    0x4ae3e(%rip),%rdx        # 83190 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xa88>
+   38352:	mov    $0x53,%esi
+   38357:	call   *0x4d423(%rip)        # 85780 <_DYNAMIC+0x278>
+   3835d:	ud2
+   3835f:	mov    %r15,0x60(%rsp)
+   38364:	mov    %r9,0x8(%rsp)
+   38369:	lea    0x60(%rsp),%rax
+   3836e:	mov    %rax,0x18(%rsp)
+   38373:	mov    0x4d4d6(%rip),%rax        # 85850 <_DYNAMIC+0x348>
+   3837a:	mov    %rax,0x20(%rsp)
+   3837f:	lea    0x8(%rsp),%rcx
+   38384:	mov    %rcx,0x28(%rsp)
+   38389:	mov    %rax,0x30(%rsp)
+   3838e:	lea    -0x3128d(%rip),%rcx        # 7108 <anon.fc0f47fa9653821f57d5a55292b6eb36.1.llvm.11340752617015147710+0x10b>
+   38395:	lea    0x4ac14(%rip),%r9        # 82fb0 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0x8a8>
+   3839c:	lea    0x50(%rsp),%rsi
+   383a1:	lea    0x58(%rsp),%rdx
+   383a6:	lea    0x18(%rsp),%r8
+   383ab:	xor    %edi,%edi
+   383ad:	call   *0x4d43d(%rip)        # 857f0 <_DYNAMIC+0x2e8>
+   383b3:	mov    %rax,%rbx
+   383b6:	jmp    383cc <gf2_core::field::vec::FieldVec<F>::axpy+0x19c>
+   383b8:	mov    %rax,%rbx
+   383bb:	lock decq (%r14)
+   383bf:	jne    383cc <gf2_core::field::vec::FieldVec<F>::axpy+0x19c>
+   383c1:	lea    0x18(%rsp),%rdi
+   383c6:	call   *0x4d48c(%rip)        # 85858 <_DYNAMIC+0x350>
+   383cc:	mov    0x8(%rsp),%rax
+   383d1:	lock decq (%rax)
+   383d5:	jne    38403 <gf2_core::field::vec::FieldVec<F>::axpy+0x1d3>
+   383d7:	lea    0x8(%rsp),%rdi
+   383dc:	call   *0x4d476(%rip)        # 85858 <_DYNAMIC+0x350>
+   383e2:	jmp    38403 <gf2_core::field::vec::FieldVec<F>::axpy+0x1d3>
+   383e4:	call   *0x4d486(%rip)        # 85870 <_DYNAMIC+0x368>
+   383ea:	mov    %rax,%rbx
+   383ed:	mov    0x18(%rsp),%rax
+   383f2:	lock decq (%rax)
+   383f6:	jne    38403 <gf2_core::field::vec::FieldVec<F>::axpy+0x1d3>
+   383f8:	lea    0x18(%rsp),%rdi
+   383fd:	call   *0x4d455(%rip)        # 85858 <_DYNAMIC+0x350>
+   38403:	mov    %rbx,%rdi
+   38406:	call   81590 <_Unwind_Resume@plt>
+   3840b:	call   *0x4d45f(%rip)        # 85870 <_DYNAMIC+0x368>

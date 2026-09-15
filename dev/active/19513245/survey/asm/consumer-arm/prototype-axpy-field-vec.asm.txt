@@ -1,0 +1,132 @@
+# label: prototype-axpy-field-vec
+# pattern: bytefield_consumer::axpy_field_vec
+# binary: target/19513245-survey/release/consumer-arm
+# binary sha256: e974158bb0fdf150b53286ef61bac84239436aa029cb2b3268f0c9f0b59df3d1
+# text symbols matching this pattern: 2
+
+## symbol at 000000000003e370, 0x0000000000000161 bytes
+000000000003e370 <bytefield_consumer::axpy_field_vec>:
+   3e370:	push   %rbp
+   3e371:	push   %r15
+   3e373:	push   %r14
+   3e375:	push   %r13
+   3e377:	push   %r12
+   3e379:	push   %rbx
+   3e37a:	sub    $0x38,%rsp
+   3e37e:	mov    %rsi,0x8(%rsp)
+   3e383:	mov    %rdx,0x28(%rsp)
+   3e388:	mov    %r9,0x30(%rsp)
+   3e38d:	cmp    %r9,%rdx
+   3e390:	jne    3e480 <bytefield_consumer::axpy_field_vec+0x110>
+   3e396:	mov    %rdx,%rbx
+   3e399:	test   %rdx,%rdx
+   3e39c:	je     3e458 <bytefield_consumer::axpy_field_vec+0xe8>
+   3e3a2:	mov    %rcx,%r10
+   3e3a5:	mov    %rbx,%rsi
+   3e3a8:	shl    $0x4,%rsi
+   3e3ac:	mov    (%rdi),%rdx
+   3e3af:	mov    $0xffffffffffffffff,%r12
+   3e3b6:	xor    %r14d,%r14d
+   3e3b9:	mov    %rcx,0x20(%rsp)
+   3e3be:	mov    %rbx,0x18(%rsp)
+   3e3c3:	mov    %rsi,0x10(%rsp)
+   3e3c8:	jmp    3e3e4 <bytefield_consumer::axpy_field_vec+0x74>
+   3e3ca:	nopw   0x0(%rax,%rax,1)
+   3e3d0:	add    $0x10,%r14
+   3e3d4:	mov    %rbp,%rdx
+   3e3d7:	mov    %rbp,0x0(%r13)
+   3e3db:	mov    %r15,0x8(%r13)
+   3e3df:	cmp    %r14,%rsi
+   3e3e2:	je     3e458 <bytefield_consumer::axpy_field_vec+0xe8>
+   3e3e4:	inc    %r12
+   3e3e7:	cmp    %r12,%rbx
+   3e3ea:	je     3e4a6 <bytefield_consumer::axpy_field_vec+0x136>
+   3e3f0:	mov    0x8(%rsp),%rax
+   3e3f5:	lea    (%rax,%r14,1),%r13
+   3e3f9:	movzbl 0x8(%r8,%r14,1),%eax
+   3e3ff:	movzbl (%r10,%rax,1),%eax
+   3e404:	xor    0x8(%r13),%al
+   3e408:	movzbl %al,%r15d
+   3e40c:	movzbl 0x80(%rdx),%ecx
+   3e413:	mov    %r15,%rax
+   3e416:	shr    %cl,%rax
+   3e419:	test   %rax,%rax
+   3e41c:	jne    3e467 <bytefield_consumer::axpy_field_vec+0xf7>
+   3e41e:	lock incq (%rdx)
+   3e422:	jle    3e4b9 <bytefield_consumer::axpy_field_vec+0x149>
+   3e428:	mov    %rdx,%rbp
+   3e42b:	mov    0x0(%r13),%rax
+   3e42f:	lock decq (%rax)
+   3e433:	jne    3e3d0 <bytefield_consumer::axpy_field_vec+0x60>
+   3e435:	mov    %r13,%rdi
+   3e438:	mov    %r8,%rbx
+   3e43b:	call   *0x70d27(%rip)        # af168 <_DYNAMIC+0x418>
+   3e441:	mov    0x10(%rsp),%rsi
+   3e446:	mov    0x20(%rsp),%r10
+   3e44b:	mov    %rbx,%r8
+   3e44e:	mov    0x18(%rsp),%rbx
+   3e453:	jmp    3e3d0 <bytefield_consumer::axpy_field_vec+0x60>
+   3e458:	add    $0x38,%rsp
+   3e45c:	pop    %rbx
+   3e45d:	pop    %r12
+   3e45f:	pop    %r13
+   3e461:	pop    %r14
+   3e463:	pop    %r15
+   3e465:	pop    %rbp
+   3e466:	ret
+   3e467:	lea    -0x3374e(%rip),%rdi        # ad20 <anon.d62261618184f8c0bbf8082feb5cf93d.9.llvm.6486907855749451038>
+   3e46e:	lea    0x6ca9b(%rip),%rdx        # aaf10 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038>
+   3e475:	mov    $0x41,%esi
+   3e47a:	call   *0x70b68(%rip)        # aefe8 <_DYNAMIC+0x298>
+   3e480:	lea    -0x329de(%rip),%rcx        # baa9 <anon.3d0f10f65a63ea4f41181cc486c36934.85.llvm.6495976655084607520+0xa49>
+   3e487:	lea    0x6d51a(%rip),%r9        # ab9a8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xa98>
+   3e48e:	lea    0x28(%rsp),%rsi
+   3e493:	lea    0x30(%rsp),%rdx
+   3e498:	mov    $0x3f,%r8d
+   3e49e:	xor    %edi,%edi
+   3e4a0:	call   *0x70bf2(%rip)        # af098 <_DYNAMIC+0x348>
+   3e4a6:	lea    0x6d513(%rip),%rdx        # ab9c0 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xab0>
+   3e4ad:	mov    %rbx,%rdi
+   3e4b0:	mov    %rbx,%rsi
+   3e4b3:	call   *0x70ad7(%rip)        # aef90 <_DYNAMIC+0x240>
+   3e4b9:	ud2
+   3e4bb:	mov    0x8(%rsp),%rcx
+   3e4c0:	mov    %rbp,(%rcx,%r14,1)
+   3e4c4:	mov    %r15,0x8(%rcx,%r14,1)
+   3e4c9:	mov    %rax,%rdi
+   3e4cc:	call   a9d20 <_Unwind_Resume@plt>
+
+## symbol at 000000000003e4e0, 0x000000000000008f bytes
+000000000003e4e0 <bytefield_consumer::axpy_field_vec>:
+   3e4e0:	sub    $0x18,%rsp
+   3e4e4:	mov    %rsi,0x8(%rsp)
+   3e4e9:	mov    %r8,0x10(%rsp)
+   3e4ee:	cmp    %r8,%rsi
+   3e4f1:	jne    3e539 <bytefield_consumer::axpy_field_vec+0x59>
+   3e4f3:	test   %rsi,%rsi
+   3e4f6:	je     3e534 <bytefield_consumer::axpy_field_vec+0x54>
+   3e4f8:	lea    0x0(,%rsi,8),%rax
+   3e500:	xor    %r8d,%r8d
+   3e503:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   3e510:	cmp    %r8,%rsi
+   3e513:	je     3e55f <bytefield_consumer::axpy_field_vec+0x7f>
+   3e515:	movzbl (%rcx,%r8,8),%r9d
+   3e51a:	movzbl (%rdx,%r9,1),%r9d
+   3e51f:	xor    (%rdi,%r8,8),%r9b
+   3e523:	movzbl %r9b,%r9d
+   3e527:	mov    %r9,(%rdi,%r8,8)
+   3e52b:	inc    %r8
+   3e52e:	add    $0xfffffffffffffff8,%rax
+   3e532:	jne    3e510 <bytefield_consumer::axpy_field_vec+0x30>
+   3e534:	add    $0x18,%rsp
+   3e538:	ret
+   3e539:	lea    -0x32a97(%rip),%rcx        # baa9 <anon.3d0f10f65a63ea4f41181cc486c36934.85.llvm.6495976655084607520+0xa49>
+   3e540:	lea    0x6d461(%rip),%r9        # ab9a8 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xa98>
+   3e547:	lea    0x8(%rsp),%rsi
+   3e54c:	lea    0x10(%rsp),%rdx
+   3e551:	mov    $0x3f,%r8d
+   3e557:	xor    %edi,%edi
+   3e559:	call   *0x70b39(%rip)        # af098 <_DYNAMIC+0x348>
+   3e55f:	lea    0x6d45a(%rip),%rdx        # ab9c0 <anon.d62261618184f8c0bbf8082feb5cf93d.11.llvm.6486907855749451038+0xab0>
+   3e566:	mov    %rsi,%rdi
+   3e569:	call   *0x70a21(%rip)        # aef90 <_DYNAMIC+0x240>

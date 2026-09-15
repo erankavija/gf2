@@ -1,0 +1,285 @@
+{
+  "schema": "bytefield-consumer-source-evidence-v1",
+  "note": "The gf2 revision is navigation metadata; each campaign's producing manifest pins the source bytes it measured. Claims whose path is under dev/active/19513245/survey are the prototype's own source.",
+  "claims": [
+    {
+      "id": "axpy-signature",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 663,
+      "text": "pub fn axpy(&mut self, a: &F, rhs: &Self) {",
+      "why": "the vector consumer: one coefficient over the whole vector, destination &mut and source &, so the borrows forbid an aliasing call and fix the overlap contract"
+    },
+    {
+      "id": "axpy-hook",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 675,
+      "text": "if F::try_simd_axpy(self.data.as_mut_slice(), a, rhs.data.as_slice()) {",
+      "why": "the one accelerated path FieldVec::axpy consults"
+    },
+    {
+      "id": "axpy-scalar-loop",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 679,
+      "text": "*y += a.clone() * x.clone();",
+      "why": "what runs when the hook declines: one element clone, one element multiply and one add-assign per element"
+    },
+    {
+      "id": "axpy-hook-default-false",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/traits.rs",
+      "line": 610,
+      "text": "fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {",
+      "why": "the hook's default returns false, so a field that does not override it takes the scalar loop"
+    },
+    {
+      "id": "axpy-hook-only-fp",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gfp/mod.rs",
+      "line": 811,
+      "text": "fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {",
+      "why": "Fp<P> is the only override of the axpy hook in the workspace, so both GF(2^8) representations take the scalar loop"
+    },
+    {
+      "id": "element-arc-handle",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 208,
+      "text": "params: Arc<FieldParams_<V>>,",
+      "why": "a Gf2mElement carries a reference-counted handle on the field parameters beside its value"
+    },
+    {
+      "id": "element-clones-handle",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 368,
+      "text": "params: Arc::clone(&self.params),",
+      "why": "every element Gf2mField::element builds clones that handle, so writing an element back costs one atomic increment and one decrement"
+    },
+    {
+      "id": "gf256-builds-no-tables",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 303,
+      "text": "log_table: None,",
+      "why": "Gf2mField::new builds no log or antilog table, so Gf2mField::gf256() has none and with_tables is the only way to get them"
+    },
+    {
+      "id": "gf256-polynomial",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 850,
+      "text": "Gf2mField::new(8, 0b100011101)",
+      "why": "Gf2mField::gf256() builds GF(2^8) modulo 0b100011101 = 0x11D"
+    },
+    {
+      "id": "gf256-doc-polynomial",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 837,
+      "text": "/// Creates a GF(2^8) field with standard primitive polynomial x^8 + x^4 + x^3 + x + 1.",
+      "why": "the rustdoc of gf256() names x^8+x^4+x^3+x+1, which is 0x11B, while the code builds 0x11D: the documentation defect tracked as 835f34f0"
+    },
+    {
+      "id": "gf256-doc-aes",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 839,
+      "text": "/// This is the standard field used in AES and many error-correcting codes.",
+      "why": "the same rustdoc calls the field the one used in AES, which is the 0x11B field, not 0x11D"
+    },
+    {
+      "id": "element-mul-clmul-route",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 1154,
+      "text": "if let (Some(clmul_barrett_fn), Some(barrett)) = (",
+      "why": "with no log tables present, the element multiply reaches the carry-less-multiply and Barrett kernel through a function pointer: one indirect call per element multiplication"
+    },
+    {
+      "id": "wide-mul-allocates",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 930,
+      "text": "let mut product = vec![0u64; 2 * N];",
+      "why": "Gf2mWide::mul_ref allocates its unreduced product on the heap, so one Gf2mWide element multiplication allocates"
+    },
+    {
+      "id": "gemm-fresh-output",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 3003,
+      "text": "let mut out = FieldMatrix {",
+      "why": "field::matrix::gemm allocates its product matrix in every call"
+    },
+    {
+      "id": "gemm-transposes",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 3032,
+      "text": "let b_t = b.transpose();",
+      "why": "gemm transposes the right operand in every call before the inner loop"
+    },
+    {
+      "id": "gemm-whole-hook",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 3040,
+      "text": "if F::try_simd_gemm_classical(",
+      "why": "the whole-product hook gemm consults first"
+    },
+    {
+      "id": "gemm-per-cell-hook",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 3082,
+      "text": "if let Some(value) = F::try_gf2m_u64_batch_dot_product(",
+      "why": "when the whole-product hook declines, gemm calls the GF(2^m) batch dot product once per output cell"
+    },
+    {
+      "id": "wide-whole-gemm-override",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 1677,
+      "text": "fn try_simd_gemm_classical(",
+      "why": "Gf2mWide<1, _> overrides the whole-product hook, so the wide representation takes the whole-product kernel and never the per-cell path"
+    },
+    {
+      "id": "wide-gemm-flattens",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/wide.rs",
+      "line": 1698,
+      "text": "let mut a_flat: Vec<u64> = Vec::with_capacity(m * k);",
+      "why": "the wide whole-product path copies both operands into flat u64 buffers and the result out of a third, allocating three buffers per call"
+    },
+    {
+      "id": "element-batch-dot-override",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "line": 1405,
+      "text": "fn try_gf2m_u64_batch_dot_product(",
+      "why": "Gf2mElement overrides the batch dot product, which is the accelerated path the element representation's gemm reaches"
+    },
+    {
+      "id": "matvec-hook",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 1460,
+      "text": "&& F::try_simd_matvec(",
+      "why": "the one accelerated path FieldMatrix::matvec consults"
+    },
+    {
+      "id": "matvec-hook-default-false",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/traits.rs",
+      "line": 667,
+      "text": "fn try_simd_matvec(a: &[Self], x: &[Self], m: usize, k: usize, out: &mut [Self]) -> bool {",
+      "why": "that hook's default returns false and only Fp<P> overrides it, so matvec over GF(2^8) never reaches a batch kernel"
+    },
+    {
+      "id": "matvec-scalar-rows",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/matrix.rs",
+      "line": 1478,
+      "text": "crate::field::vec::dot_product_slices(row, x.as_slice(), &zero),",
+      "why": "matvec falls through to one dot product per row"
+    },
+    {
+      "id": "dot-product-scalar-chain",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/field/vec.rs",
+      "line": 569,
+      "text": "let mut acc = a[0].mul_product_sum_wide(&b[0]);",
+      "why": "that dot product is a scalar multiply-and-accumulate chain for GF(2^m), where the delayed reduction bound is unlimited; it calls no batch kernel"
+    },
+    {
+      "id": "batch-mul-raw-internal",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/batch.rs",
+      "line": 103,
+      "text": "pub(crate) fn batch_mul_raw(m: usize, primitive_poly: u64, a: &[u64], b: &[u64], out: &mut [u64]) {",
+      "why": "the raw batch multiply is crate-internal, so only gf2-core's own consumers can reach it without the field context"
+    },
+    {
+      "id": "batch-mul-dispatch",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "crates/gf2-core/src/gf2m/batch.rs",
+      "line": 115,
+      "text": "if let Some(fns) = crate::simd::maybe_gf2m_batch() {",
+      "why": "gf2m::batch::batch_mul dispatches to the carry-less-multiply batch kernel at run time when the simd feature is built and the host has it"
+    },
+    {
+      "id": "prototype-table-recurrence",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "dev/active/19513245/survey/consumer/src/table.rs",
+      "line": 46,
+      "text": "entries[value] = if value % 2 == 0 {",
+      "why": "the prototype builds a coefficient table by the doubling recurrence over the field's own reduction polynomial: 256 operations, no gf2-core arithmetic"
+    },
+    {
+      "id": "prototype-region-kernel",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "dev/active/19513245/survey/consumer/src/lib.rs",
+      "line": 54,
+      "text": "pub fn axpy_region(y: &mut [u8], table: &CoefficientTable, x: &[u8]) {",
+      "why": "the prototype's region-shaped route: one indexed load and one XOR per element, with the same destination-&mut and source-& signature the consumer has"
+    },
+    {
+      "id": "prototype-in-place-write",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "dev/active/19513245/survey/consumer/src/lib.rs",
+      "line": 84,
+      "text": "*target = field.element(value);",
+      "why": "the prototype's vector-shaped route writes back through the representation the vector already stores, so it converts nothing and inherits that representation's write cost"
+    },
+    {
+      "id": "prototype-gemm-reuse",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "dev/active/19513245/survey/consumer/src/lib.rs",
+      "line": 116,
+      "text": "let row = table.row(a[i * k + p]);",
+      "why": "the prototype's product makes every left-operand element the reused coefficient of one whole right-operand row, which is why a product is k region multiply-accumulates per row"
+    },
+    {
+      "id": "prototype-pairwise-no-reuse",
+      "project": "gf2",
+      "commit": "8031118fd00ccee33577a9044a0c85ddb7c10697",
+      "path": "dev/active/19513245/survey/consumer/src/lib.rs",
+      "line": 163,
+      "text": "*target = table.get(*left, *right);",
+      "why": "the control's route reuses no coefficient, so it reaches the full 64 KiB table and can amortise no coefficient table"
+    }
+  ]
+}
