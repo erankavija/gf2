@@ -1,0 +1,23 @@
+pilot receipt  dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot-r2/receipt.json
+receipt sha256 f6d60673823b66560665942431f61101c5bb34c5d56eb228a2cf2679affc5c6d
+campaign       pilot-r2-crossover-53c5a8c0-20260913t130716z
+verdict        accepted (label pilot)
+family         gf2m-clmul-crossover: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+raw-batch-8                             24      2.2469      2.2443      2.2521    0.0023
+field-dot-8                             24      1.0224      1.0092      1.0523    0.0292
+field-dot-64                            24      1.9057      1.8905      1.9131    0.0080
+field-batch-mul-8                       24      2.3532      2.3504      2.3648    0.0049
+
+widest relative half-width   0.029188
+frozen measurement resolution 0.03
+restated purpose consumer-family -> selector-calibration
+
+holdout declaration dev/active/53c5a8c0/survey/holdout-cells.json
+declaration sha256  bbb0888a861180196e0ae58ea854cf3f638b79596851aaf22dcb52686e93da5c
+holdout cell        field-dot-16-holdout
+holdout cell        field-dot-512-holdout
+holdout rationale   Sixteen and five hundred and twelve elements appear in no pilot cell and their fixtures use seeds no pilot cell uses, so no sample of either cell took part in selecting a length threshold. The short cell's arms are swapped and its objective is non-regression: it asks whether the per-element dot product is not worse than the dispatched one where a gate would choose it. The long cell keeps the grid's direction and objective: it asks whether the dispatched dot product is materially faster where the established path is retained.
+margins: equivalence 1.05, material gap 1.25
+confirmation addendum dev/active/53c5a8c0/addendum-v4-crossover-confirmation.json

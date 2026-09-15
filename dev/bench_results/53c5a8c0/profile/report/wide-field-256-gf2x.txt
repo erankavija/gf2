@@ -1,0 +1,32 @@
+# cycle samples of wide-field-256-gf2x (gf2x arm, cell wide-field-256-composed)
+# recorded by run-profile.sh at 4000 Hz over 92764 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1454990122
+#
+# Overhead       Samples  Shared Object         Symbol                                                            IPC   [IPC Coverage]
+# ........  ............  ....................  ................................................................  ....................
+#
+     7.90%            98  libc.so.6             [.] __libc_calloc                                                 -      -            
+     2.80%            34  libc.so.6             [.] cfree                                                         -      -            
+    12.27%           149  libgf2x.so.3.0.0      [.] gf2x_mul4                                                     -      -            
+     2.95%            36  libgf2x.so.3.0.0      [.] gf2x_mul_basecase_inner                                       -      -            
+     4.35%            53  libgf2x.so.3.0.0      [.] gf2x_mul_r                                                    -      -            
+    12.73%           157  profile-arm           [.] gf2_core::gf2m::barrett::BarrettReducerWide<_>::reduce_slice  -      -            
+    13.22%           162  profile-arm           [.] gf2_core::gf2m::barrett::slice_clmul_wide_with_implicit_high  -      -            
+     6.10%            76  profile-arm           [.] gf2_core::gf2m::barrett::slice_wide_shr_2n_to_n               -      -            
+     2.63%            32  profile-arm           [.] gf2_core::gf2m::wide::clmul_wide_dispatch                     -      -            
+    24.32%           299  profile-arm           [.] gf2_kernels_simd::gf2m_wide::clmul_wide4_ymm_safe             -      -            
+    10.65%           131  profile-arm           [.] profile_arm::main                                             -      -            
+
+
+#
+# (Tip: To adjust path to source files to local file system use perf report --prefix=... --prefix-strip=...)
+#

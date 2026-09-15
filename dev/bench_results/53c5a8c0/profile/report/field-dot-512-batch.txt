@@ -1,0 +1,25 @@
+# cycle samples of field-dot-512-batch (gf2 arm, cell field-dot-512-holdout)
+# recorded by run-profile.sh at 4000 Hz over 9990 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1455799399
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                     IPC   [IPC Coverage]
+# ........  ............  ....................  .........................................................................................  ....................
+#
+    45.12%           545  profile-arm           [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run  -      -            
+    41.76%           500  profile-arm           [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>         -      -            
+     6.89%            84  profile-arm           [.] gf2_core::field::vec::FieldVec<gf2_core::gf2m::field::Gf2mElement_>::simd_dot_product  -      -            
+     4.70%            57  profile-arm           [.] gf2_kernels_simd::x86::clmul::clmul_batch                                              -      -            
+
+
+#
+# (Tip: To set sampling period of individual events use perf record -e cpu/cpu-cycles,period=100001/,cpu/branches,period=10001/ ...)
+#
