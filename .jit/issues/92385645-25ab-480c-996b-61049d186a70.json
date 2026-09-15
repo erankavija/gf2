@@ -63,7 +63,18 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-15T03:16:47.381195408Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-09-15T03:14:42.856930533Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "92385645-25ab-480c-996b-61049d186a70",
   "labels": [
     "type:task",
@@ -77,5 +88,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T03:14:09.862408193Z"
+  "updated_at": "2026-09-15T03:16:47.381195408Z"
 }
