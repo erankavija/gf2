@@ -6,7 +6,8 @@ compiler: gcc (GCC) 16.2.1 20260810
 M4RI release: 20260122
 source archive sha256: 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404
 installed libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
-semantic probe executable sha256: b9da8abd5b6964ac39453ccc82077fdfae34839af693151021dd249fb5a437ce
+semantic probe executable sha256: b604c8098ba4bcaccaaaaf32e987a2253ee86d9aaca3d606c017c0354d94b818
+build record sha256: eacf92625638a4c247976de614e4d601612f838b3162e217276874b4d89f12c9
 library build flags: CFLAGS=-O3 -march=native -fPIC; --disable-static
 probe build flags: gcc -std=c11 -O3 -march=native -Wall -Wextra -Werror
 matched operation: mzd_mul(y, A, x, 0)
@@ -28,5 +29,10 @@ Each case constructs the same logical matrix and vector in canonical gf2 word
 buffers and through M4RI public coordinates, then checks every M4RI output bit
 against the canonical parity oracle. The result demonstrates the matched
 operation only; it contains no timing or production-selection claim.
+
+The runner then reused the retained build successfully only after verifying
+the archive digest, compiler identity, build flags, configure arguments, and
+installed-library digest against `gf2-m4ri-build-record.txt`; the six semantic
+cases passed again.
 
 exit status: 0

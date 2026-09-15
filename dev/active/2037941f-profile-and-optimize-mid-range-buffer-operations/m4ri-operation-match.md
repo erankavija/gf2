@@ -15,16 +15,20 @@ Its license is `GPL-2.0-or-later`: `m4ri/mzd.h` states GPL version 2 or
 higher. The earlier external-comparator source evidence uses the same archive
 and configure command in [`fetch-build.sh`](../6fb89a3c/survey/fetch-build.sh).
 This qualification's runner repeats only that M4RI build, with the following
-exact configure and installation path:
+exact configure and identity-qualified installation path:
 
 ```text
-CFLAGS='-O3 -march=native -fPIC' ./configure --prefix=<ext>/prefix --disable-static
+CFLAGS='-O3 -march=native -fPIC' ./configure --prefix=<ext>/prefix-qualified-v1 --disable-static
 make -j"${CARGO_BUILD_JOBS:-1}"
 make install
 ```
 
 The probe builds with `gcc -std=c11 -O3 -march=native -Wall -Wextra -Werror`
-and links `<ext>/prefix/lib/libm4ri.so` using its matching headers. The source
+and links `<ext>/prefix-qualified-v1/lib/libm4ri.so` using its matching headers.
+The runner always verifies the archive digest. A retained build is reused only
+when its provenance record matches that archive, the current compiler identity,
+the exact build and configure flags, and the installed library digest; an
+incomplete or mismatched cache fails closed. The source
 archive digest, installed library digest, compiler version and actual host
 features belong in any later timed receipt; this qualification names no
 measured arm or speed claim.
