@@ -1017,6 +1017,54 @@ const _: fn() = || {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gf2_coding::ldpc::{min_sum_check_row, MinSumRule};
+    use gf2_coding::llr::Llr;
+
+    fn assert_min_sum_contract_matches_cpu(values: &[f32]) {
+        let inputs: Vec<Llr> = values.iter().copied().map(Llr::new).collect();
+        for (gpu_algorithm, cpu_rule) in [
+            (GpuBpAlgorithm::MinSum, MinSumRule::Plain),
+            (
+                GpuBpAlgorithm::NormalizedMinSum(0.75),
+                MinSumRule::Normalized(0.75),
+            ),
+            (GpuBpAlgorithm::OffsetMinSum(0.5), MinSumRule::Offset(0.5)),
+        ] {
+            let mut cpu_outputs = vec![Llr::zero(); values.len()];
+            min_sum_check_row(cpu_rule, &inputs, &mut cpu_outputs);
+            for (excluded, cpu_output) in cpu_outputs.iter().enumerate() {
+                // SAFETY: `values` remains alive for the call, its pointer and
+                // length describe the whole slice, and `excluded` is produced
+                // by iterating that slice's output positions.
+                let gpu_contract = unsafe {
+                    ffi::gf2_ldpc_min_sum_contract_reduce(
+                        values.as_ptr(),
+                        values.len() as i32,
+                        excluded as i32,
+                        gpu_algorithm.code(),
+                        gpu_algorithm.alpha(),
+                        gpu_algorithm.beta(),
+                    )
+                };
+                assert_eq!(
+                    gpu_contract.to_bits(),
+                    cpu_output.value().to_bits(),
+                    "{gpu_algorithm:?}, output {excluded} of {values:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn min_sum_host_device_contract_matches_cpu_on_signed_zero_and_nan() {
+        let negative_nan = f32::from_bits(f32::NAN.to_bits() | (1_u32 << 31));
+        assert_min_sum_contract_matches_cpu(&[-0.0, 1.0, 2.0]);
+        assert_min_sum_contract_matches_cpu(&[0.0, -0.0, -3.0]);
+        assert_min_sum_contract_matches_cpu(&[f32::NAN, 2.0, -1.0]);
+        assert_min_sum_contract_matches_cpu(&[negative_nan, 2.0, -1.0]);
+        assert_min_sum_contract_matches_cpu(&[f32::NAN, f32::NAN]);
+        assert_min_sum_contract_matches_cpu(&[f32::NAN, -0.0, -2.0]);
+    }
 
     #[test]
     fn test_algorithm_code_and_params() {
