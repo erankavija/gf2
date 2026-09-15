@@ -33,8 +33,16 @@
       "doc_type": "validation",
       "label": "Successful ISA-L XOR semantic probe record",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-probe-record.txt"
+    },
+    {
+      "commit": "d9da7a13",
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/3e83c116-r1.md"
     }
   ],
+  "done_at": "2026-09-15T03:18:10.817156512Z",
   "first_ready_at": "2026-09-15T00:55:29.092843264Z",
   "gates_required": [
     "repo-validate",
@@ -93,7 +101,7 @@
     "cites:IsaL2026"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Qualify the ISA-L XOR comparator",
-  "updated_at": "2026-09-15T03:12:51.724230371Z"
+  "updated_at": "2026-09-15T03:18:10.817156512Z"
 }
