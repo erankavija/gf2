@@ -2,8 +2,8 @@
   {
     "key": "shift-workload-profile",
     "title": "Profile the residual BitVec shift family",
-    "description": "Establish the separate workload profile and materiality disposition for arbitrary-offset zero-fill `BitVec` shifts without changing production code.\n\n## Background\n\n`BitVec::shift_left` and `BitVec::shift_right` dispatch whole-word offsets through the canonical backend while residual offsets use safe scalar carry loops. The repository-wide consumer sweep finds no downstream production caller, so this work measures the public primitive as an isolated family and records whole-consumer measurement as inapplicable rather than inventing a consumer. The profile uses release builds on the prepared Zen 3 host under the frozen benchmark protocol and keeps the existing word-shift path as a control.\n\n## Success Criteria\n\n- [hard] REQ-01: An accepted exploratory receipt reports isolated latency and sustained throughput for left and right residual shifts over representative cache-resident and streaming lengths, with the exact release binaries, runtime-selected paths and protocol inputs pinned.\n- [hard] REQ-02: The semantic fixture corpus covers lengths and offsets 0, 1, 7, 8, 63, 64 and 65, offsets at and beyond the vector length, vector-lane crossings and incomplete final words; every result matches an independent zero-fill reference with zero tail padding.\n- [hard] REQ-03: The report names the complete production consumer result, records the absence of a downstream production caller, separates the word-aligned control from residual work and makes no production-adoption claim.\n\n## Notes\n\nFollow the contract at `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md` and protocol at `dev/active/f547c394/protocol.md`. Timed work runs only in a scheduled benchmark window.",
-    "type": "task",
+    "description": "Establish the separate workload profile and materiality disposition for arbitrary-offset zero-fill `BitVec` shifts without changing production code or authorizing an ISA-specific implementation.\n\n## Background\n\n`BitVec::shift_left` and `BitVec::shift_right` dispatch whole-word offsets through the canonical backend while residual offsets use safe scalar carry loops. The repository-wide consumer sweep finds no downstream production caller, so this work measures the public primitive as an isolated family and records whole-consumer measurement as inapplicable rather than inventing a consumer. The profile uses release builds on the prepared Zen 3 host under protocol version 4 and keeps the existing word-shift path as a control.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen protocol-v4 addendum and append-only family-ledger reservation predeclare the workload matrix, exploratory role, semantic oracle, cache states, measurement settings and bounded search before any timing starts.\n- [hard] REQ-02: Scheduled benchmark-window execution produces an accepted exploratory receipt with exact rebuilt source and executable pins, raw paired samples, append-only execution log, checkpoints, runtime provenance and durable negative or unavailable outcomes.\n- [hard] REQ-03: The semantic fixture corpus covers lengths and offsets 0, 1, 7, 8, 63, 64 and 65, offsets at and beyond the vector length, vector-lane crossings and incomplete final words; every result matches an independent zero-fill reference with zero tail padding.\n- [hard] REQ-04: The report names the complete production consumer result, records the absence of a downstream production caller, separates the word-aligned control from residual work and makes no production-adoption claim.\n- [hard] REQ-05: A no-candidate or no-win disposition permits this profile to complete. If it nominates a material AVX2 lane-crossing or BMI-based form, this profile remains open until a planning-time Rust 1.95 compile and assembly record proves feasibility, including a runtime-gated scalar fallback for any capability-gated form, and the plan bracket is amended and re-reviewed to create the required candidate implementation and confirmation leaves, make them depend on this profile, and re-home publication behind their sinks in the instantiated dependency graph.\n\n## Notes\n\nFollow `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md` and `dev/active/f547c394/protocol.md`. Timed work runs only in a scheduled benchmark window.",
+    "type": "simulation",
     "priority": "normal",
     "labels": [
       "epic:zen3-cpu-performance",
@@ -12,6 +12,7 @@
       "component:benchmarks",
       "satisfies:REQ-01",
       "satisfies:REQ-07",
+      "satisfies:REQ-08",
       "satisfies:REQ-09",
       "satisfies:REQ-11"
     ],
@@ -26,11 +27,12 @@
     ],
     "depends_on": [],
     "planning": {
-      "outcome": "Residual-shift cost and production materiality have a reproducible disposition",
+      "outcome": "Residual-shift materiality has a protocol-complete disposition",
       "contract_refs": [
         "measurement-authority",
         "semantic-boundaries",
-        "family-scope"
+        "family-scope",
+        "candidate-bracket-rule"
       ],
       "produces_contracts": [
         "shift-profile-disposition"
@@ -38,20 +40,24 @@
       "source_refs": [
         "REQ-01",
         "REQ-07",
+        "REQ-08",
         "REQ-09",
         "REQ-11",
         "INV-CLASSIFICATION",
         "INV-CONSUMERS",
+        "INV-ARCHITECTURE",
         "MEASUREMENT-CONTRACT",
         "PROTOCOL-V4"
       ],
       "terminal": {
         "consumer_family": "Public BitVec zero-fill shift operations",
-        "test_boundary": "Accepted exploratory receipt against the pinned zero-fill fixture corpus",
-        "worker_sized_reason": "One isolated operation family uses the existing shift benchmark surface and a bounded fixture matrix",
+        "test_boundary": "Independent acceptance re-evaluation against the pinned zero-fill fixture corpus",
+        "worker_sized_reason": "One isolated operation family reuses the canonical campaign tooling with a bounded workload matrix",
         "footprint": {
           "creates": [
             "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md",
+            "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json",
+            "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
             "dev/bench_results/c04dd4ac/residual-shift-profile/"
           ],
           "touches": [
@@ -62,62 +68,10 @@
     }
   },
   {
-    "key": "shift-isa-feasibility",
-    "title": "Resolve residual-shift ISA feasibility",
-    "description": "Resolve the Rust 1.95 and assembly feasibility boundary for residual-shift ISA candidates without adding a production implementation.\n\n## Background\n\nThe workload profile is the authority for whether further candidate work is useful. Any concrete AVX2 lane-crossing design or BMI-based design considered here remains an isolated prototype. It must compile with Rust 1.95, expose its emitted assembly, preserve runtime capability gating and agree with the scalar zero-fill oracle. Because the consumer sweep finds no downstream production caller, a feasible instruction sequence is not by itself grounds for production adoption.\n\n## Success Criteria\n\n- [hard] REQ-01: Each concrete AVX2 lane-crossing or BMI-based candidate actually considered has a Rust 1.95 build record and a checked-in assembly artifact; unsupported intrinsic forms are recorded as explicit negative results.\n- [hard] REQ-02: Every feasible prototype matches the independent scalar oracle across the pinned boundary matrix, preserves aliasing and tail-padding contracts, and retains a runtime-gated scalar fallback.\n- [hard] REQ-03: A reviewed disposition either stops the family for lack of a material production consumer or names the new consumer evidence that requires an amended plan before any production implementation.\n\n## Notes\n\nObserved CPU capabilities and canonical dispatch decide feasibility; vendor-name assumptions do not. Prototype code stays outside production crates.",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:zen3-cpu-performance",
-      "story:zen3-shifts-and-permutations",
-      "component:gf2-core",
-      "component:gf2-kernels-simd",
-      "satisfies:REQ-08",
-      "satisfies:REQ-09"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
-    ],
-    "depends_on": [
-      "shift-workload-profile"
-    ],
-    "planning": {
-      "outcome": "Residual-shift ISA feasibility is resolved without an evidence-free production path",
-      "contract_refs": [
-        "semantic-boundaries",
-        "layer-ownership",
-        "shift-profile-disposition"
-      ],
-      "produces_contracts": [],
-      "source_refs": [
-        "REQ-08",
-        "REQ-09",
-        "INV-ARCHITECTURE",
-        "INV-CLASSIFICATION"
-      ],
-      "terminal": {
-        "consumer_family": "Residual-shift prototype evaluators",
-        "test_boundary": "Rust 1.95 assembly-backed equivalence over the pinned boundary corpus",
-        "worker_sized_reason": "A bounded feasibility spike evaluates only candidates justified by the completed shift profile",
-        "footprint": {
-          "creates": [
-            "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-isa-feasibility/"
-          ]
-        }
-      }
-    }
-  },
-  {
     "key": "dvb-interleave-profile",
     "title": "Profile the production DVB-T2 bit interleaver",
-    "description": "Attribute the cost of the production DVB-T2 packed bit scatter inside its real BICM consumers and select a bounded candidate direction.\n\n## Background\n\nThe repaired protocol-v3 re-measurement is accepted exploratory evidence: gf2 wins the whole packed-operation comparison, while conversion-subtracted 16-QAM cells leave a residual in which xdsopl's gather is faster. Earlier warm receipts remain withdrawn and cannot confirm the gap. This task rebuilds the current gf2 and xdsopl arms from their pinned sources, profiles the actual `BitInterleaver::interleave` route used by the BICM harness and simulation stages, and attributes representation conversion, memory passes and scatter work before selecting at most two candidate forms within a fixed search budget.\n\n## Success Criteria\n\n- [hard] REQ-01: A reproducible release profile covers Normal and Short FECFRAME paths for 16-QAM and 64-QAM plus a streaming case, and identifies the selected production route, call graph, hot instructions, allocation behavior and memory-pass costs.\n- [hard] REQ-02: The profile names the BICM harness and simulation-stage consumers, reports isolated interleave cost beside whole-consumer cost, and carries rebuilt gf2 and xdsopl executable identities with conversion and setup attribution.\n- [hard] REQ-03: The candidate disposition selects no more than two profile-supported branch-free or packed-word forms under a predeclared source-line and campaign budget, or records that the scatter is not material; withdrawn warm receipts provide context only.\n\n## Notes\n\nThe comparator remains xdsopl `PCTITL` for the ETSI bit-interleave operation. AFF3CT and circular shifts are not substitutes.",
-    "type": "task",
+    "description": "Attribute the production DVB-T2 packed-bit scatter cost inside its real BICM consumers and issue a bounded materiality disposition without authorizing candidate implementation.\n\n## Background\n\nThe repaired protocol-v3 re-measurement is accepted exploratory evidence: gf2 wins the whole packed-operation comparison, while conversion-subtracted 16-QAM cells leave a residual in which xdsopl's gather is faster. Earlier warm receipts remain withdrawn and cannot confirm the gap. This task rebuilds the current gf2 and xdsopl arms from exact pinned sources, profiles the actual `BitInterleaver::interleave` route used by the BICM harness and simulation stages, and attributes representation conversion, memory passes and scatter work. The result may nominate a concrete candidate only as input to an amended and re-reviewed breakdown.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen protocol-v4 addendum and append-only family-ledger reservation predeclare Normal and Short FECFRAME paths for 16-QAM and 64-QAM, a streaming case, exploratory role, isolated and whole-consumer boundaries, cache states, conversion accounting, materiality rule, complexity budget and bounded search before timing.\n- [hard] REQ-02: Scheduled benchmark-window execution produces an accepted exploratory receipt with exact rebuilt gf2 and xdsopl source, build and executable pins, raw paired samples, append-only execution log, checkpoints, runtime host provenance and durable negative or unavailable outcomes.\n- [hard] REQ-03: The profile identifies the selected production route, BICM harness and simulation-stage consumers, call graph, hot instructions, allocation behavior, representation conversions, memory passes and isolated interleave cost beside whole-consumer cost.\n- [hard] REQ-04: The disposition records the scatter as not material or nominates no more than two profile-supported branch-free or packed-word forms under the predeclared budget; withdrawn warm receipts remain historical context and do not confirm a candidate.\n- [hard] REQ-05: A no-candidate or no-win disposition permits this profile to complete. If it nominates a material branch-free or packed-word form, this profile remains open until a planning-time Rust 1.95 compile and assembly record proves feasibility, including a runtime-gated scalar fallback for any capability-gated form, and the plan bracket is amended and re-reviewed to create the required candidate implementation and confirmation leaves, make them depend on this profile, and re-home publication behind their sinks in the instantiated dependency graph.\n\n## Notes\n\nThe comparator remains xdsopl `PCTITL` for the ETSI bit-interleave operation. AFF3CT and circular shifts are not substitutes. Timed work runs only in a scheduled benchmark window.",
+    "type": "simulation",
     "priority": "high",
     "labels": [
       "epic:zen3-cpu-performance",
@@ -128,6 +82,8 @@
       "cites:Etsi2015",
       "satisfies:REQ-01",
       "satisfies:REQ-07",
+      "satisfies:REQ-08",
+      "satisfies:REQ-09",
       "satisfies:REQ-10",
       "satisfies:REQ-11"
     ],
@@ -142,12 +98,13 @@
     ],
     "depends_on": [],
     "planning": {
-      "outcome": "The DVB-T2 scatter cost has a production-grounded profile and bounded candidate direction",
+      "outcome": "DVB-T2 interleave materiality has a protocol-complete disposition",
       "contract_refs": [
         "measurement-authority",
         "semantic-boundaries",
         "family-scope",
-        "layer-ownership"
+        "layer-ownership",
+        "candidate-bracket-rule"
       ],
       "produces_contracts": [
         "dvb-profile-disposition"
@@ -155,21 +112,27 @@
       "source_refs": [
         "REQ-01",
         "REQ-07",
+        "REQ-08",
+        "REQ-09",
         "REQ-10",
         "REQ-11",
         "INV-CONSUMERS",
         "INV-PRIOR-ART",
+        "INV-ARCHITECTURE",
         "EDA07788-FINDINGS",
         "DVB-REPAIR",
-        "MEASUREMENT-CONTRACT"
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4"
       ],
       "terminal": {
         "consumer_family": "DVB-T2 BICM bit-interleave consumers",
-        "test_boundary": "Reproducible production-route profile over the pinned DVB workload matrix",
-        "worker_sized_reason": "One production operation family reuses repaired arms and a bounded set of representative BICM frames",
+        "test_boundary": "Independent acceptance re-evaluation against the pinned ETSI fixture corpus",
+        "worker_sized_reason": "One standards operation family reuses repaired adapters with a bounded BICM workload matrix",
         "footprint": {
           "creates": [
             "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md",
+            "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json",
+            "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-trial-ledger.jsonl",
             "dev/bench_results/c04dd4ac/dvb-interleave-profile/"
           ],
           "touches": [
@@ -181,315 +144,9 @@
     }
   },
   {
-    "key": "dvb-interleave-prototype",
-    "title": "Build the profile-directed DVB-T2 prototype",
-    "description": "Build semantically exact DVB-T2 interleave prototypes in an isolated survey harness, leaving production code unchanged.\n\n## Background\n\nThe production profile fixes the hot operation and permits at most two candidate forms. Candidate work remains in a dedicated prototype harness so semantic and assembly evidence exists before any production path is proposed. The coding layer owns standards-specific permutation order; a generally reusable packed primitive may be proposed only at its owning library boundary and must not create unsafe code outside the kernel crates.\n\n## Success Criteria\n\n- [hard] REQ-01: The prototype harness implements only the candidate forms authorized by the profile disposition and records emitted assembly plus Rust 1.95 compatibility for any intrinsic-sensitive construct.\n- [hard] REQ-02: Each candidate is bit-exact against the production interleaver and the ETSI TP07a oracle across 16-QAM and 64-QAM Normal and Short FECFRAME fixtures, preserving canonical indexing, aliasing behavior and incomplete-word padding.\n- [hard] REQ-03: The candidate record identifies each representation conversion and memory pass, the exact owning layer of any proposed reusable primitive, and a tested scalar fallback for any capability-gated path.\n\n## Notes\n\nThis task produces evaluation candidates, not a production optimization or performance claim.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:zen3-cpu-performance",
-      "story:zen3-shifts-and-permutations",
-      "component:gf2-coding",
-      "component:gf2-core",
-      "component:gf2-kernels-simd",
-      "cites:Etsi2015",
-      "satisfies:REQ-08",
-      "satisfies:REQ-09",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
-    ],
-    "depends_on": [
-      "dvb-interleave-profile"
-    ],
-    "planning": {
-      "outcome": "Profile-authorized DVB-T2 candidates are frozen with semantic and assembly evidence",
-      "contract_refs": [
-        "semantic-boundaries",
-        "layer-ownership",
-        "dvb-profile-disposition"
-      ],
-      "produces_contracts": [],
-      "source_refs": [
-        "REQ-08",
-        "REQ-09",
-        "REQ-11",
-        "INV-ARCHITECTURE",
-        "INV-CONSUMERS"
-      ],
-      "landing_group": "dvb-interleave-candidate",
-      "terminal": {
-        "consumer_family": "DVB-T2 bit-interleave candidate evaluators",
-        "test_boundary": "ETSI oracle equivalence over the frozen BICM fixture corpus",
-        "worker_sized_reason": "One isolated harness implements a maximum of two profile-selected variants for one standards operation",
-        "footprint": {
-          "creates": [
-            "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-prototype/"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "dvb-candidate-pilot",
-    "title": "Calibrate the DVB-T2 candidate family",
-    "description": "Run the bounded exploratory pilot that freezes the DVB-T2 candidate family's measurement settings without making an adoption decision.\n\n## Background\n\nThe pilot compares the current rebuilt production arm, the semantically validated prototype candidates, scalar and native controls, and the operation-equivalent xdsopl arm. It is a fresh protocol-v4 family stage because the old warm receipts are withdrawn and the repaired re-measurement is exploratory baseline context rather than confirmation for a new candidate. The addendum predeclares workload cells, worthwhile effect, equivalence margin, material-gap threshold, complexity budget and search cap before timing.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen family addendum and append-only ledger reservation predeclare the bounded candidate set, representative isolated and whole-consumer cells, effect margins, complexity budget, conversion accounting and attempt policy before timing.\n- [hard] REQ-02: The accepted exploratory receipt pins rebuilt release arms, protocol inputs, producing closure, runtime host facts, raw paired samples and complete session logs, and preserves unavailable or losing cells.\n- [hard] REQ-03: A deterministic derivation fixes measurement resolution and the single candidate eligible for confirmation, or records a no-selection result that spends no confirmatory attempt.\n\n## Notes\n\nTimed work runs only in a scheduled benchmark window. Exploratory samples never count as confirmation.",
-    "type": "simulation",
-    "priority": "normal",
-    "labels": [
-      "epic:zen3-cpu-performance",
-      "story:zen3-shifts-and-permutations",
-      "component:gf2-coding",
-      "component:benchmarks",
-      "cites:Xdsopl2026",
-      "cites:Etsi2015",
-      "satisfies:REQ-01",
-      "satisfies:REQ-07",
-      "satisfies:REQ-09",
-      "satisfies:REQ-10",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
-    ],
-    "depends_on": [
-      "dvb-interleave-prototype"
-    ],
-    "planning": {
-      "outcome": "The DVB-T2 candidate family has frozen settings and a pilot-derived selection",
-      "contract_refs": [
-        "measurement-authority",
-        "semantic-boundaries",
-        "dvb-profile-disposition"
-      ],
-      "produces_contracts": [
-        "dvb-selection-settings"
-      ],
-      "source_refs": [
-        "REQ-01",
-        "REQ-07",
-        "REQ-09",
-        "REQ-10",
-        "REQ-11",
-        "PROTOCOL-V4",
-        "EDA07788-FINDINGS",
-        "DVB-REPAIR"
-      ],
-      "landing_group": "dvb-interleave-candidate",
-      "terminal": {
-        "consumer_family": "DVB-T2 candidate campaign",
-        "test_boundary": "Independent acceptance re-evaluation of the frozen exploratory receipt",
-        "worker_sized_reason": "One bounded pilot reuses the canonical campaign tooling for a single candidate family",
-        "footprint": {
-          "creates": [
-            "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-candidate-pilot/",
-            "dev/bench_results/c04dd4ac/dvb-candidate-pilot/"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "dvb-candidate-confirmation",
-    "title": "Decide the DVB-T2 candidate",
-    "description": "Produce the frozen confirmatory verdict for the pilot-selected DVB-T2 candidate while preserving a pilot no-selection as a negative outcome.\n\n## Background\n\nOnly a candidate selected by the frozen pilot may enter confirmation. The confirmatory cells compare the exact current production build against the exact prototype build on isolated interleave and whole BICM consumer boundaries, with portable and native controls and the xdsopl operation-equivalent arm where it remains informative. If the pilot selects no candidate, this task publishes the content-pinned no-selection disposition and launches no confirmatory campaign.\n\n## Success Criteria\n\n- [hard] REQ-01: A selected candidate has one accepted protocol-v4 confirmation using fresh pairs, the frozen pilot-derived resolution, the family ledger's corrected comparison budget and exact before/prototype executable identities; a no-selection pilot instead yields an explicit no-campaign disposition.\n- [hard] REQ-02: The verdict applies the predeclared worthwhile-effect, equivalence, correctness and complexity rules to isolated latency, sustained throughput and whole-consumer cells, preserving every fail, inconclusive, unstable, unavailable and not-material result.\n- [hard] REQ-03: The adoption record names exactly one qualifying production candidate or requires retention of the existing implementation; external conversion and setup costs remain separately attributable and no unmatched operation affects the verdict.\n\n## Notes\n\nAn accepted receipt with `qualifies: false` is a valid negative result and cannot authorize production adoption.",
-    "type": "simulation",
-    "priority": "high",
-    "labels": [
-      "epic:zen3-cpu-performance",
-      "story:zen3-shifts-and-permutations",
-      "component:gf2-coding",
-      "component:benchmarks",
-      "cites:Xdsopl2026",
-      "cites:Etsi2015",
-      "satisfies:REQ-01",
-      "satisfies:REQ-07",
-      "satisfies:REQ-10",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
-    ],
-    "depends_on": [
-      "dvb-candidate-pilot"
-    ],
-    "planning": {
-      "outcome": "The pilot-selected DVB-T2 candidate has a frozen adoption verdict",
-      "contract_refs": [
-        "measurement-authority",
-        "semantic-boundaries",
-        "dvb-selection-settings"
-      ],
-      "produces_contracts": [
-        "dvb-adoption-verdict"
-      ],
-      "source_refs": [
-        "REQ-01",
-        "REQ-07",
-        "REQ-10",
-        "REQ-11",
-        "MEASUREMENT-CONTRACT",
-        "PROTOCOL-V4"
-      ],
-      "landing_group": "dvb-interleave-candidate",
-      "terminal": {
-        "consumer_family": "DVB-T2 candidate adoption decision",
-        "test_boundary": "Protocol acceptance or content-pinned pilot no-selection",
-        "worker_sized_reason": "One frozen candidate can consume at most one confirmatory attempt under the family policy",
-        "footprint": {
-          "creates": [
-            "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-candidate-confirmation/",
-            "dev/bench_results/c04dd4ac/dvb-candidate-confirmation/"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "dvb-production-verdict",
-    "title": "Apply the DVB-T2 production verdict",
-    "description": "Make the production DVB-T2 interleaver match the frozen adoption verdict and preserve all existing semantics.\n\n## Background\n\nThe confirmatory record authorizes exactly one of two states. A qualifying candidate is transferred into the `gf2-coding` interleaver with its tested scalar behavior and without introducing unsafe code into the crate. A non-qualifying or no-selection verdict retains the current production source byte-for-byte and records that identity. No external adapter or benchmark-only representation enters the public API.\n\n## Success Criteria\n\n- [hard] REQ-01: Production implements the exact qualifying candidate named by the adoption record, or its implementation digest remains unchanged when the record requires retention.\n- [hard] REQ-02: Shared DVB-T2 conformance and property tests cover 16-QAM and 64-QAM Normal and Short FECFRAME paths, canonical indexing, aliasing, incomplete words and scalar fallback behavior.\n- [hard] REQ-03: Any reusable primitive resides in its owning library layer with documented purpose, panic behavior, safety conditions and non-obvious complexity; `gf2-coding` remains free of unsafe code.\n\n## Notes\n\nThis task changes no numeric or scheduling contract and does not consume exploratory evidence as authority.",
-    "type": "enhancement",
-    "priority": "high",
-    "labels": [
-      "epic:zen3-cpu-performance",
-      "story:zen3-shifts-and-permutations",
-      "component:gf2-coding",
-      "component:gf2-core",
-      "satisfies:REQ-01",
-      "satisfies:REQ-08",
-      "satisfies:REQ-09",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
-    ],
-    "depends_on": [
-      "dvb-candidate-confirmation"
-    ],
-    "planning": {
-      "outcome": "Production DVB-T2 interleaving exactly matches the evidence-backed verdict",
-      "contract_refs": [
-        "semantic-boundaries",
-        "layer-ownership",
-        "dvb-adoption-verdict"
-      ],
-      "produces_contracts": [],
-      "source_refs": [
-        "REQ-01",
-        "REQ-08",
-        "REQ-09",
-        "REQ-11",
-        "INV-ARCHITECTURE",
-        "INV-CONSUMERS"
-      ],
-      "landing_group": "dvb-interleave-candidate",
-      "terminal": {
-        "consumer_family": "Production DVB-T2 bit-interleave path",
-        "test_boundary": "Shared DVB-T2 conformance suite over the standards fixture matrix",
-        "worker_sized_reason": "One evidence-fixed implementation transfers a single candidate or verifies one unchanged production path",
-        "footprint": {
-          "touches": [
-            "crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs",
-            "crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs"
-          ],
-          "uncertainty": "A non-qualifying verdict leaves these files byte-identical and records their content digests instead."
-        }
-      }
-    }
-  },
-  {
-    "key": "dvb-final-integration",
-    "title": "Verify the DVB-T2 final integration",
-    "description": "Publish final-integration evidence for the production DVB-T2 verdict without reopening candidate selection.\n\n## Background\n\nA production change requires a current pinned pre-change baseline and fresh after measurement, including dispatch and whole-consumer costs. A retained implementation requires no redundant timing campaign: the content-pinned non-adoption record proves that the before build remains authoritative. When a candidate is adopted, this task rebuilds production, runs independent holdout cells under protocol version 4 and compares them with the pinned pre-change baseline; holdout failure preserves the contradiction and restores no claim.\n\n## Success Criteria\n\n- [hard] REQ-01: An adopted path has accepted fresh holdout evidence covering isolated latency, sustained throughput, whole-consumer behavior and dispatch overhead against the pinned pre-change baseline; a retained path has a content-identity proof that no after campaign is applicable.\n- [hard] REQ-02: Holdout correctness reproduces the ETSI oracle and shared DVB-T2 suite, and the receipt pins release executables, conversion stages, memory passes, runtime provenance, bounded logs and checkpoints.\n- [hard] REQ-03: The final verdict qualifies only when every predeclared hard adoption rule passes; negative or contradicting outcomes remain committed and leave the established implementation authoritative.\n\n## Notes\n\nNo selector or threshold is recalibrated from holdout samples.",
-    "type": "simulation",
-    "priority": "high",
-    "labels": [
-      "epic:zen3-cpu-performance",
-      "story:zen3-shifts-and-permutations",
-      "component:gf2-coding",
-      "component:benchmarks",
-      "cites:Etsi2015",
-      "satisfies:REQ-01",
-      "satisfies:REQ-07",
-      "satisfies:REQ-09",
-      "satisfies:REQ-10",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
-    ],
-    "depends_on": [
-      "dvb-production-verdict"
-    ],
-    "planning": {
-      "outcome": "The DVB-T2 production verdict has independent final-integration evidence",
-      "contract_refs": [
-        "measurement-authority",
-        "semantic-boundaries",
-        "dvb-adoption-verdict"
-      ],
-      "produces_contracts": [
-        "dvb-final-verdict"
-      ],
-      "source_refs": [
-        "REQ-01",
-        "REQ-07",
-        "REQ-09",
-        "REQ-10",
-        "REQ-11",
-        "MEASUREMENT-CONTRACT",
-        "PROTOCOL-V4"
-      ],
-      "landing_group": "dvb-interleave-candidate",
-      "terminal": {
-        "consumer_family": "Production DVB-T2 integration",
-        "test_boundary": "Independent holdout acceptance or content-identity non-adoption proof",
-        "worker_sized_reason": "One final-integration verdict executes only after the production state is fixed by confirmation",
-        "footprint": {
-          "creates": [
-            "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-final-integration/",
-            "dev/bench_results/c04dd4ac/dvb-final-integration/"
-          ]
-        }
-      }
-    }
-  },
-  {
     "key": "story-evidence-publication",
-    "title": "Publish the shift-permutation evidence",
-    "description": "Publish the story's generated evidence tables and criterion disposition while preserving family boundaries and negative results.\n\n## Background\n\nThe report presents shifts, QC construction, generic puncturing and interleaving as separate workload families. It derives numeric statements from committed machine-readable artifacts, identifies the actual production consumers, records QC runtime rotation as inapplicable, preserves the accepted AFF3CT NR no-win unless `prepare_llrs` changed, and treats withdrawn DVB warm receipts only as history. No hand-maintained copy of volatile receipt facts is authoritative.\n\n## Success Criteria\n\n- [hard] REQ-01: A deterministic generator reproduces the publication tables from committed receipts, profiles and content-pinned dispositions, including latency, throughput, whole-consumer costs, intervals, sample counts, conversion stages and runtime provenance where applicable.\n- [hard] REQ-02: The findings map every story criterion to durable evidence and preserve the QC inapplicability, generic-puncturing separation, NR accepted no-win, unavailable mappings, withdrawn DVB evidence and any candidate or holdout failure.\n- [hard] REQ-03: Each performance claim cites its accepted receipt and protocol identity, each absent comparison has an explicit semantic or consumer reason, and the current production path follows the final adoption verdict.\n\n## Notes\n\nThe report stays in the story's development area; permanent prose cites it rather than copying volatile measurements.",
+    "title": "Publish the shift-permutation dispositions",
+    "description": "Publish generated story evidence that preserves family boundaries, negative results and every material candidate's completed evidence path without changing production code itself.\n\n## Background\n\nThe report presents shifts, QC construction, generic puncturing and interleaving as separate workload families. It derives numeric statements from committed machine-readable artifacts, identifies actual production consumers, records QC runtime rotation as inapplicable, preserves the accepted AFF3CT NR no-win unless `prepare_llrs` changed, and treats withdrawn DVB warm receipts only as history. The initial dependency graph is sufficient only when both profiles end in no-candidate or no-win dispositions. A material nomination activates the repository's plan-amendment bracket: the lead must add and review the required candidate leaves, re-home this publication behind their sinks, and complete them before this issue or the story can close.\n\n## Success Criteria\n\n- [hard] REQ-01: A deterministic generator reproduces the publication tables from committed receipts, profiles and content-pinned dispositions, including latency, throughput, whole-consumer costs, intervals, sample counts, conversion stages and runtime provenance where applicable.\n- [hard] REQ-02: The findings map every story criterion to durable evidence and preserve the QC inapplicability, generic-puncturing separation, NR accepted no-win, unavailable mappings, withdrawn DVB evidence and profile no-win outcomes.\n- [hard] REQ-03: Each profile has either a no-candidate or no-win disposition, or an amended and re-reviewed bracket has created the required candidate implementation and confirmation leaves, made them depend on the nominating profile, re-homed this issue behind their terminal sinks in the instantiated dependency graph, and those leaves are complete.\n- [hard] REQ-04: This issue remains open and the story does not complete while a material nomination lacks its pre-breakdown Rust 1.95 compile, assembly and scalar-fallback feasibility record, amended reviewed manifest, exact instantiated dependencies or completed candidate evidence.\n- [hard] REQ-05: Each performance claim cites its accepted receipt and protocol identity, while each absent comparison has an explicit semantic or consumer reason.\n\n## Notes\n\nThe report stays in the story's development area; permanent prose cites it rather than copying volatile measurements. The execution lead applies the repository's bracket amendment mechanism before closing a material profile or this publication.",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -518,17 +175,18 @@
       "repo-validate"
     ],
     "depends_on": [
-      "shift-isa-feasibility",
-      "dvb-final-integration"
+      "shift-workload-profile",
+      "dvb-interleave-profile"
     ],
     "planning": {
-      "outcome": "Generated evidence maps each workload family to its current adoption disposition",
+      "outcome": "Generated evidence publishes each workload family's current disposition",
       "contract_refs": [
         "measurement-authority",
         "semantic-boundaries",
         "family-scope",
+        "candidate-bracket-rule",
         "shift-profile-disposition",
-        "dvb-final-verdict"
+        "dvb-profile-disposition"
       ],
       "produces_contracts": [],
       "source_refs": [
@@ -543,12 +201,14 @@
         "INV-PRIOR-ART",
         "INV-ARCHITECTURE",
         "EDA07788-FINDINGS",
-        "DVB-REPAIR"
+        "DVB-REPAIR",
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4"
       ],
       "terminal": {
         "consumer_family": "Story reviewers",
         "test_boundary": "Deterministic regeneration from committed source artifacts",
-        "worker_sized_reason": "One generated report consumes finalized dispositions without changing implementation or measurement evidence",
+        "worker_sized_reason": "One generated report consumes two finalized profiles without implementation or new measurements",
         "footprint": {
           "creates": [
             "dev/active/c04dd4ac-zen3-shifts-and-permutations/findings.md",
