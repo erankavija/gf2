@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-14T23:53:27.866464775Z",
   "context": {},
   "created_at": "2026-09-13T11:40:06.951560552Z",
@@ -89,7 +89,7 @@
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/breakdown.json"
     },
     {
-      "commit": "HEAD",
+      "commit": "fe49ca11",
       "doc_type": "review",
       "format": "markdown",
       "label": "Shift and permutation adversarial plan review",
@@ -122,5 +122,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "planning: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-15T00:41:02.311665786Z"
+  "updated_at": "2026-09-15T00:41:16.349275960Z"
 }
