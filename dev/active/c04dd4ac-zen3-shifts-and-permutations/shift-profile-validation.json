@@ -1,0 +1,49 @@
+{
+  "schema": "bitvec-shift-profile-validation-v1",
+  "issue": "85fc5ff4",
+  "passed": true,
+  "fixture_cases": 948,
+  "lengths": [
+    0,
+    1,
+    7,
+    8,
+    63,
+    64,
+    65,
+    66,
+    127,
+    128,
+    129,
+    255,
+    256,
+    257,
+    511,
+    512,
+    513
+  ],
+  "base_offsets": [
+    0,
+    1,
+    7,
+    8,
+    63,
+    64,
+    65
+  ],
+  "seeds": [
+    0,
+    1,
+    9654697205978485932
+  ],
+  "directions": [
+    "left",
+    "right"
+  ],
+  "in_place_aliasing": true,
+  "vector_lane_crossings": true,
+  "incomplete_final_words": true,
+  "offsets_at_and_beyond_length": true,
+  "zero_tail_padding": true,
+  "failures": []
+}
