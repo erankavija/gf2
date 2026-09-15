@@ -1,0 +1,43 @@
+warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.05s
+────────────
+ Nextest run ID cca60ec5-612a-4cf9-a9b5-6baa14b0acee with nextest profile: default
+    Starting 1 test across 1 binary (50 tests skipped)
+       START [         ] (1/1) gf2-kernels-hip launch_ldpc_bp::tests::device_min_sum_matches_cpu_on_signed_zero_and_nan
+
+running 1 test
+device-memory free=17102274560 total=17163091968
+device-min-sum algorithm=MinSum case=negative-zero output-bits=[3f800000, 00000000, 00000000]
+device-min-sum algorithm=MinSum case=both-zeros output-bits=[80000000, 80000000, 00000000]
+device-min-sum algorithm=MinSum case=positive-nan output-bits=[bf800000, 3f800000, c0000000]
+device-min-sum algorithm=MinSum case=negative-nan output-bits=[bf800000, 3f800000, c0000000]
+device-min-sum algorithm=MinSum case=all-nan output-bits=[7f800000, 7f800000, 7f800000]
+device-min-sum algorithm=MinSum case=nan-and-negative-zero output-bits=[80000000, 40000000, 80000000]
+device-min-sum algorithm=NormalizedMinSum(0.75) case=negative-zero output-bits=[3f400000, 00000000, 00000000]
+device-min-sum algorithm=NormalizedMinSum(0.75) case=both-zeros output-bits=[80000000, 80000000, 00000000]
+device-min-sum algorithm=NormalizedMinSum(0.75) case=positive-nan output-bits=[bf400000, 3f400000, bfc00000]
+device-min-sum algorithm=NormalizedMinSum(0.75) case=negative-nan output-bits=[bf400000, 3f400000, bfc00000]
+device-min-sum algorithm=NormalizedMinSum(0.75) case=all-nan output-bits=[7f800000, 7f800000, 7f800000]
+device-min-sum algorithm=NormalizedMinSum(0.75) case=nan-and-negative-zero output-bits=[80000000, 3fc00000, 80000000]
+device-min-sum algorithm=OffsetMinSum(0.5) case=negative-zero output-bits=[3f000000, 00000000, 00000000]
+device-min-sum algorithm=OffsetMinSum(0.5) case=both-zeros output-bits=[80000000, 80000000, 00000000]
+device-min-sum algorithm=OffsetMinSum(0.5) case=positive-nan output-bits=[bf000000, 3f000000, bfc00000]
+device-min-sum algorithm=OffsetMinSum(0.5) case=negative-nan output-bits=[bf000000, 3f000000, bfc00000]
+device-min-sum algorithm=OffsetMinSum(0.5) case=all-nan output-bits=[7f800000, 7f800000, 7f800000]
+device-min-sum algorithm=OffsetMinSum(0.5) case=nan-and-negative-zero output-bits=[80000000, 3fc00000, 80000000]
+test launch_ldpc_bp::tests::device_min_sum_matches_cpu_on_signed_zero_and_nan ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 50 filtered out; finished in 0.04s
+
+        PASS [   0.067s] (1/1) gf2-kernels-hip launch_ldpc_bp::tests::device_min_sum_matches_cpu_on_signed_zero_and_nan
+────────────
+     Summary [   0.067s] 1 test run: 1 passed, 50 skipped

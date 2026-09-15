@@ -1,0 +1,17 @@
+warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
+warning: function `choose_k_block` is never used
+   --> crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gf2-core` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.07s
+────────────
+ Nextest run ID fa8f1057-f7f8-4da0-b7eb-e1e262e2c267 with nextest profile: ci
+    Starting 1 test across 1 binary (1 test skipped)
+        PASS [   0.072s] (1/1) gf2-sim::gpu_nr_5g_byte_identity gpu_nr_5g_smoke_byte_identical_to_cpu
+────────────
+     Summary [   0.072s] 1 test run: 1 passed, 1 skipped

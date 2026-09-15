@@ -1066,6 +1066,120 @@ mod tests {
         assert_min_sum_contract_matches_cpu(&[f32::NAN, -0.0, -2.0]);
     }
 
+    #[cfg(feature = "hip")]
+    #[test]
+    fn device_min_sum_matches_cpu_on_signed_zero_and_nan() {
+        match crate::host::device_mem_info() {
+            Ok((free, total)) => {
+                eprintln!("device-memory free={free} total={total}");
+            }
+            Err(error) if std::env::var_os("GF2_REQUIRE_GPU").is_some() => {
+                panic!("GF2_REQUIRE_GPU is set but device discovery failed: {error}");
+            }
+            Err(error) => {
+                eprintln!("skipping device min-sum conformance: {error}");
+                return;
+            }
+        }
+
+        let positive_nan = f32::from_bits(0x7fc0_0000);
+        let negative_nan = f32::from_bits(0xffc0_0000);
+        let cases = [
+            ("negative-zero", [-0.0, 1.0, 2.0]),
+            ("both-zeros", [0.0, -0.0, -3.0]),
+            ("positive-nan", [positive_nan, 2.0, -1.0]),
+            ("negative-nan", [negative_nan, 2.0, -1.0]),
+            ("all-nan", [positive_nan, negative_nan, positive_nan]),
+            ("nan-and-negative-zero", [positive_nan, -0.0, -2.0]),
+        ];
+        let layout = LdpcGraphLayout {
+            n: 3,
+            m: 1,
+            check_row_ptr: vec![0, 3],
+            check_edge_var: vec![0, 1, 2],
+            check_edge_to_var_edge: vec![0, 1, 2],
+            var_col_ptr: vec![0, 1, 2, 3],
+            var_edge_to_check_edge: vec![0, 1, 2],
+        };
+        let decoder = GpuLdpcBp::new(&layout, cases.len(), 0)
+            .expect("allocate the device check-update fixture");
+        let device_inputs: Vec<f32> = cases
+            .iter()
+            .flat_map(|(_, values)| values.iter().copied())
+            .collect();
+        decoder
+            .d_v2c
+            .copy_from_host(&device_inputs)
+            .expect("upload device check-update inputs");
+
+        for (gpu_algorithm, cpu_rule) in [
+            (GpuBpAlgorithm::MinSum, MinSumRule::Plain),
+            (
+                GpuBpAlgorithm::NormalizedMinSum(0.75),
+                MinSumRule::Normalized(0.75),
+            ),
+            (GpuBpAlgorithm::OffsetMinSum(0.5), MinSumRule::Offset(0.5)),
+        ] {
+            // SAFETY: every device buffer belongs to `decoder`; `d_v2c` and
+            // `d_c2v` contain `cases.len() * 3` lanes, the uploaded layout has
+            // one three-edge check, and the null stream/frame flags select the
+            // synchronized default-stream path without dereferencing null.
+            check_hip(
+                unsafe {
+                    ffi::launch_ldpc_check_update(
+                        decoder.d_v2c.as_ptr() as *const f32,
+                        decoder.d_c2v.as_mut_ptr() as *mut f32,
+                        decoder.d_check_row_ptr.as_ptr() as *const i32,
+                        decoder.d_check_edge_to_var_edge.as_ptr() as *const i32,
+                        ptr::null(),
+                        1,
+                        3,
+                        cases.len() as i32,
+                        gpu_algorithm.code(),
+                        gpu_algorithm.alpha(),
+                        gpu_algorithm.beta(),
+                        ptr::null_mut(),
+                    )
+                },
+                "launch_ldpc_check_update(device conformance)",
+            )
+            .expect("launch device check update");
+            // SAFETY: the default-stream launch above is valid and this call
+            // only waits for outstanding device work to finish.
+            check_hip(
+                unsafe { ffi::hip_device_synchronize() },
+                "hipDeviceSynchronize(device conformance)",
+            )
+            .expect("synchronize device check update");
+
+            let mut device_outputs = vec![0.0_f32; device_inputs.len()];
+            decoder
+                .d_c2v
+                .copy_to_host(&mut device_outputs)
+                .expect("download device check-update outputs");
+            for (case_index, (label, values)) in cases.iter().enumerate() {
+                let inputs: Vec<Llr> = values.iter().copied().map(Llr::new).collect();
+                let mut cpu_outputs = vec![Llr::zero(); values.len()];
+                min_sum_check_row(cpu_rule, &inputs, &mut cpu_outputs);
+                let device_row = &device_outputs[case_index * 3..(case_index + 1) * 3];
+                let device_bits: Vec<u32> =
+                    device_row.iter().map(|value| value.to_bits()).collect();
+                let cpu_bits: Vec<u32> = cpu_outputs
+                    .iter()
+                    .map(|value| value.value().to_bits())
+                    .collect();
+                eprintln!(
+                    "device-min-sum algorithm={gpu_algorithm:?} case={label} \
+                     output-bits={device_bits:08x?}"
+                );
+                assert_eq!(
+                    device_bits, cpu_bits,
+                    "device {gpu_algorithm:?}, case {label}, inputs {values:?}"
+                );
+            }
+        }
+    }
+
     #[test]
     fn test_algorithm_code_and_params() {
         assert_eq!(GpuBpAlgorithm::MinSum.code(), 0);
