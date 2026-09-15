@@ -1,0 +1,18 @@
+pilot receipt  dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-pilot-r2/receipt.json
+receipt sha256 3639174e76959ff7187cc3a83ef46ac6f7d175d1c890e2304f0182b639a55f05
+campaign       popcount-pilot-r2-5cbb6545-20260913t130101z
+verdict        accepted (label pilot)
+family         popcount-route-selection: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+popcount-w4-dispatch                    24      1.0238      1.0198      1.0362    0.0121
+popcount-w8-dispatch                    24      1.1555      1.1512      1.1583    0.0038
+popcount-w128-dispatch                  24      1.0453      1.0421      1.0463    0.0031
+popcount-w1024-dispatch                 24      1.3314      1.3289      1.3333    0.0019
+popcount-w16384-dispatch                24      1.3202      1.3145      1.3226    0.0043
+popcount-w16384-vs-libpopcnt            24      1.0341      1.0311      1.0365    0.0029
+
+widest relative half-width   0.012148
+frozen measurement resolution 0.02
+margins: equivalence 1.03, material gap 1.2
+confirmation addendum dev/active/5cbb6545/addendum-popcount-v4-confirmation.json

@@ -1,0 +1,19 @@
+pilot receipt  dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot-r2/receipt.json
+receipt sha256 9a435ae1f563a82faa69e1867fdd3780584a8156570980bd345fa623cae70a0f
+campaign       fused-pilot-r2-5cbb6545-20260913t130716z
+verdict        accepted (label pilot)
+family         fused-count-consumers: 1 ledger comparisons, attempt alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+and-w128-fused                          24     0.97607      0.9719     0.97817    0.0043
+and-w512-fused                          24      1.3072      1.3049       1.309    0.0018
+and-w4096-fused                         24      1.2831      1.2818      1.2861    0.0023
+and-w4096-vs-two-pass                   24      3.0051      3.0011      3.0253    0.0067
+matvec-1024x16384                       24      1.1736      1.1443      1.2076    0.0289
+matvec-1024x4096                        24     0.94079     0.92051     0.96442    0.0251
+
+widest relative half-width   0.028926
+frozen measurement resolution 0.03
+replaced equivalence_margin 1.03 -> 1.04
+margins: equivalence 1.04, material gap 1.2
+confirmation addendum dev/active/5cbb6545/addendum-fused-v4-confirmation.json

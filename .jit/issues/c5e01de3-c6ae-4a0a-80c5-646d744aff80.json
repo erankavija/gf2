@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:38:53.630653249Z",
+  "dependencies": [],
+  "description": "Correct the canonical benchmark acceptance schema and renderer so sequential-attempt alpha is never presented as the family's total alpha.\n\n## Background\n\nThe `53c5a8c0` research-review gate found that confirmation acceptance summaries render `0.025` as “family-wise alpha” while the frozen addenda declare the family-wide alpha as `0.05`. The numerical decision path is correct: `0.025` is the first-attempt allocation and per-cell corrected alpha and intervals are consistent. The defect is semantic naming in the acceptance projection. Existing receipt bytes remain immutable evidence; fix the canonical producer and document the historical label rather than rewriting receipts.\n\n## Success Criteria\n\n- [hard] REQ-01: The acceptance schema distinguishes the total family-wise alpha from the sequential attempt allocation and per-comparison corrected alpha with canonical semantic field names.\n- [hard] REQ-02: Markdown and JSON acceptance summaries label and expose each alpha consistently, and no renderer calls an attempt allocation the family-wise alpha.\n- [hard] REQ-03: Tests cover a first confirmatory attempt and a later attempt, recompute the allocation chain from the family ledger, and assert the rendered labels and numerical relationships.\n- [hard] REQ-04: Historical frozen receipts remain byte-identical; permanent prose records the legacy field-label interpretation by citation rather than modifying measurement evidence.\n\n## Notes\n\nSurfaced as advisory F1 by the `53c5a8c0` research-review gate. The verdict and conclusions are unchanged.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-15T00:38:53.630653249Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "c5e01de3-c6ae-4a0a-80c5-646d744aff80",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Name attempt alpha correctly in acceptance summaries",
+  "updated_at": "2026-09-15T00:38:53.630653249Z"
+}

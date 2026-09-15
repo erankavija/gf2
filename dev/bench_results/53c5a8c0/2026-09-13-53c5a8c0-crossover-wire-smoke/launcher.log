@@ -1,0 +1,32 @@
+# command: ./dev/bench_results/53c5a8c0/run-crossover.sh smoke crossover
+# started_utc: 2026-09-13T12:10:18Z
+# gf2 revision (informational): 8c2eaad3f9cf6213a7de10d7d37470ab2b73f09f
+# family: gf2m-clmul-crossover
+# mode: smoke
+# addendum: dev/active/53c5a8c0/addendum-v4-crossover-pilot.json
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-smoke/53c5a8c0-crossover-stage.plan.json
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-smoke/53c5a8c0-crossover-stage
+# arms: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/release/benchmark-acceptance
+# load_avg_start:  15:10:18 up 9 days, 16:39,  9 users,  load average: 1.17, 2.95, 4.02
+# session 1 exit: 1 (0 = complete, 3 = paused)
+# command: ./dev/bench_results/53c5a8c0/run-crossover.sh smoke crossover
+# started_utc: 2026-09-13T12:11:10Z
+# gf2 revision (informational): 8c3d4d057246b591f080f98934ddc9a219e6a234
+# family: gf2m-clmul-crossover
+# mode: smoke
+# addendum: dev/active/53c5a8c0/addendum-v4-crossover-pilot.json
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-smoke/53c5a8c0-crossover-stage.plan.json
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-smoke/53c5a8c0-crossover-stage
+# arms: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/release/benchmark-acceptance
+# load_avg_start:  15:11:10 up 9 days, 16:40,  9 users,  load average: 0.95, 2.61, 3.85
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-smoke/53c5a8c0-crossover-stage/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-smoke/53c5a8c0-crossover-stage/execution.log
+# session 2 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-smoke/53c5a8c0-crossover-stage/execution.log
+# session 3 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=target/bench-smoke/53c5a8c0-crossover/receipt.json

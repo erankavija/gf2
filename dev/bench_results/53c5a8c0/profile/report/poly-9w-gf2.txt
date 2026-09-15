@@ -1,0 +1,27 @@
+# cycle samples of poly-9w-gf2 (gf2 arm, cell poly-9w)
+# recorded by run-profile.sh at 4000 Hz over 167410 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1279265659
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                     IPC   [IPC Coverage]
+# ........  ............  ....................  .........................................................................................  ....................
+#
+     3.06%            33  profile-arm           [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run  -      -            
+     1.02%            11  profile-arm           [.] clmul_crossover_arms::gf2_backend::long_product                                        -      -            
+    21.40%           236  profile-arm           [.] clmul_crossover_arms::gf2_backend::owned_product                                       -      -            
+     2.83%            34  profile-arm           [.] gf2_core::gf2m::wide::clmul_wide_dispatch                                              -      -            
+    70.13%           766  profile-arm           [.] gf2_kernels_simd::gf2m_wide::clmul_wide9_ymm_safe                                      -      -            
+     0.66%             8  profile-arm           [.] profile_arm::main                                                                      -      -            
+
+
+#
+# (Tip: Sample related events with: perf record -e '{cycles,instructions}:S')
+#

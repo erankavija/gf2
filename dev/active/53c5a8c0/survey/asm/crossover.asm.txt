@@ -1,0 +1,1426 @@
+; release assembly of the measured gf2 paths (jit:53c5a8c0)
+;
+; Produced by dev/active/53c5a8c0/survey/dump-asm.py from the bytes of
+; the executable named below and from nothing else. Instruction
+; addresses are replaced by offsets from each body's entry point, so a
+; body that has not changed reproduces byte for byte. A branch into
+; the same body reads `.L+0x<offset from that body's entry>`.
+;
+; executable   : target/53c5a8c0-arms-conservative/release/crossover-arm
+; sha256       : 6447fd8d59866f5867c30b3b9fff57237b76cc2537dcff7ba152e51397fb2a9c
+; objdump      : GNU objdump (GNU Binutils) 2.47
+; disassembler : objdump -d -M intel --demangle --no-show-raw-insn
+;
+; body         : gf2_kernels_simd::x86::clmul::clmul_batch
+;                nm symbol at 0x59540, 251 bytes
+; body         : gf2_kernels_simd::x86::clmul::clmul_u64
+;                nm symbol at 0x59740, 29 bytes
+; body         : gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4
+;                nm symbol at 0x58e50, 1658 bytes
+; body         : gf2_kernels_simd::x86::clmul::clmul_barrett_reduce
+;                nm symbol at 0x59640, 256 bytes
+; body         : gf2_core::gf2m::batch::batch_mul_raw
+;                nm symbol at 0x57de0, 1022 bytes
+; body         : gf2_core::field::vec::FieldVec<gf2_core::gf2m::field::Gf2mElement_>::simd_dot_product
+;                nm symbol at 0x581e0, 2015 bytes
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::clmul::clmul_batch
+; located: nm symbol at 0x59540, 251 bytes
+;==========================================================
+
+	sub	rsp,0x28
+	mov	QWORD PTR [rsp+0x8],rsi
+	mov	QWORD PTR [rsp+0x10],rcx
+	cmp	rsi,rcx
+	jne	.L+0xaf
+	mov	QWORD PTR [rsp+0x18],rsi
+	mov	QWORD PTR [rsp+0x20],r9
+	cmp	rsi,r9
+	jne	.L+0xd5
+	test	rsi,rsi
+	je	.L+0xaa
+	cmp	rsi,0x1
+	jne	.L+0x3d
+	xor	eax,eax
+	jmp	.L+0x90
+.L+0x3d:
+	movabs	rcx,0xffffffffffffffe
+	and	rcx,rsi
+	lea	r9,[r8+0x10]
+	xor	eax,eax
+.L+0x50:
+	movq	xmm0,QWORD PTR [rdi+rax*8]
+	movq	xmm1,QWORD PTR [rdx+rax*8]
+	pclmullqlqdq	xmm1,xmm0
+	movdqa	XMMWORD PTR [r9-0x10],xmm1
+	movq	xmm0,QWORD PTR [rdi+rax*8+0x8]
+	movq	xmm1,QWORD PTR [rdx+rax*8+0x8]
+	add	rax,0x2
+	pclmullqlqdq	xmm1,xmm0
+	movdqa	XMMWORD PTR [r9],xmm1
+	add	r9,0x20
+	cmp	rcx,rax
+	jne	.L+0x50
+	test	sil,0x1
+	je	.L+0xaa
+.L+0x90:
+	movq	xmm0,QWORD PTR [rdi+rax*8]
+	movq	xmm1,QWORD PTR [rdx+rax*8]
+	pclmullqlqdq	xmm1,xmm0
+	shl	rax,0x4
+	movdqa	XMMWORD PTR [r8+rax*1],xmm1
+.L+0xaa:
+	add	rsp,0x28
+	ret
+.L+0xaf:
+	lea	rcx,[rip+0xfffffffffffb42c9]
+	lea	r9,[rip+0x4b293]
+	lea	rsi,[rsp+0x8]
+	lea	rdx,[rsp+0x10]
+	mov	r8d,0x47
+	xor	edi,edi
+	call	QWORD PTR [rip+0x4d8a3]
+.L+0xd5:
+	lea	rcx,[rip+0xfffffffffffb42f0]
+	lea	r9,[rip+0x4b285]
+	lea	rsi,[rsp+0x18]
+	lea	rdx,[rsp+0x20]
+	mov	r8d,0x59
+	xor	edi,edi
+	call	QWORD PTR [rip+0x4d87d]
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::clmul::clmul_u64
+; located: nm symbol at 0x59740, 29 bytes
+;==========================================================
+
+	movq	xmm0,rdi
+	movq	xmm1,rsi
+	pclmullqlqdq	xmm1,xmm0
+	movq	rax,xmm1
+	pextrq	rdx,xmm1,0x1
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4
+; located: nm symbol at 0x58e50, 1658 bytes
+;==========================================================
+
+	push	r15
+	push	r14
+	push	r13
+	push	r12
+	push	rbx
+	sub	rsp,0x20
+	mov	QWORD PTR [rsp],rsi
+	mov	QWORD PTR [rsp+0x8],rcx
+	cmp	rsi,rcx
+	jne	.L+0x54c
+	mov	QWORD PTR [rsp+0x10],rsi
+	mov	QWORD PTR [rsp+0x18],r9
+	cmp	rsi,r9
+	jne	.L+0x570
+	mov	ecx,DWORD PTR [rsp+0x60]
+	mov	r10,QWORD PTR [rsp+0x58]
+	mov	rax,0xffffffffffffffff
+	mov	r11,0xffffffffffffffff
+	shl	r11,cl
+	cmp	ecx,0x40
+	not	r11
+	cmove	r11,rax
+	vmovq	xmm0,QWORD PTR [rsp+0x50]
+	vinserti128	ymm2,ymm0,xmm0,0x1
+	vmovq	xmm1,r10
+	vinserti128	ymm3,ymm1,xmm1,0x1
+	cmp	ecx,0x8
+	je	.L+0x2e9
+	cmp	ecx,0x10
+	je	.L+0x1bc
+	cmp	ecx,0x20
+	jne	.L+0x2f3
+	cmp	rsi,0x4
+	jb	.L+0x2f3
+	vpbroadcastq	ymm4,xmm1
+	vmovq	xmm5,r11
+	vpbroadcastq	ymm5,xmm5
+	xor	eax,eax
+	vpbroadcastq	ymm6,QWORD PTR [rip+0xfffffffffffb1f6c]
+	vpbroadcastq	ymm7,QWORD PTR [rip+0xfffffffffffb1f4b]
+	data16	cs nop WORD PTR [rax+rax*1+0x0]
+.L+0xc0:
+	cmp	rax,rsi
+	jae	.L+0x667
+	lea	r9,[rax+0x1]
+	cmp	r9,rsi
+	jae	.L+0x62e
+	lea	r9,[rax+0x2]
+	cmp	r9,rsi
+	jae	.L+0x5f5
+	lea	r9,[rax+0x3]
+	cmp	r9,rsi
+	jae	.L+0x5bc
+	vmovdqu	xmm8,XMMWORD PTR [rdi+rax*8+0x10]
+	vpermq	ymm8,ymm8,0xd4
+	vmovdqu	xmm9,XMMWORD PTR [rdx+rax*8]
+	vmovdqu	xmm10,XMMWORD PTR [rdx+rax*8+0x10]
+	vpermq	ymm10,ymm10,0xd4
+	vpclmullqlqdq	ymm8,ymm8,ymm10
+	vpshufd	ymm10,ymm8,0xe9
+	vpclmullqlqdq	ymm10,ymm10,ymm2
+	vpshufd	ymm10,ymm10,0xe9
+	vpclmullqlqdq	ymm10,ymm10,ymm3
+	vpxor	ymm8,ymm10,ymm8
+	vmovq	xmm10,QWORD PTR [rdi+rax*8]
+	vmovq	xmm11,QWORD PTR [rdi+rax*8+0x8]
+	vinserti128	ymm10,ymm10,xmm11,0x1
+	vpermq	ymm9,ymm9,0xd4
+	vpclmullqlqdq	ymm9,ymm10,ymm9
+	vpshufd	ymm10,ymm9,0xe9
+	vpclmullqlqdq	ymm10,ymm10,ymm2
+	vpshufd	ymm10,ymm10,0xe9
+	vpclmullqlqdq	ymm10,ymm10,ymm3
+	vpxor	ymm9,ymm10,ymm9
+	vpunpcklqdq	ymm8,ymm9,ymm8
+	vpermq	ymm8,ymm8,0xd8
+	vpxor	ymm9,ymm8,ymm6
+	vpcmpgtq	ymm9,ymm7,ymm9
+	vpandn	ymm9,ymm9,ymm4
+	vpxor	ymm8,ymm9,ymm8
+	vpxor	ymm9,ymm8,ymm6
+	vpcmpgtq	ymm9,ymm7,ymm9
+	vpandn	ymm9,ymm9,ymm4
+	vpxor	ymm8,ymm9,ymm8
+	vpand	ymm8,ymm8,ymm5
+	vmovdqu	YMMWORD PTR [r8+rax*8],ymm8
+	lea	r9,[rax+0x4]
+	add	rax,0x8
+	cmp	rax,rsi
+	mov	rax,r9
+	jbe	.L+0xc0
+	jmp	.L+0x2f6
+.L+0x1bc:
+	cmp	rsi,0x4
+	jb	.L+0x2f3
+	vpbroadcastq	ymm4,xmm1
+	vmovq	xmm5,r11
+	vpbroadcastq	ymm5,xmm5
+	xor	eax,eax
+	vpbroadcastq	ymm6,QWORD PTR [rip+0xfffffffffffb1e38]
+	vpbroadcastq	ymm7,QWORD PTR [rip+0xfffffffffffb1e77]
+	nop	DWORD PTR [rax+0x0]
+.L+0x1f0:
+	cmp	rax,rsi
+	jae	.L+0x641
+	lea	r9,[rax+0x1]
+	cmp	r9,rsi
+	jae	.L+0x608
+	lea	r9,[rax+0x2]
+	cmp	r9,rsi
+	jae	.L+0x5cf
+	lea	r9,[rax+0x3]
+	cmp	r9,rsi
+	jae	.L+0x596
+	vmovdqu	xmm8,XMMWORD PTR [rdi+rax*8+0x10]
+	vpermq	ymm8,ymm8,0xd4
+	vmovdqu	xmm9,XMMWORD PTR [rdx+rax*8]
+	vmovdqu	xmm10,XMMWORD PTR [rdx+rax*8+0x10]
+	vpermq	ymm10,ymm10,0xd4
+	vpclmullqlqdq	ymm8,ymm8,ymm10
+	vpsrldq	ymm10,ymm8,0x2
+	vpclmullqlqdq	ymm10,ymm10,ymm2
+	vpsrldq	ymm10,ymm10,0x2
+	vpclmullqlqdq	ymm10,ymm10,ymm3
+	vpxor	ymm8,ymm10,ymm8
+	vmovq	xmm10,QWORD PTR [rdi+rax*8]
+	vmovq	xmm11,QWORD PTR [rdi+rax*8+0x8]
+	vinserti128	ymm10,ymm10,xmm11,0x1
+	vpermq	ymm9,ymm9,0xd4
+	vpclmullqlqdq	ymm9,ymm10,ymm9
+	vpsrldq	ymm10,ymm9,0x2
+	vpclmullqlqdq	ymm10,ymm10,ymm2
+	vpsrldq	ymm10,ymm10,0x2
+	vpclmullqlqdq	ymm10,ymm10,ymm3
+	vpxor	ymm9,ymm10,ymm9
+	vpunpcklqdq	ymm8,ymm9,ymm8
+	vpermq	ymm8,ymm8,0xd8
+	vpxor	ymm9,ymm8,ymm6
+	vpcmpgtq	ymm9,ymm7,ymm9
+	vpandn	ymm9,ymm9,ymm4
+	vpxor	ymm8,ymm9,ymm8
+	vpxor	ymm9,ymm8,ymm6
+	vpcmpgtq	ymm9,ymm7,ymm9
+	vpandn	ymm9,ymm9,ymm4
+	vpxor	ymm8,ymm9,ymm8
+	vpand	ymm8,ymm8,ymm5
+	vmovdqu	YMMWORD PTR [r8+rax*8],ymm8
+	lea	r9,[rax+0x4]
+	add	rax,0x8
+	cmp	rax,rsi
+	mov	rax,r9
+	jbe	.L+0x1f0
+	jmp	.L+0x2f6
+.L+0x2e9:
+	cmp	rsi,0x4
+	jae	.L+0x428
+.L+0x2f3:
+	xor	r9d,r9d
+.L+0x2f6:
+	cmp	r9,rsi
+	jae	.L+0x417
+	and	ecx,0x7f
+	jmp	.L+0x326
+	data16	data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x310:
+	xor	rax,r12
+	and	rax,r11
+.L+0x316:
+	mov	QWORD PTR [r8+r9*8],rax
+	inc	r9
+	cmp	rsi,r9
+	je	.L+0x417
+.L+0x326:
+	mov	rbx,QWORD PTR [rdi+r9*8]
+	test	rbx,rbx
+	je	.L+0x410
+	mov	r14,QWORD PTR [rdx+r9*8]
+	mov	eax,0x0
+	test	r14,r14
+	je	.L+0x316
+	vmovq	xmm2,rbx
+	vmovq	xmm3,r14
+	vpclmullqlqdq	xmm2,xmm2,xmm3
+	vmovq	rax,xmm2
+	vpextrq	r14,xmm2,0x1
+	mov	rbx,rax
+	shrd	rbx,r14,cl
+	shr	r14,cl
+	test	cl,0x40
+	cmovne	rbx,r14
+	mov	r15d,0x0
+	cmove	r15,r14
+	or	r15,rbx
+	je	.L+0x316
+	vmovq	xmm3,rbx
+	vpclmullqlqdq	xmm3,xmm3,xmm0
+	vpextrq	rax,xmm3,0x1
+	vmovq	rbx,xmm3
+	shrd	rbx,rax,cl
+	shr	rax,cl
+	test	cl,0x40
+	cmove	rax,rbx
+	vmovq	xmm3,rax
+	vpclmullqlqdq	xmm3,xmm3,xmm1
+	vpxor	xmm2,xmm3,xmm2
+	vpextrq	r14,xmm2,0x1
+	mov	rbx,r14
+	shr	rbx,cl
+	test	cl,0x40
+	vmovq	r13,xmm2
+	mov	eax,0x0
+	mov	r15,rbx
+	cmovne	r15,rax
+	mov	r12,r13
+	shrd	r12,r14,cl
+	test	cl,0x40
+	cmovne	r12,rbx
+	or	r12,r15
+	mov	r12d,0x0
+	je	.L+0x3eb
+	mov	r12,r10
+.L+0x3eb:
+	xor	r12,r13
+	mov	r13,r12
+	shrd	r13,r14,cl
+	test	cl,0x40
+	cmovne	r13,rbx
+	or	r13,r15
+	je	.L+0x310
+	mov	rax,r10
+	jmp	.L+0x310
+	nop	DWORD PTR [rax]
+.L+0x410:
+	xor	eax,eax
+	jmp	.L+0x316
+.L+0x417:
+	add	rsp,0x20
+	pop	rbx
+	pop	r12
+	pop	r13
+	pop	r14
+	pop	r15
+	vzeroupper
+	ret
+.L+0x428:
+	vpbroadcastq	ymm4,xmm1
+	vmovq	xmm5,r11
+	vpbroadcastq	ymm5,xmm5
+	xor	eax,eax
+	vpbroadcastq	ymm6,QWORD PTR [rip+0xfffffffffffb1bd6]
+	vpbroadcastq	ymm7,QWORD PTR [rip+0xfffffffffffb1bad]
+	nop	DWORD PTR [rax+rax*1+0x0]
+.L+0x450:
+	cmp	rax,rsi
+	jae	.L+0x654
+	lea	r9,[rax+0x1]
+	cmp	r9,rsi
+	jae	.L+0x61b
+	lea	r9,[rax+0x2]
+	cmp	r9,rsi
+	jae	.L+0x5e2
+	lea	r9,[rax+0x3]
+	cmp	r9,rsi
+	jae	.L+0x5a9
+	vmovdqu	xmm8,XMMWORD PTR [rdi+rax*8+0x10]
+	vpermq	ymm8,ymm8,0xd4
+	vmovdqu	xmm9,XMMWORD PTR [rdx+rax*8]
+	vmovdqu	xmm10,XMMWORD PTR [rdx+rax*8+0x10]
+	vpermq	ymm10,ymm10,0xd4
+	vpclmullqlqdq	ymm8,ymm8,ymm10
+	vpsrldq	ymm10,ymm8,0x1
+	vpclmullqlqdq	ymm10,ymm10,ymm2
+	vpsrldq	ymm10,ymm10,0x1
+	vpclmullqlqdq	ymm10,ymm10,ymm3
+	vpxor	ymm8,ymm10,ymm8
+	vmovq	xmm10,QWORD PTR [rdi+rax*8]
+	vmovq	xmm11,QWORD PTR [rdi+rax*8+0x8]
+	vinserti128	ymm10,ymm10,xmm11,0x1
+	vpermq	ymm9,ymm9,0xd4
+	vpclmullqlqdq	ymm9,ymm10,ymm9
+	vpsrldq	ymm10,ymm9,0x1
+	vpclmullqlqdq	ymm10,ymm10,ymm2
+	vpsrldq	ymm10,ymm10,0x1
+	vpclmullqlqdq	ymm10,ymm10,ymm3
+	vpxor	ymm9,ymm10,ymm9
+	vpunpcklqdq	ymm8,ymm9,ymm8
+	vpermq	ymm8,ymm8,0xd8
+	vpxor	ymm9,ymm8,ymm6
+	vpcmpgtq	ymm9,ymm7,ymm9
+	vpandn	ymm9,ymm9,ymm4
+	vpxor	ymm8,ymm9,ymm8
+	vpxor	ymm9,ymm8,ymm6
+	vpcmpgtq	ymm9,ymm7,ymm9
+	vpandn	ymm9,ymm9,ymm4
+	vpxor	ymm8,ymm9,ymm8
+	vpand	ymm8,ymm8,ymm5
+	vmovdqu	YMMWORD PTR [r8+rax*8],ymm8
+	lea	r9,[rax+0x4]
+	add	rax,0x8
+	cmp	rax,rsi
+	mov	rax,r9
+	jbe	.L+0x450
+	jmp	.L+0x2f6
+.L+0x54c:
+	lea	rcx,[rip+0xfffffffffffb451c]
+	lea	r9,[rip+0x4b37e]
+	mov	rsi,rsp
+	lea	rdx,[rsp+0x8]
+	mov	r8d,0x47
+	xor	edi,edi
+	call	QWORD PTR [rip+0x4daf8]
+.L+0x570:
+	lea	rcx,[rip+0xfffffffffffb451b]
+	lea	r9,[rip+0x4b372]
+	lea	rsi,[rsp+0x10]
+	lea	rdx,[rsp+0x18]
+	mov	r8d,0x55
+	xor	edi,edi
+	call	QWORD PTR [rip+0x4dad2]
+.L+0x596:
+	lea	rdx,[rip+0x4b413]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d94f]
+.L+0x5a9:
+	lea	rdx,[rip+0x4b3a0]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d93c]
+.L+0x5bc:
+	lea	rdx,[rip+0x4b44d]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d929]
+.L+0x5cf:
+	lea	rdx,[rip+0x4b3c2]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d916]
+.L+0x5e2:
+	lea	rdx,[rip+0x4b34f]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d903]
+.L+0x5f5:
+	lea	rdx,[rip+0x4b3fc]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d8f0]
+.L+0x608:
+	lea	rdx,[rip+0x4b371]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d8dd]
+.L+0x61b:
+	lea	rdx,[rip+0x4b2fe]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d8ca]
+.L+0x62e:
+	lea	rdx,[rip+0x4b3ab]
+	mov	rdi,r9
+	vzeroupper
+	call	QWORD PTR [rip+0x4d8b7]
+.L+0x641:
+	lea	rdx,[rip+0x4b320]
+	mov	rdi,rax
+	vzeroupper
+	call	QWORD PTR [rip+0x4d8a4]
+.L+0x654:
+	lea	rdx,[rip+0x4b2ad]
+	mov	rdi,rax
+	vzeroupper
+	call	QWORD PTR [rip+0x4d891]
+.L+0x667:
+	lea	rdx,[rip+0x4b35a]
+	mov	rdi,rax
+	vzeroupper
+	call	QWORD PTR [rip+0x4d87e]
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::clmul::clmul_barrett_reduce
+; located: nm symbol at 0x59640, 256 bytes
+;==========================================================
+
+	xor	eax,eax
+	test	rdi,rdi
+	je	.L+0xff
+	test	rsi,rsi
+	je	.L+0xff
+	mov	r9,rcx
+	movq	xmm1,rdi
+	movq	xmm0,rsi
+	pclmullqlqdq	xmm0,xmm1
+	movq	rax,xmm0
+	pextrq	rdi,xmm0,0x1
+	mov	ecx,r8d
+	and	ecx,0x7f
+	mov	rsi,rax
+	shrd	rsi,rdi,cl
+	shr	rdi,cl
+	xor	r10d,r10d
+	test	cl,0x40
+	cmovne	rsi,rdi
+	cmove	r10,rdi
+	or	r10,rsi
+	je	.L+0xff
+	movq	xmm1,rsi
+	movq	xmm2,rdx
+	pclmullqlqdq	xmm2,xmm1
+	pextrq	rax,xmm2,0x1
+	movq	rdx,xmm2
+	shrd	rdx,rax,cl
+	shr	rax,cl
+	test	cl,0x40
+	cmove	rax,rdx
+	movq	xmm1,rax
+	movq	xmm2,r9
+	pclmullqlqdq	xmm2,xmm1
+	pxor	xmm2,xmm0
+	pextrq	rdx,xmm2,0x1
+	mov	rsi,rdx
+	shr	rsi,cl
+	xor	eax,eax
+	test	cl,0x40
+	movq	rdi,xmm2
+	mov	r10,rsi
+	cmovne	r10,rax
+	mov	r11,rdi
+	shrd	r11,rdx,cl
+	test	cl,0x40
+	cmovne	r11,rsi
+	or	r11,r10
+	mov	r11,r9
+	cmove	r11,rax
+	xor	r11,rdi
+	mov	rdi,r11
+	shrd	rdi,rdx,cl
+	test	cl,0x40
+	cmovne	rdi,rsi
+	mov	rdx,0xffffffffffffffff
+	mov	ecx,r8d
+	shl	rdx,cl
+	or	rdi,r10
+	cmove	r9,rax
+	not	rdx
+	xor	r9,r11
+	and	r9,rdx
+	mov	rax,r9
+.L+0xff:
+	ret
+
+;==========================================================
+; symbol: gf2_core::gf2m::batch::batch_mul_raw
+; located: nm symbol at 0x57de0, 1022 bytes
+;==========================================================
+
+	push	rbp
+	push	r15
+	push	r14
+	push	r13
+	push	r12
+	push	rbx
+	sub	rsp,0x68
+	mov	QWORD PTR [rsp+0x30],r8
+	mov	QWORD PTR [rsp+0x38],rdx
+	mov	QWORD PTR [rsp+0x50],rcx
+	mov	QWORD PTR [rsp+0x58],r9
+	cmp	rcx,r9
+	jne	.L+0x1c0
+	mov	r11,rcx
+	mov	rax,QWORD PTR [rsp+0xa8]
+	mov	QWORD PTR [rsp],rcx
+	mov	QWORD PTR [rsp+0x60],rax
+	cmp	rcx,rax
+	jne	.L+0x1e6
+	mov	r14,rsi
+	mov	rbp,QWORD PTR [rsp+0xa0]
+	cmp	edi,0x20
+	mov	QWORD PTR [rsp+0x10],r11
+	ja	.L+0x226
+	mov	eax,edi
+	movabs	rcx,0x100010100
+	bt	rcx,rax
+	jae	.L+0x226
+	mov	rbx,QWORD PTR [rip+0x4f3f2]
+	mov	eax,DWORD PTR [rbx+0x20]
+	test	eax,eax
+	jne	.L+0x20a
+	mov	rdx,QWORD PTR [rbx]
+	test	rdx,rdx
+	je	.L+0x226
+.L+0x95:
+	xor	eax,eax
+	mov	rsi,r14
+	mov	ecx,edi
+	shrd	rsi,rax,cl
+	test	dil,0x40
+	cmovne	rsi,rax
+	mov	DWORD PTR [rsp+0x1c],edi
+	mov	QWORD PTR [rsp+0x20],rsi
+	mov	QWORD PTR [rsp+0x28],0x0
+	cmp	rsi,0x1
+	jne	.L+0x35e
+	mov	QWORD PTR [rsp+0x40],rdx
+	lea	eax,[rdi+rdi*1]
+	mov	edx,0x1
+	xor	r9d,r9d
+	mov	ecx,eax
+	shld	r9,rdx,cl
+	xor	r11d,r11d
+	mov	ebp,0x1
+	shl	rbp,cl
+	test	al,0x40
+	cmovne	r9,rbp
+	cmovne	rbp,r11
+	xor	r13d,r13d
+	xor	r10d,r10d
+	mov	QWORD PTR [rsp+0x48],rdi
+	mov	esi,edi
+	mov	r15d,0x1
+	jmp	.L+0x119
+	data16	data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x110:
+	dec	esi
+	dec	eax
+	cmp	esi,0xffffffff
+	je	.L+0x187
+.L+0x119:
+	mov	ecx,eax
+	and	cl,0x20
+	mov	rbx,rbp
+	shrd	rbx,r9,cl
+	mov	r12,r9
+	shr	r12,cl
+	test	al,0x40
+	cmove	r12,rbx
+	bt	r12d,eax
+	jae	.L+0x110
+	mov	rbx,r14
+	mov	ecx,esi
+	shl	rbx,cl
+	test	sil,0x40
+	mov	r12,rbx
+	cmovne	r12,r11
+	xor	edi,edi
+	shld	rdi,r14,cl
+	test	sil,0x40
+	cmovne	rdi,rbx
+	mov	ebx,0x1
+	shl	rbx,cl
+	test	sil,0x40
+	mov	r8,rbx
+	cmovne	r8,r11
+	xor	edx,edx
+	shld	rdx,r15,cl
+	test	sil,0x40
+	cmovne	rdx,rbx
+	or	r10,rdx
+	or	r13,r8
+	xor	r9,rdi
+	xor	rbp,r12
+	jmp	.L+0x110
+.L+0x187:
+	sub	rsp,0x8
+	mov	rdi,QWORD PTR [rsp+0x40]
+	mov	rcx,QWORD PTR [rsp+0x18]
+	mov	rsi,rcx
+	mov	rdx,QWORD PTR [rsp+0x38]
+	mov	r8,QWORD PTR [rsp+0xa8]
+	mov	r9,rcx
+	push	QWORD PTR [rsp+0x50]
+	push	r14
+	push	r13
+	call	QWORD PTR [rsp+0x60]
+	add	rsp,0x88
+	jmp	.L+0x353
+.L+0x1c0:
+	lea	rcx,[rip+0xfffffffffffb5881]
+	lea	r9,[rip+0x4c612]
+	lea	rsi,[rsp+0x50]
+	lea	rdx,[rsp+0x58]
+	mov	r8d,0x47
+	xor	edi,edi
+	call	QWORD PTR [rip+0x4eef2]
+.L+0x1e6:
+	lea	rcx,[rip+0xfffffffffffb5831]
+	lea	r9,[rip+0x4c604]
+	mov	rsi,rsp
+	lea	rdx,[rsp+0x60]
+	mov	r8d,0x55
+	xor	edi,edi
+	call	QWORD PTR [rip+0x4eece]
+.L+0x20a:
+	mov	r12,rdi
+	call	std::sync::once_lock::OnceLock<T>::initialize
+	mov	r11,QWORD PTR [rsp+0x10]
+	mov	rdi,r12
+	mov	rdx,QWORD PTR [rbx]
+	test	rdx,rdx
+	jne	.L+0x95
+.L+0x226:
+	test	r11,r11
+	je	.L+0x34f
+	lea	ecx,[rdi-0x1]
+	mov	eax,0x1
+	shl	rax,cl
+	mov	rsi,0xffffffffffffffff
+	mov	ecx,edi
+	shl	rsi,cl
+	test	rdi,rdi
+	je	.L+0x398
+	cmp	rdi,0x3f
+	ja	.L+0x3cd
+	not	rsi
+	mov	r8d,edi
+	and	r8d,0x3e
+	xor	r9d,r9d
+	jmp	.L+0x284
+	nop	DWORD PTR [rax+rax*1+0x0]
+.L+0x270:
+	xor	r13d,r13d
+.L+0x273:
+	mov	QWORD PTR [rbp+r9*8+0x0],r13
+	inc	r9
+	cmp	r9,r11
+	je	.L+0x34f
+.L+0x284:
+	mov	rcx,QWORD PTR [rsp+0x38]
+	mov	r10,QWORD PTR [rcx+r9*8]
+	test	r10,r10
+	je	.L+0x270
+	mov	rcx,QWORD PTR [rsp+0x30]
+	mov	r12,QWORD PTR [rcx+r9*8]
+	mov	r13d,0x0
+	test	r12,r12
+	je	.L+0x273
+	xor	r13d,r13d
+	xor	ecx,ecx
+	cmp	rdi,0x1
+	jne	.L+0x2e6
+	jmp	.L+0x333
+	cs	nop WORD PTR [rax+rax*1+0x0]
+.L+0x2c0:
+	mov	rdx,r13
+	xor	rdx,rbp
+	shl	r11,0x3e
+	sar	r11,0x3f
+	and	r11,r10
+	mov	r13,r11
+	xor	r13,rdx
+	add	r10,r10
+	xor	r10,rbx
+	add	rcx,0x2
+	cmp	r8,rcx
+	je	.L+0x320
+.L+0x2e6:
+	bt	r12,rcx
+	mov	ebp,0x0
+	cmovb	rbp,r10
+	lea	rdx,[r10+r10*1]
+	and	r10,rax
+	cmovne	r10,r14
+	mov	r11,r12
+	shr	r11,cl
+	xor	r10,rdx
+	mov	rbx,r10
+	and	rbx,rax
+	je	.L+0x2c0
+	mov	rbx,r14
+	jmp	.L+0x2c0
+	data16	data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x320:
+	test	dil,0x1
+	mov	rbp,QWORD PTR [rsp+0xa0]
+	mov	r11,QWORD PTR [rsp+0x10]
+	je	.L+0x347
+.L+0x333:
+	mov	rdx,r13
+	bt	r12,rcx
+	mov	r13d,0x0
+	cmovb	r13,r10
+	xor	r13,rdx
+.L+0x347:
+	and	r13,rsi
+	jmp	.L+0x273
+.L+0x34f:
+	add	rsp,0x68
+.L+0x353:
+	pop	rbx
+	pop	r12
+	pop	r13
+	pop	r14
+	pop	r15
+	pop	rbp
+	ret
+.L+0x35e:
+	lea	rax,[rsp+0x1c]
+	mov	QWORD PTR [rsp],rax
+	mov	rax,QWORD PTR [rip+0x4ef1a]
+	mov	QWORD PTR [rsp+0x8],rax
+	lea	rdx,[rip+0xfffffffffffb2316]
+	lea	rcx,[rip+0xfffffffffffb151b]
+	lea	r9,[rip+0x4c488]
+	lea	rsi,[rsp+0x20]
+	mov	r8,rsp
+	xor	edi,edi
+	call	QWORD PTR [rip+0x4f0e0]
+.L+0x398:
+	mov	QWORD PTR [rsp+0x20],0x0
+	lea	rax,[rsp+0x20]
+	mov	QWORD PTR [rsp],rax
+	mov	rax,QWORD PTR [rip+0x4ec77]
+	mov	QWORD PTR [rsp+0x8],rax
+	lea	rdi,[rip+0xfffffffffffb1ca9]
+	lea	rdx,[rip+0x4c464]
+	mov	rsi,rsp
+	call	QWORD PTR [rip+0x4ebfb]
+.L+0x3cd:
+	mov	QWORD PTR [rsp+0x20],rdi
+	lea	rax,[rsp+0x20]
+	mov	QWORD PTR [rsp],rax
+	mov	rax,QWORD PTR [rip+0x4ec46]
+	mov	QWORD PTR [rsp+0x8],rax
+	lea	rdi,[rip+0xfffffffffffb12e2]
+	lea	rdx,[rip+0x4c44b]
+	mov	rsi,rsp
+	call	QWORD PTR [rip+0x4ebca]
+
+;==========================================================
+; symbol: gf2_core::field::vec::FieldVec<gf2_core::gf2m::field::Gf2mElement_>::simd_dot_product
+; located: nm symbol at 0x581e0, 2015 bytes
+;==========================================================
+
+	push	rbp
+	push	r15
+	push	r14
+	push	r13
+	push	r12
+	push	rbx
+	sub	rsp,0x1000
+	mov	QWORD PTR [rsp],0x0
+	sub	rsp,0x1000
+	mov	QWORD PTR [rsp],0x0
+	sub	rsp,0x68
+	mov	rax,QWORD PTR [rdi+0x8]
+	mov	QWORD PTR [rsp+0x28],rax
+	mov	rcx,QWORD PTR [rdi+0x10]
+	mov	rax,QWORD PTR [rsi+0x8]
+	mov	QWORD PTR [rsp+0x30],rax
+	mov	rax,QWORD PTR [rsi+0x10]
+	mov	QWORD PTR [rsp+0x50],rcx
+	mov	QWORD PTR [rsp+0x58],rax
+	cmp	rcx,rax
+	jne	.L+0x4d4
+	test	rcx,rcx
+	je	.L+0x53d
+	mov	QWORD PTR [rsp+0x10],rcx
+	mov	rbx,QWORD PTR [rip+0x4ec4a]
+	mov	eax,DWORD PTR [rbx+0x30]
+	test	eax,eax
+	jne	.L+0x556
+	cmp	QWORD PTR [rbx],0x0
+	je	.L+0x565
+.L+0x83:
+	mov	rcx,QWORD PTR [rbx+0x10]
+	mov	rax,QWORD PTR [rsp+0x28]
+	mov	rax,QWORD PTR [rax]
+	mov	QWORD PTR [rsp+0x20],rcx
+	test	rcx,rcx
+	je	.L+0x56d
+	mov	rcx,QWORD PTR [rax+0x98]
+	test	rcx,rcx
+	mov	rbx,QWORD PTR [rsp+0x10]
+	je	.L+0x572
+	test	BYTE PTR [rax+0x10],0x1
+	je	.L+0x572
+	mov	QWORD PTR [rsp+0x48],rcx
+	mov	QWORD PTR [rsp+0x18],rax
+	lea	rdi,[rsp+0x860]
+	xor	r15d,r15d
+	mov	rbx,QWORD PTR [rip+0x4ea68]
+	mov	edx,0x800
+	xor	esi,esi
+	call	rbx
+	lea	rdi,[rsp+0x60]
+	mov	edx,0x800
+	xor	esi,esi
+	call	rbx
+	lea	rdi,[rsp+0x1060]
+	mov	edx,0x1000
+	xor	esi,esi
+	call	rbx
+	mov	rbx,QWORD PTR [rsp+0x10]
+	mov	rax,QWORD PTR [rsp+0x28]
+	lea	rcx,[rax+0x8]
+	mov	QWORD PTR [rsp+0x40],rcx
+	add	rax,0x10
+	mov	QWORD PTR [rsp+0x28],rax
+	mov	rax,QWORD PTR [rsp+0x30]
+	lea	rcx,[rax+0x8]
+	mov	QWORD PTR [rsp+0x38],rcx
+	add	rax,0x10
+	mov	QWORD PTR [rsp+0x30],rax
+	xor	r14d,r14d
+	xor	r12d,r12d
+	jmp	.L+0x149
+	nop	DWORD PTR [rax+rax*1+0x0]
+.L+0x140:
+	cmp	r13,rbx
+	jae	.L+0x3be
+.L+0x149:
+	mov	rcx,r15
+	lea	r13,[r15+0x100]
+	cmp	rbx,r13
+	mov	r15,r13
+	cmovb	r15,rbx
+	mov	rbp,r15
+	sub	rbp,rcx
+	cmp	rbx,rcx
+	jne	.L+0x1a0
+	cmp	rbp,0x100
+	ja	.L+0x4bd
+	lea	rdi,[rsp+0x860]
+	mov	rsi,rbp
+	lea	rdx,[rsp+0x60]
+	mov	rcx,rbp
+	lea	r8,[rsp+0x1060]
+	mov	r9,rbp
+	call	QWORD PTR [rsp+0x20]
+	jmp	.L+0x140
+	nop	DWORD PTR [rax+0x0]
+.L+0x1a0:
+	mov	rax,rcx
+	shl	rax,0x4
+	mov	rsi,rcx
+	not	rsi
+	add	rsi,r15
+	cmp	rsi,0x100
+	mov	edi,0x100
+	cmovb	rdi,rsi
+	cmp	rsi,0x11
+	ja	.L+0x1d0
+	xor	ecx,ecx
+	jmp	.L+0x300
+	nop	DWORD PTR [rax]
+.L+0x1d0:
+	cmp	rsi,0x100
+	mov	edx,0x100
+	cmovae	rsi,rdx
+	lea	r8d,[rsi*8+0x0]
+	lea	rdx,[rsp+0x868]
+	lea	r9,[rdx+r8*1]
+	lea	rdx,[rsp+0x68]
+	add	r8,rdx
+	mov	rdx,QWORD PTR [rsp+0x40]
+	add	rdx,rax
+	add	rcx,rsi
+	shl	rcx,0x4
+	mov	rsi,QWORD PTR [rsp+0x28]
+	lea	rbx,[rsi+rcx*1]
+	mov	rsi,QWORD PTR [rsp+0x38]
+	add	rsi,rax
+	add	rcx,QWORD PTR [rsp+0x30]
+	lea	r11,[rsp+0x860]
+	cmp	r11,r8
+	setb	BYTE PTR [rsp+0xf]
+	lea	r10,[rsp+0x60]
+	cmp	r10,r9
+	setb	BYTE PTR [rsp+0xe]
+	cmp	r11,rbx
+	setb	r10b
+	cmp	rdx,r9
+	setb	BYTE PTR [rsp+0xd]
+	cmp	r11,rcx
+	setb	r11b
+	cmp	rsi,r9
+	setb	BYTE PTR [rsp+0xc]
+	lea	r9,[rsp+0x60]
+	cmp	r9,rbx
+	setb	bl
+	cmp	rdx,r8
+	setb	BYTE PTR [rsp+0xb]
+	cmp	r9,rcx
+	setb	r9b
+	cmp	rsi,r8
+	setb	r8b
+	movzx	ecx,BYTE PTR [rsp+0xe]
+	test	BYTE PTR [rsp+0xf],cl
+	jne	.L+0x2f3
+	and	r10b,BYTE PTR [rsp+0xd]
+	jne	.L+0x2f3
+	and	r11b,BYTE PTR [rsp+0xc]
+	jne	.L+0x2f3
+	and	bl,BYTE PTR [rsp+0xb]
+	jne	.L+0x2f3
+	mov	ecx,0x0
+	and	r9b,r8b
+	mov	rbx,QWORD PTR [rsp+0x10]
+	jne	.L+0x300
+	mov	ecx,edi
+	and	ecx,0x1fe
+	xor	edi,edi
+	mov	r8,rcx
+	nop	DWORD PTR [rax+rax*1+0x0]
+.L+0x2c0:
+	movups	xmm0,XMMWORD PTR [rdx+rdi*2]
+	movsd	xmm1,QWORD PTR [rdx+rdi*2+0x10]
+	movlhps	xmm0,xmm1
+	movups	XMMWORD PTR [rsp+rdi*1+0x860],xmm0
+	movups	xmm0,XMMWORD PTR [rsi+rdi*2]
+	movsd	xmm1,QWORD PTR [rsi+rdi*2+0x10]
+	movlhps	xmm0,xmm1
+	movups	XMMWORD PTR [rsp+rdi*1+0x60],xmm0
+	add	rdi,0x10
+	add	r8,0xfffffffffffffffe
+	jne	.L+0x2c0
+	jmp	.L+0x300
+.L+0x2f3:
+	xor	ecx,ecx
+	mov	rbx,QWORD PTR [rsp+0x10]
+	nop	WORD PTR [rax+rax*1+0x0]
+.L+0x300:
+	mov	edx,ecx
+	shl	edx,0x4
+	add	rdx,rax
+	mov	rax,QWORD PTR [rsp+0x38]
+	add	rax,rdx
+	add	rdx,QWORD PTR [rsp+0x40]
+	lea	edi,[rcx*8+0x0]
+	lea	rsi,[rsp+rdi*1]
+	add	rsi,0x860
+	add	rdi,rsp
+	add	rdi,0x60
+	xor	r8d,r8d
+	data16	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x340:
+	cmp	rcx,0x100
+	je	.L+0x73f
+	inc	rcx
+	mov	r9,QWORD PTR [rdx+r8*2]
+	mov	QWORD PTR [rsi+r8*1],r9
+	mov	r9,QWORD PTR [rax+r8*2]
+	mov	QWORD PTR [rdi+r8*1],r9
+	add	r8,0x8
+	cmp	rbp,rcx
+	jne	.L+0x340
+	lea	rdi,[rsp+0x860]
+	mov	rsi,rbp
+	lea	rdx,[rsp+0x60]
+	mov	rcx,rbp
+	lea	r8,[rsp+0x1060]
+	mov	r9,rbp
+	call	QWORD PTR [rsp+0x20]
+	shl	rbp,0x4
+	xor	eax,eax
+	data16	data16 data16 data16 data16 cs nop WORD PTR [rax+rax*1+0x0]
+.L+0x3a0:
+	xor	r14,QWORD PTR [rsp+rax*1+0x1060]
+	xor	r12,QWORD PTR [rsp+rax*1+0x1068]
+	add	rax,0x10
+	cmp	rbp,rax
+	jne	.L+0x3a0
+	jmp	.L+0x140
+.L+0x3be:
+	mov	rbx,QWORD PTR [rsp+0x18]
+	mov	ecx,DWORD PTR [rbx+0x40]
+	and	ecx,0x7f
+	mov	rdi,r14
+	shrd	rdi,r12,cl
+	mov	rax,r12
+	shr	rax,cl
+	xor	edx,edx
+	test	cl,0x40
+	cmovne	rdi,rax
+	cmove	rdx,rax
+	or	rdx,rdi
+	je	.L+0x4ae
+	mov	rsi,QWORD PTR [rbx+0x30]
+	mov	ebp,ecx
+	mov	r13,QWORD PTR [rsp+0x48]
+	call	r13
+	mov	rdi,rdx
+	mov	ecx,ebp
+	shr	rdi,cl
+	shrd	rax,rdx,cl
+	test	bpl,0x40
+	cmove	rdi,rax
+	mov	rax,QWORD PTR [rsp+0x18]
+	mov	r15,QWORD PTR [rax+0x20]
+	mov	rax,QWORD PTR [rsp+0x18]
+	mov	rbx,QWORD PTR [rax+0x28]
+	mov	rsi,r15
+	call	r13
+	xor	rdx,r12
+	mov	rdi,rdx
+	mov	ecx,ebp
+	shr	rdi,cl
+	xor	esi,esi
+	test	bpl,0x40
+	mov	r8,rdi
+	cmovne	r8,rsi
+	xor	rax,r14
+	mov	r9,rax
+	shrd	r9,rdx,cl
+	test	bpl,0x40
+	cmovne	r9,rdi
+	or	r9,r8
+	mov	rdi,r15
+	cmove	rdi,rsi
+	cmove	rbx,rsi
+	xor	rbx,rdx
+	mov	rdx,rbx
+	shr	rdx,cl
+	test	bpl,0x40
+	mov	r8,rdx
+	cmovne	r8,rsi
+	xor	rdi,rax
+	mov	rax,rdi
+	shrd	rax,rbx,cl
+	test	bpl,0x40
+	cmovne	rax,rdx
+	mov	rdx,0xffffffffffffffff
+	shl	rdx,cl
+	test	bpl,0x40
+	cmovne	rdx,rsi
+	or	rax,r8
+	cmove	r15,rsi
+	not	rdx
+	xor	r15,rdi
+	and	r15,rdx
+	mov	r14,r15
+	mov	rbx,QWORD PTR [rsp+0x18]
+.L+0x4ae:
+	lock	inc QWORD PTR [rbx]
+	jg	.L+0x63e
+	jmp	.L+0x73d
+.L+0x4bd:
+	lea	rcx,[rip+0x4bfc4]
+	mov	edx,0x100
+	xor	edi,edi
+	mov	rsi,rbp
+	call	QWORD PTR [rip+0x4e73c]
+.L+0x4d4:
+	mov	QWORD PTR [rsp+0x860],rcx
+	mov	QWORD PTR [rsp+0x60],rax
+	lea	rax,[rsp+0x860]
+	mov	QWORD PTR [rsp+0x1060],rax
+	mov	rax,QWORD PTR [rip+0x4e730]
+	mov	QWORD PTR [rsp+0x1068],rax
+	lea	rcx,[rsp+0x60]
+	mov	QWORD PTR [rsp+0x1070],rcx
+	mov	QWORD PTR [rsp+0x1078],rax
+	lea	rcx,[rip+0xfffffffffffaf7f3]
+	lea	r9,[rip+0x4bf35]
+	lea	rsi,[rsp+0x50]
+	lea	rdx,[rsp+0x58]
+	lea	r8,[rsp+0x1060]
+	xor	edi,edi
+	call	QWORD PTR [rip+0x4e79b]
+.L+0x53d:
+	lea	rdi,[rip+0xfffffffffffb5127]
+	lea	rdx,[rip+0x4bf25]
+	mov	esi,0x57
+	call	QWORD PTR [rip+0x4e672]
+.L+0x556:
+	call	std::sync::once_lock::OnceLock<T>::initialize
+	cmp	QWORD PTR [rbx],0x0
+	jne	.L+0x83
+.L+0x565:
+	mov	rax,QWORD PTR [rsp+0x28]
+	mov	rax,QWORD PTR [rax]
+.L+0x56d:
+	mov	rbx,QWORD PTR [rsp+0x10]
+.L+0x572:
+	lock	inc QWORD PTR [rax]
+	jle	.L+0x73d
+	mov	QWORD PTR [rsp+0x20],rax
+	mov	QWORD PTR [rsp+0x860],rax
+	mov	QWORD PTR [rsp+0x868],0x0
+	mov	rax,QWORD PTR [rsp+0x28]
+	mov	r15,QWORD PTR [rax]
+	mov	rsi,QWORD PTR [rax+0x8]
+	mov	rax,QWORD PTR [rsp+0x30]
+	mov	rdx,QWORD PTR [rax]
+	mov	rcx,QWORD PTR [rax+0x8]
+	lock	inc QWORD PTR [r15]
+	jle	.L+0x73d
+	mov	QWORD PTR [rsp+0x1060],r15
+	mov	QWORD PTR [rsp+0x1068],rsi
+	mov	rdi,r15
+	call	<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+	mov	QWORD PTR [rsp+0x18],rax
+	mov	r14,rdx
+	lock	dec QWORD PTR [r15]
+	jne	.L+0x5eb
+	lea	rdi,[rsp+0x1060]
+	call	QWORD PTR [rip+0x4e6e5]
+.L+0x5eb:
+	mov	rcx,rbx
+	dec	rbx
+	mov	rax,QWORD PTR [rsp+0x18]
+	mov	QWORD PTR [rsp+0x60],rax
+	mov	QWORD PTR [rsp+0x68],r14
+	dec	rcx
+	jne	.L+0x656
+.L+0x605:
+	mov	rbx,QWORD PTR [rsp+0x18]
+	lock	inc QWORD PTR [rbx]
+	jle	.L+0x73d
+	lock	dec QWORD PTR [rbx]
+	mov	r15,QWORD PTR [rsp+0x20]
+	jne	.L+0x62a
+	lea	rdi,[rsp+0x60]
+	call	QWORD PTR [rip+0x4e6a6]
+.L+0x62a:
+	lock	dec QWORD PTR [r15]
+	jne	.L+0x63e
+	lea	rdi,[rsp+0x860]
+	call	QWORD PTR [rip+0x4e692]
+.L+0x63e:
+	mov	rax,rbx
+	mov	rdx,r14
+	add	rsp,0x2068
+	pop	rbx
+	pop	r12
+	pop	r13
+	pop	r14
+	pop	r15
+	pop	rbp
+	ret
+.L+0x656:
+	movabs	rax,0xfffffffffffffff
+	and	rbx,rax
+	mov	r15d,0x18
+	lea	rax,[rsp+0x1060]
+	mov	QWORD PTR [rsp+0x10],rax
+	jmp	.L+0x68d
+	nop	DWORD PTR [rax+rax*1+0x0]
+.L+0x680:
+	add	r15,0x10
+	dec	rbx
+	je	.L+0x605
+.L+0x68d:
+	mov	rax,QWORD PTR [rsp+0x28]
+	mov	r13,QWORD PTR [rax+r15*1-0x8]
+	mov	rsi,QWORD PTR [rax+r15*1]
+	mov	rax,QWORD PTR [rsp+0x30]
+	mov	rdx,QWORD PTR [rax+r15*1-0x8]
+	mov	rcx,QWORD PTR [rax+r15*1]
+	lock	inc QWORD PTR [r13+0x0]
+	jle	.L+0x73d
+	mov	QWORD PTR [rsp+0x1060],r13
+	mov	QWORD PTR [rsp+0x1068],rsi
+	mov	rdi,r13
+	call	<&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+	mov	r12,rax
+	mov	rbp,rdx
+	lock	dec QWORD PTR [r13+0x0]
+	jne	.L+0x6e7
+	lea	rdi,[rsp+0x1060]
+	call	QWORD PTR [rip+0x4e5e9]
+.L+0x6e7:
+	mov	QWORD PTR [rsp+0x1060],r12
+	mov	QWORD PTR [rsp+0x1068],rbp
+	cmp	QWORD PTR [rsp+0x18],r12
+	jne	.L+0x724
+	xor	r14,rbp
+	mov	QWORD PTR [rsp+0x68],r14
+	lock	dec QWORD PTR [r12]
+	jne	.L+0x680
+	lea	rdi,[rsp+0x1060]
+	call	QWORD PTR [rip+0x4e5b1]
+	jmp	.L+0x680
+.L+0x724:
+	lea	rdi,[rip+0xfffffffffffb4eca]
+	lea	rdx,[rip+0x4bdfe]
+	mov	esi,0x53
+	call	QWORD PTR [rip+0x4e48b]
+.L+0x73d:
+	ud2
+.L+0x73f:
+	lea	rdx,[rip+0x4bd5a]
+	mov	edi,0x100
+	mov	esi,0x100
+	call	QWORD PTR [rip+0x4e412]
+	mov	r14,rax
+	lock	dec QWORD PTR [r15]
+	jne	.L+0x76e
+	lea	rdi,[rsp+0x1060]
+	mov	r15,QWORD PTR [rsp+0x20]
+	jmp	.L+0x7bd
+.L+0x76e:
+	mov	r15,QWORD PTR [rsp+0x20]
+	lock	dec QWORD PTR [r15]
+	jne	.L+0x7b0
+	jmp	.L+0x7c9
+	mov	r14,rax
+	lock	dec QWORD PTR [r13+0x0]
+	jmp	.L+0x78d
+	mov	r14,rax
+	lock	dec QWORD PTR [r12]
+.L+0x78d:
+	mov	rbx,QWORD PTR [rsp+0x18]
+	mov	r15,QWORD PTR [rsp+0x20]
+	jne	.L+0x7a4
+	mov	rdi,QWORD PTR [rsp+0x10]
+	call	QWORD PTR [rip+0x4e52c]
+.L+0x7a4:
+	lock	dec QWORD PTR [rbx]
+	je	.L+0x7b8
+	lock	dec QWORD PTR [r15]
+	je	.L+0x7c9
+.L+0x7b0:
+	mov	rdi,r14
+	call	_Unwind_Resume@plt
+.L+0x7b8:
+	lea	rdi,[rsp+0x60]
+.L+0x7bd:
+	call	QWORD PTR [rip+0x4e50d]
+	lock	dec QWORD PTR [r15]
+	jne	.L+0x7b0
+.L+0x7c9:
+	lea	rdi,[rsp+0x860]
+	call	QWORD PTR [rip+0x4e4f9]
+	mov	rdi,r14
+	call	_Unwind_Resume@plt
+
+
+;=== derived annotation block ===
+;==========================================================
+; Counted from the disassembly above by
+; dev/active/53c5a8c0/survey/annotate-asm.py, which reads only these
+; bytes. See that script's module docstring for what each row counts.
+;==========================================================
+
+;=== derived annotation for gf2_kernels_simd::x86::clmul::clmul_batch ===
+;
+; instructions                                   54
+; stack frame bytes                              40
+; block copies (memcpy)                          0
+; frame stores                                   4
+; frame loads                                    0
+; backward branches                              1
+; pclmullqlqdq (carry-less multiply, low x low)  3
+; xor (scalar XOR)                               4
+; call (calls)                                   2
+;
+
+;=== derived annotation for gf2_kernels_simd::x86::clmul::clmul_u64 ===
+;
+; instructions                                   6
+; stack frame bytes                              0
+; block copies (memcpy)                          0
+; frame stores                                   0
+; frame loads                                    0
+; backward branches                              0
+; pclmullqlqdq (carry-less multiply, low x low)  1
+;
+
+;=== derived annotation for gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4 ===
+;
+; instructions                                           351
+; stack frame bytes                                      32
+; block copies (memcpy)                                  0
+; frame stores                                           4
+; frame loads                                            3
+; backward branches                                      9
+; vpclmullqlqdq (vector carry-less multiply, low x low)  21
+; xor (scalar XOR)                                       9
+; vpxor (vector XOR)                                     19
+; vpsrldq (vector byte shift right)                      8
+; vpunpcklqdq (quadword interleave (low))                3
+; vpermq (cross-lane quadword permute)                   12
+; vinserti128 (128-bit lane insert)                      5
+; vmovdqu (unaligned vector move)                        12
+; vmovq (64-bit vector move)                             18
+; vzeroupper (upper-lane zeroing)                        13
+; call (calls)                                           14
+;
+
+;=== derived annotation for gf2_kernels_simd::x86::clmul::clmul_barrett_reduce ===
+;
+; instructions                                   65
+; stack frame bytes                              0
+; block copies (memcpy)                          0
+; frame stores                                   0
+; frame loads                                    0
+; backward branches                              0
+; pclmullqlqdq (carry-less multiply, low x low)  3
+; xor (scalar XOR)                               5
+;
+
+;=== derived annotation for gf2_core::gf2m::batch::batch_mul_raw ===
+;
+; instructions                        250
+; stack frame bytes                   112
+; block copies (memcpy)               0
+; frame stores                        22
+; frame loads                         11
+; backward branches                   8
+; shld (double-precision shift left)  3
+; xor (scalar XOR)                    21
+; call (calls)                        7
+;
+
+;=== derived annotation for gf2_core::field::vec::FieldVec<gf2_core::gf2m::field::Gf2mElement_>::simd_dot_product ===
+;
+; instructions           456
+; stack frame bytes      8296
+; block copies (memcpy)  0
+; frame stores           45
+; frame loads            38
+; backward branches      10
+; xor (scalar XOR)       23
+; call (calls)           25
+;

@@ -1,0 +1,23 @@
+# command: ./dev/bench_results/53c5a8c0/run-crossover.sh crossover pilot
+# started_utc: 2026-09-13T12:49:52Z
+# gf2 revision (informational): dedc013e827e8d18698bacb63b0a89062d8301f0
+# family: gf2m-clmul-crossover
+# mode: pilot
+# addendum: dev/active/53c5a8c0/addendum-v4-crossover-pilot.json
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-stage/53c5a8c0-crossover-pilot.plan.json
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-stage/53c5a8c0-crossover-pilot
+# arms: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/53c5a8c0-arms-conservative/release
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/release/benchmark-ab-runner
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/release/benchmark-acceptance
+# load_avg_start:  15:49:52 up 9 days, 17:18,  9 users,  load average: 7.46, 3.08, 2.43
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-stage/53c5a8c0-crossover-pilot/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-stage/53c5a8c0-crossover-pilot/execution.log
+# session 2 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0/target/bench-stage/53c5a8c0-crossover-pilot/execution.log
+# session 3 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  15:54:36 up 9 days, 17:23,  9 users,  load average: 4.44, 6.10, 4.21
+# finished_utc: 2026-09-13T12:54:36Z

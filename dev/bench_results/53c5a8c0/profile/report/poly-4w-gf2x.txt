@@ -1,0 +1,25 @@
+# cycle samples of poly-4w-gf2x (gf2x arm, cell poly-4w)
+# recorded by run-profile.sh at 4000 Hz over 449101 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1354405388
+#
+# Overhead       Samples  Shared Object         Symbol                           IPC   [IPC Coverage]
+# ........  ............  ....................  ...............................  ....................
+#
+    56.54%           638  libgf2x.so.3.0.0      [.] gf2x_mul4                    -      -            
+    17.56%           198  libgf2x.so.3.0.0      [.] gf2x_mul_basecase_inner      -      -            
+    23.16%           262  libgf2x.so.3.0.0      [.] gf2x_mul_r                   -      -            
+     2.49%            28  profile-arm           [.] profile_arm::main            -      -            
+
+
+#
+# (Tip: To compare scalability of two workload samples use perf diff -c ratio file1 file2)
+#

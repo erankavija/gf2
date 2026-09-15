@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-09-14T23:53:06.909773024Z",
   "context": {},
   "created_at": "2026-09-13T11:40:06.478865369Z",
   "dependencies": [
@@ -7,16 +8,282 @@
     "6fb89a3c-f1a7-439d-a397-add1782afe2b"
   ],
   "description": "Plan Profile and optimize mid-range buffer operations (8-64 words) (2037941f) against every hard success criterion, write the concise design at dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The concise plan at dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md and its authoritative sibling breakdown manifest exist, are linked to this issue, and pass the manifest validation, render check, and batch-create dry run.\n- [hard] REQ-02: The plan-review gate passes on this issue.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "eeb7802dca6163c711b226d565d26dfc0de2093ed0087c19ad56235a5ed0455e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-kernels-simd/src/lib.rs",
+          "resolved_path": "crates/gf2-kernels-simd/src/lib.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1d5f4414e3f091bc03784c856d7818163e167ac23ad493c6d957019708a218e7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/benches/selector_non_regression.rs",
+          "resolved_path": "crates/gf2-core/benches/selector_non_regression.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e19c95641dab8e00d66c3c70939a8cd1fc92af63631e9ef1cc9a87535f15cd90",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/benches/matrix_vector.rs",
+          "resolved_path": "crates/gf2-core/benches/matrix_vector.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "699ec047e4d715d117b2d651bbb2ffcaf2829339ec8c52376f965af5e08d4027",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/benches/m4rm_components.rs",
+          "resolved_path": "crates/gf2-core/benches/m4rm_components.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "47cfbabc08bbb02f4d4ee7733d84f12a39387dc1e6384602ede2f258e0aca9a9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-kernels-simd/src/x86/mod.rs",
+          "resolved_path": "crates/gf2-kernels-simd/src/x86/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d6799b178d11312a105691a5bac02ec770a252f771ac3ab96b1cb4a2fe668c72",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/alg/strassen.rs",
+          "resolved_path": "crates/gf2-core/src/alg/strassen.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93e0e9af4f21b1b3b3eaca3e3596e97361a9fb6eeb4ca5c0c85c3a871ac7598b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/tests/popcount_routes.rs",
+          "resolved_path": "crates/gf2-core/tests/popcount_routes.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/bitvec.rs",
+          "resolved_path": "crates/gf2-core/src/bitvec.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "feedc1dd4bd059a3fa7b3ccffdb712f6dfc80610cf3a92568335ccc87bde2bab",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6fb89a3c/findings.md",
+          "resolved_path": "dev/active/6fb89a3c/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3f7880beaa73bdba3c7a68a5924eee6db6036d7ed9ca8a44ec1b8eca3de50559",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/tests/simd_equiv_matvec.rs",
+          "resolved_path": "crates/gf2-core/tests/simd_equiv_matvec.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0b1492433aa0c4de35261d7714af5ebafabbd8f27dc2d8410e1b1066cb07dce0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/kernels/backend.rs",
+          "resolved_path": "crates/gf2-core/src/kernels/backend.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c370a0081f573f2405de17590a53fe981f219bfb47294885c15a335e14d9aff5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/alg/m4rm.rs",
+          "resolved_path": "crates/gf2-core/src/alg/m4rm.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "41a35b6de8d3ed79236cfa587ce3db52f24f26949e91d151ff6adb5ebef8fa37",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/bitslice.rs",
+          "resolved_path": "crates/gf2-core/src/bitslice.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d561f41ab9e4f0fea54a714ae437b341f44e1edf74aed53ca425828ac072f06c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/alg/gauss.rs",
+          "resolved_path": "crates/gf2-core/src/alg/gauss.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f3ed481c92c24b6887aa1258f5260809dce9d62c602955162da260289bce0d72",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../04b85d10/findings.md",
+          "resolved_path": "dev/active/04b85d10/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f119a166b2836fc25dafcf482dea95035fc8d9d8e68c324a6daa0c504e6e539f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-kernels-simd/src/x86/avx2.rs",
+          "resolved_path": "crates/gf2-kernels-simd/src/x86/avx2.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8dcffc305190b780f4917334cfe6f83fe85f22501ab8ee8093ba435bf8ebe341",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/alg/rref.rs",
+          "resolved_path": "crates/gf2-core/src/alg/rref.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "37f424ccceac01736346e8d2b5169d02b9c510beadebaba8b03e47dd246cf880",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs",
+          "resolved_path": "crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2cca98abc11da2dcad729404b42c3bdab4a560842147fb42b5e6c0fbc0e491bc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/ldpc/core.rs",
+          "resolved_path": "crates/gf2-coding/src/ldpc/core.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/matrix.rs",
+          "resolved_path": "crates/gf2-core/src/matrix.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1ca4340ad331abc3f80eed1a4f97a24c01833d2ca50c5ea131409afb29e869f3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/osd/syndrome.rs",
+          "resolved_path": "crates/gf2-coding/src/osd/syndrome.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d069490980fc689f25afa886c3b878725d5db246681fc84d0a9ff9998ec1f7e1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/bch/extended.rs",
+          "resolved_path": "crates/gf2-coding/src/bch/extended.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f403317def8759869e20c7631c4ef8ce857453ce0fa0556a802ffb55b8d35042",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/kernels/ops.rs",
+          "resolved_path": "crates/gf2-core/src/kernels/ops.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "168610d351dd29648dcbfcbc0f4bdfda873566822f4766aacc2ce9befb3180cf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/drm.rs",
+          "resolved_path": "crates/gf2-coding/src/drm.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Planning Investigation",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ea0f6381bbf113864295793d95c6f2c53d95aca565af1553fb427ba5c0579235",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "22016f47de82502a989a6e46f1e1d92bc43e5144709212d9701da994e3d5707c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        }
+      ],
+      "commit": "4aa42005",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Mid-range buffer execution plan",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+    },
+    {
+      "commit": "4aa42005",
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Mid-range buffer breakdown manifest",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
+    },
+    {
+      "commit": "fe49ca11",
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Mid-range buffer adversarial plan review",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/review.md"
+    }
+  ],
+  "done_at": "2026-09-15T00:49:03.800525911Z",
   "first_ready_at": "2026-09-13T11:40:06.478865369Z",
   "gates_required": [
     "plan-review"
   ],
   "gates_status": {
     "plan-review": {
-      "status": "pending",
-      "updated_at": "2026-09-13T11:40:06.478865369Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-15T00:45:07.704237653Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "8d8be934-347f-4d7a-a53a-e7f8e13aaad8",
@@ -32,7 +299,7 @@
     "type:planning"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "done",
   "title": "planning: Profile and optimize mid-range buffer operations (8-64 words)",
-  "updated_at": "2026-09-13T11:40:06.478865369Z"
+  "updated_at": "2026-09-15T00:49:03.800525911Z"
 }

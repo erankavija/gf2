@@ -1,0 +1,4956 @@
+{
+  "session_hosts": [
+    {
+      "observed_utc": "2026-09-13T12:55:25.142014471Z",
+      "hostname": "fraktaali",
+      "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+      "cpu_flags": [
+        "3dnowprefetch",
+        "abm",
+        "adx",
+        "aes",
+        "aperfmperf",
+        "apic",
+        "arat",
+        "avic",
+        "avx",
+        "avx2",
+        "bmi1",
+        "bmi2",
+        "bpext",
+        "cat_l3",
+        "cdp_l3",
+        "clflush",
+        "clflushopt",
+        "clwb",
+        "clzero",
+        "cmov",
+        "cmp_legacy",
+        "constant_tsc",
+        "cpb",
+        "cpuid",
+        "cqm",
+        "cqm_llc",
+        "cqm_mbm_local",
+        "cqm_mbm_total",
+        "cqm_occup_llc",
+        "cr8_legacy",
+        "cx16",
+        "cx8",
+        "de",
+        "debug_swap",
+        "decodeassists",
+        "erms",
+        "extapic",
+        "extd_apicid",
+        "f16c",
+        "flushbyasid",
+        "fma",
+        "fpu",
+        "fsgsbase",
+        "fsrm",
+        "fxsr",
+        "fxsr_opt",
+        "ht",
+        "hw_pstate",
+        "ibpb",
+        "ibrs",
+        "ibs",
+        "invpcid",
+        "irperf",
+        "lahf_lm",
+        "lbrv",
+        "lm",
+        "mba",
+        "mca",
+        "mce",
+        "misalignsse",
+        "mmx",
+        "mmxext",
+        "monitor",
+        "movbe",
+        "msr",
+        "mtrr",
+        "mwaitx",
+        "nonstop_tsc",
+        "nopl",
+        "npt",
+        "nrip_save",
+        "nx",
+        "ospke",
+        "osvw",
+        "overflow_recov",
+        "pae",
+        "pat",
+        "pausefilter",
+        "pclmulqdq",
+        "pdpe1gb",
+        "perfctr_core",
+        "perfctr_llc",
+        "perfctr_nb",
+        "pfthreshold",
+        "pge",
+        "pku",
+        "pni",
+        "popcnt",
+        "pse",
+        "pse36",
+        "rapl",
+        "rdpid",
+        "rdpru",
+        "rdrand",
+        "rdseed",
+        "rdt_a",
+        "rdtscp",
+        "rep_good",
+        "sep",
+        "sha_ni",
+        "skinit",
+        "smap",
+        "smca",
+        "smep",
+        "ssbd",
+        "sse",
+        "sse2",
+        "sse4_1",
+        "sse4_2",
+        "sse4a",
+        "ssse3",
+        "stibp",
+        "succor",
+        "svm_lock",
+        "syscall",
+        "tce",
+        "topoext",
+        "tsc",
+        "tsc_scale",
+        "umip",
+        "user_shstk",
+        "v_spec_ctrl",
+        "v_vmsave_vmload",
+        "vaes",
+        "vgif",
+        "vmcb_clean",
+        "vme",
+        "vmmcall",
+        "vpclmulqdq",
+        "wbnoinvd",
+        "wdt",
+        "x2apic",
+        "xgetbv1",
+        "xsave",
+        "xsavec",
+        "xsaveerptr",
+        "xsaveopt",
+        "xsaves",
+        "xtopology"
+      ],
+      "os_kernel": "Linux 7.2.2-arch1-1",
+      "governors": {
+        "cpu0": "powersave",
+        "cpu1": "powersave",
+        "cpu10": "powersave",
+        "cpu11": "powersave",
+        "cpu12": "powersave",
+        "cpu13": "powersave",
+        "cpu14": "powersave",
+        "cpu15": "powersave",
+        "cpu16": "powersave",
+        "cpu17": "powersave",
+        "cpu18": "powersave",
+        "cpu19": "powersave",
+        "cpu2": "powersave",
+        "cpu20": "powersave",
+        "cpu21": "powersave",
+        "cpu22": "powersave",
+        "cpu23": "powersave",
+        "cpu3": "powersave",
+        "cpu4": "powersave",
+        "cpu5": "powersave",
+        "cpu6": "powersave",
+        "cpu7": "powersave",
+        "cpu8": "powersave",
+        "cpu9": "powersave"
+      },
+      "smt_active": true,
+      "affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "topology": {
+        "cpus": [
+          {
+            "cpu": 0,
+            "core_id": 0,
+            "package_id": 0,
+            "thread_siblings": [
+              0,
+              12
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 1,
+            "core_id": 1,
+            "package_id": 0,
+            "thread_siblings": [
+              1,
+              13
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 2,
+            "core_id": 2,
+            "package_id": 0,
+            "thread_siblings": [
+              2,
+              14
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 3,
+            "core_id": 3,
+            "package_id": 0,
+            "thread_siblings": [
+              3,
+              15
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 4,
+            "core_id": 4,
+            "package_id": 0,
+            "thread_siblings": [
+              4,
+              16
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 5,
+            "core_id": 5,
+            "package_id": 0,
+            "thread_siblings": [
+              5,
+              17
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 6,
+            "core_id": 8,
+            "package_id": 0,
+            "thread_siblings": [
+              6,
+              18
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 7,
+            "core_id": 9,
+            "package_id": 0,
+            "thread_siblings": [
+              7,
+              19
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 8,
+            "core_id": 10,
+            "package_id": 0,
+            "thread_siblings": [
+              8,
+              20
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 9,
+            "core_id": 11,
+            "package_id": 0,
+            "thread_siblings": [
+              9,
+              21
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 10,
+            "core_id": 12,
+            "package_id": 0,
+            "thread_siblings": [
+              10,
+              22
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 11,
+            "core_id": 13,
+            "package_id": 0,
+            "thread_siblings": [
+              11,
+              23
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 12,
+            "core_id": 0,
+            "package_id": 0,
+            "thread_siblings": [
+              0,
+              12
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 13,
+            "core_id": 1,
+            "package_id": 0,
+            "thread_siblings": [
+              1,
+              13
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 14,
+            "core_id": 2,
+            "package_id": 0,
+            "thread_siblings": [
+              2,
+              14
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 15,
+            "core_id": 3,
+            "package_id": 0,
+            "thread_siblings": [
+              3,
+              15
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 16,
+            "core_id": 4,
+            "package_id": 0,
+            "thread_siblings": [
+              4,
+              16
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 17,
+            "core_id": 5,
+            "package_id": 0,
+            "thread_siblings": [
+              5,
+              17
+            ],
+            "l3_shared": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "cpu": 18,
+            "core_id": 8,
+            "package_id": 0,
+            "thread_siblings": [
+              6,
+              18
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 19,
+            "core_id": 9,
+            "package_id": 0,
+            "thread_siblings": [
+              7,
+              19
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 20,
+            "core_id": 10,
+            "package_id": 0,
+            "thread_siblings": [
+              8,
+              20
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 21,
+            "core_id": 11,
+            "package_id": 0,
+            "thread_siblings": [
+              9,
+              21
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 22,
+            "core_id": 12,
+            "package_id": 0,
+            "thread_siblings": [
+              10,
+              22
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "cpu": 23,
+            "core_id": 13,
+            "package_id": 0,
+            "thread_siblings": [
+              11,
+              23
+            ],
+            "l3_shared": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          }
+        ],
+        "smt_active": true
+      },
+      "load_average": [
+        3.09,
+        5.52,
+        4.11
+      ],
+      "available_memory_kib": 43866284
+    }
+  ],
+  "trial_ledger": {
+    "path": "dev/bench_results/5cbb6545/popcount-route-selection-family-ledger.jsonl",
+    "snapshot": "inputs/trial-ledger.jsonl",
+    "sha256": "e613ad92b830cb4c0f8419abf20734bbbb1f17304fdfba60749258ea1e1f8815"
+  },
+  "schema": "zen3-benchmark-receipt-v1",
+  "campaign_id": "popcount-pilot-5cbb6545-20260913t125443z",
+  "family_id": "popcount-route-selection",
+  "issue": "5cbb6545",
+  "receipt_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-pilot/receipt.json",
+  "label": "pilot",
+  "campaign_seed": 20260913201,
+  "settings": {
+    "family_alpha": 0.05,
+    "bootstrap_resamples": 10000,
+    "confirmatory_pairs": 24,
+    "pilot_min_pairs": 6,
+    "pilot_max_pairs": 24,
+    "windows_per_execution": 5,
+    "window_target_ms": 100,
+    "flagged_window_factor": 2.0,
+    "max_flagged_fraction": 0.1,
+    "max_pilot_trials_per_cell": 8,
+    "max_confirmatory_attempts_per_candidate": 1,
+    "child_timeout_seconds": 120,
+    "quality_confidence": 0.95
+  },
+  "settings_deviation": false,
+  "protocol": {
+    "path": "dev/active/f547c394/protocol.md",
+    "snapshot": "inputs/protocol.md",
+    "sha256": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb"
+  },
+  "contract": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+    "snapshot": "inputs/measurement-contract.md",
+    "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3"
+  },
+  "addendum_schema": {
+    "path": "dev/active/f547c394/addendum.schema.json",
+    "snapshot": "inputs/addendum.schema.json",
+    "sha256": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47"
+  },
+  "addendum": {
+    "path": "dev/active/5cbb6545/addendum-popcount-v4-pilot.json",
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "39306e191faea67502f5f8fa47d03dc5c845eb711b0fb313aaca155538675f8f"
+  },
+  "source": {
+    "producing": {
+      "manifest_path": "dev/active/5cbb6545/producing-inputs.json",
+      "manifest_sha256": "ee64538a1ef1f7464a128f9bed19ecf63453b4a50a49edb61e7b4b2411de8975",
+      "behavior_sha256": {
+        "crates/gf2-core/src/alg/gauss.rs": "d561f41ab9e4f0fea54a714ae437b341f44e1edf74aed53ca425828ac072f06c",
+        "crates/gf2-core/src/alg/m4rm.rs": "c370a0081f573f2405de17590a53fe981f219bfb47294885c15a335e14d9aff5",
+        "crates/gf2-core/src/alg/matmul.rs": "ba9ff8d8bcaebcad2064561aee360a70a687f4356350e17a241a736f3fa1f8e8",
+        "crates/gf2-core/src/alg/mod.rs": "f4ecc302299435b96bbe06087fa3fd2122c7a3f2168a168344aabd54144b5cba",
+        "crates/gf2-core/src/alg/rref.rs": "8dcffc305190b780f4917334cfe6f83fe85f22501ab8ee8093ba435bf8ebe341",
+        "crates/gf2-core/src/alg/strassen.rs": "d6799b178d11312a105691a5bac02ec770a252f771ac3ab96b1cb4a2fe668c72",
+        "crates/gf2-core/src/bench_seed.rs": "26b2a5e1d47c8428c8041b7400c49736a038630cc27cbea989e2d634ec0f19d6",
+        "crates/gf2-core/src/bitslice.rs": "41a35b6de8d3ed79236cfa587ce3db52f24f26949e91d151ff6adb5ebef8fa37",
+        "crates/gf2-core/src/bitvec.rs": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69",
+        "crates/gf2-core/src/bitvec_sync_tests.rs": "7f78c215ea84bc977ce6e0f627d5da0290469f74a02b727aa1d7f16e19f8c196",
+        "crates/gf2-core/src/compute/backend.rs": "f81bde57c318368ae7f1222e9033f634563f67fc9d1f38cb182fec2ca2b78952",
+        "crates/gf2-core/src/compute/batch_tests.rs": "c83b89cd87bf638885a85e14cc2bf0a952d1cd1c7ce1eddad550c99093a6a761",
+        "crates/gf2-core/src/compute/cpu.rs": "995a0babf3cb2c44d94799b8f390ff111a8d2aa80dd88faee04c40ca6cad4a1e",
+        "crates/gf2-core/src/compute/field.rs": "d7649ef59899d0cac9fd369c8231a9f9fc9e92943159fda07f0e9d5b7e832afe",
+        "crates/gf2-core/src/compute/mod.rs": "e760fec2e2857061129febfc834c8772524e22b26b9e303e7bb402d95528debd",
+        "crates/gf2-core/src/field/axiom_tests.rs": "2d3319cefaebea708a6543ccaf552fd4aa38ed2e18aa2e89a5cf5d4d137d9542",
+        "crates/gf2-core/src/field/batch_ops.rs": "3513f96b2b10f11dff8bfc0ae128b37828bc48f779b3f64487f42eb1ca6974ad",
+        "crates/gf2-core/src/field/charpoly.rs": "40e87253e42d303e9ed93b670faa15a71a70d546f62efe0a922d4b6f587fcb5c",
+        "crates/gf2-core/src/field/expr.rs": "35169c2b41530cb2cde50927b4c6564a046906e3e9b1fe6487373543679c2af0",
+        "crates/gf2-core/src/field/extension.rs": "71e8a7f3d352d89db8194316a3adb5ba01f7dfaf68bcd3c81cfa71bc25b2cde7",
+        "crates/gf2-core/src/field/extension_wiedemann.rs": "22c32c6a82136941ed9004faaf3644ad6f96a4e24ad0b9a0df5e34bd7a6af8cd",
+        "crates/gf2-core/src/field/inverse.rs": "b99376e37a11e13d51e202a514df455cae9f21314bb8415c0a66b59df7442822",
+        "crates/gf2-core/src/field/irreducibility.rs": "d0c70553b3d9f5f3cfc21b9ca10d289737bb855196d01a94ae8a13f41f543d43",
+        "crates/gf2-core/src/field/matrix.rs": "45f6fe7f385e01d96e3b975fc2a91b6dc9e49c16ef605ea74f7b8644b02d8cbe",
+        "crates/gf2-core/src/field/mod.rs": "029b15d3067309c75c1309f469ad82ba4f82a60c78a58ad86ea7aacbb42a27e8",
+        "crates/gf2-core/src/field/modulus_select.rs": "b4b1e35c49842548339f6da0bb0296d435369253b7121296ee3f25f4031d14e9",
+        "crates/gf2-core/src/field/ntt.rs": "455efeeb6c615d6aace4fa1e655a0d0e98d12e4de123ee085a00c2449c9cf253",
+        "crates/gf2-core/src/field/ple.rs": "48eba168ccc3b8b85e2164b0caaf539386e99501c705a91caa1d96af78002abb",
+        "crates/gf2-core/src/field/poly.rs": "a105836035d821c304d591f8712f1fa61e770223cffda3ce588cd449ab536e4c",
+        "crates/gf2-core/src/field/poly_interpolate.rs": "440e9701cd0093f0447e7a570144144bc1ad2af407155b436335b0bd2ed9556a",
+        "crates/gf2-core/src/field/sparse_matrix.rs": "ee7e37c4f1cafcc7df20a7358bf3b046efc047253653f27b22d5d3bce1d7eac5",
+        "crates/gf2-core/src/field/test_random_matrix.rs": "ae83a9b107931c723e45717fc0d19db3c5a840c672bfcc5ed97b5871ca330a1a",
+        "crates/gf2-core/src/field/traits.rs": "0a62cac77148eb0d989b3de0612e6f722dfed1046e4e5c008091aee139ce44c2",
+        "crates/gf2-core/src/field/triangular.rs": "8e7311a12e6d9f850608654dc937c2a4abe5d0bd21e700acd2e0a4b22a10bdfa",
+        "crates/gf2-core/src/field/two_adic.rs": "888061b06666af378e63631422668091544e57c7c6fa30e23deffa53c077a7a2",
+        "crates/gf2-core/src/field/vec.rs": "7334a416911a15d838fcc10716860dcb5683a67b71ac7ba29a63c32395d83c92",
+        "crates/gf2-core/src/field/winograd.rs": "5120e729155c352b65ebdf118bd2c0cc41332f5caa61bf02fe0107b7bed0776d",
+        "crates/gf2-core/src/gf2m/barrett.rs": "d093504b37609743a983eff25b7bf04fd54ba22270518738ce841277b83a0ee2",
+        "crates/gf2-core/src/gf2m/batch.rs": "c1279c3b25877c3934dc0105f532b538188d322aa7c494bfc38f033323c66966",
+        "crates/gf2-core/src/gf2m/field.rs": "e8ce50a94aa4adf959eca8c7a6e1a86181b6a35449dba0b9efc355c20297bab9",
+        "crates/gf2-core/src/gf2m/generation.rs": "95a6e9eae3edbb76ba06517998215ec5ddc0cacf36aa57adda6cb35ca7c64725",
+        "crates/gf2-core/src/gf2m/mod.rs": "b5f42c521474f9617ef51a4d4c8263bb9a67536959552a824100a21a2bd2d936",
+        "crates/gf2-core/src/gf2m/mul_raw.rs": "60fc5cf7a83359de3459cd5f291a4c98ecd7543de6c1fa1c5f197f0b9edba7f3",
+        "crates/gf2-core/src/gf2m/poly_helpers.rs": "851acb7aaff2757199bb2692497a80a7c86f7ae9477fcec5507ef15650e0bf0d",
+        "crates/gf2-core/src/gf2m/thread_safety_tests.rs": "b1a01e4b6d287468039e23bc3c3877dc0c7941ab6d686aaab87d5632dfa0cf05",
+        "crates/gf2-core/src/gf2m/uint_ext.rs": "f74a634e281513741027f04ea5bc67363a4f102def41d1556c3f2303ada9fbe7",
+        "crates/gf2-core/src/gf2m/wide.rs": "0829daeb830573c4601f55f693981247f226f38e833ae40b917d0791cb76a5c4",
+        "crates/gf2-core/src/gf2m/wide_config.rs": "488d36db123cae0093b0657ca2ace584ab6ce8b6bef3232955b740c6e53f8e49",
+        "crates/gf2-core/src/gfp/mod.rs": "689de4b9bbb587e9429663b9ed9ce41dd16e9bc6058f27cba8f7070b50a26f9f",
+        "crates/gf2-core/src/gfp/montgomery.rs": "40be91235c20192d69eb0af66ba434bb3e9d32a7c36e227f73295d1831cf4387",
+        "crates/gf2-core/src/gfp/simd_ops.rs": "b7629632afb3be02427fc5fee0ac2d7015c1374afa5cd5263fbb6c01493d4525",
+        "crates/gf2-core/src/gfp/specialized.rs": "798943d7fe039598aea91e1d55e3afcef3e5aae4f2779558861f1e3c8d18d7e7",
+        "crates/gf2-core/src/gfpn/batch.rs": "0f286713a052ad9a8657131f00bf096b9b2f15595ba6a4d774cdd842edb15e50",
+        "crates/gf2-core/src/gfpn/cubic.rs": "e29acc9e22ef71f14865d89d173a2e3a8324232d7fc84bd11ae1bd20a36efb87",
+        "crates/gf2-core/src/gfpn/ext_config.rs": "f05019fca63e7d6c654f96672a6b6bc995019a8506ad14e07c0210a0e01578e1",
+        "crates/gf2-core/src/gfpn/mod.rs": "c95aa1199b8e0dffc15b8234a6e2d2a59a0d5a203075b419f3da8552ba222471",
+        "crates/gf2-core/src/gfpn/quadratic.rs": "be9bf36dd31475cfb74f4d7c4b452c3963cec690ec69ddd621b3ccc6721be0af",
+        "crates/gf2-core/src/gfpn/quotient.rs": "0fc47d3ea27ac5654cacf81a3baa1dbd43dc9d64921963402e9324ba75646673",
+        "crates/gf2-core/src/io/bitvec.rs": "cefabba515e346afee6527fe506ed116fd89a31c84a9904456db665790337b01",
+        "crates/gf2-core/src/io/error.rs": "2b079a486d0949e3f83711a94d23d19902d6c754ef85f7b323c293735934bf5e",
+        "crates/gf2-core/src/io/field_matrix.rs": "eb82bf72e943dbda93554a10e9a72f035f11ac0ddf08094066b32eb0c618556a",
+        "crates/gf2-core/src/io/format.rs": "32aef610628c30773ed5664f2709864f2f85ed37c0bddcc0092ace31b592d1f6",
+        "crates/gf2-core/src/io/formats.rs": "5faf84ddb19499271dd08078f4161ea7078df13aab5834affe2a6528cbe20057",
+        "crates/gf2-core/src/io/header.rs": "af8cc3a00e5439cd413c6feb3404eda73c142688647c675a27ff5b7f4eb02064",
+        "crates/gf2-core/src/io/matrix.rs": "fae52e4df2601c5824351b8fcdf6f6e4d4a11a7e10409b1f95e1b3485f01829a",
+        "crates/gf2-core/src/io/mod.rs": "576db88b52ec77a7a9e010c77feb2ad8893ef47a12c3106de9267df4227e42da",
+        "crates/gf2-core/src/io/sparse.rs": "8c1a5097a2790809bb810665a48d9559a827de488513525d90d29c4b51bd6379",
+        "crates/gf2-core/src/kernels/aarch64.rs": "f52194401a3c13a160e56408433b28866b8cdce2c4130549e4e745dcc23045fa",
+        "crates/gf2-core/src/kernels/backend.rs": "e77e3209275ecdbde6c8f007cf89cb7f98f58a3834885d5f926deec3f4e6fc1c",
+        "crates/gf2-core/src/kernels/mod.rs": "b5f38cf6057cc58548143a020ba3cc0d0f9397642e9648444caf3c848e7cdc03",
+        "crates/gf2-core/src/kernels/ops.rs": "667eb16327b80adbca5376e17723fb385254e814d029fe16f411416517253095",
+        "crates/gf2-core/src/kernels/scalar/logical.rs": "533ad1a6000d80be1d33c43b2677b802f02ae9abf30a75c72b170a1adba69eac",
+        "crates/gf2-core/src/kernels/scalar/mod.rs": "a511ca0c8d74e290554e22c4d3c22ddcae9ed29ddb996e1d38cf730b93400f7b",
+        "crates/gf2-core/src/kernels/scalar/primitives.rs": "22da185fc976baca8c2be7e3653088fcc1130f62ddf04f6a7ed474f7bbf512f4",
+        "crates/gf2-core/src/kernels/simd/mod.rs": "763205012e86d4c2f5c4c4418808fec985a5e83841f356d588512e4ac671e2a6",
+        "crates/gf2-core/src/kernels/test_utils.rs": "25c92a622beabfbde1d48dcf8a39875551523cbb4302aeef7cf52f03169230cc",
+        "crates/gf2-core/src/kernels/x86.rs": "719ae6c3d68c9e8256dcf93a19e91d74e0d24035ca4c5157da3451dd5d3c3286",
+        "crates/gf2-core/src/lib.rs": "f38b3dd2aa76a1536d52a806e3ddd4fad044cfc5d53c00a72fe2ea1733ec376c",
+        "crates/gf2-core/src/macros.rs": "2fe7803ba67bab41295ea444d240774fe2493ecd621a5076dbe123d2ad07995e",
+        "crates/gf2-core/src/matrix.rs": "ed3953e9bd8591b9e430353b167add7c7d42f0c70e6f72f23c52e8f6779bd05b",
+        "crates/gf2-core/src/matrix_like.rs": "4f60e11757bb039a7554ce4ed08684e4b624dd3f116563962add8c28a8ecdd7f",
+        "crates/gf2-core/src/primitive_polys.rs": "b6319033edf5a2262f61def5ef3b4d4965bc0d9dbd8e52086b06c8d679320b6f",
+        "crates/gf2-core/src/rng.rs": "e84732f6e6434cc2a0d62b58d2c75a168eeca3e33005e91d82932fa0b7d6853b",
+        "crates/gf2-core/src/sparse.rs": "dfddef2bdc4061016b5669c37f6b3a1cd03d948cc4a76332681b627284336798",
+        "crates/gf2-core/src/tuning/baked.rs": "0e51f185a30c7d935f764b901d9d8002dee7d0511c95fb087449217497360310",
+        "crates/gf2-core/src/tuning/mechanism.rs": "7371ca8763b27bba59a4153a23606aad787237fab508f2c1898c07c7de13b719",
+        "crates/gf2-core/src/tuning/mod.rs": "3f9b683fe226edaafce4df3c312f6264bfbd4876a28b4d4fd016890c0acc0af1",
+        "crates/gf2-core/src/tuning/profile.rs": "1c5b18477797eac20384fcf30e417bfdab6515339dcc084df5fe478401d7b0fb",
+        "crates/gf2-kernels-simd/src/bch_encode.rs": "f0c9a3719653685eea155a4d74d403c5e68bd6509847472c0920cb9c53b12cd7",
+        "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs": "98c9c3edd0130749ccf02ad5006ab4c73a0b56baa736dc14ee6cbf0d59f4c17e",
+        "crates/gf2-kernels-simd/src/bipedal/framework.rs": "ab00cf16b07867970f4a5c68b9d4da5079ebde3dae4a079a2e27907772632ac4",
+        "crates/gf2-kernels-simd/src/bipedal/lanes.rs": "a37362602d32ed72faf80c9cd4c42ef67ba6cf50241f677b2fb1ec4a6f06cf5e",
+        "crates/gf2-kernels-simd/src/bipedal/mod.rs": "63ab65571d4babd7cf3a889df2335320f1a2b2dd998d3d7a0a7168559750ed77",
+        "crates/gf2-kernels-simd/src/bipedal/packed5.rs": "1d3bd57360cdb08f5d5704ff7ea9dd619695eaf83b0b8afcda3eed3d2fdcf886",
+        "crates/gf2-kernels-simd/src/bipedal/packed7.rs": "e63941a14a0e76be26afb97fbbaa7d9efafa9d51df8baff4e7f2fde59744e86e",
+        "crates/gf2-kernels-simd/src/clmul_scalar.rs": "69b87a2624ce1abe10ed0aee9b8aa9b09f245c2abf46b32240966e42816e096d",
+        "crates/gf2-kernels-simd/src/fp65537.rs": "d48c830b27e53041a89ccda5e8ece19ddcb642cbe2a248f38586146f5e3cb8ac",
+        "crates/gf2-kernels-simd/src/fp_generic.rs": "6b4b7dd52ee325a982e3134e632a8e1a3b0509b5415340e39f61987a21e2fb61",
+        "crates/gf2-kernels-simd/src/fp_medium.rs": "fb46dbecb352f1a191a0d675787af2f09bcf4f1ec6f4bca5c5ff338e439a3120",
+        "crates/gf2-kernels-simd/src/fp_medium_f64.rs": "24bec2a0d131ea70b422c0ccfe9099d1e9e806858f434eb6a28f4ec5df49d13e",
+        "crates/gf2-kernels-simd/src/fp_medium_ple.rs": "719852e059106b305b00e36fbd3c87f0befed47f9c4618f8c8bcff3fe633100a",
+        "crates/gf2-kernels-simd/src/fp_small.rs": "04bc8785ba22af8c4b0fedbfebae42ff21030bc57661be3d700ff1f1a7d56944",
+        "crates/gf2-kernels-simd/src/fp_small_f32.rs": "6b5c1c3f2676f38fb2adb9349a640b1b1c3901e178b11ab021a5bfaf691e2b84",
+        "crates/gf2-kernels-simd/src/fp_small_panel.rs": "a14b813e2bb8fbfce2c5e4d84914511316b9e2bdaa859904b2c04e281e504bc0",
+        "crates/gf2-kernels-simd/src/fp_small_ple.rs": "fbd9aa0eb85280a2f0b0cb2fc5b4a867de24496d2123bb33f28b64b2f57853dd",
+        "crates/gf2-kernels-simd/src/gf2m.rs": "30a6c259fe90dabc84b94c32b61363531b2b33bd819ddcb71e112f8dab8260bb",
+        "crates/gf2-kernels-simd/src/gf2m_batch.rs": "fb534d4979366faf3d3d550bb9e088a7a06171f3fc164361e54f1acfce604fa3",
+        "crates/gf2-kernels-simd/src/gf2m_gemm.rs": "27d99ee222b5bf78ec25f59bbcf3cb94de88e92ccb8e68a9f65c60b7df6c317e",
+        "crates/gf2-kernels-simd/src/gf2m_wide.rs": "1ec1f3b214b03fd4c5bacb76a0b1a9658c200eacea804ebf6c17a2f5118ee5e0",
+        "crates/gf2-kernels-simd/src/lib.rs": "b1ca6e724e4c1a86f43829cd80d229588e7b615729e41e42fe6a1d8484b012ba",
+        "crates/gf2-kernels-simd/src/llr.rs": "efed86c90e984cc38854e5065a5f280bac7a2f5f65998aa7b750cf6258eca17b",
+        "crates/gf2-kernels-simd/src/mersenne.rs": "5118c17feb25c9278d18ed97754d4fdb08f0cf6419b1881b16b28345b8f85ac3",
+        "crates/gf2-kernels-simd/src/modem.rs": "451a767c840cfc3a8b98ef2f2a63bc5a48b613980c8bf748240476588549a3a7",
+        "crates/gf2-kernels-simd/src/prefetch.rs": "74352170691de56ad5b6f5d73678100cb015301e57de3349cb28a174bdfc0be0",
+        "crates/gf2-kernels-simd/src/transpose.rs": "ba1977c751c4517a87c3ea76e0c1717e07fc6319404d70da7d713886abcf2da8",
+        "crates/gf2-kernels-simd/src/x86/avx2.rs": "f119a166b2836fc25dafcf482dea95035fc8d9d8e68c324a6daa0c504e6e539f",
+        "crates/gf2-kernels-simd/src/x86/bch_encode.rs": "3601c3b13e0b921cb7c7298c87e5b8ba04af92beee4fd4634fe33fe253df9f15",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs": "8269ee99f77d77af53bcf047d230d548aa23f44e469b095f91984c31c8b012f4",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs": "0ad2cf38fcbe03a5bc2e36b920056d74fd6110be59aea7de6e9d71adaa83e791",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs": "6955e532a267da21a0ef2834e684b892c6fc6143e18888d72f41fd93b27e9521",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs": "fec4243bcc2b3cf5c41eb9a1f0647bbfcee5269458427f1d1d45fb2ec990f660",
+        "crates/gf2-kernels-simd/src/x86/clmul.rs": "a4c59d76fb90bcfa4ca9ff87459b80741e88003abd7c71f8d5c4167c915b0616",
+        "crates/gf2-kernels-simd/src/x86/fp65537.rs": "28597457a5523ef7030313e31e92d6082af709f4c1fa1ac9f6d693edf57d7a50",
+        "crates/gf2-kernels-simd/src/x86/fp_generic.rs": "0a30f181d9818e32c42b2ebbfb05fd92f9f8d950b6df9ec9ff22d3951bf49d85",
+        "crates/gf2-kernels-simd/src/x86/fp_medium.rs": "29842afef301387bd9f355d1330eb666168b551c6b4563ad2e35f4780656af63",
+        "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs": "46d14e6e33e2214d77035ec75e958d01bcae02fc686666f0f2568e8605034ba7",
+        "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs": "e299296bea8891eeb9294c52eb7445006a81e86d6642f8b1681e346c48f1e6a1",
+        "crates/gf2-kernels-simd/src/x86/fp_small.rs": "7d702d3c6019af54c710b54eff92d3bf26b5a556a0dbfd42d4a2f6c58ac2e3f1",
+        "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs": "ade0e6709429fe3493b02e6c6759e07a273dedbf92cab0b391738fc53aa268e7",
+        "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs": "801c6841cd440fcf63d6f3244ce3ee1ed1a76e985e55f9225d1c6e913857c179",
+        "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs": "db5bd1f6dffe4cd2684285516615935f7936944732fb86aeac80e8d78f2766e4",
+        "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs": "3a660491c147703650de7147b8d3a7aca2cae695eb43a6ba500e391f2e186eee",
+        "crates/gf2-kernels-simd/src/x86/gf2m_common.rs": "3f3a3dd12607ac8b5259f2334e3e9b8026f7ca51ebc36158bf100df32a083881",
+        "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs": "1e705775745245d93bb5092fa7460991238c42d8dc37092fba53b888e0feddba",
+        "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs": "dda98102f4a5aa12a75734a63cde2c494a20770e7f1798ba8b56dd878d4c98c1",
+        "crates/gf2-kernels-simd/src/x86/mersenne.rs": "f1427b4284e0a7fbbf4f26dbe199d6f18bc6bc945197efedc0edeb2cd439f513",
+        "crates/gf2-kernels-simd/src/x86/mod.rs": "47cfbabc08bbb02f4d4ee7733d84f12a39387dc1e6384602ede2f258e0aca9a9",
+        "crates/gf2-kernels-simd/src/x86/popcount.rs": "e8a7afff6969b46e1c2decbdf74b2c3bf63481d4e30f81d276ec4fc6671bba13",
+        "crates/gf2-kernels-simd/src/x86/transpose.rs": "ec5081d7a45284375c7fa73296f4a48123c7b16bc7b0941fc4b1d7eeec692c0f",
+        "dev/active/5cbb6545/run-count-campaign.sh": "b3577ca370024dafea0c20714a64c3f68525b9f78327de8bf41ffc083b2ecc98",
+        "dev/active/5cbb6545/survey/gf2-side/src/arms.rs": "2ea45ec999e5a9ecf98f1cc9f182d411eb78c0afcb18a9fc6b9b7f206a90361f",
+        "dev/active/5cbb6545/survey/gf2-side/src/bin/count-arm.rs": "ebbb3ff5d99b01aa8ff252bd13af5945f5564ada263d56001bde098b87efc7d8",
+        "dev/active/5cbb6545/survey/gf2-side/src/bin/count-verify.rs": "573b3b25153154c0d155720a01c4a6bc8a5f85b5026398284a3f5a1d63950369",
+        "dev/active/5cbb6545/survey/gf2-side/src/external.rs": "aa16d420cd1a8a6802dd2915cad703878ced1aab502ccadb8b7daeb2fdb45815",
+        "dev/active/5cbb6545/survey/gf2-side/src/fixture.rs": "1b8c592b04f02e8e6805a68dab6a3bdd443bbe0cb6bc084d4da6056aa40083d1",
+        "dev/active/5cbb6545/survey/gf2-side/src/lib.rs": "4090cea8b807995d3f979e6405a6a58551eaa49648ac5e233ac785f4a99f9039",
+        "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "095deb55202c80bda2b2eb0b3362f524ab77891f4f05da7c549e7b3f8053e824",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "e23750a6d4a92d95d966ae8618361945b288b26407640f10926134c732300612",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "a3ebd9769d81ee2e3eeeaae991053f36a24fce7557254cbabc5a9ed5e80c1e6b",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs": "1b813b667407c019b7fa563648f05fa820b1433520068bc03864cd42f53b2c5c",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "cdef0a5aa6166a37b42f3c18318cea942ace7ca9f2538382597b980c8ced24d6",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "81a909833bc7cb149c45d7851f7eef990fa665f77d06f89c1db768c5b3933121",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "b02ee6247b1290709d62580ae605e68156ff2e8c22d3a28add609e6e291472d4",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "ead299d593daa304e8a28f64b893dd920c3acf1e6be79b9cad25ab8c026bee1a",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "089f5c4dcfd6cfe34223ca31ebf8caec75d3d03a4d96bafa0ed57be2d583f58f",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "55d228c1b14366da4a003b4ad7caa7cb05036ac8151ca1f1c5e1eda1150d907a",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "afe4cf2f5b8d5eec18da0484633c390acaf348ee49dcd38b9a22f0e5d3f523a6",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd"
+      },
+      "lifecycle_sha256": {
+        "dev/active/5cbb6545/run-count-campaign.sh": "b3577ca370024dafea0c20714a64c3f68525b9f78327de8bf41ffc083b2ecc98",
+        "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "a3ebd9769d81ee2e3eeeaae991053f36a24fce7557254cbabc5a9ed5e80c1e6b",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "cdef0a5aa6166a37b42f3c18318cea942ace7ca9f2538382597b980c8ced24d6",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "81a909833bc7cb149c45d7851f7eef990fa665f77d06f89c1db768c5b3933121",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "ead299d593daa304e8a28f64b893dd920c3acf1e6be79b9cad25ab8c026bee1a",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "089f5c4dcfd6cfe34223ca31ebf8caec75d3d03a4d96bafa0ed57be2d583f58f",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "55d228c1b14366da4a003b4ad7caa7cb05036ac8151ca1f1c5e1eda1150d907a",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd"
+      },
+      "build_inputs_sha256": {
+        ".cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "crates/gf2-core/Cargo.toml": "c87af8313c6e74c47a39b8f647c97bb9757450740b553e0ec64efd19976f8fd4",
+        "crates/gf2-core/src/alg/gauss.rs": "d561f41ab9e4f0fea54a714ae437b341f44e1edf74aed53ca425828ac072f06c",
+        "crates/gf2-core/src/alg/m4rm.rs": "c370a0081f573f2405de17590a53fe981f219bfb47294885c15a335e14d9aff5",
+        "crates/gf2-core/src/alg/matmul.rs": "ba9ff8d8bcaebcad2064561aee360a70a687f4356350e17a241a736f3fa1f8e8",
+        "crates/gf2-core/src/alg/mod.rs": "f4ecc302299435b96bbe06087fa3fd2122c7a3f2168a168344aabd54144b5cba",
+        "crates/gf2-core/src/alg/rref.rs": "8dcffc305190b780f4917334cfe6f83fe85f22501ab8ee8093ba435bf8ebe341",
+        "crates/gf2-core/src/alg/strassen.rs": "d6799b178d11312a105691a5bac02ec770a252f771ac3ab96b1cb4a2fe668c72",
+        "crates/gf2-core/src/bench_seed.rs": "26b2a5e1d47c8428c8041b7400c49736a038630cc27cbea989e2d634ec0f19d6",
+        "crates/gf2-core/src/bitslice.rs": "41a35b6de8d3ed79236cfa587ce3db52f24f26949e91d151ff6adb5ebef8fa37",
+        "crates/gf2-core/src/bitvec.rs": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69",
+        "crates/gf2-core/src/bitvec_sync_tests.rs": "7f78c215ea84bc977ce6e0f627d5da0290469f74a02b727aa1d7f16e19f8c196",
+        "crates/gf2-core/src/compute/backend.rs": "f81bde57c318368ae7f1222e9033f634563f67fc9d1f38cb182fec2ca2b78952",
+        "crates/gf2-core/src/compute/batch_tests.rs": "c83b89cd87bf638885a85e14cc2bf0a952d1cd1c7ce1eddad550c99093a6a761",
+        "crates/gf2-core/src/compute/cpu.rs": "995a0babf3cb2c44d94799b8f390ff111a8d2aa80dd88faee04c40ca6cad4a1e",
+        "crates/gf2-core/src/compute/field.rs": "d7649ef59899d0cac9fd369c8231a9f9fc9e92943159fda07f0e9d5b7e832afe",
+        "crates/gf2-core/src/compute/mod.rs": "e760fec2e2857061129febfc834c8772524e22b26b9e303e7bb402d95528debd",
+        "crates/gf2-core/src/field/axiom_tests.rs": "2d3319cefaebea708a6543ccaf552fd4aa38ed2e18aa2e89a5cf5d4d137d9542",
+        "crates/gf2-core/src/field/batch_ops.rs": "3513f96b2b10f11dff8bfc0ae128b37828bc48f779b3f64487f42eb1ca6974ad",
+        "crates/gf2-core/src/field/charpoly.rs": "40e87253e42d303e9ed93b670faa15a71a70d546f62efe0a922d4b6f587fcb5c",
+        "crates/gf2-core/src/field/expr.rs": "35169c2b41530cb2cde50927b4c6564a046906e3e9b1fe6487373543679c2af0",
+        "crates/gf2-core/src/field/extension.rs": "71e8a7f3d352d89db8194316a3adb5ba01f7dfaf68bcd3c81cfa71bc25b2cde7",
+        "crates/gf2-core/src/field/extension_wiedemann.rs": "22c32c6a82136941ed9004faaf3644ad6f96a4e24ad0b9a0df5e34bd7a6af8cd",
+        "crates/gf2-core/src/field/inverse.rs": "b99376e37a11e13d51e202a514df455cae9f21314bb8415c0a66b59df7442822",
+        "crates/gf2-core/src/field/irreducibility.rs": "d0c70553b3d9f5f3cfc21b9ca10d289737bb855196d01a94ae8a13f41f543d43",
+        "crates/gf2-core/src/field/matrix.rs": "45f6fe7f385e01d96e3b975fc2a91b6dc9e49c16ef605ea74f7b8644b02d8cbe",
+        "crates/gf2-core/src/field/mod.rs": "029b15d3067309c75c1309f469ad82ba4f82a60c78a58ad86ea7aacbb42a27e8",
+        "crates/gf2-core/src/field/modulus_select.rs": "b4b1e35c49842548339f6da0bb0296d435369253b7121296ee3f25f4031d14e9",
+        "crates/gf2-core/src/field/ntt.rs": "455efeeb6c615d6aace4fa1e655a0d0e98d12e4de123ee085a00c2449c9cf253",
+        "crates/gf2-core/src/field/ple.rs": "48eba168ccc3b8b85e2164b0caaf539386e99501c705a91caa1d96af78002abb",
+        "crates/gf2-core/src/field/poly.rs": "a105836035d821c304d591f8712f1fa61e770223cffda3ce588cd449ab536e4c",
+        "crates/gf2-core/src/field/poly_interpolate.rs": "440e9701cd0093f0447e7a570144144bc1ad2af407155b436335b0bd2ed9556a",
+        "crates/gf2-core/src/field/sparse_matrix.rs": "ee7e37c4f1cafcc7df20a7358bf3b046efc047253653f27b22d5d3bce1d7eac5",
+        "crates/gf2-core/src/field/test_random_matrix.rs": "ae83a9b107931c723e45717fc0d19db3c5a840c672bfcc5ed97b5871ca330a1a",
+        "crates/gf2-core/src/field/traits.rs": "0a62cac77148eb0d989b3de0612e6f722dfed1046e4e5c008091aee139ce44c2",
+        "crates/gf2-core/src/field/triangular.rs": "8e7311a12e6d9f850608654dc937c2a4abe5d0bd21e700acd2e0a4b22a10bdfa",
+        "crates/gf2-core/src/field/two_adic.rs": "888061b06666af378e63631422668091544e57c7c6fa30e23deffa53c077a7a2",
+        "crates/gf2-core/src/field/vec.rs": "7334a416911a15d838fcc10716860dcb5683a67b71ac7ba29a63c32395d83c92",
+        "crates/gf2-core/src/field/winograd.rs": "5120e729155c352b65ebdf118bd2c0cc41332f5caa61bf02fe0107b7bed0776d",
+        "crates/gf2-core/src/gf2m/barrett.rs": "d093504b37609743a983eff25b7bf04fd54ba22270518738ce841277b83a0ee2",
+        "crates/gf2-core/src/gf2m/batch.rs": "c1279c3b25877c3934dc0105f532b538188d322aa7c494bfc38f033323c66966",
+        "crates/gf2-core/src/gf2m/field.rs": "e8ce50a94aa4adf959eca8c7a6e1a86181b6a35449dba0b9efc355c20297bab9",
+        "crates/gf2-core/src/gf2m/generation.rs": "95a6e9eae3edbb76ba06517998215ec5ddc0cacf36aa57adda6cb35ca7c64725",
+        "crates/gf2-core/src/gf2m/mod.rs": "b5f42c521474f9617ef51a4d4c8263bb9a67536959552a824100a21a2bd2d936",
+        "crates/gf2-core/src/gf2m/mul_raw.rs": "60fc5cf7a83359de3459cd5f291a4c98ecd7543de6c1fa1c5f197f0b9edba7f3",
+        "crates/gf2-core/src/gf2m/poly_helpers.rs": "851acb7aaff2757199bb2692497a80a7c86f7ae9477fcec5507ef15650e0bf0d",
+        "crates/gf2-core/src/gf2m/thread_safety_tests.rs": "b1a01e4b6d287468039e23bc3c3877dc0c7941ab6d686aaab87d5632dfa0cf05",
+        "crates/gf2-core/src/gf2m/uint_ext.rs": "f74a634e281513741027f04ea5bc67363a4f102def41d1556c3f2303ada9fbe7",
+        "crates/gf2-core/src/gf2m/wide.rs": "0829daeb830573c4601f55f693981247f226f38e833ae40b917d0791cb76a5c4",
+        "crates/gf2-core/src/gf2m/wide_config.rs": "488d36db123cae0093b0657ca2ace584ab6ce8b6bef3232955b740c6e53f8e49",
+        "crates/gf2-core/src/gfp/mod.rs": "689de4b9bbb587e9429663b9ed9ce41dd16e9bc6058f27cba8f7070b50a26f9f",
+        "crates/gf2-core/src/gfp/montgomery.rs": "40be91235c20192d69eb0af66ba434bb3e9d32a7c36e227f73295d1831cf4387",
+        "crates/gf2-core/src/gfp/simd_ops.rs": "b7629632afb3be02427fc5fee0ac2d7015c1374afa5cd5263fbb6c01493d4525",
+        "crates/gf2-core/src/gfp/specialized.rs": "798943d7fe039598aea91e1d55e3afcef3e5aae4f2779558861f1e3c8d18d7e7",
+        "crates/gf2-core/src/gfpn/batch.rs": "0f286713a052ad9a8657131f00bf096b9b2f15595ba6a4d774cdd842edb15e50",
+        "crates/gf2-core/src/gfpn/cubic.rs": "e29acc9e22ef71f14865d89d173a2e3a8324232d7fc84bd11ae1bd20a36efb87",
+        "crates/gf2-core/src/gfpn/ext_config.rs": "f05019fca63e7d6c654f96672a6b6bc995019a8506ad14e07c0210a0e01578e1",
+        "crates/gf2-core/src/gfpn/mod.rs": "c95aa1199b8e0dffc15b8234a6e2d2a59a0d5a203075b419f3da8552ba222471",
+        "crates/gf2-core/src/gfpn/quadratic.rs": "be9bf36dd31475cfb74f4d7c4b452c3963cec690ec69ddd621b3ccc6721be0af",
+        "crates/gf2-core/src/gfpn/quotient.rs": "0fc47d3ea27ac5654cacf81a3baa1dbd43dc9d64921963402e9324ba75646673",
+        "crates/gf2-core/src/io/bitvec.rs": "cefabba515e346afee6527fe506ed116fd89a31c84a9904456db665790337b01",
+        "crates/gf2-core/src/io/error.rs": "2b079a486d0949e3f83711a94d23d19902d6c754ef85f7b323c293735934bf5e",
+        "crates/gf2-core/src/io/field_matrix.rs": "eb82bf72e943dbda93554a10e9a72f035f11ac0ddf08094066b32eb0c618556a",
+        "crates/gf2-core/src/io/format.rs": "32aef610628c30773ed5664f2709864f2f85ed37c0bddcc0092ace31b592d1f6",
+        "crates/gf2-core/src/io/formats.rs": "5faf84ddb19499271dd08078f4161ea7078df13aab5834affe2a6528cbe20057",
+        "crates/gf2-core/src/io/header.rs": "af8cc3a00e5439cd413c6feb3404eda73c142688647c675a27ff5b7f4eb02064",
+        "crates/gf2-core/src/io/matrix.rs": "fae52e4df2601c5824351b8fcdf6f6e4d4a11a7e10409b1f95e1b3485f01829a",
+        "crates/gf2-core/src/io/mod.rs": "576db88b52ec77a7a9e010c77feb2ad8893ef47a12c3106de9267df4227e42da",
+        "crates/gf2-core/src/io/sparse.rs": "8c1a5097a2790809bb810665a48d9559a827de488513525d90d29c4b51bd6379",
+        "crates/gf2-core/src/kernels/aarch64.rs": "f52194401a3c13a160e56408433b28866b8cdce2c4130549e4e745dcc23045fa",
+        "crates/gf2-core/src/kernels/backend.rs": "e77e3209275ecdbde6c8f007cf89cb7f98f58a3834885d5f926deec3f4e6fc1c",
+        "crates/gf2-core/src/kernels/mod.rs": "b5f38cf6057cc58548143a020ba3cc0d0f9397642e9648444caf3c848e7cdc03",
+        "crates/gf2-core/src/kernels/ops.rs": "667eb16327b80adbca5376e17723fb385254e814d029fe16f411416517253095",
+        "crates/gf2-core/src/kernels/scalar/logical.rs": "533ad1a6000d80be1d33c43b2677b802f02ae9abf30a75c72b170a1adba69eac",
+        "crates/gf2-core/src/kernels/scalar/mod.rs": "a511ca0c8d74e290554e22c4d3c22ddcae9ed29ddb996e1d38cf730b93400f7b",
+        "crates/gf2-core/src/kernels/scalar/primitives.rs": "22da185fc976baca8c2be7e3653088fcc1130f62ddf04f6a7ed474f7bbf512f4",
+        "crates/gf2-core/src/kernels/simd/mod.rs": "763205012e86d4c2f5c4c4418808fec985a5e83841f356d588512e4ac671e2a6",
+        "crates/gf2-core/src/kernels/test_utils.rs": "25c92a622beabfbde1d48dcf8a39875551523cbb4302aeef7cf52f03169230cc",
+        "crates/gf2-core/src/kernels/x86.rs": "719ae6c3d68c9e8256dcf93a19e91d74e0d24035ca4c5157da3451dd5d3c3286",
+        "crates/gf2-core/src/lib.rs": "f38b3dd2aa76a1536d52a806e3ddd4fad044cfc5d53c00a72fe2ea1733ec376c",
+        "crates/gf2-core/src/macros.rs": "2fe7803ba67bab41295ea444d240774fe2493ecd621a5076dbe123d2ad07995e",
+        "crates/gf2-core/src/matrix.rs": "ed3953e9bd8591b9e430353b167add7c7d42f0c70e6f72f23c52e8f6779bd05b",
+        "crates/gf2-core/src/matrix_like.rs": "4f60e11757bb039a7554ce4ed08684e4b624dd3f116563962add8c28a8ecdd7f",
+        "crates/gf2-core/src/primitive_polys.rs": "b6319033edf5a2262f61def5ef3b4d4965bc0d9dbd8e52086b06c8d679320b6f",
+        "crates/gf2-core/src/rng.rs": "e84732f6e6434cc2a0d62b58d2c75a168eeca3e33005e91d82932fa0b7d6853b",
+        "crates/gf2-core/src/sparse.rs": "dfddef2bdc4061016b5669c37f6b3a1cd03d948cc4a76332681b627284336798",
+        "crates/gf2-core/src/tuning/baked.rs": "0e51f185a30c7d935f764b901d9d8002dee7d0511c95fb087449217497360310",
+        "crates/gf2-core/src/tuning/mechanism.rs": "7371ca8763b27bba59a4153a23606aad787237fab508f2c1898c07c7de13b719",
+        "crates/gf2-core/src/tuning/mod.rs": "3f9b683fe226edaafce4df3c312f6264bfbd4876a28b4d4fd016890c0acc0af1",
+        "crates/gf2-core/src/tuning/profile.rs": "1c5b18477797eac20384fcf30e417bfdab6515339dcc084df5fe478401d7b0fb",
+        "crates/gf2-kernels-simd/Cargo.toml": "e34ceabc98ed6fafc5f24ca15a18e11db7e4344ad6a960ef5c82eb0cf11223f1",
+        "crates/gf2-kernels-simd/src/bch_encode.rs": "f0c9a3719653685eea155a4d74d403c5e68bd6509847472c0920cb9c53b12cd7",
+        "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs": "98c9c3edd0130749ccf02ad5006ab4c73a0b56baa736dc14ee6cbf0d59f4c17e",
+        "crates/gf2-kernels-simd/src/bipedal/framework.rs": "ab00cf16b07867970f4a5c68b9d4da5079ebde3dae4a079a2e27907772632ac4",
+        "crates/gf2-kernels-simd/src/bipedal/lanes.rs": "a37362602d32ed72faf80c9cd4c42ef67ba6cf50241f677b2fb1ec4a6f06cf5e",
+        "crates/gf2-kernels-simd/src/bipedal/mod.rs": "63ab65571d4babd7cf3a889df2335320f1a2b2dd998d3d7a0a7168559750ed77",
+        "crates/gf2-kernels-simd/src/bipedal/packed5.rs": "1d3bd57360cdb08f5d5704ff7ea9dd619695eaf83b0b8afcda3eed3d2fdcf886",
+        "crates/gf2-kernels-simd/src/bipedal/packed7.rs": "e63941a14a0e76be26afb97fbbaa7d9efafa9d51df8baff4e7f2fde59744e86e",
+        "crates/gf2-kernels-simd/src/clmul_scalar.rs": "69b87a2624ce1abe10ed0aee9b8aa9b09f245c2abf46b32240966e42816e096d",
+        "crates/gf2-kernels-simd/src/fp65537.rs": "d48c830b27e53041a89ccda5e8ece19ddcb642cbe2a248f38586146f5e3cb8ac",
+        "crates/gf2-kernels-simd/src/fp_generic.rs": "6b4b7dd52ee325a982e3134e632a8e1a3b0509b5415340e39f61987a21e2fb61",
+        "crates/gf2-kernels-simd/src/fp_medium.rs": "fb46dbecb352f1a191a0d675787af2f09bcf4f1ec6f4bca5c5ff338e439a3120",
+        "crates/gf2-kernels-simd/src/fp_medium_f64.rs": "24bec2a0d131ea70b422c0ccfe9099d1e9e806858f434eb6a28f4ec5df49d13e",
+        "crates/gf2-kernels-simd/src/fp_medium_ple.rs": "719852e059106b305b00e36fbd3c87f0befed47f9c4618f8c8bcff3fe633100a",
+        "crates/gf2-kernels-simd/src/fp_small.rs": "04bc8785ba22af8c4b0fedbfebae42ff21030bc57661be3d700ff1f1a7d56944",
+        "crates/gf2-kernels-simd/src/fp_small_f32.rs": "6b5c1c3f2676f38fb2adb9349a640b1b1c3901e178b11ab021a5bfaf691e2b84",
+        "crates/gf2-kernels-simd/src/fp_small_panel.rs": "a14b813e2bb8fbfce2c5e4d84914511316b9e2bdaa859904b2c04e281e504bc0",
+        "crates/gf2-kernels-simd/src/fp_small_ple.rs": "fbd9aa0eb85280a2f0b0cb2fc5b4a867de24496d2123bb33f28b64b2f57853dd",
+        "crates/gf2-kernels-simd/src/gf2m.rs": "30a6c259fe90dabc84b94c32b61363531b2b33bd819ddcb71e112f8dab8260bb",
+        "crates/gf2-kernels-simd/src/gf2m_batch.rs": "fb534d4979366faf3d3d550bb9e088a7a06171f3fc164361e54f1acfce604fa3",
+        "crates/gf2-kernels-simd/src/gf2m_gemm.rs": "27d99ee222b5bf78ec25f59bbcf3cb94de88e92ccb8e68a9f65c60b7df6c317e",
+        "crates/gf2-kernels-simd/src/gf2m_wide.rs": "1ec1f3b214b03fd4c5bacb76a0b1a9658c200eacea804ebf6c17a2f5118ee5e0",
+        "crates/gf2-kernels-simd/src/lib.rs": "b1ca6e724e4c1a86f43829cd80d229588e7b615729e41e42fe6a1d8484b012ba",
+        "crates/gf2-kernels-simd/src/llr.rs": "efed86c90e984cc38854e5065a5f280bac7a2f5f65998aa7b750cf6258eca17b",
+        "crates/gf2-kernels-simd/src/mersenne.rs": "5118c17feb25c9278d18ed97754d4fdb08f0cf6419b1881b16b28345b8f85ac3",
+        "crates/gf2-kernels-simd/src/modem.rs": "451a767c840cfc3a8b98ef2f2a63bc5a48b613980c8bf748240476588549a3a7",
+        "crates/gf2-kernels-simd/src/prefetch.rs": "74352170691de56ad5b6f5d73678100cb015301e57de3349cb28a174bdfc0be0",
+        "crates/gf2-kernels-simd/src/transpose.rs": "ba1977c751c4517a87c3ea76e0c1717e07fc6319404d70da7d713886abcf2da8",
+        "crates/gf2-kernels-simd/src/x86/avx2.rs": "f119a166b2836fc25dafcf482dea95035fc8d9d8e68c324a6daa0c504e6e539f",
+        "crates/gf2-kernels-simd/src/x86/bch_encode.rs": "3601c3b13e0b921cb7c7298c87e5b8ba04af92beee4fd4634fe33fe253df9f15",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs": "8269ee99f77d77af53bcf047d230d548aa23f44e469b095f91984c31c8b012f4",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs": "0ad2cf38fcbe03a5bc2e36b920056d74fd6110be59aea7de6e9d71adaa83e791",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs": "6955e532a267da21a0ef2834e684b892c6fc6143e18888d72f41fd93b27e9521",
+        "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs": "fec4243bcc2b3cf5c41eb9a1f0647bbfcee5269458427f1d1d45fb2ec990f660",
+        "crates/gf2-kernels-simd/src/x86/clmul.rs": "a4c59d76fb90bcfa4ca9ff87459b80741e88003abd7c71f8d5c4167c915b0616",
+        "crates/gf2-kernels-simd/src/x86/fp65537.rs": "28597457a5523ef7030313e31e92d6082af709f4c1fa1ac9f6d693edf57d7a50",
+        "crates/gf2-kernels-simd/src/x86/fp_generic.rs": "0a30f181d9818e32c42b2ebbfb05fd92f9f8d950b6df9ec9ff22d3951bf49d85",
+        "crates/gf2-kernels-simd/src/x86/fp_medium.rs": "29842afef301387bd9f355d1330eb666168b551c6b4563ad2e35f4780656af63",
+        "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs": "46d14e6e33e2214d77035ec75e958d01bcae02fc686666f0f2568e8605034ba7",
+        "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs": "e299296bea8891eeb9294c52eb7445006a81e86d6642f8b1681e346c48f1e6a1",
+        "crates/gf2-kernels-simd/src/x86/fp_small.rs": "7d702d3c6019af54c710b54eff92d3bf26b5a556a0dbfd42d4a2f6c58ac2e3f1",
+        "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs": "ade0e6709429fe3493b02e6c6759e07a273dedbf92cab0b391738fc53aa268e7",
+        "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs": "801c6841cd440fcf63d6f3244ce3ee1ed1a76e985e55f9225d1c6e913857c179",
+        "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs": "db5bd1f6dffe4cd2684285516615935f7936944732fb86aeac80e8d78f2766e4",
+        "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs": "3a660491c147703650de7147b8d3a7aca2cae695eb43a6ba500e391f2e186eee",
+        "crates/gf2-kernels-simd/src/x86/gf2m_common.rs": "3f3a3dd12607ac8b5259f2334e3e9b8026f7ca51ebc36158bf100df32a083881",
+        "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs": "1e705775745245d93bb5092fa7460991238c42d8dc37092fba53b888e0feddba",
+        "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs": "dda98102f4a5aa12a75734a63cde2c494a20770e7f1798ba8b56dd878d4c98c1",
+        "crates/gf2-kernels-simd/src/x86/mersenne.rs": "f1427b4284e0a7fbbf4f26dbe199d6f18bc6bc945197efedc0edeb2cd439f513",
+        "crates/gf2-kernels-simd/src/x86/mod.rs": "47cfbabc08bbb02f4d4ee7733d84f12a39387dc1e6384602ede2f258e0aca9a9",
+        "crates/gf2-kernels-simd/src/x86/popcount.rs": "e8a7afff6969b46e1c2decbdf74b2c3bf63481d4e30f81d276ec4fc6671bba13",
+        "crates/gf2-kernels-simd/src/x86/transpose.rs": "ec5081d7a45284375c7fa73296f4a48123c7b16bc7b0941fc4b1d7eeec692c0f",
+        "dev/active/26465e6c/survey/gf2-side/csrc/libpopcnt_kernels.c": "1ba32c9420c7e4df54159cc8aabf1c81619a61ccf9be10444bbde019c474413f",
+        "dev/active/26465e6c/survey/gf2-side/csrc/mula_kernels.cpp": "21cc8c80c922ce90f83ee50871c8166735a50b0667695bec5623163baa8100db",
+        "dev/active/26465e6c/survey/vendor/libpopcnt/libpopcnt.h": "6bd9103591511c77a365867fd123b72adfd656233b92ced238e727a5c978fb23",
+        "dev/active/26465e6c/survey/vendor/mula/config.h": "1ba15040e0722f2e95a9dae6b49fce53082b4a1b36ba5c15ebe1a347a83369c0",
+        "dev/active/26465e6c/survey/vendor/mula/popcnt-avx2-harley-seal.cpp": "3fe1679cfc8f4a0043b2e71347855be27bf952722099b576e788895f1c0b7f76",
+        "dev/active/26465e6c/survey/vendor/mula/popcnt-lookup.cpp": "4a9a0bd47abef119f37fb514c0fc6f68aaae8db62f0bb281b6cf22839e28d250",
+        "dev/active/5cbb6545/make-producing-inputs.py": "d09a6267e27f19246222b09c6577466c953790e0a4f7eff2602c8990fd3d0099",
+        "dev/active/5cbb6545/run-count-campaign.sh": "b3577ca370024dafea0c20714a64c3f68525b9f78327de8bf41ffc083b2ecc98",
+        "dev/active/5cbb6545/run-validation.sh": "4acd748296c154298ba74fba22f08caeaeb7d14ab08bb9308f27058591f2efe9",
+        "dev/active/5cbb6545/survey/families.py": "33d851c851047dcd88b5a22a230d040b3f9479b6b18eb8040e59e011122db8fe",
+        "dev/active/5cbb6545/survey/gf2-side/Cargo.lock": "febd4cd0db2779330e1ff7c638f43db70194355761350c51dbbef421cae03042",
+        "dev/active/5cbb6545/survey/gf2-side/Cargo.toml": "97e43c26a032acad55661b7080f0dd2332afb75f69757ed8cd8cbe7af9a95d7c",
+        "dev/active/5cbb6545/survey/gf2-side/build.rs": "9c726d57b9fa8f74dda033a5fb6cc1f6e2ac82641eccb5e75e52652b4d446189",
+        "dev/active/5cbb6545/survey/gf2-side/src/arms.rs": "2ea45ec999e5a9ecf98f1cc9f182d411eb78c0afcb18a9fc6b9b7f206a90361f",
+        "dev/active/5cbb6545/survey/gf2-side/src/bin/count-arm.rs": "ebbb3ff5d99b01aa8ff252bd13af5945f5564ada263d56001bde098b87efc7d8",
+        "dev/active/5cbb6545/survey/gf2-side/src/bin/count-verify.rs": "573b3b25153154c0d155720a01c4a6bc8a5f85b5026398284a3f5a1d63950369",
+        "dev/active/5cbb6545/survey/gf2-side/src/external.rs": "aa16d420cd1a8a6802dd2915cad703878ced1aab502ccadb8b7daeb2fdb45815",
+        "dev/active/5cbb6545/survey/gf2-side/src/fixture.rs": "1b8c592b04f02e8e6805a68dab6a3bdd443bbe0cb6bc084d4da6056aa40083d1",
+        "dev/active/5cbb6545/survey/gf2-side/src/lib.rs": "4090cea8b807995d3f979e6405a6a58551eaa49648ac5e233ac785f4a99f9039",
+        "dev/active/5cbb6545/survey/make-addenda.py": "ffbc208e5d82d0068faca12d950e1ebdfc182ff89b78c2ad56150359179a87f2",
+        "dev/active/5cbb6545/survey/make-plan.py": "7098dbf6fcd1ff15b51257842f3e098c5c175a3a1071cc7af776b258c66023eb",
+        "dev/active/5cbb6545/validation.json": "d3e6b09b1e80094ef76c10cd9e04fdb6387bab42fb2bdfdf3af697481b132ab3",
+        "dev/scripts/ccx1-bench-flock.sh": "dd911492fec9c3a7adc64c65c439a1d8f97e02cbaf9535b667c34cf0f9549748",
+        "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "095deb55202c80bda2b2eb0b3362f524ab77891f4f05da7c549e7b3f8053e824",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "e23750a6d4a92d95d966ae8618361945b288b26407640f10926134c732300612",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "a3ebd9769d81ee2e3eeeaae991053f36a24fce7557254cbabc5a9ed5e80c1e6b",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "dfbd3707ef8afff92f62f0627bc1904721798e6671e97cb4fd2745baaebec329",
+        "dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs": "1b813b667407c019b7fa563648f05fa820b1433520068bc03864cd42f53b2c5c",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "cdef0a5aa6166a37b42f3c18318cea942ace7ca9f2538382597b980c8ced24d6",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "81a909833bc7cb149c45d7851f7eef990fa665f77d06f89c1db768c5b3933121",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "b02ee6247b1290709d62580ae605e68156ff2e8c22d3a28add609e6e291472d4",
+        "dev/tools/tuning-campaign-support/src/process.rs": "62277a17b1310e0d2674d31f3eb1d7b46fc7824386f079d5cb131b7b631435c9",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "ead299d593daa304e8a28f64b893dd920c3acf1e6be79b9cad25ab8c026bee1a",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "089f5c4dcfd6cfe34223ca31ebf8caec75d3d03a4d96bafa0ed57be2d583f58f",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "55d228c1b14366da4a003b4ad7caa7cb05036ac8151ca1f1c5e1eda1150d907a",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "afe4cf2f5b8d5eec18da0484633c390acaf348ee49dcd38b9a22f0e5d3f523a6",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd",
+        "scripts/cargo-budget.sh": "d239d32a3febaf337ed7416243f9b138846cf4423908dd35ae1f9c21dd24ae53"
+      }
+    }
+  },
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "host": {
+    "observed_utc": "2026-09-13T12:55:25.142014471Z",
+    "hostname": "fraktaali",
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "cpu_flags": [
+      "3dnowprefetch",
+      "abm",
+      "adx",
+      "aes",
+      "aperfmperf",
+      "apic",
+      "arat",
+      "avic",
+      "avx",
+      "avx2",
+      "bmi1",
+      "bmi2",
+      "bpext",
+      "cat_l3",
+      "cdp_l3",
+      "clflush",
+      "clflushopt",
+      "clwb",
+      "clzero",
+      "cmov",
+      "cmp_legacy",
+      "constant_tsc",
+      "cpb",
+      "cpuid",
+      "cqm",
+      "cqm_llc",
+      "cqm_mbm_local",
+      "cqm_mbm_total",
+      "cqm_occup_llc",
+      "cr8_legacy",
+      "cx16",
+      "cx8",
+      "de",
+      "debug_swap",
+      "decodeassists",
+      "erms",
+      "extapic",
+      "extd_apicid",
+      "f16c",
+      "flushbyasid",
+      "fma",
+      "fpu",
+      "fsgsbase",
+      "fsrm",
+      "fxsr",
+      "fxsr_opt",
+      "ht",
+      "hw_pstate",
+      "ibpb",
+      "ibrs",
+      "ibs",
+      "invpcid",
+      "irperf",
+      "lahf_lm",
+      "lbrv",
+      "lm",
+      "mba",
+      "mca",
+      "mce",
+      "misalignsse",
+      "mmx",
+      "mmxext",
+      "monitor",
+      "movbe",
+      "msr",
+      "mtrr",
+      "mwaitx",
+      "nonstop_tsc",
+      "nopl",
+      "npt",
+      "nrip_save",
+      "nx",
+      "ospke",
+      "osvw",
+      "overflow_recov",
+      "pae",
+      "pat",
+      "pausefilter",
+      "pclmulqdq",
+      "pdpe1gb",
+      "perfctr_core",
+      "perfctr_llc",
+      "perfctr_nb",
+      "pfthreshold",
+      "pge",
+      "pku",
+      "pni",
+      "popcnt",
+      "pse",
+      "pse36",
+      "rapl",
+      "rdpid",
+      "rdpru",
+      "rdrand",
+      "rdseed",
+      "rdt_a",
+      "rdtscp",
+      "rep_good",
+      "sep",
+      "sha_ni",
+      "skinit",
+      "smap",
+      "smca",
+      "smep",
+      "ssbd",
+      "sse",
+      "sse2",
+      "sse4_1",
+      "sse4_2",
+      "sse4a",
+      "ssse3",
+      "stibp",
+      "succor",
+      "svm_lock",
+      "syscall",
+      "tce",
+      "topoext",
+      "tsc",
+      "tsc_scale",
+      "umip",
+      "user_shstk",
+      "v_spec_ctrl",
+      "v_vmsave_vmload",
+      "vaes",
+      "vgif",
+      "vmcb_clean",
+      "vme",
+      "vmmcall",
+      "vpclmulqdq",
+      "wbnoinvd",
+      "wdt",
+      "x2apic",
+      "xgetbv1",
+      "xsave",
+      "xsavec",
+      "xsaveerptr",
+      "xsaveopt",
+      "xsaves",
+      "xtopology"
+    ],
+    "os_kernel": "Linux 7.2.2-arch1-1",
+    "governors": {
+      "cpu0": "powersave",
+      "cpu1": "powersave",
+      "cpu10": "powersave",
+      "cpu11": "powersave",
+      "cpu12": "powersave",
+      "cpu13": "powersave",
+      "cpu14": "powersave",
+      "cpu15": "powersave",
+      "cpu16": "powersave",
+      "cpu17": "powersave",
+      "cpu18": "powersave",
+      "cpu19": "powersave",
+      "cpu2": "powersave",
+      "cpu20": "powersave",
+      "cpu21": "powersave",
+      "cpu22": "powersave",
+      "cpu23": "powersave",
+      "cpu3": "powersave",
+      "cpu4": "powersave",
+      "cpu5": "powersave",
+      "cpu6": "powersave",
+      "cpu7": "powersave",
+      "cpu8": "powersave",
+      "cpu9": "powersave"
+    },
+    "smt_active": true,
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "topology": {
+      "cpus": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 6,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 7,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 8,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 9,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 10,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 11,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 12,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 13,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 14,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 15,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 16,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 17,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 18,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 19,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 20,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 21,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 22,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 23,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        }
+      ],
+      "smt_active": true
+    },
+    "load_average": [
+      3.09,
+      5.52,
+      4.11
+    ],
+    "available_memory_kib": 43866284
+  },
+  "lock": {
+    "lock_path": "/tmp/gf2-ccx1.lock",
+    "holder_pid": 1724813,
+    "observation": "inherited-fd-and-independent-flock-conflict"
+  },
+  "workers": {
+    "environment_rayon_threads": "1",
+    "runner_threads": 1
+  },
+  "execution_log": {
+    "path": "execution.log",
+    "sha256": "fd2a89091807bfe34395ab8f11aa73e9a59b5227bca2d0e21cdd65673c3fbed4",
+    "sessions": 1,
+    "resumed": false
+  },
+  "checkpoints": {
+    "manifest_path": "checkpoints/manifest.json",
+    "manifest_sha256": "3420eb50029637f72ec8b826fd7220884a7277cd7ecff32ce9a977ebcc6153de"
+  },
+  "arms": {
+    "legacy-dispatch": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing the route ops::popcount took before this issue: the scalar backend below eight words, the AVX2 nibble-lookup kernel of the detected bundle at or above.",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "executable_sha256": "2a999f6f60ec4bdf088ee3e78c5fc73ef8b429aac9598f45e484626b078a7f26",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "legacy-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "libpopcnt": {
+      "build": "external",
+      "description": "libpopcnt v4.2 popcnt() compiled -O3 as its README recommends, with its own CPUID dispatch.",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "executable_sha256": "2a999f6f60ec4bdf088ee3e78c5fc73ef8b429aac9598f45e484626b078a7f26",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "libpopcnt"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "resolved-dispatch": {
+      "build": "conservative-portable",
+      "description": "gf2 portable build timing ops::popcount as this issue leaves it: one route resolved for the buffer's width from the compile-time bit-backend boundaries.",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "executable_sha256": "2a999f6f60ec4bdf088ee3e78c5fc73ef8b429aac9598f45e484626b078a7f26",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "resolved-dispatch"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "popcount-w4-dispatch",
+      "key": "popcount-w4-dispatch",
+      "role": "exploratory",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724882,
+            "windows": [
+              {
+                "calls": 31127174,
+                "elapsed_ns": 101498127
+              },
+              {
+                "calls": 31127174,
+                "elapsed_ns": 101375216
+              },
+              {
+                "calls": 31127174,
+                "elapsed_ns": 101668388
+              },
+              {
+                "calls": 31127174,
+                "elapsed_ns": 101454597
+              },
+              {
+                "calls": 31127174,
+                "elapsed_ns": 101767078
+              }
+            ],
+            "ns_per_call": 3.2607562446883227,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:scalar",
+            "conversion": null,
+            "elapsed_ns": 584683840
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1724890,
+            "windows": [
+              {
+                "calls": 33708226,
+                "elapsed_ns": 108083073
+              },
+              {
+                "calls": 33708226,
+                "elapsed_ns": 107750891
+              },
+              {
+                "calls": 33708226,
+                "elapsed_ns": 108197964
+              },
+              {
+                "calls": 33708226,
+                "elapsed_ns": 108029193
+              },
+              {
+                "calls": 33708226,
+                "elapsed_ns": 108095044
+              }
+            ],
+            "ns_per_call": 3.206430175233784,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:scalar-popcnt",
+            "conversion": null,
+            "elapsed_ns": 612385591
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724900,
+            "windows": [
+              {
+                "calls": 31104586,
+                "elapsed_ns": 101484277
+              },
+              {
+                "calls": 31104586,
+                "elapsed_ns": 101319186
+              },
+              {
+                "calls": 31104586,
+                "elapsed_ns": 102015719
+              },
+              {
+                "calls": 31104586,
+                "elapsed_ns": 101301436
+              },
+              {
+                "calls": 31104586,
+                "elapsed_ns": 101444117
+              }
+            ],
+            "ns_per_call": 3.2613877902120287,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:scalar",
+            "conversion": null,
+            "elapsed_ns": 584541288
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1724894,
+            "windows": [
+              {
+                "calls": 33718904,
+                "elapsed_ns": 107400750
+              },
+              {
+                "calls": 33718904,
+                "elapsed_ns": 107440009
+              },
+              {
+                "calls": 33718904,
+                "elapsed_ns": 107886323
+              },
+              {
+                "calls": 33718904,
+                "elapsed_ns": 107311229
+              },
+              {
+                "calls": 33718904,
+                "elapsed_ns": 107383139
+              }
+            ],
+            "ns_per_call": 3.185179150544158,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:scalar-popcnt",
+            "conversion": null,
+            "elapsed_ns": 612154320
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724905,
+            "windows": [
+              {
+                "calls": 30920524,
+                "elapsed_ns": 100994064
+              },
+              {
+                "calls": 30920524,
+                "elapsed_ns": 100979934
+              },
+              {
+                "calls": 30920524,
+                "elapsed_ns": 100632992
+              },
+              {
+                "calls": 30920524,
+                "elapsed_ns": 101234166
+              },
+              {
+                "calls": 30920524,
+                "elapsed_ns": 101933469
+              }
+            ],
+            "ns_per_call": 3.2662468462694876,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:scalar",
+            "conversion": null,
+            "elapsed_ns": 583094390
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1724929,
+            "windows": [
+              {
+                "calls": 33642095,
+                "elapsed_ns": 107181359
+              },
+              {
+                "calls": 33642095,
+                "elapsed_ns": 107248858
+              },
+              {
+                "calls": 33642095,
+                "elapsed_ns": 107300229
+              },
+              {
+                "calls": 33642095,
+                "elapsed_ns": 107833162
+              },
+              {
+                "calls": 33642095,
+                "elapsed_ns": 107623481
+              }
+            ],
+            "ns_per_call": 3.1894633494138818,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:scalar-popcnt",
+            "conversion": null,
+            "elapsed_ns": 610836553
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724940,
+            "windows": [
+              {
+                "calls": 31001154,
+                "elapsed_ns": 100749433
+              },
+              {
+                "calls": 31001154,
+                "elapsed_ns": 101228336
+              },
+              {
+                "calls": 31001154,
+                "elapsed_ns": 101521887
+              },
+              {
+                "calls": 31001154,
+                "elapsed_ns": 101156965
+              },
+              {
+                "calls": 31001154,
+                "elapsed_ns": 101147625
+              }
+            ],
+            "ns_per_call": 3.2630064351798,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:scalar",
+            "conversion": null,
+            "elapsed_ns": 583600413
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1724935,
+            "windows": [
+              {
+                "calls": 33495362,
+                "elapsed_ns": 107424259
+              },
+              {
+                "calls": 33495362,
+                "elapsed_ns": 107173319
+              },
+              {
+                "calls": 33495362,
+                "elapsed_ns": 107060977
+              },
+              {
+                "calls": 33495362,
+                "elapsed_ns": 107405870
+              },
+              {
+                "calls": 33495362,
+                "elapsed_ns": 107447499
+              }
+            ],
+            "ns_per_call": 3.2065893182465084,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:scalar-popcnt",
+            "conversion": null,
+            "elapsed_ns": 609788247
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724944,
+            "windows": [
+              {
+                "calls": 30915384,
+                "elapsed_ns": 100934924
+              },
+              {
+                "calls": 30915384,
+                "elapsed_ns": 100668342
+              },
+              {
+                "calls": 30915384,
+                "elapsed_ns": 100879404
+              },
+              {
+                "calls": 30915384,
+                "elapsed_ns": 100947064
+              },
+              {
+                "calls": 30915384,
+                "elapsed_ns": 100760663
+              }
+            ],
+            "ns_per_call": 3.26308106022555,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:scalar",
+            "conversion": null,
+            "elapsed_ns": 580631417
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1724950,
+            "windows": [
+              {
+                "calls": 33588669,
+                "elapsed_ns": 107762882
+              },
+              {
+                "calls": 33588669,
+                "elapsed_ns": 107932092
+              },
+              {
+                "calls": 33588669,
+                "elapsed_ns": 107836042
+              },
+              {
+                "calls": 33588669,
+                "elapsed_ns": 107463070
+              },
+              {
+                "calls": 33588669,
+                "elapsed_ns": 107843912
+              }
+            ],
+            "ns_per_call": 3.210488691885945,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:scalar-popcnt",
+            "conversion": null,
+            "elapsed_ns": 612541972
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724959,
+            "windows": [
+              {
+                "calls": 27512610,
+                "elapsed_ns": 96753211
+              },
+              {
+                "calls": 27512610,
+                "elapsed_ns": 96479070
+              },
+              {
+                "calls": 27512610,
+                "elapsed_ns": 96585270
+              },
+              {
+                "calls": 27512610,
+                "elapsed_ns": 96319298
+              },
+              {
+                "calls": 27512610,
+                "elapsed_ns": 96343859
+              }
+            ],
+            "ns_per_call": 3.506721826827771,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:scalar",
+            "conversion": null,
+            "elapsed_ns": 565493334
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1724954,
+            "windows": [
+              {
+                "calls": 33635025,
+                "elapsed_ns": 108367534
+              },
+              {
+                "calls": 33635025,
+                "elapsed_ns": 107727452
+              },
+              {
+                "calls": 33635025,
+                "elapsed_ns": 107644971
+              },
+              {
+                "calls": 33635025,
+                "elapsed_ns": 107751481
+              },
+              {
+                "calls": 33635025,
+                "elapsed_ns": 108445355
+              }
+            ],
+            "ns_per_call": 3.2035499007359145,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:scalar-popcnt",
+            "conversion": null,
+            "elapsed_ns": 613411946
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 1.0181135382730635,
+          "lower": 1.016942851235043,
+          "upper": 1.0571036635860398,
+          "confidence": 0.975,
+          "alpha": 0.025,
+          "resamples": 10000,
+          "seed": 6108795040043695254,
+          "pairs": 6
+        },
+        "decision": "not-worse",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.03
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "e850a37ade537e16fc00d58642948b420155f1a6e7d8af9268f6790d61720daf"
+    },
+    {
+      "cell_id": "popcount-w8-dispatch",
+      "key": "popcount-w8-dispatch",
+      "role": "exploratory",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724963,
+            "windows": [
+              {
+                "calls": 26218958,
+                "elapsed_ns": 105767141
+              },
+              {
+                "calls": 26218958,
+                "elapsed_ns": 106101702
+              },
+              {
+                "calls": 26218958,
+                "elapsed_ns": 106297083
+              },
+              {
+                "calls": 26218958,
+                "elapsed_ns": 105642700
+              },
+              {
+                "calls": 26218958,
+                "elapsed_ns": 105829201
+              }
+            ],
+            "ns_per_call": 4.03636181880302,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 617643140
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1724969,
+            "windows": [
+              {
+                "calls": 29427365,
+                "elapsed_ns": 103080485
+              },
+              {
+                "calls": 29427365,
+                "elapsed_ns": 103112996
+              },
+              {
+                "calls": 29427365,
+                "elapsed_ns": 103303877
+              },
+              {
+                "calls": 29427365,
+                "elapsed_ns": 103057906
+              },
+              {
+                "calls": 29427365,
+                "elapsed_ns": 102821424
+              }
+            ],
+            "ns_per_call": 3.5028785281998576,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 595475759
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724978,
+            "windows": [
+              {
+                "calls": 26170240,
+                "elapsed_ns": 105369248
+              },
+              {
+                "calls": 26170240,
+                "elapsed_ns": 105363739
+              },
+              {
+                "calls": 26170240,
+                "elapsed_ns": 105695819
+              },
+              {
+                "calls": 26170240,
+                "elapsed_ns": 105973372
+              },
+              {
+                "calls": 26170240,
+                "elapsed_ns": 105934302
+              }
+            ],
+            "ns_per_call": 4.0387791246851386,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 616582254
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1724974,
+            "windows": [
+              {
+                "calls": 29480948,
+                "elapsed_ns": 103078246
+              },
+              {
+                "calls": 29480948,
+                "elapsed_ns": 102761854
+              },
+              {
+                "calls": 29480948,
+                "elapsed_ns": 102757874
+              },
+              {
+                "calls": 29480948,
+                "elapsed_ns": 102630853
+              },
+              {
+                "calls": 29480948,
+                "elapsed_ns": 102689544
+              }
+            ],
+            "ns_per_call": 3.4855688494142045,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 595090056
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1724984,
+            "windows": [
+              {
+                "calls": 24896196,
+                "elapsed_ns": 105525999
+              },
+              {
+                "calls": 24896196,
+                "elapsed_ns": 105347838
+              },
+              {
+                "calls": 24896196,
+                "elapsed_ns": 105454129
+              },
+              {
+                "calls": 24896196,
+                "elapsed_ns": 105553989
+              },
+              {
+                "calls": 24896196,
+                "elapsed_ns": 105624530
+              }
+            ],
+            "ns_per_call": 4.238639469258677,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 618505075
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725011,
+            "windows": [
+              {
+                "calls": 29132069,
+                "elapsed_ns": 100981994
+              },
+              {
+                "calls": 29132069,
+                "elapsed_ns": 101215656
+              },
+              {
+                "calls": 29132069,
+                "elapsed_ns": 101763108
+              },
+              {
+                "calls": 29132069,
+                "elapsed_ns": 101064435
+              },
+              {
+                "calls": 29132069,
+                "elapsed_ns": 101563517
+              }
+            ],
+            "ns_per_call": 3.474372383231689,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 587827967
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725021,
+            "windows": [
+              {
+                "calls": 26263870,
+                "elapsed_ns": 106248584
+              },
+              {
+                "calls": 26263870,
+                "elapsed_ns": 106110512
+              },
+              {
+                "calls": 26263870,
+                "elapsed_ns": 111157200
+              },
+              {
+                "calls": 26263870,
+                "elapsed_ns": 111147590
+              },
+              {
+                "calls": 26263870,
+                "elapsed_ns": 111485912
+              }
+            ],
+            "ns_per_call": 4.23195781885914,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 633900999
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725015,
+            "windows": [
+              {
+                "calls": 29502078,
+                "elapsed_ns": 102795254
+              },
+              {
+                "calls": 29502078,
+                "elapsed_ns": 102601773
+              },
+              {
+                "calls": 29502078,
+                "elapsed_ns": 102524893
+              },
+              {
+                "calls": 29502078,
+                "elapsed_ns": 102436352
+              },
+              {
+                "calls": 29502078,
+                "elapsed_ns": 102968625
+              }
+            ],
+            "ns_per_call": 3.4777812261224446,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 593780399
+          }
+        },
+        {
+          "index": 4,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725030,
+            "windows": [
+              {
+                "calls": 26214862,
+                "elapsed_ns": 105854110
+              },
+              {
+                "calls": 26214862,
+                "elapsed_ns": 105577300
+              },
+              {
+                "calls": 26214862,
+                "elapsed_ns": 106591945
+              },
+              {
+                "calls": 26214862,
+                "elapsed_ns": 106285533
+              },
+              {
+                "calls": 26214862,
+                "elapsed_ns": 106139883
+              }
+            ],
+            "ns_per_call": 4.048843858113767,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 618351064
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725025,
+            "windows": [
+              {
+                "calls": 29258584,
+                "elapsed_ns": 101536408
+              },
+              {
+                "calls": 29258584,
+                "elapsed_ns": 101371116
+              },
+              {
+                "calls": 29258584,
+                "elapsed_ns": 101651278
+              },
+              {
+                "calls": 29258584,
+                "elapsed_ns": 101657088
+              },
+              {
+                "calls": 29258584,
+                "elapsed_ns": 102083620
+              }
+            ],
+            "ns_per_call": 3.474237782662346,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 589576526
+          }
+        },
+        {
+          "index": 5,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725034,
+            "windows": [
+              {
+                "calls": 26220770,
+                "elapsed_ns": 106196753
+              },
+              {
+                "calls": 26220770,
+                "elapsed_ns": 105586119
+              },
+              {
+                "calls": 26220770,
+                "elapsed_ns": 106067272
+              },
+              {
+                "calls": 26220770,
+                "elapsed_ns": 105604450
+              },
+              {
+                "calls": 26220770,
+                "elapsed_ns": 105461229
+              }
+            ],
+            "ns_per_call": 4.027511396499798,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 616628855
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725040,
+            "windows": [
+              {
+                "calls": 29391082,
+                "elapsed_ns": 102173971
+              },
+              {
+                "calls": 29391082,
+                "elapsed_ns": 102638793
+              },
+              {
+                "calls": 29391082,
+                "elapsed_ns": 102281932
+              },
+              {
+                "calls": 29391082,
+                "elapsed_ns": 102087980
+              },
+              {
+                "calls": 29391082,
+                "elapsed_ns": 102335492
+              }
+            ],
+            "ns_per_call": 3.4800328888878607,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 592457152
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 1.1623798579716622,
+          "lower": 1.15515266859778,
+          "upper": 1.2190111412638631,
+          "confidence": 0.975,
+          "alpha": 0.025,
+          "resamples": 10000,
+          "seed": 10086409703059920804,
+          "pairs": 6
+        },
+        "decision": "improved",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.03
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "7758e398b5ef78236c7bfdb9ea7fb35c54f43993ed5d023c2bddbc25bce04105"
+    },
+    {
+      "cell_id": "popcount-w128-dispatch",
+      "key": "popcount-w128-dispatch",
+      "role": "exploratory",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725109,
+            "windows": [
+              {
+                "calls": 5490043,
+                "elapsed_ns": 104466893
+              },
+              {
+                "calls": 5490043,
+                "elapsed_ns": 105000346
+              },
+              {
+                "calls": 5490043,
+                "elapsed_ns": 105186908
+              },
+              {
+                "calls": 5490043,
+                "elapsed_ns": 105020166
+              },
+              {
+                "calls": 5490043,
+                "elapsed_ns": 104799395
+              }
+            ],
+            "ns_per_call": 19.12559628403639,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 624507638
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725047,
+            "windows": [
+              {
+                "calls": 5459506,
+                "elapsed_ns": 100186970
+              },
+              {
+                "calls": 5459506,
+                "elapsed_ns": 100481222
+              },
+              {
+                "calls": 5459506,
+                "elapsed_ns": 100188509
+              },
+              {
+                "calls": 5459506,
+                "elapsed_ns": 100436462
+              },
+              {
+                "calls": 5459506,
+                "elapsed_ns": 99587236
+              }
+            ],
+            "ns_per_call": 18.351204119933197,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 600203135
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725167,
+            "windows": [
+              {
+                "calls": 5493222,
+                "elapsed_ns": 104132361
+              },
+              {
+                "calls": 5493222,
+                "elapsed_ns": 104294852
+              },
+              {
+                "calls": 5493222,
+                "elapsed_ns": 104552784
+              },
+              {
+                "calls": 5493222,
+                "elapsed_ns": 104393283
+              },
+              {
+                "calls": 5493222,
+                "elapsed_ns": 104144152
+              }
+            ],
+            "ns_per_call": 18.986098140581248,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 620852168
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725173,
+            "windows": [
+              {
+                "calls": 5538984,
+                "elapsed_ns": 100560772
+              },
+              {
+                "calls": 5538984,
+                "elapsed_ns": 101272806
+              },
+              {
+                "calls": 5538984,
+                "elapsed_ns": 100590062
+              },
+              {
+                "calls": 5538984,
+                "elapsed_ns": 100934504
+              },
+              {
+                "calls": 5538984,
+                "elapsed_ns": 100821873
+              }
+            ],
+            "ns_per_call": 18.202232214427774,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 606999941
+          }
+        },
+        {
+          "index": 2,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725185,
+            "windows": [
+              {
+                "calls": 5367616,
+                "elapsed_ns": 102210011
+              },
+              {
+                "calls": 5367616,
+                "elapsed_ns": 102121421
+              },
+              {
+                "calls": 5367616,
+                "elapsed_ns": 102065240
+              },
+              {
+                "calls": 5367616,
+                "elapsed_ns": 102313682
+              },
+              {
+                "calls": 5367616,
+                "elapsed_ns": 102424302
+              }
+            ],
+            "ns_per_call": 19.041975245621146,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 614422202
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725178,
+            "windows": [
+              {
+                "calls": 5541114,
+                "elapsed_ns": 100913444
+              },
+              {
+                "calls": 5541114,
+                "elapsed_ns": 100760963
+              },
+              {
+                "calls": 5541114,
+                "elapsed_ns": 100660093
+              },
+              {
+                "calls": 5541114,
+                "elapsed_ns": 101150995
+              },
+              {
+                "calls": 5541114,
+                "elapsed_ns": 101542037
+              }
+            ],
+            "ns_per_call": 18.211761028558517,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 604935830
+          }
+        },
+        {
+          "index": 3,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725190,
+            "windows": [
+              {
+                "calls": 5500567,
+                "elapsed_ns": 103915480
+              },
+              {
+                "calls": 5500567,
+                "elapsed_ns": 104169342
+              },
+              {
+                "calls": 5500567,
+                "elapsed_ns": 104436554
+              },
+              {
+                "calls": 5500567,
+                "elapsed_ns": 105388918
+              },
+              {
+                "calls": 5500567,
+                "elapsed_ns": 104271462
+              }
+            ],
+            "ns_per_call": 18.95649339422645,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 625033121
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725194,
+            "windows": [
+              {
+                "calls": 5525149,
+                "elapsed_ns": 100798474
+              },
+              {
+                "calls": 5525149,
+                "elapsed_ns": 100682142
+              },
+              {
+                "calls": 5525149,
+                "elapsed_ns": 100527672
+              },
+              {
+                "calls": 5525149,
+                "elapsed_ns": 100655172
+              },
+              {
+                "calls": 5525149,
+                "elapsed_ns": 100653733
+              }
+            ],
+            "ns_per_call": 18.217639379499087,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 602432626
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725200,
+            "windows": [
+              {
+                "calls": 5504934,
+                "elapsed_ns": 105040247
+              },
+              {
+                "calls": 5504934,
+                "elapsed_ns": 106770536
+              },
+              {
+                "calls": 5504934,
+                "elapsed_ns": 105307348
+              },
+              {
+                "calls": 5504934,
+                "elapsed_ns": 104707025
+              },
+              {
+                "calls": 5504934,
+                "elapsed_ns": 104381802
+              }
+            ],
+            "ns_per_call": 19.08110923764027,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 628380898
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725225,
+            "windows": [
+              {
+                "calls": 5532385,
+                "elapsed_ns": 100837564
+              },
+              {
+                "calls": 5532385,
+                "elapsed_ns": 100544271
+              },
+              {
+                "calls": 5532385,
+                "elapsed_ns": 100485832
+              },
+              {
+                "calls": 5532385,
+                "elapsed_ns": 100715293
+              },
+              {
+                "calls": 5532385,
+                "elapsed_ns": 100861143
+              }
+            ],
+            "ns_per_call": 18.204678994683125,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 606438659
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725255,
+            "windows": [
+              {
+                "calls": 5479913,
+                "elapsed_ns": 104220732
+              },
+              {
+                "calls": 5479913,
+                "elapsed_ns": 104063961
+              },
+              {
+                "calls": 5479913,
+                "elapsed_ns": 105260348
+              },
+              {
+                "calls": 5479913,
+                "elapsed_ns": 104645454
+              },
+              {
+                "calls": 5479913,
+                "elapsed_ns": 103923170
+              }
+            ],
+            "ns_per_call": 19.018683690781224,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 623257961
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725230,
+            "windows": [
+              {
+                "calls": 5540532,
+                "elapsed_ns": 100933354
+              },
+              {
+                "calls": 5540532,
+                "elapsed_ns": 100799703
+              },
+              {
+                "calls": 5540532,
+                "elapsed_ns": 101161535
+              },
+              {
+                "calls": 5540532,
+                "elapsed_ns": 102244651
+              },
+              {
+                "calls": 5540532,
+                "elapsed_ns": 101749059
+              }
+            ],
+            "ns_per_call": 18.258451534978953,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 609245944
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 1.044778626880281,
+          "lower": 1.0413695963678409,
+          "upper": 1.0481431308518605,
+          "confidence": 0.975,
+          "alpha": 0.025,
+          "resamples": 10000,
+          "seed": 67528522039959386,
+          "pairs": 6
+        },
+        "decision": "not-worse",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.03
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "1e550cdeccd11b4a70df97e4b5959951f975538d7164d2ea345e3aaf7045756d"
+    },
+    {
+      "cell_id": "popcount-w1024-dispatch",
+      "key": "popcount-w1024-dispatch",
+      "role": "exploratory",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725266,
+            "windows": [
+              {
+                "calls": 768925,
+                "elapsed_ns": 100228770
+              },
+              {
+                "calls": 768925,
+                "elapsed_ns": 99861538
+              },
+              {
+                "calls": 768925,
+                "elapsed_ns": 99777548
+              },
+              {
+                "calls": 768925,
+                "elapsed_ns": 100184740
+              },
+              {
+                "calls": 768925,
+                "elapsed_ns": 99999029
+              }
+            ],
+            "ns_per_call": 130.05043274701694,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 594187512
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725261,
+            "windows": [
+              {
+                "calls": 1022305,
+                "elapsed_ns": 99498926
+              },
+              {
+                "calls": 1022305,
+                "elapsed_ns": 100213540
+              },
+              {
+                "calls": 1022305,
+                "elapsed_ns": 99701668
+              },
+              {
+                "calls": 1022305,
+                "elapsed_ns": 99368405
+              },
+              {
+                "calls": 1022305,
+                "elapsed_ns": 99392625
+              }
+            ],
+            "ns_per_call": 97.32802441541419,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 573688418
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725270,
+            "windows": [
+              {
+                "calls": 770939,
+                "elapsed_ns": 99725628
+              },
+              {
+                "calls": 770939,
+                "elapsed_ns": 99703347
+              },
+              {
+                "calls": 770939,
+                "elapsed_ns": 99925658
+              },
+              {
+                "calls": 770939,
+                "elapsed_ns": 99644367
+              },
+              {
+                "calls": 770939,
+                "elapsed_ns": 108940888
+              }
+            ],
+            "ns_per_call": 129.356055407756,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 598341094
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725276,
+            "windows": [
+              {
+                "calls": 1026681,
+                "elapsed_ns": 100008969
+              },
+              {
+                "calls": 1026681,
+                "elapsed_ns": 99705827
+              },
+              {
+                "calls": 1026681,
+                "elapsed_ns": 100066000
+              },
+              {
+                "calls": 1026681,
+                "elapsed_ns": 100042919
+              },
+              {
+                "calls": 1026681,
+                "elapsed_ns": 101315756
+              }
+            ],
+            "ns_per_call": 97.4430412172817,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 577858072
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725321,
+            "windows": [
+              {
+                "calls": 773629,
+                "elapsed_ns": 101084725
+              },
+              {
+                "calls": 773629,
+                "elapsed_ns": 100119870
+              },
+              {
+                "calls": 773629,
+                "elapsed_ns": 102024780
+              },
+              {
+                "calls": 773629,
+                "elapsed_ns": 100150560
+              },
+              {
+                "calls": 773629,
+                "elapsed_ns": 100284470
+              }
+            ],
+            "ns_per_call": 129.62863336302027,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 596711445
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725325,
+            "windows": [
+              {
+                "calls": 1025991,
+                "elapsed_ns": 100136279
+              },
+              {
+                "calls": 1025991,
+                "elapsed_ns": 100046600
+              },
+              {
+                "calls": 1025991,
+                "elapsed_ns": 100210069
+              },
+              {
+                "calls": 1025991,
+                "elapsed_ns": 99793358
+              },
+              {
+                "calls": 1025991,
+                "elapsed_ns": 100342421
+              }
+            ],
+            "ns_per_call": 97.5995686122003,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 576964317
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725336,
+            "windows": [
+              {
+                "calls": 765485,
+                "elapsed_ns": 102314691
+              },
+              {
+                "calls": 765485,
+                "elapsed_ns": 99680638
+              },
+              {
+                "calls": 765485,
+                "elapsed_ns": 102030090
+              },
+              {
+                "calls": 765485,
+                "elapsed_ns": 99760937
+              },
+              {
+                "calls": 765485,
+                "elapsed_ns": 100261721
+              }
+            ],
+            "ns_per_call": 130.9780348406566,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 596405983
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725331,
+            "windows": [
+              {
+                "calls": 1028750,
+                "elapsed_ns": 101283406
+              },
+              {
+                "calls": 1028750,
+                "elapsed_ns": 100431761
+              },
+              {
+                "calls": 1028750,
+                "elapsed_ns": 100055729
+              },
+              {
+                "calls": 1028750,
+                "elapsed_ns": 100120820
+              },
+              {
+                "calls": 1028750,
+                "elapsed_ns": 100422761
+              }
+            ],
+            "ns_per_call": 97.61629258809235,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 833492165
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725340,
+            "windows": [
+              {
+                "calls": 770324,
+                "elapsed_ns": 100193130
+              },
+              {
+                "calls": 770324,
+                "elapsed_ns": 100511452
+              },
+              {
+                "calls": 770324,
+                "elapsed_ns": 100073069
+              },
+              {
+                "calls": 770324,
+                "elapsed_ns": 99870458
+              },
+              {
+                "calls": 770324,
+                "elapsed_ns": 101402747
+              }
+            ],
+            "ns_per_call": 130.06621888971395,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 591056534
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725346,
+            "windows": [
+              {
+                "calls": 1027164,
+                "elapsed_ns": 101829389
+              },
+              {
+                "calls": 1027164,
+                "elapsed_ns": 100769043
+              },
+              {
+                "calls": 1027164,
+                "elapsed_ns": 100787403
+              },
+              {
+                "calls": 1027164,
+                "elapsed_ns": 100681483
+              },
+              {
+                "calls": 1027164,
+                "elapsed_ns": 101060435
+              }
+            ],
+            "ns_per_call": 98.12201654263583,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 579591401
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725355,
+            "windows": [
+              {
+                "calls": 773949,
+                "elapsed_ns": 100257210
+              },
+              {
+                "calls": 773949,
+                "elapsed_ns": 99872148
+              },
+              {
+                "calls": 773949,
+                "elapsed_ns": 100240261
+              },
+              {
+                "calls": 773949,
+                "elapsed_ns": 100545421
+              },
+              {
+                "calls": 773949,
+                "elapsed_ns": 100028810
+              }
+            ],
+            "ns_per_call": 129.51791526315043,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 592174650
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725350,
+            "windows": [
+              {
+                "calls": 1017569,
+                "elapsed_ns": 101797508
+              },
+              {
+                "calls": 1017569,
+                "elapsed_ns": 101277337
+              },
+              {
+                "calls": 1017569,
+                "elapsed_ns": 101326236
+              },
+              {
+                "calls": 1017569,
+                "elapsed_ns": 101996279
+              },
+              {
+                "calls": 1017569,
+                "elapsed_ns": 102037420
+              }
+            ],
+            "ns_per_call": 100.03990687609391,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 583305472
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 1.330214996432103,
+          "lower": 1.3071927545784887,
+          "upper": 1.337127352166619,
+          "confidence": 0.975,
+          "alpha": 0.025,
+          "resamples": 10000,
+          "seed": 15618552662003466609,
+          "pairs": 6
+        },
+        "decision": "improved",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.03
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "935a46274d234f8ee6b222ca495ba526927b5d4524d1ff06efe357927b131e1c"
+    },
+    {
+      "cell_id": "popcount-w16384-dispatch",
+      "key": "popcount-w16384-dispatch",
+      "role": "exploratory",
+      "baseline_arm": "legacy-dispatch",
+      "candidate_arm": "resolved-dispatch",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725389,
+            "windows": [
+              {
+                "calls": 51252,
+                "elapsed_ns": 101027005
+              },
+              {
+                "calls": 51252,
+                "elapsed_ns": 100571271
+              },
+              {
+                "calls": 51252,
+                "elapsed_ns": 100773313
+              },
+              {
+                "calls": 51252,
+                "elapsed_ns": 100044310
+              },
+              {
+                "calls": 51252,
+                "elapsed_ns": 100534621
+              }
+            ],
+            "ns_per_call": 1962.289686256146,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 590415411
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725360,
+            "windows": [
+              {
+                "calls": 67834,
+                "elapsed_ns": 100323661
+              },
+              {
+                "calls": 67834,
+                "elapsed_ns": 102960935
+              },
+              {
+                "calls": 67834,
+                "elapsed_ns": 101565917
+              },
+              {
+                "calls": 67834,
+                "elapsed_ns": 100668283
+              },
+              {
+                "calls": 67834,
+                "elapsed_ns": 102381112
+              }
+            ],
+            "ns_per_call": 1497.2715305009287,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 578559915
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725414,
+            "windows": [
+              {
+                "calls": 51036,
+                "elapsed_ns": 100774043
+              },
+              {
+                "calls": 51036,
+                "elapsed_ns": 99619607
+              },
+              {
+                "calls": 51036,
+                "elapsed_ns": 100463181
+              },
+              {
+                "calls": 51036,
+                "elapsed_ns": 100193210
+              },
+              {
+                "calls": 51036,
+                "elapsed_ns": 100197450
+              }
+            ],
+            "ns_per_call": 1963.2700446743474,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 590507251
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725418,
+            "windows": [
+              {
+                "calls": 67512,
+                "elapsed_ns": 100249300
+              },
+              {
+                "calls": 67512,
+                "elapsed_ns": 100586032
+              },
+              {
+                "calls": 67512,
+                "elapsed_ns": 100163570
+              },
+              {
+                "calls": 67512,
+                "elapsed_ns": 100639322
+              },
+              {
+                "calls": 67512,
+                "elapsed_ns": 100382021
+              }
+            ],
+            "ns_per_call": 1486.8767182130584,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 572218151
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725424,
+            "windows": [
+              {
+                "calls": 50992,
+                "elapsed_ns": 98770902
+              },
+              {
+                "calls": 50992,
+                "elapsed_ns": 99605706
+              },
+              {
+                "calls": 50992,
+                "elapsed_ns": 99972579
+              },
+              {
+                "calls": 50992,
+                "elapsed_ns": 99343725
+              },
+              {
+                "calls": 50992,
+                "elapsed_ns": 99573587
+              }
+            ],
+            "ns_per_call": 1952.7295850329463,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 583676374
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725429,
+            "windows": [
+              {
+                "calls": 67721,
+                "elapsed_ns": 100416381
+              },
+              {
+                "calls": 67721,
+                "elapsed_ns": 100342320
+              },
+              {
+                "calls": 67721,
+                "elapsed_ns": 100331691
+              },
+              {
+                "calls": 67721,
+                "elapsed_ns": 100707043
+              },
+              {
+                "calls": 67721,
+                "elapsed_ns": 100492011
+              }
+            ],
+            "ns_per_call": 1482.795307216373,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 574527773
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725458,
+            "windows": [
+              {
+                "calls": 51115,
+                "elapsed_ns": 100608322
+              },
+              {
+                "calls": 51115,
+                "elapsed_ns": 100627953
+              },
+              {
+                "calls": 51115,
+                "elapsed_ns": 100087759
+              },
+              {
+                "calls": 51115,
+                "elapsed_ns": 99004254
+              },
+              {
+                "calls": 51115,
+                "elapsed_ns": 100173899
+              }
+            ],
+            "ns_per_call": 1959.774997554534,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 588494670
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725433,
+            "windows": [
+              {
+                "calls": 67361,
+                "elapsed_ns": 99810317
+              },
+              {
+                "calls": 67361,
+                "elapsed_ns": 101327587
+              },
+              {
+                "calls": 67361,
+                "elapsed_ns": 100650122
+              },
+              {
+                "calls": 67361,
+                "elapsed_ns": 100246010
+              },
+              {
+                "calls": 67361,
+                "elapsed_ns": 100228700
+              }
+            ],
+            "ns_per_call": 1488.1906444381764,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 575027996
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725464,
+            "windows": [
+              {
+                "calls": 51101,
+                "elapsed_ns": 100407842
+              },
+              {
+                "calls": 51101,
+                "elapsed_ns": 100426531
+              },
+              {
+                "calls": 51101,
+                "elapsed_ns": 99440616
+              },
+              {
+                "calls": 51101,
+                "elapsed_ns": 100061049
+              },
+              {
+                "calls": 51101,
+                "elapsed_ns": 100370651
+              }
+            ],
+            "ns_per_call": 1964.1621690377879,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 588593560
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725470,
+            "windows": [
+              {
+                "calls": 67480,
+                "elapsed_ns": 100722032
+              },
+              {
+                "calls": 67480,
+                "elapsed_ns": 100405732
+              },
+              {
+                "calls": 67480,
+                "elapsed_ns": 100379260
+              },
+              {
+                "calls": 67480,
+                "elapsed_ns": 100013739
+              },
+              {
+                "calls": 67480,
+                "elapsed_ns": 100684263
+              }
+            ],
+            "ns_per_call": 1487.9331950207468,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 574583924
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "legacy-dispatch",
+            "pid": 1725481,
+            "windows": [
+              {
+                "calls": 50880,
+                "elapsed_ns": 99784938
+              },
+              {
+                "calls": 50880,
+                "elapsed_ns": 99989699
+              },
+              {
+                "calls": 50880,
+                "elapsed_ns": 100187540
+              },
+              {
+                "calls": 50880,
+                "elapsed_ns": 100057569
+              },
+              {
+                "calls": 50880,
+                "elapsed_ns": 99708907
+              }
+            ],
+            "ns_per_call": 1965.2063482704402,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-legacy-popcount:simd-nibble-lut",
+            "conversion": null,
+            "elapsed_ns": 587718186
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725475,
+            "windows": [
+              {
+                "calls": 67729,
+                "elapsed_ns": 100242840
+              },
+              {
+                "calls": 67729,
+                "elapsed_ns": 100510292
+              },
+              {
+                "calls": 67729,
+                "elapsed_ns": 100345970
+              },
+              {
+                "calls": 67729,
+                "elapsed_ns": 100443842
+              },
+              {
+                "calls": 67729,
+                "elapsed_ns": 100800903
+              }
+            ],
+            "ns_per_call": 1483.02561679635,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 574108291
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 1.3196001914163193,
+          "lower": 1.3145634218568996,
+          "upper": 1.3247810667615094,
+          "confidence": 0.975,
+          "alpha": 0.025,
+          "resamples": 10000,
+          "seed": 18082124918753888813,
+          "pairs": 6
+        },
+        "decision": "improved",
+        "margins": {
+          "improvement": 1.1,
+          "equivalence": 1.03
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "79d6a529c6f1fdb7bc6f5bc69bc0789ff4f1e83dec33ad3d0aa4d3ceb11b47fd"
+    },
+    {
+      "cell_id": "popcount-w16384-vs-libpopcnt",
+      "key": "popcount-w16384-vs-libpopcnt",
+      "role": "exploratory",
+      "baseline_arm": "resolved-dispatch",
+      "candidate_arm": "libpopcnt",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725490,
+            "windows": [
+              {
+                "calls": 67761,
+                "elapsed_ns": 100543812
+              },
+              {
+                "calls": 67761,
+                "elapsed_ns": 100806163
+              },
+              {
+                "calls": 67761,
+                "elapsed_ns": 100798664
+              },
+              {
+                "calls": 67761,
+                "elapsed_ns": 100951353
+              },
+              {
+                "calls": 67761,
+                "elapsed_ns": 100445232
+              }
+            ],
+            "ns_per_call": 1487.5616357491772,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 575168066
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "libpopcnt",
+            "pid": 1725486,
+            "windows": [
+              {
+                "calls": 69868,
+                "elapsed_ns": 100388802
+              },
+              {
+                "calls": 69868,
+                "elapsed_ns": 100467551
+              },
+              {
+                "calls": 69868,
+                "elapsed_ns": 100737993
+              },
+              {
+                "calls": 69868,
+                "elapsed_ns": 100343641
+              },
+              {
+                "calls": 69868,
+                "elapsed_ns": 100469881
+              }
+            ],
+            "ns_per_call": 1437.9623146504837,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "libpopcnt-4.2-popcnt:cpuid=0x800020:bytes=131072",
+            "conversion": null,
+            "elapsed_ns": 573180936
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725495,
+            "windows": [
+              {
+                "calls": 66874,
+                "elapsed_ns": 99339735
+              },
+              {
+                "calls": 66874,
+                "elapsed_ns": 100027329
+              },
+              {
+                "calls": 66874,
+                "elapsed_ns": 100088799
+              },
+              {
+                "calls": 66874,
+                "elapsed_ns": 99574747
+              },
+              {
+                "calls": 66874,
+                "elapsed_ns": 99279275
+              }
+            ],
+            "ns_per_call": 1488.9904447169304,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 571264095
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "libpopcnt",
+            "pid": 1725500,
+            "windows": [
+              {
+                "calls": 69892,
+                "elapsed_ns": 100497192
+              },
+              {
+                "calls": 69892,
+                "elapsed_ns": 101151075
+              },
+              {
+                "calls": 69892,
+                "elapsed_ns": 100463882
+              },
+              {
+                "calls": 69892,
+                "elapsed_ns": 100570122
+              },
+              {
+                "calls": 69892,
+                "elapsed_ns": 100902363
+              }
+            ],
+            "ns_per_call": 1438.9361014136095,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "libpopcnt-4.2-popcnt:cpuid=0x800020:bytes=131072",
+            "conversion": null,
+            "elapsed_ns": 573970080
+          }
+        },
+        {
+          "index": 2,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725510,
+            "windows": [
+              {
+                "calls": 67753,
+                "elapsed_ns": 100662762
+              },
+              {
+                "calls": 67753,
+                "elapsed_ns": 100263271
+              },
+              {
+                "calls": 67753,
+                "elapsed_ns": 100850683
+              },
+              {
+                "calls": 67753,
+                "elapsed_ns": 100554002
+              },
+              {
+                "calls": 67753,
+                "elapsed_ns": 100840444
+              }
+            ],
+            "ns_per_call": 1485.7314362463655,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 575777290
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "libpopcnt",
+            "pid": 1725506,
+            "windows": [
+              {
+                "calls": 68837,
+                "elapsed_ns": 99298485
+              },
+              {
+                "calls": 68837,
+                "elapsed_ns": 99193645
+              },
+              {
+                "calls": 68837,
+                "elapsed_ns": 99062803
+              },
+              {
+                "calls": 68837,
+                "elapsed_ns": 99128884
+              },
+              {
+                "calls": 68837,
+                "elapsed_ns": 99182515
+              }
+            ],
+            "ns_per_call": 1440.8314569199704,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "libpopcnt-4.2-popcnt:cpuid=0x800020:bytes=131072",
+            "conversion": null,
+            "elapsed_ns": 566929312
+          }
+        },
+        {
+          "index": 3,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725516,
+            "windows": [
+              {
+                "calls": 67454,
+                "elapsed_ns": 100517152
+              },
+              {
+                "calls": 67454,
+                "elapsed_ns": 100153930
+              },
+              {
+                "calls": 67454,
+                "elapsed_ns": 100362620
+              },
+              {
+                "calls": 67454,
+                "elapsed_ns": 100337291
+              },
+              {
+                "calls": 67454,
+                "elapsed_ns": 100777893
+              }
+            ],
+            "ns_per_call": 1487.8675838349097,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 571807638
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "libpopcnt",
+            "pid": 1725522,
+            "windows": [
+              {
+                "calls": 68871,
+                "elapsed_ns": 99697227
+              },
+              {
+                "calls": 68871,
+                "elapsed_ns": 99109734
+              },
+              {
+                "calls": 68871,
+                "elapsed_ns": 99394525
+              },
+              {
+                "calls": 68871,
+                "elapsed_ns": 99103864
+              },
+              {
+                "calls": 68871,
+                "elapsed_ns": 99227975
+              }
+            ],
+            "ns_per_call": 1440.7802268008306,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "libpopcnt-4.2-popcnt:cpuid=0x800020:bytes=131072",
+            "conversion": null,
+            "elapsed_ns": 568333280
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725547,
+            "windows": [
+              {
+                "calls": 67701,
+                "elapsed_ns": 100447421
+              },
+              {
+                "calls": 67701,
+                "elapsed_ns": 100464141
+              },
+              {
+                "calls": 67701,
+                "elapsed_ns": 100456562
+              },
+              {
+                "calls": 67701,
+                "elapsed_ns": 100259140
+              },
+              {
+                "calls": 67701,
+                "elapsed_ns": 100241470
+              }
+            ],
+            "ns_per_call": 1483.6918361619473,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 574163991
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "libpopcnt",
+            "pid": 1725551,
+            "windows": [
+              {
+                "calls": 69117,
+                "elapsed_ns": 99654646
+              },
+              {
+                "calls": 69117,
+                "elapsed_ns": 99699318
+              },
+              {
+                "calls": 69117,
+                "elapsed_ns": 99590296
+              },
+              {
+                "calls": 69117,
+                "elapsed_ns": 99509126
+              },
+              {
+                "calls": 69117,
+                "elapsed_ns": 99312426
+              }
+            ],
+            "ns_per_call": 1440.8943675217386,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "libpopcnt-4.2-popcnt:cpuid=0x800020:bytes=131072",
+            "conversion": null,
+            "elapsed_ns": 568787212
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "calibrated": true,
+            "arm": "resolved-dispatch",
+            "pid": 1725562,
+            "windows": [
+              {
+                "calls": 66896,
+                "elapsed_ns": 99354635
+              },
+              {
+                "calls": 66896,
+                "elapsed_ns": 99083774
+              },
+              {
+                "calls": 66896,
+                "elapsed_ns": 99092754
+              },
+              {
+                "calls": 66896,
+                "elapsed_ns": 99164494
+              },
+              {
+                "calls": 66896,
+                "elapsed_ns": 99484976
+              }
+            ],
+            "ns_per_call": 1482.3680638603205,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "gf2-ops-popcount:simd-carry-save",
+            "conversion": null,
+            "elapsed_ns": 568893402
+          },
+          "candidate": {
+            "calibrated": true,
+            "arm": "libpopcnt",
+            "pid": 1725557,
+            "windows": [
+              {
+                "calls": 69746,
+                "elapsed_ns": 100399441
+              },
+              {
+                "calls": 69746,
+                "elapsed_ns": 100665923
+              },
+              {
+                "calls": 69746,
+                "elapsed_ns": 100198030
+              },
+              {
+                "calls": 69746,
+                "elapsed_ns": 100306730
+              },
+              {
+                "calls": 69746,
+                "elapsed_ns": 100742853
+              }
+            ],
+            "ns_per_call": 1439.5010609927451,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              0
+            ],
+            "selected_path": "libpopcnt-4.2-popcnt:cpuid=0x800020:bytes=131072",
+            "conversion": null,
+            "elapsed_ns": 571635988
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 1.0322926044050436,
+          "lower": 1.0297244960487455,
+          "upper": 1.0344927823165861,
+          "confidence": 0.975,
+          "alpha": 0.025,
+          "resamples": 10000,
+          "seed": 10338415552963253803,
+          "pairs": 6
+        },
+        "decision": "not-worse",
+        "margins": {
+          "improvement": 1.2,
+          "equivalence": 1.03
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "7e4ff2fa03d50adf882feb4e51874193d9d6dc2cab10a1af3ff7739a7acd4ab6"
+    }
+  ]
+}

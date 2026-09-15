@@ -1,0 +1,129 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "fused-sweep2-5cbb6545-20260913t124728z",
+  "issue": "5cbb6545",
+  "label": "pilot",
+  "campaign_seed": 20260913112,
+  "addendum": "dev/active/5cbb6545/addendum-fused-v4-sweep2.json",
+  "producing_manifest": "dev/active/5cbb6545/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "and-legacy-fused": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_and_popcnt called directly, as BitMatrix::matvec reached it before this issue.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "and-legacy-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "and-csa-fused": {
+      "build": "conservative-portable",
+      "description": "The detected bundle's avx2_and_popcnt_csa called directly: the same carry-save block with each bit-plane ANDed from the two operands as it is loaded.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/dev/active/5cbb6545/survey/gf2-side/target/release/count-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_COUNT_ARM": "and-csa-fused"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "sweep2-and-w160-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 160,
+        "seed_lhs": 6360,
+        "seed_rhs": 14077,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-and-w192-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 192,
+        "seed_lhs": 6392,
+        "seed_rhs": 14109,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-and-w224-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 224,
+        "seed_lhs": 6424,
+        "seed_rhs": 14141,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-and-w256-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 256,
+        "seed_lhs": 6456,
+        "seed_rhs": 14173,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-and-w320-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 320,
+        "seed_lhs": 6520,
+        "seed_rhs": 14237,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "sweep2-and-w384-csa",
+      "baseline_arm": "and-legacy-fused",
+      "candidate_arm": "and-csa-fused",
+      "case": {
+        "op": "and_popcnt",
+        "words": 384,
+        "seed_lhs": 6584,
+        "seed_rhs": 14301,
+        "pattern": "random",
+        "word_offset": 0,
+        "whole_consumer": false
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 8
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "count-optimization-validation-v1",
+  "issue": "5cbb6545",
+  "recorded_utc": "2026-09-13T12:21:30Z",
+  "shared_suite": {
+    "command": "./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features simd,test-support --test popcount_routes",
+    "suite": "crates/gf2-core/tests/popcount_routes.rs",
+    "raw_output": "dev/active/5cbb6545/validation-raw.txt",
+    "exit_status": 0
+  },
+  "arm_verifier": {
+    "command": "dev/active/5cbb6545/survey/gf2-side/target/release/count-verify",
+    "source": "dev/active/5cbb6545/survey/gf2-side/src/bin/count-verify.rs",
+    "raw_output": "dev/active/5cbb6545/validation-arms.txt",
+    "exit_status": 0
+  },
+  "passed": true
+}

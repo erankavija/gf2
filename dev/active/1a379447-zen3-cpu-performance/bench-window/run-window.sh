@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Benchmark window for epic 1a379447 (jit:1a379447).
 #
-# Invoker policy (2026-09-11): a timed run inside a working session lasts at
-# most about as long as a cold cargo-ci run; longer campaigns run in separate
-# time windows outside the session. This script is that window. It runs the
+# Invoker policy (2026-09-13): the host is never locked during a working
+# session; every measurement runs in a benchmark window outside the session.
+# This script is that window. It exports GF2_BENCH_WINDOW=1, which is what
+# lets dev/scripts/ccx1-bench-flock.sh take the host mutex and makes
+# scripts/cargo-budget.sh apply its lock discipline; outside the window both
+# run unlocked. It runs the
 # jobs listed in queue.tsv beside it, one after another, each from its worker
 # worktree root.
 #
@@ -23,6 +26,7 @@ set -uo pipefail
 repo=/home/vkaskivuo/Projects/gf2
 here="$repo/dev/active/1a379447-zen3-cpu-performance/bench-window"
 state="${GF2_WINDOW_STATE:-$repo/.agents/bench-window}"
+export GF2_BENCH_WINDOW=1
 mkdir -p "$state"
 log="$state/window.log"
 
