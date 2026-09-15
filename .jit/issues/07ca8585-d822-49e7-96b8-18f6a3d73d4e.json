@@ -381,12 +381,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-15T01:15:24.734590684Z",
+      "updated_at": "2026-09-15T01:33:19.623375019Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T01:36:54.561220902Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T01:40:27.811277776Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
       "status": "failed",
-      "updated_at": "2026-09-15T01:19:16.092303038Z",
+      "updated_at": "2026-09-15T01:45:14.982205448Z",
       "updated_by": "auto:executor"
     }
   },
@@ -403,5 +413,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Remove allocation and repeated edge traversal from LDPC updates",
-  "updated_at": "2026-09-15T01:19:16.092303038Z"
+  "updated_at": "2026-09-15T01:45:14.982205448Z"
 }
