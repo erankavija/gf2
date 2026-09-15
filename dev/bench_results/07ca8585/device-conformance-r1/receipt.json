@@ -114,5 +114,11 @@
     "raw/rustc.txt": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
     "raw/source-revision.txt": "bea4e152d5f7a6c777745638463c94736c8b2584c0ab7bd696a81d84dfab41c8",
     "raw/uname.txt": "e704d78b14a8c09b4a88591a394b81b94c8779a04d67c9c4a3189fae86df07dc"
+  },
+  "producing_inputs": {
+    "snapshot": "inputs/producing/producing-snapshot.json",
+    "sha256": "3e76e8b6dc0a099333520e5c4e8edb240113bac9ca8279a24a9abb82e56a84a6",
+    "manifest_path": "dev/active/07ca8585/survey/producing-inputs-device-conformance.json",
+    "manifest_sha256": "1a93c1c1a3c33fcabdade4a712ccf80a7444f419caa21ce5a6cbf28f7e91ace2"
   }
 }
