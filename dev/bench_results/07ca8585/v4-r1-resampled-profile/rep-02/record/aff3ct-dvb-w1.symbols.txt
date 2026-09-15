@@ -1,0 +1,26 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 7876072853
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                                                                                                                                           
+# ........  ............  ................  .................................................................................................................................................................................................................................................
+#
+    61.20%          1205  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode_single_ite(std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> >&)
+    38.24%           753  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode(float const*, unsigned long)
+     0.20%             4  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode_siho(float const*, signed char*, int*, unsigned long)
+     0.05%             1  ldpc-profile      [.] (anonymous namespace)::Owned_handle<float, aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome> >::decode(float const*, unsigned char*, int, int*)
+     0.05%             1  [unknown]         [k] 0xffffffffad4015f0
+     0.05%             1  [unknown]         [k] 0xffffffffad890be8
+     0.05%             1  [unknown]         [k] 0xffffffffad892f0f
+     0.05%             1  [unknown]         [k] 0xffffffffad8a8985
+     0.05%             1  [unknown]         [k] 0xffffffffae96e55e
+     0.05%             1  [unknown]         [k] 0xffffffffae98856c
+
+
+#
+# (Tip: To show IPC for sampling periods use perf record -e '{cycles,instructions}:S' and then browse context)
+#

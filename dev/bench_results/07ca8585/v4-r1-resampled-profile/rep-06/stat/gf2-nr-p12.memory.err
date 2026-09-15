@@ -1,0 +1,4 @@
+Events disabled
+Events enabled
+Events disabled
+{"kind":"worker-placement","arm":"gf2","threads":{"ready":13,"after":13},"workers":[{"worker":0,"cpu":0,"affinity":[0],"cpus_seen":[0],"calls":2},{"worker":1,"cpu":1,"affinity":[1],"cpus_seen":[1],"calls":2},{"worker":2,"cpu":2,"affinity":[2],"cpus_seen":[2],"calls":2},{"worker":3,"cpu":3,"affinity":[3],"cpus_seen":[3],"calls":2},{"worker":4,"cpu":4,"affinity":[4],"cpus_seen":[4],"calls":2},{"worker":5,"cpu":5,"affinity":[5],"cpus_seen":[5],"calls":2},{"worker":6,"cpu":6,"affinity":[6],"cpus_seen":[6],"calls":2},{"worker":7,"cpu":7,"affinity":[7],"cpus_seen":[7],"calls":2},{"worker":8,"cpu":8,"affinity":[8],"cpus_seen":[8],"calls":2},{"worker":9,"cpu":9,"affinity":[9],"cpus_seen":[9],"calls":2},{"worker":10,"cpu":10,"affinity":[10],"cpus_seen":[10],"calls":2},{"worker":11,"cpu":11,"affinity":[11],"cpus_seen":[11],"calls":2}]}

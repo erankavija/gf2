@@ -1,0 +1,83 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "07ca8585-v4-r1-update-checknode-confirmation",
+  "issue": "07ca8585",
+  "label": "confirmation",
+  "campaign_seed": 519627909890183173,
+  "addendum": "dev/active/07ca8585/addendum-ldpc-update-checknode.json",
+  "producing_manifest": "dev/active/07ca8585/survey/producing-inputs-kernel.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2-checknode-nms-f32-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-coding after 07ca8585, one flooding check-node pass over a prepared variable-to-check message array through the canonical EdgeLayout check runs and min_sum_check_row, f32 normalized min-sum, no variable update and no termination in the timed call, one prepared array and one output array per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-update-arms/release/gf2-checknode-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "aff3ct-checknode-nms-f32-dvb-t2-r12": {
+      "build": "external",
+      "description": "AFF3CT v4.7.0 tools::Update_rule_NMS<float> over the check-node scan order of Decoder_LDPC_BP_flooding::_decode_single_ite, one pass over the same prepared variable-to-check messages in AFF3CT's own variable-major edge order, one pass object per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-update-arms/release/aff3ct-checknode-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-checknode-nms-f32-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding after 07ca8585, one flooding check-node pass over a prepared variable-to-check message array through the canonical EdgeLayout check runs and min_sum_check_row, f32 normalized min-sum, no variable update and no termination in the timed call, one prepared array and one output array per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-update-arms/release/gf2-checknode-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "aff3ct-checknode-nms-f32-nr-bg1-z384": {
+      "build": "external",
+      "description": "AFF3CT v4.7.0 tools::Update_rule_NMS<float> over the check-node scan order of Decoder_LDPC_BP_flooding::_decode_single_ite, one pass over the same prepared variable-to-check messages in AFF3CT's own variable-major edge order, one pass object per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-update-arms/release/aff3ct-checknode-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-checknode-w1",
+      "baseline_arm": "gf2-checknode-nms-f32-dvb-t2-r12",
+      "candidate_arm": "aff3ct-checknode-nms-f32-dvb-t2-r12",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "normalization_factor": 0.75,
+        "warmup_rounds": 8,
+        "frames": 8,
+        "input_checksum": "1bd7d12c4732a009",
+        "output_checksum": "b8a2ee8aee08ac2c"
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-checknode-w1",
+      "baseline_arm": "gf2-checknode-nms-f32-nr-bg1-z384",
+      "candidate_arm": "aff3ct-checknode-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "normalization_factor": 0.75,
+        "warmup_rounds": 8,
+        "frames": 8,
+        "input_checksum": "02857f028397d61e",
+        "output_checksum": "fd885d4ada849e8f"
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 1
+}

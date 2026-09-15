@@ -1,0 +1,70 @@
+# Isolated check-node-update arms and the untimed preparation tools of this
+# issue's REQ-10 granularities (jit:07ca8585).
+#
+# A standalone workspace, like the `c077a88b` and `3be770d5` survey harnesses it
+# extends: it adds no target, feature or dependency to the production workspace,
+# and it keeps its own target directory, so the pinned executables of the
+# `3be770d5` harness this issue already measured stay byte-identical.
+#
+# It reuses `3be770d5`'s pinned worker pool, recorded-bundle loader and AFF3CT
+# decoder handles by path, and `c077a88b`'s child framing, timing windows and
+# quality accumulator through them. The C++ translation unit here is its own:
+# it exposes AFF3CT's check-node update rule outside a whole decode, which
+# neither pinned shim does, and it defines a disjoint set of C entry points so
+# it can link beside them.
+#
+# Release builds keep line tables, as the measured harness does; line tables do
+# not change generated code.
+
+[workspace]
+
+[package]
+name = "ldpc-update-arms"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[features]
+default = []
+# Links the pinned AFF3CT static library; needs GF2_AFF3CT_ROOT.
+aff3ct = ["ldpc-throughput-harness/aff3ct"]
+
+[dependencies]
+ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
+ldpc-throughput-harness = { path = "../../../3be770d5/survey/harness" }
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[build-dependencies]
+cc = "1"
+
+[lib]
+name = "ldpc_update_arms"
+path = "src/lib.rs"
+
+[[bin]]
+name = "gf2-checknode-arm"
+path = "src/bin/gf2-checknode-arm.rs"
+
+[[bin]]
+name = "aff3ct-checknode-arm"
+path = "src/bin/aff3ct-checknode-arm.rs"
+required-features = ["aff3ct"]
+
+[[bin]]
+name = "ldpc-checknode-verify"
+path = "src/bin/ldpc-checknode-verify.rs"
+required-features = ["aff3ct"]
+
+[[bin]]
+name = "ldpc-fixed-quality"
+path = "src/bin/ldpc-fixed-quality.rs"
+required-features = ["aff3ct"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = "line-tables-only"
