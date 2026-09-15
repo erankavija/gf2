@@ -8,7 +8,7 @@ not a performance receipt and not a production-selection decision.
 
 ## Pinned external arm
 
-The external implementation is M4RI release `20260122`, source archive
+The external implementation is M4RI [AlbrechtBard2026] release `20260122`, source archive
 `m4ri-20260122.tar.gz`, SHA-256
 `7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404`.
 Its license is `GPL-2.0-or-later`: `m4ri/mzd.h` states GPL version 2 or
