@@ -148,6 +148,28 @@ Source: `preparation/quality-fixed/` (`dev/active/07ca8585/survey/arms/src/bin/l
 
 ## Campaigns
 
+### `v4-r1-07ca8585-ldpc-update-checknode-confirmation`
+
+Source: `v4-r1-07ca8585-ldpc-update-checknode-confirmation/receipt.json` and its acceptance summary. Family `ldpc-update-checknode-v1`; label **confirmation**; acceptance **accepted**; qualifies **True**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 2. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 check pass median ms/call | AFF3CT check pass median ms/call | gf2 check pass / AFF3CT check pass time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-checknode-w1 | single-core | 1 | 1 | 24 | 8 | 9.415 | 3.672 | 2.564 [2.558, 2.57] | 0.9875 | 0/240 | pass |
+| nr-bg1-z384-checknode-w1 | single-core | 1 | 1 | 24 | 8 | 4.323 | 1.900 | 2.275 [2.266, 2.28] | 0.9875 | 0/240 | pass |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-checknode-w1 | gf2-checknode-nms-f32-dvb-t2-r12 | 115.930 | 0.000 | 5.2 | 24 | [(2, 2)] | True |
+| dvb-t2-r12-checknode-w1 | aff3ct-checknode-nms-f32-dvb-t2-r12 | 170.836 | 0.000 | 5.3 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-checknode-w1 | gf2-checknode-nms-f32-nr-bg1-z384 | 58.400 | 0.000 | 5.2 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-checknode-w1 | aff3ct-checknode-nms-f32-nr-bg1-z384 | 110.778 | 0.000 | 5.3 | 24 | [(2, 2)] | True |
+
+This family's cells declare no decoder, so the receipt carries no per-frame decoder quality: an isolated check-node pass decodes no frame. What stands in its place is the matched-ness receipt above and the checksums every worker of either arm reproduces.
+
 ### `v4-r1-07ca8585-ldpc-update-checknode-pilot`
 
 Source: `v4-r1-07ca8585-ldpc-update-checknode-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-checknode-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
@@ -169,6 +191,84 @@ Untimed diagnostics (median over pairs) and journaled placement:
 | nr-bg1-z384-checknode-w1 | aff3ct-checknode-nms-f32-nr-bg1-z384 | 111.215 | 0.000 | 5.0 | 6 | [(2, 2)] | True |
 
 This family's cells declare no decoder, so the receipt carries no per-frame decoder quality: an isolated check-node pass decodes no frame. What stands in its place is the matched-ness receipt above and the checksums every worker of either arm reproduces.
+
+### `v4-r1-07ca8585-ldpc-update-comparator-multicore-pilot`
+
+Source: `v4-r1-07ca8585-ldpc-update-comparator-multicore-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-comparator-multicore-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 after median ms/call | AFF3CT median ms/call | gf2 after / AFF3CT time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-update-p6 | physical-cores-6 | 6 | 6 | 6 | 48 | 411.684 | 224.383 | 1.835 [1.823, 1.846] | 0.975 | 0/60 | pilot |
+| dvb-t2-r12-update-p12 | physical-cores-12 | 12 | 12 | 6 | 96 | 461.396 | 264.181 | 1.747 [1.694, 1.819] | 0.975 | 0/60 | pilot |
+| dvb-t2-r12-update-l24 | logical-cpus-24 | 24 | 24 | 6 | 192 | 695.560 | 845.186 | 0.823 [0.8124, 0.8325] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-update-p6 | physical-cores-6 | 6 | 6 | 6 | 48 | 191.515 | 114.030 | 1.68 [1.63, 1.722] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-update-p12 | physical-cores-12 | 12 | 12 | 6 | 96 | 214.037 | 140.348 | 1.525 [1.496, 1.578] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-update-l24 | logical-cpus-24 | 24 | 24 | 6 | 192 | 323.446 | 291.828 | 1.108 [1.055, 1.136] | 0.975 | 0/60 | pilot |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-update-p6 | gf2-after-nms-f32-dvb-t2-r12 | 20.715 | 0.053 | 13.9 | 6 | [(7, 7)] | True |
+| dvb-t2-r12-update-p6 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1677.703 | 0.000 | 14.1 | 6 | [(7, 7)] | True |
+| dvb-t2-r12-update-p12 | gf2-after-nms-f32-dvb-t2-r12 | 24.565 | 0.050 | 29.8 | 6 | [(13, 13)] | True |
+| dvb-t2-r12-update-p12 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1760.444 | 0.000 | 29.4 | 6 | [(13, 13)] | True |
+| dvb-t2-r12-update-l24 | gf2-after-nms-f32-dvb-t2-r12 | 33.665 | 0.052 | 67.2 | 6 | [(25, 25)] | True |
+| dvb-t2-r12-update-l24 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1772.086 | 0.000 | 48.7 | 6 | [(25, 25)] | True |
+| nr-bg1-z384-update-p6 | gf2-after-nms-f32-nr-bg1-z384 | 15.419 | 0.022 | 10.0 | 6 | [(7, 7)] | True |
+| nr-bg1-z384-update-p6 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 291.960 | 0.000 | 13.9 | 6 | [(7, 7)] | True |
+| nr-bg1-z384-update-p12 | gf2-after-nms-f32-nr-bg1-z384 | 17.842 | 0.022 | 24.6 | 6 | [(13, 13)] | True |
+| nr-bg1-z384-update-p12 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 312.618 | 0.000 | 30.1 | 6 | [(13, 13)] | True |
+| nr-bg1-z384-update-l24 | gf2-after-nms-f32-nr-bg1-z384 | 21.602 | 0.023 | 48.7 | 6 | [(25, 25)] | True |
+| nr-bg1-z384-update-l24 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 349.005 | 0.000 | 47.8 | 6 | [(25, 25)] | True |
+
+Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson 95%, BER independent-frame Hoeffding 95%), with the iteration and early-exit distribution of each arm:
+
+| Cell | Arm | FER (errors/frames) | FER interval | BER (errors/bits) | BER interval | Iterations mean / p50 / p90 / max | Wave |
+|---|---|---|---|---|---|---|---:|
+| dvb-t2-r12-update-p6 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-p6 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-p12 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-p12 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-l24 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-l24 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| nr-bg1-z384-update-p6 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-p6 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-p12 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-p12 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-l24 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-l24 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
+
+### `v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation`
+
+Source: `v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/receipt.json` and its acceptance summary. Family `ldpc-update-comparator-single-worker-v1`; label **confirmation**; acceptance **accepted**; qualifies **True**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 2. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 after median ms/call | AFF3CT median ms/call | gf2 after / AFF3CT time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-update-w1 | single-core | 1 | 1 | 24 | 8 | 392.081 | 205.542 | 1.908 [1.879, 1.912] | 0.9875 | 0/240 | pass |
+| nr-bg1-z384-update-w1 | single-core | 1 | 1 | 24 | 8 | 182.947 | 105.276 | 1.738 [1.667, 1.744] | 0.9875 | 0/240 | pass |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-update-w1 | gf2-after-nms-f32-dvb-t2-r12 | 18.540 | 0.052 | 5.2 | 24 | [(2, 2)] | True |
+| dvb-t2-r12-update-w1 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1720.729 | 0.000 | 5.2 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-update-w1 | gf2-after-nms-f32-nr-bg1-z384 | 13.759 | 0.020 | 5.2 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-update-w1 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 255.562 | 0.000 | 5.2 | 24 | [(2, 2)] | True |
+
+Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson 95%, BER independent-frame Hoeffding 95%), with the iteration and early-exit distribution of each arm:
+
+| Cell | Arm | FER (errors/frames) | FER interval | BER (errors/bits) | BER interval | Iterations mean / p50 / p90 / max | Wave |
+|---|---|---|---|---|---|---|---:|
+| dvb-t2-r12-update-w1 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| nr-bg1-z384-update-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
 
 ### `v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot`
 
@@ -199,6 +299,35 @@ Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson
 | nr-bg1-z384-update-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
 | nr-bg1-z384-update-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 30.711 / 29 / 39 / 50 | 1 |
 
+### `v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation`
+
+Source: `v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/receipt.json` and its acceptance summary. Family `ldpc-update-fixed-iteration-v1`; label **confirmation**; acceptance **accepted**; qualifies **True**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 2. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 after at the cap median ms/call | AFF3CT at the cap median ms/call | gf2 after at the cap / AFF3CT at the cap time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-fixed-iteration-w1 | single-core | 1 | 1 | 24 | 8 | 582.648 | 263.880 | 2.208 [2.147, 2.216] | 0.9875 | 0/240 | pass |
+| nr-bg1-z384-fixed-iteration-w1 | single-core | 1 | 1 | 24 | 8 | 240.902 | 126.892 | 1.898 [1.886, 1.904] | 0.9875 | 0/240 | pass |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-fixed-iteration-w1 | gf2-after-nms-f32-dvb-t2-r12 | 18.300 | 0.052 | 5.0 | 24 | [(2, 2)] | True |
+| dvb-t2-r12-fixed-iteration-w1 | aff3ct-flooding-nms-f32-dvb-t2-r12 | 1585.660 | 0.000 | 5.1 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-fixed-iteration-w1 | gf2-after-nms-f32-nr-bg1-z384 | 13.731 | 0.020 | 5.0 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-fixed-iteration-w1 | aff3ct-flooding-nms-f32-nr-bg1-z384 | 255.777 | 0.000 | 5.1 | 24 | [(2, 2)] | True |
+
+Decoder quality carried by the receipt (this issue's fixed-iteration evidence; FER Wilson 95%, BER independent-frame Hoeffding 95%), with the iteration and early-exit distribution of each arm:
+
+| Cell | Arm | FER (errors/frames) | FER interval | BER (errors/bits) | BER interval | Iterations mean / p50 / p90 / max | Wave |
+|---|---|---|---|---|---|---|---:|
+| dvb-t2-r12-fixed-iteration-w1 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 50.000 / 50 / 50 / 50 | 1 |
+| dvb-t2-r12-fixed-iteration-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 50.000 / 50 / 50 / 50 | 1 |
+| nr-bg1-z384-fixed-iteration-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 50.000 / 50 / 50 / 50 | 1 |
+| nr-bg1-z384-fixed-iteration-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 50.000 / 50 / 50 / 50 | 1 |
+
 ### `v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot`
 
 Source: `v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-fixed-iteration-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
@@ -228,6 +357,84 @@ Decoder quality carried by the receipt (this issue's fixed-iteration evidence; F
 | nr-bg1-z384-fixed-iteration-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 50.000 / 50 / 50 / 50 | 1 |
 | nr-bg1-z384-fixed-iteration-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000595555 (644/1081344) | [0, 0.120636] | 50.000 / 50 / 50 / 50 | 1 |
 
+### `v4-r1-07ca8585-ldpc-update-multicore-pilot`
+
+Source: `v4-r1-07ca8585-ldpc-update-multicore-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-multicore-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 before median ms/call | gf2 after median ms/call | gf2 before / gf2 after time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-update-p6 | physical-cores-6 | 6 | 6 | 6 | 48 | 3437.746 | 410.445 | 8.376 [8.358, 8.431] | 0.975 | 0/60 | pilot |
+| dvb-t2-r12-update-p12 | physical-cores-12 | 12 | 12 | 6 | 96 | 4004.223 | 465.299 | 8.606 [8.479, 8.646] | 0.975 | 0/60 | pilot |
+| dvb-t2-r12-update-l24 | logical-cpus-24 | 24 | 24 | 6 | 192 | 10192.759 | 690.947 | 14.75 [14.6, 14.94] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-update-p6 | physical-cores-6 | 6 | 6 | 6 | 48 | 2123.481 | 191.059 | 11.11 [11.06, 11.16] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-update-p12 | physical-cores-12 | 12 | 12 | 6 | 96 | 2343.753 | 213.855 | 10.96 [10.58, 11] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-update-l24 | logical-cpus-24 | 24 | 24 | 6 | 192 | 4535.530 | 320.676 | 14.14 [13.75, 14.58] | 0.975 | 0/60 | pilot |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-update-p6 | gf2-before-nms-f32-dvb-t2-r12 | 29.709 | 0.053 | 15.3 | 6 | [(7, 7)] | True |
+| dvb-t2-r12-update-p6 | gf2-after-nms-f32-dvb-t2-r12 | 20.466 | 0.052 | 14.1 | 6 | [(7, 7)] | True |
+| dvb-t2-r12-update-p12 | gf2-before-nms-f32-dvb-t2-r12 | 51.344 | 0.054 | 29.7 | 6 | [(13, 13)] | True |
+| dvb-t2-r12-update-p12 | gf2-after-nms-f32-dvb-t2-r12 | 24.102 | 0.052 | 33.9 | 6 | [(13, 13)] | True |
+| dvb-t2-r12-update-l24 | gf2-before-nms-f32-dvb-t2-r12 | 103.183 | 0.052 | 48.9 | 6 | [(25, 25)] | True |
+| dvb-t2-r12-update-l24 | gf2-after-nms-f32-dvb-t2-r12 | 33.376 | 0.050 | 50.3 | 6 | [(25, 25)] | True |
+| nr-bg1-z384-update-p6 | gf2-before-nms-f32-nr-bg1-z384 | 20.132 | 0.020 | 13.0 | 6 | [(7, 7)] | True |
+| nr-bg1-z384-update-p6 | gf2-after-nms-f32-nr-bg1-z384 | 15.160 | 0.020 | 12.0 | 6 | [(7, 7)] | True |
+| nr-bg1-z384-update-p12 | gf2-before-nms-f32-nr-bg1-z384 | 32.160 | 0.023 | 30.4 | 6 | [(13, 13)] | True |
+| nr-bg1-z384-update-p12 | gf2-after-nms-f32-nr-bg1-z384 | 16.589 | 0.022 | 37.7 | 6 | [(13, 13)] | True |
+| nr-bg1-z384-update-l24 | gf2-before-nms-f32-nr-bg1-z384 | 57.157 | 0.022 | 48.6 | 6 | [(25, 25)] | True |
+| nr-bg1-z384-update-l24 | gf2-after-nms-f32-nr-bg1-z384 | 21.470 | 0.022 | 50.2 | 6 | [(25, 25)] | True |
+
+Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson 95%, BER independent-frame Hoeffding 95%), with the iteration and early-exit distribution of each arm:
+
+| Cell | Arm | FER (errors/frames) | FER interval | BER (errors/bits) | BER interval | Iterations mean / p50 / p90 / max | Wave |
+|---|---|---|---|---|---|---|---:|
+| dvb-t2-r12-update-p6 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-p6 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-p12 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-p12 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-l24 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-l24 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| nr-bg1-z384-update-p6 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-p6 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-p12 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-p12 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-l24 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-l24 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+
+### `v4-r1-07ca8585-ldpc-update-single-worker-confirmation`
+
+Source: `v4-r1-07ca8585-ldpc-update-single-worker-confirmation/receipt.json` and its acceptance summary. Family `ldpc-update-single-worker-v1`; label **confirmation**; acceptance **accepted**; qualifies **True**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 2. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 before median ms/call | gf2 after median ms/call | gf2 before / gf2 after time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-update-w1 | single-core | 1 | 1 | 24 | 8 | 2633.412 | 389.824 | 6.755 [6.743, 6.766] | 0.9875 | 0/240 | pass |
+| nr-bg1-z384-update-w1 | single-core | 1 | 1 | 24 | 8 | 1823.710 | 182.524 | 9.992 [9.966, 10.03] | 0.9875 | 0/240 | pass |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-update-w1 | gf2-before-nms-f32-dvb-t2-r12 | 25.180 | 0.052 | 5.0 | 24 | [(2, 2)] | True |
+| dvb-t2-r12-update-w1 | gf2-after-nms-f32-dvb-t2-r12 | 18.337 | 0.052 | 5.0 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-update-w1 | gf2-before-nms-f32-nr-bg1-z384 | 17.041 | 0.020 | 5.2 | 24 | [(2, 2)] | True |
+| nr-bg1-z384-update-w1 | gf2-after-nms-f32-nr-bg1-z384 | 13.671 | 0.020 | 5.2 | 24 | [(2, 2)] | True |
+
+Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson 95%, BER independent-frame Hoeffding 95%), with the iteration and early-exit distribution of each arm:
+
+| Cell | Arm | FER (errors/frames) | FER interval | BER (errors/bits) | BER interval | Iterations mean / p50 / p90 / max | Wave |
+|---|---|---|---|---|---|---|---:|
+| dvb-t2-r12-update-w1 | baseline | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| dvb-t2-r12-update-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
+| nr-bg1-z384-update-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+| nr-bg1-z384-update-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+
 ### `v4-r1-07ca8585-ldpc-update-single-worker-pilot`
 
 Source: `v4-r1-07ca8585-ldpc-update-single-worker-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-single-worker-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
@@ -256,3 +463,25 @@ Decoder quality carried by the receipt (prepared `c077a88b` evidence; FER Wilson
 | dvb-t2-r12-update-w1 | candidate | 0.015625 (2/128) | [0.00429545, 0.055181] | 4.82253e-07 (2/4147200) | [0, 0.120041] | 31.594 / 27 / 50 / 50 | 1 |
 | nr-bg1-z384-update-w1 | baseline | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
 | nr-bg1-z384-update-w1 | candidate | 0.0078125 (1/128) | [0.00138043, 0.0429263] | 0.000626073 (677/1081344) | [0, 0.120666] | 30.672 / 29 / 39 / 50 | 1 |
+
+### `v4-r1-post-freeze-rebuild-07ca8585-ldpc-update-checknode-pilot`
+
+Source: `v4-r1-post-freeze-rebuild-07ca8585-ldpc-update-checknode-pilot/receipt.json` and its acceptance summary. Family `ldpc-update-checknode-v1`; label **pilot**; acceptance **accepted**; qualifies **False**; findings on this line: 0; ledger-derived attempt alpha 0.025, reserved comparisons 1. SMT active: True.
+
+| Cell | Core arm | CPUs | Workers observed | Pairs | Frames/call | gf2 check pass median ms/call | AFF3CT check pass median ms/call | gf2 check pass / AFF3CT check pass time [interval] | Confidence | Flagged windows | Outcome |
+|---|---|---:|---|---:|---:|---:|---:|---|---:|---:|---|
+| dvb-t2-r12-checknode-w1 | single-core | 1 | 1 | 6 | 8 | 9.376 | 3.666 | 2.558 [2.515, 2.568] | 0.975 | 0/60 | pilot |
+| nr-bg1-z384-checknode-w1 | single-core | 1 | 1 | 6 | 8 | 4.343 | 1.902 | 2.283 [2.277, 2.285] | 0.975 | 0/60 | pilot |
+
+The time ratio is the protocol's speedup of medians with the baseline arm as reference: values above one mean the candidate arm is faster. Medians are descriptive; the paired bootstrap interval is the estimate. Frames per call is workers times the per-worker batch.
+
+Untimed diagnostics (median over pairs) and journaled placement:
+
+| Cell | Arm | Setup ms | Pack ms | Dispatch us | Placement reports | Process threads | All workers pinned |
+|---|---|---:|---:|---:|---:|---|---|
+| dvb-t2-r12-checknode-w1 | gf2-checknode-nms-f32-dvb-t2-r12 | 115.419 | 0.000 | 4.9 | 6 | [(2, 2)] | True |
+| dvb-t2-r12-checknode-w1 | aff3ct-checknode-nms-f32-dvb-t2-r12 | 173.127 | 0.000 | 5.0 | 6 | [(2, 2)] | True |
+| nr-bg1-z384-checknode-w1 | gf2-checknode-nms-f32-nr-bg1-z384 | 58.587 | 0.000 | 5.0 | 6 | [(2, 2)] | True |
+| nr-bg1-z384-checknode-w1 | aff3ct-checknode-nms-f32-nr-bg1-z384 | 112.123 | 0.000 | 5.0 | 6 | [(2, 2)] | True |
+
+This family's cells declare no decoder, so the receipt carries no per-frame decoder quality: an isolated check-node pass decodes no frame. What stands in its place is the matched-ness receipt above and the checksums every worker of either arm reproduces.

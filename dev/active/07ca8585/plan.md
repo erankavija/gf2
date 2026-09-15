@@ -9,11 +9,11 @@ only what is specific to this issue.
 
 ## Arms
 
-The change is a production change, so a current pinned pre-change baseline is
-owed. Both arms are the `3be770d5` steady-state harness built against the two
-generations of `gf2-coding`: the **before** arm against the revision the
-`before` claims of [source-evidence.json](survey/source-evidence.json) pin, and
-the **after** arm against the changed tree. A candidate identity is the
+The production change carries a current pinned pre-change baseline. Both arms
+are the `3be770d5` steady-state harness built against the two generations of
+`gf2-coding`: the **before** arm against the revision the `before` claims of
+[source-evidence.json](survey/source-evidence.json) pin, and the **after** arm
+against the canonical-layout implementation. A candidate identity is the
 executable's bytes, so each arm's digest is recorded before its first timed
 call and every campaign refuses an arm whose digest differs.
 
@@ -40,29 +40,33 @@ two arms are pinned by
 
 | Family | Question | Arms | Decides |
 |---|---|---|---|
-| `ldpc-update-before-after-v1` | Does the changed update decode the frozen workloads faster than the path it replaces, at the same decisions? | gf2 before, gf2 after | Adoption |
-| `ldpc-update-comparator-v1` | Where does the changed decoder sit against the compatible decoder at whole decoding, per REQ-10? | gf2 after, AFF3CT | Nothing; descriptive |
+| `ldpc-update-single-worker-v1` | Does the canonical update decode the frozen workloads faster than the path it replaces, at the same decisions? | gf2 before, gf2 after | Adoption on the declared single-worker domain |
+| `ldpc-update-multicore-v1` | How does the selected route scale across physical cores and SMT? | gf2 before, gf2 after | Nothing; exploratory scaling |
+| `ldpc-update-comparator-single-worker-v1` | Where does the canonical decoder sit against the compatible decoder at whole decoding, per REQ-10? | gf2 after, AFF3CT | Nothing; descriptive |
+| `ldpc-update-comparator-multicore-v1` | How does that whole-decoding comparison scale across physical cores and SMT? | gf2 after, AFF3CT | Nothing; exploratory scaling |
 | `ldpc-update-fixed-iteration-v1` | Where does it sit against the same decoder at an equal, declared iteration count, per REQ-10? | gf2 after, AFF3CT | Nothing; descriptive |
-| `ldpc-update-checknode-v1` | Where does the changed check-node update sit against AFF3CT's own update rule, isolated, per REQ-10? | gf2 check pass, AFF3CT check pass | Nothing; descriptive |
+| `ldpc-update-checknode-v1` | Where does the canonical check-node update sit against AFF3CT's own update rule, isolated, per REQ-10? | gf2 check pass, AFF3CT check pass | Nothing; descriptive |
 
-The decision family is the before/after one: its cells carry the frozen
-worthwhile-effect and equivalence margins, and adoption follows them. The three
-comparator families publish the REQ-10 comparisons at the three granularities and
-select nothing, which keeps the questions in separate multiple-comparison
-families as the protocol requires. The check-node family's purpose is
+The decision family is the single-worker before/after one: its confirmation
+cells carry the frozen worthwhile-effect and equivalence margins, and adoption
+follows them. The three comparator families publish the REQ-10 comparisons at
+the three granularities and select nothing, which keeps the questions in
+separate multiple-comparison families as the protocol requires. The check-node family's purpose is
 `kernel-family` and its cells declare no decoder, because an isolated check-node
 pass decodes no frame; the other families are decoder families.
 
-Both families keep an append-only ledger from genesis under
-`dev/bench_results/07ca8585/`. Each family runs a pilot first; its confirmation
-addendum is derived from the committed pilot receipt by the canonical freezer
+Every family keeps an append-only ledger from genesis under
+`dev/bench_results/07ca8585/`. The four single-worker families carry a pilot and
+a confirmation addendum derived from the committed pilot receipt by the
+canonical freezer
 `dev/active/c7113c5a/survey/freeze-confirmation.py`, which pins the pilot by
 path and digest, takes the resolution from the pilot's widest relative bootstrap
 half-width at the confirmation's corrected alpha, and sets margins strictly
 above `1 + resolution`. P-20 admits at most six confirmatory cells on a
 family's first attempt; the cell count each family freezes is recomputed from
 `dev/tools/tuning-campaign-support` for that family's ledger rather than
-assumed.
+assumed. The two multicore families preserve exploratory pilots across all six
+scaling cells and make no confirmation or adoption claim.
 
 ## Cells
 
@@ -109,7 +113,7 @@ No granularity is approximated by relabelling a whole-decode cell, because a
 whole-decode cell measures the termination rule and the conversion as well as the
 update.
 
-Scaling arms are one worker and the physical-core and SMT arms the protocol
+Scaling evidence covers one worker and the physical-core and SMT arms the protocol
 resolver returns at run time. Allocation counts, degree distributions and the
 iteration and early-exit distributions are recorded per cell from the run rather
 than assumed, and are projected beside the timings.
@@ -123,6 +127,6 @@ protocol, and runs each bounded session inside one
 prepared quality corpus and the producing manifest each family reads, and checks
 the executables and corpus digests that family depends on before the first timed
 call. `dev/bench_results/07ca8585/run-profile-resample.sh` runs the predecessor's
-profile series over the changed build, which is the predecessor's refutation rule
+profile series over the canonical-layout build, which is the predecessor's refutation rule
 for the levers this issue spends. Tables are regenerated by the committed
 generator from the committed receipts and reproduce byte for byte.
