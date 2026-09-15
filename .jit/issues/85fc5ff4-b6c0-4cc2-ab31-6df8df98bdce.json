@@ -33,7 +33,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Profile the residual BitVec shift family",
-  "updated_at": "2026-09-15T01:11:30.663449889Z"
+  "updated_at": "2026-09-15T01:12:04.568257553Z"
 }
