@@ -144,4 +144,3 @@ Counters of the first session only, over a one-second repetition of each case in
 ## Generated code
 
 `dev/active/19513245/survey/asm/` holds the annotated release disassembly of the measured routes and their instruction mix, written by `disassemble.sh` from the arm executable of the same build these sessions ran; `asm/index.txt` names each file, the symbols it covers and the pattern that selected them.
-

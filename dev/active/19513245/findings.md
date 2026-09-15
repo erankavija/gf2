@@ -563,8 +563,8 @@ in the [host record](../../bench_results/19513245/r1-consumer-profile/host.txt),
 The host record's `consumer-arm` digest likewise matches the build record and
 its assembly index. The generated
 [`profile-summary.md`](../../bench_results/19513245/r1-consumer-profile/profile-summary.md)
-is a byte-for-byte regeneration from the nine structured records and the
-committed summarizer. The command recorded for reproduction is
+is derived from the nine structured records by the committed summarizer. The
+command recorded for reproduction is
 `env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/19513245/survey/run-profile.sh dev/bench_results/19513245/r1-consumer-profile`
 from the worktree root, with `GF2_BENCH_WINDOW=1` inside the benchmark window;
 the campaign remains resumable and rejects a changed profile executable.
