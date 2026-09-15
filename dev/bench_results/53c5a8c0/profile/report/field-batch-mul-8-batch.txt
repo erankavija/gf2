@@ -1,0 +1,25 @@
+# cycle samples of field-batch-mul-8-batch (gf2 arm, cell field-batch-mul-8)
+# recorded by run-profile.sh at 4000 Hz over 33318 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1460927671
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                     IPC   [IPC Coverage]
+# ........  ............  ................  .........................................................................................  ....................
+#
+    13.51%           166  profile-arm       [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run  -      -            
+    40.78%           504  profile-arm       [.] gf2_core::gf2m::batch::batch_mul_raw                                                   -      -            
+     2.07%            25  profile-arm       [.] gf2_kernels_simd::gf2m_batch::gf2m_batch_mul_ymm_unroll4_safe                          -      -            
+    43.28%           536  profile-arm       [.] gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4                          -      -            
+
+
+#
+# (Tip: To not accumulate CPU time of children symbols add --no-children)
+#

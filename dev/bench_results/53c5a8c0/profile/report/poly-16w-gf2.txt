@@ -1,0 +1,22 @@
+# cycle samples of poly-16w-gf2 (gf2 arm, cell poly-16w)
+# recorded by run-profile.sh at 4000 Hz over 2277 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1462644531
+#
+# Overhead       Samples  Shared Object         Symbol                                                IPC   [IPC Coverage]
+# ........  ............  ....................  ....................................................  ....................
+#
+    99.96%          1211  profile-arm           [.] clmul_crossover_arms::gf2_backend::owned_product  -      -            
+
+
+#
+# (Tip: Search options using a keyword: perf report -h <keyword>)
+#

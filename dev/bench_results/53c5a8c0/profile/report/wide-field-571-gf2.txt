@@ -1,0 +1,34 @@
+# cycle samples of wide-field-571-gf2 (gf2 arm, cell wide-field-571-composed)
+# recorded by run-profile.sh at 4000 Hz over 70339 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1435461239
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                     IPC   [IPC Coverage]
+# ........  ............  ....................  .........................................................................................  ....................
+#
+     6.42%            79  libc.so.6             [.] __libc_calloc                                                                          -      -            
+     4.76%            59  libc.so.6             [.] cfree                                                                                  -      -            
+     0.67%             8  libc.so.6             [.] 0x0000000000176e68                                                                     -      -            
+     1.26%            16  profile-arm           [.] <T as core::any::Any>::type_id                                                         -      -            
+     0.58%             7  profile-arm           [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run  -      -            
+     3.42%            45  profile-arm           [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write                        -      -            
+    11.42%           140  profile-arm           [.] clmul_crossover_arms::gf2_backend::wide_field_product                                  -      -            
+     3.58%            44  profile-arm           [.] core::hash::BuildHasher::hash_one                                                      -      -            
+     1.59%            19  profile-arm           [.] gf2_core::gf2m::barrett::BarrettReducerWide<_>::reduce_slice                           -      -            
+     5.10%            62  profile-arm           [.] gf2_core::gf2m::barrett::slice_clmul_wide_with_implicit_high                           -      -            
+     5.80%            70  profile-arm           [.] gf2_core::gf2m::barrett::slice_wide_shr_2n_to_n                                        -      -            
+     2.52%            32  profile-arm           [.] gf2_core::gf2m::wide::clmul_wide_dispatch                                              -      -            
+    51.41%           626  profile-arm           [.] gf2_kernels_simd::gf2m_wide::clmul_wide9_ymm_safe                                      -      -            
+
+
+#
+# (Tip: To separate samples by time use perf report --sort time,overhead,sym)
+#

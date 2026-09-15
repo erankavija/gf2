@@ -31,7 +31,12 @@
 # rate anyone could type honestly. Two runs at different call counts are used so
 # process start-up falls out of the slope between them; a single run would
 # charge start-up to the per-call rate and undershoot the target on every fast
-# row.
+# row. The pair is widened by doubling until the gap between them exceeds
+# `CALIBRATION_MIN_DELTA_MS`, because a row whose whole calibration run costs
+# less than this host's process start-up has no slope to read: the two readings
+# then differ by scheduler noise alone and can even come out negative. A row
+# that reaches `CALIBRATION_MAX_CALLS` without a readable gap stops the session
+# rather than being measured at a guessed call count.
 #
 # Every row takes the full host through the canonical mutex, because a counter
 # read beside another worker's build attributes that build's cycles to this
@@ -58,7 +63,14 @@ CASES="${HERE}/profile-cases.tsv"
 REPETITIONS=9
 CALLS_TARGET_MS=300
 CALIBRATION_CALLS=200
+CALIBRATION_MIN_DELTA_MS=50
+CALIBRATION_MAX_CALLS=4000000
+CALLS_CEILING=50000000
 SAMPLE_FREQUENCY=4000
+# Symbols below this share of a row's cycles are elided from its report. The
+# summary reports the share the listed symbols cover, so nothing is implied
+# about the remainder.
+REPORT_PERCENT_LIMIT=0.4
 THROUGHPUT_EVENTS='cycles,instructions,ex_ret_ops,branches,branch-misses'
 MEMORY_EVENTS='cycles,ls_dispatch.ld_dispatch,ls_dispatch.store_dispatch,de_dis_dispatch_token_stalls1.int_phy_reg_file_rsrc_stall,de_dis_dispatch_token_stalls1.store_queue_rsrc_stall'
 
@@ -119,6 +131,11 @@ elif [[ ! -e "${OUT}/host.txt" ]]; then
     for policy in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
         printf '%s %s\n' "${policy}" "$(cat "${policy}")"
     done 2>/dev/null || echo "no cpufreq sysfs entries"
+    echo; echo "## shared objects the arms resolve"
+    for variant in conservative native; do
+        printf '### profile-arm-%s\n' "${variant}"
+        ldd "$(binary_for "${variant}")"
+    done
     echo; echo "## load average at start"; cat /proc/loadavg
 } >"${OUT}/host.txt"
 else
@@ -143,15 +160,27 @@ observe_row() {
         --arm "${arm}" --case "${case}" --label "${label}")
 
     # Calibration at two call counts, so process start-up cancels: the slope
-    # between them is the per-call cost and the intercept is discarded.
-    local single double slope_ns calls
-    single=$(wall_ns "${CALIBRATION_CALLS}" "${invoke[@]}")
-    double=$(wall_ns $(( 2 * CALIBRATION_CALLS )) "${invoke[@]}")
-    slope_ns=$(( (double - single) / CALIBRATION_CALLS ))
-    (( slope_ns > 0 )) || slope_ns=1
+    # between them is the per-call cost and the intercept is discarded. The
+    # pair widens until the gap is larger than start-up jitter.
+    local low=${CALIBRATION_CALLS} single double slope_ns calls
+    local minimum=$(( CALIBRATION_MIN_DELTA_MS * 1000000 ))
+    single=$(wall_ns "${low}" "${invoke[@]}")
+    while :; do
+        double=$(wall_ns $(( 2 * low )) "${invoke[@]}")
+        (( double - single < minimum )) || break
+        if (( 2 * low > CALIBRATION_MAX_CALLS )); then
+            echo "row ${label} calibration never exceeded ${CALIBRATION_MIN_DELTA_MS}ms by ${CALIBRATION_MAX_CALLS} calls" >>"${LOG}"
+            echo "row ${label}: calibration found no readable per-call slope" >&2
+            exit 3
+        fi
+        single=${double}
+        low=$(( 2 * low ))
+    done
+    slope_ns=$(( (double - single) / low ))
     calls=$(( CALLS_TARGET_MS * 1000000 / slope_ns ))
     (( calls >= CALIBRATION_CALLS )) || calls=${CALIBRATION_CALLS}
-    echo "row ${label} calibrated ${CALIBRATION_CALLS}->${single}ns, $(( 2 * CALIBRATION_CALLS ))->${double}ns, ${slope_ns}ns/call -> ${calls} calls" >>"${LOG}"
+    (( calls <= CALLS_CEILING )) || calls=${CALLS_CEILING}
+    echo "row ${label} calibrated ${low}->${single}ns, $(( 2 * low ))->${double}ns, ${slope_ns}ns/call -> ${calls} calls" >>"${LOG}"
 
     # The run record: what the process did and which path it selected.
     "${invoke[@]}" --calls "${calls}" --warmup 1 \
@@ -162,17 +191,21 @@ record["build"] = sys.argv[2]
 record["crossover_path"] = sys.argv[3]
 print(json.dumps(record, sort_keys=True))' "${cell}" "${build}" "${path}" >>"${RUNS}"
 
-    # Cycle sampling, once per row: the symbol attribution does not need an
-    # interval, because it reports where a path's cycles are and every
-    # repetition of the same process runs the same code.
+    # Cycle sampling, once per row. The report carries each symbol's exact
+    # sample count beside its share, so a share can carry a binomial interval
+    # rather than a label saying it has none.
     perf record -q -e cycles:u -F "${SAMPLE_FREQUENCY}" --no-buildid-cache \
         -o "${REPORTS}/${label}.data" -- \
         "${invoke[@]}" --calls "${calls}" --warmup 1 >/dev/null 2>>"${LOG}"
     {
         echo "# cycle samples of ${label} (${arm} arm, cell ${cell})"
         echo "# recorded by run-profile.sh at ${SAMPLE_FREQUENCY} Hz over ${calls} logical calls"
-        perf report --stdio --no-children --percent-limit 0.4 \
-            --sort symbol -i "${REPORTS}/${label}.data" 2>/dev/null
+        echo "# each row: share of this row's samples, exact sample count, the object"
+        echo "# the samples fall in, and the symbol, or the offset in that object when"
+        echo "# the object carries no symbol for it"
+        perf report --stdio --no-children --percent-limit "${REPORT_PERCENT_LIMIT}" \
+            --sort dso,symbol -F overhead,sample,dso,symbol \
+            -i "${REPORTS}/${label}.data" 2>/dev/null
     } >"${REPORTS}/${label}.txt"
     rm -f "${REPORTS}/${label}.data"
 

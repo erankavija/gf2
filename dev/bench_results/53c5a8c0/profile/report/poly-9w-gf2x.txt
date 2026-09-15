@@ -1,0 +1,25 @@
+# cycle samples of poly-9w-gf2x (gf2x arm, cell poly-9w)
+# recorded by run-profile.sh at 4000 Hz over 153452 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1446992241
+#
+# Overhead       Samples  Shared Object         Symbol                            IPC   [IPC Coverage]
+# ........  ............  ....................  ................................  ....................
+#
+    88.46%          1096  libgf2x.so.3.0.0      [.] gf2x_mul9                     -      -            
+     4.90%            61  libgf2x.so.3.0.0      [.] gf2x_mul_basecase_inner       -      -            
+     5.66%            69  libgf2x.so.3.0.0      [.] gf2x_mul_r                    -      -            
+     0.83%            12  profile-arm           [.] profile_arm::main             -      -            
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#
