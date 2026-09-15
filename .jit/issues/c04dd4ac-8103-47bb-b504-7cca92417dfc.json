@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-09-06T19:17:30.493810853Z",
   "dependencies": [
-    "16560579-abd8-446c-9a02-9715feeee1af"
+    "a0812b83-3d03-4317-aad4-f0d702444f14"
   ],
   "description": "Profile and optimize arbitrary-offset bit shifts and coding permutations whose production cost is material on the target host.\n\n## Background\n\nBitVec explicitly dispatches whole-word shifts; residual-bit shifts use ordinary Rust loops. Circulant rotations, puncturing and interleaving are distinct operations with different data layouts and consumers. The presence of AVX2 or BMI2 is not sufficient reason to add a hot path.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n- [hard] REQ-07: Produce separate workload profiles and a reviewed worker-sized decomposition for shifts, QC/circulant rotations, puncturing and interleaving. Name the actual production consumer and select implementation leaves only where the predeclared materiality rule is met; preserve measured no-win/not-material outcomes for the others.\n\n- [hard] REQ-08: Validate proposed AVX2 lane-crossing and any BMI-based design on Rust 1.95 before decomposition. Use observed capabilities and canonical dispatch/tuning, never a vendor-name assumption about BMI2 cost.\n\n- [hard] REQ-09: Preserve exact bit indexing, wrap-versus-zero-fill behavior, aliasing contracts, tail padding and standards-defined permutation order. Cover offsets 0/1/7/8/63/64/65, larger-than-length shifts where defined, vector-lane crossings and incomplete words.\n\n- [hard] REQ-10: Benchmark operation-equivalent paths from pinned external coding implementations where available, plus the established scalar/vector compiler baselines. Record exact adapter/representation costs and explicitly identify unmatched operations; a field-multiplication benchmark is not a permutation comparison.\n\n- [hard] REQ-11: Publish latency/throughput and whole-consumer results; introduce reusable primitives only in their owning library layers. For compound paths, measure each representation conversion and memory pass before adopting a candidate.\n\n## Notes\n\nAFF3CT is an initial coding comparator; the source survey selects the strongest applicable implementation and records unsupported operation mappings. Numeric or scheduling changes are not implicit in this story.\n\n\n\n\nSource references: [Cassagne2019].",
   "documents": [
@@ -41,5 +41,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-13T17:02:40.591120721Z"
+  "updated_at": "2026-09-15T00:58:39.128515327Z"
 }

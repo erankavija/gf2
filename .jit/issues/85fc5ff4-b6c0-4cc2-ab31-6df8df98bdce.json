@@ -1,0 +1,38 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:57:24.562407727Z",
+  "dependencies": [
+    "16560579-abd8-446c-9a02-9715feeee1af"
+  ],
+  "description": "Establish the separate workload profile and materiality disposition for arbitrary-offset zero-fill `BitVec` shifts without changing production code or authorizing an ISA-specific implementation.\n\n## Background\n\n`BitVec::shift_left` and `BitVec::shift_right` dispatch whole-word offsets through the canonical backend while residual offsets use safe scalar carry loops. The repository-wide consumer sweep finds no downstream production caller, so this work measures the public primitive as an isolated family and records whole-consumer measurement as inapplicable rather than inventing a consumer. The profile uses release builds on the prepared Zen 3 host under protocol version 4 and keeps the existing word-shift path as a control.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen protocol-v4 addendum and append-only family-ledger reservation predeclare the workload matrix, exploratory role, semantic oracle, cache states, measurement settings and bounded search before any timing starts.\n- [hard] REQ-02: Scheduled benchmark-window execution produces an accepted exploratory receipt with exact rebuilt source and executable pins, raw paired samples, append-only execution log, checkpoints, runtime provenance and durable negative or unavailable outcomes.\n- [hard] REQ-03: The semantic fixture corpus covers lengths and offsets 0, 1, 7, 8, 63, 64 and 65, offsets at and beyond the vector length, vector-lane crossings and incomplete final words; every result matches an independent zero-fill reference with zero tail padding.\n- [hard] REQ-04: The report names the complete production consumer result, records the absence of a downstream production caller, separates the word-aligned control from residual work and makes no production-adoption claim.\n- [hard] REQ-05: A no-candidate or no-win disposition permits this profile to complete. If it nominates a material AVX2 lane-crossing or BMI-based form, this profile remains open until a planning-time Rust 1.95 compile and assembly record proves feasibility, including a runtime-gated scalar fallback for any capability-gated form, and the plan bracket is amended and re-reviewed to create the required candidate implementation and confirmation leaves, make them depend on this profile, and re-home publication behind their sinks in the instantiated dependency graph.\n\n## Notes\n\nFollow `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md` and `dev/active/f547c394/protocol.md`. Timed work runs only in a scheduled benchmark window.",
+  "documents": [],
+  "first_ready_at": "2026-09-15T00:57:24.562407727Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review",
+    "asm-artefact-present",
+    "holistic-review",
+    "repo-validate"
+  ],
+  "gates_status": {},
+  "id": "85fc5ff4-b6c0-4cc2-ab31-6df8df98bdce",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-shifts-and-permutations",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "satisfies:REQ-07",
+    "satisfies:REQ-08",
+    "satisfies:REQ-09",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Profile the residual BitVec shift family",
+  "updated_at": "2026-09-15T00:57:54.208123863Z"
+}
