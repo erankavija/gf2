@@ -12545,3 +12545,4 @@
 {"gate_key":"research-review","id":"c447a30b-b81c-4411-9a05-a7e0aa20fd8c","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:10:09.156731459Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"asm-artefact-present","id":"5d8b4756-f9f3-438b-a10e-b196d5b0da6d","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:10:16.653998245Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"holistic-review","id":"18efc3da-f8da-44fd-944f-5fedd8d77c0b","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:12:51.724230371Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"63e4c21b-be56-4c10-bda6-4262d33bac2f","issue_id":"92385645-25ab-480c-996b-61049d186a70","timestamp":"2026-09-15T03:14:09.862408193Z","type":"issue_updated","updated_by":"doc-add"}

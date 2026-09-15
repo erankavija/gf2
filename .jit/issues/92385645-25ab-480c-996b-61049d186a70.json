@@ -45,6 +45,12 @@
       "format": "markdown",
       "label": "M4RI matvec qualification runner",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh"
+    },
+    {
+      "commit": "e4e230db",
+      "doc_type": "validation",
+      "label": "Successful M4RI matvec semantic probe record",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
     }
   ],
   "first_ready_at": "2026-09-15T00:55:29.092843264Z",
@@ -71,5 +77,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T03:00:59.708447270Z"
+  "updated_at": "2026-09-15T03:14:09.862408193Z"
 }
