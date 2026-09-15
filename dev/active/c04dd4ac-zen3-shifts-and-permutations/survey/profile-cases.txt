@@ -1,0 +1,17 @@
+# Cases whose first completed session records perf counters and hot instructions.
+qam16-r12-normal-direct
+qam16-r12-normal-sim-stage
+qam16-r12-normal-xdsopl-packed
+qam16-r12-normal-bicm-channel
+qam64-r12-normal-direct
+qam64-r12-normal-sim-stage
+qam64-r12-normal-xdsopl-packed
+qam64-r12-normal-bicm-channel
+qam16-r12-short-direct
+qam16-r12-short-sim-stage
+qam16-r12-short-xdsopl-packed
+qam16-r12-short-bicm-channel
+qam64-r12-short-direct
+qam64-r12-short-sim-stage
+qam64-r12-short-xdsopl-packed
+qam64-r12-short-bicm-channel

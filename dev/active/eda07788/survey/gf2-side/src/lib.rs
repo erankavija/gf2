@@ -188,11 +188,47 @@ pub fn xdsopl_forward(modcod: &str, input: &[i32], output: &mut [i32]) {
     }
 }
 
+/// Calls xdsopl's selected `PCTITL` operation with its destructive input made
+/// explicit to the caller.
+///
+/// The profiling adapter uses this boundary so the required input copy is a
+/// separately observed memory pass instead of being hidden in the C++ shim.
+/// `input` is overwritten by xdsopl's parity-interleave stage.
+pub fn xdsopl_forward_mut(modcod: &str, input: &mut [i32], output: &mut [i32]) {
+    let bits = frame_bits(modcod);
+    assert_eq!(input.len(), bits);
+    assert_eq!(output.len(), bits);
+    // SAFETY: every selected monomorphization has exactly `bits` elements in
+    // both slices. Their pointers remain valid and non-overlapping for the
+    // duration of the call, and the C++ function reads/writes only that range.
+    unsafe {
+        match modcod {
+            "qam16-r12-normal" => {
+                xdsopl_pctitl_qam16_r12_normal_fwd_mut(input.as_mut_ptr(), output.as_mut_ptr())
+            }
+            "qam64-r12-normal" => {
+                xdsopl_pctitl_qam64_r12_normal_fwd_mut(input.as_mut_ptr(), output.as_mut_ptr())
+            }
+            "qam16-r12-short" => {
+                xdsopl_pctitl_qam16_r12_short_fwd_mut(input.as_mut_ptr(), output.as_mut_ptr())
+            }
+            "qam64-r12-short" => {
+                xdsopl_pctitl_qam64_r12_short_fwd_mut(input.as_mut_ptr(), output.as_mut_ptr())
+            }
+            other => panic!("unrecognized DVB-T2 MODCOD: {other}"),
+        }
+    }
+}
+
 unsafe extern "C" {
     fn xdsopl_pctitl_qam16_r12_normal_fwd(input: *const i32, output: *mut i32);
     fn xdsopl_pctitl_qam64_r12_normal_fwd(input: *const i32, output: *mut i32);
     fn xdsopl_pctitl_qam16_r12_short_fwd(input: *const i32, output: *mut i32);
     fn xdsopl_pctitl_qam64_r12_short_fwd(input: *const i32, output: *mut i32);
+    fn xdsopl_pctitl_qam16_r12_normal_fwd_mut(input: *mut i32, output: *mut i32);
+    fn xdsopl_pctitl_qam64_r12_normal_fwd_mut(input: *mut i32, output: *mut i32);
+    fn xdsopl_pctitl_qam16_r12_short_fwd_mut(input: *mut i32, output: *mut i32);
+    fn xdsopl_pctitl_qam64_r12_short_fwd_mut(input: *mut i32, output: *mut i32);
 }
 
 #[cfg(test)]
