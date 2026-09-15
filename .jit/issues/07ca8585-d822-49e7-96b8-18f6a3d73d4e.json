@@ -14,6 +14,360 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "report",
+      "label": "Allocation and edge traversal in the CPU min-sum LDPC update",
+      "path": "dev/active/07ca8585/findings.md"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Measurement plan for the min-sum update change",
+      "path": "dev/active/07ca8585/plan.md"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "reference",
+      "label": "Source evidence for the min-sum update path, before and after",
+      "path": "dev/active/07ca8585/survey/source-evidence.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Pilot addendum, before/after single-worker family",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-single-worker-pilot.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, before/after single-worker confirmation",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-single-worker.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "reference",
+      "label": "Derivation of the single-worker confirmation addendum from its pilot",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-single-worker-derivation.txt"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Pilot addendum, before/after multicore family",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-multicore-pilot.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Pilot addendum, comparator single-worker family",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-comparator-single-worker-pilot.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, comparator single-worker confirmation",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-comparator-single-worker.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "reference",
+      "label": "Derivation of the comparator single-worker confirmation addendum from its pilot",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-comparator-single-worker-derivation.txt"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Pilot addendum, comparator multicore family",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-comparator-multicore-pilot.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "reference",
+      "label": "Min-sum update evidence tables",
+      "path": "dev/bench_results/07ca8585/tables.md"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Build identity of both gf2 generations and the pinned AFF3CT arm",
+      "path": "dev/bench_results/07ca8585/preparation/build-identity.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Derived per-iteration structural work of both update paths",
+      "path": "dev/bench_results/07ca8585/preparation/structural-costs.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Allocation census of both generations over the frozen workloads",
+      "path": "dev/bench_results/07ca8585/preparation/alloc-census.jsonl"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Steady-state allocation counter run record (REQ-07)",
+      "path": "dev/bench_results/07ca8585/preparation/allocation-counter.jsonl"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted before/after single-worker pilot, acceptance summary",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted before/after single-worker pilot, receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-pilot/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted comparator single-worker pilot, acceptance summary",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted comparator single-worker pilot, receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger, before/after single-worker family",
+      "path": "dev/bench_results/07ca8585/v4-update-single-worker-family-ledger.jsonl"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger, comparator single-worker family",
+      "path": "dev/bench_results/07ca8585/v4-update-comparator-single-worker-family-ledger.jsonl"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Campaign launcher for the min-sum update families",
+      "path": "dev/bench_results/07ca8585/run-campaign.sh"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Wire-contract smoke of the min-sum update arms",
+      "path": "dev/bench_results/07ca8585/run-smoke.sh"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Pilot addendum, isolated check-node comparator family",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-checknode-pilot.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, isolated check-node confirmation",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-checknode.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "reference",
+      "label": "Derivation of the isolated check-node confirmation addendum",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-checknode-derivation.txt"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Pilot addendum, fixed-iteration comparator family",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-fixed-iteration-pilot.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, fixed-iteration confirmation",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-fixed-iteration.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "reference",
+      "label": "Derivation of the fixed-iteration confirmation addendum",
+      "path": "dev/active/07ca8585/addendum-ldpc-update-fixed-iteration-derivation.txt"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Build identity of the isolated arms, fixed corpus, and profile executables",
+      "path": "dev/bench_results/07ca8585/preparation/kernel-build-identity.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Bit-identity receipt for the isolated gf2 and AFF3CT check-node arms",
+      "path": "dev/bench_results/07ca8585/preparation/checknode-parity.jsonl"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "gfx1030 byte-identity verification of the canonical LDPC edge layout",
+      "path": "dev/bench_results/07ca8585/preparation/gpu-byte-identity.md"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Prepared fixed-iteration gf2 DVB-T2 quality evidence",
+      "path": "dev/bench_results/07ca8585/preparation/quality-fixed/gf2-nms-f32-dvb-t2-r12.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Prepared fixed-iteration gf2 NR quality evidence",
+      "path": "dev/bench_results/07ca8585/preparation/quality-fixed/gf2-nms-f32-nr-bg1-z384.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Prepared fixed-iteration AFF3CT DVB-T2 quality evidence",
+      "path": "dev/bench_results/07ca8585/preparation/quality-fixed/aff3ct-flooding-nms-f32-dvb-t2-r12.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Prepared fixed-iteration AFF3CT NR quality evidence",
+      "path": "dev/bench_results/07ca8585/preparation/quality-fixed/aff3ct-flooding-nms-f32-nr-bg1-z384.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted qualifying before-after single-worker confirmation receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-confirmation/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Acceptance summary for the before-after single-worker confirmation",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted nonqualifying before-after multicore scaling pilot receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-multicore-pilot/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Acceptance summary for the before-after multicore scaling pilot",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-multicore-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted matched AFF3CT full-decoding confirmation receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Acceptance summary for the matched AFF3CT full-decoding confirmation",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted nonqualifying matched AFF3CT scaling pilot receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-multicore-pilot/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Acceptance summary for the matched AFF3CT scaling pilot",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-multicore-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted isolated check-node comparator pilot receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-pilot/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Acceptance summary for the isolated check-node comparator pilot",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted qualifying isolated check-node confirmation receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Acceptance summary for the isolated check-node confirmation",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted fixed-iteration comparator pilot receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Acceptance summary for the fixed-iteration comparator pilot",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Accepted qualifying fixed-iteration confirmation receipt",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/receipt.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Acceptance summary for the fixed-iteration confirmation",
+      "path": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Append-only before-after multicore family ledger",
+      "path": "dev/bench_results/07ca8585/v4-update-multicore-family-ledger.jsonl"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Append-only matched AFF3CT multicore family ledger",
+      "path": "dev/bench_results/07ca8585/v4-update-comparator-multicore-family-ledger.jsonl"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Resolved re-sampled LDPC profile report for the canonical update",
+      "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile.md"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Machine-readable re-sampled LDPC profile summary",
+      "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Append-only execution log for the re-sampled LDPC profile",
+      "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/repetitions.log"
+    },
+    {
+      "commit": "e28168d736931bcb2c29dee3d67630416512c8fb",
+      "doc_type": "benchmark",
+      "label": "Address-attribution ledger for the re-sampled LDPC profile",
+      "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/attribution.tsv"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:24.786303643Z",
@@ -38,5 +392,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Remove allocation and repeated edge traversal from LDPC updates",
-  "updated_at": "2026-09-13T17:00:46.591068966Z"
+  "updated_at": "2026-09-15T01:10:10.251014895Z"
 }
