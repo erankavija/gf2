@@ -1,0 +1,327 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "bitvec-residual-shift-profile",
+    "issue": "85fc5ff4",
+    "purpose": "kernel-family",
+    "description": "The public BitVec zero-fill left and right shift family as an isolated workload because the complete production-source sweep finds no downstream caller. Each exploratory cell times the current residual scalar-carry path against the existing word-aligned dispatch path at the same vector length, direction, seeded representation and cache state. The offsets intentionally differ: the word path is a non-equivalent workload control, so ratios describe residual-path cost and cannot establish semantic substitution or production adoption. The matrix covers small, lane-crossing, byte-residual, resident and streaming sizes; correctness is established separately against the same independent zero-fill oracle for both paths."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-15T01:15:22Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "No adoptable candidate exists in this profile. Any production speedup rule is fixed only after a material result triggers the bracket's Rust 1.95 feasibility and re-review barrier.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.03,
+    "equivalence_rationale": "Three percent separates descriptive parity from a visible workload-control difference; exploratory results do not turn this margin into an adoption test.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A residual path must consume at least one fifth more time than the word-aligned control at a consequential size before this no-consumer family can justify planning-time feasibility work for at most two concrete forms."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "This profile authorizes no production source or unsafe kernel. A material nomination requires an amended, re-reviewed bracket before another leaf can receive a non-zero implementation budget."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "left-small-r1-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-small-len65-residual1-word64-control",
+        "size": {
+          "length_bits": 65,
+          "residual_offset": 1,
+          "control_offset": 64
+        },
+        "seed": 8501
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "left-lane-crossing-r7-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-lane-crossing-len257-residual7-word64-control",
+        "size": {
+          "length_bits": 257,
+          "residual_offset": 7,
+          "control_offset": 64
+        },
+        "seed": 8502
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "left-byte-residual-r8-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-byte-residual-len4097-residual8-word64-control",
+        "size": {
+          "length_bits": 4097,
+          "residual_offset": 8,
+          "control_offset": 64
+        },
+        "seed": 8503
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "left-resident-r63-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-resident-len65537-residual63-word64-control",
+        "size": {
+          "length_bits": 65537,
+          "residual_offset": 63,
+          "control_offset": 64
+        },
+        "seed": 8504
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "left-streaming-r65-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-streaming-len33554439-residual65-word64-control",
+        "size": {
+          "length_bits": 33554439,
+          "residual_offset": 65,
+          "control_offset": 64
+        },
+        "seed": 8505
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "right-small-r1-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-right-small-len65-residual1-word64-control",
+        "size": {
+          "length_bits": 65,
+          "residual_offset": 1,
+          "control_offset": 64
+        },
+        "seed": 8506
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "right-lane-crossing-r7-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-right-lane-crossing-len257-residual7-word64-control",
+        "size": {
+          "length_bits": 257,
+          "residual_offset": 7,
+          "control_offset": 64
+        },
+        "seed": 8507
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "right-byte-residual-r8-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-right-byte-residual-len4097-residual8-word64-control",
+        "size": {
+          "length_bits": 4097,
+          "residual_offset": 8,
+          "control_offset": 64
+        },
+        "seed": 8508
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "right-resident-r63-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-right-resident-len65537-residual63-word64-control",
+        "size": {
+          "length_bits": 65537,
+          "residual_offset": 63,
+          "control_offset": 64
+        },
+        "seed": 8509
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "right-streaming-r65-w64",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-right-streaming-len33554439-residual65-word64-control",
+        "size": {
+          "length_bits": 33554439,
+          "residual_offset": 65,
+          "control_offset": 64
+        },
+        "seed": 8510
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
