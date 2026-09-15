@@ -5,6 +5,7 @@
 This correctness receipt validates the current HIP min-sum check update on the
 AMD Radeon RX 6950 XT (`gfx1030`). It interprets no runtime duration as a performance
 measurement. Source and executable content identities are in `receipt.json`.
+The portable producing-input closure is under `inputs/producing/`.
 
 ## Verdict
 
