@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-09-15T00:53:47.660100411Z",
   "context": {},
   "created_at": "2026-09-13T11:40:06.951560552Z",
   "dependencies": [
@@ -40,5 +41,5 @@
   "priority": "normal",
   "state": "ready",
   "title": "breakdown: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-15T00:50:32.758509917Z"
+  "updated_at": "2026-09-15T00:53:47.660100411Z"
 }
