@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "e1f9a78f-1a3e-4066-8744-aa55d10f85db"
+  ],
+  "description": "Run the frozen allocated `BitMatrix::matvec` cells and commit the current fused AND-popcount production baseline.\n\n## Background\n\nThe measurement covers row strides of 8, 9, 63, 64, and 65 words plus neighboring dimensions and declared cache regimes. The scalar four-accumulator route is a semantic/reference arm; the retained fused SIMD route is the production comparator.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt contains raw samples, exact commands, frozen matrix/vector identities, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for the dense-matvec cells.\n- [hard] REQ-02: Exact parity output, canonical bit indexing, zero tail padding, and declared boundary semantics match the scalar reference.\n- [hard] REQ-03: Annotated release assembly and profiles attribute observed costs to allocation, fused kernel work, dependencies, instruction mix, spills, cache traffic, or bandwidth.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "2094958d-f5a5-4bd2-9bfa-548e29d65bd2",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Record the dense-matvec baseline",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

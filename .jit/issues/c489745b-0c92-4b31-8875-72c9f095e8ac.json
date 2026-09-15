@@ -1,0 +1,34 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "bb769456-6803-49ec-ae91-f1619dd0f278"
+  ],
+  "description": "Run the frozen isolated XOR cells on the prepared Ryzen 9 5900X and commit the current pre-change evidence.\n\n## Background\n\nThe baseline includes 8, 9, 63, 64, and 65 words, deliberately offset slices, neighboring sizes, declared cache regimes, and selected-route provenance. Earlier exploratory receipts guide prioritization but do not replace this current baseline.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt contains raw samples, exact commands, frozen input identities, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for each isolated XOR cell.\n- [hard] REQ-02: Output validation proves exact XOR semantics for aligned and offset cells, and the receipt distinguishes dispatch-inclusive public calls from resolved-function observations.\n- [hard] REQ-03: Annotated release assembly and profiles attribute observed costs to dispatch, call overhead, instruction mix, spills, cache traffic, or bandwidth without claiming an unsearched optimum.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "c489745b-0c92-4b31-8875-72c9f095e8ac",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Record the isolated XOR baseline",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

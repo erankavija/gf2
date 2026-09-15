@@ -1,0 +1,33 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "c9cf13ee-7e25-493f-8e3d-a3924fbdaf88"
+  ],
+  "description": "Apply the frozen adoption rules to the private BitSlice prototype and decide whether an integration through existing private abstractions is justified.\n\n## Background\n\nBitSlice remains a bit view and no new public borrowed-word API is authorized by this story. A qualifying consumer gain may justify a private integration design. If realizing it requires a lasting public API or shared-infrastructure change, this branch closes as no-adoption, records the pending owner decision for a later explicitly authorized container, and does not block story completion.\n\n## Success Criteria\n\n- [hard] REQ-01: The decision applies the predeclared worthwhile-effect, equivalence-margin, complexity, and whole-consumer rules to the private prototype evidence.\n- [hard] REQ-02: A qualifying existing-abstraction result names one bounded private integration target, while a non-qualifying result preserves the no-win and leaves production unchanged.\n- [hard] REQ-03: Evidence requiring a public borrowed-word API or shared infrastructure resolves here to no-adoption plus a pending owner decision for later work, without waiting for that decision.\n\n## Notes\n\nThis issue selects whether private design work is warranted; it does not design or implement the integration.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "3f57a279-02b3-401f-ba20-c4ed35dac824",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Select the zero-copy integration outcome",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

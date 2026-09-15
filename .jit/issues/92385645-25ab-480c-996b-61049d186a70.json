@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "30c3aef1-9272-425d-8ac5-276cca22a8c7"
+  ],
+  "description": "Identify and prove the M4RI operation that is mathematically and operationally comparable with one dense mid-range consumer.\n\n## Background\n\nExisting M4RI evidence covers transpose and BCH-generator framing, neither of which substitutes for dense `BitMatrix::matvec`. A useful comparator must match a real consuming operation and charge construction, conversion, execution, and output costs.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed operation-match specification pins the M4RI revision, license, build flags, exact operation, dimensions, representation mapping, output semantics, and reproducible commands.\n- [hard] REQ-02: A semantic probe demonstrates an equivalent dense consumer result with adapter costs identified, or records with evidence that no matched M4RI operation exists within the declared search budget.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.",
+  "documents": [],
+  "first_ready_at": "2026-09-15T00:55:29.092843264Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "92385645-25ab-480c-996b-61049d186a70",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-03",
+    "satisfies:REQ-06",
+    "cites:AlbrechtBard2026"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Qualify a matched M4RI consumer operation",
+  "updated_at": "2026-09-15T00:56:29.735744196Z"
+}

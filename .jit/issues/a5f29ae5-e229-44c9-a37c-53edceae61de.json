@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "65c0e13d-74af-4f66-8b08-d2eba04e2a5b",
+    "80ed6e9f-fdd9-4353-85a7-c3be63f23850"
+  ],
+  "description": "Apply the frozen adoption rules to the unroll, consumer-specific dispatch, and ISA-L comparison evidence, producing one auditable logical-buffer outcome.\n\n## Background\n\nSelection uses confidence-bound whole-consumer benefit, equivalence non-regression, maintenance complexity, and declared dispatch domain. External throughput alone cannot select a production route, and the established implementation remains when no candidate qualifies.\n\n## Success Criteria\n\n- [hard] REQ-01: The decision evaluates each candidate against the predeclared worthwhile-effect, equivalence-margin, complexity, and multiple-comparison rules using only confirmatory evidence.\n- [hard] REQ-02: At most one bounded production change is selected with its exact dispatch domain and required before/after cells, or a no-adoption outcome preserves the established route and all losing evidence.\n- [hard] REQ-03: The preserved 64-word generic-hoist no-win is not reopened without a materially different consumer contract.\n\n## Notes\n\nThe decision record is the only authority consumed by the conditional adoption task.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "a5f29ae5-e229-44c9-a37c-53edceae61de",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Select the logical-buffer production outcome",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

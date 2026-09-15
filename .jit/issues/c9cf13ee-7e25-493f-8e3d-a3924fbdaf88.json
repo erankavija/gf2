@@ -1,0 +1,37 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "552fae3b-ca8b-47bc-bd4c-32680b285759",
+    "80ed6e9f-fdd9-4353-85a7-c3be63f23850"
+  ],
+  "description": "Prototype zero-copy access privately inside the measurement harness and test whether avoided copying benefits a real mid-range consumer.\n\n## Background\n\n`BitSlice` remains an offset bit view with bit accessors, not a borrowed-word API. This study does not add public methods, change layout, or adopt a production path. Its adapter must make alignment, bit offset, logical length, and tail masking costs visible.\n\n## Success Criteria\n\n- [hard] REQ-01: A private prototype covers the predeclared consumer cell without exposing a new public borrowed-word surface or bypassing canonical logical semantics.\n- [hard] REQ-02: Exact results hold for empty, aligned, deliberately offset, and 0/1/63/64/65 boundary cases with zero tail padding.\n- [hard] REQ-03: The receipt reports copy-inclusive and prototype costs, adjusted confidence bounds, equivalence results, complexity accounting, and preserved negative or inconclusive outcomes.\n\n## Notes\n\nOnly qualifying consumer evidence can reach a separately reviewed integration design; this issue itself cannot authorize API work.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present",
+    "tdd-reminder"
+  ],
+  "gates_status": {},
+  "id": "c9cf13ee-7e25-493f-8e3d-a3924fbdaf88",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Measure a private BitSlice zero-copy prototype",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

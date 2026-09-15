@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "c71becc5-46eb-4afd-b6f5-fae4062fa028"
+  ],
+  "description": "Apply the zero-copy integration contract only when it authorizes a bounded path through existing private abstractions; otherwise preserve the recorded no-change outcome.\n\n## Background\n\nThis story never implements a public borrowed-word API or shared-infrastructure change, even if a pending owner decision is recorded for later work. A public/shared requirement is a terminal no-adoption outcome here and cannot be smuggled into production through test-only accessors, duplicated abstractions, or a later owner response outside this graph.\n\n## Success Criteria\n\n- [hard] REQ-01: The approved existing-abstraction integration is implemented exactly for its bounded consumer, or the no-adoption contract leaves production unchanged.\n- [hard] REQ-02: Shared semantic coverage proves correct offset handling, alignment behavior, logical length, zero tail padding, and 0/1/63/64/65 boundary results.\n- [hard] REQ-03: No public borrowed-word API, shared-infrastructure change, second buffer abstraction, or dispatch bypass is implemented by this story branch.\n\n## Notes\n\nBefore/after performance confirmation is intentionally separate from this code change; later public/shared work requires a separately authorized container.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present",
+    "tdd-reminder"
+  ],
+  "gates_status": {},
+  "id": "7d3ced35-cc16-4176-a8e2-225199228067",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Implement the approved private zero-copy outcome",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

@@ -1,0 +1,36 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "6ba2e919-d2b1-4f08-9c82-76bb308b8a58"
+  ],
+  "description": "Apply the dense-parity adoption decision through the existing `BitMatrix::matvec` and isolated SIMD kernel boundary.\n\n## Background\n\nWhen no candidate qualifies, this issue verifies that the fused AND-popcount production path remains unchanged and records that disposition. A qualifying change is limited to its declared route, retains scalar fallback, and cannot relabel the already selected fusion as new work.\n\n## Success Criteria\n\n- [hard] REQ-01: The selected outcome is reflected exactly in production code, or the no-adoption decision leaves `matvec` behavior and selection unchanged.\n- [hard] REQ-02: Shared scalar/SIMD suites prove exact outputs for empty, aligned, offset, and 0/1/63/64/65 boundary cases with canonical indexing and zero tails.\n- [hard] REQ-03: Any unsafe intrinsic code stays in `gf2-kernels-simd` with an explicit safety contract, annotated release assembly is committed for modified SIMD symbols, and Rust 1.95 builds the affected path.\n\n## Notes\n\nBefore/after performance confirmation is intentionally separate from this code change.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present",
+    "tdd-reminder"
+  ],
+  "gates_status": {},
+  "id": "1956017f-ccbf-49dd-992f-552133da9cbc",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Implement the selected dense-parity outcome",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

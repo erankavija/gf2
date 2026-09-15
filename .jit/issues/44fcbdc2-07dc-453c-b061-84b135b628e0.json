@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "833dff1a-8d2b-42d2-b4a7-b34c2ac36df8"
+  ],
+  "description": "Execute the frozen M4RI matched-operation comparison against the dense gf2 consumer and publish both operation and adapter-inclusive observations.\n\n## Background\n\nOnly the qualified consuming operation is measured. Transpose or BCH-generator results are not substitutes. Matrix construction, representation conversion, execution, and output materialization stay visible in the whole-consumer arm.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt contains raw samples, exact external build and run commands, content-pinned matrices, runtime path evidence, statistical interpretation, and all construction, adapter, conversion, and output costs.\n- [hard] REQ-02: Semantically equivalent output is demonstrated for the frozen dimensions and boundary cells, with isolated operation throughput reported separately from consumer benefit.\n- [hard] REQ-03: Losing, inconclusive, unmatched, or unavailable cells remain in the committed evidence without triggering production adoption.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "44fcbdc2-07dc-453c-b061-84b135b628e0",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-03",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06",
+    "cites:AlbrechtBard2026"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Measure the M4RI dense comparison",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "7d3ced35-cc16-4176-a8e2-225199228067"
+  ],
+  "description": "Run holdout confirmation for an approved private zero-copy integration through existing abstractions, or publish the final no-change verdict.\n\n## Background\n\nOnly a qualifying private integration receives before/after measurement. A public-API or shared-infrastructure requirement is already a terminal no-adoption outcome and receives no implementation or timed confirmation in this story. Private-route confirmation includes copying, offset handling, masking, dispatch, setup, and output costs in the same whole-consumer boundary used by the prototype.\n\n## Success Criteria\n\n- [hard] REQ-01: Any adopted private integration has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results.\n- [hard] REQ-02: Whole-consumer benefit survives all adapter costs and semantic checks; otherwise the integration is not accepted and the contradictory evidence remains committed.\n- [hard] REQ-03: The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, profiles, and exact commands by content identity, while any no-adoption path records why no after measurement is applicable.\n- [hard] REQ-04: A public/shared requirement produces no timed samples in this issue and remains only a pending owner decision for a separately authorized container.\n\n## Notes\n\nRun private-route confirmation only in the benchmark window on the prepared host under the full-host wrapper.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "4497e541-8480-4ce3-ae81-4ad8e70b72f9",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Confirm the private zero-copy production outcome",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

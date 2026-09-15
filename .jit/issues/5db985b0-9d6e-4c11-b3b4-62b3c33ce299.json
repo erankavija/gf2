@@ -1,0 +1,37 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "23a08297-49cf-4a7a-b086-dab3b4a5cf4e",
+    "833dff1a-8d2b-42d2-b4a7-b34c2ac36df8"
+  ],
+  "description": "Implement at most one profile-justified dense-matvec fusion experiment that is distinct from the selected fused AND-popcount route.\n\n## Background\n\nThe current AVX2 path already fuses AND with population accumulation, and the generic carry-save comparator is already unselected. If the baseline exposes no distinct material fusion opportunity within budget, the study records a no-candidate result rather than relabelling either established route. Any intrinsic arm retains runtime feature gating plus the tested scalar fallback, and every new unsafe boundary requires an explicit safety contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The candidate is traceable to a measured cost center and has shared exact-output coverage for scalar fallback plus aligned, offset, and 0/1/63/64/65 boundary cases.\n- [hard] REQ-02: The receipt reports allocated whole-`matvec` samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile attribution.\n- [hard] REQ-03: The current fused AND-popcount path remains the baseline rather than a new candidate, no production selection changes here, and a no-candidate or losing outcome is preserved.\n- [hard] REQ-04: Every new unsafe boundary is isolated to `gf2-kernels-simd` and carries an explicit safety contract covering pointer validity, slice lengths, aliasing, required target features, runtime gating, and scalar fallback reachability.\n\n## Notes\n\nAny intrinsic-bearing experiment must compile and test with Rust 1.95 and remain inside the SIMD kernel crate.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present",
+    "tdd-reminder"
+  ],
+  "gates_status": {},
+  "id": "5db985b0-9d6e-4c11-b3b4-62b3c33ce299",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-kernels-simd",
+    "component:gf2-core",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Measure the profile-selected matvec fusion",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

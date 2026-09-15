@@ -1,0 +1,33 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "3f57a279-02b3-401f-ba20-c4ed35dac824"
+  ],
+  "description": "Produce a bounded integration design only for a private BitSlice experiment that qualifies through existing abstractions.\n\n## Background\n\nThe plan fixes BitSlice as a bit view and authorizes no new public borrowed-word API. A qualifying existing-abstraction result may be designed through current private storage and kernel boundaries. A result requiring public API or shared infrastructure closes as a no-change design record with a pending owner decision for a later explicitly authorized container; this issue never waits for that authority.\n\n## Success Criteria\n\n- [hard] REQ-01: The design maps qualifying evidence to one bounded private consumer integration through existing canonical abstractions, or emits a closed no-adoption record without proposing code.\n- [hard] REQ-02: Alignment, bit offset, logical length, tail masking, safety, scalar fallback, and complexity contracts are explicit for any implementable private route.\n- [hard] REQ-03: Any public borrowed-word API or shared-infrastructure requirement terminates this story branch as no-adoption plus a pending owner decision, with no implementable contract for that route.\n\n## Notes\n\nThis is a design-only issue; it makes no production change and cannot block on ungranted authority.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "c71becc5-46eb-4afd-b6f5-fae4062fa028",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Design the qualifying zero-copy integration",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

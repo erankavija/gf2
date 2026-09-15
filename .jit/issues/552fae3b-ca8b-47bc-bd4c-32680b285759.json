@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "c489745b-0c92-4b31-8875-72c9f095e8ac",
+    "c49e78bc-b047-4093-9c88-f0b48d4d7574"
+  ],
+  "description": "Turn the relevant logical consumer baselines into one bounded private BitSlice copy-avoidance experiment before prototype samples are collected.\n\n## Background\n\nBitSlice remains a bit view and the experiment may use only a private measurement prototype. The portfolio fixes one measured consumer, copy-inclusive comparator, offset/alignment cases, complexity budget, and stop rule without authorizing public borrowed-word API or production semantics.\n\n## Success Criteria\n\n- [hard] REQ-01: The portfolio names one exact private prototype, consumer cell, baseline, offset/alignment cases, profile rationale, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: A missing consumer signal is recorded as a no-candidate outcome and leaves production unchanged.\n- [hard] REQ-03: No public borrowed-word API, shared-infrastructure change, or production route is authorized by the portfolio.\n\n## Notes\n\nThis is an experimental selection contract, not an architecture or production adoption decision.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "552fae3b-ca8b-47bc-bd4c-32680b285759",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Freeze the private zero-copy candidate",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

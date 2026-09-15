@@ -1,0 +1,36 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "a5f29ae5-e229-44c9-a37c-53edceae61de"
+  ],
+  "description": "Apply the logical-buffer adoption decision through the existing core dispatcher and isolated SIMD kernel boundary.\n\n## Background\n\nWhen no candidate qualifies, this issue verifies that production remains unchanged and records that disposition. When one candidate qualifies, the change is limited to its declared dispatch domain, keeps Rust 1.95 compatibility, preserves scalar fallback, and does not create a second buffer or dispatch abstraction.\n\n## Success Criteria\n\n- [hard] REQ-01: The selected outcome is reflected exactly in production code, or the no-adoption decision leaves production behavior and selection unchanged.\n- [hard] REQ-02: Shared scalar/SIMD semantic suites cover empty, aligned, offset, and 0/1/63/64/65 boundary cases with canonical indexing and zero tails.\n- [hard] REQ-03: Any unsafe intrinsic code stays in `gf2-kernels-simd` with an explicit safety contract, annotated release assembly is committed for modified SIMD symbols, and Rust 1.95 builds the affected path.\n\n## Notes\n\nBefore/after performance confirmation is intentionally separate from this code change.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present",
+    "tdd-reminder"
+  ],
+  "gates_status": {},
+  "id": "23a08297-49cf-4a7a-b086-dab3b4a5cf4e",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Implement the selected logical-buffer outcome",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

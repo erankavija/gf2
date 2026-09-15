@@ -1,0 +1,36 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "92385645-25ab-480c-996b-61049d186a70"
+  ],
+  "description": "Freeze the confirmatory protocol for dense `BitMatrix::matvec` and its qualified M4RI comparison before candidate measurements begin.\n\n## Background\n\nThe protocol covers row strides of 8, 9, 63, 64, and 65 words, neighboring dimensions, relevant cache regimes, output allocation, and adapter costs. The current fused AND-popcount route is the production baseline; the already rejected generic carry-save comparator is not a fresh candidate.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins matrices, vectors, dimensions, density, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated kernel observations from allocated whole-`matvec` benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The M4RI arm follows the matched-operation specification and charges construction, conversion, execution, and output costs without substituting transpose evidence.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "96c94b81-f0d9-4122-9fae-027ae3f6bb01",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "satisfies:REQ-02",
+    "satisfies:REQ-03",
+    "satisfies:REQ-06",
+    "cites:AlbrechtBard2026"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Freeze the dense-parity measurement addendum",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

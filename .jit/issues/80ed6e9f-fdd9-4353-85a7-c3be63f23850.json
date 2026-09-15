@@ -1,0 +1,36 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "42a22210-4180-4c0d-bd38-97918b3a37dd"
+  ],
+  "description": "Implement the one predeclared consumer-specific dispatch experiment and compare it with the current public-call path.\n\n## Background\n\nThe experiment targets a measured unhoisted consumer and must have a materially different call contract from the preserved 64-word generic-hoist no-win. Already-hoisted M4RM, RREF, Gauss, Strassen, and degenerate multiply loops remain controls, not migration targets.\n\n## Success Criteria\n\n- [hard] REQ-01: The candidate is bounded to the profile-identified unhoisted consumer and has shared semantic coverage across selected worker counts, fallbacks, offset views, and boundary sizes.\n- [hard] REQ-02: The receipt reports dispatch-inclusive whole-consumer samples, adjusted confidence bounds, equivalence results, complexity accounting, assembly, and profile attribution.\n- [hard] REQ-03: The 64-word generic-hoist no-win remains unchanged, no production helper lands in this issue, and negative evidence is retained.\n\n## Notes\n\nThe experiment may bind an existing resolver privately; it must not introduce a parallel dispatch authority.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present",
+    "tdd-reminder"
+  ],
+  "gates_status": {},
+  "id": "80ed6e9f-fdd9-4353-85a7-c3be63f23850",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Measure the consumer-specific dispatch candidate",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

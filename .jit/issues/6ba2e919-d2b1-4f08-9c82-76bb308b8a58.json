@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "44fcbdc2-07dc-453c-b061-84b135b628e0",
+    "5db985b0-9d6e-4c11-b3b4-62b3c33ce299"
+  ],
+  "description": "Apply the frozen adoption rules to the profile-selected fusion and M4RI comparison evidence, producing one auditable dense-parity outcome.\n\n## Background\n\nSelection uses confidence-bound allocated whole-consumer benefit, exact parity equivalence, maintenance complexity, and declared dispatch domain. M4RI isolated throughput cannot select an incompatible production route, and the current fused AND-popcount implementation remains when no candidate qualifies.\n\n## Success Criteria\n\n- [hard] REQ-01: The decision evaluates each eligible candidate against the predeclared worthwhile-effect, equivalence-margin, complexity, and multiple-comparison rules using only confirmatory evidence.\n- [hard] REQ-02: At most one bounded production change is selected with its exact dispatch domain and required before/after cells, or a no-adoption outcome preserves the established route and all losing evidence.\n- [hard] REQ-03: The existing fused AND-popcount and rejected generic carry-save routes remain prior evidence rather than being presented as new optimization work.\n\n## Notes\n\nThe decision record is the only authority consumed by the conditional adoption task.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "6ba2e919-d2b1-4f08-9c82-76bb308b8a58",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-06"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Select the dense-parity production outcome",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

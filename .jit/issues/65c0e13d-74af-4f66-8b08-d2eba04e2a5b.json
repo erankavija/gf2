@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "0064b0a2-6ed1-4b7e-aeeb-f3975781ac63"
+  ],
+  "description": "Execute the frozen ISA-L comparison against equivalent gf2 XOR cells and publish both isolated and adapter-inclusive observations.\n\n## Background\n\nThe dispatched ISA-L route is used only when the qualified build has NASM and exposes the public SIMD path. Otherwise the receipt labels `xor_gen_base` as a scalar base arm and preserves dispatched-route unavailability. No external arm is called a competitive baseline without measured compatibility.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt contains raw samples, exact external build and run commands, content-pinned inputs, runtime selected-symbol evidence, statistical interpretation, and all setup, adapter, conversion, and output costs.\n- [hard] REQ-02: Semantically equivalent output is demonstrated for the frozen aligned, offset, and boundary cells, with isolated throughput reported separately from consumer relevance.\n- [hard] REQ-03: Losing, inconclusive, base-only, or unavailable cells remain in the committed evidence without triggering production adoption.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
+  "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "65c0e13d-74af-4f66-8b08-d2eba04e2a5b",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-03",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06",
+    "cites:IsaL2026"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Measure the ISA-L XOR comparison",
+  "updated_at": "2026-09-15T00:55:29.092843264Z"
+}

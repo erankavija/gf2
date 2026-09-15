@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T00:55:29.092843264Z",
+  "dependencies": [
+    "30c3aef1-9272-425d-8ac5-276cca22a8c7"
+  ],
+  "description": "Establish the exact ISA-L XOR arm that can be compared with the canonical mid-range logical operation, including its build and representation adapter contract.\n\n## Background\n\nISA-L's public dispatched `xor_gen` route requires NASM; the earlier base-only build is useful context but is not SIMD evidence. The qualification must either reproduce the dispatched route on a prepared host or preserve its unavailability explicitly, while keeping `xor_gen_base` labelled as a scalar base arm.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed comparator specification pins the ISA-L revision, license, build flags, NASM version or observed absence, selected symbol, input/output semantics, and reproducible build commands.\n- [hard] REQ-02: A semantic probe demonstrates matching LSB-first XOR behavior and accounts for destination setup, pointer arrays, alignment, conversion, and output costs, or records why no comparable dispatched arm is available.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.",
+  "documents": [],
+  "first_ready_at": "2026-09-15T00:55:29.092843264Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "3e83c116-4623-4f45-a9bd-b45712a3dc17",
+  "labels": [
+    "type:task",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-03",
+    "satisfies:REQ-06",
+    "cites:IsaL2026"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Qualify the ISA-L XOR comparator",
+  "updated_at": "2026-09-15T00:56:07.312194560Z"
+}
