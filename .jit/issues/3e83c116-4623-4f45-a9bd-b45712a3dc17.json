@@ -27,6 +27,12 @@
       "format": "markdown",
       "label": "ISA-L XOR qualification runner",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-isal-xor-probe.sh"
+    },
+    {
+      "commit": "827bed9a",
+      "doc_type": "validation",
+      "label": "Successful ISA-L XOR semantic probe record",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-probe-record.txt"
     }
   ],
   "first_ready_at": "2026-09-15T00:55:29.092843264Z",
@@ -40,6 +46,11 @@
     "asm-artefact-present"
   ],
   "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-15T03:10:16.653998245Z",
+      "updated_by": "auto:executor"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_at": "2026-09-15T02:55:56.302723115Z",
@@ -56,8 +67,8 @@
       "updated_by": "auto:executor"
     },
     "holistic-review": {
-      "status": "failed",
-      "updated_at": "2026-09-15T03:06:24.531016637Z",
+      "status": "passed",
+      "updated_at": "2026-09-15T03:12:51.724230371Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -66,8 +77,8 @@
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-15T02:59:57.596118822Z",
+      "status": "passed",
+      "updated_at": "2026-09-15T03:10:09.156731459Z",
       "updated_by": "auto:executor"
     }
   },
@@ -84,5 +95,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify the ISA-L XOR comparator",
-  "updated_at": "2026-09-15T03:06:24.531016637Z"
+  "updated_at": "2026-09-15T03:12:51.724230371Z"
 }

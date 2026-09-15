@@ -12541,3 +12541,7 @@
 {"gate_key":"repo-validate","id":"24ad0d16-6d7f-43d8-93de-5d3262a1564d","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:01:54.169289272Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"08e1ae1d-f943-401c-a1d4-ac285353139e","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:03:30.453605108Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"holistic-review","id":"ce7645ac-731c-4ec1-8078-29726508f1a8","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:06:24.531016637Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"5745b268-8f58-4698-95bd-6f797ff3b4c8","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:07:26.981601463Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"research-review","id":"c447a30b-b81c-4411-9a05-a7e0aa20fd8c","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:10:09.156731459Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"asm-artefact-present","id":"5d8b4756-f9f3-438b-a10e-b196d5b0da6d","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:10:16.653998245Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"holistic-review","id":"18efc3da-f8da-44fd-944f-5fedd8d77c0b","issue_id":"3e83c116-4623-4f45-a9bd-b45712a3dc17","timestamp":"2026-09-15T03:12:51.724230371Z","type":"gate_passed","updated_by":"auto:executor"}
