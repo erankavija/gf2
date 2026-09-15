@@ -392,8 +392,16 @@
       "doc_type": "benchmark",
       "label": "Append-only current-source device conformance log",
       "path": "dev/bench_results/07ca8585/device-conformance-r1/execution.log"
+    },
+    {
+      "commit": "c6247df5",
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 4",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/07ca8585-r4.md"
     }
   ],
+  "done_at": "2026-09-15T02:48:22.399648491Z",
   "first_ready_at": "2026-09-06T19:16:24.786303643Z",
   "gates_required": [
     "cargo-ci",
@@ -440,7 +448,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Remove allocation and repeated edge traversal from LDPC updates",
-  "updated_at": "2026-09-15T02:40:49.978065916Z"
+  "updated_at": "2026-09-15T02:48:22.399648491Z"
 }
