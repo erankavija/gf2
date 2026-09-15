@@ -17,3 +17,4 @@
 19513245	.agents/worktrees/agent-19513245	8	dev/bench_results/19513245/run-consumer-bytefield.sh window matrix-confirmation
 53c5a8c0	.agents/worktrees/agent-53c5a8c0	20	dev/active/53c5a8c0/survey/run-profile.sh dev/bench_results/53c5a8c0/profile
 19513245	.agents/worktrees/agent-19513245	10	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/19513245/survey/run-profile.sh dev/bench_results/19513245/r1-consumer-profile
+85fc5ff4	.agents/worktrees/agent-85fc5ff4	6	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-shift-profile.sh window
