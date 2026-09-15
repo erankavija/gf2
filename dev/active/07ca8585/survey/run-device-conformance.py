@@ -207,7 +207,7 @@ def main():
     device_args = [
         "./scripts/cargo-budget.sh", "--test", "cargo", "+1.95", "nextest", "run",
         "--manifest-path", "crates/gf2-kernels-hip/Cargo.toml", "--release",
-        "--features", "hip", "--lib", "--profile", "ci", "--color", "never",
+        "--features", "hip", "--lib", "--color", "never",
         "--no-capture", "-E", "test(device_min_sum_matches_cpu_on_signed_zero_and_nan)",
     ]
     device_output = run_logged(
