@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:work-3e83c116",
+  "claimed_at": "2026-09-15T02:15:33.898940063Z",
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
@@ -29,7 +30,7 @@
     "cites:IsaL2026"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Qualify the ISA-L XOR comparator",
-  "updated_at": "2026-09-15T01:07:18.832211209Z"
+  "updated_at": "2026-09-15T02:16:48.604897818Z"
 }

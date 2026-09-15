@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:work-92385645",
+  "claimed_at": "2026-09-15T02:15:37.264622052Z",
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
@@ -29,7 +30,7 @@
     "cites:AlbrechtBard2026"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T01:07:40.936311327Z"
+  "updated_at": "2026-09-15T02:17:12.743246829Z"
 }
