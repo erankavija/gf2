@@ -4,7 +4,7 @@
 # `target/`, which is not committed.
 #
 # The throwaway addendum keeps its family's declared id, so the plan resolves
-# the same arms the campaign will, and redirects the ledger into `target/` so
+# the same arms as the campaign, and redirects the ledger into `target/` so
 # the family's own append-only ledger stays untouched.
 #
 # It runs the real `benchmark-ab-runner` over a throwaway plan at the protocol's

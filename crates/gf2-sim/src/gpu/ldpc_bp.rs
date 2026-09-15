@@ -39,10 +39,11 @@
 //! standard-agnostic and decodes
 //! whatever expanded Tanner-graph layout the host hands it, so the same binary
 //! is reused unchanged across DVB-T2 and 5G NR (design §6 shared binary). This
-//! stage builds the DVB-T2 layout today by flattening the parity-check matrix; a
-//! Phase E constructor will host-expand a 5G NR base graph + per-`i_LS`
-//! lifting-set shift table into the same flat layout (the per-`i_LS` shift is
-//! consumed host-side during expansion, never by the kernel).
+//! stage flattens an already-expanded [`LdpcCode`](gf2_coding::ldpc::LdpcCode)
+//! parity-check matrix into that layout. DVB-T2 and 5G NR both use this
+//! representation; for 5G NR, host-side construction consumes the base graph
+//! and per-`i_LS` lifting-set shift table before the kernel sees the graph
+//! (`@/issue/23d3525f`).
 //!
 //! The module home is declared unconditionally in [`gpu`](crate::gpu); the items
 //! are gated on `feature = "hip"` so the crate builds cleanly with the feature
@@ -70,11 +71,11 @@ mod imp {
     /// code, widened to the `i32` the kernel consumes. That layout is the one
     /// the CPU [`LdpcDecoder`] passes messages over, so the kernel's per-edge
     /// gather visits messages in exactly the CPU order, which is the basis of
-    /// the hard-decision byte-identity. DVB-T2 flattens an already-expanded
-    /// parity-check matrix straight into this layout; the Phase E (`23d3525f`)
-    /// 5G NR constructor will host-expand a base graph and per-`i_LS` shift
-    /// table into the same one, the shift being consumed during that host-side
-    /// expansion and never by the kernel.
+    /// the hard-decision byte-identity. DVB-T2 and 5G NR reach this function as
+    /// already-expanded parity-check matrices. For 5G NR, host-side construction
+    /// consumes the base graph and per-`i_LS` lifting-set shift table before
+    /// producing the same flat arrays, so the kernel does not branch on the
+    /// standard (`@/issue/23d3525f`).
     fn build_layout(code: &LdpcCode) -> LdpcGraphLayout {
         let layout = EdgeLayout::from_parity_check(code.parity_check_matrix());
         let widen = |values: &[u32]| values.iter().map(|&value| value as i32).collect();

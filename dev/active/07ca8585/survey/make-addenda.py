@@ -350,7 +350,7 @@ def main():
             "frozen": {"frozen_utc": frozen},
             "effect": {
                 "worthwhile_speedup": None,
-                "rationale": "A pilot observes the resolution that later fixes this family's "
+                "rationale": "A pilot supplies the observed resolution used to fix this family's "
                 "margins; declaring them here would defeat the observation.",
                 "measurement_resolution": None,
                 "resolution_evidence": None,
