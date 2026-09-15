@@ -12,22 +12,22 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-core/src/matrix.rs",
-          "resolved_path": "crates/gf2-core/src/matrix.rs"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "141973f1fc34c5b73046b5411b7ce405f6dc0ca0545c4e1fb869da9f9e7b9f20",
           "is_shared": false,
           "mime_type": null,
           "original_path": "../6fb89a3c/survey/fetch-build.sh",
           "resolved_path": "dev/active/6fb89a3c/survey/fetch-build.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/matrix.rs",
+          "resolved_path": "crates/gf2-core/src/matrix.rs"
         }
       ],
-      "commit": "94eb4788",
+      "commit": "c333d545",
       "doc_type": "specification",
       "format": "markdown",
       "label": "M4RI dense matvec operation match",
@@ -40,17 +40,31 @@
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_probe.c"
     },
     {
-      "commit": "94eb4788",
+      "commit": "c333d545",
       "doc_type": "tool",
       "format": "markdown",
       "label": "M4RI matvec qualification runner",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh"
     },
     {
-      "commit": "e4e230db",
+      "commit": "c333d545",
       "doc_type": "validation",
       "label": "Successful M4RI matvec semantic probe record",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+    },
+    {
+      "commit": "c333d545",
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "M4RI compiler-provenance regression check",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-m4ri-build-provenance.sh"
+    },
+    {
+      "commit": "d5073467",
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/92385645-r1.md"
     }
   ],
   "first_ready_at": "2026-09-15T00:55:29.092843264Z",
@@ -113,5 +127,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T03:43:41.837065713Z"
+  "updated_at": "2026-09-15T03:51:52.998714678Z"
 }
