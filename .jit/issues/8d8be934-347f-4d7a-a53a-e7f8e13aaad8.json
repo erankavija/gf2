@@ -225,6 +225,46 @@
       "format": "markdown",
       "label": "Planning Investigation",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "22016f47de82502a989a6e46f1e1d92bc43e5144709212d9701da994e3d5707c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "52c3a07531bbefd019a5db504d77f79d5db1c23179936fe5558d12de49e29aba",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
+        }
+      ],
+      "commit": "67cc38dd",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Mid-range buffer execution plan",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+    },
+    {
+      "commit": "67cc38dd",
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Mid-range buffer breakdown manifest",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
     }
   ],
   "first_ready_at": "2026-09-13T11:40:06.478865369Z",
@@ -253,5 +293,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "planning: Profile and optimize mid-range buffer operations (8-64 words)",
-  "updated_at": "2026-09-15T00:04:39.904473575Z"
+  "updated_at": "2026-09-15T00:20:44.906255905Z"
 }

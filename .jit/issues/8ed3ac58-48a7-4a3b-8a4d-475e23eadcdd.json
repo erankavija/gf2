@@ -15,6 +15,78 @@
       "format": "markdown",
       "label": "Shift and permutation planning investigation",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "79f57a42f26f81924ffec790dd101c17fe04a2f89991191545db2cc66f040283",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../eda07788/findings.md",
+          "resolved_path": "dev/active/eda07788/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "824fa96a3c7c57a9d7cc29c0af515fa3102d5623ad94c7b6d151b605d2490b11",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a938ddf442e1984dbedace270df1236690cc1dc08e823c3d5b73217507f11c99",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/eda07788/tables-nr-derate.md",
+          "resolved_path": "dev/bench_results/eda07788/tables-nr-derate.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fe6d860cb0d4e3d740a9c92a6973db9f91873bfb1f5709b1b8c34064de03a71e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/eda07788/tables-v3.md",
+          "resolved_path": "dev/bench_results/eda07788/tables-v3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6df3402694998654430640d3127378da553b781292e88809bb8cb7ce9a125dc8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        }
+      ],
+      "commit": "4da91e2a",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Shift and permutation execution plan",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/plan.md"
+    },
+    {
+      "commit": "4da91e2a",
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Shift and permutation breakdown manifest",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/breakdown.json"
     }
   ],
   "first_ready_at": "2026-09-13T11:40:06.951560552Z",
@@ -43,5 +115,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "planning: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-15T00:09:49.986862144Z"
+  "updated_at": "2026-09-15T00:20:45.275203488Z"
 }
