@@ -1,0 +1,118 @@
+{
+  "schema": "ldpc-device-conformance-v1",
+  "issue": "07ca8585",
+  "purpose": "correctness validation; test-runner durations are not performance measurements",
+  "observed_utc": "2026-09-15T01:56:55+00:00",
+  "verdict": "pass",
+  "source_identity": {
+    "revision_informational": "3e62efc058a43037110c78568da59091ae978261",
+    "files": {
+      "crates/gf2-kernels-hip/hip/ldpc_bp.hip": "9f068b7851bc498f798789ffe657893c5eaac789edaeaf336fd0516d31159cd2",
+      "crates/gf2-kernels-hip/src/ffi.rs": "dfd9dde61ce3fd6a918a1bab3e7e494b3403b716a93ef92d102c1f1d7b572cdf",
+      "crates/gf2-kernels-hip/src/launch_ldpc_bp.rs": "6df792f6d4e8b10b5fa464c35f9c11dd18c8ccba004167fc47964fd75594525e",
+      "crates/gf2-coding/src/ldpc/min_sum.rs": "524db1d7cb60c4008a37d495407fab8abcfcf806ef7f53361f37598f99146d6b",
+      "crates/gf2-coding/tests/ldpc_check_update_contract.rs": "8c6528d3a445eec6dc3067d5611807551755be32fa1a9b86b15f3b1b27cbc496",
+      "crates/gf2-sim/tests/gpu_ldpc_byte_identity.rs": "c99a8a5a44c7cde626c1abfe562cf1b20aa9ebf75f6e1f6a6b074ce75ab6ee4b",
+      "crates/gf2-sim/tests/gpu_byte_identity.rs": "34164dc32aa0d39457f4174627cdfbcbd38a76ac419ad9a5b91757deae8da2b9",
+      "crates/gf2-sim/tests/gpu_nr_5g_byte_identity.rs": "16ec35f31169e5d1bf346a0c4798797efb787864c86868f66123b8ea085dfa30",
+      "dev/active/07ca8585/survey/run-device-conformance.py": "0cc8eb4a657b7309c7d71238ab7d3fb185dd63409d5bb676d718cd2d1536f85d"
+    },
+    "git_status_informational": [
+      "?? dev/bench_results/07ca8585/device-conformance-r1/"
+    ]
+  },
+  "toolchain": {
+    "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
+    "hipcc": "HIP version: 7.2.53211-9999\nAMD clang version 22.0.0git (/srcdest/rocm-llvm f58b06dce1f9c15707c5f808fd002e18c2accf7e)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /opt/rocm/lib/llvm/bin",
+    "nextest": "cargo-nextest 0.9.133 (65e806bd5 2026-04-14)\nrelease: 0.9.133\ncommit-hash: 65e806bd589d12c4341d3696a02a9788bd437c3c\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu",
+    "host": "Linux fraktaali 7.2.2-arch1-1 #1 SMP PREEMPT_DYNAMIC Fri, 28 Aug 2026 16:09:39 +0000 x86_64 GNU/Linux"
+  },
+  "device": {
+    "target": "gfx1030",
+    "marketing_name": "AMD Radeon RX 6950 XT",
+    "rocminfo": "raw/rocminfo.txt",
+    "rocminfo_sha256": "6ac835002e5fbc1b92b5a6d1ed085cd7a51dce134415b0dde5f760e85f8f2f91"
+  },
+  "executables": {
+    "device_edge_cases": {
+      "gf2-kernels-hip": {
+        "path": "crates/gf2-kernels-hip/target/release/deps/gf2_kernels_hip-d079008f9589259f",
+        "sha256": "80ae3fac81baeac977577c89b54c2d480daedab7a17409a8299ad6cd61dd0ded"
+      }
+    },
+    "ordinary_byte_identity": {
+      "gf2-sim::gpu_byte_identity": {
+        "path": "target/release/deps/gpu_byte_identity-01fad297a83eca41",
+        "sha256": "cba93ab11c9f1f8a87aabb3a3077b086edc03cd2f6a01799a1dc297442f6105c"
+      },
+      "gf2-sim::gpu_ldpc_byte_identity": {
+        "path": "target/release/deps/gpu_ldpc_byte_identity-6abf2f447d439d0f",
+        "sha256": "279317d47e71e8f57029744c86d758ff26efc29618b85ffd9ccb250a59c872df"
+      },
+      "gf2-sim::gpu_nr_5g_byte_identity": {
+        "path": "target/release/deps/gpu_nr_5g_byte_identity-6641e3bd5a90d701",
+        "sha256": "40aa33343ef64b5437ac8d4377c98872803294f56fbf9fe7999dd81e8a71fe29"
+      }
+    }
+  },
+  "tests": {
+    "device_edge_cases": {
+      "verdict": "pass",
+      "comparison": "bitwise f32 output equality against min_sum_check_row",
+      "algorithms": [
+        "MinSum",
+        "NormalizedMinSum(0.75)",
+        "OffsetMinSum(0.5)"
+      ],
+      "cases": [
+        "negative-zero",
+        "both-zeros",
+        "positive-nan",
+        "negative-nan",
+        "all-nan",
+        "nan-and-negative-zero"
+      ],
+      "device_rows": 18,
+      "log": "raw/device-edge-cases.log"
+    },
+    "ordinary_slow": {
+      "verdict": "pass",
+      "names": [
+        "gpu_ldpc_hard_decision_byte_identical_to_cpu",
+        "gpu_chain_verdict_byte_identical_r12_16qam",
+        "gpu_chain_verdict_byte_identical_r23_64qam",
+        "gpu_chain_verdict_byte_identical_r34_16qam",
+        "gpu_nr_5g_bg1_z384_r12_byte_identical_to_cpu"
+      ],
+      "log": "raw/ordinary-slow.log"
+    },
+    "ordinary_smoke": {
+      "verdict": "pass",
+      "names": [
+        "gpu_nr_5g_smoke_byte_identical_to_cpu"
+      ],
+      "log": "raw/ordinary-smoke.log"
+    }
+  },
+  "commands": [
+    "./scripts/cargo-budget.sh --test cargo +1.95 nextest run --manifest-path crates/gf2-kernels-hip/Cargo.toml --release --features hip --lib --color never --no-capture -E test(device_min_sum_matches_cpu_on_signed_zero_and_nan)",
+    "./scripts/cargo-budget.sh --test cargo +1.95 nextest run -p gf2-sim --features hip --release --profile slow --run-ignored ignored-only --color never --test gpu_ldpc_byte_identity --test gpu_byte_identity --test gpu_nr_5g_byte_identity",
+    "./scripts/cargo-budget.sh --test cargo +1.95 nextest run -p gf2-sim --features hip --release --profile ci --color never --test gpu_nr_5g_byte_identity -E test(gpu_nr_5g_smoke_byte_identical_to_cpu)",
+    "./scripts/cargo-budget.sh cargo +1.95 nextest list --manifest-path crates/gf2-kernels-hip/Cargo.toml --release --features hip --lib --message-format json --color never",
+    "./scripts/cargo-budget.sh cargo +1.95 nextest list -p gf2-sim --features hip --release --test gpu_ldpc_byte_identity --test gpu_byte_identity --test gpu_nr_5g_byte_identity --message-format json --color never"
+  ],
+  "raw_files": {
+    "raw/device-edge-cases.log": "3eb4bafb4319373ad3d952d21581d9e155e9e36d67a1c63a48bea7e306047445",
+    "raw/device-executables.json": "6353781b590cbca65fdeac1573735cf8d92f90e0bb064f088ec5645b3ad67543",
+    "raw/git-status.txt": "7aa294c580f773ea7ae21fe9cff828d471cf05852791cce4976adf7f651ad615",
+    "raw/hipcc.txt": "70d172807391c8d76a46e7c48b721cd7940b086c71114fee74baaf3224fa094b",
+    "raw/nextest.txt": "1f6d5e27428b7e095647f40e8c93a6bd9a6466ad572b1c6b6914ec475df5323a",
+    "raw/ordinary-executables.json": "8128ba9f489d6d807014d168d9651d97f670e14183d8453bc9fc5a8f4bdb8d86",
+    "raw/ordinary-slow.log": "1a9daff070b48d2cf5dcaf9fb867b6c0eceb5fe069298016cebd23c9e0f450d0",
+    "raw/ordinary-smoke.log": "d4b1df6275cab8e17614a960f62778a392f6dd83183e1ee9112e000df309d0a4",
+    "raw/rocminfo.txt": "6ac835002e5fbc1b92b5a6d1ed085cd7a51dce134415b0dde5f760e85f8f2f91",
+    "raw/rustc.txt": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
+    "raw/source-revision.txt": "bea4e152d5f7a6c777745638463c94736c8b2584c0ab7bd696a81d84dfab41c8",
+    "raw/uname.txt": "e704d78b14a8c09b4a88591a394b81b94c8779a04d67c9c4a3189fae86df07dc"
+  }
+}
