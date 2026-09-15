@@ -1,0 +1,82 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "edd4c88e76fa70adf89380c607e3217711021f43dd92477c7b004edf9d1d6c56",
+  "campaign_id": "07ca8585-v4-r1-update-single-worker-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": true,
+  "family": {
+    "family_id": "ldpc-update-single-worker-v1",
+    "comparisons": 2,
+    "family_alpha": 0.025,
+    "per_comparison_confidence": 0.9875,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-update-w1",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 6.755390063206008,
+        "lower": 6.743013107471686,
+        "upper": 6.766174705708891,
+        "confidence": 0.9875,
+        "alpha": 0.0125,
+        "resamples": 10000,
+        "seed": 11143328080152916730,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.05,
+        "equivalence": 1.02
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-update-w1",
+      "role": "confirmatory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 9.991637219162735,
+        "lower": 9.966296939162332,
+        "upper": 10.034235523971619,
+        "confidence": 0.9875,
+        "alpha": 0.0125,
+        "resamples": 10000,
+        "seed": 3509867574206000766,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.05,
+        "equivalence": 1.02
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

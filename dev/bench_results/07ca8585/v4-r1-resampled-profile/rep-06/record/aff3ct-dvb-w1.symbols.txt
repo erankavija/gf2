@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 7740071595
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                                                                                                                                           
+# ........  ............  ................  .................................................................................................................................................................................................................................................
+#
+    62.07%          1201  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode_single_ite(std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> >&)
+    37.73%           730  ldpc-profile      [.] aff3ct::module::Decoder_LDPC_BP_flooding<int, float, aff3ct::tools::Update_rule_NMS<float>, aff3ct::tools::LDPC_syndrome>::_decode(float const*, unsigned long)
+     0.05%             1  [unknown]         [k] 0xffffffffad4015f0
+     0.05%             1  [unknown]         [k] 0xffffffffad73298d
+     0.05%             1  [unknown]         [k] 0xffffffffad89242a
+     0.05%             1  [unknown]         [k] 0xffffffffad8a8b44
+
+
+#
+# (Tip: To compute metrics for samples use perf record -e '{cycles,instructions}' ... ; perf script -F +metric)
+#

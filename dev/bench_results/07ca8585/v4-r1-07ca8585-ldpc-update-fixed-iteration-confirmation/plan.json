@@ -1,0 +1,101 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "07ca8585-v4-r1-update-fixed-iteration-confirmation",
+  "issue": "07ca8585",
+  "label": "confirmation",
+  "campaign_seed": 519627909890183174,
+  "addendum": "dev/active/07ca8585/addendum-ldpc-update-fixed-iteration.json",
+  "producing_manifest": "dev/active/07ca8585/survey/producing-inputs-kernel.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2-after-nms-f32-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-coding LdpcDecoder after 07ca8585: canonical edge layout and one shared minimum, second-minimum and sign reduction per check, f32 flooding normalized min-sum, syndrome stopping, one reused decoder per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-throughput/release/gf2-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/dev/bench_results/07ca8585/preparation/quality-fixed/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "aff3ct-flooding-nms-f32-dvb-t2-r12": {
+      "build": "external",
+      "description": "AFF3CT v4.7.0 Decoder_LDPC_BP_flooding<NMS>, f32, scalar, one clone per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-throughput/release/aff3ct-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/dev/bench_results/07ca8585/preparation/quality-fixed/aff3ct-flooding-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-after-nms-f32-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding LdpcDecoder after 07ca8585: canonical edge layout and one shared minimum, second-minimum and sign reduction per check, f32 flooding normalized min-sum, syndrome stopping, one reused decoder per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-throughput/release/gf2-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/dev/bench_results/07ca8585/preparation/quality-fixed/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "aff3ct-flooding-nms-f32-nr-bg1-z384": {
+      "build": "external",
+      "description": "AFF3CT v4.7.0 Decoder_LDPC_BP_flooding<NMS>, f32, scalar, one clone per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-throughput/release/aff3ct-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/dev/bench_results/07ca8585/preparation/quality-fixed/aff3ct-flooding-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-fixed-iteration-w1",
+      "baseline_arm": "gf2-after-nms-f32-dvb-t2-r12",
+      "candidate_arm": "aff3ct-flooding-nms-f32-dvb-t2-r12",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": false,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-fixed-iteration-w1",
+      "baseline_arm": "gf2-after-nms-f32-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1c602857/target/ldpc-inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": false,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 1
+}

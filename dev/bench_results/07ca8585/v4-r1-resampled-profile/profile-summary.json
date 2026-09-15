@@ -1,0 +1,3056 @@
+{
+  "schema": "ldpc-steady-profile-summary-v1",
+  "source": "dev/bench_results/07ca8585/v4-r1-resampled-profile",
+  "sessions": 9,
+  "resolution": {
+    "resolved": true,
+    "offset_convention": "file-offset",
+    "symbol_agreement": {
+      "offset-is-address": 257,
+      "file-offset": 521
+    },
+    "addresses": 521,
+    "executable": "target/ldpc-throughput/release/ldpc-profile",
+    "executable_sha256": "4349a556571af45fc6af56b4b15effde9223fee4934f6c7f264304f0fd291aa9"
+  },
+  "records": {
+    "gf2-dvb-w1": {
+      "kind": "record",
+      "label": "gf2-dvb-w1",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 9,
+      "total_samples": 4228,
+      "session_totals": [
+        470,
+        469,
+        470,
+        471,
+        470,
+        471,
+        469,
+        469,
+        469
+      ],
+      "categories": [
+        {
+          "category": "check-node-loop",
+          "samples": 3387,
+          "share": 0.8010879848628193,
+          "wilson_lower": 0.7887846580734622,
+          "wilson_upper": 0.8128446857416781,
+          "session_min": 0.7893617021276595,
+          "session_max": 0.8131634819532909
+        },
+        {
+          "category": "decode-loop-other",
+          "samples": 830,
+          "share": 0.19631031220435194,
+          "wilson_lower": 0.18461543019965174,
+          "wilson_upper": 0.20855654351704897,
+          "session_min": 0.18046709129511676,
+          "session_max": 0.20425531914893616
+        },
+        {
+          "category": "message-reset",
+          "samples": 3,
+          "share": 0.0007095553453169347,
+          "wilson_lower": 0.00024134153245010316,
+          "wilson_upper": 0.0020842320781068223,
+          "session_min": 0.0,
+          "session_max": 0.0021321961620469083
+        },
+        {
+          "category": "conversion-output",
+          "samples": 2,
+          "share": 0.0004730368968779565,
+          "wilson_lower": 0.00012973336546260792,
+          "wilson_upper": 0.0017232327479889437,
+          "session_min": 0.0,
+          "session_max": 0.00425531914893617
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 2,
+          "share": 0.0004730368968779565,
+          "wilson_lower": 0.00012973336546260792,
+          "wilson_upper": 0.0017232327479889437,
+          "session_min": 0.0,
+          "session_max": 0.002127659574468085
+        },
+        {
+          "category": "other:core.rs",
+          "samples": 2,
+          "share": 0.0004730368968779565,
+          "wilson_lower": 0.00012973336546260792,
+          "wilson_upper": 0.0017232327479889437,
+          "session_min": 0.0,
+          "session_max": 0.002127659574468085
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 2,
+          "share": 0.0004730368968779565,
+          "wilson_lower": 0.00012973336546260792,
+          "wilson_upper": 0.0017232327479889437,
+          "session_min": 0.0,
+          "session_max": 0.0021321961620469083
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "mut_ptr.rs:0 in check_node_update_min_sum",
+          "samples": 1285,
+          "share": 0.30392620624408706,
+          "wilson_lower": 0.29024522321308627,
+          "wilson_upper": 0.3179631616865594
+        },
+        {
+          "innermost": "core.rs:0 in decode_codeword_into",
+          "samples": 809,
+          "share": 0.1913434247871334,
+          "wilson_lower": 0.1797688264545054,
+          "wilson_upper": 0.20347838982298247
+        },
+        {
+          "innermost": "min_sum.rs:142 in check_node_update_min_sum",
+          "samples": 754,
+          "share": 0.1783349101229896,
+          "wilson_lower": 0.16709002822074945,
+          "wilson_upper": 0.19016377571594292
+        },
+        {
+          "innermost": "min_sum.rs:0 in check_node_update_min_sum",
+          "samples": 372,
+          "share": 0.0879848628192999,
+          "wilson_lower": 0.07981597633162744,
+          "wilson_upper": 0.09690176371081226
+        },
+        {
+          "innermost": "min_sum.rs:138 in check_node_update_min_sum",
+          "samples": 145,
+          "share": 0.03429517502365184,
+          "wilson_lower": 0.02921859765158437,
+          "wilson_upper": 0.04021724054793557
+        },
+        {
+          "innermost": "min_sum.rs:155 in check_node_update_min_sum",
+          "samples": 110,
+          "share": 0.026017029328287606,
+          "wilson_lower": 0.02163193058504081,
+          "wilson_upper": 0.031262645215791064
+        },
+        {
+          "innermost": "min_sum.rs:68 in min_sum_check_row",
+          "samples": 93,
+          "share": 0.021996215704824976,
+          "wilson_lower": 0.017989835267794532,
+          "wilson_upper": 0.02687041308224599
+        },
+        {
+          "innermost": "cmp.rs:1916 in spec_next",
+          "samples": 77,
+          "share": 0.018211920529801324,
+          "wilson_lower": 0.014596847235527823,
+          "wilson_upper": 0.02270168116082673
+        },
+        {
+          "innermost": "macros.rs:180 in next",
+          "samples": 76,
+          "share": 0.017975402081362345,
+          "wilson_lower": 0.01438613283867636,
+          "wilson_upper": 0.02243978806057282
+        },
+        {
+          "innermost": "index.rs:272 in index",
+          "samples": 63,
+          "share": 0.014900662251655629,
+          "wilson_lower": 0.011664266860779928,
+          "wilson_upper": 0.019017756576099398
+        },
+        {
+          "innermost": "min_sum.rs:156 in check_node_update_min_sum",
+          "samples": 59,
+          "share": 0.013954588457899717,
+          "wilson_lower": 0.010834169124278826,
+          "wilson_upper": 0.01795742432417901
+        },
+        {
+          "innermost": "zip.rs:0 in check_node_update_min_sum",
+          "samples": 51,
+          "share": 0.012062440870387891,
+          "wilson_lower": 0.009186662548284612,
+          "wilson_upper": 0.015824070923330238
+        },
+        {
+          "innermost": "core.rs:1218 in decode_codeword_into",
+          "samples": 46,
+          "share": 0.010879848628192999,
+          "wilson_lower": 0.008166969993930458,
+          "wilson_upper": 0.01448072599215752
+        },
+        {
+          "innermost": "min_sum.rs:150 in check_node_update_min_sum",
+          "samples": 44,
+          "share": 0.010406811731315043,
+          "wilson_lower": 0.007761580173725498,
+          "wilson_upper": 0.013940900818151735
+        },
+        {
+          "innermost": "zip.rs:306 in next",
+          "samples": 43,
+          "share": 0.010170293282876065,
+          "wilson_lower": 0.007559464638827295,
+          "wilson_upper": 0.013670408855944564
+        },
+        {
+          "innermost": "range.rs:772 in next",
+          "samples": 23,
+          "share": 0.005439924314096499,
+          "wilson_lower": 0.003627716191970908,
+          "wilson_upper": 0.008150007360693485
+        },
+        {
+          "innermost": "min_sum.rs:131 in check_node_update_min_sum",
+          "samples": 20,
+          "share": 0.004730368968779565,
+          "wilson_lower": 0.0030643397174495257,
+          "wilson_upper": 0.007295561343898747
+        },
+        {
+          "innermost": "mut_ptr.rs:961 in new",
+          "samples": 17,
+          "share": 0.00402081362346263,
+          "wilson_lower": 0.0025119768425691164,
+          "wilson_upper": 0.0064301017274630366
+        },
+        {
+          "innermost": "edge_layout.rs:189 in check_node_update_min_sum",
+          "samples": 17,
+          "share": 0.00402081362346263,
+          "wilson_lower": 0.0025119768425691164,
+          "wilson_upper": 0.0064301017274630366
+        },
+        {
+          "innermost": "f32.rs:1570 in min_sum_check_row",
+          "samples": 15,
+          "share": 0.003547776726584674,
+          "wilson_lower": 0.0021512277737921488,
+          "wilson_upper": 0.005845635802029257
+        },
+        {
+          "innermost": "min_sum.rs:115 in check_node_update_min_sum",
+          "samples": 14,
+          "share": 0.0033112582781456954,
+          "wilson_lower": 0.001973517132873156,
+          "wilson_upper": 0.005550738945842876
+        },
+        {
+          "innermost": "core.rs:1216 in decode_codeword_into",
+          "samples": 10,
+          "share": 0.0023651844843897824,
+          "wilson_lower": 0.0012852539750140782,
+          "wilson_upper": 0.00434857211528046
+        },
+        {
+          "innermost": "edge_layout.rs:200 in variable_node_update",
+          "samples": 10,
+          "share": 0.0023651844843897824,
+          "wilson_lower": 0.0012852539750140782,
+          "wilson_upper": 0.00434857211528046
+        },
+        {
+          "innermost": "enumerate.rs:82 in min_sum_check_row",
+          "samples": 10,
+          "share": 0.0023651844843897824,
+          "wilson_lower": 0.0012852539750140782,
+          "wilson_upper": 0.00434857211528046
+        },
+        {
+          "innermost": "range.rs:0 in decode_codeword_into",
+          "samples": 8,
+          "share": 0.001892147587511826,
+          "wilson_lower": 0.0009590994404072683,
+          "wilson_upper": 0.003729511655676523
+        }
+      ]
+    },
+    "gf2-nr-w1": {
+      "kind": "record",
+      "label": "gf2-nr-w1",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 9,
+      "total_samples": 1962,
+      "session_totals": [
+        218,
+        218,
+        218,
+        218,
+        218,
+        218,
+        218,
+        218,
+        218
+      ],
+      "categories": [
+        {
+          "category": "check-node-loop",
+          "samples": 1680,
+          "share": 0.8562691131498471,
+          "wilson_lower": 0.8400493700146912,
+          "wilson_upper": 0.8710964824278851,
+          "session_min": 0.8302752293577982,
+          "session_max": 0.8761467889908257
+        },
+        {
+          "category": "decode-loop-other",
+          "samples": 276,
+          "share": 0.14067278287461774,
+          "wilson_lower": 0.12598947020661913,
+          "wilson_upper": 0.1567604211066624,
+          "session_min": 0.12385321100917432,
+          "session_max": 0.16972477064220184
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 4,
+          "share": 0.0020387359836901123,
+          "wilson_lower": 0.0007931013964675919,
+          "wilson_upper": 0.005230506849030396,
+          "session_min": 0.0,
+          "session_max": 0.0045871559633027525
+        },
+        {
+          "category": "message-reset",
+          "samples": 2,
+          "share": 0.0010193679918450561,
+          "wilson_lower": 0.0002795919957360249,
+          "wilson_upper": 0.003709264168381201,
+          "session_min": 0.0,
+          "session_max": 0.0045871559633027525
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "mut_ptr.rs:0 in check_node_update_min_sum",
+          "samples": 578,
+          "share": 0.2945973496432212,
+          "wilson_lower": 0.27484325738391635,
+          "wilson_upper": 0.31515419821786017
+        },
+        {
+          "innermost": "min_sum.rs:142 in check_node_update_min_sum",
+          "samples": 273,
+          "share": 0.13914373088685014,
+          "wilson_lower": 0.12453335991717936,
+          "wilson_upper": 0.15516440327403103
+        },
+        {
+          "innermost": "core.rs:0 in decode_codeword_into",
+          "samples": 264,
+          "share": 0.1345565749235474,
+          "wilson_lower": 0.12016878438536903,
+          "wilson_upper": 0.15037259443962794
+        },
+        {
+          "innermost": "min_sum.rs:0 in check_node_update_min_sum",
+          "samples": 238,
+          "share": 0.12130479102956167,
+          "wilson_lower": 0.10759366082532044,
+          "wilson_upper": 0.13649594094172662
+        },
+        {
+          "innermost": "min_sum.rs:138 in check_node_update_min_sum",
+          "samples": 89,
+          "share": 0.045361875637105,
+          "wilson_lower": 0.03700852521958584,
+          "wilson_upper": 0.0554920464845945
+        },
+        {
+          "innermost": "min_sum.rs:155 in check_node_update_min_sum",
+          "samples": 77,
+          "share": 0.03924566768603466,
+          "wilson_lower": 0.031515211796031284,
+          "wilson_upper": 0.0487768474198645
+        },
+        {
+          "innermost": "min_sum.rs:68 in min_sum_check_row",
+          "samples": 57,
+          "share": 0.0290519877675841,
+          "wilson_lower": 0.022491077663694677,
+          "wilson_upper": 0.03745346073839349
+        },
+        {
+          "innermost": "index.rs:272 in index",
+          "samples": 56,
+          "share": 0.02854230377166157,
+          "wilson_lower": 0.02204526277983679,
+          "wilson_upper": 0.036881899581560997
+        },
+        {
+          "innermost": "macros.rs:180 in next",
+          "samples": 52,
+          "share": 0.026503567787971458,
+          "wilson_lower": 0.020268228608303587,
+          "wilson_upper": 0.034589429590332677
+        },
+        {
+          "innermost": "min_sum.rs:156 in check_node_update_min_sum",
+          "samples": 38,
+          "share": 0.019367991845056064,
+          "wilson_lower": 0.014143094598204415,
+          "wilson_upper": 0.026471299030766515
+        },
+        {
+          "innermost": "cmp.rs:1916 in spec_next",
+          "samples": 30,
+          "share": 0.01529051987767584,
+          "wilson_lower": 0.010731375002592306,
+          "wilson_upper": 0.02174401030085558
+        },
+        {
+          "innermost": "f32.rs:1570 in min_sum_check_row",
+          "samples": 25,
+          "share": 0.0127420998980632,
+          "wilson_lower": 0.008645617724773853,
+          "wilson_upper": 0.018742887375222127
+        },
+        {
+          "innermost": "zip.rs:0 in check_node_update_min_sum",
+          "samples": 20,
+          "share": 0.010193679918450561,
+          "wilson_lower": 0.006608504543521864,
+          "wilson_upper": 0.015693120353022217
+        },
+        {
+          "innermost": "min_sum.rs:150 in check_node_update_min_sum",
+          "samples": 19,
+          "share": 0.009683995922528032,
+          "wilson_lower": 0.006208357321153484,
+          "wilson_upper": 0.015075891534700212
+        },
+        {
+          "innermost": "range.rs:772 in next",
+          "samples": 17,
+          "share": 0.008664627930682976,
+          "wilson_lower": 0.00541681418823383,
+          "wilson_upper": 0.013832682586239105
+        },
+        {
+          "innermost": "core.rs:1218 in decode_codeword_into",
+          "samples": 16,
+          "share": 0.00815494393476045,
+          "wilson_lower": 0.0050259014416639235,
+          "wilson_upper": 0.013206219292118633
+        },
+        {
+          "innermost": "mut_ptr.rs:961 in new",
+          "samples": 11,
+          "share": 0.0056065239551478085,
+          "wilson_lower": 0.003133485219738985,
+          "wilson_upper": 0.010011755310591668
+        },
+        {
+          "innermost": "enumerate.rs:82 in min_sum_check_row",
+          "samples": 10,
+          "share": 0.0050968399592252805,
+          "wilson_lower": 0.002770869843190964,
+          "wilson_upper": 0.009356994646449308
+        },
+        {
+          "innermost": "zip.rs:306 in next",
+          "samples": 10,
+          "share": 0.0050968399592252805,
+          "wilson_lower": 0.002770869843190964,
+          "wilson_upper": 0.009356994646449308
+        },
+        {
+          "innermost": "index.rs:278 in index_mut",
+          "samples": 9,
+          "share": 0.0045871559633027525,
+          "wilson_lower": 0.0024152033298880243,
+          "wilson_upper": 0.008695285119061867
+        },
+        {
+          "innermost": "edge_layout.rs:189 in check_node_update_min_sum",
+          "samples": 7,
+          "share": 0.003567787971457696,
+          "wilson_lower": 0.0017293079384063685,
+          "wilson_upper": 0.007346428429162762
+        },
+        {
+          "innermost": "index.rs:438 in index",
+          "samples": 7,
+          "share": 0.003567787971457696,
+          "wilson_lower": 0.0017293079384063685,
+          "wilson_upper": 0.007346428429162762
+        },
+        {
+          "innermost": "range.rs:0 in decode_codeword_into",
+          "samples": 7,
+          "share": 0.003567787971457696,
+          "wilson_lower": 0.0017293079384063685,
+          "wilson_upper": 0.007346428429162762
+        },
+        {
+          "innermost": "core.rs:1216 in decode_codeword_into",
+          "samples": 6,
+          "share": 0.0030581039755351682,
+          "wilson_lower": 0.001402287008873529,
+          "wilson_upper": 0.00665607331800522
+        },
+        {
+          "innermost": "core.rs:1232 in decode_codeword_into",
+          "samples": 5,
+          "share": 0.0025484199796126403,
+          "wilson_lower": 0.0010890087774505985,
+          "wilson_upper": 0.00595197550873777
+        }
+      ]
+    },
+    "gf2-dvb-l24": {
+      "kind": "record",
+      "label": "gf2-dvb-l24",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 9,
+      "total_samples": 144608,
+      "session_totals": [
+        15942,
+        16106,
+        15918,
+        16161,
+        16018,
+        16176,
+        16115,
+        16059,
+        16113
+      ],
+      "categories": [
+        {
+          "category": "check-node-loop",
+          "samples": 100677,
+          "share": 0.6962062956406284,
+          "wilson_lower": 0.6938307713277825,
+          "wilson_upper": 0.6985713959329036,
+          "session_min": 0.6933976857867706,
+          "session_max": 0.6988130563798219
+        },
+        {
+          "category": "decode-loop-other",
+          "samples": 42973,
+          "share": 0.29716889798628016,
+          "wilson_lower": 0.2948188328745872,
+          "wilson_upper": 0.2995297390803281,
+          "session_min": 0.2947933574728431,
+          "session_max": 0.2999503290699118
+        },
+        {
+          "category": "message-reset",
+          "samples": 466,
+          "share": 0.00322250497897765,
+          "wilson_lower": 0.002943296337760849,
+          "wilson_upper": 0.0035281063453118373,
+          "session_min": 0.0022351918539674654,
+          "session_max": 0.0041462495288352805
+        },
+        {
+          "category": "other:core.rs",
+          "samples": 194,
+          "share": 0.001341557866784687,
+          "wilson_lower": 0.001165688607857917,
+          "wilson_upper": 0.0015439197815233494,
+          "session_min": 0.001058596425680304,
+          "session_max": 0.0017384825530858065
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 139,
+          "share": 0.0009612192963044921,
+          "wilson_lower": 0.0008142104741250247,
+          "wilson_upper": 0.0011347409808701086,
+          "session_min": 0.0005645464809936018,
+          "session_max": 0.001248595330253465
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 83,
+          "share": 0.0005739654790882938,
+          "wilson_lower": 0.00046307893132345045,
+          "wilson_upper": 0.0007113854632058022,
+          "session_min": 0.0003104433130510369,
+          "session_max": 0.0009891196834817012
+        },
+        {
+          "category": "conversion-output",
+          "samples": 68,
+          "share": 0.00047023677804824076,
+          "wilson_lower": 0.00037098273475830954,
+          "wilson_upper": 0.0005960297685747251,
+          "session_min": 0.0003090999010880316,
+          "session_max": 0.0006282196255811032
+        },
+        {
+          "category": "allocator",
+          "samples": 7,
+          "share": 4.840672715202478e-05,
+          "wilson_lower": 2.3448851093714347e-05,
+          "wilson_upper": 9.992596137470039e-05,
+          "session_min": 0.0,
+          "session_max": 0.00018563207722294413
+        },
+        {
+          "category": "variable-node-update",
+          "samples": 1,
+          "share": 6.915246736003541e-06,
+          "wilson_lower": 1.2207118953198969e-06,
+          "wilson_upper": 3.9173344094607624e-05,
+          "session_min": 0.0,
+          "session_max": 6.205398696866273e-05
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "core.rs:0 in decode_codeword_into",
+          "samples": 42370,
+          "share": 0.29299900420447,
+          "wilson_lower": 0.2906587058866745,
+          "wilson_upper": 0.29535030004215285
+        },
+        {
+          "innermost": "mut_ptr.rs:0 in check_node_update_min_sum",
+          "samples": 33137,
+          "share": 0.22915053109094932,
+          "wilson_lower": 0.22699154971053484,
+          "wilson_upper": 0.2313239021239805
+        },
+        {
+          "innermost": "min_sum.rs:142 in check_node_update_min_sum",
+          "samples": 17670,
+          "share": 0.12219240982518256,
+          "wilson_lower": 0.12051443352974824,
+          "wilson_upper": 0.12389045822930676
+        },
+        {
+          "innermost": "min_sum.rs:0 in check_node_update_min_sum",
+          "samples": 10266,
+          "share": 0.07099192299181235,
+          "wilson_lower": 0.06967965904252842,
+          "wilson_upper": 0.07232697922207339
+        },
+        {
+          "innermost": "min_sum.rs:138 in check_node_update_min_sum",
+          "samples": 7152,
+          "share": 0.04945784465589732,
+          "wilson_lower": 0.04835224381218974,
+          "wilson_upper": 0.050587381840077196
+        },
+        {
+          "innermost": "min_sum.rs:155 in check_node_update_min_sum",
+          "samples": 4185,
+          "share": 0.028940307590174817,
+          "wilson_lower": 0.028088716342123187,
+          "wilson_upper": 0.02981692523153182
+        },
+        {
+          "innermost": "min_sum.rs:156 in check_node_update_min_sum",
+          "samples": 3465,
+          "share": 0.02396132994025227,
+          "wilson_lower": 0.023185676317615665,
+          "wilson_upper": 0.02476227447862088
+        },
+        {
+          "innermost": "cmp.rs:1916 in spec_next",
+          "samples": 3439,
+          "share": 0.023781533525116177,
+          "wilson_lower": 0.023008774638669564,
+          "wilson_upper": 0.02457959287949353
+        },
+        {
+          "innermost": "zip.rs:0 in check_node_update_min_sum",
+          "samples": 3436,
+          "share": 0.023760787784908165,
+          "wilson_lower": 0.022988363661432903,
+          "wilson_upper": 0.02455851347849095
+        },
+        {
+          "innermost": "min_sum.rs:68 in min_sum_check_row",
+          "samples": 3343,
+          "share": 0.023117669838459837,
+          "wilson_lower": 0.022355702203374656,
+          "wilson_upper": 0.02390497321113265
+        },
+        {
+          "innermost": "index.rs:272 in index",
+          "samples": 2863,
+          "share": 0.019798351405178136,
+          "wilson_lower": 0.01909300415000832,
+          "wilson_upper": 0.020529210746220005
+        },
+        {
+          "innermost": "f32.rs:1570 in min_sum_check_row",
+          "samples": 1487,
+          "share": 0.010282971896437265,
+          "wilson_lower": 0.009775868681859954,
+          "wilson_upper": 0.010816092728635304
+        },
+        {
+          "innermost": "macros.rs:180 in next",
+          "samples": 1352,
+          "share": 0.009349413587076787,
+          "wilson_lower": 0.008866256658591913,
+          "wilson_upper": 0.009858637731137383
+        },
+        {
+          "innermost": "min_sum.rs:150 in check_node_update_min_sum",
+          "samples": 1002,
+          "share": 0.006929077229475548,
+          "wilson_lower": 0.006514437259625639,
+          "wilson_upper": 0.007369913002191904
+        },
+        {
+          "innermost": "core.rs:1218 in decode_codeword_into",
+          "samples": 827,
+          "share": 0.005718909050674928,
+          "wilson_lower": 0.005343168555476965,
+          "wilson_upper": 0.006120909642384702
+        },
+        {
+          "innermost": "core.rs:1216 in decode_codeword_into",
+          "samples": 783,
+          "share": 0.005414638194290772,
+          "wilson_lower": 0.005049321743331965,
+          "wilson_upper": 0.005806230907020795
+        },
+        {
+          "innermost": "zip.rs:306 in next",
+          "samples": 741,
+          "share": 0.0051241978313786235,
+          "wilson_lower": 0.004769112574137245,
+          "wilson_upper": 0.005505574780866104
+        },
+        {
+          "innermost": "range.rs:772 in next",
+          "samples": 677,
+          "share": 0.004681622040274397,
+          "wilson_lower": 0.004342709784736723,
+          "wilson_upper": 0.005046849501162764
+        },
+        {
+          "innermost": "mut_ptr.rs:961 in new",
+          "samples": 572,
+          "share": 0.0039555211329940256,
+          "wilson_lower": 0.0036449200235504344,
+          "wilson_upper": 0.0042924760239755255
+        },
+        {
+          "innermost": "core.rs:1232 in decode_codeword_into",
+          "samples": 571,
+          "share": 0.003948605886258022,
+          "wilson_lower": 0.003638286509288641,
+          "wilson_upper": 0.004285279412157571
+        },
+        {
+          "innermost": "index.rs:0 in check_node_update",
+          "samples": 544,
+          "share": 0.003761894224385926,
+          "wilson_lower": 0.0034592780131940636,
+          "wilson_upper": 0.004090874504098956
+        },
+        {
+          "innermost": "index.rs:278 in index_mut",
+          "samples": 544,
+          "share": 0.003761894224385926,
+          "wilson_lower": 0.0034592780131940636,
+          "wilson_upper": 0.004090874504098956
+        },
+        {
+          "innermost": "uint_macros.rs:923 in index_mut",
+          "samples": 528,
+          "share": 0.0036512502766098695,
+          "wilson_lower": 0.003353290172096857,
+          "wilson_upper": 0.003975580327920197
+        },
+        {
+          "innermost": "enumerate.rs:82 in min_sum_check_row",
+          "samples": 392,
+          "share": 0.002710776720513388,
+          "wilson_lower": 0.0024556805347586246,
+          "wilson_upper": 0.0029922928184127192
+        },
+        {
+          "innermost": "core.rs:1336 in decode_to_codeword",
+          "samples": 341,
+          "share": 0.002358099136977207,
+          "wilson_lower": 0.002120983848460635,
+          "wilson_upper": 0.002621653074643567
+        }
+      ]
+    },
+    "gf2-nr-l24": {
+      "kind": "record",
+      "label": "gf2-nr-l24",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "sessions": 9,
+      "total_samples": 64776,
+      "session_totals": [
+        7182,
+        7198,
+        7201,
+        7210,
+        7172,
+        7207,
+        7191,
+        7189,
+        7226
+      ],
+      "categories": [
+        {
+          "category": "check-node-loop",
+          "samples": 50741,
+          "share": 0.7833302457700383,
+          "wilson_lower": 0.7801409135177306,
+          "wilson_upper": 0.7864859749307893,
+          "session_min": 0.7693698706356934,
+          "session_max": 0.7916955978336342
+        },
+        {
+          "category": "decode-loop-other",
+          "samples": 13767,
+          "share": 0.212532419414598,
+          "wilson_lower": 0.2093990826660664,
+          "wilson_upper": 0.21569984994441202,
+          "session_min": 0.20413831412303846,
+          "session_max": 0.2252051745722632
+        },
+        {
+          "category": "message-reset",
+          "samples": 138,
+          "share": 0.0021304186735828083,
+          "wilson_lower": 0.001803660533372666,
+          "wilson_upper": 0.00251622436474929,
+          "session_min": 0.001245502352615555,
+          "session_max": 0.0034775351231047433
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 49,
+          "share": 0.0007564530072866494,
+          "wilson_lower": 0.0005722818163949952,
+          "wilson_upper": 0.0009998347020659644,
+          "session_min": 0.000278473962684489,
+          "session_max": 0.001112501738283966
+        },
+        {
+          "category": "other:core.rs",
+          "samples": 47,
+          "share": 0.0007255773743361739,
+          "wilson_lower": 0.0005457274028805913,
+          "wilson_upper": 0.0009646415115430425,
+          "session_min": 0.0002775079783543777,
+          "session_max": 0.0011109568115539507
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 20,
+          "share": 0.00030875632950475484,
+          "wilson_lower": 0.000199890084463377,
+          "wilson_upper": 0.000476886175456359,
+          "session_min": 0.0,
+          "session_max": 0.0005564056196967589
+        },
+        {
+          "category": "conversion-output",
+          "samples": 11,
+          "share": 0.00016981598122761516,
+          "wilson_lower": 9.48283627185102e-05,
+          "wilson_upper": 0.0003040836790332598,
+          "session_min": 0.0,
+          "session_max": 0.00041660880433273156
+        },
+        {
+          "category": "allocator",
+          "samples": 2,
+          "share": 3.0875632950475484e-05,
+          "wilson_lower": 8.467253047030086e-06,
+          "wilson_upper": 0.000112580570536774,
+          "session_min": 0.0,
+          "session_max": 0.0001392369813422445
+        },
+        {
+          "category": "variable-node-update",
+          "samples": 1,
+          "share": 1.5437816475237742e-05,
+          "wilson_lower": 2.725158880426778e-06,
+          "wilson_upper": 8.744886268471442e-05,
+          "session_min": 0.0,
+          "session_max": 0.00013886960144424384
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "mut_ptr.rs:0 in check_node_update_min_sum",
+          "samples": 14908,
+          "share": 0.23014696801284426,
+          "wilson_lower": 0.22692151545160597,
+          "wilson_upper": 0.2334044252621668
+        },
+        {
+          "innermost": "core.rs:0 in decode_codeword_into",
+          "samples": 13526,
+          "share": 0.2088119056440657,
+          "wilson_lower": 0.20569911606745267,
+          "wilson_upper": 0.21195923025652802
+        },
+        {
+          "innermost": "min_sum.rs:142 in check_node_update_min_sum",
+          "samples": 8092,
+          "share": 0.1249228109176238,
+          "wilson_lower": 0.12239887498530032,
+          "wilson_upper": 0.1274912311692662
+        },
+        {
+          "innermost": "min_sum.rs:0 in check_node_update_min_sum",
+          "samples": 6454,
+          "share": 0.09963566753118439,
+          "wilson_lower": 0.09735283350240402,
+          "wilson_upper": 0.10196598494559271
+        },
+        {
+          "innermost": "min_sum.rs:138 in check_node_update_min_sum",
+          "samples": 3346,
+          "share": 0.05165493392614549,
+          "wilson_lower": 0.0499769303104149,
+          "wilson_upper": 0.053386111463577586
+        },
+        {
+          "innermost": "min_sum.rs:155 in check_node_update_min_sum",
+          "samples": 2556,
+          "share": 0.03945905891070767,
+          "wilson_lower": 0.03798692078012482,
+          "wilson_upper": 0.04098581739912398
+        },
+        {
+          "innermost": "cmp.rs:1916 in spec_next",
+          "samples": 2237,
+          "share": 0.03453439545510683,
+          "wilson_lower": 0.033155606462593044,
+          "wilson_upper": 0.03596838887270231
+        },
+        {
+          "innermost": "index.rs:272 in index",
+          "samples": 1801,
+          "share": 0.027803507471903174,
+          "wilson_lower": 0.026565137228756933,
+          "wilson_upper": 0.029097880426401407
+        },
+        {
+          "innermost": "zip.rs:0 in check_node_update_min_sum",
+          "samples": 1694,
+          "share": 0.026151661109052735,
+          "wilson_lower": 0.02495051966195283,
+          "wilson_upper": 0.027409001177208576
+        },
+        {
+          "innermost": "min_sum.rs:68 in min_sum_check_row",
+          "samples": 1688,
+          "share": 0.02605903421020131,
+          "wilson_lower": 0.024860017529659936,
+          "wilson_upper": 0.027314260497389494
+        },
+        {
+          "innermost": "min_sum.rs:156 in check_node_update_min_sum",
+          "samples": 1466,
+          "share": 0.02263183895269853,
+          "wilson_lower": 0.021514502723915203,
+          "wilson_upper": 0.023805791254991063
+        },
+        {
+          "innermost": "f32.rs:1570 in min_sum_check_row",
+          "samples": 1044,
+          "share": 0.0161170804001482,
+          "wilson_lower": 0.01517563769536687,
+          "wilson_upper": 0.017115911831663663
+        },
+        {
+          "innermost": "min_sum.rs:150 in check_node_update_min_sum",
+          "samples": 601,
+          "share": 0.009278127701617882,
+          "wilson_lower": 0.008568352095630621,
+          "wilson_upper": 0.010046103137132249
+        },
+        {
+          "innermost": "macros.rs:180 in next",
+          "samples": 567,
+          "share": 0.0087532419414598,
+          "wilson_lower": 0.00806447727349696,
+          "wilson_upper": 0.009500268690631372
+        },
+        {
+          "innermost": "range.rs:772 in next",
+          "samples": 526,
+          "share": 0.008120291465975052,
+          "wilson_lower": 0.00745774068474933,
+          "wilson_upper": 0.008841179396613823
+        },
+        {
+          "innermost": "core.rs:1218 in decode_codeword_into",
+          "samples": 516,
+          "share": 0.007965913301222675,
+          "wilson_lower": 0.0073099130929916815,
+          "wilson_upper": 0.008680268968184846
+        },
+        {
+          "innermost": "core.rs:1216 in decode_codeword_into",
+          "samples": 430,
+          "share": 0.0066382610843522295,
+          "wilson_lower": 0.006041503864704716,
+          "wilson_upper": 0.007293531222866804
+        },
+        {
+          "innermost": "mut_ptr.rs:961 in new",
+          "samples": 417,
+          "share": 0.006437569470174139,
+          "wilson_lower": 0.005850276088157027,
+          "wilson_upper": 0.007083399573171876
+        },
+        {
+          "innermost": "index.rs:278 in index_mut",
+          "samples": 401,
+          "share": 0.006190564406570335,
+          "wilson_lower": 0.005615127020061737,
+          "wilson_upper": 0.006824567808968558
+        },
+        {
+          "innermost": "zip.rs:306 in next",
+          "samples": 276,
+          "share": 0.0042608373471656165,
+          "wilson_lower": 0.0037877845719873843,
+          "wilson_upper": 0.004792685004710051
+        },
+        {
+          "innermost": "index.rs:0 in check_node_update",
+          "samples": 236,
+          "share": 0.003643324688156107,
+          "wilson_lower": 0.0032078617941960863,
+          "wilson_upper": 0.004137655701754832
+        },
+        {
+          "innermost": "enumerate.rs:82 in min_sum_check_row",
+          "samples": 229,
+          "share": 0.003535259972829443,
+          "wilson_lower": 0.003106696842868387,
+          "wilson_upper": 0.004022704038951892
+        },
+        {
+          "innermost": "uint_macros.rs:923 in index_mut",
+          "samples": 225,
+          "share": 0.003473508706928492,
+          "wilson_lower": 0.0030489359726745273,
+          "wilson_upper": 0.0039569697010711
+        },
+        {
+          "innermost": "edge_layout.rs:200 in variable_node_update",
+          "samples": 177,
+          "share": 0.0027324935161170804,
+          "wilson_lower": 0.00235891305144901,
+          "wilson_upper": 0.003165050125400799
+        },
+        {
+          "innermost": "core.rs:1232 in decode_codeword_into",
+          "samples": 132,
+          "share": 0.002037791774731382,
+          "wilson_lower": 0.0017187995551418197,
+          "wilson_upper": 0.00241584253086816
+        }
+      ]
+    },
+    "aff3ct-dvb-w1": {
+      "kind": "record",
+      "label": "aff3ct-dvb-w1",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "sessions": 9,
+      "total_samples": 17616,
+      "session_totals": [
+        1955,
+        1969,
+        1933,
+        1990,
+        1939,
+        1935,
+        1967,
+        1995,
+        1933
+      ],
+      "categories": [
+        {
+          "category": "aff3ct-min-sum-update",
+          "samples": 8580,
+          "share": 0.48705722070844687,
+          "wilson_lower": 0.4796797839049759,
+          "wilson_upper": 0.49444030105346626,
+          "session_min": 0.4407035175879397,
+          "session_max": 0.5072681704260652
+        },
+        {
+          "category": "aff3ct-variable-node",
+          "samples": 3651,
+          "share": 0.20725476839237056,
+          "wilson_lower": 0.20133322421533245,
+          "wilson_upper": 0.21330396056837658,
+          "session_min": 0.18638902996444895,
+          "session_max": 0.2537688442211055
+        },
+        {
+          "category": "aff3ct-posterior",
+          "samples": 2578,
+          "share": 0.14634423251589465,
+          "wilson_lower": 0.14120189892467155,
+          "wilson_upper": 0.15164077340468807,
+          "session_min": 0.12882205513784462,
+          "session_max": 0.17216861350939563
+        },
+        {
+          "category": "aff3ct-check-node",
+          "samples": 2320,
+          "share": 0.13169845594913715,
+          "wilson_lower": 0.12678497880333975,
+          "wilson_upper": 0.13677252650530955,
+          "session_min": 0.11256281407035176,
+          "session_max": 0.14388860237235687
+        },
+        {
+          "category": "aff3ct-syndrome",
+          "samples": 436,
+          "share": 0.024750227066303362,
+          "wilson_lower": 0.02255749539637877,
+          "wilson_upper": 0.027150185621502235,
+          "session_min": 0.017543859649122806,
+          "session_max": 0.043718592964824124
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 20,
+          "share": 0.0011353315168029065,
+          "wilson_lower": 0.0007351024029999226,
+          "wilson_upper": 0.0017530845039683348,
+          "session_min": 0.0,
+          "session_max": 0.0030472320975114273
+        },
+        {
+          "category": "aff3ct-decode-loop",
+          "samples": 14,
+          "share": 0.0007947320617620345,
+          "wilson_lower": 0.0004734819351370787,
+          "wilson_upper": 0.0013336545760007064,
+          "session_min": 0.0,
+          "session_max": 0.002031488065007618
+        },
+        {
+          "category": "other:aff3ct_shim.cpp",
+          "samples": 10,
+          "share": 0.0005676657584014533,
+          "wilson_lower": 0.00030838340289819524,
+          "wilson_upper": 0.0010447195110192748,
+          "session_min": 0.0,
+          "session_max": 0.0020100502512562816
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 6,
+          "share": 0.0003405994550408719,
+          "wilson_lower": 0.00015610883770738405,
+          "wilson_upper": 0.000742960478989771,
+          "session_min": 0.0,
+          "session_max": 0.0010230179028132991
+        },
+        {
+          "category": "other:stl_vector.h",
+          "samples": 1,
+          "share": 5.676657584014532e-05,
+          "wilson_lower": 1.0020764818569143e-05,
+          "wilson_upper": 0.0003215065553531923,
+          "session_min": 0.0,
+          "session_max": 0.0005173305742369374
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "Update_rule_MS.hxx:91 in aff3ct::tools::Update_rule_NMS",
+          "samples": 1738,
+          "share": 0.09866030881017257,
+          "wilson_lower": 0.094343798312399,
+          "wilson_upper": 0.1031518186006945
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:64 in aff3ct::tools::Update_rule_NMS",
+          "samples": 1693,
+          "share": 0.09610581289736603,
+          "wilson_lower": 0.09184106055465466,
+          "wilson_upper": 0.10054667838971032
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:89 in aff3ct::tools::Update_rule_NMS",
+          "samples": 1679,
+          "share": 0.095311080835604,
+          "wilson_lower": 0.09106262120810775,
+          "wilson_upper": 0.09973600014598612
+        },
+        {
+          "innermost": "cmath:3694 in aff3ct::tools::Update_rule_MS",
+          "samples": 1364,
+          "share": 0.07742960944595823,
+          "wilson_lower": 0.07357426910324918,
+          "wilson_upper": 0.0814692064697449
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:274 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 1153,
+          "share": 0.06545186194368756,
+          "wilson_lower": 0.06189355654799557,
+          "wilson_upper": 0.06919964677162689
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:246 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 960,
+          "share": 0.05449591280653951,
+          "wilson_lower": 0.05123996784444632,
+          "wilson_upper": 0.05794611440929593
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:225 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 936,
+          "share": 0.05313351498637602,
+          "wilson_lower": 0.04991761893055898,
+          "wilson_upper": 0.056544261739861386
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:280 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 852,
+          "share": 0.048365122615803814,
+          "wilson_lower": 0.045294325729473055,
+          "wilson_upper": 0.0516328493993207
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:223 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 845,
+          "share": 0.0479677565849228,
+          "wilson_lower": 0.044909418879927034,
+          "wilson_upper": 0.05122319745373117
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:220 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 781,
+          "share": 0.0443346957311535,
+          "wilson_lower": 0.0413931281327335,
+          "wilson_upper": 0.04747495064539967
+        },
+        {
+          "innermost": "std_abs.h:82 in aff3ct::tools::Update_rule_MS",
+          "samples": 727,
+          "share": 0.04126930063578565,
+          "wilson_lower": 0.03843057636060107,
+          "wilson_upper": 0.04430804885505785
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:224 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 562,
+          "share": 0.03190281562216167,
+          "wilson_lower": 0.029407960913922723,
+          "wilson_upper": 0.03460177841639819
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:62 in aff3ct::tools::Update_rule_NMS",
+          "samples": 543,
+          "share": 0.03082425068119891,
+          "wilson_lower": 0.028372408773829728,
+          "wilson_upper": 0.0334806709696947
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:251 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 534,
+          "share": 0.030313351498637602,
+          "wilson_lower": 0.02788217108538223,
+          "wilson_upper": 0.032949333064396485
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:88 in aff3ct::tools::Update_rule_NMS",
+          "samples": 341,
+          "share": 0.019357402361489556,
+          "wilson_lower": 0.017425142919935598,
+          "wilson_upper": 0.02149924016396293
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:269 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 283,
+          "share": 0.016064940962761128,
+          "wilson_lower": 0.014311059355940573,
+          "wilson_upper": 0.01802983656826339
+        },
+        {
+          "innermost": "stl_vector.h:1254 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 258,
+          "share": 0.014645776566757493,
+          "wilson_lower": 0.012974660579540206,
+          "wilson_upper": 0.016528525362036785
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:228 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 242,
+          "share": 0.013737511353315168,
+          "wilson_lower": 0.012121569883114946,
+          "wilson_upper": 0.015565481669580787
+        },
+        {
+          "innermost": "stl_vector.h:1273 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 218,
+          "share": 0.012375113533151681,
+          "wilson_lower": 0.010845600160202192,
+          "wilson_upper": 0.014117249809171652
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:252 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 188,
+          "share": 0.01067211625794732,
+          "wilson_lower": 0.009257854086478787,
+          "wilson_upper": 0.012299743903742695
+        },
+        {
+          "innermost": "LDPC_syndrome.hxx:59 in bool aff3ct::module::Decoder_LDPC_BP::check_syndrome_soft",
+          "samples": 166,
+          "share": 0.009423251589464124,
+          "wilson_lower": 0.008099637853915322,
+          "wilson_upper": 0.010960775351594428
+        },
+        {
+          "innermost": "LDPC_syndrome.hxx:56 in bool aff3ct::module::Decoder_LDPC_BP::check_syndrome_soft",
+          "samples": 160,
+          "share": 0.009082652134423252,
+          "wilson_lower": 0.007784811338037645,
+          "wilson_upper": 0.010594551471641633
+        },
+        {
+          "innermost": "Update_rule_NMS.hxx:104 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 141,
+          "share": 0.00800408719346049,
+          "wilson_lower": 0.006791283190540322,
+          "wilson_upper": 0.009431420032342461
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:66 in aff3ct::tools::Update_rule_NMS",
+          "samples": 136,
+          "share": 0.007720254314259764,
+          "wilson_lower": 0.006530782242610753,
+          "wilson_upper": 0.009124378983746639
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:275 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 136,
+          "share": 0.007720254314259764,
+          "wilson_lower": 0.006530782242610753,
+          "wilson_upper": 0.009124378983746639
+        }
+      ]
+    },
+    "aff3ct-nr-w1": {
+      "kind": "record",
+      "label": "aff3ct-nr-w1",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "sessions": 9,
+      "total_samples": 9041,
+      "session_totals": [
+        993,
+        1004,
+        989,
+        995,
+        1034,
+        1017,
+        995,
+        1020,
+        994
+      ],
+      "categories": [
+        {
+          "category": "aff3ct-min-sum-update",
+          "samples": 4886,
+          "share": 0.5404269439221325,
+          "wilson_lower": 0.5301392171472284,
+          "wilson_upper": 0.5506803310259588,
+          "session_min": 0.528023598820059,
+          "session_max": 0.5492957746478874
+        },
+        {
+          "category": "aff3ct-variable-node",
+          "samples": 1748,
+          "share": 0.1933414445304723,
+          "wilson_lower": 0.18533194570032596,
+          "wilson_upper": 0.2016114269120911,
+          "session_min": 0.18611670020120724,
+          "session_max": 0.20525783619817997
+        },
+        {
+          "category": "aff3ct-posterior",
+          "samples": 1215,
+          "share": 0.13438778896139808,
+          "wilson_lower": 0.12751242436464022,
+          "wilson_upper": 0.1415737138392713,
+          "session_min": 0.12234580384226491,
+          "session_max": 0.1454183266932271
+        },
+        {
+          "category": "aff3ct-check-node",
+          "samples": 1087,
+          "share": 0.12023006304612321,
+          "wilson_lower": 0.11368688662027267,
+          "wilson_upper": 0.12709582568441052,
+          "session_min": 0.10159362549800798,
+          "session_max": 0.13274336283185842
+        },
+        {
+          "category": "aff3ct-syndrome",
+          "samples": 85,
+          "share": 0.009401614865612211,
+          "wilson_lower": 0.007610263291781348,
+          "wilson_upper": 0.011609693145504876,
+          "session_min": 0.003933136676499509,
+          "session_max": 0.013944223107569721
+        },
+        {
+          "category": "unmapped-ip",
+          "samples": 8,
+          "share": 0.0008848578697046787,
+          "wilson_lower": 0.00044844533823484585,
+          "wilson_upper": 0.001745231456546822,
+          "session_min": 0.0,
+          "session_max": 0.002014098690835851
+        },
+        {
+          "category": "other:libc.so.6",
+          "samples": 5,
+          "share": 0.0005530361685654242,
+          "wilson_lower": 0.00023624639864305765,
+          "wilson_upper": 0.0012940688516254457,
+          "session_min": 0.0,
+          "session_max": 0.002012072434607646
+        },
+        {
+          "category": "other:aff3ct_shim.cpp",
+          "samples": 5,
+          "share": 0.0005530361685654242,
+          "wilson_lower": 0.00023624639864305765,
+          "wilson_upper": 0.0012940688516254457,
+          "session_min": 0.0,
+          "session_max": 0.0019665683382497543
+        },
+        {
+          "category": "aff3ct-decode-loop",
+          "samples": 2,
+          "share": 0.00022121446742616967,
+          "wilson_lower": 6.06670822789073e-05,
+          "wilson_upper": 0.0008062866234764315,
+          "session_min": 0.0,
+          "session_max": 0.0010050251256281408
+        }
+      ],
+      "top_innermost": [
+        {
+          "innermost": "Update_rule_MS.hxx:91 in aff3ct::tools::Update_rule_NMS",
+          "samples": 1217,
+          "share": 0.13460900342882426,
+          "wilson_lower": 0.127728664341681,
+          "wilson_upper": 0.14179971489190596
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:89 in aff3ct::tools::Update_rule_NMS",
+          "samples": 868,
+          "share": 0.09600707886295763,
+          "wilson_lower": 0.09010493488196133,
+          "wilson_upper": 0.10225238467326081
+        },
+        {
+          "innermost": "cmath:3694 in aff3ct::tools::Update_rule_MS",
+          "samples": 755,
+          "share": 0.08350846145337905,
+          "wilson_lower": 0.07798126541562689,
+          "wilson_upper": 0.08938943596293275
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:62 in aff3ct::tools::Update_rule_NMS",
+          "samples": 556,
+          "share": 0.06149762194447517,
+          "wilson_lower": 0.05672934044397305,
+          "wilson_upper": 0.06663837848188
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:225 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 537,
+          "share": 0.059396084503926555,
+          "wilson_lower": 0.05470848934933707,
+          "wilson_upper": 0.06445793979459928
+        },
+        {
+          "innermost": "std_abs.h:82 in aff3ct::tools::Update_rule_MS",
+          "samples": 500,
+          "share": 0.05530361685654242,
+          "wilson_lower": 0.05077816231593938,
+          "wilson_upper": 0.060206807779001274
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:251 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 366,
+          "share": 0.04048224753898905,
+          "wilson_lower": 0.03661103773439126,
+          "wilson_upper": 0.04474378337229471
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:220 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 362,
+          "share": 0.04003981860413671,
+          "wilson_lower": 0.036190087742234,
+          "wilson_upper": 0.04428025130510108
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:275 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 343,
+          "share": 0.0379382811635881,
+          "wilson_lower": 0.03419243307280904,
+          "wilson_upper": 0.042076616192609335
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:280 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 331,
+          "share": 0.036610994359031084,
+          "wilson_lower": 0.03293241556431015,
+          "wilson_upper": 0.04068318752305558
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:223 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 328,
+          "share": 0.03627917265789182,
+          "wilson_lower": 0.03261762165548287,
+          "wilson_upper": 0.04033461988736969
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:274 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 293,
+          "share": 0.03240791947793386,
+          "wilson_lower": 0.02895173013458223,
+          "wilson_upper": 0.03626129338895008
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:66 in aff3ct::tools::Update_rule_NMS",
+          "samples": 291,
+          "share": 0.03218670501050769,
+          "wilson_lower": 0.028742647458042246,
+          "wilson_upper": 0.03602813503581461
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:64 in aff3ct::tools::Update_rule_NMS",
+          "samples": 291,
+          "share": 0.03218670501050769,
+          "wilson_lower": 0.028742647458042246,
+          "wilson_upper": 0.03602813503581461
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:221 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 201,
+          "share": 0.022232053976330053,
+          "wilson_lower": 0.019389727696120365,
+          "wilson_upper": 0.025480208462341558
+        },
+        {
+          "innermost": "stl_vector.h:1254 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 200,
+          "share": 0.022121446742616967,
+          "wilson_lower": 0.019286544209614356,
+          "wilson_upper": 0.02536227143400984
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:246 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 190,
+          "share": 0.02101537440548612,
+          "wilson_lower": 0.018255815647243424,
+          "wilson_upper": 0.02418179484800356
+        },
+        {
+          "innermost": "stl_vector.h:1273 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 163,
+          "share": 0.01802897909523283,
+          "wilson_lower": 0.015483953333298396,
+          "wilson_upper": 0.020983403261330108
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:269 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 146,
+          "share": 0.016148656122110385,
+          "wilson_lower": 0.0137483887523744,
+          "wilson_upper": 0.018959919090012836
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:88 in aff3ct::tools::Update_rule_NMS",
+          "samples": 144,
+          "share": 0.015927441654684217,
+          "wilson_lower": 0.013544769165223607,
+          "wilson_upper": 0.01872129764748819
+        },
+        {
+          "innermost": "Update_rule_MS.hxx:65 in aff3ct::tools::Update_rule_NMS",
+          "samples": 122,
+          "share": 0.01349408251299635,
+          "wilson_lower": 0.011313980729375173,
+          "wilson_upper": 0.016087434756906747
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:228 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 97,
+          "share": 0.01072890167016923,
+          "wilson_lower": 0.008803395694999373,
+          "wilson_upper": 0.013070006920339512
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:273 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 91,
+          "share": 0.01006525826789072,
+          "wilson_lower": 0.008205705054972978,
+          "wilson_upper": 0.012340974471339576
+        },
+        {
+          "innermost": "Decoder_LDPC_BP_flooding.hxx:219 in aff3ct::module::Decoder_LDPC_BP_flooding",
+          "samples": 89,
+          "share": 0.00984404380046455,
+          "wilson_lower": 0.008006963680689691,
+          "wilson_upper": 0.012097474815947418
+        },
+        {
+          "innermost": "Update_rule_NMS.hxx:45 in aff3ct::tools::Update_rule_NMS",
+          "samples": 83,
+          "share": 0.009180400398186041,
+          "wilson_lower": 0.007412322303141387,
+          "wilson_upper": 0.011365393104469393
+        }
+      ]
+    }
+  },
+  "stats": {
+    "gf2-dvb-w1": {
+      "kind": "stat",
+      "label": "gf2-dvb-w1",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 49442029.625,
+          "lower": 49358955.875,
+          "upper": 49543349.4375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 1.9197799383184868,
+          "lower": 1.914209036828589,
+          "upper": 1.923420137654403,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.059740046674363126,
+          "lower": 0.059190567358104414,
+          "upper": 0.06025013165263058,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.032780677058953385,
+          "lower": 0.03273911471831033,
+          "upper": 0.03281689275038487,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.08957248774589177,
+          "lower": 0.08939749040428839,
+          "upper": 0.08971724880180168,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.45331514878534074,
+          "lower": 0.452298711167904,
+          "upper": 0.45375079952250996,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 451594508.375,
+          "lower": 451594508.125,
+          "upper": 451594508.75,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 235232434.125,
+          "lower": 234787241.375,
+          "upper": 235917028.75,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        1
+      ]
+    },
+    "gf2-dvb-p6": {
+      "kind": "stat",
+      "label": "gf2-dvb-p6",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 51796787.125,
+          "lower": 51561568.5625,
+          "upper": 52158589.4375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 1.903274063084748,
+          "lower": 1.8991122767914932,
+          "upper": 1.9052551756913663,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.059095301472625796,
+          "lower": 0.05900922589703032,
+          "upper": 0.05931756164697963,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.032767352772164984,
+          "lower": 0.03274352693665978,
+          "upper": 0.03279068198120112,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.08961420554996288,
+          "lower": 0.08956284115408168,
+          "upper": 0.08969947198347719,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.454634385405384,
+          "lower": 0.45432699837488105,
+          "upper": 0.455042297128706,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 451594374.8541667,
+          "lower": 451594374.75,
+          "upper": 451594375.4583333,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 237272384.20833334,
+          "lower": 237025664.91666666,
+          "upper": 237792351.89583334,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        6
+      ]
+    },
+    "gf2-dvb-p12": {
+      "kind": "stat",
+      "label": "gf2-dvb-p12",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 58841484.75,
+          "lower": 58067143.1875,
+          "upper": 60068160.4375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 1.9035732504983696,
+          "lower": 1.9006514139763562,
+          "upper": 1.9047594663480834,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.05921332459142228,
+          "lower": 0.05899136686088464,
+          "upper": 0.059363090155979,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.03275432154213933,
+          "lower": 0.03273175530825654,
+          "upper": 0.032764265798469396,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.08961936126512736,
+          "lower": 0.08957514333290365,
+          "upper": 0.08984515334206977,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.4543232826686376,
+          "lower": 0.4542780675001971,
+          "upper": 0.4545370884493887,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 451594368.8020833,
+          "lower": 451594368.2916667,
+          "upper": 451594370.625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 237235089.0,
+          "lower": 237087346.86458334,
+          "upper": 237599786.76041666,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        12
+      ]
+    },
+    "gf2-dvb-l24": {
+      "kind": "stat",
+      "label": "gf2-dvb-l24",
+      "arm": "gf2",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 87521745.625,
+          "lower": 86752446.875,
+          "upper": 87995406.0625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 1.353296339431497,
+          "lower": 1.3396316600495128,
+          "upper": 1.358078189854242,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.07373401281301799,
+          "lower": 0.07327885780354601,
+          "upper": 0.0745316088459092,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.03361145169679345,
+          "lower": 0.03329785839442611,
+          "upper": 0.033795272318312024,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.10906239720748141,
+          "lower": 0.10873184903582905,
+          "upper": 0.10912313720795995,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.4830526882861841,
+          "lower": 0.48262500375394257,
+          "upper": 0.48364619194550723,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 451594407.9895833,
+          "lower": 451594404.3645833,
+          "upper": 451594429.65625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 333699570.84375,
+          "lower": 332524603.2552083,
+          "upper": 337103410.8072917,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        24
+      ]
+    },
+    "gf2-nr-w1": {
+      "kind": "stat",
+      "label": "gf2-nr-w1",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 23083566.1875,
+          "lower": 23042215.25,
+          "upper": 23096571.9375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 2.1867713805877624,
+          "lower": 2.1838667022518368,
+          "upper": 2.188316923400249,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.06681076176535512,
+          "lower": 0.06663140193257559,
+          "upper": 0.06753715510655611,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.0304230101518849,
+          "lower": 0.03041254007675684,
+          "upper": 0.03045266782324541,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.07573822699493372,
+          "lower": 0.07569851177038461,
+          "upper": 0.07582397402569879,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.06477047367649308,
+          "lower": 0.06379606098749714,
+          "upper": 0.0667855682751378,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 239170668.75,
+          "lower": 239170668.625,
+          "upper": 239170668.875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 109371592.75,
+          "lower": 109294346.75,
+          "upper": 109517063.875,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        1
+      ]
+    },
+    "gf2-nr-p6": {
+      "kind": "stat",
+      "label": "gf2-nr-p6",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 23858602.875,
+          "lower": 23837104.25,
+          "upper": 24030349.25,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 2.1753501191428803,
+          "lower": 2.173071686281058,
+          "upper": 2.1781133039228653,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.06688212236606962,
+          "lower": 0.06663276975096798,
+          "upper": 0.06723716012751663,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.030430081160639753,
+          "lower": 0.03042505887799234,
+          "upper": 0.030436179405717415,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.07589820865754913,
+          "lower": 0.0758626904276041,
+          "upper": 0.07597262417031628,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.06595967297523644,
+          "lower": 0.06549709663239231,
+          "upper": 0.0660628022134047,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 239170534.125,
+          "lower": 239170534.0,
+          "upper": 239170534.1875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 109945765.52083333,
+          "lower": 109806286.72916667,
+          "upper": 110061076.02083333,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        6
+      ]
+    },
+    "gf2-nr-p12": {
+      "kind": "stat",
+      "label": "gf2-nr-p12",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 27128983.875,
+          "lower": 26620088.3125,
+          "upper": 27823028.0625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 2.1751408505809855,
+          "lower": 2.1728996925852453,
+          "upper": 2.17691865463977,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.06687150643254774,
+          "lower": 0.066623997008505,
+          "upper": 0.0671719313652219,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.03042008396936402,
+          "lower": 0.030410173826971268,
+          "upper": 0.030432549654349488,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.07602678354182976,
+          "lower": 0.07589778965278628,
+          "upper": 0.07612302865781886,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.06573022607345373,
+          "lower": 0.06531368639532278,
+          "upper": 0.06627683937964586,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 239170527.67708334,
+          "lower": 239170526.22916666,
+          "upper": 239170529.0625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 109956341.5,
+          "lower": 109866542.65625,
+          "upper": 110069751.32291667,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        12
+      ]
+    },
+    "gf2-nr-l24": {
+      "kind": "stat",
+      "label": "gf2-nr-l24",
+      "arm": "gf2",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 1,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 39875738.125,
+          "lower": 38864686.8125,
+          "upper": 41110801.875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 1.5917798660169113,
+          "lower": 1.5873955900944443,
+          "upper": 1.5937116991871332,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.07941677651922009,
+          "lower": 0.07866064202793005,
+          "upper": 0.07983821120771581,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.031142617452416234,
+          "lower": 0.031106090629845772,
+          "upper": 0.031181416378477544,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.08725441955483414,
+          "lower": 0.08712669618604194,
+          "upper": 0.087390237815541,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.09868780213004195,
+          "lower": 0.09794314339288454,
+          "upper": 0.09937232912720537,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 239170548.68229166,
+          "lower": 239170544.09375,
+          "upper": 239170556.125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 150253528.71875,
+          "lower": 150071404.25,
+          "upper": 150668522.4375,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        24
+      ]
+    },
+    "aff3ct-dvb-w1": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-w1",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 25954232.7109375,
+          "lower": 25698738.7265625,
+          "upper": 26076859.734375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.387697982173861,
+          "lower": 4.260824743438125,
+          "upper": 4.397251162538252,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.0036672948144515875,
+          "lower": 0.002819966087733481,
+          "upper": 0.010283635274829938,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 6.754847463602357e-06,
+          "lower": 6.340643181379021e-06,
+          "upper": 1.075516309471316e-05,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.1217218348356691,
+          "lower": 0.12159252074133568,
+          "upper": 0.12203848045453576,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.03693581037445136,
+          "lower": 0.03680301327052147,
+          "upper": 0.03717493654132663,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 530793605.71875,
+          "lower": 530793605.59375,
+          "upper": 530793606.34375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 120973140.78125,
+          "lower": 120710322.40625,
+          "upper": 124575320.109375,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        1
+      ]
+    },
+    "aff3ct-dvb-p6": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-p6",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 28391760.9765625,
+          "lower": 27942977.9375,
+          "upper": 28468884.921875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.278791937991175,
+          "lower": 4.276449311241006,
+          "upper": 4.298716961429216,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.008464651778638244,
+          "lower": 0.007211009175975155,
+          "upper": 0.008636473549870391,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 8.154881182303178e-06,
+          "lower": 7.261870040789819e-06,
+          "upper": 8.254366635753606e-06,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12161956247720705,
+          "lower": 0.1215762781101449,
+          "upper": 0.12169403882406168,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.024495001166638053,
+          "lower": 0.024156421839968273,
+          "upper": 0.024683041294562762,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 530793580.5416667,
+          "lower": 530793580.0755208,
+          "upper": 530793581.7604167,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 124052206.3515625,
+          "lower": 123477210.71354167,
+          "upper": 124120162.22916667,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        6
+      ]
+    },
+    "aff3ct-dvb-p12": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-p12",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 33248955.3515625,
+          "lower": 33141786.6484375,
+          "upper": 33579937.7109375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.306486099044095,
+          "lower": 4.295823258612382,
+          "upper": 4.309585413449698,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.006743399494178059,
+          "lower": 0.006609758722842396,
+          "upper": 0.007097588926173534,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 7.3102702696996346e-06,
+          "lower": 7.176532297098977e-06,
+          "upper": 7.874963024087415e-06,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12158627763686926,
+          "lower": 0.1215600909054553,
+          "upper": 0.12163282645075114,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.025794847210253935,
+          "lower": 0.02520281360395244,
+          "upper": 0.02666875113427329,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 530793588.890625,
+          "lower": 530793585.82161456,
+          "upper": 530793592.609375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 123254452.66796875,
+          "lower": 123165812.4453125,
+          "upper": 123560389.22265625,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        12
+      ]
+    },
+    "aff3ct-dvb-l24": {
+      "kind": "stat",
+      "label": "aff3ct-dvb-l24",
+      "arm": "aff3ct",
+      "code": "dvb-t2-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 105717248.046875,
+          "lower": 105261100.046875,
+          "upper": 106475324.8125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 1.266951824604688,
+          "lower": 1.2592647866042874,
+          "upper": 1.2730576211164348,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.06289533267298461,
+          "lower": 0.06202665088023492,
+          "upper": 0.06326846061197629,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 1.0610577620145753e-05,
+          "lower": 1.0420256471893187e-05,
+          "upper": 1.0828066940302592e-05,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12000798254255653,
+          "lower": 0.12000605573816496,
+          "upper": 0.12003500291901328,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.2450113850500602,
+          "lower": 0.2428437923803437,
+          "upper": 0.24692485267699546,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 530793663.50716144,
+          "lower": 530793657.89908856,
+          "upper": 530793668.0833333,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 418953307.9244792,
+          "lower": 416943946.4108073,
+          "upper": 421510764.9746094,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        24
+      ]
+    },
+    "aff3ct-nr-w1": {
+      "kind": "stat",
+      "label": "aff3ct-nr-w1",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "single-core",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 13226318.6875,
+          "lower": 13177060.046875,
+          "upper": 13263614.7734375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.613231581585622,
+          "lower": 4.566976276650706,
+          "upper": 4.6201979183624236,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.005783302121162721,
+          "lower": 0.004755579155293748,
+          "upper": 0.008301026208875652,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.00011515158281108972,
+          "lower": 0.00011195292703390728,
+          "upper": 0.0001170758671813277,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12907249427028267,
+          "lower": 0.1288311412390595,
+          "upper": 0.12912953494247015,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.07103063189112349,
+          "lower": 0.07027707096931007,
+          "upper": 0.07213270965204417,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 286334682.28125,
+          "lower": 286334682.25,
+          "upper": 286334682.40625,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 62068135.359375,
+          "lower": 61974549.0,
+          "upper": 62696774.640625,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        1
+      ]
+    },
+    "aff3ct-nr-p6": {
+      "kind": "stat",
+      "label": "aff3ct-nr-p6",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-6",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 14637254.46875,
+          "lower": 14422149.34375,
+          "upper": 14719672.046875,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.520768579059475,
+          "lower": 4.5118136538460325,
+          "upper": 4.534387897550739,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.00934310560230134,
+          "lower": 0.007863179859024334,
+          "upper": 0.010678482967013693,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.00011826274179234483,
+          "lower": 0.00011597307150344591,
+          "upper": 0.00011914114646651058,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12900861806753833,
+          "lower": 0.1289536489301316,
+          "upper": 0.12914465286476448,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.06888044844390398,
+          "lower": 0.06865506725624661,
+          "upper": 0.06946590922017741,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 286334660.0286458,
+          "lower": 286334656.5182292,
+          "upper": 286334663.7161458,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 63337607.026041664,
+          "lower": 63147368.302083336,
+          "upper": 63463316.109375,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        6
+      ]
+    },
+    "aff3ct-nr-p12": {
+      "kind": "stat",
+      "label": "aff3ct-nr-p12",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "physical-cores-12",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 17786513.4609375,
+          "lower": 17568678.0625,
+          "upper": 17936817.53125,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 4.5384793994983355,
+          "lower": 4.528574876731615,
+          "upper": 4.555587848351268,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.008067802163258368,
+          "lower": 0.007279614367920791,
+          "upper": 0.008755772109599352,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.00011863304041593317,
+          "lower": 0.00011694243733281346,
+          "upper": 0.00011883943441284484,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.12898845462360742,
+          "lower": 0.12892006206015774,
+          "upper": 0.12904670125178386,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.06902330533212718,
+          "lower": 0.06857717517307395,
+          "upper": 0.06940324224370595,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 286334667.22265625,
+          "lower": 286334663.953125,
+          "upper": 286334673.8072917,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 63090440.376302086,
+          "lower": 62853505.794270836,
+          "upper": 63228427.03515625,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        12
+      ]
+    },
+    "aff3ct-nr-l24": {
+      "kind": "stat",
+      "label": "aff3ct-nr-l24",
+      "arm": "aff3ct",
+      "code": "nr-bg1-r12",
+      "core_arm": "logical-cpus-24",
+      "batch": 8,
+      "passes": 8,
+      "metrics": {
+        "ns_per_frame_per_worker": {
+          "median": 36303593.796875,
+          "lower": 36040683.8671875,
+          "upper": 37449813.0234375,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "ipc": {
+          "median": 2.374286442783782,
+          "lower": 2.3730669764659735,
+          "upper": 2.3777737496591866,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "frontend_stall_fraction": {
+          "median": 0.014647001083058006,
+          "lower": 0.014537526197126303,
+          "upper": 0.014866098537678448,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "branch_miss_fraction": {
+          "median": 0.0001086797716173841,
+          "lower": 0.00010811900055453463,
+          "upper": 0.00010912308507223499,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "l1d_miss_fraction": {
+          "median": 0.1182330564178457,
+          "lower": 0.11814101828417886,
+          "upper": 0.1216485855364663,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cache_miss_fraction": {
+          "median": 0.11034917366373187,
+          "lower": 0.10590438799753127,
+          "upper": 0.11039511647626289,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "instructions_per_frame": {
+          "median": 286334686.4609375,
+          "lower": 286334684.2753906,
+          "upper": 286334694.11653644,
+          "coverage": 0.9609375,
+          "n": 9
+        },
+        "cycles_per_frame": {
+          "median": 120598205.74283855,
+          "lower": 120421337.04166667,
+          "upper": 120660181.07877605,
+          "coverage": 0.9609375,
+          "n": 9
+        }
+      },
+      "workers_observed": [
+        24
+      ]
+    }
+  },
+  "ratios": [
+    {
+      "id": "slowdown:aff3ct-dvb-l24",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-dvb-l24",
+      "denominator": "aff3ct-dvb-w1",
+      "estimate": 4.073218007416732,
+      "lower": 4.048510718828149,
+      "upper": 4.113586163269381,
+      "seed": 115127834
+    },
+    {
+      "id": "slowdown:aff3ct-dvb-p12",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-dvb-p12",
+      "denominator": "aff3ct-dvb-w1",
+      "estimate": 1.2810610015664572,
+      "lower": 1.272667395555118,
+      "upper": 1.2944525088241752,
+      "seed": 4042062138
+    },
+    {
+      "id": "slowdown:aff3ct-dvb-p6",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-dvb-p6",
+      "denominator": "aff3ct-dvb-w1",
+      "estimate": 1.0939164063439175,
+      "lower": 1.0767646613053106,
+      "upper": 1.1014810285146177,
+      "seed": 3426829613
+    },
+    {
+      "id": "slowdown:aff3ct-nr-l24",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-nr-l24",
+      "denominator": "aff3ct-nr-w1",
+      "estimate": 2.7447995662757614,
+      "lower": 2.721556374028922,
+      "upper": 2.8255739877086175,
+      "seed": 3389267808
+    },
+    {
+      "id": "slowdown:aff3ct-nr-p12",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-nr-p12",
+      "denominator": "aff3ct-nr-w1",
+      "estimate": 1.344781861164987,
+      "lower": 1.326930685851286,
+      "upper": 1.3541903356067155,
+      "seed": 1225736422
+    },
+    {
+      "id": "slowdown:aff3ct-nr-p6",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "aff3ct-nr-p6",
+      "denominator": "aff3ct-nr-w1",
+      "estimate": 1.1066763787102343,
+      "lower": 1.0935829206212522,
+      "upper": 1.1156218790382861,
+      "seed": 3616306065
+    },
+    {
+      "id": "slowdown:gf2-dvb-l24",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-dvb-l24",
+      "denominator": "gf2-dvb-w1",
+      "estimate": 1.7701891748542877,
+      "lower": 1.7557064189762068,
+      "upper": 1.7810845463733183,
+      "seed": 2142415993
+    },
+    {
+      "id": "gap:gf2-dvb-l24",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-dvb-l24",
+      "denominator": "aff3ct-dvb-l24",
+      "estimate": 0.8278852055077416,
+      "lower": 0.8179532781992415,
+      "upper": 0.8328663739707318,
+      "seed": 2393703480
+    },
+    {
+      "id": "slowdown:gf2-dvb-p12",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-dvb-p12",
+      "denominator": "gf2-dvb-w1",
+      "estimate": 1.1901106244280724,
+      "lower": 1.1736078261105938,
+      "upper": 1.214021085786476,
+      "seed": 3279287717
+    },
+    {
+      "id": "gap:gf2-dvb-p12",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-dvb-p12",
+      "denominator": "aff3ct-dvb-p12",
+      "estimate": 1.7697243154809315,
+      "lower": 1.7325274766978047,
+      "upper": 1.8024022477484536,
+      "seed": 1477213760
+    },
+    {
+      "id": "slowdown:gf2-dvb-p6",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-dvb-p6",
+      "denominator": "gf2-dvb-w1",
+      "estimate": 1.0476266350281327,
+      "lower": 1.0420966947411534,
+      "upper": 1.0557239492909334,
+      "seed": 2301201418
+    },
+    {
+      "id": "gap:gf2-dvb-p6",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-dvb-p6",
+      "denominator": "aff3ct-dvb-p6",
+      "estimate": 1.824359791129491,
+      "lower": 1.8159120820761019,
+      "upper": 1.8524999840319667,
+      "seed": 4019364236
+    },
+    {
+      "id": "gap:gf2-dvb-w1",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-dvb-w1",
+      "denominator": "aff3ct-dvb-w1",
+      "estimate": 1.904969804950712,
+      "lower": 1.8946115182485999,
+      "upper": 1.9207683823595432,
+      "seed": 2606725087
+    },
+    {
+      "id": "slowdown:gf2-nr-l24",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-nr-l24",
+      "denominator": "gf2-nr-w1",
+      "estimate": 1.7274513738953015,
+      "lower": 1.6845959866777898,
+      "upper": 1.780539819442827,
+      "seed": 3937061443
+    },
+    {
+      "id": "gap:gf2-nr-l24",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-nr-l24",
+      "denominator": "aff3ct-nr-l24",
+      "estimate": 1.098396438328166,
+      "lower": 1.0670168699941331,
+      "upper": 1.1339095849734406,
+      "seed": 3899764730
+    },
+    {
+      "id": "slowdown:gf2-nr-p12",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-nr-p12",
+      "denominator": "gf2-nr-w1",
+      "estimate": 1.175250983952845,
+      "lower": 1.1543738715539567,
+      "upper": 1.2050363190040905,
+      "seed": 441967002
+    },
+    {
+      "id": "gap:gf2-nr-p12",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-nr-p12",
+      "denominator": "aff3ct-nr-p12",
+      "estimate": 1.5252558594229446,
+      "lower": 1.496644543123231,
+      "upper": 1.5742275235694114,
+      "seed": 2223736573
+    },
+    {
+      "id": "slowdown:gf2-nr-p6",
+      "kind": "per-worker slowdown against one worker",
+      "numerator": "gf2-nr-p6",
+      "denominator": "gf2-nr-w1",
+      "estimate": 1.033575257878468,
+      "lower": 1.0324718671318052,
+      "upper": 1.040772540629094,
+      "seed": 2513059539
+    },
+    {
+      "id": "gap:gf2-nr-p6",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-nr-p6",
+      "denominator": "aff3ct-nr-p6",
+      "estimate": 1.629991671316314,
+      "lower": 1.6204846046528607,
+      "upper": 1.653082200631334,
+      "seed": 3904264572
+    },
+    {
+      "id": "gap:gf2-nr-w1",
+      "kind": "gf2 over AFF3CT flooding time per frame",
+      "numerator": "gf2-nr-w1",
+      "denominator": "aff3ct-nr-w1",
+      "estimate": 1.745275214736504,
+      "lower": 1.739882955919454,
+      "upper": 1.7512179184717642,
+      "seed": 2944138491
+    }
+  ],
+  "census": {
+    "dvb-t2-r12": {
+      "frames": 8,
+      "iterations": [
+        23,
+        39,
+        25,
+        50,
+        27,
+        50,
+        25,
+        21
+      ],
+      "allocations": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "predicted_allocations": [
+        5216425,
+        8845241,
+        5670027,
+        11340052,
+        6123629,
+        11340052,
+        5670027,
+        4762823
+      ],
+      "matches_edges_per_iteration_plus_two_syndrome_vectors": false,
+      "allocations_equal_deallocations": true,
+      "reallocations": 0,
+      "bytes_requested": 64832
+    },
+    "nr-bg1-r12": {
+      "frames": 8,
+      "iterations": [
+        41,
+        45,
+        30,
+        26,
+        44,
+        33,
+        28,
+        36
+      ],
+      "allocations": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "predicted_allocations": [
+        4975188,
+        5460572,
+        3640382,
+        3154998,
+        5339226,
+        4004420,
+        3397690,
+        4368458
+      ],
+      "matches_edges_per_iteration_plus_two_syndrome_vectors": false,
+      "allocations_equal_deallocations": true,
+      "reallocations": 0,
+      "bytes_requested": 26112
+    }
+  }
+}

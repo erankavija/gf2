@@ -1,0 +1,17 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 470  of event 'cycles:u'
+# Event count (approx.): 1880017390
+#
+# Overhead       Samples  Shared Object  Symbol                                               
+# ........  ............  .............  .....................................................
+#
+   100.00%           470  ldpc-profile   [.] std::sys::backtrace::__rust_begin_short_backtrace
+
+
+#
+# (Tip: Sample related events with: perf record -e '{cycles,instructions}:S')
+#

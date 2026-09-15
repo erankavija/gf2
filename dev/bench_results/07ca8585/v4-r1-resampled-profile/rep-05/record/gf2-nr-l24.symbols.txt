@@ -1,0 +1,24 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 7K of event 'cycles:u'
+# Event count (approx.): 28688265364
+#
+# Overhead       Samples  Shared Object     Symbol                                                  
+# ........  ............  ................  ........................................................
+#
+    99.57%          7141  ldpc-profile      [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.31%            22  ldpc-profile      [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.06%             4  [unknown]         [k] 0xffffffffad4015f0
+     0.01%             1  libc.so.6         [.] 0x00000000001765c0
+     0.01%             1  libc.so.6         [.] 0x0000000000176e89
+     0.01%             1  libc.so.6         [.] 0x0000000000176e8e
+     0.01%             1  [unknown]         [k] 0xffffffffad8968b2
+     0.01%             1  [unknown]         [k] 0xffffffffae99fa66
+
+
+#
+# (Tip: To record callchains for each sample: perf record -g)
+#
