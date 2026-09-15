@@ -15,6 +15,557 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "GF(2^m) batch, dot, and polynomial crossover findings",
+      "path": "dev/active/53c5a8c0/findings.md"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, crossover wire-smoke pilot",
+      "path": "dev/active/53c5a8c0/addendum-v4-crossover-pilot.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, crossover pilot",
+      "path": "dev/active/53c5a8c0/addendum-v4-crossover-pilot-r2.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, crossover confirmation and holdouts",
+      "path": "dev/active/53c5a8c0/addendum-v4-crossover-confirmation.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, polynomial pilot",
+      "path": "dev/active/53c5a8c0/addendum-v4-polynomial-pilot.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, polynomial confirmation and holdouts",
+      "path": "dev/active/53c5a8c0/addendum-v4-polynomial-confirmation.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "label": "Crossover confirmation derivation record",
+      "path": "dev/active/53c5a8c0/resolution-crossover.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "label": "Polynomial confirmation derivation record",
+      "path": "dev/active/53c5a8c0/resolution-polynomial.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Source-evidence ledger for implementation claims",
+      "path": "dev/active/53c5a8c0/survey/source-evidence.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "label": "Correctness validation record",
+      "path": "dev/active/53c5a8c0/survey/validation.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "specification",
+      "label": "Independent confirmation holdout cells",
+      "path": "dev/active/53c5a8c0/survey/holdout-cells.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Frozen release profiling case matrix",
+      "path": "dev/active/53c5a8c0/survey/profile-cases.tsv"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "label": "Producing-input manifest",
+      "path": "dev/active/53c5a8c0/survey/producing-inputs.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "label": "Annotated release assembly, crossover paths",
+      "path": "dev/active/53c5a8c0/survey/asm/crossover.asm.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "label": "Annotated release assembly, long-product paths",
+      "path": "dev/active/53c5a8c0/survey/asm/long-product.asm.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Assembly annotation generator",
+      "path": "dev/active/53c5a8c0/survey/annotate-asm.py"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Assembly extraction generator",
+      "path": "dev/active/53c5a8c0/survey/dump-asm.py"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Release assembly regeneration wrapper",
+      "path": "dev/active/53c5a8c0/survey/regen-asm.sh"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Profile symbol-resolution generator",
+      "path": "dev/active/53c5a8c0/survey/resolve-symbols.py"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Release profile campaign runner",
+      "path": "dev/active/53c5a8c0/survey/run-profile.sh"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Profile validation and table generator",
+      "path": "dev/active/53c5a8c0/survey/summarize-profile.py"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Receipt table generator",
+      "path": "dev/active/53c5a8c0/survey/summarize.py"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Correctness validation runner",
+      "path": "dev/active/53c5a8c0/survey/run-validation.sh"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Measurement-arm crate manifest",
+      "path": "dev/active/53c5a8c0/survey/arms/Cargo.toml"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Shared measurement-arm implementation",
+      "path": "dev/active/53c5a8c0/survey/arms/src/lib.rs"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "gf2 measurement backend",
+      "path": "dev/active/53c5a8c0/survey/arms/src/gf2_backend.rs"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Pinned gf2x measurement backend",
+      "path": "dev/active/53c5a8c0/survey/arms/src/gf2x_backend.rs"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Composed-stage cost implementation",
+      "path": "dev/active/53c5a8c0/survey/arms/src/stages.rs"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Wide-field measurement implementation",
+      "path": "dev/active/53c5a8c0/survey/arms/src/wide_field.rs"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Generated crossover and polynomial receipt tables",
+      "path": "dev/bench_results/53c5a8c0/tables.md"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Append-only crossover family ledger",
+      "path": "dev/bench_results/53c5a8c0/gf2m-clmul-crossover-ledger.jsonl"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Append-only polynomial family ledger",
+      "path": "dev/bench_results/53c5a8c0/wide-polynomial-competitiveness-ledger.jsonl"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Campaign launcher for crossover and polynomial families",
+      "path": "dev/bench_results/53c5a8c0/run-crossover.sh"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Generated profile attribution table",
+      "path": "dev/bench_results/53c5a8c0/profile/profile.md"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Profile artifact validation and digest ledger",
+      "path": "dev/bench_results/53c5a8c0/profile/validation.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Profile runtime-observed run records",
+      "path": "dev/bench_results/53c5a8c0/profile/runs.jsonl"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Profile hardware-counter records",
+      "path": "dev/bench_results/53c5a8c0/profile/counters.jsonl"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Append-only profile execution log",
+      "path": "dev/bench_results/53c5a8c0/profile/profile.log"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Profile host and toolchain record",
+      "path": "dev/bench_results/53c5a8c0/profile/host.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Profile symbol resolution record",
+      "path": "dev/bench_results/53c5a8c0/profile/symbol-resolution.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field batch multiplication batch arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-batch-mul-8-batch.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field batch multiplication element arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-batch-mul-8-element.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field dot length 8 batch arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-dot-8-batch.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field dot length 8 element arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-dot-8-element.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field dot length 16 batch arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-dot-16-batch.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field dot length 16 element arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-dot-16-element.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field dot length 64 batch arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-dot-64-batch.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field dot length 64 element arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-dot-64-element.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field dot length 512 batch arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-dot-512-batch.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, field dot length 512 element arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/field-dot-512-element.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, raw short batch arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/raw-batch-8-batch.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, raw short element arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/raw-batch-8-element.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, composed gf2 batch path",
+      "path": "dev/bench_results/53c5a8c0/profile/report/raw-batch-1024-composed-gf2.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, composed gf2x batch path",
+      "path": "dev/bench_results/53c5a8c0/profile/report/raw-batch-1024-composed-gf2x.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, 4-word gf2 polynomial arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/poly-4w-gf2.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, 4-word gf2x polynomial arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/poly-4w-gf2x.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, 9-word gf2 polynomial arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/poly-9w-gf2.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, 9-word gf2x polynomial arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/poly-9w-gf2x.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, 16-word gf2 polynomial arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/poly-16w-gf2.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, 16-word gf2x polynomial arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/poly-16w-gf2x.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, GF(2^256) gf2 arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/wide-field-256-gf2.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, GF(2^256) gf2x arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/wide-field-256-gf2x.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, GF(2^571) gf2 arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/wide-field-571-gf2.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Perf report, GF(2^571) gf2x arm",
+      "path": "dev/bench_results/53c5a8c0/profile/report/wide-field-571-gf2x.txt"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover wire smoke acceptance summary",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-wire-smoke/acceptance-summary.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover wire smoke execution log",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-wire-smoke/execution.log"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover wire smoke receipt",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-wire-smoke/receipt.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover initial pilot acceptance summary",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover initial pilot execution log",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot/execution.log"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover initial pilot receipt retaining the predicate rejection",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot/receipt.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover pilot acceptance summary",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot-r2/acceptance-summary.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover pilot execution log",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot-r2/execution.log"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover pilot receipt",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot-r2/receipt.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover confirmation acceptance summary",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Crossover confirmation rendered acceptance summary",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover confirmation execution log",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-confirmation/execution.log"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Crossover confirmation receipt",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-confirmation/receipt.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Polynomial pilot acceptance summary",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Polynomial pilot execution log",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-pilot/execution.log"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Polynomial pilot receipt",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-pilot/receipt.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Polynomial confirmation acceptance summary",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Polynomial confirmation rendered acceptance summary",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Polynomial confirmation execution log",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/execution.log"
+    },
+    {
+      "commit": "8daef9b0",
+      "doc_type": "benchmark",
+      "label": "Polynomial confirmation receipt",
+      "path": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/receipt.json"
     }
   ],
   "first_ready_at": "2026-09-06T19:59:36.095902220Z",
@@ -40,5 +591,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
-  "updated_at": "2026-09-13T17:00:27.524209116Z"
+  "updated_at": "2026-09-15T00:21:14.585388835Z"
 }
