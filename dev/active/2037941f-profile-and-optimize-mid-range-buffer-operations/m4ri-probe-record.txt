@@ -6,8 +6,8 @@ compiler: gcc (GCC) 16.2.1 20260810
 M4RI release: 20260122
 source archive sha256: 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404
 installed libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
-semantic probe executable sha256: b604c8098ba4bcaccaaaaf32e987a2253ee86d9aaca3d606c017c0354d94b818
-build record sha256: eacf92625638a4c247976de614e4d601612f838b3162e217276874b4d89f12c9
+semantic probe executable sha256: e6319fa95964bae3bde5e703d42b22d21365e5893c85eb81db0abc042baaa0de
+build record sha256: b15bf5af1893645614da0282d24090724fe74bc248895390a826543417ab8b4c
 library build flags: CFLAGS=-O3 -march=native -fPIC; --disable-static
 probe build flags: gcc -std=c11 -O3 -march=native -Wall -Wextra -Werror
 matched operation: mzd_mul(y, A, x, 0)
@@ -34,5 +34,14 @@ The runner then reused the retained build successfully only after verifying
 the archive digest, compiler identity, build flags, configure arguments, and
 installed-library digest against `gf2-m4ri-build-record.txt`; the six semantic
 cases passed again.
+
+Compiler-provenance regression: the integration lead fresh-built the v2 cache
+with ambient `CC=clang`. Configure selected `/usr/bin/gcc`, the generated
+Makefile records `CC = /usr/bin/gcc`, and the provenance record identifies the
+same executable and GCC version. A second run with ambient `CC=clang`, nonempty
+`CPPFLAGS`, `LDFLAGS`, and `LIBS`, and an invalid ambient `CONFIG_SITE` reused
+the cache only after verifying the pinned GCC and explicitly controlled empty
+Autoconf inputs; all six cases passed. Ambient build variables therefore cannot
+create or reuse a cache under false GCC provenance.
 
 exit status: 0
