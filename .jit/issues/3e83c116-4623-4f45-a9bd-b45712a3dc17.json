@@ -18,7 +18,13 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "repo-validate": {
+      "status": "failed",
+      "updated_at": "2026-09-15T02:41:38.232131951Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "3e83c116-4623-4f45-a9bd-b45712a3dc17",
   "labels": [
     "type:task",
@@ -32,5 +38,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify the ISA-L XOR comparator",
-  "updated_at": "2026-09-15T02:16:48.604897818Z"
+  "updated_at": "2026-09-15T02:41:38.232131951Z"
 }

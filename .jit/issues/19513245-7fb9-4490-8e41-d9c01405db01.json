@@ -53,18 +53,6 @@
     },
     {
       "commit": "7f1f4ffed4b6612eed848d7cfaf807c0b9053629",
-      "doc_type": "assembly",
-      "label": "Release consumer-arm annotated disassembly",
-      "path": "dev/active/19513245/survey/asm/consumer-arm"
-    },
-    {
-      "commit": "7f1f4ffed4b6612eed848d7cfaf807c0b9053629",
-      "doc_type": "assembly",
-      "label": "Release consumer-profile annotated disassembly",
-      "path": "dev/active/19513245/survey/asm/consumer-profile"
-    },
-    {
-      "commit": "7f1f4ffed4b6612eed848d7cfaf807c0b9053629",
       "doc_type": "benchmark",
       "label": "Append-only vector family ledger",
       "path": "dev/bench_results/19513245/vector-family-ledger.jsonl"
@@ -116,6 +104,20 @@
       "doc_type": "review",
       "label": "Lead review round 2",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/19513245-r2.md"
+    },
+    {
+      "commit": "7f1f4ffed4b6612eed848d7cfaf807c0b9053629",
+      "doc_type": "assembly",
+      "format": "markdown",
+      "label": "Release consumer-arm assembly index",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/index.txt"
+    },
+    {
+      "commit": "7f1f4ffed4b6612eed848d7cfaf807c0b9053629",
+      "doc_type": "assembly",
+      "format": "markdown",
+      "label": "Release consumer-profile assembly index",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/index.txt"
     }
   ],
   "done_at": "2026-09-15T02:07:56.341612443Z",
@@ -169,5 +171,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Assess byte-field acceleration in vector and matrix consumers",
-  "updated_at": "2026-09-15T02:07:56.341612443Z"
+  "updated_at": "2026-09-15T02:42:15.022659514Z"
 }
