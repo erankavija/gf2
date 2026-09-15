@@ -1,0 +1,38 @@
+ISA-L XOR comparator semantic qualification record
+issue: 3e83c116
+execution date: 2026-09-15
+host: Linux 7.2.2-arch1-1 x86_64
+compiler: cc (GCC) 16.2.1 20260810
+binutils: GNU nm 2.47; GNU objdump 2.47
+ISA-L revision: 7c3479e0a9dac17f448603ec1ad64c7c625f530c
+raid/raid_base.c sha256: 4fb636b16cebebadfb52236871421f1a143d3d7e488e7bc9b23b2fc25bd04aeb
+include/raid.h sha256: 5e51c4abcd86ade41426cef509c3eeb06b0c0b3f9ef28080ddedb6af02a5cd03
+LICENSE sha256: bc8fd4a3d031e65e05e9c9e2add2c3f336ce527fa85c1e31031c808b58216217
+build flags: cc -std=c11 -O3 -march=native -Wall -Wextra -Werror
+
+Command (from repository root):
+  ISAL_SOURCE="$PWD/.agents/ext/6fb89a3c/isa-l" bash dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-isal-xor-probe.sh
+
+Observed symbol:
+  00000000000029b0 T xor_gen_base
+
+Observed disassembly contract:
+  xor_gen_base is a byte loop over the source pointer array. The linked body
+  loads one byte from each source, XORs the bytes, and writes one destination
+  byte. This is the scalar base arm and is not SIMD-dispatch evidence.
+
+Observed semantic result:
+  ISA-L xor_gen_base semantic probe: 14 cases passed (LSB-first)
+
+The fourteen cases cover 1, 7, 8, 9, 63, 64, and 65 canonical u64 words
+with both two and three input sources. Each case verifies 32-byte alignment,
+a poisoned fresh destination, every output word, every LSB-first bit,
+and source immutability.
+
+Observed dispatched-arm availability:
+  nasm=absent; public dispatched xor_gen is unavailable on this host
+
+Observed whole-operation cost audit:
+  pointer-array,32B-alignment,fresh-output,GF2-destination-copy,conversion,output-observation
+
+exit status: 0
