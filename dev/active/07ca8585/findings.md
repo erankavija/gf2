@@ -83,12 +83,12 @@ matrix rows, without materialising either vector.
 ### The GPU device layout
 
 The GPU LDPC stage derives its device layout from the same `EdgeLayout`, so its
-hard decisions stay the CPU decoder's. On this host's gfx1030 they are:
-[gpu-byte-identity.md](../../bench_results/07ca8585/preparation/gpu-byte-identity.md)
-records the kernel build, the six byte-identity legs that exercise the LDPC stage
-and their verdicts. All six pass, over both frozen workloads and all three
-supported algorithms, so the device layout carries the canonical layout without
-changing what the stage decides.
+hard decisions stay the CPU decoder's. The pinned
+[device-conformance receipt](../../bench_results/07ca8585/device-conformance-r1/summary.md)
+pins the HIP source, Rust harnesses, four test executables, Rust 1.95 and hipcc
+toolchains, and the Radeon RX 6950 XT `gfx1030` device. Its six ordinary
+byte-identity legs all pass over the DVB-T2 and 5G NR workloads, so the device
+layout carries the canonical layout without changing what the stage decides.
 
 ## The shared reduction
 
@@ -120,6 +120,14 @@ and degree-one cases, clipping and finite extrema are unchanged, and the
 behavioural suite in
 `crates/gf2-coding/tests/ldpc_check_update_contract.rs` asserts the shared
 reduction against that reference directly.
+
+The HIP check kernel uses the same comparison and magnitude rules. The
+[device-conformance receipt](../../bench_results/07ca8585/device-conformance-r1/summary.md)
+launches `ldpc_check_update_kernel` on the pinned `gfx1030` and compares its
+downloaded `f32` bit patterns directly with `min_sum_check_row`. All eighteen
+algorithm/case rows pass: plain, normalized and offset min-sum over positive
+zero, negative zero, both NaN sign encodings, an all-NaN excluded set, and a
+mixed NaN/negative-zero row.
 
 ### The disclosed numerical change
 
@@ -363,10 +371,11 @@ matched-ness receipt and
 fixed-stopping quality corpus. `run-campaign.sh checknode` and
 `run-campaign.sh fixed-iteration` then run those families, and
 [run-profile-resample.sh](../../bench_results/07ca8585/run-profile-resample.sh)
-runs the re-sampled profile series. The GPU byte-identity legs need only a
-gfx1030 and the two commands
-[gpu-byte-identity.md](../../bench_results/07ca8585/preparation/gpu-byte-identity.md)
-records.
+runs the re-sampled profile series. The correctness-only
+[device-conformance runner](survey/run-device-conformance.py) executes the
+exceptional-input check-kernel matrix and the six ordinary GPU byte-identity
+legs on a `gfx1030`; its output directory carries the pinned source,
+executables, device, toolchain, raw logs and verdict.
 
 [summarize.py](survey/summarize.py) regenerates the tables from the committed
 evidence and reproduces them byte for byte.
