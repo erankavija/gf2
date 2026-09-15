@@ -8,12 +8,12 @@ and the [shared protocol](../f547c394/protocol.md) govern every timed cell.
 The predecessor `3be770d5` ranks the levers this issue spends; its
 [findings](../3be770d5/findings.md) and
 [tables](../../bench_results/3be770d5/tables.md) are the authoritative source
-of every share, interval and labelled Amdahl ceiling quoted by pointer below.
+of every share, interval and labelled Amdahl ceiling referenced below.
 Code claims are in [source-evidence.json](survey/source-evidence.json), written
 by [make-source-evidence.py](survey/make-source-evidence.py), which refuses a
 claim whose recorded line does not contain its fragment.
 
-## The path this issue replaces
+## Baseline update path
 
 The decoder keeps its messages in two jagged vectors of vectors, one inner
 vector per check and one per variable, and its neighbour lists in two more
@@ -63,8 +63,8 @@ canonical ids `check_offsets[c] .. check_offsets[c + 1]`, in the parity-check
 matrix's CSR `row_iter` order, and `check_edge_var[e]` is edge `e`'s variable.
 Variable `v` owns the variable-major slots `var_offsets[v] .. var_offsets[v+1]`
 in CSC `col_iter` order, and `var_edge_to_check_edge[f]` is the canonical id of
-slot `f`. Those two orders are exactly the orders the previous
-`check_neighbors` and `var_neighbors` lists carried, so no message changes the
+slot `f`. Those two orders are exactly the orders the baseline
+`check_neighbors` and `var_neighbors` lists carry, so no message changes the
 position it occupies within its node, and `check_edge_to_var_edge` inverts the
 second map for consumers that keep a variable-major message array.
 
@@ -110,7 +110,7 @@ position, and the second smallest when it is, which is the minimum over the
 other inputs including when the two smallest magnitudes are equal. So the shared
 reduction reproduces the per-output reduction bit for bit.
 
-### What the reduction fixes
+### Numerical contract
 
 The canonical reduction follows the supported scalar reference in both rules
 recorded under lever `numerical-contract`: an input's sign is taken by
@@ -123,8 +123,8 @@ reduction against that reference directly.
 
 ### The disclosed numerical change
 
-The decoder's min-sum and normalized min-sum paths do not always reach that
-reference before this change. With the default `simd` feature on a host whose
+The pinned baseline decoder's min-sum and normalized min-sum paths do not always
+reach that reference. With the default `simd` feature on a host whose
 AVX2 kernel is selected, they reach `Llr::boxplus_minsum_n`, whose vector lanes
 take the IEEE sign bit and propagate a NaN through `_mm256_min_ps`, while its
 scalar tail does neither, so one kernel disagrees with itself and with the
@@ -218,15 +218,18 @@ per-frame evidence.
 Every campaign is in the tables' "Campaigns" section with its acceptance
 verdict, its `qualifies` flag, its finding count on its own Source line, its
 journaled placement and, where its cells declare a decoder, its per-arm iteration
-distribution. Four single-worker pilots are accepted and each measures both
-codes: the before/after pilot, which puts the changed decoder ahead of the path
-it replaces and narrows the comparator gap the predecessor measured at whole
-decoding, and the three comparator pilots of REQ-10's three granularities. A
-pilot decides nothing: it fixes the resolution its confirmation freezes.
+distribution. The before/after, full-decoding comparator, fixed-iteration and
+check-node families each publish an accepted single-worker pilot and the accepted
+confirmation frozen from it. The before/after confirmation qualifies the
+canonical update on both workloads. The three comparator confirmations preserve
+their material gaps in AFF3CT's favour and select no production route. The two
+multicore pilots publish every physical-core and SMT cell as exploratory evidence;
+their accepted-but-nonqualifying status remains explicit. A pilot decides
+nothing.
 
 ### The residual gap
 
-All three comparator pilots leave the changed decoder behind AFF3CT
+All three comparator confirmations leave the canonical decoder behind AFF3CT
 [Cassagne2019] at one worker on both codes, by the factors their cells carry, and
 the isolated check-node cells locate part of that gap in the update itself rather
 than only in the whole decode. The predecessor's
@@ -237,17 +240,18 @@ syndrome and termination work. What it does not spend are the three the same
 ranking carries as comparator estimates with no gf2 mechanism: inter-frame SIMD,
 tracked by `ed3d490e`, and quantized and layered decoding with QC-aware
 intra-frame work, tracked by `f63a2464`. The predecessor's refutation rule for
-this issue's levers is a re-sampled profile rather than a clock, and that
-re-sampling is a cell of the profile series rather than of a throughput family.
-[run-profile-resample.sh](../../bench_results/07ca8585/run-profile-resample.sh)
-runs it over this issue's `after` build, with the predecessor's own session
-script, case set and arm catalogue unchanged so the sampled quantities stay the
-ones the ranking was derived from, and with the executables pinned by this
-issue's
-[kernel build identity](../../bench_results/07ca8585/preparation/kernel-build-identity.json)
-rather than the predecessor's. Its nine sessions exceed a working session's
-timed budget, so it is queued for the benchmark window beside this issue's other
-queued campaigns, and the tables gain its figures when it runs.
+this issue's levers is a re-sampled profile rather than a clock. The completed
+[profile series](../../bench_results/07ca8585/v4-r1-resampled-profile/profile.md)
+uses its session script, case set and arm catalogue unchanged over this issue's
+content-pinned `after` executable. Its generated category tables contain no
+`edge-position-search`, `min-sum-input-vec`, `min-sum-dispatch` or
+`min-sum-reduction` category for any gf2 record case; the shared
+`check-node-loop` is the dominant named decoder work that remains. The
+[attribution ledger](../../bench_results/07ca8585/v4-r1-resampled-profile/attribution.tsv)
+and cached inline chains resolve the sampled executable, and the append-only
+execution log records every bounded session. Thus the sampled categories for
+the levers this issue spends disappear without converting the remaining gap
+into a claim of optimality.
 
 ### The three REQ-10 granularities
 
@@ -257,7 +261,9 @@ pilot and a confirmation frozen from that pilot's committed receipt, and each
 publishes a comparison without selecting anything.
 
 **Full decoding** is the `3be770d5` steady-state operation unchanged, measured by
-`ldpc-update-comparator-single-worker-v1` on both codes.
+`ldpc-update-comparator-single-worker-v1` on both codes. Its frozen confirmation
+publishes the single-core comparison, and the companion multicore pilot publishes
+the physical-core and SMT comparison.
 
 **Full iterations** is `ldpc-update-fixed-iteration-v1`: both arms decode at the
 iteration cap with syndrome stopping off, so each performs the same declared
@@ -296,38 +302,36 @@ the canonical check-edge-to-variable-edge map, which is what places the same
 message on the same edge.
 
 Scaling is REQ-10's second axis. The single-core arm of every family is measured.
-The physical-core and SMT arms are the `ldpc-update-multicore-v1` and
-`ldpc-update-comparator-multicore-v1` families, whose cells arrive from their
-queued campaigns.
+The `ldpc-update-multicore-v1` and
+`ldpc-update-comparator-multicore-v1` pilots measure both workloads at six and
+twelve physical cores and at twenty-four logical CPUs. Their tables preserve the
+full set of directions, including the DVB-T2 SMT cell in which the comparator
+ordering reverses, without promoting exploratory cells into confirmation.
 
 ## Adoption
 
-Adoption is decided by the `ldpc-update-single-worker-v1` and
-`ldpc-update-multicore-v1` families against the frozen worthwhile-effect and
-non-regression margins, not by the pilots. The single-worker confirmation
-addendum is frozen from its committed pilot receipt by the canonical freezer
+Adoption is decided by the `ldpc-update-single-worker-v1` family against the
+frozen worthwhile-effect and non-regression margins, not by a pilot. Its
+confirmation addendum is frozen from its committed pilot receipt by the canonical freezer
 ([addendum](addendum-ldpc-update-single-worker.json), with its
 [derivation record](addendum-ldpc-update-single-worker-derivation.txt)), and the
 comparator single-worker confirmation likewise
 ([addendum](addendum-ldpc-update-comparator-single-worker.json),
 [derivation](addendum-ldpc-update-comparator-single-worker-derivation.txt)).
-The two REQ-10 granularity families freeze their own confirmations the same way
+The two other REQ-10 granularity families freeze their own confirmations the
+same way
 ([check-node](addendum-ldpc-update-checknode.json), with its
 [derivation](addendum-ldpc-update-checknode-derivation.txt), and
 [fixed-iteration](addendum-ldpc-update-fixed-iteration.json), with its
 [derivation](addendum-ldpc-update-fixed-iteration-derivation.txt)); they publish
-comparisons and select nothing, so no adoption follows them.
-
-Those four confirmations, the two multicore pilots and the re-sampled profile
-series exceed a working session's timed budget and are queued for a benchmark
-window; the tables gain their cells when they run, and a family in which nothing
-qualifies keeps the established path and stays recorded exactly as the evaluator
-records it.
-
-The tree carries the replacement now, on the strength of the accepted pilots'
-direction, the allocation counter and the behavioural suite. What the queued
-confirmations decide is whether that replacement clears its own frozen margins;
-until they report, no cell of this issue records an adoption.
+comparisons and select nothing, so no adoption follows them. The accepted
+before/after confirmation qualifies on both frozen workloads, so the canonical
+layout and shared reduction are the selected production route for the declared
+single-worker domain. The multicore family measures independent decoder instances
+running that same route rather than a distinct candidate; its exploratory results
+characterize scaling and make no separate adoption claim. Every nonqualifying
+pilot and every comparator direction remains in the tables exactly as its
+evaluator records it.
 
 ## Reproduction
 

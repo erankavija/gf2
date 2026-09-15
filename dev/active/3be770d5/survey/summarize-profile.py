@@ -68,6 +68,7 @@ from intervals import (  # noqa: E402
 REPO = pathlib.Path(__file__).resolve().parents[4]
 BINARY = REPO / "target/ldpc-throughput/release/ldpc-profile"
 IDENTITY = REPO / "dev/bench_results/3be770d5/preparation/build-identity.json"
+EXPECTED_BINARY_SHA256 = None
 STRUCTURE = REPO / "dev/bench_results/3be770d5/preparation/structural-costs.json"
 CODE_KEYS = {"dvb-t2-r12": "dvb-t2-r12", "nr-bg1-r12": "nr-bg1-z384"}
 HARNESS_DSO = "/ldpc-profile"
@@ -326,7 +327,10 @@ def to_address(offset, segments, mode):
 def resolve(offsets):
     """Inline chains of harness offsets, with the offset convention chosen by
     agreement between perf's symbols and the executable's symbol table."""
-    if not BINARY.exists() or sha(BINARY) != json.loads(IDENTITY.read_text())["executables"]["ldpc-profile"]:
+    expected = EXPECTED_BINARY_SHA256
+    if expected is None:
+        expected = json.loads(IDENTITY.read_text())["executables"]["ldpc-profile"]
+    if not BINARY.exists() or sha(BINARY) != expected:
         return None, {"resolved": False, "reason": "the profiled executable is not available unchanged"}
     segments, table = load_segments(BINARY), symbol_table(BINARY)
     votes = {}
@@ -361,7 +365,8 @@ def resolve(offsets):
         if len(chain) > 1:
             chain[0] = ("", chain[0][1], chain[0][2])
     return chains, {"resolved": True, "offset_convention": mode, "symbol_agreement": votes,
-                    "addresses": len(addresses), "executable": str(BINARY.relative_to(REPO))}
+                    "addresses": len(addresses), "executable": str(BINARY.relative_to(REPO)),
+                    **({"executable_sha256": expected} if EXPECTED_BINARY_SHA256 is not None else {})}
 
 
 def record_summary(root, sessions, cases):
@@ -627,10 +632,13 @@ def self_test():
 
 
 def main():
+    global BINARY, EXPECTED_BINARY_SHA256
     parser = argparse.ArgumentParser()
     parser.add_argument("root", nargs="?", type=pathlib.Path)
     parser.add_argument("--json", type=pathlib.Path)
     parser.add_argument("--markdown", type=pathlib.Path)
+    parser.add_argument("--binary", type=pathlib.Path)
+    parser.add_argument("--binary-sha256")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:
@@ -638,6 +646,13 @@ def main():
         return
     if args.root is None or args.json is None or args.markdown is None:
         parser.error("root, --json and --markdown are required")
+    if (args.binary is None) != (args.binary_sha256 is None):
+        parser.error("--binary and --binary-sha256 must be supplied together")
+    if args.binary is not None:
+        if not re.fullmatch(r"[0-9a-f]{64}", args.binary_sha256):
+            parser.error("--binary-sha256 must be 64 lowercase hexadecimal characters")
+        BINARY = args.binary.resolve()
+        EXPECTED_BINARY_SHA256 = args.binary_sha256
     root = args.root.resolve()
     sessions = completed_sessions(root)
     cases = read_cases(root)

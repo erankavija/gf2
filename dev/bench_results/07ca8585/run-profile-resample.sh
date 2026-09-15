@@ -147,6 +147,7 @@ grep -q '^series done ' "${LOG}" || echo "series done $(date -u +%Y-%m-%dT%H:%M:
 
 # Summaries read files and time nothing, so they run after the mutex.
 python3 -B "${PREDECESSOR}/summarize-profile.py" "${OUT}" --json "${OUT}/profile-summary.json" \
-    --markdown "${OUT}/profile.md" \
+    --markdown "${OUT}/profile.md" --binary "${BIN}/ldpc-profile" \
+    --binary-sha256 "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["profile_resample"]["executables"]["ldpc-profile"])' "${IDENTITY}")" \
     || echo "summary failed; the session data is complete and the summary can be rerun" >&2
 echo "re-sampled profile written to ${OUT}" >&2
