@@ -1,0 +1,344 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "gf2m-clmul-crossover",
+    "issue": "53c5a8c0",
+    "purpose": "consumer-family",
+    "description": "Where the batched carry-less paths of gf2-core overtake the per-element paths a consumer can call instead, across a small/crossover/resident/streaming size grid. Baseline arm: the per-element path — the bundle's single carry-less multiply in a loop, FieldVec::dot_product, and Gf2mElement multiplication one pair at a time. Candidate arm: the batched path — the bundle's raw-batch kernel, FieldVec::simd_dot_product, and gf2m::batch::batch_mul. One executable serves both arms and selects the entry point from GF2_CROSSOVER_PATH, so the arms share a build, a fixture generator and a timing loop. The three operations are kept in separate cells: the raw independent 64x64 carry-less batch is not the reduced GF(2^m) element-wise batch and neither is the GF(2^m) dot product. The raw-batch cells are kernel-isolated; the two GF(2^m) consumer cells are whole-consumer, with packing, the operation and the extraction of the result inside every timed call and both arms paying the identical packing. The family calibrates a selector: its recommendation is a length threshold in the canonical tuning mechanism, which its holdout cells test at sizes that took no part in selection. This addendum is the pilot: every cell is exploratory, it fixes the measurement resolution the confirmation freezes against, and none of its samples enter a confirmation."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-13T12:10:40Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.15,
+    "rationale": "The recommendation this family can support is a length threshold the batched paths do not have today: a selector field in the canonical tuning mechanism, its read site, its compile-time counterpart and the calibration that keeps it honest. Fifteen percent is the smallest gain on a short vector that repays that standing cost, because a consumer whose short calls are a minority of its work sees the threshold's benefit diluted by exactly that share. Below it the study recommends retaining the established batched path rather than adding a branch.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "Five percent is the slowdown at which a consumer would notice the batched path on a size where it is not winning; a cell inside that margin is recorded as not material rather than as a crossover.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A quarter of the runtime is the smallest gap between the two paths that would justify work on the losing path itself rather than a selector that avoids it; smaller gaps are reported and not chased."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 250,
+    "maintenance_rationale": "The study changes no production code. The budget bounds the change its recommendation would authorise elsewhere: one selector field in the canonical mechanism with its validation, its compile-time counterpart, the read site in the batched entry point and the rustdoc that states the new mechanism. A recommendation whose implementation would exceed that is reported for separate tracking instead."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/53c5a8c0/gf2m-clmul-crossover-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "raw-batch-8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "raw-batch-small",
+        "size": {
+          "count": 8,
+          "inner": 256
+        },
+        "seed": 5301
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "raw-batch-64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "raw-batch-crossover",
+        "size": {
+          "count": 64,
+          "inner": 64
+        },
+        "seed": 5302
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "raw-batch-1024",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "raw-batch-resident",
+        "size": {
+          "count": 1024,
+          "inner": 4
+        },
+        "seed": 5303
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "raw-batch-65536-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "raw-batch-streaming",
+        "size": {
+          "count": 65536,
+          "inner": 1
+        },
+        "seed": 5304
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "field-dot-8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "field-dot-small",
+        "size": {
+          "count": 8,
+          "inner": 256
+        },
+        "seed": 5311
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "field-dot-64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "field-dot-crossover",
+        "size": {
+          "count": 64,
+          "inner": 64
+        },
+        "seed": 5312
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "field-dot-1024",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "field-dot-resident",
+        "size": {
+          "count": 1024,
+          "inner": 4
+        },
+        "seed": 5313
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "field-dot-65536-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "field-dot-streaming",
+        "size": {
+          "count": 65536,
+          "inner": 1
+        },
+        "seed": 5314
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "field-batch-mul-8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "field-batch-mul-small",
+        "size": {
+          "count": 8,
+          "inner": 256
+        },
+        "seed": 5321
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "field-batch-mul-32",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "field-batch-mul-crossover",
+        "size": {
+          "count": 32,
+          "inner": 128
+        },
+        "seed": 5322
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "field-batch-mul-1024",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "field-batch-mul-resident",
+        "size": {
+          "count": 1024,
+          "inner": 4
+        },
+        "seed": 5323
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

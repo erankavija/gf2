@@ -1,0 +1,107 @@
+{
+  "schema": "53c5a8c0-holdout-declaration-v1",
+  "family": "gf2m-clmul-crossover",
+  "rationale": "Sixteen and five hundred and twelve elements appear in no pilot cell and their fixtures use seeds no pilot cell uses, so no sample of either cell took part in selecting a length threshold. The short cell's arms are swapped and its objective is non-regression: it asks whether the per-element dot product is not worse than the dispatched one where a gate would choose it. The long cell keeps the grid's direction and objective: it asks whether the dispatched dot product is materially faster where the established path is retained.",
+  "cells": [
+    {
+      "cell_id": "field-dot-16-holdout",
+      "regime": "small",
+      "case": {
+        "kind": "field-dot",
+        "count": 16,
+        "inner": 128,
+        "seed": 5331
+      },
+      "metric_kind": "whole-consumer",
+      "objective": "non-regression",
+      "role": "holdout",
+      "scaling": "single-core-latency",
+      "cache_state": "warm",
+      "core_arm": "single-core",
+      "baseline_arm": "batch-path",
+      "candidate_arm": "element-path",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      }
+    },
+    {
+      "cell_id": "field-dot-512-holdout",
+      "regime": "resident",
+      "case": {
+        "kind": "field-dot",
+        "count": 512,
+        "inner": 8,
+        "seed": 5332
+      },
+      "metric_kind": "whole-consumer",
+      "objective": "improvement",
+      "role": "holdout",
+      "scaling": "single-core-latency",
+      "cache_state": "warm",
+      "core_arm": "single-core",
+      "baseline_arm": "element-path",
+      "candidate_arm": "batch-path",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      }
+    }
+  ],
+  "addendum_cells": [
+    {
+      "cell_id": "field-dot-16-holdout",
+      "objective": "non-regression",
+      "role": "holdout",
+      "workload": {
+        "identity": "field-dot-small",
+        "size": {
+          "count": 16,
+          "inner": 128
+        },
+        "seed": 5331
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "field-dot-512-holdout",
+      "objective": "improvement",
+      "role": "holdout",
+      "workload": {
+        "identity": "field-dot-resident",
+        "size": {
+          "count": 512,
+          "inner": 8
+        },
+        "seed": 5332
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

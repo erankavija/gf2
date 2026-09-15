@@ -1,0 +1,23 @@
+# cycle samples of raw-batch-1024-composed-gf2 (gf2 arm, cell raw-batch-1024-composed)
+# recorded by run-profile.sh at 4000 Hz over 606060 logical calls
+# each row: share of this row's samples, exact sample count, the object
+# the samples fall in, and the symbol, or the offset in that object when
+# the object carries no symbol for it
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1425868359
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                     IPC   [IPC Coverage]
+# ........  ............  ....................  .........................................................................................  ....................
+#
+     0.62%             8  profile-arm           [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run  -      -            
+    99.26%          1195  profile-arm           [.] gf2_kernels_simd::gf2m::clmul_batch_safe                                               -      -            
+
+
+#
+# (Tip: To not record events from perf itself add --exclude-perf)
+#

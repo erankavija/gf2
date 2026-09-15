@@ -1,0 +1,52 @@
+identity profile-arm-conservative=3caa074779afce52348826050c085ddfa06afcb4ab6578985d5def8936fa0f89 profile-arm-native=750a2d031cd5dd10cbcc3be29694bb7eefcdf356702d8db36de4e0c8df55a398 profile-cases.tsv=4c89c45632dd10e4e7a786b0436725510896399502751f282a72bd7b76bddc18
+session start 2026-09-13T17:36:34Z load=2.53 3.21 3.81
+row raw-batch-8-element calibrated 12800->57506194ns, 25600->111234485ns, 4197ns/call -> 71479 calls
+row raw-batch-8-element done 9 repetitions of both event sets
+row raw-batch-8-batch calibrated 51200->100686076ns, 102400->196713737ns, 1875ns/call -> 160000 calls
+row raw-batch-8-batch done 9 repetitions of both event sets
+row field-dot-8-element calibrated 3200->97506550ns, 6400->192204954ns, 29593ns/call -> 10137 calls
+row field-dot-8-element done 9 repetitions of both event sets
+row field-dot-8-batch calibrated 3200->100167928ns, 6400->198272984ns, 30657ns/call -> 9785 calls
+row field-dot-8-batch done 9 repetitions of both event sets
+row field-dot-16-element calibrated 3200->97628411ns, 6400->185928365ns, 27593ns/call -> 10872 calls
+row field-dot-16-element done 9 repetitions of both event sets
+row field-dot-16-batch calibrated 3200->75210522ns, 6400->139221915ns, 20003ns/call -> 14997 calls
+row field-dot-16-batch done 9 repetitions of both event sets
+row field-dot-64-element calibrated 1600->97388488ns, 3200->189535254ns, 57591ns/call -> 5209 calls
+row field-dot-64-element done 9 repetitions of both event sets
+row field-dot-64-batch calibrated 3200->100328175ns, 6400->201378756ns, 31578ns/call -> 9500 calls
+row field-dot-64-batch done 9 repetitions of both event sets
+row field-dot-512-element calibrated 1600->100131813ns, 3200->190808728ns, 56673ns/call -> 5293 calls
+row field-dot-512-element done 9 repetitions of both event sets
+row field-dot-512-batch calibrated 3200->101531690ns, 6400->197624886ns, 30029ns/call -> 9990 calls
+row field-dot-512-batch done 9 repetitions of both event sets
+session start 2026-09-14T02:04:54Z load=1.40 4.64 7.43
+row field-batch-mul-8-element calibrated 3200->76519520ns, 6400->142536032ns, 20630ns/call -> 14541 calls
+row field-batch-mul-8-element done 9 repetitions of both event sets
+row field-batch-mul-8-batch calibrated 6400->61651022ns, 12800->119278755ns, 9004ns/call -> 33318 calls
+row field-batch-mul-8-batch done 9 repetitions of both event sets
+row poly-4w-gf2 calibrated 102400->63066479ns, 204800->124424049ns, 599ns/call -> 500834 calls
+row poly-4w-gf2 done 9 repetitions of both event sets
+row poly-4w-gf2x calibrated 102400->66990597ns, 204800->135472420ns, 668ns/call -> 449101 calls
+row poly-4w-gf2x done 9 repetitions of both event sets
+row poly-9w-gf2 calibrated 51200->85605502ns, 102400->177399833ns, 1792ns/call -> 167410 calls
+row poly-9w-gf2 done 9 repetitions of both event sets
+row poly-9w-gf2x calibrated 51200->103931186ns, 102400->204037984ns, 1955ns/call -> 153452 calls
+row poly-9w-gf2x done 9 repetitions of both event sets
+row poly-16w-gf2 calibrated 400->57481774ns, 800->110175145ns, 131733ns/call -> 2277 calls
+row poly-16w-gf2 done 9 repetitions of both event sets
+row poly-16w-gf2x calibrated 51200->74089690ns, 102400->142809135ns, 1342ns/call -> 223546 calls
+row poly-16w-gf2x done 9 repetitions of both event sets
+row wide-field-256-gf2 calibrated 12800->62123585ns, 25600->117772180ns, 4347ns/call -> 69013 calls
+row wide-field-256-gf2 done 9 repetitions of both event sets
+row wide-field-256-gf2x calibrated 25600->89760222ns, 51200->172557931ns, 3234ns/call -> 92764 calls
+row wide-field-256-gf2x done 9 repetitions of both event sets
+row wide-field-571-gf2 calibrated 12800->55588625ns, 25600->110185026ns, 4265ns/call -> 70339 calls
+row wide-field-571-gf2 done 9 repetitions of both event sets
+row wide-field-571-gf2x calibrated 25600->95119296ns, 51200->186379195ns, 3564ns/call -> 84175 calls
+row wide-field-571-gf2x done 9 repetitions of both event sets
+row raw-batch-1024-composed-gf2 calibrated 102400->53834987ns, 204800->104575190ns, 495ns/call -> 606060 calls
+row raw-batch-1024-composed-gf2 done 9 repetitions of both event sets
+row raw-batch-1024-composed-gf2x calibrated 12800->80032007ns, 25600->158177816ns, 6105ns/call -> 49140 calls
+row raw-batch-1024-composed-gf2x done 9 repetitions of both event sets
+session complete 2026-09-14T02:06:30Z
