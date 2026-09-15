@@ -8,7 +8,15 @@
     "eda07788-23a0-4852-939b-2cfcda36f9d1"
   ],
   "description": "Plan Optimize arbitrary-offset shifts and coding permutations (c04dd4ac) against every hard success criterion, write the concise design at dev/active/c04dd4ac-zen3-shifts-and-permutations/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The concise plan at dev/active/c04dd4ac-zen3-shifts-and-permutations/plan.md and its authoritative sibling breakdown manifest exist, are linked to this issue, and pass the manifest validation, render check, and batch-create dry run.\n- [hard] REQ-02: The plan-review gate passes on this issue.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": "1978997e",
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Shift and permutation planning investigation",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md"
+    }
+  ],
   "first_ready_at": "2026-09-13T11:40:06.951560552Z",
   "gates_required": [
     "plan-review"
@@ -35,5 +43,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "planning: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-14T23:53:27.866464775Z"
+  "updated_at": "2026-09-15T00:09:49.986862144Z"
 }
