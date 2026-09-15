@@ -126,7 +126,33 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-15T01:59:32.933892969Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-15T01:47:44.158449804Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T01:52:06.508609654Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T01:54:32.770352870Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T01:59:31.887332103Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "19513245-7fb9-4490-8e41-d9c01405db01",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -142,5 +168,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Assess byte-field acceleration in vector and matrix consumers",
-  "updated_at": "2026-09-15T01:46:58.446667619Z"
+  "updated_at": "2026-09-15T01:59:32.933892969Z"
 }
