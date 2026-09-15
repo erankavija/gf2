@@ -12285,3 +12285,4 @@
 {"fields":["documents"],"id":"36b72017-a609-4149-96e8-48895e4f6f8c","issue_id":"8d8be934-347f-4d7a-a53a-e7f8e13aaad8","timestamp":"2026-09-15T00:36:38.030754973Z","type":"issue_updated","updated_by":"doc-update"}
 {"fields":["documents"],"id":"b7331597-fad3-4c3c-b7b5-83621ea174ba","issue_id":"8ed3ac58-48a7-4a3b-8a4d-475e23eadcdd","timestamp":"2026-09-15T00:36:38.324352819Z","type":"issue_updated","updated_by":"doc-update"}
 {"fields":["documents"],"id":"5b26fa2b-1cad-414b-82d6-35aaa5c9e740","issue_id":"8ed3ac58-48a7-4a3b-8a4d-475e23eadcdd","timestamp":"2026-09-15T00:36:38.607371395Z","type":"issue_updated","updated_by":"doc-update"}
+{"id":"971a1096-a6ab-44db-84a5-c5b9e00548a2","issue_id":"c5e01de3-c6ae-4a0a-80c5-646d744aff80","priority":"normal","timestamp":"2026-09-15T00:38:53.630653249Z","title":"Name attempt alpha correctly in acceptance summaries","type":"issue_created"}
