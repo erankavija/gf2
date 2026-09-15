@@ -87,7 +87,7 @@ def run_logged(root, raw, execution, name, argv, extra_env=None):
     (raw / f"{name}.log").write_text(output, encoding="utf-8")
     if status != 0:
         raise SystemExit(f"{name} failed with exit status {status}")
-    return command
+    return output
 
 
 def capture(root, raw, name, argv):
