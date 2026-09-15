@@ -7,7 +7,46 @@
     "30c3aef1-9272-425d-8ac5-276cca22a8c7"
   ],
   "description": "Identify and prove the M4RI operation that is mathematically and operationally comparable with one dense mid-range consumer.\n\n## Background\n\nExisting M4RI evidence covers transpose and BCH-generator framing, neither of which substitutes for dense `BitMatrix::matvec`. A useful comparator must match a real consuming operation and charge construction, conversion, execution, and output costs.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed operation-match specification pins the M4RI revision, license, build flags, exact operation, dimensions, representation mapping, output semantics, and reproducible commands.\n- [hard] REQ-02: A semantic probe demonstrates an equivalent dense consumer result with adapter costs identified, or records with evidence that no matched M4RI operation exists within the declared search budget.\n\n## Notes\n\nGrounding: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md` and the linked Zen 3 measurement contract.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/matrix.rs",
+          "resolved_path": "crates/gf2-core/src/matrix.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "141973f1fc34c5b73046b5411b7ce405f6dc0ca0545c4e1fb869da9f9e7b9f20",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../6fb89a3c/survey/fetch-build.sh",
+          "resolved_path": "dev/active/6fb89a3c/survey/fetch-build.sh"
+        }
+      ],
+      "commit": "94eb4788",
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "M4RI dense matvec operation match",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
+    },
+    {
+      "commit": "94eb4788",
+      "doc_type": "validation",
+      "label": "M4RI matvec semantic probe",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_probe.c"
+    },
+    {
+      "commit": "94eb4788",
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "M4RI matvec qualification runner",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh"
+    }
+  ],
   "first_ready_at": "2026-09-15T00:55:29.092843264Z",
   "gates_required": [
     "repo-validate",
@@ -32,5 +71,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T02:17:12.743246829Z"
+  "updated_at": "2026-09-15T02:47:17.256486544Z"
 }
