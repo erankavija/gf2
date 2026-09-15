@@ -110,6 +110,12 @@
       "doc_type": "benchmark",
       "label": "Completed nine-session byte-field consumer profile",
       "path": "dev/bench_results/19513245/r1-consumer-profile"
+    },
+    {
+      "commit": "9273165990680c9dfd3609ba2aebea641857b17c",
+      "doc_type": "review",
+      "label": "Lead review round 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/19513245-r2.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:43.729358013Z",
@@ -136,5 +142,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Assess byte-field acceleration in vector and matrix consumers",
-  "updated_at": "2026-09-15T01:20:28.507780971Z"
+  "updated_at": "2026-09-15T01:46:58.446667619Z"
 }

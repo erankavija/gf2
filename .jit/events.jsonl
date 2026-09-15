@@ -12479,3 +12479,4 @@
 {"gate_key":"code-review","id":"44856a6e-aef8-43f6-befa-ff64117489f1","issue_id":"07ca8585-d822-49e7-96b8-18f6a3d73d4e","timestamp":"2026-09-15T01:36:54.561220902Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"0172218d-f746-4151-9d61-ff3761f47c4c","issue_id":"07ca8585-d822-49e7-96b8-18f6a3d73d4e","timestamp":"2026-09-15T01:40:27.811277776Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"7a12f77e-0bf1-46b5-8c36-7fb5a94757e0","issue_id":"07ca8585-d822-49e7-96b8-18f6a3d73d4e","timestamp":"2026-09-15T01:45:14.982205448Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"bed0299c-4e0e-495b-a7a3-ec99a8ff2b88","issue_id":"19513245-7fb9-4490-8e41-d9c01405db01","timestamp":"2026-09-15T01:46:58.446667619Z","type":"issue_updated","updated_by":"doc-add"}
