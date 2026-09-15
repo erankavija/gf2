@@ -290,7 +290,7 @@
           "short_id": "53c5a8c0",
           "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
           "classification": "research",
-          "status": "session 14: continuation worker w14-53c5a8c0 (opus) in .agents/worktrees/agent-53c5a8c0 from 4fd96ef9 (both confirmations committed, qualifies=false each; freezer extended with --holdout-cells/--purpose): asm and profiler attribution (REQ-04), crossover recommendations (REQ-05), findings, tables, cargo-ci, merge main, links.",
+          "status": "done. Session 16: both nonqualifying confirmations and the profiling attribution are preserved; findings, generated tables, assembly evidence, current gates, independent review, and all linked receipts passed closure at 2026-09-15T00:40Z.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-53c5a8c0",
@@ -306,7 +306,7 @@
           "short_id": "19513245",
           "title": "Assess byte-field acceleration in vector and matrix consumers",
           "classification": "research",
-          "status": "session 14: dispatched to w14-19513245 (opus) in .agents/worktrees/agent-19513245 (base f753f8db).",
+          "status": "done. Session 16: byte-field consumer evidence, assembly and profile artifacts, all five gates, and independent review passed; directory-valued JIT document links were repaired to pinned summary files before closure at 2026-09-15T02:07Z.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-19513245",
@@ -378,14 +378,14 @@
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "pending"
+          "status": "in progress. Planning and the 30-node breakdown are done. ISA-L qualification 3e83c116 is done. M4RI qualification 92385645 is stopped after two rework attempts: review r2 reproduces false GCC provenance through MAKEFLAGS/GNUMAKEFLAGS and awaits invoker guidance. Logical addendum 3ea122df is merged at 7d04c62f; repo, doc, cargo, and code gates pass, while research-review requires invoker approval to add [IsaL2026] to the issue description."
         },
         {
           "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "pending"
+          "status": "in progress. Planning and breakdown are instantiated. Source tasks 85fc5ff4 and 9fb40c83 are prepared in isolated worktrees; their six- and fifteen-minute profiling/campaign jobs are queued for the 2026-09-16 04:00 EEST benchmark window."
         },
         {
           "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
@@ -438,7 +438,7 @@
           "short_id": "07ca8585",
           "title": "Remove allocation and repeated edge traversal from LDPC updates",
           "classification": "implementation",
-          "status": "session 15: recovery completed on 0931e66a. Both accepted pilots and both check-node/fixed-iteration confirmation addenda are restored unchanged; post-merge check-node evidence is preserved separately. Rust 1.95 build, formatting, shell syntax, DVB/NR byte parity, binary identities, receipt snapshots, and all six prepare-only campaign preflights pass. All seven issue-owned jobs in the armed overnight queue are ready; no timed work ran in-session.",
+          "status": "done. Session 16: current-source gfx1030 conformance was repackaged with canonical source/build snapshots and hash verification; all configured gates and independent six-tier review r4 pass. Closed at 220b81db on 2026-09-15T02:48Z, unlocking f63a2464.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-1c602857 (reused directory)",
@@ -449,7 +449,8 @@
             "session": 14
           },
           "reviews": [
-            "reviews/07ca8585-r1.md"
+            "reviews/07ca8585-r1.md",
+            "reviews/07ca8585-r4.md"
           ]
         },
         {
@@ -796,6 +797,22 @@
       "status": "resolved",
       "raised_at": "2026-09-13T18:15Z",
       "resolution": "Invoker: 'The host must not be locked during an active session. All measurement shall be in an overnight slot. We must disable locking. Kill any measurement that is running.' Implemented at 07fb19ee."
+    },
+    {
+      "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5)",
+      "issue": "92385645",
+      "question": "may the lead perform one focused audited correction that clears MAKEFLAGS and GNUMAKEFLAGS, exercises both channels on a fresh cache, and refreshes the M4RI evidence and gates",
+      "recommendation": "authorize the focused correction and reset the rework counter; the reviewer supplied a concrete local reproducer and the change does not alter issue scope",
+      "status": "open",
+      "raised_at": "2026-09-15T04:08Z"
+    },
+    {
+      "category": "issue scope change (description, policy item 4)",
+      "issue": "3ea122df",
+      "question": "may the lead append 'Source references: [IsaL2026].' to the issue Notes so the existing cites:IsaL2026 label passes research-review",
+      "recommendation": "approve the citation-only description repair; it mirrors the prior batch ruling but this newly created child was not named in that ruling",
+      "status": "open",
+      "raised_at": "2026-09-15T04:14Z"
     }
   ],
   "rework_counts": {
@@ -811,7 +828,8 @@
     "12fdeb5b": 2,
     "1c602857": 2,
     "07ca8585": 1,
-    "5cbb6545": 2
+    "5cbb6545": 2,
+    "92385645": 2
   },
   "surfaced_pitfalls": [
     {
@@ -1219,7 +1237,8 @@
     "Invoker ruling (session 14): dispatch prompts are ephemeral and are not committed; the session-13 suggestion to commit them is void. The 07ca8585 round-1 verdict stays under reviews/.",
     "Invoker decision (session 14): the 3be770d5 citation repair ('Source references: [Key].' appended to Notes) applies to all ten open issues whose cites labels were absent from their text: 1d4fd63d 5cbb6545 53c5a8c0 07ca8585 19513245 f63a2464 ed3d490e 1362381c 2037941f c04dd4ac.",
     "Invoker instruction 2026-09-13T18:00Z (session 14): no new work this session; let the four running workers finish; write the handoff. The two 53c5a8c0 follow-ups (no wide carry-less kernel above nine words; dot_chunk_len uncalibrated for short vectors) are recorded in handoff-11.md for filing next session.",
-    "Invoker policy 2026-09-13T18:20Z (session 14): the host must not be locked during an active session; all measurement runs in an overnight slot outside the session; locking is disabled outside the window (07fb19ee: cargo-budget.sh unlocked, ccx1-bench-flock.sh refuses unless GF2_BENCH_WINDOW=1, run-window.sh exports it; AGENTS.md and worker-brief.md updated). The lead killed the running 53c5a8c0 profile session and the 19513245 campaign (twice) on the invoker's order; their remainders are queued."
+    "Invoker policy 2026-09-13T18:20Z (session 14): the host must not be locked during an active session; all measurement runs in an overnight slot outside the session; locking is disabled outside the window (07fb19ee: cargo-budget.sh unlocked, ccx1-bench-flock.sh refuses unless GF2_BENCH_WINDOW=1, run-window.sh exports it; AGENTS.md and worker-brief.md updated). The lead killed the running 53c5a8c0 profile session and the 19513245 campaign (twice) on the invoker's order; their remainders are queued.",
+    "Session 16 (2026-09-15): 53c5a8c0, 19513245, and 07ca8585 are done with current gates and independent reviews; 3e83c116 is done; 92385645 exhausted two reworks when review r2 reproduced a MAKEFLAGS/GNUMAKEFLAGS compiler-provenance bypass; 3ea122df merged and passes repo/doc/cargo/code gates but needs invoker approval for the issue-text citation required by research-review; c04dd4ac source jobs are queued for the 2026-09-16 benchmark window. No Astra model was used."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1233,19 +1252,21 @@
     "handoff-8.md",
     "handoff-9.md",
     "handoff-10.md",
-    "handoff-11.md"
+    "handoff-11.md",
+    "handoff-12.md",
+    "handoff-13.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
   },
   "benchmark_window": {
-    "unit": "gf2-bench-window-20260914",
-    "armed_for": "2026-09-14T04:00 Europe/Helsinki (01:00Z)",
-    "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv on main at 6e203afe (07ca8585 seven lines; lines from 53c5a8c0 and 19513245 appended as their reports land)",
-    "jobs_new": 7,
-    "estimated_minutes_new": 112,
+    "unit": "gf2-bench-window-20260916",
+    "armed_for": "2026-09-16T04:00 Europe/Helsinki (01:00Z)",
+    "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv (current pending keys 85fc5ff4 and 9fb40c83)",
+    "jobs_new": 2,
+    "estimated_minutes_new": 21,
     "state_dir": ".agents/bench-window",
-    "follow": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh (set GF2_WINDOW_UNIT=gf2-bench-window-20260914)",
+    "follow": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh (set GF2_WINDOW_UNIT=gf2-bench-window-20260916)",
     "note": "Invoker policy 2026-09-13: the host is never locked during a session; every measurement runs in this window. run-window.sh exports GF2_BENCH_WINDOW=1; outside it cargo-budget.sh is unlocked and ccx1-bench-flock.sh refuses (07fb19ee). Old queue lines with .done markers are skipped. A job's rc is not evidence it measured anything; judge each campaign from its own execution log and receipt."
   }
 }
