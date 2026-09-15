@@ -64,9 +64,19 @@
     "asm-artefact-present"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-15T03:22:13.588508033Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
       "status": "failed",
-      "updated_at": "2026-09-15T03:16:47.381195408Z",
+      "updated_at": "2026-09-15T03:25:30.849246085Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-15T03:21:25.418247271Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -88,5 +98,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T03:16:47.381195408Z"
+  "updated_at": "2026-09-15T03:25:30.849246085Z"
 }
