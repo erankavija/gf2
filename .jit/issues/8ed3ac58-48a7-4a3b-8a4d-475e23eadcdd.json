@@ -96,6 +96,7 @@
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/review.md"
     }
   ],
+  "done_at": "2026-09-15T00:49:48.516426734Z",
   "first_ready_at": "2026-09-13T11:40:06.951560552Z",
   "gates_required": [
     "plan-review"
@@ -120,7 +121,7 @@
     "type:planning"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "planning: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-15T00:48:29.616961446Z"
+  "updated_at": "2026-09-15T00:49:48.516426734Z"
 }
