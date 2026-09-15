@@ -12473,3 +12473,5 @@
 {"fields":["documents"],"id":"6aabbca3-5f46-46d2-8654-c7872dec9af9","issue_id":"19513245-7fb9-4490-8e41-d9c01405db01","timestamp":"2026-09-15T01:20:27.919849232Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"79f1e70b-b0f2-49fe-a4a7-589ffb4e4b83","issue_id":"19513245-7fb9-4490-8e41-d9c01405db01","timestamp":"2026-09-15T01:20:28.210483754Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"7b12f9d8-0f76-494d-ae6a-aa27ae489576","issue_id":"19513245-7fb9-4490-8e41-d9c01405db01","timestamp":"2026-09-15T01:20:28.507780971Z","type":"issue_updated","updated_by":"doc-add"}
+{"id":"0a4bea2e-bec1-4cd2-b05e-1c9e51f5edfe","issue_id":"613574db-f283-425f-b664-369f3e93d756","priority":"high","timestamp":"2026-09-15T01:21:24.417476020Z","title":"Design cached GF(2^8) tables and consumer hooks","type":"issue_created"}
+{"fields":["dependencies"],"id":"dec086e2-97b6-449c-afc0-d7ab12b0526d","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-09-15T01:21:58.550180066Z","type":"issue_updated","updated_by":"dependency-add"}

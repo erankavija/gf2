@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-15T01:21:24.417476020Z",
+  "dependencies": [],
+  "description": "Turn the positive 19513245 consumer evidence into a reviewed library-layer design before any production implementation ships.\n\n## Background\n\nThe completed byte-field assessment confirms consumer benefit for\n`FieldVec::axpy` and dense `FieldMatrix` product, while attributing a large part\nof the current cost to repeated table construction and per-element dispatch.\nIt does not confirm `FieldMatrix::matvec`, and it does not justify a public byte\nregion API or byte-packed storage redesign.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish and link a reviewed design for a byte product table cached per field or compile-time field configuration, plus canonical `FieldVec` and `FieldMatrix` hooks for the confirmed axpy and dense-product consumers.\n- [hard] REQ-02: Preserve the representations callers already hold, the one canonical dispatch abstraction, a tested scalar fallback, and existing overlap and allocation contracts; the design introduces no public byte-region API or storage redesign.\n- [hard] REQ-03: Specify conformance for every byte coefficient, zero and one, unaligned inputs, tails, both 0x11B and 0x11D polynomials, cache lifetime and thread safety; production unsafe code remains isolated to the kernel crates.\n- [hard] REQ-04: Create reviewed worker-sized JIT implementation and confirmation scope before shipping, pinned to the 19513245 profile and confirmation receipts. `FieldMatrix::matvec` remains excluded until a separate paired consumer campaign confirms it.\n\n## Notes\n\nThe source decision and measurements are linked from `@/issue/19513245`.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-15T01:21:24.417476020Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "613574db-f283-425f-b664-369f3e93d756",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-core",
+    "satisfies:REQ-06",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Design cached GF(2^8) tables and consumer hooks",
+  "updated_at": "2026-09-15T01:21:24.417476020Z"
+}
