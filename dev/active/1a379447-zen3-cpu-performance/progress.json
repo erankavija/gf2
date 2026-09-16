@@ -378,7 +378,7 @@
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "in progress. Planning and the 30-node breakdown are done. ISA-L qualification 3e83c116 is done. M4RI qualification 92385645 is stopped after two rework attempts: review r2 reproduces false GCC provenance through MAKEFLAGS/GNUMAKEFLAGS and awaits invoker guidance. Logical addendum 3ea122df is merged at 7d04c62f; repo, doc, cargo, and code gates pass, while research-review requires invoker approval to add [IsaL2026] to the issue description."
+          "status": "in progress. Planning and the 30-node breakdown are done. ISA-L qualification 3e83c116 is done. M4RI qualification 92385645 is stopped after two rework attempts: review r2 reproduces false GCC provenance through MAKEFLAGS/GNUMAKEFLAGS and awaits invoker guidance. Logical addendum 3ea122df is done (session 17): citation repair approved, independent Terra review R-01 (cite the preserved 64-word no-win) fixed at 77606c84, all seven gates pass, review reviews/3ea122df-r1.md. 92385645 rework round 3 (counter reset) dispatched."
         },
         {
           "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
