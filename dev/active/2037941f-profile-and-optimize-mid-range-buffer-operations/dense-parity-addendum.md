@@ -179,6 +179,7 @@ The normative primary Cartesian product is:
   $0 \pmod{64}$;
 - cache state: `warm`;
 - metric/scaling/core: `kernel-isolated`, `single-core-latency`, `single-core`;
+- conversion and setup costs excluded, as the isolated boundary requires;
 - objective: `improvement`;
 - cell identifier: `and-popcnt-{W}w-warm`.
 
@@ -216,8 +217,11 @@ and the 1024 appends of its returned `BitVec`.
 
 ### M4RI comparator
 
-The confirmatory comparator cells are exactly the two qualified shapes that
-fall in the story's mid-range band:
+Every cell of this family declares `whole-consumer`, `single-core-latency`,
+`single-core`, `warm`, and conversion and setup costs included; its gf2 arm is
+the `conservative-portable` build and its external arm is the `external` M4RI
+build. The confirmatory comparator cells are exactly the two qualified shapes
+that fall in the story's mid-range band:
 
 | Cell | M4RI shape | gf2 stride | gf2 route | Objective | Role |
 |---|---|---:|---|---|---|
@@ -446,7 +450,10 @@ loops whose per-call cost is comparable to the product itself.
 The M4RI comparator family declares no worthwhile speedup because it holds no
 improvement or non-regression cell; its only objective is the comparator gap,
 so its transcription leaves that one field unresolved by design rather than by
-omission, and no cell of that family depends on it.
+omission, and no cell of that family depends on it. The two gf2 families
+declare no material gap for the mirror reason: they hold no comparator-gap
+cell. An unresolved field makes only the cells that depend on it
+non-confirmatory, and in each family here no cell does.
 
 Every declared margin strictly exceeds one plus its ceiling: $1.10>1.020$ and
 $1.03>1.020$; $1.08>1.035$ and $1.05>1.035$; $1.10>1.040$ and $1.05>1.040$.
