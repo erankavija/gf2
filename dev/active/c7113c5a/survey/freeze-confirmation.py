@@ -113,14 +113,35 @@ def main():
     if receipt["family_id"] != addendum["family"]["id"]:
         raise SystemExit("pilot belongs to another family")
 
+    family = summary["family"]
+    # `FamilySummary.family_alpha` split into three fields at `@/issue/c5e01de3`:
+    # `family_alpha` is now the frozen total family-wise error rate,
+    # `attempt_alpha` the sequential allocation this attempt spends, and
+    # `corrected_alpha` the per-comparison Bonferroni level. A pilot summary
+    # from before the split carries only the single legacy `family_alpha` key,
+    # which held the attempt allocation under that name; reading it as the
+    # attempt allocation here, in the format the freezer always wrote for it,
+    # keeps a rerun against that summary byte-identical to its committed
+    # derivation record.
+    if "attempt_alpha" in family:
+        family_line = (
+            f"family         {family['family_id']}: {family['comparisons']} ledger comparisons, "
+            f"family-wise alpha {family['family_alpha']}, attempt alpha {family['attempt_alpha']}, "
+            f"corrected alpha {family['corrected_alpha']}, per-comparison confidence "
+            f"{family['per_comparison_confidence']}"
+        )
+    else:
+        family_line = (
+            f"family         {family['family_id']}: {family['comparisons']} ledger comparisons, "
+            f"attempt alpha {family['family_alpha']}, per-comparison confidence "
+            f"{family['per_comparison_confidence']}"
+        )
     lines = [
         f"pilot receipt  {receipt_path}",
         f"receipt sha256 {receipt_sha}",
         f"campaign       {summary['campaign_id']}",
         f"verdict        {summary['verdict']} (label {summary['label']})",
-        f"family         {summary['family']['family_id']}: {summary['family']['comparisons']} ledger comparisons, "
-        f"attempt alpha {summary['family']['family_alpha']}, per-comparison confidence "
-        f"{summary['family']['per_comparison_confidence']}",
+        family_line,
         "",
         f"{'cell':<36}{'pairs':>6}{'estimate':>12}{'lower':>12}{'upper':>12}{'rel_half':>10}",
     ]
