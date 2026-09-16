@@ -27,6 +27,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-16T18:18:47.192726653Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
       "updated_at": "2026-09-16T17:39:29.958116126Z",
@@ -34,7 +39,7 @@
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-09-16T17:43:02.285492138Z",
+      "updated_at": "2026-09-16T18:03:43.986599352Z",
       "updated_by": "auto:executor"
     }
   },
@@ -48,5 +53,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Keep captured child diagnostics when the runner's request write fails",
-  "updated_at": "2026-09-16T17:43:02.285492138Z"
+  "updated_at": "2026-09-16T18:18:47.192726653Z"
 }

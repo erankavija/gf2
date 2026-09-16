@@ -3,6 +3,7 @@
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
+    "0a357f94-0c89-4bee-9330-a4fc1da7f076",
     "b9302771-703c-4f47-adb7-a7469d855b7b"
   ],
   "description": "Run the frozen isolated XOR cells on the prepared Ryzen 9 5900X and commit the current pre-change evidence.\n\n## Background\n\nThe baseline includes 8, 9, 63, 64, and 65 words, deliberately offset slices, neighboring sizes, declared cache regimes, and selected-route provenance. Earlier exploratory receipts guide prioritization but do not replace this current baseline.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt contains raw samples, exact commands, frozen input identities, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for each isolated XOR cell.\n- [hard] REQ-02: Output validation proves exact XOR semantics for aligned and offset cells, and the receipt distinguishes dispatch-inclusive public calls from resolved-function observations.\n- [hard] REQ-03: Annotated release assembly and profiles attribute observed costs to dispatch, call overhead, instruction mix, spills, cache traffic, or bandwidth without claiming an unsearched optimum.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
@@ -30,5 +31,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Record the isolated XOR baseline",
-  "updated_at": "2026-09-16T15:59:54.323243574Z"
+  "updated_at": "2026-09-16T18:26:58.335599902Z"
 }

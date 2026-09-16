@@ -3,6 +3,7 @@
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
+    "0a357f94-0c89-4bee-9330-a4fc1da7f076",
     "b9302771-703c-4f47-adb7-a7469d855b7b"
   ],
   "description": "Select the frozen coding or elimination route whose actual row stride lies in the mid-range band, then record its current whole-consumer baseline.\n\n## Background\n\nCandidate routes include OSD syndrome/candidate work and coding materialization paths that call matrix parity or `row_xor`; the addendum names exactly one primary route after confirming its runtime stride. Setup, cloning, dispatch, and output costs remain inside the declared whole-consumer boundary.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt identifies the selected production route, proves its actual stride is 8--64 words, and records raw samples, exact commands, input identities, append-only execution log, runtime provenance, and statistical interpretation.\n- [hard] REQ-02: Seeded results match the canonical implementation for the declared boundary cases and remain deterministic under the measured execution configuration.\n- [hard] REQ-03: Profiles attribute the route's material cost centers and state whether logical-buffer work is large enough to justify candidate confirmation.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
@@ -31,5 +32,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Record the coding-route logical baseline",
-  "updated_at": "2026-09-16T16:00:43.244443391Z"
+  "updated_at": "2026-09-16T18:28:12.120848555Z"
 }

@@ -51,15 +51,35 @@
       "updated_at": "2026-09-16T17:37:39.602744034Z",
       "updated_by": "auto:executor"
     },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T18:06:46.904014222Z",
+      "updated_by": "auto:executor"
+    },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-09-16T17:44:12.241601079Z",
+      "updated_at": "2026-09-16T18:05:59.794069306Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T18:23:10.091477283Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
       "status": "passed",
       "updated_at": "2026-09-16T17:37:58.188718854Z",
       "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T18:09:18.212262310Z",
+      "updated_by": "auto:executor"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-09-16T18:28:25.259278455Z",
+      "updated_by": "agent:jit-execution-lead"
     }
   },
   "id": "77c21ecd-5350-449f-ba32-dab1b2c6a8a6",
@@ -73,5 +93,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Cache GF(2^8) byte product tables and route FieldVec::axpy through them",
-  "updated_at": "2026-09-16T17:44:12.241601079Z"
+  "updated_at": "2026-09-16T18:28:25.259278455Z"
 }

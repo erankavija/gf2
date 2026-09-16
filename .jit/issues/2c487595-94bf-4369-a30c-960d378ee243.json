@@ -7,7 +7,154 @@
     "bdc507a3-b1e8-4d76-bdb0-37410c6ea339"
   ],
   "description": "Protocol version 4 replaced the shared addendum schema in place, so the version-2 and version-3 schemas survive only inside committed receipt snapshots and a frozen version-3 addendum no longer validates against the shared path.\n\n## Background\n\n`dev/active/f547c394/addendum.schema.json` is the schema every family addendum validates against, and its `schema` and `version` constants name the protocol version it describes. The version-1 schema is preserved beside it as `addendum-v1.schema.json`. The version-4 amendment edited the shared file rather than adding a version-4 sibling, so the version-2 and version-3 schemas exist only as `inputs/` snapshots inside the receipts whose campaigns pinned them. Validating a frozen version-3 addendum against the shared path fails on the two const constraints, which forced a closed survey to validate against the snapshot its receipt pins instead of the shared schema.\n\n## Success Criteria\n\n- [hard] REQ-01: Every protocol version that a committed receipt pins has a committed schema under `dev/active/f547c394/` whose digest equals the snapshot digest the receipt records.\n- [hard] REQ-02: The shared schema path validates the current protocol version, and a frozen addendum of any earlier version validates against the committed schema of the version it names, from a fresh checkout.\n- [hard] REQ-03: A committed check fails when a receipt pins an addendum schema whose digest matches no committed schema file.\n- [hard] REQ-04: No receipt, snapshot byte, frozen addendum or committed summary changes.\n\n## Notes\n\nSurfaced while repairing the DVB-T2 interleaving family, whose frozen version-3 addendum stopped validating after the version-4 amendment landed.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Pre-edit version-1 addendum schema, digest matches the first pilot/confirmation receipts",
+      "path": "dev/active/f547c394/addendum-v1-initial.schema.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Post-edit version-1 addendum schema (already committed; unchanged)",
+      "path": "dev/active/f547c394/addendum-v1.schema.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Recovered version-2 addendum schema (digest matches its pinning receipts)",
+      "path": "dev/active/f547c394/addendum-v2.schema.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Recovered version-3 addendum schema (digest matches its pinning receipts, includes the DVB-T2 family's frozen addendum)",
+      "path": "dev/active/f547c394/addendum-v3.schema.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Generated version-to-digest table for every committed addendum schema file (5 rows, two for version 1)",
+      "path": "dev/active/f547c394/schema-versions.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "REQ-03 CI check: fails when a receipt pins an addendum schema digest with no committed schema file; no exceptions registry",
+      "path": "dev/scripts/check-addendum-schema-versions.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "REQ-02 test: validates one frozen addendum per schema file (5 fixtures) against its own committed schema, using the repository's existing schema::validate",
+      "path": "dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v1-initial.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum-v1-initial.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d287568a51e37d0ee245e212df63fb2c237742cde1ddae99b9e7df4e7ae0d92c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "schema-versions.json",
+          "resolved_path": "dev/active/f547c394/schema-versions.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v1.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum-v1.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca56287b992102d0a42722cb785c1cf08da6a98e79546fdb2d9e37609ee75656",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "amendment-v2.md",
+          "resolved_path": "dev/active/f547c394/amendment-v2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "513f37627dd82dbce95f49ff3f714af83131320fdbd0fe704baffc18a57412cd",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v3.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum-v3.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "aa437238361ba6519af25fe6408e4206a7c6a898a337d465e06b980f1e60163a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "design.md",
+          "resolved_path": "dev/active/f547c394/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef0304736301968ef5422e0821e762816c88378c3a192088c7e49f59d9052876",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "amendment-v3.md",
+          "resolved_path": "dev/active/f547c394/amendment-v3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4900f412729a76cd6ecf94de21b1f3fb36239f977975490ab8e182397a6fadef",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v2.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum-v2.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Names both version-1 schema files and every later per-version file, citing amendment-v2.md for the version-1 split",
+      "path": "dev/active/f547c394/protocol.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Wires the new checker's self-test and check into the CI gate",
+      "path": "scripts/cargo-ci.sh"
+    }
+  ],
   "first_ready_at": "2026-09-12T15:43:13.659044287Z",
   "gates_required": [
     "cargo-ci",
@@ -24,5 +171,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Version the addendum schema alongside its predecessors",
-  "updated_at": "2026-09-16T17:03:18.232093668Z"
+  "updated_at": "2026-09-16T18:28:24.955257280Z"
 }

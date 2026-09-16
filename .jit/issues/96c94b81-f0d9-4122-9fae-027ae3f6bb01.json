@@ -215,8 +215,8 @@
       "updated_by": "auto:executor"
     },
     "holistic-review": {
-      "status": "failed",
-      "updated_at": "2026-09-16T17:44:42.396507320Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T18:23:37.406328090Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -225,8 +225,8 @@
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-16T17:40:27.236639751Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T18:04:41.549894306Z",
       "updated_by": "auto:executor"
     }
   },
@@ -245,5 +245,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the dense-parity measurement addendum",
-  "updated_at": "2026-09-16T18:01:03.906026485Z"
+  "updated_at": "2026-09-16T18:23:37.406328090Z"
 }
