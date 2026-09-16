@@ -1,0 +1,6 @@
+__pycache__/
+harness/target/
+
+# The harness crate's lock file pins the dependency graph a receipt was
+# taken against, so it is committed despite the repository-wide rule.
+!harness/Cargo.lock
