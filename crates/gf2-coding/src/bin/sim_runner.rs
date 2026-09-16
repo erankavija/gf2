@@ -1108,6 +1108,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gf2_core::test_scratch::scratch;
 
     const SAMPLE_TOML: &str = r#"
 [campaign]
@@ -1330,10 +1331,7 @@ max_frames = 1
         )
         .unwrap();
 
-        let output_dir =
-            std::env::temp_dir().join(format!("gf2-sim-runner-crc-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&output_dir);
-        std::fs::create_dir_all(&output_dir).unwrap();
+        let output_dir = scratch("gf2-sim-runner-crc");
 
         let results =
             run_curve(&config.curve[0], output_dir.to_str().unwrap(), false, 123).unwrap();
@@ -1342,8 +1340,6 @@ max_frames = 1
         assert!(results.points[0].ber.is_finite());
         assert!(results.points[0].bler.is_finite());
         assert!(output_dir.join("crc_25_15_smoke.csv").is_file());
-
-        std::fs::remove_dir_all(&output_dir).unwrap();
     }
 
     /// Verifies that a product-code curve routed through the Rician fading
@@ -1371,10 +1367,7 @@ max_frames = 30
 "#;
         let config: CampaignConfig = toml::from_str(toml_str).unwrap();
 
-        let output_dir =
-            std::env::temp_dir().join(format!("gf2-sim-runner-rician-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&output_dir);
-        std::fs::create_dir_all(&output_dir).unwrap();
+        let output_dir = scratch("gf2-sim-runner-rician");
 
         let results = run_curve(&config.curve[0], output_dir.to_str().unwrap(), false, 42).unwrap();
 
@@ -1403,8 +1396,6 @@ max_frames = 30
             bler_high < bler_low,
             "Expected BLER to decay: low={bler_low:.4} high={bler_high:.4}"
         );
-
-        std::fs::remove_dir_all(&output_dir).unwrap();
     }
 
     /// Verifies that the TOML parser correctly deserialises

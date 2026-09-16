@@ -1431,7 +1431,7 @@ mod tests {
     const ZERO_SHA: &str = "0000000000000000000000000000000000000000000000000000000000000000";
     const ZERO_REV: &str = "0000000000000000000000000000000000000000";
 
-    fn test_root(label: &str) -> tempfile::TempDir {
+    fn test_root(label: &str) -> gf2_core::test_scratch::Scratch {
         scratch(&format!("gf2-a835-algebra-{label}"))
     }
 
@@ -1453,7 +1453,7 @@ mod tests {
         }
     }
 
-    fn manifest_request(label: &str) -> (tempfile::TempDir, ManifestRequest) {
+    fn manifest_request(label: &str) -> (gf2_core::test_scratch::Scratch, ManifestRequest) {
         let directory = test_root(label);
         let stage = directory.path().to_path_buf();
         (

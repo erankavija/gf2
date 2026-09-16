@@ -581,6 +581,6 @@ fn determinism_resume_parity_r3_4_16qam() {
     assert_resume_parity(CONFIGS[2]);
 }
 
-fn tempdir() -> tempfile::TempDir {
+fn tempdir() -> gf2_core::test_scratch::Scratch {
     gf2_core::test_scratch::scratch("gf2sim-det")
 }

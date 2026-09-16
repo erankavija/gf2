@@ -5129,7 +5129,7 @@ mod tests {
 
     #[allow(dead_code)]
     struct TestOutput {
-        directory: tempfile::TempDir,
+        directory: gf2_core::test_scratch::Scratch,
         path: PathBuf,
     }
 

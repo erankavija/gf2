@@ -519,7 +519,7 @@ mod tests {
         assert_eq!(reader.load_payload().unwrap(), None);
     }
 
-    fn tempdir() -> tempfile::TempDir {
+    fn tempdir() -> gf2_core::test_scratch::Scratch {
         gf2_core::test_scratch::scratch("gf2sim-generic-ck")
     }
 }

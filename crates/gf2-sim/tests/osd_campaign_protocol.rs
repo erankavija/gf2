@@ -1,8 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::num::NonZeroUsize;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Mutex;
 
+use gf2_core::test_scratch::{scratch, Scratch};
 use gf2_sim::checkpoint::{CheckpointPayload, CheckpointReader, CheckpointWriter};
 use gf2_sim::osd_campaign::{
     accepts_published_value, derive_cell_seed, run_osd_campaign, BinomialConfidenceInterval,
@@ -18,31 +19,8 @@ use gf2_sim::permanent_campaign::schema::{
 use rand_chacha::ChaCha20Rng;
 use rand_core::{RngCore, SeedableRng};
 
-struct TempDir(PathBuf);
-
-impl TempDir {
-    fn new(label: &str) -> Self {
-        let path = std::env::temp_dir().join(format!(
-            "gf2-osd-campaign-{label}-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .expect("clock after epoch")
-                .as_nanos()
-        ));
-        std::fs::create_dir_all(&path).expect("create temporary campaign directory");
-        Self(path)
-    }
-
-    fn path(&self) -> &Path {
-        &self.0
-    }
-}
-
-impl Drop for TempDir {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.0);
-    }
+fn temp_dir(label: &str) -> Scratch {
+    scratch(&format!("gf2-osd-campaign-{label}"))
 }
 
 fn artifact(path: &str, digit: char) -> ArtifactIdentity {
@@ -180,7 +158,7 @@ fn mixed_stopping_index(target: u64) -> u64 {
 
 /// Runs the [`mixed_block_errors`] process to completion at `workers`.
 fn mixed_run(label: &str, campaign: &OsdCampaign, workers: NonZeroUsize) -> OsdCampaignReceipt {
-    let dir = TempDir::new(label);
+    let dir = temp_dir(label);
     run_osd_campaign(
         dir.path().join("checkpoint.json"),
         campaign,
@@ -243,7 +221,7 @@ fn tampered_completed_receipt_error(
     campaign: &OsdCampaign,
     mutate: impl FnOnce(&mut gf2_sim::osd_campaign::OsdCellReceipt),
 ) -> String {
-    let dir = TempDir::new(label);
+    let dir = temp_dir(label);
     let checkpoint_path = dir.path().join("checkpoint.json");
     let outcomes = scripted_outcomes(10, 64, &[6, 6], work(10, 10, 10));
     let outcomes = &outcomes;
@@ -274,7 +252,7 @@ fn completed_cell_ids(receipt: &OsdCampaignReceipt) -> Vec<OsdCellId> {
 
 #[test]
 fn protocol_stops_on_the_block_carrying_the_exact_target_error() {
-    let dir = TempDir::new("exact-kth-error");
+    let dir = temp_dir("exact-kth-error");
     let campaign = campaign(vec![cell("scripted", 2.0, 2)]);
     let evaluated = Mutex::new(BTreeSet::new());
     let evaluated_ref = &evaluated;
@@ -339,7 +317,7 @@ fn multi_worker_runs_reproduce_the_single_worker_reference() {
 /// error, and the blocks workers evaluate past it contribute to no counter.
 #[test]
 fn speculative_blocks_past_the_kth_error_contribute_to_no_counter() {
-    let dir = TempDir::new("speculative-truncation");
+    let dir = temp_dir("speculative-truncation");
     let campaign = campaign(vec![cell("truncation", 2.0, 2)]);
     let evaluated = Mutex::new(BTreeSet::new());
     let evaluated_ref = &evaluated;
@@ -405,7 +383,7 @@ fn interrupted_multi_worker_cell_resumes_to_the_uninterrupted_result() {
     let campaign = campaign_with_target(vec![cell("invariance", 2.0, 2)], 25);
     let uninterrupted = mixed_run("resume-uninterrupted", &campaign, workers(8));
 
-    let dir = TempDir::new("resume-interrupted");
+    let dir = temp_dir("resume-interrupted");
     let checkpoint_path = dir.path().join("checkpoint.json");
     let bounded = |count: usize| {
         run_osd_campaign(&checkpoint_path, &campaign, 40, workers(count), || {
@@ -479,8 +457,8 @@ fn block_streams_seek_to_the_shared_worker_offset() {
 
 #[test]
 fn bounded_interruption_resumes_to_uninterrupted_totals() {
-    let resumed_dir = TempDir::new("bounded-resume");
-    let uninterrupted_dir = TempDir::new("uninterrupted");
+    let resumed_dir = temp_dir("bounded-resume");
+    let uninterrupted_dir = temp_dir("uninterrupted");
     let campaign = campaign(vec![cell("scripted", 2.0, 2)]);
     let outcome = |block_index: u64| OsdBlockOutcome {
         information_bits: 64,
@@ -600,7 +578,7 @@ fn deterministic_cell_seeds_depend_on_root_and_stable_identity() {
 
 #[test]
 fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
-    let dir = TempDir::new("round-trip");
+    let dir = temp_dir("round-trip");
     let checkpoint_path = dir.path().join("checkpoint.json");
     let campaign = campaign_with_target(vec![cell("order-2-point-0", 2.0, 2)], 7);
     let outcomes = scripted_outcomes(100, 64, &[2, 2, 2, 2, 2, 1, 1], work(100, 450, 431));
@@ -711,7 +689,7 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
 
 #[test]
 fn only_completed_attempts_serialize_confidence_intervals() {
-    let dir = TempDir::new("optional-intervals");
+    let dir = temp_dir("optional-intervals");
     let campaign = campaign(vec![cell("completed", 2.0, 2), cell("interrupted", 2.5, 2)]);
     let receipt = run_osd_campaign(
         dir.path().join("checkpoint.json"),
@@ -759,7 +737,7 @@ fn only_completed_attempts_serialize_confidence_intervals() {
 
 #[test]
 fn bursty_fixture_clustered_ber_interval_is_wider_than_bit_independence_interval() {
-    let dir = TempDir::new("bursty-interval");
+    let dir = temp_dir("bursty-interval");
     let campaign = campaign(vec![cell("bursty", 2.0, 2)]);
     let outcomes = scripted_outcomes(100, 64, &[32, 32], work(100, 100, 100));
     let outcomes = &outcomes;
@@ -792,7 +770,7 @@ fn bursty_fixture_clustered_ber_interval_is_wider_than_bit_independence_interval
 /// intervals recovers a factor inside that fraction's domain.
 #[test]
 fn recorded_ber_interval_rescales_the_recorded_block_error_interval() {
-    let dir = TempDir::new("product-structure");
+    let dir = temp_dir("product-structure");
     let campaign = campaign_with_target(vec![cell("product", 2.0, 2)], 100);
     let mut failing_errors = vec![13; 98];
     failing_errors.extend([14, 14]);
@@ -871,7 +849,7 @@ fn schema_1_committed_receipt_remains_readable_with_historical_semantics() {
 
 #[test]
 fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
-    let dir = TempDir::new("resume");
+    let dir = temp_dir("resume");
     let checkpoint_path = dir.path().join("checkpoint.json");
     let first_id = "order-2-point-0".parse::<OsdCellId>().unwrap();
     let second_id = "order-2-point-1".parse::<OsdCellId>().unwrap();
@@ -956,7 +934,7 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
 
 #[test]
 fn invocation_history_accumulates_full_arguments_across_resume() {
-    let dir = TempDir::new("invocation-history");
+    let dir = temp_dir("invocation-history");
     let checkpoint_path = dir.path().join("checkpoint.json");
     let cell = cell("resume", 2.0, 2);
     let mut first_provenance = provenance();
@@ -1019,7 +997,7 @@ fn invocation_history_accumulates_full_arguments_across_resume() {
 
 #[test]
 fn resume_preserves_censored_exhausted_and_contradictory_results() {
-    let dir = TempDir::new("terminal-results");
+    let dir = temp_dir("terminal-results");
     let checkpoint_path = dir.path().join("checkpoint.json");
     let campaign = campaign(vec![
         cell("censored", 1.0, 1),
@@ -1078,7 +1056,7 @@ fn resume_preserves_censored_exhausted_and_contradictory_results() {
 fn per_block_outcomes_validate_bit_counts_and_fixed_block_length() {
     let campaign = campaign(vec![cell("accounting", 2.0, 2)]);
 
-    let bit_dir = TempDir::new("invalid-bit-accounting");
+    let bit_dir = temp_dir("invalid-bit-accounting");
     let bit_error = run_osd_campaign(
         bit_dir.path().join("checkpoint.json"),
         &campaign,
@@ -1097,7 +1075,7 @@ fn per_block_outcomes_validate_bit_counts_and_fixed_block_length() {
         .to_string()
         .contains("information-bit errors cannot exceed the sampled block length"));
 
-    let width_dir = TempDir::new("changing-block-length");
+    let width_dir = temp_dir("changing-block-length");
     let width_error = run_osd_campaign(
         width_dir.path().join("checkpoint.json"),
         &campaign,
