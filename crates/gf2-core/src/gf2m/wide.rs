@@ -1643,6 +1643,41 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         usize::MAX
     }
 
+    /// Routes a GF(2^8) fused multiply-add through the cached byte product
+    /// table.
+    ///
+    /// The mechanism is one indexed load and one XOR per element over the
+    /// coefficient's row of the process-wide table for `Cfg`'s reduction
+    /// polynomial, written into each destination word in place, so the call
+    /// allocates nothing and reaches neither the carry-less product nor the
+    /// per-element scratch buffer the wide multiply allocates. No cargo
+    /// feature and no processor capability takes part; the exact predicate
+    /// that selects this lane is
+    /// [`crate::gf2m::byte_table::gf256_table_dispatch`]. Every other degree
+    /// and every multi-word configuration declines and keeps the scalar
+    /// element loop the caller runs without this override.
+    fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
+        let Some(table) = crate::gf2m::byte_table::gf256_table_dispatch(
+            Cfg::M,
+            N == 1,
+            (Cfg::MODULUS.first().copied().unwrap_or(0) & 0xff) as u8,
+            || true,
+        ) else {
+            return false;
+        };
+        debug_assert_eq!(N, 1, "the dispatch accepts only the single-word width");
+
+        let row = table.row(a.words[0] as u8);
+        crate::gf2m::byte_table::axpy_region(
+            y,
+            x,
+            row,
+            |source| source.words[0] as u8,
+            |destination, product| destination.words[0] ^= u64::from(product),
+        );
+        true
+    }
+
     fn try_gf2m_u64_batch_dot_product(
         a: &[Self],
         b: &[Self],
