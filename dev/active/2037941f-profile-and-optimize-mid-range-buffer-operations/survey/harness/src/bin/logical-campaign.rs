@@ -302,9 +302,9 @@ fn run() -> Result<(), String> {
             let addendum_bytes = std::fs::read(addendum_path)
                 .map_err(|error| format!("cannot read {addendum_path}: {error}"))?;
             let addendum = FamilyAddendum::decode(&addendum_bytes)?;
-            addendum.validate().map_err(|errors| {
-                format!("{addendum_path} is invalid: {}", errors.join("; "))
-            })?;
+            addendum
+                .validate()
+                .map_err(|errors| format!("{addendum_path} is invalid: {}", errors.join("; ")))?;
             let outcome = smoke::session(
                 &repository_root()?,
                 stage,
@@ -335,5 +335,6 @@ fn run() -> Result<(), String> {
 
 /// The repository root every repository-relative campaign path resolves against.
 fn repository_root() -> Result<std::path::PathBuf, String> {
-    std::fs::canonicalize(".").map_err(|error| format!("cannot resolve the working directory: {error}"))
+    std::fs::canonicalize(".")
+        .map_err(|error| format!("cannot resolve the working directory: {error}"))
 }
