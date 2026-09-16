@@ -9,8 +9,8 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
 
+use gf2_core::test_scratch::{scratch, Scratch};
 use serde_json::{json, Value};
 
 use super::provenance::generate_integrity_file;
@@ -26,21 +26,22 @@ use super::schema::{
 /// Directory name every fixture dataset uses, matching its `campaign_id`.
 pub(crate) const FIXTURE_CAMPAIGN_ID: &str = "campaign-2026-08-09";
 
-static NEXT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
-
 /// An isolated temporary campaign directory removed when the test ends.
 pub(crate) struct TestDir {
     root: PathBuf,
-    parent: PathBuf,
+    _parent: Scratch,
 }
 
 impl TestDir {
     /// Creates `<temp>/<unique>/campaign-2026-08-09`.
     pub(crate) fn new() -> Self {
         let parent = unique_temp_dir("gf2-sim-dataset");
-        let root = parent.join(FIXTURE_CAMPAIGN_ID);
+        let root = parent.path().join(FIXTURE_CAMPAIGN_ID);
         fs::create_dir_all(&root).expect("create canonical campaign directory");
-        Self { root, parent }
+        Self {
+            root,
+            _parent: parent,
+        }
     }
 
     /// Returns the campaign-id directory holding the dataset.
@@ -49,16 +50,10 @@ impl TestDir {
     }
 }
 
-impl Drop for TestDir {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.parent);
-    }
-}
-
-/// Returns a process-unique, unused path under the system temporary directory.
-pub(crate) fn unique_temp_dir(prefix: &str) -> PathBuf {
-    let id = NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!("{prefix}-{}-{id}", std::process::id()))
+/// Returns an empty directory under the system temporary directory, removed
+/// when the returned handle drops.
+pub(crate) fn unique_temp_dir(prefix: &str) -> Scratch {
+    scratch(prefix)
 }
 
 /// Returns the placeholder source revision recorded by the default fixture.

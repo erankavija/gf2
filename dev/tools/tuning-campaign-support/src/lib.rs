@@ -23,5 +23,8 @@ pub mod statistics;
 pub mod timing;
 pub mod transport;
 
+#[cfg(feature = "test-support")]
+pub mod scratch;
+
 /// Versioned-protocol append-only family attempt ledger.
 pub mod trial_ledger;

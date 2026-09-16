@@ -56,8 +56,50 @@ ensure_real_cargo() {
 
 ensure_real_cargo
 
-TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
+# One private root per run. `LOGDIR` holds the per-step output this script
+# summarizes; `TMPDIR` is exported so every test process puts its scratch trees
+# under `SCRATCH` instead of the shared system temp dir, and the trap removes
+# both however the run ends.
+SYSTEM_TMPDIR=${TMPDIR:-/tmp}
+RUN_ROOT=$(mktemp -d)
+trap 'rm -rf "$RUN_ROOT"' EXIT
+LOGDIR="$RUN_ROOT/logs"
+SCRATCH="$RUN_ROOT/scratch"
+mkdir -p "$LOGDIR" "$SCRATCH"
+export TMPDIR="$SCRATCH"
+
+# Directory-name prefixes the suites give their scratch trees. A run that ends
+# with more of these than it started with leaked a fixture: `/tmp` is a tmpfs
+# here and an exhausted inode table freezes every build and shell on the host.
+#
+# The private scratch root takes the wide pattern set; the shared system temp
+# dir takes only the names a suite can still create there (the campaign stage
+# the launcher resolves as exactly `/tmp/<campaign-id>`, plus the historical
+# fixture names), so an unrelated process on this host cannot trip the check.
+scratch_fixtures() {
+  [ -d "$SCRATCH" ] || return 0
+  find "$SCRATCH" -mindepth 1 -maxdepth 1 -type d \
+    \( -name 'gf2-*' -o -name 'gf2sim-*' -o -name 'tuning-campaign-support-*' \
+       -o -name 'campaign-*' -o -name 'session-publication-*' \
+       -o -name 'active-log-repair-*' \) 2>/dev/null
+}
+
+system_fixtures() {
+  [ -d "$SYSTEM_TMPDIR" ] || return 0
+  find "$SYSTEM_TMPDIR" -mindepth 1 -maxdepth 1 -type d \
+    \( -name 'gf2-a83583e0-*' -o -name 'gf2-f547c394-*' -o -name 'gf2sim-*' \
+       -o -name 'gf2-coordinator-fixture-*' -o -name 'gf2-driver-*' \
+       -o -name 'tuning-campaign-support-*' -o -name 'gf2-launcher-*' \) 2>/dev/null
+}
+
+fixture_inventory() {
+  {
+    system_fixtures
+    scratch_fixtures
+  } | sort
+}
+
+fixtures_before=$(fixture_inventory)
 
 failed=0
 summary=""
@@ -68,7 +110,7 @@ run_step() {
 
   local started=$SECONDS
 
-  if "$@" >"$TMPDIR/$name.out" 2>&1; then
+  if "$@" >"$LOGDIR/$name.out" 2>&1; then
     local detail
     detail=$(summarize_pass "$name")
     summary+="  ✓ $name: $detail ($((SECONDS - started))s)"$'\n'
@@ -104,7 +146,7 @@ summarize_pass() {
     test)
       # Extract nextest summary line: "Summary [Xs] N tests run: P passed, F failed, S skipped"
       local summary_line
-      summary_line=$(plain "$TMPDIR/$name.out" | grep -E "^[[:space:]]*Summary" || true)
+      summary_line=$(plain "$LOGDIR/$name.out" | grep -E "^[[:space:]]*Summary" || true)
       if [ -n "$summary_line" ]; then
         local p f s
         p=$(echo "$summary_line" | grep -oP '\d+(?= passed)' || true)
@@ -133,21 +175,21 @@ summarize_fail() {
       # diagnostic at all. Observed on a run whose seven TIMEOUT lines were
       # invisible in the gate record.
       echo "--- $name failures ---"
-      plain "$TMPDIR/$name.out" | grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" || true
-      plain "$TMPDIR/$name.out" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
+      plain "$LOGDIR/$name.out" | grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" || true
+      plain "$LOGDIR/$name.out" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
       ;;
     clippy)
       echo "--- $name diagnostics ---"
       # Show warning/error lines with context
-      plain "$TMPDIR/$name.out" | grep -E "^(warning|error)" || true
+      plain "$LOGDIR/$name.out" | grep -E "^(warning|error)" || true
       ;;
     fmt)
       echo "--- $name diffs ---"
-      plain "$TMPDIR/$name.out"
+      plain "$LOGDIR/$name.out"
       ;;
     *)
       echo "--- $name output ---"
-      plain "$TMPDIR/$name.out" | tail -20
+      plain "$LOGDIR/$name.out" | tail -20
       ;;
   esac
 }
@@ -220,6 +262,18 @@ run_step tuning-core-artifact "$BUDGET" cargo test -p gf2-core --profile ci-test
 run_step tuning-algebra-artifacts "$BUDGET" cargo test -p gf2-algebra --profile ci-test --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
 run_step tuning-coding-codec "$BUDGET" cargo test -p gf2-coding --profile ci-test --features parallel,tuning-profile --test bch_encode_dispatch_profile --test bch_encode_dispatch_allocation
 run_step tuning-composer "$BUDGET" cargo test --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml
+
+fixtures_after=$(fixture_inventory)
+before_count=$(printf '%s\n' "$fixtures_before" | grep -c . || true)
+after_count=$(printf '%s\n' "$fixtures_after" | grep -c . || true)
+if [ "$after_count" -gt "$before_count" ]; then
+  summary+="  ✗ fixture-leak: FAILED ($before_count before, $after_count after)"$'\n'
+  echo "--- leaked test fixture directories ---"
+  comm -13 <(printf '%s\n' "$fixtures_before") <(printf '%s\n' "$fixtures_after")
+  failed=1
+else
+  summary+="  ✓ fixture-leak: none ($before_count before, $after_count after)"$'\n'
+fi
 
 echo "$summary"
 

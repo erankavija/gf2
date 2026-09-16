@@ -343,6 +343,7 @@ impl BitMatrix {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_scratch::scratch;
     use crate::BitMatrix;
 
     // Helper to create a simple test matrix
@@ -510,21 +511,20 @@ mod tests {
     #[test]
     fn test_file_io_roundtrip() {
         let original = create_test_matrix();
-        let temp_file = std::env::temp_dir().join("test_matrix.gf2");
+        let scratch = scratch("gf2-matrix");
+        let temp_file = scratch.path().join("test_matrix.gf2");
 
         original.save_to_file(&temp_file).unwrap();
         let loaded = BitMatrix::load_from_file(&temp_file).unwrap();
 
         assert_eq!(original, loaded);
-
-        // Cleanup
-        let _ = std::fs::remove_file(temp_file);
     }
 
     #[test]
     fn test_file_io_text_format() {
         let original = create_test_matrix();
-        let temp_file = std::env::temp_dir().join("test_matrix.txt");
+        let scratch = scratch("gf2-matrix-text");
+        let temp_file = scratch.path().join("test_matrix.txt");
 
         original
             .save_to_file_with_format(&temp_file, super::super::SerializationFormat::Text)
@@ -536,9 +536,6 @@ mod tests {
         .unwrap();
 
         assert_eq!(original, loaded);
-
-        // Cleanup
-        let _ = std::fs::remove_file(temp_file);
     }
 
     #[test]

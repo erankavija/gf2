@@ -11,9 +11,9 @@ mod common;
 use gf2_coding::ldpc::encoding::{CacheKey, EncodingCache};
 use gf2_coding::ldpc::LdpcCode;
 use gf2_coding::CodeRate;
+use gf2_core::test_scratch::scratch;
 use std::path::Path;
 use std::sync::Arc;
-use tempfile::TempDir;
 
 /// Helper: create a simple test LDPC code
 fn simple_ldpc_code() -> LdpcCode {
@@ -38,7 +38,7 @@ fn populate(
 #[test]
 #[ignore = "slow: DVB-T2 Short RREF preprocessing (~2-3 s)"]
 fn test_cache_save_to_directory() {
-    let temp_dir = TempDir::new().unwrap();
+    let temp_dir = scratch("gf2-ldpc-cache-io");
     let cache = EncodingCache::new();
 
     // Precompute one entry
@@ -62,7 +62,7 @@ fn test_cache_save_to_directory() {
 #[test]
 #[ignore = "slow: DVB-T2 Short RREF preprocessing (~2-3 s)"]
 fn test_cache_load_from_directory() {
-    let temp_dir = TempDir::new().unwrap();
+    let temp_dir = scratch("gf2-ldpc-cache-io");
 
     // Create and save cache
     let cache1 = EncodingCache::new();
@@ -86,7 +86,7 @@ fn test_cache_load_is_fast() {
         "asserts cache load <500 ms and lookup <100 μs, which measures the host"
     );
 
-    let temp_dir = TempDir::new().unwrap();
+    let temp_dir = scratch("gf2-ldpc-cache-io");
 
     // Save cache
     let cache1 = EncodingCache::new();
@@ -122,7 +122,7 @@ fn test_precompute_and_save_dvb_t2() {
         "RREF-preprocesses all 12 DVB-T2 configs (~13 min, ~800 MB peak)"
     );
 
-    let temp_dir = TempDir::new().unwrap();
+    let temp_dir = scratch("gf2-ldpc-cache-io");
 
     // Precompute and save all DVB-T2 configs (slow, but one-time)
     EncodingCache::precompute_and_save_dvb_t2(temp_dir.path()).unwrap();
@@ -155,7 +155,7 @@ fn test_load_dvb_t2_cache() {
         "RREF-preprocesses all 12 DVB-T2 configs (~13 min, ~800 MB peak)"
     );
 
-    let temp_dir = TempDir::new().unwrap();
+    let temp_dir = scratch("gf2-ldpc-cache-io");
 
     // Precompute and save
     EncodingCache::precompute_and_save_dvb_t2(temp_dir.path()).unwrap();
@@ -234,7 +234,7 @@ fn test_load_dvb_t2_cache() {
 #[test]
 #[ignore = "slow: DVB-T2 Short RREF preprocessing (~2-3 s)"]
 fn test_cache_roundtrip_encoding() {
-    let temp_dir = TempDir::new().unwrap();
+    let temp_dir = scratch("gf2-ldpc-cache-io");
 
     // Save cache
     let cache1 = EncodingCache::new();
@@ -257,7 +257,7 @@ fn test_cache_roundtrip_encoding() {
 
 #[test]
 fn test_empty_directory_loads_empty_cache() {
-    let temp_dir = TempDir::new().unwrap();
+    let temp_dir = scratch("gf2-ldpc-cache-io");
 
     // Load from empty directory
     let cache = EncodingCache::from_directory(temp_dir.path()).unwrap();

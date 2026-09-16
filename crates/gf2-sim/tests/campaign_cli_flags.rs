@@ -24,6 +24,20 @@
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use gf2_core::test_scratch::{scratch, Scratch};
+
+/// A campaign output directory that does not exist yet and is removed, with
+/// the scratch root holding it, when the returned handle drops.
+fn output_dir(label: &str) -> (Scratch, String) {
+    let root = scratch(&format!("gf2-{label}"));
+    let path = root
+        .join("out")
+        .to_str()
+        .expect("scratch paths are UTF-8")
+        .to_owned();
+    (root, path)
+}
+
 fn binary_path() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_dvb_t2_awgn_campaign"))
 }
@@ -47,8 +61,9 @@ fn base_args(output_dir: &str) -> Vec<String> {
 #[cfg(not(feature = "hip"))]
 #[test]
 fn cli_gpu_on_default_build_emits_clear_error() {
+    let (_scratch, out_dir) = output_dir("cli-gpu-default");
     let out = Command::new(binary_path())
-        .args(base_args("/tmp/dvb_d2_cli_gpu_default"))
+        .args(base_args(&out_dir))
         .arg("--gpu")
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
@@ -69,8 +84,9 @@ fn cli_gpu_on_default_build_emits_clear_error() {
 /// clear error.
 #[test]
 fn cli_strict_gpu_without_gpu_is_rejected() {
+    let (_scratch, out_dir) = output_dir("cli-strict-no-gpu");
     let out = Command::new(binary_path())
-        .args(base_args("/tmp/dvb_d2_cli_strict_no_gpu"))
+        .args(base_args(&out_dir))
         .arg("--strict-gpu")
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
@@ -89,8 +105,9 @@ fn cli_strict_gpu_without_gpu_is_rejected() {
 
 #[test]
 fn cli_rejects_unknown_decoder_algorithm() {
+    let (_scratch, out_dir) = output_dir("cli-reject-decoder");
     let out = Command::new(binary_path())
-        .args(base_args("/tmp/dvb_d2_cli_reject_decoder"))
+        .args(base_args(&out_dir))
         .args(["--decoder", "bogusalgo"])
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
@@ -106,8 +123,9 @@ fn cli_rejects_unknown_decoder_algorithm() {
 
 #[test]
 fn cli_rejects_unknown_demap_method() {
+    let (_scratch, out_dir) = output_dir("cli-reject-demap");
     let out = Command::new(binary_path())
-        .args(base_args("/tmp/dvb_d2_cli_reject_demap"))
+        .args(base_args(&out_dir))
         .args(["--demap", "softoutput"])
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
@@ -123,8 +141,9 @@ fn cli_rejects_unknown_demap_method() {
 
 #[test]
 fn cli_rejects_nms_alpha_out_of_range() {
+    let (_scratch, out_dir) = output_dir("cli-reject-nms");
     let out = Command::new(binary_path())
-        .args(base_args("/tmp/dvb_d2_cli_reject_nms"))
+        .args(base_args(&out_dir))
         .args(["--decoder", "nms:1.5"])
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
@@ -140,8 +159,9 @@ fn cli_rejects_nms_alpha_out_of_range() {
 
 #[test]
 fn cli_rejects_mutually_exclusive_calibrate_and_range() {
+    let (_scratch, out_dir) = output_dir("cli-reject-calib-range");
     let out = Command::new(binary_path())
-        .args(base_args("/tmp/dvb_d2_cli_reject_calib_range"))
+        .args(base_args(&out_dir))
         .arg("--calibrate")
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
@@ -193,10 +213,9 @@ fn count_events(jsonl: &str, event_type: &str) -> usize {
 #[test]
 #[ignore = "sim: full-codec subprocess run for end-to-end CSV-schema + tracing.jsonl acceptance"]
 fn cli_minimal_valid_run_writes_curve_csv() {
-    let out_dir = "/tmp/dvb_d2_cli_minimal_run";
-    let _ = std::fs::remove_dir_all(out_dir);
+    let (_out_dir_scratch, out_dir) = output_dir("cli-minimal-run");
     let out = Command::new(binary_path())
-        .args(base_args(out_dir))
+        .args(base_args(&out_dir))
         .args([
             "--max-frames",
             "4",
@@ -262,8 +281,7 @@ fn cli_minimal_valid_run_writes_curve_csv() {
 #[test]
 #[ignore = "sim: --calibrate subprocess run for calibration CSV-schema + tracing.jsonl acceptance"]
 fn cli_calibrate_writes_calibration_csv() {
-    let out_dir = "/tmp/dvb_d2_cli_calibrate";
-    let _ = std::fs::remove_dir_all(out_dir);
+    let (_out_dir_scratch, out_dir) = output_dir("cli-calibrate");
     let out = Command::new(binary_path())
         .args([
             "--rate",
@@ -274,7 +292,7 @@ fn cli_calibrate_writes_calibration_csv() {
             "--calibrate-frames",
             "4",
             "--output-dir",
-            out_dir,
+            &out_dir,
             "--seed",
             "7",
         ])
@@ -358,8 +376,7 @@ fn cli_resume_byte_identical_to_uninterrupted() {
     use std::time::Duration;
 
     // Reference: uninterrupted run.
-    let ref_dir = "/tmp/dvb_d2_cli_resume_ref";
-    let _ = std::fs::remove_dir_all(ref_dir);
+    let (_ref_dir_scratch, ref_dir) = output_dir("cli-resume-ref");
     let ref_status = Command::new(binary_path())
         .args([
             "--rate",
@@ -377,7 +394,7 @@ fn cli_resume_byte_identical_to_uninterrupted() {
             "--demap",
             "exactlogmap",
             "--output-dir",
-            ref_dir,
+            &ref_dir,
             "--seed",
             "42",
         ])
@@ -392,8 +409,7 @@ fn cli_resume_byte_identical_to_uninterrupted() {
     assert_eq!(ref_rows.len(), 1, "one SNR point");
 
     // Interrupted run (will be resumed).
-    let int_dir = "/tmp/dvb_d2_cli_resume_int";
-    let _ = std::fs::remove_dir_all(int_dir);
+    let (_int_dir_scratch, int_dir) = output_dir("cli-resume-int");
     let mut child = Command::new(binary_path())
         .args([
             "--rate",
@@ -411,7 +427,7 @@ fn cli_resume_byte_identical_to_uninterrupted() {
             "--demap",
             "exactlogmap",
             "--output-dir",
-            int_dir,
+            &int_dir,
             "--seed",
             "42",
         ])
@@ -452,7 +468,7 @@ fn cli_resume_byte_identical_to_uninterrupted() {
             "--demap",
             "exactlogmap",
             "--output-dir",
-            int_dir,
+            &int_dir,
             "--seed",
             "42",
             "--resume",
@@ -577,8 +593,7 @@ fn heartbeat_line_indices_for_snr(jsonl: &str, snr_idx: u64) -> Vec<usize> {
 #[test]
 #[ignore = "sim: multi-point checkpointed run asserting live snr_point_completed ordering"]
 fn cli_snr_point_completed_emitted_live_during_sweep() {
-    let out_dir = "/tmp/dvb_d2_cli_live_completed";
-    let _ = std::fs::remove_dir_all(out_dir);
+    let (_out_dir_scratch, out_dir) = output_dir("cli-live-completed");
     let out = Command::new(binary_path())
         .args([
             "--rate",
@@ -597,7 +612,7 @@ fn cli_snr_point_completed_emitted_live_during_sweep() {
             "--demap",
             "exactlogmap",
             "--output-dir",
-            out_dir,
+            &out_dir,
             "--seed",
             "11",
             "--heartbeat-frames",
@@ -701,10 +716,9 @@ fn cli_multi_snr_resume_skips_completed_points() {
     };
 
     // Reference: uninterrupted 3-point run.
-    let ref_dir = "/tmp/dvb_d2_cli_multi_resume_ref";
-    let _ = std::fs::remove_dir_all(ref_dir);
+    let (_ref_dir_scratch, ref_dir) = output_dir("cli-multi-resume-ref");
     let ref_status = Command::new(binary_path())
-        .args(common(ref_dir))
+        .args(common(&ref_dir))
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()
@@ -717,12 +731,11 @@ fn cli_multi_snr_resume_skips_completed_points() {
 
     // Interrupted run: spawn, wait until at least the first point's checkpoint
     // (snr_0000.json) is on disk but the sweep is not yet done, then SIGINT.
-    let int_dir = "/tmp/dvb_d2_cli_multi_resume_int";
-    let _ = std::fs::remove_dir_all(int_dir);
+    let (_int_dir_scratch, int_dir) = output_dir("cli-multi-resume-int");
     let first_ckpt = format!("{int_dir}/checkpoints/snr_0000.json");
     let final_csv = format!("{int_dir}/curve_1_2_16qam.csv");
     let mut child = Command::new(binary_path())
-        .args(common(int_dir))
+        .args(common(&int_dir))
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -818,7 +831,7 @@ fn cli_multi_snr_resume_skips_completed_points() {
 
     // Resume.
     let resume_status = Command::new(binary_path())
-        .args(common(int_dir))
+        .args(common(&int_dir))
         .arg("--resume")
         .stdout(Stdio::null())
         .stderr(Stdio::null())
