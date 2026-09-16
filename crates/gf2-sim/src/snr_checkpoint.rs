@@ -1623,7 +1623,6 @@ mod tests {
         assert_eq!(loaded.worker_states[0].frames_in_worker, 7);
     }
 
-    /// Minimal tempdir helper (avoids a dev-dependency on `tempfile`).
     fn tempdir() -> gf2_core::test_scratch::Scratch {
         gf2_core::test_scratch::scratch("gf2sim-ck")
     }
