@@ -21,9 +21,10 @@ pub struct ProcessResult {
     pub stderr: Vec<u8>,
     /// The observed terminal state of the child process tree.
     pub outcome: ProcessOutcome,
-    /// The first error observed while the child ran, if any: an error from the
-    /// standard-error callback, from reading a child stream, or from writing
-    /// the request to the child's standard input.
+    /// The error reported for the run, if any. The first error from the
+    /// standard-error callback or from reading a child stream takes precedence;
+    /// when neither occurred, the failure of writing the request to the child's
+    /// standard input is reported here.
     pub callback_error: Option<io::Error>,
 }
 
