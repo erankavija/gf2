@@ -1402,6 +1402,46 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
         usize::MAX
     }
 
+    /// Routes a GF(2^8) fused multiply-add through the cached byte product
+    /// table.
+    ///
+    /// The mechanism is one indexed load and one XOR per element over the
+    /// coefficient's row of the process-wide table for this field's reduction
+    /// polynomial, written into each destination element's value in place, so
+    /// the call allocates nothing and clones no field handle. No cargo feature
+    /// and no processor capability takes part; the exact predicate that
+    /// selects this lane is
+    /// [`crate::gf2m::byte_table::gf256_table_dispatch`], which also declines
+    /// when the operands do not all share the coefficient's field context, so
+    /// a mixed-context call reaches the caller's scalar loop and its
+    /// field-context assertion exactly as it does without this override.
+    fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
+        let Some(table) = crate::gf2m::byte_table::gf256_table_dispatch(
+            a.params.m,
+            V::IS_U64,
+            (a.params.primitive_poly.as_u64_truncated() & 0xff) as u8,
+            || {
+                y.iter().all(|e| Arc::ptr_eq(&e.params, &a.params))
+                    && x.iter().all(|e| Arc::ptr_eq(&e.params, &a.params))
+            },
+        ) else {
+            return false;
+        };
+
+        let row = table.row(a.value.as_u64_truncated() as u8);
+        crate::gf2m::byte_table::axpy_region(
+            y,
+            x,
+            row,
+            |source| source.value.as_u64_truncated() as u8,
+            |destination, product| {
+                destination.value =
+                    V::from_u64(destination.value.as_u64_truncated() ^ u64::from(product));
+            },
+        );
+        true
+    }
+
     fn try_gf2m_u64_batch_dot_product(
         a: &[Self],
         b: &[Self],
