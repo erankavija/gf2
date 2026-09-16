@@ -118,13 +118,22 @@ def isal_root():
 ISAL_REVISION = "7c3479e0a9dac17f448603ec1ad64c7c625f530c"
 
 
-def main():
-    gf2_commit = subprocess.run(
-        ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+def last_change(path):
+    """The commit that last changed this file.
+
+    HEAD would move with every unrelated commit and make this ledger churn;
+    content identities decide validity, and the commit that last touched the
+    file is the one a reader follows to see the claim in context.
+    """
+    return subprocess.run(
+        ["git", "-C", str(ROOT), "log", "-1", "--format=%H", "--", str(path)],
         capture_output=True,
         check=True,
         text=True,
     ).stdout.strip()
+
+
+def main():
     external = isal_root()
     records = []
     for project, path, fragment, why in CLAIMS:
@@ -137,7 +146,7 @@ def main():
         records.append(
             {
                 "project": project,
-                "commit": gf2_commit if project == "gf2" else ISAL_REVISION,
+                "commit": last_change(path) if project == "gf2" else ISAL_REVISION,
                 "path": path,
                 "line": positions[0],
                 "verbatim": lines[positions[0] - 1],
