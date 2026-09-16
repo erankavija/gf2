@@ -9,15 +9,18 @@ addendum of that earlier version could no longer be validated against a
 committed schema from a fresh checkout — only against the specific receipt's
 own snapshot copy.
 
+Version 1 itself was pinned under two distinct digests: a wording-only edit
+to its `frozen.description` annotation (no `$id`, `const`, `enum`, `required`
+or numeric-bound change — see `amendment-v2.md`) split the very first pilot
+and confirmation receipts from every later version-1 receipt. Both texts are
+committed, each under its own name
+(`addendum-v1-initial.schema.json`, `addendum-v1.schema.json`), so this check
+has no need for a registry of accepted exceptions: every pinned digest either
+equals a committed schema file's digest or the check fails.
+
 This check reads every committed campaign receipt's pinned addendum-schema
 digest (`addendum_schema.sha256`) and confirms it equals the digest of some
-committed `dev/active/f547c394/addendum*.schema.json` file. A digest with no
-match fails the check unless it is registered in
-`dev/scripts/addendum-schema-digest-exceptions.json` — reserved for a receipt
-whose pinned bytes differ from the committed schema of its own version by
-annotation text only (no `$id`, `const`, `enum`, `required` or numeric-bound
-difference), so every instance the two schema texts accept or reject is
-identical; see the registered entries for the specific receipts and cause.
+committed `dev/active/f547c394/addendum*.schema.json` file.
 
 The check reads committed content only: paths come from the git index, or
 from a named revision, and bytes from the blobs they name, so the verdict is
@@ -46,14 +49,12 @@ from pathlib import Path
 from typing import NamedTuple
 
 SCHEMA_DIR = "dev/active/f547c394"
-SCHEMA_FILE_RE = re.compile(r"^addendum(?:-v\d+)?\.schema\.json$")
+SCHEMA_FILE_RE = re.compile(r"^addendum\.schema\.json$|^addendum-v\d+(?:-[a-z]+)?\.schema\.json$")
 SCHEMA_ID_RE = re.compile(r"^zen3-benchmark-addendum-v(\d+)$")
 VERSIONS_TABLE = f"{SCHEMA_DIR}/schema-versions.json"
 VERSIONS_TABLE_SCHEMA = "addendum-schema-versions-v1"
-EXCEPTIONS = "dev/scripts/addendum-schema-digest-exceptions.json"
-EXCEPTIONS_SCHEMA = "addendum-schema-digest-exceptions-v1"
 
-UNKNOWN_DIGEST = "addendum schema digest matches no committed schema file"
+UNMATCHED_DIGEST = "addendum schema digest matches no committed schema file"
 
 
 class SchemaFile(NamedTuple):
@@ -141,7 +142,12 @@ def decode(read, path: str) -> object | None:
 
 
 def schema_files(oids: dict[str, str], read) -> list[SchemaFile]:
-    """Lists every committed addendum schema file under `SCHEMA_DIR`."""
+    """Lists every committed addendum schema file under `SCHEMA_DIR`.
+
+    More than one file may name the same protocol version: version 1 has two
+    (`addendum-v1-initial.schema.json`, `addendum-v1.schema.json`), one per
+    digest a committed receipt pins.
+    """
     files: list[SchemaFile] = []
     for path in sorted(oids):
         if not path.startswith(f"{SCHEMA_DIR}/"):
@@ -206,24 +212,14 @@ def pinned_schema_digests(paths: list[str], read) -> list[Pin]:
     return pins
 
 
-def registered_exceptions(read) -> tuple[set[tuple[str, str]], list[str]]:
-    """Reads the registry of receipts whose pinned digest is a named exception."""
-    registry = decode(read, EXCEPTIONS)
-    if registry is None:
-        return set(), []
-    if not isinstance(registry, dict) or registry.get("schema") != EXCEPTIONS_SCHEMA:
-        return set(), [f"{EXCEPTIONS}: schema is not {EXCEPTIONS_SCHEMA}"]
-    return {
-        (entry["receipt"], entry["sha256"]) for entry in registry["exceptions"]
-    }, []
-
-
 def build_table(files: list[SchemaFile], counted_pins: list[Pin]) -> dict:
     """Builds the version-to-digest table `VERSIONS_TABLE` records.
 
     `pinning_receipts` counts committed campaign receipts only (snapshot
     copies excluded), so one campaign is counted once regardless of how many
-    resolution-evidence citations repeat its receipt bytes elsewhere.
+    resolution-evidence citations repeat its receipt bytes elsewhere. A
+    version with two committed schema files (version 1) gets two rows, one
+    per file, each counting only the receipts that pin its own digest.
     """
     counts: dict[str, int] = {}
     for pin in counted_pins:
@@ -236,7 +232,7 @@ def build_table(files: list[SchemaFile], counted_pins: list[Pin]) -> dict:
             "sha256": file.sha256,
             "pinning_receipts": counts.get(file.sha256, 0),
         }
-        for file in sorted(files, key=lambda file: file.version)
+        for file in sorted(files, key=lambda file: (file.version, file.path))
     ]
     return {"schema": VERSIONS_TABLE_SCHEMA, "versions": versions}
 
@@ -246,10 +242,7 @@ def render_table(table: dict) -> bytes:
 
 
 class Findings(NamedTuple):
-    unregistered: list[Pin]
-    recorded: list[Pin]
-    stale: list[str]
-    duplicate_versions: list[str]
+    unmatched: list[Pin]
     table: dict
     table_mismatch: str | None
 
@@ -260,33 +253,11 @@ def check(root: Path, revision: str | None = None) -> Findings:
     read = BlobReader(root, oids)
     try:
         files = schema_files(oids, read)
-        by_version: dict[int, list[SchemaFile]] = {}
-        for file in files:
-            by_version.setdefault(file.version, []).append(file)
-        duplicate_versions = [
-            f"protocol version {version} has {len(group)} committed schema files: "
-            f"{', '.join(sorted(file.path for file in group))}"
-            for version, group in sorted(by_version.items())
-            if len(group) > 1
-        ]
         known_digests = {file.sha256 for file in files}
 
         counted_pins = pinned_schema_digests(receipt_paths(oids), read)
         all_pins = pinned_schema_digests(all_receipt_paths(oids), read)
-        exceptions, exception_errors = registered_exceptions(read)
-
-        # A "problem" pin is one whose digest matches no committed schema
-        # file; every other pin needs no exception and is dropped here.
-        problems = [pin for pin in all_pins if pin.sha256 not in known_digests]
-        problem_keys = {(pin.receipt, pin.sha256) for pin in problems}
-        unregistered = [
-            pin for pin in problems if (pin.receipt, pin.sha256) not in exceptions
-        ]
-        recorded = [pin for pin in problems if (pin.receipt, pin.sha256) in exceptions]
-        stale = exception_errors + [
-            f"{EXCEPTIONS} registers {sha256} for {receipt}, which is not a problem"
-            for receipt, sha256 in sorted(exceptions - problem_keys)
-        ]
+        unmatched = [pin for pin in all_pins if pin.sha256 not in known_digests]
 
         table = build_table(files, counted_pins)
         committed_table = read(VERSIONS_TABLE)
@@ -298,27 +269,22 @@ def check(root: Path, revision: str | None = None) -> Findings:
                 if committed_table is not None
                 else f"{VERSIONS_TABLE} is not committed: regenerate with --write"
             )
-        return Findings(
-            unregistered=unregistered,
-            recorded=recorded,
-            stale=stale,
-            duplicate_versions=duplicate_versions,
-            table=table,
-            table_mismatch=table_mismatch,
-        )
+        return Findings(unmatched=unmatched, table=table, table_mismatch=table_mismatch)
     finally:
         read.close()
 
 
 def report(pins: list[Pin], stream) -> None:
     for pin in pins:
-        print(f"    {pin.receipt}: {pin.sha256} ({UNKNOWN_DIGEST})", file=stream)
+        print(f"    {pin.receipt}: {pin.sha256} ({UNMATCHED_DIGEST})", file=stream)
 
 
-def write_fixture_schema(root: Path, version: int, schema_id: str) -> str:
+def write_fixture_schema(root: Path, version: int, schema_id: str, name: str | None = None) -> str:
     """Stages a minimal committed schema file for `version` and returns its digest."""
-    name = "addendum.schema.json" if version == 4 else f"addendum-v{version}.schema.json"
-    path = f"{SCHEMA_DIR}/{name}"
+    filename = name or (
+        "addendum.schema.json" if version == 4 else f"addendum-v{version}.schema.json"
+    )
+    path = f"{SCHEMA_DIR}/{filename}"
     content = json.dumps(
         {
             "$id": schema_id,
@@ -343,85 +309,50 @@ def write_fixture_receipt(root: Path, name: str, sha256: str) -> str:
 
 
 def self_test() -> int:
-    """Asserts the check accepts a matched digest and rejects an orphan one."""
+    """Asserts the check accepts every matched digest and rejects an orphan one.
+
+    Exercises the version-1 two-digest case directly: two schema files
+    legitimately name the same protocol version, and a receipt pinning either
+    digest passes while a receipt pinning neither fails.
+    """
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         git(root, "init", "-q")
-        known = write_fixture_schema(root, 1, "zen3-benchmark-addendum-v1")
-        known_receipt = write_fixture_receipt(root, "known", known)
-        orphan_receipt = write_fixture_receipt(
-            root, "orphan", "0" * 64
+        initial = write_fixture_schema(
+            root, 1, "zen3-benchmark-addendum-v1", name="addendum-v1-initial.schema.json"
         )
-        table = build_table(
-            [
-                SchemaFile(
-                    f"{SCHEMA_DIR}/addendum-v1.schema.json", known, "zen3-benchmark-addendum-v1", 1
-                )
-            ],
-            [Pin(known_receipt, known)],
-        )
+        edited = write_fixture_schema(root, 1, "zen3-benchmark-addendum-v1")
+        initial_receipt = write_fixture_receipt(root, "initial", initial)
+        edited_receipt = write_fixture_receipt(root, "edited", edited)
+        orphan_receipt = write_fixture_receipt(root, "orphan", "0" * 64)
+        files = [
+            SchemaFile(
+                f"{SCHEMA_DIR}/addendum-v1-initial.schema.json",
+                initial,
+                "zen3-benchmark-addendum-v1",
+                1,
+            ),
+            SchemaFile(
+                f"{SCHEMA_DIR}/addendum-v1.schema.json", edited, "zen3-benchmark-addendum-v1", 1
+            ),
+        ]
+        table = build_table(files, [Pin(initial_receipt, initial), Pin(edited_receipt, edited)])
         (root / VERSIONS_TABLE).parent.mkdir(parents=True, exist_ok=True)
         (root / VERSIONS_TABLE).write_bytes(render_table(table))
         git(root, "add", VERSIONS_TABLE)
 
         findings = check(root)
-        if findings.unregistered != [Pin(orphan_receipt, "0" * 64)]:
+        if findings.unmatched != [Pin(orphan_receipt, "0" * 64)]:
             print(
-                f"self-test: expected the orphan pin unregistered, got {findings.unregistered}",
+                f"self-test: expected only the orphan pin unmatched, got {findings.unmatched}",
                 file=sys.stderr,
             )
-            return 1
-        if findings.recorded or findings.stale or findings.duplicate_versions:
-            print(f"self-test: expected a clean pass otherwise, got {findings}", file=sys.stderr)
             return 1
         if findings.table_mismatch:
-            print(f"self-test: expected the fixture table to match, got {findings.table_mismatch}", file=sys.stderr)
-            return 1
-
-        registry = root / EXCEPTIONS
-        registry.parent.mkdir(parents=True, exist_ok=True)
-        registry.write_text(
-            json.dumps(
-                {
-                    "schema": EXCEPTIONS_SCHEMA,
-                    "exceptions": [{"receipt": orphan_receipt, "sha256": "0" * 64}],
-                }
-            )
-        )
-        git(root, "add", EXCEPTIONS)
-        findings = check(root)
-        if findings.unregistered or not findings.recorded:
             print(
-                f"self-test: expected the registered pin recorded, got {findings}",
+                f"self-test: expected the fixture table to match, got {findings.table_mismatch}",
                 file=sys.stderr,
             )
-            return 1
-
-        stale_receipt = write_fixture_receipt(root, "stale", known)
-        registry.write_text(
-            json.dumps(
-                {
-                    "schema": EXCEPTIONS_SCHEMA,
-                    "exceptions": [
-                        {"receipt": orphan_receipt, "sha256": "0" * 64},
-                        {"receipt": stale_receipt, "sha256": known},
-                    ],
-                }
-            )
-        )
-        table = build_table(
-            [
-                SchemaFile(
-                    f"{SCHEMA_DIR}/addendum-v1.schema.json", known, "zen3-benchmark-addendum-v1", 1
-                )
-            ],
-            [Pin(known_receipt, known), Pin(stale_receipt, known)],
-        )
-        (root / VERSIONS_TABLE).write_bytes(render_table(table))
-        git(root, "add", EXCEPTIONS, VERSIONS_TABLE)
-        findings = check(root)
-        if not findings.stale:
-            print("self-test: expected the now-matched exception flagged stale", file=sys.stderr)
             return 1
 
     print("check-addendum-schema-versions: self-test passed")
@@ -445,7 +376,9 @@ def main() -> int:
         oids = committed_oids(root)
         read = BlobReader(root, oids)
         try:
-            table = build_table(schema_files(oids, read), pinned_schema_digests(receipt_paths(oids), read))
+            table = build_table(
+                schema_files(oids, read), pinned_schema_digests(receipt_paths(oids), read)
+            )
         finally:
             read.close()
         (root / VERSIONS_TABLE).write_bytes(render_table(table))
@@ -453,30 +386,20 @@ def main() -> int:
         return 0
 
     findings = check(root, arguments.revision)
-    if findings.duplicate_versions:
-        for message in findings.duplicate_versions:
-            print(message, file=sys.stderr)
-    if findings.recorded:
-        print(f"recorded in {EXCEPTIONS}:")
-        for pin in findings.recorded:
-            print(f"    {pin.receipt}: {pin.sha256}")
-    for message in findings.stale:
-        print(message, file=sys.stderr)
-    if findings.unregistered:
-        report(findings.unregistered, sys.stderr)
+    if findings.unmatched:
+        report(findings.unmatched, sys.stderr)
         print(
-            f"{len(findings.unregistered)} receipts pin an addendum schema digest "
+            f"{len(findings.unmatched)} receipts pin an addendum schema digest "
             "with no committed schema file",
             file=sys.stderr,
         )
     if findings.table_mismatch:
         print(findings.table_mismatch, file=sys.stderr)
-    if findings.unregistered or findings.stale or findings.duplicate_versions or findings.table_mismatch:
+    if findings.unmatched or findings.table_mismatch:
         return 1
     print(
         "check-addendum-schema-versions: every pinned addendum schema digest matches a "
         "committed schema file"
-        + (f", {len(findings.recorded)} recorded as a named exception" if findings.recorded else "")
     )
     return 0
 

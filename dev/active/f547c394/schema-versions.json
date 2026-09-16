@@ -4,6 +4,13 @@
     {
       "version": 1,
       "schema_id": "zen3-benchmark-addendum-v1",
+      "path": "dev/active/f547c394/addendum-v1-initial.schema.json",
+      "sha256": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+      "pinning_receipts": 2
+    },
+    {
+      "version": 1,
+      "schema_id": "zen3-benchmark-addendum-v1",
       "path": "dev/active/f547c394/addendum-v1.schema.json",
       "sha256": "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1",
       "pinning_receipts": 20
