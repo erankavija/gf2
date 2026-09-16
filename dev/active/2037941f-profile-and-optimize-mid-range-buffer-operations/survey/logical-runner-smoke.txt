@@ -1,12 +1,12 @@
 # Logical-buffer harness non-timed wire smoke (jit:bb769456)
-# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke
+# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke --isal
 # every line below is observed at run time from the semantic oracle, the stage
 # execution logs, the checkpoint stores and the handshake records under target/;
 # the record carries no clock reading, the arms answer a zero-window request, and
 # no receipt is finalized, so a rerun on the same executables reproduces it byte
 # for byte and the smoke cannot serve as a pilot
-# logical-arm sha256: 424721029cc68df4f83866172390cee6f0d5553357ba2ce079c36373c6491348
-# logical-isal-arm sha256: f9c44a996e2e188073324e89e4385f3c55830dbf3b664563496b0a3c49edb0bc
+# logical-arm sha256: 68a06b6d210158ee80cf0bf4f9adaedcfb77bd66d5d9ff043557a37679d74edb
+# logical-isal-arm sha256: cc54247b36bc12970b221332067c567814a435272b5ab87e2342ae3d1d0ed427
 PASS semantic oracle: 45 cases, 2366432 checks
 PASS 2037941f-logical-isolated-xor: 2 sessions, resume repeated no cell
 PASS xor-8w-a64-streaming: 2 arms handshook, 0 timing windows, cache streaming
