@@ -12632,3 +12632,7 @@
 {"id":"514e6850-4062-461a-98a1-ba8af4ef712f","issue_id":"7cdc28e9-b18a-45e4-b430-4e8a59dff8e3","priority":"normal","timestamp":"2026-09-16T11:23:23.041385979Z","title":"Skip non-benchmark receipts in the receipt re-evaluation checker","type":"issue_created"}
 {"fields":["dependencies"],"id":"b4f10280-9665-4edb-ae5f-e57f103ecb84","issue_id":"7cdc28e9-b18a-45e4-b430-4e8a59dff8e3","timestamp":"2026-09-16T11:23:46.897586495Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["dependencies"],"id":"ed3d40b7-bf6b-4a97-b88f-dacba72469c4","issue_id":"1362381c-78c0-42eb-bdc9-4327f20bc343","timestamp":"2026-09-16T11:24:10.924404159Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"a037a049-66b4-4b38-935d-ae0dfba457f3","issue_id":"c5e01de3-c6ae-4a0a-80c5-646d744aff80","timestamp":"2026-09-16T11:34:45.879591655Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"06a2ccf2-d3db-4702-98b3-d95f328b2e79","issue_id":"c5e01de3-c6ae-4a0a-80c5-646d744aff80","timestamp":"2026-09-16T11:39:29.089641133Z","type":"gate_failed","updated_by":"auto:executor"}
+{"from":"ready","id":"ab68be07-e8fc-46de-9263-a23c1de1f3db","issue_id":"613574db-f283-425f-b664-369f3e93d756","timestamp":"2026-09-16T11:40:31.431365972Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"cb406b23-bd52-4635-ad34-cc003be21fbd","issue_id":"613574db-f283-425f-b664-369f3e93d756","timestamp":"2026-09-16T11:40:31.431365972Z","type":"issue_claimed"}

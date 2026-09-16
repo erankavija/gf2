@@ -433,14 +433,14 @@
           "short_id": "c5e01de3",
           "title": "Name attempt alpha correctly in acceptance summaries",
           "classification": "implementation",
-          "status": "rework round 1 (session 17): producer fix accepted (three alpha fields, tests, protocol prose); FAIL on integration fitness H1: the canonical freezer dev/active/c7113c5a/survey/freeze-confirmation.py:122 prints family_alpha as attempt alpha. Review reviews/c5e01de3-r1.md."
+          "status": "rework round 2 (session 17): round 1 (canonical freezer) merged at c2e9df89; cargo-ci passed; code-review F1 (blocking): acceptance schema keeps the zen3-benchmark-acceptance-v1 identity while family_alpha's meaning changed; needs a new schema identity with explicit legacy-v1 handling (canonical-cutover). Dispatched to the same worker."
         },
         {
           "id": "613574db-f283-425f-b664-369f3e93d756",
           "short_id": "613574db",
           "title": "Design cached GF(2^8) tables and consumer hooks",
           "classification": "design",
-          "status": "pending; dispatch when a worker slot frees (opus), reuse agent-19513245."
+          "status": "dispatched session 17 (opus) in the reused agent-19513245 directory renamed agent-613574db; design + REQ-04 leaf manifest; the lead creates the leaves."
         }
       ]
     },
@@ -888,7 +888,7 @@
     "07ca8585": 1,
     "5cbb6545": 2,
     "92385645": 0,
-    "c5e01de3": 1
+    "c5e01de3": 2
   },
   "surfaced_pitfalls": [
     {

@@ -12,7 +12,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-16T11:34:45.879591655Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T11:39:29.089641133Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c5e01de3-c6ae-4a0a-80c5-646d744aff80",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -22,5 +33,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Name attempt alpha correctly in acceptance summaries",
-  "updated_at": "2026-09-16T10:14:42.883041301Z"
+  "updated_at": "2026-09-16T11:39:29.089641133Z"
 }
