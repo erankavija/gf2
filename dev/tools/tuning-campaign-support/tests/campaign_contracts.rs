@@ -96,38 +96,16 @@ fn clean_lifecycle_cannot_publish_before_observed_release() {
 
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::path::Path;
 use tuning_campaign_support::journal::{
     CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity,
 };
+use tuning_campaign_support::scratch::scratch;
 use tuning_campaign_support::timing::{
     execution_windows_configured, TimingProgress, TimingSample, WINDOWS,
 };
 use tuning_campaign_support::transport::{encode_result_line, FRESH_CASE_VAR};
 
-struct Scratch(PathBuf);
-impl Scratch {
-    fn new() -> Self {
-        static NEXT: AtomicU64 = AtomicU64::new(0);
-        let path = std::env::temp_dir().join(format!(
-            "campaign-layer-{}-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos(),
-            NEXT.fetch_add(1, Ordering::Relaxed)
-        ));
-        fs::create_dir(&path).unwrap();
-        Self(path)
-    }
-}
-impl Drop for Scratch {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
 fn digest() -> Sha256Digest {
     Sha256Digest::of(b"contract")
 }
@@ -382,12 +360,12 @@ fn process_paths_environment_and_staged_bytes_are_strict() {
     let mut bad = valid.clone();
     bad.environment.insert("UNDECLARED".into(), "1".into());
     assert!(bad.validate().is_err());
-    let tmp = Scratch::new();
-    let file = tmp.0.join("producer");
+    let tmp = scratch("campaign-layer");
+    let file = tmp.path().join("producer");
     fs::write(&file, b"executable").unwrap();
     let mut staged = valid;
     staged.executable = file.clone();
-    staged.working_directory = tmp.0.clone();
+    staged.working_directory = tmp.to_path_buf();
     staged.executable_sha256 = Sha256Digest::of(b"executable");
     staged.verify_staged().unwrap();
     fs::write(file, b"changed").unwrap();
@@ -644,9 +622,9 @@ fn prelock_evidence(store: &SessionStore) -> PrelockInterruptionEvidence {
 
 #[test]
 fn prepared_writer_death_closes_without_fictitious_wrapper_or_release() {
-    let tmp = Scratch::new();
-    let first = descriptor(&tmp.0);
-    let mut log = log(&tmp.0);
+    let tmp = scratch("campaign-layer");
+    let first = descriptor(tmp.path());
+    let mut log = log(tmp.path());
     let mut store = SessionStore::prepare(first.clone()).unwrap();
     store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
     store.consume_mode(SessionMode::RunSession).unwrap();
@@ -740,7 +718,8 @@ fn prepared_writer_death_closes_without_fictitious_wrapper_or_release() {
     let mut next = first;
     next.session_id = token("s2");
     drop(log);
-    let next_log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+    let next_log =
+        ExecutionLog::resume(tmp.path().join("execution.log"), "campaign", "s2").unwrap();
     assert_eq!(next_log.session_id(), "s2");
     SessionStore::prepare(next).unwrap();
 }
@@ -753,9 +732,9 @@ fn prelock_abort_rejects_any_held_or_fabricated_wrapper_evidence() {
         JournalEvent::LockRelease,
         JournalEvent::ChildSpawn,
     ] {
-        let tmp = Scratch::new();
-        let first = descriptor(&tmp.0);
-        let mut log = log(&tmp.0);
+        let tmp = scratch("campaign-layer");
+        let first = descriptor(tmp.path());
+        let mut log = log(tmp.path());
         let mut store = SessionStore::prepare(first).unwrap();
         store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
         let proof = prelock_evidence(&store);
@@ -768,11 +747,14 @@ fn prelock_abort_rejects_any_held_or_fabricated_wrapper_evidence() {
             )
             .is_err());
         assert_eq!(store.lifecycle().state(), SessionState::Prepared);
-        assert!(!tmp.0.join("sessions/s1/transition-000000.json").exists());
+        assert!(!tmp
+            .path()
+            .join("sessions/s1/transition-000000.json")
+            .exists());
     }
-    let tmp = Scratch::new();
-    let first = descriptor(&tmp.0);
-    let mut log = log(&tmp.0);
+    let tmp = scratch("campaign-layer");
+    let first = descriptor(tmp.path());
+    let mut log = log(tmp.path());
     let mut store = SessionStore::prepare(first.clone()).unwrap();
     let proof = prelock_evidence(&store);
     store.consume_mode(SessionMode::RunSession).unwrap();
@@ -799,8 +781,8 @@ fn prelock_abort_rejects_any_held_or_fabricated_wrapper_evidence() {
 
 #[test]
 fn durable_descriptors_reject_concurrent_writer_reuse_and_identity_change() {
-    let tmp = Scratch::new();
-    let descriptor = descriptor(&tmp.0);
+    let tmp = scratch("campaign-layer");
+    let descriptor = descriptor(tmp.path());
     let mut store = SessionStore::prepare(descriptor.clone()).unwrap();
     assert!(SessionStore::reopen(descriptor.clone()).is_err());
     store.consume_mode(SessionMode::RunSession).unwrap();
@@ -816,9 +798,9 @@ fn durable_descriptors_reject_concurrent_writer_reuse_and_identity_change() {
 
 #[test]
 fn transition_projection_recovers_once_after_durable_state_commit() {
-    let tmp = Scratch::new();
-    let descriptor = descriptor(&tmp.0);
-    let mut log = log(&tmp.0);
+    let tmp = scratch("campaign-layer");
+    let descriptor = descriptor(tmp.path());
+    let mut log = log(tmp.path());
     let mut store = SessionStore::prepare(descriptor.clone()).unwrap();
     store.consume_mode(SessionMode::RunSession).unwrap();
     store
@@ -849,10 +831,10 @@ fn transition_projection_recovers_once_after_durable_state_commit() {
     drop(store);
     drop(log);
     // Simulate the crash boundary after immutable state commit, before its journal append.
-    fs::write(tmp.0.join("execution.log"), &prefix).unwrap();
+    fs::write(tmp.path().join("execution.log"), &prefix).unwrap();
     // Journal low-level reopen keeps the same live session for projection recovery.
     let mut log =
-        ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+        ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1").unwrap();
     let store = SessionStore::reopen(descriptor).unwrap();
     store.reconcile_journal(&mut log).unwrap();
     let sequence = log.next_sequence();
@@ -862,23 +844,26 @@ fn transition_projection_recovers_once_after_durable_state_commit() {
 
 #[test]
 fn checkpoints_bind_progress_then_reconcile_missing_acceptance_once() {
-    let tmp = Scratch::new();
+    let tmp = scratch("campaign-layer");
     let m = manifest();
     let unit = &m.ordered_units[3];
-    let mut log = log(&tmp.0);
+    let mut log = log(tmp.path());
     let report = complete_attempt(&mut log, unit);
-    let mut store =
-        CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-            .unwrap();
+    let mut store = CheckpointStore::create_new(
+        tmp.path().join("checkpoints"),
+        "campaign",
+        resume_identity(),
+    )
+    .unwrap();
     let before = fs::read(log.path()).unwrap();
     accept_checkpoint(&mut log, &mut store, unit, &report).unwrap();
     let (saved, bound): (LaunchUnit, BoundResult) = store.load(unit.key.as_str()).unwrap();
     assert_eq!(&saved, unit);
     assert_eq!(bound.result, report);
     drop(log);
-    fs::write(tmp.0.join("execution.log"), before).unwrap();
+    fs::write(tmp.path().join("execution.log"), before).unwrap();
     let mut log =
-        ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+        ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1").unwrap();
     let bundle = reconcile_checkpoints(&mut log, &store, &m).unwrap();
     assert_eq!(bundle.accepted.len(), 1);
     bundle.validate(&m, false).unwrap();
@@ -894,13 +879,16 @@ fn checkpoints_bind_progress_then_reconcile_missing_acceptance_once() {
 
 #[test]
 fn missing_progress_or_validation_never_accepts_a_checkpoint() {
-    let tmp = Scratch::new();
+    let tmp = scratch("campaign-layer");
     let m = manifest();
     let unit = &m.ordered_units[3];
-    let mut log = log(&tmp.0);
-    let mut store =
-        CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-            .unwrap();
+    let mut log = log(tmp.path());
+    let mut store = CheckpointStore::create_new(
+        tmp.path().join("checkpoints"),
+        "campaign",
+        resume_identity(),
+    )
+    .unwrap();
     assert!(accept_checkpoint(&mut log, &mut store, unit, &result(unit)).is_err());
     assert!(store.completed_keys().is_empty());
     let mut attempt = ChildAttempt::start(&mut log, unit.clone(), token("attempt"), 123).unwrap();
@@ -925,8 +913,8 @@ fn missing_progress_or_validation_never_accepts_a_checkpoint() {
 
 #[test]
 fn pending_recovery_requires_synced_journal_handshake_and_is_idempotent() {
-    let tmp = Scratch::new();
-    let root = tmp.0.join("checkpoints");
+    let tmp = scratch("campaign-layer");
+    let root = tmp.path().join("checkpoints");
     drop(CheckpointStore::create_new(&root, "campaign", resume_identity()).unwrap());
     fs::write(
         root.join("pending")
@@ -936,7 +924,7 @@ fn pending_recovery_requires_synced_journal_handshake_and_is_idempotent() {
     .unwrap();
     let mut store = CheckpointStore::resume(&root, "campaign", resume_identity()).unwrap();
     let recovery = store.pending_recovery().unwrap().clone();
-    let mut log = log(&tmp.0);
+    let mut log = log(tmp.path());
     acknowledge_pending_recovery(&mut log, &mut store, &token("campaign")).unwrap();
     assert!(store.pending_recovery().is_none());
     let records =
@@ -993,9 +981,9 @@ fn derived_manifests_cannot_change_reserved_slots_or_input_digest() {
 
 #[test]
 fn budget_terminal_checksum_gap_and_same_identity_resume_preserve_the_prefix() {
-    let tmp = Scratch::new();
-    let first = descriptor(&tmp.0);
-    let mut log = log(&tmp.0);
+    let tmp = scratch("campaign-layer");
+    let first = descriptor(tmp.path());
+    let mut log = log(tmp.path());
     let mut store = SessionStore::prepare(first.clone()).unwrap();
     let mut announcement = Vec::new();
     store
@@ -1078,7 +1066,7 @@ fn budget_terminal_checksum_gap_and_same_identity_resume_preserve_the_prefix() {
     // Finalizer was killed after synced terminal, before checksum publication.
     let store = SessionStore::reopen(first.clone()).unwrap();
     let mut log =
-        ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+        ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1").unwrap();
     store.reconcile_journal(&mut log).unwrap();
     assert_eq!(log.next_sequence(), terminal_sequence);
     let pin = store.write_checksum(&mut log, vec![]).unwrap();
@@ -1087,7 +1075,7 @@ fn budget_terminal_checksum_gap_and_same_identity_resume_preserve_the_prefix() {
     let mut second = first.clone();
     second.session_id = token("s2");
     let store = SessionStore::prepare(second).unwrap();
-    let mut log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+    let mut log = ExecutionLog::resume(tmp.path().join("execution.log"), "campaign", "s2").unwrap();
     store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
     let saved: SessionChecksum = pin.read().unwrap();
     saved.validate(&first, log.path()).unwrap();
@@ -1095,9 +1083,9 @@ fn budget_terminal_checksum_gap_and_same_identity_resume_preserve_the_prefix() {
 
 #[test]
 fn recovery_requires_release_then_censored_interruption_and_allows_resume() {
-    let tmp = Scratch::new();
-    let first = descriptor(&tmp.0);
-    let mut log = log(&tmp.0);
+    let tmp = scratch("campaign-layer");
+    let first = descriptor(tmp.path());
+    let mut log = log(tmp.path());
     let mut store = SessionStore::prepare(first.clone()).unwrap();
     store.consume_mode(SessionMode::RunSession).unwrap();
     store
@@ -1156,7 +1144,7 @@ fn recovery_requires_release_then_censored_interruption_and_allows_resume() {
     let mut second = first;
     second.session_id = token("s2");
     let store = SessionStore::prepare(second).unwrap();
-    let mut log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+    let mut log = ExecutionLog::resume(tmp.path().join("execution.log"), "campaign", "s2").unwrap();
     store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
 }
 
@@ -1253,14 +1241,17 @@ fn rewrite_records(
 #[test]
 fn completion_intent_recovers_every_raw_exit_validation_and_checkpoint_boundary() {
     for boundary in 0..6 {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[3];
-        let first = descriptor(&tmp.0);
-        let mut log = log(&tmp.0);
-        let mut checkpoints =
-            CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-                .unwrap();
+        let first = descriptor(tmp.path());
+        let mut log = log(tmp.path());
+        let mut checkpoints = CheckpointStore::create_new(
+            tmp.path().join("checkpoints"),
+            "campaign",
+            resume_identity(),
+        )
+        .unwrap();
         let mut store = SessionStore::prepare(first.clone()).unwrap();
         store.consume_mode(SessionMode::RunSession).unwrap();
         store
@@ -1304,8 +1295,8 @@ fn completion_intent_recovers_every_raw_exit_validation_and_checkpoint_boundary(
                 .count(),
             usize::from(boundary > 0)
         );
-        let stdout = fs::read(tmp.0.join("raw.stdout")).unwrap();
-        let stderr_digest = Sha256Digest::of(&fs::read(tmp.0.join("raw.stderr")).unwrap());
+        let stdout = fs::read(tmp.path().join("raw.stdout")).unwrap();
+        let stderr_digest = Sha256Digest::of(&fs::read(tmp.path().join("raw.stderr")).unwrap());
         if boundary == 0 {
             assert!(ChildAttempt::recover_exited(
                 &mut log,
@@ -1344,7 +1335,8 @@ fn completion_intent_recovers_every_raw_exit_validation_and_checkpoint_boundary(
         let pin = store.write_checksum(&mut log, vec![]).unwrap();
         store.retire(&mut log, &pin).unwrap();
         drop(log);
-        let mut log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+        let mut log =
+            ExecutionLog::resume(tmp.path().join("execution.log"), "campaign", "s2").unwrap();
         if boundary == 0 {
             // Raw files alone make no claim about the original exit outcome.
             // Only the independently closed interruption permits a fresh run.
@@ -1406,10 +1398,10 @@ fn completion_intent_recovers_every_raw_exit_validation_and_checkpoint_boundary(
 #[test]
 fn pending_completion_rejects_wrong_outcome_case_artifacts_and_duplicate_intent() {
     for mutation in 0..6 {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[3];
-        let mut log = log(&tmp.0);
+        let mut log = log(tmp.path());
         complete_attempt_with_streams(&mut log, unit, true);
         rewrite_records(&log, |records| {
             records.retain(|record| {
@@ -1428,12 +1420,13 @@ fn pending_completion_rejects_wrong_outcome_case_artifacts_and_duplicate_intent(
                 2 => records[index].details["exit"]["stdout_sha256"] = json!(digest()),
                 3 => records[index].details["exit"]["attempt"] = json!("other"),
                 4 => records.insert(index, records[index].clone()),
-                _ => fs::write(tmp.0.join("raw.stdout"), b"changed raw bytes").unwrap(),
+                _ => fs::write(tmp.path().join("raw.stdout"), b"changed raw bytes").unwrap(),
             }
         });
         drop(log);
         let mut log =
-            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+            ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1")
+                .unwrap();
         let prefix = fs::read(log.path()).unwrap();
         assert!(repair_child_exits(&mut log).is_err());
         assert_eq!(fs::read(log.path()).unwrap(), prefix);
@@ -1443,10 +1436,10 @@ fn pending_completion_rejects_wrong_outcome_case_artifacts_and_duplicate_intent(
 #[test]
 fn completed_raw_result_never_overrides_failure_or_timeout_observation() {
     for timeout in [false, true] {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[3];
-        let mut log = log(&tmp.0);
+        let mut log = log(tmp.path());
         complete_attempt_with_streams(&mut log, unit, true);
         let outcome = if timeout {
             ProcessOutcome::TimedOut {
@@ -1478,7 +1471,8 @@ fn completed_raw_result_never_overrides_failure_or_timeout_observation() {
         });
         drop(log);
         let mut log =
-            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+            ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1")
+                .unwrap();
         repair_child_exits(&mut log).unwrap();
         if timeout {
             // Crash after synced ChildTimeout but before synced ChildExit.
@@ -1486,8 +1480,8 @@ fn completed_raw_result_never_overrides_failure_or_timeout_observation() {
                 records.retain(|record| record.event != JournalEvent::ChildExit)
             });
             drop(log);
-            log =
-                ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+            log = ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1")
+                .unwrap();
             repair_child_exits(&mut log).unwrap();
         }
         let sequence = log.next_sequence();
@@ -1515,8 +1509,8 @@ fn completed_raw_result_never_overrides_failure_or_timeout_observation() {
             &mut log,
             unit.clone(),
             token("attempt-1"),
-            &fs::read(tmp.0.join("raw.stdout")).unwrap(),
-            Sha256Digest::of(&fs::read(tmp.0.join("raw.stderr")).unwrap())
+            &fs::read(tmp.path().join("raw.stdout")).unwrap(),
+            Sha256Digest::of(&fs::read(tmp.path().join("raw.stderr")).unwrap())
         )
         .is_err());
     }
@@ -1540,14 +1534,14 @@ fn rejected_stderr_remains_durable_across_completion_and_exit_crashes() {
     ];
     for (raw_stderr, callback_error, expected) in fixtures {
         for write_exit in [false, true] {
-            let tmp = Scratch::new();
+            let tmp = scratch("campaign-layer");
             let m = manifest();
             let unit = &m.ordered_units[0];
             assert_eq!(unit.identity.task, Task::Probe);
             let report = result(unit);
             let stdout = format!("{}\n", encode_result_line(&report).unwrap()).into_bytes();
             let stderr_digest = Sha256Digest::of(raw_stderr);
-            let mut log = log(&tmp.0);
+            let mut log = log(tmp.path());
             let mut attempt =
                 ChildAttempt::start(&mut log, unit.clone(), token("rejected"), 123).unwrap();
             if let Ok(text) = std::str::from_utf8(raw_stderr) {
@@ -1568,8 +1562,8 @@ fn rejected_stderr_remains_durable_across_completion_and_exit_crashes() {
                 unit,
                 token("rejected"),
                 outcome.clone(),
-                publish_artifact(&tmp.0, &tmp.0.join("raw.stdout"), &stdout).unwrap(),
-                publish_artifact(&tmp.0, &tmp.0.join("raw.stderr"), raw_stderr).unwrap(),
+                publish_artifact(tmp.path(), &tmp.join("raw.stdout"), &stdout).unwrap(),
+                publish_artifact(tmp.path(), &tmp.join("raw.stderr"), raw_stderr).unwrap(),
                 callback_error.map(str::to_owned),
             )
             .unwrap();
@@ -1584,7 +1578,8 @@ fn rejected_stderr_remains_durable_across_completion_and_exit_crashes() {
             drop(attempt);
             drop(log);
             let mut log =
-                ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+                ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1")
+                    .unwrap();
             repair_child_exits(&mut log).unwrap();
             let sequence = log.next_sequence();
             repair_child_exits(&mut log).unwrap();
@@ -1598,7 +1593,10 @@ fn rejected_stderr_remains_durable_across_completion_and_exit_crashes() {
                     .count(),
                 1
             );
-            assert_eq!(fs::read(tmp.0.join("raw.stderr")).unwrap(), *raw_stderr);
+            assert_eq!(
+                fs::read(tmp.path().join("raw.stderr")).unwrap(),
+                *raw_stderr
+            );
             assert!(ChildAttempt::recover_exited(
                 &mut log,
                 unit.clone(),
@@ -1608,7 +1606,7 @@ fn rejected_stderr_remains_durable_across_completion_and_exit_crashes() {
             )
             .is_err());
             let mut checkpoints = CheckpointStore::create_new(
-                tmp.0.join("checkpoints"),
+                tmp.path().join("checkpoints"),
                 "campaign",
                 resume_identity(),
             )
@@ -1621,16 +1619,16 @@ fn rejected_stderr_remains_durable_across_completion_and_exit_crashes() {
 
 #[test]
 fn completion_records_missing_callback_progress_before_rejecting_exit() {
-    let source = Scratch::new();
+    let source = scratch("campaign-layer");
     let m = manifest();
     let unit = &m.ordered_units[3];
-    let mut source_log = log(&source.0);
+    let mut source_log = log(source.path());
     let report = complete_attempt_with_streams(&mut source_log, unit, true);
-    let stdout = fs::read(source.0.join("raw.stdout")).unwrap();
-    let stderr = fs::read(source.0.join("raw.stderr")).unwrap();
+    let stdout = fs::read(source.path().join("raw.stdout")).unwrap();
+    let stderr = fs::read(source.path().join("raw.stderr")).unwrap();
     let stderr_digest = Sha256Digest::of(&stderr);
-    let tmp = Scratch::new();
-    let mut log = log(&tmp.0);
+    let tmp = scratch("campaign-layer");
+    let mut log = log(tmp.path());
     let mut attempt = ChildAttempt::start(&mut log, unit.clone(), token("missed"), 123).unwrap();
     let outcome = ProcessOutcome::Exited {
         pid: 123,
@@ -1642,8 +1640,8 @@ fn completion_records_missing_callback_progress_before_rejecting_exit() {
         unit,
         token("missed"),
         outcome.clone(),
-        publish_artifact(&tmp.0, &tmp.0.join("raw.stdout"), &stdout).unwrap(),
-        publish_artifact(&tmp.0, &tmp.0.join("raw.stderr"), &stderr).unwrap(),
+        publish_artifact(tmp.path(), &tmp.join("raw.stdout"), &stdout).unwrap(),
+        publish_artifact(tmp.path(), &tmp.join("raw.stderr"), &stderr).unwrap(),
         None,
     )
     .unwrap();
@@ -1672,9 +1670,12 @@ fn completion_records_missing_callback_progress_before_rejecting_exit() {
         stderr_digest,
     )
     .is_err());
-    let mut checkpoints =
-        CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-            .unwrap();
+    let mut checkpoints = CheckpointStore::create_new(
+        tmp.path().join("checkpoints"),
+        "campaign",
+        resume_identity(),
+    )
+    .unwrap();
     assert!(accept_checkpoint(&mut log, &mut checkpoints, unit, &report).is_err());
 }
 
@@ -1685,20 +1686,20 @@ fn raw_stderr_validity_and_progress_equivalence_cannot_be_mutated_into_acceptanc
         "missing-journal-progress",
         "missing-raw-progress",
     ] {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[3];
-        let mut log = log(&tmp.0);
+        let mut log = log(tmp.path());
         complete_attempt_with_streams(&mut log, unit, true);
-        let stdout = fs::read(tmp.0.join("raw.stdout")).unwrap();
+        let stdout = fs::read(tmp.path().join("raw.stdout")).unwrap();
         if mutation == "raw-validity" {
-            fs::write(tmp.0.join("raw.stderr"), b"\xff\n").unwrap();
+            fs::write(tmp.path().join("raw.stderr"), b"\xff\n").unwrap();
         } else if mutation == "missing-raw-progress" {
-            let raw = fs::read(tmp.0.join("raw.stderr")).unwrap();
+            let raw = fs::read(tmp.path().join("raw.stderr")).unwrap();
             let first_lf = raw.iter().position(|byte| *byte == b'\n').unwrap();
-            fs::write(tmp.0.join("raw.stderr"), &raw[first_lf + 1..]).unwrap();
+            fs::write(tmp.path().join("raw.stderr"), &raw[first_lf + 1..]).unwrap();
         }
-        let stderr_digest = Sha256Digest::of(&fs::read(tmp.0.join("raw.stderr")).unwrap());
+        let stderr_digest = Sha256Digest::of(&fs::read(tmp.path().join("raw.stderr")).unwrap());
         rewrite_records(&log, |records| {
             records.retain(|record| {
                 !(matches!(
@@ -1716,7 +1717,8 @@ fn raw_stderr_validity_and_progress_equivalence_cannot_be_mutated_into_acceptanc
         });
         drop(log);
         let mut log =
-            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+            ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1")
+                .unwrap();
         let before = fs::read(log.path()).unwrap();
         if mutation == "missing-journal-progress" {
             repair_child_exits(&mut log).unwrap();
@@ -1737,14 +1739,18 @@ fn raw_stderr_validity_and_progress_equivalence_cannot_be_mutated_into_acceptanc
 
 #[test]
 fn completed_exit_cannot_accept_after_its_retained_raw_artifact_changes() {
-    let tmp = Scratch::new();
+    let tmp = scratch("campaign-layer");
     let m = manifest();
     let unit = &m.ordered_units[3];
-    let mut log = log(&tmp.0);
+    let mut log = log(tmp.path());
     let report = complete_attempt_with_streams(&mut log, unit, true);
-    let stdout = fs::read(tmp.0.join("raw.stdout")).unwrap();
-    let stderr_digest = Sha256Digest::of(&fs::read(tmp.0.join("raw.stderr")).unwrap());
-    fs::write(tmp.0.join("raw.stderr"), b"changed retained diagnostic").unwrap();
+    let stdout = fs::read(tmp.path().join("raw.stdout")).unwrap();
+    let stderr_digest = Sha256Digest::of(&fs::read(tmp.path().join("raw.stderr")).unwrap());
+    fs::write(
+        tmp.path().join("raw.stderr"),
+        b"changed retained diagnostic",
+    )
+    .unwrap();
     assert!(ChildAttempt::recover_exited(
         &mut log,
         unit.clone(),
@@ -1753,9 +1759,12 @@ fn completed_exit_cannot_accept_after_its_retained_raw_artifact_changes() {
         stderr_digest
     )
     .is_err());
-    let mut checkpoints =
-        CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-            .unwrap();
+    let mut checkpoints = CheckpointStore::create_new(
+        tmp.path().join("checkpoints"),
+        "campaign",
+        resume_identity(),
+    )
+    .unwrap();
     assert!(accept_checkpoint(&mut log, &mut checkpoints, unit, &report).is_err());
     assert!(checkpoints.completed_keys().is_empty());
 }
@@ -1763,11 +1772,11 @@ fn completed_exit_cannot_accept_after_its_retained_raw_artifact_changes() {
 #[test]
 fn clean_exit_recovery_reuses_timing_before_and_after_owner_validation() {
     for validated in [false, true] {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[3];
-        let first = descriptor(&tmp.0);
-        let mut log = log(&tmp.0);
+        let first = descriptor(tmp.path());
+        let mut log = log(tmp.path());
         let mut store = SessionStore::prepare(first.clone()).unwrap();
         store.consume_mode(SessionMode::RunSession).unwrap();
         store
@@ -1819,7 +1828,8 @@ fn clean_exit_recovery_reuses_timing_before_and_after_owner_validation() {
         let pin = store.write_checksum(&mut log, vec![]).unwrap();
         store.retire(&mut log, &pin).unwrap();
         drop(log);
-        let mut log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+        let mut log =
+            ExecutionLog::resume(tmp.path().join("execution.log"), "campaign", "s2").unwrap();
         let stdout = format!("{}\n", encode_result_line(&report).unwrap());
         let count = log.next_sequence();
         let mut recovered = ChildAttempt::recover_exited(
@@ -1852,9 +1862,12 @@ fn clean_exit_recovery_reuses_timing_before_and_after_owner_validation() {
                 )
                 .unwrap();
         }
-        let mut checkpoints =
-            CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-                .unwrap();
+        let mut checkpoints = CheckpointStore::create_new(
+            tmp.path().join("checkpoints"),
+            "campaign",
+            resume_identity(),
+        )
+        .unwrap();
         accept_checkpoint(&mut log, &mut checkpoints, unit, &report).unwrap();
         let records =
             ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
@@ -1878,10 +1891,10 @@ fn clean_exit_recovery_reuses_timing_before_and_after_owner_validation() {
 #[test]
 fn clean_exit_recovery_rejects_raw_stream_and_progress_mutations() {
     for mutation in 0..6 {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[3];
-        let mut log = log(&tmp.0);
+        let mut log = log(tmp.path());
         let report = complete_attempt(&mut log, unit);
         let mut stdout = format!("{}\n", encode_result_line(&report).unwrap());
         let mut stderr = digest();
@@ -1920,7 +1933,8 @@ fn clean_exit_recovery_rejects_raw_stream_and_progress_mutations() {
         }
         drop(log);
         let mut log =
-            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+            ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1")
+                .unwrap();
         let prefix = fs::read(log.path()).unwrap();
         assert!(ChildAttempt::recover_exited(
             &mut log,
@@ -1937,14 +1951,17 @@ fn clean_exit_recovery_rejects_raw_stream_and_progress_mutations() {
 #[test]
 fn acceptance_reconciliation_rejects_unknown_keys_wrong_cases_and_duplicates() {
     for mutation in 0..4 {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[0];
-        let mut log = log(&tmp.0);
+        let mut log = log(tmp.path());
         let report = complete_attempt(&mut log, unit);
-        let mut checkpoints =
-            CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-                .unwrap();
+        let mut checkpoints = CheckpointStore::create_new(
+            tmp.path().join("checkpoints"),
+            "campaign",
+            resume_identity(),
+        )
+        .unwrap();
         accept_checkpoint(&mut log, &mut checkpoints, unit, &report).unwrap();
         rewrite_records(&log, |records| {
             let acceptance = records
@@ -1971,7 +1988,8 @@ fn acceptance_reconciliation_rejects_unknown_keys_wrong_cases_and_duplicates() {
         });
         drop(log);
         let mut log =
-            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+            ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1")
+                .unwrap();
         assert!(reconcile_checkpoints(&mut log, &checkpoints, &m).is_err());
         assert!(
             reconcile_campaign_checkpoints(&mut log, &checkpoints, std::slice::from_ref(&m))
@@ -1990,10 +2008,10 @@ fn every_bound_child_record_requires_its_exact_structured_case() {
         JournalEvent::ChildExit,
         JournalEvent::ResultValidated,
     ] {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[3];
-        let mut log = log(&tmp.0);
+        let mut log = log(tmp.path());
         let report = complete_attempt(&mut log, unit);
         rewrite_records(&log, |records| {
             records
@@ -2002,9 +2020,12 @@ fn every_bound_child_record_requires_its_exact_structured_case() {
                 .unwrap()
                 .case = Some(json!({"wrong":"case"}));
         });
-        let mut checkpoints =
-            CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-                .unwrap();
+        let mut checkpoints = CheckpointStore::create_new(
+            tmp.path().join("checkpoints"),
+            "campaign",
+            resume_identity(),
+        )
+        .unwrap();
         assert!(
             accept_checkpoint(&mut log, &mut checkpoints, unit, &report).is_err(),
             "{event:?}"
@@ -2016,10 +2037,10 @@ fn every_bound_child_record_requires_its_exact_structured_case() {
 #[test]
 fn prefix_replay_rejects_overlapping_spawns_and_resampling_before_validation() {
     for insert_after in [JournalEvent::ChildSpawn, JournalEvent::ChildExit] {
-        let tmp = Scratch::new();
+        let tmp = scratch("campaign-layer");
         let m = manifest();
         let unit = &m.ordered_units[0];
-        let mut log = log(&tmp.0);
+        let mut log = log(tmp.path());
         let report = complete_attempt(&mut log, unit);
         rewrite_records(&log, |records| {
             let mut spawn = records
@@ -2037,10 +2058,14 @@ fn prefix_replay_rejects_overlapping_spawns_and_resampling_before_validation() {
         });
         drop(log);
         let mut log =
-            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
-        let mut checkpoints =
-            CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
+            ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1")
                 .unwrap();
+        let mut checkpoints = CheckpointStore::create_new(
+            tmp.path().join("checkpoints"),
+            "campaign",
+            resume_identity(),
+        )
+        .unwrap();
         assert!(accept_checkpoint(&mut log, &mut checkpoints, unit, &report).is_err());
         assert!(checkpoints.completed_keys().is_empty());
     }
@@ -2048,10 +2073,10 @@ fn prefix_replay_rejects_overlapping_spawns_and_resampling_before_validation() {
 
 #[test]
 fn invalid_utf8_stdout_keeps_exact_exit_bytes_and_cannot_accept() {
-    let tmp = Scratch::new();
+    let tmp = scratch("campaign-layer");
     let m = manifest();
     let unit = &m.ordered_units[0];
-    let mut log = log(&tmp.0);
+    let mut log = log(tmp.path());
     let mut attempt =
         ChildAttempt::start(&mut log, unit.clone(), token("invalid-output"), 123).unwrap();
     let stdout = b"GF2_TUNING_RESULT=\xff\n";
@@ -2076,18 +2101,21 @@ fn invalid_utf8_stdout_keeps_exact_exit_bytes_and_cannot_accept() {
         exit.details["stdout_sha256"],
         json!(Sha256Digest::of(stdout))
     );
-    let mut checkpoints =
-        CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-            .unwrap();
+    let mut checkpoints = CheckpointStore::create_new(
+        tmp.path().join("checkpoints"),
+        "campaign",
+        resume_identity(),
+    )
+    .unwrap();
     assert!(accept_checkpoint(&mut log, &mut checkpoints, unit, &result(unit)).is_err());
 }
 
 #[test]
 fn active_claim_and_torn_log_recover_in_place_before_release_and_replacement() {
     use std::io::Write;
-    let tmp = Scratch::new();
-    let first = descriptor(&tmp.0);
-    let mut log = log(&tmp.0);
+    let tmp = scratch("campaign-layer");
+    let first = descriptor(tmp.path());
+    let mut log = log(tmp.path());
     let mut store = SessionStore::prepare(first.clone()).unwrap();
     store.consume_mode(SessionMode::RunSession).unwrap();
     store
@@ -2107,7 +2135,7 @@ fn active_claim_and_torn_log_recover_in_place_before_release_and_replacement() {
     let torn = b"{\"uncommitted\":true";
     std::fs::OpenOptions::new()
         .append(true)
-        .open(tmp.0.join("execution.log"))
+        .open(tmp.path().join("execution.log"))
         .unwrap()
         .write_all(torn)
         .unwrap();
@@ -2171,14 +2199,14 @@ fn active_claim_and_torn_log_recover_in_place_before_release_and_replacement() {
     store.retire(&mut log, &pin).unwrap();
     drop(log);
     let store = SessionStore::prepare(second).unwrap();
-    let mut log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+    let mut log = ExecutionLog::resume(tmp.path().join("execution.log"), "campaign", "s2").unwrap();
     store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
     assert_eq!(log.session_id(), "s2");
 }
 
 #[test]
 fn campaign_reconciliation_validates_the_complete_all_owner_universe() {
-    let tmp = Scratch::new();
+    let tmp = scratch("campaign-layer");
     let first = manifest();
     let mut second = first.clone();
     second.owner = token("algebra");
@@ -2190,10 +2218,13 @@ fn campaign_reconciliation_validates_the_complete_all_owner_universe() {
         unit.key = unit.identity.key().unwrap();
     }
     second.seal().unwrap();
-    let mut log = log(&tmp.0);
-    let mut checkpoints =
-        CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
-            .unwrap();
+    let mut log = log(tmp.path());
+    let mut checkpoints = CheckpointStore::create_new(
+        tmp.path().join("checkpoints"),
+        "campaign",
+        resume_identity(),
+    )
+    .unwrap();
     for manifest in [&first, &second] {
         let unit = &manifest.ordered_units[0];
         let result = complete_attempt(&mut log, unit);

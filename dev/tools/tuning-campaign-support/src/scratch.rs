@@ -1,4 +1,11 @@
-//! `gf2_core::test_scratch` is the workspace form, while this crate is dependency-isolated from the gf2 crates.
+//! Scratch directories for this crate's tests and its driver binary.
+//!
+//! `gf2_core::test_scratch` is the workspace form of this module. This crate is
+//! a dev-dependency of `gf2-core`, so depending back on it would close a package
+//! cycle; the two stay in step by convention.
+
+use std::ops::Deref;
+use std::path::{Path, PathBuf};
 
 use tempfile::{Builder, TempDir};
 
@@ -10,37 +17,124 @@ pub fn keep_scratch() -> bool {
     std::env::var_os(KEEP_VAR).is_some_and(|value| !value.is_empty())
 }
 
+/// An empty directory removed when the handle drops, including during panic
+/// unwinding. Dereferences to its own path.
+pub struct Scratch(TempDir);
+
+impl Scratch {
+    /// Returns the directory this handle owns.
+    pub fn path(&self) -> &Path {
+        self.0.path()
+    }
+}
+
+impl Deref for Scratch {
+    type Target = Path;
+
+    fn deref(&self) -> &Path {
+        self.0.path()
+    }
+}
+
+impl AsRef<Path> for Scratch {
+    fn as_ref(&self) -> &Path {
+        self.0.path()
+    }
+}
+
+impl std::fmt::Debug for Scratch {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.path().fmt(formatter)
+    }
+}
+
 /// Creates an empty `<prefix>-<random>` directory under `std::env::temp_dir()`.
-///
-/// The directory is removed when the returned handle drops, including during
-/// panic unwinding.
 ///
 /// # Panics
 ///
 /// Panics if the directory cannot be created.
-pub fn scratch(prefix: &str) -> TempDir {
+pub fn scratch(prefix: &str) -> Scratch {
     scratch_with(prefix, keep_scratch())
 }
 
 /// [`scratch`] with the keep decision supplied rather than read from the
 /// environment.
-pub fn scratch_with(prefix: &str, keep: bool) -> TempDir {
-    Builder::new()
-        .prefix(&format!("{prefix}-"))
-        .disable_cleanup(keep)
-        .tempdir()
-        .expect("create scratch directory")
+///
+/// # Panics
+///
+/// Panics if the directory cannot be created.
+pub fn scratch_with(prefix: &str, keep: bool) -> Scratch {
+    Scratch(
+        Builder::new()
+            .prefix(&format!("{prefix}-"))
+            .disable_cleanup(keep)
+            .tempdir()
+            .expect("create scratch directory"),
+    )
+}
+
+/// A caller-named directory removed when the handle drops, for the one case
+/// that cannot accept a random name: a campaign stage the launcher resolves as
+/// exactly `/tmp/<campaign-id>`.
+///
+/// [`KEEP_VAR`] suppresses the removal, as it does for [`Scratch`].
+pub struct NamedScratch {
+    path: PathBuf,
+    keep: bool,
+}
+
+impl NamedScratch {
+    /// Creates `parent/name`, which must not already exist.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the directory cannot be created.
+    pub fn create(parent: &Path, name: &str) -> Self {
+        let path = parent.join(name);
+        std::fs::create_dir(&path).expect("create named scratch directory");
+        Self {
+            path,
+            keep: keep_scratch(),
+        }
+    }
+
+    /// Returns the directory this handle owns.
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Deref for NamedScratch {
+    type Target = Path;
+
+    fn deref(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl AsRef<Path> for NamedScratch {
+    fn as_ref(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for NamedScratch {
+    fn drop(&mut self) {
+        if !self.keep {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{scratch, scratch_with};
+    use super::{scratch, scratch_with, NamedScratch};
     use std::fs;
 
     #[test]
     fn scratch_tree_is_removed_when_the_test_panics() {
         let handle = scratch("tuning-campaign-support-panic");
-        let path = handle.path().to_path_buf();
+        let path = handle.to_path_buf();
         let previous_hook = std::panic::take_hook();
         std::panic::set_hook(Box::new(|_| {}));
         let result = std::panic::catch_unwind(move || {
@@ -54,20 +148,27 @@ mod tests {
     }
 
     #[test]
-    fn scratch_tree_is_removed_when_the_handle_drops() {
-        let path = {
-            let handle = scratch("tuning-campaign-support-drop");
-            assert!(handle.path().exists());
-            handle.path().to_path_buf()
-        };
+    fn named_scratch_tree_is_removed_when_the_test_panics() {
+        let parent = scratch("tuning-campaign-support-named-panic");
+        let expected = parent.join("fixed-name");
+        let handle = NamedScratch::create(&parent, "fixed-name");
+        assert_eq!(handle.path(), expected);
+        let previous_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
+        let result = std::panic::catch_unwind(move || {
+            let _handle = handle;
+            panic!("named scratch test panic");
+        });
+        std::panic::set_hook(previous_hook);
 
-        assert!(!path.exists());
+        assert!(result.is_err());
+        assert!(!expected.exists());
     }
 
     #[test]
     fn kept_scratch_tree_survives_its_handle() {
         let handle = scratch_with("tuning-campaign-support-keep", true);
-        let path = handle.path().to_path_buf();
+        let path = handle.to_path_buf();
         drop(handle);
 
         assert!(path.exists());
@@ -80,7 +181,7 @@ mod tests {
         let second = scratch("tuning-campaign-support-distinct");
 
         assert_ne!(first.path(), second.path());
-        assert!(first.path().exists());
-        assert!(second.path().exists());
+        assert!(first.exists());
+        assert!(second.exists());
     }
 }

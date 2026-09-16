@@ -1,9 +1,16 @@
 //! Exercises launcher recovery using the real neutral discovery command.
+//!
+//! `dev/scripts/tuning-extent-campaign.sh` resolves a campaign's stage as
+//! literally `/tmp/<campaign-id>` and the driver refuses any other path, so
+//! these tests stage under the real `/tmp` rather than `std::env::temp_dir()`.
+//! [`NamedScratch`] removes the stage when the test ends, whichever way it
+//! ends. Everything else the tests write lives under `temp_dir()`.
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Command;
 use tuning_campaign_support::campaign::{CanonicalJson, PreparationStore, SessionChannels, Token};
+use tuning_campaign_support::scratch::{scratch, NamedScratch};
 
 fn executable(path: &Path, content: &str) {
     fs::write(path, content).unwrap();
@@ -11,19 +18,14 @@ fn executable(path: &Path, content: &str) {
 }
 
 fn launcher_replays_preparation(complete_temporary: bool) {
-    let root = std::env::temp_dir().join(format!(
-        "gf2-launcher-discovery-{}-{complete_temporary}",
-        std::process::id()
-    ));
-    fs::create_dir(&root).unwrap();
+    let root = scratch("gf2-launcher-discovery");
     let campaign = format!(
         "gf2-a83583e0-19700101T00000{}Z-{}{}",
         u8::from(complete_temporary),
         std::process::id(),
         u8::from(complete_temporary)
     );
-    let stage = std::env::temp_dir().join(&campaign);
-    fs::create_dir(&stage).unwrap();
+    let stage = NamedScratch::create(Path::new("/tmp"), &campaign);
     let session = "original-session";
     drop(
         PreparationStore::begin(
@@ -111,8 +113,6 @@ fn launcher_replays_preparation(complete_temporary: bool) {
     assert_eq!(fs::read(&canonical_intent).unwrap(), original);
     assert!(!stage.join("execution.log").exists());
     assert_eq!(fs::read_dir(stage.join("preparations")).unwrap().count(), 1);
-    fs::remove_dir_all(root).unwrap();
-    fs::remove_dir_all(stage).unwrap();
 }
 
 #[test]
@@ -127,9 +127,7 @@ fn launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_
 
 #[test]
 fn launcher_rejects_arbitrary_stage_paths_before_creating_them() {
-    let root =
-        std::env::temp_dir().join(format!("gf2-launcher-stage-policy-{}", std::process::id()));
-    fs::create_dir(&root).unwrap();
+    let root = scratch("gf2-launcher-stage-policy");
     let launcher = root.join("launcher.sh");
     fs::write(
         &launcher,
@@ -144,5 +142,4 @@ fn launcher_rejects_arbitrary_stage_paths_before_creating_them() {
         .unwrap();
     assert_eq!(result.status.code(), Some(2));
     assert!(!forbidden.exists());
-    fs::remove_dir_all(root).unwrap();
 }
