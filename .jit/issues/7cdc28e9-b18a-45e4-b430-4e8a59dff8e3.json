@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-16T11:23:23.041385979Z",
+  "dependencies": [
+    "07ca8585-d822-49e7-96b8-18f6a3d73d4e"
+  ],
+  "description": "Make the committed receipt re-evaluation tolerate receipt files that are not zen3 benchmark receipts.\n\n## Background\n\n`dev/active/a203a23c/reevaluate-receipts.sh` evaluates every `receipt.json` under `dev/bench_results/` as a `zen3-benchmark-receipt-v1` receipt. The 07ca8585 device-conformance evidence at `dev/bench_results/07ca8585/device-conformance-r1/receipt.json` carries schema `ldpc-device-conformance-v1`, so the checker aborts with `KeyError: 'addendum'` before reaching the remaining receipts. Found by the c5e01de3 worker while proving that its acceptance-schema change reproduces every committed verdict; a diagnostic copy that skips other schemas reproduces 120 of 125 receipts with the five baseline divergences already recorded in `dev/active/a203a23c/receipt-reevaluation.json`.\n\n## Success Criteria\n\n- [hard] REQ-01: The checker selects receipts by their declared schema, evaluates every `zen3-benchmark-receipt-v1` receipt, and lists every skipped receipt with its schema in its output record.\n- [hard] REQ-02: A run on current main completes and reproduces the committed `receipt-reevaluation.json` baseline verdicts, with the skipped receipts recorded.\n- [hard] REQ-03: A test or self-check covers a receipt of another schema placed beside a benchmark receipt.\n\n## Notes\n\nFollow `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`; the checker is untimed and runs unlocked in-session.",
+  "documents": [],
+  "first_ready_at": "2026-09-16T11:23:23.041385979Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "7cdc28e9-b18a-45e4-b430-4e8a59dff8e3",
+  "labels": [
+    "type:bug",
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "satisfies:REQ-05"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Skip non-benchmark receipts in the receipt re-evaluation checker",
+  "updated_at": "2026-09-16T11:23:46.897586495Z"
+}

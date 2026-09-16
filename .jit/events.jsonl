@@ -12629,3 +12629,6 @@
 {"gate_key":"tdd-reminder","id":"3b732842-04f0-41a2-b934-0c686f36e1c7","issue_id":"bb769456-6803-49ec-ae91-f1619dd0f278","timestamp":"2026-09-16T11:08:10.455063750Z","type":"gate_passed","updated_by":"agent:jit-execution-lead"}
 {"from":"ready","id":"03063ce6-2e7b-43a1-906b-4efee7912a77","issue_id":"bb769456-6803-49ec-ae91-f1619dd0f278","timestamp":"2026-09-16T11:08:51.183400295Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"3f91749c-db58-4a1e-a982-76bd78bf7d87","issue_id":"bb769456-6803-49ec-ae91-f1619dd0f278","timestamp":"2026-09-16T11:08:51.183400295Z","type":"issue_claimed"}
+{"id":"514e6850-4062-461a-98a1-ba8af4ef712f","issue_id":"7cdc28e9-b18a-45e4-b430-4e8a59dff8e3","priority":"normal","timestamp":"2026-09-16T11:23:23.041385979Z","title":"Skip non-benchmark receipts in the receipt re-evaluation checker","type":"issue_created"}
+{"fields":["dependencies"],"id":"b4f10280-9665-4edb-ae5f-e57f103ecb84","issue_id":"7cdc28e9-b18a-45e4-b430-4e8a59dff8e3","timestamp":"2026-09-16T11:23:46.897586495Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"ed3d40b7-bf6b-4a97-b88f-dacba72469c4","issue_id":"1362381c-78c0-42eb-bdc9-4327f20bc343","timestamp":"2026-09-16T11:24:10.924404159Z","type":"issue_updated","updated_by":"dependency-add"}

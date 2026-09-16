@@ -433,7 +433,7 @@
           "short_id": "c5e01de3",
           "title": "Name attempt alpha correctly in acceptance summaries",
           "classification": "implementation",
-          "status": "dispatched session 17 (sonnet) in the reused agent-53c5a8c0 directory renamed agent-c5e01de3."
+          "status": "rework round 1 (session 17): producer fix accepted (three alpha fields, tests, protocol prose); FAIL on integration fitness H1: the canonical freezer dev/active/c7113c5a/survey/freeze-confirmation.py:122 prints family_alpha as attempt alpha. Review reviews/c5e01de3-r1.md."
         },
         {
           "id": "613574db-f283-425f-b664-369f3e93d756",
@@ -621,6 +621,12 @@
       "type": "bug",
       "in_epic": false,
       "reason": "9fb40c83 rebuild: choose_k_block in gf2-core m4rm.rs is dead without test-support; cargo-ci's --all-features clippy never sees it; depends on 9fb40c83"
+    },
+    {
+      "id": "7cdc28e9",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "c5e01de3 review H3: dev/active/a203a23c/reevaluate-receipts.sh crashes (KeyError 'addendum') on the 07ca8585 ldpc-device-conformance-v1 receipt; pre-existing on main; depends on 07ca8585, feeds 1362381c"
     }
   ],
   "escalations": [
@@ -881,7 +887,8 @@
     "1c602857": 2,
     "07ca8585": 1,
     "5cbb6545": 2,
-    "92385645": 0
+    "92385645": 0,
+    "c5e01de3": 1
   },
   "surfaced_pitfalls": [
     {
