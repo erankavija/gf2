@@ -32,6 +32,8 @@ enum Stream {
     Stderr(Vec<u8>),
     End,
     Error(io::Error),
+    /// The request could not be written to the child's standard input.
+    WriteFailed(io::Error),
 }
 
 fn drain(mut input: impl Read, tx: mpsc::Sender<Stream>, stderr: bool) {
@@ -226,9 +228,11 @@ impl Drop for ChildGuard<'_> {
 /// `all_reaped` is cleared after spawn and set once every descendant is reaped.
 /// `started` receives the child PID. The callback receives raw standard-error
 /// chunks; its first error stops the child and is returned in `callback_error`.
-/// A failure writing `input` to the child's standard input takes that same
-/// path, so the caller still receives the captured streams and the observed
-/// outcome of a child that exits before it reads its request. Errors from
+/// A failure writing `input` to the child's standard input stops the child the
+/// same way and is reported in `callback_error` when the callback raised no
+/// error of its own; the callback keeps receiving chunks after a write failure,
+/// so the caller still receives the captured streams and the observed outcome
+/// of a child that exits before it reads its request. Errors from
 /// spawning, stream setup, waiting, or process-tree management are returned
 /// directly. The callback is not called after its first error.
 #[allow(clippy::too_many_arguments)]
@@ -263,6 +267,7 @@ pub fn run_process(
     all_reaped.store(false, Ordering::SeqCst);
     let pid = child.id();
     let mut callback_error = started(pid).err();
+    let mut write_error: Option<io::Error> = None;
     let stdin = child.stdin.take().ok_or_else(|| invalid("missing stdin"))?;
     let stdout = child
         .stdout
@@ -278,7 +283,7 @@ pub fn run_process(
     let writer = thread::spawn(move || {
         let mut stdin = stdin;
         if let Err(error) = stdin.write_all(&input) {
-            let _ = write_tx.send(Stream::Error(io::Error::new(
+            let _ = write_tx.send(Stream::WriteFailed(io::Error::new(
                 error.kind(),
                 format!("writing the request to the child failed: {error}"),
             )));
@@ -311,6 +316,11 @@ pub fn run_process(
                     callback_error = Some(e);
                 }
             }
+            Ok(Stream::WriteFailed(e)) => {
+                if write_error.is_none() {
+                    write_error = Some(e);
+                }
+            }
             Err(mpsc::RecvTimeoutError::Disconnected) => {}
             Err(mpsc::RecvTimeoutError::Timeout) => {}
         }
@@ -320,6 +330,7 @@ pub fn run_process(
         if stopped.is_none()
             && (begin.elapsed() >= timeout
                 || callback_error.is_some()
+                || write_error.is_some()
                 || (status.is_some() && (live_group(pid)? || !reap_adopted()?)))
         {
             timed_out = begin.elapsed() >= timeout;
@@ -361,12 +372,16 @@ pub fn run_process(
     // The drain loop leaves once both readers have sent their end marker, so
     // every stream chunk is already accounted for and only a write failure the
     // child's exit released at the same moment can remain on the channel.
-    if callback_error.is_none() {
-        callback_error = rx.try_iter().find_map(|message| match message {
-            Stream::Error(error) => Some(error),
+    if write_error.is_none() {
+        write_error = rx.try_iter().find_map(|message| match message {
+            Stream::WriteFailed(error) => Some(error),
             _ => None,
         });
     }
+    // A write failure is reported through `callback_error` only when the
+    // standard-error callback itself raised none, so the callback keeps
+    // receiving every chunk the child wrote after its request was refused.
+    let callback_error = callback_error.or(write_error);
     child.done = true;
     all_reaped.store(true, Ordering::SeqCst);
     let elapsed_ns = u64::try_from(begin.elapsed().as_nanos())
