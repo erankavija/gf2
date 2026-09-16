@@ -2,7 +2,7 @@
 //! harnesses.
 
 use std::ops::Deref;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use tempfile::{Builder, TempDir};
 
@@ -87,9 +87,87 @@ pub fn scratch_in(parent: &Path, prefix: &str) -> Scratch {
     )
 }
 
+/// A path whose tree is removed when the handle drops, for the two cases
+/// [`Scratch`] does not cover: a directory the caller must name exactly, and a
+/// path a test needs to still be absent.
+///
+/// [`KEEP_VAR`] suppresses the removal, as it does for [`Scratch`].
+pub struct ScratchPath {
+    path: PathBuf,
+    /// Present for [`ScratchPath::reserved`], whose removal it performs.
+    root: Option<Scratch>,
+    keep: bool,
+}
+
+impl ScratchPath {
+    /// Creates `parent/name`, which must not already exist.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the directory cannot be created.
+    pub fn create(parent: &Path, name: &str) -> Self {
+        let path = parent.join(name);
+        std::fs::create_dir(&path).expect("create named scratch directory");
+        Self {
+            path,
+            root: None,
+            keep: keep_scratch(),
+        }
+    }
+
+    /// Names `<fresh scratch root>/scratch` without creating it, so a caller
+    /// that refuses a pre-existing path still sees one that is absent.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the scratch root cannot be created.
+    pub fn reserved(prefix: &str) -> Self {
+        let root = scratch(prefix);
+        let path = root.join("scratch");
+        Self {
+            path,
+            root: Some(root),
+            keep: keep_scratch(),
+        }
+    }
+
+    /// Returns the path this handle owns.
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Deref for ScratchPath {
+    type Target = Path;
+
+    fn deref(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl AsRef<Path> for ScratchPath {
+    fn as_ref(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl std::fmt::Debug for ScratchPath {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.path.fmt(formatter)
+    }
+}
+
+impl Drop for ScratchPath {
+    fn drop(&mut self) {
+        if self.root.is_none() && !self.keep {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{scratch, scratch_with};
+    use super::{scratch, scratch_with, ScratchPath};
     use std::fs;
 
     #[test]
@@ -127,6 +205,24 @@ mod tests {
 
         assert!(path.exists());
         fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn a_reserved_scratch_path_is_absent_and_its_tree_is_removed_on_panic() {
+        let handle = ScratchPath::reserved("gf2-scratch-reserved-panic");
+        let path = handle.to_path_buf();
+        assert!(!path.exists());
+        fs::create_dir(&path).unwrap();
+        let previous_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
+        let result = std::panic::catch_unwind(move || {
+            let _handle = handle;
+            panic!("reserved scratch test panic");
+        });
+        std::panic::set_hook(previous_hook);
+
+        assert!(result.is_err());
+        assert!(!path.exists());
     }
 
     #[test]

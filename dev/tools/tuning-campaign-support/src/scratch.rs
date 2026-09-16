@@ -73,17 +73,19 @@ pub fn scratch_with(prefix: &str, keep: bool) -> Scratch {
     )
 }
 
-/// A caller-named directory removed when the handle drops, for the one case
-/// that cannot accept a random name: a campaign stage the launcher resolves as
-/// exactly `/tmp/<campaign-id>`.
+/// A path whose tree is removed when the handle drops, for the two cases
+/// [`Scratch`] does not cover: a directory the caller must name exactly, and a
+/// path a test needs to still be absent.
 ///
 /// [`KEEP_VAR`] suppresses the removal, as it does for [`Scratch`].
-pub struct NamedScratch {
+pub struct ScratchPath {
     path: PathBuf,
+    /// Present for [`ScratchPath::reserved`], whose removal it performs.
+    root: Option<Scratch>,
     keep: bool,
 }
 
-impl NamedScratch {
+impl ScratchPath {
     /// Creates `parent/name`, which must not already exist.
     ///
     /// # Panics
@@ -94,17 +96,34 @@ impl NamedScratch {
         std::fs::create_dir(&path).expect("create named scratch directory");
         Self {
             path,
+            root: None,
             keep: keep_scratch(),
         }
     }
 
-    /// Returns the directory this handle owns.
+    /// Names `<fresh scratch root>/scratch` without creating it, so a caller
+    /// that refuses a pre-existing path still sees one that is absent.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the scratch root cannot be created.
+    pub fn reserved(prefix: &str) -> Self {
+        let root = scratch(prefix);
+        let path = root.join("scratch");
+        Self {
+            path,
+            root: Some(root),
+            keep: keep_scratch(),
+        }
+    }
+
+    /// Returns the path this handle owns.
     pub fn path(&self) -> &Path {
         &self.path
     }
 }
 
-impl Deref for NamedScratch {
+impl Deref for ScratchPath {
     type Target = Path;
 
     fn deref(&self) -> &Path {
@@ -112,15 +131,21 @@ impl Deref for NamedScratch {
     }
 }
 
-impl AsRef<Path> for NamedScratch {
+impl AsRef<Path> for ScratchPath {
     fn as_ref(&self) -> &Path {
         &self.path
     }
 }
 
-impl Drop for NamedScratch {
+impl std::fmt::Debug for ScratchPath {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.path.fmt(formatter)
+    }
+}
+
+impl Drop for ScratchPath {
     fn drop(&mut self) {
-        if !self.keep {
+        if self.root.is_none() && !self.keep {
             let _ = std::fs::remove_dir_all(&self.path);
         }
     }
@@ -128,7 +153,7 @@ impl Drop for NamedScratch {
 
 #[cfg(test)]
 mod tests {
-    use super::{scratch, scratch_with, NamedScratch};
+    use super::{scratch, scratch_with, ScratchPath};
     use std::fs;
 
     #[test]
@@ -148,10 +173,10 @@ mod tests {
     }
 
     #[test]
-    fn named_scratch_tree_is_removed_when_the_test_panics() {
+    fn a_named_scratch_tree_is_removed_when_the_test_panics() {
         let parent = scratch("tuning-campaign-support-named-panic");
         let expected = parent.join("fixed-name");
-        let handle = NamedScratch::create(&parent, "fixed-name");
+        let handle = ScratchPath::create(&parent, "fixed-name");
         assert_eq!(handle.path(), expected);
         let previous_hook = std::panic::take_hook();
         std::panic::set_hook(Box::new(|_| {}));
@@ -163,6 +188,24 @@ mod tests {
 
         assert!(result.is_err());
         assert!(!expected.exists());
+    }
+
+    #[test]
+    fn a_reserved_scratch_path_is_absent_and_its_tree_is_removed_on_panic() {
+        let handle = ScratchPath::reserved("tuning-campaign-support-reserved-panic");
+        let path = handle.to_path_buf();
+        assert!(!path.exists());
+        fs::create_dir(&path).unwrap();
+        let previous_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
+        let result = std::panic::catch_unwind(move || {
+            let _handle = handle;
+            panic!("reserved scratch test panic");
+        });
+        std::panic::set_hook(previous_hook);
+
+        assert!(result.is_err());
+        assert!(!path.exists());
     }
 
     #[test]

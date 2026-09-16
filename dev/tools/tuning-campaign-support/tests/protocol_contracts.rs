@@ -305,6 +305,8 @@ fn identity(
 }
 
 struct Built {
+    /// Owns the tree `repo` and `dir` point into.
+    _root: Scratch,
     repo: PathBuf,
     dir: PathBuf,
 }
@@ -1043,7 +1045,11 @@ fn build_receipt_with_history(
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    Built { repo, dir }
+    Built {
+        _root: root,
+        repo,
+        dir,
+    }
 }
 
 fn spec(id: &'static str, speedup: f64) -> CellSpec {
@@ -3324,6 +3330,8 @@ exec "$WORKLOAD""#;
 
 /// A finalized receipt directory and its execution log.
 struct InterruptedCampaign {
+    /// Owns the tree `out` points into.
+    _root: Scratch,
     out: PathBuf,
     records: Vec<JournalRecord>,
 }
@@ -3510,7 +3518,11 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
     let records =
         ExecutionLog::validate_prefix(&fs::read(out.join(LOG_FILE)).unwrap(), INTERRUPTED_CAMPAIGN)
             .unwrap();
-    InterruptedCampaign { out, records }
+    InterruptedCampaign {
+        _root: root,
+        out,
+        records,
+    }
 }
 
 /// Sequences of the `cell-start` records of one cell.
