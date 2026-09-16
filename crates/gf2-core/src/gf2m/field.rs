@@ -1411,7 +1411,7 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
     /// the call allocates nothing and clones no field handle. No cargo feature
     /// and no processor capability takes part; the exact predicate that
     /// selects this lane is
-    /// [`crate::gf2m::byte_table::gf256_table_dispatch`], which also declines
+    /// `crate::gf2m::byte_table::gf256_table_dispatch`, which also declines
     /// when the operands do not all share the coefficient's field context, so
     /// a mixed-context call reaches the caller's scalar loop and its
     /// field-context assertion exactly as it does without this override.

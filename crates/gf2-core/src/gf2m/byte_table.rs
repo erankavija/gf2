@@ -329,7 +329,7 @@ static FORCE_SCALAR_GF256_TABLE: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
 /// Holds every GF(2^8) fused multiply-add on the consumer's scalar element
-/// loop, or releases it back to [`gf256_table_dispatch`], and reports the
+/// loop, or releases it back to `gf256_table_dispatch`, and reports the
 /// previous setting.
 ///
 /// One switch covers every caller of that dispatch, so the scalar fallback
