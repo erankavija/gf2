@@ -212,10 +212,12 @@ $t$ spends $\alpha_t=\alpha/[t(t+1)]$; exploratory summaries use $t=1$.
 The sum of these attempt budgets over any finite or infinite sequence is at
 most $\alpha$. Within an attempt, Bonferroni [Dunn1961] uses
 $\alpha_c=\alpha_t/m$. This additionally counts all previously spent cells,
-including unfinished and losing attempts. `FamilySummary.family_alpha` reports
-the allocated attempt budget and `comparisons` reports $m$; the addendum and
-shared settings retain the overall family budget. Merely using $\alpha/m$
-repeatedly would not control sequential error spending.
+including unfinished and losing attempts. `FamilySummary.attempt_alpha`
+reports $\alpha_t$, `FamilySummary.corrected_alpha` reports $\alpha_c$, and
+`comparisons` reports $m$; `FamilySummary.family_alpha` reports the frozen
+overall family budget $\alpha$, matching the addendum and shared settings.
+Merely using $\alpha/m$ repeatedly would not control sequential error
+spending.
 
 The union bound gives this allocation under arbitrary dependence between
 attempts and cells; the confidence procedure inside each comparison retains
