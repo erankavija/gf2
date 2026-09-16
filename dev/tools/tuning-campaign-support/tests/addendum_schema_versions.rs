@@ -5,10 +5,14 @@
 //! describes the current protocol version; each earlier version has its own
 //! committed sibling file (`addendum-v1.schema.json`, `addendum-v2.schema.json`,
 //! `addendum-v3.schema.json`, ...), named by the `addendum-v1.schema.json`
-//! pattern the version-1 archive established. A frozen family addendum names
-//! its own protocol version through its `schema` field, so this test resolves
-//! each fixture's schema file by that identity and fails loudly when the
-//! version a fixture names has no committed schema file to read.
+//! pattern the version-1 archive established. Version 1 has two such files,
+//! `addendum-v1-initial.schema.json` and `addendum-v1.schema.json`, since a
+//! wording-only edit to the `frozen.description` annotation split the very
+//! first pilot and confirmation receipts from every later version-1 receipt
+//! (`amendment-v2.md`); both are exercised below. A frozen family addendum
+//! names its own protocol version through its `schema` field, so this test
+//! resolves each fixture's schema file by that identity and fails loudly when
+//! the version a fixture names has no committed schema file to read.
 
 use serde_json::Value;
 use std::fs;
@@ -27,6 +31,10 @@ fn repo_root() -> PathBuf {
 /// to. The shared path stands for the current version; earlier versions each
 /// name their own sibling file.
 const VERSIONED_FIXTURES: &[(&str, &str)] = &[
+    (
+        "dev/active/f547c394/addendum-v1-initial.schema.json",
+        "dev/active/f547c394/addendum-protocol-smoke-pilot.json",
+    ),
     (
         "dev/active/f547c394/addendum-v1.schema.json",
         "dev/active/26465e6c/superseded/v1/addendum-popcount.json",
