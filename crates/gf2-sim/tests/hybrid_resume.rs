@@ -254,7 +254,7 @@ fn assert_hybrid_resume_parity(cfg: ResumeConfig) {
     // The flushed checkpoint of the interrupted point is resumable and its
     // worker_states are batch-aligned strided-partition prefixes.
     let hash = config_hash(pipeline.config());
-    let reader = CheckpointReader::new(&dir, hash);
+    let reader = CheckpointReader::new(dir.path(), hash);
     let ck = reader
         .load(trip_snr)
         .expect("interrupted checkpoint loads")
@@ -382,7 +382,7 @@ fn hybrid_drain_resume_smoke() {
         interrupt_at: (0, 9),
     };
     let dir = tempdir();
-    let pipeline = smoke.build_pipeline(Some(dir.clone()));
+    let pipeline = smoke.build_pipeline(Some(dir.to_path_buf()));
     let scheduler = Scheduler::from_pipeline(&pipeline);
     assert!(
         scheduler.gpu_active(),
@@ -401,7 +401,7 @@ fn hybrid_drain_resume_smoke() {
     // Point 0's checkpoint: complete, with the hybrid strided-partition
     // worker_states latched after the drain (8 workers x 2 frames each).
     let hash = config_hash(pipeline.config());
-    let ck = CheckpointReader::new(&dir, hash)
+    let ck = CheckpointReader::new(dir.path(), hash)
         .load(0)
         .expect("point-0 checkpoint loads")
         .expect("point-0 checkpoint exists");
@@ -498,7 +498,7 @@ fn hybrid_partial_point_restore() {
         interrupt_at: (0, 4),
     };
     let dir = tempdir();
-    let pipeline = restore_cfg.build_pipeline(Some(dir.clone()));
+    let pipeline = restore_cfg.build_pipeline(Some(dir.to_path_buf()));
     let scheduler = Scheduler::from_pipeline(&pipeline);
     assert!(
         scheduler.gpu_active(),
@@ -518,7 +518,7 @@ fn hybrid_partial_point_restore() {
 
     // Verify the partial checkpoint: not complete, done=[16,16], sum=32.
     let hash = config_hash(pipeline.config());
-    let ck = CheckpointReader::new(&dir, hash)
+    let ck = CheckpointReader::new(dir.path(), hash)
         .load(0)
         .expect("checkpoint loads")
         .expect("checkpoint was flushed");
@@ -648,7 +648,7 @@ fn hybrid_checkpointed_recoverable_fault_aborts_resumably() {
     let dir = tempdir();
 
     // Step 1: clean interrupted run commits a 32-frame round-1 checkpoint.
-    let pipeline = cfg.build_pipeline(Some(dir.clone()));
+    let pipeline = cfg.build_pipeline(Some(dir.to_path_buf()));
     let scheduler = Scheduler::from_pipeline(&pipeline);
     assert!(
         scheduler.gpu_active(),
@@ -665,7 +665,7 @@ fn hybrid_checkpointed_recoverable_fault_aborts_resumably() {
     assert!(interrupted.interrupted, "the SIGINT must stop the sweep");
 
     let hash = config_hash(pipeline.config());
-    let ck = CheckpointReader::new(&dir, hash.clone())
+    let ck = CheckpointReader::new(dir.path(), hash.clone())
         .load(0)
         .expect("step-1 checkpoint loads")
         .expect("step-1 checkpoint was flushed");
@@ -680,7 +680,7 @@ fn hybrid_checkpointed_recoverable_fault_aborts_resumably() {
     // PROPAGATES — the sweep aborts (requirement 1) without committing a new
     // checkpoint, so the 32-frame checkpoint survives (requirement 2).
     clear_interrupt();
-    let mut faulting = cfg.build_pipeline(Some(dir.clone()));
+    let mut faulting = cfg.build_pipeline(Some(dir.to_path_buf()));
     faulting.config_mut().inject_gpu_oom_modulus = Some(32);
     let faulting_sched = Scheduler::from_pipeline(&faulting);
     let err = faulting_sched
@@ -699,7 +699,7 @@ fn hybrid_checkpointed_recoverable_fault_aborts_resumably() {
 
     // Requirement 2 (re-assert): the last committed checkpoint is intact and
     // still resumable — the faulted round committed nothing.
-    let ck_after = CheckpointReader::new(&dir, hash.clone())
+    let ck_after = CheckpointReader::new(dir.path(), hash.clone())
         .load(0)
         .expect("checkpoint still loads after the faulted resume")
         .expect("the committed checkpoint survives the abort");

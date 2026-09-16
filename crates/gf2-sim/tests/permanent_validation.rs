@@ -13,7 +13,7 @@ use gf2_algebra::permanent::{
     determinant_singular_probability, enumerate_permanent_zero_probability, permanent_ryser,
 };
 use gf2_core::gfp::Fp;
-use gf2_core::test_scratch::{scratch, Scratch};
+use gf2_core::test_scratch::ScratchPath;
 use gf2_sim::permanent_campaign::provenance::repository_top_level;
 use gf2_sim::permanent_campaign::schedule::backend_supports_cell;
 use gf2_sim::permanent_campaign::schema::{read_manifest, ArtifactIdentity, Backend, Sha256Digest};
@@ -47,8 +47,8 @@ const FOCUSED_DRAWS: u64 = 4_096;
 /// One labelled single-field mutation of an otherwise valid artifact.
 type Mutation<T> = (&'static str, Box<dyn Fn(&mut T)>);
 
-fn unique_directory(label: &str) -> Scratch {
-    scratch(&format!("gf2-{label}"))
+fn unique_directory(label: &str) -> ScratchPath {
+    ScratchPath::reserved(&format!("gf2-{label}"))
 }
 
 fn repository() -> PathBuf {
@@ -145,7 +145,7 @@ fn focused_identity() -> ArtifactIdentity {
     identity("fixtures/preregistration.json", 'e')
 }
 
-fn passing_receipt(label: &str) -> (ValidationReceipt, Scratch) {
+fn passing_receipt(label: &str) -> (ValidationReceipt, ScratchPath) {
     let state = unique_directory(label);
     let receipt = run_validation(&focused_plan(), focused_identity(), 2, &state)
         .expect("the focused anchors execute");
@@ -634,7 +634,7 @@ fn the_receipt_round_trips_and_republishes_only_identical_evidence() {
     assert!(error.to_string().contains("incompatible"), "{error}");
 }
 
-fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, Scratch) {
+fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, ScratchPath) {
     let state = unique_directory(label);
     let mut bootstrap = focused_plan();
     bootstrap.anchors = vec![focused_anchor(3, 1, 0)];
@@ -674,7 +674,7 @@ fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, 
     (plan, state)
 }
 
-fn copy_committed_validation_journal(label: &str) -> Scratch {
+fn copy_committed_validation_journal(label: &str) -> ScratchPath {
     let destination = unique_directory(label);
     fs::create_dir_all(&destination).expect("the journal fixture directory is creatable");
     let source = repository().join("dev/active/02b8137c/validation-journal");
@@ -757,7 +757,7 @@ fn current_continuation_inputs(
 ) -> (
     ValidationPreregistration,
     ArtifactIdentity,
-    Scratch,
+    ScratchPath,
     gf2_sim::permanent_campaign::validation::AuthorizedValidationContinuation,
 ) {
     let repository = repository();
@@ -962,7 +962,7 @@ fn receipt_segments_and_terminal_identities_require_exact_ordered_coverage() {
     }
 }
 
-fn two_segment_receipt_fixture(label: &str) -> (ValidationReceipt, Scratch) {
+fn two_segment_receipt_fixture(label: &str) -> (ValidationReceipt, ScratchPath) {
     let (mut receipt, state) = passing_receipt(label);
     let mut second_runtime = receipt.producer_segments[0].runtime.clone();
     second_runtime.worker_count += 1;

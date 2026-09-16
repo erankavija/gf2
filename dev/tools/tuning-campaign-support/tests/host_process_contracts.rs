@@ -9,10 +9,10 @@ use tuning_campaign_support::host::{
     HostObservation, LogicalCpu,
 };
 use tuning_campaign_support::process::run_process;
-use tuning_campaign_support::scratch::Scratch;
+use tuning_campaign_support::scratch::ScratchPath;
 
-fn unique_path(label: &str) -> Scratch {
-    tuning_campaign_support::scratch::scratch(&format!("tuning-campaign-support-{label}"))
+fn unique_path(label: &str) -> ScratchPath {
+    ScratchPath::reserved(&format!("tuning-campaign-support-{label}"))
 }
 
 #[test]

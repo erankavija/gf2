@@ -3,14 +3,14 @@
 //! `dev/scripts/tuning-extent-campaign.sh` resolves a campaign's stage as
 //! literally `/tmp/<campaign-id>` and the driver refuses any other path, so
 //! these tests stage under the real `/tmp` rather than `std::env::temp_dir()`.
-//! [`NamedScratch`] removes the stage when the test ends, whichever way it
+//! [`ScratchPath`] removes the stage when the test ends, whichever way it
 //! ends. Everything else the tests write lives under `temp_dir()`.
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Command;
 use tuning_campaign_support::campaign::{CanonicalJson, PreparationStore, SessionChannels, Token};
-use tuning_campaign_support::scratch::{scratch, NamedScratch};
+use tuning_campaign_support::scratch::{scratch, ScratchPath};
 
 fn executable(path: &Path, content: &str) {
     fs::write(path, content).unwrap();
@@ -25,7 +25,7 @@ fn launcher_replays_preparation(complete_temporary: bool) {
         std::process::id(),
         u8::from(complete_temporary)
     );
-    let stage = NamedScratch::create(Path::new("/tmp"), &campaign);
+    let stage = ScratchPath::create(Path::new("/tmp"), &campaign);
     let session = "original-session";
     drop(
         PreparationStore::begin(

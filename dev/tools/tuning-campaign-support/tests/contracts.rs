@@ -7,7 +7,7 @@ use tuning_campaign_support::journal::{
     atomic_replace, atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity,
     TerminalState,
 };
-use tuning_campaign_support::scratch::Scratch;
+use tuning_campaign_support::scratch::ScratchPath;
 use tuning_campaign_support::seed::{bank_role, fixture_seed, EXTENT_SEED_ROOT};
 use tuning_campaign_support::statistics::{
     analyze_extent, analyze_gemm, analyze_joint_vector, classify_curve, empirical_summary,
@@ -29,8 +29,8 @@ struct Message {
     value: u64,
 }
 
-fn scratch(name: &str) -> Scratch {
-    tuning_campaign_support::scratch::scratch(&format!("tuning-campaign-support-{name}"))
+fn scratch(name: &str) -> ScratchPath {
+    ScratchPath::reserved(&format!("tuning-campaign-support-{name}"))
 }
 
 #[test]
