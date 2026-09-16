@@ -427,6 +427,20 @@
             "doc-review": "passed e479a99c",
             "research-review": "passed e479a99c (A1 advisory)"
           }
+        },
+        {
+          "id": "c5e01de3-c6ae-4a0a-80c5-646d744aff80",
+          "short_id": "c5e01de3",
+          "title": "Name attempt alpha correctly in acceptance summaries",
+          "classification": "implementation",
+          "status": "dispatched session 17 (sonnet) in the reused agent-53c5a8c0 directory renamed agent-c5e01de3."
+        },
+        {
+          "id": "613574db-f283-425f-b664-369f3e93d756",
+          "short_id": "613574db",
+          "title": "Design cached GF(2^8) tables and consumer hooks",
+          "classification": "design",
+          "status": "pending; dispatch when a worker slot frees (opus), reuse agent-19513245."
         }
       ]
     },
@@ -589,6 +603,18 @@
       "type": "task",
       "in_epic": false,
       "reason": "1d4fd63d follow-up 3 / 04b85d10 ranked entry 1: word-wise systematic codeword assembly for packed BCH is a gf2-coding packing change with no owner; depends on 1d4fd63d"
+    },
+    {
+      "id": "c5e01de3",
+      "type": "task",
+      "in_epic": true,
+      "reason": "53c5a8c0 research-review advisory F1: confirmation acceptance summaries render the first-attempt allocation 0.025 as family-wise alpha; canonical schema/renderer fix, receipts immutable. Created session 16; slotted into wave 3 in session 17."
+    },
+    {
+      "id": "613574db",
+      "type": "task",
+      "in_epic": true,
+      "reason": "19513245 positive consumer evidence (axpy, dense product) needs a reviewed library-layer design (cached byte product tables, canonical FieldVec/FieldMatrix hooks) before any implementation ships. Created session 16; slotted into wave 3 in session 17."
     }
   ],
   "escalations": [
@@ -786,8 +812,9 @@
       "issue": "1d4fd63d",
       "question": "the avx2-ymm6 lane is confirmed faster on three kernel cells and ahead of both comparators but its receipt does not qualify (two minority-share consumer cells frozen as improvement record not-material) and the family has no further attempt",
       "recommendation": "leave the published lane unchanged; 63bad95d calibrates selectors under its own frozen protocol",
-      "status": "open",
-      "raised_at": "2026-09-13T17:00Z"
+      "status": "resolved",
+      "raised_at": "2026-09-13T17:00Z",
+      "resolution": "Invoker (session 17): leave the published avx2-ymm6 lane unchanged; 63bad95d calibrates selectors under its own frozen protocol. Question closed; no new measurement."
     },
     {
       "category": "shared infrastructure (policy item 8)",
@@ -803,16 +830,27 @@
       "issue": "92385645",
       "question": "may the lead perform one focused audited correction that clears MAKEFLAGS and GNUMAKEFLAGS, exercises both channels on a fresh cache, and refreshes the M4RI evidence and gates",
       "recommendation": "authorize the focused correction and reset the rework counter; the reviewer supplied a concrete local reproducer and the change does not alter issue scope",
-      "status": "open",
-      "raised_at": "2026-09-15T04:08Z"
+      "status": "resolved",
+      "raised_at": "2026-09-15T04:08Z",
+      "resolution": "Invoker (session 17) authorized the focused correction and reset the rework counter: unset MAKEFLAGS and GNUMAKEFLAGS before configure/build/install, add a fresh-cache hostile make-level regression, refresh the semantic record and every gate, obtain a new independent review."
     },
     {
       "category": "issue scope change (description, policy item 4)",
       "issue": "3ea122df",
       "question": "may the lead append 'Source references: [IsaL2026].' to the issue Notes so the existing cites:IsaL2026 label passes research-review",
       "recommendation": "approve the citation-only description repair; it mirrors the prior batch ruling but this newly created child was not named in that ruling",
-      "status": "open",
-      "raised_at": "2026-09-15T04:14Z"
+      "status": "resolved",
+      "raised_at": "2026-09-15T04:14Z",
+      "resolution": "Invoker (session 17) approved the one-line citation repair; \"Source references: [IsaL2026].\" appended to the description Notes."
+    },
+    {
+      "category": "scheduling (benchmark window)",
+      "issue": "none",
+      "question": "when to run the next benchmark window after the 2026-09-16 slot lost both c04dd4ac jobs in the arm stdin handshake",
+      "recommendation": "2026-09-17 04:00 EEST",
+      "status": "resolved",
+      "raised_at": "2026-09-16T08:30Z",
+      "resolution": "Invoker (session 17): hold; do not arm a window until told. Repaired jobs stay queued."
     }
   ],
   "rework_counts": {
@@ -829,7 +867,7 @@
     "1c602857": 2,
     "07ca8585": 1,
     "5cbb6545": 2,
-    "92385645": 2
+    "92385645": 0
   },
   "surfaced_pitfalls": [
     {
@@ -1238,7 +1276,10 @@
     "Invoker decision (session 14): the 3be770d5 citation repair ('Source references: [Key].' appended to Notes) applies to all ten open issues whose cites labels were absent from their text: 1d4fd63d 5cbb6545 53c5a8c0 07ca8585 19513245 f63a2464 ed3d490e 1362381c 2037941f c04dd4ac.",
     "Invoker instruction 2026-09-13T18:00Z (session 14): no new work this session; let the four running workers finish; write the handoff. The two 53c5a8c0 follow-ups (no wide carry-less kernel above nine words; dot_chunk_len uncalibrated for short vectors) are recorded in handoff-11.md for filing next session.",
     "Invoker policy 2026-09-13T18:20Z (session 14): the host must not be locked during an active session; all measurement runs in an overnight slot outside the session; locking is disabled outside the window (07fb19ee: cargo-budget.sh unlocked, ccx1-bench-flock.sh refuses unless GF2_BENCH_WINDOW=1, run-window.sh exports it; AGENTS.md and worker-brief.md updated). The lead killed the running 53c5a8c0 profile session and the 19513245 campaign (twice) on the invoker's order; their remainders are queued.",
-    "Session 16 (2026-09-15): 53c5a8c0, 19513245, and 07ca8585 are done with current gates and independent reviews; 3e83c116 is done; 92385645 exhausted two reworks when review r2 reproduced a MAKEFLAGS/GNUMAKEFLAGS compiler-provenance bypass; 3ea122df merged and passes repo/doc/cargo/code gates but needs invoker approval for the issue-text citation required by research-review; c04dd4ac source jobs are queued for the 2026-09-16 benchmark window. No Astra model was used."
+    "Session 16 (2026-09-15): 53c5a8c0, 19513245, and 07ca8585 are done with current gates and independent reviews; 3e83c116 is done; 92385645 exhausted two reworks when review r2 reproduced a MAKEFLAGS/GNUMAKEFLAGS compiler-provenance bypass; 3ea122df merged and passes repo/doc/cargo/code gates but needs invoker approval for the issue-text citation required by research-review; c04dd4ac source jobs are queued for the 2026-09-16 benchmark window. No Astra model was used.",
+    "Session 17 (2026-09-16): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time; reuse worktrees; the invoker was interviewed on open escalations. Invoker rule: subagents may not spawn codex subagents. Rulings: 92385645 focused correction authorized with counter reset; 3ea122df citation repair approved and applied; 1d4fd63d question closed (lane unchanged, 63bad95d calibrates); no benchmark window armed until the invoker says so.",
+    "Session 17: the 2026-09-16 window lost both c04dd4ac source jobs in about 15 ms each. 85fc5ff4: arm `shifts` exited 2 with 'fresh tuning stdin is not canonical compact JSON' (transport.rs decode_canonical: the arm re-encodes the request and compares bytes). 9fb40c83: the runner hit Broken pipe writing the request, so the dvb-profile-arm exited before reading stdin. Both runners appended a sequence-0 reservation to the (previously empty, committed) family ledgers in the worktrees; the protocol's voided-attempt rule (protocol.md ledger section) governs, since no result was read. Both go back to their workers as handshake rework; the worker brief's 'smoke every arm through the real benchmark-ab-runner on a throwaway plan' evidently was not done against the exact queued arm executables.",
+    "Session 17 disk: the host had 25 GB free. Removed three stale stub directories from the BCH epic and the closed worktrees agent-3e83c116 (233 GB, mostly target/debug) and agent-1c602857 (169 GB, 07ca8585) without harvesting: the reclaim script's rsync harvest copies rather than hardlinks, and the pool (203 GB) already holds the seed they started from. The closed agent-53c5a8c0 directory is reused for c5e01de3 and agent-19513245 is held for 613574db (same evidence tree)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1260,13 +1301,10 @@
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
   },
   "benchmark_window": {
-    "unit": "gf2-bench-window-20260916",
-    "armed_for": "2026-09-16T04:00 Europe/Helsinki (01:00Z)",
-    "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv (current pending keys 85fc5ff4 and 9fb40c83)",
-    "jobs_new": 2,
-    "estimated_minutes_new": 21,
+    "unit": null,
+    "armed_for": null,
     "state_dir": ".agents/bench-window",
-    "follow": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh (set GF2_WINDOW_UNIT=gf2-bench-window-20260916)",
-    "note": "Invoker policy 2026-09-13: the host is never locked during a session; every measurement runs in this window. run-window.sh exports GF2_BENCH_WINDOW=1; outside it cargo-budget.sh is unlocked and ccx1-bench-flock.sh refuses (07fb19ee). Old queue lines with .done markers are skipped. A job's rc is not evidence it measured anything; judge each campaign from its own execution log and receipt."
+    "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
+    "note": "Invoker hold (session 17): no window is armed. The 2026-09-16 04:00 EEST window (unit gf2-bench-window-20260916) ran 3.9 s: 85fc5ff4 job 3f984872e67aaac0 and 9fb40c83 job cf0e12a3c5d4fe28 both died in the arm stdin handshake (no .done markers). Invoker policy 2026-09-13 stands: the host is never locked during a session; every measurement runs in a window. A job's rc is not evidence it measured anything; judge each campaign from its own execution log and receipt."
   }
 }
