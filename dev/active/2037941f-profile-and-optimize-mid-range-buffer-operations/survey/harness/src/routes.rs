@@ -276,6 +276,10 @@ pub struct WindowPlan {
 /// untimed pass of the measured operation over its one-item working set before
 /// calibration; a streaming policy runs no measured operation beforehand; a
 /// cold policy calibrates nothing and uses the frozen call count.
+///
+/// A plan declaring zero windows is the non-timed arrangement pass the
+/// deterministic smoke drives: the cache policy's declared untimed pass runs,
+/// the timing protocol is never entered, and the execution reports no sample.
 pub fn run_windows(
     plan: WindowPlan,
     body: &mut dyn FnMut(usize, usize),
@@ -290,6 +294,9 @@ pub fn run_windows(
     }
     if plan.cache == Cache::Warm {
         body(0, 0);
+    }
+    if plan.windows == 0 {
+        return Ok(Vec::new());
     }
     let (banks, items) = (plan.banks, plan.items);
     let mut call = 0_u64;

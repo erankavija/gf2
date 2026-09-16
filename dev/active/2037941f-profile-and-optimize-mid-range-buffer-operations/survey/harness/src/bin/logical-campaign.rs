@@ -11,17 +11,26 @@
 //!                          [--isal-executable <path>] [--label pilot|smoke]
 //!                          [--max-cells-per-session <n>] [--pilot-pairs <n>]
 //!                          [--isolated-candidate <route>]
+//! logical-campaign smoke   --plan <path> --addendum <path> --stage <dir>
+//! logical-campaign inputs  --producing-manifest <path> [--also <path>]...
 //! ```
 //!
 //! `verify` re-derives the transcription of the named family and compares it
 //! byte for byte with a candidate campaign addendum, so a campaign JSON that
 //! changes a cell, margin, limit or rule fails closed.
+//!
+//! `smoke` drives one non-timed session of a projected plan: it exits 0 when
+//! the plan is complete and 3 when the plan's per-session cell budget pauses
+//! it, mirroring the campaign runner's resumable-pause convention.
+//!
+//! `inputs` refuses unless every path of the producing-input closure, plus each
+//! `--also` path, is tracked by git and identical to its committed content.
 
-use logical_buffer_harness::campaign;
 use logical_buffer_harness::cells::{family_cells, Question};
 use logical_buffer_harness::routes::Route;
+use logical_buffer_harness::{campaign, inputs, smoke};
 use std::collections::BTreeMap;
-use tuning_campaign_support::protocol::{FamilyAddendum, ReceiptLabel};
+use tuning_campaign_support::protocol::{FamilyAddendum, ReceiptLabel, RunnerPlan};
 
 fn main() {
     if let Err(error) = run() {
@@ -32,11 +41,16 @@ fn main() {
 
 struct Arguments {
     flags: BTreeMap<String, String>,
+    repeated: Vec<String>,
 }
 
 impl Arguments {
+    /// `--also` is the one repeatable flag; every other flag is given once.
+    const REPEATABLE: &'static str = "also";
+
     fn parse(raw: &[String]) -> Result<Self, String> {
         let mut flags = BTreeMap::new();
+        let mut repeated = Vec::new();
         let mut index = 0;
         while index < raw.len() {
             let name = raw[index]
@@ -47,12 +61,18 @@ impl Arguments {
                 .get(index + 1)
                 .ok_or_else(|| format!("--{name} needs a value"))?
                 .clone();
-            if flags.insert(name.clone(), value).is_some() {
+            if name == Self::REPEATABLE {
+                repeated.push(value);
+            } else if flags.insert(name.clone(), value).is_some() {
                 return Err(format!("--{name} is given twice"));
             }
             index += 2;
         }
-        Ok(Self { flags })
+        Ok(Self { flags, repeated })
+    }
+
+    fn repeated(&self) -> &[String] {
+        &self.repeated
     }
 
     fn required(&self, name: &str) -> Result<&str, String> {
@@ -112,9 +132,9 @@ fn transcribe(arguments: &Arguments) -> Result<(Question, FamilyAddendum), Strin
 
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
-    let (command, rest) = raw
-        .split_first()
-        .ok_or("usage: logical-campaign <pins|list|cells|verify|plan> --flag value ...")?;
+    let (command, rest) = raw.split_first().ok_or(
+        "usage: logical-campaign <pins|list|cells|verify|plan|smoke|inputs> --flag value ...",
+    )?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
         "pins" => {
@@ -271,6 +291,49 @@ fn run() -> Result<(), String> {
             );
             Ok(())
         }
+        "smoke" => {
+            let stage = std::path::Path::new(arguments.required("stage")?);
+            let plan_path = arguments.required("plan")?;
+            let addendum_path = arguments.required("addendum")?;
+            let plan_bytes = std::fs::read(plan_path)
+                .map_err(|error| format!("cannot read {plan_path}: {error}"))?;
+            let plan: RunnerPlan = serde_json::from_slice(&plan_bytes)
+                .map_err(|error| format!("{plan_path} does not decode: {error}"))?;
+            let addendum_bytes = std::fs::read(addendum_path)
+                .map_err(|error| format!("cannot read {addendum_path}: {error}"))?;
+            let addendum = FamilyAddendum::decode(&addendum_bytes)?;
+            addendum.validate().map_err(|errors| {
+                format!("{addendum_path} is invalid: {}", errors.join("; "))
+            })?;
+            let outcome = smoke::session(
+                &repository_root()?,
+                stage,
+                &plan,
+                &plan_bytes,
+                &addendum,
+                &addendum_bytes,
+            )
+            .map_err(|error| format!("the non-timed smoke failed: {error}"))?;
+            println!(
+                "{}: {:?} after {} handshake cells, zero timing samples",
+                plan.campaign_id, outcome.state, outcome.completed
+            );
+            std::process::exit(outcome.exit_code());
+        }
+        "inputs" => {
+            let manifest = arguments.required("producing-manifest")?;
+            let checked = inputs::check(&repository_root()?, manifest, arguments.repeated())?;
+            println!(
+                "{manifest}: {} campaign inputs committed and clean",
+                checked.len()
+            );
+            Ok(())
+        }
         other => Err(format!("unknown command {other:?}")),
     }
+}
+
+/// The repository root every repository-relative campaign path resolves against.
+fn repository_root() -> Result<std::path::PathBuf, String> {
+    std::fs::canonicalize(".").map_err(|error| format!("cannot resolve the working directory: {error}"))
 }
