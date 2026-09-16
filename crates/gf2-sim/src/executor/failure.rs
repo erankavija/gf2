@@ -459,22 +459,15 @@ mod tests {
         }
     }
 
-    fn dump_dir() -> std::path::PathBuf {
-        let mut p = std::env::temp_dir();
-        p.push(format!(
-            "gf2sim-failure-test-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_nanos())
-                .unwrap_or(0)
-        ));
-        p
+    fn dump_dir() -> (tempfile::TempDir, std::path::PathBuf) {
+        let scratch = gf2_core::test_scratch::scratch("gf2sim-failure-test");
+        let dump_dir = scratch.path().join("dump");
+        (scratch, dump_dir)
     }
 
     #[test]
     fn test_ok_passes_through() {
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let result: Result<u32, StageError> = Ok(42);
         let out = dispatch_with_fallback(result, || Ok(0), ctx(), false, &dir);
         assert_eq!(out.unwrap(), 42);
@@ -484,7 +477,7 @@ mod tests {
 
     #[test]
     fn test_oom_non_strict_invokes_fallback() {
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let result: Result<u32, StageError> =
             Err(StageError::Recoverable(RecoverableError::OutOfMemory {
                 device_id: 0,
@@ -498,7 +491,7 @@ mod tests {
 
     #[test]
     fn test_oom_strict_promotes_to_fatal_and_writes_dump() {
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let result: Result<u32, StageError> =
             Err(StageError::Recoverable(RecoverableError::OutOfMemory {
                 device_id: 1,
@@ -517,7 +510,6 @@ mod tests {
             .collect();
         assert!(!entries.is_empty(), "at least one dump file must exist");
         // Cleanup.
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// `strict_gpu` promotes OOM ONLY: a `Transient` recoverable error takes
@@ -526,7 +518,7 @@ mod tests {
     /// not fatal). No dump is written when the fallback succeeds.
     #[test]
     fn test_transient_under_strict_gpu_still_falls_back() {
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let result: Result<u32, StageError> = Err(StageError::Recoverable(
             RecoverableError::Transient("unsupported arch gfx9999".into()),
         ));
@@ -558,7 +550,7 @@ mod tests {
 
     #[test]
     fn test_oom_non_strict_fallback_also_fails() {
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let result: Result<u32, StageError> =
             Err(StageError::Recoverable(RecoverableError::OutOfMemory {
                 device_id: 0,
@@ -578,12 +570,11 @@ mod tests {
             ),
             "expected CpuFallbackAlsoFailed, got {err:?}"
         );
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_fatal_writes_dump_and_propagates() {
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let fatal = StageError::Fatal(FatalError::KernelLaunch {
             hip_code: 7,
             kernel: "bcjr",
@@ -600,12 +591,11 @@ mod tests {
             .filter_map(|e| e.ok())
             .collect();
         assert!(!entries.is_empty(), "fatal must write a dump file");
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_type_mismatch_passes_through_without_dump() {
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let err = StageError::TypeMismatch {
             expected: std::any::TypeId::of::<u32>(),
             actual: std::any::TypeId::of::<u8>(),
@@ -683,7 +673,7 @@ mod tests {
     /// line 188).
     #[test]
     fn test_fatal_device_unavailable_propagates_and_writes_dump() {
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let fatal = StageError::Fatal(FatalError::DeviceUnavailable);
         let err = dispatch_with_fallback::<u32, _>(Err(fatal), || Ok(0), ctx(), false, &dir)
             .expect_err("DeviceUnavailable must propagate");
@@ -700,7 +690,6 @@ mod tests {
             !entries.is_empty(),
             "DeviceUnavailable fatal must write a dump file"
         );
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// `FatalError::BuildError` must produce a dump and propagate (exercises
@@ -708,7 +697,7 @@ mod tests {
     #[test]
     fn test_fatal_build_error_propagates_and_writes_dump() {
         use crate::error::BuildError;
-        let dir = dump_dir();
+        let (_scratch, dir) = dump_dir();
         let fatal = StageError::Fatal(FatalError::BuildError(BuildError::ExecutionValidation {
             reason: "unit test build error".to_string(),
         }));
@@ -726,7 +715,6 @@ mod tests {
             !entries.is_empty(),
             "BuildError fatal must write a dump file"
         );
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// When `dump_dir` cannot be created (e.g. because a path component is a

@@ -329,10 +329,11 @@ fn assert_workers_byte_identical(cfg: DetConfig, workers: &[usize]) {
 /// [`assert_resume_parity`].
 fn run_uninterrupted(cfg: DetConfig, parallelism: NonZeroUsize) -> WorkerCounters {
     let dir = tempdir();
-    let (_pipeline, frame_sim) = seeded_runner_factory(cfg, parallelism, Some(dir.clone()));
-    let config = checkpoint_config(parallelism, FRAMES, &dir, cfg.es_n0_db);
+    let (_pipeline, frame_sim) =
+        seeded_runner_factory(cfg, parallelism, Some(dir.path().to_path_buf()));
+    let config = checkpoint_config(parallelism, FRAMES, dir.path(), cfg.es_n0_db);
     let hash = config_hash(&config);
-    let writer = CheckpointWriter::new(&dir).expect("create checkpoint dir");
+    let writer = CheckpointWriter::new(dir.path()).expect("create checkpoint dir");
     clear_interrupt();
     let run = run_snr_point_checkpointed(
         &config,
@@ -399,9 +400,10 @@ fn assert_resume_parity(cfg: DetConfig) {
     // at frame 100. The frame-100 flush trips the SIGINT flag, so the next chunk
     // boundary stops with a resumable (completed = false) checkpoint on disk.
     let dir = tempdir();
-    let (_pipeline, frame_sim) = seeded_runner_factory(cfg, parallelism, Some(dir.clone()));
-    let writer = CheckpointWriter::new(&dir).expect("create checkpoint dir");
-    let config = checkpoint_config(parallelism, FRAMES, &dir, cfg.es_n0_db);
+    let (_pipeline, frame_sim) =
+        seeded_runner_factory(cfg, parallelism, Some(dir.path().to_path_buf()));
+    let writer = CheckpointWriter::new(dir.path()).expect("create checkpoint dir");
+    let config = checkpoint_config(parallelism, FRAMES, dir.path(), cfg.es_n0_db);
     let hash = config_hash(&config);
 
     clear_interrupt();
@@ -443,7 +445,7 @@ fn assert_resume_parity(cfg: DetConfig) {
     // resume's first chunk-boundary check would trip it again), load the flushed
     // resumable checkpoint, and continue WITHOUT touching `completed`.
     clear_interrupt();
-    let reader = CheckpointReader::new(&dir, hash.clone());
+    let reader = CheckpointReader::new(dir.path(), hash.clone());
     let loaded = reader
         .load(cfg.snr_idx)
         .expect("load interrupted checkpoint")
@@ -579,17 +581,6 @@ fn determinism_resume_parity_r3_4_16qam() {
     assert_resume_parity(CONFIGS[2]);
 }
 
-/// Minimal unique tempdir helper (no `tempfile` dev-dependency), mirroring the
-/// checkpoint module's own test helper.
-fn tempdir() -> PathBuf {
-    let mut p = std::env::temp_dir();
-    let unique = format!(
-        "gf2sim-det-{}-{}",
-        std::process::id(),
-        COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-    );
-    p.push(unique);
-    std::fs::create_dir_all(&p).expect("create unique tempdir");
-    p
+fn tempdir() -> tempfile::TempDir {
+    gf2_core::test_scratch::scratch("gf2sim-det")
 }
-static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);

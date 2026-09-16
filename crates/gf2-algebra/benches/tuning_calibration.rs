@@ -25,6 +25,7 @@ use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec, PermanentSelectors}
 use gf2_core::compute::field::run_in_dedicated_parallel_pool;
 use gf2_core::gfp::Fp;
 use gf2_core::rng::Lcg;
+use gf2_core::test_scratch::scratch;
 use gf2_core::tuning::{
     self, AssemblyProvenance, CompiledProfileProvenance, GitRevision, HarnessSchema,
     MeasurementProvenance, PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder,
@@ -1430,8 +1431,8 @@ mod tests {
     const ZERO_SHA: &str = "0000000000000000000000000000000000000000000000000000000000000000";
     const ZERO_REV: &str = "0000000000000000000000000000000000000000";
 
-    fn test_root(label: &str) -> std::path::PathBuf {
-        env::temp_dir().join(format!("gf2-a835-algebra-{label}-{}", std::process::id()))
+    fn test_root(label: &str) -> tempfile::TempDir {
+        scratch(&format!("gf2-a835-algebra-{label}"))
     }
 
     fn test_process() -> ProcessDescriptor {
@@ -1452,18 +1453,22 @@ mod tests {
         }
     }
 
-    fn manifest_request(label: &str) -> ManifestRequest {
-        let stage = test_root(label);
-        ManifestRequest {
-            campaign_id: token(format!("test-{label}")).unwrap(),
-            protocol_sha256: Sha256Digest::new(ZERO_SHA).unwrap(),
-            channels: SessionChannels {
-                execution_log: stage.join("execution.log"),
-                checkpoints: stage.join("checkpoints"),
-                stage,
+    fn manifest_request(label: &str) -> (tempfile::TempDir, ManifestRequest) {
+        let directory = test_root(label);
+        let stage = directory.path().to_path_buf();
+        (
+            directory,
+            ManifestRequest {
+                campaign_id: token(format!("test-{label}")).unwrap(),
+                protocol_sha256: Sha256Digest::new(ZERO_SHA).unwrap(),
+                channels: SessionChannels {
+                    execution_log: stage.join("execution.log"),
+                    checkpoints: stage.join("checkpoints"),
+                    stage,
+                },
+                processes: vec![test_process()],
             },
-            processes: vec![test_process()],
-        }
+        )
     }
 
     #[derive(Clone, Copy)]
@@ -1546,7 +1551,8 @@ mod tests {
 
     #[test]
     fn grid_order_counts_seeds_and_codec_inventory_are_exact() {
-        let manifest = campaign_manifest(manifest_request("grid")).unwrap();
+        let (_scratch, request) = manifest_request("grid");
+        let manifest = campaign_manifest(request).unwrap();
         validate_manifest_order(&manifest).unwrap();
         assert_eq!(manifest.ordered_units.len(), 90);
         assert_eq!(manifest.owner.as_str(), "gf2-algebra");
@@ -1588,7 +1594,8 @@ mod tests {
 
     #[test]
     fn canonical_parsing_and_owner_validation_reject_changes() {
-        let manifest = campaign_manifest(manifest_request("reject")).unwrap();
+        let (_scratch, request) = manifest_request("reject");
+        let manifest = campaign_manifest(request).unwrap();
         let unit = &manifest.ordered_units[0];
         let mut case: AlgebraCase = unit.case.decode().unwrap();
         case.candidate = 3;
@@ -1606,7 +1613,8 @@ mod tests {
 
     #[test]
     fn owner_rejects_resealed_case_identity_substitution() {
-        let mut manifest = campaign_manifest(manifest_request("identity-manifest")).unwrap();
+        let (_scratch, request) = manifest_request("identity-manifest");
+        let mut manifest = campaign_manifest(request).unwrap();
         let mut case: AlgebraCase = manifest.ordered_units[0].case.decode().unwrap();
         case.identity.campaign_id = token("substituted-campaign").unwrap();
         manifest.ordered_units[0].case = canonical_json(&case).unwrap();
@@ -1614,7 +1622,8 @@ mod tests {
         assert!(manifest.validate().is_ok());
         assert!(validate_manifest_order(&manifest).is_err());
 
-        let manifest = campaign_manifest(manifest_request("identity-bundle")).unwrap();
+        let (_scratch, request) = manifest_request("identity-bundle");
+        let manifest = campaign_manifest(request).unwrap();
         let mut bundle = synthetic_bundle(&manifest, SyntheticCurve::MeasuredDefault);
         let accepted = &mut bundle.accepted[0];
         let mut case: AlgebraCase = accepted.unit.case.decode().unwrap();
@@ -1627,7 +1636,8 @@ mod tests {
 
     #[test]
     fn result_validation_rejects_sample_order_calls_and_execution_changes() {
-        let manifest = campaign_manifest(manifest_request("sample-reject")).unwrap();
+        let (_scratch, request) = manifest_request("sample-reject");
+        let manifest = campaign_manifest(request).unwrap();
         let unit = manifest
             .ordered_units
             .iter()
@@ -1650,7 +1660,8 @@ mod tests {
 
     #[test]
     fn progress_and_result_share_the_exact_identity_and_samples() {
-        let manifest = campaign_manifest(manifest_request("progress")).unwrap();
+        let (_scratch, request) = manifest_request("progress");
+        let manifest = campaign_manifest(request).unwrap();
         let unit = manifest
             .ordered_units
             .iter()
@@ -1840,7 +1851,8 @@ mod tests {
 
     #[test]
     fn analysis_selects_nondefault_and_falls_back_on_cross_stratum_conflict() {
-        let manifest = campaign_manifest(manifest_request("analysis-curves")).unwrap();
+        let (_scratch, request) = manifest_request("analysis-curves");
+        let manifest = campaign_manifest(request).unwrap();
 
         let nondefault = analyze_results(&synthetic_bundle(
             &manifest,
@@ -1894,18 +1906,18 @@ mod tests {
     #[test]
     fn owner_emission_analyzes_and_strictly_reopens_the_algebra_envelope() {
         let root = test_root("emit");
-        fs::create_dir_all(&root).unwrap();
+        let (_request_scratch, request) = manifest_request("emit-request");
         let manifest = campaign_manifest(ManifestRequest {
             channels: SessionChannels {
-                execution_log: root.join("execution.log"),
-                checkpoints: root.join("checkpoints"),
-                stage: root.clone(),
+                execution_log: root.path().join("execution.log"),
+                checkpoints: root.path().join("checkpoints"),
+                stage: root.path().to_path_buf(),
             },
-            ..manifest_request("emit-request")
+            ..request
         })
         .unwrap();
         let bundle = synthetic_bundle(&manifest, SyntheticCurve::SelectedNondefault);
-        let bundle_path = root.join("accepted.json");
+        let bundle_path = root.path().join("accepted.json");
         let bundle_bytes = serde_json::to_vec(&bundle).unwrap();
         fs::write(&bundle_path, &bundle_bytes).unwrap();
         let bundle_path = fs::canonicalize(bundle_path).unwrap();
@@ -1944,7 +1956,7 @@ mod tests {
                 })
                 .unwrap(),
             },
-            output: root.join("algebra-owner.json"),
+            output: root.path().join("algebra-owner.json"),
         };
         let (artifact, analysis) = emit_owner(request).unwrap();
         assert_eq!(analysis.selected, 16_384);
@@ -1967,6 +1979,5 @@ mod tests {
                 .gray_chunk_subsets(),
             16_384
         );
-        fs::remove_dir_all(root).unwrap();
     }
 }

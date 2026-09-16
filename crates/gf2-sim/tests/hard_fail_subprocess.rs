@@ -36,22 +36,17 @@ use std::process::Command;
 
 /// Returns a fresh temp directory path for one probe invocation (not created;
 /// the probe's dump writer creates it on demand).
-fn temp_dump_dir() -> PathBuf {
-    std::env::temp_dir().join(format!(
-        "gf2sim-hardfail-subproc-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0)
-    ))
+fn temp_dump_dir() -> (tempfile::TempDir, PathBuf) {
+    let scratch = gf2_core::test_scratch::scratch("gf2sim-hardfail-subproc");
+    let dump_dir = scratch.path().join("dump");
+    (scratch, dump_dir)
 }
 
 #[test]
 fn test_hard_fail_subprocess_nonzero_exit_dump_and_error_event() {
     // The probe binary path, injected by cargo for integration tests.
     let probe = env!("CARGO_BIN_EXE_hard_fail_probe");
-    let dump_dir = temp_dump_dir();
+    let (_scratch, dump_dir) = temp_dump_dir();
 
     let output = Command::new(probe)
         .arg("--diagnostic-dump-dir")

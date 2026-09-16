@@ -415,7 +415,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::atomic::{AtomicU64, Ordering};
 
     #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     struct UnrelatedPayload {
@@ -440,7 +439,7 @@ mod tests {
     #[test]
     fn test_generic_checkpoint_round_trips_unrelated_payload() {
         let dir = tempdir();
-        let path = dir.join("shard-progress.json");
+        let path = dir.path().join("shard-progress.json");
         let payload = UnrelatedPayload {
             shard_name: "q5-n12-s003".to_string(),
             samples: 41_000,
@@ -463,7 +462,7 @@ mod tests {
     #[test]
     fn test_generic_reader_refuses_schema_identity_and_config_mismatches() {
         let dir = tempdir();
-        let path = dir.join("generic.json");
+        let path = dir.path().join("generic.json");
         let payload = UnrelatedPayload {
             shard_name: "q7-n10-s001".to_string(),
             samples: 13,
@@ -514,21 +513,13 @@ mod tests {
     fn test_generic_reader_treats_absence_as_fresh_work() {
         let dir = tempdir();
         let reader = CheckpointReader::<UnrelatedPayload, _>::for_payload(
-            dir.join("absent.json"),
+            dir.path().join("absent.json"),
             TestConfigHash("blake3:fresh"),
         );
         assert_eq!(reader.load_payload().unwrap(), None);
     }
 
-    fn tempdir() -> PathBuf {
-        static COUNTER: AtomicU64 = AtomicU64::new(0);
-        let mut path = std::env::temp_dir();
-        path.push(format!(
-            "gf2sim-generic-ck-{}-{}",
-            std::process::id(),
-            COUNTER.fetch_add(1, Ordering::Relaxed)
-        ));
-        std::fs::create_dir_all(&path).unwrap();
-        path
+    fn tempdir() -> tempfile::TempDir {
+        gf2_core::test_scratch::scratch("gf2sim-generic-ck")
     }
 }

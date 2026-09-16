@@ -1216,7 +1216,7 @@ mod tests {
     #[test]
     fn test_checkpoint_v2_is_a_generic_payload_instantiation() {
         let dir = tempdir();
-        let path = dir.join("snr-payload.json");
+        let path = dir.path().join("snr-payload.json");
         let cfg = test_config(1);
         let hash = config_hash(&cfg);
         let payload = build_checkpoint(
@@ -1245,9 +1245,9 @@ mod tests {
         let h = config_hash(&cfg);
         let mut ckpt = build_checkpoint(&cfg, 0, 6.25, &h, &WorkerCounters::default(), &[0], false);
         ckpt.schema_version = 1;
-        let writer = CheckpointWriter::new(&dir).unwrap();
+        let writer = CheckpointWriter::new(dir.path()).unwrap();
         writer.write(&ckpt).unwrap();
-        let reader = CheckpointReader::new(&dir, h);
+        let reader = CheckpointReader::new(dir.path(), h);
         match reader.load(0) {
             Err(FatalError::BuildError(BuildError::ConfigHashMismatch { loaded, .. })) => {
                 assert!(loaded.contains("schema_version:1"));
@@ -1260,7 +1260,7 @@ mod tests {
     fn test_reader_rejects_hash_mismatch() {
         let dir = tempdir();
         let cfg = test_config(1);
-        let writer = CheckpointWriter::new(&dir).unwrap();
+        let writer = CheckpointWriter::new(dir.path()).unwrap();
         let ckpt = build_checkpoint(
             &cfg,
             0,
@@ -1271,7 +1271,7 @@ mod tests {
             false,
         );
         writer.write(&ckpt).unwrap();
-        let reader = CheckpointReader::new(&dir, config_hash(&cfg));
+        let reader = CheckpointReader::new(dir.path(), config_hash(&cfg));
         assert!(matches!(
             reader.load(0),
             Err(FatalError::BuildError(
@@ -1283,7 +1283,7 @@ mod tests {
     #[test]
     fn test_reader_missing_file_is_none() {
         let dir = tempdir();
-        let reader = CheckpointReader::new(&dir, "blake3:x".to_string());
+        let reader = CheckpointReader::new(dir.path(), "blake3:x".to_string());
         assert_eq!(reader.load(3).unwrap(), None);
     }
 
@@ -1296,8 +1296,8 @@ mod tests {
         let not_v2 = r#"{ "snr_index": 0, "eb_n0_db": 1.99, "frames_completed": 100,
             "rng_word_pos": "13060800", "completed": true,
             "config_hash": "blake3:ef56" }"#;
-        std::fs::write(checkpoint_path(&dir, 0), not_v2).unwrap();
-        let reader = CheckpointReader::new(&dir, "blake3:ef56".to_string());
+        std::fs::write(checkpoint_path(dir.path(), 0), not_v2).unwrap();
+        let reader = CheckpointReader::new(dir.path(), "blake3:ef56".to_string());
         assert!(matches!(
             reader.load(0),
             Err(FatalError::BuildError(
@@ -1313,7 +1313,7 @@ mod tests {
         let dir = tempdir();
         let cfg = test_config(1);
         let h = config_hash(&cfg);
-        let writer = CheckpointWriter::new(&dir).unwrap();
+        let writer = CheckpointWriter::new(dir.path()).unwrap();
         let c1 = build_checkpoint(&cfg, 0, 6.25, &h, &WorkerCounters::default(), &[0], false);
         writer.write(&c1).unwrap();
         let total = WorkerCounters {
@@ -1322,12 +1322,12 @@ mod tests {
         };
         let c2 = build_checkpoint(&cfg, 0, 6.25, &h, &total, &[10], true);
         writer.write(&c2).unwrap();
-        let reader = CheckpointReader::new(&dir, h);
+        let reader = CheckpointReader::new(dir.path(), h);
         let loaded = reader.load(0).unwrap().unwrap();
         assert_eq!(loaded.frames_completed, 10);
         assert!(loaded.completed);
         // No leftover canonical-name .tmp.
-        assert!(!dir.join("snr_0000.tmp").exists());
+        assert!(!dir.path().join("snr_0000.tmp").exists());
     }
 
     #[test]
@@ -1341,7 +1341,7 @@ mod tests {
         let dir = tempdir();
         let cfg = test_config(1);
         let h = config_hash(&cfg);
-        let writer = CheckpointWriter::new(&dir).unwrap();
+        let writer = CheckpointWriter::new(dir.path()).unwrap();
 
         // First, a complete previous-state checkpoint.
         let prev = WorkerCounters {
@@ -1353,7 +1353,9 @@ mod tests {
 
         // Simulate a crash mid-flush of the *next* checkpoint: a half-written
         // tmp sibling that was never renamed (truncated JSON).
-        let tmp = dir.join(format!("snr_0000.{}.tmp", std::process::id()));
+        let tmp = dir
+            .path()
+            .join(format!("snr_0000.{}.tmp", std::process::id()));
         std::fs::write(
             &tmp,
             b"{ \"schema_version\": 2, \"snr_index\": 0, \"frames_comp",
@@ -1361,7 +1363,7 @@ mod tests {
         .unwrap();
 
         // The canonical file is untouched and still loads as the previous state.
-        let reader = CheckpointReader::new(&dir, h);
+        let reader = CheckpointReader::new(dir.path(), h);
         let loaded = reader
             .load(0)
             .expect("canonical checkpoint must still be a valid v2 file")
@@ -1384,7 +1386,7 @@ mod tests {
         let h = config_hash(&cfg);
 
         let dir_ref = tempdir();
-        let w_ref = CheckpointWriter::new(&dir_ref).unwrap();
+        let w_ref = CheckpointWriter::new(dir_ref.path()).unwrap();
         clear_interrupt();
         let reference = run_snr_point_checkpointed(
             &cfg,
@@ -1403,7 +1405,7 @@ mod tests {
         // Interrupted run: stop after the first heartbeat chunk, then resume
         // from the written checkpoint.
         let dir = tempdir();
-        let writer = CheckpointWriter::new(&dir).unwrap();
+        let writer = CheckpointWriter::new(dir.path()).unwrap();
         let interrupt_cfg = PipelineConfig {
             max_frames: 7, // first chunk only
             ..cfg.clone()
@@ -1426,7 +1428,7 @@ mod tests {
         // Load the partial checkpoint, then resume under the full config.
         // The partial checkpoint was written by `interrupt_cfg`; rewrite the
         // recorded frames_completed under the full config for resume.
-        let reader = CheckpointReader::new(&dir, h.clone());
+        let reader = CheckpointReader::new(dir.path(), h.clone());
         let mut loaded = reader.load(0).unwrap().unwrap();
         loaded.completed = false; // continue the point under the full budget
         let resumed = run_snr_point_checkpointed(
@@ -1468,7 +1470,7 @@ mod tests {
         };
         let h = config_hash(&cfg);
         let dir = tempdir();
-        let writer = CheckpointWriter::new(&dir).unwrap();
+        let writer = CheckpointWriter::new(dir.path()).unwrap();
         clear_interrupt();
         let run = run_snr_point_checkpointed(
             &cfg,
@@ -1485,7 +1487,10 @@ mod tests {
         assert!(run.completed);
         assert_eq!(run.counters.frames, 14);
 
-        let loaded = CheckpointReader::new(&dir, h).load(0).unwrap().unwrap();
+        let loaded = CheckpointReader::new(dir.path(), h)
+            .load(0)
+            .unwrap()
+            .unwrap();
         assert_eq!(loaded.worker_states.len(), 2);
         // Authoritative chunked distribution: 8/6, not the analytic 7/7.
         assert_eq!(
@@ -1551,7 +1556,7 @@ mod tests {
         let cfg = test_config(2);
         let h = config_hash(&cfg);
         let dir = tempdir();
-        let writer = CheckpointWriter::new(&dir).unwrap();
+        let writer = CheckpointWriter::new(dir.path()).unwrap();
         // Trip the interrupt before the run: the first chunk check stops it with
         // no chunk run and no checkpoint file (start == 0, nothing committed).
         set_interrupted_for_test();
@@ -1586,7 +1591,7 @@ mod tests {
         let cfg = test_config(1); // single worker, heartbeat = 7, max = 40
         let h = config_hash(&cfg);
         let dir = tempdir();
-        let writer = CheckpointWriter::new(&dir).unwrap();
+        let writer = CheckpointWriter::new(dir.path()).unwrap();
 
         let trip_at = 6usize; // last frame of the first 7-frame chunk (0..7)
         let frame = move |g: usize, ctx: &mut WorkerCtx, s: &mut ()| {
@@ -1609,7 +1614,7 @@ mod tests {
 
         // A resumable checkpoint was flushed: it loads, is not completed, and
         // records the 7 committed frames.
-        let loaded = CheckpointReader::new(&dir, h)
+        let loaded = CheckpointReader::new(dir.path(), h)
             .load(0)
             .unwrap()
             .expect("a checkpoint must have been flushed before the halt");
@@ -1619,16 +1624,7 @@ mod tests {
     }
 
     /// Minimal tempdir helper (avoids a dev-dependency on `tempfile`).
-    fn tempdir() -> PathBuf {
-        let mut p = std::env::temp_dir();
-        let unique = format!(
-            "gf2sim-ck-{}-{}",
-            std::process::id(),
-            COUNTER.fetch_add(1, Ordering::Relaxed)
-        );
-        p.push(unique);
-        std::fs::create_dir_all(&p).unwrap();
-        p
+    fn tempdir() -> tempfile::TempDir {
+        gf2_core::test_scratch::scratch("gf2sim-ck")
     }
-    static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 }
