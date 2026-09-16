@@ -9,7 +9,8 @@ and a handshake record whose every arm reports zero timing windows. The stage
 is also checked to hold no finalized receipt, so the smoke can state from
 observation that it produced no timing sample and no receipt sample. Every line
 of the record is observed at run time and carries no clock reading, so a rerun
-on the same executables reproduces it byte for byte.
+on the same executables reproduces it byte for byte. The recorded command line
+is the launcher invocation that ran, passed through as `--command`.
 """
 
 import argparse
@@ -34,6 +35,7 @@ def fail(message):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage", required=True)
+    parser.add_argument("--command", required=True)
     parser.add_argument("--record", required=True)
     parser.add_argument("--oracle", required=True)
     parser.add_argument("--gf2-arm", required=True)
@@ -168,8 +170,7 @@ def main():
     with record.open("w") as handle:
         print(
             "# Logical-buffer harness non-timed wire smoke (jit:bb769456)\n"
-            "# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/"
-            "survey/run-logical-harness.sh smoke\n"
+            f"# command: {arguments.command}\n"
             "# every line below is observed at run time from the semantic oracle, the stage\n"
             "# execution logs, the checkpoint stores and the handshake records under target/;\n"
             "# the record carries no clock reading, the arms answer a zero-window request, and\n"

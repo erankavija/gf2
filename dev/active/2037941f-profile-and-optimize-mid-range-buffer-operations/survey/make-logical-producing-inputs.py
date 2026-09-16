@@ -40,15 +40,30 @@ def main():
             + lifecycle
         )
     )
+    # Every Cargo manifest and lock file a timed executable is built from: the
+    # harness workspace builds the arms from its own manifest and lock against
+    # the three measured crates, and the window builds `benchmark-ab-runner`
+    # and `benchmark-acceptance` from the root workspace with `--locked`, so the
+    # root manifest, the root lock and the campaign-support manifest control
+    # those bytes too. The closure manifest itself is a build input because the
+    # window guard reads it to decide which paths to check.
+    manifests = [
+        "Cargo.lock",
+        "Cargo.toml",
+        str(HARNESS / "Cargo.lock"),
+        str(HARNESS / "Cargo.toml"),
+        "crates/gf2-core/Cargo.toml",
+        "crates/gf2-coding/Cargo.toml",
+        "crates/gf2-kernels-simd/Cargo.toml",
+        "dev/tools/tuning-campaign-support/Cargo.toml",
+    ]
     build = sorted(
         set(
             behavior
+            + manifests
             + [
                 ".cargo/config.toml",
-                "Cargo.lock",
-                "Cargo.toml",
-                str(HARNESS / "Cargo.lock"),
-                str(HARNESS / "Cargo.toml"),
+                str(OUTPUT),
                 str(SURVEY / "make-logical-producing-inputs.py"),
                 str(SURVEY / "logical-source-evidence.json"),
                 str(STORY / "logical-harness.md"),
@@ -57,14 +72,17 @@ def main():
                 "dev/active/f547c394/amendment-v4.md",
                 "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
                 "scripts/cargo-budget.sh",
-                "crates/gf2-core/Cargo.toml",
-                "crates/gf2-coding/Cargo.toml",
-                "crates/gf2-kernels-simd/Cargo.toml",
             ]
             + files_under(pathlib.Path("crates/gf2-kernels-simd/src"))
         )
     )
-    missing = sorted(path for path in set(build) if not (ROOT / path).is_file())
+    # The closure manifest is this script's own output, so it is the one
+    # build input that need not exist before the write below.
+    missing = sorted(
+        path
+        for path in set(build) - {str(OUTPUT)}
+        if not (ROOT / path).is_file()
+    )
     if missing:
         raise SystemExit(f"producing inputs are missing: {missing}")
     document = {

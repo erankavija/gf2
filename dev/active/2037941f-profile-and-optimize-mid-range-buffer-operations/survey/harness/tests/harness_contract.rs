@@ -599,3 +599,160 @@ fn the_porcelain_status_decodes_renames_and_untracked_entries() {
         Some("R ")
     );
 }
+
+/// The repository root, five directories above this crate's manifest.
+fn repository_root() -> std::path::PathBuf {
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(5)
+        .expect("the harness crate sits five directories below the repository root")
+        .canonicalize()
+        .expect("the repository root resolves")
+}
+
+/// Decodes `cargo metadata` for one manifest without touching its lock file.
+fn cargo_metadata(root: &std::path::Path, manifest: &str, all_features: bool) -> serde_json::Value {
+    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+    let mut command = std::process::Command::new(cargo);
+    command
+        .current_dir(root)
+        .args(["metadata", "--format-version", "1", "--locked", "--offline"])
+        .arg("--manifest-path")
+        .arg(manifest);
+    if all_features {
+        command.arg("--all-features");
+    }
+    let output = command.output().expect("cargo metadata runs");
+    assert!(
+        output.status.success(),
+        "cargo metadata {manifest}: {}",
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
+    serde_json::from_slice(&output.stdout).expect("cargo metadata decodes")
+}
+
+/// Package ids of one resolved graph, or of the subgraph rooted at `from`.
+fn resolved_ids(metadata: &serde_json::Value, from: Option<&str>) -> BTreeSet<String> {
+    let packages = metadata["packages"].as_array().expect("packages");
+    let identifier =
+        |package: &serde_json::Value| package["id"].as_str().expect("a package id").to_owned();
+    let Some(name) = from else {
+        return packages.iter().map(identifier).collect();
+    };
+    let start = packages
+        .iter()
+        .find(|package| package["name"] == name)
+        .map(identifier)
+        .unwrap_or_else(|| panic!("{name} is not a package of this workspace"));
+    let edges: std::collections::BTreeMap<&str, Vec<&str>> = metadata["resolve"]["nodes"]
+        .as_array()
+        .expect("resolve nodes")
+        .iter()
+        .map(|node| {
+            let deps = node["deps"]
+                .as_array()
+                .expect("node deps")
+                .iter()
+                .map(|dep| dep["pkg"].as_str().expect("a dep package id"))
+                .collect();
+            (node["id"].as_str().expect("a node id"), deps)
+        })
+        .collect();
+    let mut reached = BTreeSet::new();
+    let mut pending = vec![start];
+    while let Some(id) = pending.pop() {
+        if !reached.insert(id.clone()) {
+            continue;
+        }
+        for dependency in edges.get(id.as_str()).into_iter().flatten() {
+            pending.push((*dependency).to_owned());
+        }
+    }
+    reached
+}
+
+/// Repository-relative manifests and lock files one resolved graph builds from.
+///
+/// Every reached package inside the repository contributes its own
+/// `Cargo.toml`, and the resolved workspace contributes the root manifest that
+/// its members inherit from together with the lock that pins the resolution.
+fn build_manifests(
+    root: &std::path::Path,
+    metadata: &serde_json::Value,
+    from: Option<&str>,
+) -> BTreeSet<String> {
+    let reached = resolved_ids(metadata, from);
+    let relative = |path: &str| {
+        std::path::Path::new(path)
+            .strip_prefix(root)
+            .ok()
+            .map(|path| path.to_string_lossy().into_owned())
+    };
+    let mut manifests: BTreeSet<String> = metadata["packages"]
+        .as_array()
+        .expect("packages")
+        .iter()
+        .filter(|package| reached.contains(package["id"].as_str().expect("a package id")))
+        .filter_map(|package| relative(package["manifest_path"].as_str().expect("a manifest")))
+        .collect();
+    let workspace = relative(
+        metadata["workspace_root"]
+            .as_str()
+            .expect("a workspace root"),
+    )
+    .expect("the workspace root is inside the repository");
+    for file in ["Cargo.toml", "Cargo.lock"] {
+        manifests.insert(
+            std::path::Path::new(&workspace)
+                .join(file)
+                .to_string_lossy()
+                .into_owned(),
+        );
+    }
+    manifests
+}
+
+#[test]
+fn the_closure_names_every_manifest_a_timed_executable_builds_from() {
+    let root = repository_root();
+    let own = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .canonicalize()
+        .expect("the harness crate resolves")
+        .strip_prefix(&root)
+        .expect("the harness crate is inside the repository")
+        .join("Cargo.toml")
+        .to_string_lossy()
+        .into_owned();
+
+    // The arms are built from the harness workspace with every feature, so
+    // that graph carries the ISA-L arm too; the runner and the acceptance
+    // binary are built from the root workspace as `-p tuning-campaign-support`.
+    let arms = cargo_metadata(&root, &own, true);
+    let support = "dev/tools/tuning-campaign-support/Cargo.toml";
+    let runner = cargo_metadata(&root, support, false);
+    let mut expected = build_manifests(&root, &arms, None);
+    expected.extend(build_manifests(
+        &root,
+        &runner,
+        Some("tuning-campaign-support"),
+    ));
+    assert!(
+        expected.contains(&own) && expected.contains(support),
+        "the derivation reached neither executable's manifest: {expected:?}"
+    );
+
+    let inputs = tuning_campaign_support::provenance::ProducingInputs::read_at(&root, MANIFEST)
+        .expect("the committed closure decodes");
+    let declared: BTreeSet<String> = inputs.build_inputs.iter().cloned().collect();
+    let omitted: Vec<&String> = expected.difference(&declared).collect();
+    assert!(
+        omitted.is_empty(),
+        "the producing-input closure omits the build manifests {omitted:?}"
+    );
+    // The window guard reads the closure manifest to decide what to check, so
+    // the manifest is itself a provenance-controlling build input.
+    assert!(
+        declared.contains(MANIFEST),
+        "the producing-input closure omits itself"
+    );
+}
