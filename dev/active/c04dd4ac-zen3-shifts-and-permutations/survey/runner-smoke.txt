@@ -1,0 +1,13 @@
+# DVB-T2 interleaver profile runner-wire smoke (jit:9fb40c83)
+# command: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh
+# every line below is observed at run time from the stage execution log and the
+# finalized throwaway receipt; the record carries no clock reading, so a rerun on
+# the same executable reproduces it byte for byte
+# dvb-profile-arm sha256: c16e3b44bd9fb6ffb0a8797c2befbeac2d9a57b787bf3036c68399f8633aaf3e
+PASS dvb-t2-qam16-r12-short-warm-isolated-null: paired executions complete
+PASS dvb-t2-qam16-r12-short-warm-sim-stage-gap: paired executions complete
+PASS gf2-direct-a: 6 handshakes, 6 result lines parsed
+PASS gf2-direct-b: 6 handshakes, 6 result lines parsed
+PASS gf2-stage: 6 handshakes, 6 result lines parsed
+PASS xdsopl-stage: 6 handshakes, 6 result lines parsed
+PASS wire: 24 child spawns, 24 clean exits, 0 child diagnostics
