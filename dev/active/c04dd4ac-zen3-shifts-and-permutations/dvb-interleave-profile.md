@@ -65,8 +65,17 @@ The standalone harness is built with Rust 1.95 in release mode. Its non-timed
 gate checks canonical little-endian pack/unpack boundaries, every output
 position of all four ETSI permutations against xdsopl, direct versus
 `BitInterleave` output, the explicit xdsopl destructive-input adapter, and the
-deterministic max-log BICM consumer. [`survey/harness-validation.txt`](survey/harness-validation.txt)
-is the committed result.
+deterministic max-log BICM consumer, and runs the survey workspace's contract
+checks, which the repository CI contract does not reach.
+[`survey/harness-validation.txt`](survey/harness-validation.txt) is the
+committed result, written by the gate itself.
+
+Code reading does not establish the campaign wire, so every arm also runs
+through the real `benchmark-ab-runner` on a throwaway family under `target/`,
+untimed and without the host mutex.
+[`survey/runner-smoke.txt`](survey/runner-smoke.txt) records the handshakes and
+parsed result lines that run observed, and
+[`survey/smoke-dvb-arms.sh`](survey/smoke-dvb-arms.sh) reproduces it.
 
 The scheduled profile measures four paths for every MODCOD: direct scatter,
 the simulation stage, xdsopl at the packed boundary, and the complete
@@ -79,11 +88,22 @@ as explicit unavailable records with stderr.
 
 The benchmark-window queue contains one resumable job for this worktree. It
 rebuilds and validates the exact source closure, executes the protocol-v4
-campaign into `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot`,
+campaign into `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot`,
 then writes the repeated profile to
-`dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-dynamic-profile`.
+`dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile`.
 Each campaign session checkpoints at two cells, and each completed profile
 session is recorded in its append-only `repetitions.log`.
+
+An earlier launch, campaign `v4-r1-9fb40c83-dvb-interleave-profile`, aborted on
+a procedural defect in its own launch before any result was read, and is voided
+under the voided-attempt rule of
+[`protocol.md`](../f547c394/protocol.md). Its stage is preserved whole at
+[`v4-r1-pilot-abandoned`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log)
+and
+[`v4-voided-profile-attempt.json`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json)
+records the campaign, the addendum digest, the defect, the cells measured and
+unmeasured and the abort. Its reservation does not enter the chain, so the
+family ledger stays empty and `v4-r2` reserves sequence zero on it.
 
 No materiality or candidate disposition is made before those outputs exist.
 The accepted protocol-v3 re-measurement remains exploratory context; withdrawn
