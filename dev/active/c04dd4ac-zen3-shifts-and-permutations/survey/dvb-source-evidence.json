@@ -106,22 +106,22 @@
     },
     "profile_arm": {
       "path": "dev/active/eda07788/survey/gf2-side/src/bin/dvb-profile-arm.rs",
-      "sha256": "ad9f8ba12fc3b149d934c4502892636f84a142447a49dd4134150a6a4fd74e39",
+      "sha256": "99eb8b14bed05bf208c0520e5a0cc612009481f9c9469570588e574cfd4e5b03",
       "matches": [
         {
-          "line": 175,
+          "line": 181,
           "fragment": "let unpacked = unpack_words(&words[bank], bits);"
         },
         {
-          "line": 179,
+          "line": 185,
           "fragment": "let mut mutable_input = unpacked.clone();"
         },
         {
-          "line": 183,
+          "line": 189,
           "fragment": "xdsopl_forward_mut(&modcod, &mut mutable_input, &mut output);"
         },
         {
-          "line": 186,
+          "line": 192,
           "fragment": "let packed = pack_bits(&output);"
         }
       ]
