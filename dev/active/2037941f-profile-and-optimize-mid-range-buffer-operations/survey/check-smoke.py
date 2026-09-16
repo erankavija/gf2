@@ -35,13 +35,21 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage", required=True)
     parser.add_argument("--record", required=True)
+    parser.add_argument("--oracle", required=True)
     parser.add_argument("--gf2-arm", required=True)
     parser.add_argument("--isal-arm")
     parser.add_argument("--families", required=True, nargs="+")
     arguments = parser.parse_args()
     stage = pathlib.Path(arguments.stage)
 
-    lines = []
+    # Semantics: every oracle case passes, and the record carries the case and
+    # check counts that run reported.
+    oracle = pathlib.Path(arguments.oracle).read_text().splitlines()
+    if not oracle or any(not case.startswith("PASS ") for case in oracle):
+        fail(f"the semantic oracle reported {[c for c in oracle if not c.startswith('PASS ')]}")
+    checks = sum(int(case.rsplit(": ", 1)[1].split()[0]) for case in oracle)
+
+    lines = [f"PASS semantic oracle: {len(oracle)} cases, {checks} checks"]
     for family in arguments.families:
         directory = stage / family
         session = directory / "stage"
@@ -162,11 +170,11 @@ def main():
             "# Logical-buffer harness non-timed wire smoke (jit:bb769456)\n"
             "# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/"
             "survey/run-logical-harness.sh smoke\n"
-            "# every line below is observed at run time from the stage execution logs, the\n"
-            "# checkpoint stores and the handshake records under target/; the record carries\n"
-            "# no clock reading, the arms answer a zero-window request, and no receipt is\n"
-            "# finalized, so a rerun on the same executables reproduces it byte for byte and\n"
-            "# the smoke cannot serve as a pilot",
+            "# every line below is observed at run time from the semantic oracle, the stage\n"
+            "# execution logs, the checkpoint stores and the handshake records under target/;\n"
+            "# the record carries no clock reading, the arms answer a zero-window request, and\n"
+            "# no receipt is finalized, so a rerun on the same executables reproduces it byte\n"
+            "# for byte and the smoke cannot serve as a pilot",
             file=handle,
         )
         for name, path in digests:

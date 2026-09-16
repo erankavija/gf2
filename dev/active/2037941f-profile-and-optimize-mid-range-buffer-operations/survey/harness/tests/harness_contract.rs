@@ -532,8 +532,11 @@ fn a_committed_and_clean_closure_admits_a_timed_run() {
 #[test]
 fn a_dirty_harness_source_refuses_a_timed_run() {
     let root = scratch_closure("closure-dirty-harness");
-    std::fs::write(root.join(HARNESS_SOURCE), "harness edited after the build\n")
-        .expect("dirty harness source");
+    std::fs::write(
+        root.join(HARNESS_SOURCE),
+        "harness edited after the build\n",
+    )
+    .expect("dirty harness source");
     let refusal = inputs::check(&root, MANIFEST, &[]).expect_err("a dirty harness source refuses");
     assert!(refusal.contains(HARNESS_SOURCE), "{refusal}");
     assert!(!refusal.contains(RUNNER_SOURCE), "{refusal}");
@@ -591,5 +594,8 @@ fn the_porcelain_status_decodes_renames_and_untracked_entries() {
     assert_eq!(status.get("dev/tools/a.rs").map(String::as_str), Some(" M"));
     // A rename dirties both the reported path and its recorded origin.
     assert_eq!(status.get("dev/tools/b.rs").map(String::as_str), Some("R "));
-    assert_eq!(status.get("dev/tools/old.rs").map(String::as_str), Some("R "));
+    assert_eq!(
+        status.get("dev/tools/old.rs").map(String::as_str),
+        Some("R ")
+    );
 }

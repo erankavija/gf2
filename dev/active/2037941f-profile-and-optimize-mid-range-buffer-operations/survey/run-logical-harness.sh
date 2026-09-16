@@ -133,8 +133,14 @@ cmd_smoke() {
     smoke=target/bb769456-campaigns/smoke
     rm -rf "${smoke}"
     mkdir -p "${smoke}"
-    touch "${smoke}/lock"
     "${CAMPAIGN_TOOL}" pins
+
+    # Semantics: the deterministic untimed oracle, whose cases the smoke record
+    # counts. It emits no timing sample.
+    "${ORACLE}" >"${smoke}/oracle.txt"
+    if [[ "${with_isal}" == 1 ]]; then
+        "${ISAL_ARM}" --oracle >>"${smoke}/oracle.txt"
+    fi
 
     local families=(
         2037941f-logical-isolated-xor
@@ -206,6 +212,7 @@ cmd_smoke() {
     done
 
     python3 -B "${SURVEY}/check-smoke.py" --stage "${smoke}" --record "${SMOKE_RECORD}" \
+        --oracle "${smoke}/oracle.txt" \
         --gf2-arm "${GF2_ARM}" \
         $([[ "${with_isal}" == 1 ]] && echo "--isal-arm ${ISAL_ARM}") \
         --families "${families[@]}"

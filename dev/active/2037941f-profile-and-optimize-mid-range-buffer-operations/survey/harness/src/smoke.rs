@@ -169,12 +169,12 @@ pub fn session(
     if log.next_sequence() == 0 {
         log.append(JournalEvent::CampaignStart, None, facts)?;
     } else {
-        let records = ExecutionLog::validate_prefix(
-            &log.validated_synced_prefix()?,
-            &plan.campaign_id,
-        )?;
-        let recorded: ResumeIdentity = serde_json::from_value(records[0].details["identity"].clone())
-            .map_err(|error| invalid(format!("campaign-start identity does not decode: {error}")))?;
+        let records =
+            ExecutionLog::validate_prefix(&log.validated_synced_prefix()?, &plan.campaign_id)?;
+        let recorded: ResumeIdentity =
+            serde_json::from_value(records[0].details["identity"].clone()).map_err(|error| {
+                invalid(format!("campaign-start identity does not decode: {error}"))
+            })?;
         if !recorded.resume_equivalent(&identity) {
             return Err(invalid(
                 "resume identity differs from the campaign-start facts",
@@ -410,7 +410,11 @@ fn handshake_arm(
     }
     match result.outcome {
         ProcessOutcome::Exited { exit_code: 0, .. } => {}
-        other => return Err(invalid(format!("arm {name} did not exit cleanly: {other:?}"))),
+        other => {
+            return Err(invalid(format!(
+                "arm {name} did not exit cleanly: {other:?}"
+            )))
+        }
     }
     let text = String::from_utf8(result.stdout).map_err(|_| invalid("arm stdout is not UTF-8"))?;
     let parsed: ArmResult = transport::parse_result(&text).map_err(invalid)?;
@@ -458,7 +462,11 @@ fn identity(
     host: &HostObservation,
 ) -> io::Result<ResumeIdentity> {
     let snapshot = ProducingInputs::capture(root, plan.producing_manifest_path())?;
-    let ordered: Vec<&str> = plan.cells.iter().map(|cell| cell.cell_id.as_str()).collect();
+    let ordered: Vec<&str> = plan
+        .cells
+        .iter()
+        .map(|cell| cell.cell_id.as_str())
+        .collect();
     let mut executables = BTreeMap::new();
     for (name, arm) in &plan.arms {
         let path = if Path::new(&arm.executable).is_absolute() {

@@ -94,7 +94,11 @@ that changes a cell, margin, limit, or rule fails closed.
 version at or above 2 and fails when the family ledger file is absent, so all
 four ledger paths named by the frozen addendum exist as committed empty files
 under `dev/bench_results/2037941f/`. An empty ledger is the explicit genesis
-state; it reserves nothing. The smoke uses a throwaway ledger under `target/`.
+state; it reserves nothing. A family's confirmatory count is whatever that
+ledger and the campaign addendum's non-exploratory cells admit; the harness
+carries no confirmatory constant. The non-timed smoke reserves nothing at all
+and names a throwaway ledger path under `target/`, so the committed ledgers
+stay at genesis.
 
 ## Routes and provenance
 
@@ -161,12 +165,15 @@ substitutes another target.
 ## Logging, checkpoint, and resume
 
 Execution logging, checkpointing, and resume are the canonical mechanisms of
-`benchmark-ab-runner`: one append-only `execution.log` per stage, opened before
-the first bounded run, with `campaign-start`, `cell-start`, `cell-complete`,
-checkpoint and terminal records. The launcher prints the canonical log path
-before launching work and treats console output as a view of that record. A
-paused session resumes from the same stage and plan; completed cells are not
-measured again. `max_cells_per_session` bounds one session.
+`tuning_campaign_support::journal`, which `benchmark-ab-runner` and the
+non-timed smoke both drive: one append-only `execution.log` per stage, opened
+before the first bounded run, with `campaign-start`, `cell-start`,
+`cell-complete`, checkpoint and terminal records, and one immutable checkpoint
+unit per cell under a manifest pinning the run's resume identity. The launcher
+prints the canonical log path before launching work and treats console output as
+a view of that record. A paused session resumes from the same stage and plan;
+completed cells are not measured again. `max_cells_per_session` bounds one
+session, and a session that exhausts it exits 3.
 
 The launcher verifies completion from the execution log, never from an exit
 code: the terminal record is `complete` and every declared cell has one
@@ -174,11 +181,18 @@ code: the terminal record is `complete` and every declared cell has one
 
 ## Machine-readable output
 
-The receipt directory is the canonical output: `receipt.json`, the plan, the
-pinned inputs, the execution log, the checkpoint manifest, and the acceptance
-summary written by `benchmark-acceptance`. Arms emit exactly one
+The receipt directory is the canonical output of a timed run: `receipt.json`,
+the plan, the pinned inputs, the execution log, the checkpoint manifest, and the
+acceptance summary written by `benchmark-acceptance`. Arms emit exactly one
 `zen3-benchmark-arm-result-v1` line each; the runner assembles
 `zen3-benchmark-receipt-v1`. The harness defines no receipt schema of its own.
+
+The non-timed smoke produces no receipt. Its output is
+`logical-buffer-nontimed-smoke-v1`, written as `handshake.json` beside the
+stage's execution log: one entry per declared cell carrying the cell's declared
+cache state and, for each arm, the arm name, its role, the executable digest,
+the cache state the arm applied, the route provenance it observed, and its
+window count, which is zero.
 
 ## Provenance artifacts
 
@@ -212,7 +226,8 @@ call directly: `pins` prints the frozen addendum's path, pinned digest,
 identity, freeze time and the four family ledgers, and fails when the document's
 bytes differ from the pin; `list` prints one family's cells with their ordinals
 and seeds; `cells`, `verify` and `plan` are the transcription, the comparison
-and the plan projection.
+and the plan projection; `smoke` drives one non-timed session of a projected
+plan; `inputs` is the producing-input closure guard.
 
 `build` compiles the gf2 arms `conservative-portable` into
 `target/bb769456-arms`, runs the crate's own contract tests and the semantic
@@ -228,9 +243,15 @@ also compiles `logical-isal-arm` against the pinned ISA-L checkout into
 `--isal` it covers the three gf2 families; with it, all four.
 
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
-SHA-256 equals the pin the harness carries, the campaign JSON matches
-`logical-campaign verify`, and every campaign input is committed and clean
-against `HEAD`. It then projects the plan, prints the execution log path, runs
+SHA-256 equals the pin the harness carries, and the campaign JSON matches
+`logical-campaign verify`. It then rebuilds every executable it launches from
+the current tree, and only afterwards runs `logical-campaign inputs`, which
+refuses unless every path of the producing-input closure, plus the campaign JSON
+and the family ledger, is tracked by git and identical to its committed content.
+A path git does not track is a refusal, so a source added to a measured crate
+without being committed stops the run. The closure check is the last step before
+the launch: nothing rebuilds after it, so no executable can carry bytes the
+check never saw. It then projects the plan, prints the execution log path, runs
 the runner under `dev/scripts/ccx1-bench-flock.sh --full-host` until the log's
 terminal record is `complete`, finalizes the receipt under
 `dev/bench_results/2037941f/<family>/<run-id>-pilot`, and evaluates it with
@@ -260,32 +281,50 @@ reaches the queue, and each owns its own ledger reservation.
 dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke
 ```
 
-The command runs from the worktree root, takes a private throwaway lock under
-`target/`, never calls `dev/scripts/ccx1-bench-flock.sh`, and writes nothing
-under `dev/bench_results/`. It checks, in order:
+The command runs from the worktree root, takes no benchmark lock, never calls
+`dev/scripts/ccx1-bench-flock.sh`, and writes nothing under
+`dev/bench_results/`. It checks, in order:
 
 1. **Cell generation.** Every family transcribes twice to identical bytes and
    validates against the version-4 schema through
    `FamilyAddendum::decode` and `validate`.
 2. **Semantics.** `logical-oracle` and, when the ISA-L arm is built,
    `logical-isal-arm --oracle` report every case as `PASS`.
-3. **The wire.** Every arm runs through the real `benchmark-ab-runner` on a
-   throwaway plan, under a private lock, with a throwaway ledger and stage under
+3. **The wire.** Every arm the family's plan declares runs as a fresh child
+   process speaking the canonical child-v2 framing, from the projected plan and
+   the throwaway campaign addendum, with a throwaway ledger path and stage under
    `target/`. Each family contributes two cells: its smallest anchor plus one
    cell in a second cache state, so warm, streaming and the frozen cold call
-   count all reach the wire.
+   count all reach the wire. Every request declares zero timing windows, so each
+   arm builds its fixture, resolves its route, runs the untimed arrangement its
+   cache policy declares and answers with no timing window; a child that answers
+   a zero-window request with a window fails the smoke.
 4. **Append-only logging and resume.** `max_cells_per_session` is one, so the
    first session pauses and a second completes the stage. The first session's
    execution log is a byte prefix of the final log, no cell carries two
-   `cell-complete` records, and the terminal record is `complete`.
-5. **Output schema.** `benchmark-acceptance` decodes and evaluates the
-   throwaway receipt directory.
+   `cell-complete` records, no cell attempt is abandoned, the journal carries no
+   `execution-progress` or `window-progress` record, one immutable checkpoint
+   unit exists per cell, and the terminal record is `complete`.
+5. **Output schema.** The stage's `handshake.json` decodes as
+   `logical-buffer-nontimed-smoke-v1`, names exactly the addendum's declared
+   cells, and reports each arm's applied cache state and zero windows. The stage
+   holds no finalized receipt.
 
 `build` writes `survey/logical-harness-validation.txt` the same way: the
 toolchain, the pins, the contract-test count, every oracle line and the
 executable digests, all observed by that run.
 
 The record is `survey/logical-runner-smoke.txt`. Every line is observed at run
-time from the execution log and the finalized throwaway receipt; it carries no
-clock reading, so a rerun on the same executables reproduces it byte for byte.
-The record carries no timing sample, and the smoke cannot serve as a pilot.
+time from the execution log, the checkpoint store and the handshake record; it
+carries no clock reading, so a rerun on the same executables reproduces it byte
+for byte. The smoke collects zero timing samples and finalizes zero receipts,
+both stated in the record from observation, so it cannot serve as a pilot.
+
+The smoke drives the arms directly rather than through `benchmark-ab-runner`.
+The runner has one measurement path: a cell whose core arm resolves is measured
+at the plan's pair count, and its paired statistic is computed from the median
+of each execution's windows, which an execution with no window cannot supply. A
+smoke that reached the arms through the runner would therefore collect timing
+samples outside the benchmark window. The smoke instead speaks the runner's own
+wire types and drives the runner's own journal, checkpoint store and resume
+identity, so the contract it establishes is the contract the runner uses.
