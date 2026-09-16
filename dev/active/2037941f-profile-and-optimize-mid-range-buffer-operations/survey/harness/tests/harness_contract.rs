@@ -10,6 +10,7 @@ use logical_buffer_harness::cells::{
     ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, NR_TARGETS, STREAMING_BANKS, STREAMING_BANK_BYTES,
 };
 use logical_buffer_harness::fixture::{RowBanks, XorBanks, SLAB_ALIGN};
+use logical_buffer_harness::inputs;
 use logical_buffer_harness::oracle;
 use logical_buffer_harness::routes::{nr_construct, run_windows, verify_nr, Route, WindowPlan};
 use logical_buffer_harness::wire::{Case, Request};
@@ -229,10 +230,11 @@ fn a_streaming_working_set_fills_every_declared_bank() {
 
 #[test]
 fn warm_runs_one_untimed_pass_and_streaming_runs_none() {
-    // Zero windows makes the timing protocol fail before its first call, so
-    // every body call observed here precedes calibration.
+    // A zero-window plan is the non-timed arrangement pass: it stops before
+    // the timing protocol, so every body call observed here is the cache
+    // policy's own untimed pass and the execution reports no sample.
     let mut calls = Vec::new();
-    let outcome = run_windows(
+    let samples = run_windows(
         WindowPlan {
             cache: Cache::Warm,
             cold_calls: None,
@@ -243,12 +245,13 @@ fn warm_runs_one_untimed_pass_and_streaming_runs_none() {
         },
         &mut |bank, item| calls.push((bank, item)),
         |_| Ok(()),
-    );
-    assert!(outcome.is_err());
+    )
+    .expect("the arrangement pass succeeds");
+    assert!(samples.is_empty());
     assert_eq!(calls, vec![(0, 0)]);
 
     let mut streaming = 0;
-    let outcome = run_windows(
+    let samples = run_windows(
         WindowPlan {
             cache: Cache::Streaming,
             cold_calls: None,
@@ -259,9 +262,52 @@ fn warm_runs_one_untimed_pass_and_streaming_runs_none() {
         },
         &mut |_, _| streaming += 1,
         |_| Ok(()),
-    );
-    assert!(outcome.is_err());
+    )
+    .expect("the arrangement pass succeeds");
+    assert!(samples.is_empty());
     assert_eq!(streaming, 0);
+}
+
+#[test]
+fn a_zero_window_arrangement_pass_collects_no_timing_sample() {
+    // Every cache policy the addendum declares reaches the arrangement pass,
+    // and none of them enters the timing protocol.
+    for (cache, cold_calls) in [
+        (Cache::Warm, None),
+        (Cache::Streaming, None),
+        (Cache::Cold, Cache::Cold.cold_calls()),
+    ] {
+        let samples = run_windows(
+            WindowPlan {
+                cache,
+                cold_calls,
+                windows: 0,
+                window_target_ms: 0,
+                banks: 1,
+                items: 1,
+            },
+            &mut |_, _| {},
+            |_| panic!("a zero-window plan reports no timing progress"),
+        )
+        .expect("the arrangement pass succeeds");
+        assert!(samples.is_empty(), "{}", cache.id());
+    }
+
+    // A zero-window plan still refuses a cache state paired with the wrong
+    // frozen call count, so the smoke cannot arrange an undeclared cell.
+    assert!(run_windows(
+        WindowPlan {
+            cache: Cache::Warm,
+            cold_calls: Some(1),
+            windows: 0,
+            window_target_ms: 0,
+            banks: 1,
+            items: 1,
+        },
+        &mut |_, _| {},
+        |_| Ok(()),
+    )
+    .is_err());
 }
 
 #[test]
@@ -423,4 +469,133 @@ fn whole_consumer_cells_charge_conversion_costs() {
             }
         }
     }
+}
+
+/// Repository-relative paths of two producing inputs a scratch closure pins:
+/// one harness source and one campaign-runner source.
+const HARNESS_SOURCE: &str = "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/lib.rs";
+const RUNNER_SOURCE: &str = "dev/tools/tuning-campaign-support/src/campaign.rs";
+
+/// Builds a scratch repository whose producing-input closure pins a harness
+/// source, a campaign-runner source and the manifest itself, all committed.
+fn scratch_closure(name: &str) -> std::path::PathBuf {
+    let root = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&root).expect("scratch root");
+    for path in [HARNESS_SOURCE, RUNNER_SOURCE, MANIFEST] {
+        std::fs::create_dir_all(root.join(path).parent().expect("parent")).expect("parent");
+    }
+    std::fs::write(root.join(HARNESS_SOURCE), "harness\n").expect("harness source");
+    std::fs::write(root.join(RUNNER_SOURCE), "runner\n").expect("runner source");
+    let closure = serde_json::json!({
+        "schema": "tuning-campaign-producing-inputs-v1",
+        "behavior_sources": [HARNESS_SOURCE, RUNNER_SOURCE],
+        "lifecycle_sources": [RUNNER_SOURCE],
+        "build_inputs": [HARNESS_SOURCE, MANIFEST, RUNNER_SOURCE],
+    });
+    std::fs::write(
+        root.join(MANIFEST),
+        serde_json::to_string_pretty(&closure).expect("manifest"),
+    )
+    .expect("manifest");
+    git(&root, &["init", "--quiet"]);
+    git(&root, &["add", "--all"]);
+    git(&root, &["commit", "--quiet", "-m", "scratch closure"]);
+    root
+}
+
+const MANIFEST: &str = "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json";
+
+fn git(root: &std::path::Path, arguments: &[&str]) {
+    let status = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(arguments)
+        .env("GIT_AUTHOR_NAME", "harness")
+        .env("GIT_AUTHOR_EMAIL", "harness@example.invalid")
+        .env("GIT_COMMITTER_NAME", "harness")
+        .env("GIT_COMMITTER_EMAIL", "harness@example.invalid")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_CONFIG_SYSTEM", "/dev/null")
+        .status()
+        .expect("git runs");
+    assert!(status.success(), "git {arguments:?}");
+}
+
+#[test]
+fn a_committed_and_clean_closure_admits_a_timed_run() {
+    let root = scratch_closure("closure-clean");
+    let checked = inputs::check(&root, MANIFEST, &[]).expect("the closure is clean");
+    assert_eq!(checked, vec![HARNESS_SOURCE, MANIFEST, RUNNER_SOURCE]);
+}
+
+#[test]
+fn a_dirty_harness_source_refuses_a_timed_run() {
+    let root = scratch_closure("closure-dirty-harness");
+    std::fs::write(
+        root.join(HARNESS_SOURCE),
+        "harness edited after the build\n",
+    )
+    .expect("dirty harness source");
+    let refusal = inputs::check(&root, MANIFEST, &[]).expect_err("a dirty harness source refuses");
+    assert!(refusal.contains(HARNESS_SOURCE), "{refusal}");
+    assert!(!refusal.contains(RUNNER_SOURCE), "{refusal}");
+}
+
+#[test]
+fn a_dirty_runner_source_refuses_a_timed_run() {
+    let root = scratch_closure("closure-dirty-runner");
+    std::fs::write(root.join(RUNNER_SOURCE), "runner edited after the build\n")
+        .expect("dirty runner source");
+    let refusal = inputs::check(&root, MANIFEST, &[]).expect_err("a dirty runner source refuses");
+    assert!(refusal.contains(RUNNER_SOURCE), "{refusal}");
+}
+
+#[test]
+fn an_untracked_closure_path_refuses_a_timed_run() {
+    let root = scratch_closure("closure-untracked");
+    let added = "dev/tools/tuning-campaign-support/src/uncommitted.rs";
+    std::fs::write(root.join(added), "uncommitted\n").expect("untracked source");
+    let mut closure: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(root.join(MANIFEST)).expect("manifest"))
+            .expect("manifest decodes");
+    closure["build_inputs"] = serde_json::json!([HARNESS_SOURCE, MANIFEST, RUNNER_SOURCE, added]);
+    std::fs::write(
+        root.join(MANIFEST),
+        serde_json::to_string_pretty(&closure).expect("manifest"),
+    )
+    .expect("manifest");
+    git(&root, &["add", MANIFEST]);
+    git(&root, &["commit", "--quiet", "-m", "extend the closure"]);
+    let refusal = inputs::check(&root, MANIFEST, &[]).expect_err("an untracked input refuses");
+    assert!(refusal.contains(added), "{refusal}");
+}
+
+#[test]
+fn an_extra_campaign_input_joins_the_closure() {
+    let root = scratch_closure("closure-extra");
+    let ledger = "dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl";
+    std::fs::create_dir_all(root.join(ledger).parent().expect("parent")).expect("parent");
+    std::fs::write(root.join(ledger), "").expect("ledger");
+    let extra = vec![ledger.to_owned()];
+    let refusal = inputs::check(&root, MANIFEST, &extra).expect_err("an untracked ledger refuses");
+    assert!(refusal.contains(ledger), "{refusal}");
+    git(&root, &["add", ledger]);
+    git(&root, &["commit", "--quiet", "-m", "commit the ledger"]);
+    let checked = inputs::check(&root, MANIFEST, &extra).expect("the extended closure is clean");
+    assert!(checked.contains(&ledger.to_owned()));
+}
+
+#[test]
+fn the_porcelain_status_decodes_renames_and_untracked_entries() {
+    let stdout = b"?? new.rs\0 M dev/tools/a.rs\0R  dev/tools/b.rs\0dev/tools/old.rs\0".to_vec();
+    let status = inputs::parse_status(&stdout).expect("porcelain decodes");
+    assert_eq!(status.get("new.rs").map(String::as_str), Some("??"));
+    assert_eq!(status.get("dev/tools/a.rs").map(String::as_str), Some(" M"));
+    // A rename dirties both the reported path and its recorded origin.
+    assert_eq!(status.get("dev/tools/b.rs").map(String::as_str), Some("R "));
+    assert_eq!(
+        status.get("dev/tools/old.rs").map(String::as_str),
+        Some("R ")
+    );
 }

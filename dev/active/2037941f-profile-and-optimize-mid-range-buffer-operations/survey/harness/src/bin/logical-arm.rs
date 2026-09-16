@@ -30,6 +30,9 @@ fn elapsed_ns(started: Instant) -> u64 {
 
 /// One separately measured fresh-destination arrangement, averaged over many
 /// repetitions so a few-nanosecond cost rounds to an observed value.
+///
+/// A timed execution charges this cost; the non-timed arrangement pass of a
+/// zero-window request runs no probe and reports zero.
 fn destination_probe_ns(words: usize) -> u64 {
     const REPS: u32 = 100_000;
     let started = Instant::now();
@@ -159,7 +162,9 @@ fn run() -> Result<(), String> {
                 backend_name(words),
                 banks.working_set_bytes()
             );
-            dispatch_ns = destination_probe_ns(words);
+            if request.windows > 0 {
+                dispatch_ns = destination_probe_ns(words);
+            }
             let items = banks.items();
             let observed = std::cell::Cell::new(0_u64);
             let mut body = |bank: usize, item: usize| {
