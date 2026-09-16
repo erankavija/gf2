@@ -2,12 +2,14 @@
 //! (jit:9fb40c83).
 
 use std::collections::BTreeSet;
+use std::io::Write;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use survey_gf2_side::CachePolicy;
 use tuning_campaign_support::protocol::{CellRole, FamilyAddendum, MetricKind, RunnerPlan};
 use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::schema;
+use tuning_campaign_support::transport::{FRESH_CASE_VALUE, FRESH_CASE_VAR};
 
 const REPO: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../../..");
 const SCHEMA: &str = "dev/active/f547c394/addendum.schema.json";
@@ -88,8 +90,51 @@ fn timed_binaries_fail_closed_outside_the_benchmark_window() {
     let arm = Command::new(env!("CARGO_BIN_EXE_dvb-profile-arm"))
         .env_remove("GF2_BENCH")
         .env_remove("GF2_BENCH_WINDOW")
+        .env_remove(FRESH_CASE_VAR)
         .output()
         .expect("arm guard runs");
+    assert_eq!(arm.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&arm.stderr).contains("requires GF2_BENCH_WINDOW=1"));
+}
+
+/// The exact request `benchmark-ab-runner` writes for a cell of this family.
+///
+/// The runner serializes its own request type with `serde_json::to_vec`, and
+/// `transport::decode_case` accepts only bytes the arm's mirror re-encodes
+/// unchanged, so the absent `cold_calls` and `decoder` are part of the wire.
+const RUNNER_REQUEST: &str = concat!(
+    r#"{"schema":"zen3-benchmark-arm-request-v1","#,
+    r#""cell_id":"dvb-t2-qam16-r12-short-warm-isolated-null","#,
+    r#""arm":"gf2-direct-a","role":"baseline","pair":0,"#,
+    r#""case":{"modcod":"qam16-r12-short","seed":2103},"cache_state":"warm","#,
+    r#""windows":5,"window_target_ms":100,"cpus":[0],"workers_declared":2}"#,
+);
+
+#[test]
+fn a_campaign_child_decodes_the_runner_request_wire() {
+    let mut arm = Command::new(env!("CARGO_BIN_EXE_dvb-profile-arm"))
+        .env_remove("GF2_BENCH")
+        .env_remove("GF2_BENCH_WINDOW")
+        .env(FRESH_CASE_VAR, FRESH_CASE_VALUE)
+        .env("GF2_DVB_PROFILE_ROUTE", "gf2-direct-a")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("arm child spawns");
+    arm.stdin
+        .take()
+        .expect("child stdin is piped")
+        .write_all(RUNNER_REQUEST.as_bytes())
+        .expect("request writes without a broken pipe");
+    let arm = arm.wait_with_output().expect("arm child completes");
+    // The request declares two workers, which this profile refuses after it
+    // decodes, so the wire contract is observed without timing anything.
+    let stderr = String::from_utf8_lossy(&arm.stderr).into_owned();
+    assert!(
+        stderr.contains("one-worker non-decoder"),
+        "the child rejected the runner's wire: {stderr}"
+    );
     assert_eq!(arm.status.code(), Some(2));
 }
 
@@ -152,7 +197,7 @@ fn projected_plan_is_valid_for_the_frozen_addendum() {
             "--addendum",
             ADDENDUM,
             "--campaign-id",
-            "v4-r1-9fb40c83-dvb-interleave-profile",
+            "v4-r2-9fb40c83-dvb-interleave-profile",
             "--campaign-seed",
             "20260915",
             "--lock",
