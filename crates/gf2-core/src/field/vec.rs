@@ -668,11 +668,10 @@ impl<F: FiniteField> FieldVec<F> {
             self.len(),
             rhs.len()
         );
-        // Accelerated path: the AVX2 kernels for `Fp<P>` with `P ≤ 65521`
-        // (issue d1dd266c) and the cached byte product table for both
-        // single-word GF(2^8) representations (issue 77c21ecd). Falls
-        // through to the scalar zip-loop for every field that declines
-        // the hook.
+        // Accelerated path: each field's `try_simd_axpy` override is the
+        // authoritative statement of when it runs (`Fp<P>`: issue d1dd266c;
+        // GF(2^8): `gf2m::byte_table::gf256_table_dispatch`, issue 77c21ecd).
+        // Falls through to the scalar zip-loop for every field that declines.
         if F::try_simd_axpy(self.data.as_mut_slice(), a, rhs.data.as_slice()) {
             return;
         }

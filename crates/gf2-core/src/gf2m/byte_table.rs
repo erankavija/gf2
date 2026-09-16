@@ -35,11 +35,10 @@
 //! # Footprint
 //!
 //! One table occupies 65536 bytes. The registry is 256 lazily initialised
-//! slots, one per degree-8 modulus, so a process using one field holds one
-//! table and a process constructing every degree-8 modulus there is holds
-//! 16 MiB. Only 30 of the 256 keys name an irreducible modulus, which bounds
-//! what a field-arithmetic caller can reach. Tables are never evicted, which
-//! is what makes the amortisation unconditional.
+//! slots, one per low-byte key, and `gf256_table_dispatch` accepts every
+//! degree-8 key its callers present, so a process holds one table per distinct
+//! degree-8 modulus it has used and at most 16 MiB. Tables are never evicted,
+//! which is what makes the amortisation unconditional.
 //!
 //! # Determinism and sharing
 //!
