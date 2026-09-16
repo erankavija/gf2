@@ -1,0 +1,169 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "residual-shift-profile-85fc5ff4-v4",
+  "issue": "85fc5ff4",
+  "label": "pilot",
+  "campaign_seed": 2026091585,
+  "addendum": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json",
+  "producing_manifest": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/shift-profile-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "residual-production": {
+      "build": "conservative-portable",
+      "description": "Current public BitVec zero-fill shift at the declared residual offset; the non-word-aligned scalar carry loop is selected.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/release/deps/shifts-0bf958b31b19206c",
+      "arguments": [],
+      "environment": {
+        "GF2_SHIFT_ARM": "residual-production"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "word-aligned-control": {
+      "build": "conservative-portable",
+      "description": "Current public BitVec zero-fill shift at offset 64; the canonical word-shift backend is a non-equivalent workload control only.",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/release/deps/shifts-0bf958b31b19206c",
+      "arguments": [],
+      "environment": {
+        "GF2_SHIFT_ARM": "word-aligned-control"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "left-small-r1-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "left",
+        "length_bits": 65,
+        "residual_offset": 1,
+        "control_offset": 64,
+        "seed": 8501
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "left-lane-crossing-r7-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "left",
+        "length_bits": 257,
+        "residual_offset": 7,
+        "control_offset": 64,
+        "seed": 8502
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "left-byte-residual-r8-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "left",
+        "length_bits": 4097,
+        "residual_offset": 8,
+        "control_offset": 64,
+        "seed": 8503
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "left-resident-r63-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "left",
+        "length_bits": 65537,
+        "residual_offset": 63,
+        "control_offset": 64,
+        "seed": 8504
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "left-streaming-r65-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "left",
+        "length_bits": 33554439,
+        "residual_offset": 65,
+        "control_offset": 64,
+        "seed": 8505
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "right-small-r1-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "right",
+        "length_bits": 65,
+        "residual_offset": 1,
+        "control_offset": 64,
+        "seed": 8506
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "right-lane-crossing-r7-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "right",
+        "length_bits": 257,
+        "residual_offset": 7,
+        "control_offset": 64,
+        "seed": 8507
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "right-byte-residual-r8-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "right",
+        "length_bits": 4097,
+        "residual_offset": 8,
+        "control_offset": 64,
+        "seed": 8508
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "right-resident-r63-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "right",
+        "length_bits": 65537,
+        "residual_offset": 63,
+        "control_offset": 64,
+        "seed": 8509
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "right-streaming-r65-w64",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "case": {
+        "direction": "right",
+        "length_bits": 33554439,
+        "residual_offset": 65,
+        "control_offset": 64,
+        "seed": 8510
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 2
+}
