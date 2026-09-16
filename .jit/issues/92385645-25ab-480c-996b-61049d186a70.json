@@ -72,6 +72,13 @@
       "format": "markdown",
       "label": "Independent M4RI rework review round 2",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/92385645-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "M4RI pinned build identity",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh"
     }
   ],
   "first_ready_at": "2026-09-15T00:55:29.092843264Z",
@@ -134,5 +141,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T04:15:33.816133961Z"
+  "updated_at": "2026-09-16T11:46:33.489845768Z"
 }

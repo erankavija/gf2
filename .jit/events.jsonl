@@ -12636,3 +12636,4 @@
 {"gate_key":"code-review","id":"06a2ccf2-d3db-4702-98b3-d95f328b2e79","issue_id":"c5e01de3-c6ae-4a0a-80c5-646d744aff80","timestamp":"2026-09-16T11:39:29.089641133Z","type":"gate_failed","updated_by":"auto:executor"}
 {"from":"ready","id":"ab68be07-e8fc-46de-9263-a23c1de1f3db","issue_id":"613574db-f283-425f-b664-369f3e93d756","timestamp":"2026-09-16T11:40:31.431365972Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"cb406b23-bd52-4635-ad34-cc003be21fbd","issue_id":"613574db-f283-425f-b664-369f3e93d756","timestamp":"2026-09-16T11:40:31.431365972Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"0451ecf3-d22e-4454-9a2f-ff8aa6bfd3de","issue_id":"92385645-25ab-480c-996b-61049d186a70","timestamp":"2026-09-16T11:46:33.489845768Z","type":"issue_updated","updated_by":"doc-add"}
