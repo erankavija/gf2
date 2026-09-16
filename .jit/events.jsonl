@@ -12626,3 +12626,6 @@
 {"id":"fc5489db-ee68-4998-adea-38e402678935","issue_id":"598d8057-af2a-48b1-837c-bc011c6afd8a","priority":"low","timestamp":"2026-09-16T10:54:35.570565555Z","title":"Remove or gate the dead choose_k_block helper in m4rm","type":"issue_created"}
 {"from":"ready","id":"65deb2d8-7172-4c26-9fa4-212b3f8db013","issue_id":"598d8057-af2a-48b1-837c-bc011c6afd8a","timestamp":"2026-09-16T10:55:02.077633189Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"7e3ae7aa-881b-44de-9c8a-c059f6d5f05d","issue_id":"598d8057-af2a-48b1-837c-bc011c6afd8a","timestamp":"2026-09-16T10:55:02.077633189Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"tdd-reminder","id":"3b732842-04f0-41a2-b934-0c686f36e1c7","issue_id":"bb769456-6803-49ec-ae91-f1619dd0f278","timestamp":"2026-09-16T11:08:10.455063750Z","type":"gate_passed","updated_by":"agent:jit-execution-lead"}
+{"from":"ready","id":"03063ce6-2e7b-43a1-906b-4efee7912a77","issue_id":"bb769456-6803-49ec-ae91-f1619dd0f278","timestamp":"2026-09-16T11:08:51.183400295Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"3f91749c-db58-4a1e-a982-76bd78bf7d87","issue_id":"bb769456-6803-49ec-ae91-f1619dd0f278","timestamp":"2026-09-16T11:08:51.183400295Z","type":"issue_claimed"}

@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-16T11:08:51.183400295Z",
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
@@ -18,7 +19,13 @@
     "asm-artefact-present",
     "tdd-reminder"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-09-16T11:08:10.455063750Z",
+      "updated_by": "agent:jit-execution-lead"
+    }
+  },
   "id": "bb769456-6803-49ec-ae91-f1619dd0f278",
   "labels": [
     "type:task",
@@ -30,7 +37,7 @@
     "satisfies:REQ-06"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Implement the logical-buffer measurement harness",
-  "updated_at": "2026-09-16T10:48:31.038164560Z"
+  "updated_at": "2026-09-16T11:08:51.183400295Z"
 }
