@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
-    "bb769456-6803-49ec-ae91-f1619dd0f278"
+    "b9302771-703c-4f47-adb7-a7469d855b7b"
   ],
   "description": "Run the frozen public `BitMatrix::row_xor` consumer cells and commit the current pre-change evidence.\n\n## Background\n\nThis is the primary unhoisted row-operation route. It is measured at actual mid-range row strides with whole-call costs, output validation, and neighboring sizes; already-hoisted algorithm loops remain controls rather than generic-hoist candidates.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt contains raw samples, exact commands, frozen matrix inputs, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for the row-XOR cells.\n- [hard] REQ-02: Exact row semantics, canonical bit indexing, and zero tail padding hold for the declared boundary and offset cases.\n- [hard] REQ-03: Profiles attribute material time to public dispatch, row access, XOR execution, memory traffic, or downstream work and identify any candidate signal within the frozen search budget.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
   "documents": [],
@@ -31,5 +31,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Record the row-XOR consumer baseline",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T16:00:18.751779942Z"
 }
