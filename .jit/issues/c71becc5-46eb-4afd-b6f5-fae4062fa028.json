@@ -10,11 +10,8 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
-    "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "code-review"
   ],
   "gates_status": {},
   "id": "c71becc5-46eb-4afd-b6f5-fae4062fa028",
@@ -29,5 +26,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Design the qualifying zero-copy integration",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:32:14.876202360Z"
 }

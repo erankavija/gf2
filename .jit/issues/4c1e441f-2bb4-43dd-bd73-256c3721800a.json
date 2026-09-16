@@ -11,11 +11,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "4c1e441f-2bb4-43dd-bd73-256c3721800a",
@@ -31,5 +29,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Confirm the GF(2^8) dense product against the current matrix route",
-  "updated_at": "2026-09-16T12:13:37.251980155Z"
+  "updated_at": "2026-09-16T20:28:47.896127761Z"
 }

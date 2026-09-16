@@ -10,12 +10,10 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
     "research-review",
-    "asm-artefact-present",
-    "tdd-reminder"
+    "asm-artefact-present"
   ],
   "gates_status": {},
   "id": "80ed6e9f-fdd9-4353-85a7-c3be63f23850",
@@ -32,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the consumer-specific dispatch candidate",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:24:11.969367342Z"
 }

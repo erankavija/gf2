@@ -10,11 +10,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "b8ef6f13-bae7-4f26-bf99-0f0cd1a57dac",
@@ -30,5 +28,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Confirm the logical-buffer production outcome",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:33:19.208279185Z"
 }

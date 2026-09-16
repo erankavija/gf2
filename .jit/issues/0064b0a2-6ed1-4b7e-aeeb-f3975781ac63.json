@@ -14,8 +14,7 @@
     "doc-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "0064b0a2-6ed1-4b7e-aeeb-f3975781ac63",
@@ -32,5 +31,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Freeze the logical candidate portfolio",
-  "updated_at": "2026-09-16T19:10:10.723786959Z"
+  "updated_at": "2026-09-16T20:30:55.342350109Z"
 }

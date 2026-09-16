@@ -12,9 +12,7 @@
     "doc-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present",
-    "tdd-reminder"
+    "asm-artefact-present"
   ],
   "gates_status": {},
   "id": "23a08297-49cf-4a7a-b086-dab3b4a5cf4e",
@@ -31,5 +29,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Implement the selected logical-buffer outcome",
-  "updated_at": "2026-09-16T19:11:18.518886794Z"
+  "updated_at": "2026-09-16T20:26:24.534728055Z"
 }

@@ -11,11 +11,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "c49e78bc-b047-4093-9c88-f0b48d4d7574",
@@ -32,5 +30,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Record the coding-route logical baseline",
-  "updated_at": "2026-09-16T18:28:12.120848555Z"
+  "updated_at": "2026-09-16T20:29:51.630753044Z"
 }

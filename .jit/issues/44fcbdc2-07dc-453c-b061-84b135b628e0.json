@@ -10,11 +10,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "44fcbdc2-07dc-453c-b061-84b135b628e0",
@@ -31,5 +29,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the M4RI dense comparison",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:30:07.483657647Z"
 }

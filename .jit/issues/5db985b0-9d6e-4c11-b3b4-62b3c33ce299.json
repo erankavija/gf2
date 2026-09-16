@@ -11,12 +11,10 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
     "research-review",
-    "asm-artefact-present",
-    "tdd-reminder"
+    "asm-artefact-present"
   ],
   "gates_status": {},
   "id": "5db985b0-9d6e-4c11-b3b4-62b3c33ce299",
@@ -33,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the profile-selected matvec fusion",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:23:38.616335465Z"
 }

@@ -9,13 +9,13 @@
 - Epic: `1a379447` — state: in_progress
 - Wave in progress: wave 3 of 7
 - Children summary: this session closed `96c94b81`, `77c21ecd`, `8275a6f8`,
-  `7cdc28e9`; `9fb40c83` and `85fc5ff4` wait for tonight's window;
+  `7cdc28e9`, `bb769456`, `2c487595`; `9fb40c83` and `85fc5ff4` wait for tonight's window;
   new issues `8275a6f8` (bug, done), `b9302771` (m = 5 amendment),
   `0a357f94` (closure freshness), `7cc591a0` (test scratch leak, outside the
   epic). Run `jit graph tree 1a379447` for the full picture.
 - Active claims: `9fb40c83` (agent:work-9fb40c83), `85fc5ff4`
-  (agent:work_85fc5ff4), `2c487595` (agent:worker, gates not all passed), `bb769456` (agent:worker, gates not all passed); all in_progress.
-- Open escalations: bb769456 holistic F1 (see the questions section). The three from handoff-14 were ruled on (see
+  (agent:work_85fc5ff4); all in_progress.
+- Open escalations: none. The three from handoff-14 were ruled on (see
   `progress.json` escalations) and a standing approval covers the
   `Source references: [Key].` citation repair for any epic issue whose
   `cites:` label lacks its token.
@@ -54,6 +54,16 @@
 - Verified Rust 1.95 for 77c21ecd (gf2-core builds, 2712 tests pass).
 - Filed `0a357f94` (closure freshness before a timed logical run) and wired
   the three logical baselines onto it and onto `b9302771`.
+- Invoker ruling at the end of the session: holistic-review is a container
+  gate; the lead removed it from every open leaf under the epic (containers
+  keep it). bb769456's leaf holistic failure on the closure-freshness gap is
+  therefore not a required gate; the gap stays tracked as `0a357f94`.
+- Second gate ruling: tdd-reminder is removed from every open leaf;
+  research-review from leaves that produce no measurement, addendum or
+  findings (b64dc9c4, 0a357f94, e1f9a78f, 23a08297, 1956017f, 7d3ced35,
+  c71becc5); asm-artefact-present from leaves that cannot touch SIMD kernel
+  sources, where it is a no-op that only confuses. Containers and the
+  measurement leaves keep their sets; `jit issue show` is authoritative.
 
 ## What to do next
 
@@ -62,7 +72,7 @@
   `agent-85fc5ff4` and `agent-9fb40c83`, never the job rc; then finish their
   findings, gates and closure (their workers are idle; a fresh agent or the
   lead does the remainder).
-- [ ] bb769456: not all gates passed at handoff; read `jit gate status-all bb769456` and `reviews/bb769456-r2.md`; rework attempts are exhausted (2 of 2), so escalate per policy item 5 before any further rework. 2c487595: code-review rerun did not pass; see its findings and decide rework 1.
+- [ ] bb769456 is done; dispatch `b9302771` and `0a357f94` next (both depend on it).
 - [ ] Dispatch when slots allow: `b64dc9c4` (L2 dense product; warm worktree
   `agent-613574db`, detached at main), `b9302771` and `0a357f94` (after
   bb769456 closes), `706a8f93` and `94bbe5d7` (sonnet-sized; worktrees
@@ -96,6 +106,9 @@
   `while read path` loop lost every command until the shell was replaced.
 - **Do NOT use `set -- $pair` or unquoted word splitting in zsh.** It does not
   split; loops silently ran with empty arguments.
+- **Do NOT put holistic-review on a leaf.** It is a container review; on
+  leaves it re-reported the other gates' findings and blocked bb769456 on a
+  successor task's scope. The invoker removed it from every open leaf.
 - **Do NOT re-run passed gates for a lead docstring touch-up.** The invoker
   ruled it waste; record the touch-up in the verdict instead.
 - **Do NOT write "smoke through the real runner" as a requirement for a
@@ -110,23 +123,7 @@
 
 ## Open questions needing invoker input
 
-- Question: how to close bb769456's holistic-review F1 (blocking): the window
-  guard verifies a static producing-input manifest, so a measured source
-  committed after the last regeneration can change rebuilt executable bytes
-  without appearing in the receipt closure (REQ-02/REQ-04). Both rework
-  attempts are spent (policy item 5), and the same defect is already filed as
-  task `0a357f94` (depends on bb769456; the three logical baselines depend on
-  it), which the reviewer cites.
-  - Options: (A) accept `0a357f94` as the fix, close bb769456 with the
-    holistic finding recorded as resolved-by-successor, and let `0a357f94` land
-    before any timed logical run; (B) authorize a third rework of bb769456 that
-    folds `0a357f94`'s REQ-01/REQ-02 in and close `0a357f94` as duplicate;
-    (C) reject bb769456 and re-scope.
-  - Recommendation: A. The guard already refuses every listed dirty or
-    untracked path; the gap is regeneration freshness, which `0a357f94` states
-    exactly and which no timed run can reach before it lands.
-- Question: the remaining bb769456 gates after the doc fix: doc-review rerun
-  is in wave 5; holistic was not re-run because F1 stands until the ruling.
+None.
 
 ## Reference artefacts
 

@@ -10,11 +10,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "4497e541-8480-4ce3-ae81-4ad8e70b72f9",
@@ -31,5 +29,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Confirm the private zero-copy production outcome",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:32:47.388301729Z"
 }

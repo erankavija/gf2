@@ -13,8 +13,6 @@
     "code-review",
     "doc-review",
     "research-review",
-    "asm-artefact-present",
-    "holistic-review",
     "repo-validate"
   ],
   "gates_status": {},
@@ -39,5 +37,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Publish the shift-permutation dispositions",
-  "updated_at": "2026-09-15T00:57:24.562407727Z"
+  "updated_at": "2026-09-16T20:33:35.082605360Z"
 }

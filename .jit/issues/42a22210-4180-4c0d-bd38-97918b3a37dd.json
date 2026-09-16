@@ -10,12 +10,10 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
     "research-review",
-    "asm-artefact-present",
-    "tdd-reminder"
+    "asm-artefact-present"
   ],
   "gates_status": {},
   "id": "42a22210-4180-4c0d-bd38-97918b3a37dd",
@@ -32,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the XOR unroll portfolio",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:23:21.259155060Z"
 }

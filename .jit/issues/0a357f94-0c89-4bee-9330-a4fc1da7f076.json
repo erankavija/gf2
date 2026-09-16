@@ -12,9 +12,7 @@
     "repo-validate",
     "doc-review",
     "cargo-ci",
-    "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "code-review"
   ],
   "gates_status": {},
   "id": "0a357f94-0c89-4bee-9330-a4fc1da7f076",
@@ -26,7 +24,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Verify the logical producing-input closure before a timed run",
-  "updated_at": "2026-09-16T19:10:27.128961435Z"
+  "updated_at": "2026-09-16T20:35:49.211503435Z"
 }

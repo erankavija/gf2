@@ -11,11 +11,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "b9302771-703c-4f47-adb7-a7469d855b7b",
@@ -27,7 +25,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Amend the frozen ISA-L family to five confirmatory cells",
-  "updated_at": "2026-09-16T17:01:46.833748256Z"
+  "updated_at": "2026-09-16T20:36:38.030230040Z"
 }

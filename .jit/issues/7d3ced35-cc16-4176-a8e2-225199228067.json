@@ -10,12 +10,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present",
-    "tdd-reminder"
+    "asm-artefact-present"
   ],
   "gates_status": {},
   "id": "7d3ced35-cc16-4176-a8e2-225199228067",
@@ -31,5 +28,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Implement the approved private zero-copy outcome",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:26:56.408712994Z"
 }

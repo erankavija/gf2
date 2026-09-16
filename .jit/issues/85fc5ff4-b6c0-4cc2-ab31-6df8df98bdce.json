@@ -162,8 +162,6 @@
     "code-review",
     "doc-review",
     "research-review",
-    "asm-artefact-present",
-    "holistic-review",
     "repo-validate"
   ],
   "gates_status": {},
@@ -183,5 +181,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile the residual BitVec shift family",
-  "updated_at": "2026-09-16T12:48:52.929268676Z"
+  "updated_at": "2026-09-16T20:34:06.969415605Z"
 }

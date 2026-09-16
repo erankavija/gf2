@@ -10,11 +10,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "65c0e13d-74af-4f66-8b08-d2eba04e2a5b",
@@ -31,5 +29,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the ISA-L XOR comparison",
-  "updated_at": "2026-09-16T15:59:54.323243574Z"
+  "updated_at": "2026-09-16T20:30:23.382712471Z"
 }

@@ -11,11 +11,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "ad2a6a58-39f1-4d1e-bdcc-e6a1e909fe67",
@@ -31,5 +29,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-09-16T18:51:23.673240247Z"
+  "updated_at": "2026-09-16T20:28:31.917808788Z"
 }

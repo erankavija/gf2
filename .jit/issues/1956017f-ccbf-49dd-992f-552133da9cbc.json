@@ -12,9 +12,7 @@
     "doc-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present",
-    "tdd-reminder"
+    "asm-artefact-present"
   ],
   "gates_status": {},
   "id": "1956017f-ccbf-49dd-992f-552133da9cbc",
@@ -31,5 +29,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Implement the selected dense-parity outcome",
-  "updated_at": "2026-09-16T19:10:44.262471414Z"
+  "updated_at": "2026-09-16T20:26:40.538238983Z"
 }

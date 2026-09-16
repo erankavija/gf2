@@ -196,23 +196,16 @@
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/bb769456-r2.md"
     }
   ],
+  "done_at": "2026-09-16T20:35:24.719665912Z",
   "first_ready_at": "2026-09-16T10:48:31.038164560Z",
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present",
-    "tdd-reminder"
+    "research-review"
   ],
   "gates_status": {
-    "asm-artefact-present": {
-      "status": "passed",
-      "updated_at": "2026-09-16T18:55:35.800772901Z",
-      "updated_by": "auto:executor"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_at": "2026-09-16T19:03:17.292342123Z",
@@ -228,11 +221,6 @@
       "updated_at": "2026-09-16T19:11:01.313870366Z",
       "updated_by": "auto:executor"
     },
-    "holistic-review": {
-      "status": "failed",
-      "updated_at": "2026-09-16T19:07:36.637717986Z",
-      "updated_by": "auto:executor"
-    },
     "repo-validate": {
       "status": "passed",
       "updated_at": "2026-09-16T18:53:47.240938258Z",
@@ -242,11 +230,6 @@
       "status": "passed",
       "updated_at": "2026-09-16T19:02:38.557224826Z",
       "updated_by": "auto:executor"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_at": "2026-09-16T18:53:13.284944970Z",
-      "updated_by": "agent:jit-execution-lead"
     }
   },
   "id": "bb769456-6803-49ec-ae91-f1619dd0f278",
@@ -260,7 +243,7 @@
     "satisfies:REQ-06"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Implement the logical-buffer measurement harness",
-  "updated_at": "2026-09-16T19:12:08.462976730Z"
+  "updated_at": "2026-09-16T20:35:24.719665912Z"
 }

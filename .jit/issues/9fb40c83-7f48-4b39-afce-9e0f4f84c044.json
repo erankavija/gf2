@@ -200,8 +200,6 @@
     "code-review",
     "doc-review",
     "research-review",
-    "asm-artefact-present",
-    "holistic-review",
     "repo-validate"
   ],
   "gates_status": {},
@@ -224,5 +222,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-16T10:54:19.520229900Z"
+  "updated_at": "2026-09-16T20:33:51.013252963Z"
 }

@@ -162,6 +162,7 @@
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/2c487595-r1.md"
     }
   ],
+  "done_at": "2026-09-16T20:37:27.121353665Z",
   "first_ready_at": "2026-09-12T15:43:13.659044287Z",
   "gates_required": [
     "cargo-ci",
@@ -175,8 +176,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-16T19:01:23.684515088Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T19:19:48.935805179Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -192,7 +193,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Version the addendum schema alongside its predecessors",
-  "updated_at": "2026-09-16T19:12:08.127438396Z"
+  "updated_at": "2026-09-16T20:37:27.121353665Z"
 }

@@ -10,11 +10,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "833dff1a-8d2b-42d2-b4a7-b34c2ac36df8",
@@ -31,5 +29,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Freeze the dense-parity candidate portfolio",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:30:39.324775503Z"
 }

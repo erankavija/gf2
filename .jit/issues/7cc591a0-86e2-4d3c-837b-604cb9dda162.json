@@ -20,7 +20,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Make test scratch directories self-cleaning and TMPDIR-aware",
-  "updated_at": "2026-09-16T17:36:36.318133619Z"
+  "updated_at": "2026-09-16T20:36:13.728067472Z"
 }

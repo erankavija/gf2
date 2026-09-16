@@ -11,12 +11,10 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
     "research-review",
-    "asm-artefact-present",
-    "tdd-reminder"
+    "asm-artefact-present"
   ],
   "gates_status": {},
   "id": "c9cf13ee-7e25-493f-8e3d-a3924fbdaf88",
@@ -33,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Measure a private BitSlice zero-copy prototype",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:25:03.332984745Z"
 }

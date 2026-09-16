@@ -11,11 +11,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "c489745b-0c92-4b31-8875-72c9f095e8ac",
@@ -31,5 +29,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Record the isolated XOR baseline",
-  "updated_at": "2026-09-16T18:26:58.335599902Z"
+  "updated_at": "2026-09-16T20:29:35.639772555Z"
 }

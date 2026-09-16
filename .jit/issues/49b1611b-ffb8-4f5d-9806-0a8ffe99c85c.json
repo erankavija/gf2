@@ -10,11 +10,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "49b1611b-ffb8-4f5d-9806-0a8ffe99c85c",
@@ -30,5 +28,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Confirm the dense-parity production outcome",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:33:03.348205511Z"
 }

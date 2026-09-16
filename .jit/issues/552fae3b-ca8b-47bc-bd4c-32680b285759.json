@@ -11,11 +11,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "552fae3b-ca8b-47bc-bd4c-32680b285759",
@@ -31,5 +29,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Freeze the private zero-copy candidate",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T20:31:11.231750610Z"
 }

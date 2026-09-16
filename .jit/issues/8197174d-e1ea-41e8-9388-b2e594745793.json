@@ -11,11 +11,9 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "8197174d-e1ea-41e8-9388-b2e594745793",
@@ -32,5 +30,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Record the row-XOR consumer baseline",
-  "updated_at": "2026-09-16T18:27:22.718315928Z"
+  "updated_at": "2026-09-16T20:29:19.683912723Z"
 }

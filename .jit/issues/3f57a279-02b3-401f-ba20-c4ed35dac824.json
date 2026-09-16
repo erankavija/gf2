@@ -12,8 +12,7 @@
     "doc-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "3f57a279-02b3-401f-ba20-c4ed35dac824",
@@ -28,5 +27,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Select the zero-copy integration outcome",
-  "updated_at": "2026-09-16T19:11:52.165777485Z"
+  "updated_at": "2026-09-16T20:31:59.059900753Z"
 }
