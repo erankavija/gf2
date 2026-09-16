@@ -12637,3 +12637,8 @@
 {"from":"ready","id":"ab68be07-e8fc-46de-9263-a23c1de1f3db","issue_id":"613574db-f283-425f-b664-369f3e93d756","timestamp":"2026-09-16T11:40:31.431365972Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"cb406b23-bd52-4635-ad34-cc003be21fbd","issue_id":"613574db-f283-425f-b664-369f3e93d756","timestamp":"2026-09-16T11:40:31.431365972Z","type":"issue_claimed"}
 {"fields":["documents"],"id":"0451ecf3-d22e-4454-9a2f-ff8aa6bfd3de","issue_id":"92385645-25ab-480c-996b-61049d186a70","timestamp":"2026-09-16T11:46:33.489845768Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"repo-validate","id":"dfe98930-c780-4bb3-8d37-7f9f90a4c539","issue_id":"92385645-25ab-480c-996b-61049d186a70","timestamp":"2026-09-16T11:46:59.291531979Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"3bc28084-cf08-4a6b-85e1-7cb6bfc32731","issue_id":"92385645-25ab-480c-996b-61049d186a70","timestamp":"2026-09-16T11:49:20.537816376Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"holistic-review","id":"8eb7a4f5-3b9b-40e5-a056-7d5552a0ccf7","issue_id":"92385645-25ab-480c-996b-61049d186a70","timestamp":"2026-09-16T11:52:29.978611658Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"128899b1-a28d-46f6-a1bc-54b5bad3eb4c","issue_id":"613574db-f283-425f-b664-369f3e93d756","timestamp":"2026-09-16T11:53:13.001030388Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"e03c44c1-4043-4d13-a57f-993e986eeb1d","issue_id":"613574db-f283-425f-b664-369f3e93d756","timestamp":"2026-09-16T11:53:13.443293341Z","type":"issue_updated","updated_by":"doc-add"}
