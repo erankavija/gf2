@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-16T12:11:34.507392176Z",
+  "dependencies": [
+    "b64dc9c4-be76-4409-82fb-c4356d5c5521"
+  ],
+  "description": "Measure the shipped GF(2^8) dense matrix product against the route the\nlibrary takes without it, as a protocol-version-4 A/B family with a pilot and\na confirmation, and publish the receipts and the decision.\n\n## Background\n\nA production change needs a current pinned pre-change baseline and an after\nmeasurement on the same host, including dispatch overhead; a prior study's\nreceipts are context, not a substitute. Both arms are the same shipped\nexecutable, separated by the test-build lane switch, so the comparison\nisolates the change. The accepted matrix-family confirmation receipt under\n`dev/bench_results/19513245/` states the direction an earlier prototype\nreached and is cited for agreement, not inherited; the shipped path writes\nresults in place and restores the transposed operand, neither of which the\nprototype did. The two representations reach different routes without the\nchange — one a batched dot product per output cell, the other a whole-product\ncarry-less-multiply kernel — so each is its own cell. Cells also cover the\nwhole-consumer boundary, where the scratch buffers and the operand restoration\nare paid.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen family addendum is committed before the campaign\n  launches, with every numeric setting from it and the shared protocol\n  settings, and the confirmation addendum is derived from the committed pilot\n  receipt by the repository's canonical confirmation freezer with its\n  derivation record beside it.\n- [hard] REQ-02: The family's append-only ledger opens empty, records each\n  attempt's reservation, and is never hand-edited; an attempt aborted for a\n  procedural defect in its own freeze or launch, before any result is read, is\n  recorded under the voided-attempt rule with its stage preserved.\n- [hard] REQ-03: Every arm and case operation passes through the real\n  benchmark runner on a throwaway plan before any timed campaign is queued,\n  and every timed run is a committed queue line for the benchmark window\n  rather than a session launch.\n- [hard] REQ-04: Each campaign is verified from its own execution log: the\n  declared cell count starts, checkpoints and completes exactly once, every\n  cell reaches its declared pair count with a measured status, the campaign\n  ends in a terminal complete record, and the acceptance tool recomputes the\n  committed verdict.\n- [hard] REQ-05: The pilot covers both GF(2^8) element representations, at\n  least two square dimensions and the whole-matrix consumer boundary; the\n  confirmation retains as many of those cells as its family's confirmatory\n  budget admits, and the freezer's derivation record names which cells are\n  retained, which are dropped and why. Each cell's selected lane and per-call\n  allocation counts are recorded at run time.\n- [hard] REQ-06: The published outcome states, for each cell, the verdict the\n  acceptance summary records, including any not-material or regressed cell,\n  and states whether the result agrees in direction with the earlier\n  matrix-family confirmation receipt it pins by path and digest. A\n  non-qualifying outcome is published as the result, with retention or removal\n  of the accelerated path decided by the frozen rule rather than after the\n  fact.\n- [hard] REQ-07: No measured or derived figure is copied into prose; each\n  quantitative statement is a conclusion plus a pointer to the generated table\n  row, receipt or ledger line that holds it.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-16T12:11:34.507392176Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "4c1e441f-2bb4-43dd-bd73-256c3721800a",
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "epic:zen3-cpu-performance"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Confirm the GF(2^8) dense product against the current matrix route",
+  "updated_at": "2026-09-16T12:13:37.251980155Z"
+}

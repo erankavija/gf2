@@ -1,0 +1,34 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-16T12:10:29.931809742Z",
+  "dependencies": [
+    "613574db-f283-425f-b664-369f3e93d756"
+  ],
+  "description": "Cache the GF(2^8) byte product table per reduction polynomial in `gf2-core`,\nand make the vector fused multiply-add over GF(2^8) take it through the\naccelerated-axpy hook that consumer already consults, for both the\nruntime-context element and the single-word wide representation.\n\n## Background\n\nByte-oriented GF(2^8) arithmetic multiplies by a reused coefficient with one\nindexed load and accumulates with one XOR, over a table of the products of\nevery byte pair under the field's reduction polynomial. Preparing that table\ninside a call is a large fraction of a small call, so it is built once per\npolynomial and shared for the life of the process; the same key serves the\nruntime-context and the compile-time-configured representation.\n`FieldVec::axpy` offers its operands to one hook before running its scalar\nelement loop, and no GF(2^8) representation overrides that hook, so the loop\nreaches a per-element function pointer for one representation and a\nper-element allocation for the other. `dev/active/613574db/design.md` fixes\nthe table layout, the cache key, the lifetime, the guard conditions, the\nfield-handle pre-check, the in-place write-back and the conformance surface;\nit is the contract this work implements.\n\n## Success Criteria\n\n- [hard] REQ-01: A product table for a degree-8 reduction polynomial answers\n  every byte pair with the product an independent schoolbook oracle computes,\n  for all 30 irreducible degree-8 polynomials, with the zero coefficient\n  giving an all-zero row and the one coefficient giving the identity row.\n- [hard] REQ-02: A table is built at most once per reduction polynomial per\n  process and is shared by reference afterwards; concurrent first touches of\n  one key from many threads observe one identical table that agrees with the\n  oracle, and a second lookup of a key returns the same table.\n- [hard] REQ-03: The accelerated path accepts single-word GF(2^8) operands of\n  both representations and declines every other degree, backing width and\n  multi-word configuration, so those keep the results they produce.\n- [hard] REQ-04: For every coefficient 0 through 255 over both the 0x11B and\n  0x11D polynomials, the accepted path and the scalar path produce identical\n  vectors, for lengths 0, 1, 63, 64 and 65, an odd length above the kernel's\n  unrolling, and source and destination at every byte offset 0 through 7. A\n  coefficient of zero leaves the destination unchanged and a coefficient of\n  one reduces the operation to XOR.\n- [hard] REQ-05: A call whose operands do not all share the coefficient's\n  field context behaves exactly as it does without the accelerated path.\n- [hard] REQ-06: One function selects between the accelerated lane and the\n  scalar lane; its documentation is the authoritative statement of the\n  predicate, a lane witness reports which lane ran, and a switch compiled only\n  for test builds holds every caller on the scalar lane so the fallback is\n  exercised on a host where the accelerated lane would run.\n- [hard] REQ-07: The call allocates nothing, reads a source distinct from its\n  destination, and leaves the vector element type, layout and public signature\n  unchanged; the crate adds no unsafe code, no dependency and no public\n  byte-region API, and the table and kernel stay crate-internal outside test\n  builds.\n- [hard] REQ-08: The shared field-law suite runs over both representations\n  over both polynomials and passes, and the work builds and tests at Rust 1.95\n  under the repository CI contract.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-16T12:10:29.931809742Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review",
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present",
+    "tdd-reminder"
+  ],
+  "gates_status": {},
+  "id": "77c21ecd-5350-449f-ba32-dab1b2c6a8a6",
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "satisfies:REQ-02",
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Cache GF(2^8) byte product tables and route FieldVec::axpy through them",
+  "updated_at": "2026-09-16T12:12:02.687993883Z"
+}
