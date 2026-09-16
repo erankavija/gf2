@@ -14,7 +14,7 @@ REPO="$(cd "${HERE}/../../../.." && pwd)"
     echo 'invoke from the worker worktree root' >&2
     exit 2
 }
-RUN_ID="${1:-v4-r1}"
+RUN_ID="${1:-v4-r2}"
 ADDENDUM=dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json
 PRODUCING=dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json
 LEDGER=dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-trial-ledger.jsonl
