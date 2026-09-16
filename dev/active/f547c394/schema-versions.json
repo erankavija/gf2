@@ -1,0 +1,33 @@
+{
+  "schema": "addendum-schema-versions-v1",
+  "versions": [
+    {
+      "version": 1,
+      "schema_id": "zen3-benchmark-addendum-v1",
+      "path": "dev/active/f547c394/addendum-v1.schema.json",
+      "sha256": "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1",
+      "pinning_receipts": 20
+    },
+    {
+      "version": 2,
+      "schema_id": "zen3-benchmark-addendum-v2",
+      "path": "dev/active/f547c394/addendum-v2.schema.json",
+      "sha256": "4900f412729a76cd6ecf94de21b1f3fb36239f977975490ab8e182397a6fadef",
+      "pinning_receipts": 2
+    },
+    {
+      "version": 3,
+      "schema_id": "zen3-benchmark-addendum-v3",
+      "path": "dev/active/f547c394/addendum-v3.schema.json",
+      "sha256": "513f37627dd82dbce95f49ff3f714af83131320fdbd0fe704baffc18a57412cd",
+      "pinning_receipts": 43
+    },
+    {
+      "version": 4,
+      "schema_id": "zen3-benchmark-addendum-v4",
+      "path": "dev/active/f547c394/addendum.schema.json",
+      "sha256": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",
+      "pinning_receipts": 58
+    }
+  ]
+}
