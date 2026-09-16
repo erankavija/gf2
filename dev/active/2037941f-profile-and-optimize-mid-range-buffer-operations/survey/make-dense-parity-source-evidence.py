@@ -5,8 +5,9 @@ Every claim names a project, a repository-relative path, the line, the verbatim
 line at that position and why the addendum relies on it. Each claim also states
 how many times its fragment occurs in that file, so a fragment that gains or
 loses an occurrence fails this script instead of silently repinning. The file is
-regenerated rather than edited, so a claim that moves or disappears fails here
-instead of going stale in prose.
+regenerated rather than edited, so a claim that disappears or changes its
+occurrence count fails here instead of going stale in prose, and a claim whose
+fragment moves is re-pinned to the line it currently occupies.
 """
 
 import hashlib
