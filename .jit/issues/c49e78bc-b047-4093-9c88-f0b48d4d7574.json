@@ -19,17 +19,16 @@
   "id": "c49e78bc-b047-4093-9c88-f0b48d4d7574",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-coding",
     "component:benchmarks",
     "satisfies:REQ-01",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "epic:zen3-cpu-performance"
+    "resolution:merged-into-18a87159"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Record the coding-route logical baseline",
-  "updated_at": "2026-09-16T22:11:00.357969680Z"
+  "updated_at": "2026-09-16T23:24:12.902158279Z"
 }

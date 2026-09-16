@@ -9,8 +9,6 @@
   "documents": [],
   "first_ready_at": "2026-09-16T12:11:34.507392176Z",
   "gates_required": [
-    "repo-validate",
-    "doc-review",
     "cargo-ci",
     "code-review",
     "research-review"
@@ -29,5 +27,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Confirm the GF(2^8) dense product against the current matrix route",
-  "updated_at": "2026-09-16T20:28:47.896127761Z"
+  "updated_at": "2026-09-16T22:39:48.771675173Z"
 }

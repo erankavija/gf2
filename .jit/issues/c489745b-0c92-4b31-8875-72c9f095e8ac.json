@@ -19,16 +19,15 @@
   "id": "c489745b-0c92-4b31-8875-72c9f095e8ac",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
     "satisfies:REQ-01",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "epic:zen3-cpu-performance"
+    "resolution:merged-into-18a87159"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Record the isolated XOR baseline",
-  "updated_at": "2026-09-16T22:03:59.194909945Z"
+  "updated_at": "2026-09-16T23:23:22.249161444Z"
 }

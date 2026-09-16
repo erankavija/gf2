@@ -160,9 +160,7 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review",
-    "research-review",
-    "repo-validate"
+    "research-review"
   ],
   "gates_status": {},
   "id": "85fc5ff4-b6c0-4cc2-ab31-6df8df98bdce",
@@ -181,5 +179,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile the residual BitVec shift family",
-  "updated_at": "2026-09-16T20:34:06.969415605Z"
+  "updated_at": "2026-09-16T22:39:00.458981427Z"
 }

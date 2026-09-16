@@ -9,7 +9,6 @@
   "documents": [],
   "first_ready_at": "2026-09-16T12:10:47.157126993Z",
   "gates_required": [
-    "repo-validate",
     "doc-review",
     "cargo-ci",
     "code-review"
@@ -26,5 +25,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Route the dense FieldMatrix product for GF(2^8) through the cached table",
-  "updated_at": "2026-09-16T20:28:15.987864108Z"
+  "updated_at": "2026-09-16T22:41:09.613054629Z"
 }

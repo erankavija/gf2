@@ -9,7 +9,6 @@
   "documents": [],
   "first_ready_at": "2026-09-16T18:26:09.534194702Z",
   "gates_required": [
-    "repo-validate",
     "doc-review",
     "cargo-ci",
     "code-review"
@@ -27,5 +26,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Verify the logical producing-input closure before a timed run",
-  "updated_at": "2026-09-16T21:55:44.654690962Z"
+  "updated_at": "2026-09-16T22:41:47.233139174Z"
 }

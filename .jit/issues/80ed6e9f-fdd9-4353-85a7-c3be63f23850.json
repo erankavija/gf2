@@ -19,17 +19,16 @@
   "id": "80ed6e9f-fdd9-4353-85a7-c3be63f23850",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "epic:zen3-cpu-performance"
+    "resolution:merged-into-bc091474"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Measure the consumer-specific dispatch candidate",
-  "updated_at": "2026-09-16T22:08:06.489535192Z"
+  "updated_at": "2026-09-16T23:25:30.290831854Z"
 }

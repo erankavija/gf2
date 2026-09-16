@@ -19,16 +19,15 @@
   "id": "a5f29ae5-e229-44c9-a37c-53edceae61de",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-06",
-    "epic:zen3-cpu-performance"
+    "resolution:merged-into-bc091474"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Select the logical-buffer production outcome",
-  "updated_at": "2026-09-16T22:03:17.609824999Z"
+  "updated_at": "2026-09-16T23:25:55.422746936Z"
 }

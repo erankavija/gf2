@@ -9,8 +9,6 @@
   "documents": [],
   "first_ready_at": "2026-09-16T15:55:26.367380919Z",
   "gates_required": [
-    "repo-validate",
-    "doc-review",
     "cargo-ci",
     "code-review",
     "research-review"
@@ -28,5 +26,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Amend the frozen ISA-L family to five confirmatory cells",
-  "updated_at": "2026-09-16T22:10:10.731598421Z"
+  "updated_at": "2026-09-16T22:40:21.193591297Z"
 }

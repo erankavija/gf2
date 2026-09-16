@@ -18,17 +18,16 @@
   "id": "4497e541-8480-4ce3-ae81-4ad8e70b72f9",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "epic:zen3-cpu-performance"
+    "resolution:folded-into-a1ad6d4e"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Confirm the private zero-copy production outcome",
-  "updated_at": "2026-09-16T21:59:52.633562183Z"
+  "updated_at": "2026-09-16T23:33:11.128099886Z"
 }

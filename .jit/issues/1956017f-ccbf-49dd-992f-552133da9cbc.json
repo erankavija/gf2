@@ -18,17 +18,16 @@
   "id": "1956017f-ccbf-49dd-992f-552133da9cbc",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "epic:zen3-cpu-performance"
+    "resolution:merged-into-6e87c436"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Implement the selected dense-parity outcome",
-  "updated_at": "2026-09-16T21:56:09.415321515Z"
+  "updated_at": "2026-09-16T23:29:47.602344468Z"
 }

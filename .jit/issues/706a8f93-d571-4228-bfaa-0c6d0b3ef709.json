@@ -18,10 +18,10 @@
     "epic:zen3-cpu-performance",
     "component:benchmarks",
     "type:bug",
-    "resolution:provenance freeze: protocol v4 and its receipt schema are final for epic 1a379447; scheduling-priority observation is a follow-up outside the epic"
+    "resolution:provenance-freeze"
   ],
   "priority": "normal",
   "state": "rejected",
   "title": "Record the achieved scheduling priority in receipt host observations",
-  "updated_at": "2026-09-16T22:05:29.488448405Z"
+  "updated_at": "2026-09-16T23:33:35.871732924Z"
 }

@@ -18,10 +18,10 @@
     "epic:zen3-cpu-performance",
     "component:benchmarks",
     "type:task",
-    "resolution:provenance freeze: protocol v4 and its addendum schema are final for epic 1a379447; stage-specific family prose is a follow-up outside the epic"
+    "resolution:provenance-freeze"
   ],
   "priority": "normal",
   "state": "rejected",
   "title": "Freeze confirmation addenda with stage-specific family prose",
-  "updated_at": "2026-09-16T22:06:18.595911891Z"
+  "updated_at": "2026-09-16T23:34:01.337847168Z"
 }

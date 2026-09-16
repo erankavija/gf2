@@ -20,17 +20,16 @@
   "id": "0064b0a2-6ed1-4b7e-aeeb-f3975781ac63",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "epic:zen3-cpu-performance"
+    "resolution:merged-into-bc091474"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Freeze the logical candidate portfolio",
-  "updated_at": "2026-09-16T21:55:19.834169498Z"
+  "updated_at": "2026-09-16T23:24:37.812629473Z"
 }

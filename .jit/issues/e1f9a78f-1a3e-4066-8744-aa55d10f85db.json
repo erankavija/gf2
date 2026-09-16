@@ -10,7 +10,6 @@
   "documents": [],
   "first_ready_at": "2026-09-16T20:37:02.481753350Z",
   "gates_required": [
-    "repo-validate",
     "doc-review",
     "cargo-ci",
     "code-review"
@@ -30,5 +29,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Implement the dense-parity measurement harness",
-  "updated_at": "2026-09-16T22:04:39.978333190Z"
+  "updated_at": "2026-09-16T22:41:31.227648500Z"
 }

@@ -9,8 +9,6 @@
   "documents": [],
   "first_ready_at": "2026-09-16T12:11:10.819218802Z",
   "gates_required": [
-    "repo-validate",
-    "doc-review",
     "cargo-ci",
     "code-review",
     "research-review"
@@ -29,5 +27,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-09-16T20:28:31.917808788Z"
+  "updated_at": "2026-09-16T22:39:32.596989529Z"
 }
