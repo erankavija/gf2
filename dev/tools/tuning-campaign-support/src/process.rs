@@ -22,9 +22,9 @@ pub struct ProcessResult {
     /// The observed terminal state of the child process tree.
     pub outcome: ProcessOutcome,
     /// The error reported for the run, if any. The first error from the
-    /// standard-error callback or from reading a child stream takes precedence;
-    /// when neither occurred, the failure of writing the request to the child's
-    /// standard input is reported here.
+    /// `started` callback, the standard-error callback or a child stream read
+    /// takes precedence; when none of those occurred, the failure of writing
+    /// the request to the child's standard input is reported here.
     pub callback_error: Option<io::Error>,
 }
 
