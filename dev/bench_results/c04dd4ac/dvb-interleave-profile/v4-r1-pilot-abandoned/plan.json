@@ -1,0 +1,161 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "v4-r1-9fb40c83-dvb-interleave-profile",
+  "issue": "9fb40c83",
+  "label": "pilot",
+  "campaign_seed": 20260915,
+  "addendum": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json",
+  "producing_manifest": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-direct-a": {
+      "build": "native",
+      "description": "First isolated null arm: current gf2-coding DvbT2BitInterleaver::interleave on one packed BitVec, including output allocation",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-arms-native/release/dvb-profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DVB_PROFILE_ROUTE": "gf2-direct-a"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-direct-b": {
+      "build": "native",
+      "description": "Second isolated null arm: byte-identical executable and current direct gf2 interleave route, independently launched for same-path noise",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-arms-native/release/dvb-profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DVB_PROFILE_ROUTE": "gf2-direct-b"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-stage": {
+      "build": "native",
+      "description": "Production gf2-sim BitInterleave::process on a one-frame BitPackedBatch, which calls the current gf2-coding packed scatter and returns a BitPackedBatch",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-arms-native/release/dvb-profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DVB_PROFILE_ROUTE": "gf2-stage"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "xdsopl-stage": {
+      "build": "external",
+      "description": "Operation-equivalent xdsopl PCTITL at the same one-frame BitPackedBatch boundary; unpack, destructive-input copy, output allocation and pack remain inside each call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-arms-native/release/dvb-profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DVB_PROFILE_ROUTE": "xdsopl-stage"
+      },
+      "rustflags": "-C target-cpu=native; C++ -O3 -march=native -std=c++17",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-warm-isolated-null",
+      "baseline_arm": "gf2-direct-a",
+      "candidate_arm": "gf2-direct-b",
+      "case": {
+        "modcod": "qam16-r12-normal",
+        "seed": 2101
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-warm-sim-stage-gap",
+      "baseline_arm": "gf2-stage",
+      "candidate_arm": "xdsopl-stage",
+      "case": {
+        "modcod": "qam16-r12-normal",
+        "seed": 2101
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-warm-isolated-null",
+      "baseline_arm": "gf2-direct-a",
+      "candidate_arm": "gf2-direct-b",
+      "case": {
+        "modcod": "qam64-r12-normal",
+        "seed": 2102
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-normal-warm-sim-stage-gap",
+      "baseline_arm": "gf2-stage",
+      "candidate_arm": "xdsopl-stage",
+      "case": {
+        "modcod": "qam64-r12-normal",
+        "seed": 2102
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-short-warm-isolated-null",
+      "baseline_arm": "gf2-direct-a",
+      "candidate_arm": "gf2-direct-b",
+      "case": {
+        "modcod": "qam16-r12-short",
+        "seed": 2103
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-short-warm-sim-stage-gap",
+      "baseline_arm": "gf2-stage",
+      "candidate_arm": "xdsopl-stage",
+      "case": {
+        "modcod": "qam16-r12-short",
+        "seed": 2103
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-short-warm-isolated-null",
+      "baseline_arm": "gf2-direct-a",
+      "candidate_arm": "gf2-direct-b",
+      "case": {
+        "modcod": "qam64-r12-short",
+        "seed": 2104
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam64-r12-short-warm-sim-stage-gap",
+      "baseline_arm": "gf2-stage",
+      "candidate_arm": "xdsopl-stage",
+      "case": {
+        "modcod": "qam64-r12-short",
+        "seed": 2104
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-streaming-isolated-null",
+      "baseline_arm": "gf2-direct-a",
+      "candidate_arm": "gf2-direct-b",
+      "case": {
+        "modcod": "qam16-r12-normal",
+        "seed": 2101
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-qam16-r12-normal-streaming-sim-stage-gap",
+      "baseline_arm": "gf2-stage",
+      "candidate_arm": "xdsopl-stage",
+      "case": {
+        "modcod": "qam16-r12-normal",
+        "seed": 2101
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 2
+}
