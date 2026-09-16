@@ -76,7 +76,10 @@ build_isal() {
 }
 
 cmd_build() {
-    local with_isal=0 source=''
+    local with_isal=0 source='' invocation
+    # The record states the invocation that produced it, so the launcher's own
+    # arguments are passed through rather than reconstructed.
+    invocation="${LAUNCHER} build${*:+ $*}"
     [[ "${1:-}" == "--isal" ]] && with_isal=1
     build_gf2
     # The survey harness is its own workspace, so the repository CI contract
@@ -95,7 +98,7 @@ cmd_build() {
     llvm="$(rustc --version --verbose | sed -n 's/^LLVM version: //p')"
     {
         echo '# Logical-buffer harness non-timed validation (jit:bb769456)'
-        echo "# command: ${LAUNCHER} build$([[ ${with_isal} == 1 ]] && echo ' --isal')"
+        echo "# command: ${invocation}"
         echo '# timing: none; the command builds release binaries and runs semantic validators only'
         echo "# rustc: ${version}; LLVM ${llvm}; ${host}"
         "${CAMPAIGN_TOOL}" pins | sed 's/^/# /'
@@ -266,10 +269,12 @@ cmd_window() {
         --bin benchmark-ab-runner --bin benchmark-acceptance
 
     # The producing-input closure is the manifest every receipt snapshots:
-    # harness sources, measured crate sources, campaign-support sources, the
-    # contract, the protocol and the frozen addendum. A path the closure names
-    # that git does not track, or whose bytes differ from the committed
-    # content, refuses the run. This is the last step before the launch.
+    # harness sources, measured crate sources, campaign-support sources, every
+    # Cargo manifest and lock the executables above are built from, the closure
+    # manifest itself, the contract, the protocol and the frozen addendum. A
+    # path the closure names that git does not track, or whose bytes differ
+    # from the committed content, refuses the run. This is the last step before
+    # the launch.
     "${CAMPAIGN_TOOL}" inputs --producing-manifest "${PRODUCING}" \
         --also "${addendum}" --also "${ledger}"
 
