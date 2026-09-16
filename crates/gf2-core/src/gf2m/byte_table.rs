@@ -3,8 +3,9 @@
 //! Byte-oriented GF(2^8) arithmetic multiplies by a reused coefficient with
 //! one indexed load and accumulates with one XOR. The table of every byte pair
 //! under one degree-8 reduction polynomial is what makes that possible, and
-//! building it costs 65536 shift-and-XOR steps, so it is built once per
-//! polynomial and shared for the life of the process.
+//! building it takes 256 initialisation stores and 65024 doubling-recurrence
+//! steps, so it is built once per polynomial and shared for the life of the
+//! process.
 //!
 //! # Walkthrough
 //!
@@ -389,10 +390,11 @@ mod tests {
     }
 
     #[test]
-    fn the_crate_reports_the_gauss_count_of_irreducible_degree_8_moduli() {
-        // Gauss: (2^8 - 2^4) / 8 monic irreducibles of degree 8 over GF(2).
-        let gauss = (256 - 16) / 8;
-        assert_eq!(irreducible_keys().len(), gauss);
+    fn the_crate_reports_thirty_irreducible_degree_8_moduli() {
+        // Monic irreducible polynomials of degree 8 over GF(2): Mobius inversion
+        // of 2^n = sum over d | n of d * N(d) gives (2^8 - 2^4) / 8.
+        let expected = (256 - 16) / 8;
+        assert_eq!(irreducible_keys().len(), expected);
     }
 
     #[test]
