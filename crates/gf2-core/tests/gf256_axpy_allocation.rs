@@ -81,7 +81,11 @@ impl Gf2mWideConfig<1> for Gf256Poly11dCfg {
 fn neither_representation_allocates_on_the_table_lane() {
     let field = Gf2mField::new(8, 0x11d);
     let coefficient = field.element(0x53);
-    let mut y = FieldVec::from((0..137u64).map(|v| field.element(v & 0xff)).collect::<Vec<_>>());
+    let mut y = FieldVec::from(
+        (0..137u64)
+            .map(|v| field.element(v & 0xff))
+            .collect::<Vec<_>>(),
+    );
     let x = FieldVec::from(
         (0..137u64)
             .map(|v| field.element((v * 7 + 3) & 0xff))
