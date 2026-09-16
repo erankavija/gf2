@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Judge the logical-buffer runner smoke and write its record.
+"""Judge the logical-buffer non-timed smoke and write its record.
 
-The smoke is judged by what the arms and the runner wrote, not by exit codes:
-one parsed result line per arm per role, an append-only execution log whose
-first session is a byte prefix of the final log, one `cell-complete` per cell,
-a terminal `complete` record, and a decoding acceptance summary. Every line of
-the record is observed at run time and carries no clock reading, so a rerun on
-the same executables reproduces it byte for byte.
+The smoke is judged by what the arms and the smoke driver wrote, not by exit
+codes: one parsed result line per arm per cell, an append-only execution log
+whose first session is a byte prefix of the final log, one `cell-complete` per
+declared cell, a terminal `complete` record, an immutable checkpoint per cell,
+and a handshake record whose every arm reports zero timing windows. The stage
+is also checked to hold no finalized receipt, so the smoke can state from
+observation that it produced no timing sample and no receipt sample. Every line
+of the record is observed at run time and carries no clock reading, so a rerun
+on the same executables reproduces it byte for byte.
 """
 
 import argparse
@@ -14,6 +17,10 @@ import hashlib
 import json
 import pathlib
 import sys
+
+SMOKE_SCHEMA = "logical-buffer-nontimed-smoke-v1"
+# Journal events that exist only because a timing interval completed.
+TIMING_EVENTS = ("execution-progress", "window-progress")
 
 
 def events(path):
@@ -37,7 +44,8 @@ def main():
     lines = []
     for family in arguments.families:
         directory = stage / family
-        log = directory / "stage" / "execution.log"
+        session = directory / "stage"
+        log = session / "execution.log"
         first = directory / "execution.session-1.log"
         if not log.is_file():
             fail(f"{family} opened no execution log")
@@ -66,31 +74,55 @@ def main():
         abandoned = [r for r in records if r["event"] == "cell-abandoned"]
         if abandoned:
             fail(f"{family} abandoned {len(abandoned)} cell attempts")
+        timed = [r for r in records if r["event"] in TIMING_EVENTS]
+        if timed:
+            fail(f"{family} journalled {len(timed)} timing records")
 
         spawns = sum(1 for r in records if r["event"] == "child-spawn")
         exits = [r for r in records if r["event"] == "child-exit"]
         diagnostics = [r for r in records if r["event"] == "child-diagnostic"]
         nonzero = [r for r in exits if r["details"]["outcome"].get("exit_code") != 0]
 
-        receipt = json.loads((directory / "receipt" / "receipt.json").read_text())
+        # A finalized receipt is the one artifact a non-timed smoke must not
+        # leave behind; the stage holds the log, the plan, the checkpoints and
+        # the handshake record only.
+        receipts = sorted(
+            path.name
+            for path in list(session.glob("receipt*")) + list(directory.glob("receipt*"))
+        )
+        if receipts:
+            fail(f"{family} finalized {receipts}")
+
+        declared = {
+            cell["cell_id"]: cell["cache_state"]
+            for cell in json.loads((directory / "smoke-addendum.json").read_text())["cells"]
+        }
+        handshake = json.loads((session / "handshake.json").read_text())
+        if handshake["schema"] != SMOKE_SCHEMA:
+            fail(f"{family} wrote schema {handshake['schema']!r}")
         parsed = {}
         cells = {}
-        for cell in receipt["cells"]:
-            pairs = cell.get("pairs") or []
-            if not pairs:
-                fail(f"{cell['cell_id']} carries no paired execution")
-            states = set()
-            for pair in pairs:
-                for role in ("baseline", "candidate"):
-                    arm = cell[f"{role}_arm"]
-                    execution = pair[role]
-                    if not execution.get("windows"):
-                        fail(f"{arm} in {cell['cell_id']} reported no window")
-                    states.add(execution["cache_state_applied"])
-                    parsed[arm] = parsed.get(arm, 0) + 1
-            cells[cell["cell_id"]] = (len(pairs), sorted(states))
+        for cell in handshake["cells"]:
+            cell_id = cell["cell_id"]
+            if declared.get(cell_id) != cell["cache_state"]:
+                fail(f"{cell_id} reports cache state {cell['cache_state']!r}")
+            for arm in cell["arms"]:
+                if arm["windows"] != 0:
+                    fail(f"{arm['arm']} in {cell_id} reported {arm['windows']} timing windows")
+                if arm["cache_state_applied"] != cell["cache_state"]:
+                    fail(f"{arm['arm']} in {cell_id} applied another cache state")
+                if not arm["selected_path"]:
+                    fail(f"{arm['arm']} in {cell_id} reported no route provenance")
+                parsed[arm["arm"]] = parsed.get(arm["arm"], 0) + 1
+            cells[cell_id] = (len(cell["arms"]), cell["cache_state"])
         if sorted(cells) != sorted(keys):
-            fail(f"{family} receipt cells {sorted(cells)} differ from log {sorted(keys)}")
+            fail(f"{family} handshake cells {sorted(cells)} differ from log {sorted(keys)}")
+        if sorted(cells) != sorted(declared):
+            fail(f"{family} handshook {sorted(cells)} rather than the declared {sorted(declared)}")
+
+        units = sorted((session / "checkpoints" / "units").glob("*.json"))
+        if len(units) != len(cells):
+            fail(f"{family} checkpointed {len(units)} units for {len(cells)} cells")
         if nonzero or diagnostics:
             fail(f"{family}: {len(nonzero)} arm children failed, "
                  f"{len(diagnostics)} wrote diagnostics")
@@ -98,14 +130,11 @@ def main():
             fail(f"{family}: {spawns} spawns, {len(exits)} exits, "
                  f"{sum(parsed.values())} result lines")
 
-        summary = json.loads((directory / "receipt" / "acceptance-summary.json").read_text())
-        codes = sorted({finding["code"] for finding in summary["findings"]})
-
         lines.append(f"PASS {family}: {sessions} sessions, resume repeated no cell")
         for cell_id in sorted(cells):
-            pairs, states = cells[cell_id]
+            arms, cache = cells[cell_id]
             lines.append(
-                f"PASS {cell_id}: {pairs} paired executions, cache {'+'.join(states)}"
+                f"PASS {cell_id}: {arms} arms handshook, 0 timing windows, cache {cache}"
             )
         for arm in sorted(parsed):
             lines.append(f"PASS {arm}: {parsed[arm]} handshakes, "
@@ -115,8 +144,12 @@ def main():
             f"{len(diagnostics)} child diagnostics"
         )
         lines.append(
-            f"PASS {family} schema: acceptance summary decodes, verdict "
-            f"{summary['verdict']}, finding codes {','.join(codes) or 'none'}"
+            f"PASS {family} journal: {len(timed)} timing records, {len(units)} checkpointed "
+            f"cells, {len(receipts)} finalized receipts"
+        )
+        lines.append(
+            f"PASS {family} schema: handshake record decodes as {handshake['schema']}, "
+            f"{len(cells)} cells"
         )
 
     digests = [("logical-arm", arguments.gf2_arm)]
@@ -126,13 +159,14 @@ def main():
     record = pathlib.Path(arguments.record)
     with record.open("w") as handle:
         print(
-            "# Logical-buffer harness runner-wire smoke (jit:bb769456)\n"
+            "# Logical-buffer harness non-timed wire smoke (jit:bb769456)\n"
             "# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/"
             "survey/run-logical-harness.sh smoke\n"
-            "# every line below is observed at run time from the stage execution logs and the\n"
-            "# finalized throwaway receipts under target/; the record carries no clock reading\n"
-            "# and no timing sample, so a rerun on the same executables reproduces it byte for\n"
-            "# byte and the smoke cannot serve as a pilot",
+            "# every line below is observed at run time from the stage execution logs, the\n"
+            "# checkpoint stores and the handshake records under target/; the record carries\n"
+            "# no clock reading, the arms answer a zero-window request, and no receipt is\n"
+            "# finalized, so a rerun on the same executables reproduces it byte for byte and\n"
+            "# the smoke cannot serve as a pilot",
             file=handle,
         )
         for name, path in digests:
