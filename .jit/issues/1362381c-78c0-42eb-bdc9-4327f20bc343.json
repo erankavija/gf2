@@ -6,9 +6,9 @@
     "12fdeb5b-685d-4232-a350-2585c29cfed6",
     "2c487595-94bf-4369-a30c-960d378ee243",
     "428f2f6b-4cfa-4c78-b93c-a576e443594d",
-    "63bad95d-0e69-459b-840b-c37521036f52",
     "706a8f93-d571-4228-bfaa-0c6d0b3ef709",
     "7cdc28e9-b18a-45e4-b430-4e8a59dff8e3",
+    "807ddab2-f77b-4276-9430-e397258499c7",
     "8275a6f8-0a9f-40f9-b6ed-e17e355c5905",
     "94bbe5d7-48d0-4449-8a4d-37da700ef697",
     "a203a23c-d000-41de-8fe5-2a3df0a36053",
@@ -62,5 +62,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Publish end-to-end competitive results and remaining limits",
-  "updated_at": "2026-09-16T21:53:50.046402317Z"
+  "updated_at": "2026-09-16T22:23:52.917273572Z"
 }
