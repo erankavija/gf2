@@ -12742,3 +12742,4 @@
 {"id":"1fb0472d-d0b3-416f-b284-cecdab614c7b","issue_id":"65c0e13d-74af-4f66-8b08-d2eba04e2a5b","new_count":1,"old_count":2,"removed_deps":["b9302771-703c-4f47-adb7-a7469d855b7b"],"timestamp":"2026-09-16T15:59:54.323243574Z","type":"dependency_reduced"}
 {"fields":["dependencies"],"id":"fb628c9f-4b73-42e3-acb2-14e18c3ab36f","issue_id":"8197174d-e1ea-41e8-9388-b2e594745793","timestamp":"2026-09-16T16:00:18.751779942Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["dependencies"],"id":"7bc47ab1-d2ca-4d03-a28f-dc75a78c8069","issue_id":"c49e78bc-b047-4093-9c88-f0b48d4d7574","timestamp":"2026-09-16T16:00:43.244443391Z","type":"issue_updated","updated_by":"dependency-add"}
+{"id":"7c46eb88-b9f5-4468-8bf7-61eeea76d2b9","issue_id":"7cc591a0-86e2-4d3c-837b-604cb9dda162","priority":"high","timestamp":"2026-09-16T16:59:44.107186734Z","title":"Make test scratch directories self-cleaning and TMPDIR-aware","type":"issue_created"}
