@@ -85,8 +85,8 @@ impl Gf2mWideConfig<1> for Gf2m16Cfg {
     const MODULUS: [u64; 1] = [0x002d];
 }
 
-/// GF(2^256) from Seroussi HPL-98-135 Table 1, a multi-word configuration the
-/// dispatch declines on width.
+/// GF(2^256) over the modulus whose low word is 0x425, a multi-word
+/// configuration the dispatch declines on width before any arithmetic runs.
 struct Gf2m256Cfg;
 impl Gf2mWideConfig<4> for Gf2m256Cfg {
     const M: usize = 256;
@@ -346,7 +346,8 @@ fn every_irreducible_degree_8_modulus_agrees_across_lanes() {
     }
 
     drop(guard);
-    // Gauss: (2^8 - 2^4) / 8 monic irreducibles of degree 8 over GF(2).
+    // Monic irreducible polynomials of degree 8 over GF(2): Mobius inversion
+    // of 2^n = sum over d | n of d * N(d) gives (2^8 - 2^4) / 8.
     assert_eq!(irreducible, (256 - 16) / 8);
 }
 

@@ -169,8 +169,8 @@ acquire load. A table is immutable after publication and holds no interior
 mutability, so it is `Send + Sync` and shareable across every worker.
 
 Tables live for the process. They are never evicted, which is the property
-that makes the amortization unconditional and the footprint bounded by the
-30-polynomial count above.
+that makes the amortization unconditional; the footprint is bounded by the 256
+registry slots, one table per distinct degree-8 modulus a process uses.
 
 Determinism follows from purity: a table's contents are a function of its key
 alone, so the same seed and configuration produce identical results across
