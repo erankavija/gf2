@@ -34,8 +34,7 @@
 //! SIGINT window exists, but stays fast (~1 s/test).
 
 use std::num::NonZeroUsize;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::path::Path;
 
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
@@ -50,17 +49,8 @@ use gf2_sim::PipelineConfig;
 // Test scaffolding
 // ---------------------------------------------------------------------------
 
-static COUNTER: AtomicU64 = AtomicU64::new(0);
-
-fn tempdir(tag: &str) -> PathBuf {
-    let mut p = std::env::temp_dir();
-    p.push(format!(
-        "gf2sim-ckcompat-{tag}-{}-{}",
-        std::process::id(),
-        COUNTER.fetch_add(1, Ordering::Relaxed)
-    ));
-    std::fs::create_dir_all(&p).unwrap();
-    p
+fn tempdir(tag: &str) -> tempfile::TempDir {
+    gf2_core::test_scratch::scratch(&format!("gf2sim-ckcompat-{tag}"))
 }
 
 fn checkpoint_payload(bytes: &[u8]) -> serde_json::Result<CheckpointV2> {
@@ -74,15 +64,11 @@ fn checkpoint_payload(bytes: &[u8]) -> serde_json::Result<CheckpointV2> {
 /// needs `sync_all` to do real, slow disk I/O so the SIGKILL can land inside it,
 /// so it uses this instead of [`tempdir`].
 #[cfg(unix)]
-fn tempdir_real_fs(tag: &str) -> PathBuf {
-    let mut p = PathBuf::from(env!("CARGO_TARGET_TMPDIR"));
-    p.push(format!(
-        "gf2sim-ckcompat-{tag}-{}-{}",
-        std::process::id(),
-        COUNTER.fetch_add(1, Ordering::Relaxed)
-    ));
-    std::fs::create_dir_all(&p).unwrap();
-    p
+fn tempdir_real_fs(tag: &str) -> tempfile::TempDir {
+    gf2_core::test_scratch::scratch_in(
+        Path::new(env!("CARGO_TARGET_TMPDIR")),
+        &format!("gf2sim-ckcompat-{tag}"),
+    )
 }
 
 fn cfg(parallelism: usize, max_frames: u64, heartbeat: u64) -> PipelineConfig {
@@ -187,7 +173,7 @@ where
 
     // Uninterrupted reference.
     let dir_ref = tempdir(&format!("{tag}-ref"));
-    let w_ref = CheckpointWriter::new(&dir_ref).unwrap();
+    let w_ref = CheckpointWriter::new(dir_ref.path()).unwrap();
     clear_interrupt();
     let reference =
         run_snr_point_checkpointed(&full, 0, 6.25, &w_ref, &h, None, || (), &frame, |_, _| {})
@@ -197,7 +183,7 @@ where
 
     // Partial run capped at the first chunk, then resume under the full budget.
     let dir = tempdir(&format!("{tag}-resume"));
-    let writer = CheckpointWriter::new(&dir).unwrap();
+    let writer = CheckpointWriter::new(dir.path()).unwrap();
     let partial_cfg = PipelineConfig {
         max_frames: 13,
         ..full.clone()
@@ -217,7 +203,7 @@ where
     .unwrap();
     assert_eq!(partial.counters.frames, 13);
 
-    let reader = CheckpointReader::new(&dir, h.clone());
+    let reader = CheckpointReader::new(dir.path(), h.clone());
     let mut loaded = reader.load(0).unwrap().unwrap();
     // Re-open the point under the full budget for resume.
     loaded.completed = false;
@@ -281,7 +267,7 @@ fn test_v2_resume_nonzero_errors_present() {
     let c = cfg(2, 20, 7);
     let h = config_hash(&c);
     let dir = tempdir("nonzero");
-    let w = CheckpointWriter::new(&dir).unwrap();
+    let w = CheckpointWriter::new(dir.path()).unwrap();
     clear_interrupt();
     let run =
         run_snr_point_checkpointed(&c, 0, 6.25, &w, &h, None, || (), awgn_frame(&ch), |_, _| {})
@@ -299,7 +285,7 @@ fn test_snr_checkpoint_uses_generic_envelope() {
     let c = cfg(1, 1, 1);
     let h = config_hash(&c);
     let dir = tempdir("generic-envelope");
-    let writer = CheckpointWriter::new(&dir).unwrap();
+    let writer = CheckpointWriter::new(dir.path()).unwrap();
     let ch = Awgn::new(0.0, 1);
     run_snr_point_checkpointed(
         &c,
@@ -315,7 +301,7 @@ fn test_snr_checkpoint_uses_generic_envelope() {
     .unwrap();
 
     let stored: serde_json::Value =
-        serde_json::from_slice(&std::fs::read(dir.join("snr_0000.json")).unwrap()).unwrap();
+        serde_json::from_slice(&std::fs::read(dir.path().join("snr_0000.json")).unwrap()).unwrap();
     assert_eq!(
         stored["payload_identity"],
         serde_json::json!("gf2-sim/snr-checkpoint-v2")
@@ -592,13 +578,13 @@ fn assert_sweep_resume_byte_identical(channel: &str, max_frames: u64) {
     let heartbeat = max_frames / 4;
 
     let ref_dir = tempdir(&format!("sweep-ref-{channel}"));
-    run_full_sweep(&ref_dir, channel, snr_points, max_frames, heartbeat);
-    let reference = load_all_normalized(&ref_dir);
+    run_full_sweep(ref_dir.path(), channel, snr_points, max_frames, heartbeat);
+    let reference = load_all_normalized(ref_dir.path());
     assert_eq!(reference.len(), snr_points);
 
     let res_dir = tempdir(&format!("sweep-res-{channel}"));
-    interrupt_then_resume(&res_dir, channel, snr_points, max_frames, heartbeat);
-    let resumed = load_all_normalized(&res_dir);
+    interrupt_then_resume(res_dir.path(), channel, snr_points, max_frames, heartbeat);
+    let resumed = load_all_normalized(res_dir.path());
 
     assert_eq!(
         resumed, reference,
@@ -690,7 +676,7 @@ fn test_kill_during_fsync_deterministic() {
         let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_checkpoint_sweep"))
             .args([
                 "--checkpoint-dir",
-                dir.to_str().unwrap(),
+                dir.path().to_str().unwrap(),
                 "--channel",
                 "awgn",
                 "--snr-points",
@@ -723,18 +709,17 @@ fn test_kill_during_fsync_deterministic() {
         }
         let _ = child.wait();
 
-        if assert_canonical_complete_or_absent(&dir, &format!("iter {i}")) {
+        if assert_canonical_complete_or_absent(dir.path(), &format!("iter {i}")) {
             present += 1;
             // The prior complete state (<=2 worker_states) must survive — the
             // interrupted large write (700k worker_states) never renamed.
             let c: CheckpointV2 =
-                checkpoint_payload(&std::fs::read(dir.join("snr_0000.json")).unwrap()).unwrap();
+                checkpoint_payload(&std::fs::read(dir.path().join("snr_0000.json")).unwrap())
+                    .unwrap();
             if c.worker_states.len() <= 2 {
                 prior_state_survived += 1;
             }
         }
-        // Clean up the large tmp/canonical files so disk isn't bloated.
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     assert!(
@@ -777,7 +762,7 @@ fn test_kill_mid_write_randomized_defense_in_depth() {
         let dir = tempdir(&format!("crashkill-{i}"));
         let mut child = spawn_sweep(&[
             "--checkpoint-dir",
-            dir.to_str().unwrap(),
+            dir.path().to_str().unwrap(),
             "--channel",
             "awgn",
             "--snr-points",
@@ -790,10 +775,9 @@ fn test_kill_mid_write_randomized_defense_in_depth() {
         std::thread::sleep(std::time::Duration::from_micros(micros));
         let _ = child.kill();
         let _ = child.wait();
-        if assert_canonical_complete_or_absent(&dir, &format!("iter {i}")) {
+        if assert_canonical_complete_or_absent(dir.path(), &format!("iter {i}")) {
             observed_present += 1;
         }
-        let _ = std::fs::remove_dir_all(&dir);
     }
     assert!(
         observed_present > 0,

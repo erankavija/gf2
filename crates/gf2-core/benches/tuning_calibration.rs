@@ -57,6 +57,7 @@ use gf2_core::gfpn::{BatchExtField, ExtConfig};
 use gf2_core::kernels::{Backend, ScalarBackend};
 use gf2_core::matrix::{transpose_route, TransposeRoute};
 use gf2_core::rng::Lcg;
+use gf2_core::test_scratch::scratch;
 use gf2_core::tuning;
 use gf2_core::tuning::HarnessSchema;
 use gf2_core::tuning::{
@@ -5128,27 +5129,16 @@ mod tests {
 
     #[allow(dead_code)]
     struct TestOutput {
-        directory: PathBuf,
+        directory: tempfile::TempDir,
         path: PathBuf,
     }
 
     #[allow(dead_code)]
     impl TestOutput {
         fn new(label: &str) -> Self {
-            static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-            let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-            let directory = env::temp_dir().join(format!(
-                "gf2-tuning-calibration-{}-{serial}-{label}",
-                std::process::id()
-            ));
-            let path = directory.join("profile.json");
+            let directory = scratch(&format!("gf2-tuning-calibration-{label}"));
+            let path = directory.path().join("profile.json");
             Self { directory, path }
-        }
-    }
-
-    impl Drop for TestOutput {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.directory);
         }
     }
 
@@ -5652,7 +5642,7 @@ mod tests {
         assert_eq!(emit_profile(&output.path, &document).unwrap(), document);
         assert_eq!(fs::read_to_string(&output.path).unwrap(), document);
         assert_eq!(
-            fs::read_dir(&output.directory).unwrap().count(),
+            fs::read_dir(output.directory.path()).unwrap().count(),
             1,
             "the validated final file is the only surviving directory entry"
         );
@@ -5666,22 +5656,22 @@ mod tests {
             .expect_err("a document outside the strict owner schema must not publish");
         assert_eq!(error.kind(), io::ErrorKind::Other);
         assert!(!output.path.exists());
-        if output.directory.exists() {
-            assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 0);
+        if output.directory.path().exists() {
+            assert_eq!(fs::read_dir(output.directory.path()).unwrap().count(), 0);
         }
     }
 
     #[test]
     fn output_publication_never_replaces_an_existing_path() {
         let output = TestOutput::new("occupied");
-        fs::create_dir_all(&output.directory).unwrap();
+        fs::create_dir_all(output.directory.path()).unwrap();
         fs::write(&output.path, "sentinel").unwrap();
 
         let error = emit_profile(&output.path, &profile_from(&DISTINCT).to_json())
             .expect_err("an existing artifact must win the publication race");
         assert_eq!(error.kind(), io::ErrorKind::AlreadyExists);
         assert_eq!(fs::read_to_string(&output.path).unwrap(), "sentinel");
-        assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 1);
+        assert_eq!(fs::read_dir(output.directory.path()).unwrap().count(), 1);
     }
 
     #[test]
@@ -10846,16 +10836,8 @@ mod campaign_owner {
             assert!(present.iter().all(|leaf| decisions
                 .measured
                 .contains(&format!("{}.{}", leaf.family, leaf.field))));
-            let temporary = env::temp_dir().join(format!(
-                "gf2-core-owner-analysis-{}-{}",
-                std::process::id(),
-                SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_nanos()
-            ));
-            fs::create_dir(&temporary).unwrap();
-            let input_path = temporary.join("accepted-input.json");
+            let temporary = scratch("gf2-core-owner-analysis");
+            let input_path = temporary.path().join("accepted-input.json");
             let prefix = neutral::AcceptedResultsBundle {
                 schema: neutral::ACCEPTED_RESULTS_SCHEMA.to_owned(),
                 manifest_sha256: manifest.manifest_sha256.clone(),
@@ -10881,13 +10863,12 @@ mod campaign_owner {
                     .map(|entry| entry.unit.clone())
                     .collect::<Vec<_>>()
             );
-            let output_path = temporary.join("owner.json");
+            let output_path = temporary.path().join("owner.json");
             assert_eq!(emit_profile(&output_path, &document).unwrap(), document);
             assert_eq!(
                 ProducedCoreProfile::from_json(&fs::read_to_string(output_path).unwrap()).unwrap(),
                 profile
             );
-            fs::remove_dir_all(&temporary).unwrap();
             let mut missing = bundle.clone();
             missing.accepted.pop();
             assert!(AnalysisInput::new(

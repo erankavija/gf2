@@ -32,24 +32,15 @@ use gf2_sim::executor::failure::{default_dump_dir, dispatch_with_fallback, Fault
 use gf2_sim::stage::{erase, Stage};
 
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-static COUNTER: AtomicU64 = AtomicU64::new(0);
-
-/// Returns a unique temp directory for this test invocation. Does NOT create it
-/// (dump functions create it on demand; non-dump tests assert it stays absent).
-fn test_dump_dir(tag: &str) -> PathBuf {
-    let mut p = std::env::temp_dir();
-    p.push(format!(
-        "gf2sim-failmode-{tag}-{}-{}",
-        std::process::id(),
-        COUNTER.fetch_add(1, Ordering::Relaxed),
-    ));
-    p
+fn test_dump_dir(tag: &str) -> (tempfile::TempDir, PathBuf) {
+    let scratch = gf2_core::test_scratch::scratch(&format!("gf2sim-failmode-{tag}"));
+    let dump_dir = scratch.path().join("dump");
+    (scratch, dump_dir)
 }
 
 fn ctx() -> FaultContext {
@@ -76,7 +67,7 @@ fn ctx() -> FaultContext {
 /// delegate to.
 #[test]
 fn test_oom_fallback_output_matches_cpu_only_path() {
-    let dir = test_dump_dir("oom-fallback");
+    let (_scratch, dir) = test_dump_dir("oom-fallback");
     let input = TinyBatch(55);
 
     // Simulate what the GPU path returns: an OOM error.
@@ -112,7 +103,7 @@ fn test_oom_fallback_output_matches_cpu_only_path() {
 /// running directly.
 #[test]
 fn test_oom_injector_dispatched_via_dispatch_with_fallback() {
-    let dir = test_dump_dir("oom-injector");
+    let (_scratch, dir) = test_dump_dir("oom-injector");
     let input = TinyBatch(99);
 
     // The injector reports itself as CpuOnly (like a GPU stage, but with
@@ -144,7 +135,7 @@ fn test_oom_injector_dispatched_via_dispatch_with_fallback() {
 /// `FatalError::CpuFallbackAlsoFailed` and a dump IS written.
 #[test]
 fn test_oom_fallback_also_fails_produces_dump_and_cpu_fallback_also_failed() {
-    let dir = test_dump_dir("oom-fb-fail");
+    let (_scratch, dir) = test_dump_dir("oom-fb-fail");
     let oom: Result<TinyBatch, StageError> =
         Err(StageError::Recoverable(RecoverableError::OutOfMemory {
             device_id: 0,
@@ -178,7 +169,6 @@ fn test_oom_fallback_also_fails_produces_dump_and_cpu_fallback_also_failed() {
         !entries.is_empty(),
         "a dump file must be written on CpuFallbackAlsoFailed"
     );
-    let _ = std::fs::remove_dir_all(&dir);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -200,7 +190,7 @@ fn test_oom_fallback_also_fails_produces_dump_and_cpu_fallback_also_failed() {
 /// actually spawning a process and reading its status.
 #[test]
 fn test_fatal_kernel_error_writes_dump_and_propagates() {
-    let dir = test_dump_dir("fatal-kernel");
+    let (_scratch, dir) = test_dump_dir("fatal-kernel");
     let fatal: Result<TinyBatch, StageError> = Err(StageError::Fatal(FatalError::KernelLaunch {
         hip_code: 301,
         kernel: "bcjr_decode",
@@ -247,15 +237,13 @@ fn test_fatal_kernel_error_writes_dump_and_propagates() {
     assert_eq!(v["snr_idx"], 3_i64, "snr_idx must match context");
     assert_eq!(v["batch_id"], 7_i64, "batch_id must match context");
     assert_eq!(v["device_id"], 0_i64, "device_id must match context");
-
-    let _ = std::fs::remove_dir_all(&dir);
 }
 
 /// `KernelErrorInjector` consumed via `mod common;` (SC2 + SC3): inject a fatal
 /// error on the 1st call and verify the dump is written.
 #[test]
 fn test_kernel_error_injector_via_common_mod_writes_dump() {
-    let dir = test_dump_dir("kernel-injector");
+    let (_scratch, dir) = test_dump_dir("kernel-injector");
     let input = TinyBatch(0);
 
     // Consume KernelErrorInjector from the shared common module (SC2 mandate).
@@ -299,8 +287,6 @@ fn test_kernel_error_injector_via_common_mod_writes_dump() {
         !entries.is_empty(),
         "dump file must be written on fatal error"
     );
-
-    let _ = std::fs::remove_dir_all(&dir);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -312,7 +298,7 @@ fn test_kernel_error_injector_via_common_mod_writes_dump() {
 /// called (verified by the sentinel).
 #[test]
 fn test_strict_gpu_promotes_oom_to_fatal_without_fallback() {
-    let dir = test_dump_dir("strict-gpu");
+    let (_scratch, dir) = test_dump_dir("strict-gpu");
     let input = TinyBatch(42);
 
     let oom: Result<TinyBatch, StageError> =
@@ -351,14 +337,13 @@ fn test_strict_gpu_promotes_oom_to_fatal_without_fallback() {
         !entries.is_empty(),
         "dump file must be written on strict OOM"
     );
-    let _ = std::fs::remove_dir_all(&dir);
 }
 
 /// With `strict_gpu=true`, `OomInjector` (consumed from `mod common;`) triggers
 /// the strict promotion path — no fallback, `FatalError::OutOfMemory`.
 #[test]
 fn test_strict_gpu_with_oom_injector_from_common_mod() {
-    let dir = test_dump_dir("strict-oom-injector");
+    let (_scratch, dir) = test_dump_dir("strict-oom-injector");
     let input = TinyBatch(5);
 
     // SC2: consume OomInjector from common.
@@ -384,7 +369,6 @@ fn test_strict_gpu_with_oom_injector_from_common_mod() {
         .filter_map(|e| e.ok())
         .collect();
     assert!(!entries.is_empty(), "dump must be written on strict OOM");
-    let _ = std::fs::remove_dir_all(&dir);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

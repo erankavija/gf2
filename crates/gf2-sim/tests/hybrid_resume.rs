@@ -222,7 +222,7 @@ fn assert_hybrid_resume_parity(cfg: ResumeConfig) {
 
     // Interrupted leg: the programmatic SIGINT lands at the named
     // (snr_idx, global_frame) while GPU batches are active.
-    let pipeline = cfg.build_pipeline(Some(dir.clone()));
+    let pipeline = cfg.build_pipeline(Some(dir.path().to_path_buf()));
     let scheduler = Scheduler::from_pipeline(&pipeline);
     assert!(
         scheduler.gpu_active(),
@@ -771,12 +771,6 @@ fn hybrid_resume_parity_r3_4_16qam() {
     assert_hybrid_resume_parity(CONFIGS[2]);
 }
 
-/// Creates a unique tempdir for this test file via the shared `common::tempdir`
-/// helper (L8: eliminates the duplicated helper from this file).
-///
-/// The `determinism.rs` copy is NOT pointed here: its prefix (`gf2sim-det-`)
-/// and `COUNTER` are local to that binary; a mechanical swap would silently
-/// rename every logged path in that suite. Leave it in place per the L8 rule.
-fn tempdir() -> PathBuf {
+fn tempdir() -> tempfile::TempDir {
     common::tempdir("hybres")
 }

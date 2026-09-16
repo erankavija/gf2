@@ -45,6 +45,7 @@ rustix = { version = "1.1", features = ["fs"] }
 num-bigint = { workspace = true }
 
 [dev-dependencies]
+gf2-core = { path = "../gf2-core", features = ["test-support"] }
 gf2-algebra = { path = "../gf2-algebra", features = ["test-support"] }
 proptest = { workspace = true }
 trybuild = { workspace = true }

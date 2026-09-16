@@ -599,15 +599,8 @@ mod tests {
     use crate::gfpn::{ExtConfig, QuadraticExt, QuotientElement, QuotientField};
     use std::io::Cursor as IoCursor;
 
-    fn tempdir(name: &str) -> PathBuf {
-        let path = std::env::temp_dir().join(format!(
-            "gf2-field-matrix-{name}-{}-{}",
-            std::process::id(),
-            std::thread::current().name().unwrap_or("test")
-        ));
-        let _ = fs::remove_dir_all(&path);
-        fs::create_dir_all(&path).unwrap();
-        path
+    fn tempdir(name: &str) -> tempfile::TempDir {
+        crate::test_scratch::scratch(&format!("gf2-field-matrix-{name}"))
     }
 
     fn round_trip<F: FieldIdentity>(matrix: &FieldMatrix<F>, witness: &F) {
@@ -750,7 +743,7 @@ mod tests {
     #[test]
     fn atomic_replacement_and_failed_write_clean_up_temporary_file() {
         let directory = tempdir("atomic");
-        let path = directory.join("matrix.fm");
+        let path = directory.path().join("matrix.fm");
         let first = FieldMatrix::<Fp<7>>::identity(1);
         first.save_to_file(&path).unwrap();
 
@@ -762,16 +755,16 @@ mod tests {
             second
         );
 
-        let destination_directory = directory.join("blocked");
+        let destination_directory = directory.path().join("blocked");
         fs::create_dir(&destination_directory).unwrap();
         assert!(matches!(
             first.save_to_file(&destination_directory),
             Err(IoError::Io(_))
         ));
-        let temporary = directory.join(format!("blocked.{}.tmp", std::process::id()));
+        let temporary = directory
+            .path()
+            .join(format!("blocked.{}.tmp", std::process::id()));
         assert!(!temporary.exists());
-
-        let _ = fs::remove_dir_all(directory);
     }
 
     #[test]

@@ -319,24 +319,11 @@ pub fn build_dvb_t2_graph_chain(
 
 /// Creates a unique, empty temporary directory for use by a single test.
 ///
-/// The directory name is `gf2sim-<prefix>-<pid>-<counter>` under the system
-/// temp dir. No `tempfile` dev-dependency required.
-///
 /// # Panics
 ///
 /// Panics if the directory cannot be created.
-pub fn tempdir(prefix: &str) -> std::path::PathBuf {
-    static TMPDIR_COUNTER: AtomicU64 = AtomicU64::new(0);
-    let mut p = std::env::temp_dir();
-    let unique = format!(
-        "gf2sim-{}-{}-{}",
-        prefix,
-        std::process::id(),
-        TMPDIR_COUNTER.fetch_add(1, Ordering::Relaxed)
-    );
-    p.push(unique);
-    std::fs::create_dir_all(&p).expect("create unique tempdir");
-    p
+pub fn tempdir(prefix: &str) -> tempfile::TempDir {
+    gf2_core::test_scratch::scratch(&format!("gf2sim-{prefix}"))
 }
 
 // ────────────────────────────────────────────────────────────────────────────

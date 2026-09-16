@@ -65,6 +65,7 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
+use gf2_core::test_scratch::scratch;
 use gf2_sim::frame_sim::DvbT2BicmFrameSim;
 use gf2_sim::parallel::{run_snr_point, WorkerCounters};
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
@@ -217,14 +218,8 @@ fn build_gpu_pipeline_with_oom_injection(
 fn run_and_assert_oom_fallback(frames: usize, workers: usize, label: &str) {
     let es_n0 = 6.0_f32;
 
-    let dump_dir = std::env::temp_dir().join(format!(
-        "gf2sim-oom-fallback-run-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0)
-    ));
+    let scratch = scratch("gf2sim-oom-fallback-run");
+    let dump_dir = scratch.path().to_path_buf();
 
     // Capture WARN events globally (the fallback warn fires on rayon worker
     // threads, so a thread-local subscriber would miss it). The sink is shared
@@ -284,8 +279,6 @@ fn run_and_assert_oom_fallback(frames: usize, workers: usize, label: &str) {
         captured.len(),
         captured.iter().map(|e| &e.fields).collect::<Vec<_>>()
     );
-
-    let _ = std::fs::remove_dir_all(&dump_dir);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -300,14 +293,8 @@ fn run_and_assert_oom_fallback(frames: usize, workers: usize, label: &str) {
 fn run_and_assert_scheduler_oom_fallback(frames: usize, workers: usize, label: &str) {
     let es_n0 = 6.0_f32;
 
-    let dump_dir = std::env::temp_dir().join(format!(
-        "gf2sim-sched-oom-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0)
-    ));
+    let scratch = scratch("gf2sim-sched-oom");
+    let dump_dir = scratch.path().to_path_buf();
 
     // Capture WARN events for the fallback warn from the hybrid loop. Shared
     // process-wide sink; the guard serializes the capture-asserting tests.
@@ -371,8 +358,6 @@ fn run_and_assert_scheduler_oom_fallback(frames: usize, workers: usize, label: &
         captured.len(),
         captured.iter().map(|e| &e.fields).collect::<Vec<_>>()
     );
-
-    let _ = std::fs::remove_dir_all(&dump_dir);
 }
 
 /// **MEDIUM-2 fast smoke: scheduler hybrid loop OOM injection (fast tier,
@@ -494,14 +479,8 @@ fn test_strict_gpu_config_promotes_oom_to_fatal_via_topology() {
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
 
-    let dump_dir = std::env::temp_dir().join(format!(
-        "gf2sim-sc4-strict-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0)
-    ));
+    let scratch = scratch("gf2sim-sc4-strict");
+    let dump_dir = scratch.path().to_path_buf();
 
     // Build the GPU preset and wire BOTH strict_gpu and inject_gpu_oom_modulus
     // through the PipelineConfig — this is the config-driven path under test.
@@ -560,5 +539,4 @@ fn test_strict_gpu_config_promotes_oom_to_fatal_via_topology() {
         !entries.is_empty(),
         "SC4: at least one JSON dump file must be written on strict_gpu OOM promotion"
     );
-    let _ = std::fs::remove_dir_all(&dump_dir);
 }
