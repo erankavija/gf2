@@ -26,10 +26,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Measure a private BitSlice zero-copy prototype",
-  "updated_at": "2026-09-16T20:25:03.332984745Z"
+  "updated_at": "2026-09-16T22:11:49.920040542Z"
 }

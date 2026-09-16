@@ -107,10 +107,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-03",
     "satisfies:REQ-06",
-    "cites:IsaL2026"
+    "cites:IsaL2026",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "done",
   "title": "Freeze the logical-buffer measurement addendum",
-  "updated_at": "2026-09-16T10:48:04.050670626Z"
+  "updated_at": "2026-09-16T21:58:38.073481250Z"
 }

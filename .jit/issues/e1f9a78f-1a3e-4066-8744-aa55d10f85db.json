@@ -24,10 +24,11 @@
     "component:benchmarks",
     "satisfies:REQ-01",
     "satisfies:REQ-04",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Implement the dense-parity measurement harness",
-  "updated_at": "2026-09-16T20:37:02.481753350Z"
+  "updated_at": "2026-09-16T22:04:39.978333190Z"
 }

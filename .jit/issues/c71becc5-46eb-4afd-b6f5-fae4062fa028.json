@@ -21,10 +21,11 @@
     "component:gf2-core",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Design the qualifying zero-copy integration",
-  "updated_at": "2026-09-16T20:32:14.876202360Z"
+  "updated_at": "2026-09-16T22:11:25.077679545Z"
 }

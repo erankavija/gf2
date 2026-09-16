@@ -25,10 +25,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the XOR unroll portfolio",
-  "updated_at": "2026-09-16T20:23:21.259155060Z"
+  "updated_at": "2026-09-16T21:59:27.726908452Z"
 }

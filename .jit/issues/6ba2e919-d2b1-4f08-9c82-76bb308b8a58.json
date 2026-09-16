@@ -24,10 +24,11 @@
     "component:gf2-kernels-simd",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Select the dense-parity production outcome",
-  "updated_at": "2026-09-16T20:31:43.094727981Z"
+  "updated_at": "2026-09-16T22:07:16.835501821Z"
 }

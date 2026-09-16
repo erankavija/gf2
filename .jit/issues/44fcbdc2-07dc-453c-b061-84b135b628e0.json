@@ -24,10 +24,11 @@
     "satisfies:REQ-03",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "cites:AlbrechtBard2026"
+    "cites:AlbrechtBard2026",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the M4RI dense comparison",
-  "updated_at": "2026-09-16T20:30:07.483657647Z"
+  "updated_at": "2026-09-16T22:00:17.328463242Z"
 }

@@ -24,10 +24,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Implement the selected logical-buffer outcome",
-  "updated_at": "2026-09-16T20:26:24.534728055Z"
+  "updated_at": "2026-09-16T21:56:59.099865281Z"
 }

@@ -22,10 +22,11 @@
     "component:gf2-core",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Select the zero-copy integration outcome",
-  "updated_at": "2026-09-16T20:31:59.059900753Z"
+  "updated_at": "2026-09-16T21:59:02.851778315Z"
 }

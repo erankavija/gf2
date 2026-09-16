@@ -22,10 +22,11 @@
     "component:benchmarks",
     "satisfies:REQ-01",
     "cites:IsaL2026",
-    "type:task"
+    "type:task",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Amend the frozen ISA-L family to five confirmatory cells",
-  "updated_at": "2026-09-16T20:36:38.030230040Z"
+  "updated_at": "2026-09-16T22:10:10.731598421Z"
 }

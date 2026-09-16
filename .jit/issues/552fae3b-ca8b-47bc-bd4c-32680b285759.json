@@ -24,10 +24,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Freeze the private zero-copy candidate",
-  "updated_at": "2026-09-16T20:31:11.231750610Z"
+  "updated_at": "2026-09-16T22:01:06.986846742Z"
 }

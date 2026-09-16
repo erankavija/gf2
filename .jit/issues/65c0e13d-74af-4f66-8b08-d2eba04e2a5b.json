@@ -24,10 +24,11 @@
     "satisfies:REQ-03",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "cites:IsaL2026"
+    "cites:IsaL2026",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the ISA-L XOR comparison",
-  "updated_at": "2026-09-16T20:30:23.382712471Z"
+  "updated_at": "2026-09-16T22:01:56.561222888Z"
 }

@@ -240,10 +240,11 @@
     "component:benchmarks",
     "satisfies:REQ-01",
     "satisfies:REQ-04",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "done",
   "title": "Implement the logical-buffer measurement harness",
-  "updated_at": "2026-09-16T20:35:24.719665912Z"
+  "updated_at": "2026-09-16T22:10:35.596230988Z"
 }

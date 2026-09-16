@@ -24,10 +24,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Freeze the dense-parity candidate portfolio",
-  "updated_at": "2026-09-16T20:30:39.324775503Z"
+  "updated_at": "2026-09-16T22:08:31.452136231Z"
 }

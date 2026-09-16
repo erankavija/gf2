@@ -24,10 +24,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Confirm the private zero-copy production outcome",
-  "updated_at": "2026-09-16T20:32:47.388301729Z"
+  "updated_at": "2026-09-16T21:59:52.633562183Z"
 }

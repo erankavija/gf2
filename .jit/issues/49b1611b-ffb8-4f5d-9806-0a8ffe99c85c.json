@@ -23,10 +23,11 @@
     "component:benchmarks",
     "satisfies:REQ-02",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Confirm the dense-parity production outcome",
-  "updated_at": "2026-09-16T20:33:03.348205511Z"
+  "updated_at": "2026-09-16T22:00:42.157398815Z"
 }

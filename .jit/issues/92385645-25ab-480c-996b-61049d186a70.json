@@ -144,10 +144,11 @@
     "component:benchmarks",
     "satisfies:REQ-03",
     "satisfies:REQ-06",
-    "cites:AlbrechtBard2026"
+    "cites:AlbrechtBard2026",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "done",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-16T12:09:27.968423234Z"
+  "updated_at": "2026-09-16T22:08:56.224459032Z"
 }

@@ -21,10 +21,11 @@
     "component:benchmarks",
     "satisfies:REQ-01",
     "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Verify the logical producing-input closure before a timed run",
-  "updated_at": "2026-09-16T20:35:49.211503435Z"
+  "updated_at": "2026-09-16T21:55:44.654690962Z"
 }

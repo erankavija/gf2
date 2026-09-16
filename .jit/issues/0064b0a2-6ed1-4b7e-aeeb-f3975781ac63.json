@@ -26,10 +26,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Freeze the logical candidate portfolio",
-  "updated_at": "2026-09-16T20:30:55.342350109Z"
+  "updated_at": "2026-09-16T21:55:19.834169498Z"
 }

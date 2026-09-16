@@ -248,10 +248,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-03",
     "satisfies:REQ-06",
-    "cites:AlbrechtBard2026"
+    "cites:AlbrechtBard2026",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "done",
   "title": "Freeze the dense-parity measurement addendum",
-  "updated_at": "2026-09-16T18:49:44.162307823Z"
+  "updated_at": "2026-09-16T22:09:21.107485315Z"
 }

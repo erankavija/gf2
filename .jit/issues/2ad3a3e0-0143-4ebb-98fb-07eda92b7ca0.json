@@ -29,10 +29,11 @@
     "satisfies:REQ-03",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Publish the mid-range evidence synthesis",
-  "updated_at": "2026-09-16T20:32:30.796485771Z"
+  "updated_at": "2026-09-16T21:57:23.987079542Z"
 }

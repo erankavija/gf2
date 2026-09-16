@@ -26,10 +26,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the profile-selected matvec fusion",
-  "updated_at": "2026-09-16T20:23:38.616335465Z"
+  "updated_at": "2026-09-16T22:01:31.693243581Z"
 }

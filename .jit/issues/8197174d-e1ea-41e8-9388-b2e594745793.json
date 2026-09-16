@@ -25,10 +25,11 @@
     "satisfies:REQ-01",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Record the row-XOR consumer baseline",
-  "updated_at": "2026-09-16T20:29:19.683912723Z"
+  "updated_at": "2026-09-16T22:02:36.975333634Z"
 }

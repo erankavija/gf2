@@ -98,10 +98,11 @@
     "component:benchmarks",
     "satisfies:REQ-03",
     "satisfies:REQ-06",
-    "cites:IsaL2026"
+    "cites:IsaL2026",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "done",
   "title": "Qualify the ISA-L XOR comparator",
-  "updated_at": "2026-09-15T03:18:10.817156512Z"
+  "updated_at": "2026-09-16T21:57:48.866523020Z"
 }

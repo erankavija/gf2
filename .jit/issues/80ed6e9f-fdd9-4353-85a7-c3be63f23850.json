@@ -25,10 +25,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Measure the consumer-specific dispatch candidate",
-  "updated_at": "2026-09-16T20:24:11.969367342Z"
+  "updated_at": "2026-09-16T22:08:06.489535192Z"
 }

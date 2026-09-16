@@ -24,10 +24,11 @@
     "component:benchmarks",
     "satisfies:REQ-01",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Record the isolated XOR baseline",
-  "updated_at": "2026-09-16T20:29:35.639772555Z"
+  "updated_at": "2026-09-16T22:03:59.194909945Z"
 }

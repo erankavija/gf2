@@ -24,10 +24,11 @@
     "satisfies:REQ-01",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Record the dense-matvec baseline",
-  "updated_at": "2026-09-16T20:29:03.767704786Z"
+  "updated_at": "2026-09-16T21:56:34.345324099Z"
 }
