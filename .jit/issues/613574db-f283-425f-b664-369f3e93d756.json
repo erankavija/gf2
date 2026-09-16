@@ -55,8 +55,16 @@
       "format": "markdown",
       "label": "Implementation and confirmation leaf manifest",
       "path": "dev/active/613574db/breakdown.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/613574db-r1.md"
     }
   ],
+  "done_at": "2026-09-16T12:18:01.070928274Z",
   "first_ready_at": "2026-09-15T01:21:24.417476020Z",
   "gates_required": [
     "repo-validate",
@@ -70,8 +78,8 @@
       "updated_by": "auto:executor"
     },
     "holistic-review": {
-      "status": "failed",
-      "updated_at": "2026-09-16T12:08:26.952261454Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T12:17:04.198255954Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -88,7 +96,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Design cached GF(2^8) tables and consumer hooks",
-  "updated_at": "2026-09-16T12:08:26.952261454Z"
+  "updated_at": "2026-09-16T12:18:01.070928274Z"
 }

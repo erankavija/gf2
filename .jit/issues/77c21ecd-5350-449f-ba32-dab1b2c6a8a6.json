@@ -28,7 +28,7 @@
     "epic:zen3-cpu-performance"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cache GF(2^8) byte product tables and route FieldVec::axpy through them",
-  "updated_at": "2026-09-16T12:12:02.687993883Z"
+  "updated_at": "2026-09-16T12:18:24.949104186Z"
 }
