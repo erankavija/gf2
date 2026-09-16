@@ -567,6 +567,55 @@
           "title": "Vectorize LDPC decoding across frames",
           "classification": "implementation",
           "status": "pending"
+        },
+        {
+          "id": "18a87159",
+          "short_id": "18a87159",
+          "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
+          "classification": "research",
+          "status": "pending; merged from c489745b, 8197174d, c49e78bc (session 19)"
+        },
+        {
+          "id": "bc091474",
+          "short_id": "bc091474",
+          "title": "Freeze, measure and select the logical-buffer candidates",
+          "classification": "research",
+          "status": "pending; merged from 0064b0a2, 42a22210, 80ed6e9f, a5f29ae5 (session 19)"
+        },
+        {
+          "id": "fcb04d66",
+          "short_id": "fcb04d66",
+          "title": "Implement and confirm the logical-buffer outcome",
+          "classification": "implementation",
+          "status": "pending; merged from 23a08297, b8ef6f13 (session 19)"
+        },
+        {
+          "id": "c73ffa25",
+          "short_id": "c73ffa25",
+          "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
+          "classification": "research",
+          "status": "pending; merged from 2094958d, 833dff1a (session 19)"
+        },
+        {
+          "id": "50f0bd42",
+          "short_id": "50f0bd42",
+          "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
+          "classification": "research",
+          "status": "pending; merged from 44fcbdc2, 5db985b0, 6ba2e919 (session 19)"
+        },
+        {
+          "id": "6e87c436",
+          "short_id": "6e87c436",
+          "title": "Implement and confirm the dense-parity outcome",
+          "classification": "implementation",
+          "status": "pending; merged from 1956017f, 49b1611b (session 19)"
+        },
+        {
+          "id": "a1ad6d4e",
+          "short_id": "a1ad6d4e",
+          "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
+          "classification": "research",
+          "status": "pending; merged from 552fae3b, c9cf13ee, 3f57a279, c71becc5, 7d3ced35, 4497e541 (session 19)"
         }
       ]
     },
@@ -1523,7 +1572,12 @@
     "Trap (session 19): zsh does not word-split unquoted variables; a `for i in $ids` loop passed the whole list as one argument. Use `while read -r` or `${(f)var}`.",
     "Trap (session 19): `jit issue create --json` output did not parse as JSON in a pipeline; read the created id from `git status --short .jit` instead of parsing.",
     "Session 19 ruling: native subagents in preference to codex; model by task difficulty (sonnet/opus), no Fable subagents.",
-    "Session 19 ruling: provenance freeze (protocol v4, receipt and addendum schemas final); comment concision rule in AGENTS.md is enforced by code-review."
+    "Session 19 ruling: provenance freeze (protocol v4, receipt and addendum schemas final); comment concision rule in AGENTS.md is enforced by code-review.",
+    "Session 19 simplification ruling: the mid-range story 2037941f runs as seven merged leaves (18a87159 -> bc091474 -> fcb04d66; e1f9a78f -> c73ffa25 -> 50f0bd42 -> 6e87c436; a1ad6d4e; 65c0e13d; 2ad3a3e0). A zero-copy ship task is created only if a1ad6d4e selects the candidate; its criteria are in a1ad6d4e's description.",
+    "Session 19 gate ruling: repo-validate is a story-level gate (removed from every leaf); doc-review only on implementation, synthesis and publish leaves and containers; asm-artefact-present only where SIMD sources can change.",
+    "Trap (session 19): `jit issue reject --reason` writes the reason verbatim as a resolution: label; a reason with spaces violates the label format and blocks every later update on that issue until fixed with --force. Use a hyphenated reason such as merged-into-<id>.",
+    "Trap (session 19): merged descriptions must number criteria REQ-01.. uniquely per issue and keep the `[hard] REQ-NN: text` shape; a source tag goes after the colon.",
+    "Trap (session 19): a native worker inherits the user CLAUDE.md and delegated to codex; the delegation rule was removed from ~/.claude/CLAUDE.md and every prompt now says to do the work itself."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
