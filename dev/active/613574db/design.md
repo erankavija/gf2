@@ -100,9 +100,9 @@ $$
 T[256c + v] = c \cdot v \bmod P(x), \qquad c, v \in \{0, \dots, 255\}.
 $$
 
-Two accessors serve the two shapes the evidence covers: `row(c)` returns the
-256-byte window beginning at $256c$, for a reused coefficient, and `get(c, v)`
-returns one product for the no-reuse shape.
+`row(c)` returns the 256-byte window beginning at $256c$, for a reused
+coefficient; one product for the no-reuse shape is `row(c)[v]`, and a dedicated
+accessor arrives with the first consumer that needs one (leaf b64dc9c4).
 
 The cache key is the low eight bits of the reduction polynomial. A degree-8
 modulus is eight low bits plus an implicit leading one, so the key is total and
@@ -123,8 +123,9 @@ flowchart LR
 ### Construction, footprint and amortization
 
 One row is built by the doubling recurrence over the field's own reduction
-polynomial, which is why the same construction serves as an independent oracle
-for the conformance suite: $T[256c] = 0$, $T[256c + 1] = c$, and for
+polynomial, and the conformance suite checks every entry against a separate
+schoolbook oracle that multiplies and reduces bit by bit: $T[256c] = 0$,
+$T[256c + 1] = c$, and for
 $v \ge 2$,
 
 $$
@@ -136,8 +137,10 @@ T[256c + v - 1] \oplus T[256c + 1] & v \text{ odd},
 $$
 
 where $\mathrm{xtime}(u) = (u \ll 1) \oplus (P_{\text{low}} \cdot [\,u_7 = 1\,])$.
-Each entry costs one shift-and-conditional-XOR or one XOR, so a whole table is
-65536 such steps and names no gf2-core arithmetic.
+Each row starts from its two initial entries and takes one
+shift-and-conditional-XOR or one XOR per further entry, so a whole table is 256
+initialisation stores and 65024 recurrence steps and names no gf2-core
+arithmetic.
 
 One table occupies 65536 bytes. The number of monic irreducible polynomials of
 degree 8 over $\mathrm{GF}(2)$ is
