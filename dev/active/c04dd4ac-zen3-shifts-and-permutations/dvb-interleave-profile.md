@@ -73,8 +73,8 @@ committed result, written by the gate itself.
 Code reading does not establish the campaign wire, so every arm also runs
 through the real `benchmark-ab-runner` on a throwaway family under `target/`,
 untimed and without the host mutex.
-[`survey/runner-smoke.txt`](survey/runner-smoke.txt) records the handshakes and
-parsed result lines that run observed, and
+[`survey/runner-smoke.txt`](survey/runner-smoke.txt) records what that run
+observes, each arm's handshakes and parsed result lines, and
 [`survey/smoke-dvb-arms.sh`](survey/smoke-dvb-arms.sh) reproduces it.
 
 The scheduled profile measures four paths for every MODCOD: direct scatter,
@@ -94,9 +94,9 @@ then writes the repeated profile to
 Each campaign session checkpoints at two cells, and each completed profile
 session is recorded in its append-only `repetitions.log`.
 
-An earlier launch, campaign `v4-r1-9fb40c83-dvb-interleave-profile`, aborted on
-a procedural defect in its own launch before any result was read, and is voided
-under the voided-attempt rule of
+One attempt of this family is voided: campaign
+`v4-r1-9fb40c83-dvb-interleave-profile` aborted on a procedural defect in its
+own launch before any result was read, under the voided-attempt rule of
 [`protocol.md`](../f547c394/protocol.md). Its stage is preserved whole at
 [`v4-r1-pilot-abandoned`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log)
 and
