@@ -198,9 +198,18 @@ window count, which is zero.
 
 `survey/make-logical-producing-inputs.py` writes
 `survey/logical-producing-inputs.json`, the content closure every receipt
-snapshots: the two measured crates' sources, the harness sources and manifest,
-the shared campaign support, the frozen addendum and comparator specification,
-and the build inputs. `survey/make-logical-source-evidence.py` writes
+snapshots: the two measured crates' sources, the isolated SIMD kernels, the
+harness sources, the shared campaign support, the frozen addendum, the
+comparator specification, the protocol and contract documents, and the build
+inputs. The build inputs carry every Cargo manifest and lock file a timed
+executable is built from — the harness workspace manifest and lock, the
+manifests of `gf2-core`, `gf2-coding` and `gf2-kernels-simd`, and the root
+workspace manifest, root lock and `dev/tools/tuning-campaign-support` manifest
+that the window's `--locked -p tuning-campaign-support` build resolves — and the
+closure manifest itself, which the window guard reads to decide what to check.
+The harness contract test derives that manifest set from `cargo metadata` for
+both workspaces, so a new crate on either path fails the test rather than
+slipping past the guard. `survey/make-logical-source-evidence.py` writes
 `survey/logical-source-evidence.json`, where every source claim the harness
 makes records its project, commit, path, line, the verbatim line and why. Both
 are regenerated rather than edited, so a claim that moves fails its generator

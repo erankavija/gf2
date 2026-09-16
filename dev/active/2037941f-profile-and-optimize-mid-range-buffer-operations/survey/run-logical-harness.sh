@@ -125,7 +125,10 @@ cmd_cells() {
 }
 
 cmd_smoke() {
-    local with_isal=0
+    local with_isal=0 invocation
+    # The record states the invocation that produced it, so the launcher's own
+    # arguments are passed through rather than reconstructed.
+    invocation="${LAUNCHER} smoke${*:+ $*}"
     [[ "${1:-}" == "--isal" ]] && with_isal=1
     build_gf2
     [[ "${with_isal}" == 1 ]] && build_isal >/dev/null
@@ -212,6 +215,7 @@ cmd_smoke() {
     done
 
     python3 -B "${SURVEY}/check-smoke.py" --stage "${smoke}" --record "${SMOKE_RECORD}" \
+        --command "${invocation}" \
         --oracle "${smoke}/oracle.txt" \
         --gf2-arm "${GF2_ARM}" \
         $([[ "${with_isal}" == 1 ]] && echo "--isal-arm ${ISAL_ARM}") \
