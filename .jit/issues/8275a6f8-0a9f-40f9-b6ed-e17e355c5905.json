@@ -5,7 +5,21 @@
   "created_at": "2026-09-16T15:55:09.684331676Z",
   "dependencies": [],
   "description": "Keep the captured child diagnostics when the benchmark runner's request write fails.\n\n## Background\n\n`dev/tools/tuning-campaign-support/src/process.rs` runs each arm with a stdin writer thread, stdout and stderr reader threads and a drain loop. After the loop, the writer's result is propagated with `?`, so a request write that fails (for example `EPIPE` when the arm exits before reading its request) returns before the captured stdout and stderr reach the journal: `run_arm` never records `child-diagnostic` or `child-exit`. The 2026-09-16 benchmark window recorded no stderr for the `9fb40c83` job for this reason, and the arm's own failure message was lost. Callback errors already take a different path: they are stored in `callback_error`, the child is stopped, and the outcome carries the captured output.\n\n## Success Criteria\n\n- [hard] REQ-01: A failed request write ends the run through the same path as a callback error, so the outcome carries the captured stdout, stderr and exit status and the campaign journal records `child-diagnostic` and `child-exit` for the arm.\n- [hard] REQ-02: A regression test drives an arm that exits before reading stdin with a request larger than the pipe buffer and asserts that the returned error names the write failure and that the captured stderr is present.\n- [hard] REQ-03: Successful runs, timeouts and callback errors keep their current outcomes and journal records; the existing process and runner tests pass unchanged.\n\n## Notes\n\nShared runner change authorized by the invoker on 2026-09-16 (execution-lead escalation, policy item 8). Untimed work: builds and tests run unlocked in-session. Follow `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`; the change touches no measurement behaviour, so committed receipts stay valid.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "test",
+      "format": "markdown",
+      "label": "Regression: a failed request write keeps the captured child diagnostics (REQ-02)",
+      "path": "dev/tools/tuning-campaign-support/tests/host_process_contracts.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "source",
+      "label": "run_process delivers a request-write failure through the callback-error path (REQ-01)",
+      "path": "dev/tools/tuning-campaign-support/src/process.rs"
+    }
+  ],
   "first_ready_at": "2026-09-16T15:55:09.684331676Z",
   "gates_required": [
     "cargo-ci",
@@ -23,5 +37,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Keep captured child diagnostics when the runner's request write fails",
-  "updated_at": "2026-09-16T15:57:48.741959591Z"
+  "updated_at": "2026-09-16T17:32:53.947715409Z"
 }
