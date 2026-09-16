@@ -3024,6 +3024,94 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
     assert!(summary.findings.iter().any(|f| f.rule == "P-20"));
 }
 
+/// A first confirmatory attempt (`t=1`) recomputes `attempt_alpha` from the
+/// family ledger as `alpha / (t(t+1))`, distinct from the frozen total
+/// `family_alpha`; the renderer never labels the attempt allocation
+/// "family-wise alpha". Regression coverage for `@/issue/c5e01de3`.
+#[test]
+fn family_summary_names_first_attempt_alpha_distinctly_from_the_family_total() {
+    let family = v2_family();
+    let built = build_receipt(
+        "first-attempt-alpha-naming",
+        &family,
+        &[spec("quality", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    let fam = summary.family.as_ref().unwrap();
+
+    // t = 1: the ledger holds only this attempt's own reservation.
+    let expected_attempt_alpha = family.family_wise.alpha / (1.0 * 2.0);
+    assert_eq!(fam.family_alpha, family.family_wise.alpha, "frozen total");
+    assert_eq!(fam.attempt_alpha, expected_attempt_alpha, "t=1 allocation");
+    assert_ne!(fam.family_alpha, fam.attempt_alpha);
+    assert_eq!(
+        fam.corrected_alpha,
+        fam.attempt_alpha / f64::from(fam.comparisons)
+    );
+
+    // Recompute independently from the frozen ledger chain (P-22 path).
+    let receipt =
+        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    let ledger_pin = receipt.trial_ledger.clone().unwrap();
+    let recomputed =
+        tuning_campaign_support::trial_ledger::attempt_alpha(&ledger_pin, &built.dir, &family)
+            .unwrap();
+    assert_eq!(fam.attempt_alpha, recomputed);
+
+    let markdown = render_markdown(&summary);
+    assert!(markdown.contains(&format!("family-wise alpha {}", fam.family_alpha)));
+    assert!(markdown.contains(&format!("attempt alpha {}", fam.attempt_alpha)));
+    assert!(!markdown.contains(&format!("family-wise alpha {}", fam.attempt_alpha)));
+}
+
+/// A later confirmatory attempt (`t=2`, after one prior reservation) spends a
+/// smaller sequential allocation than the first; the frozen total stays fixed
+/// and the renderer still never calls the allocation "family-wise alpha".
+/// Regression coverage for `@/issue/c5e01de3`.
+#[test]
+fn family_summary_names_later_attempt_alpha_distinctly_from_the_family_total() {
+    let family = v2_family();
+    let built = build_receipt_with_history(
+        "later-attempt-alpha-naming",
+        &family,
+        &[spec("quality", 2.0)],
+        None,
+        &["prior-attempt"],
+        PilotFixture::default(),
+        |_| {},
+    );
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    let fam = summary.family.as_ref().unwrap();
+
+    // t = 2: one prior reservation precedes this attempt's own.
+    let expected_attempt_alpha = family.family_wise.alpha / (2.0 * 3.0);
+    assert_eq!(fam.family_alpha, family.family_wise.alpha, "frozen total");
+    assert_eq!(fam.attempt_alpha, expected_attempt_alpha, "t=2 allocation");
+    assert_ne!(fam.family_alpha, fam.attempt_alpha);
+    assert_eq!(
+        fam.corrected_alpha,
+        fam.attempt_alpha / f64::from(fam.comparisons)
+    );
+
+    let receipt =
+        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    let ledger_pin = receipt.trial_ledger.clone().unwrap();
+    let recomputed =
+        tuning_campaign_support::trial_ledger::attempt_alpha(&ledger_pin, &built.dir, &family)
+            .unwrap();
+    assert_eq!(fam.attempt_alpha, recomputed);
+
+    let markdown = render_markdown(&summary);
+    assert!(markdown.contains(&format!("family-wise alpha {}", fam.family_alpha)));
+    assert!(markdown.contains(&format!("attempt alpha {}", fam.attempt_alpha)));
+    assert!(!markdown.contains(&format!("family-wise alpha {}", fam.attempt_alpha)));
+}
+
 #[test]
 fn v2_outlier_flags_do_not_depend_on_cross_arm_effect_size() {
     let family = v2_family();
