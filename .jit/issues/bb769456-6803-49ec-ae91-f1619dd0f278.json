@@ -168,6 +168,13 @@
       "doc_type": "evidence",
       "label": "ISA-L scalar-gap family ledger at genesis",
       "path": "dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/bb769456-r1.md"
     }
   ],
   "first_ready_at": "2026-09-16T10:48:31.038164560Z",
@@ -182,6 +189,41 @@
     "tdd-reminder"
   ],
   "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-16T12:44:50.958860842Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-16T12:35:42.340901619Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T12:39:08.326606900Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T12:35:04.564607902Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T12:47:28.076587320Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-09-16T12:32:38.495628403Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T12:44:49.920697848Z",
+      "updated_by": "auto:executor"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_at": "2026-09-16T11:08:10.455063750Z",
@@ -201,5 +243,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the logical-buffer measurement harness",
-  "updated_at": "2026-09-16T12:18:41.967717680Z"
+  "updated_at": "2026-09-16T12:48:25.150934013Z"
 }
