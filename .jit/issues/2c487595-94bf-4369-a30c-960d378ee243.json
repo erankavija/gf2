@@ -153,6 +153,13 @@
       "format": "markdown",
       "label": "Wires the new checker's self-test and check into the CI gate",
       "path": "scripts/cargo-ci.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/2c487595-r1.md"
     }
   ],
   "first_ready_at": "2026-09-12T15:43:13.659044287Z",
@@ -169,7 +176,7 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-09-16T18:35:39.221148054Z",
+      "updated_at": "2026-09-16T19:01:23.684515088Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -187,5 +194,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Version the addendum schema alongside its predecessors",
-  "updated_at": "2026-09-16T18:43:50.353700814Z"
+  "updated_at": "2026-09-16T19:12:08.127438396Z"
 }

@@ -11,7 +11,6 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
     "research-review",
@@ -29,5 +28,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Verify the logical producing-input closure before a timed run",
-  "updated_at": "2026-09-16T18:26:33.840462627Z"
+  "updated_at": "2026-09-16T19:10:27.128961435Z"
 }

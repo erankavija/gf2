@@ -187,6 +187,13 @@
       "doc_type": "tool",
       "label": "Non-timed smoke driver over the shared journal and checkpoints",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/smoke.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/bb769456-r2.md"
     }
   ],
   "first_ready_at": "2026-09-16T10:48:31.038164560Z",
@@ -203,42 +210,42 @@
   "gates_status": {
     "asm-artefact-present": {
       "status": "passed",
-      "updated_at": "2026-09-16T12:44:50.958860842Z",
+      "updated_at": "2026-09-16T18:55:35.800772901Z",
       "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-16T17:39:50.511298244Z",
+      "updated_at": "2026-09-16T19:03:17.292342123Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-16T17:42:57.576785156Z",
+      "updated_at": "2026-09-16T19:00:17.929869775Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-16T17:44:21.262162138Z",
+      "updated_at": "2026-09-16T19:11:01.313870366Z",
       "updated_by": "auto:executor"
     },
     "holistic-review": {
       "status": "failed",
-      "updated_at": "2026-09-16T12:47:28.076587320Z",
+      "updated_at": "2026-09-16T19:07:36.637717986Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
-      "status": "failed",
-      "updated_at": "2026-09-16T17:36:05.200840008Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T18:53:47.240938258Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-16T17:49:47.626623161Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T19:02:38.557224826Z",
       "updated_by": "auto:executor"
     },
     "tdd-reminder": {
       "status": "passed",
-      "updated_at": "2026-09-16T11:08:10.455063750Z",
+      "updated_at": "2026-09-16T18:53:13.284944970Z",
       "updated_by": "agent:jit-execution-lead"
     }
   },
@@ -255,5 +262,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the logical-buffer measurement harness",
-  "updated_at": "2026-09-16T17:49:47.626623161Z"
+  "updated_at": "2026-09-16T19:12:08.462976730Z"
 }

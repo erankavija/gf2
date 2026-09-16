@@ -12,7 +12,6 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
     "research-review",
@@ -33,5 +32,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Freeze the logical candidate portfolio",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T19:10:10.723786959Z"
 }

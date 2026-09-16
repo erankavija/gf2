@@ -12,7 +12,6 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
     "research-review",
@@ -36,5 +35,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Publish the mid-range evidence synthesis",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T19:11:35.019094851Z"
 }

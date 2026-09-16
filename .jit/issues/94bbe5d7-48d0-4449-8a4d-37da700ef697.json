@@ -1,5 +1,6 @@
 {
   "assignee": null,
+  "claimed_at": "2026-09-16T18:52:45.100811902Z",
   "context": {},
   "created_at": "2026-09-13T11:53:58.569086319Z",
   "dependencies": [],
@@ -21,5 +22,5 @@
   "priority": "normal",
   "state": "ready",
   "title": "Freeze confirmation addenda with stage-specific family prose",
-  "updated_at": "2026-09-13T11:53:58.569086319Z"
+  "updated_at": "2026-09-16T18:54:59.072777544Z"
 }
