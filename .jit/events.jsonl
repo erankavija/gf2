@@ -13094,3 +13094,4 @@
 {"fields":["labels"],"id":"28034a51-5e01-4199-9c94-b5951373dd1c","issue_id":"4497e541-8480-4ce3-ae81-4ad8e70b72f9","timestamp":"2026-09-16T23:33:11.128099886Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["labels"],"id":"7197ca7f-92ae-45ed-bdd7-710fd45de36b","issue_id":"706a8f93-d571-4228-bfaa-0c6d0b3ef709","timestamp":"2026-09-16T23:33:35.871732924Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["labels"],"id":"576eb807-204f-4664-a7de-06180364a9b9","issue_id":"94bbe5d7-48d0-4449-8a4d-37da700ef697","timestamp":"2026-09-16T23:34:01.337847168Z","type":"issue_updated","updated_by":"issue-update"}
+{"id":"96aa22c9-f685-4f8d-b9d8-02f2e743b2b2","isolated_torn_tail":false,"operation":"upgrade","profiles":[{"id":"jit-default","status":"unchanged","variables":[]},{"id":"sim-research","status":"upgraded","variables":[]}],"timestamp":"2026-09-16T23:50:45.869084859Z","type":"profile_lifecycle"}
