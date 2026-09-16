@@ -378,14 +378,14 @@
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "in progress. Planning and the 30-node breakdown are done. ISA-L qualification 3e83c116 is done. M4RI qualification 92385645 is stopped after two rework attempts: review r2 reproduces false GCC provenance through MAKEFLAGS/GNUMAKEFLAGS and awaits invoker guidance. Logical addendum 3ea122df is done (session 17): citation repair approved, independent Terra review R-01 (cite the preserved 64-word no-win) fixed at 77606c84, all seven gates pass, review reviews/3ea122df-r1.md. 92385645 rework round 3 (counter reset) dispatched."
+          "status": "in progress. Session 17: 3ea122df done (77606c84, seven gates); 92385645 done after the invoker-authorized round 3 (make-channel provenance, 5954c15b, seven gates, review r3); bb769456 harness merged at e215ce95 but REWORK: code-review, research-review and holistic-review converge on two blockers (smoke emits timing samples against REQ-03; window clean-input guard covers six paths, not the producing manifest, against REQ-04), review reviews/bb769456-r1.md, no rework dispatched (invoker: no new work). Next ready: 96c94b81 (dense-parity addendum) and the bb769456 rework."
         },
         {
           "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "in progress. Session 17: the 2026-09-16 window lost both source jobs in the arm stdin handshake. 9fb40c83 rework merged at 24d0c86e (arm fixed: window-variable demand before stdin and null-spelled optional fields; runner smoke of all four arms; v4-r1 attempt voided per protocol; v4-r2 queue line). 85fc5ff4 rework committed on its branch (root cause in the shifts bench arm), CI pending. No window is armed (invoker hold)."
+          "status": "in progress. Session 17: both source tasks repaired after the 2026-09-16 window handshake failures and merged (9fb40c83 at 24d0c86e, 85fc5ff4 at 34509f0f); each voided its v4-r1 attempt per protocol, smoked every arm through the real runner, and holds a queue line (9fb40c83 v4-r2 campaign; 85fc5ff4 launcher stages the a2 identity). No window is armed (invoker hold). Issues stay in_progress until their window runs and their gates pass."
         },
         {
           "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
@@ -433,14 +433,14 @@
           "short_id": "c5e01de3",
           "title": "Name attempt alpha correctly in acceptance summaries",
           "classification": "implementation",
-          "status": "rework round 2 (session 17): round 1 (canonical freezer) merged at c2e9df89; cargo-ci passed; code-review F1 (blocking): acceptance schema keeps the zen3-benchmark-acceptance-v1 identity while family_alpha's meaning changed; needs a new schema identity with explicit legacy-v1 handling (canonical-cutover). Dispatched to the same worker."
+          "status": "done. Session 17: producer split of family/attempt/corrected alpha (round 1), canonical freezer fixed and acceptance schema versioned to zen3-benchmark-acceptance-v2 with a schema-keyed legacy branch (round 2); cargo-ci, code-review, doc-review pass at 2a530ffa; reviews reviews/c5e01de3-r1.md, -r2.md; closed at 6e3eee57."
         },
         {
           "id": "613574db-f283-425f-b664-369f3e93d756",
           "short_id": "613574db",
           "title": "Design cached GF(2^8) tables and consumer hooks",
           "classification": "design",
-          "status": "dispatched session 17 (opus) in the reused agent-19513245 directory renamed agent-613574db; design + REQ-04 leaf manifest; the lead creates the leaves."
+          "status": "done. Session 17: design.md and breakdown.md merged at 60dcba18; repo-validate, doc-review and holistic-review pass after the four manifest leaves were instantiated (77c21ecd, b64dc9c4, ad2a6a58, 4c1e441f); review reviews/613574db-r1.md; closed at b47b6592."
         }
       ]
     },
@@ -627,6 +627,30 @@
       "type": "bug",
       "in_epic": true,
       "reason": "c5e01de3 review H3: dev/active/a203a23c/reevaluate-receipts.sh crashes (KeyError 'addendum') on the 07ca8585 ldpc-device-conformance-v1 receipt; pre-existing on main; depends on 07ca8585, feeds 1362381c"
+    },
+    {
+      "id": "77c21ecd",
+      "type": "task",
+      "in_epic": true,
+      "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
+    },
+    {
+      "id": "b64dc9c4",
+      "type": "task",
+      "in_epic": true,
+      "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
+    },
+    {
+      "id": "ad2a6a58",
+      "type": "task",
+      "in_epic": true,
+      "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
+    },
+    {
+      "id": "4c1e441f",
+      "type": "task",
+      "in_epic": true,
+      "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
     }
   ],
   "escalations": [
@@ -871,6 +895,22 @@
       "recommendation": "authorize; one-line control-flow change in the shared runner with a regression test",
       "status": "open",
       "raised_at": "2026-09-16T10:55Z"
+    },
+    {
+      "category": "protocol gap (shared infrastructure / closed-issue scope)",
+      "issue": "bb769456 / 3ea122df",
+      "question": "the frozen ISA-L family declares m = 6 (five confirmatory cells plus the declared unavailable dispatched row that spends a comparison), but trial_ledger::reserve counts only non-exploratory cells and can reserve five; close the gap by a versioned protocol change (represent a declared unavailable row) or by amending the closed addendum 3ea122df to m = 5",
+      "recommendation": "versioned protocol change: a declared unavailable row is a reservation-bearing cell kind; keeps the frozen, more conservative alpha_c",
+      "status": "open",
+      "raised_at": "2026-09-16T12:10Z"
+    },
+    {
+      "category": "epic task candidate (out-of-scope finding)",
+      "issue": "3e83c116 (done) / 65c0e13d",
+      "question": "survey/run-isal-xor-probe.sh compiles ISA-L with the bare name cc and records no compiler identity, so the ISA-L comparator has no compiler provenance (the r1 substance of 92385645 applies); create a task before 65c0e13d measures",
+      "recommendation": "create the task and wire 65c0e13d onto it",
+      "status": "open",
+      "raised_at": "2026-09-16T11:45Z"
     }
   ],
   "rework_counts": {
@@ -1310,7 +1350,11 @@
     "Session 16 (2026-09-15): 53c5a8c0, 19513245, and 07ca8585 are done with current gates and independent reviews; 3e83c116 is done; 92385645 exhausted two reworks when review r2 reproduced a MAKEFLAGS/GNUMAKEFLAGS compiler-provenance bypass; 3ea122df merged and passes repo/doc/cargo/code gates but needs invoker approval for the issue-text citation required by research-review; c04dd4ac source jobs are queued for the 2026-09-16 benchmark window. No Astra model was used.",
     "Session 17 (2026-09-16): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time; reuse worktrees; the invoker was interviewed on open escalations. Invoker rule: subagents may not spawn codex subagents. Rulings: 92385645 focused correction authorized with counter reset; 3ea122df citation repair approved and applied; 1d4fd63d question closed (lane unchanged, 63bad95d calibrates); no benchmark window armed until the invoker says so.",
     "Session 17: the 2026-09-16 window lost both c04dd4ac source jobs in about 15 ms each. 85fc5ff4: arm `shifts` exited 2 with 'fresh tuning stdin is not canonical compact JSON' (transport.rs decode_canonical: the arm re-encodes the request and compares bytes). 9fb40c83: the runner hit Broken pipe writing the request, so the dvb-profile-arm exited before reading stdin. Both runners appended a sequence-0 reservation to the (previously empty, committed) family ledgers in the worktrees; the protocol's voided-attempt rule (protocol.md ledger section) governs, since no result was read. Both go back to their workers as handshake rework; the worker brief's 'smoke every arm through the real benchmark-ab-runner on a throwaway plan' evidently was not done against the exact queued arm executables.",
-    "Session 17 disk: the host had 25 GB free. Removed three stale stub directories from the BCH epic and the closed worktrees agent-3e83c116 (233 GB, mostly target/debug) and agent-1c602857 (169 GB, 07ca8585) without harvesting: the reclaim script's rsync harvest copies rather than hardlinks, and the pool (203 GB) already holds the seed they started from. The closed agent-53c5a8c0 directory is reused for c5e01de3 and agent-19513245 is held for 613574db (same evidence tree)."
+    "Session 17 disk: the host had 25 GB free. Removed three stale stub directories from the BCH epic and the closed worktrees agent-3e83c116 (233 GB, mostly target/debug) and agent-1c602857 (169 GB, 07ca8585) without harvesting: the reclaim script's rsync harvest copies rather than hardlinks, and the pool (203 GB) already holds the seed they started from. The closed agent-53c5a8c0 directory is reused for c5e01de3 and agent-19513245 is held for 613574db (same evidence tree).",
+    "Session 17 invoker rulings (later in the session): no separate independent reviews beside the issue gates (the Terra pass convention inherited from sessions 4-16 is void; the lead stopped the in-flight 92385645 pass); subagents may not spawn codex agents; no new work after 12:00Z, finish running tasks and hand off; check for stalled workers every 20 minutes.",
+    "Session 17 stall pattern: three workers idled waiting for a background cargo-ci notification that never woke them, and one wrote a shell wait loop gated on a process-name search that matches its own shell and therefore never exits (the lead killed it). Dispatch prompts must say: wait on the process with the shell's wait builtin or on the log's final line; never gate a loop on a process-name search; never idle before the final report exists.",
+    "Session 17 gate ordering: `jit gate evaluate-all` runs gates in the issue's gate-list order and stops at the first failure; holistic-review sits third on the 2037941f children, so it runs before code/research review and fails on their staleness (92385645) or stops the chain (c5e01de3). Evaluate individually with holistic-review last.",
+    "Session 17 review outcomes: 3ea122df, 92385645, c5e01de3, 613574db done; 9fb40c83 and 85fc5ff4 repaired and merged, awaiting a window; bb769456 merged but in rework (two converging blockers); 4 GF(2^8) leaves created; bugs 598d8057 (dead choose_k_block, outside epic) and 7cdc28e9 (receipt checker skips other schemas, in epic) filed; worktrees agent-3e83c116, agent-1c602857, agent-92385645, agent-c5e01de3 reclaimed without harvest (rsync harvest copies; disk was at 98%)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1326,7 +1370,8 @@
     "handoff-10.md",
     "handoff-11.md",
     "handoff-12.md",
-    "handoff-13.md"
+    "handoff-13.md",
+    "handoff-14.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."

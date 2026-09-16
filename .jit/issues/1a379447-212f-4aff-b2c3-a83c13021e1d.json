@@ -837,6 +837,13 @@
       "format": "markdown",
       "label": "Session 16 handoff",
       "path": "dev/active/1a379447-zen3-cpu-performance/handoff-13.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Session 17 handoff",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-14.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -860,5 +867,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-16T12:14:03.431473240Z"
+  "updated_at": "2026-09-16T12:51:03.066718021Z"
 }
