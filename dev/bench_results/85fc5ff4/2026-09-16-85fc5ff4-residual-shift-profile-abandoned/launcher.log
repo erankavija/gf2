@@ -1,0 +1,12 @@
+# command: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-shift-profile.sh window
+# started_utc: 2026-09-16T01:00:29Z
+# source revision (informational): 2e7da9f32c774d31d1c690512db0bd6c2a7117b2
+# addendum: dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json
+# plan: target/bench-stage/85fc5ff4-residual-shift-profile.plan.json
+# stage: target/bench-stage/85fc5ff4-residual-shift-profile
+# output: dev/bench_results/c04dd4ac/residual-shift-profile
+# arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/release/deps/shifts-0bf958b31b19206c
+# arm build identity: {"crate":"gf2-core","target":"shifts","rust_version":"1.95","features":"all"}
+# load_avg_start:  04:00:29 up 12 days,  5:29, 13 users,  load average: 0.12, 0.13, 0.15
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/bench-stage/85fc5ff4-residual-shift-profile/execution.log
+# session 1 exit: 1 (0 = complete, 3 = paused)
