@@ -1,0 +1,106 @@
+{
+  "schema": "logical-buffer-source-evidence-v1",
+  "issue": "bb769456",
+  "addendum_identity": "2037941f-logical-buffer-v1",
+  "claims": [
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 93,
+      "verbatim": "pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {",
+      "sha256": "f403317def8759869e20c7631c4ef8ce857453ce0fa0556a802ffb55b8d35042",
+      "why": "The isolated-XOR baseline calls exactly this public entry point, so per-call backend selection stays inside the measured region."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 100,
+      "verbatim": "    let xor = resolve_xor_inplace(dst.len());",
+      "sha256": "f403317def8759869e20c7631c4ef8ce857453ce0fa0556a802ffb55b8d35042",
+      "why": "Dispatch is resolved per call inside the public route; the resolved arm hoists this one line out of the loop and is attribution only."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 55,
+      "verbatim": "pub fn resolve_xor_inplace(word_len: usize) -> XorInplaceFn {",
+      "sha256": "f403317def8759869e20c7631c4ef8ce857453ce0fa0556a802ffb55b8d35042",
+      "why": "The exploratory attribution route resolves once outside timing through this public function."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1027,
+      "verbatim": "    pub fn row_xor(&mut self, dst: usize, src: usize) {",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "One reported row operation is one call to this public method; row lookup, split, dispatch and the in-place XOR are inside timing."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 745,
+      "verbatim": "    pub fn row_words(&self, row: usize) -> &[u64] {",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "The row arm observes the production allocation's addresses through this public accessor rather than copying rows into a private layout."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 456,
+      "verbatim": "    pub fn nr_5g_rate_matched(",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228",
+      "why": "The whole-consumer cell times this public constructor end to end."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 753,
+      "verbatim": "fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> MotherEncoding {",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228",
+      "why": "The constructor's repeated unhoisted public row XORs are the dispatch-hoist consumer the frozen addendum admits."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 762,
+      "verbatim": "    let mut work = BitMatrix::zeros(m, n);",
+      "sha256": "29780ac369da9550a49e593ceb867a72954f62fe9923365a7bc0221db7478228",
+      "why": "The dense conversion inside the constructor fixes the row stride the selected-route table declares."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+      "line": 502,
+      "verbatim": "    command.env_clear();",
+      "sha256": "a3ebd9769d81ee2e3eeeaae991053f36a24fce7557254cbabc5a9ed5e80c1e6b",
+      "why": "The runner clears the child environment, so an arm must not demand window variables before reading its request."
+    },
+    {
+      "project": "gf2",
+      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
+      "line": 102,
+      "verbatim": "    let mut file = fs::OpenOptions::new().read(true).append(true).open(&path)?;",
+      "sha256": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd",
+      "why": "Every protocol-v4 campaign reserves against its family ledger, so the four ledger files exist as committed empty genesis files."
+    },
+    {
+      "project": "isa-l",
+      "commit": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
+      "path": "raid/raid_base.c",
+      "line": 100,
+      "verbatim": "xor_gen_base(int vects, int len, void **array)",
+      "sha256": "4fb636b16cebebadfb52236871421f1a143d3d7e488e7bc9b23b2fc25bd04aeb",
+      "why": "The external arm links this scalar reference; the NASM-built multibinary xor_gen has no reproduced executable on this host."
+    }
+  ]
+}
