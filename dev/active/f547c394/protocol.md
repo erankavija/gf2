@@ -33,7 +33,14 @@ crate is the canonical home.
   the receipt pin (P-01, P-22, P-13).
 - The addendum schema identity is `zen3-benchmark-addendum-v4`; receipts carry
   `zen3-benchmark-receipt-v1`; acceptance summaries carry
-  `zen3-benchmark-acceptance-v1`; runner plans carry `zen3-benchmark-plan-v1`.
+  `zen3-benchmark-acceptance-v2`; runner plans carry `zen3-benchmark-plan-v1`.
+  A `zen3-benchmark-acceptance-v1` summary is a committed, immutable earlier
+  identity: it reports the sequential-attempt allocation under the field name
+  `family_alpha`, where `v2` separates that allocation (`attempt_alpha`) from
+  the frozen total (`family_alpha`) and the per-comparison corrected level
+  (`corrected_alpha`), `@/issue/c5e01de3`. A current reader of a committed
+  summary branches on this identity, never on which fields happen to be
+  present.
 
 ## Contract clause coverage
 
@@ -472,7 +479,7 @@ Each bounded campaign writes one directory under the owning issue's
 | `execution.log` | The append-only journal of every session. |
 | `inputs/` | Immutable protocol, contract, schema, addendum, producing-input and referenced-receipt snapshots used by this campaign. |
 | `checkpoints/` | The immutable manifest and accepted units. |
-| `acceptance-summary.json` | `zen3-benchmark-acceptance-v1` from `benchmark-acceptance`. |
+| `acceptance-summary.json` | `zen3-benchmark-acceptance-v2` from `benchmark-acceptance`. |
 | `acceptance-summary.md` | Markdown rendered from the summary alone. |
 
 The launcher script beside the directory records the exact commands. Receipt

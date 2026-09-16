@@ -2300,7 +2300,7 @@ fn acceptance_summary_markdown_renders_from_the_summary_only() {
     assert!(markdown.contains(&summary.receipt_sha256));
     assert!(markdown.contains("| `a` |"));
     let json: Value = serde_json::to_value(&summary).unwrap();
-    assert_eq!(json["schema"], "zen3-benchmark-acceptance-v1");
+    assert_eq!(json["schema"], "zen3-benchmark-acceptance-v2");
 }
 
 fn git(repo: &Path, args: &[&str]) {
