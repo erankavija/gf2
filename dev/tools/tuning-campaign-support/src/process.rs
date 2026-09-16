@@ -21,7 +21,9 @@ pub struct ProcessResult {
     pub stderr: Vec<u8>,
     /// The observed terminal state of the child process tree.
     pub outcome: ProcessOutcome,
-    /// The first error returned by the standard-error callback, if any.
+    /// The first error observed while the child ran, if any: an error from the
+    /// standard-error callback, from reading a child stream, or from writing
+    /// the request to the child's standard input.
     pub callback_error: Option<io::Error>,
 }
 
@@ -224,8 +226,11 @@ impl Drop for ChildGuard<'_> {
 /// `all_reaped` is cleared after spawn and set once every descendant is reaped.
 /// `started` receives the child PID. The callback receives raw standard-error
 /// chunks; its first error stops the child and is returned in `callback_error`.
-/// Errors from spawning, stream setup, waiting, or process-tree management are
-/// returned directly. The callback is not called after its first error.
+/// A failure writing `input` to the child's standard input takes that same
+/// path, so the caller still receives the captured streams and the observed
+/// outcome of a child that exits before it reads its request. Errors from
+/// spawning, stream setup, waiting, or process-tree management are returned
+/// directly. The callback is not called after its first error.
 #[allow(clippy::too_many_arguments)]
 pub fn run_process(
     mut command: Command,
@@ -269,9 +274,15 @@ pub fn run_process(
         .ok_or_else(|| invalid("missing stderr"))?;
     let (tx, rx) = mpsc::channel();
     let input = input.to_vec();
+    let write_tx = tx.clone();
     let writer = thread::spawn(move || {
         let mut stdin = stdin;
-        stdin.write_all(&input)
+        if let Err(error) = stdin.write_all(&input) {
+            let _ = write_tx.send(Stream::Error(io::Error::new(
+                error.kind(),
+                format!("writing the request to the child failed: {error}"),
+            )));
+        }
     });
     let out_tx = tx.clone();
     let err_tx = tx.clone();
@@ -340,13 +351,22 @@ pub fn run_process(
     let status = child.wait()?;
     writer
         .join()
-        .map_err(|_| invalid("stdin writer panicked"))??;
+        .map_err(|_| invalid("stdin writer panicked"))?;
     out_thread
         .join()
         .map_err(|_| invalid("stdout reader panicked"))?;
     err_thread
         .join()
         .map_err(|_| invalid("stderr reader panicked"))?;
+    // The drain loop leaves once both readers have sent their end marker, so
+    // every stream chunk is already accounted for and only a write failure the
+    // child's exit released at the same moment can remain on the channel.
+    if callback_error.is_none() {
+        callback_error = rx.try_iter().find_map(|message| match message {
+            Stream::Error(error) => Some(error),
+            _ => None,
+        });
+    }
     child.done = true;
     all_reaped.store(true, Ordering::SeqCst);
     let elapsed_ns = u64::try_from(begin.elapsed().as_nanos())
