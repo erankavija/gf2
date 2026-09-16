@@ -5,7 +5,7 @@
   "claims": [
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "af0dacfa5aa0c2986f6dda6883f99109c4b6a4c4",
       "path": "crates/gf2-core/src/kernels/ops.rs",
       "line": 93,
       "verbatim": "pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {",
@@ -14,7 +14,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "af0dacfa5aa0c2986f6dda6883f99109c4b6a4c4",
       "path": "crates/gf2-core/src/kernels/ops.rs",
       "line": 100,
       "verbatim": "    let xor = resolve_xor_inplace(dst.len());",
@@ -23,7 +23,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "af0dacfa5aa0c2986f6dda6883f99109c4b6a4c4",
       "path": "crates/gf2-core/src/kernels/ops.rs",
       "line": 55,
       "verbatim": "pub fn resolve_xor_inplace(word_len: usize) -> XorInplaceFn {",
@@ -32,7 +32,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 1027,
       "verbatim": "    pub fn row_xor(&mut self, dst: usize, src: usize) {",
@@ -41,7 +41,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 745,
       "verbatim": "    pub fn row_words(&self, row: usize) -> &[u64] {",
@@ -50,7 +50,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "8aa291b2e0c18b1a063f672eeb9836376c02b24c",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 456,
       "verbatim": "    pub fn nr_5g_rate_matched(",
@@ -59,7 +59,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "8aa291b2e0c18b1a063f672eeb9836376c02b24c",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 753,
       "verbatim": "fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> MotherEncoding {",
@@ -68,7 +68,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "8aa291b2e0c18b1a063f672eeb9836376c02b24c",
       "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
       "line": 762,
       "verbatim": "    let mut work = BitMatrix::zeros(m, n);",
@@ -77,7 +77,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "566318d45de223ea88c0e439ec727b3ec768c2e0",
       "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
       "line": 502,
       "verbatim": "    command.env_clear();",
@@ -86,7 +86,7 @@
     },
     {
       "project": "gf2",
-      "commit": "03e73296beb46b388c44ee7816d9762facd68ce1",
+      "commit": "6cdf576e2623f5593a2f0bf4389eac546b26844b",
       "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
       "line": 102,
       "verbatim": "    let mut file = fs::OpenOptions::new().read(true).append(true).open(&path)?;",
