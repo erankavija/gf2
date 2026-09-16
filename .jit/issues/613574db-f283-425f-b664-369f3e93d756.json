@@ -63,7 +63,23 @@
     "doc-review",
     "holistic-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T12:05:32.275233608Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T12:08:26.952261454Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-09-16T12:02:58.300137589Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "613574db-f283-425f-b664-369f3e93d756",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -74,5 +90,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Design cached GF(2^8) tables and consumer hooks",
-  "updated_at": "2026-09-16T11:53:13.443293341Z"
+  "updated_at": "2026-09-16T12:08:26.952261454Z"
 }

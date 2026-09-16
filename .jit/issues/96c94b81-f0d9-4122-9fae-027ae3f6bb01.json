@@ -7,6 +7,7 @@
   ],
   "description": "Freeze the confirmatory protocol for dense `BitMatrix::matvec` and its qualified M4RI comparison before candidate measurements begin.\n\n## Background\n\nThe protocol covers row strides of 8, 9, 63, 64, and 65 words, neighboring dimensions, relevant cache regimes, output allocation, and adapter costs. The current fused AND-popcount route is the production baseline; the already rejected generic carry-save comparator is not a fresh candidate.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins matrices, vectors, dimensions, density, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated kernel observations from allocated whole-`matvec` benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The M4RI arm follows the matched-operation specification and charges construction, conversion, execution, and output costs without substituting transpose evidence.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.",
   "documents": [],
+  "first_ready_at": "2026-09-16T12:09:51.453702532Z",
   "gates_required": [
     "repo-validate",
     "doc-review",
@@ -30,7 +31,7 @@
     "cites:AlbrechtBard2026"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Freeze the dense-parity measurement addendum",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T12:09:51.453702532Z"
 }
