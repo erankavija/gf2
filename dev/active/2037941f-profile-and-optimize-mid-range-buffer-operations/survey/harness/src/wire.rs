@@ -189,7 +189,8 @@ fn parse_shape(name: &str) -> Result<RowShape, String> {
 }
 
 /// One timing window of an arm result.
-#[derive(Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct Window {
     /// Calls in the window.
     pub calls: u64,
@@ -198,7 +199,8 @@ pub struct Window {
 }
 
 /// Conversion costs an arm observed outside its measured operation.
-#[derive(Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct ConversionCosts {
     /// Fixture and route setup, once per execution.
     pub setup_ns: u64,
@@ -213,7 +215,12 @@ pub struct ConversionCosts {
 }
 
 /// One arm result line.
-#[derive(Serialize)]
+///
+/// The type both arms emit is the type the non-timed smoke parses, so the
+/// result contract has one form and a canonical re-encode of a parsed line
+/// reproduces the bytes the arm wrote.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct ArmResult {
     /// Result schema identity.
     pub schema: String,
@@ -294,8 +301,9 @@ pub fn read_request() -> Result<(Request, Case, Cache), String> {
 /// never observes the window variables its launcher exported. A child carrying
 /// the sentinel therefore defers to the layers that do enforce the window, the
 /// launcher's `window` subcommand and `dev/scripts/ccx1-bench-flock.sh`, and to
-/// the untimed runner smoke the worker brief requires outside one. Every other
-/// invocation requires the window variables and exits before reading a request.
+/// the non-timed smoke, whose zero-window requests collect no timing sample.
+/// Every other invocation requires the window variables and exits before
+/// reading a request.
 pub fn require_window_unless_child() -> Result<(), String> {
     if std::env::var(transport::FRESH_CASE_VAR).as_deref() == Ok(transport::FRESH_CASE_VALUE) {
         return Ok(());

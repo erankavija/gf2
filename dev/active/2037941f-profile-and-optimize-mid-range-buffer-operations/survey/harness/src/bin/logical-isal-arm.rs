@@ -58,6 +58,9 @@ fn isal_operation(source0: &[u64], source1: &[u64]) -> Result<u64, String> {
 }
 
 /// One separately measured arrangement: fresh destination plus pointer array.
+///
+/// A timed execution charges this cost; the non-timed arrangement pass of a
+/// zero-window request runs no probe and reports zero.
 fn arrangement_probe_ns(words: usize, source0: &[u64], source1: &[u64]) -> u64 {
     const REPS: u32 = 100_000;
     let started = Instant::now();
@@ -214,7 +217,11 @@ fn run() -> Result<(), String> {
         banks.working_set_bytes()
     );
     let (probe0, probe1) = banks.sources(0, 0);
-    let dispatch_ns = arrangement_probe_ns(words, probe0, probe1);
+    let dispatch_ns = if request.windows > 0 {
+        arrangement_probe_ns(words, probe0, probe1)
+    } else {
+        0
+    };
     let items = banks.items();
     let failure = std::cell::RefCell::new(None);
     let observed = std::cell::Cell::new(0_u64);
