@@ -3,9 +3,8 @@
 
 `reevaluate-receipts.sh` evaluates every `zen3-benchmark-receipt-v1` receipt
 under `dev/bench_results/` with `benchmark-acceptance`. A receipt of another
-schema, such as the 07ca8585 device-conformance evidence
-(`ldpc-device-conformance-v1`), is not a benchmark receipt: handing it to a
-benchmark-shaped evaluator aborts the run. This module partitions a tree of
+schema is not a benchmark receipt: handing it to a benchmark-shaped evaluator
+aborts the run. This module partitions a tree of
 committed receipts by each receipt's own declared `schema` field, never by
 path, so a receipt of another schema is skipped and recorded instead of
 evaluated.
