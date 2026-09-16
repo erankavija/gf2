@@ -74,16 +74,17 @@ else
             bash -c 'set -euo pipefail
                 export CC="$1" CFLAGS="$2" CPPFLAGS="" LDFLAGS="" LIBS="" CONFIG_SITE=/dev/null
                 unset AR AS CPP LD NM OBJDUMP RANLIB STRIP
-                # Word-split on purpose: "$5" is the pinned channel list.
+                # Word-split on purpose: "$5" is the pinned channel list and
+                # "$6" the pinned configure arguments the record names.
                 unset $5
-                if ! { ./configure --prefix="$3" --disable-static &&
+                if ! { ./configure --prefix="$3" $6 &&
                        make -j"${CARGO_BUILD_JOBS:-1}" V=1 &&
                        make install V=1; } >"$4" 2>&1; then
                     tail -n 40 "$4" >&2
                     exit 1
                 fi' \
             _ "${m4ri_compiler_command}" "${m4ri_build_flags}" "${prefix}" \
-            "${build_log}" "${m4ri_make_channels}"
+            "${build_log}" "${m4ri_make_channels}" "${m4ri_configure_args}"
     )
     # Configure's own selection, which a make-time command-line override would
     # leave untouched; the build log and producer checks cover that override.
