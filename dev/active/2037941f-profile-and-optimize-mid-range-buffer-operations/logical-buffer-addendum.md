@@ -332,7 +332,11 @@ identity and protocol version. Sampling never expands to chase a margin.
 
 ## Preserved no-win and scope exclusions
 
-The confirmed 64-word generic dispatch-hoist no-win remains authoritative.
+The confirmed 64-word generic dispatch-hoist no-win remains authoritative:
+the predecessor profile records the hoist as not material on 64-word rows
+([`dev/active/04b85d10/findings.md:100-110`](../04b85d10/findings.md#L100-L110),
+tables § `logical-v3-confirmation`, row `logical-row-xor-dispatch-64w-1core` in
+[`dev/bench_results/04b85d10/tables.md`](../../bench_results/04b85d10/tables.md)).
 This addendum therefore forbids a candidate that changes public `xor_inplace`,
 public `BitMatrix::row_xor`, or the global size threshold merely to hoist
 dispatch for a 64-word call. It also excludes already-hoisted M4RM, RREF,
