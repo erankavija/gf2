@@ -95,6 +95,13 @@ impl ShiftCase {
     }
 }
 
+/// Mirror of the runner's arm request.
+///
+/// `case` stays a `serde_json::Value` because the canonical child-v2 framing
+/// accepts a request only when the child re-encodes the runner's bytes
+/// exactly, and the runner forwards the plan cell's case as a `Value`, whose
+/// object keys re-encode in sorted order rather than in a struct's declaration
+/// order. The typed [`ShiftCase`] is decoded from that value.
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct ArmRequest {
@@ -103,7 +110,7 @@ struct ArmRequest {
     arm: String,
     role: String,
     pair: u32,
-    case: ShiftCase,
+    case: Value,
     cache_state: CacheState,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     cold_calls: Option<u64>,
@@ -282,8 +289,11 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
             mode.name()
         ));
     }
-    if request.role != "exploratory" {
-        return Err("the residual-shift profile is exploratory only".to_owned());
+    if request.role != "baseline" && request.role != "candidate" {
+        return Err(format!(
+            "request role {:?} names neither arm of a pair",
+            request.role
+        ));
     }
     if request.workers_declared != 1 {
         return Err(format!(
@@ -294,26 +304,28 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
     if request.decoder.is_some() || request.cold_calls.is_some() {
         return Err("shift cells have neither decoder nor cold-call settings".to_owned());
     }
-    request.case.validate()?;
-    let offset = mode.offset(&request.case);
+    let case: ShiftCase = serde_json::from_value(request.case.clone())
+        .map_err(|error| format!("shift case does not decode: {error}"))?;
+    case.validate()?;
+    let offset = mode.offset(&case);
     let expected = {
-        let initial = fixture(request.case.length_bits, request.case.seed);
-        reference_shift(&initial, request.case.direction, offset)
+        let initial = fixture(case.length_bits, case.seed);
+        reference_shift(&initial, case.direction, offset)
     };
-    let mut probe = fixture(request.case.length_bits, request.case.seed);
-    apply_shift(&mut probe, request.case.direction, offset);
+    let mut probe = fixture(case.length_bits, case.seed);
+    apply_shift(&mut probe, case.direction, offset);
     if (0..probe.len()).any(|index| probe.get(index) != expected[index]) || !tail_is_zero(&probe) {
         return Err("selected arm failed the independent zero-fill oracle".to_owned());
     }
 
-    let mut fixtures = fixture_banks(request.cache_state, &request.case)?;
+    let mut fixtures = fixture_banks(request.cache_state, &case)?;
     if request.cache_state == CacheState::Warm {
-        apply_shift(&mut fixtures[0], request.case.direction, offset);
+        apply_shift(&mut fixtures[0], case.direction, offset);
     }
     let bank_count = fixtures.len();
     let mut body = |bank: usize| {
         let vector = black_box(&mut fixtures[bank % bank_count]);
-        apply_shift(vector, request.case.direction, offset);
+        apply_shift(vector, case.direction, offset);
         black_box(vector.words());
     };
     let samples = execution_windows_fixed_or_calibrated(
@@ -340,7 +352,7 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
         cache_state_applied: request.cache_state,
         workers_observed: 1,
         cpus_observed,
-        selected_path: Some(mode.selected_path(request.case.direction)),
+        selected_path: Some(mode.selected_path(case.direction)),
         conversion: None,
         quality: None,
         calibrated: true,
