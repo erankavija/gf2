@@ -1653,7 +1653,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     /// per-element scratch buffer the wide multiply allocates. No cargo
     /// feature and no processor capability takes part; the exact predicate
     /// that selects this lane is
-    /// [`crate::gf2m::byte_table::gf256_table_dispatch`]. Every other degree
+    /// `crate::gf2m::byte_table::gf256_table_dispatch`. Every other degree
     /// and every multi-word configuration declines and keeps the scalar
     /// element loop the caller runs without this override.
     fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
