@@ -37,6 +37,8 @@
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use gf2_core::test_scratch::{scratch, Scratch};
+
 /// Path to the migrated campaign binary cargo built for this test.
 fn binary_path() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_dvb_t2_awgn_campaign"))
@@ -80,14 +82,22 @@ fn parse_det_rows(csv: &str) -> Vec<DetRow> {
         .collect()
 }
 
+/// Returns the not-yet-created output directory inside a scratch root.
+fn out_path(root: &Scratch) -> String {
+    root.join("out")
+        .to_str()
+        .expect("scratch paths are UTF-8")
+        .to_owned()
+}
+
 /// Runs the migrated campaign once, returning the parsed curve CSV rows.
 fn run_campaign(
-    out_dir: &str,
+    out_dir: String,
     esn0_range: &str,
     max_frames: &str,
     target_errors: &str,
 ) -> Vec<DetRow> {
-    let _ = std::fs::remove_dir_all(out_dir);
+    let out_dir = out_dir.as_str();
     let bin = binary_path();
     let status = Command::new(&bin)
         .args([
@@ -127,8 +137,10 @@ fn run_campaign(
 #[test]
 #[ignore = "sim: two full-codec subprocess runs for binary two-run byte-identity"]
 fn byte_identical_two_runs_smoke() {
-    let a = run_campaign("/tmp/dvb_d2_byteid_smoke_a", "6.25:6.25:0.5", "8", "1000");
-    let b = run_campaign("/tmp/dvb_d2_byteid_smoke_b", "6.25:6.25:0.5", "8", "1000");
+    let leg_a = scratch("gf2-byteid-smoke-a");
+    let leg_b = scratch("gf2-byteid-smoke-b");
+    let a = run_campaign(out_path(&leg_a), "6.25:6.25:0.5", "8", "1000");
+    let b = run_campaign(out_path(&leg_b), "6.25:6.25:0.5", "8", "1000");
     assert_eq!(a.len(), 1, "one SNR point");
     assert_eq!(
         a, b,
@@ -144,13 +156,15 @@ fn byte_identical_two_runs_smoke() {
 #[test]
 #[ignore = "sim: 200-frame n=64800 DVB-T2 BICM waterfall two-run byte-identity"]
 fn byte_identical_two_runs_waterfall() {
+    let leg_a = scratch("gf2-byteid-waterfall-a");
+    let leg_b = scratch("gf2-byteid-waterfall-b");
     let a = run_campaign(
-        "/tmp/dvb_d2_byteid_wf_a",
+        out_path(&leg_a),
         "6.0:6.0:0.5",
         "200",
         "100000", // never reached; runs the full 200 frames
     );
-    let b = run_campaign("/tmp/dvb_d2_byteid_wf_b", "6.0:6.0:0.5", "200", "100000");
+    let b = run_campaign(out_path(&leg_b), "6.0:6.0:0.5", "200", "100000");
     assert_eq!(a.len(), 1);
 
     // Non-vacuity: a genuine waterfall mix of errored and clean frames.

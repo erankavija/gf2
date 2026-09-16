@@ -37,6 +37,7 @@ use tuning_campaign_support::receipt::{
     LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
 use tuning_campaign_support::schema;
+use tuning_campaign_support::scratch::Scratch;
 
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 const CAMPAIGN_SEED: u64 = 7;
@@ -48,11 +49,8 @@ fn repo_root() -> PathBuf {
         .unwrap()
 }
 
-fn scratch(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("gf2-f547c394-{name}-{}", std::process::id()));
-    let _ = fs::remove_dir_all(&dir);
-    fs::create_dir_all(&dir).unwrap();
-    dir
+fn scratch(name: &str) -> Scratch {
+    tuning_campaign_support::scratch::scratch(&format!("gf2-f547c394-{name}"))
 }
 
 /// Copies the committed protocol documents into a scratch repository root.
@@ -307,6 +305,8 @@ fn identity(
 }
 
 struct Built {
+    /// Owns the tree `repo` and `dir` point into.
+    _root: Scratch,
     repo: PathBuf,
     dir: PathBuf,
 }
@@ -1045,7 +1045,11 @@ fn build_receipt_with_history(
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    Built { repo, dir }
+    Built {
+        _root: root,
+        repo,
+        dir,
+    }
 }
 
 fn spec(id: &'static str, speedup: f64) -> CellSpec {
@@ -3326,6 +3330,8 @@ exec "$WORKLOAD""#;
 
 /// A finalized receipt directory and its execution log.
 struct InterruptedCampaign {
+    /// Owns the tree `out` points into.
+    _root: Scratch,
     out: PathBuf,
     records: Vec<JournalRecord>,
 }
@@ -3512,7 +3518,11 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
     let records =
         ExecutionLog::validate_prefix(&fs::read(out.join(LOG_FILE)).unwrap(), INTERRUPTED_CAMPAIGN)
             .unwrap();
-    InterruptedCampaign { out, records }
+    InterruptedCampaign {
+        _root: root,
+        out,
+        records,
+    }
 }
 
 /// Sequences of the `cell-start` records of one cell.

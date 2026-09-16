@@ -68,6 +68,9 @@ pub mod rng;
 #[cfg(any(test, feature = "test-support"))]
 pub mod bench_seed;
 
+#[cfg(feature = "test-support")]
+pub mod test_scratch;
+
 pub use bitslice::{BitSlice, BitSliceMut};
 pub use bitvec::BitVec;
 pub use matrix::BitMatrix;

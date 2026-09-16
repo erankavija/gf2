@@ -1231,18 +1231,8 @@ mod tests {
     // ── run_sweep_checkpointed paths ────────────────────────────────────────
 
     /// Helper: unique temp dir for a checkpointed sweep test.
-    fn sweep_tmp(label: &str) -> std::path::PathBuf {
-        let mut p = std::env::temp_dir();
-        p.push(format!(
-            "gf2-drain-sweep-{}-{}-{}",
-            label,
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_nanos())
-                .unwrap_or(0)
-        ));
-        p
+    fn sweep_tmp(label: &str) -> gf2_core::test_scratch::Scratch {
+        gf2_core::test_scratch::scratch(&format!("gf2-drain-sweep-{label}"))
     }
 
     /// A pipeline without a `RunPlan` (built via `from_parts`, not a preset)
@@ -1250,13 +1240,14 @@ mod tests {
     /// in `run_sweep_checkpointed` (lines 441-445).
     #[test]
     fn test_run_sweep_checkpointed_rejects_missing_run_plan() {
+        let scratch = gf2_core::test_scratch::scratch("gf2-drain-no-plan");
         let config = PipelineConfig {
             seed: 0,
             esn0_db_points: vec![5.0],
             target_errors: 0,
             max_frames: 1,
             heartbeat_every_frames: 0,
-            checkpoint_dir: Some(std::env::temp_dir()),
+            checkpoint_dir: Some(scratch.path().to_path_buf()),
             tracing_log_path: None,
             parallelism: NonZeroUsize::new(1).unwrap(),
             gpu_enabled: false,
@@ -1337,7 +1328,6 @@ mod tests {
         use gf2_coding::CodeRate;
 
         let tmp = sweep_tmp("empty");
-        std::fs::create_dir_all(&tmp).expect("temp dir");
 
         let mut pipeline = Pipeline::dvb_t2()
             .modcod(crate::presets::dvb_t2::Modcod::Normal {
@@ -1349,7 +1339,7 @@ mod tests {
             .channel(crate::presets::dvb_t2::Channel::awgn(9.0_f32))
             .parallelism(NonZeroUsize::new(1).unwrap())
             .seed(0)
-            .checkpoint_dir(Some(tmp.clone()))
+            .checkpoint_dir(Some(tmp.path().to_path_buf()))
             .build()
             .expect("pipeline builds");
         pipeline.config_mut().esn0_db_points = vec![]; // no points: loop doesn't run
@@ -1365,7 +1355,6 @@ mod tests {
             0,
             "no points → empty per_point"
         );
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     /// A checkpointed CPU sweep over one SNR point with one frame must complete
@@ -1382,7 +1371,6 @@ mod tests {
         use gf2_coding::CodeRate;
 
         let tmp = sweep_tmp("single");
-        std::fs::create_dir_all(&tmp).expect("temp dir");
 
         let mut pipeline = Pipeline::dvb_t2()
             .modcod(crate::presets::dvb_t2::Modcod::Normal {
@@ -1395,7 +1383,7 @@ mod tests {
             .channel(crate::presets::dvb_t2::Channel::awgn(9.0_f32))
             .parallelism(NonZeroUsize::new(1).unwrap())
             .seed(0xDEAD_BEEF_u64)
-            .checkpoint_dir(Some(tmp.clone()))
+            .checkpoint_dir(Some(tmp.path().to_path_buf()))
             .build()
             .expect("pipeline builds");
         pipeline.config_mut().esn0_db_points = vec![9.0];
@@ -1422,6 +1410,5 @@ mod tests {
             1,
             "frame observer must fire once"
         );
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 }
