@@ -8,7 +8,22 @@ performs or by a field a receipt must carry; the rule identifiers `P-NN` are the
 finding codes the tool emits. Family and cell settings that the contract leaves
 to families are declared in addenda conforming to
 [`addendum.schema.json`](addendum.schema.json); the shared numeric settings are
-frozen here. The tooling lives in the `tuning-campaign-support` workspace crate
+frozen here. `addendum.schema.json` is the shared path and always describes
+the current protocol version; each earlier version has its own committed
+sibling file named by the version it describes
+([`addendum-v1-initial.schema.json`](addendum-v1-initial.schema.json),
+[`addendum-v1.schema.json`](addendum-v1.schema.json),
+[`addendum-v2.schema.json`](addendum-v2.schema.json),
+[`addendum-v3.schema.json`](addendum-v3.schema.json)), so a frozen addendum of
+any version validates against a committed schema from a fresh checkout.
+Version 1 has two sibling files because it was pinned under two digests:
+`addendum-v1-initial.schema.json` is the text the very first pilot and
+confirmation receipts pinned, and `addendum-v1.schema.json` is the text every
+later version-1 receipt pinned after a wording-only edit to the
+`frozen.description` annotation; [amendment-v2.md](amendment-v2.md) records
+the edit. [`schema-versions.json`](schema-versions.json) records which digest
+each version's schema file and its pinning receipts carry. The tooling lives
+in the `tuning-campaign-support` workspace crate
 (`dev/tools/tuning-campaign-support`); [design.md](design.md) records why that
 crate is the canonical home.
 
