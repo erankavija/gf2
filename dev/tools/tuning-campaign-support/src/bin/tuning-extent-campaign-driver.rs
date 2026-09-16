@@ -1969,6 +1969,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tuning_campaign_support::scratch::{scratch, Scratch};
 
     #[test]
     fn staged_process_receives_only_the_declared_measurement_environment() {
@@ -2001,7 +2002,7 @@ mod tests {
     fn staged_reporting_preflights_use_their_actual_cli_flags_and_empty_stdin() {
         use std::os::unix::fs::PermissionsExt;
 
-        let stage = scratch("report-cli");
+        let stage = scratch("gf2-driver-report-cli");
         let executable = stage.join("owner");
         fs::write(
             &executable,
@@ -2023,22 +2024,11 @@ mod tests {
             verify_report_response(label, &response).unwrap();
         }
         assert!(report_cli(&process, "unknown", None).is_err());
-        fs::remove_dir_all(stage).unwrap();
     }
 
-    fn scratch(name: &str) -> std::path::PathBuf {
-        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-        let path = env::temp_dir().join(format!(
-            "gf2-driver-{}-{}-{name}",
-            std::process::id(),
-            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-        ));
-        fs::create_dir(&path).unwrap();
-        path
-    }
     #[test]
     fn incomplete_executable_staging_replays_before_campaign_config_exists() {
-        let stage = scratch("staging-replay");
+        let stage = scratch("gf2-driver-staging-replay");
         fs::create_dir(stage.join("build")).unwrap();
         let source_revision = command_text("git", &["rev-parse", "HEAD"]).unwrap();
         let source_tree = command_text("git", &["rev-parse", "HEAD^{tree}"]).unwrap();
@@ -2102,12 +2092,11 @@ mod tests {
         stage_executables(&stage, &input).unwrap();
         fs::write(&source.path, b"changed producer").unwrap();
         assert!(stage_executables(&stage, &input).is_err());
-        fs::remove_dir_all(stage).unwrap();
     }
 
     #[test]
     fn relocated_build_source_observation_is_rejected_before_campaign_work() {
-        let stage = scratch("relocated-build-source");
+        let stage = scratch("gf2-driver-relocated-build-source");
         fs::create_dir(stage.join("build")).unwrap();
         let relocated = stage.join("source-before.json");
         fs::write(&relocated, b"{}").unwrap();
@@ -2123,12 +2112,11 @@ mod tests {
         assert!(validate_build_source_observations(&stage, &staging).is_err());
         assert!(!stage.join("execution.log").exists());
         assert!(!stage.join("active-session.json").exists());
-        fs::remove_dir_all(stage).unwrap();
     }
 
     #[test]
     fn relocated_preflight_report_is_rejected_before_campaign_work() {
-        let stage = scratch("relocated-preflight");
+        let stage = scratch("gf2-driver-relocated-preflight");
         let mut reports = BTreeMap::new();
         for owner in ["core", "algebra"] {
             for mode in ["self-check", "list-grid", "capability-report"] {
@@ -2145,7 +2133,6 @@ mod tests {
         assert!(validate_preflight_identities(&stage, &reports).is_err());
         assert!(!stage.join("execution.log").exists());
         assert!(!stage.join("active-session.json").exists());
-        fs::remove_dir_all(stage).unwrap();
     }
     #[test]
     fn affinity_is_observed_from_the_current_os_mask_and_binds_resume() {
@@ -2165,6 +2152,7 @@ mod tests {
     fn probe_fixture(
         stderr: &[u8],
     ) -> (
+        Scratch,
         CampaignConfig,
         LaunchUnit,
         ChildResult,
@@ -2172,7 +2160,7 @@ mod tests {
         CheckpointStore,
     ) {
         use std::os::unix::fs::PermissionsExt;
-        let stage = scratch("probe-checkpoint");
+        let stage = scratch("gf2-driver-probe-checkpoint");
         let channels = SessionChannels::for_stage(&stage).unwrap();
         let campaign = Token::new("driver-probe-test").unwrap();
         let unit = LaunchUnit::new(
@@ -2215,7 +2203,7 @@ mod tests {
             executable_sha256: executable.sha256.clone(),
             arguments: vec!["--fresh-child".into()],
             environment: measurement_environment(),
-            working_directory: stage.clone(),
+            working_directory: stage.to_path_buf(),
         };
         let digest = Sha256Digest::of(b"test identity").as_str().to_owned();
         let identity = ResumeIdentity {
@@ -2259,11 +2247,11 @@ mod tests {
         let checkpoints =
             CheckpointStore::create_new(&channels.checkpoints, campaign.as_str(), identity)
                 .unwrap();
-        (config, unit, expected, log, checkpoints)
+        (stage, config, unit, expected, log, checkpoints)
     }
     #[test]
     fn interrupted_derived_projection_publication_is_replayed_and_bound() {
-        let (config, unit, _result, _log, _checkpoints) = probe_fixture(b"");
+        let (_stage, config, unit, _result, _log, _checkpoints) = probe_fixture(b"");
         let stage = &config.channels.stage;
         let mut units = Vec::new();
         for (ordinal, task) in std::iter::once(Task::Probe)
@@ -2330,7 +2318,6 @@ mod tests {
         let mut changed = observed;
         changed.derivation = CanonicalJson::new("{\"changed\":true}").unwrap();
         assert!(restore_derived_projection(stage, &original, &request, &changed).is_err());
-        fs::remove_dir_all(stage).unwrap();
     }
     #[test]
     fn rejected_raw_streams_cannot_recover_after_completion_crash() {
@@ -2339,7 +2326,7 @@ mod tests {
             b"\xff".as_slice(),
             b"GF2_TUNING_PROGRESS={}\n".as_slice(),
         ] {
-            let (config, unit, _expected, mut log, mut checkpoints) = probe_fixture(stderr);
+            let (_stage, config, unit, _expected, mut log, mut checkpoints) = probe_fixture(stderr);
             assert!(bounded_unit_with_hook(
                 &config,
                 &unit,
@@ -2360,7 +2347,6 @@ mod tests {
             .unwrap();
             assert!(recover_unit(&config, &unit, &mut log, &mut checkpoints, &records).is_err());
             assert!(checkpoints.completed_keys().is_empty());
-            fs::remove_dir_all(&config.channels.stage).unwrap();
         }
     }
     #[test]
@@ -2370,7 +2356,7 @@ mod tests {
             UnitBoundary::Exit,
             UnitBoundary::Validation,
         ] {
-            let (config, unit, expected, mut log, mut checkpoints) = probe_fixture(b"");
+            let (_stage, config, unit, expected, mut log, mut checkpoints) = probe_fixture(b"");
             assert!(bounded_unit_with_hook(
                 &config,
                 &unit,
@@ -2404,13 +2390,11 @@ mod tests {
                     .count(),
                 1
             );
-            fs::remove_dir_all(&config.channels.stage).unwrap();
         }
     }
     #[test]
     fn a_probe_streams_validates_and_commits_one_bound_checkpoint() {
-        let (config, unit, expected, mut log, mut checkpoints) = probe_fixture(b"");
-        let stage = config.channels.stage.clone();
+        let (_stage, config, unit, expected, mut log, mut checkpoints) = probe_fixture(b"");
         let campaign = config.campaign_id.clone();
         let accepted = bounded_unit(&config, &unit, &mut log, &mut checkpoints).unwrap();
         assert_eq!(accepted.result, expected);
@@ -2448,7 +2432,6 @@ mod tests {
             r.event,
             JournalEvent::ExecutionProgress | JournalEvent::WindowProgress
         )));
-        fs::remove_dir_all(stage).unwrap();
     }
     #[test]
     fn progress_is_delivered_before_exit() {
@@ -2537,7 +2520,7 @@ mod tests {
     }
     #[test]
     fn promotion_is_idempotent_and_rejects_different_occupied_bytes() {
-        let stage = scratch("promotion");
+        let stage = scratch("gf2-driver-promotion");
         let source = stage.join("candidate.json");
         let target = stage.join("owner.json");
         fs::write(&source, b"canonical candidate").unwrap();
@@ -2546,7 +2529,6 @@ mod tests {
         assert_eq!(promote(&source, &target).unwrap(), first);
         fs::write(&target, b"different").unwrap();
         assert!(promote(&source, &target).is_err());
-        fs::remove_dir_all(stage).unwrap();
     }
     #[test]
     fn live_writer_and_reused_identity_are_distinguished() {
@@ -2557,7 +2539,7 @@ mod tests {
     }
     #[test]
     fn held_lock_requires_an_inherited_descriptor() {
-        let stage = scratch("lock");
+        let stage = scratch("gf2-driver-lock");
         let path = stage.join("host.lock");
         let lock = File::create(&path).unwrap();
         assert!(lock_available(&path).unwrap());
@@ -2566,7 +2548,6 @@ mod tests {
         assert_eq!(inherited_lock(&path).unwrap(), std::process::id());
         lock.unlock().unwrap();
         assert!(inherited_lock(&path).is_err());
-        fs::remove_dir_all(stage).unwrap();
     }
     #[test]
     fn simultaneous_binary_streams_are_drained_without_loss() {

@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::ErrorKind;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use tuning_campaign_support::campaign::ProcessOutcome;
 use tuning_campaign_support::host::{
@@ -9,16 +9,10 @@ use tuning_campaign_support::host::{
     HostObservation, LogicalCpu,
 };
 use tuning_campaign_support::process::run_process;
+use tuning_campaign_support::scratch::Scratch;
 
-fn unique_path(label: &str) -> std::path::PathBuf {
-    let nonce = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("system clock is after Unix epoch")
-        .as_nanos();
-    std::env::temp_dir().join(format!(
-        "tuning-campaign-support-{label}-{}-{nonce}",
-        std::process::id()
-    ))
+fn unique_path(label: &str) -> Scratch {
+    tuning_campaign_support::scratch::scratch(&format!("tuning-campaign-support-{label}"))
 }
 
 #[test]
