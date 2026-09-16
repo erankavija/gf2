@@ -149,10 +149,7 @@ fn element_axpy(
     );
     y.axpy(&field.element(u64::from(coefficient)), &x);
     let lane = last_gf256_axpy_lane();
-    (
-        (0..y.len()).map(|i| y[i].value() as u8).collect(),
-        lane,
-    )
+    ((0..y.len()).map(|i| y[i].value() as u8).collect(), lane)
 }
 
 /// Runs `y += a * x` over a single-word wide value and returns the
@@ -176,10 +173,7 @@ fn wide_axpy<Cfg: Gf2mWideConfig<1>>(
     );
     y.axpy(&Gf2mWide::<1, Cfg>::from_u64(u64::from(coefficient)), &x);
     let lane = last_gf256_axpy_lane();
-    (
-        (0..y.len()).map(|i| y[i].words()[0] as u8).collect(),
-        lane,
-    )
+    ((0..y.len()).map(|i| y[i].words()[0] as u8).collect(), lane)
 }
 
 // ---------------------------------------------------------------------------
@@ -244,8 +238,14 @@ fn wide_axpy_agrees_with_the_scalar_lane_for_every_coefficient() {
             assert_eq!(scalar_d_lane, GF256_SCALAR_LANE);
             assert_eq!(table_b_lane, GF256_TABLE_LANE);
             assert_eq!(table_d_lane, GF256_TABLE_LANE);
-            assert_eq!(table_b, scalar_b, "0x11B, coefficient {coefficient}, length {length}");
-            assert_eq!(table_d, scalar_d, "0x11D, coefficient {coefficient}, length {length}");
+            assert_eq!(
+                table_b, scalar_b,
+                "0x11B, coefficient {coefficient}, length {length}"
+            );
+            assert_eq!(
+                table_d, scalar_d,
+                "0x11D, coefficient {coefficient}, length {length}"
+            );
         }
     }
 
@@ -337,7 +337,10 @@ fn every_irreducible_degree_8_modulus_agrees_across_lanes() {
                 force_scalar_gf256_table(restore);
                 let (table, lane) = element_axpy(&field, coefficient, &destination, &source);
                 assert_eq!(lane, GF256_TABLE_LANE);
-                assert_eq!(table, scalar, "modulus {low:#04x}, coefficient {coefficient}");
+                assert_eq!(
+                    table, scalar,
+                    "modulus {low:#04x}, coefficient {coefficient}"
+                );
             }
         }
     }
@@ -370,7 +373,12 @@ fn another_degree_declines_and_keeps_its_result() {
         let coefficient = field.element(3);
 
         let mut y = FieldVec::from(values.iter().map(|&v| field.element(v)).collect::<Vec<_>>());
-        let x = FieldVec::from(sources.iter().map(|&v| field.element(v)).collect::<Vec<_>>());
+        let x = FieldVec::from(
+            sources
+                .iter()
+                .map(|&v| field.element(v))
+                .collect::<Vec<_>>(),
+        );
         let expected: Vec<_> = values
             .iter()
             .zip(sources.iter())
@@ -393,7 +401,12 @@ fn another_backing_width_declines_and_keeps_its_result() {
     let coefficient = field.element(0x53);
 
     let mut y = FieldVec::from(values.iter().map(|&v| field.element(v)).collect::<Vec<_>>());
-    let x = FieldVec::from(sources.iter().map(|&v| field.element(v)).collect::<Vec<_>>());
+    let x = FieldVec::from(
+        sources
+            .iter()
+            .map(|&v| field.element(v))
+            .collect::<Vec<_>>(),
+    );
     let expected: Vec<_> = values
         .iter()
         .zip(sources.iter())
@@ -463,7 +476,8 @@ fn a_single_word_configuration_of_another_degree_declines_and_keeps_its_result()
         .iter()
         .zip(sources.iter())
         .map(|(&v, &s)| {
-            Gf2mWide::<1, Gf2m16Cfg>::from_u64(v) + coefficient * Gf2mWide::<1, Gf2m16Cfg>::from_u64(s)
+            Gf2mWide::<1, Gf2m16Cfg>::from_u64(v)
+                + coefficient * Gf2mWide::<1, Gf2m16Cfg>::from_u64(s)
         })
         .collect();
 
@@ -496,6 +510,7 @@ fn a_mixed_field_context_declines_and_panics_exactly_as_the_scalar_path_does() {
         let message = panic
             .downcast_ref::<String>()
             .cloned()
+            .or_else(|| panic.downcast_ref::<&str>().map(|s| (*s).to_string()))
             .unwrap_or_else(|| String::from("<non-string panic payload>"));
         (message, last_gf256_axpy_lane())
     }
@@ -538,14 +553,12 @@ fn the_force_switch_holds_every_caller_on_the_scalar_lane() {
 
     let (table_element, table_element_lane) =
         element_axpy(&element_field(POLY_11D), 0x53, &destination, &source);
-    let (table_wide, table_wide_lane) =
-        wide_axpy::<Gf256Poly11dCfg>(0x53, &destination, &source);
+    let (table_wide, table_wide_lane) = wide_axpy::<Gf256Poly11dCfg>(0x53, &destination, &source);
 
     let restore = force_scalar_gf256_table(true);
     let (scalar_element, scalar_element_lane) =
         element_axpy(&element_field(POLY_11D), 0x53, &destination, &source);
-    let (scalar_wide, scalar_wide_lane) =
-        wide_axpy::<Gf256Poly11dCfg>(0x53, &destination, &source);
+    let (scalar_wide, scalar_wide_lane) = wide_axpy::<Gf256Poly11dCfg>(0x53, &destination, &source);
     let was_forced = force_scalar_gf256_table(restore);
 
     let (released_element, released_element_lane) =

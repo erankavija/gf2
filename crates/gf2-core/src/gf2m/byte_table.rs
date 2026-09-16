@@ -84,8 +84,19 @@ impl Gf256ProductTable {
     ///
     /// `O(65536)` byte operations.
     fn build(reduction_low: u8) -> Self {
-        let _ = reduction_low;
-        todo!("77c21ecd: the doubling recurrence lands with the implementation")
+        let mut entries = [0u8; TABLE_ENTRIES];
+        for coefficient in 0..256usize {
+            let base = coefficient << 8;
+            entries[base + 1] = coefficient as u8;
+            for value in 2..256usize {
+                entries[base + value] = if value % 2 == 0 {
+                    xtime(entries[base + value / 2], reduction_low)
+                } else {
+                    entries[base + value - 1] ^ entries[base + 1]
+                };
+            }
+        }
+        Self { entries }
     }
 
     /// Returns the 256 products of `coefficient` with every byte.
@@ -162,8 +173,23 @@ pub(crate) fn axpy_region<Y, X>(
     source_byte: impl Fn(&X) -> u8,
     accumulate: impl Fn(&mut Y, u8),
 ) {
-    let _ = (y, x, row, source_byte, accumulate);
-    todo!("77c21ecd: the region kernel lands with the implementation")
+    let mut destinations = y.chunks_exact_mut(AXPY_UNROLL);
+    let mut sources = x.chunks_exact(AXPY_UNROLL);
+    for (destination, source) in destinations.by_ref().zip(sources.by_ref()) {
+        for lane in 0..AXPY_UNROLL {
+            accumulate(
+                &mut destination[lane],
+                row[usize::from(source_byte(&source[lane]))],
+            );
+        }
+    }
+    for (destination, source) in destinations
+        .into_remainder()
+        .iter_mut()
+        .zip(sources.remainder())
+    {
+        accumulate(destination, row[usize::from(source_byte(source))]);
+    }
 }
 
 /// Name the GF(2^8) axpy dispatch reports when it runs the cached product
@@ -358,9 +384,7 @@ mod tests {
     /// the crate's own Rabin irreducibility test rather than a copied list.
     fn irreducible_keys() -> Vec<u8> {
         (0u16..256)
-            .filter(|low| {
-                Gf2mField::new(8, 0x100 | u64::from(*low)).is_irreducible_rabin()
-            })
+            .filter(|low| Gf2mField::new(8, 0x100 | u64::from(*low)).is_irreducible_rabin())
             .map(|low| low as u8)
             .collect()
     }
