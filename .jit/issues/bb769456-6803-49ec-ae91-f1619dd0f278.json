@@ -7,7 +7,169 @@
     "3ea122df-f38e-4ce7-8c8b-4b594a8cf139"
   ],
   "description": "Implement the bounded resumable harness required by the frozen logical-buffer addendum without changing production selection.\n\n## Background\n\nThe harness reuses the canonical campaign support and benchmark lock discipline. Its smoke validation is deterministic and non-timed: it validates cells, semantics, logging, resume, and output shape but cannot collect receipt samples. Every timed sample is queued only after the frozen addendum is committed and runs on the prepared host inside the benchmark window under the shared measurement contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen isolated XOR and whole-consumer cells with exact validation of outputs, zero tails, unaligned views, and 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A deterministic non-timed release smoke validates cell generation, semantics, append-only logging, checkpoint/resume, and output schema while emitting zero receipt samples.\n- [hard] REQ-04: Timed execution refuses unfrozen inputs and queues every sample only after the committed addendum exists for execution inside the prepared-host benchmark window under the contract.\n\n## Notes\n\nThe harness may extend an established benchmark target when that preserves its behavioral identity; otherwise it uses one story-specific target.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "34510cd81a5f3198d3cd673d55622bb8382ce5417ccd1a5ac751285bd9de36c3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "adff007c618c3ccc1b28d3a65755cb438ab854762156070fdfbf99c55831b613",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-comparator.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Logical-buffer measurement harness interface (logical-measurement-interface)",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-harness.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Harness launcher: build, cells, smoke, window",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Logical-buffer harness crate manifest and lock",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Harness library: cells, fixtures, routes, oracle, wire, campaign",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2 campaign arm for every logical route",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "ISA-L xor_gen_base/scalar comparator arm",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-isal-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Campaign addendum transcription, verification, plan projection",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-campaign.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Deterministic untimed semantic oracle",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-oracle.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "format": "markdown",
+      "label": "Behavioral contract of the harness",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/tests/harness_contract.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Throwaway smoke addenda under target/",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-smoke-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Smoke judge and record writer",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-smoke.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Producing-input closure generator",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-logical-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Source-claim ledger generator",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-logical-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Content closure every logical receipt snapshots",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Source claims with project, commit, path, line, verbatim",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Non-timed build and oracle validation record",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-harness-validation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Runner-wire smoke record, zero receipt samples",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-runner-smoke.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Isolated-XOR family ledger at genesis",
+      "path": "dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Public row-XOR family ledger at genesis",
+      "path": "dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "NR construction family ledger at genesis",
+      "path": "dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "ISA-L scalar-gap family ledger at genesis",
+      "path": "dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl"
+    }
+  ],
   "first_ready_at": "2026-09-16T10:48:31.038164560Z",
   "gates_required": [
     "repo-validate",
@@ -39,5 +201,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the logical-buffer measurement harness",
-  "updated_at": "2026-09-16T11:08:51.183400295Z"
+  "updated_at": "2026-09-16T12:18:41.967717680Z"
 }
