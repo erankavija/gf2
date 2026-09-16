@@ -317,7 +317,8 @@ def report(pins: list[Pin], stream) -> None:
 
 def write_fixture_schema(root: Path, version: int, schema_id: str) -> str:
     """Stages a minimal committed schema file for `version` and returns its digest."""
-    path = f"{SCHEMA_DIR}/addendum-v{version}.schema.json" if version != 4 else f"{SCHEMA_DIR}/addendum.schema.json"
+    name = "addendum.schema.json" if version == 4 else f"addendum-v{version}.schema.json"
+    path = f"{SCHEMA_DIR}/{name}"
     content = json.dumps(
         {
             "$id": schema_id,
