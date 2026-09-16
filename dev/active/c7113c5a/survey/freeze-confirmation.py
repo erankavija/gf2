@@ -114,26 +114,28 @@ def main():
         raise SystemExit("pilot belongs to another family")
 
     family = summary["family"]
-    # `FamilySummary.family_alpha` split into three fields at `@/issue/c5e01de3`:
-    # `family_alpha` is now the frozen total family-wise error rate,
-    # `attempt_alpha` the sequential allocation this attempt spends, and
-    # `corrected_alpha` the per-comparison Bonferroni level. A pilot summary
-    # from before the split carries only the single legacy `family_alpha` key,
-    # which held the attempt allocation under that name; reading it as the
-    # attempt allocation here, in the format the freezer always wrote for it,
-    # keeps a rerun against that summary byte-identical to its committed
-    # derivation record.
-    if "attempt_alpha" in family:
+    # Acceptance-summary schema `zen3-benchmark-acceptance-v1` reports the
+    # sequential-attempt allocation under the single field name `family_alpha`.
+    # `zen3-benchmark-acceptance-v2` (`@/issue/c5e01de3`) separates that
+    # allocation (`attempt_alpha`) from the frozen total (`family_alpha`) and
+    # the per-comparison corrected level (`corrected_alpha`). The legacy
+    # branch below is keyed on the declared schema identity, not on which
+    # fields happen to be present, so a summary that adds fields under the
+    # v1 identity in the future still reads as v1. A v1 summary reproduces
+    # its committed derivation record byte for byte in the single-line format
+    # the freezer always wrote for it.
+    LEGACY_ACCEPTANCE_SCHEMA = "zen3-benchmark-acceptance-v1"
+    if summary["schema"] == LEGACY_ACCEPTANCE_SCHEMA:
         family_line = (
             f"family         {family['family_id']}: {family['comparisons']} ledger comparisons, "
-            f"family-wise alpha {family['family_alpha']}, attempt alpha {family['attempt_alpha']}, "
-            f"corrected alpha {family['corrected_alpha']}, per-comparison confidence "
+            f"attempt alpha {family['family_alpha']}, per-comparison confidence "
             f"{family['per_comparison_confidence']}"
         )
     else:
         family_line = (
             f"family         {family['family_id']}: {family['comparisons']} ledger comparisons, "
-            f"attempt alpha {family['family_alpha']}, per-comparison confidence "
+            f"family-wise alpha {family['family_alpha']}, attempt alpha {family['attempt_alpha']}, "
+            f"corrected alpha {family['corrected_alpha']}, per-comparison confidence "
             f"{family['per_comparison_confidence']}"
         )
     lines = [
