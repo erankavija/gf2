@@ -11,7 +11,7 @@
 # family=2037941f-logical-public-row-xor ledger=dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl cells=17
 # family=2037941f-logical-nr-construction ledger=dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl cells=6
 # family=2037941f-logical-isal-base-gap ledger=dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl cells=12
-PASS harness contract: 19 tests pass
+PASS harness contract: 26 tests pass
 PASS xor-bits-0: 2 checks
 PASS xor-bits-1: 5 checks
 PASS xor-bits-63: 67 checks
@@ -59,7 +59,7 @@ PASS isal-63w: 4102 checks
 PASS isal-64w: 4167 checks
 PASS isal-65w: 4232 checks
 PASS isal-66w: 4297 checks
-# logical-isal-arm sha256: d3b8467889edfea6bb14ce0307f7caf6917f50183622aa8a30bbf1b682ed56b1
-# logical-arm sha256: 5f6e2893d1707b34623c4a486001066e27d5d64078fb2db15897da135e14af05
-# logical-campaign sha256: 827790acef461026fa0436c195d1046772bc56a3c066a864ba313046316a3b38
-# logical-oracle sha256: 3ab1a462317ec6698d576b616c8a12d7e59eac1470deb0207d9428d89b40bec1
+# logical-isal-arm sha256: f6593d2dfaf61f70b1d7ac9a77757fe5314abd5afda9651984892f7b10734449
+# logical-arm sha256: 0c57a7263f66e183b5199fd17a52d116cc63384d5b86fdc152cc037d1f3ea845
+# logical-campaign sha256: b2701a07274a785370777552a198befa17e5ea2916068a09cf3557bcd266635d
+# logical-oracle sha256: ec9f7f77ac7ef1809da1764e60766d0897af653487266ac4eb45b7c88cf5a8fe

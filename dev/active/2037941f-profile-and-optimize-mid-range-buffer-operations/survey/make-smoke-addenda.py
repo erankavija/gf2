@@ -2,10 +2,10 @@
 """Build the throwaway smoke addenda of the logical-buffer harness.
 
 The smoke exercises the wire, the cache policies and checkpoint/resume, not a
-measurement: each family is restricted to two cells and its ledger is moved
-under `target/`, so the committed family ledgers stay at genesis and nothing
-the smoke writes is evidence. Every other field is the harness transcription of
-the frozen addendum, unchanged.
+measurement: each family is restricted to two cells and its ledger path is
+moved under `target/`, so the smoke names no committed ledger and nothing it
+writes is evidence. Every other field is the harness transcription of the
+frozen addendum, unchanged.
 """
 
 import argparse

@@ -129,11 +129,7 @@ cmd_smoke() {
     [[ "${1:-}" == "--isal" ]] && with_isal=1
     build_gf2
     [[ "${with_isal}" == 1 ]] && build_isal >/dev/null
-    ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
-        --bin benchmark-ab-runner --bin benchmark-acceptance >/dev/null
-    local runner acceptance smoke
-    runner="$(realpath target/release/benchmark-ab-runner)"
-    acceptance="$(realpath target/release/benchmark-acceptance)"
+    local smoke
     smoke=target/bb769456-campaigns/smoke
     rm -rf "${smoke}"
     mkdir -p "${smoke}"
@@ -165,19 +161,21 @@ cmd_smoke() {
             --addendum "${smoke}/${family}/addendum.a.json" >/dev/null
     done
 
-    # The throwaway family rewrites only the ledger path, so the reservation
-    # lands under target/ and the committed family ledgers stay at genesis.
+    # The throwaway family rewrites only the ledger path, so the smoke names no
+    # committed ledger and the four family ledgers stay at genesis.
     python3 -B "${SURVEY}/make-smoke-addenda.py" --stage "${smoke}" \
         --families "${families[@]}"
 
-    local lock_fd
+    # The smoke never takes the benchmark lock: it collects no timing sample,
+    # so it neither needs a quiet host nor may pretend to have had one.
     for family in "${families[@]}"; do
         local stage="${smoke}/${family}/stage"
         local plan="${smoke}/${family}/plan.json"
+        local addendum="${smoke}/${family}/smoke-addendum.json"
         local isal_flag=()
         [[ "${family}" == *isal-base-gap ]] && isal_flag=(--isal-executable "${ISAL_ARM}")
         "${CAMPAIGN_TOOL}" plan --family "${family}" \
-            --addendum "${smoke}/${family}/smoke-addendum.json" \
+            --addendum "${addendum}" \
             --campaign-id "bb769456-${family}-wire-smoke" \
             --campaign-seed 20260916 \
             --label smoke \
@@ -186,22 +184,17 @@ cmd_smoke() {
             "${isal_flag[@]}" \
             --producing-manifest "${PRODUCING}" \
             --max-cells-per-session 1 \
-            --pilot-pairs 6 \
             --output "${plan}"
         echo "campaign execution log: ${stage}/execution.log" >&2
         # Session one pauses after its first cell; session two completes the
         # stage from the checkpoint without repeating it.
-        exec {lock_fd}<"${smoke}/lock"
-        flock -x "${lock_fd}"
         set +e
-        "${runner}" run "${stage}" "${plan}"
+        "${CAMPAIGN_TOOL}" smoke --plan "${plan}" --addendum "${addendum}" --stage "${stage}"
         local first=$?
         cp "${stage}/execution.log" "${smoke}/${family}/execution.session-1.log"
-        "${runner}" run "${stage}" "${plan}"
+        "${CAMPAIGN_TOOL}" smoke --plan "${plan}" --addendum "${addendum}" --stage "${stage}"
         local second=$?
         set -e
-        flock -u "${lock_fd}"
-        exec {lock_fd}<&-
         [[ "${first}" == 3 ]] || {
             echo "${family}: the first session exited ${first} rather than pausing" >&2
             exit 2
@@ -210,8 +203,6 @@ cmd_smoke() {
             echo "${family}: the resumed session exited ${second}" >&2
             exit 2
         }
-        "${runner}" finalize "${stage}" "${smoke}/${family}/receipt"
-        "${acceptance}" "${smoke}/${family}/receipt" || true
     done
 
     python3 -B "${SURVEY}/check-smoke.py" --stage "${smoke}" --record "${SMOKE_RECORD}" \
@@ -246,29 +237,31 @@ cmd_window() {
     ledger="$("${CAMPAIGN_TOOL}" pins | sed -n "s/^family=${family} ledger=\\([^ ]*\\).*/\\1/p")"
     [[ -n "${ledger}" ]] || { echo "${family} is not a frozen family" >&2; exit 2; }
 
-    # Refuse unfrozen inputs: the prose addendum matches the harness pin, the
-    # campaign JSON is the harness transcription of it, and every campaign
-    # input is committed and clean.
+    # Refuse unfrozen inputs: the prose addendum matches the harness pin and
+    # the campaign JSON is the harness transcription of it.
     "${CAMPAIGN_TOOL}" pins
     "${CAMPAIGN_TOOL}" verify --family "${family}" --addendum "${addendum}"
-    local path
-    for path in "${addendum}" "${PRODUCING}" "${ledger}" "${LAUNCHER}" \
-        "${STORY}/logical-buffer-addendum.md" "${STORY}/logical-harness.md"; do
-        git ls-files --error-unmatch "${path}" >/dev/null
-        git diff --quiet HEAD -- "${path}" || {
-            echo "${path} differs from the committed campaign input" >&2
-            exit 2
-        }
-    done
-    [[ -x "${GF2_ARM}" ]] || { echo "${GF2_ARM} is absent; run build first" >&2; exit 2; }
+
+    # Every executable this run launches is rebuilt from the current tree
+    # before the closure is checked, so no build can follow the check and no
+    # prebuilt arm can carry bytes the check never saw.
+    build_gf2
     local isal_flag=()
     if [[ "${with_isal}" == 1 ]]; then
-        [[ -x "${ISAL_ARM}" ]] || { echo "${ISAL_ARM} is absent; run build --isal" >&2; exit 2; }
+        build_isal >/dev/null
         isal_flag=(--isal-executable "${ISAL_ARM}")
     fi
-
     ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
         --bin benchmark-ab-runner --bin benchmark-acceptance
+
+    # The producing-input closure is the manifest every receipt snapshots:
+    # harness sources, measured crate sources, campaign-support sources, the
+    # contract, the protocol and the frozen addendum. A path the closure names
+    # that git does not track, or whose bytes differ from the committed
+    # content, refuses the run. This is the last step before the launch.
+    "${CAMPAIGN_TOOL}" inputs --producing-manifest "${PRODUCING}" \
+        --also "${addendum}" --also "${ledger}"
+
     local runner acceptance campaign stage plan out lock launch
     runner="$(realpath target/release/benchmark-ab-runner)"
     acceptance="$(realpath target/release/benchmark-acceptance)"
@@ -284,7 +277,7 @@ cmd_window() {
     "${CAMPAIGN_TOOL}" plan --family "${family}" --addendum "${addendum}" \
         --campaign-id "${campaign}" --campaign-seed 20260916 --label pilot \
         --lock "${lock}" --gf2-executable "${GF2_ARM}" "${isal_flag[@]}" \
-        --producing-manifest "${PRODUCING}" --max-cells-per-session 2 --pilot-pairs 6 \
+        --producing-manifest "${PRODUCING}" --max-cells-per-session 2 \
         --output "${plan}.projected"
     if [[ -e "${plan}" ]]; then
         cmp -s "${plan}.projected" "${plan}" || {
