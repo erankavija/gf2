@@ -1,0 +1,36 @@
+# Logical-buffer harness runner-wire smoke (jit:bb769456)
+# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke
+# every line below is observed at run time from the stage execution logs and the
+# finalized throwaway receipts under target/; the record carries no clock reading
+# and no timing sample, so a rerun on the same executables reproduces it byte for
+# byte and the smoke cannot serve as a pilot
+# logical-arm sha256: 5f6e2893d1707b34623c4a486001066e27d5d64078fb2db15897da135e14af05
+# logical-isal-arm sha256: d3b8467889edfea6bb14ce0307f7caf6917f50183622aa8a30bbf1b682ed56b1
+PASS 2037941f-logical-isolated-xor: 2 sessions, resume repeated no cell
+PASS xor-8w-a64-streaming: 6 paired executions, cache streaming
+PASS xor-8w-a64-warm: 6 paired executions, cache warm
+PASS public-xor-a: 12 handshakes, 12 result lines parsed
+PASS public-xor-b: 12 handshakes, 12 result lines parsed
+PASS 2037941f-logical-isolated-xor wire: 24 child spawns, 24 clean exits, 0 child diagnostics
+PASS 2037941f-logical-isolated-xor schema: acceptance summary decodes, verdict accepted, finding codes none
+PASS 2037941f-logical-public-row-xor: 2 sessions, resume repeated no cell
+PASS row-xor-8w-full-streaming: 6 paired executions, cache streaming
+PASS row-xor-8w-full-warm: 6 paired executions, cache warm
+PASS row-xor-a: 12 handshakes, 12 result lines parsed
+PASS row-xor-b: 12 handshakes, 12 result lines parsed
+PASS 2037941f-logical-public-row-xor wire: 24 child spawns, 24 clean exits, 0 child diagnostics
+PASS 2037941f-logical-public-row-xor schema: acceptance summary decodes, verdict accepted, finding codes none
+PASS 2037941f-logical-nr-construction: 2 sessions, resume repeated no cell
+PASS nr-construct-bg2-256-49-z9-8w-cold: 6 paired executions, cache cold
+PASS nr-construct-bg2-256-49-z9-8w-warm: 6 paired executions, cache warm
+PASS nr-construct-a: 12 handshakes, 12 result lines parsed
+PASS nr-construct-b: 12 handshakes, 12 result lines parsed
+PASS 2037941f-logical-nr-construction wire: 24 child spawns, 24 clean exits, 0 child diagnostics
+PASS 2037941f-logical-nr-construction schema: acceptance summary decodes, verdict accepted, finding codes none
+PASS 2037941f-logical-isal-base-gap: 2 sessions, resume repeated no cell
+PASS isal-base-gap-8w-a64-streaming: 6 paired executions, cache streaming
+PASS isal-base-gap-8w-a64-warm: 6 paired executions, cache warm
+PASS isal-peer-gf2: 12 handshakes, 12 result lines parsed
+PASS isal-xor-gen-base: 12 handshakes, 12 result lines parsed
+PASS 2037941f-logical-isal-base-gap wire: 24 child spawns, 24 clean exits, 0 child diagnostics
+PASS 2037941f-logical-isal-base-gap schema: acceptance summary decodes, verdict accepted, finding codes none

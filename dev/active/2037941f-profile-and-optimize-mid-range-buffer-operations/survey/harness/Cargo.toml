@@ -1,0 +1,61 @@
+# Logical-buffer measurement harness for story 2037941f (jit:bb769456).
+#
+# A standalone workspace: the campaign arms are fresh child processes speaking
+# the canonical child-v2 framing, and the ISA-L arm links a C translation unit
+# at its comparator specification's own flags, so neither belongs in a
+# production crate's benchmark target.
+#
+# `gf2-core/simd` is named explicitly so the runtime-dispatched logical routes
+# the production consumers use are part of this crate's declared identity
+# rather than an artifact of feature unification. The release profile mirrors
+# the workspace's own `conservative-portable` release settings.
+
+[workspace]
+
+[package]
+name = "logical-buffer-harness"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+build = "build.rs"
+
+[lib]
+name = "logical_buffer_harness"
+path = "src/lib.rs"
+
+[[bin]]
+name = "logical-arm"
+path = "src/bin/logical-arm.rs"
+
+[[bin]]
+name = "logical-campaign"
+path = "src/bin/logical-campaign.rs"
+
+[[bin]]
+name = "logical-oracle"
+path = "src/bin/logical-oracle.rs"
+
+[[bin]]
+name = "logical-isal-arm"
+path = "src/bin/logical-isal-arm.rs"
+required-features = ["isal"]
+
+[features]
+# Compiles and links the pinned ISA-L `raid/raid_base.c`; see build.rs.
+isal = []
+
+[dependencies]
+gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+
+[build-dependencies]
+cc = "1"
+sha2 = "0.10"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
