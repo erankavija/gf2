@@ -281,18 +281,27 @@ def report(pins: list[Pin], stream) -> None:
         print(f"    {pin.receipt}: {pin.sha256} ({UNMATCHED_DIGEST})", file=stream)
 
 
-def write_fixture_schema(root: Path, version: int, schema_id: str, name: str | None = None) -> str:
-    """Writes and stages a minimal schema file for `version` and returns its digest."""
-    filename = name or (
-        "addendum.schema.json" if version == 4 else f"addendum-v{version}.schema.json"
-    )
-    path = f"{SCHEMA_DIR}/{filename}"
-    content = json.dumps(
+def fixture_schema_name(version: int, name: str | None) -> str:
+    """The file name a fixture schema takes: the shared path for version 4."""
+    return name or ("addendum.schema.json" if version == 4 else f"addendum-v{version}.schema.json")
+
+
+def fixture_schema_content(version: int, schema_id: str, filename: str) -> bytes:
+    """A minimal schema whose bytes, and so whose digest, differ per file name."""
+    return json.dumps(
         {
             "$id": schema_id,
+            "title": filename,
             "properties": {"protocol": {"properties": {"version": {"const": version}}}},
         }
     ).encode()
+
+
+def write_fixture_schema(root: Path, version: int, schema_id: str, name: str | None = None) -> str:
+    """Writes and stages a minimal schema file for `version` and returns its digest."""
+    filename = fixture_schema_name(version, name)
+    path = f"{SCHEMA_DIR}/{filename}"
+    content = fixture_schema_content(version, schema_id, filename)
     full = root / path
     full.parent.mkdir(parents=True, exist_ok=True)
     full.write_bytes(content)
@@ -313,9 +322,11 @@ def write_fixture_receipt(root: Path, name: str, sha256: str) -> str:
 def self_test() -> int:
     """Asserts the check accepts every matched digest and rejects an orphan one.
 
-    Exercises the version-1 two-digest case directly: two schema files
-    legitimately name the same protocol version, and a receipt pinning either
-    digest passes while a receipt pinning neither fails.
+    Exercises the version-1 two-digest case directly: two committed schema
+    files legitimately name the same protocol version, and a receipt pinning
+    either digest passes. The orphan receipt pins the digest of a schema file
+    that is staged but not committed, so the check fails it only because it
+    reads `HEAD`; a check that read the index would accept it.
     """
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
@@ -326,7 +337,11 @@ def self_test() -> int:
         edited = write_fixture_schema(root, 1, "zen3-benchmark-addendum-v1")
         initial_receipt = write_fixture_receipt(root, "initial", initial)
         edited_receipt = write_fixture_receipt(root, "edited", edited)
-        orphan_receipt = write_fixture_receipt(root, "orphan", "0" * 64)
+        staged_name = "addendum-v1-staged.schema.json"
+        staged_digest = hashlib.sha256(
+            fixture_schema_content(1, "zen3-benchmark-addendum-v1", staged_name)
+        ).hexdigest()
+        orphan_receipt = write_fixture_receipt(root, "orphan", staged_digest)
         files = [
             SchemaFile(
                 f"{SCHEMA_DIR}/addendum-v1-initial.schema.json",
@@ -347,12 +362,13 @@ def self_test() -> int:
             "-c", "user.name=self-test", "-c", "user.email=self-test@localhost",
             "commit", "-q", "-m", "fixtures",
         )
-        staged_orphan = write_fixture_schema(
-            root, 1, "zen3-benchmark-addendum-v1", name="addendum-v1-staged.schema.json"
-        )
+        staged = write_fixture_schema(root, 1, "zen3-benchmark-addendum-v1", name=staged_name)
+        if staged != staged_digest:
+            print("self-test: the staged fixture digest is not the one the orphan pins", file=sys.stderr)
+            return 1
 
         findings = check(root)
-        if staged_orphan == "0" * 64 or findings.unmatched != [Pin(orphan_receipt, "0" * 64)]:
+        if findings.unmatched != [Pin(orphan_receipt, staged_digest)]:
             print(
                 f"self-test: expected only the orphan pin unmatched, got {findings.unmatched}",
                 file=sys.stderr,
