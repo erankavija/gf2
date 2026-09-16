@@ -18,8 +18,16 @@
       "doc_type": "source",
       "label": "run_process delivers a request-write failure through the callback-error path (REQ-01)",
       "path": "dev/tools/tuning-campaign-support/src/process.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/8275a6f8-r1.md"
     }
   ],
+  "done_at": "2026-09-16T18:50:09.044387732Z",
   "first_ready_at": "2026-09-16T15:55:09.684331676Z",
   "gates_required": [
     "cargo-ci",
@@ -38,8 +46,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-16T18:03:43.986599352Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T18:30:32.224154469Z",
       "updated_by": "auto:executor"
     }
   },
@@ -51,7 +59,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Keep captured child diagnostics when the runner's request write fails",
-  "updated_at": "2026-09-16T18:18:47.192726653Z"
+  "updated_at": "2026-09-16T18:50:09.044387732Z"
 }

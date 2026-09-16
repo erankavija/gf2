@@ -29,7 +29,7 @@
     "epic:zen3-cpu-performance"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-09-16T12:13:12.117202055Z"
+  "updated_at": "2026-09-16T18:51:23.673240247Z"
 }

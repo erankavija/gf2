@@ -26,8 +26,16 @@
       "doc_type": "evidence",
       "label": "regenerated REQ-02 baseline record (125 evaluated, 120 reproduce, 5 unchanged divergences, 1 skipped)",
       "path": "dev/active/a203a23c/receipt-reevaluation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/7cdc28e9-r1.md"
     }
   ],
+  "done_at": "2026-09-16T18:50:34.055796937Z",
   "first_ready_at": "2026-09-16T11:23:23.041385979Z",
   "gates_required": [
     "cargo-ci",
@@ -41,8 +49,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-16T18:08:05.740267172Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T18:34:17.825078201Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -59,7 +67,7 @@
     "satisfies:REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Skip non-benchmark receipts in the receipt re-evaluation checker",
-  "updated_at": "2026-09-16T18:28:21.912463534Z"
+  "updated_at": "2026-09-16T18:50:34.055796937Z"
 }

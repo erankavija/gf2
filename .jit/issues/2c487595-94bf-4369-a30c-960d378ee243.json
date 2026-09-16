@@ -161,7 +161,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-16T18:43:50.353700814Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T18:35:39.221148054Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T18:34:29.145485165Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "2c487595-94bf-4369-a30c-960d378ee243",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -171,5 +187,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Version the addendum schema alongside its predecessors",
-  "updated_at": "2026-09-16T18:28:24.955257280Z"
+  "updated_at": "2026-09-16T18:43:50.353700814Z"
 }

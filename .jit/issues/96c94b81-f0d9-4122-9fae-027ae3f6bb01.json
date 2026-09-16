@@ -181,8 +181,16 @@
       "format": "markdown",
       "label": "Generator that regenerates and re-verifies the dense-parity source ledger",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/96c94b81-r1.md"
     }
   ],
+  "done_at": "2026-09-16T18:49:44.162307823Z",
   "first_ready_at": "2026-09-16T12:09:51.453702532Z",
   "gates_required": [
     "repo-validate",
@@ -243,7 +251,7 @@
     "cites:AlbrechtBard2026"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Freeze the dense-parity measurement addendum",
-  "updated_at": "2026-09-16T18:23:37.406328090Z"
+  "updated_at": "2026-09-16T18:49:44.162307823Z"
 }
