@@ -40,8 +40,16 @@
       "format": "markdown",
       "label": "Logical-buffer measurement addendum",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/3ea122df-r1.md"
     }
   ],
+  "done_at": "2026-09-16T10:48:04.050670626Z",
   "first_ready_at": "2026-09-15T03:18:34.802632305Z",
   "gates_required": [
     "repo-validate",
@@ -53,29 +61,39 @@
     "asm-artefact-present"
   ],
   "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-16T10:47:02.918905038Z",
+      "updated_by": "auto:executor"
+    },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-15T04:11:25.097526589Z",
+      "updated_at": "2026-09-16T10:40:58.322633638Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T04:14:41.600285575Z",
+      "updated_at": "2026-09-16T10:43:41.291294362Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T04:09:06.152997579Z",
+      "updated_at": "2026-09-16T10:37:12.425200733Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T10:40:16.154037024Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
       "status": "passed",
-      "updated_at": "2026-09-15T04:05:55.233374947Z",
+      "updated_at": "2026-09-16T10:34:19.923601408Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-15T04:14:49.746197922Z",
+      "status": "passed",
+      "updated_at": "2026-09-16T10:47:01.910407077Z",
       "updated_by": "auto:executor"
     }
   },
@@ -92,7 +110,7 @@
     "cites:IsaL2026"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Freeze the logical-buffer measurement addendum",
-  "updated_at": "2026-09-16T10:14:04.422211176Z"
+  "updated_at": "2026-09-16T10:48:04.050670626Z"
 }

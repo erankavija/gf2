@@ -7,6 +7,7 @@
   ],
   "description": "Implement the bounded resumable harness required by the frozen logical-buffer addendum without changing production selection.\n\n## Background\n\nThe harness reuses the canonical campaign support and benchmark lock discipline. Its smoke validation is deterministic and non-timed: it validates cells, semantics, logging, resume, and output shape but cannot collect receipt samples. Every timed sample is queued only after the frozen addendum is committed and runs on the prepared host inside the benchmark window under the shared measurement contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen isolated XOR and whole-consumer cells with exact validation of outputs, zero tails, unaligned views, and 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A deterministic non-timed release smoke validates cell generation, semantics, append-only logging, checkpoint/resume, and output schema while emitting zero receipt samples.\n- [hard] REQ-04: Timed execution refuses unfrozen inputs and queues every sample only after the committed addendum exists for execution inside the prepared-host benchmark window under the contract.\n\n## Notes\n\nThe harness may extend an established benchmark target when that preserves its behavioral identity; otherwise it uses one story-specific target.",
   "documents": [],
+  "first_ready_at": "2026-09-16T10:48:31.038164560Z",
   "gates_required": [
     "repo-validate",
     "doc-review",
@@ -29,7 +30,7 @@
     "satisfies:REQ-06"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Implement the logical-buffer measurement harness",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T10:48:31.038164560Z"
 }
