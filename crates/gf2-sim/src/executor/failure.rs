@@ -509,7 +509,6 @@ mod tests {
             .filter_map(|e| e.ok())
             .collect();
         assert!(!entries.is_empty(), "at least one dump file must exist");
-        // Cleanup.
     }
 
     /// `strict_gpu` promotes OOM ONLY: a `Transient` recoverable error takes
