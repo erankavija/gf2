@@ -11,7 +11,9 @@
 # an earlier revision evaluates that evidence with the same evaluator, which is
 # how the record of the state before a restoration is produced. The committed
 # acceptance summaries are removed from the export, so no committed file is
-# written.
+# written. Receipts are selected by their own declared `schema` field
+# (dev/active/a203a23c/select-receipts.py); a receipt of another schema is not
+# evaluated and is listed under the record's `skipped` section instead.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -33,21 +35,26 @@ git archive "$evidence" | tar -x -C "$work/tree"
   -p tuning-campaign-support --bin benchmark-acceptance
 cp target/release/benchmark-acceptance "$work/benchmark-acceptance"
 
-# One tab-separated row per receipt of the evidence revision: receipt, exit code.
-# The committed summary is set aside before the evaluator writes its own.
+# Selects receipts of the exported evidence by their own declared schema: a
+# zen3-benchmark-receipt-v1 receipt is evaluated, any other schema is recorded
+# as skipped and never handed to the acceptance evaluator.
+python3 dev/active/a203a23c/select-receipts.py "$work/tree" \
+  --selected-out "$work/selected.txt" --skipped-out "$work/skipped.tsv"
+
+# One tab-separated row per selected receipt of the evidence revision: receipt,
+# exit code. The committed summary is set aside before the evaluator writes
+# its own.
 : > "$work/exits.tsv"
-git ls-tree -r -z --name-only "$evidence" -- dev/bench_results |
-  while IFS= read -r -d '' receipt; do
-    case "$receipt" in */inputs/*) continue ;; esac
-    case "$receipt" in */receipt.json) ;; *) continue ;; esac
-    dir="$work/tree/$(dirname "$receipt")"
-    [ -e "$dir/acceptance-summary.json" ] &&
-      mv "$dir/acceptance-summary.json" "$dir/committed-summary.json"
-    rm -f "$dir/acceptance-summary.md"
-    status=0
-    "$work/benchmark-acceptance" "$dir" > /dev/null 2> "$dir.stderr" || status=$?
-    printf '%s\t%s\n' "$receipt" "$status" >> "$work/exits.tsv"
-  done
+while IFS= read -r receipt; do
+  [ -n "$receipt" ] || continue
+  dir="$work/tree/$(dirname "$receipt")"
+  [ -e "$dir/acceptance-summary.json" ] &&
+    mv "$dir/acceptance-summary.json" "$dir/committed-summary.json"
+  rm -f "$dir/acceptance-summary.md"
+  status=0
+  "$work/benchmark-acceptance" "$dir" > /dev/null 2> "$dir.stderr" || status=$?
+  printf '%s\t%s\n' "$receipt" "$status" >> "$work/exits.tsv"
+done < "$work/selected.txt"
 
 python3 - "$root" "$work" "$head" "$evidence" "$output" <<'EOF'
 import hashlib
@@ -122,6 +129,16 @@ for line in (root / work / "exits.tsv").read_text().splitlines():
     rows.append(row)
 rows.sort(key=lambda row: row["receipt"])
 
+skipped = []
+skipped_path = root / work / "skipped.tsv"
+if skipped_path.exists():
+    for line in skipped_path.read_text().splitlines():
+        if not line:
+            continue
+        skipped_receipt, schema = line.split("\t", 1)
+        skipped.append({"receipt": skipped_receipt, "schema": schema})
+skipped.sort(key=lambda row: row["receipt"])
+
 record = {
     "schema": "a203a23c-receipt-reevaluation-v1",
     "purpose": (
@@ -139,9 +156,11 @@ record = {
         (root / work / "benchmark-acceptance").read_bytes()
     ).hexdigest(),
     "receipts": rows,
+    "skipped": skipped,
     "result": {
         "receipts": len(rows),
         "reproduces": sum(row["reproduces"] for row in rows),
+        "skipped": len(skipped),
         "differs": [row["receipt"] for row in rows if not row["reproduces"]],
     },
 }

@@ -37,12 +37,20 @@ def receipt_paths(tree: Path) -> list[str]:
 
 
 def select(tree: Path) -> tuple[list[str], list[tuple[str, str]]]:
-    """Selects every receipt under `tree`, schema selection not yet applied.
+    """Partitions committed receipts by each one's own declared schema.
 
-    TODO(jit:7cdc28e9): partition by each receipt's declared `schema` field
-    instead of treating every receipt.json as a benchmark receipt.
+    Returns the sorted benchmark-receipt paths and the sorted (path, schema)
+    pairs of every receipt whose declared schema is not the benchmark schema.
     """
-    return receipt_paths(tree), []
+    selected: list[str] = []
+    skipped: list[tuple[str, str]] = []
+    for path in receipt_paths(tree):
+        schema = json.loads((tree / path).read_text()).get("schema")
+        if schema == BENCHMARK_SCHEMA:
+            selected.append(path)
+        else:
+            skipped.append((path, schema))
+    return selected, sorted(skipped)
 
 
 def repo_root() -> Path:
