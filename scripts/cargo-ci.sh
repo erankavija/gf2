@@ -194,6 +194,8 @@ run_step tuning-campaign-support-nextest "$BUDGET" --test cargo nextest run -p t
 run_step tuning-campaign-validator python3 dev/scripts/validate-tuning-extent-campaign.py --self-test
 run_step receipt-input-snapshots-self-test python3 dev/scripts/check-receipt-input-snapshots.py --self-test
 run_step receipt-input-snapshots python3 dev/scripts/check-receipt-input-snapshots.py
+run_step addendum-schema-versions-self-test python3 dev/scripts/check-addendum-schema-versions.py --self-test
+run_step addendum-schema-versions python3 dev/scripts/check-addendum-schema-versions.py
 run_step tuning-campaign-launcher-syntax bash -n dev/scripts/tuning-extent-campaign.sh
 run_step tuning-lifecycle-cargo "$BUDGET" cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
 
