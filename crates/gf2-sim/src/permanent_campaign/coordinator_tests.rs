@@ -1,9 +1,7 @@
 use std::fs::{self, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::OnceLock;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use crate::permanent_campaign::acceptance::{
     assess_completed_cell, AcceptanceFamily, AcceptancePlan,
@@ -27,19 +25,9 @@ use crate::permanent_campaign::schema::{
     DeterminantPlan, GitRevision, HaltReason, Provenance, RngAlgorithm, ShardRecord, ShardSpec,
     StreamAddress, StreamPurpose, SCHEMA_VERSION,
 };
+
+use gf2_core::test_scratch::{scratch, Scratch};
 use sha2::{Digest, Sha256};
-
-static FIXTURE_ID: AtomicU64 = AtomicU64::new(0);
-static TEST_RUN_ID: OnceLock<u128> = OnceLock::new();
-
-fn test_run_id() -> u128 {
-    *TEST_RUN_ID.get_or_init(|| {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("test clock is after the Unix epoch")
-            .as_nanos()
-    })
-}
 
 fn artifact(path: &str, byte: char) -> ArtifactIdentity {
     ArtifactIdentity {
@@ -161,20 +149,15 @@ fn arm_for_manifest(manifest: &CampaignManifest, q: u8, n: u16) -> ArmInvocation
     }
 }
 
-fn fixture() -> (PathBuf, CampaignManifest, CampaignCoordinator) {
+fn fixture() -> (Scratch, PathBuf, CampaignManifest, CampaignCoordinator) {
     fixture_from_manifest(manifest())
 }
 
 fn fixture_from_manifest(
     manifest: CampaignManifest,
-) -> (PathBuf, CampaignManifest, CampaignCoordinator) {
-    let id = FIXTURE_ID.fetch_add(1, Ordering::Relaxed);
-    let fixture_root = std::env::temp_dir().join(format!(
-        "gf2-coordinator-fixture-{}-{}-{id}",
-        std::process::id(),
-        test_run_id()
-    ));
-    let repository = fixture_root.join("checkout");
+) -> (Scratch, PathBuf, CampaignManifest, CampaignCoordinator) {
+    let fixture_root = scratch("gf2-coordinator-fixture");
+    let repository = fixture_root.path().join("checkout");
     let root = repository.join("dev/simulation_results/permanent-zero-fraction");
     let campaign_root = root.join(manifest.campaign_id.to_string());
     fs::create_dir_all(&campaign_root).unwrap();
@@ -183,7 +166,7 @@ fn fixture_from_manifest(
     fs::write(root.join("protocol.md"), b"fixture frozen protocol\n").unwrap();
     write_evidence_sources(&repository);
     let coordinator = CampaignCoordinator::new(&campaign_root, &evidence_sources()).unwrap();
-    (root, manifest, coordinator)
+    (fixture_root, root, manifest, coordinator)
 }
 
 fn evidence_sources() -> CoordinatorEvidenceSources {
@@ -233,25 +216,33 @@ fn write_evidence_sources(repository: &Path) {
     .unwrap();
 }
 
-fn live_fixture() -> (PathBuf, PathBuf, CampaignManifest, EmissionApproval) {
+fn live_fixture() -> (
+    Scratch,
+    PathBuf,
+    PathBuf,
+    CampaignManifest,
+    EmissionApproval,
+) {
     live_fixture_from_manifest(manifest())
 }
 
 fn live_fixture_from_manifest(
     mut manifest: CampaignManifest,
-) -> (PathBuf, PathBuf, CampaignManifest, EmissionApproval) {
+) -> (
+    Scratch,
+    PathBuf,
+    PathBuf,
+    CampaignManifest,
+    EmissionApproval,
+) {
     let executable = std::env::current_exe().unwrap();
     manifest.provenance.binary_sha256 = Some(
         format!("{:x}", Sha256::digest(fs::read(executable).unwrap()))
             .parse()
             .unwrap(),
     );
-    let id = FIXTURE_ID.fetch_add(1, Ordering::Relaxed);
-    let root = std::env::temp_dir().join(format!(
-        "gf2-live-coordinator-fixture-{}-{}-{id}",
-        std::process::id(),
-        test_run_id()
-    ));
+    let scratch = scratch("gf2-live-coordinator-fixture");
+    let root = scratch.path().to_path_buf();
     let repository = root.join("checkout");
     let dataset = repository.join("dev/simulation_results/permanent-zero-fraction");
     let campaign_root = dataset.join(manifest.campaign_id.to_string());
@@ -271,7 +262,7 @@ fn live_fixture_from_manifest(
         .success());
     commit_fixture(&repository, "freeze fixture");
     let approval = approve_emission(&campaign_root).unwrap();
-    (root, campaign_root, manifest, approval)
+    (scratch, root, campaign_root, manifest, approval)
 }
 
 fn single_cell_manifest(q: u8) -> CampaignManifest {
@@ -515,7 +506,7 @@ fn persist_million_sample_assessment(
     permanent_zero_count: u64,
     determinant_zero_count: Option<u64>,
 ) -> (PathBuf, PathBuf, CampaignCoordinator) {
-    let (root, campaign, mut coordinator) = fixture_from_manifest(campaign);
+    let (_scratch, root, campaign, mut coordinator) = fixture_from_manifest(campaign);
     let campaign_root = root.join(campaign.campaign_id.to_string());
     coordinator
         .authorize_arm(arm_for_manifest(&campaign, 7, 20))
@@ -551,7 +542,7 @@ fn persist_million_sample_assessment(
 
 #[test]
 fn coordinator_persists_exact_underflow_pass_and_finite_n_determinant_rejection() {
-    let (underflow_root, _, underflow) = persist_million_sample_assessment(
+    let (_underflow_root, _, underflow) = persist_million_sample_assessment(
         million_sample_manifest(DeterminantPlan::NotEvaluated),
         0,
         None,
@@ -589,7 +580,7 @@ fn coordinator_persists_exact_underflow_pass_and_finite_n_determinant_rejection(
         } if rejected_families == &[AcceptanceFamily::PermanentFloor]
     ));
 
-    let (pass_root, _, pass) = persist_million_sample_assessment(
+    let (_pass_root, _, pass) = persist_million_sample_assessment(
         million_sample_manifest(DeterminantPlan::NotEvaluated),
         142_857,
         None,
@@ -607,7 +598,7 @@ fn coordinator_persists_exact_underflow_pass_and_finite_n_determinant_rejection(
     assert!(assessment.permanent.test.log_p_value.is_finite());
     assert!(matches!(pass.halt_state(), CampaignHaltState::Running));
 
-    let (determinant_root, _, determinant) = persist_million_sample_assessment(
+    let (_determinant_root, _, determinant) = persist_million_sample_assessment(
         million_sample_manifest(DeterminantPlan::Evaluate),
         142_857,
         Some(0),
@@ -634,15 +625,11 @@ fn coordinator_persists_exact_underflow_pass_and_finite_n_determinant_rejection(
             }
         } if rejected_families == &[AcceptanceFamily::Determinant]
     ));
-
-    fs::remove_dir_all(underflow_root).unwrap();
-    fs::remove_dir_all(pass_root).unwrap();
-    fs::remove_dir_all(determinant_root).unwrap();
 }
 
 #[test]
 fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
-    let (root, campaign, mut coordinator) = fixture();
+    let (_scratch, root, campaign, mut coordinator) = fixture();
     let campaign_root = root.join(campaign.campaign_id.to_string());
     for &(q, n) in &[(7, 4), (5, 4), (3, 4)] {
         assert!(coordinator.authorize_arm(arm(q, n)).is_err());
@@ -720,7 +707,7 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
         }
     ));
 
-    let (second_root, _, mut second_failure) = fixture();
+    let (_scratch, second_root, _, mut second_failure) = fixture();
     let second_campaign_root = second_root.join("coordinator-fixture");
     second_failure.authorize_arm(arm(7, 20)).unwrap();
     second_failure.persist(&second_campaign_root).unwrap();
@@ -739,15 +726,13 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
         Some(CellExecutionState::Halted { .. })
     ));
     assert!(second_failure.authorize_attempt(7, 20, 0).is_err());
-    fs::remove_dir_all(second_root).unwrap();
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
     let scope = ExactCellScope { q: 7, n: 20 };
 
-    let (retry_root, retry_campaign, retry_manifest, approval) = live_fixture();
+    let (_scratch, _retry_root, retry_campaign, retry_manifest, approval) = live_fixture();
     let mut mismatched_worker_entries = 0_u8;
     assert!(execute_campaign_cell_with_evaluator(
         &retry_campaign,
@@ -820,7 +805,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
     .is_ok());
     assert_eq!(forbidden_entries, 0);
 
-    let (adopt_root, adopt_campaign, adopt_manifest, approval) = live_fixture();
+    let (_scratch, _adopt_root, adopt_campaign, adopt_manifest, approval) = live_fixture();
     let mut adopt = CampaignCoordinator::new(&adopt_campaign, &evidence_sources()).unwrap();
     adopt
         .authorize_arm(arm_for_manifest(&adopt_manifest, 7, 20))
@@ -859,7 +844,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         ShardAttemptState::Accepted { .. }
     ));
 
-    let (invalid_root, invalid_campaign, invalid_manifest, approval) = live_fixture();
+    let (_scratch, _invalid_root, invalid_campaign, invalid_manifest, approval) = live_fixture();
     let mut invalid = CampaignCoordinator::new(&invalid_campaign, &evidence_sources()).unwrap();
     invalid
         .authorize_arm(arm_for_manifest(&invalid_manifest, 7, 20))
@@ -906,15 +891,11 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         .attempts
         .iter()
         .all(|attempt| matches!(attempt.state, ShardAttemptState::Quarantined { .. })));
-
-    fs::remove_dir_all(retry_root).unwrap();
-    fs::remove_dir_all(adopt_root).unwrap();
-    fs::remove_dir_all(invalid_root).unwrap();
 }
 
 #[test]
 fn canonical_transaction_persists_authorization_before_sampling_and_raw_before_acceptance() {
-    let (root, campaign_root, campaign, approval) = live_fixture();
+    let (_scratch, _root, campaign_root, campaign, approval) = live_fixture();
     let mut evaluator_saw_authorized = false;
     let mut durability_saw_authorized = false;
     let execution = execute_campaign_cell_with_evaluator(
@@ -955,12 +936,11 @@ fn canonical_transaction_persists_authorization_before_sampling_and_raw_before_a
         persisted.receipt().attempts.last().unwrap().state,
         ShardAttemptState::Accepted { .. }
     ));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn persisted_arm_binds_one_repository_relative_accelerator_cost_snapshot() {
-    let (root, campaign_root, mut campaign, _) = live_fixture();
+    let (_scratch, root, campaign_root, mut campaign, _) = live_fixture();
     let repository = root.join("checkout");
     let relative_table = "dev/benchmarks/permanent_campaign/coordinator-costs.csv";
     let table_path = repository.join(relative_table);
@@ -1034,12 +1014,11 @@ fn persisted_arm_binds_one_repository_relative_accelerator_cost_snapshot() {
         persisted.receipt().attempts[0].state,
         ShardAttemptState::Authorized
     ));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn exact_executor_lock_contention_has_zero_sampler_entry() {
-    let (root, campaign_root, campaign, approval) = live_fixture();
+    let (_scratch, _root, campaign_root, campaign, approval) = live_fixture();
     let lock_path = coordinator_lock_path(&campaign_root, &campaign.campaign_id);
     fs::create_dir_all(lock_path.parent().unwrap()).unwrap();
     let lock = OpenOptions::new()
@@ -1069,12 +1048,11 @@ fn exact_executor_lock_contention_has_zero_sampler_entry() {
     .is_err());
     assert_eq!(entries, 0);
     drop(lock);
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn stale_scheduled_snapshot_cannot_overwrite_authorized_accepted_or_completed() {
-    let (root, campaign, mut initial) = fixture();
+    let (_scratch, root, campaign, mut initial) = fixture();
     let campaign_root = root.join(campaign.campaign_id.to_string());
     initial.authorize_arm(arm(7, 20)).unwrap();
     initial.persist(&campaign_root).unwrap();
@@ -1111,12 +1089,11 @@ fn stale_scheduled_snapshot_cannot_overwrite_authorized_accepted_or_completed() 
         terminal.cell_state(7, 20),
         Some(CellExecutionState::Completed { .. })
     ));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn receipt_summary_is_terminal_monotonic_and_closed() {
-    let (root, campaign, mut coordinator) = fixture();
+    let (_scratch, root, campaign, mut coordinator) = fixture();
     let campaign_root = root.join(campaign.campaign_id.to_string());
     let checksums = campaign_root.join("checksums.sha256");
     fs::write(&checksums, b"raw-checksum-fixture\n").unwrap();
@@ -1238,7 +1215,6 @@ fn receipt_summary_is_terminal_monotonic_and_closed() {
     );
 
     assert_eq!(fs::read(&checksums).unwrap(), b"raw-checksum-fixture\n");
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -1246,7 +1222,7 @@ fn receipt_summary_is_terminal_monotonic_and_closed() {
 fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
     use std::os::unix::fs::symlink;
 
-    let (root, campaign_root, campaign, approval) = live_fixture();
+    let (_scratch, root, campaign_root, campaign, approval) = live_fixture();
     let mut coordinator = CampaignCoordinator::new(&campaign_root, &evidence_sources()).unwrap();
     coordinator
         .authorize_arm(arm_for_manifest(&campaign, 7, 20))
@@ -1288,7 +1264,6 @@ fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
             .state,
         ShardAttemptState::Authorized
     ));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -1297,7 +1272,7 @@ fn transaction_refuses_symlinked_writer_ancestors_without_external_effects() {
     use std::os::unix::fs::symlink;
 
     for attacked in ["derived", "shards"] {
-        let (root, campaign_root, campaign, approval) = live_fixture();
+        let (_scratch, root, campaign_root, campaign, approval) = live_fixture();
         let external = root.join(format!("external-{attacked}"));
         fs::create_dir_all(&external).unwrap();
         let sentinel = external.join("sentinel");
@@ -1329,7 +1304,6 @@ fn transaction_refuses_symlinked_writer_ancestors_without_external_effects() {
             1,
             "{attacked} ancestor attack created external campaign evidence"
         );
-        fs::remove_dir_all(root).unwrap();
     }
 }
 
@@ -1339,7 +1313,7 @@ fn transaction_refuses_symlinked_lock_and_receipt_entries() {
     use std::os::unix::fs::symlink;
 
     for attacked in ["execution.lock", "coordinator-receipt.json"] {
-        let (root, campaign_root, campaign, approval) = live_fixture();
+        let (_scratch, root, campaign_root, campaign, approval) = live_fixture();
         let coordinator_dir = campaign_root
             .join("derived")
             .join(campaign.campaign_id.to_string())
@@ -1366,13 +1340,12 @@ fn transaction_refuses_symlinked_lock_and_receipt_entries() {
         assert!(result.is_err(), "{attacked} symlink was followed");
         assert_eq!(sampler_entries, 0, "{attacked} attack reached the sampler");
         assert_eq!(fs::read(&target).unwrap(), b"outside campaign\n");
-        fs::remove_dir_all(root).unwrap();
     }
 }
 
 #[test]
 fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
-    let (root, campaign, mut coordinator) = fixture();
+    let (_scratch, root, campaign, mut coordinator) = fixture();
     let campaign_root = root.join(campaign.campaign_id.to_string());
     accept_cell(&mut coordinator, &campaign_root, &campaign, 7, 20, 14, None);
     coordinator.persist(&campaign_root).unwrap();
@@ -1424,7 +1397,7 @@ fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
     write_receipt(&campaign_root, &campaign.campaign_id, &unbound_arm);
     assert!(CampaignCoordinator::read(&campaign_root).is_err());
 
-    let (exhausted_root, exhausted_manifest, mut exhausted) = fixture();
+    let (_scratch, exhausted_root, exhausted_manifest, mut exhausted) = fixture();
     let exhausted_campaign = exhausted_root.join(exhausted_manifest.campaign_id.to_string());
     exhausted.authorize_arm(arm(7, 20)).unwrap();
     exhausted.persist(&exhausted_campaign).unwrap();
@@ -1456,8 +1429,6 @@ fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
         &forged_retry,
     );
     assert!(CampaignCoordinator::read(&exhausted_campaign).is_err());
-    fs::remove_dir_all(exhausted_root).unwrap();
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -1465,7 +1436,7 @@ fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
 fn invalid_raw_refuses_symlinked_quarantine_ancestor() {
     use std::os::unix::fs::symlink;
 
-    let (root, campaign_root, campaign, approval) = live_fixture();
+    let (_scratch, root, campaign_root, campaign, approval) = live_fixture();
     let mut coordinator = CampaignCoordinator::new(&campaign_root, &evidence_sources()).unwrap();
     coordinator
         .authorize_arm(arm_for_manifest(&campaign, 7, 20))
@@ -1516,7 +1487,6 @@ fn invalid_raw_refuses_symlinked_quarantine_ancestor() {
             .state,
         ShardAttemptState::Authorized
     ));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -1524,7 +1494,7 @@ fn invalid_raw_refuses_symlinked_quarantine_ancestor() {
 fn coordinator_refuses_symlinked_protocol_identity() {
     use std::os::unix::fs::symlink;
 
-    let (root, campaign, _) = fixture();
+    let (_scratch, root, campaign, _) = fixture();
     let campaign_root = root.join(campaign.campaign_id.to_string());
     let protocol = root.join("protocol.md");
     let external = root.join("external-protocol.md");
@@ -1533,7 +1503,6 @@ fn coordinator_refuses_symlinked_protocol_identity() {
     symlink(&external, &protocol).unwrap();
     assert!(CampaignCoordinator::new(&campaign_root, &evidence_sources()).is_err());
     assert_eq!(fs::read(&external).unwrap(), b"outside protocol\n");
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -1608,7 +1577,7 @@ fn q3_target_parser_is_exact_and_precision_boundaries_are_closed() {
 #[test]
 fn transaction_refuses_mismatched_literature_identity_before_receipt_or_sampling() {
     let campaign = single_cell_manifest(7);
-    let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
+    let (_scratch, root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
     let expected_sources = evidence_sources();
     let repository = root.join("checkout");
     fs::write(
@@ -1637,7 +1606,6 @@ fn transaction_refuses_mismatched_literature_identity_before_receipt_or_sampling
     assert_eq!(evaluator_entries, 0);
     assert!(!coordinator_receipt_path(&campaign_root, &campaign.campaign_id).exists());
     assert!(!campaign_root.join(shard_record_file(7, 20, 0)).exists());
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -1649,7 +1617,7 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
     campaign
         .cells
         .push(cell(5, 4, DeterminantPlan::NotEvaluated));
-    let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
+    let (_scratch, _root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
     let expected_sources = evidence_sources();
     let q7_argv = arm_for_manifest(&campaign, 7, 20).argv;
     execute_campaign_cell_with_evaluator(
@@ -1775,13 +1743,12 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
     let mut forged_nested: serde_json::Value = serde_json::from_slice(&q3_bytes).unwrap();
     forged_nested["interpretation"]["caller_prose"] = serde_json::json!("forged");
     assert!(serde_json::from_value::<CoordinatorFieldSidecar>(forged_nested).is_err());
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn terminal_projection_recovers_without_sampling_and_refuses_conflicts() {
     let campaign = single_cell_manifest(7);
-    let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
+    let (_scratch, _root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
     let sidecar = coordinator_field_sidecar_path(&campaign_root, &campaign.campaign_id, 7);
     let mut first_entries = 0_u8;
     let first = execute_campaign_cell_with_evaluator(
@@ -1855,13 +1822,12 @@ fn terminal_projection_recovers_without_sampling_and_refuses_conflicts() {
         fs::read(campaign_root.join(field_summary_file(7))).unwrap(),
         summary
     );
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn zero_evidence_halt_publishes_raw_only_halted_projection() {
     let campaign = manifest();
-    let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
+    let (_scratch, _root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
     let execution = execute_campaign_cell_with_evaluator(
         &campaign_root,
         ExactCellScope { q: 7, n: 20 },
@@ -1929,5 +1895,4 @@ fn zero_evidence_halt_publishes_raw_only_halted_projection() {
             "halted q=3 leaked {forbidden}"
         );
     }
-    fs::remove_dir_all(root).unwrap();
 }

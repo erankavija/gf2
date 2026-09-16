@@ -459,7 +459,7 @@ mod tests {
         }
     }
 
-    fn dump_dir() -> (tempfile::TempDir, std::path::PathBuf) {
+    fn dump_dir() -> (gf2_core::test_scratch::Scratch, std::path::PathBuf) {
         let scratch = gf2_core::test_scratch::scratch("gf2sim-failure-test");
         let dump_dir = scratch.path().join("dump");
         (scratch, dump_dir)

@@ -49,7 +49,7 @@ use gf2_sim::PipelineConfig;
 // Test scaffolding
 // ---------------------------------------------------------------------------
 
-fn tempdir(tag: &str) -> tempfile::TempDir {
+fn tempdir(tag: &str) -> gf2_core::test_scratch::Scratch {
     gf2_core::test_scratch::scratch(&format!("gf2sim-ckcompat-{tag}"))
 }
 
@@ -64,7 +64,7 @@ fn checkpoint_payload(bytes: &[u8]) -> serde_json::Result<CheckpointV2> {
 /// needs `sync_all` to do real, slow disk I/O so the SIGKILL can land inside it,
 /// so it uses this instead of [`tempdir`].
 #[cfg(unix)]
-fn tempdir_real_fs(tag: &str) -> tempfile::TempDir {
+fn tempdir_real_fs(tag: &str) -> gf2_core::test_scratch::Scratch {
     gf2_core::test_scratch::scratch_in(
         Path::new(env!("CARGO_TARGET_TMPDIR")),
         &format!("gf2sim-ckcompat-{tag}"),

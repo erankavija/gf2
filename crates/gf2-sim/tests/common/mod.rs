@@ -322,7 +322,7 @@ pub fn build_dvb_t2_graph_chain(
 /// # Panics
 ///
 /// Panics if the directory cannot be created.
-pub fn tempdir(prefix: &str) -> tempfile::TempDir {
+pub fn tempdir(prefix: &str) -> gf2_core::test_scratch::Scratch {
     gf2_core::test_scratch::scratch(&format!("gf2sim-{prefix}"))
 }
 

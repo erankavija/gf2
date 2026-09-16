@@ -599,7 +599,7 @@ mod tests {
     use crate::gfpn::{ExtConfig, QuadraticExt, QuotientElement, QuotientField};
     use std::io::Cursor as IoCursor;
 
-    fn tempdir(name: &str) -> tempfile::TempDir {
+    fn tempdir(name: &str) -> crate::test_scratch::Scratch {
         crate::test_scratch::scratch(&format!("gf2-field-matrix-{name}"))
     }
 

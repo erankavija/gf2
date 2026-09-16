@@ -8,13 +8,12 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use gf2_algebra::permanent::{
     determinant_singular_probability, enumerate_permanent_zero_probability, permanent_ryser,
 };
 use gf2_core::gfp::Fp;
+use gf2_core::test_scratch::{scratch, Scratch};
 use gf2_sim::permanent_campaign::provenance::repository_top_level;
 use gf2_sim::permanent_campaign::schedule::backend_supports_cell;
 use gf2_sim::permanent_campaign::schema::{read_manifest, ArtifactIdentity, Backend, Sha256Digest};
@@ -45,21 +44,11 @@ const VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
 /// for the fast tier. The protocol's own count is fixed at 400,000.
 const FOCUSED_DRAWS: u64 = 4_096;
 
-static SEQUENCE: AtomicU64 = AtomicU64::new(0);
-
 /// One labelled single-field mutation of an otherwise valid artifact.
 type Mutation<T> = (&'static str, Box<dyn Fn(&mut T)>);
 
-fn unique_directory(label: &str) -> PathBuf {
-    let unique = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("the test host clock follows the Unix epoch")
-        .as_nanos();
-    std::env::temp_dir().join(format!(
-        "gf2-{label}-{}-{unique}-{}",
-        std::process::id(),
-        SEQUENCE.fetch_add(1, Ordering::Relaxed)
-    ))
+fn unique_directory(label: &str) -> Scratch {
+    scratch(&format!("gf2-{label}"))
 }
 
 fn repository() -> PathBuf {
@@ -156,7 +145,7 @@ fn focused_identity() -> ArtifactIdentity {
     identity("fixtures/preregistration.json", 'e')
 }
 
-fn passing_receipt(label: &str) -> (ValidationReceipt, PathBuf) {
+fn passing_receipt(label: &str) -> (ValidationReceipt, Scratch) {
     let state = unique_directory(label);
     let receipt = run_validation(&focused_plan(), focused_identity(), 2, &state)
         .expect("the focused anchors execute");
@@ -290,7 +279,7 @@ fn frozen_preregistration_anchor_counts_match_the_committed_exact_evidence() {
 
 #[test]
 fn every_required_backend_and_the_determinant_path_reproduce_the_oracle() {
-    let (receipt, state) = passing_receipt("validation-pass");
+    let (receipt, _state) = passing_receipt("validation-pass");
     assert_eq!(receipt.schema_version, RECEIPT_SCHEMA_VERSION);
     assert_eq!(receipt.anchors.len(), 2);
 
@@ -346,7 +335,6 @@ fn every_required_backend_and_the_determinant_path_reproduce_the_oracle() {
         }
         assert!(compared > 0, "every anchor compares at least one backend");
     }
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -371,12 +359,11 @@ fn fresh_validation_uses_the_single_canonical_schema_v2_state_model() {
         assert_eq!(value["schema_version"], 2, "{file} must use schema v2");
     }
     assert!(!state.join(CONTINUATION_STATE_FILE).exists());
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
 fn replay_uses_two_fresh_instances_over_the_first_preregistered_matrices() {
-    let (receipt, state) = passing_receipt("validation-replay");
+    let (receipt, _state) = passing_receipt("validation-replay");
     for anchor in &receipt.anchors {
         let replay = anchor.replay.as_ref().expect("the replay phase completed");
         // `MatrixSampler` exposes no worker-count choice, so the protocol's
@@ -393,12 +380,11 @@ fn replay_uses_two_fresh_instances_over_the_first_preregistered_matrices() {
         receipt.anchors[1].replay.as_ref().unwrap().first_sha256,
         "distinct anchors address distinct streams"
     );
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
 fn sampled_draws_come_from_the_validation_stream_and_never_the_campaign_stream() {
-    let (receipt, state) = passing_receipt("validation-purpose");
+    let (receipt, _state) = passing_receipt("validation-purpose");
     let sample = receipt.anchors[0]
         .sample
         .as_ref()
@@ -423,7 +409,6 @@ fn sampled_draws_come_from_the_validation_stream_and_never_the_campaign_stream()
         from_validation, from_campaign,
         "validation and campaign-cell purposes must address disjoint streams"
     );
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -539,7 +524,6 @@ fn an_exact_component_failure_is_preserved_and_stops_before_replay() {
     let adopted = run_validation(&plan, focused_identity(), 1, &state)
         .expect("terminal evidence is adopted rather than recomputed");
     assert_eq!(adopted, receipt, "a completed address is never reopened");
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -582,7 +566,6 @@ fn a_lost_terminal_record_preserves_an_interruption_without_a_redraw() {
     let third = run_validation(&plan, focused_identity(), 1, &state)
         .expect("the interruption record is terminal");
     assert_eq!(third, second);
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -609,7 +592,6 @@ fn stale_temporary_files_neither_block_publication_nor_are_adopted() {
         state.join("run-state.tmp-1-0-0-0").is_file(),
         "an unadopted temporary is left untouched rather than read as state"
     );
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -624,7 +606,6 @@ fn an_incompatible_journal_refuses_to_adopt_a_different_plan() {
     let error = run_validation(&other, focused_identity(), 1, &state)
         .expect_err("a different plan cannot adopt this journal");
     assert!(error.to_string().contains("incompatible"), "{error}");
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -651,10 +632,9 @@ fn the_receipt_round_trips_and_republishes_only_identical_evidence() {
     let error = publish_validation_receipt_atomic(&output, &altered)
         .expect_err("an immutable receipt is never overwritten");
     assert!(error.to_string().contains("incompatible"), "{error}");
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
-fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, PathBuf) {
+fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, Scratch) {
     let state = unique_directory(label);
     let mut bootstrap = focused_plan();
     bootstrap.anchors = vec![focused_anchor(3, 1, 0)];
@@ -694,7 +674,7 @@ fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, 
     (plan, state)
 }
 
-fn copy_committed_validation_journal(label: &str) -> PathBuf {
+fn copy_committed_validation_journal(label: &str) -> Scratch {
     let destination = unique_directory(label);
     fs::create_dir_all(&destination).expect("the journal fixture directory is creatable");
     let source = repository().join("dev/active/02b8137c/validation-journal");
@@ -770,7 +750,6 @@ fn the_current_journal_admits_an_ordered_continuation_before_q5_n2_starts() {
             "continuation published forbidden campaign artifact {name}"
         );
     }
-    fs::remove_dir_all(state).expect("the journal fixture is removable");
 }
 
 fn current_continuation_inputs(
@@ -778,7 +757,7 @@ fn current_continuation_inputs(
 ) -> (
     ValidationPreregistration,
     ArtifactIdentity,
-    PathBuf,
+    Scratch,
     gf2_sim::permanent_campaign::validation::AuthorizedValidationContinuation,
 ) {
     let repository = repository();
@@ -806,7 +785,6 @@ fn default_resume_refuses_the_original_producer_mismatch_without_opening_q5_n2()
     assert!(error.to_string().contains("incompatible"), "{error}");
     assert!(!state.join(CONTINUATION_STATE_FILE).exists());
     assert!(!state.join("q5-n02-s0.exact.started.json").exists());
-    fs::remove_dir_all(state).expect("the journal fixture is removable");
 }
 
 #[test]
@@ -844,7 +822,6 @@ fn canonical_v2_resume_refuses_runtime_drift_before_any_journal_change() {
         before,
         "runtime mismatch must precede every additional marker, terminal, or rewrite"
     );
-    fs::remove_dir_all(state).expect("the canonical journal fixture is removable");
 }
 
 #[test]
@@ -902,7 +879,6 @@ fn continuation_rejects_changed_prefix_bytes_gaps_and_preopened_suffixes() {
             "{label}: {error}"
         );
         assert!(!state.join("q5-n02-s0.sample.started.json").exists());
-        fs::remove_dir_all(state).expect("the journal fixture is removable");
     }
 }
 
@@ -937,12 +913,11 @@ fn an_immutable_second_segment_refuses_a_third_runtime() {
         "third-producer refusal cannot rewrite the admitted segment state"
     );
     assert!(!state.join("q5-n02-s0.exact.started.json").exists());
-    fs::remove_dir_all(state).expect("the journal fixture is removable");
 }
 
 #[test]
 fn receipt_segments_and_terminal_identities_require_exact_ordered_coverage() {
-    let (receipt, state) = two_segment_receipt_fixture("validation-segment-receipt");
+    let (receipt, _state) = two_segment_receipt_fixture("validation-segment-receipt");
     receipt
         .validate()
         .expect("two exact contiguous segments validate");
@@ -985,10 +960,9 @@ fn receipt_segments_and_terminal_identities_require_exact_ordered_coverage() {
         alter(&mut altered);
         assert!(altered.validate().is_err(), "receipt accepted {label}");
     }
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
-fn two_segment_receipt_fixture(label: &str) -> (ValidationReceipt, PathBuf) {
+fn two_segment_receipt_fixture(label: &str) -> (ValidationReceipt, Scratch) {
     let (mut receipt, state) = passing_receipt(label);
     let mut second_runtime = receipt.producer_segments[0].runtime.clone();
     second_runtime.worker_count += 1;
@@ -1039,7 +1013,6 @@ fn journal_verifier_rehashes_each_segment_state_and_terminal_on_disk() {
         verify_validation_receipt_journal(&receipt, &state)
             .expect("the restored journal verifies before the next mutation");
     }
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -1094,7 +1067,6 @@ fn the_committed_q5_terminal_is_adopted_without_float_drift_or_redraw() {
         before,
         "adoption never rewrites immutable journal bytes"
     );
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -1121,12 +1093,11 @@ fn a_genuinely_altered_committed_terminal_is_rejected_without_overwrite() {
         altered_bytes,
         "rejection never overwrites journal bytes"
     );
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
 fn receipt_validation_rejects_each_mutated_field() {
-    let (base, state) = passing_receipt("validation-mutations");
+    let (base, _state) = passing_receipt("validation-mutations");
     base.validate().expect("the unmutated receipt validates");
 
     let snapshot = |byte: char| {
@@ -1409,7 +1380,6 @@ fn receipt_validation_rejects_each_mutated_field() {
             "receipt validation must reject a mutated {label}"
         );
     }
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -1572,7 +1542,6 @@ fn a_preregistration_authority_digest_must_match_the_committed_bytes() {
         load_validation_preregistration(&root, &root.join(relative)).is_err(),
         "an absolute preregistration path is rejected"
     );
-    fs::remove_dir_all(root).expect("the fixture directory is removable");
 }
 
 #[test]
@@ -1639,7 +1608,6 @@ fn validation_writes_no_campaign_artifact_and_leaves_the_frozen_payload_intact()
         ],
         "validation publishes no shard, checkpoint, summary, or interpretation artifact"
     );
-    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]

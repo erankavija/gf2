@@ -36,7 +36,7 @@ use std::process::Command;
 
 /// Returns a fresh temp directory path for one probe invocation (not created;
 /// the probe's dump writer creates it on demand).
-fn temp_dump_dir() -> (tempfile::TempDir, PathBuf) {
+fn temp_dump_dir() -> (gf2_core::test_scratch::Scratch, PathBuf) {
     let scratch = gf2_core::test_scratch::scratch("gf2sim-hardfail-subproc");
     let dump_dir = scratch.path().join("dump");
     (scratch, dump_dir)

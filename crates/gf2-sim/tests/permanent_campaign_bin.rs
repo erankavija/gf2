@@ -2,6 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use gf2_core::test_scratch::{scratch, Scratch};
 use gf2_sim::permanent_campaign::schema::{
     ArtifactIdentity, Availability, Backend, CampaignManifest, CellSpec, DeterminantPlan,
     GitRevision, Provenance, RngAlgorithm, ShardSpec, StreamPurpose, SCHEMA_VERSION,
@@ -149,15 +150,8 @@ fn exact_execution_manifest(parent: &Path) -> CampaignManifest {
     campaign
 }
 
-fn temp_path(label: &str) -> PathBuf {
-    std::env::temp_dir().join(format!(
-        "gf2-permanent-campaign-bin-{label}-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ))
+fn temp_path(label: &str) -> Scratch {
+    scratch(&format!("gf2-permanent-campaign-bin-{label}"))
 }
 
 fn commit_campaign_manifest(checkout: &Path) {
@@ -288,7 +282,6 @@ fn run_with_cost_table(label: &str, table: &str) -> std::process::Output {
         before,
         "cost-table preflight must not draw or emit campaign evidence"
     );
-    fs::remove_dir_all(parent).unwrap();
     result
 }
 
@@ -326,8 +319,6 @@ fn print_provenance_reports_the_emitting_binary_and_source_revision() {
     assert!(revision
         .chars()
         .all(|character| character.is_ascii_digit() || matches!(character, 'a'..='f')));
-
-    let _ = fs::remove_dir_all(parent);
 }
 
 #[test]
@@ -370,8 +361,6 @@ fn binary_refuses_emission_before_writing_outside_repository() {
     );
     assert!(!output_path.join("shards").exists());
     assert!(!output_path.join("summaries").exists());
-
-    let _ = fs::remove_dir_all(parent);
 }
 
 #[test]
@@ -426,8 +415,6 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
         stderr.contains("intra_matrix_parallel"),
         "stderr:\n{stderr}"
     );
-
-    let _ = fs::remove_dir_all(parent);
 }
 
 #[test]
@@ -479,8 +466,6 @@ fn binary_requires_full_cost_table_even_for_a_processor_selected_cell() {
         stderr.contains("accelerator") && stderr.contains("no measured per-matrix cost"),
         "stderr:\n{stderr}"
     );
-
-    let _ = fs::remove_dir_all(parent);
 }
 
 #[test]
@@ -631,7 +616,6 @@ fn exact_selector_dry_run_schedules_only_the_requested_cell() {
         !output_path.exists(),
         "dry scheduling must not open a receipt, lock, sampler, or output"
     );
-    fs::remove_dir_all(parent).unwrap();
 }
 
 #[test]
@@ -679,7 +663,6 @@ fn exact_selector_executes_only_target_shards_and_keeps_field_open() {
         !output_path.join("summaries/q7.json").exists(),
         "one exact cell must not finalize the field summary"
     );
-    fs::remove_dir_all(parent).unwrap();
 }
 
 #[test]
@@ -713,7 +696,6 @@ fn direct_nonfirst_execution_is_refused_before_sampler_or_raw_output() {
 
     assert!(!result.status.success());
     assert!(!output_path.join("shards/q7/n04").exists());
-    fs::remove_dir_all(parent).unwrap();
 }
 
 #[test]
@@ -782,5 +764,4 @@ fn invalid_exact_selector_fails_before_receipt_or_output_creation() {
             );
         }
     }
-    fs::remove_dir_all(parent).unwrap();
 }

@@ -37,7 +37,7 @@ use std::path::PathBuf;
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-fn test_dump_dir(tag: &str) -> (tempfile::TempDir, PathBuf) {
+fn test_dump_dir(tag: &str) -> (gf2_core::test_scratch::Scratch, PathBuf) {
     let scratch = gf2_core::test_scratch::scratch(&format!("gf2sim-failmode-{tag}"));
     let dump_dir = scratch.path().join("dump");
     (scratch, dump_dir)

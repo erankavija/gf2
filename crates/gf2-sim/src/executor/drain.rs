@@ -1231,7 +1231,7 @@ mod tests {
     // ── run_sweep_checkpointed paths ────────────────────────────────────────
 
     /// Helper: unique temp dir for a checkpointed sweep test.
-    fn sweep_tmp(label: &str) -> tempfile::TempDir {
+    fn sweep_tmp(label: &str) -> gf2_core::test_scratch::Scratch {
         gf2_core::test_scratch::scratch(&format!("gf2-drain-sweep-{label}"))
     }
 
