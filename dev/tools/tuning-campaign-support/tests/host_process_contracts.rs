@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::io::ErrorKind;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -172,5 +173,48 @@ fn run_process_drains_both_streams_and_times_out_cleanly() {
     )
     .unwrap();
     assert!(matches!(result.outcome, ProcessOutcome::TimedOut { .. }));
+    assert!(all_reaped.load(Ordering::SeqCst));
+}
+
+/// A request larger than the 64 KiB Linux pipe buffer cannot be absorbed by
+/// the kernel before the arm exits, so the writer is still blocked when the
+/// read end closes and the write fails with `EPIPE` on every run. A request
+/// that fits the buffer can complete before the arm exits, so this size is
+/// what makes the failure deterministic.
+#[test]
+fn a_failed_request_write_keeps_the_captured_child_diagnostics() {
+    let mut command = std::process::Command::new("sh");
+    command.args(["-c", "printf 'arm rejected the request\\n' >&2; exit 9"]);
+    let all_reaped = AtomicBool::new(true);
+    let mut observed = Vec::new();
+    let result = run_process(
+        command,
+        &vec![b'q'; 1 << 20],
+        Duration::from_secs(5),
+        Duration::from_millis(100),
+        || Ok(()),
+        &all_reaped,
+        |_| Ok(()),
+        |chunk| {
+            observed.extend_from_slice(chunk);
+            Ok(())
+        },
+    )
+    .expect("a failed request write returns the captured run rather than an early error");
+    let error = result
+        .callback_error
+        .expect("the failed request write is reported to the caller");
+    assert_eq!(error.kind(), ErrorKind::BrokenPipe);
+    assert!(
+        error.to_string().contains("writing the request"),
+        "the error names the write that failed: {error}"
+    );
+    assert_eq!(result.stderr, b"arm rejected the request\n");
+    assert_eq!(observed, result.stderr);
+    assert!(
+        matches!(result.outcome, ProcessOutcome::Exited { exit_code: 9, .. }),
+        "{:?}",
+        result.outcome
+    );
     assert!(all_reaped.load(Ordering::SeqCst));
 }
