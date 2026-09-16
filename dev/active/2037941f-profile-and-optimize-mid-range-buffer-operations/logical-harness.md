@@ -279,7 +279,7 @@ when the current projection differs.
 | `c489745b` isolated XOR | `2037941f-logical-isolated-xor` | `build`, `cells`, `smoke`, `window` |
 | `8197174d` row XOR | `2037941f-logical-public-row-xor` | `build`, `cells`, `smoke`, `window` |
 | `c49e78bc` coding route | `2037941f-logical-nr-construction` | `build`, `cells`, `smoke`, `window` |
-| `65c0e13d` ISA-L | `2037941f-logical-isal-base-gap` | `build --isal`, `cells`, `smoke`, `window --isal` |
+| `65c0e13d` ISA-L | `2037941f-logical-isal-base-gap` | `build --isal`, `cells`, `smoke --isal`, `window --isal` |
 
 Each leaf commits its family's campaign JSON addendum before its `window` line
 reaches the queue, and each owns its own ledger reservation.
@@ -287,8 +287,12 @@ reaches the queue, and each owns its own ledger reservation.
 ## Untimed release smoke
 
 ```
-dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke [--isal]
 ```
+
+The record's own `# command:` header names the invocation that wrote it, so the
+committed `survey/logical-runner-smoke.txt` states whether its run covered the
+ISA-L family.
 
 The command runs from the worktree root, takes no benchmark lock, never calls
 `dev/scripts/ccx1-bench-flock.sh`, and writes nothing under
