@@ -385,7 +385,7 @@
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "in progress. Planning and breakdown are instantiated. Source tasks 85fc5ff4 and 9fb40c83 are prepared in isolated worktrees; their six- and fifteen-minute profiling/campaign jobs are queued for the 2026-09-16 04:00 EEST benchmark window."
+          "status": "in progress. Session 17: the 2026-09-16 window lost both source jobs in the arm stdin handshake. 9fb40c83 rework merged at 24d0c86e (arm fixed: window-variable demand before stdin and null-spelled optional fields; runner smoke of all four arms; v4-r1 attempt voided per protocol; v4-r2 queue line). 85fc5ff4 rework committed on its branch (root cause in the shifts bench arm), CI pending. No window is armed (invoker hold)."
         },
         {
           "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
@@ -615,6 +615,12 @@
       "type": "task",
       "in_epic": true,
       "reason": "19513245 positive consumer evidence (axpy, dense product) needs a reviewed library-layer design (cached byte product tables, canonical FieldVec/FieldMatrix hooks) before any implementation ships. Created session 16; slotted into wave 3 in session 17."
+    },
+    {
+      "id": "598d8057",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "9fb40c83 rebuild: choose_k_block in gf2-core m4rm.rs is dead without test-support; cargo-ci's --all-features clippy never sees it; depends on 9fb40c83"
     }
   ],
   "escalations": [
@@ -851,6 +857,14 @@
       "status": "resolved",
       "raised_at": "2026-09-16T08:30Z",
       "resolution": "Invoker (session 17): hold; do not arm a window until told. Repaired jobs stay queued."
+    },
+    {
+      "category": "shared infrastructure (policy item 8)",
+      "issue": "9fb40c83",
+      "question": "authorize the smallest fix in dev/tools/tuning-campaign-support/src/process.rs:341-343: the stdin writer's error propagates with ? after the drain loop, discarding captured stdout/stderr, so run_arm never journals child-diagnostic or child-exit when the request write fails (why the 2026-09-16 window recorded no stderr for 9fb40c83); deliver that error through callback_error instead",
+      "recommendation": "authorize; one-line control-flow change in the shared runner with a regression test",
+      "status": "open",
+      "raised_at": "2026-09-16T10:55Z"
     }
   ],
   "rework_counts": {
@@ -1198,6 +1212,16 @@
       "origin": "issue-impact (freezer default)",
       "disposition": "advisory; the receipt pins the addendum bytes so the frozen file stays; worker brief amended to require --family-description; freezer default change filed as an epic task",
       "criterion_named_by": "none in 1a379447"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "a worktree seeded from the cache pool carries test binaries whose baked CARGO_MANIFEST_DIR names the worktree that built them (agent-1d4fd63d, since removed); 84 tuning-campaign-support tests abort before running until the crate is cleaned (92385645 round 3)",
+      "status": "noted; worker brief already names the stale-seeded-cache remedy"
+    },
+    {
+      "issue": "9fb40c83",
+      "subject": "benchmark-ab-runner clears the child environment (PATH, HOME, RAYON_NUM_THREADS, RUSTUP_TOOLCHAIN, per-arm variables, sentinel only), so an arm that demands GF2_BENCH_WINDOW/GF2_BENCH before reading stdin dies in the handshake; an arm's request mirror must omit absent optional fields exactly as the runner does (decode_canonical byte comparison); when the request write hits EPIPE the runner drops the captured child diagnostics (process.rs:341-343, escalated)",
+      "status": "arm fixed on the branch; shared-runner diagnostics loss escalated"
     }
   ],
   "notes": [

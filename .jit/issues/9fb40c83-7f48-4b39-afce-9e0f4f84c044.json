@@ -7,7 +7,193 @@
     "16560579-abd8-446c-9a02-9715feeee1af"
   ],
   "description": "Attribute the production DVB-T2 packed-bit scatter cost inside its real BICM consumers and issue a bounded materiality disposition without authorizing candidate implementation.\n\n## Background\n\nThe repaired protocol-v3 re-measurement is accepted exploratory evidence: gf2 wins the whole packed-operation comparison, while conversion-subtracted 16-QAM cells leave a residual in which xdsopl's gather is faster. Earlier warm receipts remain withdrawn and cannot confirm the gap. This task rebuilds the current gf2 and xdsopl arms from exact pinned sources, profiles the actual `BitInterleaver::interleave` route used by the BICM harness and simulation stages, and attributes representation conversion, memory passes and scatter work. The result may nominate a concrete candidate only as input to an amended and re-reviewed breakdown.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen protocol-v4 addendum and append-only family-ledger reservation predeclare Normal and Short FECFRAME paths for 16-QAM and 64-QAM, a streaming case, exploratory role, isolated and whole-consumer boundaries, cache states, conversion accounting, materiality rule, complexity budget and bounded search before timing.\n- [hard] REQ-02: Scheduled benchmark-window execution produces an accepted exploratory receipt with exact rebuilt gf2 and xdsopl source, build and executable pins, raw paired samples, append-only execution log, checkpoints, runtime host provenance and durable negative or unavailable outcomes.\n- [hard] REQ-03: The profile identifies the selected production route, BICM harness and simulation-stage consumers, call graph, hot instructions, allocation behavior, representation conversions, memory passes and isolated interleave cost beside whole-consumer cost.\n- [hard] REQ-04: The disposition records the scatter as not material or nominates no more than two profile-supported branch-free or packed-word forms under the predeclared budget; withdrawn warm receipts remain historical context and do not confirm a candidate.\n- [hard] REQ-05: A no-candidate or no-win disposition permits this profile to complete. If it nominates a material branch-free or packed-word form, this profile remains open until a planning-time Rust 1.95 compile and assembly record proves feasibility, including a runtime-gated scalar fallback for any capability-gated form, and the plan bracket is amended and re-reviewed to create the required candidate implementation and confirmation leaves, make them depend on this profile, and re-home publication behind their sinks in the instantiated dependency graph.\n\n## Notes\n\nThe comparator remains xdsopl `PCTITL` for the ETSI bit-interleave operation. AFF3CT and circular shifts are not substitutes. Timed work runs only in a scheduled benchmark window.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "47865f3f83bba6dc085d91fcfc828cc0424a0869289a0505564b548ab2a3d869",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dvb-profile-addendum.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "16a08e5e5223d56d2d1fe1e18039919a81829896f44237b084f86b903719a33f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/runner-smoke.txt",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/runner-smoke.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a17b82285a659683559e210d9753d91e3f37dd44cb863fa4bdd5453d6d001335",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2819260f02f9b89788173b3801c371c7f5410da7dd2b108809d542e301724ea5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/smoke-dvb-arms.sh",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e968fe20b36d311184e9d8d08ebb04b1e8a616b80626c6023f90bcc7e000f962",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "047b8f395637642852da8066efbf33eafa81da5d9f1296e0631a986e2b7604bb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a5c836105cf61ac702415e70ac1e4c068f0ef766cd7e71ab652eb2be5a1ddfc4",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/dvb-source-evidence.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "900907fe5732219b5c25a05bed5ef180148cec0a6a1c480ab4c4642818a0c2e9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/harness-validation.txt",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/harness-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dvb-profile-trial-ledger.jsonl",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-trial-ledger.jsonl"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "DVB-T2 interleaver profile",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen protocol-v4 DVB profile addendum",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "DVB profile family ledger",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-trial-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Non-timed DVB harness validation record",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/harness-validation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Runner-wire smoke of every DVB arm",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/runner-smoke.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "format": "markdown",
+      "label": "DVB arm runner-wire smoke script",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "DVB harness build and validation gate",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/build-dvb-harness.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "DVB profile campaign launcher",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-dvb-campaign.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "DVB dynamic profile launcher",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-profile.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "DVB runner plan projector",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "DVB family addendum freezer",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-addendum.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Voided-attempt record generator",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-voided-attempt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "DVB route and memory-pass source pins",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "DVB producing-input closure",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "DVB profile campaign arm",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/dvb-profile-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Voided v4-r1 profile attempt record",
+      "path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Aborted v4-r1 profile stage execution log",
+      "path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log"
+    }
+  ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
   "gates_required": [
     "cargo-ci",
@@ -38,5 +224,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-15T01:10:46.921983378Z"
+  "updated_at": "2026-09-16T10:54:19.520229900Z"
 }
