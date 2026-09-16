@@ -378,14 +378,14 @@
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "in progress. Session 17: 3ea122df done (77606c84, seven gates); 92385645 done after the invoker-authorized round 3 (make-channel provenance, 5954c15b, seven gates, review r3); bb769456 harness merged at e215ce95 but REWORK: code-review, research-review and holistic-review converge on two blockers (smoke emits timing samples against REQ-03; window clean-input guard covers six paths, not the producing manifest, against REQ-04), review reviews/bb769456-r1.md, no rework dispatched (invoker: no new work). Next ready: 96c94b81 (dense-parity addendum) and the bb769456 rework."
+          "status": "in progress. Session 17: 3ea122df done (77606c84, seven gates); 92385645 done after the invoker-authorized round 3 (make-channel provenance, 5954c15b, seven gates, review r3); bb769456 harness merged at e215ce95 but REWORK: code-review, research-review and holistic-review converge on two blockers (smoke emits timing samples against REQ-03; window clean-input guard covers six paths, not the producing manifest, against REQ-04), review reviews/bb769456-r1.md, no rework dispatched (invoker: no new work). Next ready: 96c94b81 (dense-parity addendum) and the bb769456 rework. Session 18: bb769456 rework 1 dispatched (opus, 2026-09-16T16:06Z); 96c94b81 dispatched (opus, new agent-96c94b81, base 2c52be3d); task b9302771 (m = 5 amendment) filed after bb769456 and before 65c0e13d/c489745b/8197174d/c49e78bc; 65c0e13d gained REQ-04 (ISA-L compiler provenance)."
         },
         {
           "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "in progress. Session 17: both source tasks repaired after the 2026-09-16 window handshake failures and merged (9fb40c83 at 24d0c86e, 85fc5ff4 at 34509f0f); each voided its v4-r1 attempt per protocol, smoked every arm through the real runner, and holds a queue line (9fb40c83 v4-r2 campaign; 85fc5ff4 launcher stages the a2 identity). No window is armed (invoker hold). Issues stay in_progress until their window runs and their gates pass."
+          "status": "in progress. Session 17: both source tasks repaired after the 2026-09-16 window handshake failures and merged (9fb40c83 at 24d0c86e, 85fc5ff4 at 34509f0f); each voided its v4-r1 attempt per protocol, smoked every arm through the real runner, and holds a queue line (9fb40c83 v4-r2 campaign; 85fc5ff4 launcher stages the a2 identity). No window is armed (invoker hold). Issues stay in_progress until their window runs and their gates pass. Session 18: window gf2-bench-window-20260917 armed for 2026-09-17 04:00 EEST over the committed queue lines of 85fc5ff4 and 9fb40c83."
         },
         {
           "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
@@ -441,6 +441,48 @@
           "title": "Design cached GF(2^8) tables and consumer hooks",
           "classification": "design",
           "status": "done. Session 17: design.md and breakdown.md merged at 60dcba18; repo-validate, doc-review and holistic-review pass after the four manifest leaves were instantiated (77c21ecd, b64dc9c4, ad2a6a58, 4c1e441f); review reviews/613574db-r1.md; closed at b47b6592."
+        },
+        {
+          "id": "77c21ecd",
+          "short_id": "77c21ecd",
+          "title": "Cache GF(2^8) byte product tables and route FieldVec::axpy through them",
+          "classification": "implementation",
+          "status": "dispatched session 18 (2026-09-16T16:06Z) on opus in agent-613574db (branch worktree-agent-77c21ecd, base 2c52be3d)"
+        },
+        {
+          "id": "8275a6f8",
+          "short_id": "8275a6f8",
+          "title": "Keep captured child diagnostics when the runner's request write fails",
+          "classification": "implementation",
+          "status": "dispatched session 18 (2026-09-16T16:06Z) on opus in agent-8275a6f8 (base 2c52be3d)"
+        },
+        {
+          "id": "7cdc28e9",
+          "short_id": "7cdc28e9",
+          "title": "Skip non-benchmark receipts in the receipt re-evaluation checker",
+          "classification": "implementation",
+          "status": "pending (sonnet slot)"
+        },
+        {
+          "id": "94bbe5d7",
+          "short_id": "94bbe5d7",
+          "title": "Freeze confirmation addenda with stage-specific family prose",
+          "classification": "implementation",
+          "status": "pending (sonnet slot)"
+        },
+        {
+          "id": "706a8f93",
+          "short_id": "706a8f93",
+          "title": "Record the achieved scheduling priority in receipt host observations",
+          "classification": "implementation",
+          "status": "pending (sonnet slot)"
+        },
+        {
+          "id": "2c487595",
+          "short_id": "2c487595",
+          "title": "Version the addendum schema alongside its predecessors",
+          "classification": "implementation",
+          "status": "pending (sonnet slot)"
         }
       ]
     },
@@ -473,6 +515,27 @@
           "title": "Calibrate production dispatch for the 5900X",
           "classification": "implementation",
           "status": "pending"
+        },
+        {
+          "id": "b64dc9c4",
+          "short_id": "b64dc9c4",
+          "title": "Route the dense FieldMatrix product for GF(2^8) through the cached table",
+          "classification": "implementation",
+          "status": "pending; depends on 77c21ecd"
+        },
+        {
+          "id": "ad2a6a58",
+          "short_id": "ad2a6a58",
+          "title": "Confirm the GF(2^8) axpy path against the current vector route",
+          "classification": "research",
+          "status": "pending; depends on 77c21ecd; needs a window"
+        },
+        {
+          "id": "b9302771",
+          "short_id": "b9302771",
+          "title": "Amend the frozen ISA-L family to five confirmatory cells",
+          "classification": "implementation",
+          "status": "pending; depends on bb769456"
         }
       ]
     },
@@ -485,6 +548,13 @@
           "title": "Evaluate quantized layered and QC-aware LDPC candidates",
           "classification": "research",
           "status": "pending"
+        },
+        {
+          "id": "4c1e441f",
+          "short_id": "4c1e441f",
+          "title": "Confirm the GF(2^8) dense product against the current matrix route",
+          "classification": "research",
+          "status": "pending; depends on b64dc9c4; needs a window"
         }
       ]
     },
@@ -651,6 +721,18 @@
       "type": "task",
       "in_epic": true,
       "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
+    },
+    {
+      "id": "8275a6f8",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "9fb40c83 window failure root cause in the shared runner: process.rs propagates the stdin writer's error with ? after the drain loop and drops captured child stdout/stderr; invoker authorized the shared change (session 18); feeds 1362381c"
+    },
+    {
+      "id": "b9302771",
+      "type": "task",
+      "in_epic": true,
+      "reason": "invoker ruling (session 18): close the ISA-L family's m = 6 versus reservable-five gap by amending the closed addendum 3ea122df to m = 5; depends on bb769456; gates 65c0e13d and the three logical baseline records"
     }
   ],
   "escalations": [
@@ -893,24 +975,27 @@
       "issue": "9fb40c83",
       "question": "authorize the smallest fix in dev/tools/tuning-campaign-support/src/process.rs:341-343: the stdin writer's error propagates with ? after the drain loop, discarding captured stdout/stderr, so run_arm never journals child-diagnostic or child-exit when the request write fails (why the 2026-09-16 window recorded no stderr for 9fb40c83); deliver that error through callback_error instead",
       "recommendation": "authorize; one-line control-flow change in the shared runner with a regression test",
-      "status": "open",
-      "raised_at": "2026-09-16T10:55Z"
+      "status": "resolved",
+      "raised_at": "2026-09-16T10:55Z",
+      "resolution": "Invoker authorized (session 18, 2026-09-16): bug 8275a6f8 filed in the epic (feeds 1362381c) and dispatched."
     },
     {
       "category": "protocol gap (shared infrastructure / closed-issue scope)",
       "issue": "bb769456 / 3ea122df",
       "question": "the frozen ISA-L family declares m = 6 (five confirmatory cells plus the declared unavailable dispatched row that spends a comparison), but trial_ledger::reserve counts only non-exploratory cells and can reserve five; close the gap by a versioned protocol change (represent a declared unavailable row) or by amending the closed addendum 3ea122df to m = 5",
       "recommendation": "versioned protocol change: a declared unavailable row is a reservation-bearing cell kind; keeps the frozen, more conservative alpha_c",
-      "status": "open",
-      "raised_at": "2026-09-16T12:10Z"
+      "status": "resolved",
+      "raised_at": "2026-09-16T12:10Z",
+      "resolution": "Invoker chose option B (session 18): amend the closed addendum 3ea122df to m = 5. Task b9302771 created; depends on bb769456; 65c0e13d, c489745b, 8197174d and c49e78bc depend on it (edges reduced)."
     },
     {
       "category": "epic task candidate (out-of-scope finding)",
       "issue": "3e83c116 (done) / 65c0e13d",
       "question": "survey/run-isal-xor-probe.sh compiles ISA-L with the bare name cc and records no compiler identity, so the ISA-L comparator has no compiler provenance (the r1 substance of 92385645 applies); create a task before 65c0e13d measures",
       "recommendation": "create the task and wire 65c0e13d onto it",
-      "status": "open",
-      "raised_at": "2026-09-16T11:45Z"
+      "status": "resolved",
+      "raised_at": "2026-09-16T11:45Z",
+      "resolution": "Invoker chose to fold the ISA-L compiler provenance into 65c0e13d (session 18): REQ-04 added to its description with the ruling recorded in Notes."
     }
   ],
   "rework_counts": {
@@ -928,7 +1013,8 @@
     "07ca8585": 1,
     "5cbb6545": 2,
     "92385645": 0,
-    "c5e01de3": 2
+    "c5e01de3": 2,
+    "bb769456": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1354,7 +1440,8 @@
     "Session 17 invoker rulings (later in the session): no separate independent reviews beside the issue gates (the Terra pass convention inherited from sessions 4-16 is void; the lead stopped the in-flight 92385645 pass); subagents may not spawn codex agents; no new work after 12:00Z, finish running tasks and hand off; check for stalled workers every 20 minutes.",
     "Session 17 stall pattern: three workers idled waiting for a background cargo-ci notification that never woke them, and one wrote a shell wait loop gated on a process-name search that matches its own shell and therefore never exits (the lead killed it). Dispatch prompts must say: wait on the process with the shell's wait builtin or on the log's final line; never gate a loop on a process-name search; never idle before the final report exists.",
     "Session 17 gate ordering: `jit gate evaluate-all` runs gates in the issue's gate-list order and stops at the first failure; holistic-review sits third on the 2037941f children, so it runs before code/research review and fails on their staleness (92385645) or stops the chain (c5e01de3). Evaluate individually with holistic-review last.",
-    "Session 17 review outcomes: 3ea122df, 92385645, c5e01de3, 613574db done; 9fb40c83 and 85fc5ff4 repaired and merged, awaiting a window; bb769456 merged but in rework (two converging blockers); 4 GF(2^8) leaves created; bugs 598d8057 (dead choose_k_block, outside epic) and 7cdc28e9 (receipt checker skips other schemas, in epic) filed; worktrees agent-3e83c116, agent-1c602857, agent-92385645, agent-c5e01de3 reclaimed without harvest (rsync harvest copies; disk was at 98%)."
+    "Session 17 review outcomes: 3ea122df, 92385645, c5e01de3, 613574db done; 9fb40c83 and 85fc5ff4 repaired and merged, awaiting a window; bb769456 merged but in rework (two converging blockers); 4 GF(2^8) leaves created; bugs 598d8057 (dead choose_k_block, outside epic) and 7cdc28e9 (receipt checker skips other schemas, in epic) filed; worktrees agent-3e83c116, agent-1c602857, agent-92385645, agent-c5e01de3 reclaimed without harvest (rsync harvest copies; disk was at 98%).",
+    "Session 18 (2026-09-16T16:06Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time in worktrees, reuse over proliferation; interview the invoker on open escalations. Rulings: m = 6 gap closed by amending the closed addendum to m = 5 (task b9302771); shared-runner diagnostics fix authorized (bug 8275a6f8); ISA-L compiler provenance folded into 65c0e13d as REQ-04; window armed for 2026-09-17 04:00 EEST. Disk: the 'debug' trees of agent-85fc5ff4, agent-bb769456 and the cache pool were hardlinked copies of one 171 GB tree; removing all three freed about 14 GB net (the pool's release and ci-test seeds remain). Dispatched: bb769456 rework 1 (opus, agent-bb769456 fast-forwarded to main), 77c21ecd (opus, warm agent-613574db rebranched worktree-agent-77c21ecd), 96c94b81 (opus, new agent-96c94b81), 8275a6f8 (opus, new agent-8275a6f8)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1377,10 +1464,10 @@
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
   },
   "benchmark_window": {
-    "unit": null,
-    "armed_for": null,
+    "unit": "gf2-bench-window-20260917",
+    "armed_for": "2026-09-17T04:00 Europe/Helsinki (01:00Z)",
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
-    "note": "Invoker hold (session 17): no window is armed. The 2026-09-16 04:00 EEST window (unit gf2-bench-window-20260916) ran 3.9 s: 85fc5ff4 job 3f984872e67aaac0 and 9fb40c83 job cf0e12a3c5d4fe28 both died in the arm stdin handshake (no .done markers). Invoker policy 2026-09-13 stands: the host is never locked during a session; every measurement runs in a window. A job's rc is not evidence it measured anything; judge each campaign from its own execution log and receipt."
+    "note": "Armed session 18 on the invoker's choice via systemd-run --user (XDG_RUNTIME_DIR=/run/user/1000, DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus), working directory the primary checkout, PATH=~/.cargo/bin:/usr/local/bin:/usr/bin, GF2_WINDOW_UNIT set. Queue: 85fc5ff4 (run-shift-profile.sh window, 6 min) and 9fb40c83 (build-dvb-harness.sh && run-dvb-campaign.sh v4-r2 && run-profile.sh, 18 min). Queue cutoff 03:40 EEST. Invoker policy 2026-09-13 stands: judge each campaign from its own execution log and receipt, never the job rc."
   }
 }
