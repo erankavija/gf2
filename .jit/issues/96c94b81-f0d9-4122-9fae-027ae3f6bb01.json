@@ -6,7 +6,7 @@
   "dependencies": [
     "92385645-25ab-480c-996b-61049d186a70"
   ],
-  "description": "Freeze the confirmatory protocol for dense `BitMatrix::matvec` and its qualified M4RI comparison before candidate measurements begin.\n\n## Background\n\nThe protocol covers row strides of 8, 9, 63, 64, and 65 words, neighboring dimensions, relevant cache regimes, output allocation, and adapter costs. The current fused AND-popcount route is the production baseline; the already rejected generic carry-save comparator is not a fresh candidate.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins matrices, vectors, dimensions, density, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated kernel observations from allocated whole-`matvec` benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The M4RI arm follows the matched-operation specification and charges construction, conversion, execution, and output costs without substituting transpose evidence.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.",
+  "description": "Freeze the confirmatory protocol for dense `BitMatrix::matvec` and its qualified M4RI comparison before candidate measurements begin.\n\n## Background\n\nThe protocol covers row strides of 8, 9, 63, 64, and 65 words, neighboring dimensions, relevant cache regimes, output allocation, and adapter costs. The current fused AND-popcount route is the production baseline; the already rejected generic carry-save comparator is not a fresh candidate.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins matrices, vectors, dimensions, density, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated kernel observations from allocated whole-`matvec` benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The M4RI arm follows the matched-operation specification and charges construction, conversion, execution, and output costs without substituting transpose evidence.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.\n\nSource references: [AlbrechtBard2026].",
   "documents": [
     {
       "assets": [
@@ -193,7 +193,43 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:33:57.851170338Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:39:10.954273423Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:38:24.438447577Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:40:25.456021163Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T17:44:42.396507320Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:37:30.406262876Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T17:40:27.236639751Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "96c94b81-f0d9-4122-9fae-027ae3f6bb01",
   "labels": [
     "type:task",
@@ -209,5 +245,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the dense-parity measurement addendum",
-  "updated_at": "2026-09-16T17:32:53.203332741Z"
+  "updated_at": "2026-09-16T18:01:03.906026485Z"
 }

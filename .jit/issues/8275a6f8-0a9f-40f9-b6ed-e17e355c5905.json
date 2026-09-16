@@ -26,7 +26,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:39:29.958116126Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-16T17:43:02.285492138Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "8275a6f8-0a9f-40f9-b6ed-e17e355c5905",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -37,5 +48,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Keep captured child diagnostics when the runner's request write fails",
-  "updated_at": "2026-09-16T17:32:53.947715409Z"
+  "updated_at": "2026-09-16T17:43:02.285492138Z"
 }
