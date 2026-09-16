@@ -916,12 +916,30 @@ pub struct CellVerdict {
 }
 
 /// Family-level statistics of the evaluation.
+///
+/// Three alpha quantities coexist here under the protocol's sequential
+/// family-wise error control (`dev/active/f547c394/protocol.md`, "Families
+/// and selection"): `family_alpha` is the frozen total two-sided family-wise
+/// error rate shared by every attempt on this family
+/// (`SharedSettings::family_alpha`, e.g. `0.05`); `attempt_alpha` is the
+/// budget this attempt spends, `alpha / [t(t+1)]` for attempt `t` recomputed
+/// from the family ledger (e.g. `0.025` on a first attempt,
+/// [`crate::trial_ledger::attempt_alpha`]); `corrected_alpha` is
+/// `attempt_alpha / comparisons`, the Bonferroni-corrected per-comparison
+/// level the bootstrap interval actually uses. A summary produced before
+/// these fields separated reported the attempt allocation under the name
+/// `family_alpha`; `@/issue/c5e01de3` records that the legacy field carried
+/// the attempt budget, not the frozen total, under that name, and that
+/// committed receipts predating this type keep their legacy value and
+/// meaning unchanged.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct FamilySummary {
     pub family_id: String,
     pub comparisons: u32,
     pub family_alpha: f64,
+    pub attempt_alpha: f64,
+    pub corrected_alpha: f64,
     pub per_comparison_confidence: f64,
     pub bootstrap_resamples: u32,
 }
@@ -1473,7 +1491,7 @@ pub fn evaluate_version(
         } else {
             addendum.family_comparisons()
         };
-        let alpha = if version >= 2 {
+        let attempt_alpha = if version >= 2 {
             receipt
                 .trial_ledger
                 .as_ref()
@@ -1482,12 +1500,14 @@ pub fn evaluate_version(
         } else {
             receipt.settings.family_alpha
         };
-        let confidence = bonferroni_confidence(alpha, comparisons)
+        let confidence = bonferroni_confidence(attempt_alpha, comparisons)
             .unwrap_or(1.0 - receipt.settings.family_alpha);
         FamilySummary {
             family_id: addendum.family.id.clone(),
             comparisons,
-            family_alpha: alpha,
+            family_alpha: receipt.settings.family_alpha,
+            attempt_alpha,
+            corrected_alpha: attempt_alpha / f64::from(comparisons),
             per_comparison_confidence: confidence,
             bootstrap_resamples: receipt.settings.bootstrap_resamples,
         }
@@ -2055,7 +2075,7 @@ pub fn evaluate_version(
             .unwrap_or(1.0 - settings.family_alpha);
         let corrected_alpha = family
             .as_ref()
-            .map(|family| family.family_alpha / f64::from(family.comparisons))
+            .map(|family| family.corrected_alpha)
             .unwrap_or(settings.family_alpha);
         let interval = match if version >= 3 {
             paired_bootstrap_speedup(
@@ -2425,9 +2445,9 @@ fn verified_pilot_alpha(
         &addendum.family.id,
     )
     .map_err(|error| format!("pilot ledger does not decode: {error}"))?;
-    let family_alpha = crate::trial_ledger::attempt_alpha(&ledger, receipt_dir, &addendum)
+    let attempt_alpha = crate::trial_ledger::attempt_alpha(&ledger, receipt_dir, &addendum)
         .map_err(|error| format!("pilot alpha is not verified: {error}"))?;
-    Ok(family_alpha
+    Ok(attempt_alpha
         / f64::from(
             crate::trial_ledger::comparisons(&entries)
                 .map_err(|error| format!("pilot comparison count is not verified: {error}"))?,
@@ -2499,8 +2519,14 @@ pub fn render_markdown(summary: &AcceptanceSummary) -> String {
         let _ = writeln!(out);
         let _ = writeln!(
             out,
-            "Family `{}`: {} comparisons at family-wise alpha {}, per-comparison confidence {:.6}, {} bootstrap resamples.",
-            family.family_id, family.comparisons, family.family_alpha, family.per_comparison_confidence, family.bootstrap_resamples
+            "Family `{}`: {} comparisons; family-wise alpha {} (frozen total), attempt alpha {} (this attempt's sequential allocation), corrected alpha {} per comparison (confidence {:.6}), {} bootstrap resamples.",
+            family.family_id,
+            family.comparisons,
+            family.family_alpha,
+            family.attempt_alpha,
+            family.corrected_alpha,
+            family.per_comparison_confidence,
+            family.bootstrap_resamples
         );
     }
     let _ = writeln!(out);
