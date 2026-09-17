@@ -151,7 +151,13 @@ fn conformance_shapes() -> Vec<(usize, usize, usize)> {
             }
         }
     }
-    shapes.extend([(5, 7, 3), (8, 8, 8), (32, 32, 64), (33, 17, 65), (40, 24, 72)]);
+    shapes.extend([
+        (5, 7, 3),
+        (8, 8, 8),
+        (32, 32, 64),
+        (33, 17, 65),
+        (40, 24, 72),
+    ]);
     shapes
 }
 
@@ -514,7 +520,7 @@ fn naive_gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> Vec<F> 
         for j in 0..b.cols() {
             let mut cell = a.get(i, 0).zero_like();
             for p in 0..a.cols() {
-                cell = cell + a.get(i, p) * b.get(p, j);
+                cell += a.get(i, p) * b.get(p, j);
             }
             out.push(cell);
         }
@@ -592,8 +598,7 @@ fn a_multi_word_configuration_declines_and_keeps_its_result() {
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    let (product, naive, lane) =
-        declined_case((9, 7, 5), Gf2mWide::<4, Gf2m256Cfg>::from_u64);
+    let (product, naive, lane) = declined_case((9, 7, 5), Gf2mWide::<4, Gf2m256Cfg>::from_u64);
 
     drop(guard);
 
