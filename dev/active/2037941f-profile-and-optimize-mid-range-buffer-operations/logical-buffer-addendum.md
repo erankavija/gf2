@@ -156,8 +156,8 @@ The ISA-L scalar-gap primary family uses the five anchor word counts, `a64`,
 `isal-base-gap-{W}w-a64-warm`. Exploratory rows add $W=7$, $W=66$, and the
 five anchor `streaming` cells. Every receipt also carries the unavailable
 `isal-dispatched-xor-gen` row with the qualified NASM-absence reason and zero
-samples. That declared unavailable row spends a comparison in a confirmatory
-reservation even though it produces no pair.
+samples. That declared unavailable row is retained with its reason and zero
+samples; it spends no comparison in a confirmatory reservation (Amendment 1).
 
 The 6-physical-core, 12-physical-core, and 24-logical-CPU arms are inapplicable
 to these serial APIs. Receipts retain each inapplicable arm and its reason;
@@ -257,14 +257,14 @@ its own holdout family before observing after-change samples.
 | `2037941f-logical-isolated-xor` | `dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl` | five anchor isolated cells | 5 |
 | `2037941f-logical-public-row-xor` | `dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl` | five anchor row cells | 5 |
 | `2037941f-logical-nr-construction` | `dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl` | five selected-route/control cells | 5 |
-| `2037941f-logical-isal-base-gap` | `dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl` | five scalar-gap cells plus one unavailable dispatched cell | 6 |
+| `2037941f-logical-isal-base-gap` | `dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl` | five scalar-gap cells | 5 |
 
 Candidate pilots within one question remain in that question's ledger and
 spend zero comparisons. Candidate selection occurs only among those pilots;
 the selected identity receives the family's single confirmatory reservation.
-At $t=1$ and $m=5$, $\alpha_c=0.005$, leaving 25 expected bootstrap draws in
-each tail. The ISA-L family has $m=6$, $\alpha_c=1/240=0.0041\overline{6}$,
-and more than 20 expected draws in each tail. A second confirmation in the
+At $t=1$ and $m=5$ for all four families, $\alpha_c=0.005$, leaving 25
+expected bootstrap draws in each tail; the ISA-L family reaches this $m$ and
+$\alpha_c$ by amendment (Amendment 1). A second confirmation in the
 same family is forbidden both by the one-attempt rule and because sequential
 error spending can violate the protocol's tail-support check. Final integration
 uses a separately frozen `final-integration` family because it asks the new
@@ -355,6 +355,23 @@ zero-copy selection may close as no-candidate; any proposed cell not already
 listed here requires a versioned protocol amendment before pilot work, and any
 public/shared representation change requires a separately authorized
 container.
+
+## Amendments
+
+### Amendment 1 (2026-09-16, issue `b9302771`) — ISA-L family reservation count
+
+This addendum froze the ISA-L scalar-gap family at $m=6$ and a corrected
+$\alpha_c=0.05\,/\,(1\cdot2\cdot6)=0.0041\overline{6}$: five scalar-gap
+confirmatory cells plus the unavailable `isal-dispatched-xor-gen` row, which
+this addendum said spent a comparison although it produces no pair.
+`tuning_campaign_support::trial_ledger::reserve` counts only non-exploratory
+cells and reserves five, so the frozen $m=6$ could never be reserved and the
+family's confirmation (`65c0e13d`) could not start. The invoker ruled on
+2026-09-16 that this closed addendum is amended to $m=5$ and
+$\alpha_c=0.005$ rather than changing the protocol or the ledger mechanism.
+The unavailable row stays in every receipt with its reason and zero samples;
+it spends no comparison. No other family, cell, seed, margin, or budget
+changes.
 
 ## Receipt and stopping evidence
 

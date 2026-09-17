@@ -3,7 +3,7 @@
 # timing: none; the command builds release binaries and runs semantic validators only
 # rustc: 1.95.0 (59807616e 2026-04-14); LLVM 22.1.2; x86_64-unknown-linux-gnu
 # addendum=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md
-# addendum_sha256=34510cd81a5f3198d3cd673d55622bb8382ce5417ccd1a5ac751285bd9de36c3
+# addendum_sha256=290685bf5ab2837e9a38602acead3d33005c2c14b8b883a30bcf863d8c2b7074
 # addendum_identity=2037941f-logical-buffer-v1
 # addendum_frozen_utc=2026-09-15T03:56:39Z
 # comparator=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md
@@ -59,7 +59,7 @@ PASS isal-63w: 4102 checks
 PASS isal-64w: 4167 checks
 PASS isal-65w: 4232 checks
 PASS isal-66w: 4297 checks
-# logical-isal-arm sha256: cc54247b36bc12970b221332067c567814a435272b5ab87e2342ae3d1d0ed427
-# logical-arm sha256: 68a06b6d210158ee80cf0bf4f9adaedcfb77bd66d5d9ff043557a37679d74edb
-# logical-campaign sha256: 6ecc014fefcb581f55e1bc5101ecdc2cbc1eeb65195f7c3d81dc0abd91c8ff65
-# logical-oracle sha256: 19d00d54db91dabd4b39b86883a2766492fc7d0ce0e2e11694d78b9ee94c328f
+# logical-isal-arm sha256: 6d600a0f104dd27503704735e9df610f138b81353385142f49a25b0a98a25c77
+# logical-arm sha256: 92b82abc0cb0380324349ab9c53480f3ff0c78905cedb3fb9d3dd4b03d0b7255
+# logical-campaign sha256: 1ef167601554181382e828cab3c51e2b45e920df6a0ddd1b1a3036c5765a3bcd
+# logical-oracle sha256: 6cb10c06b66fe18cbde476665a4a98fbf3bff27afe292f1a5eca7cb02ae41184

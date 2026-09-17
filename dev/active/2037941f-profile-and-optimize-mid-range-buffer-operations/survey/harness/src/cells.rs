@@ -14,7 +14,7 @@ pub const ADDENDUM_PATH: &str =
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md";
 /// Content identity of that frozen document, verified before a timed run.
 pub const ADDENDUM_SHA256: &str =
-    "34510cd81a5f3198d3cd673d55622bb8382ce5417ccd1a5ac751285bd9de36c3";
+    "290685bf5ab2837e9a38602acead3d33005c2c14b8b883a30bcf863d8c2b7074";
 /// Addendum identity string the frozen document declares.
 pub const ADDENDUM_IDENTITY: &str = "2037941f-logical-buffer-v1";
 /// Freeze time the frozen document declares.

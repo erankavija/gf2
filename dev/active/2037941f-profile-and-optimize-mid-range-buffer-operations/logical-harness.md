@@ -68,9 +68,9 @@ The declared unavailable row `isal-dispatched-xor-gen` carries no workload and
 no samples, so it takes no ordinal and generates no seed. It is not a runner
 cell: the runner's only unavailable path is an unresolvable core arm. The
 ISA-L family's receipt and table generator in `65c0e13d` carries that row with
-the NASM-absence reason from [`isal-comparator.md`](isal-comparator.md), and
-the family's confirmatory reservation spends the comparison
-($m = 6$) that the row declares.
+the NASM-absence reason from [`isal-comparator.md`](isal-comparator.md); the
+row spends no comparison, and the family's confirmatory reservation is the
+five scalar-gap cells the addendum's Amendment 1 declares ($m = 5$).
 
 `logical-campaign cells` transcribes one family into a protocol version-4
 campaign JSON addendum against `dev/active/f547c394/addendum.schema.json`. The
