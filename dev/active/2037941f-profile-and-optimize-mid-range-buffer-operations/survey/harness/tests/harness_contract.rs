@@ -7,12 +7,15 @@
 use logical_buffer_harness::campaign;
 use logical_buffer_harness::cells::{
     cells, family_cells, Cache, Layout, NrTarget, Question, RowShape, Workload, ALL_WORDS,
-    ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, NR_TARGETS, STREAMING_BANKS, STREAMING_BANK_BYTES,
+    ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, MID_RANGE_MAX_WORDS, MID_RANGE_MIN_WORDS,
+    NR_TARGETS, STREAMING_BANKS, STREAMING_BANK_BYTES,
 };
 use logical_buffer_harness::fixture::{RowBanks, XorBanks, SLAB_ALIGN};
 use logical_buffer_harness::inputs;
 use logical_buffer_harness::oracle;
-use logical_buffer_harness::routes::{nr_construct, run_windows, verify_nr, Route, WindowPlan};
+use logical_buffer_harness::routes::{
+    canonical_structure_digest, nr_construct, observe_nr, run_windows, verify_nr, Route, WindowPlan,
+};
 use logical_buffer_harness::wire::{Case, Request};
 use std::collections::BTreeSet;
 use tuning_campaign_support::abtest::SplitMix64;
@@ -371,6 +374,40 @@ fn a_returned_code_is_checked_against_its_frozen_declaration() {
     assert!(
         verify_nr(&code, &wrong).is_err(),
         "a mismatch makes the cell unavailable rather than substituting a target"
+    );
+}
+
+#[test]
+fn every_selected_coding_route_runs_at_a_mid_range_stride() {
+    for target in NR_TARGETS {
+        let code = nr_construct(&target);
+        let facts = verify_nr(&code, &target).expect("the frozen route holds");
+        assert!(
+            (MID_RANGE_MIN_WORDS..=MID_RANGE_MAX_WORDS).contains(&facts.stride_words),
+            "{} runs at {} words",
+            target.suffix,
+            facts.stride_words
+        );
+    }
+}
+
+#[test]
+fn the_canonical_expansion_is_not_a_restatement_of_the_constructor() {
+    let target = NR_TARGETS[0];
+    let observed = observe_nr(&nr_construct(&target));
+    let canonical = canonical_structure_digest(target.base_graph, target.lifting_factor)
+        .expect("the declared lifting factor is a 5G NR size");
+    assert_eq!(observed.structure_digest, canonical);
+
+    let other_graph = canonical_structure_digest(1, target.lifting_factor)
+        .expect("the declared lifting factor is a 5G NR size");
+    assert_ne!(
+        canonical, other_graph,
+        "the model must separate the two base graphs"
+    );
+    assert!(
+        canonical_structure_digest(2, 17).is_err(),
+        "a lifting factor outside the 5G NR set has no canonical expansion"
     );
 }
 
