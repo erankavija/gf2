@@ -245,6 +245,11 @@
       "status": "passed",
       "updated_at": "2026-09-17T21:51:11.772515211Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-17T21:56:26.337030533Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "e1f9a78f-1a3e-4066-8744-aa55d10f85db",
@@ -261,5 +266,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the dense-parity measurement harness",
-  "updated_at": "2026-09-17T21:55:37.269979506Z"
+  "updated_at": "2026-09-17T21:56:26.337030533Z"
 }
