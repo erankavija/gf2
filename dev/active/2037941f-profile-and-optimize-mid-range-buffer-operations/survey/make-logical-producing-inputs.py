@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-"""Generate the content closure snapshotted by a logical-buffer receipt."""
+"""Generate the content closure snapshotted by a logical-buffer receipt.
 
+`--check` writes nothing and compares instead, so a timed run refuses a closure
+that no longer enumerates its own tree.
+"""
+
+import argparse
 import json
 import pathlib
 
@@ -21,7 +26,8 @@ def files_under(*roots):
     return paths
 
 
-def main():
+def closure():
+    """The producing-input document this tree enumerates."""
     # The measured routes are public gf2-core and gf2-coding entry points, so
     # the behavioral closure is those two crates' sources plus the harness that
     # calls them and the shared campaign support that times them.
@@ -77,7 +83,7 @@ def main():
         )
     )
     # The closure manifest is this script's own output, so it is the one
-    # build input that need not exist before the write below.
+    # build input that need not already exist.
     missing = sorted(
         path
         for path in set(build) - {str(OUTPUT)}
@@ -85,13 +91,66 @@ def main():
     )
     if missing:
         raise SystemExit(f"producing inputs are missing: {missing}")
-    document = {
+    return {
         "schema": "tuning-campaign-producing-inputs-v1",
         "behavior_sources": behavior,
         "lifecycle_sources": sorted(set(lifecycle)),
         "build_inputs": build,
     }
-    (ROOT / OUTPUT).write_text(json.dumps(document, indent=2) + "\n")
+
+
+def differences(recorded, regenerated):
+    """`+`/`- ` lines for every path one closure names and the other does not."""
+    lines = []
+    for section, paths in regenerated.items():
+        if not isinstance(paths, list):
+            continue
+        listed = set(recorded.get(section, []))
+        lines += [f"+ {section} {path}" for path in sorted(set(paths) - listed)]
+        lines += [f"- {section} {path}" for path in sorted(listed - set(paths))]
+    return lines
+
+
+def check(document, text):
+    try:
+        committed = (ROOT / OUTPUT).read_text()
+    except OSError as error:
+        raise SystemExit(f"{OUTPUT}: {error}") from error
+    if committed == text:
+        print(f"{OUTPUT}: enumerates this tree")
+        return
+    try:
+        recorded = json.loads(committed)
+    except json.JSONDecodeError:
+        recorded = {}
+    detail = differences(recorded, document) or [
+        "the sections name the same paths, so the two differ in schema or rendering"
+    ]
+    raise SystemExit(
+        "\n".join(
+            [
+                f"{OUTPUT} is not the closure of this tree; regenerate it with "
+                f"{SURVEY / 'make-logical-producing-inputs.py'}",
+                *detail,
+            ]
+        )
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="compare the committed closure with this tree's instead of writing it",
+    )
+    arguments = parser.parse_args()
+    document = closure()
+    text = json.dumps(document, indent=2) + "\n"
+    if arguments.check:
+        check(document, text)
+        return
+    (ROOT / OUTPUT).write_text(text)
     print(
         f"{OUTPUT}: {len(document['behavior_sources'])} behavior, "
         f"{len(document['lifecycle_sources'])} lifecycle, "
