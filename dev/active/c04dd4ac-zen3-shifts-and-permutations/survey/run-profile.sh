@@ -66,15 +66,15 @@ if [[ "${MODE}" == session ]]; then
                     --sort dso,symbol -F overhead,sample,dso,symbol \
                     -i "${OUT}/${REP}/hot/${case}.data" \
                     >"${OUT}/${REP}/hot/${case}.report.txt" 2>>"${OUT}/${REP}/hot/${case}.err"
-                perf annotate --stdio --no-children --percent-limit 1.0 \
+                perf annotate --stdio --no-source --percent-limit 1.0 \
                     -i "${OUT}/${REP}/hot/${case}.data" \
-                    >"${OUT}/${REP}/hot/${case}.annotate.txt" 2>>"${OUT}/${REP}/hot/${case}.err"
+                    >"${OUT}/${REP}/hot/${case}.instructions.txt" 2>>"${OUT}/${REP}/hot/${case}.err"
             else
                 printf 'perf record unavailable for %s (exit %s); see %s.err\n' \
                     "${case}" "${record_rc}" "${case}" \
                     >"${OUT}/${REP}/hot/${case}.report.txt"
                 cp "${OUT}/${REP}/hot/${case}.report.txt" \
-                    "${OUT}/${REP}/hot/${case}.annotate.txt"
+                    "${OUT}/${REP}/hot/${case}.instructions.txt"
             fi
             set -e
         done <"${CASES}"
