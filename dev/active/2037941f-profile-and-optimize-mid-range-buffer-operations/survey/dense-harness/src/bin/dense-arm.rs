@@ -38,7 +38,7 @@ fn run() -> Result<(), String> {
     let route = Route::from_environment()?;
     route.check_build()?;
     let workload = case.workload()?;
-    if route.question() != workload_question(workload) {
+    if route.question() != workload.question() {
         return Err(format!("{} does not serve a {:?} cell", route.id(), workload));
     }
     let seed = case.seed();
@@ -165,15 +165,6 @@ fn run() -> Result<(), String> {
     )
     .emit()
     .map_err(|error| error.to_string())
-}
-
-fn workload_question(workload: Workload) -> dense_parity_harness::cells::Question {
-    use dense_parity_harness::cells::Question;
-    match workload {
-        Workload::AndPopcnt { .. } => Question::IsolatedFusedParity,
-        Workload::Matvec { .. } => Question::AllocatedMatvec,
-        Workload::M4riGap { .. } => Question::MatvecVsM4ri,
-    }
 }
 
 fn windows(
