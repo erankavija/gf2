@@ -1,0 +1,8 @@
+# label: resolve-xor-inplace
+# pattern: gf2_core::kernels::ops::resolve_xor_inplace
+# binary: logical-profile
+# binary sha256: 6f66ff9e55d50c02a748632788ad8c04f9554dd0d6a7951e71f8247ea87ff767
+# text symbols matching this pattern: 0
+# no text symbol of this pattern is present in the measured binary, either
+# because the routine is inlined into its callers or because the build
+# contains no such path; this file records that rather than a silent gap.

@@ -1,0 +1,2233 @@
+# label: nr-rate-matched
+# pattern: QuasiCyclicLdpc>::nr_5g_rate_matched
+# binary: logical-arm
+# binary sha256: 960e1e35c55271906ce3563afdbcdb1a67417faf7f3c04e0c052cbdb3fee9d02
+# text symbols matching this pattern: 2
+
+## symbol at 0000000000046f70, 0x0000000000002a0a bytes
+0000000000046f70 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched>:
+   46f70:	push   %rbp
+   46f71:	push   %r15
+   46f73:	push   %r14
+   46f75:	push   %r13
+   46f77:	push   %r12
+   46f79:	push   %rbx
+   46f7a:	sub    $0x3e8,%rsp
+   46f81:	mov    %sil,0xe(%rsp)
+   46f86:	mov    %rdx,0x178(%rsp)
+   46f8e:	mov    %rcx,0x1b8(%rsp)
+   46f96:	lea    -0x1(%rsi),%eax
+   46f99:	cmp    $0x1,%al
+   46f9b:	ja     48e99 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1f29>
+   46fa1:	cmp    %rcx,%rdx
+   46fa4:	jbe    48d8a <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1e1a>
+   46faa:	mov    %rdi,%r12
+   46fad:	cmp    $0x1,%sil
+   46fb1:	je     46fe0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x70>
+   46fb3:	movdqa -0x3c26b(%rip),%xmm0        # ad50 <anon.58baeeae7d5fe476157d296c9f08f803.346.llvm.5844774155465566772+0x420>
+   46fbb:	movdqa %xmm0,0x360(%rsp)
+   46fc4:	mov    $0xa,%ebp
+   46fc9:	mov    $0x34,%r15d
+   46fcf:	cmp    $0x280,%rcx
+   46fd6:	jbe    47004 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x94>
+   46fd8:	mov    $0xa,%r14d
+   46fde:	jmp    47027 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xb7>
+   46fe0:	movdqa -0x3c398(%rip),%xmm0        # ac50 <anon.58baeeae7d5fe476157d296c9f08f803.346.llvm.5844774155465566772+0x320>
+   46fe8:	movdqa %xmm0,0x360(%rsp)
+   46ff1:	mov    $0x16,%ebp
+   46ff6:	mov    $0x44,%r15d
+   46ffc:	mov    $0x16,%r14d
+   47002:	jmp    47027 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xb7>
+   47004:	mov    $0x9,%r14d
+   4700a:	cmp    $0x230,%rcx
+   47011:	ja     47027 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xb7>
+   47013:	xor    %eax,%eax
+   47015:	cmp    $0xc1,%rcx
+   4701c:	setae  %al
+   4701f:	lea    0x6(,%rax,2),%r14
+   47027:	mov    %r14,0x230(%rsp)
+   4702f:	lea    0x1e0(%rsp),%rbx
+   47037:	mov    %rbx,%rdi
+   4703a:	call   *0x78ce8(%rip)        # bfd28 <_DYNAMIC+0x500>
+   47040:	mov    0x1f0(%rsp),%rax
+   47048:	test   %rax,%rax
+   4704b:	je     4910d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x219d>
+   47051:	mov    0x1e8(%rsp),%rcx
+   47059:	add    %rax,%rax
+   4705c:	mov    0x1b8(%rsp),%rdx
+   47064:	mov    %rdx,0x138(%rsp)
+   4706c:	mov    %r15,%rdx
+   4706f:	sub    %rbp,%rdx
+   47072:	add    $0xfffffffffffffffe,%rdx
+   47076:	mov    0x178(%rsp),%rsi
+   4707e:	mov    %rsi,0x170(%rsp)
+   47086:	xor    %esi,%esi
+   47088:	mov    0x138(%rsp),%r8
+   47090:	jmp    470ad <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x13d>
+   47092:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   470a0:	add    $0x2,%rsi
+   470a4:	cmp    %rsi,%rax
+   470a7:	je     4910d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x219d>
+   470ad:	movzwl (%rcx,%rsi,1),%r9d
+   470b2:	mov    %r14,%rdi
+   470b5:	imul   %r9,%rdi
+   470b9:	cmp    %r8,%rdi
+   470bc:	jb     470a0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x130>
+   470be:	mov    %rdx,%rdi
+   470c1:	imul   %r9,%rdi
+   470c5:	add    %r8,%rdi
+   470c8:	cmp    0x170(%rsp),%rdi
+   470d0:	jb     470a0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x130>
+   470d2:	mov    %r9,0x238(%rsp)
+   470da:	imul   %r9,%rbp
+   470de:	imul   %r9,%r15
+   470e2:	mov    %rbp,%r14
+   470e5:	sub    %r8,%r14
+   470e8:	mov    %r14,0x240(%rsp)
+   470f0:	lea    (%r9,%r9,1),%eax
+   470f4:	mov    %rax,0x248(%rsp)
+   470fc:	mov    %r15,%rcx
+   470ff:	sub    %rbp,%rcx
+   47102:	mov    %rax,0x118(%rsp)
+   4710a:	sub    %rax,%r8
+   4710d:	mov    %rcx,0x1a8(%rsp)
+   47115:	add    %rcx,%r8
+   47118:	mov    %r8,0x250(%rsp)
+   47120:	sub    0x170(%rsp),%r8
+   47128:	mov    %r8,0x1c8(%rsp)
+   47130:	jb     48ddd <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1e6d>
+   47136:	mov    %r9,%rbx
+   47139:	movzbl 0xe(%rsp),%eax
+   4713e:	mov    %al,0x6f(%rsp)
+   47142:	movzbl %al,%esi
+   47145:	lea    0x258(%rsp),%rdi
+   4714d:	mov    %r9,%rdx
+   47150:	call   *0x78bda(%rip)        # bfd30 <_DYNAMIC+0x508>
+   47156:	lea    0x290(%rsp),%rdi
+   4715e:	lea    0x258(%rsp),%rsi
+   47166:	call   *0x78bac(%rip)        # bfd18 <_DYNAMIC+0x4f0>
+   4716c:	mov    %r12,0x228(%rsp)
+   47174:	mov    %rbx,0x1b0(%rsp)
+   4717c:	mov    0x320(%rsp),%rdx
+   47184:	mov    0x328(%rsp),%r12
+   4718c:	mov    %r12,0x1d8(%rsp)
+   47194:	mov    %rdx,%rcx
+   47197:	sub    %r12,%rcx
+   4719a:	mov    %rcx,0xd0(%rsp)
+   471a2:	mov    %rcx,0x278(%rsp)
+   471aa:	test   %rdx,%rdx
+   471ad:	mov    %r15,0x1d0(%rsp)
+   471b5:	mov    %r14,0x1c0(%rsp)
+   471bd:	je     471d8 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x268>
+   471bf:	mov    %rdx,%rbx
+   471c2:	shr    $0x6,%rbx
+   471c6:	mov    %rdx,%r13
+   471c9:	mov    %edx,%eax
+   471cb:	and    $0x3f,%eax
+   471ce:	cmp    $0x1,%rax
+   471d2:	sbb    $0xffffffffffffffff,%rbx
+   471d6:	jmp    471dd <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x26d>
+   471d8:	mov    %rdx,%r13
+   471db:	xor    %ebx,%ebx
+   471dd:	movabs $0x7ffffffffffffff1,%rdx
+   471e7:	mov    %rbx,%r14
+   471ea:	imul   %r12,%r14
+   471ee:	lea    0x0(,%r14,8),%r15
+   471f6:	mov    %r14,%rax
+   471f9:	shr    $0x3d,%rax
+   471fd:	setne  %al
+   47200:	add    $0x7,%rdx
+   47204:	cmp    %rdx,%r15
+   47207:	seta   %cl
+   4720a:	or     %al,%cl
+   4720c:	je     4721e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2ae>
+   4720e:	xor    %edi,%edi
+   47210:	mov    %r15,%rsi
+   47213:	call   *0x78807(%rip)        # bfa20 <_DYNAMIC+0x1f8>
+   47219:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   4721e:	mov    %rdx,0xc0(%rsp)
+   47226:	test   %r15,%r15
+   47229:	je     47247 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2d7>
+   4722b:	mov    $0x1,%esi
+   47230:	mov    %r15,%rdi
+   47233:	call   *0x788b7(%rip)        # bfaf0 <calloc@GLIBC_2.2.5>
+   47239:	test   %rax,%rax
+   4723c:	je     493e9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2479>
+   47242:	mov    %r14,%rcx
+   47245:	jmp    4724e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2de>
+   47247:	mov    $0x8,%eax
+   4724c:	xor    %ecx,%ecx
+   4724e:	mov    %rcx,0x70(%rsp)
+   47253:	mov    %rax,0x78(%rsp)
+   47258:	mov    %r14,0x80(%rsp)
+   47260:	mov    %r12,0x88(%rsp)
+   47268:	mov    %r13,0x90(%rsp)
+   47270:	mov    %rbx,0x98(%rsp)
+   47278:	mov    %r12,0x20(%rsp)
+   4727d:	test   %r12,%r12
+   47280:	je     4733a <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x3ca>
+   47286:	xor    %r15d,%r15d
+   47289:	lea    0x290(%rsp),%r12
+   47291:	mov    0x78aa0(%rip),%rbx        # bfd38 <_DYNAMIC+0x510>
+   47298:	jmp    472ae <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x33e>
+   4729a:	nopw   0x0(%rax,%rax,1)
+   472a0:	inc    %r15
+   472a3:	cmp    0x20(%rsp),%r15
+   472a8:	je     4733a <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x3ca>
+   472ae:	mov    %r12,%rdi
+   472b1:	mov    %r15,%rsi
+   472b4:	call   *%rbx
+   472b6:	cmp    %rdx,%rax
+   472b9:	je     472a0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x330>
+   472bb:	cmp    0x88(%rsp),%r15
+   472c3:	jae    47d2d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xdbd>
+   472c9:	mov    0x98(%rsp),%r8
+   472d1:	imul   %r15,%r8
+   472d5:	mov    0x90(%rsp),%r9
+   472dd:	mov    0x78(%rsp),%r10
+   472e2:	mov    0x80(%rsp),%rsi
+   472ea:	nopw   0x0(%rax,%rax,1)
+   472f0:	mov    (%rax),%rcx
+   472f3:	mov    %r15,0xa8(%rsp)
+   472fb:	mov    %rcx,0x140(%rsp)
+   47303:	cmp    %r9,%rcx
+   47306:	jae    477f9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x889>
+   4730c:	mov    %rcx,%rdi
+   4730f:	shr    $0x6,%rdi
+   47313:	add    %r8,%rdi
+   47316:	cmp    %rsi,%rdi
+   47319:	jae    48ed1 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1f61>
+   4731f:	mov    $0x1,%r11d
+   47325:	shl    %cl,%r11
+   47328:	or     %r11,(%r10,%rdi,8)
+   4732c:	add    $0x8,%rax
+   47330:	cmp    %rdx,%rax
+   47333:	jne    472f0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x380>
+   47335:	jmp    472a0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x330>
+   4733a:	movabs $0x1fffffffffffffff,%rax
+   47344:	mov    0x20(%rsp),%rbx
+   47349:	lea    0x0(,%rbx,8),%r14
+   47351:	cmp    %rax,%rbx
+   47354:	seta   %al
+   47357:	cmp    0xc0(%rsp),%r14
+   4735f:	seta   %cl
+   47362:	or     %al,%cl
+   47364:	je     47376 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x406>
+   47366:	xor    %edi,%edi
+   47368:	mov    %r14,%rsi
+   4736b:	call   *0x786af(%rip)        # bfa20 <_DYNAMIC+0x1f8>
+   47371:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   47376:	test   %r14,%r14
+   47379:	mov    %r14,0xc8(%rsp)
+   47381:	je     4739a <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x42a>
+   47383:	mov    %r14,%rdi
+   47386:	call   *0x786e4(%rip)        # bfa70 <malloc@GLIBC_2.2.5>
+   4738c:	test   %rax,%rax
+   4738f:	je     493f3 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2483>
+   47395:	mov    %rbx,%rcx
+   47398:	jmp    473a1 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x431>
+   4739a:	mov    $0x8,%eax
+   4739f:	xor    %ecx,%ecx
+   473a1:	mov    %rcx,0xa8(%rsp)
+   473a9:	mov    %rax,0xb0(%rsp)
+   473b1:	movq   $0x0,0xb8(%rsp)
+   473bd:	mov    %rbp,0x120(%rsp)
+   473c5:	cmp    %r13,%rbp
+   473c8:	mov    %r13,0xe0(%rsp)
+   473d0:	jae    475d9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x669>
+   473d6:	mov    %r13,%r12
+   473d9:	mov    0x20(%rsp),%rbx
+   473de:	cmp    $0x1,%rbx
+   473e2:	adc    $0x0,%rbx
+   473e6:	mov    $0x1,%eax
+   473eb:	mov    %rax,0x60(%rsp)
+   473f0:	xor    %r13d,%r13d
+   473f3:	xor    %ebp,%ebp
+   473f5:	jmp    4742d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x4bd>
+   473f7:	nopw   0x0(%rax,%rax,1)
+   47400:	mov    0xb0(%rsp),%rax
+   47408:	mov    %r12,(%rax,%r13,8)
+   4740c:	inc    %r13
+   4740f:	mov    %r13,0xb8(%rsp)
+   47417:	inc    %rbp
+   4741a:	decq   0x60(%rsp)
+   4741f:	cmp    %r12,0x120(%rsp)
+   47427:	jae    475de <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x66e>
+   4742d:	cmp    0x20(%rsp),%rbp
+   47432:	je     4783f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x8cf>
+   47438:	mov    0x88(%rsp),%rdx
+   47440:	mov    0x90(%rsp),%rax
+   47448:	mov    0x98(%rsp),%r9
+   47450:	mov    0x78(%rsp),%r10
+   47455:	mov    0x80(%rsp),%rsi
+   4745d:	mov    %r9,%r11
+   47460:	imul   %rbp,%r11
+   47464:	lea    -0x1(%r12),%r8
+   47469:	mov    %rax,0x10(%rsp)
+   4746e:	dec    %r12
+   47471:	mov    $0x1,%r15d
+   47477:	mov    %r12d,%ecx
+   4747a:	shl    %cl,%r15
+   4747d:	cmp    %rax,%r12
+   47480:	jae    47d6d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xdfd>
+   47486:	mov    %r8,%rdi
+   47489:	shr    $0x6,%rdi
+   4748d:	add    %r11,%rdi
+   47490:	mov    %r12,%r14
+   47493:	shr    $0x6,%r14
+   47497:	xor    %eax,%eax
+   47499:	nopl   0x0(%rax)
+   474a0:	lea    (%rax,%rbp,1),%rcx
+   474a4:	cmp    0x20(%rsp),%rcx
+   474a9:	jae    474e0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x570>
+   474ab:	mov    %rcx,0x28(%rsp)
+   474b0:	mov    %r12,0x140(%rsp)
+   474b8:	cmp    %rdx,%rcx
+   474bb:	jae    47da9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe39>
+   474c1:	cmp    %rsi,%rdi
+   474c4:	jae    49044 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x20d4>
+   474ca:	inc    %rax
+   474cd:	test   %r15,(%r10,%rdi,8)
+   474d1:	lea    (%rdi,%r9,1),%rdi
+   474d5:	je     474a0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x530>
+   474d7:	jmp    47500 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x590>
+   474d9:	nopl   0x0(%rax)
+   474e0:	dec    %r8
+   474e3:	cmp    %r12,0x120(%rsp)
+   474eb:	mov    0x10(%rsp),%rax
+   474f0:	jb     4746e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x4fe>
+   474f6:	jmp    475de <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x66e>
+   474fb:	nopl   0x0(%rax,%rax,1)
+   47500:	cmp    $0x1,%rax
+   47504:	je     4751c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x5ac>
+   47506:	sub    0x60(%rsp),%rax
+   4750b:	lea    0x70(%rsp),%rdi
+   47510:	mov    %rax,%rsi
+   47513:	mov    %rbp,%rdx
+   47516:	call   *0x78824(%rip)        # bfd40 <_DYNAMIC+0x518>
+   4751c:	xor    %r13d,%r13d
+   4751f:	jmp    47538 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x5c8>
+   47521:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   47530:	inc    %r13
+   47533:	cmp    %r13,%rbx
+   47536:	je     475b0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x640>
+   47538:	cmp    %r13,%rbp
+   4753b:	je     47530 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x5c0>
+   4753d:	mov    %r13,0x28(%rsp)
+   47542:	mov    %r12,0x140(%rsp)
+   4754a:	cmp    0x88(%rsp),%r13
+   47552:	jae    47da9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe39>
+   47558:	cmp    0x90(%rsp),%r12
+   47560:	jae    47d7f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe0f>
+   47566:	mov    0x98(%rsp),%rdi
+   4756e:	imul   %r13,%rdi
+   47572:	add    %r14,%rdi
+   47575:	mov    0x80(%rsp),%rsi
+   4757d:	cmp    %rsi,%rdi
+   47580:	jae    49044 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x20d4>
+   47586:	mov    0x78(%rsp),%rax
+   4758b:	test   %r15,(%rax,%rdi,8)
+   4758f:	je     47530 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x5c0>
+   47591:	lea    0x70(%rsp),%rdi
+   47596:	mov    %r13,%rsi
+   47599:	mov    %rbp,%rdx
+   4759c:	call   *0x787a6(%rip)        # bfd48 <_DYNAMIC+0x520>
+   475a2:	jmp    47530 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x5c0>
+   475a4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   475b0:	mov    0xb8(%rsp),%r13
+   475b8:	cmp    0xa8(%rsp),%r13
+   475c0:	jne    47400 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x490>
+   475c6:	lea    0xa8(%rsp),%rdi
+   475ce:	call   *0x7877c(%rip)        # bfd50 <_DYNAMIC+0x528>
+   475d4:	jmp    47400 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x490>
+   475d9:	xor    %r13d,%r13d
+   475dc:	xor    %ebp,%ebp
+   475de:	cmpq   $0x0,0x1b0(%rsp)
+   475e7:	je     47853 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x8e3>
+   475ed:	mov    0x20(%rsp),%rbx
+   475f2:	cmp    $0x1,%rbx
+   475f6:	adc    $0x0,%rbx
+   475fa:	mov    $0x1,%eax
+   475ff:	sub    %rbp,%rax
+   47602:	mov    %rax,0x60(%rsp)
+   47607:	mov    0x120(%rsp),%r12
+   4760f:	jmp    47648 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x6d8>
+   47611:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   47620:	mov    0xb0(%rsp),%rax
+   47628:	mov    %r12,(%rax,%r13,8)
+   4762c:	inc    %r13
+   4762f:	mov    %r13,0xb8(%rsp)
+   47637:	inc    %rbp
+   4763a:	decq   0x60(%rsp)
+   4763f:	test   %r12,%r12
+   47642:	je     47853 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x8e3>
+   47648:	cmp    0x20(%rsp),%rbp
+   4764d:	jae    47853 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x8e3>
+   47653:	mov    0x88(%rsp),%rdx
+   4765b:	mov    0x90(%rsp),%rax
+   47663:	mov    0x98(%rsp),%r9
+   4766b:	mov    0x78(%rsp),%r10
+   47670:	mov    0x80(%rsp),%rsi
+   47678:	mov    %r9,%r11
+   4767b:	imul   %rbp,%r11
+   4767f:	lea    -0x1(%r12),%r8
+   47684:	mov    %rax,0x10(%rsp)
+   47689:	dec    %r12
+   4768c:	mov    $0x1,%r15d
+   47692:	mov    %r12d,%ecx
+   47695:	shl    %cl,%r15
+   47698:	cmp    %rax,%r12
+   4769b:	jae    47d6d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xdfd>
+   476a1:	mov    %r8,%rdi
+   476a4:	shr    $0x6,%rdi
+   476a8:	add    %r11,%rdi
+   476ab:	mov    %r12,%r14
+   476ae:	shr    $0x6,%r14
+   476b2:	xor    %eax,%eax
+   476b4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   476c0:	lea    (%rax,%rbp,1),%rcx
+   476c4:	cmp    0x20(%rsp),%rcx
+   476c9:	jae    47700 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x790>
+   476cb:	mov    %rcx,0x28(%rsp)
+   476d0:	mov    %r12,0x140(%rsp)
+   476d8:	cmp    %rdx,%rcx
+   476db:	jae    47da9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe39>
+   476e1:	cmp    %rsi,%rdi
+   476e4:	jae    49044 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x20d4>
+   476ea:	inc    %rax
+   476ed:	test   %r15,(%r10,%rdi,8)
+   476f1:	lea    (%rdi,%r9,1),%rdi
+   476f5:	je     476c0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x750>
+   476f7:	jmp    47720 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x7b0>
+   476f9:	nopl   0x0(%rax)
+   47700:	dec    %r8
+   47703:	test   %r12,%r12
+   47706:	mov    0x10(%rsp),%rax
+   4770b:	jne    47689 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x719>
+   47711:	jmp    47853 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x8e3>
+   47716:	cs nopw 0x0(%rax,%rax,1)
+   47720:	cmp    $0x1,%rax
+   47724:	je     4773c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x7cc>
+   47726:	sub    0x60(%rsp),%rax
+   4772b:	lea    0x70(%rsp),%rdi
+   47730:	mov    %rax,%rsi
+   47733:	mov    %rbp,%rdx
+   47736:	call   *0x78604(%rip)        # bfd40 <_DYNAMIC+0x518>
+   4773c:	xor    %r13d,%r13d
+   4773f:	jmp    47758 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x7e8>
+   47741:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   47750:	inc    %r13
+   47753:	cmp    %r13,%rbx
+   47756:	je     477d0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x860>
+   47758:	cmp    %r13,%rbp
+   4775b:	je     47750 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x7e0>
+   4775d:	mov    %r13,0x28(%rsp)
+   47762:	mov    %r12,0x140(%rsp)
+   4776a:	cmp    0x88(%rsp),%r13
+   47772:	jae    47da9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe39>
+   47778:	cmp    0x90(%rsp),%r12
+   47780:	jae    47d7f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe0f>
+   47786:	mov    0x98(%rsp),%rdi
+   4778e:	imul   %r13,%rdi
+   47792:	add    %r14,%rdi
+   47795:	mov    0x80(%rsp),%rsi
+   4779d:	cmp    %rsi,%rdi
+   477a0:	jae    49044 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x20d4>
+   477a6:	mov    0x78(%rsp),%rax
+   477ab:	test   %r15,(%rax,%rdi,8)
+   477af:	je     47750 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x7e0>
+   477b1:	lea    0x70(%rsp),%rdi
+   477b6:	mov    %r13,%rsi
+   477b9:	mov    %rbp,%rdx
+   477bc:	call   *0x78586(%rip)        # bfd48 <_DYNAMIC+0x520>
+   477c2:	jmp    47750 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x7e0>
+   477c4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   477d0:	mov    0xb8(%rsp),%r13
+   477d8:	cmp    0xa8(%rsp),%r13
+   477e0:	jne    47620 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x6b0>
+   477e6:	lea    0xa8(%rsp),%rdi
+   477ee:	call   *0x7855c(%rip)        # bfd50 <_DYNAMIC+0x528>
+   477f4:	jmp    47620 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x6b0>
+   477f9:	lea    0x140(%rsp),%rax
+   47801:	mov    %rax,0x30(%rsp)
+   47806:	lea    0x7497b(%rip),%rdx        # bc188 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x730>
+   4780d:	lea    -0x3d322(%rip),%rdi        # a4f2 <anon.54136273668c12017a25d9d38f3d6fa9.1491.llvm.17395286453373707274+0xc3>
+   47814:	lea    0x30(%rsp),%rsi
+   47819:	lea    0x90(%rsp),%rcx
+   47821:	mov    0x784b8(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
+   47828:	mov    %rax,0x8(%rsi)
+   4782c:	mov    %rcx,0x10(%rsi)
+   47830:	mov    %rax,0x18(%rsi)
+   47834:	call   *0x7826e(%rip)        # bfaa8 <_DYNAMIC+0x280>
+   4783a:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   4783f:	mov    0x20(%rsp),%rbp
+   47844:	cmpq   $0x0,0x1b0(%rsp)
+   4784d:	jne    475ed <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x67d>
+   47853:	mov    %r13,0x280(%rsp)
+   4785b:	mov    0x20(%rsp),%rsi
+   47860:	cmp    %rsi,%r13
+   47863:	jne    48ee3 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1f73>
+   47869:	cmp    $0x2,%rsi
+   4786d:	mov    0xe0(%rsp),%rbp
+   47875:	mov    0xc8(%rsp),%r11
+   4787d:	jae    48f3e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1fce>
+   47883:	mov    0xb0(%rsp),%rbx
+   4788b:	mov    0xb8(%rsp),%r15
+   47893:	mov    $0xffffffffffffffd8,%r14
+   4789a:	cmpb   $0x1,%fs:0x10(%r14)
+   478a0:	jne    48f97 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2027>
+   478a6:	mov    %fs:(%r14),%rcx
+   478aa:	mov    %fs:0x8(%r14),%rdx
+   478af:	lea    0x1(%rcx),%rax
+   478b3:	mov    %rax,%fs:(%r14)
+   478b7:	movups 0x74602(%rip),%xmm0        # bbec0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x468>
+   478be:	movaps %xmm0,0x30(%rsp)
+   478c3:	movdqu 0x74605(%rip),%xmm0        # bbed0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x478>
+   478cb:	movdqa %xmm0,0x40(%rsp)
+   478d1:	mov    %rcx,0x50(%rsp)
+   478d6:	mov    %rdx,0x110(%rsp)
+   478de:	mov    %rdx,0x58(%rsp)
+   478e3:	test   %r15,%r15
+   478e6:	jne    48fb0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2040>
+   478ec:	movq   $0x0,0x10(%rsp)
+   478f5:	mov    $0x1,%r12d
+   478fb:	mov    $0x1,%al
+   478fd:	mov    %rax,0xc8(%rsp)
+   47905:	lea    -0x3d09c(%rip),%rax        # a870 <anon.eb89d4395b0ead844ef0b45b8b54da85.151.llvm.3643936799275306673+0x100>
+   4790c:	mov    %rax,0x60(%rsp)
+   47911:	test   %rbp,%rbp
+   47914:	je     47cb2 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xd42>
+   4791a:	xor    %r15d,%r15d
+   4791d:	mov    %rcx,0xd8(%rsp)
+   47925:	mov    $0x20,%edi
+   4792a:	call   *0x78140(%rip)        # bfa70 <malloc@GLIBC_2.2.5>
+   47930:	test   %rax,%rax
+   47933:	je     493fd <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x248d>
+   47939:	mov    %r15,(%rax)
+   4793c:	movq   $0x4,0x30(%rsp)
+   47945:	mov    %rax,0x38(%rsp)
+   4794a:	movq   $0x1,0x40(%rsp)
+   47953:	mov    $0x1,%r15d
+   47959:	cmp    %rbp,%r12
+   4795c:	jae    47c07 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xc97>
+   47962:	mov    %rbp,%r14
+   47965:	movabs $0x736f6d6570736575,%r13
+   4796f:	mov    0xd8(%rsp),%rdx
+   47977:	xor    %rdx,%r13
+   4797a:	movabs $0x646f72616e646f6d,%rbp
+   47984:	mov    0x110(%rsp),%rcx
+   4798c:	xor    %rcx,%rbp
+   4798f:	movabs $0x6c7967656e657261,%rsi
+   47999:	add    %rbp,%r13
+   4799c:	rol    $0xd,%rbp
+   479a0:	xor    %rdx,%rsi
+   479a3:	mov    %rsi,0xf0(%rsp)
+   479ab:	xor    %r13,%rbp
+   479ae:	rol    $0x20,%r13
+   479b2:	mov    %rbp,%rdx
+   479b5:	rol    $0x11,%rdx
+   479b9:	mov    %rdx,0xa0(%rsp)
+   479c1:	movabs $0x7465646279746573,%rdx
+   479cb:	xor    %rcx,%rdx
+   479ce:	mov    %rdx,0xe8(%rsp)
+   479d6:	jmp    479fd <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xa8d>
+   479d8:	nopl   0x0(%rax,%rax,1)
+   479e0:	mov    0x38(%rsp),%rax
+   479e5:	mov    %r12,(%rax,%r15,8)
+   479e9:	inc    %r15
+   479ec:	mov    %r15,0x40(%rsp)
+   479f1:	mov    %rbx,%r12
+   479f4:	cmp    %r14,%rbx
+   479f7:	jae    47c07 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xc97>
+   479fd:	cmpb   $0x0,0xc8(%rsp)
+   47a05:	je     47acc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xb5c>
+   47a0b:	lea    0x1(%r12),%rbx
+   47a10:	cmp    0x30(%rsp),%r15
+   47a15:	jne    479e5 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xa75>
+   47a17:	mov    $0x1,%edx
+   47a1c:	mov    $0x8,%ecx
+   47a21:	mov    $0x8,%r8d
+   47a27:	lea    0x30(%rsp),%rdi
+   47a2c:	mov    %r15,%rsi
+   47a2f:	call   4bba0 <alloc::raw_vec::RawVecInner<A>::reserve::do_reserve_and_handle>
+   47a34:	jmp    479e0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xa70>
+   47a36:	cs nopw 0x0(%rax,%rax,1)
+   47a40:	and    0x10(%rsp),%rdi
+   47a45:	mov    0x60(%rsp),%rdx
+   47a4a:	movdqu (%rdx,%rdi,1),%xmm1
+   47a4f:	movdqa %xmm1,%xmm2
+   47a53:	pcmpeqb %xmm0,%xmm2
+   47a57:	pmovmskb %xmm2,%edx
+   47a5b:	test   %edx,%edx
+   47a5d:	je     47a90 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xb20>
+   47a5f:	tzcnt  %edx,%esi
+   47a63:	add    %rdi,%rsi
+   47a66:	and    0x10(%rsp),%rsi
+   47a6b:	shl    $0x3,%rsi
+   47a6f:	mov    0x60(%rsp),%r8
+   47a74:	sub    %rsi,%r8
+   47a77:	cmp    -0x8(%r8),%r12
+   47a7b:	je     47ac0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xb50>
+   47a7d:	lea    -0x1(%rdx),%esi
+   47a80:	and    %dx,%si
+   47a83:	mov    %esi,%edx
+   47a85:	jne    47a5f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xaef>
+   47a87:	nopw   0x0(%rax,%rax,1)
+   47a90:	pcmpeqd %xmm2,%xmm2
+   47a94:	pcmpeqb %xmm2,%xmm1
+   47a98:	pmovmskb %xmm1,%edx
+   47a9c:	test   %edx,%edx
+   47a9e:	jne    47a10 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xaa0>
+   47aa4:	add    %rcx,%rdi
+   47aa7:	add    $0x10,%rdi
+   47aab:	add    $0x10,%rcx
+   47aaf:	jmp    47a40 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xad0>
+   47ab1:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   47ac0:	mov    %rbx,%r12
+   47ac3:	cmp    %r14,%rbx
+   47ac6:	je     47c07 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xc97>
+   47acc:	mov    %r12,%r8
+   47acf:	xor    0xe8(%rsp),%r8
+   47ad7:	mov    0xf0(%rsp),%rcx
+   47adf:	add    %r8,%rcx
+   47ae2:	rol    $0x10,%r8
+   47ae6:	xor    %rcx,%r8
+   47ae9:	add    %rbp,%rcx
+   47aec:	lea    (%r8,%r13,1),%rdx
+   47af0:	mov    %rcx,%rsi
+   47af3:	rol    $0x15,%r8
+   47af7:	xor    0xa0(%rsp),%rsi
+   47aff:	rol    $0x20,%rcx
+   47b03:	mov    %rdx,%rdi
+   47b06:	xor    %r12,%rdi
+   47b09:	movabs $0x800000000000000,%r9
+   47b13:	xor    %r9,%rdx
+   47b16:	xor    %r8,%rdx
+   47b19:	add    %rsi,%rdi
+   47b1c:	add    %rdx,%rcx
+   47b1f:	rol    $0xd,%rsi
+   47b23:	xor    %rdi,%rsi
+   47b26:	rol    $0x10,%rdx
+   47b2a:	rol    $0x20,%rdi
+   47b2e:	xor    %rcx,%rdx
+   47b31:	add    %rsi,%rcx
+   47b34:	rol    $0x11,%rsi
+   47b38:	add    %rdx,%rdi
+   47b3b:	xor    %rcx,%rsi
+   47b3e:	rol    $0x15,%rdx
+   47b42:	xor    %rdi,%rdx
+   47b45:	rol    $0x20,%rcx
+   47b49:	xor    %r9,%rdi
+   47b4c:	xor    $0xff,%rcx
+   47b53:	add    %rsi,%rdi
+   47b56:	rol    $0xd,%rsi
+   47b5a:	add    %rdx,%rcx
+   47b5d:	xor    %rdi,%rsi
+   47b60:	rol    $0x10,%rdx
+   47b64:	xor    %rcx,%rdx
+   47b67:	rol    $0x20,%rdi
+   47b6b:	add    %rsi,%rcx
+   47b6e:	add    %rdx,%rdi
+   47b71:	rol    $0x11,%rsi
+   47b75:	xor    %rcx,%rsi
+   47b78:	rol    $0x15,%rdx
+   47b7c:	rol    $0x20,%rcx
+   47b80:	xor    %rdi,%rdx
+   47b83:	add    %rsi,%rdi
+   47b86:	rol    $0xd,%rsi
+   47b8a:	add    %rdx,%rcx
+   47b8d:	xor    %rdi,%rsi
+   47b90:	rol    $0x10,%rdx
+   47b94:	xor    %rcx,%rdx
+   47b97:	rol    $0x20,%rdi
+   47b9b:	add    %rsi,%rcx
+   47b9e:	add    %rdx,%rdi
+   47ba1:	rol    $0x11,%rsi
+   47ba5:	xor    %rcx,%rsi
+   47ba8:	rol    $0x15,%rdx
+   47bac:	rol    $0x20,%rcx
+   47bb0:	xor    %rdi,%rdx
+   47bb3:	add    %rsi,%rdi
+   47bb6:	rol    $0xd,%rsi
+   47bba:	add    %rdx,%rcx
+   47bbd:	xor    %rdi,%rsi
+   47bc0:	rol    $0x10,%rdx
+   47bc4:	xor    %rcx,%rdx
+   47bc7:	add    %rsi,%rcx
+   47bca:	rol    $0x11,%rsi
+   47bce:	lea    0x1(%r12),%rbx
+   47bd3:	rol    $0x15,%rdx
+   47bd7:	mov    %rcx,%rdi
+   47bda:	rol    $0x20,%rdi
+   47bde:	xor    %rsi,%rdi
+   47be1:	xor    %rdx,%rdi
+   47be4:	xor    %rcx,%rdi
+   47be7:	mov    %rdi,%rcx
+   47bea:	shr    $0x39,%rcx
+   47bee:	movd   %ecx,%xmm0
+   47bf2:	punpcklbw %xmm0,%xmm0
+   47bf6:	pshuflw $0x0,%xmm0,%xmm0
+   47bfb:	pshufd $0x44,%xmm0,%xmm0
+   47c00:	xor    %ecx,%ecx
+   47c02:	jmp    47a40 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xad0>
+   47c07:	mov    0x30(%rsp),%rax
+   47c0c:	mov    %rax,0xe8(%rsp)
+   47c14:	mov    0x38(%rsp),%rax
+   47c19:	mov    %rax,0x108(%rsp)
+   47c21:	mov    %r15,0x288(%rsp)
+   47c29:	cmp    0xd0(%rsp),%r15
+   47c31:	mov    0x10(%rsp),%r12
+   47c36:	jne    47cf1 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xd81>
+   47c3c:	mov    0x1d8(%rsp),%r15
+   47c44:	lea    0x0(,%r15,8),%r13
+   47c4c:	movabs $0x1fffffffffffffff,%rax
+   47c56:	cmp    %rax,%r15
+   47c59:	seta   %al
+   47c5c:	cmp    0xc0(%rsp),%r13
+   47c64:	seta   %cl
+   47c67:	or     %al,%cl
+   47c69:	je     47c7b <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xd0b>
+   47c6b:	xor    %edi,%edi
+   47c6d:	mov    %r13,%rsi
+   47c70:	call   *0x77daa(%rip)        # bfa20 <_DYNAMIC+0x1f8>
+   47c76:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   47c7b:	test   %r13,%r13
+   47c7e:	je     47d17 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xda7>
+   47c84:	mov    $0x1,%esi
+   47c89:	mov    %r13,%rdi
+   47c8c:	call   *0x77e5e(%rip)        # bfaf0 <calloc@GLIBC_2.2.5>
+   47c92:	test   %rax,%rax
+   47c95:	je     4949f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x252f>
+   47c9b:	mov    %rax,%rbp
+   47c9e:	test   %r15,%r15
+   47ca1:	sete   0xf(%rsp)
+   47ca6:	test   %r15,%r15
+   47ca9:	je     47d26 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xdb6>
+   47cab:	xor    %ecx,%ecx
+   47cad:	jmp    47e0c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe9c>
+   47cb2:	mov    %rcx,0xd8(%rsp)
+   47cba:	mov    $0x8,%eax
+   47cbf:	mov    %rax,0x108(%rsp)
+   47cc7:	movq   $0x0,0xe8(%rsp)
+   47cd3:	xor    %r15d,%r15d
+   47cd6:	mov    %r15,0x288(%rsp)
+   47cde:	cmp    0xd0(%rsp),%r15
+   47ce6:	mov    0x10(%rsp),%r12
+   47ceb:	je     47c3c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xccc>
+   47cf1:	lea    0x74290(%rip),%r9        # bbf88 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x530>
+   47cf8:	lea    0x288(%rsp),%rsi
+   47d00:	lea    0x278(%rsp),%rdx
+   47d08:	xor    %edi,%edi
+   47d0a:	xor    %ecx,%ecx
+   47d0c:	call   *0x77dee(%rip)        # bfb00 <_DYNAMIC+0x2d8>
+   47d12:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   47d17:	mov    $0x8,%ebp
+   47d1c:	movb   $0x1,0xf(%rsp)
+   47d21:	test   %r15,%r15
+   47d24:	jne    47cab <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xd3b>
+   47d26:	xor    %ebx,%ebx
+   47d28:	jmp    47ebf <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xf4f>
+   47d2d:	mov    (%rax),%rax
+   47d30:	mov    %r15,0xa8(%rsp)
+   47d38:	mov    %rax,0x140(%rsp)
+   47d40:	lea    0xa8(%rsp),%rax
+   47d48:	mov    %rax,0x30(%rsp)
+   47d4d:	lea    0x7441c(%rip),%rdx        # bc170 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x718>
+   47d54:	lea    -0x3fed5(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   47d5b:	lea    0x30(%rsp),%rsi
+   47d60:	lea    0x88(%rsp),%rcx
+   47d68:	jmp    47821 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x8b1>
+   47d6d:	mov    %rbp,0x28(%rsp)
+   47d72:	mov    %r12,0x140(%rsp)
+   47d7a:	cmp    %rdx,%rbp
+   47d7d:	jae    47da9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe39>
+   47d7f:	lea    0x140(%rsp),%rax
+   47d87:	mov    %rax,0x30(%rsp)
+   47d8c:	lea    0x743ad(%rip),%rdx        # bc140 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6e8>
+   47d93:	lea    -0x3d8a8(%rip),%rdi        # a4f2 <anon.54136273668c12017a25d9d38f3d6fa9.1491.llvm.17395286453373707274+0xc3>
+   47d9a:	lea    0x30(%rsp),%rsi
+   47d9f:	lea    0x90(%rsp),%rcx
+   47da7:	jmp    47dce <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe5e>
+   47da9:	lea    0x28(%rsp),%rax
+   47dae:	mov    %rax,0x30(%rsp)
+   47db3:	lea    0x7436e(%rip),%rdx        # bc128 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6d0>
+   47dba:	lea    -0x3ff3b(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   47dc1:	lea    0x30(%rsp),%rsi
+   47dc6:	lea    0x88(%rsp),%rcx
+   47dce:	mov    0x77f0b(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
+   47dd5:	mov    %rax,0x8(%rsi)
+   47dd9:	mov    %rcx,0x10(%rsi)
+   47ddd:	mov    %rax,0x18(%rsi)
+   47de1:	call   *0x77cc1(%rip)        # bfaa8 <_DYNAMIC+0x280>
+   47de7:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   47dec:	test   %r8,%r8
+   47def:	jne    4951e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x25ae>
+   47df5:	data16 cs nopw 0x0(%rax,%rax,1)
+   47e00:	inc    %rcx
+   47e03:	cmp    %r15,%rcx
+   47e06:	je     47eb7 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xf47>
+   47e0c:	mov    0xb0(%rsp),%rdx
+   47e14:	mov    0xb8(%rsp),%r8
+   47e1c:	cmp    0x88(%rsp),%rcx
+   47e24:	jae    47dec <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe7c>
+   47e26:	shl    $0x3,%r8
+   47e2a:	mov    0x90(%rsp),%r9
+   47e32:	mov    0x98(%rsp),%r10
+   47e3a:	imul   %rcx,%r10
+   47e3e:	mov    0x78(%rsp),%r11
+   47e43:	mov    0x80(%rsp),%rsi
+   47e4b:	mov    $0xffffffffffffffff,%rdi
+   47e52:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   47e60:	test   %r8,%r8
+   47e63:	je     47e00 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe90>
+   47e65:	mov    0x8(%rdx,%rdi,8),%rbx
+   47e6a:	mov    %rcx,0x28(%rsp)
+   47e6f:	mov    %rbx,0x140(%rsp)
+   47e77:	cmp    %r9,%rbx
+   47e7a:	jae    48d1a <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1daa>
+   47e80:	mov    %rbx,%rax
+   47e83:	shr    $0x6,%rax
+   47e87:	add    %r10,%rax
+   47e8a:	cmp    %rsi,%rax
+   47e8d:	jae    491b4 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2244>
+   47e93:	mov    (%r11,%rax,8),%rax
+   47e97:	inc    %rdi
+   47e9a:	add    $0xfffffffffffffff8,%r8
+   47e9e:	bt     %rbx,%rax
+   47ea2:	jae    47e60 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xef0>
+   47ea4:	cmp    %r15,%rdi
+   47ea7:	jae    493d4 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2464>
+   47ead:	mov    %rcx,0x0(%rbp,%rdi,8)
+   47eb2:	jmp    47e00 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe90>
+   47eb7:	lea    0x3f(%r15),%rbx
+   47ebb:	shr    $0x6,%rbx
+   47ebf:	mov    %rbx,%r12
+   47ec2:	imul   0xd0(%rsp),%r12
+   47ecb:	lea    0x0(,%r12,8),%r14
+   47ed3:	movabs $0x1fffffffffffffff,%rax
+   47edd:	cmp    %rax,%r12
+   47ee0:	seta   %al
+   47ee3:	cmp    0xc0(%rsp),%r14
+   47eeb:	seta   %cl
+   47eee:	or     %al,%cl
+   47ef0:	je     47f07 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xf97>
+   47ef2:	xor    %edi,%edi
+   47ef4:	mov    %r14,%rsi
+   47ef7:	mov    0x10(%rsp),%r12
+   47efc:	call   *0x77b1e(%rip)        # bfa20 <_DYNAMIC+0x1f8>
+   47f02:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   47f07:	test   %r14,%r14
+   47f0a:	je     47f28 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xfb8>
+   47f0c:	mov    $0x1,%esi
+   47f11:	mov    %r14,%rdi
+   47f14:	call   *0x77bd6(%rip)        # bfaf0 <calloc@GLIBC_2.2.5>
+   47f1a:	test   %rax,%rax
+   47f1d:	je     494bc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x254c>
+   47f23:	mov    %r12,%rcx
+   47f26:	jmp    47f2f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xfbf>
+   47f28:	mov    $0x8,%eax
+   47f2d:	xor    %ecx,%ecx
+   47f2f:	mov    %rcx,0x140(%rsp)
+   47f37:	mov    %rax,0x148(%rsp)
+   47f3f:	mov    %r12,0x150(%rsp)
+   47f47:	mov    0xd0(%rsp),%rcx
+   47f4f:	mov    %rcx,0x158(%rsp)
+   47f57:	mov    %r15,0x160(%rsp)
+   47f5f:	mov    %rbx,0xf0(%rsp)
+   47f67:	mov    %rbx,0x168(%rsp)
+   47f6f:	mov    0xe0(%rsp),%rcx
+   47f77:	cmp    0x20(%rsp),%rcx
+   47f7c:	je     4816f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x11ff>
+   47f82:	test   %r15,%r15
+   47f85:	je     4816f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x11ff>
+   47f8b:	mov    0xd0(%rsp),%rcx
+   47f93:	mov    0x108(%rsp),%r9
+   47f9b:	lea    (%r9,%rcx,8),%rcx
+   47f9f:	mov    %rcx,0x20(%rsp)
+   47fa4:	xor    %r11d,%r11d
+   47fa7:	lea    0x741aa(%rip),%rcx        # bc158 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x700>
+   47fae:	mov    %rcx,0xa0(%rsp)
+   47fb6:	jmp    47fd2 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1062>
+   47fb8:	nopl   0x0(%rax,%rax,1)
+   47fc0:	add    $0x8,%r9
+   47fc4:	inc    %r11
+   47fc7:	cmp    0x20(%rsp),%r9
+   47fcc:	je     4816f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x11ff>
+   47fd2:	mov    (%r9),%r8
+   47fd5:	mov    %r8,%r10
+   47fd8:	shr    $0x6,%r10
+   47fdc:	mov    $0x1,%ebx
+   47fe1:	mov    %r8d,%ecx
+   47fe4:	shl    %cl,%rbx
+   47fe7:	cmp    0xd0(%rsp),%r11
+   47fef:	jae    480b4 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1144>
+   47ff5:	mov    %r11,%r14
+   47ff8:	imul   0xf0(%rsp),%r14
+   48001:	xor    %edx,%edx
+   48003:	xor    %ecx,%ecx
+   48005:	jmp    48028 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x10b8>
+   48007:	nopw   0x0(%rax,%rax,1)
+   48010:	mov    $0x1,%esi
+   48015:	shl    %cl,%rsi
+   48018:	or     %rsi,(%rax,%rdi,8)
+   4801c:	add    $0x8,%rdx
+   48020:	inc    %rcx
+   48023:	cmp    %rdx,%r13
+   48026:	je     47fc0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1050>
+   48028:	mov    %rbp,%rsi
+   4802b:	add    %rdx,%rsi
+   4802e:	je     47fc0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1050>
+   48030:	mov    0x0(%rbp,%rcx,8),%rdi
+   48035:	mov    %rdi,0x128(%rsp)
+   4803d:	mov    %r8,0x28(%rsp)
+   48042:	cmp    0x88(%rsp),%rdi
+   4804a:	jae    49454 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x24e4>
+   48050:	cmp    0x90(%rsp),%r8
+   48058:	jae    4942d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x24bd>
+   4805e:	imul   0x98(%rsp),%rdi
+   48067:	add    %r10,%rdi
+   4806a:	mov    0x80(%rsp),%rsi
+   48072:	cmp    %rsi,%rdi
+   48075:	jae    493bc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x244c>
+   4807b:	mov    0x78(%rsp),%rsi
+   48080:	test   %rbx,(%rsi,%rdi,8)
+   48084:	je     4801c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x10ac>
+   48086:	mov    %r11,0x128(%rsp)
+   4808e:	mov    %rcx,0x28(%rsp)
+   48093:	cmp    %r15,%rcx
+   48096:	jae    48d60 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1df0>
+   4809c:	mov    %rcx,%rdi
+   4809f:	shr    $0x6,%rdi
+   480a3:	add    %r14,%rdi
+   480a6:	cmp    %r12,%rdi
+   480a9:	jb     48010 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x10a0>
+   480af:	jmp    493aa <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x243a>
+   480b4:	mov    0x88(%rsp),%rcx
+   480bc:	mov    %rcx,0xe0(%rsp)
+   480c4:	cmp    0x90(%rsp),%r8
+   480cc:	jae    49412 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x24a2>
+   480d2:	mov    0x98(%rsp),%rcx
+   480da:	mov    %rcx,0x1a0(%rsp)
+   480e2:	mov    0x78(%rsp),%rcx
+   480e7:	mov    %rcx,0x198(%rsp)
+   480ef:	mov    0x80(%rsp),%rsi
+   480f7:	mov    %r13,%rdx
+   480fa:	xor    %ecx,%ecx
+   480fc:	mov    %rbp,%r14
+   480ff:	test   %r14,%r14
+   48102:	je     47fc0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1050>
+   48108:	mov    (%r14),%rdi
+   4810b:	mov    %rdi,0x128(%rsp)
+   48113:	mov    %r8,0x28(%rsp)
+   48118:	cmp    0xe0(%rsp),%rdi
+   48120:	jae    49454 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x24e4>
+   48126:	mov    %rcx,0xc0(%rsp)
+   4812e:	imul   0x1a0(%rsp),%rdi
+   48137:	add    %r10,%rdi
+   4813a:	cmp    %rsi,%rdi
+   4813d:	jae    493bc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x244c>
+   48143:	mov    0x198(%rsp),%rcx
+   4814b:	test   %rbx,(%rcx,%rdi,8)
+   4814f:	jne    494d9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2569>
+   48155:	add    $0x8,%r14
+   48159:	mov    0xc0(%rsp),%rcx
+   48161:	dec    %rcx
+   48164:	add    $0xfffffffffffffff8,%rdx
+   48168:	jne    480ff <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x118f>
+   4816a:	jmp    47fc0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1050>
+   4816f:	mov    $0xffffffffffffffd8,%rsi
+   48176:	cmpb   $0x1,%fs:0x10(%rsi)
+   4817b:	jne    491e4 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2274>
+   48181:	mov    %fs:(%rsi),%rax
+   48185:	mov    %fs:0x8(%rsi),%rdx
+   4818a:	mov    0x138(%rsp),%rcx
+   48192:	mov    0x118(%rsp),%r14
+   4819a:	lea    0x1(%rax),%r12
+   4819e:	mov    %r12,%fs:(%rsi)
+   481a2:	movups 0x73d17(%rip),%xmm0        # bbec0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x468>
+   481a9:	movaps %xmm0,0x30(%rsp)
+   481ae:	movdqu 0x73d1a(%rip),%xmm0        # bbed0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x478>
+   481b6:	movdqa %xmm0,0x40(%rsp)
+   481bc:	mov    %rax,0x50(%rsp)
+   481c1:	mov    %rdx,0x58(%rsp)
+   481c6:	cmp    %rcx,0x120(%rsp)
+   481ce:	ja     49204 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2294>
+   481d4:	mov    %rax,0x188(%rsp)
+   481dc:	mov    0xb0(%rsp),%rbx
+   481e4:	mov    0xb8(%rsp),%r15
+   481ec:	pxor   %xmm0,%xmm0
+   481f0:	movdqa %xmm0,0x350(%rsp)
+   481f9:	lea    -0x3d990(%rip),%rax        # a870 <anon.eb89d4395b0ead844ef0b45b8b54da85.151.llvm.3643936799275306673+0x100>
+   48200:	mov    %rax,0x20(%rsp)
+   48205:	movq   $0x0,0xa0(%rsp)
+   48211:	movq   $0x0,0xf0(%rsp)
+   4821d:	mov    %rdx,0x180(%rsp)
+   48225:	mov    %rdx,%rdi
+   48228:	mov    0x1a8(%rsp),%rdx
+   48230:	mov    %rdx,%r13
+   48233:	mov    0x1c8(%rsp),%rcx
+   4823b:	sub    %rcx,%r13
+   4823e:	lea    0x1(%r12),%rax
+   48243:	mov    %rax,%fs:(%rsi)
+   48247:	movups 0x73c72(%rip),%xmm0        # bbec0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x468>
+   4824e:	movaps %xmm0,0x30(%rsp)
+   48253:	movdqu 0x73c75(%rip),%xmm0        # bbed0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x478>
+   4825b:	movdqa %xmm0,0x40(%rsp)
+   48261:	mov    %r12,0x50(%rsp)
+   48266:	mov    %rdi,0x58(%rsp)
+   4826b:	cmp    %rcx,%rdx
+   4826e:	je     48279 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1309>
+   48270:	test   %r15,%r15
+   48273:	jne    492f0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2380>
+   48279:	cmp    %r13,%r15
+   4827c:	cmovae %r13,%r15
+   48280:	test   %r15,%r15
+   48283:	je     482dd <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x136d>
+   48285:	xor    %r14d,%r14d
+   48288:	lea    0x30(%rsp),%r12
+   4828d:	nopl   (%rax)
+   48290:	mov    (%rbx,%r14,8),%rsi
+   48294:	mov    %r12,%rdi
+   48297:	call   4bc20 <hashbrown::map::HashMap<K,V,S,A>::insert>
+   4829c:	inc    %r14
+   4829f:	cmp    %r14,%r15
+   482a2:	jne    48290 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1320>
+   482a4:	mov    0x30(%rsp),%rax
+   482a9:	mov    %rax,0x130(%rsp)
+   482b1:	mov    0x38(%rsp),%rax
+   482b6:	mov    %rax,0x100(%rsp)
+   482be:	mov    0x50(%rsp),%r12
+   482c3:	mov    0x58(%rsp),%rdi
+   482c8:	cmpq   $0x0,0x48(%rsp)
+   482ce:	sete   0x1f(%rsp)
+   482d3:	mov    0x118(%rsp),%r14
+   482db:	jmp    482fd <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x138d>
+   482dd:	lea    -0x3da74(%rip),%rax        # a870 <anon.eb89d4395b0ead844ef0b45b8b54da85.151.llvm.3643936799275306673+0x100>
+   482e4:	mov    %rax,0x130(%rsp)
+   482ec:	movb   $0x1,0x1f(%rsp)
+   482f1:	movq   $0x0,0x100(%rsp)
+   482fd:	mov    %rdi,0x190(%rsp)
+   48305:	mov    0x170(%rsp),%rbx
+   4830d:	test   %rbx,%rbx
+   48310:	mov    %r13,0x218(%rsp)
+   48318:	je     48339 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x13c9>
+   4831a:	lea    0x0(,%rbx,8),%r15
+   48322:	mov    %r15,%rdi
+   48325:	call   *0x77745(%rip)        # bfa70 <malloc@GLIBC_2.2.5>
+   4832b:	test   %rax,%rax
+   4832e:	je     494c6 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2556>
+   48334:	mov    %r12,%rdi
+   48337:	jmp    48341 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x13d1>
+   48339:	mov    %r12,%rdi
+   4833c:	mov    $0x8,%eax
+   48341:	mov    %rbx,0x30(%rsp)
+   48346:	mov    %rax,0x38(%rsp)
+   4834b:	movq   $0x0,0x40(%rsp)
+   48354:	cmpw   $0x0,0x1b0(%rsp)
+   4835d:	je     489ed <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1a7d>
+   48363:	movabs $0x736f6d6570736575,%r8
+   4836d:	mov    0x188(%rsp),%rcx
+   48375:	mov    %rcx,%r12
+   48378:	xor    %r8,%r12
+   4837b:	movabs $0x646f72616e646f6d,%r9
+   48385:	mov    0x180(%rsp),%rsi
+   4838d:	mov    %rsi,%r13
+   48390:	xor    %r9,%r13
+   48393:	movabs $0x6c7967656e657261,%rax
+   4839d:	add    %r13,%r12
+   483a0:	rol    $0xd,%r13
+   483a4:	xor    %r12,%r13
+   483a7:	rol    $0x20,%r12
+   483ab:	xor    %rax,%rcx
+   483ae:	mov    %rcx,0xc0(%rsp)
+   483b6:	mov    %r13,%rcx
+   483b9:	rol    $0x11,%rcx
+   483bd:	mov    %rcx,0x1a8(%rsp)
+   483c5:	mov    0xd8(%rsp),%rcx
+   483cd:	mov    %rcx,%r10
+   483d0:	xor    %r8,%r10
+   483d3:	mov    0x110(%rsp),%rdx
+   483db:	mov    %rdx,%r11
+   483de:	xor    %r9,%r11
+   483e1:	xor    %rax,%rcx
+   483e4:	mov    %rcx,0xd8(%rsp)
+   483ec:	add    %r11,%r10
+   483ef:	rol    $0xd,%r11
+   483f3:	xor    %r10,%r11
+   483f6:	rol    $0x20,%r10
+   483fa:	mov    %r10,0x1a0(%rsp)
+   48402:	mov    %r11,0x198(%rsp)
+   4840a:	rol    $0x11,%r11
+   4840e:	mov    %r11,0x220(%rsp)
+   48416:	xor    %rdi,%r8
+   48419:	mov    0x190(%rsp),%rcx
+   48421:	xor    %rcx,%r9
+   48424:	xor    %rax,%rdi
+   48427:	mov    %rdi,0x210(%rsp)
+   4842f:	add    %r9,%r8
+   48432:	rol    $0xd,%r9
+   48436:	xor    %r8,%r9
+   48439:	rol    $0x20,%r8
+   4843d:	mov    %r8,0x208(%rsp)
+   48445:	mov    %r9,0x200(%rsp)
+   4844d:	rol    $0x11,%r9
+   48451:	mov    %r9,0x1f8(%rsp)
+   48459:	movabs $0x7465646279746573,%rax
+   48463:	xor    %rax,%rsi
+   48466:	mov    %rsi,0xe0(%rsp)
+   4846e:	xor    %rax,%rdx
+   48471:	mov    %rdx,0x110(%rsp)
+   48479:	xor    %rax,%rcx
+   4847c:	mov    %rcx,0x190(%rsp)
+   48484:	xor    %ebx,%ebx
+   48486:	xor    %r15d,%r15d
+   48489:	jmp    484ad <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x153d>
+   4848b:	mov    0x38(%rsp),%rax
+   48490:	mov    %rbx,(%rax,%r15,8)
+   48494:	inc    %r15
+   48497:	mov    %r15,0x40(%rsp)
+   4849c:	inc    %rbx
+   4849f:	cmp    0x1d0(%rsp),%rbx
+   484a7:	je     489ed <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1a7d>
+   484ad:	cmp    %r14,%rbx
+   484b0:	jb     4849c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x152c>
+   484b2:	cmpq   $0x0,0xf0(%rsp)
+   484bb:	je     4865f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x16ef>
+   484c1:	mov    %rbx,%rdi
+   484c4:	xor    0xe0(%rsp),%rdi
+   484cc:	mov    0xc0(%rsp),%rax
+   484d4:	add    %rdi,%rax
+   484d7:	rol    $0x10,%rdi
+   484db:	xor    %rax,%rdi
+   484de:	add    %r13,%rax
+   484e1:	lea    (%rdi,%r12,1),%rcx
+   484e5:	mov    %rax,%rdx
+   484e8:	rol    $0x15,%rdi
+   484ec:	xor    0x1a8(%rsp),%rdx
+   484f4:	rol    $0x20,%rax
+   484f8:	mov    %rcx,%rsi
+   484fb:	xor    %rbx,%rsi
+   484fe:	movabs $0x800000000000000,%r8
+   48508:	xor    %r8,%rcx
+   4850b:	xor    %rdi,%rcx
+   4850e:	add    %rdx,%rsi
+   48511:	add    %rcx,%rax
+   48514:	rol    $0xd,%rdx
+   48518:	xor    %rsi,%rdx
+   4851b:	rol    $0x10,%rcx
+   4851f:	rol    $0x20,%rsi
+   48523:	xor    %rax,%rcx
+   48526:	add    %rdx,%rax
+   48529:	rol    $0x11,%rdx
+   4852d:	add    %rcx,%rsi
+   48530:	xor    %rax,%rdx
+   48533:	rol    $0x15,%rcx
+   48537:	xor    %rsi,%rcx
+   4853a:	rol    $0x20,%rax
+   4853e:	xor    %r8,%rsi
+   48541:	xor    $0xff,%rax
+   48547:	add    %rdx,%rsi
+   4854a:	rol    $0xd,%rdx
+   4854e:	add    %rcx,%rax
+   48551:	xor    %rsi,%rdx
+   48554:	rol    $0x10,%rcx
+   48558:	xor    %rax,%rcx
+   4855b:	rol    $0x20,%rsi
+   4855f:	add    %rdx,%rax
+   48562:	add    %rcx,%rsi
+   48565:	rol    $0x11,%rdx
+   48569:	xor    %rax,%rdx
+   4856c:	rol    $0x15,%rcx
+   48570:	rol    $0x20,%rax
+   48574:	xor    %rsi,%rcx
+   48577:	add    %rdx,%rsi
+   4857a:	rol    $0xd,%rdx
+   4857e:	add    %rcx,%rax
+   48581:	xor    %rsi,%rdx
+   48584:	rol    $0x10,%rcx
+   48588:	xor    %rax,%rcx
+   4858b:	rol    $0x20,%rsi
+   4858f:	add    %rdx,%rax
+   48592:	add    %rcx,%rsi
+   48595:	rol    $0x11,%rdx
+   48599:	xor    %rax,%rdx
+   4859c:	rol    $0x15,%rcx
+   485a0:	rol    $0x20,%rax
+   485a4:	xor    %rsi,%rcx
+   485a7:	add    %rdx,%rsi
+   485aa:	rol    $0xd,%rdx
+   485ae:	add    %rcx,%rax
+   485b1:	xor    %rsi,%rdx
+   485b4:	rol    $0x10,%rcx
+   485b8:	xor    %rax,%rcx
+   485bb:	add    %rdx,%rax
+   485be:	rol    $0x11,%rdx
+   485c2:	rol    $0x15,%rcx
+   485c6:	mov    %rax,%rsi
+   485c9:	rol    $0x20,%rsi
+   485cd:	xor    %rdx,%rsi
+   485d0:	xor    %rcx,%rsi
+   485d3:	xor    %rax,%rsi
+   485d6:	mov    %rsi,%rax
+   485d9:	shr    $0x39,%rax
+   485dd:	movd   %eax,%xmm0
+   485e1:	punpcklbw %xmm0,%xmm0
+   485e5:	pshuflw $0x0,%xmm0,%xmm0
+   485ea:	pshufd $0x44,%xmm0,%xmm0
+   485ef:	xor    %eax,%eax
+   485f1:	and    0xa0(%rsp),%rsi
+   485f9:	mov    0x20(%rsp),%rcx
+   485fe:	movdqu (%rcx,%rsi,1),%xmm1
+   48603:	movdqa %xmm1,%xmm2
+   48607:	pcmpeqb %xmm0,%xmm2
+   4860b:	pmovmskb %xmm2,%ecx
+   4860f:	test   %ecx,%ecx
+   48611:	je     48642 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x16d2>
+   48613:	tzcnt  %ecx,%edx
+   48617:	add    %rsi,%rdx
+   4861a:	and    0xa0(%rsp),%rdx
+   48622:	shl    $0x3,%rdx
+   48626:	mov    0x20(%rsp),%rdi
+   4862b:	sub    %rdx,%rdi
+   4862e:	cmp    -0x8(%rdi),%rbx
+   48632:	je     4849c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x152c>
+   48638:	lea    -0x1(%rcx),%edx
+   4863b:	and    %cx,%dx
+   4863e:	mov    %edx,%ecx
+   48640:	jne    48613 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x16a3>
+   48642:	pcmpeqd %xmm2,%xmm2
+   48646:	pcmpeqb %xmm2,%xmm1
+   4864a:	pmovmskb %xmm1,%ecx
+   4864e:	test   %ecx,%ecx
+   48650:	jne    4865f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x16ef>
+   48652:	add    %rax,%rsi
+   48655:	add    $0x10,%rsi
+   48659:	add    $0x10,%rax
+   4865d:	jmp    485f1 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1681>
+   4865f:	cmpb   $0x0,0xc8(%rsp)
+   48667:	je     48684 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1714>
+   48669:	cmp    0x30(%rsp),%r15
+   4866e:	jne    4848b <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x151b>
+   48674:	lea    0x30(%rsp),%rdi
+   48679:	call   *0x776d1(%rip)        # bfd50 <_DYNAMIC+0x528>
+   4867f:	jmp    4848b <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x151b>
+   48684:	mov    %rbx,%rdi
+   48687:	xor    0x110(%rsp),%rdi
+   4868f:	mov    0xd8(%rsp),%rax
+   48697:	add    %rdi,%rax
+   4869a:	rol    $0x10,%rdi
+   4869e:	xor    %rax,%rdi
+   486a1:	add    0x198(%rsp),%rax
+   486a9:	mov    0x1a0(%rsp),%rcx
+   486b1:	add    %rdi,%rcx
+   486b4:	mov    %rax,%rdx
+   486b7:	rol    $0x15,%rdi
+   486bb:	xor    0x220(%rsp),%rdx
+   486c3:	rol    $0x20,%rax
+   486c7:	mov    %rcx,%rsi
+   486ca:	xor    %rbx,%rsi
+   486cd:	movabs $0x800000000000000,%r8
+   486d7:	xor    %r8,%rcx
+   486da:	xor    %rdi,%rcx
+   486dd:	add    %rdx,%rsi
+   486e0:	add    %rcx,%rax
+   486e3:	rol    $0xd,%rdx
+   486e7:	xor    %rsi,%rdx
+   486ea:	rol    $0x10,%rcx
+   486ee:	rol    $0x20,%rsi
+   486f2:	xor    %rax,%rcx
+   486f5:	add    %rdx,%rax
+   486f8:	rol    $0x11,%rdx
+   486fc:	add    %rcx,%rsi
+   486ff:	xor    %rax,%rdx
+   48702:	rol    $0x15,%rcx
+   48706:	xor    %rsi,%rcx
+   48709:	rol    $0x20,%rax
+   4870d:	xor    %r8,%rsi
+   48710:	xor    $0xff,%rax
+   48716:	add    %rdx,%rsi
+   48719:	rol    $0xd,%rdx
+   4871d:	add    %rcx,%rax
+   48720:	xor    %rsi,%rdx
+   48723:	rol    $0x10,%rcx
+   48727:	xor    %rax,%rcx
+   4872a:	rol    $0x20,%rsi
+   4872e:	add    %rdx,%rax
+   48731:	add    %rcx,%rsi
+   48734:	rol    $0x11,%rdx
+   48738:	xor    %rax,%rdx
+   4873b:	rol    $0x15,%rcx
+   4873f:	rol    $0x20,%rax
+   48743:	xor    %rsi,%rcx
+   48746:	add    %rdx,%rsi
+   48749:	rol    $0xd,%rdx
+   4874d:	add    %rcx,%rax
+   48750:	xor    %rsi,%rdx
+   48753:	rol    $0x10,%rcx
+   48757:	xor    %rax,%rcx
+   4875a:	rol    $0x20,%rsi
+   4875e:	add    %rdx,%rax
+   48761:	add    %rcx,%rsi
+   48764:	rol    $0x11,%rdx
+   48768:	xor    %rax,%rdx
+   4876b:	rol    $0x15,%rcx
+   4876f:	rol    $0x20,%rax
+   48773:	xor    %rsi,%rcx
+   48776:	add    %rdx,%rsi
+   48779:	rol    $0xd,%rdx
+   4877d:	add    %rcx,%rax
+   48780:	xor    %rsi,%rdx
+   48783:	rol    $0x10,%rcx
+   48787:	xor    %rax,%rcx
+   4878a:	add    %rdx,%rax
+   4878d:	rol    $0x11,%rdx
+   48791:	rol    $0x15,%rcx
+   48795:	mov    %rax,%rsi
+   48798:	rol    $0x20,%rsi
+   4879c:	xor    %rdx,%rsi
+   4879f:	xor    %rcx,%rsi
+   487a2:	xor    %rax,%rsi
+   487a5:	mov    %rsi,%rax
+   487a8:	shr    $0x39,%rax
+   487ac:	movd   %eax,%xmm0
+   487b0:	punpcklbw %xmm0,%xmm0
+   487b4:	pshuflw $0x0,%xmm0,%xmm0
+   487b9:	pshufd $0x44,%xmm0,%xmm0
+   487be:	xor    %eax,%eax
+   487c0:	and    0x10(%rsp),%rsi
+   487c5:	mov    0x60(%rsp),%rcx
+   487ca:	movdqu (%rcx,%rsi,1),%xmm1
+   487cf:	movdqa %xmm1,%xmm2
+   487d3:	pcmpeqb %xmm0,%xmm2
+   487d7:	pmovmskb %xmm2,%ecx
+   487db:	test   %ecx,%ecx
+   487dd:	je     48807 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1897>
+   487df:	tzcnt  %ecx,%edx
+   487e3:	add    %rsi,%rdx
+   487e6:	and    0x10(%rsp),%rdx
+   487eb:	shl    $0x3,%rdx
+   487ef:	mov    0x60(%rsp),%rdi
+   487f4:	sub    %rdx,%rdi
+   487f7:	cmp    -0x8(%rdi),%rbx
+   487fb:	je     48828 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x18b8>
+   487fd:	lea    -0x1(%rcx),%edx
+   48800:	and    %cx,%dx
+   48803:	mov    %edx,%ecx
+   48805:	jne    487df <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x186f>
+   48807:	pcmpeqd %xmm2,%xmm2
+   4880b:	pcmpeqb %xmm2,%xmm1
+   4880f:	pmovmskb %xmm1,%ecx
+   48813:	test   %ecx,%ecx
+   48815:	jne    48669 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x16f9>
+   4881b:	add    %rax,%rsi
+   4881e:	add    $0x10,%rsi
+   48822:	add    $0x10,%rax
+   48826:	jmp    487c0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1850>
+   48828:	cmpb   $0x0,0x1f(%rsp)
+   4882d:	jne    4849c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x152c>
+   48833:	mov    %rbx,%rdi
+   48836:	xor    0x190(%rsp),%rdi
+   4883e:	mov    0x210(%rsp),%rax
+   48846:	add    %rdi,%rax
+   48849:	rol    $0x10,%rdi
+   4884d:	xor    %rax,%rdi
+   48850:	add    0x200(%rsp),%rax
+   48858:	mov    0x208(%rsp),%rcx
+   48860:	add    %rdi,%rcx
+   48863:	mov    %rax,%rdx
+   48866:	rol    $0x15,%rdi
+   4886a:	xor    0x1f8(%rsp),%rdx
+   48872:	rol    $0x20,%rax
+   48876:	mov    %rcx,%rsi
+   48879:	xor    %rbx,%rsi
+   4887c:	movabs $0x800000000000000,%r8
+   48886:	xor    %r8,%rcx
+   48889:	xor    %rdi,%rcx
+   4888c:	add    %rdx,%rsi
+   4888f:	add    %rcx,%rax
+   48892:	rol    $0xd,%rdx
+   48896:	xor    %rsi,%rdx
+   48899:	rol    $0x10,%rcx
+   4889d:	rol    $0x20,%rsi
+   488a1:	xor    %rax,%rcx
+   488a4:	add    %rdx,%rax
+   488a7:	rol    $0x11,%rdx
+   488ab:	add    %rcx,%rsi
+   488ae:	xor    %rax,%rdx
+   488b1:	rol    $0x15,%rcx
+   488b5:	xor    %rsi,%rcx
+   488b8:	rol    $0x20,%rax
+   488bc:	xor    %r8,%rsi
+   488bf:	xor    $0xff,%rax
+   488c5:	add    %rdx,%rsi
+   488c8:	rol    $0xd,%rdx
+   488cc:	add    %rcx,%rax
+   488cf:	xor    %rsi,%rdx
+   488d2:	rol    $0x10,%rcx
+   488d6:	xor    %rax,%rcx
+   488d9:	rol    $0x20,%rsi
+   488dd:	add    %rdx,%rax
+   488e0:	add    %rcx,%rsi
+   488e3:	rol    $0x11,%rdx
+   488e7:	xor    %rax,%rdx
+   488ea:	rol    $0x15,%rcx
+   488ee:	rol    $0x20,%rax
+   488f2:	xor    %rsi,%rcx
+   488f5:	add    %rdx,%rsi
+   488f8:	rol    $0xd,%rdx
+   488fc:	add    %rcx,%rax
+   488ff:	xor    %rsi,%rdx
+   48902:	rol    $0x10,%rcx
+   48906:	xor    %rax,%rcx
+   48909:	rol    $0x20,%rsi
+   4890d:	add    %rdx,%rax
+   48910:	add    %rcx,%rsi
+   48913:	rol    $0x11,%rdx
+   48917:	xor    %rax,%rdx
+   4891a:	rol    $0x15,%rcx
+   4891e:	rol    $0x20,%rax
+   48922:	xor    %rsi,%rcx
+   48925:	add    %rdx,%rsi
+   48928:	rol    $0xd,%rdx
+   4892c:	add    %rcx,%rax
+   4892f:	xor    %rsi,%rdx
+   48932:	rol    $0x10,%rcx
+   48936:	xor    %rax,%rcx
+   48939:	add    %rdx,%rax
+   4893c:	rol    $0x11,%rdx
+   48940:	rol    $0x15,%rcx
+   48944:	mov    %rax,%rsi
+   48947:	rol    $0x20,%rsi
+   4894b:	xor    %rdx,%rsi
+   4894e:	xor    %rcx,%rsi
+   48951:	xor    %rax,%rsi
+   48954:	mov    %rsi,%rax
+   48957:	shr    $0x39,%rax
+   4895b:	movd   %eax,%xmm0
+   4895f:	punpcklbw %xmm0,%xmm0
+   48963:	pshuflw $0x0,%xmm0,%xmm0
+   48968:	pshufd $0x44,%xmm0,%xmm0
+   4896d:	xor    %eax,%eax
+   4896f:	mov    0x100(%rsp),%rdi
+   48977:	and    %rdi,%rsi
+   4897a:	mov    0x130(%rsp),%rcx
+   48982:	movdqu (%rcx,%rsi,1),%xmm1
+   48987:	movdqa %xmm1,%xmm2
+   4898b:	pcmpeqb %xmm0,%xmm2
+   4898f:	pmovmskb %xmm2,%ecx
+   48993:	test   %ecx,%ecx
+   48995:	je     489cc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1a5c>
+   48997:	tzcnt  %ecx,%edx
+   4899b:	add    %rsi,%rdx
+   4899e:	and    %rdi,%rdx
+   489a1:	shl    $0x3,%rdx
+   489a5:	mov    0x130(%rsp),%rdi
+   489ad:	sub    %rdx,%rdi
+   489b0:	cmp    -0x8(%rdi),%rbx
+   489b4:	je     48669 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x16f9>
+   489ba:	lea    -0x1(%rcx),%edx
+   489bd:	and    %cx,%dx
+   489c0:	mov    %edx,%ecx
+   489c2:	mov    0x100(%rsp),%rdi
+   489ca:	jne    48997 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1a27>
+   489cc:	pcmpeqd %xmm2,%xmm2
+   489d0:	pcmpeqb %xmm2,%xmm1
+   489d4:	pmovmskb %xmm1,%ecx
+   489d8:	test   %ecx,%ecx
+   489da:	jne    4849c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x152c>
+   489e0:	add    %rax,%rsi
+   489e3:	add    $0x10,%rsi
+   489e7:	add    $0x10,%rax
+   489eb:	jmp    4896f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x19ff>
+   489ed:	movups 0x140(%rsp),%xmm0
+   489f5:	movups 0x150(%rsp),%xmm1
+   489fd:	movups 0x160(%rsp),%xmm2
+   48a05:	movaps %xmm2,0x3d0(%rsp)
+   48a0d:	movaps %xmm1,0x3c0(%rsp)
+   48a15:	movaps %xmm0,0x3b0(%rsp)
+   48a1d:	movups 0xa8(%rsp),%xmm0
+   48a25:	movaps %xmm0,0x370(%rsp)
+   48a2d:	mov    0xb8(%rsp),%rax
+   48a35:	mov    %rax,0x380(%rsp)
+   48a3d:	mov    0x30(%rsp),%rax
+   48a42:	mov    %rax,0x330(%rsp)
+   48a4a:	mov    0x38(%rsp),%rax
+   48a4f:	mov    %rax,0x338(%rsp)
+   48a57:	mov    0x40(%rsp),%rax
+   48a5c:	mov    %rax,0x340(%rsp)
+   48a64:	mov    0x100(%rsp),%rcx
+   48a6c:	test   %rcx,%rcx
+   48a6f:	je     48a97 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1b27>
+   48a71:	lea    0x17(,%rcx,8),%rax
+   48a79:	and    $0xfffffffffffffff0,%rax
+   48a7d:	add    %rax,%rcx
+   48a80:	cmp    $0xffffffffffffffef,%rcx
+   48a84:	je     48a97 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1b27>
+   48a86:	mov    0x130(%rsp),%rdi
+   48a8e:	sub    %rax,%rdi
+   48a91:	call   *0x76fc1(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   48a97:	cmpb   $0x0,0xf(%rsp)
+   48a9c:	mov    0x228(%rsp),%r13
+   48aa4:	mov    0x1d0(%rsp),%r14
+   48aac:	mov    0x10(%rsp),%rbx
+   48ab1:	jne    48abc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1b4c>
+   48ab3:	mov    %rbp,%rdi
+   48ab6:	call   *0x76f9c(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   48abc:	test   %rbx,%rbx
+   48abf:	je     48ae4 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1b74>
+   48ac1:	lea    0x17(,%rbx,8),%rax
+   48ac9:	and    $0xfffffffffffffff0,%rax
+   48acd:	add    %rax,%rbx
+   48ad0:	cmp    $0xffffffffffffffef,%rbx
+   48ad4:	je     48ae4 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1b74>
+   48ad6:	mov    0x60(%rsp),%rdi
+   48adb:	sub    %rax,%rdi
+   48ade:	call   *0x76f74(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   48ae4:	cmpq   $0x0,0x70(%rsp)
+   48aea:	mov    0x120(%rsp),%rbx
+   48af2:	je     48aff <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1b8f>
+   48af4:	mov    0x78(%rsp),%rdi
+   48af9:	call   *0x76f59(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   48aff:	lea    0x290(%rsp),%rsi
+   48b07:	mov    $0xa0,%edx
+   48b0c:	mov    %r13,%rdi
+   48b0f:	call   *0x76f2b(%rip)        # bfa40 <memcpy@GLIBC_2.14>
+   48b15:	movaps 0x3b0(%rsp),%xmm0
+   48b1d:	movdqa 0x3c0(%rsp),%xmm1
+   48b26:	movdqa 0x3d0(%rsp),%xmm2
+   48b2f:	movdqu %xmm2,0xc0(%r13)
+   48b38:	movdqu %xmm1,0xb0(%r13)
+   48b41:	movups %xmm0,0xa0(%r13)
+   48b49:	mov    0xe8(%rsp),%rax
+   48b51:	mov    %rax,0xd0(%r13)
+   48b58:	mov    0x108(%rsp),%rax
+   48b60:	mov    %rax,0xd8(%r13)
+   48b67:	mov    0xd0(%rsp),%rax
+   48b6f:	mov    %rax,0xe0(%r13)
+   48b76:	mov    0x380(%rsp),%rax
+   48b7e:	mov    %rax,0xf8(%r13)
+   48b85:	movaps 0x370(%rsp),%xmm0
+   48b8d:	movups %xmm0,0xe8(%r13)
+   48b95:	mov    0x340(%rsp),%rax
+   48b9d:	mov    %rax,0x110(%r13)
+   48ba4:	movaps 0x330(%rsp),%xmm0
+   48bac:	movups %xmm0,0x100(%r13)
+   48bb4:	mov    0x20(%rsp),%rax
+   48bb9:	mov    %rax,0x118(%r13)
+   48bc0:	movaps 0x350(%rsp),%xmm0
+   48bc8:	movups %xmm0,0x120(%r13)
+   48bd0:	mov    0xf0(%rsp),%rax
+   48bd8:	mov    %rax,0x130(%r13)
+   48bdf:	mov    0x188(%rsp),%rax
+   48be7:	mov    %rax,0x138(%r13)
+   48bee:	mov    0x180(%rsp),%rax
+   48bf6:	mov    %rax,0x140(%r13)
+   48bfd:	mov    0x1b0(%rsp),%rax
+   48c05:	mov    %rax,0x148(%r13)
+   48c0c:	mov    0x170(%rsp),%rax
+   48c14:	mov    %rax,0x150(%r13)
+   48c1b:	mov    0x138(%rsp),%rax
+   48c23:	mov    %rax,0x158(%r13)
+   48c2a:	mov    %rbx,0x160(%r13)
+   48c31:	mov    %r14,0x168(%r13)
+   48c38:	mov    0x1c0(%rsp),%rax
+   48c40:	mov    %rax,0x170(%r13)
+   48c47:	mov    0x118(%rsp),%rax
+   48c4f:	mov    %rax,0x178(%r13)
+   48c56:	mov    0x1c8(%rsp),%rax
+   48c5e:	mov    %rax,0x180(%r13)
+   48c65:	mov    0x218(%rsp),%rax
+   48c6d:	mov    %rax,0x188(%r13)
+   48c74:	movdqa 0x360(%rsp),%xmm0
+   48c7d:	movdqu %xmm0,0x190(%r13)
+   48c86:	movzbl 0x6f(%rsp),%eax
+   48c8b:	mov    %al,0x1a0(%r13)
+   48c92:	mov    0x260(%rsp),%rbx
+   48c9a:	mov    0x268(%rsp),%r14
+   48ca2:	test   %r14,%r14
+   48ca5:	je     48cd8 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1d68>
+   48ca7:	lea    0x8(%rbx),%r15
+   48cab:	mov    0x76da6(%rip),%r12        # bfa58 <free@GLIBC_2.2.5>
+   48cb2:	jmp    48cc9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1d59>
+   48cb4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   48cc0:	add    $0x18,%r15
+   48cc4:	dec    %r14
+   48cc7:	je     48cd8 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1d68>
+   48cc9:	cmpq   $0x0,-0x8(%r15)
+   48cce:	je     48cc0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1d50>
+   48cd0:	mov    (%r15),%rdi
+   48cd3:	call   *%r12
+   48cd6:	jmp    48cc0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1d50>
+   48cd8:	cmpq   $0x0,0x258(%rsp)
+   48ce1:	je     48cec <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1d7c>
+   48ce3:	mov    %rbx,%rdi
+   48ce6:	call   *0x76d6c(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   48cec:	cmpq   $0x0,0x1e0(%rsp)
+   48cf5:	je     48d05 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1d95>
+   48cf7:	mov    0x1e8(%rsp),%rdi
+   48cff:	call   *0x76d53(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   48d05:	mov    %r13,%rax
+   48d08:	add    $0x3e8,%rsp
+   48d0f:	pop    %rbx
+   48d10:	pop    %r12
+   48d12:	pop    %r13
+   48d14:	pop    %r14
+   48d16:	pop    %r15
+   48d18:	pop    %rbp
+   48d19:	ret
+   48d1a:	lea    0x140(%rsp),%rax
+   48d22:	mov    %rax,0x30(%rsp)
+   48d27:	lea    0x73412(%rip),%rdx        # bc140 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6e8>
+   48d2e:	lea    -0x3e843(%rip),%rdi        # a4f2 <anon.54136273668c12017a25d9d38f3d6fa9.1491.llvm.17395286453373707274+0xc3>
+   48d35:	lea    0x30(%rsp),%rsi
+   48d3a:	lea    0x90(%rsp),%rcx
+   48d42:	mov    0x76f97(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
+   48d49:	mov    %rax,0x8(%rsi)
+   48d4d:	mov    %rcx,0x10(%rsi)
+   48d51:	mov    %rax,0x18(%rsi)
+   48d55:	call   *0x76d4d(%rip)        # bfaa8 <_DYNAMIC+0x280>
+   48d5b:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   48d60:	lea    0x28(%rsp),%rax
+   48d65:	mov    %rax,0x30(%rsp)
+   48d6a:	lea    0x73417(%rip),%rdx        # bc188 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x730>
+   48d71:	lea    -0x3e886(%rip),%rdi        # a4f2 <anon.54136273668c12017a25d9d38f3d6fa9.1491.llvm.17395286453373707274+0xc3>
+   48d78:	lea    0x30(%rsp),%rsi
+   48d7d:	lea    0x160(%rsp),%rcx
+   48d85:	jmp    4947c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x250c>
+   48d8a:	lea    0x178(%rsp),%rax
+   48d92:	mov    %rax,0x290(%rsp)
+   48d9a:	mov    0x76f3f(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
+   48da1:	mov    %rax,0x298(%rsp)
+   48da9:	lea    0x1b8(%rsp),%rcx
+   48db1:	mov    %rcx,0x2a0(%rsp)
+   48db9:	mov    %rax,0x2a8(%rsp)
+   48dc1:	lea    -0x4045c(%rip),%rdi        # 896c <anon.eb89d4395b0ead844ef0b45b8b54da85.185.llvm.3643936799275306673+0x274>
+   48dc8:	lea    0x73231(%rip),%rdx        # bc000 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x5a8>
+   48dcf:	lea    0x290(%rsp),%rsi
+   48dd7:	call   *0x76ccb(%rip)        # bfaa8 <_DYNAMIC+0x280>
+   48ddd:	lea    0x240(%rsp),%rax
+   48de5:	mov    %rax,0x290(%rsp)
+   48ded:	mov    0x76eec(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
+   48df4:	mov    %rax,0x298(%rsp)
+   48dfc:	lea    0x248(%rsp),%rcx
+   48e04:	mov    %rcx,0x2a0(%rsp)
+   48e0c:	mov    %rax,0x2a8(%rsp)
+   48e14:	lea    0x250(%rsp),%rcx
+   48e1c:	mov    %rcx,0x2b0(%rsp)
+   48e24:	mov    %rax,0x2b8(%rsp)
+   48e2c:	lea    0x178(%rsp),%rcx
+   48e34:	mov    %rcx,0x2c0(%rsp)
+   48e3c:	mov    %rax,0x2c8(%rsp)
+   48e44:	lea    0xe(%rsp),%rcx
+   48e49:	mov    %rcx,0x2d0(%rsp)
+   48e51:	mov    0x76e20(%rip),%rcx        # bfc78 <_DYNAMIC+0x450>
+   48e58:	mov    %rcx,0x2d8(%rsp)
+   48e60:	lea    0x238(%rsp),%rcx
+   48e68:	mov    %rcx,0x2e0(%rsp)
+   48e70:	mov    %rax,0x2e8(%rsp)
+   48e78:	lea    -0x40e4c(%rip),%rdi        # 8033 <anon.54136273668c12017a25d9d38f3d6fa9.1490.llvm.17395286453373707274+0x85>
+   48e7f:	lea    0x73192(%rip),%rdx        # bc018 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x5c0>
+   48e86:	lea    0x290(%rsp),%rsi
+   48e8e:	call   *0x76c14(%rip)        # bfaa8 <_DYNAMIC+0x280>
+   48e94:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   48e99:	lea    0xe(%rsp),%rax
+   48e9e:	mov    %rax,0x290(%rsp)
+   48ea6:	mov    0x76dcb(%rip),%rax        # bfc78 <_DYNAMIC+0x450>
+   48ead:	mov    %rax,0x298(%rsp)
+   48eb5:	lea    -0x40b41(%rip),%rdi        # 837b <anon.58baeeae7d5fe476157d296c9f08f803.181.llvm.5844774155465566772+0x1c6>
+   48ebc:	lea    0x7316d(%rip),%rdx        # bc030 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x5d8>
+   48ec3:	lea    0x290(%rsp),%rsi
+   48ecb:	call   *0x76bd7(%rip)        # bfaa8 <_DYNAMIC+0x280>
+   48ed1:	lea    0x732c8(%rip),%rdx        # bc1a0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x748>
+   48ed8:	call   *0x76b52(%rip)        # bfa30 <_DYNAMIC+0x208>
+   48ede:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   48ee3:	mov    %r13,0x140(%rsp)
+   48eeb:	lea    0x140(%rsp),%rax
+   48ef3:	mov    %rax,0x30(%rsp)
+   48ef8:	mov    0x76de1(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
+   48eff:	mov    %rax,0x38(%rsp)
+   48f04:	lea    0x1d8(%rsp),%rdx
+   48f0c:	mov    %rdx,0x40(%rsp)
+   48f11:	mov    %rax,0x48(%rsp)
+   48f16:	lea    -0x40f15(%rip),%rcx        # 8008 <anon.54136273668c12017a25d9d38f3d6fa9.1490.llvm.17395286453373707274+0x5a>
+   48f1d:	lea    0x7304c(%rip),%r9        # bbf70 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x518>
+   48f24:	lea    0x280(%rsp),%rsi
+   48f2c:	lea    0x30(%rsp),%r8
+   48f31:	xor    %edi,%edi
+   48f33:	call   *0x76bc7(%rip)        # bfb00 <_DYNAMIC+0x2d8>
+   48f39:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   48f3e:	mov    0xb0(%rsp),%rdi
+   48f46:	cmp    $0x15,%rsi
+   48f4a:	jae    494a9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2539>
+   48f50:	lea    0x8(%rdi),%rcx
+   48f54:	test   $0x1,%sil
+   48f58:	jne    49164 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x21f4>
+   48f5e:	mov    (%rdi),%rsi
+   48f61:	mov    0x8(%rdi),%rax
+   48f65:	cmp    %rsi,%rax
+   48f68:	jae    4931a <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23aa>
+   48f6e:	mov    $0x8,%edx
+   48f73:	mov    %rsi,(%rdi,%rdx,1)
+   48f77:	cmp    $0x8,%rdx
+   48f7b:	je     49314 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23a4>
+   48f81:	mov    -0x10(%rdi,%rdx,1),%rsi
+   48f86:	add    $0xfffffffffffffff8,%rdx
+   48f8a:	cmp    %rsi,%rax
+   48f8d:	jb     48f73 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2003>
+   48f8f:	add    %rdi,%rdx
+   48f92:	jmp    49317 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23a7>
+   48f97:	call   *0x76dbb(%rip)        # bfd58 <_DYNAMIC+0x530>
+   48f9d:	mov    %rax,%rcx
+   48fa0:	mov    %rdx,%fs:0x8(%r14)
+   48fa5:	movb   $0x1,%fs:0x10(%r14)
+   48fab:	jmp    478af <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x93f>
+   48fb0:	lea    0x50(%rsp),%rdx
+   48fb5:	lea    0x30(%rsp),%rdi
+   48fba:	mov    %r15,%rsi
+   48fbd:	mov    $0x1,%ecx
+   48fc2:	call   *0x76d98(%rip)        # bfd60 <_DYNAMIC+0x538>
+   48fc8:	xor    %r14d,%r14d
+   48fcb:	lea    0x30(%rsp),%r12
+   48fd0:	mov    (%rbx,%r14,8),%rsi
+   48fd4:	mov    %r12,%rdi
+   48fd7:	call   4bc20 <hashbrown::map::HashMap<K,V,S,A>::insert>
+   48fdc:	inc    %r14
+   48fdf:	cmp    %r14,%r15
+   48fe2:	jne    48fd0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2060>
+   48fe4:	mov    0x48(%rsp),%rax
+   48fe9:	test   %rax,%rax
+   48fec:	sete   %cl
+   48fef:	mov    %rcx,0xc8(%rsp)
+   48ff7:	mov    0x30(%rsp),%rcx
+   48ffc:	mov    %rcx,0x60(%rsp)
+   49001:	mov    0x38(%rsp),%rcx
+   49006:	mov    %rcx,0x10(%rsp)
+   4900b:	mov    0x50(%rsp),%r14
+   49010:	mov    0x58(%rsp),%rcx
+   49015:	mov    %rcx,0x110(%rsp)
+   4901d:	mov    $0x8,%ecx
+   49022:	mov    %rcx,0x108(%rsp)
+   4902a:	test   %rbp,%rbp
+   4902d:	je     4916f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x21ff>
+   49033:	test   %rax,%rax
+   49036:	je     491c9 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2259>
+   4903c:	xor    %r15d,%r15d
+   4903f:	jmp    490d6 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2166>
+   49044:	lea    0x7310d(%rip),%rdx        # bc158 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x700>
+   4904b:	call   *0x769df(%rip)        # bfa30 <_DYNAMIC+0x208>
+   49051:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   49056:	and    0x10(%rsp),%rax
+   4905b:	mov    0x60(%rsp),%rdx
+   49060:	movdqu (%rdx,%rax,1),%xmm1
+   49065:	movdqa %xmm1,%xmm2
+   49069:	pcmpeqb %xmm0,%xmm2
+   4906d:	pmovmskb %xmm2,%edx
+   49071:	test   %edx,%edx
+   49073:	je     4909d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x212d>
+   49075:	tzcnt  %edx,%esi
+   49079:	add    %rax,%rsi
+   4907c:	and    0x10(%rsp),%rsi
+   49081:	shl    $0x3,%rsi
+   49085:	mov    0x60(%rsp),%rdi
+   4908a:	sub    %rsi,%rdi
+   4908d:	cmp    -0x8(%rdi),%r15
+   49091:	je     490be <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x214e>
+   49093:	lea    -0x1(%rdx),%esi
+   49096:	and    %dx,%si
+   49099:	mov    %esi,%edx
+   4909b:	jne    49075 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2105>
+   4909d:	pcmpeqd %xmm2,%xmm2
+   490a1:	pcmpeqb %xmm2,%xmm1
+   490a5:	pmovmskb %xmm1,%edx
+   490a9:	test   %edx,%edx
+   490ab:	jne    491a6 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2236>
+   490b1:	add    %rcx,%rax
+   490b4:	add    $0x10,%rax
+   490b8:	add    $0x10,%rcx
+   490bc:	jmp    49056 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x20e6>
+   490be:	movq   $0x0,0xc8(%rsp)
+   490ca:	mov    %r12,%r15
+   490cd:	cmp    %rbp,%r12
+   490d0:	je     4916f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x21ff>
+   490d6:	lea    0x1(%r15),%r12
+   490da:	mov    %r14,%rdi
+   490dd:	mov    0x110(%rsp),%rsi
+   490e5:	mov    %r15,%rdx
+   490e8:	call   4aba0 <core::hash::BuildHasher::hash_one>
+   490ed:	mov    %rax,%rcx
+   490f0:	shr    $0x39,%rcx
+   490f4:	movd   %ecx,%xmm0
+   490f8:	punpcklbw %xmm0,%xmm0
+   490fc:	pshuflw $0x0,%xmm0,%xmm0
+   49101:	pshufd $0x44,%xmm0,%xmm0
+   49106:	xor    %ecx,%ecx
+   49108:	jmp    49056 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x20e6>
+   4910d:	lea    0xe(%rsp),%rax
+   49112:	mov    %rax,0x388(%rsp)
+   4911a:	lea    0x178(%rsp),%rax
+   49122:	mov    %rax,0x390(%rsp)
+   4912a:	lea    0x1b8(%rsp),%rax
+   49132:	mov    %rax,0x398(%rsp)
+   4913a:	lea    0x230(%rsp),%rax
+   49142:	mov    %rax,0x3a0(%rsp)
+   4914a:	mov    %rbx,0x3a8(%rsp)
+   49152:	lea    0x388(%rsp),%rdi
+   4915a:	call   49980 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched::{{closure}}>
+   4915f:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   49164:	mov    %rcx,%rax
+   49167:	mov    %rdi,%rcx
+   4916a:	jmp    4931e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23ae>
+   4916f:	movq   $0x0,0xe8(%rsp)
+   4917b:	xor    %r15d,%r15d
+   4917e:	mov    %r14,0xd8(%rsp)
+   49186:	mov    %r15,0x288(%rsp)
+   4918e:	cmp    0xd0(%rsp),%r15
+   49196:	mov    0x10(%rsp),%r12
+   4919b:	je     47c3c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xccc>
+   491a1:	jmp    47cf1 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xd81>
+   491a6:	movq   $0x0,0xc8(%rsp)
+   491b2:	jmp    491dc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x226c>
+   491b4:	lea    0x72f9d(%rip),%rdx        # bc158 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x700>
+   491bb:	mov    %rax,%rdi
+   491be:	call   *0x7686c(%rip)        # bfa30 <_DYNAMIC+0x208>
+   491c4:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   491c9:	mov    $0x1,%r12d
+   491cf:	mov    $0x1,%al
+   491d1:	mov    %rax,0xc8(%rsp)
+   491d9:	xor    %r15d,%r15d
+   491dc:	mov    %r14,%rcx
+   491df:	jmp    4791d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x9ad>
+   491e4:	mov    %rsi,%rbx
+   491e7:	mov    0x10(%rsp),%r12
+   491ec:	call   *0x76b66(%rip)        # bfd58 <_DYNAMIC+0x530>
+   491f2:	mov    %rbx,%rsi
+   491f5:	mov    %rdx,%fs:0x8(%rbx)
+   491fa:	movb   $0x1,%fs:0x10(%rbx)
+   491ff:	jmp    4818a <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x121a>
+   49204:	mov    %rsi,%r14
+   49207:	lea    0x50(%rsp),%rdx
+   4920c:	lea    0x30(%rsp),%rdi
+   49211:	mov    0x1c0(%rsp),%rsi
+   49219:	mov    $0x1,%ecx
+   4921e:	call   *0x76b3c(%rip)        # bfd60 <_DYNAMIC+0x538>
+   49224:	lea    0x30(%rsp),%r15
+   49229:	mov    0x138(%rsp),%rbx
+   49231:	cmp    0xd0(%rsp),%rbx
+   49239:	jae    49558 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x25e8>
+   4923f:	mov    0x108(%rsp),%rax
+   49247:	mov    (%rax,%rbx,8),%rsi
+   4924b:	mov    %r15,%rdi
+   4924e:	call   4bc20 <hashbrown::map::HashMap<K,V,S,A>::insert>
+   49253:	inc    %rbx
+   49256:	cmp    %rbx,0x120(%rsp)
+   4925e:	jne    49231 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x22c1>
+   49260:	mov    0x30(%rsp),%rax
+   49265:	mov    %rax,0x20(%rsp)
+   4926a:	mov    0x38(%rsp),%rax
+   4926f:	mov    %rax,0xa0(%rsp)
+   49277:	movdqu 0x38(%rsp),%xmm0
+   4927d:	movdqa %xmm0,0x350(%rsp)
+   49286:	mov    0x48(%rsp),%rax
+   4928b:	mov    %rax,0xf0(%rsp)
+   49293:	mov    0x50(%rsp),%rax
+   49298:	mov    %rax,0x188(%rsp)
+   492a0:	mov    0x58(%rsp),%rax
+   492a5:	mov    %rax,0x180(%rsp)
+   492ad:	mov    0xb0(%rsp),%rbx
+   492b5:	mov    0xb8(%rsp),%r15
+   492bd:	cmpb   $0x1,%fs:0x10(%r14)
+   492c3:	je     49572 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2602>
+   492c9:	call   *0x76a89(%rip)        # bfd58 <_DYNAMIC+0x530>
+   492cf:	mov    %r14,%rsi
+   492d2:	mov    %rdx,%rdi
+   492d5:	mov    %rdx,%fs:0x8(%r14)
+   492da:	movb   $0x1,%fs:0x10(%r14)
+   492e0:	mov    0x118(%rsp),%r14
+   492e8:	mov    %rax,%r12
+   492eb:	jmp    48228 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x12b8>
+   492f0:	lea    0x50(%rsp),%rdx
+   492f5:	cmp    %r15,%r13
+   492f8:	cmovb  %r13,%r15
+   492fc:	lea    0x30(%rsp),%rdi
+   49301:	mov    %r15,%rsi
+   49304:	mov    $0x1,%ecx
+   49309:	call   *0x76a51(%rip)        # bfd60 <_DYNAMIC+0x538>
+   4930f:	jmp    48285 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1315>
+   49314:	mov    %rdi,%rdx
+   49317:	mov    %rax,(%rdx)
+   4931a:	lea    0x10(%rdi),%rax
+   4931e:	cmp    $0x10,%r11
+   49322:	je     47883 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x913>
+   49328:	add    %rdi,%r11
+   4932b:	lea    0x8(%rax),%rdx
+   4932f:	jmp    4934c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23dc>
+   49331:	mov    %rdi,%r8
+   49334:	mov    %rcx,(%r8)
+   49337:	lea    0x8(%rax),%rcx
+   4933b:	add    $0x10,%rax
+   4933f:	add    $0x10,%rdx
+   49343:	cmp    %r11,%rax
+   49346:	je     47883 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x913>
+   4934c:	mov    (%rax),%rsi
+   4934f:	mov    (%rcx),%r8
+   49352:	cmp    %r8,%rsi
+   49355:	jae    49381 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2411>
+   49357:	mov    %rax,%r10
+   4935a:	mov    %r8,(%r10)
+   4935d:	cmp    %rdi,%rcx
+   49360:	je     4937b <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x240b>
+   49362:	lea    -0x8(%rcx),%r9
+   49366:	mov    -0x8(%rcx),%r8
+   4936a:	mov    %rcx,%r10
+   4936d:	mov    %r9,%rcx
+   49370:	cmp    %r8,%rsi
+   49373:	jb     4935a <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23ea>
+   49375:	add    $0x8,%r9
+   49379:	jmp    4937e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x240e>
+   4937b:	mov    %rdi,%r9
+   4937e:	mov    %rsi,(%r9)
+   49381:	mov    (%rax),%rsi
+   49384:	mov    0x8(%rax),%rcx
+   49388:	cmp    %rsi,%rcx
+   4938b:	jae    49337 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23c7>
+   4938d:	mov    %rdx,%r9
+   49390:	lea    -0x8(%r9),%r8
+   49394:	mov    %rsi,(%r9)
+   49397:	cmp    %rdi,%r8
+   4939a:	je     49331 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23c1>
+   4939c:	mov    -0x10(%r9),%rsi
+   493a0:	mov    %r8,%r9
+   493a3:	cmp    %rsi,%rcx
+   493a6:	jb     49390 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2420>
+   493a8:	jmp    49334 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x23c4>
+   493aa:	mov    %r12,%rsi
+   493ad:	lea    0x72dec(%rip),%rax        # bc1a0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x748>
+   493b4:	mov    %rax,0xa0(%rsp)
+   493bc:	mov    0xa0(%rsp),%rdx
+   493c4:	mov    0x10(%rsp),%r12
+   493c9:	call   *0x76661(%rip)        # bfa30 <_DYNAMIC+0x208>
+   493cf:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   493d4:	lea    0x72bc5(%rip),%rdx        # bbfa0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x548>
+   493db:	mov    %r15,%rsi
+   493de:	call   *0x7664c(%rip)        # bfa30 <_DYNAMIC+0x208>
+   493e4:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   493e9:	mov    $0x8,%edi
+   493ee:	jmp    47210 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2a0>
+   493f3:	mov    $0x8,%edi
+   493f8:	jmp    47368 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x3f8>
+   493fd:	mov    $0x8,%edi
+   49402:	mov    $0x20,%esi
+   49407:	call   *0x76613(%rip)        # bfa20 <_DYNAMIC+0x1f8>
+   4940d:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   49412:	mov    0x0(%rbp),%rax
+   49416:	mov    %rax,0x128(%rsp)
+   4941e:	mov    %r8,0x28(%rsp)
+   49423:	cmp    0xe0(%rsp),%rax
+   4942b:	jae    49454 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x24e4>
+   4942d:	lea    0x28(%rsp),%rax
+   49432:	mov    %rax,0x30(%rsp)
+   49437:	lea    0x72d02(%rip),%rdx        # bc140 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6e8>
+   4943e:	lea    -0x3ef53(%rip),%rdi        # a4f2 <anon.54136273668c12017a25d9d38f3d6fa9.1491.llvm.17395286453373707274+0xc3>
+   49445:	lea    0x30(%rsp),%rsi
+   4944a:	lea    0x90(%rsp),%rcx
+   49452:	jmp    4947c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x250c>
+   49454:	lea    0x128(%rsp),%rax
+   4945c:	mov    %rax,0x30(%rsp)
+   49461:	lea    0x72cc0(%rip),%rdx        # bc128 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6d0>
+   49468:	lea    -0x415e9(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   4946f:	lea    0x30(%rsp),%rsi
+   49474:	lea    0x88(%rsp),%rcx
+   4947c:	mov    0x7685d(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
+   49483:	mov    %rax,0x8(%rsi)
+   49487:	mov    %rcx,0x10(%rsi)
+   4948b:	mov    %rax,0x18(%rsi)
+   4948f:	mov    0x10(%rsp),%r12
+   49494:	call   *0x7660e(%rip)        # bfaa8 <_DYNAMIC+0x280>
+   4949a:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   4949f:	mov    $0x8,%edi
+   494a4:	jmp    47c6d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xcfd>
+   494a9:	lea    0xff(%rsp),%rdx
+   494b1:	call   *0x768b1(%rip)        # bfd68 <_DYNAMIC+0x540>
+   494b7:	jmp    47883 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x913>
+   494bc:	mov    $0x8,%edi
+   494c1:	jmp    47ef4 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xf84>
+   494c6:	mov    $0x8,%edi
+   494cb:	mov    %r15,%rsi
+   494ce:	call   *0x7654c(%rip)        # bfa20 <_DYNAMIC+0x1f8>
+   494d4:	jmp    49570 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2600>
+   494d9:	mov    %r11,0x128(%rsp)
+   494e1:	mov    0xc0(%rsp),%rdx
+   494e9:	neg    %rdx
+   494ec:	mov    %rdx,0x28(%rsp)
+   494f1:	lea    0x128(%rsp),%rax
+   494f9:	mov    %rax,0x30(%rsp)
+   494fe:	lea    0x72c6b(%rip),%rdx        # bc170 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x718>
+   49505:	lea    -0x41686(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   4950c:	lea    0x30(%rsp),%rsi
+   49511:	lea    0x158(%rsp),%rcx
+   49519:	jmp    4947c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x250c>
+   4951e:	mov    (%rdx),%rax
+   49521:	mov    %rcx,0x28(%rsp)
+   49526:	mov    %rax,0x140(%rsp)
+   4952e:	lea    0x28(%rsp),%rax
+   49533:	mov    %rax,0x30(%rsp)
+   49538:	lea    0x72be9(%rip),%rdx        # bc128 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6d0>
+   4953f:	lea    -0x416c0(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   49546:	lea    0x30(%rsp),%rsi
+   4954b:	lea    0x88(%rsp),%rcx
+   49553:	jmp    48d42 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1dd2>
+   49558:	lea    0x72a59(%rip),%rdx        # bbfb8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x560>
+   4955f:	mov    %rbx,%rdi
+   49562:	mov    0xd0(%rsp),%rsi
+   4956a:	call   *0x764c0(%rip)        # bfa30 <_DYNAMIC+0x208>
+   49570:	ud2
+   49572:	mov    %r14,%rsi
+   49575:	mov    %fs:(%r14),%r12
+   49579:	mov    %fs:0x8(%r14),%rdi
+   4957e:	mov    0x118(%rsp),%r14
+   49586:	jmp    48228 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x12b8>
+   4958b:	jmp    49653 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x26e3>
+   49590:	mov    %rax,%r14
+   49593:	jmp    49665 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x26f5>
+   49598:	jmp    495b8 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2648>
+   4959a:	jmp    4959c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x262c>
+   4959c:	mov    %rax,%r14
+   4959f:	mov    0x30(%rsp),%rdi
+   495a4:	mov    0x38(%rsp),%rsi
+   495a9:	call   4ab70 <core::ptr::drop_in_place<std::collections::hash::set::HashSet<usize>>>
+   495ae:	mov    0x10(%rsp),%r12
+   495b3:	jmp    496e8 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2778>
+   495b8:	mov    %rax,%r14
+   495bb:	mov    0x30(%rsp),%rdi
+   495c0:	mov    0x38(%rsp),%rsi
+   495c5:	call   4ab70 <core::ptr::drop_in_place<std::collections::hash::set::HashSet<usize>>>
+   495ca:	jmp    4977e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x280e>
+   495cf:	mov    %rax,%r14
+   495d2:	jmp    495ea <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x267a>
+   495d4:	mov    %rax,%r14
+   495d7:	cmpq   $0x0,0x30(%rsp)
+   495dd:	je     495ea <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x267a>
+   495df:	mov    0x38(%rsp),%rdi
+   495e4:	call   *0x7646e(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   495ea:	cmpq   $0x0,0x100(%rsp)
+   495f3:	je     49665 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x26f5>
+   495f5:	mov    0x100(%rsp),%rcx
+   495fd:	lea    0x17(,%rcx,8),%rax
+   49605:	and    $0xfffffffffffffff0,%rax
+   49609:	add    %rax,%rcx
+   4960c:	cmp    $0xffffffffffffffef,%rcx
+   49610:	je     49665 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x26f5>
+   49612:	mov    0x130(%rsp),%rdi
+   4961a:	sub    %rax,%rdi
+   4961d:	call   *0x76435(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49623:	jmp    49665 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x26f5>
+   49625:	mov    %rax,%r14
+   49628:	jmp    49640 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x26d0>
+   4962a:	mov    %rax,%r14
+   4962d:	cmpq   $0x0,0x30(%rsp)
+   49633:	je     49640 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x26d0>
+   49635:	mov    0x38(%rsp),%rdi
+   4963a:	call   *0x76418(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49640:	mov    0x10(%rsp),%r12
+   49645:	test   %r12,%r12
+   49648:	jne    4975b <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27eb>
+   4964e:	jmp    4977e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x280e>
+   49653:	mov    %rax,%r14
+   49656:	mov    0x30(%rsp),%rdi
+   4965b:	mov    0x38(%rsp),%rsi
+   49660:	call   4ab70 <core::ptr::drop_in_place<std::collections::hash::set::HashSet<usize>>>
+   49665:	cmpq   $0x0,0xa0(%rsp)
+   4966e:	je     4968d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x271d>
+   49670:	mov    0xa0(%rsp),%rcx
+   49678:	lea    0x17(,%rcx,8),%rax
+   49680:	and    $0xfffffffffffffff0,%rax
+   49684:	add    %rax,%rcx
+   49687:	cmp    $0xffffffffffffffef,%rcx
+   4968b:	jne    49694 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2724>
+   4968d:	mov    0x10(%rsp),%r12
+   49692:	jmp    496e8 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2778>
+   49694:	mov    0x20(%rsp),%rdi
+   49699:	sub    %rax,%rdi
+   4969c:	call   *0x763b6(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   496a2:	mov    0x10(%rsp),%r12
+   496a7:	jmp    496e8 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2778>
+   496a9:	jmp    49735 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27c5>
+   496ae:	jmp    49735 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27c5>
+   496b3:	mov    %rax,%r14
+   496b6:	mov    0x260(%rsp),%rbx
+   496be:	mov    0x268(%rsp),%r15
+   496c6:	test   %r15,%r15
+   496c9:	je     49918 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29a8>
+   496cf:	jmp    4994d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29dd>
+   496d4:	jmp    4982f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x28bf>
+   496d9:	jmp    49735 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27c5>
+   496db:	jmp    49735 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27c5>
+   496dd:	mov    %rax,%r14
+   496e0:	jmp    4992c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29bc>
+   496e5:	mov    %rax,%r14
+   496e8:	cmpq   $0x0,0x140(%rsp)
+   496f1:	je     49706 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2796>
+   496f3:	mov    0x148(%rsp),%rdi
+   496fb:	call   *0x76357(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49701:	jmp    49706 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2796>
+   49703:	mov    %rax,%r14
+   49706:	cmpb   $0x0,0xf(%rsp)
+   4970b:	je     4971f <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27af>
+   4970d:	cmpq   $0x0,0xe8(%rsp)
+   49716:	jne    49748 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27d8>
+   49718:	test   %r12,%r12
+   4971b:	jne    4975b <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27eb>
+   4971d:	jmp    4977e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x280e>
+   4971f:	mov    %rbp,%rdi
+   49722:	call   *0x76330(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49728:	cmpq   $0x0,0xe8(%rsp)
+   49731:	je     49718 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27a8>
+   49733:	jmp    49748 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27d8>
+   49735:	mov    %rax,%r14
+   49738:	jmp    4977e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x280e>
+   4973a:	mov    %rax,%r14
+   4973d:	cmpq   $0x0,0xe8(%rsp)
+   49746:	je     49718 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x27a8>
+   49748:	mov    0x108(%rsp),%rdi
+   49750:	call   *0x76302(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49756:	test   %r12,%r12
+   49759:	je     4977e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x280e>
+   4975b:	lea    0x17(,%r12,8),%rax
+   49763:	and    $0xfffffffffffffff0,%rax
+   49767:	add    %rax,%r12
+   4976a:	cmp    $0xffffffffffffffef,%r12
+   4976e:	je     4977e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x280e>
+   49770:	mov    0x60(%rsp),%rdi
+   49775:	sub    %rax,%rdi
+   49778:	call   *0x762da(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   4977e:	cmpq   $0x0,0xa8(%rsp)
+   49787:	je     49797 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2827>
+   49789:	mov    0xb0(%rsp),%rdi
+   49791:	call   *0x762c1(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49797:	cmpq   $0x0,0x70(%rsp)
+   4979d:	jne    4983e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x28ce>
+   497a3:	cmpq   $0x0,0x290(%rsp)
+   497ac:	jne    4986c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x28fc>
+   497b2:	cmpq   $0x0,0x2a8(%rsp)
+   497bb:	jne    49889 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2919>
+   497c1:	cmpq   $0x0,0x2d0(%rsp)
+   497ca:	jne    498a6 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2936>
+   497d0:	cmpq   $0x0,0x2e8(%rsp)
+   497d9:	jne    498c3 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2953>
+   497df:	mov    0x310(%rsp),%rax
+   497e7:	lock decq (%rax)
+   497eb:	jne    498e3 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2973>
+   497f1:	lea    0x310(%rsp),%rdi
+   497f9:	call   *0x76511(%rip)        # bfd10 <_DYNAMIC+0x4e8>
+   497ff:	mov    0x318(%rsp),%rax
+   49807:	lock decq (%rax)
+   4980b:	je     498f5 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2985>
+   49811:	mov    0x260(%rsp),%rbx
+   49819:	mov    0x268(%rsp),%r15
+   49821:	test   %r15,%r15
+   49824:	je     49918 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29a8>
+   4982a:	jmp    4994d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29dd>
+   4982f:	mov    %rax,%r14
+   49832:	cmpq   $0x0,0x70(%rsp)
+   49838:	je     497a3 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2833>
+   4983e:	mov    0x78(%rsp),%rdi
+   49843:	call   *0x7620f(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49849:	cmpq   $0x0,0x290(%rsp)
+   49852:	je     497b2 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2842>
+   49858:	jmp    4986c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x28fc>
+   4985a:	mov    %rax,%r14
+   4985d:	cmpq   $0x0,0x290(%rsp)
+   49866:	je     497b2 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2842>
+   4986c:	mov    0x298(%rsp),%rdi
+   49874:	call   *0x761de(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   4987a:	cmpq   $0x0,0x2a8(%rsp)
+   49883:	je     497c1 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2851>
+   49889:	mov    0x2b0(%rsp),%rdi
+   49891:	call   *0x761c1(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49897:	cmpq   $0x0,0x2d0(%rsp)
+   498a0:	je     497d0 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2860>
+   498a6:	mov    0x2d8(%rsp),%rdi
+   498ae:	call   *0x761a4(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   498b4:	cmpq   $0x0,0x2e8(%rsp)
+   498bd:	je     497df <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x286f>
+   498c3:	mov    0x2f0(%rsp),%rdi
+   498cb:	call   *0x76187(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   498d1:	mov    0x310(%rsp),%rax
+   498d9:	lock decq (%rax)
+   498dd:	je     497f1 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x2881>
+   498e3:	mov    0x318(%rsp),%rax
+   498eb:	lock decq (%rax)
+   498ef:	jne    49811 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x28a1>
+   498f5:	lea    0x318(%rsp),%rdi
+   498fd:	call   *0x7640d(%rip)        # bfd10 <_DYNAMIC+0x4e8>
+   49903:	mov    0x260(%rsp),%rbx
+   4990b:	mov    0x268(%rsp),%r15
+   49913:	test   %r15,%r15
+   49916:	jne    4994d <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29dd>
+   49918:	cmpq   $0x0,0x258(%rsp)
+   49921:	je     4992c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29bc>
+   49923:	mov    %rbx,%rdi
+   49926:	call   *0x7612c(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   4992c:	cmpq   $0x0,0x1e0(%rsp)
+   49935:	je     49945 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29d5>
+   49937:	mov    0x1e8(%rsp),%rdi
+   4993f:	call   *0x76113(%rip)        # bfa58 <free@GLIBC_2.2.5>
+   49945:	mov    %r14,%rdi
+   49948:	call   ba7a0 <_Unwind_Resume@plt>
+   4994d:	lea    0x8(%rbx),%r12
+   49951:	mov    0x76100(%rip),%r13        # bfa58 <free@GLIBC_2.2.5>
+   49958:	jmp    49969 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29f9>
+   4995a:	nopw   0x0(%rax,%rax,1)
+   49960:	add    $0x18,%r12
+   49964:	dec    %r15
+   49967:	je     49918 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29a8>
+   49969:	cmpq   $0x0,-0x8(%r12)
+   4996f:	je     49960 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29f0>
+   49971:	mov    (%r12),%rdi
+   49975:	call   *%r13
+   49978:	jmp    49960 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x29f0>
+
+## symbol at 0000000000049980, 0x00000000000000d7 bytes
+0000000000049980 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched::{{closure}}>:
+   49980:	sub    $0x88,%rsp
+   49987:	mov    0x20(%rdi),%rcx
+   4998b:	mov    0x10(%rcx),%rax
+   4998f:	test   %rax,%rax
+   49992:	jne    499a1 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched::{{closure}}+0x21>
+   49994:	lea    0x726ad(%rip),%rdi        # bc048 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x5f0>
+   4999b:	call   *0x7622f(%rip)        # bfbd0 <_DYNAMIC+0x3a8>
+   499a1:	mov    (%rdi),%rdx
+   499a4:	mov    0x8(%rdi),%rsi
+   499a8:	mov    0x10(%rdi),%r8
+   499ac:	mov    0x18(%rdi),%rdi
+   499b0:	mov    0x8(%rcx),%rcx
+   499b4:	lea    (%rcx,%rax,2),%r9
+   499b8:	add    $0xfffffffffffffffe,%r9
+   499bc:	mov    %r9,0x10(%rsp)
+   499c1:	movzwl -0x2(%rcx,%rax,2),%eax
+   499c6:	imul   (%rdi),%ax
+   499ca:	mov    %ax,0xe(%rsp)
+   499cf:	mov    %rdx,0x18(%rsp)
+   499d4:	mov    0x7629d(%rip),%rax        # bfc78 <_DYNAMIC+0x450>
+   499db:	mov    %rax,0x20(%rsp)
+   499e0:	mov    %rsi,0x28(%rsp)
+   499e5:	mov    0x762f4(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
+   499ec:	mov    %rax,0x30(%rsp)
+   499f1:	mov    %r8,0x38(%rsp)
+   499f6:	mov    %rax,0x40(%rsp)
+   499fb:	mov    %rdi,0x48(%rsp)
+   49a00:	mov    %rax,0x50(%rsp)
+   49a05:	mov    %rdi,0x58(%rsp)
+   49a0a:	mov    %rax,0x60(%rsp)
+   49a0f:	lea    0x10(%rsp),%rax
+   49a14:	mov    %rax,0x68(%rsp)
+   49a19:	lea    0xfa0(%rip),%rax        # 4a9c0 <<&T as core::fmt::Display>::fmt>
+   49a20:	mov    %rax,0x70(%rsp)
+   49a25:	lea    0xe(%rsp),%rax
+   49a2a:	mov    %rax,0x78(%rsp)
+   49a2f:	mov    0x7626a(%rip),%rax        # bfca0 <_DYNAMIC+0x478>
+   49a36:	mov    %rax,0x80(%rsp)
+   49a3e:	lea    -0x412f8(%rip),%rdi        # 874d <anon.eb89d4395b0ead844ef0b45b8b54da85.185.llvm.3643936799275306673+0x55>
+   49a45:	lea    0x72614(%rip),%rdx        # bc060 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x608>
+   49a4c:	lea    0x18(%rsp),%rsi
+   49a51:	call   *0x76051(%rip)        # bfaa8 <_DYNAMIC+0x280>

@@ -5,9 +5,9 @@
 # the record carries no clock reading, the arms answer a zero-window request, and
 # no receipt is finalized, so a rerun on the same executables reproduces it byte
 # for byte and the smoke cannot serve as a pilot
-# logical-arm sha256: 92b82abc0cb0380324349ab9c53480f3ff0c78905cedb3fb9d3dd4b03d0b7255
-# logical-isal-arm sha256: 6d600a0f104dd27503704735e9df610f138b81353385142f49a25b0a98a25c77
-PASS semantic oracle: 45 cases, 2366432 checks
+# logical-arm sha256: 960e1e35c55271906ce3563afdbcdb1a67417faf7f3c04e0c052cbdb3fee9d02
+# logical-isal-arm sha256: 1cef17fc1f02f4b38424610d35e7f21307b647a378322cba34bc5899f86c94c3
+PASS semantic oracle: 45 cases, 2366756 checks
 PASS 2037941f-logical-isolated-xor: 2 sessions, resume repeated no cell
 PASS xor-8w-a64-streaming: 2 arms handshook, 0 timing windows, cache streaming
 PASS xor-8w-a64-warm: 2 arms handshook, 0 timing windows, cache warm
