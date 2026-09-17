@@ -34,7 +34,15 @@ pub const PLAN_SCHEMA_ID: &str = "zen3-benchmark-plan-v1";
 /// Schema identity carried by every receipt.
 pub const RECEIPT_SCHEMA_ID: &str = "zen3-benchmark-receipt-v1";
 /// Schema identity carried by every acceptance summary.
-pub const ACCEPTANCE_SCHEMA_ID: &str = "zen3-benchmark-acceptance-v1";
+///
+/// `zen3-benchmark-acceptance-v1` reports the sequential-attempt allocation
+/// under the field name `family_alpha`; `zen3-benchmark-acceptance-v2`
+/// (`@/issue/c5e01de3`) separates that allocation (`attempt_alpha`) from the
+/// frozen total (`family_alpha`) and the per-comparison corrected level
+/// (`corrected_alpha`). A committed v1 summary keeps its bytes and its v1
+/// meaning; a reader that still consumes acceptance summaries branches on
+/// this identity rather than on which fields happen to be present.
+pub const ACCEPTANCE_SCHEMA_ID: &str = "zen3-benchmark-acceptance-v2";
 /// Lifecycle schema recorded in the runner's resume identity.
 pub const RUNNER_LIFECYCLE_SCHEMA: &str = "zen3-benchmark-runner-session-v1";
 

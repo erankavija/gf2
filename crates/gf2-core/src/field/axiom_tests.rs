@@ -765,6 +765,23 @@ fn test_gf2_8_field_axioms() {
     test_field_axioms(gf2m_strategy(&field), 2);
 }
 
+/// The runtime-context GF(2^8) element over `x^8 + x^4 + x^3 + x + 1`, the
+/// modulus whose low eight bits are 0x1B. The polynomial identity is read from
+/// the value passed here, not from a constructor's name.
+#[test]
+fn test_gf2_8_poly_11b_field_axioms() {
+    let field = Gf2mField::new(8, 0b1_0001_1011);
+    test_field_axioms(gf2m_strategy(&field), 2);
+}
+
+/// The runtime-context GF(2^8) element over `x^8 + x^4 + x^3 + x^2 + 1`, the
+/// modulus whose low eight bits are 0x1D.
+#[test]
+fn test_gf2_8_poly_11d_field_axioms() {
+    let field = Gf2mField::new(8, 0b1_0001_1101);
+    test_field_axioms(gf2m_strategy(&field), 2);
+}
+
 #[test]
 fn test_gf2_16_field_axioms() {
     let field = Gf2mField::gf65536();
@@ -1066,6 +1083,48 @@ fn test_order_panics_at_m256() {
 #[ignore]
 fn test_axioms_gf2m_wide_256_stress() {
     test_const_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2);
+}
+
+// ---------------------------------------------------------------------------
+// Single-word GF(2^8) wide configurations, one per reduction polynomial
+// ---------------------------------------------------------------------------
+
+/// GF(2^8) over `x^8 + x^4 + x^3 + x + 1`; low-order bits `0x1b`.
+#[cfg(test)]
+struct Gf256Poly11bTestConfig;
+
+#[cfg(test)]
+impl Gf2mWideConfig<1> for Gf256Poly11bTestConfig {
+    const M: usize = 8;
+    /// `x^4 + x^3 + x + 1 = 0x1b`; the high bit at position 8 is implicit.
+    const MODULUS: [u64; 1] = [0x1b];
+    const NAME: &'static str = "Gf256Poly11bTestConfig";
+}
+
+/// GF(2^8) over `x^8 + x^4 + x^3 + x^2 + 1`; low-order bits `0x1d`.
+#[cfg(test)]
+struct Gf256Poly11dTestConfig;
+
+#[cfg(test)]
+impl Gf2mWideConfig<1> for Gf256Poly11dTestConfig {
+    const M: usize = 8;
+    /// `x^4 + x^3 + x^2 + 1 = 0x1d`; the high bit at position 8 is implicit.
+    const MODULUS: [u64; 1] = [0x1d];
+    const NAME: &'static str = "Gf256Poly11dTestConfig";
+}
+
+/// The single-word wide GF(2^8) representation over the 0x11B modulus, the
+/// companion of [`test_gf2_8_poly_11b_field_axioms`] on the other
+/// representation of the same field.
+#[test]
+fn test_axioms_gf2m_wide_gf256_poly_11b() {
+    test_const_field_axioms(gf2m_wide_strategy::<1, Gf256Poly11bTestConfig>(), 2);
+}
+
+/// The single-word wide GF(2^8) representation over the 0x11D modulus.
+#[test]
+fn test_axioms_gf2m_wide_gf256_poly_11d() {
+    test_const_field_axioms(gf2m_wide_strategy::<1, Gf256Poly11dTestConfig>(), 2);
 }
 
 // ---------------------------------------------------------------------------

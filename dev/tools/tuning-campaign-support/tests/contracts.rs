@@ -2,11 +2,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::fs;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 use tuning_campaign_support::journal::{
     atomic_replace, atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity,
     TerminalState,
 };
+use tuning_campaign_support::scratch::ScratchPath;
 use tuning_campaign_support::seed::{bank_role, fixture_seed, EXTENT_SEED_ROOT};
 use tuning_campaign_support::statistics::{
     analyze_extent, analyze_gemm, analyze_joint_vector, classify_curve, empirical_summary,
@@ -28,15 +29,8 @@ struct Message {
     value: u64,
 }
 
-fn scratch(name: &str) -> std::path::PathBuf {
-    let nonce = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    std::env::temp_dir().join(format!(
-        "tuning-campaign-support-{name}-{}-{nonce}",
-        std::process::id()
-    ))
+fn scratch(name: &str) -> ScratchPath {
+    ScratchPath::reserved(&format!("tuning-campaign-support-{name}"))
 }
 
 #[test]

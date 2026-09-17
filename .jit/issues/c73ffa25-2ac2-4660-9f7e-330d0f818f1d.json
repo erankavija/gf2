@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-16T22:37:03.248580933Z",
+  "dependencies": [
+    "e1f9a78f-1a3e-4066-8744-aa55d10f85db"
+  ],
+  "description": "Record the dense-matvec baseline and freeze the dense-parity candidate portfolio.\n\n## Background\n\n**2094958d — Record the dense-matvec baseline.** Run the frozen allocated `BitMatrix::matvec` cells and commit the current fused AND-popcount production baseline. The measurement covers row strides of 8, 9, 63, 64, and 65 words plus neighboring dimensions and declared cache regimes. The scalar four-accumulator route is a semantic/reference arm; the retained fused SIMD route is the production comparator.\n\n**833dff1a — Freeze the dense-parity candidate portfolio.** Turn the current dense-matvec baseline and profile into a bounded fusion experiment before candidate samples are collected. The portfolio admits at most one profile-justified fusion distinct from the retained fused AND-popcount route. It keeps the generic carry-save no-win out of the search. M4RI remains an external matched-operation comparison under its qualified adapter contract.\n\n## Success Criteria\n\n- [hard] REQ-01: (2094958d REQ-01) A committed receipt contains raw samples, exact commands, frozen matrix/vector identities, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for the dense-matvec cells.\n- [hard] REQ-02: (2094958d REQ-02) Exact parity output, canonical bit indexing, zero tail padding, and declared boundary semantics match the scalar reference.\n- [hard] REQ-03: (2094958d REQ-03) Annotated release assembly and profiles attribute observed costs to allocation, fused kernel work, dependencies, instruction mix, spills, cache traffic, or bandwidth.\n\n- [hard] REQ-04: (833dff1a REQ-01) The portfolio names at most one exact fusion candidate, target cells, rationale from current profiles, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-05: (833dff1a REQ-02) A missing profile signal is recorded as a no-candidate outcome, and the selected fused AND-popcount plus rejected generic carry-save routes remain prior evidence.\n- [hard] REQ-06: (833dff1a REQ-03) Candidate scope uses the canonical matvec and kernel boundary without pre-authorizing a production change.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 2094958d, 833dff1a; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n2094958d: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\n833dff1a: This is an experimental selection contract, not a production adoption decision.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-16T22:37:03.248580933Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "c73ffa25-2ac2-4660-9f7e-330d0f818f1d",
+  "labels": [
+    "component:benchmarks",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:zen3-cpu-performance",
+    "satisfies:REQ-01",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
+  "updated_at": "2026-09-16T23:19:35.942880380Z"
+}

@@ -10,24 +10,22 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "3f57a279-02b3-401f-ba20-c4ed35dac824",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "resolution:merged-into-a1ad6d4e"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Select the zero-copy integration outcome",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T23:31:55.080907883Z"
 }

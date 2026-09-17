@@ -1,0 +1,36 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-16T22:38:43.315534285Z",
+  "dependencies": [
+    "50f0bd42-56d8-4905-a0d5-409b7aa32ba7"
+  ],
+  "description": "Implement the selected dense-parity outcome and confirm it in production under the frozen confirmation addendum.\n\n## Background\n\n**1956017f — Implement the selected dense-parity outcome.** Apply the dense-parity adoption decision through the existing `BitMatrix::matvec` and isolated SIMD kernel boundary. When no candidate qualifies, this issue verifies that the fused AND-popcount production path remains unchanged and records that disposition. A qualifying change is limited to its declared route, retains scalar fallback, and cannot relabel the already selected fusion as new work.\n\n**49b1611b — Confirm the dense-parity production outcome.** Run holdout confirmation for the selected dense-parity outcome against the pinned current baseline, or publish the final no-change verdict. A production change requires allocated whole-`matvec` before/after evidence on the exact declared domain plus neighboring non-regression cells. A no-adoption decision preserves the complete fusion and M4RI record and explains why the current fused AND-popcount route remains selected.\n\n## Success Criteria\n\n- [hard] REQ-01: (1956017f REQ-01) The selected outcome is reflected exactly in production code, or the no-adoption decision leaves `matvec` behavior and selection unchanged.\n- [hard] REQ-02: (1956017f REQ-02) Shared scalar/SIMD suites prove exact outputs for empty, aligned, offset, and 0/1/63/64/65 boundary cases with canonical indexing and zero tails.\n- [hard] REQ-03: (1956017f REQ-03) Any unsafe intrinsic code stays in `gf2-kernels-simd` with an explicit safety contract, annotated release assembly is committed for modified SIMD symbols, and Rust 1.95 builds the affected path.\n\n- [hard] REQ-04: (49b1611b REQ-01) Any production change has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results for primary and neighboring cells.\n- [hard] REQ-05: (49b1611b REQ-02) Allocated whole-`matvec` cells demonstrate the predeclared worthwhile benefit without regression outside the selected domain; otherwise the change is not accepted and contradictory evidence remains committed.\n- [hard] REQ-06: (49b1611b REQ-03) The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, assembly, profiles, and exact commands by content identity.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 1956017f, 49b1611b; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n1956017f: Before/after performance confirmation is intentionally separate from this code change.\n\n49b1611b: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\nThe merge keeps the code change and its confirmation as separate stages and separate commits: the confirmation measures the merged code against the pinned pre-change baseline, so the source note that they are separate still holds inside this one task.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-16T22:38:43.315534285Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "doc-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "6e87c436-53d2-4fd4-bf58-aee2c7ed97fb",
+  "labels": [
+    "component:benchmarks",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:zen3-cpu-performance",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Implement and confirm the dense-parity outcome",
+  "updated_at": "2026-09-16T23:20:26.975525686Z"
+}

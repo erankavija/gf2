@@ -1,0 +1,14 @@
+# command: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-dvb-campaign.sh v4-r1
+# invocation: new
+# started_utc: 2026-09-16T01:00:30Z
+# gf2 revision (informational): 8dff5165469ee58e54bac26ac91dcb219ebc2b7b
+# xdsopl revision: 32357d8ad55a6a302c34e093759f0454e45cca56
+# addendum: dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json sha256=47865f3f83bba6dc085d91fcfc828cc0424a0869289a0505564b548ab2a3d869
+# producing manifest: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json sha256=00d589c6186d7f9ac643a5025af3fcb2e3f07a1d6490ed9eb16e7c80edb612ec
+# executable: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-arms-native/release/dvb-profile-arm sha256=ad922ee2fca2ec366ae9ecce7264d3bc1922629a7e144758bddc438372ef6671
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r1-9fb40c83-dvb-interleave-profile
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r1-9fb40c83-dvb-interleave-profile.plan.json sha256=c5ce288d103e173e396d94ee754eb63aa1b302542b9811d6d42a9e412ff311d4
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14);binary: rustc;commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860;commit-date: 2026-04-14;host: x86_64-unknown-linux-gnu;release: 1.95.0;LLVM version: 22.1.2;
+# load_avg_start:  04:00:30 up 12 days,  5:29, 13 users,  load average: 0.12, 0.13, 0.15
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r1-9fb40c83-dvb-interleave-profile/execution.log
+# session 1 exit: 1

@@ -1,12 +1,197 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-16T15:57:24.311366316Z",
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
     "92385645-25ab-480c-996b-61049d186a70"
   ],
-  "description": "Freeze the confirmatory protocol for dense `BitMatrix::matvec` and its qualified M4RI comparison before candidate measurements begin.\n\n## Background\n\nThe protocol covers row strides of 8, 9, 63, 64, and 65 words, neighboring dimensions, relevant cache regimes, output allocation, and adapter costs. The current fused AND-popcount route is the production baseline; the already rejected generic carry-save comparator is not a fresh candidate.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins matrices, vectors, dimensions, density, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated kernel observations from allocated whole-`matvec` benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The M4RI arm follows the matched-operation specification and charges construction, conversion, execution, and output costs without substituting transpose evidence.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.",
-  "documents": [],
+  "description": "Freeze the confirmatory protocol for dense `BitMatrix::matvec` and its qualified M4RI comparison before candidate measurements begin.\n\n## Background\n\nThe protocol covers row strides of 8, 9, 63, 64, and 65 words, neighboring dimensions, relevant cache regimes, output allocation, and adapter costs. The current fused AND-popcount route is the production baseline; the already rejected generic carry-save comparator is not a fresh candidate.\n\n## Success Criteria\n\n- [hard] REQ-01: The addendum pins matrices, vectors, dimensions, density, cache regimes, seeds, warmup, sample bounds, repetitions, primary cells, estimator, confidence procedure, outlier policy, multiple-comparison family, search budget, and stopping rule before confirmation.\n- [hard] REQ-02: Family-specific worthwhile-effect, equivalence-margin, complexity, and measurement-resolution rules distinguish isolated kernel observations from allocated whole-`matvec` benefit and retain negative or unavailable cells.\n- [hard] REQ-03: The M4RI arm follows the matched-operation specification and charges construction, conversion, execution, and output costs without substituting transpose evidence.\n\n## Notes\n\nThe normative measurement rules are in `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`.\n\nSource references: [AlbrechtBard2026].",
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ca6a7d1d433a5994381c8819e7cdd4e265e6d6aecfc7d2a57529195dbf5c4d58",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/m4ri-build-pins.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d1d8eeac58070975ba930cd1d60db94f96417fc1b8600dd2aef698e3a565b498",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/run-m4ri-matvec-probe.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4767a66105bb43b403c544ff8beaa092c582aae0544f0f0daa38799222bd0351",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../f547c394/addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2c30b174090ec8b575c07dc36e475c9d42acaa65d6abd3b805798ab32e8125f9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/dense-parity-source-evidence.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2f71d2fab2c3bb03d35f63654a1d9be63b9f4c0446b1758f1a446f29ba716e0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../5cbb6545/findings.md",
+          "resolved_path": "dev/active/5cbb6545/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "949aed84fec7839f3cad2383daf01f682da45e5b83c37dc487ae84903a73c99b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/check-m4ri-build-provenance.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-m4ri-build-provenance.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f64989872d148abad318151419fe08e84962869ead3e33b4486d960c8c50b71e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/make-dense-parity-source-evidence.py",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "22016f47de82502a989a6e46f1e1d92bc43e5144709212d9701da994e3d5707c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa88b8372deb892a230dcae5d1429b02db0517d9d576885bb9dc23074609182c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/m4ri_matvec_probe.c",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_probe.c"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "089883c3439913cb79064908b0e9dd98686ebb800124939bf3dbf335566da43f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/5cbb6545/tables.md",
+          "resolved_path": "dev/bench_results/5cbb6545/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e761c1335ef1ff1e6c39f5610cd552aa78282293e3faf69467d2f3ab6fc188c2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../crates/gf2-core/src/matrix.asm.txt",
+          "resolved_path": "crates/gf2-core/src/matrix.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f3ed481c92c24b6887aa1258f5260809dce9d62c602955162da260289bce0d72",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../04b85d10/findings.md",
+          "resolved_path": "dev/active/04b85d10/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "64004e045aad1122061373f23226d15863845b60168eb14954db6a9572895a0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "m4ri-operation-match.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f3460aaa053fc8f0398c489118324bdc3947fa06a1666b21b4019de266fa325b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/tables.md",
+          "resolved_path": "dev/bench_results/04b85d10/tables.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Dense-parity measurement addendum (2037941f-dense-parity-v1)",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Dense-parity source-evidence ledger (17 pinned gf2 claims)",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Generator that regenerates and re-verifies the dense-parity source ledger",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/96c94b81-r1.md"
+    }
+  ],
+  "done_at": "2026-09-16T18:49:44.162307823Z",
+  "first_ready_at": "2026-09-16T12:09:51.453702532Z",
   "gates_required": [
     "repo-validate",
     "doc-review",
@@ -16,7 +201,43 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:33:57.851170338Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:39:10.954273423Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:38:24.438447577Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:40:25.456021163Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T18:23:37.406328090Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-09-16T17:37:30.406262876Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-16T18:04:41.549894306Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "96c94b81-f0d9-4122-9fae-027ae3f6bb01",
   "labels": [
     "type:task",
@@ -27,10 +248,11 @@
     "satisfies:REQ-02",
     "satisfies:REQ-03",
     "satisfies:REQ-06",
-    "cites:AlbrechtBard2026"
+    "cites:AlbrechtBard2026",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Freeze the dense-parity measurement addendum",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T22:09:21.107485315Z"
 }

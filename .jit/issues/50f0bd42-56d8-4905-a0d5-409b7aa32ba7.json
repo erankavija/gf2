@@ -1,0 +1,38 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-16T22:37:53.286171086Z",
+  "dependencies": [
+    "c73ffa25-2ac2-4660-9f7e-330d0f818f1d",
+    "fcb04d66-e997-491e-8855-a505e139a39b"
+  ],
+  "description": "Measure the M4RI dense comparison and the profile-selected matvec fusion, then select the dense-parity production outcome.\n\n## Background\n\n**44fcbdc2 — Measure the M4RI dense comparison.** Execute the frozen M4RI matched-operation comparison against the dense gf2 consumer and publish both operation and adapter-inclusive observations. Only the qualified consuming operation is measured. Transpose or BCH-generator results are not substitutes. Matrix construction, representation conversion, execution, and output materialization stay visible in the whole-consumer arm.\n\n**5db985b0 — Measure the profile-selected matvec fusion.** Implement at most one profile-justified dense-matvec fusion experiment that is distinct from the selected fused AND-popcount route. The current AVX2 path already fuses AND with population accumulation, and the generic carry-save comparator is already unselected. If the baseline exposes no distinct material fusion opportunity within budget, the study records a no-candidate result rather than relabelling either established route. Any intrinsic arm retains runtime feature gating plus the tested scalar fallback, and every new unsafe boundary requires an explicit safety contract.\n\n**6ba2e919 — Select the dense-parity production outcome.** Apply the frozen adoption rules to the profile-selected fusion and M4RI comparison evidence, producing one auditable dense-parity outcome. Selection uses confidence-bound allocated whole-consumer benefit, exact parity equivalence, maintenance complexity, and declared dispatch domain. M4RI isolated throughput cannot select an incompatible production route, and the current fused AND-popcount implementation remains when no candidate qualifies.\n\n## Success Criteria\n\n- [hard] REQ-01: (44fcbdc2 REQ-01) The receipt contains raw samples, exact external build and run commands, content-pinned matrices, runtime path evidence, statistical interpretation, and all construction, adapter, conversion, and output costs.\n- [hard] REQ-02: (44fcbdc2 REQ-02) Semantically equivalent output is demonstrated for the frozen dimensions and boundary cells, with isolated operation throughput reported separately from consumer benefit.\n- [hard] REQ-03: (44fcbdc2 REQ-03) Losing, inconclusive, unmatched, or unavailable cells remain in the committed evidence without triggering production adoption.\n\n- [hard] REQ-04: (5db985b0 REQ-01) The candidate is traceable to a measured cost center and has shared exact-output coverage for scalar fallback plus aligned, offset, and 0/1/63/64/65 boundary cases.\n- [hard] REQ-05: (5db985b0 REQ-02) The receipt reports allocated whole-`matvec` samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile attribution.\n- [hard] REQ-06: (5db985b0 REQ-03) The current fused AND-popcount path remains the baseline rather than a new candidate, no production selection changes here, and a no-candidate or losing outcome is preserved.\n- [hard] REQ-07: (5db985b0 REQ-04) Every new unsafe boundary is isolated to `gf2-kernels-simd` and carries an explicit safety contract covering pointer validity, slice lengths, aliasing, required target features, runtime gating, and scalar fallback reachability.\n\n- [hard] REQ-08: (6ba2e919 REQ-01) The decision evaluates each eligible candidate against the predeclared worthwhile-effect, equivalence-margin, complexity, and multiple-comparison rules using only confirmatory evidence.\n- [hard] REQ-09: (6ba2e919 REQ-02) At most one bounded production change is selected with its exact dispatch domain and required before/after cells, or a no-adoption outcome preserves the established route and all losing evidence.\n- [hard] REQ-10: (6ba2e919 REQ-03) The existing fused AND-popcount and rejected generic carry-save routes remain prior evidence rather than being presented as new optimization work.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 44fcbdc2, 5db985b0, 6ba2e919; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n44fcbdc2: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\n5db985b0: Any intrinsic-bearing experiment must compile and test with Rust 1.95 and remain inside the SIMD kernel crate.\n\n6ba2e919: The decision record is the only authority consumed by the conditional adoption task.\n\n\nSource references: [AlbrechtBard2026].\n",
+  "documents": [],
+  "first_ready_at": "2026-09-16T22:37:53.286171086Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "50f0bd42-56d8-4905-a0d5-409b7aa32ba7",
+  "labels": [
+    "cites:AlbrechtBard2026",
+    "component:benchmarks",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:zen3-cpu-performance",
+    "satisfies:REQ-02",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
+  "updated_at": "2026-09-16T23:20:00.579550833Z"
+}

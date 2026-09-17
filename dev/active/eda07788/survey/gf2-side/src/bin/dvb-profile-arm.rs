@@ -25,6 +25,12 @@ use tuning_campaign_support::host::CpuAffinity;
 use tuning_campaign_support::timing::TimingProgress;
 use tuning_campaign_support::transport;
 
+/// Mirror of the runner's arm request.
+///
+/// `transport::decode_case` accepts only the exact bytes this type re-encodes,
+/// so every field spelling, order and omission rule matches the runner's own
+/// request type: the runner omits `cold_calls` and `decoder` for a cell that
+/// declares neither, and a mirror that spells them `null` rejects the request.
 #[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Request {
@@ -35,9 +41,9 @@ struct Request {
     pair: u32,
     case: Value,
     cache_state: String,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     cold_calls: Option<u64>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     decoder: Option<Value>,
     windows: u32,
     window_target_ms: u32,
@@ -120,8 +126,8 @@ fn main() {
 }
 
 fn run() -> Result<(), String> {
-    require_benchmark_window()?;
     let sentinel = std::env::var(transport::FRESH_CASE_VAR).ok();
+    require_benchmark_window(sentinel.as_deref())?;
     let request: Request = transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock())
         .map_err(|error| error.to_string())?;
     if request.workers_declared != 1 || request.cold_calls.is_some() || request.decoder.is_some() {
@@ -238,7 +244,20 @@ fn run() -> Result<(), String> {
     transport::write_result_line(io::stdout().lock(), &result).map_err(|error| error.to_string())
 }
 
-fn require_benchmark_window() -> Result<(), String> {
+/// Fails a hand invocation closed and leaves window policy to the campaign.
+///
+/// `benchmark-ab-runner` clears the child environment and installs only the
+/// plan's per-arm variables plus the child-v2 sentinel, so a campaign child
+/// never observes the window variables its launcher exported. A child that
+/// carries the sentinel therefore defers to the two layers that do enforce the
+/// window, `survey/run-dvb-campaign.sh` and `dev/scripts/ccx1-bench-flock.sh`,
+/// and to the untimed runner smoke the worker brief requires outside one.
+/// Every other invocation requires the window variables and exits before it
+/// reads a request.
+fn require_benchmark_window(sentinel: Option<&str>) -> Result<(), String> {
+    if sentinel == Some(transport::FRESH_CASE_VALUE) {
+        return Ok(());
+    }
     if std::env::var("GF2_BENCH_WINDOW").as_deref() != Ok("1")
         || std::env::var("GF2_BENCH").as_deref() != Ok("1")
     {

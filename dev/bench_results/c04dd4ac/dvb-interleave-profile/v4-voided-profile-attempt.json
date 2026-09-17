@@ -1,0 +1,61 @@
+{
+  "kind": "voided-family-ledger-attempt",
+  "summary": "The executor aborted this exploratory attempt for a procedural defect in its own launch, before reading any of its results, and voided it under the protocol's voided-attempt rule. Its reservation does not enter the chain the replacement attempt reserves on, so it is never interior to that chain and it spends no comparison and no candidate attempt. The aborted stage is preserved whole beside the published outcomes. The rule reaches only an attempt whose results were unread; an attempt whose results were read spends its reservation like any other.",
+  "attempt": {
+    "family": "dvb-t2-interleave-consumer-profile",
+    "campaign": "v4-r1-9fb40c83-dvb-interleave-profile",
+    "protocol_version": 4,
+    "rule": "dev/active/f547c394/protocol.md, the voided-attempt paragraph of the family-ledger section; dev/active/f547c394/amendment-v4.md records the entry.",
+    "stage": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned",
+    "addendum": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json",
+    "addendum_sha256": "47865f3f83bba6dc085d91fcfc828cc0424a0869289a0505564b548ab2a3d869",
+    "defect": "The arm executable this attempt launched required GF2_BENCH_WINDOW=1 and GF2_BENCH=1 before it read its request. benchmark-ab-runner clears the child environment and installs only PATH, HOME, RAYON_NUM_THREADS, RUSTUP_TOOLCHAIN, the plan's per-arm variables and the child-v2 sentinel, so the window variables the launcher exported never reached the child. The first arm exited 2 without reading stdin, the runner's request write returned a broken pipe, and the child's diagnostics died with the pipe. Behind that defect the arm's request mirror spelled the absent cold_calls and decoder as null, which transport::decode_case rejects as noncanonical, so the handshake would have failed again on the next byte. Both defects are in the arm crate and both are repaired before the replacement attempt.",
+    "results_read": false,
+    "results_read_detail": "The stage reached no cell-complete and wrote no checkpoint unit, so the attempt produced no window, no execution and no interval. Nothing of it is quoted anywhere in this survey.",
+    "abort": {
+      "actor": "runner",
+      "signal": null,
+      "launcher_exit_code": 1,
+      "receipt_written": false,
+      "terminal_event": "failed",
+      "terminal_error": "Broken pipe (os error 32)"
+    },
+    "reservation": {
+      "comparisons": 0,
+      "candidates": [],
+      "in_family_ledger": false,
+      "snapshot": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/inputs/trial-ledger.jsonl",
+      "spends": "nothing: no comparison and no candidate attempt. This family declares only exploratory cells, whose reservations spend zero comparisons in any case, and the replacement attempt reserves on the empty chain this attempt's reservation does not enter."
+    },
+    "cells_declared": 10,
+    "cells_measured": 0,
+    "cells_measured_ids": [],
+    "cells_unmeasured_ids": [
+      "dvb-t2-qam16-r12-normal-streaming-isolated-null",
+      "dvb-t2-qam16-r12-normal-streaming-sim-stage-gap",
+      "dvb-t2-qam16-r12-normal-warm-isolated-null",
+      "dvb-t2-qam16-r12-normal-warm-sim-stage-gap",
+      "dvb-t2-qam16-r12-short-warm-isolated-null",
+      "dvb-t2-qam16-r12-short-warm-sim-stage-gap",
+      "dvb-t2-qam64-r12-normal-warm-isolated-null",
+      "dvb-t2-qam64-r12-normal-warm-sim-stage-gap",
+      "dvb-t2-qam64-r12-short-warm-isolated-null",
+      "dvb-t2-qam64-r12-short-warm-sim-stage-gap"
+    ],
+    "cells_started_unfinished_ids": [
+      "dvb-t2-qam16-r12-normal-warm-isolated-null"
+    ],
+    "execution_log": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log",
+    "execution_log_events": {
+      "campaign-start": 1,
+      "cell-start": 1,
+      "child-spawn": 1,
+      "driver-diagnostic": 2,
+      "failed": 1,
+      "lock-hold": 1,
+      "orchestration-start": 1
+    },
+    "checkpoint_units": 0,
+    "measured_data_location": "none: the stage carries no checkpoint unit and no execution-progress record, so this attempt left no measured window anywhere."
+  }
+}

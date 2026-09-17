@@ -19,9 +19,7 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "f63a2464-424d-4def-a740-8ff1471f0108",
@@ -42,5 +40,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Evaluate quantized layered and QC-aware LDPC candidates",
-  "updated_at": "2026-09-15T02:49:19.848245453Z"
+  "updated_at": "2026-09-16T22:40:53.391329385Z"
 }

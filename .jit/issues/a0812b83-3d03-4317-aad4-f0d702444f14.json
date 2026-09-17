@@ -12,10 +12,7 @@
     "cargo-ci",
     "code-review",
     "doc-review",
-    "research-review",
-    "asm-artefact-present",
-    "holistic-review",
-    "repo-validate"
+    "research-review"
   ],
   "gates_status": {},
   "id": "a0812b83-3d03-4317-aad4-f0d702444f14",
@@ -39,5 +36,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Publish the shift-permutation dispositions",
-  "updated_at": "2026-09-15T00:57:24.562407727Z"
+  "updated_at": "2026-09-16T22:42:19.650808515Z"
 }
