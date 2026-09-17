@@ -476,12 +476,19 @@ fn whole_consumer_cells_charge_conversion_costs() {
 const HARNESS_SOURCE: &str = "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/lib.rs";
 const RUNNER_SOURCE: &str = "dev/tools/tuning-campaign-support/src/campaign.rs";
 
-/// Builds a scratch repository whose producing-input closure pins a harness
-/// source, a campaign-runner source and the manifest itself, all committed.
-fn scratch_closure(name: &str) -> std::path::PathBuf {
+/// An empty directory under this crate's own scratch space, replacing whatever
+/// an earlier run of the same test left there.
+fn scratch_tree(name: &str) -> std::path::PathBuf {
     let root = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
     let _ = std::fs::remove_dir_all(&root);
     std::fs::create_dir_all(&root).expect("scratch root");
+    root
+}
+
+/// Builds a scratch repository whose producing-input closure pins a harness
+/// source, a campaign-runner source and the manifest itself, all committed.
+fn scratch_closure(name: &str) -> std::path::PathBuf {
+    let root = scratch_tree(name);
     for path in [HARNESS_SOURCE, RUNNER_SOURCE, MANIFEST] {
         std::fs::create_dir_all(root.join(path).parent().expect("parent")).expect("parent");
     }
@@ -584,6 +591,52 @@ fn an_extra_campaign_input_joins_the_closure() {
     git(&root, &["commit", "--quiet", "-m", "commit the ledger"]);
     let checked = inputs::check(&root, MANIFEST, &extra).expect("the extended closure is clean");
     assert!(checked.contains(&ledger.to_owned()));
+}
+
+/// The generator that both writes and freshness-checks the closure.
+const CLOSURE_GENERATOR: &str = "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-logical-producing-inputs.py";
+
+/// Regenerates the closure of `root` and compares it with `root`'s committed
+/// manifest, writing nothing.
+fn closure_freshness(root: &std::path::Path) -> std::process::Output {
+    std::process::Command::new("python3")
+        .arg("-B")
+        .arg(CLOSURE_GENERATOR)
+        .arg("--check")
+        .current_dir(root)
+        .output()
+        .expect("the closure generator runs")
+}
+
+#[test]
+fn a_source_added_to_a_measured_crate_fails_the_closure_freshness_check() {
+    let root = repository_root();
+    let inputs = tuning_campaign_support::provenance::ProducingInputs::read_at(&root, MANIFEST)
+        .expect("the committed closure decodes");
+    // Every path the generator enumerates is a build input, so copying the
+    // build inputs alone yields a tree whose closure is the committed one.
+    let scratch = scratch_tree("closure-freshness");
+    for path in &inputs.build_inputs {
+        let target = scratch.join(path);
+        std::fs::create_dir_all(target.parent().expect("parent")).expect("parent");
+        std::fs::copy(root.join(path), &target).expect("copy a producing input");
+    }
+    let current = closure_freshness(&scratch);
+    assert!(
+        current.status.success(),
+        "the copied tree does not reproduce its own closure: {}",
+        String::from_utf8_lossy(&current.stderr)
+    );
+
+    let added = "crates/gf2-core/src/scratch_measured_source.rs";
+    std::fs::write(scratch.join(added), "pub fn added() {}\n").expect("the added source");
+    let stale = closure_freshness(&scratch);
+    assert!(
+        !stale.status.success(),
+        "a source added to a measured crate passed the check"
+    );
+    let refusal = String::from_utf8_lossy(&stale.stderr);
+    assert!(refusal.contains(added), "{refusal}");
 }
 
 #[test]
