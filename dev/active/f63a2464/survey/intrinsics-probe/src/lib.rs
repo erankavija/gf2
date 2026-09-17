@@ -261,10 +261,7 @@ pub unsafe fn rotate_bytes_i8<const K: i32>(x: &[i8; 32], out: &mut [i8; 32]) {
     unsafe {
         let vx = _mm256_loadu_si256(x.as_ptr().cast());
         let swapped = _mm256_permute2x128_si256(vx, vx, 0x01);
-        _mm256_storeu_si256(
-            out.as_mut_ptr().cast(),
-            _mm256_alignr_epi8(swapped, vx, K),
-        );
+        _mm256_storeu_si256(out.as_mut_ptr().cast(), _mm256_alignr_epi8(swapped, vx, K));
     }
 }
 
@@ -384,8 +381,22 @@ mod tests {
             return;
         }
         let cases: [i16; 16] = [
-            0, 1, -1, 127, -127, 128, -128, 255, -256, 4096, -4096, i16::MAX, i16::MIN,
-            i16::MAX - 1, i16::MIN + 1, 32000,
+            0,
+            1,
+            -1,
+            127,
+            -127,
+            128,
+            -128,
+            255,
+            -256,
+            4096,
+            -4096,
+            i16::MAX,
+            i16::MIN,
+            i16::MAX - 1,
+            i16::MIN + 1,
+            32000,
         ];
         for &a in &cases {
             let lhs = [a; 16];
@@ -420,7 +431,11 @@ mod tests {
                 i32::from(min2[0]),
                 i32::from(reference::magnitude_i8(value)),
             );
-            assert_eq!((i32::from(out1[0]), i32::from(out2[0])), want, "value {value}");
+            assert_eq!(
+                (i32::from(out1[0]), i32::from(out2[0])),
+                want,
+                "value {value}"
+            );
             min1 = out1;
             min2 = out2;
         }
@@ -447,7 +462,11 @@ mod tests {
             let x = [value; 16];
             unsafe { fold_two_minima_i16(&min1, &min2, &x, &mut out1, &mut out2) };
             want = reference::fold_two_minima(want.0, want.1, i32::from(value.abs()));
-            assert_eq!((i32::from(out1[0]), i32::from(out2[0])), want, "value {value}");
+            assert_eq!(
+                (i32::from(out1[0]), i32::from(out2[0])),
+                want,
+                "value {value}"
+            );
             min1 = out1;
             min2 = out2;
         }
@@ -481,7 +500,11 @@ mod tests {
         for value in i8::MIN..=i8::MAX {
             x.fill(value);
             unsafe { clip_symmetric_i8(&x, 31, &mut out) };
-            assert_eq!(i32::from(out[0]), i32::from(value).clamp(-31, 31), "value {value}");
+            assert_eq!(
+                i32::from(out[0]),
+                i32::from(value).clamp(-31, 31),
+                "value {value}"
+            );
         }
     }
 
@@ -492,7 +515,16 @@ mod tests {
         if !avx2() {
             return;
         }
-        let x = [-0.0f32, 0.0, 1.0, -1.0, f32::NAN, f32::INFINITY, f32::NEG_INFINITY, -2.0];
+        let x = [
+            -0.0f32,
+            0.0,
+            1.0,
+            -1.0,
+            f32::NAN,
+            f32::INFINITY,
+            f32::NEG_INFINITY,
+            -2.0,
+        ];
         let mut magnitude = [0.0f32; 8];
         let mut sign_bits = [0.0f32; 8];
         let mut comparison = [0.0f32; 8];
@@ -500,7 +532,11 @@ mod tests {
         unsafe { negative_by_comparison_f32(&x, &mut comparison) };
 
         for lane in 0..8 {
-            assert_eq!(magnitude[lane].to_bits(), x[lane].abs().to_bits(), "lane {lane}");
+            assert_eq!(
+                magnitude[lane].to_bits(),
+                x[lane].abs().to_bits(),
+                "lane {lane}"
+            );
             let by_comparison = comparison[lane].to_bits() != 0;
             assert_eq!(by_comparison, x[lane] < 0.0, "lane {lane}");
         }
@@ -522,7 +558,11 @@ mod tests {
             let mut out = [0.0f32; 8];
             unsafe { rotate_lanes_f32(&x, &indices, &mut out) };
             for lane in 0..8 {
-                assert_eq!(out[lane], x[(lane + amount) % 8], "amount {amount} lane {lane}");
+                assert_eq!(
+                    out[lane],
+                    x[(lane + amount) % 8],
+                    "amount {amount} lane {lane}"
+                );
             }
         }
     }
