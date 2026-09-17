@@ -416,7 +416,8 @@ impl QuasiCyclicLdpc {
     ///
     /// Unlike column-removal approaches, this preserves the full mother code
     /// H for BP decoding. Rate matching is handled via LLR initialization:
-    /// punctured positions get LLR=0, filler positions get LLR=+inf.
+    /// punctured positions get LLR=0, filler positions get the finite filler
+    /// magnitude `FILLER_LLR`.
     ///
     /// # Arguments
     ///
