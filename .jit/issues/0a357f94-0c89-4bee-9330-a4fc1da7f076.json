@@ -14,7 +14,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-17T21:22:04.708331335Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-17T21:24:41.952985442Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "0a357f94-0c89-4bee-9330-a4fc1da7f076",
   "labels": [
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
@@ -27,5 +38,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Verify the logical producing-input closure before a timed run",
-  "updated_at": "2026-09-17T00:37:42.056220282Z"
+  "updated_at": "2026-09-17T21:24:41.952985442Z"
 }
