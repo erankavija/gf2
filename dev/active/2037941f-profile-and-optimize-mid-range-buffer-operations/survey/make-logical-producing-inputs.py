@@ -18,11 +18,14 @@ OUTPUT = SURVEY / "logical-producing-inputs.json"
 
 
 def files_under(*roots):
+    # `target` is excluded by its position under ROOT, never by a component of
+    # the absolute path: ROOT itself may sit inside a build directory.
     paths = []
     for root in roots:
         for path in (ROOT / root).rglob("*"):
-            if path.is_file() and "target" not in path.parts:
-                paths.append(str(path.relative_to(ROOT)))
+            relative = path.relative_to(ROOT)
+            if path.is_file() and "target" not in relative.parts:
+                paths.append(str(relative))
     return paths
 
 
