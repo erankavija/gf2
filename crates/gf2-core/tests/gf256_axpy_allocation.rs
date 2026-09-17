@@ -15,7 +15,9 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use gf2_core::field::FieldVec;
-use gf2_core::gf2m::{last_gf256_axpy_lane, Gf2mField, Gf2mWide, Gf2mWideConfig, GF256_TABLE_LANE};
+use gf2_core::gf2m::{
+    last_gf256_table_lane, Gf2mField, Gf2mWide, Gf2mWideConfig, GF256_TABLE_LANE,
+};
 
 /// Forwards to the system allocator and counts every allocating call made
 /// while [`ARMED`] is set.
@@ -108,12 +110,12 @@ fn neither_representation_allocates_on_the_table_lane() {
     // both are process-wide and paid once, so they run before the counter arms.
     y.axpy(&coefficient, &x);
     wide_y.axpy(&wide_coefficient, &wide_x);
-    assert_eq!(last_gf256_axpy_lane(), GF256_TABLE_LANE);
+    assert_eq!(last_gf256_table_lane(), GF256_TABLE_LANE);
 
     let element_allocations = allocations_during(|| y.axpy(&coefficient, &x));
-    assert_eq!(last_gf256_axpy_lane(), GF256_TABLE_LANE);
+    assert_eq!(last_gf256_table_lane(), GF256_TABLE_LANE);
     let wide_allocations = allocations_during(|| wide_y.axpy(&wide_coefficient, &wide_x));
-    assert_eq!(last_gf256_axpy_lane(), GF256_TABLE_LANE);
+    assert_eq!(last_gf256_table_lane(), GF256_TABLE_LANE);
 
     assert_eq!(element_allocations, 0);
     assert_eq!(wide_allocations, 0);
