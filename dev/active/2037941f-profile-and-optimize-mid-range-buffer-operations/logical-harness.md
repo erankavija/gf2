@@ -68,9 +68,9 @@ The declared unavailable row `isal-dispatched-xor-gen` carries no workload and
 no samples, so it takes no ordinal and generates no seed. It is not a runner
 cell: the runner's only unavailable path is an unresolvable core arm. The
 ISA-L family's receipt and table generator in `65c0e13d` carries that row with
-the NASM-absence reason from [`isal-comparator.md`](isal-comparator.md), and
-the family's confirmatory reservation spends the comparison
-($m = 6$) that the row declares.
+the NASM-absence reason from [`isal-comparator.md`](isal-comparator.md); the
+row spends no comparison, and the family's confirmatory reservation is the
+five scalar-gap cells the addendum's Amendment 1 declares ($m = 5$).
 
 `logical-campaign cells` transcribes one family into a protocol version-4
 campaign JSON addendum against `dev/active/f547c394/addendum.schema.json`. The
@@ -209,7 +209,18 @@ that the window's `--locked -p tuning-campaign-support` build resolves — and t
 closure manifest itself, which the window guard reads to decide what to check.
 The harness contract test derives that manifest set from `cargo metadata` for
 both workspaces, so a new crate on either path fails the test rather than
-slipping past the guard. `survey/make-logical-source-evidence.py` writes
+slipping past the guard.
+
+The source sections are a snapshot of the tree they were enumerated from, so
+`make-logical-producing-inputs.py --check` regenerates the closure from the
+current tree, writes nothing, and exits non-zero naming every added and removed
+path when the committed manifest differs. The window runs it immediately before
+the closure guard, so a source added to a measured crate after the last
+regeneration refuses the run instead of being timed outside the closure. A
+harness contract test copies the committed build inputs into a scratch tree,
+adds a source under a measured crate and asserts the refusal names it.
+
+`survey/make-logical-source-evidence.py` writes
 `survey/logical-source-evidence.json`, where every source claim the harness
 makes records its project, commit, path, line, the verbatim line and why. Both
 are regenerated rather than edited, so a claim that moves fails its generator
@@ -256,13 +267,15 @@ also compiles `logical-isal-arm` against the pinned ISA-L checkout into
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
 SHA-256 equals the pin the harness carries, and the campaign JSON matches
 `logical-campaign verify`. It then rebuilds every executable it launches from
-the current tree, and only afterwards runs `logical-campaign inputs`, which
-refuses unless every path of the producing-input closure, plus the campaign JSON
-and the family ledger, is tracked by git and identical to its committed content.
-A path git does not track is a refusal, so a source added to a measured crate
-without being committed stops the run. The closure check is the last step before
-the launch: nothing rebuilds after it, so no executable can carry bytes the
-check never saw. It then projects the plan, prints the execution log path, runs
+the current tree, regenerates the closure with
+`make-logical-producing-inputs.py --check`, and only afterwards runs
+`logical-campaign inputs`, which refuses unless every path of the
+producing-input closure, plus the campaign JSON and the family ledger, is
+tracked by git and identical to its committed content. A source added to a
+measured crate stops the run either way: the freshness check catches one the
+committed closure does not yet name, and the guard catches one it names that
+git does not track. The two closure checks are the last steps before the launch:
+nothing rebuilds after them, so no executable can carry bytes they never saw. It then projects the plan, prints the execution log path, runs
 the runner under `dev/scripts/ccx1-bench-flock.sh --full-host` until the log's
 terminal record is `complete`, finalizes the receipt under
 `dev/bench_results/2037941f/<family>/<run-id>-pilot`, and evaluates it with

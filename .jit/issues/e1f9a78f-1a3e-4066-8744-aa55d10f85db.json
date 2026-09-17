@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-17T00:02:29.845573226Z",
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
@@ -27,7 +28,7 @@
     "epic:zen3-cpu-performance"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Implement the dense-parity measurement harness",
-  "updated_at": "2026-09-16T22:41:31.227648500Z"
+  "updated_at": "2026-09-17T00:02:29.845573226Z"
 }
