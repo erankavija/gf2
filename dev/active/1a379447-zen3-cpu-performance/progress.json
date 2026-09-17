@@ -378,14 +378,14 @@
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "in progress. Planning and the 30-node breakdown are done. ISA-L qualification 3e83c116 is done. M4RI qualification 92385645 is stopped after two rework attempts: review r2 reproduces false GCC provenance through MAKEFLAGS/GNUMAKEFLAGS and awaits invoker guidance. Logical addendum 3ea122df is merged at 7d04c62f; repo, doc, cargo, and code gates pass, while research-review requires invoker approval to add [IsaL2026] to the issue description."
+          "status": "in progress. Session 17: 3ea122df done (77606c84, seven gates); 92385645 done after the invoker-authorized round 3 (make-channel provenance, 5954c15b, seven gates, review r3); bb769456 harness merged at e215ce95 but REWORK: code-review, research-review and holistic-review converge on two blockers (smoke emits timing samples against REQ-03; window clean-input guard covers six paths, not the producing manifest, against REQ-04), review reviews/bb769456-r1.md, no rework dispatched (invoker: no new work). Next ready: 96c94b81 (dense-parity addendum) and the bb769456 rework. Session 18: bb769456 rework 1 dispatched (opus, 2026-09-16T16:06Z); 96c94b81 dispatched (opus, new agent-96c94b81, base 2c52be3d); task b9302771 (m = 5 amendment) filed after bb769456 and before 65c0e13d/c489745b/8197174d/c49e78bc; 65c0e13d gained REQ-04 (ISA-L compiler provenance). Session 18 later: 96c94b81 merged at 9eef5d48 (worker 344918c9, bd92f958; lead-committed edits 0e9df9e8); bb769456 rework 1 merged at 2689d021 (5bf82fed, 5253e0a3, 77304505), both review findings closed; merged-tree cargo-ci green for both; gates pending. Worker brief runner-smoke rule amended by the lead (harness smoke with the runner's encoder qualifies). Wave 2 gates: 96c94b81 all seven pass (holistic advisory on the generator docstring fixed by the lead); bb769456 research-review FAIL r2 (closure omits campaign-support Cargo manifest and the manifest itself; smoke record omits --isal): rework 2 dispatched on a fresh opus agent (commits 99aa7128, 4fb54a71, f51bb103). Session 18 end: bb769456 rework 2 merged at b39cfd65, gates not all passed (see status-all); 96c94b81 done. bb769456 done after the holistic-review removal ruling; next: b9302771, 0a357f94, e1f9a78f."
         },
         {
           "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "in progress. Planning and breakdown are instantiated. Source tasks 85fc5ff4 and 9fb40c83 are prepared in isolated worktrees; their six- and fifteen-minute profiling/campaign jobs are queued for the 2026-09-16 04:00 EEST benchmark window."
+          "status": "in progress. Session 17: both source tasks repaired after the 2026-09-16 window handshake failures and merged (9fb40c83 at 24d0c86e, 85fc5ff4 at 34509f0f); each voided its v4-r1 attempt per protocol, smoked every arm through the real runner, and holds a queue line (9fb40c83 v4-r2 campaign; 85fc5ff4 launcher stages the a2 identity). No window is armed (invoker hold). Issues stay in_progress until their window runs and their gates pass. Session 18: window gf2-bench-window-20260917 armed for 2026-09-17 04:00 EEST over the committed queue lines of 85fc5ff4 and 9fb40c83."
         },
         {
           "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
@@ -433,14 +433,56 @@
           "short_id": "c5e01de3",
           "title": "Name attempt alpha correctly in acceptance summaries",
           "classification": "implementation",
-          "status": "dispatched session 17 (sonnet) in the reused agent-53c5a8c0 directory renamed agent-c5e01de3."
+          "status": "done. Session 17: producer split of family/attempt/corrected alpha (round 1), canonical freezer fixed and acceptance schema versioned to zen3-benchmark-acceptance-v2 with a schema-keyed legacy branch (round 2); cargo-ci, code-review, doc-review pass at 2a530ffa; reviews reviews/c5e01de3-r1.md, -r2.md; closed at 6e3eee57."
         },
         {
           "id": "613574db-f283-425f-b664-369f3e93d756",
           "short_id": "613574db",
           "title": "Design cached GF(2^8) tables and consumer hooks",
           "classification": "design",
-          "status": "pending; dispatch when a worker slot frees (opus), reuse agent-19513245."
+          "status": "done. Session 17: design.md and breakdown.md merged at 60dcba18; repo-validate, doc-review and holistic-review pass after the four manifest leaves were instantiated (77c21ecd, b64dc9c4, ad2a6a58, 4c1e441f); review reviews/613574db-r1.md; closed at b47b6592."
+        },
+        {
+          "id": "77c21ecd",
+          "short_id": "77c21ecd",
+          "title": "Cache GF(2^8) byte product tables and route FieldVec::axpy through them",
+          "classification": "implementation",
+          "status": "merged at f03b8c7c (worker 69c07880, 9b1c202f; lead-committed rustdoc sweep a16461dc); merged-tree cargo-ci green (cargo-ci-main-1); lead-run Rust 1.95 build and 2712 gf2-core tests green; gates pending. (2026-09-16T17:32Z) Wave 2: code-review and cargo-ci pass; doc-review F1 (design.md 30-table bound), research-review F1-F3 (Seroussi and Gauss attributions without citekeys; 65536-step claim) fixed by the lead in wave 3; reruns queued. All eight gates pass; done (session 18)."
+        },
+        {
+          "id": "8275a6f8",
+          "short_id": "8275a6f8",
+          "title": "Keep captured child diagnostics when the runner's request write fails",
+          "classification": "implementation",
+          "status": "merged at 63f72897 (worker 57261275, 2f9473f2); merged-tree cargo-ci exposed the new regression test flaking under suite load (stderr callback suppressed when the write error arrived first); lead fix as rework 1 on main (write failure tracked separately, 0/20 stress failures); cargo-ci-main-3 green; gates pending. (2026-09-16T17:32Z) Wave 2: code-review and cargo-ci pass; doc-review F1 twice on callback_error precedence wording, fixed by the lead (e71019fd, c1192323); rerun queued. All three gates pass; done (session 18)."
+        },
+        {
+          "id": "7cdc28e9",
+          "short_id": "7cdc28e9",
+          "title": "Skip non-benchmark receipts in the receipt re-evaluation checker",
+          "classification": "implementation",
+          "status": "merged at cf25c7b5 (worker 170cc2c3, 260099c4, f351bb44; sonnet); lead verified the regenerated record keeps all 62 baseline verdicts and adds 63 receipts plus 1 skipped; code-review F1 (tool docstring named a live receipt) fixed by the lead; doc-review and cargo-ci pass; gates re-run in wave 3 (2026-09-16T18:51Z). Done."
+        },
+        {
+          "id": "94bbe5d7",
+          "short_id": "94bbe5d7",
+          "title": "Freeze confirmation addenda with stage-specific family prose",
+          "classification": "implementation",
+          "status": "pending (sonnet slot)"
+        },
+        {
+          "id": "706a8f93",
+          "short_id": "706a8f93",
+          "title": "Record the achieved scheduling priority in receipt host observations",
+          "classification": "implementation",
+          "status": "pending (sonnet slot)"
+        },
+        {
+          "id": "2c487595",
+          "short_id": "2c487595",
+          "title": "Version the addendum schema alongside its predecessors",
+          "classification": "implementation",
+          "status": "merged at 5e6d0ee7; lead fix 910a6c1d (checker reads HEAD); gates code-review rerun failed; open (2026-09-16T19:12Z). Done after the staged-decoy self-test fix (d45828e2)."
         }
       ]
     },
@@ -473,6 +515,47 @@
           "title": "Calibrate production dispatch for the 5900X",
           "classification": "implementation",
           "status": "pending"
+        },
+        {
+          "id": "b64dc9c4",
+          "short_id": "b64dc9c4",
+          "title": "Route the dense FieldMatrix product for GF(2^8) through the cached table",
+          "classification": "implementation",
+          "status": "in_progress: dispatched session 19 (after the 7cc591a0 /tmp fix merged at fa1d1e54)",
+          "dispatch": {
+            "model": "claude-opus (native subagent)",
+            "worktree": ".agents/worktrees/agent-b64dc9c4",
+            "branch": "worktree-agent-b64dc9c4",
+            "base": "51e6bb81",
+            "attempt": 1,
+            "session": 19
+          }
+        },
+        {
+          "id": "ad2a6a58",
+          "short_id": "ad2a6a58",
+          "title": "Confirm the GF(2^8) axpy path against the current vector route",
+          "classification": "research",
+          "status": "pending; depends on 77c21ecd; needs a window"
+        },
+        {
+          "id": "b9302771",
+          "short_id": "b9302771",
+          "title": "Amend the frozen ISA-L family to five confirmatory cells",
+          "classification": "implementation",
+          "status": "done. Session 19: sonnet worker, attempt 1; merged at 0a49cd0f; merged-tree cargo-ci green; gates cargo-ci, code-review passed, research-review passed on re-run after the lead appended the [IsaL2026] source line (standing approval); 7 artifacts linked; review reviews/b9302771-r1.md PASS; closed at a541cfb7; worktree reclaimed.",
+          "dispatch": {
+            "model": "claude-sonnet (native subagent)",
+            "worktree": ".agents/worktrees/agent-b9302771",
+            "branch": "worktree-agent-b9302771",
+            "base": "51e6bb81",
+            "attempt": 1,
+            "session": 19
+          },
+          "merge_commit": "0a49cd0f",
+          "reviews": [
+            "reviews/b9302771-r1.md"
+          ]
         }
       ]
     },
@@ -485,6 +568,13 @@
           "title": "Evaluate quantized layered and QC-aware LDPC candidates",
           "classification": "research",
           "status": "pending"
+        },
+        {
+          "id": "4c1e441f",
+          "short_id": "4c1e441f",
+          "title": "Confirm the GF(2^8) dense product against the current matrix route",
+          "classification": "research",
+          "status": "pending; depends on b64dc9c4; needs a window"
         }
       ]
     },
@@ -497,12 +587,68 @@
           "title": "Vectorize LDPC decoding across frames",
           "classification": "implementation",
           "status": "pending"
+        },
+        {
+          "id": "18a87159",
+          "short_id": "18a87159",
+          "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
+          "classification": "research",
+          "status": "pending; merged from c489745b, 8197174d, c49e78bc (session 19)"
+        },
+        {
+          "id": "bc091474",
+          "short_id": "bc091474",
+          "title": "Freeze, measure and select the logical-buffer candidates",
+          "classification": "research",
+          "status": "pending; merged from 0064b0a2, 42a22210, 80ed6e9f, a5f29ae5 (session 19)"
+        },
+        {
+          "id": "fcb04d66",
+          "short_id": "fcb04d66",
+          "title": "Implement and confirm the logical-buffer outcome",
+          "classification": "implementation",
+          "status": "pending; merged from 23a08297, b8ef6f13 (session 19)"
+        },
+        {
+          "id": "c73ffa25",
+          "short_id": "c73ffa25",
+          "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
+          "classification": "research",
+          "status": "pending; merged from 2094958d, 833dff1a (session 19)"
+        },
+        {
+          "id": "50f0bd42",
+          "short_id": "50f0bd42",
+          "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
+          "classification": "research",
+          "status": "pending; merged from 44fcbdc2, 5db985b0, 6ba2e919 (session 19)"
+        },
+        {
+          "id": "6e87c436",
+          "short_id": "6e87c436",
+          "title": "Implement and confirm the dense-parity outcome",
+          "classification": "implementation",
+          "status": "pending; merged from 1956017f, 49b1611b (session 19)"
+        },
+        {
+          "id": "a1ad6d4e",
+          "short_id": "a1ad6d4e",
+          "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
+          "classification": "research",
+          "status": "pending; merged from 552fae3b, c9cf13ee, 3f57a279, c71becc5, 7d3ced35, 4497e541 (session 19)"
         }
       ]
     },
     {
       "wave_number": 7,
       "issues": [
+        {
+          "id": "807ddab2",
+          "short_id": "807ddab2",
+          "title": "Trim comments and rustdoc in epic-touched files to the non-obvious-only standard",
+          "classification": "implementation",
+          "status": "pending; after 63bad95d"
+        },
         {
           "id": "1362381c-78c0-42eb-bdc9-4327f20bc343",
           "short_id": "1362381c",
@@ -615,6 +761,66 @@
       "type": "task",
       "in_epic": true,
       "reason": "19513245 positive consumer evidence (axpy, dense product) needs a reviewed library-layer design (cached byte product tables, canonical FieldVec/FieldMatrix hooks) before any implementation ships. Created session 16; slotted into wave 3 in session 17."
+    },
+    {
+      "id": "598d8057",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "9fb40c83 rebuild: choose_k_block in gf2-core m4rm.rs is dead without test-support; cargo-ci's --all-features clippy never sees it; depends on 9fb40c83"
+    },
+    {
+      "id": "7cdc28e9",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "c5e01de3 review H3: dev/active/a203a23c/reevaluate-receipts.sh crashes (KeyError 'addendum') on the 07ca8585 ldpc-device-conformance-v1 receipt; pre-existing on main; depends on 07ca8585, feeds 1362381c"
+    },
+    {
+      "id": "77c21ecd",
+      "type": "task",
+      "in_epic": true,
+      "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
+    },
+    {
+      "id": "b64dc9c4",
+      "type": "task",
+      "in_epic": true,
+      "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
+    },
+    {
+      "id": "ad2a6a58",
+      "type": "task",
+      "in_epic": true,
+      "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
+    },
+    {
+      "id": "4c1e441f",
+      "type": "task",
+      "in_epic": true,
+      "reason": "613574db REQ-04 manifest leaf (cached GF(2^8) tables: L1 axpy hook, L2 dense product hook, L3/L4 paired confirmations); created session 17 with the epic's gate set"
+    },
+    {
+      "id": "8275a6f8",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "9fb40c83 window failure root cause in the shared runner: process.rs propagates the stdin writer's error with ? after the drain loop and drops captured child stdout/stderr; invoker authorized the shared change (session 18); feeds 1362381c"
+    },
+    {
+      "id": "b9302771",
+      "type": "task",
+      "in_epic": true,
+      "reason": "invoker ruling (session 18): close the ISA-L family's m = 6 versus reservable-five gap by amending the closed addendum 3ea122df to m = 5; depends on bb769456; gates 65c0e13d and the three logical baseline records"
+    },
+    {
+      "id": "807ddab2",
+      "type": "task",
+      "in_epic": true,
+      "reason": "invoker ruling (session 19): trim comments and rustdoc in epic-touched files to the non-obvious-only rule; runs after 63bad95d so later tasks do not rewrite trimmed files; gates cargo-ci, code-review, doc-review"
+    },
+    {
+      "id": "7cc591a0",
+      "type": "bug",
+      "in_epic": false,
+      "reason": "filed session 18; session 19 ruling: fix before any further cargo-ci run; dispatched to opus worker in worktree agent-7cc591a0; merged at fa1d1e54, merged-tree cargo-ci green (6065 tests, fixture-leak none), gates cargo-ci and code-review passed with zero findings; review reviews/7cc591a0-r1.md PASS; closed at 55b4cbbf; worktree reclaimed"
     }
   ],
   "escalations": [
@@ -851,6 +1057,69 @@
       "status": "resolved",
       "raised_at": "2026-09-16T08:30Z",
       "resolution": "Invoker (session 17): hold; do not arm a window until told. Repaired jobs stay queued."
+    },
+    {
+      "category": "shared infrastructure (policy item 8)",
+      "issue": "9fb40c83",
+      "question": "authorize the smallest fix in dev/tools/tuning-campaign-support/src/process.rs:341-343: the stdin writer's error propagates with ? after the drain loop, discarding captured stdout/stderr, so run_arm never journals child-diagnostic or child-exit when the request write fails (why the 2026-09-16 window recorded no stderr for 9fb40c83); deliver that error through callback_error instead",
+      "recommendation": "authorize; one-line control-flow change in the shared runner with a regression test",
+      "status": "resolved",
+      "raised_at": "2026-09-16T10:55Z",
+      "resolution": "Invoker authorized (session 18, 2026-09-16): bug 8275a6f8 filed in the epic (feeds 1362381c) and dispatched."
+    },
+    {
+      "category": "protocol gap (shared infrastructure / closed-issue scope)",
+      "issue": "bb769456 / 3ea122df",
+      "question": "the frozen ISA-L family declares m = 6 (five confirmatory cells plus the declared unavailable dispatched row that spends a comparison), but trial_ledger::reserve counts only non-exploratory cells and can reserve five; close the gap by a versioned protocol change (represent a declared unavailable row) or by amending the closed addendum 3ea122df to m = 5",
+      "recommendation": "versioned protocol change: a declared unavailable row is a reservation-bearing cell kind; keeps the frozen, more conservative alpha_c",
+      "status": "resolved",
+      "raised_at": "2026-09-16T12:10Z",
+      "resolution": "Invoker chose option B (session 18): amend the closed addendum 3ea122df to m = 5. Task b9302771 created; depends on bb769456; 65c0e13d, c489745b, 8197174d and c49e78bc depend on it (edges reduced)."
+    },
+    {
+      "category": "epic task candidate (out-of-scope finding)",
+      "issue": "3e83c116 (done) / 65c0e13d",
+      "question": "survey/run-isal-xor-probe.sh compiles ISA-L with the bare name cc and records no compiler identity, so the ISA-L comparator has no compiler provenance (the r1 substance of 92385645 applies); create a task before 65c0e13d measures",
+      "recommendation": "create the task and wire 65c0e13d onto it",
+      "status": "resolved",
+      "raised_at": "2026-09-16T11:45Z",
+      "resolution": "Invoker chose to fold the ISA-L compiler provenance into 65c0e13d (session 18): REQ-04 added to its description with the ruling recorded in Notes."
+    },
+    {
+      "category": "blocker outside the epic (policy item 6)",
+      "issue": "7cc591a0",
+      "question": "/tmp tmpfs inode exhaustion from leaked test fixtures froze the host in session 18 and had refilled to 303K inodes by session 19",
+      "recommendation": "fix first, clear now",
+      "status": "resolved",
+      "raised_at": "2026-09-16T22:30Z",
+      "resolution": "Invoker (session 19): dispatch 7cc591a0 first, add a fixture-count check to cargo-ci.sh, delete the leaked fixture directories now. Done: 303K -> 102K inodes; 7cc591a0 claimed and dispatched to an opus worker in worktree agent-7cc591a0."
+    },
+    {
+      "category": "cross-epic dependencies (policy item 2)",
+      "issue": "1362381c / 63bad95d",
+      "question": "1362381c->fd9d5416 pulled the whole BCH epic into the resolved subtree; 7f809931->2037941f left the mid-range story doubly contained and its 32 children unlabelled",
+      "recommendation": "cut fd9d5416, adopt 2037941f",
+      "status": "resolved",
+      "raised_at": "2026-09-16T22:30Z",
+      "resolution": "Invoker (session 19): both edges removed, 2037941f's children labelled epic:zen3-cpu-performance; subtree 150 -> 111 nodes. Direct epic->story edges were refused by transitive reduction, so the leaf-chain containment stays by tool design."
+    },
+    {
+      "category": "shared infrastructure / epic scope (policy items 4, 8)",
+      "issue": "706a8f93, 94bbe5d7",
+      "question": "the provenance machinery (12.5K lines added to dev/tools/tuning-campaign-support this epic, seven maintenance tasks) ratchets: each review finds a gap, a task adds machinery",
+      "recommendation": "freeze v4, no new machinery tasks",
+      "status": "resolved",
+      "raised_at": "2026-09-16T22:30Z",
+      "resolution": "Invoker (session 19): protocol v4, receipt schema and addendum schema frozen for the epic; 706a8f93 and 94bbe5d7 rejected; rule recorded in worker-brief.md. Gaps found in review become follow-ups outside the epic unless a REQ names them."
+    },
+    {
+      "category": "shared infrastructure (policy item 8)",
+      "issue": "none (AGENTS.md, contrib/gates/code-review-prompt.md)",
+      "question": "comment density up to 63% in touched files, history narration in rustdoc, no concision rule in AGENTS.md",
+      "recommendation": "rule + gate prompt + sweep task",
+      "status": "resolved",
+      "raised_at": "2026-09-16T22:30Z",
+      "resolution": "Invoker (session 19): concision rule added to AGENTS.md and the code-review prompt (54e6f1b9); sweep task 807ddab2 created, wired 1362381c->807ddab2->63bad95d."
     }
   ],
   "rework_counts": {
@@ -867,7 +1136,13 @@
     "1c602857": 2,
     "07ca8585": 1,
     "5cbb6545": 2,
-    "92385645": 0
+    "92385645": 0,
+    "c5e01de3": 2,
+    "bb769456": 2,
+    "8275a6f8": 1,
+    "2c487595": 1,
+    "77c21ecd": 0,
+    "7cdc28e9": 0
   },
   "surfaced_pitfalls": [
     {
@@ -1198,11 +1473,34 @@
       "origin": "issue-impact (freezer default)",
       "disposition": "advisory; the receipt pins the addendum bytes so the frozen file stays; worker brief amended to require --family-description; freezer default change filed as an epic task",
       "criterion_named_by": "none in 1a379447"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "a worktree seeded from the cache pool carries test binaries whose baked CARGO_MANIFEST_DIR names the worktree that built them (agent-1d4fd63d, since removed); 84 tuning-campaign-support tests abort before running until the crate is cleaned (92385645 round 3)",
+      "status": "noted; worker brief already names the stale-seeded-cache remedy"
+    },
+    {
+      "issue": "9fb40c83",
+      "subject": "benchmark-ab-runner clears the child environment (PATH, HOME, RAYON_NUM_THREADS, RUSTUP_TOOLCHAIN, per-arm variables, sentinel only), so an arm that demands GF2_BENCH_WINDOW/GF2_BENCH before reading stdin dies in the handshake; an arm's request mirror must omit absent optional fields exactly as the runner does (decode_canonical byte comparison); when the request write hits EPIPE the runner drops the captured child diagnostics (process.rs:341-343, escalated)",
+      "status": "arm fixed on the branch; shared-runner diagnostics loss escalated"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "seven test helpers create per-test directories under /tmp and never remove them; about 29,700 leaked fixture directories exhausted the tmpfs inode table on 2026-09-16 and froze every shell and build on the host; one full cargo-ci run adds a few thousand",
+      "origin": "host incident (session 18), verified by all four workers",
+      "disposition": "bug 7cc591a0 filed outside the epic; recovered by the invoker deleting the directories; the lead removes the leaked patterns between gate runs until the bug lands",
+      "criterion_named_by": "none in 1a379447"
+    },
+    {
+      "issue": "bb769456",
+      "subject": "the worker brief's 'smoke every arm through the real runner' and REQ-03 'zero receipt samples' cannot both hold: the runner has no zero-window or handshake mode and medians an empty window set into an error (report P2, with the exact runner change proposed and not made)",
+      "origin": "rework 1 (session 18)",
+      "disposition": "lead amended the brief: a non-timed harness smoke using the runner's own encoder and a pinned request mirror qualifies; the runner change stays unimplemented (versioned protocol question) and is recorded here for 1362381c",
+      "criterion_named_by": "bb769456 REQ-03 (met by the harness smoke)"
     }
   ],
   "notes": [
     "Wave numbers are dependency depth; dispatch is dependency-driven within a wave.",
-    "1362381c depends on fd9d5416 (BCH epic ae03bcd0): cross-epic dependency, part of the user-approved plan (plan-review.md); revisit at wave 7.",
     "Invocation scope: the first wave only (user instruction 2026-09-06).",
     "Trap: a worker that stops mid-task leaves uncommitted work; require an early first commit once the scaffold compiles.",
     "Invocation 2026-09-07: complete waves 1 and 2; use Sol, Terra and Luna by difficulty.",
@@ -1279,7 +1577,28 @@
     "Session 16 (2026-09-15): 53c5a8c0, 19513245, and 07ca8585 are done with current gates and independent reviews; 3e83c116 is done; 92385645 exhausted two reworks when review r2 reproduced a MAKEFLAGS/GNUMAKEFLAGS compiler-provenance bypass; 3ea122df merged and passes repo/doc/cargo/code gates but needs invoker approval for the issue-text citation required by research-review; c04dd4ac source jobs are queued for the 2026-09-16 benchmark window. No Astra model was used.",
     "Session 17 (2026-09-16): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time; reuse worktrees; the invoker was interviewed on open escalations. Invoker rule: subagents may not spawn codex subagents. Rulings: 92385645 focused correction authorized with counter reset; 3ea122df citation repair approved and applied; 1d4fd63d question closed (lane unchanged, 63bad95d calibrates); no benchmark window armed until the invoker says so.",
     "Session 17: the 2026-09-16 window lost both c04dd4ac source jobs in about 15 ms each. 85fc5ff4: arm `shifts` exited 2 with 'fresh tuning stdin is not canonical compact JSON' (transport.rs decode_canonical: the arm re-encodes the request and compares bytes). 9fb40c83: the runner hit Broken pipe writing the request, so the dvb-profile-arm exited before reading stdin. Both runners appended a sequence-0 reservation to the (previously empty, committed) family ledgers in the worktrees; the protocol's voided-attempt rule (protocol.md ledger section) governs, since no result was read. Both go back to their workers as handshake rework; the worker brief's 'smoke every arm through the real benchmark-ab-runner on a throwaway plan' evidently was not done against the exact queued arm executables.",
-    "Session 17 disk: the host had 25 GB free. Removed three stale stub directories from the BCH epic and the closed worktrees agent-3e83c116 (233 GB, mostly target/debug) and agent-1c602857 (169 GB, 07ca8585) without harvesting: the reclaim script's rsync harvest copies rather than hardlinks, and the pool (203 GB) already holds the seed they started from. The closed agent-53c5a8c0 directory is reused for c5e01de3 and agent-19513245 is held for 613574db (same evidence tree)."
+    "Session 17 disk: the host had 25 GB free. Removed three stale stub directories from the BCH epic and the closed worktrees agent-3e83c116 (233 GB, mostly target/debug) and agent-1c602857 (169 GB, 07ca8585) without harvesting: the reclaim script's rsync harvest copies rather than hardlinks, and the pool (203 GB) already holds the seed they started from. The closed agent-53c5a8c0 directory is reused for c5e01de3 and agent-19513245 is held for 613574db (same evidence tree).",
+    "Session 17 invoker rulings (later in the session): no separate independent reviews beside the issue gates (the Terra pass convention inherited from sessions 4-16 is void; the lead stopped the in-flight 92385645 pass); subagents may not spawn codex agents; no new work after 12:00Z, finish running tasks and hand off; check for stalled workers every 20 minutes.",
+    "Session 17 stall pattern: three workers idled waiting for a background cargo-ci notification that never woke them, and one wrote a shell wait loop gated on a process-name search that matches its own shell and therefore never exits (the lead killed it). Dispatch prompts must say: wait on the process with the shell's wait builtin or on the log's final line; never gate a loop on a process-name search; never idle before the final report exists.",
+    "Session 17 gate ordering: `jit gate evaluate-all` runs gates in the issue's gate-list order and stops at the first failure; holistic-review sits third on the 2037941f children, so it runs before code/research review and fails on their staleness (92385645) or stops the chain (c5e01de3). Evaluate individually with holistic-review last.",
+    "Session 17 review outcomes: 3ea122df, 92385645, c5e01de3, 613574db done; 9fb40c83 and 85fc5ff4 repaired and merged, awaiting a window; bb769456 merged but in rework (two converging blockers); 4 GF(2^8) leaves created; bugs 598d8057 (dead choose_k_block, outside epic) and 7cdc28e9 (receipt checker skips other schemas, in epic) filed; worktrees agent-3e83c116, agent-1c602857, agent-92385645, agent-c5e01de3 reclaimed without harvest (rsync harvest copies; disk was at 98%).",
+    "Session 18 (2026-09-16T16:06Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time in worktrees, reuse over proliferation; interview the invoker on open escalations. Rulings: m = 6 gap closed by amending the closed addendum to m = 5 (task b9302771); shared-runner diagnostics fix authorized (bug 8275a6f8); ISA-L compiler provenance folded into 65c0e13d as REQ-04; window armed for 2026-09-17 04:00 EEST. Disk: the 'debug' trees of agent-85fc5ff4, agent-bb769456 and the cache pool were hardlinked copies of one 171 GB tree; removing all three freed about 14 GB net (the pool's release and ci-test seeds remain). Dispatched: bb769456 rework 1 (opus, agent-bb769456 fast-forwarded to main), 77c21ecd (opus, warm agent-613574db rebranched worktree-agent-77c21ecd), 96c94b81 (opus, new agent-96c94b81), 8275a6f8 (opus, new agent-8275a6f8).",
+    "Session 18 (2026-09-16T17:32Z): /tmp tmpfs inode exhaustion (test-fixture leak, bug 7cc591a0) froze the host for about an hour; the invoker cleared the directories. Invoker instruction: do not wake idle workers (prompt caching); the lead finished their remaining steps itself. Merges on main with per-merge cargo-ci: 96c94b81+77c21ecd (f03b8c7c), 8275a6f8 (63f72897) + lead fix, bb769456 (2689d021). Dispatched sonnet: 7cdc28e9 (reused agent-96c94b81), 2c487595 (reused agent-613574db); 2c487595 got one in-flight required change (REQ-01 literal: commit the pre-edit v1 schema, no exceptions registry).",
+    "Session 18 (2026-09-16T18:51Z): concurrent `jit gate evaluate` calls collide on .jit-bootstrap.lock (5 s timeout) and codex reviewers' own jit reads add contention; the lead now launches evaluations through scratchpad/gate-driver.sh (staggered starts, retry on lock timeout). Invoker standing approval: append 'Source references: [Key].' to any epic issue whose cites label lacks its token (applied to 96c94b81). The 2c487595 worker removed 172 GB of hardlinked stale caches from its worktree; disk is at about 190 GB free.",
+    "Session 18 end (2026-09-16T19:12Z): invoker rulings late in the session: no new work, handoff when running tasks finish, do not wake idle workers. Closed: 96c94b81, 77c21ecd, 8275a6f8, 7cdc28e9. Open after gates: 2c487595, bb769456. Three worktrees (agent-613574db, agent-96c94b81, agent-8275a6f8) are detached at main and free; agent-bb769456 holds the merged rework branch.",
+    "Session 18 close (2026-09-16T20:35Z): invoker ruling: holistic-review is a container gate, removed from every open leaf under the epic (containers keep it). Closed after the ruling: bb769456, 2c487595. Still open of the reviewed set: none. Rework counts: bb769456 2 (closed on its remaining gates), 2c487595 0 (lead fixes only). Second ruling: tdd-reminder off every open leaf; research-review off non-measurement leaves; asm-artefact-present off leaves that cannot touch SIMD sources.",
+    "Session 19: 1362381c->fd9d5416 removed; the BCH epic is no longer in this subtree.",
+    "Trap (session 19): every jit mutation takes about 18 s (repository-image capture spawns three git processes per document reference, twice; upstream just-in-time issue 9c9ac88e) and holds .jit-bootstrap.lock throughout, so concurrent mutations or gate evaluations fail with a 5 s lock timeout. Run mutations strictly one at a time; use `jit issue update --filter` for multi-issue label changes; wrap each mutation in a retry on lock timeout.",
+    "Trap (session 19): zsh does not word-split unquoted variables; a `for i in $ids` loop passed the whole list as one argument. Use `while read -r` or `${(f)var}`.",
+    "Trap (session 19): `jit issue create --json` output did not parse as JSON in a pipeline; read the created id from `git status --short .jit` instead of parsing.",
+    "Session 19 ruling: native subagents in preference to codex; model by task difficulty (sonnet/opus), no Fable subagents.",
+    "Session 19 ruling: provenance freeze (protocol v4, receipt and addendum schemas final); comment concision rule in AGENTS.md is enforced by code-review.",
+    "Session 19 simplification ruling: the mid-range story 2037941f runs as seven merged leaves (18a87159 -> bc091474 -> fcb04d66; e1f9a78f -> c73ffa25 -> 50f0bd42 -> 6e87c436; a1ad6d4e; 65c0e13d; 2ad3a3e0). A zero-copy ship task is created only if a1ad6d4e selects the candidate; its criteria are in a1ad6d4e's description.",
+    "Session 19 gate ruling: repo-validate is a story-level gate (removed from every leaf); doc-review only on implementation, synthesis and publish leaves and containers; asm-artefact-present only where SIMD sources can change.",
+    "Trap (session 19): `jit issue reject --reason` writes the reason verbatim as a resolution: label; a reason with spaces violates the label format and blocks every later update on that issue until fixed with --force. Use a hyphenated reason such as merged-into-<id>.",
+    "Trap (session 19): merged descriptions must number criteria REQ-01.. uniquely per issue and keep the `[hard] REQ-NN: text` shape; a source tag goes after the colon.",
+    "Trap (session 19): a native worker inherits the user CLAUDE.md and delegated to codex; the delegation rule was removed from ~/.claude/CLAUDE.md and every prompt now says to do the work itself.",
+    "Session 20 (2026-09-17T21:15Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time in worktrees, reuse over proliferation; check for worker stalls every 20 minutes. Session 19 ended on the weekly usage limit without a handoff; its state was recovered from progress.json, git and the worktrees. The 2026-09-17 window ran both c04dd4ac source jobs (rc 0; results uncommitted in their worktrees). Dispatched into the existing worktrees: 85fc5ff4 (opus, collect window and finish), 9fb40c83 (opus, same), e1f9a78f (opus, finish after the lead-preserve WIP 9ab18326), b64dc9c4 (sonnet, REQ audit, main merge, cargo-ci, Rust 1.95). The lead finishes 0a357f94 itself (branch complete; main merged; closure --check passes; cargo-ci running)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1295,16 +1614,18 @@
     "handoff-10.md",
     "handoff-11.md",
     "handoff-12.md",
-    "handoff-13.md"
+    "handoff-13.md",
+    "handoff-14.md",
+    "handoff-15.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
   },
   "benchmark_window": {
-    "unit": null,
-    "armed_for": null,
+    "unit": "gf2-bench-window-20260917",
+    "armed_for": "2026-09-17T04:00 Europe/Helsinki (01:00Z)",
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
-    "note": "Invoker hold (session 17): no window is armed. The 2026-09-16 04:00 EEST window (unit gf2-bench-window-20260916) ran 3.9 s: 85fc5ff4 job 3f984872e67aaac0 and 9fb40c83 job cf0e12a3c5d4fe28 both died in the arm stdin handshake (no .done markers). Invoker policy 2026-09-13 stands: the host is never locked during a session; every measurement runs in a window. A job's rc is not evidence it measured anything; judge each campaign from its own execution log and receipt."
+    "note": "Armed session 18 on the invoker's choice via systemd-run --user (XDG_RUNTIME_DIR=/run/user/1000, DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus), working directory the primary checkout, PATH=~/.cargo/bin:/usr/local/bin:/usr/bin, GF2_WINDOW_UNIT set. Queue: 85fc5ff4 (run-shift-profile.sh window, 6 min) and 9fb40c83 (build-dvb-harness.sh && run-dvb-campaign.sh v4-r2 && run-profile.sh, 18 min). Queue cutoff 03:40 EEST. Invoker policy 2026-09-13 stands: judge each campaign from its own execution log and receipt, never the job rc."
   }
 }

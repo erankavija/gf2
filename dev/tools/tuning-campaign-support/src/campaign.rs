@@ -4780,28 +4780,8 @@ impl RetirementRecord {
 #[cfg(test)]
 mod publication_tests {
     use super::*;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use crate::scratch::scratch;
 
-    struct Scratch(PathBuf);
-    impl Scratch {
-        fn new() -> Self {
-            let nonce = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "session-publication-{}-{nonce}",
-                std::process::id()
-            ));
-            fs::create_dir(&path).unwrap();
-            Self(path)
-        }
-    }
-    impl Drop for Scratch {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
-        }
-    }
     fn descriptor(stage: &Path) -> SessionDescriptor {
         let hash = Sha256Digest::of(b"fixed").as_str().to_string();
         SessionDescriptor {
@@ -4918,19 +4898,19 @@ mod publication_tests {
     #[test]
     fn preparation_discovery_rejects_intent_under_another_session_root() {
         for publisher_only in [false, true] {
-            let tmp = Scratch::new();
-            let preparation = begin_preparation(&tmp.0, "session");
+            let tmp = scratch("session-publication");
+            let preparation = begin_preparation(tmp.path(), "session");
             let encoded = bytes(&preparation.intent).unwrap();
             let original = preparation.root.join("intent.json");
             drop(preparation);
-            fs::remove_file(tmp.0.join("active-preparation.json")).unwrap();
+            fs::remove_file(tmp.path().join("active-preparation.json")).unwrap();
             fs::remove_file(&original).unwrap();
-            fs::remove_dir_all(artifact_publication_root(&tmp.0, &original).unwrap()).unwrap();
-            let wrong_root = tmp.0.join("preparations/wrong-session");
+            fs::remove_dir_all(artifact_publication_root(tmp.path(), &original).unwrap()).unwrap();
+            let wrong_root = tmp.path().join("preparations/wrong-session");
             fs::create_dir(&wrong_root).unwrap();
             let misplaced = wrong_root.join("intent.json");
             let preserved = if publisher_only {
-                let publisher = artifact_publication_root(&tmp.0, &misplaced).unwrap();
+                let publisher = artifact_publication_root(tmp.path(), &misplaced).unwrap();
                 fs::create_dir(&publisher).unwrap();
                 let intent = ArtifactPublicationIntent {
                     schema: "tuning-campaign-artifact-publication-v1".into(),
@@ -4946,20 +4926,20 @@ mod publication_tests {
                 misplaced
             };
             let before = fs::read(&preserved).unwrap();
-            assert!(PreparationStore::discover_pending(&tmp.0).is_err());
+            assert!(PreparationStore::discover_pending(tmp.path()).is_err());
             assert_eq!(fs::read(&preserved).unwrap(), before);
-            assert!(!tmp.0.join("active-preparation.json").exists());
+            assert!(!tmp.path().join("active-preparation.json").exists());
             assert!(!original.exists());
         }
-        let tmp = Scratch::new();
-        let diagnostic = tmp.0.join("preparations/diagnostic-only");
+        let tmp = scratch("session-publication");
+        let diagnostic = tmp.path().join("preparations/diagnostic-only");
         fs::create_dir_all(&diagnostic).unwrap();
         fs::write(
             diagnostic.join("retained.bytes"),
             b"partial preparation evidence",
         )
         .unwrap();
-        assert!(PreparationStore::discover_pending(&tmp.0)
+        assert!(PreparationStore::discover_pending(tmp.path())
             .unwrap()
             .is_none());
         assert_eq!(
@@ -4971,11 +4951,11 @@ mod publication_tests {
     #[test]
     fn retirement_and_reopen_reject_noncanonical_checksum_bindings() {
         for boundary in ["retire", "reopen", "publication", "digest"] {
-            let tmp = Scratch::new();
-            let (store, mut log, checksum) = closed_session(&tmp.0);
+            let tmp = scratch("session-publication");
+            let (store, mut log, checksum) = closed_session(tmp.path());
             let expected = store.descriptor.clone();
             let alias = ArtifactIdentity {
-                path: tmp.0.join("alternate-checksum.json"),
+                path: tmp.path().join("alternate-checksum.json"),
                 sha256: checksum.sha256.clone(),
             };
             fs::copy(&checksum.path, &alias.path).unwrap();
@@ -5012,21 +4992,21 @@ mod publication_tests {
                 assert!(SessionStore::reopen(expected).is_err());
                 assert_eq!(fs::read(target).unwrap(), before);
             }
-            assert!(tmp.0.join("active-session.json").exists());
+            assert!(tmp.path().join("active-session.json").exists());
         }
     }
 
     #[test]
     fn replacement_preparation_rejects_byte_identical_checksum_alias() {
-        let tmp = Scratch::new();
-        let (store, mut log, checksum) = closed_session(&tmp.0);
+        let tmp = scratch("session-publication");
+        let (store, mut log, checksum) = closed_session(tmp.path());
         let expected = store.descriptor.clone();
         store.retire(&mut log, &checksum).unwrap();
-        let preparation = begin_preparation(&tmp.0, "replacement");
+        let preparation = begin_preparation(tmp.path(), "replacement");
         let mut saved = preparation.intent.clone();
         drop(preparation);
         let alias = ArtifactIdentity {
-            path: tmp.0.join("alternate-checksum.json"),
+            path: tmp.path().join("alternate-checksum.json"),
             sha256: checksum.sha256,
         };
         fs::copy(&checksum.path, &alias.path).unwrap();
@@ -5048,13 +5028,13 @@ mod publication_tests {
 
     #[test]
     fn session_checksum_requires_strict_artifact_path_order() {
-        let tmp = Scratch::new();
-        let (store, log, checksum) = closed_session(&tmp.0);
+        let tmp = scratch("session-publication");
+        let (store, log, checksum) = closed_session(tmp.path());
         let mut saved: SessionChecksum = checksum.read().unwrap();
         for name in ["a", "b"] {
             saved
                 .artifacts
-                .push(publish_artifact(&tmp.0, &tmp.0.join(name), name.as_bytes()).unwrap());
+                .push(publish_artifact(tmp.path(), &tmp.join(name), name.as_bytes()).unwrap());
         }
         saved.validate(store.descriptor(), log.path()).unwrap();
         saved.artifacts.reverse();
@@ -5064,8 +5044,8 @@ mod publication_tests {
     #[test]
     fn initial_preparation_replays_log_config_checkpoint_and_active_handoff_gaps() {
         for boundary in 0..8 {
-            let tmp = Scratch::new();
-            let preparation = begin_preparation(&tmp.0, "session");
+            let tmp = scratch("session-publication");
+            let preparation = begin_preparation(tmp.path(), "session");
             let expected = preparation_descriptor(&preparation);
             let original_preparer = preparation.preparer().clone();
             let mut log = if boundary >= 1 {
@@ -5074,7 +5054,7 @@ mod publication_tests {
                 None
             };
             let config = if boundary >= 2 {
-                Some(preparation_config(&tmp.0))
+                Some(preparation_config(tmp.path()))
             } else {
                 None
             };
@@ -5084,7 +5064,7 @@ mod publication_tests {
                     config: config.clone().unwrap(),
                 };
                 publish_artifact(
-                    &tmp.0,
+                    tmp.path(),
                     &preparation.root.join("finish.json"),
                     &bytes(&finish).unwrap(),
                 )
@@ -5098,7 +5078,7 @@ mod publication_tests {
                     &expected.channels.checkpoints,
                     "campaign",
                     expected.identity.clone(),
-                    |path, content| publish_artifact(&tmp.0, path, content).map(|_| ()),
+                    |path, content| publish_artifact(tmp.path(), path, content).map(|_| ()),
                 )
                 .unwrap();
             }
@@ -5107,25 +5087,25 @@ mod publication_tests {
                 drop(SessionStore::prepare(expected.clone()).unwrap());
             }
             if boundary == 7 {
-                let (store, _) = begin_preparation(&tmp.0, "session")
+                let (store, _) = begin_preparation(tmp.path(), "session")
                     .finish(expected.clone(), config.unwrap(), log.as_mut().unwrap())
                     .unwrap();
                 drop(store);
                 fs::copy(
-                    tmp.0.join("preparations/session/intent.json"),
-                    tmp.0.join("active-preparation.json"),
+                    tmp.path().join("preparations/session/intent.json"),
+                    tmp.path().join("active-preparation.json"),
                 )
                 .unwrap();
             }
             drop(log);
             let (store, checkpoints, mut log) =
-                match PreparationStore::resume_pending(&tmp.0).unwrap() {
+                match PreparationStore::resume_pending(tmp.path()).unwrap() {
                     Some(finished) => finished,
                     None => {
-                        let preparation = begin_preparation(&tmp.0, "session");
+                        let preparation = begin_preparation(tmp.path(), "session");
                         assert_eq!(preparation.preparer(), &original_preparer);
                         let mut log = preparation.open_log().unwrap();
-                        let config = preparation_config(&tmp.0);
+                        let config = preparation_config(tmp.path());
                         let (store, checkpoints) = preparation
                             .finish(expected.clone(), config, &mut log)
                             .unwrap();
@@ -5160,21 +5140,23 @@ mod publication_tests {
                     | JournalEvent::WrapperReturned
                     | JournalEvent::LockRelease
             )));
-            assert!(!tmp.0.join("active-preparation.json").exists());
+            assert!(!tmp.path().join("active-preparation.json").exists());
             drop(store);
             drop(log);
-            assert!(PreparationStore::resume_pending(&tmp.0).unwrap().is_none());
+            assert!(PreparationStore::resume_pending(tmp.path())
+                .unwrap()
+                .is_none());
         }
     }
 
     #[test]
     fn preparation_replacement_recovers_before_after_and_during_session_start() {
         for boundary in 0..3 {
-            let tmp = Scratch::new();
-            let preparation = begin_preparation(&tmp.0, "session");
+            let tmp = scratch("session-publication");
+            let preparation = begin_preparation(tmp.path(), "session");
             let expected = preparation_descriptor(&preparation);
             let mut log = preparation.open_log().unwrap();
-            let config = preparation_config(&tmp.0);
+            let config = preparation_config(tmp.path());
             let (mut store, _) = preparation
                 .finish(expected, config.clone(), &mut log)
                 .unwrap();
@@ -5185,7 +5167,7 @@ mod publication_tests {
             let checksum = store.write_checksum(&mut log, vec![]).unwrap();
             store.retire(&mut log, &checksum).unwrap();
             drop(log);
-            let preparation = begin_preparation(&tmp.0, "replacement");
+            let preparation = begin_preparation(tmp.path(), "replacement");
             let expected = preparation_descriptor(&preparation);
             if boundary >= 1 {
                 let log = preparation.open_log().unwrap();
@@ -5197,8 +5179,10 @@ mod publication_tests {
                 drop(log);
             }
             drop(preparation);
-            assert!(PreparationStore::resume_pending(&tmp.0).unwrap().is_none());
-            let preparation = begin_preparation(&tmp.0, "replacement");
+            assert!(PreparationStore::resume_pending(tmp.path())
+                .unwrap()
+                .is_none());
+            let preparation = begin_preparation(tmp.path(), "replacement");
             let mut log = preparation.open_log().unwrap();
             let (store, _) = preparation
                 .finish(expected.clone(), config, &mut log)
@@ -5226,14 +5210,15 @@ mod publication_tests {
     #[test]
     fn preparation_intent_replays_initial_publication_and_rejects_changed_identity() {
         for boundary in 0..3 {
-            let tmp = Scratch::new();
-            let preparation = begin_preparation(&tmp.0, "session");
+            let tmp = scratch("session-publication");
+            let preparation = begin_preparation(tmp.path(), "session");
             let root = preparation.root.clone();
             let original = preparation.intent.clone();
             drop(preparation);
-            fs::remove_file(tmp.0.join("active-preparation.json")).unwrap();
+            fs::remove_file(tmp.path().join("active-preparation.json")).unwrap();
             fs::remove_file(root.join("intent.json")).unwrap();
-            let publication = artifact_publication_root(&tmp.0, &root.join("intent.json")).unwrap();
+            let publication =
+                artifact_publication_root(tmp.path(), &root.join("intent.json")).unwrap();
             if boundary >= 1 {
                 let content = fs::read(publication.join("intent.json")).unwrap();
                 fs::remove_file(publication.join("intent.json")).unwrap();
@@ -5247,7 +5232,7 @@ mod publication_tests {
                 )
                 .unwrap();
             }
-            let discovered = PreparationStore::discover_pending(&tmp.0).unwrap();
+            let discovered = PreparationStore::discover_pending(tmp.path()).unwrap();
             if boundary < 2 {
                 assert_eq!(
                     discovered,
@@ -5258,26 +5243,26 @@ mod publication_tests {
                 );
                 assert_eq!(
                     decode::<PreparationIntent>(
-                        &fs::read(tmp.0.join("active-preparation.json")).unwrap()
+                        &fs::read(tmp.path().join("active-preparation.json")).unwrap()
                     )
                     .unwrap(),
                     original
                 );
-                assert!(PreparationStore::discover_pending(&tmp.0)
+                assert!(PreparationStore::discover_pending(tmp.path())
                     .unwrap()
                     .is_some());
             } else {
                 assert!(discovered.is_none());
             }
-            assert!(!tmp.0.join("execution.log").exists());
-            let preparation = begin_preparation(&tmp.0, "session");
+            assert!(!tmp.path().join("execution.log").exists());
+            let preparation = begin_preparation(tmp.path(), "session");
             if boundary < 2 {
                 assert_eq!(preparation.intent, original);
             }
             drop(preparation);
-            let before = fs::read(tmp.0.join("active-preparation.json")).unwrap();
+            let before = fs::read(tmp.path().join("active-preparation.json")).unwrap();
             assert!(PreparationStore::begin(
-                SessionChannels::for_stage(&tmp.0).unwrap(),
+                SessionChannels::for_stage(tmp.path()).unwrap(),
                 Token::new("campaign").unwrap(),
                 Token::new("session").unwrap(),
                 "/tmp/campaign.lock".into(),
@@ -5285,7 +5270,7 @@ mod publication_tests {
             )
             .is_err());
             assert_eq!(
-                fs::read(tmp.0.join("active-preparation.json")).unwrap(),
+                fs::read(tmp.path().join("active-preparation.json")).unwrap(),
                 before
             );
         }
@@ -5294,10 +5279,10 @@ mod publication_tests {
     #[test]
     fn immutable_artifact_publication_replays_intent_and_target_boundaries() {
         for boundary in 0..7 {
-            let tmp = Scratch::new();
-            let target = tmp.0.join("report.bin");
+            let tmp = scratch("session-publication");
+            let target = tmp.path().join("report.bin");
             let content = b"report\n\xff\0";
-            let root = artifact_publication_root(&tmp.0, &target).unwrap();
+            let root = artifact_publication_root(tmp.path(), &target).unwrap();
             fs::create_dir_all(&root).unwrap();
             let intent = ArtifactPublicationIntent {
                 schema: "tuning-campaign-artifact-publication-v1".into(),
@@ -5307,7 +5292,7 @@ mod publication_tests {
             };
             let encoded = bytes(&intent).unwrap();
             let intent_temp = root.join(".intent.json.tmp-1-2-3");
-            let target_temp = tmp.0.join(".report.bin.tmp-1-2-3");
+            let target_temp = tmp.path().join(".report.bin.tmp-1-2-3");
             match boundary {
                 0 => {}
                 1 => fs::write(&intent_temp, &encoded[..8]).unwrap(),
@@ -5330,10 +5315,10 @@ mod publication_tests {
                     }
                 }
             }
-            let identity = publish_artifact(&tmp.0, &target, content).unwrap();
+            let identity = publish_artifact(tmp.path(), &target, content).unwrap();
             assert_eq!(
                 identity,
-                publish_artifact(&tmp.0, &target, content).unwrap()
+                publish_artifact(tmp.path(), &target, content).unwrap()
             );
             assert_eq!(fs::read(&target).unwrap(), content);
             assert!(!intent_temp.exists());
@@ -5341,28 +5326,28 @@ mod publication_tests {
             if matches!(boundary, 1 | 2 | 4 | 5 | 6) {
                 assert!(root.join("diagnostics").is_dir());
             }
-            assert!(publish_artifact(&tmp.0, &target, b"changed").is_err());
+            assert!(publish_artifact(tmp.path(), &target, b"changed").is_err());
             assert_eq!(fs::read(&target).unwrap(), content);
         }
     }
 
     #[test]
     fn immutable_artifact_publication_preserves_ambiguous_bytes_and_excludes_writers() {
-        let tmp = Scratch::new();
-        let target = tmp.0.join("report.txt");
-        let root = artifact_publication_root(&tmp.0, &target).unwrap();
+        let tmp = scratch("session-publication");
+        let target = tmp.path().join("report.txt");
+        let root = artifact_publication_root(tmp.path(), &target).unwrap();
         fs::create_dir_all(&root).unwrap();
         let writer = SessionStore::writer(&root).unwrap();
         assert_eq!(
-            publish_artifact(&tmp.0, &target, b"intended")
+            publish_artifact(tmp.path(), &target, b"intended")
                 .unwrap_err()
                 .kind(),
             io::ErrorKind::WouldBlock
         );
         drop(writer);
-        let temporary = tmp.0.join(".report.txt.tmp-1-2-3");
+        let temporary = tmp.path().join(".report.txt.tmp-1-2-3");
         fs::write(&temporary, b"unrelated").unwrap();
-        assert!(publish_artifact(&tmp.0, &target, b"intended").is_err());
+        assert!(publish_artifact(tmp.path(), &target, b"intended").is_err());
         assert_eq!(fs::read(&temporary).unwrap(), b"unrelated");
         assert!(!target.exists());
     }
@@ -5370,10 +5355,10 @@ mod publication_tests {
     #[test]
     fn prelock_interruption_checksum_and_retirement_recover_every_publication_gap() {
         for boundary in 0..11 {
-            let tmp = Scratch::new();
-            let expected = descriptor(&tmp.0);
+            let tmp = scratch("session-publication");
+            let expected = descriptor(tmp.path());
             let root = root(&expected);
-            let mut log = ExecutionLog::create_new(&tmp.0, "campaign", "session").unwrap();
+            let mut log = ExecutionLog::create_new(tmp.path(), "campaign", "session").unwrap();
             log.append(JournalEvent::CampaignStart, None, serde_json::json!({}))
                 .unwrap();
             let mut store = SessionStore::prepare(expected.clone()).unwrap();
@@ -5493,11 +5478,11 @@ mod publication_tests {
             next.session_id = Token::new("replacement").unwrap();
             assert!(SessionStore::prepare(next.clone()).is_err());
             store.retire(&mut log, &checksum).unwrap();
-            assert!(!tmp.0.join("active-session.json").exists());
+            assert!(!tmp.path().join("active-session.json").exists());
             assert!(SessionStore::reopen(expected).is_err());
             drop(log);
             let mut log =
-                ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "replacement")
+                ExecutionLog::resume(tmp.path().join("execution.log"), "campaign", "replacement")
                     .unwrap();
             let store = SessionStore::prepare(next).unwrap();
             store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
@@ -5506,10 +5491,10 @@ mod publication_tests {
 
     #[test]
     fn prelock_evidence_binds_every_distinct_mode_writer_and_replay_checks_mutation() {
-        let tmp = Scratch::new();
-        let expected = descriptor(&tmp.0);
+        let tmp = scratch("session-publication");
+        let expected = descriptor(tmp.path());
         let root = root(&expected);
-        let mut log = ExecutionLog::create_new(&tmp.0, "campaign", "session").unwrap();
+        let mut log = ExecutionLog::create_new(tmp.path(), "campaign", "session").unwrap();
         log.append(JournalEvent::CampaignStart, None, serde_json::json!({}))
             .unwrap();
         drop(SessionStore::prepare(expected.clone()).unwrap());
@@ -5545,14 +5530,14 @@ mod publication_tests {
         fs::write(root.join("run-session.json"), bytes(&changed).unwrap()).unwrap();
         assert!(SessionStore::reopen(expected).is_err());
         assert!(!root.join("checksum.json").exists());
-        assert!(tmp.0.join("active-session.json").exists());
+        assert!(tmp.path().join("active-session.json").exists());
     }
 
     #[test]
     fn preparation_recovers_every_uncommitted_initial_intent_boundary() {
         for complete_temporary in [false, true] {
-            let tmp = Scratch::new();
-            let expected = descriptor(&tmp.0);
+            let tmp = scratch("session-publication");
+            let expected = descriptor(tmp.path());
             let root = root(&expected);
             fs::create_dir_all(publication_root(&root)).unwrap();
             let pending = publication_root(&root).join(".intent.json.tmp-1-2-3");
@@ -5567,7 +5552,7 @@ mod publication_tests {
             assert_eq!(store.lifecycle.state(), SessionState::Prepared);
             assert!(!pending.exists());
             assert_eq!(
-                fs::read(tmp.0.join("active-session.json")).unwrap(),
+                fs::read(tmp.path().join("active-session.json")).unwrap(),
                 bytes(&expected).unwrap()
             );
             let recovery = session_publication_recoveries(&root, &expected).unwrap();
@@ -5589,8 +5574,8 @@ mod publication_tests {
     #[test]
     fn mode_publication_replays_intent_sync_temporary_sync_and_destination_link() {
         for boundary in 0..4 {
-            let tmp = Scratch::new();
-            let expected = descriptor(&tmp.0);
+            let tmp = scratch("session-publication");
+            let expected = descriptor(tmp.path());
             drop(SessionStore::prepare(expected.clone()).unwrap());
             let root = root(&expected);
             let intent = mode_intent(&expected);
@@ -5627,8 +5612,8 @@ mod publication_tests {
 
     #[test]
     fn uncommitted_mode_intent_never_claims_a_launch_occurred() {
-        let tmp = Scratch::new();
-        let expected = descriptor(&tmp.0);
+        let tmp = scratch("session-publication");
+        let expected = descriptor(tmp.path());
         drop(SessionStore::prepare(expected.clone()).unwrap());
         let root = root(&expected);
         fs::write(
@@ -5645,8 +5630,8 @@ mod publication_tests {
     #[test]
     fn tampered_or_cross_identity_publication_preserves_all_original_evidence() {
         for wrong_identity in [false, true] {
-            let tmp = Scratch::new();
-            let expected = descriptor(&tmp.0);
+            let tmp = scratch("session-publication");
+            let expected = descriptor(tmp.path());
             drop(SessionStore::prepare(expected.clone()).unwrap());
             let root = root(&expected);
             let mut publication = mode_intent(&expected);
@@ -5666,10 +5651,10 @@ mod publication_tests {
 
     #[test]
     fn synced_transition_intent_recovers_observation_and_journals_it_once() {
-        let tmp = Scratch::new();
-        let expected = descriptor(&tmp.0);
+        let tmp = scratch("session-publication");
+        let expected = descriptor(tmp.path());
         let root = root(&expected);
-        let mut log = ExecutionLog::create_new(&tmp.0, "campaign", "session").unwrap();
+        let mut log = ExecutionLog::create_new(tmp.path(), "campaign", "session").unwrap();
         log.append(JournalEvent::CampaignStart, None, serde_json::json!({}))
             .unwrap();
         let mut store = SessionStore::prepare(expected.clone()).unwrap();
@@ -5733,8 +5718,8 @@ mod publication_tests {
     #[test]
     fn preparation_replays_descriptor_prepare_and_active_claim_gaps() {
         for boundary in 0..3 {
-            let tmp = Scratch::new();
-            let expected = descriptor(&tmp.0);
+            let tmp = scratch("session-publication");
+            let expected = descriptor(tmp.path());
             let root = root(&expected);
             fs::create_dir_all(publication_root(&root)).unwrap();
             fs::write(root.join("descriptor.json"), bytes(&expected).unwrap()).unwrap();
@@ -5750,15 +5735,15 @@ mod publication_tests {
             if boundary == 2 {
                 let publication = intent(&expected, "active-session.json", &expected);
                 fs::write(intent_path(&root), bytes(&publication).unwrap()).unwrap();
-                let pending = tmp.0.join(".active-session.json.tmp-1-2-3");
+                let pending = tmp.path().join(".active-session.json.tmp-1-2-3");
                 fs::write(&pending, bytes(&expected).unwrap()).unwrap();
-                fs::hard_link(&pending, tmp.0.join("active-session.json")).unwrap();
+                fs::hard_link(&pending, tmp.path().join("active-session.json")).unwrap();
             }
             let store = SessionStore::reopen(expected.clone()).unwrap();
             assert_eq!(store.lifecycle.state(), SessionState::Prepared);
             drop(store);
             assert_eq!(
-                fs::read(tmp.0.join("active-session.json")).unwrap(),
+                fs::read(tmp.path().join("active-session.json")).unwrap(),
                 bytes(&expected).unwrap()
             );
             assert!(root.join("prepare-session.json").is_file());
@@ -5767,8 +5752,8 @@ mod publication_tests {
 
     #[test]
     fn resume_identity_precedes_temporary_cleanup_and_namespace_is_exact() {
-        let tmp = Scratch::new();
-        let expected = descriptor(&tmp.0);
+        let tmp = scratch("session-publication");
+        let expected = descriptor(tmp.path());
         drop(SessionStore::prepare(expected.clone()).unwrap());
         let root = root(&expected);
         let pending = publication_root(&root).join(".intent.json.tmp-1-2-3");
@@ -5786,10 +5771,10 @@ mod publication_tests {
 
     #[test]
     fn recovered_interruption_journals_cleanup_after_release_without_inventing_work() {
-        let tmp = Scratch::new();
-        let expected = descriptor(&tmp.0);
+        let tmp = scratch("session-publication");
+        let expected = descriptor(tmp.path());
         let root = root(&expected);
-        let mut log = ExecutionLog::create_new(&tmp.0, "campaign", "session").unwrap();
+        let mut log = ExecutionLog::create_new(tmp.path(), "campaign", "session").unwrap();
         log.append(JournalEvent::CampaignStart, None, serde_json::json!({}))
             .unwrap();
         let mut store = SessionStore::prepare(expected.clone()).unwrap();

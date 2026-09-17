@@ -39,6 +39,7 @@ use gf2_core::field::poly::{
 };
 use gf2_core::gfp::Fp;
 use gf2_core::rng::Lcg;
+use gf2_core::test_scratch::scratch;
 
 const SCHEMA_VERSION: &str = "selector-non-regression-v1";
 const DEFAULT_REPETITIONS: u32 = 5;
@@ -2553,13 +2554,10 @@ mod tests {
              {SCHEMA_VERSION},1,1,bit_backend,{cell},scalar,1,0,8,0,1000,10000,10.000000,250,0,rev,false,rustc,host,cpu,kernel,gov\n\
              {SCHEMA_VERSION},1,2,bit_backend,{cell},scalar,1,0,8,1,3000,90000,30.000000,250,0,rev,false,rustc,host,cpu,kernel,gov\n"
         );
-        let path = std::env::temp_dir().join(format!(
-            "gf2-{SCHEMA_VERSION}-pooling-{}.csv",
-            std::process::id()
-        ));
+        let directory = scratch(&format!("gf2-{SCHEMA_VERSION}-pooling"));
+        let path = directory.path().join("receipt.csv");
         fs::write(&path, rows).expect("write fixture receipt");
         let receipt = load_receipt(&path).expect("fixture receipt loads");
-        fs::remove_file(&path).expect("remove fixture receipt");
 
         assert_eq!(receipt.schema_version, SCHEMA_VERSION);
         let stat = &receipt.stats[cell];
@@ -2640,10 +2638,9 @@ mod tests {
     /// column is what the identity precondition reads.
     #[test]
     fn arm_column_of_a_receipt_reaches_the_identity_check() {
-        let dir = std::env::temp_dir();
-        let stamp = std::process::id();
-        let baseline_path = dir.join(format!("gf2-{SCHEMA_VERSION}-arm-base-{stamp}.csv"));
-        let candidate_path = dir.join(format!("gf2-{SCHEMA_VERSION}-arm-cand-{stamp}.csv"));
+        let directory = scratch(&format!("gf2-{SCHEMA_VERSION}-arm"));
+        let baseline_path = directory.path().join("base.csv");
+        let candidate_path = directory.path().join("candidate.csv");
         let flipped = cell_id(Cell::PolyMul { len: 33 });
         fs::write(&baseline_path, pinned_receipt_csv(None)).expect("write baseline");
         fs::write(
@@ -2654,8 +2651,6 @@ mod tests {
 
         let baseline = load_receipt(&baseline_path).expect("baseline loads");
         let candidate = load_receipt(&candidate_path).expect("candidate loads");
-        fs::remove_file(&baseline_path).expect("remove baseline");
-        fs::remove_file(&candidate_path).expect("remove candidate");
 
         let error = compare(&baseline, &candidate).unwrap_err();
         assert_eq!(error.class(), "selector identity mismatch");
@@ -2793,17 +2788,10 @@ mod tests {
 
     #[allow(dead_code)]
     fn parse_ensemble(text: &str) -> EnsembleArm {
-        let path = std::env::temp_dir().join(format!(
-            "gf2-selector-ensemble-{}-{:?}.csv",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("clock is after the epoch")
-                .as_nanos()
-        ));
+        let directory = scratch("gf2-selector-ensemble");
+        let path = directory.path().join("ensemble.csv");
         fs::write(&path, text).expect("temporary ensemble is writable");
         let arm = load_ensemble(&path);
-        fs::remove_file(&path).expect("temporary ensemble is removable");
         arm.expect("ensemble parses")
     }
 

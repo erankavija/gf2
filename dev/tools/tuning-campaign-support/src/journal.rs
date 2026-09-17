@@ -2329,25 +2329,8 @@ mod active_repair_tests {
         SessionState, SessionStore, SessionTransition, Token, FEATURE_CONTRACT, LIFECYCLE_SCHEMA,
         THREAD_CONTRACT,
     };
+    use crate::scratch::scratch;
 
-    struct Scratch(PathBuf);
-    impl Scratch {
-        fn new() -> Self {
-            let nonce = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_nanos();
-            let path = std::env::temp_dir()
-                .join(format!("active-log-repair-{}-{nonce}", std::process::id()));
-            fs::create_dir(&path).unwrap();
-            Self(path)
-        }
-    }
-    impl Drop for Scratch {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
-        }
-    }
     fn descriptor(stage: &Path) -> SessionDescriptor {
         let hash = sha256_bytes(b"fixed");
         SessionDescriptor {
@@ -2399,8 +2382,8 @@ mod active_repair_tests {
     #[test]
     fn active_claim_survives_every_same_session_torn_repair_boundary() {
         for boundary in 0..5 {
-            let scratch = Scratch::new();
-            let expected = held_session(&scratch.0);
+            let scratch = scratch("active-log-repair");
+            let expected = held_session(scratch.path());
             let path = expected.channels.execution_log.clone();
             let suffix = b"{\"uncommitted-child\":";
             OpenOptions::new()
@@ -2446,7 +2429,7 @@ mod active_repair_tests {
             let log = session.repair_log().unwrap();
             assert_eq!(session.lifecycle().state(), SessionState::LockHeld);
             assert_eq!(log.session_id(), "session");
-            assert!(scratch.0.join("active-session.json").exists());
+            assert!(scratch.path().join("active-session.json").exists());
             assert!(!intent_path.exists());
             let records =
                 ExecutionLog::validate_prefix(&fs::read(&path).unwrap(), "campaign").unwrap();
@@ -2470,8 +2453,8 @@ mod active_repair_tests {
 
     #[test]
     fn active_repair_preserves_complete_malformed_records_and_rejects_wrong_session() {
-        let scratch = Scratch::new();
-        let expected = held_session(&scratch.0);
+        let scratch = scratch("active-log-repair");
+        let expected = held_session(scratch.path());
         let path = &expected.channels.execution_log;
         OpenOptions::new()
             .append(true)
@@ -2483,7 +2466,7 @@ mod active_repair_tests {
         let session = SessionStore::reopen(expected.clone()).unwrap();
         assert!(session.repair_log().is_err());
         assert_eq!(fs::read(path).unwrap(), original);
-        assert!(scratch.0.join("active-session.json").exists());
+        assert!(scratch.path().join("active-session.json").exists());
         fs::write(path, &original[..original.len() - 1]).unwrap();
         let torn = fs::read(path).unwrap();
         assert!(ExecutionLog::repair_active(path, "campaign", "different-session").is_err());

@@ -1,0 +1,177 @@
+{
+  "schema": "dense-parity-source-evidence-v1",
+  "issue": "96c94b81",
+  "addendum_identity": "2037941f-dense-parity-v1",
+  "claims": [
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1538,
+      "occurrences": 1,
+      "verbatim": "    pub fn matvec(&self, x: &crate::BitVec) -> crate::BitVec {",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "The allocated whole-consumer cell times exactly this public method, whose return value is the freshly allocated output."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1541,
+      "occurrences": 1,
+      "verbatim": "        match matvec_route(self.stride_words) {",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "Route selection happens inside the public call, so it is inside the allocated cost boundary."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 50,
+      "occurrences": 1,
+      "verbatim": "pub fn matvec_route(stride_words: usize) -> MatvecRoute {",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "The selector is public, so an arm observes the route each cell takes without forcing it through a private hook."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 53,
+      "occurrences": 1,
+      "verbatim": "        if stride_words >= MATVEC_SIMD_MIN_WORDS_SELECTED {",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "The threshold comparison puts every anchor stride from eight words upward on the SIMD route."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 18,
+      "occurrences": 1,
+      "verbatim": "pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "Eight words is the conservative default definition of the selector threshold, which fixes the lowest anchor stride."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1606,
+      "occurrences": 1,
+      "verbatim": "        for row in self.data.chunks_exact(self.stride_words).take(self.rows) {",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "The SIMD lane walks whole rows of the declared stride, so one cell's call count is its row count."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1607,
+      "occurrences": 1,
+      "verbatim": "            y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "The production route reaches the fused kernel once per row through the bundle function pointer and folds parity from the low bit."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1568,
+      "occurrences": 1,
+      "verbatim": "    fn row_dot_parity_scalar(row: &[u64], x_words: &[u64]) -> bool {",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "The four-accumulator scalar row parity is private, so the reference arm reaches it only through a build without the simd feature."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 316,
+      "occurrences": 2,
+      "verbatim": "        let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+      "why": "Stride is the ceiling of columns over 64 at both construction sites, which fixes each anchor cell's column count."
+    },
+    {
+      "project": "gf2",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 115,
+      "occurrences": 1,
+      "verbatim": "    pub fn with_capacity(bits: usize) -> Self {",
+      "sha256": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69",
+      "why": "The output allocation is one reservation of the ceiling of rows over 64 words, made inside the timed public call."
+    },
+    {
+      "project": "gf2",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 283,
+      "occurrences": 1,
+      "verbatim": "    pub fn push_bit(&mut self, bit: bool) {",
+      "sha256": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69",
+      "why": "Each output bit is appended through a branch on the parity value, so output density is part of the allocated cost."
+    },
+    {
+      "project": "gf2",
+      "commit": "cfa3184188c277c6e42afab46d1e1686a932b99e",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 316,
+      "occurrences": 1,
+      "verbatim": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
+      "sha256": "f119a166b2836fc25dafcf482dea95035fc8d9d8e68c324a6daa0c504e6e539f",
+      "why": "This is the kernel identity the bundle field reaches on an AVX2 host, and the body the complexity budget is measured against."
+    },
+    {
+      "project": "gf2",
+      "commit": "cfa3184188c277c6e42afab46d1e1686a932b99e",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 686,
+      "occurrences": 1,
+      "verbatim": "    fn and_popcnt_fn(lhs: &[u64], rhs: &[u64]) -> u64 {",
+      "sha256": "f119a166b2836fc25dafcf482dea95035fc8d9d8e68c324a6daa0c504e6e539f",
+      "why": "The bundle field is this wrapper, so an arm that devirtualises it measures a different route than a consumer reaches."
+    },
+    {
+      "project": "gf2",
+      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "path": "crates/gf2-kernels-simd/src/lib.rs",
+      "line": 129,
+      "occurrences": 1,
+      "verbatim": "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,",
+      "sha256": "eeb7802dca6163c711b226d565d26dfc0de2093ed0087c19ad56235a5ed0455e",
+      "why": "The carry-save fused comparator stays a direct comparator field that no automatic resolver selects, so it is not a candidate here."
+    },
+    {
+      "project": "gf2",
+      "commit": "28559fd225622c31a85f6182231ffd96e579d18e",
+      "path": "crates/gf2-core/Cargo.toml",
+      "line": 56,
+      "occurrences": 1,
+      "verbatim": "simd = []",
+      "sha256": "443f02ebe3702841eab6c03f9889ba9ce7537fb59da9c2c02f4961e46ce1968e",
+      "why": "The simd feature is opt-in, so the scalar reference arm is a separately built executable rather than a runtime toggle."
+    },
+    {
+      "project": "gf2",
+      "commit": "6cdf576e2623f5593a2f0bf4389eac546b26844b",
+      "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
+      "line": 109,
+      "occurrences": 2,
+      "verbatim": "        .filter(|c| c.role != CellRole::Exploratory)",
+      "sha256": "84d5df8f3f379b1aff3dc03cdb1660ca57696408cab97c086f8ce7d3a35252dd",
+      "why": "Reservation and verification both count non-exploratory cells only, so a retained exploratory row spends no comparison."
+    },
+    {
+      "project": "gf2",
+      "commit": "0dbfdac60bf2b324b76ccc61cab6b2bcb78448a2",
+      "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
+      "line": 2166,
+      "occurrences": 1,
+      "verbatim": "                || f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;",
+      "sha256": "3d909b7ac6510c50c702ae8ee43f41c21d54936f6da26e58b7aaf86996bfd9f3",
+      "why": "P-20 requires twenty expected draws per bootstrap tail, which bounds each family's confirmatory cell count."
+    }
+  ]
+}

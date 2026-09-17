@@ -1417,13 +1417,17 @@ mod tests {
     /// checkout's working tree.
     struct TestRepo {
         root: PathBuf,
+        _scratch: gf2_core::test_scratch::Scratch,
     }
 
     impl TestRepo {
         fn new() -> Self {
-            let root = unique_temp_dir("gf2-sim-provenance");
-            fs::create_dir_all(&root).expect("create throwaway repository");
-            let repo = Self { root };
+            let scratch = unique_temp_dir("gf2-sim-provenance");
+            let root = scratch.path().to_path_buf();
+            let repo = Self {
+                root,
+                _scratch: scratch,
+            };
             repo.git(&["init", "--quiet", "--initial-branch=main"]);
             repo.write(SOURCE_FILE, "pub fn permanent() {}\n");
             repo.write(DEPENDENCY_MANIFEST, "[package]\nname = \"gf2-sim\"\n");

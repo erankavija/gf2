@@ -2015,6 +2015,7 @@ mod tests {
         Provenance, RngAlgorithm, ShardSpec, StreamPurpose,
     };
     use gf2_core::field::{matrix::FieldMatrix, FieldVec};
+    use gf2_core::test_scratch::scratch;
     use std::collections::BTreeSet;
 
     #[test]
@@ -3078,17 +3079,13 @@ mod tests {
         let mut campaign = manifest(vec![cell(3, 2, 8, &[(0, 61)])]);
         campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
         let run = run_field(&campaign, 3).unwrap();
-        let parent = std::env::temp_dir().join(format!(
-            "campaign-summary-round-trip-{}",
-            std::process::id()
-        ));
-        let root = parent.join("campaign-test");
+        let parent = scratch("campaign-summary-round-trip");
+        let root = parent.path().join("campaign-test");
 
         emit_field(&root, &campaign, &run).unwrap();
         let read_back = crate::permanent_campaign::schema::read_field_summary(&root, 3).unwrap();
 
         assert_eq!(read_back, *run.summary());
-        let _ = fs::remove_dir_all(parent);
     }
 
     #[test]
@@ -3117,14 +3114,13 @@ mod tests {
         let campaign = manifest(vec![cell(3, 2, 1, &[(0, 10)]), cell(5, 2, 1, &[(0, 20)])]);
         let q3 = run_field(&campaign, 3).unwrap();
         let q5 = run_field(&campaign, 5).unwrap();
-        let parent = std::env::temp_dir().join(format!("gf2-campaign-test-{}", std::process::id()));
-        let root = parent.join("campaign-test");
+        let parent = scratch("gf2-campaign-test");
+        let root = parent.path().join("campaign-test");
         let q3_paths = emit_field(&root, &campaign, &q3).unwrap();
         let q5_paths = emit_field(&root, &campaign, &q5).unwrap();
         let q3_set: BTreeSet<_> = q3_paths.iter().collect();
         let q5_set: BTreeSet<_> = q5_paths.iter().collect();
         assert!(q3_set.is_disjoint(&q5_set));
-        let _ = fs::remove_dir_all(parent);
     }
 
     #[test]
@@ -3133,8 +3129,8 @@ mod tests {
         let run = run_field(&campaign, 3).unwrap();
         assert_eq!(run.q(), 3);
         assert_eq!(run.summary().q, 3);
-        let parent = std::env::temp_dir().join(format!("campaign-parse-{}", std::process::id()));
-        let root = parent.join("campaign-test");
+        let parent = scratch("campaign-parse");
+        let root = parent.path().join("campaign-test");
         let paths = emit_field(&root, &campaign, &run).unwrap();
         let campaign_name = campaign.campaign_id.to_string();
         assert_eq!(
@@ -3153,7 +3149,6 @@ mod tests {
             3
         );
         assert!(paths.iter().all(|path| path.starts_with(&root)));
-        let _ = fs::remove_dir_all(parent);
     }
 
     #[test]
@@ -3161,28 +3156,24 @@ mod tests {
         let campaign = manifest(vec![cell(3, 2, 2, &[(0, 10)])]);
         let first = run_field(&campaign, 3).unwrap();
         let second = run_field(&campaign, 3).unwrap();
-        let left_parent =
-            std::env::temp_dir().join(format!("campaign-left-{}", std::process::id()));
-        let right_parent =
-            std::env::temp_dir().join(format!("campaign-right-{}", std::process::id()));
-        let left = left_parent.join("campaign-test");
-        let right = right_parent.join("campaign-test");
+        let left_parent = scratch("campaign-left");
+        let right_parent = scratch("campaign-right");
+        let left = left_parent.path().join("campaign-test");
+        let right = right_parent.path().join("campaign-test");
         let left_paths = emit_field(&left, &campaign, &first).unwrap();
         let right_paths = emit_field(&right, &campaign, &second).unwrap();
         assert_eq!(left_paths.len(), right_paths.len());
         for (left_path, right_path) in left_paths.iter().zip(right_paths.iter()) {
             assert_eq!(fs::read(left_path).unwrap(), fs::read(right_path).unwrap());
         }
-        let _ = fs::remove_dir_all(left_parent);
-        let _ = fs::remove_dir_all(right_parent);
     }
 
     #[test]
     fn re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission() {
         let campaign = manifest(vec![cell(3, 2, 1, &[(0, 10)])]);
         let run = run_field(&campaign, 3).unwrap();
-        let parent = std::env::temp_dir().join(format!("campaign-reemit-{}", std::process::id()));
-        let root = parent.join("campaign-test");
+        let parent = scratch("campaign-reemit");
+        let root = parent.path().join("campaign-test");
         let paths = emit_field(&root, &campaign, &run).unwrap();
         let first_bytes: Vec<_> = paths
             .iter()
@@ -3198,6 +3189,5 @@ mod tests {
         for (path, bytes) in paths.iter().zip(first_bytes) {
             assert_eq!(fs::read(path).unwrap(), bytes);
         }
-        let _ = fs::remove_dir_all(parent);
     }
 }

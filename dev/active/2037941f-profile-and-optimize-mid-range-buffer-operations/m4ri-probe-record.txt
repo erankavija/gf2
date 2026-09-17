@@ -1,22 +1,24 @@
 M4RI dense matvec comparator semantic qualification record
 issue: 92385645
-execution date: 2026-09-15
+execution date: 2026-09-16
 host: Linux 7.2.2-arch1-1 x86_64
 compiler: gcc (GCC) 16.2.1 20260810
+compiler producer string: GCC: (GNU) 16.2.1 20260810
 M4RI release: 20260122
 source archive sha256: 7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404
 installed libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
-semantic probe executable sha256: e6319fa95964bae3bde5e703d42b22d21365e5893c85eb81db0abc042baaa0de
-build record sha256: b15bf5af1893645614da0282d24090724fe74bc248895390a826543417ab8b4c
+semantic probe executable sha256: 8c1c0f4d98d0a9bcb10aac9dfd1f70a075a9bcfa36331a6cb4aae4dba67788d0
+build record sha256: d1f856e135ac31656b53b94141a34fc0ca321b82b22d3c8d7e20306a6e97e490
 library build flags: CFLAGS=-O3 -march=native -fPIC; --disable-static
 probe build flags: gcc -std=c11 -O3 -march=native -Wall -Wextra -Werror
+compile invocations in the retained build log: 17, every one by /usr/bin/gcc
 matched operation: mzd_mul(y, A, x, 0)
 
-The retained executable was built by:
+The retained executable comes from:
   bash dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh
 
-The integration lead reran that pinned executable with its matching retained
-shared library and observed:
+That pinned executable, run against its matching retained shared library,
+observes:
 
   ok rows=1 cols=1 words=1
   ok rows=63 cols=63 words=1
@@ -30,18 +32,30 @@ buffers and through M4RI public coordinates, then checks every M4RI output bit
 against the canonical parity oracle. The result demonstrates the matched
 operation only; it contains no timing or production-selection claim.
 
-The runner then reused the retained build successfully only after verifying
-the archive digest, compiler identity, build flags, configure arguments, and
-installed-library digest against `gf2-m4ri-build-record.txt`; the six semantic
-cases passed again.
+The runner reuses a retained build only after verifying, against
+`gf2-m4ri-build-record.txt`, the archive digest, the compiler executable, its
+version and its ELF producer string, the build flags, the configure arguments,
+the explicitly empty Autoconf inputs, the cleared GNU Make override channels,
+the compile driver and invocation count re-derived from the retained verbose
+build log, the installed library's own `.comment` producer strings, and the
+installed-library digest. The six semantic cases pass again under reuse.
 
-Compiler-provenance regression: the integration lead fresh-built the v2 cache
-with ambient `CC=clang`. Configure selected `/usr/bin/gcc`, the generated
-Makefile records `CC = /usr/bin/gcc`, and the provenance record identifies the
-same executable and GCC version. A second run with ambient `CC=clang`, nonempty
-`CPPFLAGS`, `LDFLAGS`, and `LIBS`, and an invalid ambient `CONFIG_SITE` reused
-the cache only after verifying the pinned GCC and explicitly controlled empty
-Autoconf inputs; all six cases passed. Ambient build variables therefore cannot
-create or reuse a cache under false GCC provenance.
+Compiler-provenance regression:
+  bash dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-m4ri-build-provenance.sh
 
+Every regression case builds a disposable cache under `target/`, so no
+retained comparator build is rebuilt or removed. A control first observes that
+this GNU Make promotes a `MAKEFLAGS` or `GNUMAKEFLAGS` variable definition over
+a makefile's own assignment, and that clearing both channels restores the
+makefile value. Three fresh caches then build under hostile ambient `CC=clang`
+with nonempty `CPPFLAGS`, `LDFLAGS` and `LIBS` and an invalid `CONFIG_SITE`,
+under `MAKEFLAGS='CC=clang CFLAGS=-O0'`, and under
+`GNUMAKEFLAGS='CC=clang CFLAGS=-O0'`. A fourth case reuses the first cache with
+every hostile channel present at once. Each case observes 17 compile
+invocations by /usr/bin/gcc, no invocation carrying `-O0`, library producer
+strings `GCC: (GNU) 16.2.1 20260810`, and six passing semantic cases. Neither
+ambient Autoconf inputs nor GNU Make override channels can create or reuse a
+cache under false GCC provenance.
+
+regression verdict: M4RI compiler-provenance regression: PASS
 exit status: 0
