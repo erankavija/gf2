@@ -126,7 +126,7 @@
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "done. Rework round 1 (doc-review F1, launcher resume comment) merged at fec1f140; the lead then swept the narrative protocol v4 invalidated and regenerated reevaluation.txt against the v4 evaluator built from main \u2014 every verdict, finding and summary comparison unchanged, the two evaluator digest lines the whole diff, and tables.md byte-identical. All four gates pass on be0986af and two independent Terra xhigh reviews return zero findings. Closed at session 10. Worktree agent-26465e6c-r1 reclaimed.",
+          "status": "done. Rework round 1 (doc-review F1, launcher resume comment) merged at fec1f140; the lead then swept the narrative protocol v4 invalidated and regenerated reevaluation.txt against the v4 evaluator built from main — every verdict, finding and summary comparison unchanged, the two evaluator digest lines the whole diff, and tables.md byte-identical. All four gates pass on be0986af and two independent Terra xhigh reviews return zero findings. Closed at session 10. Worktree agent-26465e6c-r1 reclaimed.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c-r1",
@@ -1182,7 +1182,7 @@
     },
     {
       "issue": "f547c394",
-      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set \u2014 declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property \u2014 is the rework's design target.",
+      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set — declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property — is the rework's design target.",
       "origin": "issue-impact",
       "disposition": "all recorded in reviews/f547c394-r3.md; the rework worker reads that file as part of its mandatory audit step",
       "criterion_named_by": "REQ-02, REQ-03, REQ-04, REQ-06 of f547c394"
@@ -1315,7 +1315,7 @@
     },
     {
       "issue": "6c6b09b1",
-      "subject": "the launcher completeness guard read measured_cells from the terminal record, which benchmark-ab-runner increments regardless of outcome and which a resumed session that finds every cell checkpointed reports as zero \u2014 so the guard would have passed an all-inapplicable campaign and failed a legitimately resumed one",
+      "subject": "the launcher completeness guard read measured_cells from the terminal record, which benchmark-ab-runner increments regardless of outcome and which a resumed session that finds every cell checkpointed reports as zero — so the guard would have passed an all-inapplicable campaign and failed a legitimately resumed one",
       "origin": "issue-impact (session 10)",
       "disposition": "found only because the lead required the untested host-unavailable branch to be exercised against a synthesized fixture rather than code-read. Guard now counts cell-complete records carrying pairs; ten cases committed as dev/bench_results/6c6b09b1/run-byte-field-v4.test.sh, two of them pinned to real artifacts. Exit 4 distinguishes a sound run whose plan does not fit the host from exit 1, a run that broke.",
       "criterion_named_by": "epic REQ-01 (measurement contract)"
@@ -1343,23 +1343,23 @@
     },
     {
       "issue": "6fb89a3c",
-      "subject": "dev/active/6fb89a3c/survey/freeze-remeasure.py no longer reproduces the addenda it froze: pilot_history() globs dev/bench_results/6fb89a3c/*/execution.log and filters only on family id and exploratory role, with no skip for the campaign the addendum itself drives, while main() adds +1 for 'this campaign' \u2014 so now that the three re-measurement receipts are committed, each campaign is counted twice",
+      "subject": "dev/active/6fb89a3c/survey/freeze-remeasure.py no longer reproduces the addenda it froze: pilot_history() globs dev/bench_results/6fb89a3c/*/execution.log and filters only on family id and exploratory role, with no skip for the campaign the addendum itself drives, while main() adds +1 for 'this campaign' — so now that the three re-measurement receipts are committed, each campaign is counted twice",
       "origin": "lead review (session 10), by reading; not confirmable by running from main because the arm executables are gitignored",
-      "disposition": "OPEN \u2014 blocks closing 6fb89a3c. Identical defect to the one 3e59cb9a found and fixed in dev/active/eda07788/survey/freeze-remeasure.py (skip a campaign whose campaign-start record names this addendum as its own path). A reviewer rerunning the script would find the frozen addendum disagreeing with the receipt that measured it.",
+      "disposition": "OPEN — blocks closing 6fb89a3c. Identical defect to the one 3e59cb9a found and fixed in dev/active/eda07788/survey/freeze-remeasure.py (skip a campaign whose campaign-start record names this addendum as its own path). A reviewer rerunning the script would find the frozen addendum disagreeing with the receipt that measured it.",
       "criterion_named_by": "6fb89a3c REQ-01 (reproducible release benchmarks) and epic REQ-01"
     },
     {
       "issue": "bdc507a3",
       "subject": "protocol v4 replaced dev/active/f547c394/addendum.schema.json in place instead of versioning it alongside; addendum-v1.schema.json is preserved but v2 and v3 are not, so the only surviving copies of the v3 schema are inside receipt inputs/ snapshots",
       "origin": "issue-impact (session 10), found by 3e59cb9a when its frozen-addendum test went red on the merge",
-      "disposition": "OPEN \u2014 bdc507a3 is already closed, so this needs its own issue. Anything validating a frozen v3 addendum against the shared path fails on two const constraints ($id and protocol.version). Workaround in use: validate against the version-3 snapshot the receipt pins and assert that snapshot's digest against receipt.addendum_schema.sha256. FamilyAddendum::validate() itself accepts 1..=PROTOCOL_VERSION, so only the JSON-Schema file is affected.",
+      "disposition": "OPEN — bdc507a3 is already closed, so this needs its own issue. Anything validating a frozen v3 addendum against the shared path fails on two const constraints ($id and protocol.version). Workaround in use: validate against the version-3 snapshot the receipt pins and assert that snapshot's digest against receipt.addendum_schema.sha256. FamilyAddendum::validate() itself accepts 1..=PROTOCOL_VERSION, so only the JSON-Schema file is affected.",
       "criterion_named_by": "epic REQ-01 and REQ-06 (deterministic, reproducible execution)"
     },
     {
       "issue": "04b85d10",
       "subject": "code-review round 2 returned three issue-impact blocking findings: F1 the frozen layout addendum labels degree-14 short-frame BCH measurements as normal-frame so its declared workload does not match the receipt (addendum-bit-storage-layout-v3-confirmation.json:11); F2 the n=64800 whole-consumer receipt reports conversion costs from a short-code setup and a 32448-bit proxy rather than the declared normal-frame consumer (survey/gf2-side/src/lib.rs:781 in the count-v3-confirmation producing snapshot); F3 summarize-receipts.py hard-codes receipt-specific provenance and correction prose instead of deriving it from structured receipt evidence (:93)",
       "origin": "gate (session 10)",
-      "disposition": "OPEN \u2014 blocks closing 04b85d10; rework round 2 of 2, so a third failure escalates per policy item 5. F1 and F2 are measurement-validity defects, not wording: the declared workload does not match what was measured. Verdict references @/issue/04b85d10/requirement/REQ-01..03 and @/invariant/benchmark-backed-performance.",
+      "disposition": "OPEN — blocks closing 04b85d10; rework round 2 of 2, so a third failure escalates per policy item 5. F1 and F2 are measurement-validity defects, not wording: the declared workload does not match what was measured. Verdict references @/issue/04b85d10/requirement/REQ-01..03 and @/invariant/benchmark-backed-performance.",
       "criterion_named_by": "04b85d10 REQ-01, REQ-02, REQ-03 and epic REQ-01"
     },
     {
@@ -1373,14 +1373,14 @@
       "issue": "a203a23c",
       "subject": "research-review F1 (high, blocking): tagged commit 76812a4e reports the checker's 23.1 s -> 2.59 s and the restoration generator's 60.2 s -> 10.1 s reductions without a committed benchmark artifact, invocation, hardware or provenance",
       "origin": "gate (session 10)",
-      "disposition": "OPEN \u2014 blocks closing a203a23c; its other three gates pass. The lead caused this by asking for the cost measurement without also asking where the artifact recording it would live. Fix: commit an artifact carrying the invocation, host and timings with provenance, and point the claim at it. References @/invariant/claims-trace-to-artifacts and @/invariant/benchmark-backed-performance.",
+      "disposition": "OPEN — blocks closing a203a23c; its other three gates pass. The lead caused this by asking for the cost measurement without also asking where the artifact recording it would live. Fix: commit an artifact carrying the invocation, host and timings with provenance, and point the claim at it. References @/invariant/claims-trace-to-artifacts and @/invariant/benchmark-backed-performance.",
       "criterion_named_by": "epic REQ-01 (measurement contract)"
     },
     {
       "issue": "1a379447",
       "subject": "the CCX1 wrapper's `nice -n -5` always fails on this host (RLIMIT_NICE max nice priority is 0), so every campaign runs at NI=0; the receipt's host observation records governor, SMT and load but not the achieved scheduling priority",
       "origin": "invoker observation (session 10), verified",
-      "disposition": "benign and consistent: GNU nice warns and still runs the command (exit status is the command's), the wrapper's own comment already calls the pin best-effort, and 146 committed evidence files carry the same warning back to 2026-05-27 \u2014 so all committed measurements are mutually comparable at NI=0. The gap is provenance, not validity: on a host where the pin succeeded, measurements would shift and nothing would flag it. Worth recording achieved niceness in the host observation.",
+      "disposition": "benign and consistent: GNU nice warns and still runs the command (exit status is the command's), the wrapper's own comment already calls the pin best-effort, and 146 committed evidence files carry the same warning back to 2026-05-27 — so all committed measurements are mutually comparable at NI=0. The gap is provenance, not validity: on a host where the pin succeeded, measurements would shift and nothing would flag it. Worth recording achieved niceness in the host observation.",
       "criterion_named_by": "epic REQ-01 (measurement contract) and REQ-06 (deterministic seeded execution)"
     },
     {
@@ -1518,13 +1518,13 @@
     "Session 4 lead direction on f547c394 F12: the rework materially amends P-17, P-18, P-19 and P-22, so the protocol becomes version 2. Version-1 receipts stay valid as version-1 evidence and acceptance must refuse to evaluate a receipt under a version it was not pinned to.",
     "Session 4: all eight wave-2 branches merged current main and were lead-preserved first. c7113c5a's confirmatory receipt and 26465e6c's popcount pilot receipt were sitting uncommitted in their worktrees and are now on their branches.",
     "Session 4 confirmed empirically: codex --add-dir <repo>/.git does NOT make a linked worktree's git directory writable; the sandbox mounts it read-only regardless. Codex workers keep a COMMIT-PLAN.md and the lead commits for them.",
-    "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations \u2014 but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
+    "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations — but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
     "Session 4: the CCX1 mutex starved every exclusive waiter because cargo-budget.sh took the shared side with flock -s and a pending flock -x does not block a new flock -s on Linux. Fixed at d088c284 with a turnstile both sides pass through, authorized by the invoker as a shared-infrastructure change. The fix binds only checkouts that have it, so the lead merged main into all nine live worktrees and then held the turnstile to drain the six runners launched under the old wrapper.",
-    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record \u2014 c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
+    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record — c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
     "Session 4: the lead commissioned two stood-down duplicate workers as read-only auditors rather than idling them. One verified 106 citations across all five survey findings documents and nine external checkouts; the other audited the shared crate for the defect class the first F13 instance revealed. Between them they produced F13-F19 and two false claims that would have reached receipts. Neither wrote a byte in any worktree.",
     "Session 4 convention adopted: a survey records code claims in a source-evidence.json ledger (project, commit, path, line, the verbatim text of that line, and why) rather than putting line numbers in prose. c077a88b did this and audited clean on 37 citations in seconds; the four prose-citation surveys took minutes each and two carried claims their citations did not support.",
-    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted \u2014 the F3 repair it needs to emit a decoder receipt at all \u2014 in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
-    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots \u2014 re-read each branch before acting.",
+    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted — the F3 repair it needs to emit a decoder receipt at all — in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
+    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots — re-read each branch before acting.",
     "Session 4 sequencing rule still in force: four surveys were told to hold their confirmatory campaigns until the lead says protocol v2 has landed. v2 is the critical path.",
     "Session 4 open question for the invoker: whether the 5G NR whole-consumer encoder cell eda07788 proposed becomes a new survey family in this epic, a tracked follow-up outside it, or is dropped. Lead recommends a tracked follow-up outside the epic.",
     "Session 6 halted on the invoker request after stopping all three subagents and releasing the c077a88b, 1d0da41f and eda07788 leases. c077a88b is merged but open; 1d0da41f is complete on an unmerged branch; eda07788 completed all six frozen confirmation cells while the interrupt was being delivered and preserves the generated result uncommitted. Exact state and resume order are in handoff-5.md.",
@@ -1556,7 +1556,7 @@
     "Pruned six stale worktrees (02b8137c, 3f7edef1, 5ee83cd3, 97410c80, b1bd75ca, e1e0e7ff), all clean and fully merged; branches kept. Free disk 38G -> 74G. agent-02b8137c-run kept: 22 untracked validation-journal files belonging to another epic.",
     "Session 10: 26465e6c and bdc507a3 closed; a387825e in doc-review rework round 1 (lead-authored, comments only).",
     "Session 10: reclaimed worktrees agent-26465e6c-r1 and agent-c7113c5a-v3 after their issues closed; free disk 69G -> 78G.",
-    "Session 10: the Codex weekly usage limit was exhausted at 07:05Z by four gate suites plus four independent Terra xhigh reviews, failing two gate suites with 'Agent produced no output' \u2014 which records as a gate FAILURE indistinguishable from a finding. The invoker reset it; both suites were re-run.",
+    "Session 10: the Codex weekly usage limit was exhausted at 07:05Z by four gate suites plus four independent Terra xhigh reviews, failing two gate suites with 'Agent produced no output' — which records as a gate FAILURE indistinguishable from a finding. The invoker reset it; both suites were re-run.",
     "Session 10: merged a387825e, bdc507a3, 26465e6c, 04b85d10, 6fb89a3c, 3e59cb9a and a203a23c to main, cargo-ci green after each.",
     "Session 10 (invoker, mid-session): no more new work this session; finish what is in flight and hand off.",
     "2026-09-12T08:36Z: invoker directed the pending campaigns to start immediately, independent of the session. Window launched as systemd user unit gf2-bench-window-20260912b over the committed queue (7 jobs, ~215 min): 3be770d5 profile re-run, 6c6b09b1 three v4 pilots, 3be770d5 two v4 confirmations, 1c602857 pilot. All seven pre-flighted before launch (worktree present, launcher present, no .done key collision with the 2026-09-12 01:00Z window). Follow with dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh.",
@@ -1597,7 +1597,8 @@
     "Session 19 gate ruling: repo-validate is a story-level gate (removed from every leaf); doc-review only on implementation, synthesis and publish leaves and containers; asm-artefact-present only where SIMD sources can change.",
     "Trap (session 19): `jit issue reject --reason` writes the reason verbatim as a resolution: label; a reason with spaces violates the label format and blocks every later update on that issue until fixed with --force. Use a hyphenated reason such as merged-into-<id>.",
     "Trap (session 19): merged descriptions must number criteria REQ-01.. uniquely per issue and keep the `[hard] REQ-NN: text` shape; a source tag goes after the colon.",
-    "Trap (session 19): a native worker inherits the user CLAUDE.md and delegated to codex; the delegation rule was removed from ~/.claude/CLAUDE.md and every prompt now says to do the work itself."
+    "Trap (session 19): a native worker inherits the user CLAUDE.md and delegated to codex; the delegation rule was removed from ~/.claude/CLAUDE.md and every prompt now says to do the work itself.",
+    "Session 20 (2026-09-17T21:15Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time in worktrees, reuse over proliferation; check for worker stalls every 20 minutes. Session 19 ended on the weekly usage limit without a handoff; its state was recovered from progress.json, git and the worktrees. The 2026-09-17 window ran both c04dd4ac source jobs (rc 0; results uncommitted in their worktrees). Dispatched into the existing worktrees: 85fc5ff4 (opus, collect window and finish), 9fb40c83 (opus, same), e1f9a78f (opus, finish after the lead-preserve WIP 9ab18326), b64dc9c4 (sonnet, REQ audit, main merge, cargo-ci, Rust 1.95). The lead finishes 0a357f94 itself (branch complete; main merged; closure --check passes; cargo-ci running)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
