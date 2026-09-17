@@ -535,6 +535,22 @@ fn a_route_refuses_the_build_it_cannot_serve() {
 }
 
 #[test]
+fn a_cell_workload_names_the_question_every_arm_of_that_cell_serves() {
+    // The gf2 arm refuses a cell whose workload belongs to another question,
+    // so the workload's question and the plan's arms agree on every frozen cell.
+    for cell in cells() {
+        assert_eq!(cell.workload.question(), cell.question, "{}", cell.cell_id);
+        let (baseline, candidate) = campaign::cell_arms(&cell);
+        for arm in [baseline, candidate] {
+            match Route::parse(arm) {
+                Ok(route) => assert_eq!(route.question(), cell.question, "{}", cell.cell_id),
+                Err(_) => assert_eq!(arm, M4RI_ARM, "{}", cell.cell_id),
+            }
+        }
+    }
+}
+
+#[test]
 fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
     let expected_arms = [
         (Question::IsolatedFusedParity, 2),
