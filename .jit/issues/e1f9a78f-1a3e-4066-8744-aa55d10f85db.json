@@ -8,14 +8,245 @@
     "bb769456-6803-49ec-ae91-f1619dd0f278"
   ],
   "description": "Implement the bounded resumable harness required by the frozen dense-parity addendum without changing production selection.\n\n## Background\n\nThe harness reuses canonical campaign support and separately reports allocated whole-`matvec`, scalar reference, selected production, candidate, and externally adapted observations. Its smoke validation is deterministic and non-timed: it validates cells, semantics, logging, resume, and output shape but cannot collect receipt samples. Every timed sample is queued only after the frozen addendum is committed and runs on the prepared host inside the benchmark window under the shared measurement contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness executes the frozen stride-boundary cells with output allocation included and validates exact parity results plus 0/1/63/64/65 bit-boundary semantics.\n- [hard] REQ-02: Bounded runs resume without repeating completed cells and emit content-pinned protocol, addendum, executable, input, host, toolchain, route, and sample provenance.\n- [hard] REQ-03: A deterministic non-timed release smoke validates cell generation, parity semantics, append-only logging, checkpoint/resume, and output schema while emitting zero receipt samples.\n- [hard] REQ-04: Timed execution refuses unfrozen inputs and queues every sample only after the committed addendum exists for execution inside the prepared-host benchmark window under the contract.\n\n## Notes\n\nThe scalar four-accumulator route is a semantic/reference arm, not a proposed public API.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Dense-parity measurement harness interface (parity-measurement-interface)",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-harness.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Harness launcher: build, cells, smoke, window",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Dense-parity harness crate manifest and lock",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "M4RI arm build: qualified install digest and pinned compiler flags",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Harness library: cells, fixtures, routes, oracle, wire, campaign",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Frozen cell table, questions, seeds and unavailable rows",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/cells.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Measured routes, shape and lane verification, timing windows",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/routes.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Parity oracle over the 0/1/63/64/65 boundaries and every word count",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/oracle.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Non-timed smoke driver over the shared journal and checkpoints",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/smoke.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Producing-input closure guard: tracked and clean campaign inputs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/inputs.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2 campaign arm for every dense-parity route",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "External M4RI mzd_mul comparator arm",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-m4ri-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Campaign addendum transcription, verification, plan projection, smoke",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Deterministic untimed semantic oracle",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-oracle.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "format": "markdown",
+      "label": "Behavioral contract of the harness",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/tests/harness_contract.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "C shim reaching M4RI public coordinate accessors",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_arm.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Producing-input closure generator and freshness check",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Source-claim ledger generator",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Throwaway smoke addenda under target/",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-smoke-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Smoke judge and record writer",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-dense-smoke.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Content closure every dense-parity receipt snapshots",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Source claims with project, commit, path, line, verbatim",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Non-timed build, contract and oracle validation record",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Non-timed wire smoke record, zero receipt samples",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Isolated fused-parity pilot campaign addendum",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-isolated-fused-parity.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Allocated whole-matvec pilot campaign addendum",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-allocated-matvec.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "M4RI comparator pilot campaign addendum",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Isolated fused-parity family ledger at genesis",
+      "path": "dev/bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Allocated whole-matvec family ledger at genesis",
+      "path": "dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "M4RI comparator family ledger at genesis",
+      "path": "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Benchmark-window queue lines for the three dense-parity families",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    }
+  ],
   "first_ready_at": "2026-09-16T20:37:02.481753350Z",
   "gates_required": [
     "doc-review",
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-17T21:51:11.772515211Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "e1f9a78f-1a3e-4066-8744-aa55d10f85db",
   "labels": [
     "type:task",
@@ -30,5 +261,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the dense-parity measurement harness",
-  "updated_at": "2026-09-17T00:02:29.845573226Z"
+  "updated_at": "2026-09-17T21:55:37.269979506Z"
 }

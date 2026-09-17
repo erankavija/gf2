@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-17T21:50:40.332188968Z",
   "context": {},
   "created_at": "2026-09-16T22:36:13.474372771Z",
   "dependencies": [
@@ -29,7 +30,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
-  "updated_at": "2026-09-17T21:31:05.686519583Z"
+  "updated_at": "2026-09-17T21:50:40.332188968Z"
 }
