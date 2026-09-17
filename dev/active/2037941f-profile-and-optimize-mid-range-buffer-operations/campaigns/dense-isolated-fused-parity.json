@@ -1,0 +1,371 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "2037941f-dense-isolated-fused-parity",
+    "issue": "e1f9a78f",
+    "purpose": "kernel-family",
+    "description": "Isolated call to the detected bundle's fused AND-population-count entry over one row and the vector, at the frozen anchor and neighbouring word counts in the warm and streaming cache states. This addendum is the pilot: every cell is exploratory and no cell decides adoption."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-16T16:16:04Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The fused kernel holds most but not all of the allocated consumer at the attributed 64-word shape, so an isolated gain no larger than the allocated bar cannot produce a confirmable allocated gain.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.03,
+    "equivalence_rationale": "Three percent is the finest non-inferiority statement the isolated analogue's resolution supports.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The isolated family selects a candidate; it holds no comparator-gap cell and declares no external gap."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 1,
+    "max_added_source_lines": 96,
+    "maintenance_rationale": "One new unsafe kernel function with an explicit safety contract in crates/gf2-kernels-simd/src/x86/, 96 added nonblank production lines, and no allocation, dependency, public API, semantic type or second dispatcher."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 4,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "and-popcnt-8w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-8w-warm",
+        "size": {
+          "bits": 512,
+          "words": 8
+        },
+        "seed": 2321486996327451521
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-9w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-9w-warm",
+        "size": {
+          "bits": 576,
+          "words": 9
+        },
+        "seed": 4753145896412340504
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-63w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-63w-warm",
+        "size": {
+          "bits": 4032,
+          "words": 63
+        },
+        "seed": 17148963807832978103
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-64w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-64w-warm",
+        "size": {
+          "bits": 4096,
+          "words": 64
+        },
+        "seed": 10967803942208214426
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-65w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-65w-warm",
+        "size": {
+          "bits": 4160,
+          "words": 65
+        },
+        "seed": 3240581074667839197
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-7w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-7w-warm",
+        "size": {
+          "bits": 448,
+          "words": 7
+        },
+        "seed": 11659743146836513938
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-66w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-66w-warm",
+        "size": {
+          "bits": 4224,
+          "words": 66
+        },
+        "seed": 8616225918994224998
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-8w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-8w-streaming",
+        "size": {
+          "bits": 512,
+          "words": 8
+        },
+        "seed": 3844196989419024866
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-9w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-9w-streaming",
+        "size": {
+          "bits": 576,
+          "words": 9
+        },
+        "seed": 805649719888145275
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-63w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-63w-streaming",
+        "size": {
+          "bits": 4032,
+          "words": 63
+        },
+        "seed": 8612390784212865105
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-64w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-64w-streaming",
+        "size": {
+          "bits": 4096,
+          "words": 64
+        },
+        "seed": 12030604777397187438
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcnt-65w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-fused-parity-and-popcnt-65w-streaming",
+        "size": {
+          "bits": 4160,
+          "words": 65
+        },
+        "seed": 3639733647289882297
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

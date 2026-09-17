@@ -22,6 +22,14 @@ typedef struct {
     int rows;
 } gf2_m4ri_state;
 
+/* The exported boundary, declared before use so the arm and this unit agree. */
+int gf2_m4ri_fresh_call(const uint64_t *rows_words, const uint64_t *x_words, int nrows, int ncols,
+                        uint64_t *y_words);
+gf2_m4ri_state *gf2_m4ri_retain(const uint64_t *rows_words, const uint64_t *x_words, int nrows,
+                                int ncols);
+int gf2_m4ri_retained_call(const gf2_m4ri_state *state, uint64_t *y_words);
+void gf2_m4ri_release(gf2_m4ri_state *state);
+
 static int bit_of(const uint64_t *words, int index) {
     return (int)((words[(size_t)index >> 6] >> ((unsigned)index & 63U)) & UINT64_C(1));
 }
