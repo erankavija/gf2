@@ -172,16 +172,7 @@ fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
             return Err(fail(&name, "the output length is not the frozen row count"));
         }
         for row in 0..MATVEC_ROWS {
-            let expected = item
-                .matrix
-                .row_words(row)
-                .iter()
-                .zip(item.vector.words())
-                .fold(0_u64, |accumulator, (left, right)| accumulator ^ (left & right))
-                .count_ones()
-                & 1
-                == 1;
-            if output.get(row) != expected {
+            if output.get(row) != oracle_parity(&item.matrix, &item.vector, row) {
                 return Err(fail(&name, format!("row {row} differs from the parity oracle")));
             }
         }
