@@ -1,0 +1,195 @@
+{
+  "schema": "ldpc-candidate-source-evidence-v1",
+  "note": "Claims are read from the working tree. The revision is navigation metadata: receipts pin the measured bytes.",
+  "claims": [
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 132,
+      "text": "sign_product = if value >= 0.0 {",
+      "topic": "sign",
+      "why": "the canonical sign rule is a comparison against zero, so a negative-zero input counts as positive and a NaN input counts as negative"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 137,
+      "text": "let magnitude = value.abs();",
+      "topic": "magnitude",
+      "why": "the magnitude entering the fold is the float absolute value, which has no overflow case"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 138,
+      "text": "if magnitude < min1 {",
+      "topic": "tie",
+      "why": "a strict comparison keeps the first of two equal smallest magnitudes at the smallest position, which fixes the tie rule"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 155,
+      "text": "let magnitude = if index == arg1 { min2 } else { min1 };",
+      "topic": "tie",
+      "why": "an output takes the second smallest exactly at the smallest position, which is the leave-one-out minimum including under a tie"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 69,
+      "text": "Self::Offset(beta) => Llr::new(sign * (magnitude - beta).max(0.0)),",
+      "topic": "clipping",
+      "why": "offset min-sum floors the excluded magnitude at zero; this is the only clipping the float contract performs inside the check update"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
+      "line": 118,
+      "text": "outputs[0] = Llr::zero();",
+      "topic": "degree",
+      "why": "a degree-one check emits the zero LLR that a degree-zero reduction means"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1214,
+      "text": "belief = Llr::new(belief.value() + self.check_to_var[edge].value());",
+      "topic": "accumulation",
+      "why": "the variable-node belief accumulates sequentially over the variable's canonical layout slots in the parity-check matrix's column order"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1223,
+      "text": "self.var_to_check[edge] = Llr::new(belief.value() - incoming.value());",
+      "topic": "accumulation",
+      "why": "a variable-to-check message is the belief minus that edge's incoming message, so the subtraction inherits the accumulated belief's rounding"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1341,
+      "text": "*message = llrs[var as usize];",
+      "topic": "initialisation",
+      "why": "every variable-to-check message starts at its variable's channel LLR unscaled, so the float contract applies no channel scaling of its own"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1336,
+      "text": "// Reset all messages: check-to-variable to zero, and every",
+      "topic": "initialisation",
+      "why": "check-to-variable messages start at zero at the top of every decode"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1353,
+      "text": "if early_termination && self.syndrome_passes() {",
+      "topic": "termination",
+      "why": "per-frame termination is a syndrome test after the variable update of each iteration"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1243,
+      "text": "parity ^= self.hard_bits[edge_var[edge] as usize];",
+      "topic": "termination",
+      "why": "a check's parity is the exclusive or of its edges' hard decisions over the canonical layout"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 168,
+      "text": "self.0 < 0.0",
+      "topic": "hard-decision",
+      "why": "the hard decision is a strict comparison, so a zero or negative-zero belief decides to bit zero"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/llr.rs",
+      "line": 247,
+      "text": "Llr(self.0.clamp(-max, max))",
+      "topic": "saturation",
+      "why": "the float alphabet's only saturation is this explicit caller-invoked clamp; the decoder itself applies none"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "crates/gf2-coding/src/ldpc/edge_layout.rs",
+      "line": 70,
+      "text": "var_edge_to_check_edge: Vec<u32>,",
+      "topic": "layout",
+      "why": "a variable's slots resolve to canonical check-major edge ids, which is the map any alternative layout must reproduce"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
+      "line": 217,
+      "text": "let attempts = entries.iter().filter(|e| e.comparisons > 0).count().max(1) as f64;",
+      "topic": "budget",
+      "why": "the sequential attempt index counts ledger entries that reserve a comparison, so exploratory reservations do not advance it"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
+      "line": 218,
+      "text": "Ok(family.family_wise.alpha / (attempts * (attempts + 1.0)))",
+      "topic": "budget",
+      "why": "attempt t spends alpha / (t (t + 1)), so a family's first confirmation spends half the frozen alpha"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
+      "line": 2166,
+      "text": "|| f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;",
+      "topic": "budget",
+      "why": "a cell is not-confirmatory when its corrected alpha leaves fewer than twenty expected draws in a bootstrap tail, which caps the cell count of an attempt"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
+      "line": 83,
+      "text": "family_alpha: 0.05,",
+      "topic": "budget",
+      "why": "the frozen family-wise error rate the cap is computed from"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
+      "line": 84,
+      "text": "bootstrap_resamples: 10_000,",
+      "topic": "budget",
+      "why": "the frozen resample count the tail-support rule is computed from"
+    },
+    {
+      "project": "gf2",
+      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
+      "line": 93,
+      "text": "max_confirmatory_attempts_per_candidate: 1,",
+      "topic": "budget",
+      "why": "one confirmatory attempt per candidate identity and protocol version"
+    }
+  ]
+}
