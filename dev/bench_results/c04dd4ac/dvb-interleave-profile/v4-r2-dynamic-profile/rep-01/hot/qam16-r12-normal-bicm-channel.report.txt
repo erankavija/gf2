@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 2973782416
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ............  ....................  ........................................................................................................................................  ....................
+#
+    58.92%          2094  dvb-profile           [.] <gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs  -      -            
+     1.25%            43  dvb-profile           [.] <gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits                             -      -            
+     0.60%            22  dvb-profile           [.] dvb_profile::prepare::{{closure}}                                                                                                     -      -            
+    19.73%           712  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave                                                            -      -            
+     1.19%            43  [unknown]             [k] 0xffffffffad401280                                                                                                                    -      -            
+     0.75%            32  [unknown]             [k] 0xffffffffadb10fb3                                                                                                                    -      -            
+
+
+#
+# (Tip: To record every process run by a user: perf record -u <user>)
+#

@@ -1,0 +1,82 @@
+[
+  {
+    "id": "qam16-r12-normal-direct",
+    "modcod": "qam16-r12-normal",
+    "boundary": "direct"
+  },
+  {
+    "id": "qam16-r12-normal-sim-stage",
+    "modcod": "qam16-r12-normal",
+    "boundary": "sim-stage"
+  },
+  {
+    "id": "qam16-r12-normal-xdsopl-packed",
+    "modcod": "qam16-r12-normal",
+    "boundary": "xdsopl-packed"
+  },
+  {
+    "id": "qam16-r12-normal-bicm-channel",
+    "modcod": "qam16-r12-normal",
+    "boundary": "bicm-channel"
+  },
+  {
+    "id": "qam64-r12-normal-direct",
+    "modcod": "qam64-r12-normal",
+    "boundary": "direct"
+  },
+  {
+    "id": "qam64-r12-normal-sim-stage",
+    "modcod": "qam64-r12-normal",
+    "boundary": "sim-stage"
+  },
+  {
+    "id": "qam64-r12-normal-xdsopl-packed",
+    "modcod": "qam64-r12-normal",
+    "boundary": "xdsopl-packed"
+  },
+  {
+    "id": "qam64-r12-normal-bicm-channel",
+    "modcod": "qam64-r12-normal",
+    "boundary": "bicm-channel"
+  },
+  {
+    "id": "qam16-r12-short-direct",
+    "modcod": "qam16-r12-short",
+    "boundary": "direct"
+  },
+  {
+    "id": "qam16-r12-short-sim-stage",
+    "modcod": "qam16-r12-short",
+    "boundary": "sim-stage"
+  },
+  {
+    "id": "qam16-r12-short-xdsopl-packed",
+    "modcod": "qam16-r12-short",
+    "boundary": "xdsopl-packed"
+  },
+  {
+    "id": "qam16-r12-short-bicm-channel",
+    "modcod": "qam16-r12-short",
+    "boundary": "bicm-channel"
+  },
+  {
+    "id": "qam64-r12-short-direct",
+    "modcod": "qam64-r12-short",
+    "boundary": "direct"
+  },
+  {
+    "id": "qam64-r12-short-sim-stage",
+    "modcod": "qam64-r12-short",
+    "boundary": "sim-stage"
+  },
+  {
+    "id": "qam64-r12-short-xdsopl-packed",
+    "modcod": "qam64-r12-short",
+    "boundary": "xdsopl-packed"
+  },
+  {
+    "id": "qam64-r12-short-bicm-channel",
+    "modcod": "qam64-r12-short",
+    "boundary": "bicm-channel"
+  }
+]
