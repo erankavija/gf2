@@ -10,6 +10,7 @@ use dense_parity_harness::cells::{
     CAMPAIGN_SEED, MATVEC_ROWS, M4RI_SHAPES, SIMD_LANE_MIN_WORDS, STREAMING_BANKS,
     STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
 };
+use dense_parity_harness::external::{self, LibraryIdentity};
 use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
 use dense_parity_harness::inputs;
 use dense_parity_harness::oracle;
@@ -548,6 +549,74 @@ fn a_cell_workload_names_the_question_every_arm_of_that_cell_serves() {
             }
         }
     }
+}
+
+/// One qualified install's mapping as the kernel reports it, beside the
+/// entries a mapping table carries that name no loadable comparator: an
+/// anonymous mapping, a pseudo-file, a different library, and a backing file
+/// the kernel has marked deleted.
+const MAPS: &str = "\
+7f2c00000000-7f2c00021000 r--p 00000000 08:02 5241987 /opt/m4ri/lib/libm4ri.so.2.0.1
+7f2c00021000-7f2c00100000 r-xp 00021000 08:02 5241987 /opt/m4ri/lib/libm4ri.so.2.0.1
+7f2c00200000-7f2c00280000 r-xp 00000000 08:02 5241000 /usr/lib/libc.so.6
+7f2c00300000-7f2c00321000 rw-p 00000000 00:00 0 
+7f2c00400000-7f2c00421000 rw-p 00000000 00:00 0 [heap]
+7f2c00500000-7f2c00521000 r-xp 00000000 08:02 5241988 /tmp/stale/libm4ri.so.2 (deleted)
+";
+
+#[test]
+fn the_mapping_table_names_the_comparator_object_this_process_loaded() {
+    let mapped = external::mapped_libraries(MAPS, "m4ri");
+    assert_eq!(
+        mapped.into_iter().collect::<Vec<_>>(),
+        vec!["/opt/m4ri/lib/libm4ri.so.2.0.1"]
+    );
+    assert!(external::mapped_libraries(MAPS, "gmp").is_empty());
+
+    // The real table is the authority: this build links no comparator, so it
+    // maps none and the arm's check refuses rather than assuming one.
+    let found = external::loaded_library("m4ri");
+    if cfg!(feature = "m4ri") {
+        found.expect("an m4ri build maps the library it links");
+    } else {
+        let refusal = found.expect_err("this build links no m4ri");
+        assert!(refusal.contains("no libm4ri.so is mapped"), "{refusal}");
+    }
+}
+
+#[test]
+fn a_substituted_comparator_library_refuses_a_timed_run() {
+    let identity = LibraryIdentity {
+        path: "/opt/m4ri/lib/libm4ri.so.2.0.1".to_owned(),
+        sha256: "0".repeat(64),
+    };
+    let record = dense_parity_harness::cells::QUALIFICATION_RECORD;
+    external::verify_pinned(&identity, &identity.sha256, record).expect("the qualified object");
+
+    let pinned = "1".repeat(64);
+    let refusal = external::verify_pinned(&identity, &pinned, record)
+        .expect_err("a different object refuses");
+    assert!(refusal.contains(&identity.path), "{refusal}");
+    assert!(refusal.contains(&identity.sha256), "{refusal}");
+    assert!(refusal.contains(&pinned), "{refusal}");
+    assert!(refusal.contains(record), "{refusal}");
+}
+
+#[test]
+fn the_comparator_provenance_names_the_object_it_loaded() {
+    let identity = LibraryIdentity {
+        path: "/opt/m4ri/lib/libm4ri.so.2.0.1".to_owned(),
+        sha256: "a".repeat(64),
+    };
+    let shape = M4RI_SHAPES[0];
+    let path = external::comparator_selected_path(shape, false, &identity);
+    assert!(path.contains("m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer"), "{path}");
+    assert!(path.contains(&format!("rows={}/cols={}", shape.rows, shape.cols)), "{path}");
+    assert!(path.contains(&format!("loaded={}", identity.path)), "{path}");
+    assert!(path.contains(&format!("sha256={}", identity.sha256)), "{path}");
+    assert!(
+        external::comparator_selected_path(shape, true, &identity).contains("retained-state")
+    );
 }
 
 #[test]

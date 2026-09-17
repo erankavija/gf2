@@ -26,6 +26,12 @@ pub const ADDENDUM_FROZEN_UTC: &str = "2026-09-16T16:16:04Z";
 /// Repository-relative path of the qualified M4RI matched-operation specification.
 pub const COMPARATOR_PATH: &str =
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md";
+/// Repository-relative path of the executed M4RI qualification record, whose
+/// pinned library digest the comparator arm verifies against what it loads.
+pub const QUALIFICATION_RECORD: &str =
+    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt";
+/// Name stem of the external shared object a comparator arm loads.
+pub const COMPARATOR_LIBRARY_STEM: &str = "m4ri";
 
 /// Campaign seed of the frozen addendum.
 pub const CAMPAIGN_SEED: u64 = 0x2037_941f_96c9_4b81;

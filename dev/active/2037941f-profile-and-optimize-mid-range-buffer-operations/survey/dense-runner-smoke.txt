@@ -5,9 +5,9 @@
 # the record carries no clock reading, the arms answer a zero-window request, and
 # no receipt is finalized, so a rerun on the same executables reproduces it byte
 # for byte and the smoke cannot serve as a pilot
-# dense-arm sha256: 9909d730a0b51b08544f4ab02cddb243bd1bdb880a4f8d2f21de1a5a8059beea
-# dense-arm-scalar sha256: d6f5bd889ff8836f61fc7e49e51b0e4b2b430041acdfaf8236a4c0f2e5f3b3de
-# dense-m4ri-arm sha256: 228bf03d59a70c377050a68b3890713fb058370bfb881ddea9cf66007b0e0e42
+# dense-arm sha256: d16736b611b290aeb565d005ae72a5e7f8b26065575b7802fe8a942231b84706
+# dense-arm-scalar sha256: 7647ba58ad4d8fce5733620ed32798ea21e8c5092edaf796efa92eaa6f3f7ebe
+# dense-m4ri-arm sha256: a19becd3ea05f19b45a2dcd5053fa6bfb79a4d2fcf8660568a98e8b084b30ef4
 PASS semantic oracle: 108 cases, 21465 checks
 PASS 2037941f-dense-isolated-fused-parity: 2 sessions, resume repeated no cell
 PASS and-popcnt-8w-streaming: 2 arms handshook, 0 timing windows, cache streaming
@@ -35,4 +35,5 @@ PASS m4ri-peer-gf2: 2 handshakes, 2 result lines parsed
 PASS 2037941f-dense-matvec-vs-m4ri wire: 4 child spawns, 4 clean exits, 0 child diagnostics
 PASS 2037941f-dense-matvec-vs-m4ri journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
 PASS 2037941f-dense-matvec-vs-m4ri schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 2 cells
+PASS external comparator object: /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1 sha256 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb, observed by 2 arm handshakes
 PASS 2037941f-dense-matvec-vs-m4ri cells: 8 cells transcribe and verify against the frozen addendum
