@@ -206,7 +206,7 @@ pub(crate) struct GemmShape {
     pub(crate) n: usize,
 }
 
-/// Writes the dense product of `a` and the operand `b_t` transposes into
+/// Writes the product of `a` and the operand `b_t` holds transposed into
 /// `out`.
 ///
 /// `b_t` is the right operand in `n × k` row-major order, the form the
@@ -224,8 +224,8 @@ pub(crate) struct GemmShape {
 /// * `shape` — the three dimensions.
 /// * `out` — destination, `m × n` row-major, overwritten rather than
 ///   accumulated into.
-/// * `table` — the cached table for the operands’ reduction polynomial.
-/// * `byte_of` — an operand element’s GF(2^8) value.
+/// * `table` — the cached table for the operands' reduction polynomial.
+/// * `byte_of` — an operand element's GF(2^8) value.
 /// * `store` — writes one result byte into a destination element.
 ///
 /// # Complexity
