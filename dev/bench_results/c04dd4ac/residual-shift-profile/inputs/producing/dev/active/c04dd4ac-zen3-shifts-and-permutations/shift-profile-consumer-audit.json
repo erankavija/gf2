@@ -1,0 +1,13 @@
+{
+  "schema": "bitvec-shift-production-consumer-audit-v1",
+  "issue": "85fc5ff4",
+  "scope": "every Rust source below crates/*/src",
+  "query": "\\.\\s*shift_(left|right)\\s*\\(",
+  "owner_excluded": "crates/gf2-core/src/bitvec.rs",
+  "files_scanned": 332,
+  "source_closure_sha256": "92552efc6f227e442873ef337bbe30e1a8ec9a8f70b5ae919583eadd40ad7389",
+  "downstream_production_calls": [],
+  "downstream_production_call_count": 0,
+  "disposition": "no downstream production caller; profile the public primitive as an isolated family and mark whole-consumer measurement inapplicable",
+  "passed": true
+}
