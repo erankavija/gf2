@@ -1,0 +1,721 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "2037941f-dense-allocated-matvec",
+    "issue": "e1f9a78f",
+    "purpose": "consumer-family",
+    "description": "Public BitMatrix::matvec including its output allocation and appends, at the frozen strides, both column shapes and the warm, cold and streaming cache states, with the scalar four-accumulator reference arm. This addendum is the pilot: every cell is exploratory and no cell decides adoption."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-16T16:16:04Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.08,
+    "rationale": "The protocol rejects a margin at or below one plus the resolution, so 1.035 is this family's floor and 1.08 is the first round value above it that leaves the interval's lower bound room to reach the margin.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "A non-inferiority statement finer than five percent is not available at the allocated consumer's resolution.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The allocated family selects a candidate; it holds no comparator-gap cell and declares no external gap."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 1,
+    "max_added_source_lines": 96,
+    "maintenance_rationale": "The same single candidate and the same 96-line budget as the isolated family; the selector keeps its one threshold constant and gains no second arm."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 4,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "matvec-r1024-8w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-8w-warm",
+        "size": {
+          "columns": 512,
+          "rows": 1024,
+          "words": 8
+        },
+        "seed": 8049191449235058548
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-9w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-9w-warm",
+        "size": {
+          "columns": 576,
+          "rows": 1024,
+          "words": 9
+        },
+        "seed": 7190720007137168217
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-63w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-63w-warm",
+        "size": {
+          "columns": 4032,
+          "rows": 1024,
+          "words": 63
+        },
+        "seed": 3117358692666444870
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-64w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-64w-warm",
+        "size": {
+          "columns": 4096,
+          "rows": 1024,
+          "words": 64
+        },
+        "seed": 15652021052963172887
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-65w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-65w-warm",
+        "size": {
+          "columns": 4160,
+          "rows": 1024,
+          "words": 65
+        },
+        "seed": 10007588411803260362
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-7w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-7w-warm",
+        "size": {
+          "columns": 448,
+          "rows": 1024,
+          "words": 7
+        },
+        "seed": 1588375660268498462
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-66w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-66w-warm",
+        "size": {
+          "columns": 4224,
+          "rows": 1024,
+          "words": 66
+        },
+        "seed": 10724164548331238982
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-8w-tail1-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-8w-tail1-warm",
+        "size": {
+          "columns": 511,
+          "rows": 1024,
+          "words": 8
+        },
+        "seed": 4237608217738781917
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-9w-tail1-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-9w-tail1-warm",
+        "size": {
+          "columns": 575,
+          "rows": 1024,
+          "words": 9
+        },
+        "seed": 8735601851605880606
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-63w-tail1-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-63w-tail1-warm",
+        "size": {
+          "columns": 4031,
+          "rows": 1024,
+          "words": 63
+        },
+        "seed": 14649510900526505649
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-64w-tail1-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-64w-tail1-warm",
+        "size": {
+          "columns": 4095,
+          "rows": 1024,
+          "words": 64
+        },
+        "seed": 18272834139000336465
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-65w-tail1-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-65w-tail1-warm",
+        "size": {
+          "columns": 4159,
+          "rows": 1024,
+          "words": 65
+        },
+        "seed": 13781133191863846747
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-8w-cold",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-8w-cold",
+        "size": {
+          "columns": 512,
+          "rows": 1024,
+          "words": 8
+        },
+        "seed": 388461069177716305
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "cold_calls": 1,
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-64w-cold",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-64w-cold",
+        "size": {
+          "columns": 4096,
+          "rows": 1024,
+          "words": 64
+        },
+        "seed": 13590593586377551235
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "cold_calls": 1,
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-8w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-8w-streaming",
+        "size": {
+          "columns": 512,
+          "rows": 1024,
+          "words": 8
+        },
+        "seed": 11852988628343451800
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-9w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-9w-streaming",
+        "size": {
+          "columns": 576,
+          "rows": 1024,
+          "words": 9
+        },
+        "seed": 7254516891968433991
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-63w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-63w-streaming",
+        "size": {
+          "columns": 4032,
+          "rows": 1024,
+          "words": 63
+        },
+        "seed": 17933182833253764645
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-64w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-64w-streaming",
+        "size": {
+          "columns": 4096,
+          "rows": 1024,
+          "words": 64
+        },
+        "seed": 1668634441295471306
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-65w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-65w-streaming",
+        "size": {
+          "columns": 4160,
+          "rows": 1024,
+          "words": 65
+        },
+        "seed": 6999881079626253303
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-8w-scalar-reference-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-8w-scalar-reference-warm",
+        "size": {
+          "columns": 512,
+          "rows": 1024,
+          "words": 8
+        },
+        "seed": 2277592533046809067
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-9w-scalar-reference-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-9w-scalar-reference-warm",
+        "size": {
+          "columns": 576,
+          "rows": 1024,
+          "words": 9
+        },
+        "seed": 12328378119869908462
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-63w-scalar-reference-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-63w-scalar-reference-warm",
+        "size": {
+          "columns": 4032,
+          "rows": 1024,
+          "words": 63
+        },
+        "seed": 6103978880523314708
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-64w-scalar-reference-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-64w-scalar-reference-warm",
+        "size": {
+          "columns": 4096,
+          "rows": 1024,
+          "words": 64
+        },
+        "seed": 14372969380209728846
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matvec-r1024-65w-scalar-reference-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "allocated-matvec-matvec-r1024-65w-scalar-reference-warm",
+        "size": {
+          "columns": 4160,
+          "rows": 1024,
+          "words": 65
+        },
+        "seed": 1254844494614584826
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
