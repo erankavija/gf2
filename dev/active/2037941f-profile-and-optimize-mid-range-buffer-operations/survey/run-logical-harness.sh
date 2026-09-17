@@ -268,6 +268,11 @@ cmd_window() {
     ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
         --bin benchmark-ab-runner --bin benchmark-acceptance
 
+    # The closure is a snapshot of the tree it was enumerated from, so a source
+    # added to a measured crate since the last regeneration is absent from it
+    # and the guard below would never look at it.
+    python3 -B "${SURVEY}/make-logical-producing-inputs.py" --check
+
     # The producing-input closure is the manifest every receipt snapshots:
     # harness sources, measured crate sources, campaign-support sources, every
     # Cargo manifest and lock the executables above are built from, the closure
