@@ -10,33 +10,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
+use gf2_core::test_scratch::{scratch, Scratch};
 use gf2_sim::osd_campaign::{OsdCampaignReceipt, OsdCellTermination};
 
-struct TempDir(PathBuf);
-
-impl TempDir {
-    fn new(label: &str) -> Self {
-        let path = std::env::temp_dir().join(format!(
-            "gf2-ebch-osd-cli-{label}-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .expect("clock after epoch")
-                .as_nanos()
-        ));
-        fs::create_dir_all(&path).expect("create temporary campaign directory");
-        Self(path)
-    }
-
-    fn path(&self) -> &Path {
-        &self.0
-    }
-}
-
-impl Drop for TempDir {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
+fn temp_dir(label: &str) -> Scratch {
+    scratch(&format!("gf2-ebch-osd-cli-{label}"))
 }
 
 fn binary_path() -> PathBuf {
@@ -105,7 +83,7 @@ fn usage_names_pinned_configuration_and_output_paths() {
 /// default included, so the record reproduces the run.
 #[test]
 fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
-    let defaulted_dir = TempDir::new("workers-default");
+    let defaulted_dir = temp_dir("workers-default");
     let defaulted_args = vec![
         "--checkpoint".to_owned(),
         defaulted_dir
@@ -147,7 +125,7 @@ fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
 
     // The single-worker run is the reference the invariance contract is stated
     // against; the real eBCH/OSD evaluator must reproduce it at every count.
-    let reference_dir = TempDir::new("workers-1");
+    let reference_dir = temp_dir("workers-1");
     let reference_run = run(&workers_campaign_args(
         reference_dir.path(),
         "8",
@@ -163,7 +141,7 @@ fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
     assert_eq!(reference.cell_results[0].samples, 8);
 
     for workers in ["2", "8", "24"] {
-        let dir = TempDir::new(&format!("workers-{workers}"));
+        let dir = temp_dir(&format!("workers-{workers}"));
         let output = run(&workers_campaign_args(dir.path(), "8", "1000000", workers));
         assert!(
             output.status.success(),
@@ -191,7 +169,7 @@ fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
 
 #[test]
 fn campaign_maps_pinned_cells_and_resumes_into_the_same_receipt() {
-    let dir = TempDir::new("resume");
+    let dir = temp_dir("resume");
     let first = run(&campaign_args(dir.path(), "1", "1000000"));
     assert!(
         first.status.success(),
@@ -249,7 +227,7 @@ fn campaign_maps_pinned_cells_and_resumes_into_the_same_receipt() {
     assert_eq!(resumed.cell_results[0].invocation_index, Some(0));
     assert_eq!(resumed.cell_results[1].invocation_index, Some(1));
 
-    let uninterrupted_dir = TempDir::new("uninterrupted-prefix");
+    let uninterrupted_dir = temp_dir("uninterrupted-prefix");
     let uninterrupted_output = run(&campaign_args(uninterrupted_dir.path(), "3", "1000000"));
     assert!(
         uninterrupted_output.status.success(),
@@ -270,7 +248,7 @@ fn campaign_maps_pinned_cells_and_resumes_into_the_same_receipt() {
 
 #[test]
 fn recorded_cpu_model_matches_runtime_observed_processor_identity() {
-    let dir = TempDir::new("cpu-identity");
+    let dir = temp_dir("cpu-identity");
     let output = run(&campaign_args(dir.path(), "1", "1000000"));
     assert!(
         output.status.success(),
@@ -305,7 +283,7 @@ fn recorded_cpu_model_matches_runtime_observed_processor_identity() {
 
 #[test]
 fn invalid_input_returns_nonzero_without_emitting_a_receipt() {
-    let dir = TempDir::new("invalid");
+    let dir = temp_dir("invalid");
     let args = vec![
         "--checkpoint".to_owned(),
         dir.path().join("checkpoint.json").display().to_string(),

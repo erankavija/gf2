@@ -590,21 +590,31 @@ pub trait FiniteField:
         false
     }
 
-    /// Hidden vectorised `axpy` hook (issue `d1dd266c`).
+    /// Hidden accelerated `axpy` hook (issue `d1dd266c`).
     ///
-    /// Computes `y[i] += a · x[i]` for all `i` using a SIMD kernel
-    /// where available. Returns `true` when the kernel succeeded (and
-    /// `y` was updated), `false` (the default) when the caller should
-    /// fall back to the scalar `for (y_i, x_i) in y.zip(x): y_i += a * x_i`
-    /// loop.
+    /// Computes `y[i] += a · x[i]` for all `i` through whatever
+    /// accelerated route the field has. Returns `true` when that route
+    /// ran (and `y` was updated), `false` (the default) when the caller
+    /// should fall back to the scalar
+    /// `for (y_i, x_i) in y.zip(x): y_i += a * x_i` loop.
     ///
-    /// `Fp<P>` (`P ≤ 65521`) overrides this hook to dispatch to the
-    /// AVX2 byte-lane (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`)
-    /// `batch_mul` + `batch_add` kernels with the scalar `a`
-    /// broadcast across the whole vector. The pack/unpack overhead is
-    /// `O(n)` and is amortised against the `O(n)` SIMD inner loop;
-    /// callers that perform `O(n)` axpys per reduction step (such as
-    /// `cyclic_decomposition`) thus close the asymptotic gap.
+    /// Two families override it, and neither shares a mechanism with the
+    /// other:
+    ///
+    /// * `Fp<P>` (`P ≤ 65521`) dispatches to the AVX2 byte-lane
+    ///   (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`) `batch_mul` +
+    ///   `batch_add` kernels with the scalar `a` broadcast across the
+    ///   whole vector, which needs the crate's `simd` feature and an
+    ///   AVX2 host. The pack/unpack overhead is `O(n)` and is amortised
+    ///   against the `O(n)` SIMD inner loop; callers that perform `O(n)`
+    ///   axpys per reduction step (such as `cyclic_decomposition`) thus
+    ///   close the asymptotic gap.
+    /// * Both single-word GF(2^8) representations — `Gf2mElement_<u64>`
+    ///   and `Gf2mWide<1, Cfg>` with `Cfg::M == 8` — read a cached byte
+    ///   product table at one indexed load and one XOR per element
+    ///   (issue `77c21ecd`). That path is safe scalar Rust and needs no
+    ///   cargo feature and no processor capability; its exact predicate
+    ///   is `crate::gf2m::byte_table::gf256_table_dispatch`.
     #[doc(hidden)]
     #[inline]
     fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {

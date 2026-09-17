@@ -26,6 +26,7 @@ sha2 = { version = "0.10", optional = true }
 blake3 = { version = "1", optional = true }
 # Only pulled in when the `test-support` feature is enabled.
 proptest = { workspace = true, optional = true }
+tempfile = { version = "3", optional = true }
 
 [dev-dependencies]
 tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
@@ -67,7 +68,7 @@ tuning-profile = ["dep:serde", "dep:serde_json", "dep:sha2"]
 # Exposes the canonical field axiom test harness (`field::axiom_tests`) to
 # integration tests, benchmarks, and downstream crates. Off by default; gets
 # auto-enabled under `cargo test` via the self-dev-dependency above.
-test-support = ["dep:proptest"]
+test-support = ["dep:proptest", "dep:tempfile"]
 
 [[bench]]
 name = "bitvec"

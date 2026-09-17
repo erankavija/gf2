@@ -8,7 +8,22 @@ performs or by a field a receipt must carry; the rule identifiers `P-NN` are the
 finding codes the tool emits. Family and cell settings that the contract leaves
 to families are declared in addenda conforming to
 [`addendum.schema.json`](addendum.schema.json); the shared numeric settings are
-frozen here. The tooling lives in the `tuning-campaign-support` workspace crate
+frozen here. `addendum.schema.json` is the shared path and always describes
+the current protocol version; each earlier version has its own committed
+sibling file named by the version it describes
+([`addendum-v1-initial.schema.json`](addendum-v1-initial.schema.json),
+[`addendum-v1.schema.json`](addendum-v1.schema.json),
+[`addendum-v2.schema.json`](addendum-v2.schema.json),
+[`addendum-v3.schema.json`](addendum-v3.schema.json)), so a frozen addendum of
+any version validates against a committed schema from a fresh checkout.
+Version 1 has two sibling files because it was pinned under two digests:
+`addendum-v1-initial.schema.json` is the text the very first pilot and
+confirmation receipts pinned, and `addendum-v1.schema.json` is the text every
+later version-1 receipt pinned after a wording-only edit to the
+`frozen.description` annotation; [amendment-v2.md](amendment-v2.md) records
+the edit. [`schema-versions.json`](schema-versions.json) records which digest
+each version's schema file and its pinning receipts carry. The tooling lives
+in the `tuning-campaign-support` workspace crate
 (`dev/tools/tuning-campaign-support`); [design.md](design.md) records why that
 crate is the canonical home.
 
@@ -33,7 +48,14 @@ crate is the canonical home.
   the receipt pin (P-01, P-22, P-13).
 - The addendum schema identity is `zen3-benchmark-addendum-v4`; receipts carry
   `zen3-benchmark-receipt-v1`; acceptance summaries carry
-  `zen3-benchmark-acceptance-v1`; runner plans carry `zen3-benchmark-plan-v1`.
+  `zen3-benchmark-acceptance-v2`; runner plans carry `zen3-benchmark-plan-v1`.
+  A `zen3-benchmark-acceptance-v1` summary is a committed, immutable earlier
+  identity: it reports the sequential-attempt allocation under the field name
+  `family_alpha`, where `v2` separates that allocation (`attempt_alpha`) from
+  the frozen total (`family_alpha`) and the per-comparison corrected level
+  (`corrected_alpha`), `@/issue/c5e01de3`. A current reader of a committed
+  summary branches on this identity, never on which fields happen to be
+  present.
 
 ## Contract clause coverage
 
@@ -212,10 +234,12 @@ $t$ spends $\alpha_t=\alpha/[t(t+1)]$; exploratory summaries use $t=1$.
 The sum of these attempt budgets over any finite or infinite sequence is at
 most $\alpha$. Within an attempt, Bonferroni [Dunn1961] uses
 $\alpha_c=\alpha_t/m$. This additionally counts all previously spent cells,
-including unfinished and losing attempts. `FamilySummary.family_alpha` reports
-the allocated attempt budget and `comparisons` reports $m$; the addendum and
-shared settings retain the overall family budget. Merely using $\alpha/m$
-repeatedly would not control sequential error spending.
+including unfinished and losing attempts. `FamilySummary.attempt_alpha`
+reports $\alpha_t$, `FamilySummary.corrected_alpha` reports $\alpha_c$, and
+`comparisons` reports $m$; `FamilySummary.family_alpha` reports the frozen
+overall family budget $\alpha$, matching the addendum and shared settings.
+Merely using $\alpha/m$ repeatedly would not control sequential error
+spending.
 
 The union bound gives this allocation under arbitrary dependence between
 attempts and cells; the confidence procedure inside each comparison retains
@@ -470,7 +494,7 @@ Each bounded campaign writes one directory under the owning issue's
 | `execution.log` | The append-only journal of every session. |
 | `inputs/` | Immutable protocol, contract, schema, addendum, producing-input and referenced-receipt snapshots used by this campaign. |
 | `checkpoints/` | The immutable manifest and accepted units. |
-| `acceptance-summary.json` | `zen3-benchmark-acceptance-v1` from `benchmark-acceptance`. |
+| `acceptance-summary.json` | `zen3-benchmark-acceptance-v2` from `benchmark-acceptance`. |
 | `acceptance-summary.md` | Markdown rendered from the summary alone. |
 
 The launcher script beside the directory records the exact commands. Receipt

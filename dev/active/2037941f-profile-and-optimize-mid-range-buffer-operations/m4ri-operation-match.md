@@ -18,25 +18,41 @@ This qualification's runner repeats only that M4RI build, with the following
 exact configure and identity-qualified installation path:
 
 ```text
+unset MAKEFLAGS GNUMAKEFLAGS MFLAGS MAKEFILES
 CC=<resolved-gcc> CFLAGS='-O3 -march=native -fPIC' CPPFLAGS='' LDFLAGS='' \
   LIBS='' CONFIG_SITE=/dev/null ./configure \
-  --prefix=<ext>/prefix-qualified-v2 --disable-static
-make -j"${CARGO_BUILD_JOBS:-1}"
-make install
+  --prefix=<ext>/prefix-qualified-v3 --disable-static
+make -j"${CARGO_BUILD_JOBS:-1}" V=1
+make install V=1
 ```
 
+GNU Make promotes a variable definition carried in `MAKEFLAGS` or
+`GNUMAKEFLAGS` to a command-line override, and a command-line override outranks
+the generated Makefile's own `CC =` assignment (GNU Make manual,
+"Communicating Options to a Sub-make" and "Overriding Variables"); `MFLAGS` and
+`MAKEFILES` are the remaining make-level inheritance channels. Clearing all
+four keeps the compiler make runs identical to the one the record names.
+
 The probe builds with `gcc -std=c11 -O3 -march=native -Wall -Wextra -Werror`
-and links `<ext>/prefix-qualified-v2/lib/libm4ri.so` using its matching headers.
-The runner always verifies the archive digest. A retained build is reused only
-when its provenance record matches that archive, the exact resolved GCC
-executable and identity, the build and configure flags, the explicitly empty
-`CPPFLAGS`, `LDFLAGS`, and `LIBS`, `CONFIG_SITE=/dev/null`, and the installed
-library digest. The configure/build subprocess overwrites ambient `CC` and
-these Autoconf inputs and clears ambient tool overrides; an incomplete or
-mismatched cache fails closed. The source
-archive digest, installed library digest, compiler version and actual host
-features belong in any later timed receipt; this qualification names no
-measured arm or speed claim.
+and links `<ext>/prefix-qualified-v3/lib/libm4ri.so` using its matching headers.
+The runner always verifies the archive digest. `V=1` makes Automake echo every
+real compiler invocation, and the runner retains that verbose log beside the
+provenance record. Provenance rests on what the build ran, not on what the
+generated Makefile says: the compile driver and invocation count come from the
+retained log, and the compiler that emitted the shipped code comes from the
+installed library's ELF `.comment` producer strings, compared against the
+producer string of an object the pinned GCC emits in the same run. A retained
+build is reused only when its record matches the archive, the resolved GCC
+executable, its version and producer string, the build and configure flags, the
+explicitly empty `CPPFLAGS`, `LDFLAGS`, and `LIBS`, `CONFIG_SITE=/dev/null`,
+the cleared make-level channels, the log-derived driver and count, the
+library's producer strings, and the installed library digest. The
+configure/build subprocess overwrites ambient `CC` and these Autoconf inputs,
+clears ambient tool overrides, and clears every make-level override channel; an
+incomplete or mismatched cache fails closed. The source archive digest,
+installed library digest, compiler version and actual host features belong in
+any later timed receipt; this qualification names no measured arm or speed
+claim.
 
 ## Matched operation and mapping
 
@@ -99,7 +115,15 @@ does not collect timings.
 
 ```text
 bash dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh
+bash dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-m4ri-build-provenance.sh
 ```
+
+The second command is the provenance regression. Each of its cases builds a
+disposable cache under `target/`, leaving every retained comparator build
+untouched, under hostile ambient Autoconf inputs and under hostile `MAKEFLAGS`
+and `GNUMAKEFLAGS` compiler and flag overrides. It fails unless every case
+still builds with the pinned GCC at the pinned flags. Both scripts read one
+pinned build identity, [`m4ri-build-pins.sh`](survey/m4ri-build-pins.sh).
 
 The probe seeds each case deterministically, builds canonical gf2-word input
 buffers, writes the same logical coordinates to M4RI, runs `mzd_mul`, and

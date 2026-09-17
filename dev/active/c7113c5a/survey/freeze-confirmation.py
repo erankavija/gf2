@@ -113,14 +113,37 @@ def main():
     if receipt["family_id"] != addendum["family"]["id"]:
         raise SystemExit("pilot belongs to another family")
 
+    family = summary["family"]
+    # Acceptance-summary schema `zen3-benchmark-acceptance-v1` reports the
+    # sequential-attempt allocation under the single field name `family_alpha`.
+    # `zen3-benchmark-acceptance-v2` (`@/issue/c5e01de3`) separates that
+    # allocation (`attempt_alpha`) from the frozen total (`family_alpha`) and
+    # the per-comparison corrected level (`corrected_alpha`). The legacy
+    # branch below is keyed on the declared schema identity, not on which
+    # fields happen to be present, so a summary that adds fields under the
+    # v1 identity in the future still reads as v1. A v1 summary reproduces
+    # its committed derivation record byte for byte in the single-line format
+    # the freezer always wrote for it.
+    LEGACY_ACCEPTANCE_SCHEMA = "zen3-benchmark-acceptance-v1"
+    if summary["schema"] == LEGACY_ACCEPTANCE_SCHEMA:
+        family_line = (
+            f"family         {family['family_id']}: {family['comparisons']} ledger comparisons, "
+            f"attempt alpha {family['family_alpha']}, per-comparison confidence "
+            f"{family['per_comparison_confidence']}"
+        )
+    else:
+        family_line = (
+            f"family         {family['family_id']}: {family['comparisons']} ledger comparisons, "
+            f"family-wise alpha {family['family_alpha']}, attempt alpha {family['attempt_alpha']}, "
+            f"corrected alpha {family['corrected_alpha']}, per-comparison confidence "
+            f"{family['per_comparison_confidence']}"
+        )
     lines = [
         f"pilot receipt  {receipt_path}",
         f"receipt sha256 {receipt_sha}",
         f"campaign       {summary['campaign_id']}",
         f"verdict        {summary['verdict']} (label {summary['label']})",
-        f"family         {summary['family']['family_id']}: {summary['family']['comparisons']} ledger comparisons, "
-        f"attempt alpha {summary['family']['family_alpha']}, per-comparison confidence "
-        f"{summary['family']['per_comparison_confidence']}",
+        family_line,
         "",
         f"{'cell':<36}{'pairs':>6}{'estimate':>12}{'lower':>12}{'upper':>12}{'rel_half':>10}",
     ]

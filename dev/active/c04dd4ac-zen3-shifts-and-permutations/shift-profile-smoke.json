@@ -1,0 +1,74 @@
+{
+  "schema": "bitvec-residual-shift-wire-smoke-v1",
+  "issue": "85fc5ff4",
+  "scope": "throwaway protocol-v4 run of the queued arm executable through the real benchmark-ab-runner; the handshake and the result framing are the observation, the durations are discarded",
+  "campaign_id": "85fc5ff4-arms-smoke",
+  "family_id": "bitvec-residual-shift-arms-smoke",
+  "runner": {
+    "path": "target/release/benchmark-ab-runner",
+    "sha256": "5a544af0de11b1aae4e822e2a3caa645137376091ef192fd96829858d3dc17d2"
+  },
+  "arm_executable": {
+    "path": "target/release/deps/shifts-0bf958b31b19206c",
+    "sha256": "0b50f7ced1010b0a3b70453126b4874a84038931f5e24b7dfb26aaafba2a3cd5"
+  },
+  "children_spawned": 24,
+  "children_exited_zero": 24,
+  "children_reaped": 24,
+  "child_diagnostics": [],
+  "terminal_events": [
+    "complete"
+  ],
+  "cells": [
+    {
+      "cell_id": "left-small-r1-w64",
+      "role": "exploratory",
+      "status": "measured",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "pairs": 6
+    },
+    {
+      "cell_id": "right-streaming-r65-w64",
+      "role": "exploratory",
+      "status": "measured",
+      "baseline_arm": "residual-production",
+      "candidate_arm": "word-aligned-control",
+      "pairs": 6
+    }
+  ],
+  "arms": [
+    {
+      "arm": "residual-production",
+      "result_lines_parsed": 12,
+      "selected_paths": [
+        "bitvec-residual-scalar-left",
+        "bitvec-residual-scalar-right"
+      ],
+      "result_fields_present": [
+        "cache_state_applied",
+        "selected_path",
+        "windows",
+        "workers_observed"
+      ],
+      "complete_result_lines": 12
+    },
+    {
+      "arm": "word-aligned-control",
+      "result_lines_parsed": 12,
+      "selected_paths": [
+        "bitvec-word-dispatch-left",
+        "bitvec-word-dispatch-right"
+      ],
+      "result_fields_present": [
+        "cache_state_applied",
+        "selected_path",
+        "windows",
+        "workers_observed"
+      ],
+      "complete_result_lines": 12
+    }
+  ],
+  "passed": true,
+  "failures": []
+}

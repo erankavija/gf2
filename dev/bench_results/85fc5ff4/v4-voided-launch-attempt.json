@@ -1,0 +1,65 @@
+{
+  "kind": "voided-family-ledger-attempt",
+  "summary": "The executor aborted this exploratory attempt for a procedural defect in its own launch, before reading any of its results, and voided it under the protocol's voided-attempt rule. Its reservation does not enter the chain the replacement attempt reserves on, so it is never interior to that chain and it spends no comparison and no candidate attempt. The aborted stage is preserved whole beside the published outcomes. The rule reaches only an attempt whose results were unread; an attempt whose results were read spends its reservation like any other.",
+  "attempt": {
+    "family": "bitvec-residual-shift-profile",
+    "campaign": "residual-shift-profile-85fc5ff4-v4",
+    "protocol_version": 4,
+    "rule": "dev/active/f547c394/protocol.md, the voided-attempt paragraph of the family-ledger section; dev/active/f547c394/amendment-v4.md records the entry.",
+    "rule_reading": "The family is exploratory-only, so its reservation spends zero comparisons under the ledger section's ordinary rule as well. Voiding changes only the chain the replacement attempt reserves on.",
+    "stage": "dev/bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned",
+    "addendum": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json",
+    "addendum_sha256": "7e7289e083b351d3a5c6778e90e07de019c634a49b92f606ee9c921abf6e3e41",
+    "defect": "The arm executable this attempt launched could not complete the canonical child-v2 handshake. The runner forwards a plan cell's case as a serde_json Value, whose object keys re-encode in sorted order; the arm deserialized the request into a type whose case was the typed ShiftCase, which re-encodes in declaration order. transport::decode_canonical accepts a request only when the child re-encodes the runner's bytes exactly, so it rejected the first request and the child exited 2 before any timing began. A second defect stood behind it: the arm required the request's role field to read \"exploratory\", while the wire carries the arm's position in the pair. The defect is in the launched arm, not in the runner, the transport or the plan.",
+    "defect_diagnostics": [
+      "shifts: fresh tuning stdin is not canonical compact JSON\n"
+    ],
+    "resolution": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json records the same executable, rebuilt from the corrected arm, completing the handshake and the result framing through the same runner on a throwaway plan.",
+    "results_read": false,
+    "results_read_detail": "No cell reached a checkpoint and no execution produced a window: the first child of the first cell failed the handshake. No interval, decision or outcome of this attempt exists to be read, and none is quoted anywhere in this profile.",
+    "abort": {
+      "actor": "executor",
+      "launcher_exit_code": 1,
+      "receipt_written": false,
+      "terminal_event": "failed",
+      "terminal_error": "arm residual-production did not exit cleanly: Exited { pid: 1363346, exit_code: 2, elapsed_ns: 13532574, all_descendants_reaped: true }"
+    },
+    "reservation": {
+      "comparisons": 0,
+      "candidates": [],
+      "in_family_ledger": false,
+      "family_ledger": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
+      "snapshot": "dev/bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned/inputs/trial-ledger.jsonl",
+      "spends": "nothing: no comparison and no candidate attempt. Every cell of this family is exploratory, so the family's confirmatory budget is untouched and the replacement attempt reserves at sequence 0 on an empty chain."
+    },
+    "cells_declared": 10,
+    "cells_measured": 0,
+    "cells_measured_ids": [],
+    "cells_unmeasured_ids": [
+      "left-small-r1-w64",
+      "left-lane-crossing-r7-w64",
+      "left-byte-residual-r8-w64",
+      "left-resident-r63-w64",
+      "left-streaming-r65-w64",
+      "right-small-r1-w64",
+      "right-lane-crossing-r7-w64",
+      "right-byte-residual-r8-w64",
+      "right-resident-r63-w64",
+      "right-streaming-r65-w64"
+    ],
+    "checkpoints_accepted": 0,
+    "execution_log": "dev/bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned/execution.log",
+    "execution_log_events": {
+      "campaign-start": 1,
+      "cell-start": 1,
+      "child-diagnostic": 1,
+      "child-exit": 1,
+      "child-spawn": 1,
+      "driver-diagnostic": 2,
+      "failed": 1,
+      "lock-hold": 1,
+      "orchestration-start": 1
+    },
+    "measured_data_location": "None. The stage carries no checkpointed unit and no window, so this attempt contributes no measurement to any record."
+  }
+}

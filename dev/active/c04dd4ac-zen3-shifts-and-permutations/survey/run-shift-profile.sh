@@ -27,7 +27,13 @@ addendum="$active/shift-profile-addendum.json"
 validation="$active/shift-profile-validation.json"
 producing="$survey/shift-profile-producing-inputs.json"
 out=dev/bench_results/c04dd4ac/residual-shift-profile
-stage=target/bench-stage/85fc5ff4-residual-shift-profile
+# One attempt token names the campaign and its stage together, so a replacement
+# attempt neither resumes an earlier stage nor reserves on an earlier campaign's
+# ledger line. `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json` records
+# the voided attempt this token succeeds.
+attempt=a2
+campaign="residual-shift-profile-85fc5ff4-v4-$attempt"
+stage="target/bench-stage/85fc5ff4-residual-shift-profile-$attempt"
 plan="$stage.plan.json"
 build_dir=target/85fc5ff4-build
 mkdir -p "$build_dir" "$(dirname "$stage")"
@@ -55,7 +61,7 @@ export GF2_CCX1_LOCK="$lock"
 if [[ -f "$plan" ]]; then
   echo "# preserving staged plan for resumability: $plan" >&2
 else
-  python3 "$survey/make-shift-plan.py" "$plan" "$arm" "$lock"
+  python3 "$survey/make-shift-plan.py" "$plan" "$arm" "$lock" --campaign-id "$campaign"
 fi
 "$arm" --check-plan "$plan"
 

@@ -109,6 +109,10 @@ contract is mathematical or implemented by several backends.
   prefer one type- or module-level walkthrough over per-method repetition.
   Repetitive examples for accessors, constants, constructors, predicates, and
   direct field mappings are documentation and doctest burden.
+- Comments and rustdoc carry only what the code leaves non-obvious: the
+  contract, an invariant, the reason behind a choice, or a pointer to evidence.
+  Use the shortest form that conveys it. History belongs in git and jit; a
+  module-level orientation is at most one short paragraph.
 
 The ordinary fast tier has an eight-second per-test kill and a sixty-second
 suite budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`

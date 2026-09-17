@@ -3,9 +3,9 @@
   "purpose": "Acceptance verdict of every committed benchmark receipt when the evaluator reads committed content alone, beside the verdict of the acceptance summary committed with it.",
   "generator": "dev/active/a203a23c/reevaluate-receipts.sh",
   "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
-  "evidence_revision": "e8d1a0bb806886a3de3eb5d082276cffe161c180",
-  "evaluator_revision": "e8d1a0bb806886a3de3eb5d082276cffe161c180",
-  "benchmark_acceptance_sha256": "146f30a8b06741f12a635b5662dbb22c812bb5f94e67daf96ee89f91d5b00906",
+  "evidence_revision": "260099c4fdf0bf92026d531a85f69028267d163a",
+  "evaluator_revision": "260099c4fdf0bf92026d531a85f69028267d163a",
+  "benchmark_acceptance_sha256": "7a4a3e29b0a972bd6371263b627298d2b5d25ba6817049050be24cdca6ce2af5",
   "receipts": [
     {
       "receipt": "dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json",
@@ -85,6 +85,314 @@
       "reproduces": true
     },
     {
+      "receipt": "dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-multicore-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-multicore-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/07ca8585/v4-r1-post-freeze-rebuild-07ca8585-ldpc-update-checknode-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r1/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r2/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r3/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r4/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/19513245/r1-control-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/19513245/r1-control-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/19513245/r1-matrix-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/19513245/r1-matrix-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/19513245/r1-vector-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/19513245/r1-vector-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
       "receipt": "dev/bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot/receipt.json",
       "protocol_version": 1,
       "committed_verdict": "accepted",
@@ -141,6 +449,72 @@
     {
       "receipt": "dev/bench_results/1d0da41f/v3-pilot/receipt.json",
       "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke/receipt.json",
+      "protocol_version": 4,
       "committed_verdict": "accepted",
       "fresh_checkout": {
         "exit": 0,
@@ -244,6 +618,314 @@
     {
       "receipt": "dev/bench_results/26465e6c/v3-popcount-pilot/receipt.json",
       "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-fastest-compatible-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-multicore-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-single-worker-pilot/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-multicore-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-single-worker-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot-r2/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-wire-smoke/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot-r2/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-sweep/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-sweep2/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-pilot-r2/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-sweep/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-sweep2/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot/receipt.json",
+      "protocol_version": 1,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/receipt.json",
+      "protocol_version": 4,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
+      "receipt": "dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot/receipt.json",
+      "protocol_version": 4,
       "committed_verdict": "accepted",
       "fresh_checkout": {
         "exit": 0,
@@ -672,6 +1354,17 @@
       "reproduces": true
     },
     {
+      "receipt": "dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json",
+      "protocol_version": 3,
+      "committed_verdict": "accepted",
+      "fresh_checkout": {
+        "exit": 0,
+        "verdict": "accepted",
+        "errors": []
+      },
+      "reproduces": true
+    },
+    {
       "receipt": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json",
       "protocol_version": 1,
       "committed_verdict": "accepted",
@@ -760,9 +1453,16 @@
       "reproduces": true
     }
   ],
+  "skipped": [
+    {
+      "receipt": "dev/bench_results/07ca8585/device-conformance-r1/receipt.json",
+      "schema": "ldpc-device-conformance-v1"
+    }
+  ],
   "result": {
-    "receipts": 62,
-    "reproduces": 57,
+    "receipts": 125,
+    "reproduces": 120,
+    "skipped": 1,
     "differs": [
       "dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/receipt.json",
       "dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot/receipt.json",
