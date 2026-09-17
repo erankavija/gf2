@@ -17,7 +17,7 @@ pub mod wide_config;
 
 #[cfg(any(test, feature = "test-support"))]
 pub use byte_table::{
-    force_scalar_gf256_table, gf256_table_builds, last_gf256_axpy_lane, GF256_SCALAR_LANE,
+    force_scalar_gf256_table, gf256_table_builds, last_gf256_table_lane, GF256_SCALAR_LANE,
     GF256_TABLE_LANE,
 };
 pub use field::*;
