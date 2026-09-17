@@ -40,9 +40,9 @@ of those properties would change that target's behavioral identity, which
 The project is a standalone Cargo workspace. Its `Cargo.lock` is committed so a
 receipt pins the dependency graph it measured. It is the sibling of
 `survey/harness/`, the logical-buffer harness of issue `bb769456`, and follows
-its structure; the git closure guard `src/inputs.rs` is the same mechanism in
-both, whose one canonical home is `tuning_campaign_support` once the epic's
-provenance freeze lifts.
+its structure; the git closure guard `src/inputs.rs` is byte-identical in both,
+because the epic's provenance freeze holds `tuning_campaign_support` at its
+current surface.
 
 ## Cell identity and generation
 
