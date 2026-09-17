@@ -543,7 +543,7 @@
           "short_id": "b9302771",
           "title": "Amend the frozen ISA-L family to five confirmatory cells",
           "classification": "implementation",
-          "status": "in_progress: dispatched session 19 (after the 7cc591a0 /tmp fix merged at fa1d1e54)",
+          "status": "done. Session 19: sonnet worker, attempt 1; merged at 0a49cd0f; merged-tree cargo-ci green; gates cargo-ci, code-review passed, research-review passed on re-run after the lead appended the [IsaL2026] source line (standing approval); 7 artifacts linked; review reviews/b9302771-r1.md PASS; closed at a541cfb7; worktree reclaimed.",
           "dispatch": {
             "model": "claude-sonnet (native subagent)",
             "worktree": ".agents/worktrees/agent-b9302771",
@@ -551,7 +551,11 @@
             "base": "51e6bb81",
             "attempt": 1,
             "session": 19
-          }
+          },
+          "merge_commit": "0a49cd0f",
+          "reviews": [
+            "reviews/b9302771-r1.md"
+          ]
         }
       ]
     },
