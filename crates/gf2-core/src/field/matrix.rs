@@ -3031,12 +3031,9 @@ fn gemm_tiled<
     // is exactly column `j` of `b`.
     let b_t = b.transpose();
 
-    // Whole-gemm SIMD fast path: when the field exposes a packed
-    // small-prime AVX2 kernel (the `Fp<P>` `P ≤ 251` byte-lane
-    // implementation), pre-pack A and B^T once and run the
-    // vectorised inner kernel directly, bypassing the per-cell
-    // `dot_product_slices` loop. The pack overhead amortises across
-    // the `O(m·k·n)` inner work.
+    // Whole-product fast path: a field that packs both operands once and
+    // runs its own inner kernel bypasses the per-cell loop below, its packing
+    // amortising across the `O(m·k·n)` inner work. The default declines.
     if F::try_simd_gemm_classical(
         a.data.as_slice(),
         b_t.data.as_slice(),
