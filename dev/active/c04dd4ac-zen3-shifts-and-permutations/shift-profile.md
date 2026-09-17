@@ -194,20 +194,27 @@ planning-time feasibility work, the maximum the frozen addendum allows:
 
 This is a nomination, not an adoption: the profile authorizes no production
 source, and its complexity budget stays at zero new unsafe kernels and zero
-added lines. Nothing here shows either form is implementable at the repository's
-Rust 1.95 floor, and nothing here shows either form would close the measured
-gap, since the control does strictly less work per word than any correct
-residual shift can.
+added lines. Nothing measured here shows either form would close the gap, since
+the control does strictly less work per word than any correct residual shift
+can; whether either form is implementable at the repository's Rust 1.95 floor
+is settled by the record named below, and settling it is not a win.
 
-Under REQ-05 the nomination keeps this profile open. What it owes next is
-planning-time evidence rather than more measurement: a Rust 1.95 compile and
-assembly record for each nominated form, including the runtime-gated scalar
-fallback each capability-gated form needs, and an amended, re-reviewed plan
-bracket that creates the candidate implementation and confirmation leaves,
-makes them depend on this profile, and re-homes publication behind their sinks
-in the instantiated dependency graph. A family whose downstream consumer set is
-empty also owes the bracket an argument that the primitive is worth the
-maintenance at all; this profile supplies the cost side of that argument only.
+Under REQ-05 the nomination keeps this profile open, and what it owes is
+planning-time evidence rather than more measurement. The Rust 1.95 compile and
+assembly record for both nominated forms, with the runtime-gated scalar
+fallback each capability-gated form needs, is the
+[feasibility record](shift-feasibility-record.md): both forms are feasible at
+the MSRV, and that record carries the toolchain and assembly artefacts, the
+correctness evidence and a scope proposal for the leaves. Feasibility is not a
+win, and the record makes no speed claim.
+
+What stays open is the plan bracket: an amended, re-reviewed bracket that
+creates the candidate implementation and confirmation leaves, makes them depend
+on this profile, and re-homes publication behind their sinks in the
+instantiated dependency graph. That amendment is the lead's. A family whose
+downstream consumer set is empty also owes the bracket an argument that the
+primitive is worth the maintenance at all; this profile supplies the cost side
+of that argument only.
 
 ## Evidence map
 
@@ -218,6 +225,7 @@ maintenance at all; this profile supplies the cost side of that argument only.
 | [`shift-profile-validation.json`](shift-profile-validation.json) | Passing independent-oracle corpus; tables § *Semantic oracle corpus* |
 | [`shift-profile-consumer-audit.json`](shift-profile-consumer-audit.json) | Passing; no downstream production caller; tables § *Production-consumer audit* |
 | [`shift-profile-smoke.json`](shift-profile-smoke.json) | Passing: the queued arm executable completes the handshake and the result framing through the real runner |
+| [`shift-feasibility-record.md`](shift-feasibility-record.md) | The REQ-05 planning-time record: both nominated forms feasible at Rust 1.95, with the toolchain, assembly and correctness artefacts |
 | [`survey/shift-source-evidence.json`](survey/shift-source-evidence.json) | The pinned code claims behind every mechanism statement above |
 | [`dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json`](../../bench_results/85fc5ff4/v4-voided-launch-attempt.json) | The voided launch attempt, its preserved stage and its unmeasured cells |
 | [`dev/bench_results/c04dd4ac/residual-shift-profile/`](../../bench_results/c04dd4ac/residual-shift-profile/) | The accepted exploratory receipt, its acceptance summary, execution log, checkpoints and input snapshots |
