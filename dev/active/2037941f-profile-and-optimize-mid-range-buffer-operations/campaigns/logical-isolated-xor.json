@@ -1,0 +1,506 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "2037941f-logical-isolated-xor",
+    "issue": "18a87159",
+    "purpose": "kernel-family",
+    "description": "Isolated public gf2_core::kernels::ops::xor_inplace at the frozen anchor and neighbouring word counts, both address layouts and the warm and streaming cache states. This addendum is the pilot: every cell is exploratory and no cell decides adoption."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-17T22:00:39Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.05,
+    "rationale": "Five percent is the smallest isolated gain worth carrying into consumers; isolated evidence never authorizes adoption by itself.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.03,
+    "equivalence_rationale": "Anchors immediately outside a selected dispatch band must remain not-worse within three percent.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The isolated family selects a candidate; it declares no external comparator gap."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 1,
+    "max_added_source_lines": 80,
+    "maintenance_rationale": "At most one new private target-feature XOR function with its explicit safety contract, 80 added nonblank production lines, one existing unsafe-kernel file, and no allocation, dependency, public API or second dispatcher."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 4,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "xor-8w-a64-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-8w-a64-warm",
+        "size": {
+          "bits": 512,
+          "words": 8
+        },
+        "seed": 2321486994848424671
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-9w-a64-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-9w-a64-warm",
+        "size": {
+          "bits": 576,
+          "words": 9
+        },
+        "seed": 13633757928082271450
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-63w-a64-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-63w-a64-warm",
+        "size": {
+          "bits": 4032,
+          "words": 63
+        },
+        "seed": 16115194359174302255
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-64w-a64-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-64w-a64-warm",
+        "size": {
+          "bits": 4096,
+          "words": 64
+        },
+        "seed": 15918720729511618500
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-65w-a64-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-65w-a64-warm",
+        "size": {
+          "bits": 4160,
+          "words": 65
+        },
+        "seed": 14267296182557858454
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-7w-a64-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-7w-a64-warm",
+        "size": {
+          "bits": 448,
+          "words": 7
+        },
+        "seed": 1837115473580572245
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-66w-a64-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-66w-a64-warm",
+        "size": {
+          "bits": 4224,
+          "words": 66
+        },
+        "seed": 17175135014391788643
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-8w-o8-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-8w-o8-warm",
+        "size": {
+          "bits": 512,
+          "words": 8
+        },
+        "seed": 16156431033300177415
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-9w-o8-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-9w-o8-warm",
+        "size": {
+          "bits": 576,
+          "words": 9
+        },
+        "seed": 9229130992898457282
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-63w-o8-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-63w-o8-warm",
+        "size": {
+          "bits": 4032,
+          "words": 63
+        },
+        "seed": 9391114251795375824
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-64w-o8-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-64w-o8-warm",
+        "size": {
+          "bits": 4096,
+          "words": 64
+        },
+        "seed": 4178068976868291933
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-65w-o8-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-65w-o8-warm",
+        "size": {
+          "bits": 4160,
+          "words": 65
+        },
+        "seed": 17493942236861456296
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-8w-a64-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-8w-a64-streaming",
+        "size": {
+          "bits": 512,
+          "words": 8
+        },
+        "seed": 4121416940162179919
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-9w-a64-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-9w-a64-streaming",
+        "size": {
+          "bits": 576,
+          "words": 9
+        },
+        "seed": 13426436795046580976
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-63w-a64-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-63w-a64-streaming",
+        "size": {
+          "bits": 4032,
+          "words": 63
+        },
+        "seed": 4532189289085035454
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-64w-a64-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-64w-a64-streaming",
+        "size": {
+          "bits": 4096,
+          "words": 64
+        },
+        "seed": 17059762262206293089
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-65w-a64-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isolated-xor-xor-65w-a64-streaming",
+        "size": {
+          "bits": 4160,
+          "words": 65
+        },
+        "seed": 18175591272758656396
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
