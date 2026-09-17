@@ -60,6 +60,12 @@ record repeats the selection beside the confirmation addendum.
 
 ## After the window
 
+A receipt directory carries the producing-input snapshot, whose nested
+`Cargo.lock` files `.gitignore` excludes: committing a receipt means
+`git add -f` on them followed by
+`python3 dev/scripts/check-receipt-input-snapshots.py`, which reads the index
+rather than the working tree and fails CI on an omission.
+
 The post-window session commits the pilot receipt, runs
 `dev/bench_results/ad2a6a58/run-axpy-confirmation.sh freeze`, commits the
 confirmation addendum and its derivation record, queues the confirmation line,
