@@ -25,7 +25,7 @@
     "epic:zen3-cpu-performance"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Confirm the GF(2^8) dense product against the current matrix route",
-  "updated_at": "2026-09-16T22:39:48.771675173Z"
+  "updated_at": "2026-09-17T21:50:09.591844275Z"
 }
