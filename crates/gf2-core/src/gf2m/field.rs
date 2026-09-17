@@ -1442,6 +1442,63 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
         true
     }
 
+    /// Routes a dense GF(2^8) product through the cached byte product table.
+    ///
+    /// The mechanism is one region multiply-accumulate per left-hand
+    /// coefficient over that coefficient’s row of the process-wide table for
+    /// this field’s reduction polynomial, so every product costs one indexed
+    /// load and one XOR and every coefficient is reused across a whole output
+    /// row. Results are written into each destination element’s value in
+    /// place, so no field handle is cloned. No cargo feature and no processor
+    /// capability takes part; the exact predicate that selects this lane is
+    /// `crate::gf2m::byte_table::gf256_table_dispatch`.
+    ///
+    /// The destination joins the operands in the field-context check because
+    /// writing values in place keeps the destination’s own handles, which the
+    /// per-cell path replaces; declining sends a mixed-context product to that
+    /// path and its field-context assertion. A left operand with no elements
+    /// carries no field context to check against and also declines.
+    ///
+    /// The companion probe
+    /// [`has_simd_gemm_classical`](crate::field::FiniteField::has_simd_gemm_classical)
+    /// keeps its declining default for this field.
+    fn try_simd_gemm_classical(
+        a: &[Self],
+        b_t: &[Self],
+        m: usize,
+        k: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        let Some(context) = a.first() else {
+            return false;
+        };
+        let Some(table) = crate::gf2m::byte_table::gf256_table_dispatch(
+            context.params.m,
+            V::IS_U64,
+            (context.params.primitive_poly.as_u64_truncated() & 0xff) as u8,
+            || {
+                a.iter()
+                    .chain(b_t.iter())
+                    .chain(out.iter())
+                    .all(|e| Arc::ptr_eq(&e.params, &context.params))
+            },
+        ) else {
+            return false;
+        };
+
+        crate::gf2m::byte_table::gemm_region(
+            a,
+            b_t,
+            &crate::gf2m::byte_table::GemmShape { m, k, n },
+            out,
+            table,
+            |source| source.value.as_u64_truncated() as u8,
+            |destination, product| destination.value = V::from_u64(u64::from(product)),
+        );
+        true
+    }
+
     fn try_gf2m_u64_batch_dot_product(
         a: &[Self],
         b: &[Self],

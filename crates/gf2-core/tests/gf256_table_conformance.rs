@@ -37,7 +37,7 @@ use std::sync::Mutex;
 
 use gf2_core::field::FieldVec;
 use gf2_core::gf2m::{
-    force_scalar_gf256_table, gf256_table_builds, last_gf256_axpy_lane, Gf2mField, Gf2mField_,
+    force_scalar_gf256_table, gf256_table_builds, last_gf256_table_lane, Gf2mField, Gf2mField_,
     Gf2mWide, Gf2mWideConfig, GF256_SCALAR_LANE, GF256_TABLE_LANE,
 };
 
@@ -46,7 +46,7 @@ use gf2_core::gf2m::{
 ///
 /// The override is a single process-wide `AtomicBool`: every lane computes the
 /// same bytes, so the override never corrupts a result, but a test that
-/// asserts *which* lane [`last_gf256_axpy_lane`] reports can observe another
+/// asserts *which* lane [`last_gf256_table_lane`] reports can observe another
 /// thread's toggle mid-section under the default multi-threaded `cargo test`
 /// harness. Every function here that forces the scalar lane or asserts an
 /// un-forced lane holds this lock for its whole
@@ -148,7 +148,7 @@ fn element_axpy(
             .collect::<Vec<_>>(),
     );
     y.axpy(&field.element(u64::from(coefficient)), &x);
-    let lane = last_gf256_axpy_lane();
+    let lane = last_gf256_table_lane();
     ((0..y.len()).map(|i| y[i].value() as u8).collect(), lane)
 }
 
@@ -172,7 +172,7 @@ fn wide_axpy<Cfg: Gf2mWideConfig<1>>(
             .collect::<Vec<_>>(),
     );
     y.axpy(&Gf2mWide::<1, Cfg>::from_u64(u64::from(coefficient)), &x);
-    let lane = last_gf256_axpy_lane();
+    let lane = last_gf256_table_lane();
     ((0..y.len()).map(|i| y[i].words()[0] as u8).collect(), lane)
 }
 
@@ -387,7 +387,7 @@ fn another_degree_declines_and_keeps_its_result() {
             .collect();
 
         y.axpy(&coefficient, &x);
-        assert_eq!(last_gf256_axpy_lane(), GF256_SCALAR_LANE, "degree {m}");
+        assert_eq!(last_gf256_table_lane(), GF256_SCALAR_LANE, "degree {m}");
         for (i, want) in expected.iter().enumerate() {
             assert_eq!(&y[i], want, "degree {m}, index {i}");
         }
@@ -415,7 +415,7 @@ fn another_backing_width_declines_and_keeps_its_result() {
         .collect();
 
     y.axpy(&coefficient, &x);
-    assert_eq!(last_gf256_axpy_lane(), GF256_SCALAR_LANE);
+    assert_eq!(last_gf256_table_lane(), GF256_SCALAR_LANE);
     for (i, want) in expected.iter().enumerate() {
         assert_eq!(&y[i], want, "index {i}");
     }
@@ -449,7 +449,7 @@ fn a_multi_word_configuration_declines_and_keeps_its_result() {
         .collect();
 
     y.axpy(&coefficient, &x);
-    assert_eq!(last_gf256_axpy_lane(), GF256_SCALAR_LANE);
+    assert_eq!(last_gf256_table_lane(), GF256_SCALAR_LANE);
     for (i, want) in expected.iter().enumerate() {
         assert_eq!(&y[i], want, "index {i}");
     }
@@ -483,7 +483,7 @@ fn a_single_word_configuration_of_another_degree_declines_and_keeps_its_result()
         .collect();
 
     y.axpy(&coefficient, &x);
-    assert_eq!(last_gf256_axpy_lane(), GF256_SCALAR_LANE);
+    assert_eq!(last_gf256_table_lane(), GF256_SCALAR_LANE);
     for (i, want) in expected.iter().enumerate() {
         assert_eq!(&y[i], want, "index {i}");
     }
@@ -513,7 +513,7 @@ fn a_mixed_field_context_declines_and_panics_exactly_as_the_scalar_path_does() {
             .cloned()
             .or_else(|| panic.downcast_ref::<&str>().map(|s| (*s).to_string()))
             .unwrap_or_else(|| String::from("<non-string panic payload>"));
-        (message, last_gf256_axpy_lane())
+        (message, last_gf256_table_lane())
     }
 
     let guard = DISPATCH_LANE_MUTEX
@@ -623,7 +623,7 @@ fn the_call_leaves_its_source_unchanged() {
     );
     y.axpy(&field.element(0x53), &x);
 
-    assert_eq!(last_gf256_axpy_lane(), GF256_TABLE_LANE);
+    assert_eq!(last_gf256_table_lane(), GF256_TABLE_LANE);
     let read_back: Vec<u8> = (0..x.len()).map(|i| x[i].value() as u8).collect();
     assert_eq!(read_back, source);
 }

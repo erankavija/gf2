@@ -1709,6 +1709,24 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         Some(Self::from_u64(value))
     }
 
+    /// Computes the dense product, over the cached GF(2^8) byte product table
+    /// when the dispatch accepts and over the carry-less-product kernel
+    /// otherwise.
+    ///
+    /// On the table route each left-hand coefficient selects one row of the
+    /// process-wide table for `Cfg`’s reduction polynomial and drives a whole
+    /// output row through it, so every product costs one indexed load and one
+    /// XOR and no carry-less multiply runs. Results are written into each
+    /// destination word in place. No cargo feature and no processor capability
+    /// takes part in selecting it; the exact predicate is
+    /// `crate::gf2m::byte_table::gf256_table_dispatch`.
+    ///
+    /// Every other degree, every multi-word configuration and a forced-scalar
+    /// table lane fall through to the route below: the AVX2 + VPCLMULQDQ
+    /// kernel when the `simd` cargo feature is on and the host carries both
+    /// capabilities, and the panelized carry-less fallback otherwise. That
+    /// route serves single-word GF(2^m) for `m` in {8, 16, 32} and declines
+    /// everything else.
     fn try_simd_gemm_classical(
         a: &[Self],
         b_t: &[Self],
@@ -1717,7 +1735,24 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         n: usize,
         out: &mut [Self],
     ) -> bool {
-        // Only handle single-word GF(2^m) with m ∈ {8, 16, 32}.
+        if let Some(table) = crate::gf2m::byte_table::gf256_table_dispatch(
+            Cfg::M,
+            N == 1,
+            (Cfg::MODULUS.first().copied().unwrap_or(0) & 0xff) as u8,
+            || true,
+        ) {
+            crate::gf2m::byte_table::gemm_region(
+                a,
+                b_t,
+                &crate::gf2m::byte_table::GemmShape { m, k, n },
+                out,
+                table,
+                |source| source.words[0] as u8,
+                |destination, product| destination.words[0] = u64::from(product),
+            );
+            return true;
+        }
+
         if N != 1 || !matches!(Cfg::M, 8 | 16 | 32) {
             return false;
         }
