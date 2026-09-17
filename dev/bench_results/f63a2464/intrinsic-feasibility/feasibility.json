@@ -6,8 +6,8 @@
   },
   "assembly": {
     "path": "dev/bench_results/f63a2464/intrinsic-feasibility/probe.s",
-    "sha256": "3bca7b2cb5fa7d3884eb473c1372579726eaba41c035f41eed13a0a66f31b190",
-    "source_sha256": "b89a6174409b9fdf3290252c6e5ad403bfb0b939869850679811dbf5f375ee9b"
+    "sha256": "e81bd010649afc48492a88aaa009145fc57d8d227ce891546afcc2e635b1edfa",
+    "source_sha256": "9bf8476e5f688ab230aeec9b710c352d5ca4c19032a0526317c7b17b6aa73217"
   },
   "behavioural_tests": {
     "command": "cargo +1.95 test --offline --release",

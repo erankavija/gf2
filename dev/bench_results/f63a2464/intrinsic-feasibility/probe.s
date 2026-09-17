@@ -308,7 +308,7 @@ _ZN21ldpc_intrinsics_probe22sign_mask_and_apply_i817h0623d82ad0e977feE:
 _ZN21ldpc_intrinsics_probe24rotate_bytes_i8_by_three17he200418661337542E:
 .Lfunc_begin10:
 	.cfi_startproc
-	.loc	3 284 14 prologue_end
+	.loc	3 281 14 prologue_end
 	vmovdqu	ymm0, ymmword ptr [rdi]
 .Ltmp54:
 	.file	7 "/rustc/59807616e1fa2540724bfbac14d7976d7e4a3860" "library/core/src/../../stdarch/crates/core_arch/src/macros.rs"
@@ -321,7 +321,7 @@ _ZN21ldpc_intrinsics_probe24rotate_bytes_i8_by_three17he200418661337542E:
 	.loc	1 547 14 is_stmt 1
 	vmovdqu	ymmword ptr [rsi], ymm0
 .Ltmp57:
-	.loc	3 285 2
+	.loc	3 282 2
 	vzeroupper
 	ret
 .Ltmp58:
@@ -367,7 +367,7 @@ _ZN21ldpc_intrinsics_probe26rotate_bytes_i8_by_sixteen17h8cc09a31a5549baaE:
 	.loc	1 547 14
 	vmovups	ymmword ptr [rsi], ymm0
 .Ltmp64:
-	.loc	3 296 2
+	.loc	3 293 2
 	vzeroupper
 	ret
 .Ltmp65:
@@ -381,13 +381,13 @@ _ZN21ldpc_intrinsics_probe26rotate_bytes_i8_by_sixteen17h8cc09a31a5549baaE:
 	.type	_ZN21ldpc_intrinsics_probe9reference12magnitude_i817h86562cf2b0df91beE,@function
 _ZN21ldpc_intrinsics_probe9reference12magnitude_i817h86562cf2b0df91beE:
 .Lfunc_begin13:
-	.loc	3 318 0
+	.loc	3 315 0
 	.cfi_startproc
 	push	rax
 	.cfi_def_cfa_offset 16
 	mov	byte ptr [rsp + 7], dil
 .Ltmp66:
-	.loc	3 319 9 prologue_end
+	.loc	3 316 9 prologue_end
 	cmp	dil, -128
 	je	.LBB13_2
 .Ltmp67:
@@ -398,16 +398,16 @@ _ZN21ldpc_intrinsics_probe9reference12magnitude_i817h86562cf2b0df91beE:
 	xor	dil, al
 	sub	dil, al
 .Ltmp68:
-	.loc	3 321 6
+	.loc	3 318 6
 	mov	eax, edi
-	.loc	3 321 6 epilogue_begin is_stmt 0
+	.loc	3 318 6 epilogue_begin is_stmt 0
 	pop	rcx
 	.cfi_def_cfa_offset 8
 	ret
 .LBB13_2:
 	.cfi_def_cfa_offset 16
 .Ltmp69:
-	.loc	3 319 9 is_stmt 1
+	.loc	3 316 9 is_stmt 1
 	lea	rdx, [rip + .Lanon.fa1f34f804581cd11c810b97f41bac6b.0]
 	lea	rcx, [rip + .Lanon.fa1f34f804581cd11c810b97f41bac6b.1]
 	lea	r9, [rip + .Lanon.fa1f34f804581cd11c810b97f41bac6b.3]
@@ -440,7 +440,7 @@ _ZN21ldpc_intrinsics_probe9reference15fold_two_minima17h540b54da7bceed1cE:
 	cmp	edx, esi
 	cmovge	edx, esi
 .Ltmp73:
-	.loc	3 327 6
+	.loc	3 324 6
 	ret
 .Ltmp74:
 .Lfunc_end14:
@@ -535,7 +535,7 @@ _ZN4core9panicking13assert_failed17ha2519999bdb0d7e3E:
 	.p2align	3, 0x0
 .Lanon.fa1f34f804581cd11c810b97f41bac6b.3:
 	.quad	.Lanon.fa1f34f804581cd11c810b97f41bac6b.2
-	.asciz	"\n\000\000\000\000\000\000\000?\001\000\000\t\000\000"
+	.asciz	"\n\000\000\000\000\000\000\000<\001\000\000\t\000\000"
 	.size	.Lanon.fa1f34f804581cd11c810b97f41bac6b.3, 24
 
 	.type	.Lanon.fa1f34f804581cd11c810b97f41bac6b.4,@object
@@ -1621,7 +1621,7 @@ _ZN4core9panicking13assert_failed17ha2519999bdb0d7e3E:
 	.quad	.Ltmp54
 	.long	.Ltmp57-.Ltmp54
 	.byte	3
-	.short	284
+	.short	281
 	.byte	14
 	.byte	7
 	.long	2606
@@ -1643,8 +1643,8 @@ _ZN4core9panicking13assert_failed17ha2519999bdb0d7e3E:
 	.quad	.Ltmp55
 	.long	.Ltmp56-.Ltmp55
 	.byte	3
-	.short	266
-	.byte	13
+	.short	264
+	.byte	54
 	.byte	7
 	.long	304
 	.quad	.Ltmp56
@@ -1754,7 +1754,7 @@ _ZN4core9panicking13assert_failed17ha2519999bdb0d7e3E:
 	.quad	.Lfunc_begin12
 	.long	.Ltmp64-.Lfunc_begin12
 	.byte	3
-	.short	295
+	.short	292
 	.byte	14
 	.byte	7
 	.long	2987
@@ -1816,7 +1816,7 @@ _ZN4core9panicking13assert_failed17ha2519999bdb0d7e3E:
 	.quad	.Ltmp67
 	.long	.Ltmp68-.Ltmp67
 	.byte	3
-	.short	320
+	.short	317
 	.byte	11
 	.byte	0
 	.byte	2
@@ -1834,21 +1834,21 @@ _ZN4core9panicking13assert_failed17ha2519999bdb0d7e3E:
 	.quad	.Lfunc_begin14
 	.long	.Ltmp71-.Lfunc_begin14
 	.byte	3
-	.short	326
+	.short	323
 	.byte	15
 	.byte	5
 	.long	3220
 	.quad	.Ltmp71
 	.long	.Ltmp72-.Ltmp71
 	.byte	3
-	.short	326
+	.short	323
 	.byte	45
 	.byte	5
 	.long	3214
 	.quad	.Ltmp72
 	.long	.Ltmp73-.Ltmp72
 	.byte	3
-	.short	326
+	.short	323
 	.byte	36
 	.byte	0
 	.byte	2

@@ -1,0 +1,32 @@
+# Bounded candidate prototypes for the quantized, layered and QC-aware
+# evaluation (jit:f63a2464).
+#
+# A standalone workspace, like the `c077a88b`, `3be770d5` and `07ca8585` survey
+# crates: it adds no target, feature or dependency to the production workspace,
+# keeps its own target directory, and changes no production selection. It
+# consumes `gf2-coding`'s canonical code, edge layout and LLR types through
+# their safe public interfaces; the one `unsafe` module is the AVX2 check-block
+# kernel of the QC candidate, which carries its safety contract and is asserted
+# byte-identical to its scalar reference.
+
+[workspace]
+
+[package]
+name = "ldpc-candidate-prototypes"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+gf2-core = { path = "../../../../../crates/gf2-core" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = "line-tables-only"
+
+[lib]
+name = "ldpc_candidate_prototypes"
+path = "src/lib.rs"
