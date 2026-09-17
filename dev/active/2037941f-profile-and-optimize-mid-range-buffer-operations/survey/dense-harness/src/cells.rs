@@ -266,6 +266,15 @@ pub enum Workload {
 }
 
 impl Workload {
+    /// The canonical question whose cells carry this workload.
+    pub fn question(self) -> Question {
+        match self {
+            Self::AndPopcnt { .. } => Question::IsolatedFusedParity,
+            Self::Matvec { .. } => Question::AllocatedMatvec,
+            Self::M4riGap { .. } => Question::MatvecVsM4ri,
+        }
+    }
+
     /// gf2 row stride in words, for every workload.
     pub fn stride_words(self) -> usize {
         match self {
