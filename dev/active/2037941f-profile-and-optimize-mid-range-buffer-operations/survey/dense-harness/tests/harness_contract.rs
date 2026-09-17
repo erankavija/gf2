@@ -551,6 +551,18 @@ fn a_cell_workload_names_the_question_every_arm_of_that_cell_serves() {
 }
 
 #[test]
+fn every_anchor_stride_is_a_confirmatory_cell_of_both_gf2_questions() {
+    for question in [Question::IsolatedFusedParity, Question::AllocatedMatvec] {
+        let anchors: BTreeSet<usize> = family_cells(question)
+            .iter()
+            .filter(|cell| cell.anchor)
+            .map(|cell| cell.workload.stride_words())
+            .collect();
+        assert_eq!(anchors, ANCHOR_WORDS.into_iter().collect::<BTreeSet<_>>());
+    }
+}
+
+#[test]
 fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
     let expected_arms = [
         (Question::IsolatedFusedParity, 2),
@@ -743,6 +755,28 @@ fn a_dirty_harness_source_refuses_a_timed_run() {
     assert!(refusal.contains(HARNESS_SOURCE), "{refusal}");
     assert!(!refusal.contains(RUNNER_SOURCE), "{refusal}");
     std::fs::remove_dir_all(&root).expect("the scratch closure is removed");
+}
+
+#[test]
+fn a_dirty_runner_source_refuses_a_timed_run() {
+    let root = scratch_closure("closure-dirty-runner");
+    std::fs::write(root.join(RUNNER_SOURCE), "runner edited after the build\n")
+        .expect("dirty runner source");
+    let refusal = inputs::check(&root, MANIFEST, &[]).expect_err("a dirty runner source refuses");
+    assert!(refusal.contains(RUNNER_SOURCE), "{refusal}");
+    assert!(!refusal.contains(HARNESS_SOURCE), "{refusal}");
+    std::fs::remove_dir_all(&root).expect("the scratch closure is removed");
+}
+
+#[test]
+fn the_porcelain_status_decodes_renames_and_untracked_entries() {
+    let stdout = b"?? new.rs\0 M dev/tools/a.rs\0R  dev/tools/b.rs\0dev/tools/old.rs\0".to_vec();
+    let status = inputs::parse_status(&stdout).expect("porcelain decodes");
+    assert_eq!(status.get("new.rs").map(String::as_str), Some("??"));
+    assert_eq!(status.get("dev/tools/a.rs").map(String::as_str), Some(" M"));
+    // A rename dirties both the reported path and its recorded origin.
+    assert_eq!(status.get("dev/tools/b.rs").map(String::as_str), Some("R "));
+    assert_eq!(status.get("dev/tools/old.rs").map(String::as_str), Some("R "));
 }
 
 #[test]
