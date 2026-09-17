@@ -1,7 +1,7 @@
 # label: avx512-xor-into
 # pattern: gf2_kernels_simd::x86::avx512::avx512_xor_into
 # binary: logical-arm
-# binary sha256: 960e1e35c55271906ce3563afdbcdb1a67417faf7f3c04e0c052cbdb3fee9d02
+# binary sha256: 57e7643368f689478e6066bee522099eded3fec4d8f734d2111516fb8e2454c5
 # text symbols matching this pattern: 0
 # no text symbol of this pattern is present in the measured binary, either
 # because the routine is inlined into its callers or because the build
