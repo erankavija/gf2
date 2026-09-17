@@ -1,0 +1,34 @@
+{
+  "schema": "ldpc-candidate-confirmatory-budget-v1",
+  "frozen": {
+    "family_alpha": 0.05,
+    "bootstrap_resamples": 10000.0,
+    "min_tail_draws": 20.0
+  },
+  "families": [
+    {
+      "ledger": "dev/bench_results/f63a2464/v4-qc-comparator-single-worker-family-ledger.jsonl",
+      "entries": 0,
+      "reservations_spending_a_comparison": 0,
+      "next_attempt_index": 1,
+      "attempt_alpha": 0.025,
+      "max_confirmatory_cells": 6
+    },
+    {
+      "ledger": "dev/bench_results/f63a2464/v4-qc-intra-frame-multicore-family-ledger.jsonl",
+      "entries": 0,
+      "reservations_spending_a_comparison": 0,
+      "next_attempt_index": 1,
+      "attempt_alpha": 0.025,
+      "max_confirmatory_cells": 6
+    },
+    {
+      "ledger": "dev/bench_results/f63a2464/v4-qc-intra-frame-single-worker-family-ledger.jsonl",
+      "entries": 0,
+      "reservations_spending_a_comparison": 0,
+      "next_attempt_index": 1,
+      "attempt_alpha": 0.025,
+      "max_confirmatory_cells": 6
+    }
+  ]
+}
