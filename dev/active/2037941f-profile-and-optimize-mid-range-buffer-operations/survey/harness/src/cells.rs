@@ -31,6 +31,10 @@ pub const ANCHOR_WORDS: [usize; 5] = [8, 9, 63, 64, 65];
 pub const NEIGHBOR_WORDS: [usize; 2] = [7, 66];
 /// Every word count the oracle exercises.
 pub const ALL_WORDS: [usize; 7] = [7, 8, 9, 63, 64, 65, 66];
+/// Smallest row stride of the story's declared mid-range band, in words.
+pub const MID_RANGE_MIN_WORDS: usize = 8;
+/// Largest row stride of that band.
+pub const MID_RANGE_MAX_WORDS: usize = 64;
 /// Logical bit lengths the oracle exercises at the word boundary.
 pub const BOUNDARY_BITS: [usize; 5] = [0, 1, 63, 64, 65];
 /// Rows in every public row-XOR matrix.

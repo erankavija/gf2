@@ -11,7 +11,7 @@
 # family=2037941f-logical-public-row-xor ledger=dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl cells=17
 # family=2037941f-logical-nr-construction ledger=dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl cells=6
 # family=2037941f-logical-isal-base-gap ledger=dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl cells=12
-PASS harness contract: 27 tests pass
+PASS harness contract: 30 tests pass
 PASS xor-bits-0: 2 checks
 PASS xor-bits-1: 5 checks
 PASS xor-bits-63: 67 checks
@@ -31,25 +31,25 @@ PASS xor-65w-a64: 4232 checks
 PASS xor-65w-o8: 4232 checks
 PASS xor-66w-a64: 4297 checks
 PASS xor-66w-o8: 4297 checks
-PASS row-xor-7w-full: 28737 checks
-PASS row-xor-7w-tail63: 28737 checks
-PASS row-xor-8w-full: 32833 checks
-PASS row-xor-8w-tail63: 32833 checks
-PASS row-xor-9w-full: 36929 checks
-PASS row-xor-9w-tail63: 36929 checks
-PASS row-xor-63w-full: 258113 checks
-PASS row-xor-63w-tail63: 258113 checks
-PASS row-xor-64w-full: 262209 checks
-PASS row-xor-64w-tail63: 262209 checks
-PASS row-xor-65w-full: 266305 checks
-PASS row-xor-65w-tail63: 266305 checks
-PASS row-xor-66w-full: 270401 checks
-PASS row-xor-66w-tail63: 270401 checks
-PASS nr-construct-bg2-256-49-z9-8w: 6 checks
-PASS nr-construct-bg2-256-121-z22-18w: 6 checks
-PASS nr-construct-bg2-625-225-z30-25w: 6 checks
-PASS nr-construct-bg1-1024-640-z30-32w: 6 checks
-PASS nr-construct-bg2-1024-441-z56-46w: 6 checks
+PASS row-xor-7w-full: 28753 checks
+PASS row-xor-7w-tail63: 28753 checks
+PASS row-xor-8w-full: 32849 checks
+PASS row-xor-8w-tail63: 32849 checks
+PASS row-xor-9w-full: 36945 checks
+PASS row-xor-9w-tail63: 36945 checks
+PASS row-xor-63w-full: 258129 checks
+PASS row-xor-63w-tail63: 258129 checks
+PASS row-xor-64w-full: 262225 checks
+PASS row-xor-64w-tail63: 262225 checks
+PASS row-xor-65w-full: 266321 checks
+PASS row-xor-65w-tail63: 266321 checks
+PASS row-xor-66w-full: 270417 checks
+PASS row-xor-66w-tail63: 270417 checks
+PASS nr-construct-bg2-256-49-z9-8w: 26 checks
+PASS nr-construct-bg2-256-121-z22-18w: 26 checks
+PASS nr-construct-bg2-625-225-z30-25w: 26 checks
+PASS nr-construct-bg1-1024-640-z30-32w: 26 checks
+PASS nr-construct-bg2-1024-441-z56-46w: 26 checks
 # isa-l: 7c3479e0a9dac17f448603ec1ad64c7c625f530c
 # {"library":"isa-l","entrypoint":"xor_gen_base","qualified_label":"xor_gen_base/scalar","runtime_dispatch":false,"public_xor_gen_available":false,"unavailable_row":"isal-dispatched-xor-gen","unavailable_reason":"NASM is absent on the qualifying host, so raid_multibinary.asm and the SSE/AVX/AVX-512 xor_gen objects have no reproduced executable or observed dispatch route","comparator":"dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"}
 PASS isal-7w: 462 checks
@@ -59,7 +59,7 @@ PASS isal-63w: 4102 checks
 PASS isal-64w: 4167 checks
 PASS isal-65w: 4232 checks
 PASS isal-66w: 4297 checks
-# logical-isal-arm sha256: 6d600a0f104dd27503704735e9df610f138b81353385142f49a25b0a98a25c77
-# logical-arm sha256: 92b82abc0cb0380324349ab9c53480f3ff0c78905cedb3fb9d3dd4b03d0b7255
-# logical-campaign sha256: 1ef167601554181382e828cab3c51e2b45e920df6a0ddd1b1a3036c5765a3bcd
-# logical-oracle sha256: 6cb10c06b66fe18cbde476665a4a98fbf3bff27afe292f1a5eca7cb02ae41184
+# logical-isal-arm sha256: 241ac8980b38d5124e411c32c7f404476e785de54dd2c950837913401bb8cc7c
+# logical-arm sha256: e3be85e50f004bd2c4301f1ff197d90cb89a51c446cacd97651afc9123fb0e62
+# logical-campaign sha256: 18c312de1bcc1208bfff6aef3352a6840915870ac26b89bf895b575f10a56e1a
+# logical-oracle sha256: 880778d3d4b3c0a17ad33b0932c46ed8a5d627d269c0fb3bb1d1e90c135c82a8
