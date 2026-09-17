@@ -1142,7 +1142,8 @@
     "8275a6f8": 1,
     "2c487595": 1,
     "77c21ecd": 0,
-    "7cdc28e9": 0
+    "7cdc28e9": 0,
+    "e1f9a78f": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1598,7 +1599,8 @@
     "Trap (session 19): `jit issue reject --reason` writes the reason verbatim as a resolution: label; a reason with spaces violates the label format and blocks every later update on that issue until fixed with --force. Use a hyphenated reason such as merged-into-<id>.",
     "Trap (session 19): merged descriptions must number criteria REQ-01.. uniquely per issue and keep the `[hard] REQ-NN: text` shape; a source tag goes after the colon.",
     "Trap (session 19): a native worker inherits the user CLAUDE.md and delegated to codex; the delegation rule was removed from ~/.claude/CLAUDE.md and every prompt now says to do the work itself.",
-    "Session 20 (2026-09-17T21:15Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time in worktrees, reuse over proliferation; check for worker stalls every 20 minutes. Session 19 ended on the weekly usage limit without a handoff; its state was recovered from progress.json, git and the worktrees. The 2026-09-17 window ran both c04dd4ac source jobs (rc 0; results uncommitted in their worktrees). Dispatched into the existing worktrees: 85fc5ff4 (opus, collect window and finish), 9fb40c83 (opus, same), e1f9a78f (opus, finish after the lead-preserve WIP 9ab18326), b64dc9c4 (sonnet, REQ audit, main merge, cargo-ci, Rust 1.95). The lead finishes 0a357f94 itself (branch complete; main merged; closure --check passes; cargo-ci running)."
+    "Session 20 (2026-09-17T21:15Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time in worktrees, reuse over proliferation; check for worker stalls every 20 minutes. Session 19 ended on the weekly usage limit without a handoff; its state was recovered from progress.json, git and the worktrees. The 2026-09-17 window ran both c04dd4ac source jobs (rc 0; results uncommitted in their worktrees). Dispatched into the existing worktrees: 85fc5ff4 (opus, collect window and finish), 9fb40c83 (opus, same), e1f9a78f (opus, finish after the lead-preserve WIP 9ab18326), b64dc9c4 (sonnet, REQ audit, main merge, cargo-ci, Rust 1.95). The lead finishes 0a357f94 itself (branch complete; main merged; closure --check passes; cargo-ci running).",
+    "Session 20 (2026-09-17T22:20Z): closed 0a357f94 (code-review R1 closed by an empty-diff regeneration commit aa9a2f5a) and b64dc9c4 (all gates first run). Merged e1f9a78f (8f1ace4e), 9fb40c83 (0e976898), 85fc5ff4 (fd5ac642). e1f9a78f code-review F1 (libm4ri.so runtime identity unpinned): rework 1 sent to its original worker. 9fb40c83 code-review F1 (smoke-dvb-arms.sh finalizes a timed throwaway receipt outside the window) and F2 (narrative comments); smoke-shift-arms.sh of 85fc5ff4 has the same pattern; one rework covers both smokes when a slot frees. 9fb40c83 citation repair applied under the standing approval. 85fc5ff4: disposition material, two forms nominated, both feasible at Rust 1.95 (shift-feasibility-record.md); REQ-05 bracket amendment pending invoker consultation. Dispatched: ad2a6a58 (opus, agent-0a357f94 dir), 18a87159 (opus, agent-b64dc9c4 dir), f63a2464 (opus, agent-9fb40c83 dir). Pitfall: the e1f9a78f dense queue lines are keyed to e1f9a78f and the window skips done issues; c73ffa25 must re-key them. Host race: concurrent cargo-ci runs delete the sccache server scratch dir of another run (reported by three workers)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
