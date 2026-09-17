@@ -13,7 +13,7 @@
 # unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
-PASS harness contract: 32 tests pass
+PASS harness contract: 33 tests pass
 PASS matvec-cols-0-rows-0: 6 checks
 PASS matvec-cols-0-rows-1: 9 checks
 PASS matvec-cols-0-rows-63: 195 checks

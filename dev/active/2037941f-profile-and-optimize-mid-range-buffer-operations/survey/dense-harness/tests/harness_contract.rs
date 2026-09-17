@@ -424,6 +424,49 @@ fn the_output_sink_releases_a_batch_outside_the_window() {
 }
 
 #[test]
+fn a_windowed_execution_retains_and_releases_through_the_arm_arrangement() {
+    // The arm's arrangement: the body retains each output and the post-window
+    // callback releases the batch. A zero-window smoke never reaches it, so the
+    // borrow discipline and the release boundary are checked here. The windows
+    // are one millisecond of a trivial body and carry no performance claim.
+    let banks = MatvecBanks::build(65, 512, Cache::Warm, 11);
+    let retained = std::cell::RefCell::new(OutputSink::default());
+    let mut body = |bank: usize, item: usize| {
+        let item = banks.item(bank, item);
+        retained.borrow_mut().keep(item.matrix.matvec(&item.vector));
+    };
+    let mut released = 0usize;
+    let samples = run_windows(
+        WindowPlan {
+            cache: Cache::Warm,
+            cold_calls: None,
+            windows: 1,
+            window_target_ms: 1,
+            banks: 1,
+            items: 1,
+        },
+        &mut body,
+        |progress| {
+            let mut retained = retained.borrow_mut();
+            match progress {
+                tuning_campaign_support::timing::TimingProgress::CalibrationComplete { calls } => {
+                    retained.reserve(calls)
+                }
+                tuning_campaign_support::timing::TimingProgress::WindowComplete(_) => {
+                    released += 1;
+                    retained.release();
+                }
+            }
+            Ok(())
+        },
+    )
+    .expect("the windowed execution succeeds");
+    assert_eq!(samples.len(), 1);
+    assert!(samples[0].calls > 0);
+    assert_eq!(released, 1);
+}
+
+#[test]
 fn the_oracle_covers_every_frozen_boundary_and_passes() {
     let report = oracle::run().expect("the oracle passes");
     let names: BTreeSet<&str> = report.iter().map(|case| case.name.as_str()).collect();
