@@ -18,6 +18,8 @@ CORE = "crates/gf2-coding/src/ldpc/core.rs"
 LLR = "crates/gf2-coding/src/llr.rs"
 MINSUM = "crates/gf2-coding/src/ldpc/min_sum.rs"
 LAYOUT = "crates/gf2-coding/src/ldpc/edge_layout.rs"
+NR = "crates/gf2-coding/src/ldpc/nr_5g/mod.rs"
+DVB = "crates/gf2-coding/src/ldpc/dvb_t2/builder.rs"
 LEDGER = "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
 RECEIPT = "dev/tools/tuning-campaign-support/src/receipt.rs"
 PROTOCOL = "dev/tools/tuning-campaign-support/src/protocol.rs"
@@ -52,6 +54,16 @@ CLAIMS = [
      "the hard decision is a strict comparison, so a zero or negative-zero belief decides to bit zero"),
     (LLR, "Llr(self.0.clamp(-max, max))", "saturation",
      "the float alphabet's only saturation is this explicit caller-invoked clamp; the decoder itself applies none"),
+    (NR, "const FILLER_LLR: f32 = 15.0;", "fillers",
+     "a filler position enters as a finite positive magnitude, not an infinity, so a quantized alphabet maps it by the same scale as any other channel LLR"),
+    (NR, "let mut full_llrs = vec![Llr::zero(); p.full_n];", "puncturing",
+     "every position the rate matching does not transmit, punctured or untransmitted parity alike, enters at the zero LLR"),
+    (CORE, "let col = col_offset + ((i + self.shift) % self.size);", "qc-structure",
+     "a circulant block places lifted position i of a check block on lifted position (i + shift) mod Z of a variable block, which is the rotation an intra-frame block update performs"),
+    (DVB, "let parity_bit = (base_parity + j * q) % m;", "qc-structure",
+     "the DVB-T2 information part groups columns into blocks of Z whose check indices advance by the step q, so its check rows carry no equal-degree block partition"),
+    (DVB, "edges.push((p, k + p - 1));", "qc-structure",
+     "the DVB-T2 parity part is a staircase accumulator rather than a circulant block"),
     (LAYOUT, "var_edge_to_check_edge: Vec<u32>,", "layout",
      "a variable's slots resolve to canonical check-major edge ids, which is the map any alternative layout must reproduce"),
     (LEDGER, "let attempts = entries.iter().filter(|e| e.comparisons > 0).count().max(1) as f64;",

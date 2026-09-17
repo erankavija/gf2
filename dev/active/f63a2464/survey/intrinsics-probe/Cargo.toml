@@ -1,0 +1,25 @@
+# AVX2 intrinsic feasibility probe for the candidate families (jit:f63a2464).
+#
+# A standalone workspace with no dependency, so it adds no target, feature or
+# dependency to the production workspace and keeps its own target directory.
+# Its only purpose is to establish, at the repository MSRV, that the intrinsic
+# forms each candidate family needs compile and lower to the instructions the
+# design assumes, and that each one agrees with a scalar reference.
+
+[workspace]
+
+[package]
+name = "ldpc-intrinsics-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = "line-tables-only"
+
+[lib]
+name = "ldpc_intrinsics_probe"
+path = "src/lib.rs"

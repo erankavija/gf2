@@ -4,7 +4,7 @@
   "claims": [
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
       "line": 132,
       "text": "sign_product = if value >= 0.0 {",
@@ -13,7 +13,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
       "line": 137,
       "text": "let magnitude = value.abs();",
@@ -22,7 +22,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
       "line": 138,
       "text": "if magnitude < min1 {",
@@ -31,7 +31,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
       "line": 155,
       "text": "let magnitude = if index == arg1 { min2 } else { min1 };",
@@ -40,7 +40,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
       "line": 69,
       "text": "Self::Offset(beta) => Llr::new(sign * (magnitude - beta).max(0.0)),",
@@ -49,7 +49,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/min_sum.rs",
       "line": 118,
       "text": "outputs[0] = Llr::zero();",
@@ -58,7 +58,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 1214,
       "text": "belief = Llr::new(belief.value() + self.check_to_var[edge].value());",
@@ -67,7 +67,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 1223,
       "text": "self.var_to_check[edge] = Llr::new(belief.value() - incoming.value());",
@@ -76,7 +76,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 1341,
       "text": "*message = llrs[var as usize];",
@@ -85,7 +85,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 1336,
       "text": "// Reset all messages: check-to-variable to zero, and every",
@@ -94,7 +94,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 1353,
       "text": "if early_termination && self.syndrome_passes() {",
@@ -103,7 +103,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/core.rs",
       "line": 1243,
       "text": "parity ^= self.hard_bits[edge_var[edge] as usize];",
@@ -112,7 +112,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/llr.rs",
       "line": 168,
       "text": "self.0 < 0.0",
@@ -121,7 +121,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/llr.rs",
       "line": 247,
       "text": "Llr(self.0.clamp(-max, max))",
@@ -130,7 +130,52 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 698,
+      "text": "const FILLER_LLR: f32 = 15.0;",
+      "topic": "fillers",
+      "why": "a filler position enters as a finite positive magnitude, not an infinity, so a quantized alphabet maps it by the same scale as any other channel LLR"
+    },
+    {
+      "project": "gf2",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 1184,
+      "text": "let mut full_llrs = vec![Llr::zero(); p.full_n];",
+      "topic": "puncturing",
+      "why": "every position the rate matching does not transmit, punctured or untransmitted parity alike, enters at the zero LLR"
+    },
+    {
+      "project": "gf2",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 542,
+      "text": "let col = col_offset + ((i + self.shift) % self.size);",
+      "topic": "qc-structure",
+      "why": "a circulant block places lifted position i of a check block on lifted position (i + shift) mod Z of a variable block, which is the rotation an intra-frame block update performs"
+    },
+    {
+      "project": "gf2",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/builder.rs",
+      "line": 88,
+      "text": "let parity_bit = (base_parity + j * q) % m;",
+      "topic": "qc-structure",
+      "why": "the DVB-T2 information part groups columns into blocks of Z whose check indices advance by the step q, so its check rows carry no equal-degree block partition"
+    },
+    {
+      "project": "gf2",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/builder.rs",
+      "line": 113,
+      "text": "edges.push((p, k + p - 1));",
+      "topic": "qc-structure",
+      "why": "the DVB-T2 parity part is a staircase accumulator rather than a circulant block"
+    },
+    {
+      "project": "gf2",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "crates/gf2-coding/src/ldpc/edge_layout.rs",
       "line": 70,
       "text": "var_edge_to_check_edge: Vec<u32>,",
@@ -139,7 +184,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
       "line": 217,
       "text": "let attempts = entries.iter().filter(|e| e.comparisons > 0).count().max(1) as f64;",
@@ -148,7 +193,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
       "line": 218,
       "text": "Ok(family.family_wise.alpha / (attempts * (attempts + 1.0)))",
@@ -157,7 +202,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
       "line": 2166,
       "text": "|| f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;",
@@ -166,7 +211,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 83,
       "text": "family_alpha: 0.05,",
@@ -175,7 +220,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 84,
       "text": "bootstrap_resamples: 10_000,",
@@ -184,7 +229,7 @@
     },
     {
       "project": "gf2",
-      "commit": "0e9768982430da41ad0a694782a5a77d5dda97cf",
+      "commit": "46d15d9b769c992ed081f0c73fbb53591b439b1d",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 93,
       "text": "max_confirmatory_attempts_per_candidate: 1,",

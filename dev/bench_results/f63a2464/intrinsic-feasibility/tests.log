@@ -1,0 +1,24 @@
+
+running 10 tests
+test tests::clip_symmetric_i8_bounds_both_sides ... ok
+test tests::fold_two_minima_i16_matches_the_scalar_reference ... ok
+test tests::rotate_lanes_f32_is_a_cyclic_rotation ... ok
+test tests::saturating_add_and_sub_i16_match_the_scalar_reference ... ok
+test tests::rotate_bytes_i8_is_a_cyclic_rotation_of_thirty_two_lanes ... ok
+test tests::magnitude_i8_is_exact_on_the_symmetric_alphabet_and_wraps_at_the_minimum ... ok
+test tests::saturating_add_i8_matches_the_scalar_reference ... ok
+test tests::saturating_sub_i8_matches_the_scalar_reference ... ok
+test tests::sign_mask_and_apply_i8_negate_under_the_mask ... ok
+test tests::the_comparison_sign_rule_and_the_sign_bit_part_on_negative_zero ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling ldpc-intrinsics-probe v0.0.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/dev/active/f63a2464/survey/intrinsics-probe)
+    Finished `release` profile [optimized + debuginfo] target(s) in 4.07s
+     Running unittests src/lib.rs (target/ldpc-intrinsics-probe/release/deps/ldpc_intrinsics_probe-19bc62be4c8059c0)
+   Doc-tests ldpc_intrinsics_probe
