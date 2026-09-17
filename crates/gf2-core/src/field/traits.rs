@@ -515,6 +515,20 @@ pub trait FiniteField:
     /// [`chain_poly_arith_available`](Self::chain_poly_arith_available)
     /// for the `try_make_chain_poly_arith` hook.
     ///
+    /// # A field may accept the hook and decline this probe
+    ///
+    /// [`crate::field::matrix::gemm`] calls the hook directly rather than
+    /// through this probe, so a field whose hook populates `out` may still
+    /// answer `false` here. A `false` therefore means only that callers should
+    /// neither pre-allocate operand scratch for the hook nor restructure an
+    /// algorithm around it; it does not mean the dense product declines. The
+    /// single-word GF(2^8) representations are that case: their hook runs the
+    /// cached byte product table while this probe keeps the default, so the
+    /// GEMM-axpy fold, the blocked triangular solve and the blocked inverse
+    /// keep the route they take. The condition that ends it is a benchmark
+    /// receipt covering those three consumers on the table lane; until one
+    /// exists, the probe stays `false` for GF(2^8).
+    ///
     /// # Returns
     ///
     /// `true` when [`try_simd_gemm_classical`] is expected to populate
