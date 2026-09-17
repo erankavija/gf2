@@ -1,6 +1,6 @@
 # Instruction mix of the measured logical routes (jit:18a87159)
 # binary: logical-arm
-# binary sha256: 57e7643368f689478e6066bee522099eded3fec4d8f734d2111516fb8e2454c5
+# binary sha256: a2b8d3913050408209adb291f142f3b0d28432ab621b899cff253359d45c988e
 # Counts are of instruction lines within the named symbol; the symbols are
 # those the disassembly table names plus the harness route bodies calling them.
 

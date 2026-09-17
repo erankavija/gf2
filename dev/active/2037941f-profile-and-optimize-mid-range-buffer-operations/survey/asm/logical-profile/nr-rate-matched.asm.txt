@@ -1,7 +1,7 @@
 # label: nr-rate-matched
 # pattern: QuasiCyclicLdpc>::nr_5g_rate_matched
 # binary: logical-profile
-# binary sha256: d9c0b00b1f21bcb70d810116377e6055e94241ec8d7e07f9b0815c2918692c18
+# binary sha256: 10a73e2a0457f23887cea418dbcb287b75d10800150a76fa38a0e1565130d8c8
 # text symbols matching this pattern: 2
 
 ## symbol at 000000000003ccc0, 0x0000000000002a0a bytes
@@ -451,7 +451,7 @@
    3d549:	lea    0x140(%rsp),%rax
    3d551:	mov    %rax,0x30(%rsp)
    3d556:	lea    0x62de3(%rip),%rdx        # a0340 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x3e8>
-   3d55d:	lea    -0x34f24(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.7643799368439059581+0xc5>
+   3d55d:	lea    -0x34f24(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.15526432133659602438+0xc5>
    3d564:	lea    0x30(%rsp),%rsi
    3d569:	lea    0x90(%rsp),%rcx
    3d571:	mov    0x65d48(%rip),%rax        # a32c0 <_DYNAMIC+0x488>
@@ -744,7 +744,7 @@
    3dacf:	lea    0x140(%rsp),%rax
    3dad7:	mov    %rax,0x30(%rsp)
    3dadc:	lea    0x62815(%rip),%rdx        # a02f8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x3a0>
-   3dae3:	lea    -0x354aa(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.7643799368439059581+0xc5>
+   3dae3:	lea    -0x354aa(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.15526432133659602438+0xc5>
    3daea:	lea    0x30(%rsp),%rsi
    3daef:	lea    0x90(%rsp),%rcx
    3daf7:	jmp    3db1e <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0xe5e>
@@ -1578,7 +1578,7 @@
    3ea6a:	lea    0x140(%rsp),%rax
    3ea72:	mov    %rax,0x30(%rsp)
    3ea77:	lea    0x6187a(%rip),%rdx        # a02f8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x3a0>
-   3ea7e:	lea    -0x36445(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.7643799368439059581+0xc5>
+   3ea7e:	lea    -0x36445(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.15526432133659602438+0xc5>
    3ea85:	lea    0x30(%rsp),%rsi
    3ea8a:	lea    0x90(%rsp),%rcx
    3ea92:	mov    0x64827(%rip),%rax        # a32c0 <_DYNAMIC+0x488>
@@ -1590,7 +1590,7 @@
    3eab0:	lea    0x28(%rsp),%rax
    3eab5:	mov    %rax,0x30(%rsp)
    3eaba:	lea    0x6187f(%rip),%rdx        # a0340 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x3e8>
-   3eac1:	lea    -0x36488(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.7643799368439059581+0xc5>
+   3eac1:	lea    -0x36488(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.15526432133659602438+0xc5>
    3eac8:	lea    0x30(%rsp),%rsi
    3eacd:	lea    0x160(%rsp),%rcx
    3ead5:	jmp    3f1cc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x250c>
@@ -1927,7 +1927,7 @@
    3f17d:	lea    0x28(%rsp),%rax
    3f182:	mov    %rax,0x30(%rsp)
    3f187:	lea    0x6116a(%rip),%rdx        # a02f8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x3a0>
-   3f18e:	lea    -0x36b55(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.7643799368439059581+0xc5>
+   3f18e:	lea    -0x36b55(%rip),%rdi        # 8640 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.344.llvm.15526432133659602438+0xc5>
    3f195:	lea    0x30(%rsp),%rsi
    3f19a:	lea    0x90(%rsp),%rcx
    3f1a2:	jmp    3f1cc <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x250c>

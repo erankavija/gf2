@@ -1,7 +1,7 @@
 # label: nr-rate-matched
 # pattern: QuasiCyclicLdpc>::nr_5g_rate_matched
 # binary: logical-arm
-# binary sha256: 57e7643368f689478e6066bee522099eded3fec4d8f734d2111516fb8e2454c5
+# binary sha256: a2b8d3913050408209adb291f142f3b0d28432ab621b899cff253359d45c988e
 # text symbols matching this pattern: 2
 
 ## symbol at 0000000000046f70, 0x0000000000002a0a bytes
