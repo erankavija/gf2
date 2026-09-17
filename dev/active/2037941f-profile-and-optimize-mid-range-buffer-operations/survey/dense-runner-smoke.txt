@@ -5,9 +5,9 @@
 # the record carries no clock reading, the arms answer a zero-window request, and
 # no receipt is finalized, so a rerun on the same executables reproduces it byte
 # for byte and the smoke cannot serve as a pilot
-# dense-arm sha256: a6dc71f682456ada2057966ebd65e6f4a2376a7efe5d1bd764e0e3f3a96cc398
-# dense-arm-scalar sha256: 9b8167a0a91b553474cc85eb5c9b63a98e6926c2881a053d46c6d274826376f6
-# dense-m4ri-arm sha256: 35114d79dcda826a742f8cbfba4d049e51ab19804e0455d72961cbe118e0d9ff
+# dense-arm sha256: f44e16a01b42c4bb8b3434860edcb4341a0fc4d33c41b6c91121e865ee13eba2
+# dense-arm-scalar sha256: 2617516c2a1d78e3ab9054e5c5c68cf09d2df62d73828d896cf1d31ba5ac6631
+# dense-m4ri-arm sha256: 228bf03d59a70c377050a68b3890713fb058370bfb881ddea9cf66007b0e0e42
 PASS semantic oracle: 108 cases, 21465 checks
 PASS 2037941f-dense-isolated-fused-parity: 2 sessions, resume repeated no cell
 PASS and-popcnt-8w-streaming: 2 arms handshook, 0 timing windows, cache streaming

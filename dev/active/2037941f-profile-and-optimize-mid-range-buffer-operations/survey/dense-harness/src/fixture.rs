@@ -282,7 +282,7 @@ impl MatvecBanks {
     /// Observed allocation base of one matrix's row storage modulo 64.
     pub fn base_mod_64(&self, bank: usize, item: usize) -> usize {
         let item = &self.banks[bank][item];
-        if self.words == 0 {
+        if self.rows == 0 || self.words == 0 {
             return 0;
         }
         item.matrix.row_words(0).as_ptr() as usize % SLAB_ALIGN
