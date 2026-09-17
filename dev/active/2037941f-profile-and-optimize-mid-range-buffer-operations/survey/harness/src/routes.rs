@@ -217,7 +217,8 @@ fn structure_digest(rows: usize, cols: usize, row_columns: impl Fn(usize) -> Vec
 /// object rather than a restatement of how it was built.
 pub fn canonical_structure_digest(base_graph: u8, lifting_factor: usize) -> Result<String, String> {
     let index = lifting_set_index(
-        u16::try_from(lifting_factor).map_err(|_| format!("Z={lifting_factor} is not a lifting size"))?,
+        u16::try_from(lifting_factor)
+            .map_err(|_| format!("Z={lifting_factor} is not a lifting size"))?,
     )
     .ok_or_else(|| format!("Z={lifting_factor} is not a 5G NR lifting size"))?;
     let table = shift_table(base_graph, index);

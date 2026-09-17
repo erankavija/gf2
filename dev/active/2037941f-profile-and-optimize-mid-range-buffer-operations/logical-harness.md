@@ -155,8 +155,8 @@ timing sample. It reports one `PASS <case>: <n> checks` line per case.
 |---|---|
 | `xor-bits-{L}` | logical bit lengths 0, 1, 63, 64, 65: every output word, every bit by `word >> b & 1`, logical length, zero tail padding, source immutability |
 | `xor-{W}w-{a64,o8}` | all seven word counts in both layouts: observed address modulo 64, every output word, source immutability, call parity after two applications |
-| `row-xor-{W}w-{full,tail63}` | all seven word counts, full and `tail63` shapes, the four bidirectional row-pair groups: every row word against an independent model, `get(row, col)` against `row_words`, zero padding bit |
-| `nr-construct-{suffix}` | the five selected-route targets: lifting factor, dense dimensions, stride, and sparse-structure digest read from the returned public objects |
+| `row-xor-{W}w-{full,tail63}` | all seven word counts, full and `tail63` shapes, the four bidirectional row-pair groups: every row word against an independent model, `get(row, col)` against `row_words`, zero padding bit, and every directed pair's observed source and destination offset against the production allocation's own stride |
+| `nr-construct-{suffix}` | the five selected-route targets: lifting factor, dense dimensions, stride and its mid-range band, and sparse-structure digest read from the returned public objects; the digest against the canonical TS 38.212 expansion the harness computes from the public shift table; and the seeded boundary messages of each route against the linear-code law, encoded through two independently constructed objects |
 | `isal-{W}w` | in `logical-isal-arm --oracle`: 32-byte alignment, poisoned fresh destination, pointer-array order, every output word and bit against the gf2 peer, source immutability |
 
 A mismatch in the NR group makes that cell unavailable; the harness never
@@ -256,6 +256,15 @@ plan; `inputs` is the producing-input closure guard.
 oracle, and writes `survey/logical-harness-validation.txt`. With `--isal` it
 also compiles `logical-isal-arm` against the pinned ISA-L checkout into
 `target/bb769456-isal-arm`.
+
+`logical-profile` is the crate's profile driver: `cases` prints the frozen
+profile matrix, and `run --case <id> --seconds <n>` runs one route on one
+frozen cell under that cell's cache policy until the duration elapses,
+counting its own calls and reporting the route provenance it observed. It
+refuses to run outside the benchmark window exactly as the campaign arm does.
+`survey/run-logical-profile.sh` is its session launcher; `survey/disassemble-logical.sh`
+writes the annotated release disassembly of the measured routes from the same
+executables, and times nothing.
 
 `cells` writes one family's campaign JSON addendum. `--family` is one of
 `2037941f-logical-isolated-xor`, `2037941f-logical-public-row-xor`,

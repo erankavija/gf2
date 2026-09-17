@@ -205,14 +205,21 @@ fn row_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
             // cell exercises whatever alignment `BitMatrix` gives that stride.
             let base = banks.base_mod_64(0, 0);
             let stride_bytes = matrix.stride_words() * 8;
-            for (&(dst, src), &(dst_addr, src_addr)) in
-                ROW_PAIRS.iter().zip(banks.pair_addresses_mod_64(0, 0).iter())
+            for (&(dst, src), &(dst_addr, src_addr)) in ROW_PAIRS
+                .iter()
+                .zip(banks.pair_addresses_mod_64(0, 0).iter())
             {
-                let wanted = ((base + dst * stride_bytes) % 64, (base + src * stride_bytes) % 64);
+                let wanted = (
+                    (base + dst * stride_bytes) % 64,
+                    (base + src * stride_bytes) % 64,
+                );
                 if (dst_addr, src_addr) != wanted {
                     return Err(fail(
                         &name,
-                        format!("pair ({dst}, {src}) sits at {:?} rather than {wanted:?} mod 64", (dst_addr, src_addr)),
+                        format!(
+                            "pair ({dst}, {src}) sits at {:?} rather than {wanted:?} mod 64",
+                            (dst_addr, src_addr)
+                        ),
                     ));
                 }
                 checks += 2;
@@ -314,29 +321,44 @@ fn nr_encode_checks(
     seed: u64,
 ) -> Result<usize, String> {
     let messages = boundary_messages(k, seed);
-    let codewords: Vec<BitVec> = messages.iter().map(|message| code.encode(message)).collect();
+    let codewords: Vec<BitVec> = messages
+        .iter()
+        .map(|message| code.encode(message))
+        .collect();
     let mut checks = 0;
     for (message, codeword) in messages.iter().zip(codewords.iter()) {
         if codeword.len() != n {
-            return Err(fail(name, format!("a codeword is {} bits, not {n}", codeword.len())));
+            return Err(fail(
+                name,
+                format!("a codeword is {} bits, not {n}", codeword.len()),
+            ));
         }
         let repeated = again.encode(message);
         if (0..n).any(|index| repeated.get(index) != codeword.get(index)) {
-            return Err(fail(name, "two constructions of the route encode differently"));
+            return Err(fail(
+                name,
+                "two constructions of the route encode differently",
+            ));
         }
         checks += 2;
     }
     if (0..n).any(|index| codewords[0].get(index)) {
-        return Err(fail(name, "the zero message does not encode to the zero codeword"));
+        return Err(fail(
+            name,
+            "the zero message does not encode to the zero codeword",
+        ));
     }
     checks += 1;
     for left in 1..messages.len() {
         for right in (left + 1)..messages.len() {
             let combined = code.encode(&xor_bits(&messages[left], &messages[right]));
-            if (0..n)
-                .any(|index| combined.get(index) != codewords[left].get(index) ^ codewords[right].get(index))
-            {
-                return Err(fail(name, "the encoding is not linear over the boundary messages"));
+            if (0..n).any(|index| {
+                combined.get(index) != codewords[left].get(index) ^ codewords[right].get(index)
+            }) {
+                return Err(fail(
+                    name,
+                    "the encoding is not linear over the boundary messages",
+                ));
             }
             checks += 1;
         }
@@ -370,14 +392,7 @@ fn nr_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
         }
         checks += 1;
         let seed = CAMPAIGN_SEED ^ ((target.target_n as u64) << 32) ^ target.target_k as u64;
-        checks += nr_encode_checks(
-            &name,
-            &code,
-            &again,
-            target.target_k,
-            target.target_n,
-            seed,
-        )?;
+        checks += nr_encode_checks(&name, &code, &again, target.target_k, target.target_n, seed)?;
         report.push(OracleCase { name, checks });
     }
     Ok(())

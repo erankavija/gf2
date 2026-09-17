@@ -59,7 +59,7 @@ PASS isal-63w: 4102 checks
 PASS isal-64w: 4167 checks
 PASS isal-65w: 4232 checks
 PASS isal-66w: 4297 checks
-# logical-isal-arm sha256: 241ac8980b38d5124e411c32c7f404476e785de54dd2c950837913401bb8cc7c
-# logical-arm sha256: e3be85e50f004bd2c4301f1ff197d90cb89a51c446cacd97651afc9123fb0e62
-# logical-campaign sha256: 18c312de1bcc1208bfff6aef3352a6840915870ac26b89bf895b575f10a56e1a
-# logical-oracle sha256: 880778d3d4b3c0a17ad33b0932c46ed8a5d627d269c0fb3bb1d1e90c135c82a8
+# logical-isal-arm sha256: 1cef17fc1f02f4b38424610d35e7f21307b647a378322cba34bc5899f86c94c3
+# logical-arm sha256: 960e1e35c55271906ce3563afdbcdb1a67417faf7f3c04e0c052cbdb3fee9d02
+# logical-campaign sha256: 29c15573779c3a9dd93fd6af41f567e241d8ec3224ca0be1190df0f14efb8967
+# logical-oracle sha256: 4784efd9ed2726b3cb79c134f352bda7bbd734295203e5022dc40ceaeeebe3c2
