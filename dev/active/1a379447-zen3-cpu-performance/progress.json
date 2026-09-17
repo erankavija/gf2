@@ -816,7 +816,7 @@
       "id": "7cc591a0",
       "type": "bug",
       "in_epic": false,
-      "reason": "filed session 18; session 19 ruling: fix before any further cargo-ci run; dispatched to opus worker in worktree agent-7cc591a0; merged at fa1d1e54, merged-tree cargo-ci green (6065 tests, fixture-leak none), gates cargo-ci and code-review evaluating; review pending in reviews/7cc591a0-r1.md"
+      "reason": "filed session 18; session 19 ruling: fix before any further cargo-ci run; dispatched to opus worker in worktree agent-7cc591a0; merged at fa1d1e54, merged-tree cargo-ci green (6065 tests, fixture-leak none), gates cargo-ci and code-review passed with zero findings; review reviews/7cc591a0-r1.md PASS; closed at 55b4cbbf; worktree reclaimed"
     }
   ],
   "escalations": [
