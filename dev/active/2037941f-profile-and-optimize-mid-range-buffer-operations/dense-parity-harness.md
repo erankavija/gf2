@@ -244,6 +244,16 @@ lock file a timed executable is built from and the closure manifest itself,
 which the window guard reads to decide what to check. The harness contract test
 derives that manifest set from `cargo metadata` for both workspaces, so a new
 crate on either path fails the test rather than slipping past the guard.
+
+The source sections are a snapshot of the tree they were enumerated from, so
+`make-dense-producing-inputs.py --check` regenerates the closure from the
+current tree, writes nothing, and exits non-zero naming every added and removed
+path when the committed manifest differs. The window runs it immediately before
+the closure guard, so a source added to a measured crate after the last
+regeneration refuses the run instead of being timed outside the closure. A
+harness contract test copies the committed build inputs into a scratch tree,
+adds a source under a measured crate and asserts the refusal names it.
+
 `survey/make-dense-parity-source-evidence.py` writes
 `survey/dense-parity-source-evidence.json`, where every source claim the frozen
 addendum makes records its project, commit, path, line, the verbatim line and
@@ -305,13 +315,16 @@ runs the crate's own contract tests and both builds' semantic oracle, and writes
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
 SHA-256 equals the pin the harness carries, and the campaign JSON matches
 `dense-campaign verify`. It then rebuilds every executable it launches from the
-current tree, and only afterwards runs `dense-campaign inputs`, which refuses
-unless every path of the producing-input closure, plus the campaign JSON and the
-family ledger, is tracked by git and identical to its committed content. A path
-git does not track is a refusal, so a source added to a measured crate without
-being committed stops the run. The closure check is the last step before the
-launch: nothing rebuilds after it, so no executable can carry bytes the check
-never saw. It then projects the plan, prints the execution log path, runs the
+current tree, regenerates the closure with
+`make-dense-producing-inputs.py --check`, and only afterwards runs
+`dense-campaign inputs`, which refuses unless every path of the producing-input
+closure, plus the campaign JSON and the family ledger, is tracked by git and
+identical to its committed content. A source added to a measured crate stops the
+run either way: the freshness check catches one the committed closure does not
+yet name, and the guard catches one it names that git does not track. The two
+closure checks are the last steps before the launch: nothing rebuilds after
+them, so no executable can carry bytes they never saw. It then projects the
+plan, prints the execution log path, runs the
 runner under `dev/scripts/ccx1-bench-flock.sh --full-host` until the log's
 terminal record is `complete`, finalizes the receipt under
 `dev/bench_results/2037941f/<family>/<run-id>-pilot`, and evaluates it with
