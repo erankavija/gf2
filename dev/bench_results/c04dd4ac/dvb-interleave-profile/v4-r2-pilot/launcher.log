@@ -1,0 +1,28 @@
+# command: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-dvb-campaign.sh v4-r2
+# invocation: new
+# started_utc: 2026-09-17T01:01:44Z
+# gf2 revision (informational): 2cd523fd36ab1fbad3ede2b853673f617536e3d3
+# xdsopl revision: 32357d8ad55a6a302c34e093759f0454e45cca56
+# addendum: dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json sha256=47865f3f83bba6dc085d91fcfc828cc0424a0869289a0505564b548ab2a3d869
+# producing manifest: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json sha256=00d589c6186d7f9ac643a5025af3fcb2e3f07a1d6490ed9eb16e7c80edb612ec
+# executable: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-arms-native/release/dvb-profile-arm sha256=c16e3b44bd9fb6ffb0a8797c2befbeac2d9a57b787bf3036c68399f8633aaf3e
+# stage: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r2-9fb40c83-dvb-interleave-profile
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r2-9fb40c83-dvb-interleave-profile.plan.json sha256=53cf5b3e23cb6a89c7981afab37f208ab9f0852afb1fbd78307b3b7eb8edff6a
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14);binary: rustc;commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860;commit-date: 2026-04-14;host: x86_64-unknown-linux-gnu;release: 1.95.0;LLVM version: 22.1.2;
+# load_avg_start:  04:01:44 up 13 days,  5:30, 15 users,  load average: 2.40, 8.38, 11.11
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r2-9fb40c83-dvb-interleave-profile/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r2-9fb40c83-dvb-interleave-profile/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r2-9fb40c83-dvb-interleave-profile/execution.log
+# session 3 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r2-9fb40c83-dvb-interleave-profile/execution.log
+# session 4 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/9fb40c83-campaigns/v4-r2-9fb40c83-dvb-interleave-profile/execution.log
+# session 5 exit: 0
+GF2_BENCHMARK_RECEIPT=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions this invocation: 5
+# load_avg_end:  04:02:59 up 13 days,  5:32, 15 users,  load average: 1.54, 6.80, 10.35
+# finished_utc: 2026-09-17T01:02:59Z

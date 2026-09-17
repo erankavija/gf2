@@ -1,0 +1,290 @@
+[
+  {
+    "id": "qam16-r12-normal-direct",
+    "modcod": "qam16-r12-normal",
+    "boundary": "direct",
+    "selected_path": "gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-normal",
+    "ns_per_call": 181451.10928961748,
+    "windows_ns_per_call": [
+      191378.868852459,
+      183564.56284153005,
+      181451.10928961748,
+      181220.28961748633,
+      181295.65027322405
+    ],
+    "calls_per_window": 183,
+    "allocations_per_call": 1,
+    "allocated_bytes_per_call": 8104,
+    "setup_ns": 906185
+  },
+  {
+    "id": "qam16-r12-normal-sim-stage",
+    "modcod": "qam16-r12-normal",
+    "boundary": "sim-stage",
+    "selected_path": "gf2-sim/BitInterleave::process/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-normal",
+    "ns_per_call": 181195.19004524886,
+    "windows_ns_per_call": [
+      181385.60180995477,
+      181140.5294117647,
+      181195.19004524886,
+      181207.17647058822,
+      181069.58371040723
+    ],
+    "calls_per_window": 221,
+    "allocations_per_call": 2,
+    "allocated_bytes_per_call": 8192,
+    "setup_ns": 798734
+  },
+  {
+    "id": "qam16-r12-normal-xdsopl-packed",
+    "modcod": "qam16-r12-normal",
+    "boundary": "xdsopl-packed",
+    "selected_path": "profile-adapter/packed-unpack-copy/xdsopl-PCTITL/pack/qam16-r12-normal",
+    "ns_per_call": 260788.12751677854,
+    "windows_ns_per_call": [
+      260788.12751677854,
+      260612.8255033557,
+      260605.64429530202,
+      261338.53020134228,
+      262350.02013422817
+    ],
+    "calls_per_window": 149,
+    "allocations_per_call": 4,
+    "allocated_bytes_per_call": 785704,
+    "setup_ns": 80
+  },
+  {
+    "id": "qam16-r12-normal-bicm-channel",
+    "modcod": "qam16-r12-normal",
+    "boundary": "bicm-channel",
+    "selected_path": "gf2-coding/BicmAwgnChannel::transmit_and_demodulate_with_noise/max-log/qam16-r12-normal",
+    "ns_per_call": 1116162.0857142857,
+    "windows_ns_per_call": [
+      1116162.0857142857,
+      1114441.1714285715,
+      1112304.342857143,
+      1122650.9428571428,
+      1118817.2285714287
+    ],
+    "calls_per_window": 35,
+    "allocations_per_call": 32,
+    "allocated_bytes_per_call": 2341856,
+    "setup_ns": 517982
+  },
+  {
+    "id": "qam64-r12-normal-direct",
+    "modcod": "qam64-r12-normal",
+    "boundary": "direct",
+    "selected_path": "gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-normal",
+    "ns_per_call": 181635.96313364056,
+    "windows_ns_per_call": [
+      183839.80184331798,
+      181962.23041474653,
+      181495.96313364056,
+      181567.3410138249,
+      181635.96313364056
+    ],
+    "calls_per_window": 217,
+    "allocations_per_call": 1,
+    "allocated_bytes_per_call": 8104,
+    "setup_ns": 680864
+  },
+  {
+    "id": "qam64-r12-normal-sim-stage",
+    "modcod": "qam64-r12-normal",
+    "boundary": "sim-stage",
+    "selected_path": "gf2-sim/BitInterleave::process/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-normal",
+    "ns_per_call": 181595.5113122172,
+    "windows_ns_per_call": [
+      181240.61990950227,
+      181661.8416289593,
+      181595.5113122172,
+      181189.3484162896,
+      182711.44343891402
+    ],
+    "calls_per_window": 221,
+    "allocations_per_call": 2,
+    "allocated_bytes_per_call": 8192,
+    "setup_ns": 670704
+  },
+  {
+    "id": "qam64-r12-normal-xdsopl-packed",
+    "modcod": "qam64-r12-normal",
+    "boundary": "xdsopl-packed",
+    "selected_path": "profile-adapter/packed-unpack-copy/xdsopl-PCTITL/pack/qam64-r12-normal",
+    "ns_per_call": 263892.26206896553,
+    "windows_ns_per_call": [
+      260408.04137931034,
+      263909.924137931,
+      263722.46206896554,
+      264397.5103448276,
+      263892.26206896553
+    ],
+    "calls_per_window": 145,
+    "allocations_per_call": 4,
+    "allocated_bytes_per_call": 785704,
+    "setup_ns": 90
+  },
+  {
+    "id": "qam64-r12-normal-bicm-channel",
+    "modcod": "qam64-r12-normal",
+    "boundary": "bicm-channel",
+    "selected_path": "gf2-coding/BicmAwgnChannel::transmit_and_demodulate_with_noise/max-log/qam64-r12-normal",
+    "ns_per_call": 1333102.2333333334,
+    "windows_ns_per_call": [
+      1334994.9,
+      1340570.5666666667,
+      1324340.8666666667,
+      1333102.2333333334,
+      1330591.5333333334
+    ],
+    "calls_per_window": 30,
+    "allocations_per_call": 32,
+    "allocated_bytes_per_call": 2451272,
+    "setup_ns": 520283
+  },
+  {
+    "id": "qam16-r12-short-direct",
+    "modcod": "qam16-r12-short",
+    "boundary": "direct",
+    "selected_path": "gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-short",
+    "ns_per_call": 11947.588818117481,
+    "windows_ns_per_call": [
+      11919.910120311395,
+      11947.588818117481,
+      11924.113234253362,
+      11987.568294409059,
+      11972.40127388535
+    ],
+    "calls_per_window": 1413,
+    "allocations_per_call": 1,
+    "allocated_bytes_per_call": 2032,
+    "setup_ns": 140760
+  },
+  {
+    "id": "qam16-r12-short-sim-stage",
+    "modcod": "qam16-r12-short",
+    "boundary": "sim-stage",
+    "selected_path": "gf2-sim/BitInterleave::process/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-short",
+    "ns_per_call": 12013.502862307923,
+    "windows_ns_per_call": [
+      11956.47634829768,
+      11993.689665561917,
+      12022.478457366677,
+      12013.502862307923,
+      12020.351310635733
+    ],
+    "calls_per_window": 3319,
+    "allocations_per_call": 2,
+    "allocated_bytes_per_call": 2120,
+    "setup_ns": 71640
+  },
+  {
+    "id": "qam16-r12-short-xdsopl-packed",
+    "modcod": "qam16-r12-short",
+    "boundary": "xdsopl-packed",
+    "selected_path": "profile-adapter/packed-unpack-copy/xdsopl-PCTITL/pack/qam16-r12-short",
+    "ns_per_call": 34575.925981873115,
+    "windows_ns_per_call": [
+      34896.59214501511,
+      34536.0,
+      34594.53625377644,
+      34548.552870090636,
+      34575.925981873115
+    ],
+    "calls_per_window": 662,
+    "allocations_per_call": 4,
+    "allocated_bytes_per_call": 196432,
+    "setup_ns": 80
+  },
+  {
+    "id": "qam16-r12-short-bicm-channel",
+    "modcod": "qam16-r12-short",
+    "boundary": "bicm-channel",
+    "selected_path": "gf2-coding/BicmAwgnChannel::transmit_and_demodulate_with_noise/max-log/qam16-r12-short",
+    "ns_per_call": 170490.55450236966,
+    "windows_ns_per_call": [
+      170827.37914691944,
+      171606.43601895735,
+      170490.55450236966,
+      170282.21327014218,
+      169997.0
+    ],
+    "calls_per_window": 211,
+    "allocations_per_call": 32,
+    "allocated_bytes_per_call": 586184,
+    "setup_ns": 72510
+  },
+  {
+    "id": "qam64-r12-short-direct",
+    "modcod": "qam64-r12-short",
+    "boundary": "direct",
+    "selected_path": "gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-short",
+    "ns_per_call": 11953.641733452063,
+    "windows_ns_per_call": [
+      11914.8910655981,
+      11978.340160284952,
+      11988.02285544672,
+      11933.679726921935,
+      11953.641733452063
+    ],
+    "calls_per_window": 3369,
+    "allocations_per_call": 1,
+    "allocated_bytes_per_call": 2032,
+    "setup_ns": 71770
+  },
+  {
+    "id": "qam64-r12-short-sim-stage",
+    "modcod": "qam64-r12-short",
+    "boundary": "sim-stage",
+    "selected_path": "gf2-sim/BitInterleave::process/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-short",
+    "ns_per_call": 12020.187146682534,
+    "windows_ns_per_call": [
+      11929.823564415352,
+      11967.696518893186,
+      12020.187146682534,
+      12022.436477238916,
+      12116.152930675395
+    ],
+    "calls_per_window": 3361,
+    "allocations_per_call": 2,
+    "allocated_bytes_per_call": 2120,
+    "setup_ns": 72080
+  },
+  {
+    "id": "qam64-r12-short-xdsopl-packed",
+    "modcod": "qam64-r12-short",
+    "boundary": "xdsopl-packed",
+    "selected_path": "profile-adapter/packed-unpack-copy/xdsopl-PCTITL/pack/qam64-r12-short",
+    "ns_per_call": 30438.16133518776,
+    "windows_ns_per_call": [
+      30771.944367176635,
+      30663.642559109874,
+      30438.16133518776,
+      30427.03337969402,
+      30424.21140472879
+    ],
+    "calls_per_window": 719,
+    "allocations_per_call": 4,
+    "allocated_bytes_per_call": 196432,
+    "setup_ns": 140
+  },
+  {
+    "id": "qam64-r12-short-bicm-channel",
+    "modcod": "qam64-r12-short",
+    "boundary": "bicm-channel",
+    "selected_path": "gf2-coding/BicmAwgnChannel::transmit_and_demodulate_with_noise/max-log/qam64-r12-short",
+    "ns_per_call": 198089.5294117647,
+    "windows_ns_per_call": [
+      198015.7860962567,
+      197861.88235294117,
+      198089.5294117647,
+      198937.3422459893,
+      208040.32620320856
+    ],
+    "calls_per_window": 187,
+    "allocations_per_call": 32,
+    "allocated_bytes_per_call": 614600,
+    "setup_ns": 71590
+  }
+]
