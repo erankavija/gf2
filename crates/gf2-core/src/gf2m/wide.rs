@@ -1714,7 +1714,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     /// otherwise.
     ///
     /// On the table route each left-hand coefficient selects one row of the
-    /// process-wide table for `Cfg`’s reduction polynomial and drives a whole
+    /// process-wide table for `Cfg`'s reduction polynomial and drives a whole
     /// output row through it, so every product costs one indexed load and one
     /// XOR and no carry-less multiply runs. Results are written into each
     /// destination word in place. No cargo feature and no processor capability

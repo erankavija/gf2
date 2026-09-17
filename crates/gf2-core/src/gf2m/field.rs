@@ -1445,16 +1445,16 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
     /// Routes a dense GF(2^8) product through the cached byte product table.
     ///
     /// The mechanism is one region multiply-accumulate per left-hand
-    /// coefficient over that coefficient’s row of the process-wide table for
-    /// this field’s reduction polynomial, so every product costs one indexed
+    /// coefficient over that coefficient's row of the process-wide table for
+    /// this field's reduction polynomial, so every product costs one indexed
     /// load and one XOR and every coefficient is reused across a whole output
-    /// row. Results are written into each destination element’s value in
+    /// row. Results are written into each destination element's value in
     /// place, so no field handle is cloned. No cargo feature and no processor
     /// capability takes part; the exact predicate that selects this lane is
     /// `crate::gf2m::byte_table::gf256_table_dispatch`.
     ///
     /// The destination joins the operands in the field-context check because
-    /// writing values in place keeps the destination’s own handles, which the
+    /// writing values in place keeps the destination's own handles, which the
     /// per-cell path replaces; declining sends a mixed-context product to that
     /// path and its field-context assertion. A left operand with no elements
     /// carries no field context to check against and also declines.
