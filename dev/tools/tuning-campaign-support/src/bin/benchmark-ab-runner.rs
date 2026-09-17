@@ -1058,6 +1058,26 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
     Ok(())
 }
 
+/// Decodes a plan and the addendum it names and validates both, measuring
+/// nothing and writing nothing.
+///
+/// The check a launcher runs in a working session so a malformed frozen input
+/// fails there rather than inside a benchmark window. It applies exactly the
+/// decode and validation `run` applies before its first measurement.
+fn check(plan_path: &Path) -> io::Result<i32> {
+    let (plan, _) = read_plan(plan_path)?;
+    let addendum = load_addendum(&fs::read(&plan.addendum)?, &plan)?;
+    println!(
+        "plan {} for family {}: {} cells, {} arms, addendum {}",
+        plan.campaign_id,
+        addendum.family.id,
+        plan.cells.len(),
+        plan.arms.len(),
+        plan.addendum
+    );
+    Ok(0)
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let result = match args
@@ -1070,9 +1090,11 @@ fn main() {
         [_, "finalize", stage, out_dir] => {
             finalize(Path::new(stage), Path::new(out_dir)).map(|()| 0)
         }
+        [_, "check", plan] => check(Path::new(plan)),
         _ => {
             eprintln!(
-                "usage: benchmark-ab-runner run <stage> <plan.json> | finalize <stage> <out-dir>"
+                "usage: benchmark-ab-runner run <stage> <plan.json> | \
+                 finalize <stage> <out-dir> | check <plan.json>"
             );
             std::process::exit(2);
         }

@@ -1,0 +1,64 @@
+# Shipped GF(2^8) table suites of the measured tree (jit:ad2a6a58)
+# command: cargo nextest run -p gf2-core --all-features --cargo-profile ci-test
+#          --profile ci -E 'test(gf256) + binary_id(~gf256)'
+    Finished `ci-test` profile [optimized] target(s) in 0.08s
+────────────
+ Nextest run ID 1fd0f5f0-2810-4779-ac17-4d89eff43603 with nextest profile: ci
+    Starting 55 tests across 94 binaries (2696 tests skipped)
+        PASS  ( 1/55) gf2-core::gf256_gemm_allocation the_wide_product_allocates_three_byte_buffers
+        PASS  ( 2/55) gf2-core::gf256_axpy_allocation neither_representation_allocates_on_the_table_lane
+        PASS  ( 3/55) gf2-core::gf256_gemm_allocation the_element_product_allocates_three_byte_buffers
+        PASS  ( 4/55) gf2-core field::axiom_tests::test_extension_laws_gf2_in_gf256
+        PASS  ( 5/55) gf2-core field::axiom_tests::test_extension_laws_trivial_gf256
+        PASS  ( 6/55) gf2-core field::traits::tests::test_gf256_inv
+        PASS  ( 7/55) gf2-core field::traits::tests::test_gf256_pow
+        PASS  ( 8/55) gf2-core gf2m::field::kani_table_validation::precomputed_tables_match_database_gf256
+        PASS  ( 9/55) gf2-core field::traits::tests::test_generic_field_gf256
+        PASS  (10/55) gf2-core gf2m::field::poly_tests::test_verify_primitive_gf256
+        PASS  (11/55) gf2-core field::traits::tests::test_gf256_square
+        PASS  (12/55) gf2-core gf2m::field::tests::test_gf256_division
+        PASS  (13/55) gf2-core primitive_polys::tests::test_database_gf256_standard
+        PASS  (14/55) gf2-core gf2m::byte_table::tests::the_dispatch_declines_every_configuration_outside_single_word_gf256
+        PASS  (15/55) gf2-core field::vec::tests::test_simd_dot_product_matches_scalar_gf256_1000
+        PASS  (16/55) gf2-core gf2m::field::tests::test_gf256_multiplication_simple
+        PASS  (17/55) gf2-core gf2m::field::tests::test_table_generation_gf256
+        PASS  (18/55) gf2-core gf2m::field::tests::test_gf256_preset
+        PASS  (19/55) gf2-core gf2m::field::tests::test_gf256_addition
+        PASS  (20/55) gf2-core gf2m::field::tests::prop_gf256_table_multiply_equals_schoolbook
+        PASS  (21/55) gf2-core gf2m::field::tests::test_verify_primitive_gf256
+        PASS  (22/55) gf2-core::gf256_gemm_conformance a_multi_word_configuration_declines_and_keeps_its_result
+        PASS  (23/55) gf2-core field::vec::tests::prop_simd_dot_product_commutative_gf256
+        PASS  (24/55) gf2-core::gf256_gemm_conformance a_single_column_operand_gives_the_schoolbook_dot_products
+        PASS  (25/55) gf2-core::gf256_gemm_conformance another_degree_declines_and_keeps_its_result
+        PASS  (26/55) gf2-core::gf256_gemm_conformance another_backing_width_declines_and_keeps_its_result
+        PASS  (27/55) gf2-core::gf256_gemm_conformance the_availability_probe_declines_for_both_representations
+        PASS  (28/55) gf2-core::gf256_gemm_conformance a_zero_operand_gives_the_zero_matrix
+        PASS  (29/55) gf2-core::gf256_gemm_conformance every_shape_that_reaches_the_hook_takes_the_table_lane
+        PASS  (30/55) gf2-core::gf256_gemm_conformance an_identity_operand_reproduces_the_other_operand
+        PASS  (31/55) gf2-core::gf256_table_conformance a_mixed_field_context_declines_and_panics_exactly_as_the_scalar_path_does
+        PASS  (32/55) gf2-core::gf256_gemm_conformance a_single_word_configuration_of_another_degree_declines_and_keeps_its_result
+        PASS  (33/55) gf2-core::gf256_gemm_conformance the_table_lane_accepts_both_single_word_gf256_representations
+        PASS  (34/55) gf2-core::gf256_table_conformance a_multi_word_configuration_declines_and_keeps_its_result
+        PASS  (35/55) gf2-core::gf256_gemm_conformance the_output_keeps_its_shape_layout_and_field_handles
+        PASS  (36/55) gf2-core::gf256_gemm_conformance the_gemm_axpy_fold_keeps_its_per_cell_route
+        PASS  (37/55) gf2-core::gf256_gemm_conformance the_blocked_triangular_solve_stays_unselected
+        PASS  (38/55) gf2-core::gf256_table_conformance a_one_coefficient_reduces_the_operation_to_xor
+        PASS  (39/55) gf2-core::gf256_table_conformance a_single_word_configuration_of_another_degree_declines_and_keeps_its_result
+        PASS  (40/55) gf2-core::gf256_gemm_conformance the_two_representations_agree_with_each_other_over_both_polynomials
+        PASS  (41/55) gf2-core::gf256_table_conformance a_zero_coefficient_leaves_the_destination_unchanged
+        PASS  (42/55) gf2-core::gf256_table_conformance another_backing_width_declines_and_keeps_its_result
+        PASS  (43/55) gf2-core::gf256_table_conformance another_degree_declines_and_keeps_its_result
+        PASS  (44/55) gf2-core::gf256_gemm_conformance the_wide_product_agrees_with_the_path_without_the_table
+        PASS  (45/55) gf2-core::gf256_table_conformance the_call_leaves_its_source_unchanged
+        PASS  (46/55) gf2-core::gf256_table_conformance the_table_lane_accepts_both_single_word_gf256_representations
+        PASS  (47/55) gf2-core::gf256_table_conformance the_force_switch_holds_every_caller_on_the_scalar_lane
+        PASS  (48/55) gf2-core::gf256_table_conformance repeated_calls_on_one_polynomial_build_one_table
+        PASS  (49/55) gf2-core::gf256_table_conformance the_two_representations_agree_with_each_other_over_both_polynomials
+        PASS  (50/55) gf2-core::gf256_gemm_conformance the_element_product_agrees_with_the_path_without_the_table
+        PASS  (51/55) gf2-core::gf256_table_conformance every_irreducible_degree_8_modulus_agrees_across_lanes
+        PASS  (52/55) gf2-core field::axiom_tests::test_axioms_gf2m_wide_gf256_poly_11b
+        PASS  (53/55) gf2-core field::axiom_tests::test_axioms_gf2m_wide_gf256_poly_11d
+        PASS  (54/55) gf2-core::gf256_table_conformance element_axpy_agrees_with_the_scalar_lane_for_every_coefficient
+        PASS  (55/55) gf2-core::gf256_table_conformance wide_axpy_agrees_with_the_scalar_lane_for_every_coefficient
+────────────
+     Summary  55 tests run: 55 passed, 2696 skipped
