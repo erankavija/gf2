@@ -1,0 +1,25 @@
+# command: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-shift-profile.sh window
+# started_utc: 2026-09-17T01:00:29Z
+# source revision (informational): 226a62b177449826fba179b9d8d84a8457a36566
+# addendum: dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json
+# plan: target/bench-stage/85fc5ff4-residual-shift-profile-a2.plan.json
+# stage: target/bench-stage/85fc5ff4-residual-shift-profile-a2
+# output: dev/bench_results/c04dd4ac/residual-shift-profile
+# arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/release/deps/shifts-0bf958b31b19206c
+# arm build identity: {"crate":"gf2-core","target":"shifts","rust_version":"1.95","features":"all"}
+# load_avg_start:  04:00:29 up 13 days,  5:29, 15 users,  load average: 4.94, 10.41, 11.94
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/bench-stage/85fc5ff4-residual-shift-profile-a2/execution.log
+# session 1 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/bench-stage/85fc5ff4-residual-shift-profile-a2/execution.log
+# session 2 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/bench-stage/85fc5ff4-residual-shift-profile-a2/execution.log
+# session 3 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/bench-stage/85fc5ff4-residual-shift-profile-a2/execution.log
+# session 4 exit: 3 (0 = complete, 3 = paused)
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-85fc5ff4/target/bench-stage/85fc5ff4-residual-shift-profile-a2/execution.log
+# session 5 exit: 0 (0 = complete, 3 = paused)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  04:01:43 up 13 days,  5:30, 15 users,  load average: 2.40, 8.38, 11.11
+# finished_utc: 2026-09-17T01:01:43Z

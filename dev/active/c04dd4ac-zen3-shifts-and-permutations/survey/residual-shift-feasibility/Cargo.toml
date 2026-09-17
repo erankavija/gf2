@@ -1,0 +1,20 @@
+[package]
+name = "residual_shift_feasibility"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Planning-time Rust 1.95 compile and assembly feasibility prototype for the residual BitVec shift forms nominated by JIT issue 85fc5ff4 (REQ-05). Authorizes no production source. NOT part of the gf2 workspace."
+rust-version = "1.95"
+
+[lib]
+name = "residual_shift_feasibility"
+path = "src/lib.rs"
+
+# Standalone planning prototype: deliberately not a workspace member, so the
+# unsafe it carries never reaches a production crate's lint surface.
+[workspace]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

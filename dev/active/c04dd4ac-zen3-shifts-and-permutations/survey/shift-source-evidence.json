@@ -1,0 +1,188 @@
+{
+  "schema": "bitvec-residual-shift-source-evidence-v1",
+  "issue": "85fc5ff4",
+  "measured_paths": {
+    "residual-production": "safe scalar double-word funnel over the packed words, no SIMD and no runtime dispatch",
+    "word-aligned-control": "whole-word move through the detected SIMD word-shift backend under the `simd` feature"
+  },
+  "files": [
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "sha256": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/benches/shifts.rs",
+      "commit": "b566e2f9900a70a8cd672e9b340941ca0bea092d",
+      "sha256": "c9c8acf399002b3ed75156a822f311c9ba0da1d115e4b900d27af26b6532b7df"
+    }
+  ],
+  "claims": [
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 475,
+      "also_at_lines": [],
+      "text": "pub fn shift_left(&mut self, k: usize) {",
+      "why": "the public in-place zero-fill left shift the family measures"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 536,
+      "also_at_lines": [],
+      "text": "pub fn shift_right(&mut self, k: usize) {",
+      "why": "the public in-place zero-fill right shift the family measures"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 489,
+      "also_at_lines": [
+        550
+      ],
+      "text": "let bit_shift = k % 64;",
+      "why": "the residual offset that selects between the word-aligned and residual paths"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 495,
+      "also_at_lines": [],
+      "text": "(fns.shift_left_words_fn)(&mut self.data, word_shift);",
+      "why": "the word-aligned left control routes to the detected SIMD word-shift backend"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 556,
+      "also_at_lines": [],
+      "text": "(fns.shift_right_words_fn)(&mut self.data, word_shift);",
+      "why": "the word-aligned right control routes to the detected SIMD word-shift backend"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 494,
+      "also_at_lines": [
+        555,
+        910,
+        950
+      ],
+      "text": "if let Some(fns) = crate::simd::maybe_simd() {",
+      "why": "the word-aligned path takes the backend only when runtime detection supplies it"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 493,
+      "also_at_lines": [
+        554,
+        909,
+        949
+      ],
+      "text": "#[cfg(feature = \"simd\")]",
+      "why": "the backend exists only under the non-default `simd` cargo feature of gf2-core"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 511,
+      "also_at_lines": [],
+      "text": "self.data[i] = (self.data[i - word_shift] << bit_shift)",
+      "why": "the residual left path is a safe scalar double-word funnel over one word per step"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 512,
+      "also_at_lines": [],
+      "text": "| (self.data[i - word_shift - 1] >> inv_shift);",
+      "why": "the residual left funnel's carry term reads the neighbouring word"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 572,
+      "also_at_lines": [],
+      "text": "self.data[i] = (self.data[i + word_shift] >> bit_shift)",
+      "why": "the residual right path is the mirrored safe scalar funnel"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 573,
+      "also_at_lines": [],
+      "text": "| (self.data[i + word_shift + 1] << inv_shift);",
+      "why": "the residual right funnel's carry term reads the neighbouring word"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 509,
+      "also_at_lines": [
+        570
+      ],
+      "text": "let inv_shift = 64 - bit_shift;",
+      "why": "both residual paths derive the complementary shift count per call, not per word"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "line": 461,
+      "also_at_lines": [
+        496,
+        522,
+        557,
+        585,
+        1292,
+        1335,
+        1351
+      ],
+      "text": "self.mask_tail();",
+      "why": "every path restores the zero tail padding the semantic oracle checks"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/benches/shifts.rs",
+      "commit": "b566e2f9900a70a8cd672e9b340941ca0bea092d",
+      "line": 58,
+      "also_at_lines": [],
+      "text": "Self::ResidualProduction => case.residual_offset,",
+      "why": "the baseline arm times the cell's declared residual offset"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/benches/shifts.rs",
+      "commit": "b566e2f9900a70a8cd672e9b340941ca0bea092d",
+      "line": 59,
+      "also_at_lines": [],
+      "text": "Self::WordAlignedControl => case.control_offset,",
+      "why": "the candidate arm times the cell's declared word-aligned control offset"
+    },
+    {
+      "project": "gf2",
+      "path": "crates/gf2-core/benches/shifts.rs",
+      "commit": "b566e2f9900a70a8cd672e9b340941ca0bea092d",
+      "line": 65,
+      "also_at_lines": [],
+      "text": "(Self::ResidualProduction, Direction::Left) => \"bitvec-residual-scalar-left\",",
+      "why": "the arm labels the path each receipt execution records as `selected_path`"
+    }
+  ]
+}
