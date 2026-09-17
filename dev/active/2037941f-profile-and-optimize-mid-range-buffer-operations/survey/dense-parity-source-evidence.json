@@ -145,12 +145,12 @@
     },
     {
       "project": "gf2",
-      "commit": "28559fd225622c31a85f6182231ffd96e579d18e",
+      "commit": "f689ccacedcb855448f58068d45334a9574ab1cf",
       "path": "crates/gf2-core/Cargo.toml",
-      "line": 56,
+      "line": 57,
       "occurrences": 1,
       "verbatim": "simd = []",
-      "sha256": "443f02ebe3702841eab6c03f9889ba9ce7537fb59da9c2c02f4961e46ce1968e",
+      "sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3",
       "why": "The simd feature is opt-in, so the scalar reference arm is a separately built executable rather than a runtime toggle."
     },
     {
