@@ -10,26 +10,24 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "2094958d-f5a5-4bd2-9bfa-548e29d65bd2",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
     "satisfies:REQ-01",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "resolution:merged-into-c73ffa25"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Record the dense-matvec baseline",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T23:27:38.238302521Z"
 }

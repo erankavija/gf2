@@ -1,5 +1,6 @@
 {
   "assignee": null,
+  "claimed_at": "2026-09-16T18:52:20.018811787Z",
   "context": {},
   "created_at": "2026-09-12T15:43:23.888296383Z",
   "dependencies": [],
@@ -16,10 +17,11 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "type:bug"
+    "type:bug",
+    "resolution:provenance-freeze"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "rejected",
   "title": "Record the achieved scheduling priority in receipt host observations",
-  "updated_at": "2026-09-12T15:43:23.888296383Z"
+  "updated_at": "2026-09-16T23:33:35.871732924Z"
 }

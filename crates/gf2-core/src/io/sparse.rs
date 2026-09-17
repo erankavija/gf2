@@ -523,7 +523,7 @@ impl SpBitMatrixDual {
 
 #[cfg(test)]
 mod tests {
-
+    use crate::test_scratch::scratch;
     use crate::{SpBitMatrix, SpBitMatrixDual};
 
     fn create_test_sparse() -> SpBitMatrix {
@@ -584,14 +584,13 @@ mod tests {
     #[test]
     fn test_spbitmatrix_file_io() {
         let original = create_test_sparse();
-        let temp_file = std::env::temp_dir().join("test_sparse.gf2");
+        let scratch = scratch("gf2-sparse");
+        let temp_file = scratch.path().join("test_sparse.gf2");
 
         original.save_to_file(&temp_file).unwrap();
         let loaded = SpBitMatrix::load_from_file(&temp_file).unwrap();
 
         assert_eq!(original, loaded);
-
-        let _ = std::fs::remove_file(temp_file);
     }
 
     #[test]

@@ -1,0 +1,37 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-16T22:38:18.352726539Z",
+  "dependencies": [
+    "65c0e13d-74af-4f66-8b08-d2eba04e2a5b",
+    "bc091474-8c85-4758-aef6-fffb012fad36"
+  ],
+  "description": "Implement the selected logical-buffer outcome and confirm it in production under the frozen confirmation addendum.\n\n## Background\n\n**23a08297 — Implement the selected logical-buffer outcome.** Apply the logical-buffer adoption decision through the existing core dispatcher and isolated SIMD kernel boundary. When no candidate qualifies, this issue verifies that production remains unchanged and records that disposition. When one candidate qualifies, the change is limited to its declared dispatch domain, keeps Rust 1.95 compatibility, preserves scalar fallback, and does not create a second buffer or dispatch abstraction.\n\n**b8ef6f13 — Confirm the logical-buffer production outcome.** Run holdout confirmation for the selected logical-buffer outcome against the pinned current baseline, or publish the final no-change verdict. A production change requires dispatch-inclusive before/after evidence on the exact declared domain plus neighboring non-regression cells. A no-adoption decision still preserves the complete candidate record and explains why the current route remains selected.\n\n## Success Criteria\n\n- [hard] REQ-01: (23a08297 REQ-01) The selected outcome is reflected exactly in production code, or the no-adoption decision leaves production behavior and selection unchanged.\n- [hard] REQ-02: (23a08297 REQ-02) Shared scalar/SIMD semantic suites cover empty, aligned, offset, and 0/1/63/64/65 boundary cases with canonical indexing and zero tails.\n- [hard] REQ-03: (23a08297 REQ-03) Any unsafe intrinsic code stays in `gf2-kernels-simd` with an explicit safety contract, annotated release assembly is committed for modified SIMD symbols, and Rust 1.95 builds the affected path.\n\n- [hard] REQ-04: (b8ef6f13 REQ-01) Any production change has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results for primary and neighboring cells.\n- [hard] REQ-05: (b8ef6f13 REQ-02) Whole-consumer cells demonstrate the predeclared worthwhile benefit without regression outside the selected domain; otherwise the change is not accepted and the contradictory evidence remains committed.\n- [hard] REQ-06: (b8ef6f13 REQ-03) The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, assembly, profiles, and exact commands by content identity.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 23a08297, b8ef6f13; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n23a08297: Before/after performance confirmation is intentionally separate from this code change.\n\nb8ef6f13: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\nThe merge keeps the code change and its confirmation as separate stages and separate commits: the confirmation measures the merged code against the pinned pre-change baseline, so the source note that they are separate still holds inside this one task.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-16T22:38:18.352726539Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review",
+    "doc-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "fcb04d66-e997-491e-8855-a505e139a39b",
+  "labels": [
+    "component:benchmarks",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:zen3-cpu-performance",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04",
+    "satisfies:REQ-05",
+    "satisfies:REQ-06",
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Implement and confirm the logical-buffer outcome",
+  "updated_at": "2026-09-16T23:19:10.200863324Z"
+}

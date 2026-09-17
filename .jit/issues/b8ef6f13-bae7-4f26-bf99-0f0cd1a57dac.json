@@ -10,25 +10,23 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "b8ef6f13-bae7-4f26-bf99-0f0cd1a57dac",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
     "satisfies:REQ-02",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "resolution:merged-into-fcb04d66"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Confirm the logical-buffer production outcome",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T23:27:13.456167069Z"
 }

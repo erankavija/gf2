@@ -1,0 +1,42 @@
+{
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-17T00:37:42.056220282Z",
+  "context": {},
+  "created_at": "2026-09-16T18:26:09.534194702Z",
+  "dependencies": [
+    "bb769456-6803-49ec-ae91-f1619dd0f278"
+  ],
+  "description": "Verify the logical producing-input closure is complete before a timed run starts.\n\n## Background\n\n`survey/make-logical-producing-inputs.py` enumerates the harness, measured-crate and campaign-support sources into `survey/logical-producing-inputs.json`, and the window guard (`logical-campaign inputs`) refuses a timed run when any listed path is untracked or dirty. The listing is a snapshot: a source added to a measured crate after the last regeneration (for example `crates/gf2-core/src/gf2m/byte_table.rs`, which the rework-2 regeneration of bb769456 picked up) is absent from the closure until someone regenerates it, so a dirty new source could be timed unnoticed. The manifest set is guarded by a contract test since bb769456 rework 2; the source sections are not.\n\n## Success Criteria\n\n- [hard] REQ-01: The window guard, or a step the launcher runs immediately before it, regenerates the closure from the current tree and refuses the run when the regenerated closure differs from the committed `survey/logical-producing-inputs.json`, naming every added or removed path.\n- [hard] REQ-02: A harness contract test adds a source file under a measured crate in a scratch tree and asserts the check refuses; the committed closure on main is regenerated in the same change and its diff is only the paths the current tree adds.\n- [hard] REQ-03: The smoke, the validation record and every committed logical evidence file stay byte-identical except the regenerated closure; `./scripts/cargo-ci.sh` passes.\n\n## Notes\n\nReported by the bb769456 rework-2 worker (session 18, observation 1). Untimed work. Depends on bb769456; the three logical baseline records run after it.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-16T18:26:09.534194702Z",
+  "gates_required": [
+    "doc-review",
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-17T21:22:04.708331335Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-17T21:24:41.952985442Z",
+      "updated_by": "auto:executor"
+    }
+  },
+  "id": "0a357f94-0c89-4bee-9330-a4fc1da7f076",
+  "labels": [
+    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04",
+    "type:task",
+    "epic:zen3-cpu-performance"
+  ],
+  "priority": "high",
+  "state": "in_progress",
+  "title": "Verify the logical producing-input closure before a timed run",
+  "updated_at": "2026-09-17T21:24:41.952985442Z"
+}

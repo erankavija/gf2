@@ -1,34 +1,9 @@
 use serde_json::json;
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::path::Path;
 use tuning_campaign_support::journal::{atomic_write_new, CheckpointStore, ResumeIdentity};
-
-struct Scratch(PathBuf);
-
-impl Scratch {
-    fn new() -> Self {
-        static NEXT: AtomicU64 = AtomicU64::new(0);
-        let path = std::env::temp_dir().join(format!(
-            "gf2-checkpoint-provenance-{}-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos(),
-            NEXT.fetch_add(1, Ordering::Relaxed)
-        ));
-        fs::create_dir(&path).unwrap();
-        Self(path)
-    }
-}
-
-impl Drop for Scratch {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
+use tuning_campaign_support::scratch::scratch;
 
 fn digest(byte: u8) -> String {
     format!("{byte:02x}").repeat(32)
@@ -68,8 +43,8 @@ fn publish(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
 
 #[test]
 fn metadata_only_revision_change_allows_resume_and_initialize_replay() {
-    let scratch = Scratch::new();
-    let root = scratch.0.join("checkpoints");
+    let scratch = scratch("gf2-checkpoint-provenance");
+    let root = scratch.path().join("checkpoints");
     let original = identity();
     let store =
         CheckpointStore::initialize_with(&root, "campaign", original.clone(), publish).unwrap();
@@ -88,8 +63,8 @@ fn metadata_only_revision_change_allows_resume_and_initialize_replay() {
 
 #[test]
 fn metadata_only_resume_retains_completed_result_and_original_manifest() {
-    let scratch = Scratch::new();
-    let root = scratch.0.join("checkpoints");
+    let scratch = scratch("gf2-checkpoint-provenance");
+    let root = scratch.path().join("checkpoints");
     let original = identity();
     let mut store =
         CheckpointStore::initialize_with(&root, "campaign", original.clone(), publish).unwrap();
@@ -119,8 +94,8 @@ fn metadata_only_resume_retains_completed_result_and_original_manifest() {
 
 #[test]
 fn changed_producing_digest_rejects_before_mutating_checkpoint_evidence() {
-    let scratch = Scratch::new();
-    let root = scratch.0.join("checkpoints");
+    let scratch = scratch("gf2-checkpoint-provenance");
+    let root = scratch.path().join("checkpoints");
     let original = identity();
     let mut store =
         CheckpointStore::initialize_with(&root, "campaign", original.clone(), publish).unwrap();
@@ -156,8 +131,8 @@ fn changed_producing_digest_rejects_before_mutating_checkpoint_evidence() {
 
 #[test]
 fn inspection_validates_without_recovering_or_creating_files() {
-    let scratch = Scratch::new();
-    let root = scratch.0.join("checkpoints");
+    let scratch = scratch("gf2-checkpoint-provenance");
+    let root = scratch.path().join("checkpoints");
     let mut store = CheckpointStore::create_new(&root, "campaign", identity()).unwrap();
     let unit = store
         .accept("unit", &json!({"input": 1}), &json!({"value": 42}))

@@ -3,33 +3,32 @@
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
-    "bb769456-6803-49ec-ae91-f1619dd0f278"
+    "0a357f94-0c89-4bee-9330-a4fc1da7f076",
+    "b9302771-703c-4f47-adb7-a7469d855b7b"
   ],
   "description": "Run the frozen public `BitMatrix::row_xor` consumer cells and commit the current pre-change evidence.\n\n## Background\n\nThis is the primary unhoisted row-operation route. It is measured at actual mid-range row strides with whole-call costs, output validation, and neighboring sizes; already-hoisted algorithm loops remain controls rather than generic-hoist candidates.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt contains raw samples, exact commands, frozen matrix inputs, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for the row-XOR cells.\n- [hard] REQ-02: Exact row semantics, canonical bit indexing, and zero tail padding hold for the declared boundary and offset cases.\n- [hard] REQ-03: Profiles attribute material time to public dispatch, row access, XOR execution, memory traffic, or downstream work and identify any candidate signal within the frozen search budget.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.",
   "documents": [],
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "8197174d-e1ea-41e8-9388-b2e594745793",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
     "satisfies:REQ-01",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "resolution:merged-into-18a87159"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Record the row-XOR consumer baseline",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T23:23:48.003298688Z"
 }

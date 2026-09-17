@@ -3,20 +3,17 @@
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
   "dependencies": [
-    "4497e541-8480-4ce3-ae81-4ad8e70b72f9",
-    "49b1611b-ffb8-4f5d-9806-0a8ffe99c85c",
-    "b8ef6f13-bae7-4f26-bf99-0f0cd1a57dac"
+    "6e87c436-53d2-4fd4-bf58-aee2c7ed97fb",
+    "a1ad6d4e-c682-4af6-ada5-36ccfd9101e4"
   ],
   "description": "Publish the final story-level evidence index and criterion interpretation without duplicating the raw receipts.\n\n## Background\n\nThe synthesis links the frozen protocols, baseline and candidate receipts, external comparisons, adoption decisions, holdout confirmations, annotated assembly, and profiles. It preserves negative, unavailable, inconclusive, and contradictory outcomes and states which production routes remain selected.\n\n## Success Criteria\n\n- [hard] REQ-01: A concise findings document maps each story criterion to content-pinned artifacts and distinguishes isolated throughput from measured consumer benefit.\n- [hard] REQ-02: Every empirical claim names its sample count, confidence interval or equivalence result, producing identity, host, and toolchain; raw data remain linked rather than copied.\n- [hard] REQ-03: Residual gaps have a measured limit, preserved experiment, or tracked falsifiable follow-up within the frozen search budget, and no finite search is described as an absolute optimum.\n- [hard] REQ-04: The selected or retained production routes and all no-win outcomes are stated consistently with the canonical buffer boundary and external-comparison rules.\n\n## Notes\n\nPermanent documentation changes are required only when the final selected production behavior changes a user-facing contract.",
   "documents": [],
+  "first_ready_at": "2026-09-16T22:43:16.553004431Z",
   "gates_required": [
-    "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "2ad3a3e0-0143-4ebb-98fb-07eda92b7ca0",
@@ -31,10 +28,11 @@
     "satisfies:REQ-03",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Publish the mid-range evidence synthesis",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T22:47:17.995380823Z"
 }

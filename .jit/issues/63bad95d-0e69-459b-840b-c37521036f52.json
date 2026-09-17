@@ -25,7 +25,6 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review",
     "research-review"
   ],
   "gates_status": {},
@@ -43,5 +42,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Calibrate production dispatch for the 5900X",
-  "updated_at": "2026-09-10T16:46:03.806703393Z"
+  "updated_at": "2026-09-16T22:40:37.248163099Z"
 }

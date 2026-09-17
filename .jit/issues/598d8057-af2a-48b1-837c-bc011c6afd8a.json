@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-16T10:54:35.570565555Z",
+  "dependencies": [
+    "9fb40c83-7f48-4b39-afce-9e0f4f84c044"
+  ],
+  "description": "Remove the dead-code warning that `crates/gf2-core/src/alg/m4rm.rs` emits in every build without the `test-support` feature.\n\n## Background\n\n`choose_k_block` (about line 532) has one caller, `multiply_rowwise_for_test` (about line 1155), which is gated on `test` or `test-support`. A plain release build of `gf2-core` therefore warns `function choose_k_block is never used`; `cargo-ci` runs Clippy with `--all-features` and never observes it. Surfaced by the 9fb40c83 profile build in the 2026-09-16 benchmark window.\n\n## Success Criteria\n\n- [hard] REQ-01: A release build of `gf2-core` without `test-support` emits no dead-code warning for `choose_k_block`, either by gating the helper like its only caller or by giving it a production caller.\n- [hard] REQ-02: `cargo clippy -p gf2-core --release -- -D warnings` (default features) passes and the `--all-features` CI run is unchanged.\n\n## Notes\n\nFound by the 9fb40c83 worker while rebuilding the DVB profile arms.",
+  "documents": [],
+  "first_ready_at": "2026-09-16T10:54:35.570565555Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "598d8057-af2a-48b1-837c-bc011c6afd8a",
+  "labels": [
+    "type:bug",
+    "component:gf2-core"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Remove or gate the dead choose_k_block helper in m4rm",
+  "updated_at": "2026-09-16T10:55:02.077633189Z"
+}

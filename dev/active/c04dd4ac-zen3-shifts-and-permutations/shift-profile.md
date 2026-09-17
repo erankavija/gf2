@@ -49,6 +49,42 @@ tail padding. The launcher refuses to stage measurement unless the rebuilt
 Rust 1.95 benchmark executable reproduces the committed validation bytes and
 the current production-source audit reproduces its committed bytes.
 
+## Wire contract
+
+The canonical child-v2 framing accepts an arm's request only when the child
+re-encodes the runner's bytes exactly, so an arm whose request type does not
+round-trip the runner's request fails its first child and measures nothing.
+Code reading does not establish that contract. `survey/smoke-shift-arms.sh`
+carries the queued arm executable through the same `benchmark-ab-runner`
+binary, the same plan projector and the same framing on a throwaway family
+under `target/`, over two cells that between them name both arms, both
+directions and both cache states the frozen addendum declares. The smoke takes
+no host mutex and its durations are discarded;
+[`shift-profile-smoke.json`](shift-profile-smoke.json) records the executables
+that spoke, the children the runner spawned and reaped, the child diagnostics,
+and the fields of each arm's one result line the runner parsed.
+
+## The voided launch attempt
+
+Campaign `residual-shift-profile-85fc5ff4-v4` reaches the benchmark window
+with an arm that cannot complete the handshake, and the executor voids it under
+the [protocol's voided-attempt rule](../f547c394/protocol.md) rather than
+spending its reservation: the defect is procedural and in the attempt's own
+launch, and no result of it is read. Its reservation therefore does not enter
+the chain the replacement attempt reserves on, and the family ledger stays at
+its empty genesis. The family is exploratory-only, so the reservation spends no
+comparison under the ledger section's ordinary rule either.
+
+The aborted stage is preserved whole at
+[`2026-09-16-85fc5ff4-residual-shift-profile-abandoned`](../../bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned/execution.log),
+and
+[`v4-voided-launch-attempt.json`](../../bench_results/85fc5ff4/v4-voided-launch-attempt.json)
+names the campaign, the addendum digest, the defect, the cells measured and
+unmeasured, and the abort. No figure in this profile comes from it: the stage
+carries no checkpointed unit and no timing window. The replacement attempt
+carries its own campaign and stage identity, so it reserves fresh rather than
+resuming the voided stage.
+
 ## Evidence map
 
 | Evidence | Current result |
@@ -57,6 +93,8 @@ the current production-source audit reproduces its committed bytes.
 | `shift-profile-trial-ledger.jsonl` | Empty genesis; the runner reserves the campaign before its first cell |
 | `shift-profile-validation.json` | Passing: 948 independent-oracle cases and zero tail-padding failures |
 | `shift-profile-consumer-audit.json` | Passing: 332 production files and zero downstream calls |
+| `shift-profile-smoke.json` | Passing: the queued arm executable completes the handshake and the result framing through the real runner |
+| `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json` | The voided launch attempt, its preserved stage and its unmeasured cells |
 | `dev/bench_results/c04dd4ac/residual-shift-profile/` | Pending scheduled-window receipt |
 
 ## Result

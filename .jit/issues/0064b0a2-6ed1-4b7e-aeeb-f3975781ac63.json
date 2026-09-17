@@ -12,26 +12,24 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
     "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "research-review"
   ],
   "gates_status": {},
   "id": "0064b0a2-6ed1-4b7e-aeeb-f3975781ac63",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
     "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "resolution:merged-into-bc091474"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Freeze the logical candidate portfolio",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T23:24:37.812629473Z"
 }

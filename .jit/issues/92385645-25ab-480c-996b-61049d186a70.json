@@ -72,8 +72,23 @@
       "format": "markdown",
       "label": "Independent M4RI rework review round 2",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/92385645-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "M4RI pinned build identity",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 3",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/92385645-r3.md"
     }
   ],
+  "done_at": "2026-09-16T12:09:27.968423234Z",
   "first_ready_at": "2026-09-15T00:55:29.092843264Z",
   "gates_required": [
     "repo-validate",
@@ -87,37 +102,37 @@
   "gates_status": {
     "asm-artefact-present": {
       "status": "passed",
-      "updated_at": "2026-09-15T04:01:52.460060554Z",
+      "updated_at": "2026-09-16T12:00:23.162970152Z",
       "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:55:39.895627358Z",
+      "updated_at": "2026-09-16T11:54:09.911710667Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:58:21.901640439Z",
+      "updated_at": "2026-09-16T11:57:07.629040484Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:54:46.251370009Z",
+      "updated_at": "2026-09-16T11:49:20.537816376Z",
       "updated_by": "auto:executor"
     },
     "holistic-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T04:04:42.885543843Z",
+      "updated_at": "2026-09-16T12:02:39.261734555Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
       "status": "passed",
-      "updated_at": "2026-09-15T03:52:31.327185159Z",
+      "updated_at": "2026-09-16T11:46:59.291531979Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-09-15T04:01:48.944702069Z",
+      "updated_at": "2026-09-16T12:00:21.613283162Z",
       "updated_by": "auto:executor"
     }
   },
@@ -129,10 +144,11 @@
     "component:benchmarks",
     "satisfies:REQ-03",
     "satisfies:REQ-06",
-    "cites:AlbrechtBard2026"
+    "cites:AlbrechtBard2026",
+    "epic:zen3-cpu-performance"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-15T04:15:33.816133961Z"
+  "updated_at": "2026-09-16T22:08:56.224459032Z"
 }

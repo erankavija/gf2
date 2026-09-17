@@ -268,6 +268,7 @@ impl BitVec {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_scratch::scratch;
     use std::io::Cursor;
 
     #[test]
@@ -429,13 +430,12 @@ mod tests {
             original.set(i, true);
         }
 
-        let temp_file = std::env::temp_dir().join("test_bitvec.gf2");
+        let scratch = scratch("gf2-bitvec");
+        let temp_file = scratch.path().join("test_bitvec.gf2");
         original.save_to_file(&temp_file).unwrap();
 
         let restored = BitVec::load_from_file(&temp_file).unwrap();
         assert_eq!(original, restored);
-
-        std::fs::remove_file(temp_file).ok();
     }
 
     #[test]

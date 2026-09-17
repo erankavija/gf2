@@ -10,24 +10,21 @@
   "gates_required": [
     "repo-validate",
     "doc-review",
-    "holistic-review",
     "cargo-ci",
-    "code-review",
-    "research-review",
-    "asm-artefact-present"
+    "code-review"
   ],
   "gates_status": {},
   "id": "c71becc5-46eb-4afd-b6f5-fae4062fa028",
   "labels": [
     "type:task",
-    "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "satisfies:REQ-02",
     "satisfies:REQ-04",
-    "satisfies:REQ-06"
+    "satisfies:REQ-06",
+    "resolution:folded-into-a1ad6d4e"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Design the qualifying zero-copy integration",
-  "updated_at": "2026-09-15T00:55:29.092843264Z"
+  "updated_at": "2026-09-16T23:32:19.969596297Z"
 }

@@ -10,7 +10,6 @@ use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Barrier};
-use tempfile::Builder;
 
 fn digest(byte: u8) -> String {
     format!("{byte:02x}").repeat(32)
@@ -1656,7 +1655,10 @@ fn terminal_artifact(envelope: &RareEventArtifactEnvelopeV1) -> AttemptTerminalA
     AttemptTerminalArtifactV1::new(attempt_receipt(envelope)).unwrap()
 }
 
-fn dataset_directory(root: &tempfile::TempDir, identity: &RareEventDatasetIdentityV1) -> PathBuf {
+fn dataset_directory(
+    root: &gf2_core::test_scratch::Scratch,
+    identity: &RareEventDatasetIdentityV1,
+) -> PathBuf {
     let dataset = root.path().join(dataset_id(identity).unwrap());
     fs::create_dir(&dataset).unwrap();
     dataset
@@ -1711,9 +1713,10 @@ fn assert_cut_point_recovery<A: PublishableArtifact>(
     }
 }
 
-fn artifact_tempdir(prefix: &str) -> tempfile::TempDir {
-    fs::create_dir_all("target").unwrap();
-    Builder::new().prefix(prefix).tempdir_in("target").unwrap()
+/// Rooted at `target/` rather than the system temp mount: these artifacts are
+/// large enough that a tmpfs `/tmp` is the wrong place for them.
+fn artifact_tempdir(prefix: &str) -> gf2_core::test_scratch::Scratch {
+    gf2_core::test_scratch::scratch_in(Path::new("target"), prefix)
 }
 
 #[test]

@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
-"""Write the resumable protocol-v4 runner plan for issue 85fc5ff4."""
+"""Write a resumable protocol-v4 runner plan for issue 85fc5ff4.
 
+The same projection serves the queued profile and the throwaway wire smoke:
+both name the residual and word-aligned arms of one executable and both derive
+every cell from a frozen addendum, so the smoke exercises the case shape the
+profile sends.
+"""
+
+import argparse
 import json
-import sys
 
 ADDENDUM = (
     "dev/active/c04dd4ac-zen3-shifts-and-permutations/"
@@ -12,6 +18,7 @@ PRODUCING = (
     "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/"
     "shift-profile-producing-inputs.json"
 )
+SEED = 2026091585
 
 
 def arm(executable, name, description):
@@ -26,63 +33,71 @@ def arm(executable, name, description):
     }
 
 
+def cell(declared):
+    size = declared["workload"]["size"]
+    return {
+        "cell_id": declared["cell_id"],
+        "baseline_arm": "residual-production",
+        "candidate_arm": "word-aligned-control",
+        "case": {
+            "direction": declared["cell_id"].split("-", 1)[0],
+            "length_bits": size["length_bits"],
+            "residual_offset": size["residual_offset"],
+            "control_offset": size["control_offset"],
+            "seed": declared["workload"]["seed"],
+        },
+        "pilot_pairs": 6,
+    }
+
+
 def main():
-    if len(sys.argv) != 4:
-        raise SystemExit("usage: make-shift-plan.py <plan> <arm-executable> <absolute-lock>")
-    output, executable, lock = sys.argv[1:]
-    with open(ADDENDUM) as source:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("output")
+    parser.add_argument("executable")
+    parser.add_argument("lock")
+    parser.add_argument("--addendum", default=ADDENDUM)
+    parser.add_argument("--producing-manifest", default=PRODUCING)
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--campaign-seed", type=int, default=SEED)
+    parser.add_argument("--label", default="pilot")
+    parser.add_argument("--max-cells-per-session", type=int, default=2)
+    args = parser.parse_args()
+
+    with open(args.addendum) as source:
         addendum = json.load(source)
-    cells = []
-    for declared in addendum["cells"]:
-        size = declared["workload"]["size"]
-        direction = declared["cell_id"].split("-", 1)[0]
-        cells.append(
-            {
-                "cell_id": declared["cell_id"],
-                "baseline_arm": "residual-production",
-                "candidate_arm": "word-aligned-control",
-                "case": {
-                    "direction": direction,
-                    "length_bits": size["length_bits"],
-                    "residual_offset": size["residual_offset"],
-                    "control_offset": size["control_offset"],
-                    "seed": declared["workload"]["seed"],
-                },
-                "pilot_pairs": 6,
-            }
-        )
+    cells = [cell(declared) for declared in addendum["cells"]]
     plan = {
         "schema": "zen3-benchmark-plan-v1",
-        "campaign_id": "residual-shift-profile-85fc5ff4-v4",
+        "campaign_id": args.campaign_id,
         "issue": "85fc5ff4",
-        "label": "pilot",
-        "campaign_seed": 2026091585,
-        "addendum": ADDENDUM,
-        "producing_manifest": PRODUCING,
-        "lock_path": lock,
+        "label": args.label,
+        "campaign_seed": args.campaign_seed,
+        "addendum": args.addendum,
+        "producing_manifest": args.producing_manifest,
+        "lock_path": args.lock,
         "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
         "timing_override": None,
         "arms": {
             "residual-production": arm(
-                executable,
+                args.executable,
                 "residual-production",
                 "Current public BitVec zero-fill shift at the declared residual offset; "
                 "the non-word-aligned scalar carry loop is selected.",
             ),
             "word-aligned-control": arm(
-                executable,
+                args.executable,
                 "word-aligned-control",
                 "Current public BitVec zero-fill shift at offset 64; the canonical "
                 "word-shift backend is a non-equivalent workload control only.",
             ),
         },
         "cells": cells,
-        "max_cells_per_session": 2,
+        "max_cells_per_session": args.max_cells_per_session,
     }
-    with open(output, "w") as destination:
+    with open(args.output, "w") as destination:
         json.dump(plan, destination, indent=2)
         destination.write("\n")
-    print(f"{len(cells)} cells -> {output}")
+    print(f"{len(cells)} cells -> {args.output}")
 
 
 if __name__ == "__main__":

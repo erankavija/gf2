@@ -3,7 +3,6 @@
   "context": {},
   "created_at": "2026-02-21T19:35:51.570386512Z",
   "dependencies": [
-    "2037941f-852c-4d94-9d49-ad06a364dca8",
     "b3766524-f893-48b5-b380-ce38a8bf5467",
     "c7c0e991-4480-4c23-bdfd-6c781352a1fe",
     "f8d230ef-a204-40b0-9471-729053e46d60",
@@ -27,5 +26,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "SIMD and platform expansion",
-  "updated_at": "2026-08-05T12:24:07.929206577Z"
+  "updated_at": "2026-09-16T21:54:14.954296452Z"
 }
