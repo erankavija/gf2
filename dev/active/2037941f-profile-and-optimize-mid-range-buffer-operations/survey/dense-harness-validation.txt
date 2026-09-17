@@ -13,7 +13,7 @@
 # unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
-PASS harness contract: 33 tests pass
+PASS harness contract: 37 tests pass
 PASS matvec-cols-0-rows-0: 6 checks
 PASS matvec-cols-0-rows-1: 9 checks
 PASS matvec-cols-0-rows-63: 195 checks
@@ -127,7 +127,7 @@ PASS m4ri-64x64: 70 checks
 PASS m4ri-65x65: 71 checks
 # dense-m4ri-arm sha256: 228bf03d59a70c377050a68b3890713fb058370bfb881ddea9cf66007b0e0e42
 # libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
-# dense-arm sha256: f44e16a01b42c4bb8b3434860edcb4341a0fc4d33c41b6c91121e865ee13eba2
-# dense-campaign sha256: d2e9b4cf3ed4620e75866e0e496eb2c43ca74b4001ef2a76f6580ee7ead48343
-# dense-oracle sha256: b286b33fc25b9a83cd46a6ce3a317862427bfdd5def974cb18c7355eaff0d4b3
-# dense-arm (scalar-reference) sha256: 2617516c2a1d78e3ab9054e5c5c68cf09d2df62d73828d896cf1d31ba5ac6631
+# dense-arm sha256: 9909d730a0b51b08544f4ab02cddb243bd1bdb880a4f8d2f21de1a5a8059beea
+# dense-campaign sha256: 72c31147538a2625b0859e83977453ada6951d4308fba621bb49e44f93ec5d3d
+# dense-oracle sha256: 3a3869bef9d46bbd7db47d9cea6517f070d918e0735c973811d4a3795510a8cb
+# dense-arm (scalar-reference) sha256: d6f5bd889ff8836f61fc7e49e51b0e4b2b430041acdfaf8236a4c0f2e5f3b3de
