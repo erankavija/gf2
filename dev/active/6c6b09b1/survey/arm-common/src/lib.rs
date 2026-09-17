@@ -9,7 +9,9 @@
 //!
 //! An arm supplies a [`Workload`]: it prepares its operands once, reports
 //! what the conversions around its kernel cost, and exposes a closure the
-//! timing protocol calls. Everything outside that closure is untimed.
+//! timing protocol calls. Everything outside that closure is untimed. An arm
+//! that can only name its code path once the measured calls have run supplies
+//! an [`ObservedWorkload`] instead.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

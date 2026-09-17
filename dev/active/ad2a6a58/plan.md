@@ -44,6 +44,13 @@ execution is distinguishable from one that found the table cached.
 | Confirmation campaign | `dev/bench_results/ad2a6a58/r1-axpy-confirmation` | queued after the freeze |
 | Published outcome | [`tables.md`](../../bench_results/ad2a6a58/tables.md) | generated from committed receipts |
 
+The freezer derives the measurement resolution from the whole pilot, dropped
+cells included, so a cold cell's width sizes the confirmation's margins even
+though no cold cell is retained. A resolution the frozen margins cannot clear
+is not a reason to narrow the pilot after the fact: the freezer's margin
+options replace a margin with a new rationale, and its record names the
+replacement.
+
 The pilot covers both element representations at five shapes: 1 KiB cold,
 4 KiB warm, 128 KiB warm, 8 MiB warm and 2 MiB rotated through the eight
 fixture banks. The frozen addendum states which six of those ten cells the
