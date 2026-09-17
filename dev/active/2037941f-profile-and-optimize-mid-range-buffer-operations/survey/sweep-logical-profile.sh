@@ -29,10 +29,13 @@ done <"${CASES_FILE}"
 while read -r case; do
     [[ -z "${case}" ]] && continue
     file="${REP}/${case}"
-    perf record --quiet -g --call-graph dwarf -o "${file}.perf.data" \
+    # Flat sampling: the release executables carry no frame pointers and no
+    # DWARF unwind tables, so a requested call graph would be unusable rather
+    # than absent, and a per-symbol share is what the attribution needs.
+    perf record --quiet -F 4999 -o "${file}.perf.data" \
         -- "${DRIVER}" run --case "${case}" --seconds "${SECONDS_PER_PASS}" \
         >"${file}.record.json"
-    # The call graph is kept as its rendered report: the raw sample file holds
+    # The samples are kept as their rendered report: the raw sample file holds
     # absolute paths of this run's build tree and is many times its size.
     perf report --stdio --no-children --percent-limit 0.5 \
         -i "${file}.perf.data" >"${file}.report.txt"

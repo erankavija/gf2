@@ -115,7 +115,7 @@ def cell(values, digits):
 
 
 def symbol_shares(recorded, reps):
-    """Median share of each symbol above the report's percent limit."""
+    """Median share of each symbol above the sample report's percent limit."""
     shares = {}
     for case in recorded:
         per_symbol = collections.defaultdict(list)
@@ -197,11 +197,11 @@ def main():
     for case in cases:
         print(f"| `{case}` | `{paths[case]}` |")
     print()
-    print("## Call-graph shares")
+    print("## Sampled symbol shares")
     print()
     print(
-        "Symbols the sampled call graph attributes at or above the report's "
-        "own percent limit, as the median of their per-repetition shares."
+        "Symbols the flat sample report attributes at or above its own "
+        "percent limit, as the median of their per-repetition shares."
     )
     print()
     print("| Case | symbol | median share | repetitions |")
