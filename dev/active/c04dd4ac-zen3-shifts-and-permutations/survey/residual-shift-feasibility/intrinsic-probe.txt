@@ -1,0 +1,22 @@
+# Does rustc 1.95 expose _shld_u64 / _shrd_u64?
+# Regenerate with ./capture-asm.sh; source: probe/shld_probe.rs
+
+## rustc +1.95 --edition 2021 --crate-type lib --emit metadata probe/shld_probe.rs
+error[E0432]: unresolved imports `core::arch::x86_64::_shld_u64`, `core::arch::x86_64::_shrd_u64`
+ --> probe/shld_probe.rs:7:30
+  |
+7 |     use core::arch::x86_64::{_shld_u64, _shrd_u64};
+  |                              ^^^^^^^^^  ^^^^^^^^^ no `_shrd_u64` in `core_arch::arch::x86_64`
+  |                              |
+  |                              no `_shld_u64` in `core_arch::arch::x86_64`
+  |
+help: a similar name exists in the module
+  |
+7 -     use core::arch::x86_64::{_shld_u64, _shrd_u64};
+7 +     use core::arch::x86_64::{_mulx_u64, _shrd_u64};
+  |
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0432`.
+exit status: 1
