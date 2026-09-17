@@ -20,6 +20,10 @@ publish = false
 [dependencies]
 gf2-coding = { path = "../../../../../crates/gf2-coding" }
 gf2-core = { path = "../../../../../crates/gf2-core" }
+# The canonical recorded-bundle contract of the decoder survey, reused rather
+# than reimplemented: it verifies the frozen digests and reads the AList.
+ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
+serde_json = { version = "1", features = ["float_roundtrip"] }
 
 [profile.release]
 opt-level = 3
@@ -30,3 +34,7 @@ debug = "line-tables-only"
 [lib]
 name = "ldpc_candidate_prototypes"
 path = "src/lib.rs"
+
+[[bin]]
+name = "ldpc-candidate-quality"
+path = "src/bin/ldpc-candidate-quality.rs"
