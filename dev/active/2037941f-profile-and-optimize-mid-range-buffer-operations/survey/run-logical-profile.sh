@@ -43,7 +43,7 @@ SECONDS_PER_PASS=1
 # so neither group is multiplexed.
 GROUP_ISSUE=cycles,instructions,branches,branch-misses
 GROUP_MEMORY=L1-dcache-loads,L1-dcache-load-misses,LLC-loads,LLC-load-misses
-# The one case per baseline whose call graph the report attributes.
+# The one case per baseline whose sampled symbol shares the report attributes.
 RECORDED_CASES=(
     "xor-8w-a64-warm@public-xor-a"
     "row-xor-8w-full-warm@row-xor-a"
