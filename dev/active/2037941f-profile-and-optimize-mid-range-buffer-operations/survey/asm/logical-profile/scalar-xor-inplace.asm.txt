@@ -1,7 +1,7 @@
 # label: scalar-xor-inplace
 # pattern: gf2_core::kernels::ops::scalar_xor_inplace
 # binary: logical-profile
-# binary sha256: 6f66ff9e55d50c02a748632788ad8c04f9554dd0d6a7951e71f8247ea87ff767
+# binary sha256: d9c0b00b1f21bcb70d810116377e6055e94241ec8d7e07f9b0815c2918692c18
 # text symbols matching this pattern: 3
 
 ## symbol at 0000000000044230, 0x00000000000001de bytes
@@ -320,31 +320,31 @@
    5c19e:	jne    5c190 <gf2_core::kernels::ops::scalar_xor_inplace+0x140>
    5c1a0:	pop    %rax
    5c1a1:	ret
-   5c1a2:	lea    0x44cdf(%rip),%rdx        # a0e88 <anon.22acd268c8c329f75dc06b997be41664.672.llvm.18233473615024583656+0xd8>
+   5c1a2:	lea    0x44cdf(%rip),%rdx        # a0e88 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.677.llvm.7643799368439059581+0xd8>
    5c1a9:	mov    %rax,%rdi
    5c1ac:	call   *0x46ec6(%rip)        # a3078 <_DYNAMIC+0x240>
-   5c1b2:	lea    0x44cb7(%rip),%rdx        # a0e70 <anon.22acd268c8c329f75dc06b997be41664.672.llvm.18233473615024583656+0xc0>
+   5c1b2:	lea    0x44cb7(%rip),%rdx        # a0e70 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.677.llvm.7643799368439059581+0xc0>
    5c1b9:	mov    %rax,%rdi
    5c1bc:	mov    %rcx,%rsi
    5c1bf:	call   *0x46eb3(%rip)        # a3078 <_DYNAMIC+0x240>
-   5c1c5:	lea    0x44c8c(%rip),%rdx        # a0e58 <anon.22acd268c8c329f75dc06b997be41664.672.llvm.18233473615024583656+0xa8>
+   5c1c5:	lea    0x44c8c(%rip),%rdx        # a0e58 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.677.llvm.7643799368439059581+0xa8>
    5c1cc:	mov    %r8,%rdi
    5c1cf:	call   *0x46ea3(%rip)        # a3078 <_DYNAMIC+0x240>
-   5c1d5:	lea    0x44c64(%rip),%rdx        # a0e40 <anon.22acd268c8c329f75dc06b997be41664.672.llvm.18233473615024583656+0x90>
+   5c1d5:	lea    0x44c64(%rip),%rdx        # a0e40 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.677.llvm.7643799368439059581+0x90>
    5c1dc:	mov    %r8,%rdi
    5c1df:	mov    %rcx,%rsi
    5c1e2:	call   *0x46e90(%rip)        # a3078 <_DYNAMIC+0x240>
-   5c1e8:	lea    0x44c39(%rip),%rdx        # a0e28 <anon.22acd268c8c329f75dc06b997be41664.672.llvm.18233473615024583656+0x78>
+   5c1e8:	lea    0x44c39(%rip),%rdx        # a0e28 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.677.llvm.7643799368439059581+0x78>
    5c1ef:	mov    %r8,%rdi
    5c1f2:	call   *0x46e80(%rip)        # a3078 <_DYNAMIC+0x240>
-   5c1f8:	lea    0x44c11(%rip),%rdx        # a0e10 <anon.22acd268c8c329f75dc06b997be41664.672.llvm.18233473615024583656+0x60>
+   5c1f8:	lea    0x44c11(%rip),%rdx        # a0e10 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.677.llvm.7643799368439059581+0x60>
    5c1ff:	mov    %r8,%rdi
    5c202:	mov    %rcx,%rsi
    5c205:	call   *0x46e6d(%rip)        # a3078 <_DYNAMIC+0x240>
-   5c20b:	lea    0x44be6(%rip),%rdx        # a0df8 <anon.22acd268c8c329f75dc06b997be41664.672.llvm.18233473615024583656+0x48>
+   5c20b:	lea    0x44be6(%rip),%rdx        # a0df8 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.677.llvm.7643799368439059581+0x48>
    5c212:	mov    %r8,%rdi
    5c215:	call   *0x46e5d(%rip)        # a3078 <_DYNAMIC+0x240>
-   5c21b:	lea    0x44bbe(%rip),%rdx        # a0de0 <anon.22acd268c8c329f75dc06b997be41664.672.llvm.18233473615024583656+0x30>
+   5c21b:	lea    0x44bbe(%rip),%rdx        # a0de0 <anon.fdd5fb9bbd58f0f17e0475bc444b8e2f.677.llvm.7643799368439059581+0x30>
    5c222:	mov    %r8,%rdi
    5c225:	mov    %rcx,%rsi
    5c228:	call   *0x46e4a(%rip)        # a3078 <_DYNAMIC+0x240>

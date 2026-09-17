@@ -149,7 +149,11 @@ operation before the first window, and calibrates nothing.
 ## Semantic oracle
 
 `logical_buffer_harness::oracle::run` is deterministic, untimed, and emits no
-timing sample. It reports one `PASS <case>: <n> checks` line per case.
+timing sample. It reports one `PASS <case>: <n> checks` line per case, followed
+by `[<facts>]` where the case establishes observed facts: the row cases report
+the stride, column count and observed offsets they checked, and the NR cases
+the lifting factor, dense dimensions, stride with its band, non-zero count and
+structure digest they checked.
 
 | Case group | Coverage |
 |---|---|

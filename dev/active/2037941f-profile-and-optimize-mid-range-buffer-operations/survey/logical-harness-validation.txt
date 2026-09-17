@@ -31,25 +31,25 @@ PASS xor-65w-a64: 4232 checks
 PASS xor-65w-o8: 4232 checks
 PASS xor-66w-a64: 4297 checks
 PASS xor-66w-o8: 4297 checks
-PASS row-xor-7w-full: 28753 checks
-PASS row-xor-7w-tail63: 28753 checks
-PASS row-xor-8w-full: 32849 checks
-PASS row-xor-8w-tail63: 32849 checks
-PASS row-xor-9w-full: 36945 checks
-PASS row-xor-9w-tail63: 36945 checks
-PASS row-xor-63w-full: 258129 checks
-PASS row-xor-63w-tail63: 258129 checks
-PASS row-xor-64w-full: 262225 checks
-PASS row-xor-64w-tail63: 262225 checks
-PASS row-xor-65w-full: 266321 checks
-PASS row-xor-65w-tail63: 266321 checks
-PASS row-xor-66w-full: 270417 checks
-PASS row-xor-66w-tail63: 270417 checks
-PASS nr-construct-bg2-256-49-z9-8w: 26 checks
-PASS nr-construct-bg2-256-121-z22-18w: 26 checks
-PASS nr-construct-bg2-625-225-z30-25w: 26 checks
-PASS nr-construct-bg1-1024-640-z30-32w: 26 checks
-PASS nr-construct-bg2-1024-441-z56-46w: 26 checks
+PASS row-xor-7w-full: 28753 checks [stride=7w columns=448 base%64=32 dst:src%64=24:32,32:24,24:32,32:24,24:32,32:24,24:32,32:24]
+PASS row-xor-7w-tail63: 28753 checks [stride=7w columns=447 base%64=32 dst:src%64=24:32,32:24,24:32,32:24,24:32,32:24,24:32,32:24]
+PASS row-xor-8w-full: 32849 checks [stride=8w columns=512 base%64=32 dst:src%64=32:32,32:32,32:32,32:32,32:32,32:32,32:32,32:32]
+PASS row-xor-8w-tail63: 32849 checks [stride=8w columns=511 base%64=32 dst:src%64=32:32,32:32,32:32,32:32,32:32,32:32,32:32,32:32]
+PASS row-xor-9w-full: 36945 checks [stride=9w columns=576 base%64=32 dst:src%64=40:32,32:40,40:32,32:40,40:32,32:40,40:32,32:40]
+PASS row-xor-9w-tail63: 36945 checks [stride=9w columns=575 base%64=32 dst:src%64=40:32,32:40,40:32,32:40,40:32,32:40,40:32,32:40]
+PASS row-xor-63w-full: 258129 checks [stride=63w columns=4032 base%64=32 dst:src%64=24:32,32:24,24:32,32:24,24:32,32:24,24:32,32:24]
+PASS row-xor-63w-tail63: 258129 checks [stride=63w columns=4031 base%64=32 dst:src%64=24:32,32:24,24:32,32:24,24:32,32:24,24:32,32:24]
+PASS row-xor-64w-full: 262225 checks [stride=64w columns=4096 base%64=32 dst:src%64=32:32,32:32,32:32,32:32,32:32,32:32,32:32,32:32]
+PASS row-xor-64w-tail63: 262225 checks [stride=64w columns=4095 base%64=32 dst:src%64=32:32,32:32,32:32,32:32,32:32,32:32,32:32,32:32]
+PASS row-xor-65w-full: 266321 checks [stride=65w columns=4160 base%64=48 dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56]
+PASS row-xor-65w-tail63: 266321 checks [stride=65w columns=4159 base%64=48 dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56]
+PASS row-xor-66w-full: 270417 checks [stride=66w columns=4224 base%64=48 dst:src%64=0:48,48:0,0:48,48:0,0:48,48:0,0:48,48:0]
+PASS row-xor-66w-tail63: 270417 checks [stride=66w columns=4223 base%64=48 dst:src%64=0:48,48:0,0:48,48:0,0:48,48:0,0:48,48:0]
+PASS nr-construct-bg2-256-49-z9-8w: 26 checks [Z=9 dense=378x468 stride=8w band=8-64w nnz=1773 h-sha256=1cd2ee73fb6ad2bff8557657add5362f508aa877a7ed1c0255f2dd2c54c386a4]
+PASS nr-construct-bg2-256-121-z22-18w: 26 checks [Z=22 dense=924x1144 stride=18w band=8-64w nnz=4334 h-sha256=f7450a50e75adf89f27476892f10dd4c46bb54ab4995bd4dadd38031495742c2]
+PASS nr-construct-bg2-625-225-z30-25w: 26 checks [Z=30 dense=1260x1560 stride=25w band=8-64w nnz=5910 h-sha256=10c67719ce0aa246a4617f5a99e4a84ae37af1d65cca902e1b2e36b551966a52]
+PASS nr-construct-bg1-1024-640-z30-32w: 26 checks [Z=30 dense=1380x2040 stride=32w band=8-64w nnz=9480 h-sha256=e20ce39c01c69dd6825b5b817bde602d0cc4abc2ee9af89d6e7d868f93cab3e6]
+PASS nr-construct-bg2-1024-441-z56-46w: 26 checks [Z=56 dense=2352x2912 stride=46w band=8-64w nnz=11032 h-sha256=ce426676dbecc9d2f56a50a8418d802e1c36c22a9f9ca1cbf9267446ce43debc]
 # isa-l: 7c3479e0a9dac17f448603ec1ad64c7c625f530c
 # {"library":"isa-l","entrypoint":"xor_gen_base","qualified_label":"xor_gen_base/scalar","runtime_dispatch":false,"public_xor_gen_available":false,"unavailable_row":"isal-dispatched-xor-gen","unavailable_reason":"NASM is absent on the qualifying host, so raid_multibinary.asm and the SSE/AVX/AVX-512 xor_gen objects have no reproduced executable or observed dispatch route","comparator":"dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"}
 PASS isal-7w: 462 checks
@@ -59,7 +59,7 @@ PASS isal-63w: 4102 checks
 PASS isal-64w: 4167 checks
 PASS isal-65w: 4232 checks
 PASS isal-66w: 4297 checks
-# logical-isal-arm sha256: 1cef17fc1f02f4b38424610d35e7f21307b647a378322cba34bc5899f86c94c3
-# logical-arm sha256: 960e1e35c55271906ce3563afdbcdb1a67417faf7f3c04e0c052cbdb3fee9d02
-# logical-campaign sha256: 29c15573779c3a9dd93fd6af41f567e241d8ec3224ca0be1190df0f14efb8967
-# logical-oracle sha256: 4784efd9ed2726b3cb79c134f352bda7bbd734295203e5022dc40ceaeeebe3c2
+# logical-isal-arm sha256: e392f6cffea79da6b2335fbfdbfd48196c138ca780063c0ad5a139ea1f4a103c
+# logical-arm sha256: 57e7643368f689478e6066bee522099eded3fec4d8f734d2111516fb8e2454c5
+# logical-campaign sha256: 7b31d64d9c984f3fe093704f3bb30bde88ccece6064519ffef491422424797a4
+# logical-oracle sha256: d34074adbce14da8d5cbc2e91461842ab9e168a2aac1330407e969a17085d20b

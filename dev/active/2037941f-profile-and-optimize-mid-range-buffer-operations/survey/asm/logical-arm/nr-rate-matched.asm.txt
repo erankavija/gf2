@@ -1,7 +1,7 @@
 # label: nr-rate-matched
 # pattern: QuasiCyclicLdpc>::nr_5g_rate_matched
 # binary: logical-arm
-# binary sha256: 960e1e35c55271906ce3563afdbcdb1a67417faf7f3c04e0c052cbdb3fee9d02
+# binary sha256: 57e7643368f689478e6066bee522099eded3fec4d8f734d2111516fb8e2454c5
 # text symbols matching this pattern: 2
 
 ## symbol at 0000000000046f70, 0x0000000000002a0a bytes
@@ -733,7 +733,7 @@
    47d40:	lea    0xa8(%rsp),%rax
    47d48:	mov    %rax,0x30(%rsp)
    47d4d:	lea    0x7441c(%rip),%rdx        # bc170 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x718>
-   47d54:	lea    -0x3fed5(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   47d54:	lea    -0x3fed5(%rip),%rdi        # 7e86 <anon.cc7a8baf36180bb75a1511fcf481c07c.576.llvm.11904158524852292762>
    47d5b:	lea    0x30(%rsp),%rsi
    47d60:	lea    0x88(%rsp),%rcx
    47d68:	jmp    47821 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x8b1>
@@ -751,7 +751,7 @@
    47da9:	lea    0x28(%rsp),%rax
    47dae:	mov    %rax,0x30(%rsp)
    47db3:	lea    0x7436e(%rip),%rdx        # bc128 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6d0>
-   47dba:	lea    -0x3ff3b(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   47dba:	lea    -0x3ff3b(%rip),%rdi        # 7e86 <anon.cc7a8baf36180bb75a1511fcf481c07c.576.llvm.11904158524852292762>
    47dc1:	lea    0x30(%rsp),%rsi
    47dc6:	lea    0x88(%rsp),%rcx
    47dce:	mov    0x77f0b(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
@@ -1934,7 +1934,7 @@
    49454:	lea    0x128(%rsp),%rax
    4945c:	mov    %rax,0x30(%rsp)
    49461:	lea    0x72cc0(%rip),%rdx        # bc128 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6d0>
-   49468:	lea    -0x415e9(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   49468:	lea    -0x415e9(%rip),%rdi        # 7e86 <anon.cc7a8baf36180bb75a1511fcf481c07c.576.llvm.11904158524852292762>
    4946f:	lea    0x30(%rsp),%rsi
    49474:	lea    0x88(%rsp),%rcx
    4947c:	mov    0x7685d(%rip),%rax        # bfce0 <_DYNAMIC+0x4b8>
@@ -1962,7 +1962,7 @@
    494f1:	lea    0x128(%rsp),%rax
    494f9:	mov    %rax,0x30(%rsp)
    494fe:	lea    0x72c6b(%rip),%rdx        # bc170 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x718>
-   49505:	lea    -0x41686(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   49505:	lea    -0x41686(%rip),%rdi        # 7e86 <anon.cc7a8baf36180bb75a1511fcf481c07c.576.llvm.11904158524852292762>
    4950c:	lea    0x30(%rsp),%rsi
    49511:	lea    0x158(%rsp),%rcx
    49519:	jmp    4947c <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x250c>
@@ -1972,7 +1972,7 @@
    4952e:	lea    0x28(%rsp),%rax
    49533:	mov    %rax,0x30(%rsp)
    49538:	lea    0x72be9(%rip),%rdx        # bc128 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x6d0>
-   4953f:	lea    -0x416c0(%rip),%rdi        # 7e86 <anon.22acd268c8c329f75dc06b997be41664.664.llvm.18233473615024583656>
+   4953f:	lea    -0x416c0(%rip),%rdi        # 7e86 <anon.cc7a8baf36180bb75a1511fcf481c07c.576.llvm.11904158524852292762>
    49546:	lea    0x30(%rsp),%rsi
    4954b:	lea    0x88(%rsp),%rcx
    49553:	jmp    48d42 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched+0x1dd2>

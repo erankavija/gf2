@@ -7,8 +7,8 @@
 //! timing sample and cannot serve as a pilot.
 
 use crate::cells::{
-    Cache, Layout, RowShape, ALL_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, NR_TARGETS, ROW_MATRIX_ROWS,
-    ROW_PAIRS,
+    Cache, Layout, RowShape, ALL_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, MID_RANGE_MAX_WORDS,
+    MID_RANGE_MIN_WORDS, NR_TARGETS, ROW_MATRIX_ROWS, ROW_PAIRS,
 };
 use crate::fixture::{RowBanks, XorBanks, SLAB_ALIGN};
 use crate::routes::{
@@ -26,11 +26,28 @@ pub struct OracleCase {
     pub name: String,
     /// Checks the case performed.
     pub checks: usize,
+    /// Observed facts the case establishes, rendered after the check count.
+    pub detail: String,
+}
+
+impl OracleCase {
+    /// A case whose name and check count say everything it establishes.
+    pub fn plain(name: String, checks: usize) -> Self {
+        Self {
+            name,
+            checks,
+            detail: String::new(),
+        }
+    }
 }
 
 impl std::fmt::Display for OracleCase {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(formatter, "PASS {}: {} checks", self.name, self.checks)
+        write!(formatter, "PASS {}: {} checks", self.name, self.checks)?;
+        if self.detail.is_empty() {
+            return Ok(());
+        }
+        write!(formatter, " [{}]", self.detail)
     }
 }
 
@@ -97,7 +114,7 @@ fn bit_length_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
             return Err(fail(&name, "the logical length changed"));
         }
         checks += 1;
-        report.push(OracleCase { name, checks });
+        report.push(OracleCase::plain(name, checks));
     }
     Ok(())
 }
@@ -174,7 +191,7 @@ fn isolated_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
                 ));
             }
             checks += 1;
-            report.push(OracleCase { name, checks });
+            report.push(OracleCase::plain(name, checks));
         }
     }
     Ok(())
@@ -205,10 +222,13 @@ fn row_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
             // cell exercises whatever alignment `BitMatrix` gives that stride.
             let base = banks.base_mod_64(0, 0);
             let stride_bytes = matrix.stride_words() * 8;
-            for (&(dst, src), &(dst_addr, src_addr)) in ROW_PAIRS
+            let observed = banks.pair_addresses_mod_64(0, 0);
+            let offsets = observed
                 .iter()
-                .zip(banks.pair_addresses_mod_64(0, 0).iter())
-            {
+                .map(|(dst, src)| format!("{dst}:{src}"))
+                .collect::<Vec<_>>()
+                .join(",");
+            for (&(dst, src), &(dst_addr, src_addr)) in ROW_PAIRS.iter().zip(observed.iter()) {
                 let wanted = (
                     (base + dst * stride_bytes) % 64,
                     (base + src * stride_bytes) % 64,
@@ -248,7 +268,14 @@ fn row_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
                 ));
             }
             checks += 1;
-            report.push(OracleCase { name, checks });
+            report.push(OracleCase {
+                name,
+                checks,
+                detail: format!(
+                    "stride={}w columns={columns} base%64={base} dst:src%64={offsets}",
+                    matrix.stride_words()
+                ),
+            });
         }
     }
     Ok(())
@@ -393,7 +420,19 @@ fn nr_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
         checks += 1;
         let seed = CAMPAIGN_SEED ^ ((target.target_n as u64) << 32) ^ target.target_k as u64;
         checks += nr_encode_checks(&name, &code, &again, target.target_k, target.target_n, seed)?;
-        report.push(OracleCase { name, checks });
+        report.push(OracleCase {
+            name,
+            checks,
+            detail: format!(
+                "Z={} dense={}x{} stride={}w band={MID_RANGE_MIN_WORDS}-{MID_RANGE_MAX_WORDS}w nnz={} h-sha256={}",
+                facts.lifting_factor,
+                facts.dense_rows,
+                facts.dense_cols,
+                facts.stride_words,
+                facts.nnz,
+                facts.structure_digest
+            ),
+        });
     }
     Ok(())
 }

@@ -1,6 +1,6 @@
 # Annotated release disassembly of the measured logical routes (jit:18a87159)
 # binary: logical-arm
-# binary sha256: 960e1e35c55271906ce3563afdbcdb1a67417faf7f3c04e0c052cbdb3fee9d02
+# binary sha256: 57e7643368f689478e6066bee522099eded3fec4d8f734d2111516fb8e2454c5
 # rustc: rustc 1.95.0 (59807616e 2026-04-14)
 # Fields: file  symbols  bytes  pattern
 public-xor-inplace.asm.txt  0  0  gf2_core::kernels::ops::xor_inplace
