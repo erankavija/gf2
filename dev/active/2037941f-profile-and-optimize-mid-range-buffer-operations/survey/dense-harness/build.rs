@@ -4,7 +4,9 @@
 //! from the committed qualification record and the install's own build record
 //! rather than typed here, so the arm links the one build those records
 //! qualify and a different install fails the build instead of producing an arm
-//! whose external identity is unknown.
+//! whose external identity is unknown. The same digest reaches the arm as
+//! `GF2_M4RI_PINNED_SHA256`, which it checks against the object the loader
+//! actually gives it.
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -45,6 +47,11 @@ fn main() {
         library.display(),
         record.display()
     );
+
+    // The arm links M4RI dynamically, so it verifies at run time that the
+    // object the loader gave it is this one. The pin travels from the record
+    // to the executable here rather than being typed into the arm.
+    println!("cargo:rustc-env=GF2_M4RI_PINNED_SHA256={want}");
 
     let shim = manifest.join(SHIM_SOURCE);
     println!("cargo:rerun-if-changed={}", shim.display());

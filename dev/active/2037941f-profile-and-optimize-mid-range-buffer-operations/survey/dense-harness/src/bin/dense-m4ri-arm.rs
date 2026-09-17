@@ -7,11 +7,20 @@
 //! charged components live in the C shim `survey/m4ri_matvec_arm.c` that
 //! `build.rs` compiles against the qualified install.
 //!
-//! `--backend` reports the linked entry point and the qualified shapes.
-//! `--oracle` runs the comparator's semantic cases against the gf2 peer. With
-//! no argument the executable is a child-v2 campaign arm.
+//! M4RI is linked dynamically, as the executed qualification linked it, so the
+//! arm's own digest does not pin the library the loader resolves. Every entry
+//! point below therefore reads this process's mappings, hashes the object it
+//! loaded, and refuses unless that digest is the one the qualification record
+//! pins; the identity it observed travels in the provenance it reports.
+//!
+//! `--backend` reports the linked entry point, the qualified shapes and that
+//! identity. `--oracle` runs the comparator's semantic cases against the gf2
+//! peer. With no argument the executable is a child-v2 campaign arm.
 
-use dense_parity_harness::cells::{Cache, Workload, M4RI_SHAPES};
+use dense_parity_harness::cells::{
+    Cache, Workload, COMPARATOR_LIBRARY_STEM, M4RI_SHAPES, QUALIFICATION_RECORD,
+};
+use dense_parity_harness::external::{self, LibraryIdentity};
 use dense_parity_harness::fixture::MatvecBanks;
 use dense_parity_harness::oracle::OracleCase;
 use dense_parity_harness::routes::{observe_output, run_windows, WindowPlan};
@@ -108,7 +117,19 @@ impl Drop for RetainedState {
     }
 }
 
-fn backend_record() -> String {
+/// The loaded M4RI object, refused unless it is the qualified one.
+///
+/// `build.rs` reads the pinned digest from the qualification record and passes
+/// it here, so no prior figure is typed in this source.
+fn qualified() -> Result<LibraryIdentity, String> {
+    external::qualified_library(
+        COMPARATOR_LIBRARY_STEM,
+        env!("GF2_M4RI_PINNED_SHA256"),
+        QUALIFICATION_RECORD,
+    )
+}
+
+fn backend_record(library: &LibraryIdentity) -> String {
     let shapes = M4RI_SHAPES
         .iter()
         .map(|shape| format!("{}x{}", shape.rows, shape.cols))
@@ -117,8 +138,11 @@ fn backend_record() -> String {
     format!(
         "{{\"library\":\"m4ri\",\"entrypoint\":\"mzd_mul\",\"matched_operation\":\
          \"mzd_mul(y, A, x, 0)\",\"coordinates\":\"mzd_write_bit/mzd_read_bit\",\
-         \"qualified_shapes\":\"{shapes}\",\"comparator\":\"{}\"}}",
-        dense_parity_harness::cells::COMPARATOR_PATH
+         \"qualified_shapes\":\"{shapes}\",\"comparator\":\"{}\",\
+         \"loaded_library\":\"{}\",\"loaded_sha256\":\"{}\"}}",
+        dense_parity_harness::cells::COMPARATOR_PATH,
+        library.path,
+        library.sha256
     )
 }
 
@@ -196,11 +220,10 @@ fn main() {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let outcome = match arguments.as_slice() {
         [] => run(),
-        [flag] if flag == "--backend" => {
-            println!("{}", backend_record());
-            Ok(())
-        }
-        [flag] if flag == "--oracle" => oracle().map(|report| {
+        [flag] if flag == "--backend" => qualified().map(|library| {
+            println!("{}", backend_record(&library));
+        }),
+        [flag] if flag == "--oracle" => qualified().and_then(|_| oracle()).map(|report| {
             for case in report {
                 println!("{case}");
             }
@@ -219,6 +242,7 @@ fn run() -> Result<(), String> {
     let Workload::M4riGap { shape, retained } = case.workload()? else {
         return Err("the M4RI comparator arm serves only matvec-vs-m4ri cells".into());
     };
+    let library = qualified()?;
     let setup_start = Instant::now();
     let banks = MatvecBanks::build(shape.rows, shape.cols, cache, case.seed());
     let item = banks.item(0, 0);
@@ -231,13 +255,7 @@ fn run() -> Result<(), String> {
         ),
         false => None,
     };
-    let selected_path = format!(
-        "m4ri/mzd_mul(y,A,x,0)/{}/rows={}/cols={}/words={}/coordinates=mzd_write_bit+mzd_read_bit",
-        if retained { "retained-state" } else { "fresh-whole-consumer" },
-        shape.rows,
-        shape.cols,
-        shape.stride_words()
-    );
+    let selected_path = external::comparator_selected_path(shape, retained, &library);
 
     let failure = RefCell::new(None);
     let observed = MutCell::new(0_u64);

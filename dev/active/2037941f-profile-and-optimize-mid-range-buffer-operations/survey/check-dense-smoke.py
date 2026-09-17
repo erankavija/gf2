@@ -17,11 +17,16 @@ import argparse
 import hashlib
 import json
 import pathlib
+import re
 import sys
 
 SMOKE_SCHEMA = "dense-parity-nontimed-smoke-v1"
 # Journal events that exist only because a timing interval completed.
 TIMING_EVENTS = ("execution-progress", "window-progress")
+# The shared object an external arm reports having loaded, and its digest. The
+# arm refuses a run whose object is not the qualified one, so a handshake that
+# carries this pair is a handshake against the qualified comparator.
+EXTERNAL_OBJECT = re.compile(r"/loaded=(?P<path>.+)/sha256=(?P<digest>[0-9a-f]{64})$")
 
 
 def events(path):
@@ -60,6 +65,7 @@ def main():
         fail("the comparator family did not transcribe")
 
     lines = [f"PASS semantic oracle: {len(oracle)} cases, {checks} checks"]
+    external = {}
     for family in arguments.families:
         directory = stage / family
         session = directory / "stage"
@@ -134,6 +140,12 @@ def main():
                     fail(f"{arm['arm']} in {cell_id} applied another cache state")
                 if not arm["selected_path"]:
                     fail(f"{arm['arm']} in {cell_id} reported no route provenance")
+                if arm["selected_path"].startswith("m4ri/"):
+                    observed = EXTERNAL_OBJECT.search(arm["selected_path"])
+                    if not observed:
+                        fail(f"{arm['arm']} in {cell_id} named no loaded shared object")
+                    key = (observed["path"], observed["digest"])
+                    external[key] = external.get(key, 0) + 1
                 parsed[arm["arm"]] = parsed.get(arm["arm"], 0) + 1
             cells[cell_id] = (len(cell["arms"]), cell["cache_state"])
         if sorted(cells) != sorted(keys):
@@ -171,6 +183,15 @@ def main():
         lines.append(
             f"PASS {family} schema: handshake record decodes as {handshake['schema']}, "
             f"{len(cells)} cells"
+        )
+
+    if arguments.m4ri_arm:
+        if len(external) != 1:
+            fail(f"the external arms report {len(external)} distinct shared objects: {external}")
+        (path, digest), handshakes = next(iter(external.items()))
+        lines.append(
+            f"PASS external comparator object: {path} sha256 {digest}, "
+            f"observed by {handshakes} arm handshakes"
         )
 
     comparator_cells = json.loads(comparator.read_text())["cells"]
