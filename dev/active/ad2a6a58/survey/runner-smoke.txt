@@ -3,7 +3,7 @@
 # every line below is observed at run time from the stage execution log and the
 # finalized throwaway receipt; the record carries no clock reading, so a rerun on
 # the same executable reproduces it byte for byte
-# gf256-axpy-arm sha256: c760a5136f0136eee44a19f6bf60bdefbfeb9bf2c6ca49f724fc84108cf93dce
+# gf256-axpy-arm sha256: 578a89da3a121e3a1f217d198f6af33470ccea4c005ef7561e98338f15fc244b
 PASS axpy-1k-cold-element: paired executions complete
 PASS axpy-1k-cold-wide: paired executions complete
 PASS axpy-2m-stream-wide: paired executions complete
