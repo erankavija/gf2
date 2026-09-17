@@ -317,7 +317,18 @@
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-17T21:57:25.580833434Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-17T22:01:08.812731099Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "9fb40c83-7f48-4b39-afce-9e0f4f84c044",
   "labels": [
     "type:simulation",
@@ -337,5 +348,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-17T21:55:41.071792587Z"
+  "updated_at": "2026-09-17T22:01:08.812731099Z"
 }
