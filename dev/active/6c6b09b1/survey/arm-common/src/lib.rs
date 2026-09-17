@@ -173,6 +173,39 @@ pub struct Workload<'a> {
     pub body: Box<dyn FnMut(usize) + 'a>,
 }
 
+impl<'a> Workload<'a> {
+    /// The same workload with its already-known path.
+    fn into_observed(self) -> ObservedWorkload<'a> {
+        let Workload {
+            selected_path,
+            conversion,
+            body,
+        } = self;
+        ObservedWorkload {
+            conversion,
+            body,
+            observe: Box::new(move || selected_path),
+        }
+    }
+}
+
+/// A workload whose selected path is read after the last timed window.
+///
+/// An arm whose lane witness is only set by a measured call cannot name its
+/// path before the windows run: a `cold` cell forbids any execution of the
+/// measured workload before its first timed window, so the first dispatch is
+/// inside that window. [`observe`](Self::observe) runs once the body is
+/// dropped and supplies the path the result line carries.
+pub struct ObservedWorkload<'a> {
+    /// Costs of the conversions around the kernel.
+    pub conversion: Conversion,
+    /// The measured body, as in [`Workload`].
+    pub body: Box<dyn FnMut(usize) + 'a>,
+    /// Reads the runtime-observed identity of the code path the measured
+    /// calls selected.
+    pub observe: Box<dyn FnOnce() -> String + 'a>,
+}
+
 /// Deterministic operands over the shared [`SplitMix64`] [Steele2014]
 /// (`tuning_campaign_support::abtest`), so both arms see the same bytes for
 /// the same seed.
@@ -250,6 +283,17 @@ pub fn run<F>(build: F) -> !
 where
     F: for<'a> FnOnce(&'a Request, &'a Case) -> Result<Workload<'a>, String>,
 {
+    run_observed(|request, case| build(request, case).map(Workload::into_observed))
+}
+
+/// [`run`] for an arm that reads its selected path after the timed windows.
+///
+/// The framing, the guards and the result line are [`run`]'s; only the moment
+/// the path is read differs.
+pub fn run_observed<F>(build: F) -> !
+where
+    F: for<'a> FnOnce(&'a Request, &'a Case) -> Result<ObservedWorkload<'a>, String>,
+{
     let sentinel = std::env::var(transport::FRESH_CASE_VAR).ok();
     let request: Request =
         match transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock()) {
@@ -270,10 +314,10 @@ where
         Ok(workload) => workload,
         Err(reason) => fatal(&reason),
     };
-    let Workload {
-        selected_path,
+    let ObservedWorkload {
         conversion,
         mut body,
+        observe,
     } = workload;
 
     // `warm` gives the working set one untimed pass before calibration;
@@ -294,6 +338,7 @@ where
         Err(error) => fatal(&format!("timing failed: {error}")),
     };
     drop(body);
+    let selected_path = observe();
 
     let cpus_observed = CpuAffinity::observe()
         .map(|affinity| affinity.cpus().to_vec())
