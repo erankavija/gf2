@@ -15,7 +15,9 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use gf2_core::field::FieldVec;
-use gf2_core::gf2m::{last_gf256_table_lane, Gf2mField, Gf2mWide, Gf2mWideConfig, GF256_TABLE_LANE};
+use gf2_core::gf2m::{
+    last_gf256_table_lane, Gf2mField, Gf2mWide, Gf2mWideConfig, GF256_TABLE_LANE,
+};
 
 /// Forwards to the system allocator and counts every allocating call made
 /// while [`ARMED`] is set.
