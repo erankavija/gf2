@@ -34,10 +34,9 @@ FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
 # Nine is the smallest repetition count whose order-statistic interval for a
 # median at 95% coverage excludes the extreme repetitions ([x(2), x(8)], 96.1%).
 REPETITIONS=9
-# One second per counter pass: long enough that process start-up and fixture
-# construction are a small part of the counted region, short enough that the
-# whole matrix fits one window slot. The driver counts its own calls, so no
-# call constant is assumed about this host.
+# One second of measured operations per counter pass. The driver counts its own
+# calls, so the session assumes no call constant about this host; the counters
+# cover the whole process, including its start-up and fixture construction.
 SECONDS_PER_PASS=1
 # Two disjoint counter groups, each within the core's general-purpose counters,
 # so neither group is multiplexed.

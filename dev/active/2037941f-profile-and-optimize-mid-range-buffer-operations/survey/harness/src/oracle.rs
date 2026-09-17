@@ -217,9 +217,8 @@ fn row_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
                 }
             }
             let matrix = banks.matrix(0, 0);
-            // The measured offsets are the unmodified production allocation's:
-            // every declared row sits at its own stride from the base, so the
-            // cell exercises whatever alignment `BitMatrix` gives that stride.
+            // The offsets are the unmodified production allocation's: every
+            // declared row sits at its own stride from the base.
             let base = banks.base_mod_64(0, 0);
             let stride_bytes = matrix.stride_words() * 8;
             let observed = banks.pair_addresses_mod_64(0, 0);
@@ -335,10 +334,9 @@ fn xor_bits(left: &BitVec, right: &BitVec) -> BitVec {
 /// Checks the seeded encodings of one route against the canonical linear model.
 ///
 /// A linear block code answers the sum of two messages with the sum of their
-/// codewords and the zero message with the zero codeword; the canonical model
-/// is that law, evaluated on the route's own responses to the boundary
-/// messages. Both independently constructed objects answer identically, which
-/// is the determinism the measured configuration relies on.
+/// codewords, and the zero message with the zero codeword. Two independently
+/// constructed objects answer identically, which is the determinism the
+/// measured configuration relies on.
 fn nr_encode_checks(
     name: &str,
     code: &Nr5gRateMatchedCode,

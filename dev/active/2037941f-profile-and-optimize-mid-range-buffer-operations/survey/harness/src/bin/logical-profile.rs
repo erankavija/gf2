@@ -1,12 +1,10 @@
 //! Fixed-duration profile driver for the measured logical-buffer routes.
 //!
-//! `perf` wraps one invocation per profile case, so the counters it reports
-//! belong to one route at one frozen cell. The driver observes its own call
-//! count rather than carrying a per-case call constant, because a call count
-//! chosen before the window would be a prior figure about this host.
-//!
-//! The executable is the campaign arm's sibling: same crate, same
-//! `conservative-portable` build, same fixtures and same public entry points.
+//! `perf` wraps one invocation per profile case, so its counters belong to one
+//! route at one frozen cell. The driver observes its own call count rather than
+//! carrying a per-case call constant, which would be a prior figure about this
+//! host. It is the campaign arm's sibling: same crate, same fixtures and the
+//! same public entry points.
 
 use logical_buffer_harness::cells::{cells, Cache, Cell, Workload};
 use logical_buffer_harness::fixture::{RowBanks, XorBanks};

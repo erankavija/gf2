@@ -1,7 +1,7 @@
 # label: resolve-xor-inplace
 # pattern: gf2_core::kernels::ops::resolve_xor_inplace
 # binary: logical-arm
-# binary sha256: 57e7643368f689478e6066bee522099eded3fec4d8f734d2111516fb8e2454c5
+# binary sha256: a2b8d3913050408209adb291f142f3b0d28432ab621b899cff253359d45c988e
 # text symbols matching this pattern: 0
 # no text symbol of this pattern is present in the measured binary, either
 # because the routine is inlined into its callers or because the build

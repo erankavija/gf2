@@ -158,7 +158,9 @@ def main():
     print(
         "Each figure is the median over the repetitions, with the "
         "order-statistic interval in brackets. A per-call figure divides a "
-        "counter by the call count the driver observed in that same pass."
+        "whole-process counter by the call count the driver observed in that "
+        "same pass, so it carries the pass's own start-up and fixture "
+        "construction as well as its measured operations."
     )
     print()
     print("## Per-call cost and instruction mix")
