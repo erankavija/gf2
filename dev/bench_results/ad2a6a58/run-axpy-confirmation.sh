@@ -297,18 +297,61 @@ evaluate
 } >>"${LAUNCH_LOG}"
 
 # An exit code says a process ended, not that it produced data: a campaign
-# whose every cell failed can still exit cleanly. This reads what the receipt
-# holds and fails the job when it holds no paired cell.
-python3 - "${OUT}/receipt.json" <<'PY'
-import json, sys
-cells = json.load(open(sys.argv[1]))["cells"]
-paired = [cell for cell in cells if cell.get("pairs")]
-unpaired = [cell["cell_id"] for cell in cells if not cell.get("pairs")]
-if not paired:
-    raise SystemExit(f"receipt carries {len(cells)} cells and no paired execution: "
-                     + ", ".join(unpaired))
-print(f"receipt: {len(paired)} paired cells of {len(cells)}"
-      + (f"; no pairs: {', '.join(unpaired)}" if unpaired else ""))
+# whose every cell failed can still exit cleanly. The campaign is verified
+# from its own execution log instead, against the plan it measured.
+python3 - "${OUT}/execution.log" "${OUT}/receipt.json" "${PLAN}" <<'PY'
+import collections, json, sys
+
+log_path, receipt_path, plan_path = sys.argv[1:4]
+events = [json.loads(line) for line in open(log_path)]
+receipt = json.load(open(receipt_path))
+plan = json.load(open(plan_path))
+
+# Declared pairs per cell: an exploratory cell names its own count, a
+# confirmatory one takes the protocol's frozen confirmatory pair count, which
+# the receipt carries in its settings.
+confirmatory = receipt["settings"]["confirmatory_pairs"]
+declared = {cell["cell_id"]: cell["pilot_pairs"] or confirmatory for cell in plan["cells"]}
+
+terminal = [event["event"] for event in events
+            if event["event"] in ("complete", "failed", "paused", "budget-exhausted")]
+if terminal != ["complete"]:
+    raise SystemExit(f"the campaign ended {terminal} rather than one 'complete' record")
+
+def cells_of(name):
+    return [event for event in events
+            if event["event"] == name and event.get("case") is not None]
+
+starts = collections.Counter(event["case"]["cell_id"] for event in cells_of("cell-start"))
+checkpoints = collections.Counter(event["case"]["cell_id"]
+                                  for event in cells_of("checkpoint-accepted"))
+completes = {event["case"]["cell_id"]: event["details"] for event in cells_of("cell-complete")}
+abandoned = collections.Counter(event["case"]["cell_id"]
+                                for event in cells_of("cell-abandoned"))
+
+problems = []
+for cell_id, pairs in sorted(declared.items()):
+    # A restarted attempt is abandoned exactly once by a later session, so the
+    # start count exceeds one only by the abandonments the journal records.
+    if starts[cell_id] != 1 + abandoned[cell_id]:
+        problems.append(f"{cell_id}: {starts[cell_id]} starts, {abandoned[cell_id]} abandoned")
+    if checkpoints[cell_id] != 1:
+        problems.append(f"{cell_id}: {checkpoints[cell_id]} checkpoints accepted")
+    detail = completes.get(cell_id)
+    if detail is None:
+        problems.append(f"{cell_id}: never completed")
+        continue
+    if detail.get("status") != "measured":
+        problems.append(f"{cell_id}: completed with status {detail.get('status')!r}")
+    if detail.get("pairs") != pairs:
+        problems.append(f"{cell_id}: {detail.get('pairs')} pairs, {pairs} declared")
+extra = sorted(set(completes) - set(declared))
+if extra:
+    problems.append(f"the log completes undeclared cells: {', '.join(extra)}")
+if problems:
+    raise SystemExit("execution log: " + "; ".join(problems))
+print(f"execution log: {len(declared)} declared cells, each started once, checkpointed once "
+      f"and completed once at its declared pairs, terminal record 'complete'")
 PY
 echo "receipt: ${OUT}" >&2
 exit "${verdict}"
