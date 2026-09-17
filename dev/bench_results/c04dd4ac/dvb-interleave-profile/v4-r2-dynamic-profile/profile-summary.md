@@ -38,23 +38,23 @@ The descriptive share divides the direct scatter's across-session median by the 
 
 ## Hardware counters and hot instructions
 
-| Case | perf stat | perf record | counter data | hot-symbol report | annotated instructions |
+| Case | perf stat | perf record | counter data | hot-symbol report | instruction listing |
 |---|---:|---:|---|---|---|
-| `qam16-r12-normal-bicm-channel` | 0 | 0 | `rep-01/counters/qam16-r12-normal-bicm-channel.csv` | `rep-01/hot/qam16-r12-normal-bicm-channel.report.txt` | `rep-01/hot/qam16-r12-normal-bicm-channel.annotate.txt` |
-| `qam16-r12-normal-direct` | 0 | 0 | `rep-01/counters/qam16-r12-normal-direct.csv` | `rep-01/hot/qam16-r12-normal-direct.report.txt` | `rep-01/hot/qam16-r12-normal-direct.annotate.txt` |
-| `qam16-r12-normal-sim-stage` | 0 | 0 | `rep-01/counters/qam16-r12-normal-sim-stage.csv` | `rep-01/hot/qam16-r12-normal-sim-stage.report.txt` | `rep-01/hot/qam16-r12-normal-sim-stage.annotate.txt` |
-| `qam16-r12-normal-xdsopl-packed` | 0 | 0 | `rep-01/counters/qam16-r12-normal-xdsopl-packed.csv` | `rep-01/hot/qam16-r12-normal-xdsopl-packed.report.txt` | `rep-01/hot/qam16-r12-normal-xdsopl-packed.annotate.txt` |
-| `qam16-r12-short-bicm-channel` | 0 | 0 | `rep-01/counters/qam16-r12-short-bicm-channel.csv` | `rep-01/hot/qam16-r12-short-bicm-channel.report.txt` | `rep-01/hot/qam16-r12-short-bicm-channel.annotate.txt` |
-| `qam16-r12-short-direct` | 0 | 0 | `rep-01/counters/qam16-r12-short-direct.csv` | `rep-01/hot/qam16-r12-short-direct.report.txt` | `rep-01/hot/qam16-r12-short-direct.annotate.txt` |
-| `qam16-r12-short-sim-stage` | 0 | 0 | `rep-01/counters/qam16-r12-short-sim-stage.csv` | `rep-01/hot/qam16-r12-short-sim-stage.report.txt` | `rep-01/hot/qam16-r12-short-sim-stage.annotate.txt` |
-| `qam16-r12-short-xdsopl-packed` | 0 | 0 | `rep-01/counters/qam16-r12-short-xdsopl-packed.csv` | `rep-01/hot/qam16-r12-short-xdsopl-packed.report.txt` | `rep-01/hot/qam16-r12-short-xdsopl-packed.annotate.txt` |
-| `qam64-r12-normal-bicm-channel` | 0 | 0 | `rep-01/counters/qam64-r12-normal-bicm-channel.csv` | `rep-01/hot/qam64-r12-normal-bicm-channel.report.txt` | `rep-01/hot/qam64-r12-normal-bicm-channel.annotate.txt` |
-| `qam64-r12-normal-direct` | 0 | 0 | `rep-01/counters/qam64-r12-normal-direct.csv` | `rep-01/hot/qam64-r12-normal-direct.report.txt` | `rep-01/hot/qam64-r12-normal-direct.annotate.txt` |
-| `qam64-r12-normal-sim-stage` | 0 | 0 | `rep-01/counters/qam64-r12-normal-sim-stage.csv` | `rep-01/hot/qam64-r12-normal-sim-stage.report.txt` | `rep-01/hot/qam64-r12-normal-sim-stage.annotate.txt` |
-| `qam64-r12-normal-xdsopl-packed` | 0 | 0 | `rep-01/counters/qam64-r12-normal-xdsopl-packed.csv` | `rep-01/hot/qam64-r12-normal-xdsopl-packed.report.txt` | `rep-01/hot/qam64-r12-normal-xdsopl-packed.annotate.txt` |
-| `qam64-r12-short-bicm-channel` | 0 | 0 | `rep-01/counters/qam64-r12-short-bicm-channel.csv` | `rep-01/hot/qam64-r12-short-bicm-channel.report.txt` | `rep-01/hot/qam64-r12-short-bicm-channel.annotate.txt` |
-| `qam64-r12-short-direct` | 0 | 0 | `rep-01/counters/qam64-r12-short-direct.csv` | `rep-01/hot/qam64-r12-short-direct.report.txt` | `rep-01/hot/qam64-r12-short-direct.annotate.txt` |
-| `qam64-r12-short-sim-stage` | 0 | 0 | `rep-01/counters/qam64-r12-short-sim-stage.csv` | `rep-01/hot/qam64-r12-short-sim-stage.report.txt` | `rep-01/hot/qam64-r12-short-sim-stage.annotate.txt` |
-| `qam64-r12-short-xdsopl-packed` | 0 | 0 | `rep-01/counters/qam64-r12-short-xdsopl-packed.csv` | `rep-01/hot/qam64-r12-short-xdsopl-packed.report.txt` | `rep-01/hot/qam64-r12-short-xdsopl-packed.annotate.txt` |
+| `qam16-r12-normal-bicm-channel` | 0 | 0 | `rep-01/counters/qam16-r12-normal-bicm-channel.csv` | `rep-01/hot/qam16-r12-normal-bicm-channel.report.txt` | `rep-01/hot/qam16-r12-normal-bicm-channel.instructions.txt` |
+| `qam16-r12-normal-direct` | 0 | 0 | `rep-01/counters/qam16-r12-normal-direct.csv` | `rep-01/hot/qam16-r12-normal-direct.report.txt` | `rep-01/hot/qam16-r12-normal-direct.instructions.txt` |
+| `qam16-r12-normal-sim-stage` | 0 | 0 | `rep-01/counters/qam16-r12-normal-sim-stage.csv` | `rep-01/hot/qam16-r12-normal-sim-stage.report.txt` | `rep-01/hot/qam16-r12-normal-sim-stage.instructions.txt` |
+| `qam16-r12-normal-xdsopl-packed` | 0 | 0 | `rep-01/counters/qam16-r12-normal-xdsopl-packed.csv` | `rep-01/hot/qam16-r12-normal-xdsopl-packed.report.txt` | `rep-01/hot/qam16-r12-normal-xdsopl-packed.instructions.txt` |
+| `qam16-r12-short-bicm-channel` | 0 | 0 | `rep-01/counters/qam16-r12-short-bicm-channel.csv` | `rep-01/hot/qam16-r12-short-bicm-channel.report.txt` | `rep-01/hot/qam16-r12-short-bicm-channel.instructions.txt` |
+| `qam16-r12-short-direct` | 0 | 0 | `rep-01/counters/qam16-r12-short-direct.csv` | `rep-01/hot/qam16-r12-short-direct.report.txt` | `rep-01/hot/qam16-r12-short-direct.instructions.txt` |
+| `qam16-r12-short-sim-stage` | 0 | 0 | `rep-01/counters/qam16-r12-short-sim-stage.csv` | `rep-01/hot/qam16-r12-short-sim-stage.report.txt` | `rep-01/hot/qam16-r12-short-sim-stage.instructions.txt` |
+| `qam16-r12-short-xdsopl-packed` | 0 | 0 | `rep-01/counters/qam16-r12-short-xdsopl-packed.csv` | `rep-01/hot/qam16-r12-short-xdsopl-packed.report.txt` | `rep-01/hot/qam16-r12-short-xdsopl-packed.instructions.txt` |
+| `qam64-r12-normal-bicm-channel` | 0 | 0 | `rep-01/counters/qam64-r12-normal-bicm-channel.csv` | `rep-01/hot/qam64-r12-normal-bicm-channel.report.txt` | `rep-01/hot/qam64-r12-normal-bicm-channel.instructions.txt` |
+| `qam64-r12-normal-direct` | 0 | 0 | `rep-01/counters/qam64-r12-normal-direct.csv` | `rep-01/hot/qam64-r12-normal-direct.report.txt` | `rep-01/hot/qam64-r12-normal-direct.instructions.txt` |
+| `qam64-r12-normal-sim-stage` | 0 | 0 | `rep-01/counters/qam64-r12-normal-sim-stage.csv` | `rep-01/hot/qam64-r12-normal-sim-stage.report.txt` | `rep-01/hot/qam64-r12-normal-sim-stage.instructions.txt` |
+| `qam64-r12-normal-xdsopl-packed` | 0 | 0 | `rep-01/counters/qam64-r12-normal-xdsopl-packed.csv` | `rep-01/hot/qam64-r12-normal-xdsopl-packed.report.txt` | `rep-01/hot/qam64-r12-normal-xdsopl-packed.instructions.txt` |
+| `qam64-r12-short-bicm-channel` | 0 | 0 | `rep-01/counters/qam64-r12-short-bicm-channel.csv` | `rep-01/hot/qam64-r12-short-bicm-channel.report.txt` | `rep-01/hot/qam64-r12-short-bicm-channel.instructions.txt` |
+| `qam64-r12-short-direct` | 0 | 0 | `rep-01/counters/qam64-r12-short-direct.csv` | `rep-01/hot/qam64-r12-short-direct.report.txt` | `rep-01/hot/qam64-r12-short-direct.instructions.txt` |
+| `qam64-r12-short-sim-stage` | 0 | 0 | `rep-01/counters/qam64-r12-short-sim-stage.csv` | `rep-01/hot/qam64-r12-short-sim-stage.report.txt` | `rep-01/hot/qam64-r12-short-sim-stage.instructions.txt` |
+| `qam64-r12-short-xdsopl-packed` | 0 | 0 | `rep-01/counters/qam64-r12-short-xdsopl-packed.csv` | `rep-01/hot/qam64-r12-short-xdsopl-packed.report.txt` | `rep-01/hot/qam64-r12-short-xdsopl-packed.instructions.txt` |
 
-Exit status zero means the host exposed the requested user-mode counters. Nonzero status is retained with stderr as the durable unavailable outcome; it is not replaced by inferred counter values.
+Exit status zero means the host exposed the requested user-mode counters. Nonzero status is retained with stderr as the durable unavailable outcome; it is not replaced by inferred counter values. An instruction listing disassembles the pinned executable against the samples already recorded beside it, so `render-hot-instructions.sh` reproduces it outside the benchmark window; a session whose own annotation step leaves an empty `.annotate.txt` keeps that file and its `.err` record.
