@@ -1,0 +1,38 @@
+# Dense-parity harness non-timed wire smoke (jit:e1f9a78f)
+# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh smoke --m4ri
+# every line below is observed at run time from the semantic oracle, the stage
+# execution logs, the checkpoint stores and the handshake records under target/;
+# the record carries no clock reading, the arms answer a zero-window request, and
+# no receipt is finalized, so a rerun on the same executables reproduces it byte
+# for byte and the smoke cannot serve as a pilot
+# dense-arm sha256: a6dc71f682456ada2057966ebd65e6f4a2376a7efe5d1bd764e0e3f3a96cc398
+# dense-arm-scalar sha256: 9b8167a0a91b553474cc85eb5c9b63a98e6926c2881a053d46c6d274826376f6
+# dense-m4ri-arm sha256: 35114d79dcda826a742f8cbfba4d049e51ab19804e0455d72961cbe118e0d9ff
+PASS semantic oracle: 108 cases, 21465 checks
+PASS 2037941f-dense-isolated-fused-parity: 2 sessions, resume repeated no cell
+PASS and-popcnt-8w-streaming: 2 arms handshook, 0 timing windows, cache streaming
+PASS and-popcnt-8w-warm: 2 arms handshook, 0 timing windows, cache warm
+PASS and-popcnt-a: 2 handshakes, 2 result lines parsed
+PASS and-popcnt-b: 2 handshakes, 2 result lines parsed
+PASS 2037941f-dense-isolated-fused-parity wire: 4 child spawns, 4 clean exits, 0 child diagnostics
+PASS 2037941f-dense-isolated-fused-parity journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
+PASS 2037941f-dense-isolated-fused-parity schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 2 cells
+PASS 2037941f-dense-allocated-matvec: 3 sessions, resume repeated no cell
+PASS matvec-r1024-8w-cold: 2 arms handshook, 0 timing windows, cache cold
+PASS matvec-r1024-8w-scalar-reference-warm: 2 arms handshook, 0 timing windows, cache warm
+PASS matvec-r1024-8w-warm: 2 arms handshook, 0 timing windows, cache warm
+PASS matvec-a: 2 handshakes, 2 result lines parsed
+PASS matvec-b: 3 handshakes, 3 result lines parsed
+PASS matvec-scalar-reference: 1 handshakes, 1 result lines parsed
+PASS 2037941f-dense-allocated-matvec wire: 6 child spawns, 6 clean exits, 0 child diagnostics
+PASS 2037941f-dense-allocated-matvec journal: 0 timing records, 3 checkpointed cells, 0 finalized receipts
+PASS 2037941f-dense-allocated-matvec schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 3 cells
+PASS 2037941f-dense-matvec-vs-m4ri: 2 sessions, resume repeated no cell
+PASS m4ri-gap-65x512-retained-warm: 2 arms handshook, 0 timing windows, cache warm
+PASS m4ri-gap-65x512-warm: 2 arms handshook, 0 timing windows, cache warm
+PASS m4ri-mzd-mul: 2 handshakes, 2 result lines parsed
+PASS m4ri-peer-gf2: 2 handshakes, 2 result lines parsed
+PASS 2037941f-dense-matvec-vs-m4ri wire: 4 child spawns, 4 clean exits, 0 child diagnostics
+PASS 2037941f-dense-matvec-vs-m4ri journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
+PASS 2037941f-dense-matvec-vs-m4ri schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 2 cells
+PASS 2037941f-dense-matvec-vs-m4ri cells: 8 cells transcribe and verify against the frozen addendum
