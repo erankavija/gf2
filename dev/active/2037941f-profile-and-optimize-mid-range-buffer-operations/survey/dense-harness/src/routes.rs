@@ -18,12 +18,7 @@ use tuning_campaign_support::timing::{
 /// Environment variable selecting one gf2 route in `dense-arm`.
 pub const ROUTE_VAR: &str = "GF2_DENSE_ROUTE";
 
-/// Outputs one execution retains before it releases them mid-window.
-///
-/// The allocated boundary charges the output allocation and excludes its
-/// release, so each timed call's output is retained and the whole batch is
-/// released after the window closes. The bound keeps that batch resident in a
-/// bounded working set; a window longer than the bound releases inside itself
+/// Retention bound of [`OutputSink`]; a longer window releases inside itself
 /// rather than growing without limit.
 pub const MAX_RETAINED_OUTPUTS: usize = 1 << 18;
 

@@ -2,14 +2,14 @@
 
 > **Diátaxis Type:** Reference
 >
-> **Interface identity:** `2037941f-dense-measurement-interface-v1`
+> **Interface identity:** `2037941f-parity-measurement-interface-v1`
 >
 > **Owning issue:** `e1f9a78f`
 >
 > **Implements:** [`dense-parity-addendum.md`](dense-parity-addendum.md),
 > identity `2037941f-dense-parity-v1`
 
-This document is the `dense-parity-harness` interface named by
+This document is the `parity-measurement-interface` named by
 [`plan.md`](plan.md). It fixes cell identity, semantic validation, route
 provenance, append-only logging, checkpoint/resume, and machine-readable output
 for the dense-parity questions.

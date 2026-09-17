@@ -125,9 +125,9 @@ PASS m4ri-1x1: 7 checks
 PASS m4ri-63x63: 69 checks
 PASS m4ri-64x64: 70 checks
 PASS m4ri-65x65: 71 checks
-# dense-m4ri-arm sha256: 35114d79dcda826a742f8cbfba4d049e51ab19804e0455d72961cbe118e0d9ff
+# dense-m4ri-arm sha256: 228bf03d59a70c377050a68b3890713fb058370bfb881ddea9cf66007b0e0e42
 # libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
-# dense-arm sha256: a6dc71f682456ada2057966ebd65e6f4a2376a7efe5d1bd764e0e3f3a96cc398
-# dense-campaign sha256: a4bae9b9cfdd0123cb7b755bb3b89a9f17237f6a7ccee0d88c4aa32e27e38974
+# dense-arm sha256: f44e16a01b42c4bb8b3434860edcb4341a0fc4d33c41b6c91121e865ee13eba2
+# dense-campaign sha256: d2e9b4cf3ed4620e75866e0e496eb2c43ca74b4001ef2a76f6580ee7ead48343
 # dense-oracle sha256: b286b33fc25b9a83cd46a6ce3a317862427bfdd5def974cb18c7355eaff0d4b3
-# dense-arm (scalar-reference) sha256: 9b8167a0a91b553474cc85eb5c9b63a98e6926c2881a053d46c6d274826376f6
+# dense-arm (scalar-reference) sha256: 2617516c2a1d78e3ab9054e5c5c68cf09d2df62d73828d896cf1d31ba5ac6631
