@@ -1,0 +1,19 @@
+# GF(2^8) axpy runner-wire smoke (jit:ad2a6a58)
+# command: dev/active/ad2a6a58/survey/smoke-arms.sh
+# every line below is observed at run time from the stage execution log and the
+# finalized throwaway receipt; the record carries no clock reading, so a rerun on
+# the same executable reproduces it byte for byte
+# gf256-axpy-arm sha256: c760a5136f0136eee44a19f6bf60bdefbfeb9bf2c6ca49f724fc84108cf93dce
+PASS axpy-1k-cold-element: paired executions complete
+PASS axpy-1k-cold-wide: paired executions complete
+PASS axpy-2m-stream-wide: paired executions complete
+PASS axpy-4k-element: paired executions complete
+PASS scalar-element: gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
+PASS scalar-element: 12 handshakes, 12 result lines parsed
+PASS scalar-wide: gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
+PASS scalar-wide: 12 handshakes, 12 result lines parsed
+PASS table-element: gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
+PASS table-element: 12 handshakes, 12 result lines parsed
+PASS table-wide: gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
+PASS table-wide: 12 handshakes, 12 result lines parsed
+PASS wire: 48 child spawns, 48 clean exits, 0 child diagnostics
