@@ -42,6 +42,22 @@ RUSTC_ARGS=(--emit asm -C llvm-args=--x86-asm-syntax=intel)
   rustc "+${TOOLCHAIN}" --print cfg | grep '^target_feature' | sort
 } > toolchain.txt
 
+# rustc's own verdict on the double-precision shift intrinsic, whichever way
+# it falls. The probe is expected to fail to compile; a success is recorded
+# just as plainly.
+{
+  echo "# Does rustc ${TOOLCHAIN} expose _shld_u64 / _shrd_u64?"
+  echo "# Regenerate with ./capture-asm.sh; source: probe/shld_probe.rs"
+  echo
+  echo "## rustc +${TOOLCHAIN} --edition 2021 --crate-type lib --emit metadata probe/shld_probe.rs"
+  if rustc "+${TOOLCHAIN}" --edition 2021 --crate-type lib --emit metadata \
+      -o /dev/null probe/shld_probe.rs 2>&1; then
+    echo "exit status: 0"
+  else
+    echo "exit status: $?"
+  fi
+} > intrinsic-probe.txt
+
 cargo "+${TOOLCHAIN}" clean --release -p residual_shift_feasibility
 cargo "+${TOOLCHAIN}" rustc --release --lib -- "${RUSTC_ARGS[@]}"
 
