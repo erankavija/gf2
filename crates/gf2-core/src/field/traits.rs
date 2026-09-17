@@ -462,15 +462,16 @@ pub trait FiniteField:
         None
     }
 
-    /// Hidden whole-gemm hook for SIMD-accelerated `Fp<P>` matrix multiply.
+    /// Hidden whole-gemm hook for a field that computes the whole product
+    /// itself.
     ///
-    /// Lets `Fp<P>` (`P ≤ 251`) bypass the per-cell `dot_product_slices`
-    /// loop in [`crate::field::matrix::gemm`] and instead pre-pack the
-    /// entire `A` and `B^T` to canonical-byte slices once, run a fully
-    /// vectorised inner gemm at AVX2 byte/16-bit-lane width, and unpack
-    /// the output. The pack/unpack cost is `O(m·k + n·k + m·n)`,
-    /// amortising the per-element Montgomery REDC across the
-    /// `O(m·k·n)` inner kernel.
+    /// Lets a field bypass the per-cell `dot_product_slices` loop in
+    /// [`crate::field::matrix::gemm`] and instead pack `A` and `B^T` once,
+    /// run its own inner kernel and unpack the output, paying
+    /// `O(m·k + n·k + m·n)` of packing to amortise a per-element cost
+    /// across the `O(m·k·n)` inner kernel. `Fp<P>` for `P ≤ 251` packs to
+    /// canonical bytes for an AVX2 byte-lane gemm; the single-word GF(2^8)
+    /// representations pack to bytes for the cached product table.
     ///
     /// # Arguments
     ///
@@ -514,6 +515,20 @@ pub trait FiniteField:
     /// This is the same probe pattern used by
     /// [`chain_poly_arith_available`](Self::chain_poly_arith_available)
     /// for the `try_make_chain_poly_arith` hook.
+    ///
+    /// # A field may accept the hook and decline this probe
+    ///
+    /// [`crate::field::matrix::gemm`] calls the hook directly rather than
+    /// through this probe, so a field whose hook populates `out` may still
+    /// answer `false` here. A `false` therefore means only that callers should
+    /// neither pre-allocate operand scratch for the hook nor restructure an
+    /// algorithm around it; it does not mean the dense product declines. The
+    /// single-word GF(2^8) representations are that case: their hook runs the
+    /// cached byte product table while this probe keeps the default, so the
+    /// GEMM-axpy fold, the blocked triangular solve and the blocked inverse
+    /// keep the route they take. The condition that ends it is a benchmark
+    /// receipt covering those three consumers on the table lane; until one
+    /// exists, the probe stays `false` for GF(2^8).
     ///
     /// # Returns
     ///

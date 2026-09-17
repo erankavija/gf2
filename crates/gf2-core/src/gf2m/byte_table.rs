@@ -23,6 +23,9 @@
 //! axpy_region(y, x, row, |e| byte_of(e), |d, product| xor_into(d, product));
 //! ```
 //!
+//! The dense product calls [`gemm_region`], which reuses that same kernel once
+//! per left-hand coefficient so each coefficient drives a whole output row.
+//!
 //! # Layout and key
 //!
 //! `T[256 * c + v]` is the product `c * v` reduced by the field's own modulus,
@@ -192,16 +195,96 @@ pub(crate) fn axpy_region<Y, X>(
     }
 }
 
-/// Name the GF(2^8) axpy dispatch reports when it runs the cached product
+/// Shape of one dense product: an `m × k` left operand by a `k × n` right
+/// operand.
+pub(crate) struct GemmShape {
+    /// Rows of the left operand and of the output.
+    pub(crate) m: usize,
+    /// Inner dimension summed over.
+    pub(crate) k: usize,
+    /// Columns of the right operand and of the output.
+    pub(crate) n: usize,
+}
+
+/// Writes the product of `a` and the operand `b_t` holds transposed into
+/// `out`.
+///
+/// `b_t` is the right operand in `n × k` row-major order, the form the
+/// whole-product hook receives; restoring it to `k × n` is what lets one
+/// left-hand coefficient drive a whole output row through [`axpy_region`], and
+/// costs `O(kn)` byte moves inside an `O(mkn)` kernel. `byte_of` reads the
+/// GF(2^8) value out of an operand element and `store` writes one result byte
+/// into a destination element, so the same traversal serves the
+/// runtime-context element and the compile-time-configured wide value.
+///
+/// # Arguments
+///
+/// * `a` — left operand, `m × k` row-major, `m * k` elements.
+/// * `b_t` — transposed right operand, `n × k` row-major, `n * k` elements.
+/// * `shape` — the three dimensions.
+/// * `out` — destination, `m × n` row-major, overwritten rather than
+///   accumulated into.
+/// * `table` — the cached table for the operands' reduction polynomial.
+/// * `byte_of` — an operand element's GF(2^8) value.
+/// * `store` — writes one result byte into a destination element.
+///
+/// # Complexity
+///
+/// `O(mkn)` indexed loads and XORs over three byte buffers totalling
+/// `mk + kn + mn` bytes.
+pub(crate) fn gemm_region<T>(
+    a: &[T],
+    b_t: &[T],
+    shape: &GemmShape,
+    out: &mut [T],
+    table: &Gf256ProductTable,
+    byte_of: impl Fn(&T) -> u8,
+    store: impl Fn(&mut T, u8),
+) {
+    let GemmShape { m, k, n } = *shape;
+    debug_assert_eq!(a.len(), m * k);
+    debug_assert_eq!(b_t.len(), n * k);
+    debug_assert_eq!(out.len(), m * n);
+    if m == 0 || n == 0 {
+        return;
+    }
+
+    let left: Vec<u8> = a.iter().map(&byte_of).collect();
+    let mut right = vec![0u8; k * n];
+    for (p, right_row) in right.chunks_exact_mut(n).enumerate() {
+        for (j, slot) in right_row.iter_mut().enumerate() {
+            *slot = byte_of(&b_t[j * k + p]);
+        }
+    }
+
+    let mut products = vec![0u8; m * n];
+    for (i, product_row) in products.chunks_exact_mut(n).enumerate() {
+        for (p, right_row) in right.chunks_exact(n).enumerate() {
+            axpy_region(
+                product_row,
+                right_row,
+                table.row(left[i * k + p]),
+                |byte| *byte,
+                |slot, product| *slot ^= product,
+            );
+        }
+    }
+
+    for (slot, &product) in out.iter_mut().zip(products.iter()) {
+        store(slot, product);
+    }
+}
+
+/// Name the GF(2^8) table dispatch reports when it runs the cached product
 /// table.
 pub const GF256_TABLE_LANE: &str = "gf256-product-table";
 
-/// Name the GF(2^8) axpy dispatch reports when it declines and the consumer
-/// runs its scalar element loop.
-pub const GF256_SCALAR_LANE: &str = "scalar-element-loop";
+/// Name the GF(2^8) table dispatch reports when it declines, leaving the
+/// caller on the route it takes without the table.
+pub const GF256_SCALAR_LANE: &str = "gf256-table-declined";
 
-/// Selects between the cached-table lane and the consumer's scalar element
-/// loop for one GF(2^8) fused multiply-add.
+/// Selects between the cached-table lane and the consumer's own scalar path
+/// for one GF(2^8) operation.
 ///
 /// # Dispatch predicate
 ///
@@ -231,7 +314,7 @@ pub const GF256_SCALAR_LANE: &str = "scalar-element-loop";
 /// this dispatch.
 ///
 /// Either lane records itself through the witness
-/// [`last_gf256_axpy_lane`] reads.
+/// [`last_gf256_table_lane`] reads.
 ///
 /// # Arguments
 ///
@@ -258,10 +341,10 @@ pub(crate) fn gf256_table_dispatch(
     shared_field_context: impl FnOnce() -> bool,
 ) -> Option<&'static Gf256ProductTable> {
     if degree == 8 && single_u64_word && gf256_table_lane_enabled() && shared_field_context() {
-        record_gf256_axpy_lane(GF256_TABLE_LANE);
+        record_gf256_table_lane(GF256_TABLE_LANE);
         Some(product_table(reduction_low))
     } else {
-        record_gf256_axpy_lane(GF256_SCALAR_LANE);
+        record_gf256_table_lane(GF256_SCALAR_LANE);
         None
     }
 }
@@ -270,36 +353,36 @@ pub(crate) fn gf256_table_dispatch(
 // Lane witness, build counter and the test-only force switch
 // ---------------------------------------------------------------------------
 
-/// Records the lane the most recent GF(2^8) axpy dispatch selected.
+/// Records the lane the most recent GF(2^8) table dispatch selected.
 ///
 /// Compiled away outside `test` and `test-support` builds, where the recorder
 /// is an empty inlined function.
 #[cfg(any(test, feature = "test-support"))]
 #[inline]
-fn record_gf256_axpy_lane(lane: &'static str) {
-    LAST_GF256_AXPY_LANE.with(|cell| cell.set(lane));
+fn record_gf256_table_lane(lane: &'static str) {
+    LAST_GF256_TABLE_LANE.with(|cell| cell.set(lane));
 }
 
 #[cfg(not(any(test, feature = "test-support")))]
 #[inline(always)]
-fn record_gf256_axpy_lane(_lane: &'static str) {}
+fn record_gf256_table_lane(_lane: &'static str) {}
 
 #[cfg(any(test, feature = "test-support"))]
 std::thread_local! {
-    /// Lane of the most recent GF(2^8) axpy dispatch on this thread.
-    static LAST_GF256_AXPY_LANE: std::cell::Cell<&'static str> =
+    /// Lane of the most recent GF(2^8) table dispatch on this thread.
+    static LAST_GF256_TABLE_LANE: std::cell::Cell<&'static str> =
         const { std::cell::Cell::new(GF256_SCALAR_LANE) };
 }
 
-/// The lane the most recent GF(2^8) fused multiply-add took on this thread:
+/// The lane the most recent GF(2^8) table dispatch took on this thread:
 /// [`GF256_TABLE_LANE`] or [`GF256_SCALAR_LANE`].
 ///
 /// The witness the conformance suite reads to prove which path a public call
 /// took. A thread that has dispatched nothing yet reports
 /// [`GF256_SCALAR_LANE`].
 #[cfg(any(test, feature = "test-support"))]
-pub fn last_gf256_axpy_lane() -> &'static str {
-    LAST_GF256_AXPY_LANE.with(std::cell::Cell::get)
+pub fn last_gf256_table_lane() -> &'static str {
+    LAST_GF256_TABLE_LANE.with(std::cell::Cell::get)
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -328,9 +411,8 @@ pub fn gf256_table_builds() -> usize {
 static FORCE_SCALAR_GF256_TABLE: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
-/// Holds every GF(2^8) fused multiply-add on the consumer's scalar element
-/// loop, or releases it back to `gf256_table_dispatch`, and reports the
-/// previous setting.
+/// Holds every GF(2^8) caller on its own scalar path, or releases it back to
+/// `gf256_table_dispatch`, and reports the previous setting.
 ///
 /// One switch covers every caller of that dispatch, so the scalar fallback
 /// stays reachable under test on a host where the table lane would run. Both
@@ -506,7 +588,7 @@ mod tests {
     #[test]
     fn the_dispatch_declines_every_configuration_outside_single_word_gf256() {
         assert!(gf256_table_dispatch(8, true, 0x1d, || true).is_some());
-        assert_eq!(last_gf256_axpy_lane(), GF256_TABLE_LANE);
+        assert_eq!(last_gf256_table_lane(), GF256_TABLE_LANE);
 
         for (degree, single_word, shared) in [
             (4usize, true, true),
@@ -515,7 +597,7 @@ mod tests {
             (8, true, false),
         ] {
             assert!(gf256_table_dispatch(degree, single_word, 0x1d, || shared).is_none());
-            assert_eq!(last_gf256_axpy_lane(), GF256_SCALAR_LANE);
+            assert_eq!(last_gf256_table_lane(), GF256_SCALAR_LANE);
         }
     }
 
