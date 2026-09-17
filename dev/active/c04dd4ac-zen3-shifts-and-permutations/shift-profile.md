@@ -47,10 +47,11 @@ seeded representation and cache state. The baseline arm calls the public method
 at the cell's residual offset, where a non-zero `k % 64` selects a safe scalar
 double-word funnel that reads a word and its neighbour, combines them with the
 shift and its complement, and stores one word per step. The candidate arm calls
-the same public method at offset 64, where `k % 64` is zero and the call routes
-to the detected SIMD word-shift backend of the non-default `simd` cargo feature,
-which moves whole words and touches no bit lanes. Both restore the zero tail
-padding. `survey/shift-source-evidence.json` pins each of those statements.
+the same public method at offset 64, where `k % 64` is zero and the call takes
+the word-aligned dispatch: it hands whole words to the SIMD word-shift backend
+when the non-default `simd` cargo feature is built and runtime detection
+supplies one, and otherwise moves whole words scalar-wise. Either way it moves
+words and touches no bit lanes. Both arms restore the zero tail padding. `survey/shift-source-evidence.json` pins each of those statements.
 
 A ratio between these arms describes what the residual path costs relative to a
 cheaper, non-equivalent workload at the same size. It cannot establish semantic
@@ -173,9 +174,9 @@ host inside one benchmark window, not run-to-run variation across hosts or
 builds.
 
 The mechanism the gap follows is visible in the two measured paths rather than
-in the numbers: the control moves whole words through a vector backend while
-the residual path performs one scalar funnel per word with a loop-carried read
-of the neighbouring word. The ratio therefore grows where per-word work
+in the numbers: the control moves whole words, while the residual path
+performs one scalar funnel per word with a loop-carried read of the
+neighbouring word. The ratio therefore grows where per-word work
 dominates per-call overhead, which is what the size ordering shows.
 
 ## Disposition
