@@ -60,10 +60,12 @@ DVB-T2 permutation, and unsafe intrinsic code is permitted only in
 `gf2-kernels-simd` with an explicit safety contract at every unsafe boundary.
 Benchmark adapters and external representations do not enter public APIs. The
 one production change in this graph obeys that split: the residual-shift funnel
-kernel and its capability-gated scope live in `gf2-kernels-simd`, while
-`gf2-core` keeps only the safe dispatch consultation the word-aligned branch
-already performs behind the crate's non-default `simd` cargo feature, and the
-scalar funnel stays the fallback.
+kernel, its capability-gated scope and its own detected bundle live in
+`gf2-kernels-simd`, following the one-bundle-per-kernel-family convention the
+crate already uses, while `gf2-core` adds only the safe accessor and the
+dispatch consultation, in the shape and behind the non-default `simd` cargo
+feature the word-aligned branch already uses. The scalar funnel stays the
+fallback.
 
 ### `candidate-bracket-rule` [plan-fixed] — feasibility barrier before a candidate leaf
 
@@ -100,12 +102,13 @@ any route added to this primitive.
 
 ### `residual-shift-kernel-route` [implementation-produced] — the gated dispatch surface
 
-Produced by `shift-bmi2-implementation`. It binds the funnel kernel's home in
-`gf2-kernels-simd`, the `simd` cargo feature and the runtime capability that
-select it, the scalar funnel that stays the fallback, the shared behavioural
-suite both routes run, the serialized test-only route forcing the confirmation's
-arms drive, and the committed assembly artefact for the dispatched path. It
-authorizes no production retention: the route ships in order to be measured.
+Produced by `shift-bmi2-implementation`. It binds the funnel kernel's home in its
+own detected bundle in `gf2-kernels-simd`, the `simd` cargo feature and the
+runtime capability that select it, the scalar funnel that stays the fallback, the
+shared behavioural suite both routes run, the lane witness and the
+`test-support`-compiled force switch the confirmation's arms drive, and the
+committed assembly artefact for the dispatched path. It authorizes no production
+retention: the route ships in order to be measured.
 
 ### `shift-candidate-outcome` [implementation-produced] — the candidate's verdict
 
@@ -129,7 +132,7 @@ above unspent; any later nomination re-enters that barrier.
 | Key | Title | Type | Outcome | Contracts | Sources | Footprint | Landing | Depends on |
 |---|---|---|---|---|---|---|---|---|
 | shift-workload-profile | Profile the residual BitVec shift family | simulation | Residual-shift materiality has a protocol-complete disposition | measurement-authority, semantic-boundaries, family-scope, candidate-bracket-rule | REQ-01, REQ-07, REQ-08, REQ-09, REQ-11, INV-CLASSIFICATION, INV-CONSUMERS, INV-ARCHITECTURE, MEASUREMENT-CONTRACT, PROTOCOL-V4 | creates 4, touches 1 | — | — |
-| shift-bmi2-implementation | Route residual BitVec shifts through a BMI2-gated funnel kernel | task | Residual BitVec shifts run a BMI2-gated funnel kernel behind runtime detection | measurement-authority, semantic-boundaries, family-scope, layer-ownership, candidate-bracket-rule, shift-profile-disposition | REQ-07, REQ-08, REQ-09, REQ-11, INV-ARCHITECTURE, MEASUREMENT-CONTRACT, SHIFT-PROFILE, SHIFT-FEASIBILITY | creates 3, touches 5, uncertain | — | shift-workload-profile |
+| shift-bmi2-implementation | Route residual BitVec shifts through a BMI2-gated funnel kernel | task | Residual BitVec shifts run a BMI2-gated funnel kernel behind runtime detection | measurement-authority, semantic-boundaries, family-scope, layer-ownership, candidate-bracket-rule, shift-profile-disposition | REQ-07, REQ-08, REQ-09, REQ-11, INV-ARCHITECTURE, MEASUREMENT-CONTRACT, SHIFT-PROFILE, SHIFT-FEASIBILITY | creates 4, touches 4 | — | shift-workload-profile |
 | shift-bmi2-confirmation | Confirm the BMI2 residual shift route against the scalar funnel | simulation | The gated residual shift route has a protocol-complete A/B verdict at the profile's material cells | measurement-authority, semantic-boundaries, family-scope, candidate-bracket-rule, shift-profile-disposition, residual-shift-kernel-route | REQ-01, REQ-07, REQ-11, MEASUREMENT-CONTRACT, PROTOCOL-V4, SHIFT-PROFILE | creates 3, touches 3 | — | shift-bmi2-implementation |
 | dvb-interleave-profile | Profile the production DVB-T2 bit interleaver | simulation | DVB-T2 interleave materiality has a protocol-complete disposition | measurement-authority, semantic-boundaries, family-scope, layer-ownership, candidate-bracket-rule | REQ-01, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, INV-CONSUMERS, INV-PRIOR-ART, INV-ARCHITECTURE, EDA07788-FINDINGS, DVB-REPAIR, MEASUREMENT-CONTRACT, PROTOCOL-V4 | creates 4, touches 2 | — | — |
 | story-evidence-publication | Publish the shift-permutation dispositions | task | Generated evidence publishes each workload family's current disposition | measurement-authority, semantic-boundaries, family-scope, candidate-bracket-rule, shift-profile-disposition, shift-candidate-outcome, dvb-profile-disposition | REQ-01, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, INV-CLASSIFICATION, INV-CONSUMERS, INV-PRIOR-ART, INV-ARCHITECTURE, EDA07788-FINDINGS, DVB-REPAIR, MEASUREMENT-CONTRACT, PROTOCOL-V4, SHIFT-PROFILE, SHIFT-FEASIBILITY | creates 3 | — | dvb-interleave-profile, shift-bmi2-confirmation |
