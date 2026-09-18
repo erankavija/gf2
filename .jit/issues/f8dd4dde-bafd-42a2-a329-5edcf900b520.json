@@ -74,8 +74,16 @@
       "format": "markdown",
       "label": "Generator for the Rust 1.95 validation record",
       "path": "dev/active/f8dd4dde/validate-msrv.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "f8dd4dde lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f8dd4dde-r1.md"
     }
   ],
+  "done_at": "2026-09-18T17:03:21.575276835Z",
   "first_ready_at": "2026-09-18T10:59:58.864310516Z",
   "gates_required": [
     "cargo-ci",
@@ -118,7 +126,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Route residual BitVec shifts through a BMI2-gated funnel kernel",
-  "updated_at": "2026-09-18T17:02:32.735521827Z"
+  "updated_at": "2026-09-18T17:03:21.575276835Z"
 }
