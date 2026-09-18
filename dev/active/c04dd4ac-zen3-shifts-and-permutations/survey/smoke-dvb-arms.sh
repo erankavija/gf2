@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
-# Non-timed wire-contract smoke of the DVB profile arms (jit:9fb40c83).
-#
-# Drives every arm of every frozen cell in the validation role with the runner's
-# own request framing and child environment, so each arm performs one untimed
-# dispatch and returns no timing window. The smoke opens no campaign: it takes
-# no lock, reserves nothing in the family ledger, writes no stage and finalizes
-# no receipt. The arm is a separate workspace, so its request mirror and its
-# environment contract hold only when the two processes actually speak.
+# Non-timed smoke of the DVB profile arms (jit:9fb40c83).
 #
 # Usage (from the worker worktree root): smoke-dvb-arms.sh [--check]
+# Contract: `benchmark-ab-runner smoke`, stated at
+# `tuning_campaign_support::arm::smoke`.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,8 +24,6 @@ SURVEY="${ACTIVE}/survey"
 ADDENDUM="${ACTIVE}/dvb-profile-addendum.json"
 PRODUCING="${SURVEY}/dvb-producing-inputs.json"
 PLAN_TOOL="${SURVEY}/make-dvb-plan.py"
-MANIFEST="${SURVEY}/arm-smoke/Cargo.toml"
-DRIVER="${SURVEY}/arm-smoke/target/release/arm-smoke"
 RECORD="${SURVEY}/runner-smoke.txt"
 ARM="${REPO}/target/9fb40c83-arms-native/release/dvb-profile-arm"
 SMOKE=target/9fb40c83-arm-smoke
@@ -43,15 +36,15 @@ export CARGO_CI_NO_SCCACHE=1
     echo "${ARM} is absent; run ${SURVEY}/build-dvb-harness.sh first" >&2
     exit 2
 }
-./scripts/cargo-budget.sh cargo build --release --manifest-path "${MANIFEST}" >/dev/null
-./scripts/cargo-budget.sh --test cargo test --release --manifest-path "${MANIFEST}"
+./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
+    --bin benchmark-ab-runner
+RUNNER="$(realpath target/release/benchmark-ab-runner)"
 
 rm -rf "${SMOKE}"
 mkdir -p "${SMOKE}"
 
 # The plan is the campaign's own projection of the frozen addendum over every
-# frozen cell; the lock it names is never opened, because the smoke measures
-# nothing.
+# frozen cell; the lock it names is never opened.
 python3 -B "${PLAN_TOOL}" \
     --addendum "${ADDENDUM}" \
     --campaign-id 9fb40c83-dvb-interleave-arms-smoke \
@@ -63,9 +56,9 @@ python3 -B "${PLAN_TOOL}" \
     --max-cells-per-session 2 \
     --pilot-pairs 6
 
-"${DRIVER}" --plan "${SMOKE}/plan.json" --output "${SMOKE}/observations.json"
+"${RUNNER}" smoke "${SMOKE}/plan.json" --record "${SMOKE}/smoke.json"
 python3 -B "${SURVEY}/summarize-arm-smoke.py" \
-    --observations "${SMOKE}/observations.json" --format text --output "${RECORD}" \
+    --record "${SMOKE}/smoke.json" --output "${RECORD}" \
     --title 'DVB-T2 interleaver profile non-timed arm smoke' \
     --command "${SURVEY}/smoke-dvb-arms.sh" ${MODE:+--check}
 cat "${RECORD}"
