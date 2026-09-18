@@ -11,7 +11,6 @@
 //!                          [--isal-executable <path>] [--label pilot|smoke]
 //!                          [--max-cells-per-session <n>] [--pilot-pairs <n>]
 //!                          [--isolated-candidate <route>]
-//! logical-campaign smoke   --plan <path> --addendum <path> --stage <dir>
 //! logical-campaign inputs  --producing-manifest <path> [--also <path>]...
 //! ```
 //!
@@ -19,18 +18,14 @@
 //! byte for byte with a candidate campaign addendum, so a campaign JSON that
 //! changes a cell, margin, limit or rule fails closed.
 //!
-//! `smoke` drives one non-timed session of a projected plan: it exits 0 when
-//! the plan is complete and 3 when the plan's per-session cell budget pauses
-//! it, mirroring the campaign runner's resumable-pause convention.
-//!
 //! `inputs` refuses unless every path of the producing-input closure, plus each
 //! `--also` path, is tracked by git and identical to its committed content.
 
 use logical_buffer_harness::cells::{family_cells, Question};
 use logical_buffer_harness::routes::Route;
-use logical_buffer_harness::{campaign, inputs, smoke};
+use logical_buffer_harness::{campaign, inputs};
 use std::collections::BTreeMap;
-use tuning_campaign_support::protocol::{FamilyAddendum, ReceiptLabel, RunnerPlan};
+use tuning_campaign_support::protocol::{FamilyAddendum, ReceiptLabel};
 
 fn main() {
     if let Err(error) = run() {
@@ -133,7 +128,7 @@ fn transcribe(arguments: &Arguments) -> Result<(Question, FamilyAddendum), Strin
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     let (command, rest) = raw.split_first().ok_or(
-        "usage: logical-campaign <pins|list|cells|verify|plan|smoke|inputs> --flag value ...",
+        "usage: logical-campaign <pins|list|cells|verify|plan|inputs> --flag value ...",
     )?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
@@ -290,35 +285,6 @@ fn run() -> Result<(), String> {
                 plan.arms.len()
             );
             Ok(())
-        }
-        "smoke" => {
-            let stage = std::path::Path::new(arguments.required("stage")?);
-            let plan_path = arguments.required("plan")?;
-            let addendum_path = arguments.required("addendum")?;
-            let plan_bytes = std::fs::read(plan_path)
-                .map_err(|error| format!("cannot read {plan_path}: {error}"))?;
-            let plan: RunnerPlan = serde_json::from_slice(&plan_bytes)
-                .map_err(|error| format!("{plan_path} does not decode: {error}"))?;
-            let addendum_bytes = std::fs::read(addendum_path)
-                .map_err(|error| format!("cannot read {addendum_path}: {error}"))?;
-            let addendum = FamilyAddendum::decode(&addendum_bytes)?;
-            addendum
-                .validate()
-                .map_err(|errors| format!("{addendum_path} is invalid: {}", errors.join("; ")))?;
-            let outcome = smoke::session(
-                &repository_root()?,
-                stage,
-                &plan,
-                &plan_bytes,
-                &addendum,
-                &addendum_bytes,
-            )
-            .map_err(|error| format!("the non-timed smoke failed: {error}"))?;
-            println!(
-                "{}: {:?} after {} handshake cells, zero timing samples",
-                plan.campaign_id, outcome.state, outcome.completed
-            );
-            std::process::exit(outcome.exit_code());
         }
         "inputs" => {
             let manifest = arguments.required("producing-manifest")?;
