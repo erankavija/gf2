@@ -317,6 +317,20 @@
       "format": "markdown",
       "label": "Smoke-record text renderer",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-arm-smoke.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Provenance closure of the v4-r2 dynamic profile (generated)",
+      "path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Profile provenance closure generator, content-verified against the measured tree",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-profile-provenance.py"
     }
   ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
@@ -361,5 +375,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-18T16:20:19.651378938Z"
+  "updated_at": "2026-09-18T18:03:42.561043266Z"
 }
