@@ -181,26 +181,28 @@ def decomposition(receipt: dict) -> None:
         )
     print()
 
-    print("### Conversion parts of the xdsopl arm")
+    print("### Conversion parts of both arms")
     print()
     print(
-        "The arm times unpack, the destructive-input copy with output allocation, and pack "
-        "inside every call. The remainder is the per-call total less those three parts and holds "
-        "the `PCTITL` permutation together with the final packed-batch wrap, which the arm does "
-        "not time separately, so the remainder is not a `PCTITL` figure. Each part is the median "
-        "over the same pairs with its own order-statistic interval."
+        "Each arm times unpack, the destructive-input copy with output allocation, and pack "
+        "inside every call, and reports them whether or not it crosses a representation "
+        "boundary. The remainder is the per-call total less those three parts; for the xdsopl arm "
+        "it holds the `PCTITL` permutation together with the final packed-batch wrap, which the "
+        "arm does not time separately, so the remainder is not a `PCTITL` figure. Each part is "
+        "the median over the same pairs with its own order-statistic interval."
     )
     print()
-    print("| Cell | part | pairs | ns/call | interval |")
-    print("|---|---|---:|---:|---|")
+    print("| Cell | arm | part | pairs | ns/call | interval |")
+    print("|---|---|---|---:|---:|---|")
     for cell in cells:
-        parts = side_parts(cell, "candidate")
-        for key, name in PART_NAMES:
-            statistic = order_statistic(parts[key])
-            print(
-                f"| `{cell['cell_id']}` | {name} | {len(cell['pairs'])} | "
-                f"{fixed(statistic[0])} | {span(statistic[1], statistic[2])} |"
-            )
+        for side, arm in (("baseline", "gf2 stage"), ("candidate", "xdsopl")):
+            parts = side_parts(cell, side)
+            for key, name in PART_NAMES:
+                statistic = order_statistic(parts[key])
+                print(
+                    f"| `{cell['cell_id']}` | {arm} | {name} | {len(cell['pairs'])} | "
+                    f"{fixed(statistic[0])} | {span(statistic[1], statistic[2])} |"
+                )
     print()
 
 
