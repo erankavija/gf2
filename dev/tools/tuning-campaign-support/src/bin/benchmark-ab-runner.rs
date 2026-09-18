@@ -1022,7 +1022,10 @@ fn smoke(plan_path: &Path, record_path: Option<&Path>) -> io::Result<i32> {
     if let Some(path) = record_path {
         let mut bytes = serde_json::to_vec_pretty(&record)?;
         bytes.push(b'\n');
-        if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+        if let Some(parent) = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+        {
             fs::create_dir_all(parent)?;
         }
         fs::write(path, bytes)?;

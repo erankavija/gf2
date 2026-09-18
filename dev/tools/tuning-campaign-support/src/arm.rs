@@ -31,7 +31,8 @@ pub const SMOKE_RECORD_SCHEMA: &str = "zen3-arm-smoke-record-v1";
 /// Variables an arm child inherits from the runner's own environment; the
 /// child's environment is otherwise the plan arm's declaration and the
 /// fresh-child sentinel.
-pub const INHERITED_ENVIRONMENT: [&str; 4] = ["PATH", "HOME", "RAYON_NUM_THREADS", "RUSTUP_TOOLCHAIN"];
+pub const INHERITED_ENVIRONMENT: [&str; 4] =
+    ["PATH", "HOME", "RAYON_NUM_THREADS", "RUSTUP_TOOLCHAIN"];
 
 const CHILD_KILL_GRACE: Duration = Duration::from_secs(CHILD_KILL_GRACE_SECONDS);
 static ALL_REAPED: AtomicBool = AtomicBool::new(true);
