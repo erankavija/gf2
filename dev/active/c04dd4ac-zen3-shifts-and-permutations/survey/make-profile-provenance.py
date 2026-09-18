@@ -41,6 +41,7 @@ BUILD_GATE = "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/build-dvb-
 LAUNCHER = "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-profile.sh"
 CASES = "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/profile-cases.txt"
 QUEUE = "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+RENDERER = "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/render-hot-instructions.sh"
 PROFILE_SOURCE = "dev/active/eda07788/survey/gf2-side/src/bin/dvb-profile.rs"
 LIBRARY_SOURCE = "dev/active/eda07788/survey/gf2-side/src/lib.rs"
 ENTROPY = re.compile(r"thread_rng|rand::|from_entropy|getrandom|SystemTime|RandomState")
@@ -238,6 +239,31 @@ def main() -> None:
             f"| `{path.relative_to(session).as_posix()}` | `{sha256(path.read_bytes())}` |",
             file=out,
         )
+    perf = sorted(
+        path
+        for pattern in ("rep-*/counters/*", "rep-*/hot/*")
+        for path in session.glob(pattern)
+        if path.is_file()
+    )
+    aggregate = sha256(
+        "".join(
+            f"{sha256(path.read_bytes())}  {path.relative_to(session).as_posix()}\n"
+            for path in perf
+        ).encode()
+    )
+    print(
+        f"| counter and sample files ({len(perf)}), aggregate | `{aggregate}` |",
+        file=out,
+    )
+    print(f"| `{RENDERER}` at this checkout | `{sha256((repo / RENDERER).read_bytes())}` |", file=out)
+    print(file=out)
+    print(
+        "The aggregate is the SHA-256 of the `<digest>  <path>` lines of every counter and "
+        "sample file the session retains, in path order. The instruction listings beside those "
+        "samples are the renderer's output over them and the executable the samples name, which "
+        "is why the renderer's identity belongs to this record.",
+        file=out,
+    )
     print(file=out)
 
     print("## Executable and build closure", file=out)
