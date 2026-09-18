@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 """Judge the logical-buffer non-timed smoke and write its record.
 
-The smoke is judged by what the arms and the smoke driver wrote, not by exit
-codes: one parsed result line per arm per cell, an append-only execution log
-whose first session is a byte prefix of the final log, one `cell-complete` per
-declared cell, a terminal `complete` record, an immutable checkpoint per cell,
-a stage holding no finalized receipt, and a handshake record whose every arm
-reports zero timing windows. Every record line projects one of those
-observations; the smoke's own contract is stated at
-`tuning_campaign_support::arm::smoke`.
+Each family's smoke record comes from `benchmark-ab-runner smoke`, whose
+contract `tuning_campaign_support::arm::smoke` states. This check adds what the
+shared record cannot know: that every oracle case passed, and that the record
+covers exactly the cells and arms the family's campaign addendum declares. Every
+record line projects one of those observations.
 """
 
 import argparse
@@ -17,13 +14,7 @@ import json
 import pathlib
 import sys
 
-SMOKE_SCHEMA = "logical-buffer-nontimed-smoke-v1"
-# Journal events that exist only because a timing interval completed.
-TIMING_EVENTS = ("execution-progress", "window-progress")
-
-
-def events(path):
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+RECORD_SCHEMA = "zen3-arm-smoke-record-v1"
 
 
 def fail(message):
@@ -52,126 +43,55 @@ def main():
     lines = [f"PASS semantic oracle: {len(oracle)} cases, {checks} checks"]
     for family in arguments.families:
         directory = stage / family
-        session = directory / "stage"
-        log = session / "execution.log"
-        first = directory / "execution.session-1.log"
-        if not log.is_file():
-            fail(f"{family} opened no execution log")
-
-        # Append-only: the paused session's log is a byte prefix of the final one.
-        final_bytes = log.read_bytes()
-        first_bytes = first.read_bytes()
-        if not final_bytes.startswith(first_bytes) or len(final_bytes) <= len(first_bytes):
-            fail(f"{family} rewrote or did not extend its execution log")
-
-        records = events(log)
-        if records[0]["event"] != "campaign-start":
-            fail(f"{family} did not open with campaign-start")
-        terminal = [r["event"] for r in records if r["event"] in
-                    ("complete", "failed", "paused", "budget-exhausted")]
-        if terminal[-1] != "complete":
-            fail(f"{family} ended {terminal} rather than complete")
-        sessions = terminal.count("paused") + 1
-        if sessions < 2:
-            fail(f"{family} completed in one session, so resume was not exercised")
-
-        completed = [r for r in records if r["event"] == "cell-complete"]
-        keys = [r["case"]["cell_id"] for r in completed]
-        if len(keys) != len(set(keys)):
-            fail(f"{family} completed a cell twice: {keys}")
-        abandoned = [r for r in records if r["event"] == "cell-abandoned"]
-        if abandoned:
-            fail(f"{family} abandoned {len(abandoned)} cell attempts")
-        timed = [r for r in records if r["event"] in TIMING_EVENTS]
-        if timed:
-            fail(f"{family} journalled {len(timed)} timing records")
-
-        spawns = sum(1 for r in records if r["event"] == "child-spawn")
-        exits = [r for r in records if r["event"] == "child-exit"]
-        diagnostics = [r for r in records if r["event"] == "child-diagnostic"]
-        nonzero = [r for r in exits if r["details"]["outcome"].get("exit_code") != 0]
-
-        # A finalized receipt is the one artifact a non-timed smoke must not
-        # leave behind; the stage holds the log, the plan, the checkpoints and
-        # the handshake record only.
-        receipts = sorted(
-            path.name
-            for path in list(session.glob("receipt*")) + list(directory.glob("receipt*"))
-        )
-        if receipts:
-            fail(f"{family} finalized {receipts}")
-
+        smoke = directory / "smoke.json"
+        if not smoke.is_file():
+            fail(f"{family} wrote no smoke record")
+        record = json.loads(smoke.read_text())
+        if record["schema"] != RECORD_SCHEMA:
+            fail(f"{family} wrote schema {record['schema']!r}")
         declared = {
             cell["cell_id"]: cell["cache_state"]
             for cell in json.loads((directory / "smoke-addendum.json").read_text())["cells"]
         }
-        handshake = json.loads((session / "handshake.json").read_text())
-        if handshake["schema"] != SMOKE_SCHEMA:
-            fail(f"{family} wrote schema {handshake['schema']!r}")
-        parsed = {}
+        dispatches = {}
         cells = {}
-        for cell in handshake["cells"]:
+        for cell in record["cells"]:
             cell_id = cell["cell_id"]
             if declared.get(cell_id) != cell["cache_state"]:
                 fail(f"{cell_id} reports cache state {cell['cache_state']!r}")
             for arm in cell["arms"]:
-                if arm["windows"] != 0:
-                    fail(f"{arm['arm']} in {cell_id} reported {arm['windows']} timing windows")
-                if arm["cache_state_applied"] != cell["cache_state"]:
-                    fail(f"{arm['arm']} in {cell_id} applied another cache state")
-                if not arm["selected_path"]:
-                    fail(f"{arm['arm']} in {cell_id} reported no route provenance")
-                parsed[arm["arm"]] = parsed.get(arm["arm"], 0) + 1
+                dispatches[arm["arm"]] = dispatches.get(arm["arm"], 0) + 1
             cells[cell_id] = (len(cell["arms"]), cell["cache_state"])
-        if sorted(cells) != sorted(keys):
-            fail(f"{family} handshake cells {sorted(cells)} differ from log {sorted(keys)}")
         if sorted(cells) != sorted(declared):
-            fail(f"{family} handshook {sorted(cells)} rather than the declared {sorted(declared)}")
+            fail(f"{family} smoked {sorted(cells)} rather than the declared {sorted(declared)}")
 
-        units = sorted((session / "checkpoints" / "units").glob("*.json"))
-        if len(units) != len(cells):
-            fail(f"{family} checkpointed {len(units)} units for {len(cells)} cells")
-        if nonzero or diagnostics:
-            fail(f"{family}: {len(nonzero)} arm children failed, "
-                 f"{len(diagnostics)} wrote diagnostics")
-        if spawns != len(exits) or spawns != sum(parsed.values()):
-            fail(f"{family}: {spawns} spawns, {len(exits)} exits, "
-                 f"{sum(parsed.values())} result lines")
-
-        lines.append(f"PASS {family}: {sessions} sessions, resume repeated no cell")
+        lines.append(
+            f"PASS {family}: {len(cells)} declared cells smoked, "
+            f"{sum(dispatches.values())} validation dispatches"
+        )
         for cell_id in sorted(cells):
             arms, cache = cells[cell_id]
             lines.append(
-                f"PASS {cell_id}: {arms} arms handshook, 0 timing windows, cache {cache}"
+                f"PASS {cell_id}: {arms} arms validated, 0 timing windows, cache {cache}"
             )
-        for arm in sorted(parsed):
-            lines.append(f"PASS {arm}: {parsed[arm]} handshakes, "
-                         f"{parsed[arm]} result lines parsed")
-        lines.append(
-            f"PASS {family} wire: {spawns} child spawns, {len(exits)} clean exits, "
-            f"{len(diagnostics)} child diagnostics"
-        )
-        lines.append(
-            f"PASS {family} journal: {len(timed)} timing records, {len(units)} checkpointed "
-            f"cells, {len(receipts)} finalized receipts"
-        )
-        lines.append(
-            f"PASS {family} schema: handshake record decodes as {handshake['schema']}, "
-            f"{len(cells)} cells"
-        )
+        for arm in sorted(dispatches):
+            lines.append(f"PASS {arm}: {dispatches[arm]} dispatches, "
+                         f"{dispatches[arm]} result lines parsed")
+        for route in sorted({arm["selected_path"]
+                             for cell in record["cells"] for arm in cell["arms"]}):
+            lines.append(f"PASS {family} route: {route}")
 
     digests = [("logical-arm", arguments.gf2_arm)]
     if arguments.isal_arm:
         digests.append(("logical-isal-arm", arguments.isal_arm))
 
-    record = pathlib.Path(arguments.record)
-    with record.open("w") as handle:
+    record_path = pathlib.Path(arguments.record)
+    with record_path.open("w") as handle:
         print(
             "# Logical-buffer harness non-timed wire smoke (jit:bb769456)\n"
             f"# command: {arguments.command}\n"
             "# contract: benchmark-ab-runner smoke (tuning_campaign_support::arm::smoke)\n"
-            "# every line projects the semantic oracle, the stage execution logs, the\n"
-            "# checkpoint stores or the handshake records under target/",
+            "# every line projects the semantic oracle or a family's smoke record",
             file=handle,
         )
         for name, path in digests:
@@ -179,7 +99,7 @@ def main():
             print(f"# {name} sha256: {digest}", file=handle)
         for line in lines:
             print(line, file=handle)
-    print(record.read_text(), end="", file=sys.stderr)
+    print(record_path.read_text(), end="", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -471,6 +471,11 @@ pub fn validate_arm(
 /// declare fails before any arm runs.
 ///
 /// `root` is the repository root the plan's relative paths resolve against.
+///
+/// Each dispatch makes this process a child subreaper that reaps adopted
+/// children ([`crate::process::run_process`]), so a test binary calling the
+/// smoke must not also spawn and wait on unrelated children: those belong in
+/// their own test binary.
 pub fn smoke(root: &Path, plan_path: &Path) -> io::Result<SmokeRecord> {
     let plan_bytes = std::fs::read(plan_path)?;
     let plan = RunnerPlan::decode(&plan_bytes).map_err(invalid)?;
