@@ -53,6 +53,7 @@ mod macros;
 pub mod matrix;
 pub mod matrix_like;
 pub mod primitive_polys;
+pub mod residual_shift;
 pub mod sparse;
 pub mod tuning;
 
@@ -97,6 +98,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns;
     use gf2_kernels_simd::gf2m_wide::{ClmulWide256Fns, ClmulWide571Fns, Gf2mWideFns};
     use gf2_kernels_simd::mersenne::MersenneFns;
+    use gf2_kernels_simd::shift_funnel::ShiftFunnelFns;
     use gf2_kernels_simd::transpose::TransposeFns;
     use gf2_kernels_simd::LogicalFns;
     use std::sync::OnceLock;
@@ -116,11 +118,30 @@ pub(crate) mod simd {
     static FP_SMALL_PANEL_FNS: OnceLock<Option<SmallPrimePanelFns>> = OnceLock::new();
     static FP_SMALL_PLE_FNS: OnceLock<Option<SmallPrimePlePanelFns>> = OnceLock::new();
     static GF2M_WIDE_FNS: OnceLock<Option<Gf2mWideFns>> = OnceLock::new();
+    static SHIFT_FUNNEL_FNS: OnceLock<Option<ShiftFunnelFns>> = OnceLock::new();
     static TRANSPOSE_FNS: OnceLock<Option<TransposeFns>> = OnceLock::new();
 
     #[inline]
     pub fn maybe_simd() -> Option<&'static LogicalFns> {
         FNS.get_or_init(gf2_kernels_simd::detect).as_ref()
+    }
+
+    /// Returns the residual bit-shift funnel kernels, if any.
+    ///
+    /// This whole module is compiled only under this crate's `simd` cargo
+    /// feature, which is not one of its defaults. The kernels need the `bmi2`
+    /// processor feature, which
+    /// [`gf2_kernels_simd::shift_funnel::detect`] tests at run time; the
+    /// bundle is its own detection with its own feature, so a host that reports
+    /// `bmi2` without AVX2 still reaches it. `None` means the residual branch of
+    /// [`BitVec::shift_left`](crate::BitVec::shift_left) and
+    /// [`shift_right`](crate::BitVec::shift_right) runs its portable funnel;
+    /// [`crate::residual_shift`] owns that selection.
+    #[inline]
+    pub fn maybe_shift_funnel() -> Option<&'static ShiftFunnelFns> {
+        SHIFT_FUNNEL_FNS
+            .get_or_init(gf2_kernels_simd::shift_funnel::detect)
+            .as_ref()
     }
 
     /// Returns the production 64×64 bit-block transpose kernels, if any.
@@ -403,6 +424,14 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_mersenne() -> Option<()> {
+        None
+    }
+
+    /// Without the `simd` feature no kernel bundle is compiled, so
+    /// [`crate::residual_shift`] never reaches for one.
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_shift_funnel() -> Option<()> {
         None
     }
 

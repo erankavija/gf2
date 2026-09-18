@@ -463,6 +463,15 @@ impl BitVec {
 
     /// Shifts all bits left by `k` positions. Bits shifted out are lost; zeros fill from the right.
     ///
+    /// # Routes
+    ///
+    /// A `k` that is a whole number of words consults the logical kernel bundle,
+    /// which needs this crate's non-default `simd` cargo feature and the `avx2`
+    /// processor feature. Any other `k` goes to
+    /// [`crate::residual_shift`], whose kernel route needs the same cargo
+    /// feature and the `bmi2` processor feature and whose fallback is the
+    /// portable funnel. Every route writes the same bits.
+    ///
     /// # Examples
     ///
     /// ```
@@ -505,24 +514,18 @@ impl BitVec {
                 self.data[i] = 0;
             }
         } else {
-            // Non-aligned shift
-            let inv_shift = 64 - bit_shift;
-            for i in (word_shift + 1..self.data.len()).rev() {
-                self.data[i] = (self.data[i - word_shift] << bit_shift)
-                    | (self.data[i - word_shift - 1] >> inv_shift);
-            }
-            if word_shift < self.data.len() {
-                self.data[word_shift] = self.data[0] << bit_shift;
-            }
-            for i in 0..word_shift.min(self.data.len()) {
-                self.data[i] = 0;
-            }
+            crate::residual_shift::shift_left(&mut self.data, word_shift, bit_shift as u32);
         }
 
         self.mask_tail();
     }
 
     /// Shifts all bits right by `k` positions. Bits shifted out are lost; zeros fill from the left.
+    ///
+    /// # Routes
+    ///
+    /// The same two branches as [`BitVec::shift_left`], under the same cargo
+    /// feature and processor features.
     ///
     /// # Examples
     ///
@@ -566,20 +569,7 @@ impl BitVec {
                 self.data[i] = 0;
             }
         } else {
-            // Non-aligned shift
-            let inv_shift = 64 - bit_shift;
-            for i in 0..(self.data.len() - word_shift - 1) {
-                self.data[i] = (self.data[i + word_shift] >> bit_shift)
-                    | (self.data[i + word_shift + 1] << inv_shift);
-            }
-            if word_shift < self.data.len() {
-                let len = self.data.len();
-                let last_val = self.data[len - 1] >> bit_shift;
-                self.data[len - word_shift - 1] = last_val;
-            }
-            for i in (self.data.len() - word_shift)..self.data.len() {
-                self.data[i] = 0;
-            }
+            crate::residual_shift::shift_right(&mut self.data, word_shift, bit_shift as u32);
         }
 
         self.mask_tail();
