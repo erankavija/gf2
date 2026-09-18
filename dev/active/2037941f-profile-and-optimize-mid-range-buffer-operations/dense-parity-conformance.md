@@ -28,7 +28,7 @@ decision to it.
 
 | Clauses checked | Conforming | Fixed here | Cannot conform |
 |---:|---:|---:|---:|
-| 112 | 104 | 8 | 0 |
+| 113 | 105 | 8 | 0 |
 
 The eight fixed clauses are the rows whose verdict names a commit. Every other
 row conformed before this round; no clause of the addendum, the contract or the
@@ -92,7 +92,7 @@ so it carries no row of its own.
 | The exploratory comparator matrix adds the four remaining qualified shapes and the two retained-state cells; a retained-state cell never replaces a fresh one | `survey/dense-harness/src/cells.rs:422` | `the_cell_table_reproduces_the_frozen_matrices` | conforms |
 | The external arm converts once per retained-state cell and both arms still allocate a fresh output | `survey/dense-harness/src/bin/dense-m4ri-arm.rs:261`, `survey/m4ri_matvec_arm.c:99` | `every_comparator_cell_is_a_warm_whole_consumer_cell` | conforms |
 | The external arm must arrange the one warm item the family declares | `survey/dense-harness/src/bin/dense-m4ri-arm.rs:248` refuses another cache state | `every_comparator_cell_is_a_warm_whole_consumer_cell` | FIXED in `21eb1ab7` |
-| The three unqualified anchor strides are retained as `unavailable` rows with a reason and zero samples, take no ordinal, and carry the exploratory role | `survey/dense-harness/src/cells.rs:241`, printed by `survey/dense-harness/src/bin/dense-campaign.rs:230` | `the_unavailable_comparator_rows_take_no_ordinal` | conforms |
+| The three unqualified anchor strides are retained as `unavailable` rows with a reason and zero samples, take no ordinal, and carry the exploratory role | `survey/dense-harness/src/cells.rs:241`, printed by `survey/dense-harness/src/bin/dense-campaign.rs:196` | `the_unavailable_comparator_rows_take_no_ordinal` | conforms |
 | Admitting an unqualified shape needs a newly qualified shape and a versioned amendment | `survey/dense-harness/src/wire.rs:82` refuses a case whose shape is not qualified | `an_unfrozen_case_is_refused` | conforms |
 
 ## Input identities and correctness
@@ -111,18 +111,19 @@ so it carries no row of its own.
 | "Both arms of a cell see the same fixture bytes." | `survey/dense-harness/src/fixture.rs:217`, reached from both arms with the cell's own seed | `a_working_set_is_a_pure_function_of_its_cell` | conforms |
 | The external arm receives the same canonical gf2 words and reaches only `mzd_write_bit`/`mzd_read_bit`; no arm exposes M4RI storage as a word slice or compares physical strides | `survey/dense-harness/src/bin/dense-m4ri-arm.rs:58`, `survey/m4ri_matvec_arm.c:38` | `dense-m4ri-arm --oracle` | conforms |
 | The untimed smoke covers logical column counts 0, 1, 63, 64, 65, all seven word counts and both shapes | `survey/dense-harness/src/oracle.rs:99`, `survey/dense-harness/src/oracle.rs:127` | `the_oracle_covers_every_frozen_boundary_and_passes` | conforms |
-| The untimed smoke covers both cold and warm entry and resume after each cell boundary | `survey/dense-harness/src/smoke.rs:91` with `max_cells_per_session` one; `survey/make-dense-smoke-addenda.py:23` contributes the frozen cold cell | record `survey/dense-runner-smoke.txt`, judged by `survey/check-dense-smoke.py` | conforms |
+| The untimed smoke covers both cold and warm entry | `survey/make-dense-smoke-addenda.py:22` contributes the frozen cold cell beside the warm anchor | record `survey/dense-runner-smoke.txt`, judged by `survey/check-dense-smoke.py` | conforms |
+| Resume after each cell boundary, which no untimed dispatch enters | runner `benchmark-ab-runner run`; the untimed smoke opens no session | `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs::runner_announces_the_log_before_work_and_resumes_without_repeating` | conforms |
 | "The oracle is an independent row-parity computation in the harness, not a gf2 route" | `survey/dense-harness/src/oracle.rs:41` | `the_oracle_covers_every_frozen_boundary_and_passes` | conforms |
 | The oracle checks every output bit, the output length, canonical LSB-first indexing, zero tail padding and input immutability | `survey/dense-harness/src/oracle.rs:48`, `survey/dense-harness/src/oracle.rs:108` | `the_oracle_covers_every_frozen_boundary_and_passes` | conforms |
 | The external arm additionally checks its allocations, the zeroing of excess bits, the coordinates and disposal | `survey/dense-harness/src/bin/dense-m4ri-arm.rs:149` | `dense-m4ri-arm --oracle` | conforms |
-| "Smoke execution emits no timing samples and cannot serve as a pilot." | `survey/dense-harness/src/routes.rs:374` returns before the timing protocol; the shared `tuning_campaign_support::arm::validate_arm` refuses an arm that reports a window | `a_zero_window_arrangement_pass_collects_no_timing_sample`, `the_smoke_dispatch_fails_an_arm_that_reports_a_timing_window` | conforms |
+| "Smoke execution emits no timing samples and cannot serve as a pilot." | `survey/dense-harness/src/routes.rs:374` returns before the timing protocol; `benchmark-ab-runner smoke` refuses an arm that reports a window | `a_zero_window_arrangement_pass_collects_no_timing_sample`, `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs::smoke_drives_every_arm_untimed_and_reproduces_its_record` | conforms |
 
 ## Cache, warmup, and sampling
 
 | Clause | Harness location | Test | Verdict |
 |---|---|---|---|
-| "All builds finish before timing and use release mode." | `survey/run-dense-harness.sh:293` builds every launched executable before the closure checks and the launch | record `survey/dense-harness-validation.txt` | conforms |
-| "Measurements run on the prepared Ryzen 9 5900X under the repository's full-host benchmark-window lock" | `survey/dense-harness/src/campaign.rs:430`, `survey/run-dense-harness.sh:375`; the arms refuse a hand invocation at `survey/dense-harness/src/wire.rs:191` | `every_dense_arm_accepts_the_shared_validation_request` | conforms |
+| "All builds finish before timing and use release mode." | `survey/run-dense-harness.sh:264` builds every launched executable before the closure checks and the launch | record `survey/dense-harness-validation.txt` | conforms |
+| "Measurements run on the prepared Ryzen 9 5900X under the repository's full-host benchmark-window lock" | `survey/dense-harness/src/campaign.rs:430`, `survey/run-dense-harness.sh:346`; the arms refuse a hand invocation at `survey/dense-harness/src/wire.rs:191` | `every_dense_arm_accepts_the_shared_validation_request` | conforms |
 | The runner records CPU IDs, topology, affinity, SMT, governors, clocks, capabilities, toolchain, executable digests and selected routes | runner `benchmark-ab-runner` per protocol P-06/P-09; each arm reports its own affinity and route at `survey/dense-harness/src/wire.rs:156` | `the_comparator_provenance_names_the_object_it_loaded` | conforms |
 | The gf2 arms are `conservative-portable` with no `target-cpu` override; the reference arm removes `simd`; the external arm is the pinned build | `survey/dense-harness/src/campaign.rs:366`, `survey/dense-harness/src/campaign.rs:326`, `survey/dense-harness/build.rs:58` | `the_comparator_arm_is_the_external_build_and_the_gf2_arms_are_not` | conforms |
 | `warm`: "execute exactly one untimed pass of the measured operation over that cell's complete working set before calibration", using the same buffers including the output | `survey/dense-harness/src/routes.rs:363` | `warm_runs_one_untimed_pass_and_streaming_runs_none` | FIXED in `4b8198fc` |
@@ -130,13 +131,13 @@ so it carries no row of its own.
 | `streaming`: touch every initialized byte outside timing and execute no measured operation as warmup | `survey/dense-harness/src/fixture.rs:166`, called at `survey/dense-harness/src/bin/dense-arm.rs:54`; `survey/dense-harness/src/routes.rs:363` warms only a warm cell | `warm_runs_one_untimed_pass_and_streaming_runs_none` | conforms |
 | `streaming`: rotate banks once per operation | `survey/dense-harness/src/routes.rs:379` over `timing::execution_windows_fixed_or_calibrated` | `every_declared_cell_builds_the_working_set_its_cache_state_fixes` | conforms |
 | `streaming`: "The reported working set is at least 64 MiB." | `survey/dense-harness/src/fixture.rs:160`, reported at `survey/dense-harness/src/bin/dense-arm.rs:60` | `every_declared_cell_builds_the_working_set_its_cache_state_fixes` | conforms |
-| A receipt retains the fixture-bank sizes | `survey/dense-harness/src/bin/dense-arm.rs:60`, `survey/dense-harness/src/bin/dense-arm.rs:99`, `survey/dense-harness/src/bin/dense-arm.rs:142` | `survey/check-dense-smoke.py:32` refuses a handshake that names none | FIXED in `af313747` |
+| A receipt retains the fixture-bank sizes | `survey/dense-harness/src/bin/dense-arm.rs:60`, `survey/dense-harness/src/bin/dense-arm.rs:99`, `survey/dense-harness/src/bin/dense-arm.rs:142` | `survey/check-dense-smoke.py:28` refuses a handshake that names none | FIXED in `af313747` |
 | `cold`: fresh child, fresh fixture, no measured operation before the first window, `cold_calls` fixed to one | `survey/dense-harness/src/cells.rs:169`, `survey/dense-harness/src/routes.rs:356` | `a_cache_state_and_its_frozen_call_count_must_agree` | conforms |
 | Every exploratory cell runs exactly the pilot maximum of paired executions; the rows declared unavailable run none | `survey/dense-harness/src/campaign.rs:36`, applied at `survey/dense-harness/src/campaign.rs:377` | `every_projected_cell_runs_the_frozen_number_of_paired_executions` | FIXED in `9b1f59c3` |
 | Each pair launches adjacent fresh children in the seed-determined, two-pair-counterbalanced order | runner `abtest::pair_orders` per protocol P-16 | `every_projected_cell_runs_the_frozen_number_of_paired_executions` (the plan carries the campaign seed) | conforms |
 | Each warm or streaming execution uses five windows targeted at 100 ms after calibration; a cold execution uses five one-call windows | `survey/dense-harness/src/campaign.rs:431` leaves the protocol's shared settings in force; `survey/dense-harness/src/wire.rs:113` refuses any other window protocol | `an_arm_refuses_a_window_protocol_the_addendum_does_not_declare` | FIXED in `50a2e3c6` |
 | "No adaptive sample extension, early significance stop, or reuse of exploratory pairs is allowed." | `survey/dense-harness/src/campaign.rs:244`; the harness adds no sampling path of its own | `every_family_transcribes_into_a_valid_version_four_addendum` | conforms |
-| "The child timeout is 120 seconds." | runner setting `child_timeout_seconds`; the smoke uses the same at `survey/dense-harness/src/smoke.rs:44` | `a_launched_arm_child_carries_the_frozen_timeout` | FIXED in `3606cb50` |
+| "The child timeout is 120 seconds." | runner setting `child_timeout_seconds`, which every dispatch of the plan's settings carries | `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs::protocol_document_pins_the_frozen_shared_settings` | FIXED in `3606cb50` |
 | The outlier policy removes nothing; a flagged fraction above its limit makes a cell unstable | evaluator `benchmark-acceptance` over the protocol's shared settings | `every_family_transcribes_into_a_valid_version_four_addendum` | conforms |
 
 ## Estimator, confidence, and multiple comparisons
@@ -151,7 +152,7 @@ so it carries no row of its own.
 | "Each canonical question owns a distinct ledger and family identity." | `survey/dense-harness/src/cells.rs:85`, `survey/dense-harness/src/cells.rs:94` | `every_family_ledger_exists_at_genesis` | conforms |
 | "The version-1 prior-counter fields stay empty in every transcription" | `survey/dense-harness/src/campaign.rs:237` | `every_family_transcribes_into_a_valid_version_four_addendum` | conforms |
 | Candidate selection families set `holdout.required` to false with no holdout cells | `survey/dense-harness/src/campaign.rs:247` | `every_family_transcribes_into_a_valid_version_four_addendum` | conforms |
-| Each family's ledger is created once as an empty genesis file and retained | `dev/bench_results/2037941f/`, named at `survey/dense-harness/src/cells.rs:94`; the smoke names a throwaway path instead (`survey/make-dense-smoke-addenda.py:55`) | `every_family_ledger_exists_at_genesis` | conforms |
+| Each family's ledger is created once as an empty genesis file and retained | `dev/bench_results/2037941f/`, named at `survey/dense-harness/src/cells.rs:94`; the smoke names a throwaway path instead (`survey/make-dense-smoke-addenda.py:54`) | `every_family_ledger_exists_at_genesis` | conforms |
 
 ## Effect, resolution, and complexity rules
 
@@ -184,9 +185,9 @@ so it carries no row of its own.
 
 | Clause | Harness location | Test | Verdict |
 |---|---|---|---|
-| Every campaign snapshots this document, the contract, protocol, schema, campaign JSON, producing-source closure, executable, toolchain and inputs by SHA-256 before opening its log | `survey/make-dense-producing-inputs.py:32` enumerates the closure; `survey/run-dense-harness.sh:314` guards it with the campaign JSON and the ledger; `survey/dense-harness/src/smoke.rs:285` pins the same identities | `the_closure_names_every_manifest_a_timed_executable_builds_from`, `a_committed_and_clean_closure_admits_a_timed_run` | conforms |
-| "The log path is printed before the first bounded run" | `survey/dense-harness/src/smoke.rs:123`, `survey/run-dense-harness.sh:360` | record `survey/dense-runner-smoke.txt` | conforms |
-| "completed cells resume without repetition" | `survey/dense-harness/src/smoke.rs:170` | record `survey/dense-runner-smoke.txt`, judged at `survey/check-dense-smoke.py:93` | conforms |
+| Every campaign snapshots this document, the contract, protocol, schema, campaign JSON, producing-source closure, executable, toolchain and inputs by SHA-256 before opening its log | `survey/make-dense-producing-inputs.py:32` enumerates the closure; `survey/run-dense-harness.sh:285` guards it with the campaign JSON and the ledger; the runner snapshots the closure the plan names | `the_closure_names_every_manifest_a_timed_executable_builds_from`, `a_committed_and_clean_closure_admits_a_timed_run` | conforms |
+| "The log path is printed before the first bounded run" | `survey/run-dense-harness.sh:331` prints it before the runner launches | `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs::runner_announces_the_log_before_work_and_resumes_without_repeating` | conforms |
+| "completed cells resume without repetition" | runner `benchmark-ab-runner run` over the canonical `journal`; the harness adds no resume path | `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs::runner_announces_the_log_before_work_and_resumes_without_repeating` | conforms |
 | A session that stops inside a cell is closed with an `interrupted` record and abandoned once before that cell is measured again | canonical `journal` and runner, protocol v4 P-11 | record `survey/dense-runner-smoke.txt` (no abandonment in a clean smoke) | conforms |
 | Receipts retain commands, raw pairs and windows, seeds, cache claims, observed routes and operand alignment, fixture-bank sizes, output validation, host facts and every negative row | runner receipt; the arm's contribution is `survey/dense-harness/src/wire.rs:156` | `the_comparator_provenance_names_the_object_it_loaded` | conforms |
 | "only producing content identities decide validity" | `survey/dense-harness/src/inputs.rs` checks tracked and clean content, never a revision | `a_dirty_harness_source_refuses_a_timed_run`, `a_dirty_runner_source_refuses_a_timed_run` | conforms |
@@ -195,16 +196,16 @@ so it carries no row of its own.
 
 | Clause | Harness location | Test | Verdict |
 |---|---|---|---|
-| Contract: every receipt pins the contract, protocol and addendum by content digest, and git locators are never critical provenance | `survey/dense-harness/src/cells.rs:21`, `survey/dense-harness/src/smoke.rs:285` | `the_carried_pins_are_the_frozen_addendums_own_identity` | conforms |
-| Contract: bounded resumable runs open and print the append-only log before the first bounded run and checkpoint completed cells | `survey/dense-harness/src/smoke.rs:91` | record `survey/dense-runner-smoke.txt` | conforms |
-| Contract: never add a parallel private campaign framework | every arm dispatch is `tuning_campaign_support::arm::validate_arm` (`survey/dense-harness/src/smoke.rs:242`); the journal, checkpoints and timing are the canonical ones (`survey/dense-harness/src/smoke.rs:23`, `survey/dense-harness/src/routes.rs:14`) | `the_smoke_dispatch_fails_an_arm_that_reports_a_timing_window` | FIXED in `bb54e91b` |
+| Contract: every receipt pins the contract, protocol and addendum by content digest, and git locators are never critical provenance | `survey/dense-harness/src/cells.rs:21`, `survey/dense-harness/src/inputs.rs` | `the_carried_pins_are_the_frozen_addendums_own_identity` | conforms |
+| Contract: bounded resumable runs open and print the append-only log before the first bounded run and checkpoint completed cells | runner `benchmark-ab-runner run`, launched at `survey/run-dense-harness.sh:346` | `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs::runner_announces_the_log_before_work_and_resumes_without_repeating` | conforms |
+| Contract: never add a parallel private campaign framework | the untimed smoke is `benchmark-ab-runner smoke` (`survey/run-dense-harness.sh:221`) and the timed run is `benchmark-ab-runner run` (`survey/run-dense-harness.sh:346`); the timing protocol is the canonical one (`survey/dense-harness/src/routes.rs:14`) | `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs::smoke_drives_every_arm_untimed_and_reproduces_its_record` | FIXED in `1b549c8d` |
 | Contract: preserve canonical little-endian indexing, zero tail padding and the 0/1/63/64/65 boundaries | `survey/dense-harness/src/oracle.rs:74`, `survey/dense-harness/src/oracle.rs:79` | `the_oracle_covers_every_frozen_boundary_and_passes` | conforms |
 | Contract: keep deterministic seeded behaviour across checkpoint/resume | `survey/dense-harness/src/cells.rs:367` is a pure function; `survey/dense-harness/src/fixture.rs:217` is a pure function of its cell | `cell_generation_is_deterministic`, `a_working_set_is_a_pure_function_of_its_cell` | conforms |
 | `@/inv/runtime-observed-provenance`: a tool's source and emitted preambles carry no hand-written figure, file inventory or prior-run narrative | every pin is read at run time (`survey/dense-harness/src/bin/dense-m4ri-arm.rs:123`, `survey/dense-harness/build.rs:54`); the records are written by their generators | `the_carried_pins_are_the_frozen_addendums_own_identity` | conforms |
 | Protocol: the warm pass is the timed body over the timed call's working set | `survey/dense-harness/src/routes.rs:363` runs the same `body` the windows run | `warm_runs_one_untimed_pass_and_streaming_runs_none` | FIXED in `4b8198fc` (counted above) |
 | Protocol: an omitted exploratory `pilot_pairs` selects the pilot minimum, so a plan states the count it wants | `survey/dense-harness/src/campaign.rs:377` | `every_projected_cell_runs_the_frozen_number_of_paired_executions` | FIXED in `9b1f59c3` (counted above) |
-| Protocol: the resume identity pins plan, protocol, closure, cell list, arm descriptors and executable digests | `survey/dense-harness/src/smoke.rs:307` | record `survey/dense-runner-smoke.txt` | conforms |
-| Protocol: `cache_state_applied` is reported by the arm and a mismatch invalidates the cell | `survey/dense-harness/src/wire.rs:171`, checked by the shared `tuning_campaign_support::arm::validate_arm` | record `survey/dense-runner-smoke.txt`, judged at `survey/check-dense-smoke.py:147` | conforms |
+| Protocol: the resume identity pins plan, protocol, closure, cell list, arm descriptors and executable digests | runner `benchmark-ab-runner run` over the canonical `journal` | `dev/tools/tuning-campaign-support/tests/checkpoint_provenance.rs::changed_producing_digest_rejects_before_mutating_checkpoint_evidence` | conforms |
+| Protocol: `cache_state_applied` is reported by the arm and a mismatch invalidates the cell | `survey/dense-harness/src/wire.rs:171`, checked by `benchmark-ab-runner smoke` | record `survey/dense-runner-smoke.txt`, judged at `survey/check-dense-smoke.py:83` | conforms |
 
 The two protocol rows marked "counted above" restate an addendum clause already
 counted in its own section, so the totals count each clause once.

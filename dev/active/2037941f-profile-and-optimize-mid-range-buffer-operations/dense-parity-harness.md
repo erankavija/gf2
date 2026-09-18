@@ -228,19 +228,15 @@ checked against the same parity oracle as the SIMD lane.
 
 ## Logging, checkpoint, and resume
 
-Execution logging, checkpointing, and resume are the canonical mechanisms of
-`tuning_campaign_support::journal`, which `benchmark-ab-runner` and the
-non-timed smoke both drive: one append-only `execution.log` per stage, opened
-before the first bounded run, with `campaign-start`, `cell-start`,
-`cell-complete`, checkpoint and terminal records, and one immutable checkpoint
-unit per cell under a manifest pinning the run's resume identity. That identity
-pins the protocol document, the producing-input closure, the ordered cell list,
-the arm descriptors, every arm executable, the campaign addendum and the plan.
-The launcher prints the canonical log path before launching work and treats
-console output as a view of that record. A paused session resumes from the same
-stage and plan; completed cells are journalled as omissions and are not
-measured again. `max_cells_per_session` bounds one session, and a session that
-exhausts it exits 3.
+Execution logging, checkpointing, and resume belong to `benchmark-ab-runner run`
+over the canonical `tuning_campaign_support::journal`: one append-only
+`execution.log` per stage, one immutable checkpoint unit per cell, and a manifest
+pinning the run's resume identity over the protocol document, the producing-input
+closure, the ordered cell list, the arm descriptors, every arm executable, the
+campaign addendum and the plan. The harness adds no session of its own; the
+launcher prints the canonical log path before launching work, treats console
+output as a view of that record, and bounds one session with
+`max_cells_per_session`. An untimed smoke opens no session.
 
 The launcher verifies completion from the execution log, never from an exit
 code: the terminal record is `complete` and every declared cell has one
@@ -254,10 +250,10 @@ acceptance summary written by `benchmark-acceptance`. Arms emit exactly one
 `zen3-benchmark-arm-result-v1` line each; the runner assembles
 `zen3-benchmark-receipt-v1`. The harness defines no receipt schema of its own.
 
-The non-timed smoke produces no receipt. Its output is
-`dense-parity-nontimed-smoke-v1`, written as `handshake.json` beside the stage's
-execution log: one entry per declared cell holding the
-`tuning_campaign_support::arm::CellValidation` its dispatches returned.
+The non-timed smoke produces no receipt. Its output is the shared
+`zen3-arm-smoke-record-v1` that `benchmark-ab-runner smoke --record` writes under
+`target/`, projected into the committed `survey/dense-runner-smoke.txt` by
+`survey/check-dense-smoke.py`.
 
 ## Provenance artifacts
 
@@ -351,9 +347,9 @@ directly: `pins` prints the frozen addendum's path, pinned digest, identity,
 freeze time, the three family ledgers and the declared unavailable rows, and
 fails when the document's bytes differ from the pin; `list` prints one family's
 cells with their ordinals, arms and seeds; `cells`, `verify` and `plan` are the
-transcription, the comparison and the plan projection; `smoke` drives one
-non-timed session of a projected plan; `inputs` is the producing-input closure
-guard.
+transcription, the comparison and the plan projection; `inputs` is the
+producing-input closure guard. The untimed smoke and the timed run are
+`benchmark-ab-runner` subcommands over a projected plan.
 
 `build` compiles the gf2 arms `conservative-portable` into
 `target/e1f9a78f-arms` and the reference arm into `target/e1f9a78f-scalar-arm`,
@@ -414,43 +410,28 @@ It checks, in order:
    this smoke does not drive its arms.
 2. **Semantics.** `dense-oracle` from both gf2 builds and, when the M4RI arm is
    built, `dense-m4ri-arm --oracle` report every case as `PASS`.
-3. **The arms.** Every arm the family's plan declares is dispatched through the
-   shared smoke contract of `tuning_campaign_support::arm::smoke`, from the
-   projected plan and the throwaway campaign addendum, with a throwaway ledger
-   path and stage under `target/`. The allocated family contributes its warm
-   anchor, the frozen cold cell and the scalar-reference cell, so warm, the
-   frozen cold call count and the reference build all reach the arms; the
-   isolated family adds a streaming cell and the comparator family adds a
-   retained-state cell. Each gf2 arm names the fixture banks it built and a
-   working set those banks account for. Each comparator arm names the shared
-   object it loaded, and the record carries that path and digest; arms that
-   disagree on the object fail the smoke.
-4. **Append-only logging and resume.** `max_cells_per_session` is one, so every
-   family pauses at least once and a later session completes the stage. The
-   first session's execution log is a byte prefix of the final log, the resumed
-   session journals a completed-in-prior-session omission, no cell carries two
-   `cell-complete` records, no cell attempt is abandoned, the journal carries no
-   `execution-progress` or `window-progress` record, one immutable checkpoint
-   unit exists per cell, and the terminal record is `complete`.
-5. **Output schema.** The stage's `handshake.json` decodes as
-   `dense-parity-nontimed-smoke-v1`, names exactly the addendum's declared cells,
-   and reports each arm in the validation position with its applied cache state
-   and zero windows. The stage holds no finalized receipt.
+3. **The arms.** `benchmark-ab-runner smoke <plan.json> --record <path>` drives
+   every arm of each family's projected plan, whose throwaway campaign addendum
+   names a ledger path under `target/`. The allocated family contributes its warm
+   anchor, the frozen cold cell and the scalar-reference cell, so warm, the frozen
+   cold call count and the reference build all reach an arm; the isolated family
+   adds a streaming cell and the comparator family adds a retained-state cell.
+4. **The record.** Every dispatch of every declared cell answers in the
+   validation position with its declared cache state and no timing window. Each
+   gf2 arm names the fixture banks it built and a working set those banks account
+   for; each comparator arm names the shared object it loaded, with its digest,
+   and a family whose comparator arms disagree on that object fails.
 
 `build` writes `survey/dense-harness-validation.txt` the same way: the
 toolchain, the pins, the contract-test count, every oracle line and the
 executable digests, all observed by that run.
 
-The record is `survey/dense-runner-smoke.txt`. Every line is observed at run
-time from the execution log, the checkpoint store and the handshake record; it
+The record is `survey/dense-runner-smoke.txt`, projected from the families'
+smoke records and the oracle's output by `survey/check-dense-smoke.py`. It
 carries no clock reading, so a rerun on the same executables reproduces it byte
-for byte. The smoke collects zero timing samples and finalizes zero receipts,
-both stated in the record from observation, so it cannot serve as a pilot.
+for byte, and its timing-window counts are the arms' own.
 
-The smoke reaches the arms through the shared library entry rather than through
-`benchmark-ab-runner run`: the runner's measurement path computes each cell's
-paired statistic from the median of every execution's windows, which an untimed
-execution cannot supply, so a `run` over these plans would measure outside the
-benchmark window. Around those dispatches this smoke drives the runner's own
-journal, checkpoint store and resume identity, which the shared smoke leaves to
-its caller.
+The smoke is the `smoke` subcommand, never `benchmark-ab-runner run`: the
+runner's measurement path computes each cell's paired statistic from the median
+of every execution's windows, which an untimed execution cannot supply, so a
+`run` over these plans would measure outside the benchmark window.
