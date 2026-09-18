@@ -234,6 +234,8 @@ run_step tuning-algebra-calibration-nextest "$BUDGET" --test cargo nextest run -
 run_step tuning-campaign-support-build "$BUDGET" cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile ci --no-run
 run_step tuning-campaign-support-nextest "$BUDGET" --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile ci
 run_step tuning-campaign-validator python3 dev/scripts/validate-tuning-extent-campaign.py --self-test
+run_step campaign-producing-closure-self-test python3 dev/scripts/check-campaign-producing-closure.py --self-test
+run_step campaign-producing-closure python3 dev/scripts/check-campaign-producing-closure.py
 run_step receipt-input-snapshots-self-test python3 dev/scripts/check-receipt-input-snapshots.py --self-test
 run_step receipt-input-snapshots python3 dev/scripts/check-receipt-input-snapshots.py
 run_step addendum-schema-versions-self-test python3 dev/scripts/check-addendum-schema-versions.py --self-test
