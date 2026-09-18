@@ -14,6 +14,7 @@
 
 pub mod campaign;
 pub mod cells;
+pub mod external;
 pub mod fixture;
 pub mod inputs;
 pub mod oracle;
