@@ -61,6 +61,19 @@
       "format": "markdown",
       "label": "Residual funnel kernel bundle, detection and safe wrappers",
       "path": "crates/gf2-kernels-simd/src/shift_funnel.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Rust 1.95 build-and-suite validation record (REQ-06)",
+      "path": "dev/active/f8dd4dde/validate-msrv-record.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Generator for the Rust 1.95 validation record",
+      "path": "dev/active/f8dd4dde/validate-msrv.sh"
     }
   ],
   "first_ready_at": "2026-09-18T10:59:58.864310516Z",
@@ -102,5 +115,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Route residual BitVec shifts through a BMI2-gated funnel kernel",
-  "updated_at": "2026-09-18T16:08:34.067158339Z"
+  "updated_at": "2026-09-18T16:55:20.369286200Z"
 }
