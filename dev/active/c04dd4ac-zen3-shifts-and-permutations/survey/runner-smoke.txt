@@ -1,37 +1,37 @@
 # DVB-T2 interleaver profile non-timed arm smoke (jit:9fb40c83)
 # command: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh
-# scope: non-timed validation-role dispatch of every arm of the plan's cells, through the runner's own request framing and child environment; the smoke opens no campaign, takes no lock, reserves nothing in a family ledger, finalizes no receipt and records no timing window
-# plan: target/9fb40c83-arm-smoke/plan.json sha256 b6977c0f56ed42bc07534905d91e50d2b3740f513d66d70b198a4ab141b0521c
+# contract: benchmark-ab-runner smoke (tuning_campaign_support::arm::smoke)
+# campaign: 9fb40c83-dvb-interleave-arms-smoke plan sha256 b6977c0f56ed42bc07534905d91e50d2b3740f513d66d70b198a4ab141b0521c
 # addendum: dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json sha256 47865f3f83bba6dc085d91fcfc828cc0424a0869289a0505564b548ab2a3d869
 # dvb-profile-arm sha256: 686a19d2833211a4bf215e6878bd4a69aa1daed42207a48561f124f052222164
-PASS cell dvb-t2-qam16-r12-normal-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam16-r12-normal-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam64-r12-normal-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam64-r12-normal-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam16-r12-short-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam16-r12-short-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam64-r12-short-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam64-r12-short-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam16-r12-normal-streaming-isolated-null: gf2-direct-a and gf2-direct-b validated, 2 result lines, 0 timing windows
-PASS cell dvb-t2-qam16-r12-normal-streaming-sim-stage-gap: gf2-stage and xdsopl-stage validated, 2 result lines, 0 timing windows
-PASS arm gf2-direct-a: 5 dispatches, 5 result lines, 0 timing windows, workers observed 1
+PASS cell dvb-t2-qam16-r12-normal-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, cache warm, 0 timing windows
+PASS cell dvb-t2-qam16-r12-normal-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, cache warm, 0 timing windows
+PASS cell dvb-t2-qam64-r12-normal-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, cache warm, 0 timing windows
+PASS cell dvb-t2-qam64-r12-normal-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, cache warm, 0 timing windows
+PASS cell dvb-t2-qam16-r12-short-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, cache warm, 0 timing windows
+PASS cell dvb-t2-qam16-r12-short-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, cache warm, 0 timing windows
+PASS cell dvb-t2-qam64-r12-short-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, cache warm, 0 timing windows
+PASS cell dvb-t2-qam64-r12-short-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, cache warm, 0 timing windows
+PASS cell dvb-t2-qam16-r12-normal-streaming-isolated-null: gf2-direct-a and gf2-direct-b validated, cache streaming, 0 timing windows
+PASS cell dvb-t2-qam16-r12-normal-streaming-sim-stage-gap: gf2-stage and xdsopl-stage validated, cache streaming, 0 timing windows
+PASS arm gf2-direct-a: 5 dispatches, 0 timing windows
 PASS route gf2-direct-a: gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-normal
 PASS route gf2-direct-a: gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-short
 PASS route gf2-direct-a: gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-normal
 PASS route gf2-direct-a: gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-short
-PASS arm gf2-direct-b: 5 dispatches, 5 result lines, 0 timing windows, workers observed 1
+PASS arm gf2-direct-b: 5 dispatches, 0 timing windows
 PASS route gf2-direct-b: gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-normal
 PASS route gf2-direct-b: gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-short
 PASS route gf2-direct-b: gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-normal
 PASS route gf2-direct-b: gf2-coding/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-short
-PASS arm gf2-stage: 5 dispatches, 5 result lines, 0 timing windows, workers observed 1
+PASS arm gf2-stage: 5 dispatches, 0 timing windows
 PASS route gf2-stage: gf2-sim/BitInterleave::process/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-normal
 PASS route gf2-stage: gf2-sim/BitInterleave::process/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-short
 PASS route gf2-stage: gf2-sim/BitInterleave::process/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-normal
 PASS route gf2-stage: gf2-sim/BitInterleave::process/DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam64-r12-short
-PASS arm xdsopl-stage: 5 dispatches, 5 result lines, 0 timing windows, workers observed 1
+PASS arm xdsopl-stage: 5 dispatches, 0 timing windows
 PASS route xdsopl-stage: profile-adapter/BitPackedBatch/unpack-copy/xdsopl-PCTITL/pack/qam16-r12-normal
 PASS route xdsopl-stage: profile-adapter/BitPackedBatch/unpack-copy/xdsopl-PCTITL/pack/qam16-r12-short
 PASS route xdsopl-stage: profile-adapter/BitPackedBatch/unpack-copy/xdsopl-PCTITL/pack/qam64-r12-normal
 PASS route xdsopl-stage: profile-adapter/BitPackedBatch/unpack-copy/xdsopl-PCTITL/pack/qam64-r12-short
-PASS smoke: 20 dispatches, 20 result lines, 0 timing windows
+PASS smoke: 20 dispatches over 10 cells, 0 timing windows

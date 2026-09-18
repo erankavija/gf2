@@ -141,16 +141,10 @@ checks, which the repository CI contract does not reach.
 committed result, written by the gate itself.
 
 Code reading does not establish the campaign wire, so
-[`survey/smoke-dvb-arms.sh`](survey/smoke-dvb-arms.sh) drives all four arms of
-every frozen cell with the runner's own request framing, result parser and child
-environment, in the validation role: each arm performs one untimed dispatch and
-returns no timing window, and the driver refuses an arm that reports one. The
-smoke opens no campaign, so it takes no host mutex, reserves nothing in the
-family ledger, writes no stage, finalizes no receipt and emits no timing sample,
-and it runs outside the benchmark window.
-[`survey/runner-smoke.txt`](survey/runner-smoke.txt) is the committed record:
-the plan and executable identities, the route each arm selected, the result
-lines parsed and the window count.
+[`survey/smoke-dvb-arms.sh`](survey/smoke-dvb-arms.sh) smokes all four arms of
+every frozen cell through the shared `benchmark-ab-runner smoke`, whose contract
+`tuning_campaign_support::arm::smoke` states.
+[`survey/runner-smoke.txt`](survey/runner-smoke.txt) is the committed record.
 
 ## Measurement record
 
