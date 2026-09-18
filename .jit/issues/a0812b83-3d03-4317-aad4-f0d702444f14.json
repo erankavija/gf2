@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-09-15T00:57:24.562407727Z",
   "dependencies": [
-    "85fc5ff4-b6c0-4cc2-ab31-6df8df98bdce",
+    "00dd43c3-2335-40bd-948a-32f95bd450ce",
     "9fb40c83-7f48-4b39-afce-9e0f4f84c044"
   ],
   "description": "Publish generated story evidence that preserves family boundaries, negative results and every material candidate's completed evidence path without changing production code itself.\n\n## Background\n\nThe report presents shifts, QC construction, generic puncturing and interleaving as separate workload families. It derives numeric statements from committed machine-readable artifacts, identifies actual production consumers, records QC runtime rotation as inapplicable, preserves the accepted AFF3CT NR no-win unless `prepare_llrs` changed, and treats withdrawn DVB warm receipts only as history. The initial dependency graph is sufficient only when both profiles end in no-candidate or no-win dispositions. A material nomination activates the repository's plan-amendment bracket: the lead must add and review the required candidate leaves, re-home this publication behind their sinks, and complete them before this issue or the story can close.\n\n## Success Criteria\n\n- [hard] REQ-01: A deterministic generator reproduces the publication tables from committed receipts, profiles and content-pinned dispositions, including latency, throughput, whole-consumer costs, intervals, sample counts, conversion stages and runtime provenance where applicable.\n- [hard] REQ-02: The findings map every story criterion to durable evidence and preserve the QC inapplicability, generic-puncturing separation, NR accepted no-win, unavailable mappings, withdrawn DVB evidence and profile no-win outcomes.\n- [hard] REQ-03: Each profile has either a no-candidate or no-win disposition, or an amended and re-reviewed bracket has created the required candidate implementation and confirmation leaves, made them depend on the nominating profile, re-homed this issue behind their terminal sinks in the instantiated dependency graph, and those leaves are complete.\n- [hard] REQ-04: This issue remains open and the story does not complete while a material nomination lacks its pre-breakdown Rust 1.95 compile, assembly and scalar-fallback feasibility record, amended reviewed manifest, exact instantiated dependencies or completed candidate evidence.\n- [hard] REQ-05: Each performance claim cites its accepted receipt and protocol identity, while each absent comparison has an explicit semantic or consumer reason.\n\n## Notes\n\nThe report stays in the story's development area; permanent prose cites it rather than copying volatile measurements. The execution lead applies the repository's bracket amendment mechanism before closing a material profile or this publication.",
@@ -36,5 +36,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Publish the shift-permutation dispositions",
-  "updated_at": "2026-09-16T22:42:19.650808515Z"
+  "updated_at": "2026-09-18T11:00:37.191825149Z"
 }

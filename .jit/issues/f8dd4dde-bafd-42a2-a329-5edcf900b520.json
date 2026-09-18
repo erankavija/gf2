@@ -1,0 +1,34 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-18T10:59:58.864310516Z",
+  "dependencies": [
+    "85fc5ff4-b6c0-4cc2-ab31-6df8df98bdce"
+  ],
+  "description": "Dispatch the residual, non-word-aligned branch of the public `BitVec` shifts to a BMI2-gated funnel kernel, with the present scalar funnel as the tested fallback.\n\n## Background\n\n`BitVec::shift_left` and `BitVec::shift_right` consult the SIMD kernel bundle only when the offset is a whole number of words; a non-zero residual falls straight into a safe scalar double-word funnel. The residual-shift workload profile at `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` records that branch as material at consequential sizes under its frozen rule and nominates two forms. The planning-time record at `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md` establishes both as feasible at the repository's Rust 1.95 floor and ranks the BMI2-gated scalar funnel first: it reaches its intended instructions from the expression the production loop already writes, so it costs a target-feature scope and a runtime gate rather than a new algorithm. That record is the source for which expression the compiler lowers to which instruction at that floor, for the six-bit count mask the 128-bit double-precision form needs, and for the absence of a double-precision shift intrinsic in `core::arch::x86_64` there; read it rather than re-deriving them. The nominated AVX2 lane-crossing funnel is feasible and is not selected for implementation here.\n\nThe kernel crate publishes one capability-gated bundle per kernel family, each with its own detection and its own safe wrappers, and `gf2-core` reaches each through its own accessor in the module its `simd` feature compiles. The residual funnel follows that shape rather than joining the AVX2-gated logical bundle, so a host that reports the capability without AVX2 still reaches the route. The family has no downstream production caller: the two public methods are the route's only consumers, and whether the route stays in production is decided by the frozen rule of its A/B confirmation rather than after the fact.\n\n## Success Criteria\n\n- [hard] REQ-01: The funnel kernel lives in `gf2-kernels-simd` and carries an explicit safety contract at every unsafe boundary and at the target-feature scope it needs; no other production crate gains unsafe code.\n- [hard] REQ-02: The residual branch of both public shift methods consults the funnel bundle's accessor behind the same non-default `simd` cargo feature the word-aligned branch uses, and the route is selected by its own `is_x86_feature_detected!` result rather than by another capability's gate.\n- [hard] REQ-03: A host or build without the capability runs the present scalar funnel, and a test drives that fallback as a reachable route instead of assuming it.\n- [hard] REQ-04: Both routes run one shared behavioural suite: the existing `BitVec` shift tests extended with the feasibility corpus shape, covering lengths and offsets 0, 1, 7, 8, 63, 64 and 65, offsets at and beyond the length, and sizes leaving an incomplete final word; every result matches an independent zero-fill reference over canonical little-endian indices and keeps zero tail padding.\n- [hard] REQ-05: One selection point chooses the route, a lane witness reports the route that executed, and a force switch holds callers on the scalar funnel; the witness and the switch compile under the crate's `test-support` feature as well as under test, so one shipped measurement build drives either route, and each test that toggles them serializes its whole toggle-execute-observe-restore section under one mutex, following `crates/gf2-core/tests/prime_route_dispatch.rs`.\n- [hard] REQ-06: The crates build and the shared suite passes on Rust 1.95, and a regenerated annotated release-build assembly artefact under the kernel crate's `x86/asm/<module>.asm.txt` convention shows the emitted loop of the dispatched path in both directions.\n- [hard] REQ-07: Rustdoc on the dispatched path names the cargo feature that enables it and the runtime capability it requires, and states each unsafe boundary's safety condition.\n- [hard] REQ-08: The retention-or-removal rule is on record before the route is measured: the route ships in order to be measured, its confirmation's frozen rule decides whether it stays or gives way to the scalar funnel, and this work publishes no speed claim of its own.\n\n## Notes\n\n`dev/active/1a379447-zen3-cpu-performance/measurement-contract.md` states the MSRV, scalar-fallback and unsafe-isolation requirements this work inherits. Nothing here is timed.",
+  "documents": [],
+  "first_ready_at": "2026-09-18T10:59:58.864310516Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "f8dd4dde-bafd-42a2-a329-5edcf900b520",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-shifts-and-permutations",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-07",
+    "satisfies:REQ-08",
+    "satisfies:REQ-09",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Route residual BitVec shifts through a BMI2-gated funnel kernel",
+  "updated_at": "2026-09-18T11:00:09.636689799Z"
+}
