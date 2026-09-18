@@ -378,14 +378,14 @@
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "in progress. Session 17: 3ea122df done (77606c84, seven gates); 92385645 done after the invoker-authorized round 3 (make-channel provenance, b0696775, seven gates, review r3); bb769456 harness merged at f2bd8f1c but REWORK: code-review, research-review and holistic-review converge on two blockers (smoke emits timing samples against REQ-03; window clean-input guard covers six paths, not the producing manifest, against REQ-04), review reviews/bb769456-r1.md, no rework dispatched (invoker: no new work). Next ready: 96c94b81 (dense-parity addendum) and the bb769456 rework. Session 18: bb769456 rework 1 dispatched (opus, 2026-09-16T16:06Z); 96c94b81 dispatched (opus, new agent-96c94b81, base 62e72612); task b9302771 (m = 5 amendment) filed after bb769456 and before 65c0e13d/c489745b/8197174d/c49e78bc; 65c0e13d gained REQ-04 (ISA-L compiler provenance). Session 18 later: 96c94b81 merged at a75cfa40 (worker edd94713, 7f4c3a83; lead-committed edits f3a4f4f7); bb769456 rework 1 merged at 2c4d8c42 (935bae8c, c7fcc06e, 3be84110), both review findings closed; merged-tree cargo-ci green for both; gates pending. Worker brief runner-smoke rule amended by the lead (harness smoke with the runner's encoder qualifies). Wave 2 gates: 96c94b81 all seven pass (holistic advisory on the generator docstring fixed by the lead); bb769456 research-review FAIL r2 (closure omits campaign-support Cargo manifest and the manifest itself; smoke record omits --isal): rework 2 dispatched on a fresh opus agent (commits 6a1667d1, 37d10a5a, a38019ed). Session 18 end: bb769456 rework 2 merged at 29c75271, gates not all passed (see status-all); 96c94b81 done. bb769456 done after the holistic-review removal ruling; next: b9302771, 0a357f94, e1f9a78f."
+          "status": "in progress. Session 21: e1f9a78f rounds 2-6 merged (in-window release, host claim, bank sizing plus a 112-clause addendum audit with seven further fixes, dense smoke on the shared runner smoke); its gates wait for d45aff82's staged smoke mode because e1f9a78f REQ-03 names logging and checkpoint/resume; the three dense queue lines stay commented out until c73ffa25 re-keys them. 18a87159 pre-window work merged, four lines queued for the 2026-09-19 window. bb769456's logical smoke converged on the shared smoke under d45aff82."
         },
         {
           "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "in progress. Session 17: both source tasks repaired after the 2026-09-16 window handshake failures and merged (9fb40c83 at 59e4d818, 85fc5ff4 at 34376022); each voided its v4-r1 attempt per protocol, smoked every arm through the real runner, and holds a queue line (9fb40c83 v4-r2 campaign; 85fc5ff4 launcher stages the a2 identity). No window is armed (invoker hold). Issues stay in_progress until their window runs and their gates pass. Session 18: window gf2-bench-window-20260917 armed for 2026-09-17 04:00 EEST over the committed queue lines of 85fc5ff4 and 9fb40c83."
+          "status": "in progress. Session 21: 85fc5ff4 DONE (reviews/85fc5ff4-r1.md); bracket amended and re-reviewed for the BMI2 form only (invoker); f8dd4dde DONE (reviews/f8dd4dde-r1.md; rework 1 added the Rust 1.95 record); 00dd43c3 (A/B confirmation) backlog, waits for d45aff82; 9fb40c83 in progress: code-review PASS after the shared smoke, research-review FAIL on the dynamic profile, round 3 merged (provenance record from committed material, order-statistic intervals, n = 1 labels), gates not yet re-run; a0812b83 sits behind 00dd43c3 and 9fb40c83."
         },
         {
           "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
@@ -536,7 +536,7 @@
           "short_id": "ad2a6a58",
           "title": "Confirm the GF(2^8) axpy path against the current vector route",
           "classification": "research",
-          "status": "pending; depends on 77c21ecd; needs a window"
+          "status": "in_progress: pre-window work merged (non-timed smoke, REQ-03 reworded by the invoker); pilot queued for the 2026-09-19 window from agent-0a357f94; post-window round: judge the pilot from its execution log (the launcher rejects a paused-then-complete campaign after finalizing), freeze the confirmation, converge on dev/scripts shared forms and on d45aff82's smoke, add src/arm.rs to its closure, rebase onto the rewritten main."
         },
         {
           "id": "b9302771",
@@ -556,6 +556,13 @@
           "reviews": [
             "reviews/b9302771-r1.md"
           ]
+        },
+        {
+          "id": "d45aff82",
+          "short_id": "d45aff82",
+          "title": "Provide one shared non-timed arm smoke in the campaign tools",
+          "classification": "implementation",
+          "status": "in_progress: shared smoke merged; rework 1 merged (logical launcher calls the subcommand, usage text states the contract, subreaper hazard in rustdoc); src/arm.rs in the shared closure with a CI guard; NEXT: staged mode per the reworded REQ-02 (invoker ruling), then gates"
         }
       ]
     },
@@ -567,14 +574,14 @@
           "short_id": "f63a2464",
           "title": "Evaluate quantized layered and QC-aware LDPC candidates",
           "classification": "research",
-          "status": "pending"
+          "status": "in_progress: pre-window work merged; three QC pilots queued for the 2026-09-19 window from agent-9fb40c83; post-window round also converges qc-arm-smoke and ldpc-plan-check on the shared runner subcommands and adds src/arm.rs to its closure."
         },
         {
           "id": "4c1e441f",
           "short_id": "4c1e441f",
           "title": "Confirm the GF(2^8) dense product against the current matrix route",
           "classification": "research",
-          "status": "pending; depends on b64dc9c4; needs a window"
+          "status": "in_progress: pre-window work merged (shared campaign scripts under dev/scripts, gemm arm, non-timed smoke); pilot queued for the 2026-09-19 window from agent-c04dd4ac; post-window round as for ad2a6a58."
         }
       ]
     },
@@ -593,7 +600,7 @@
           "short_id": "18a87159",
           "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
           "classification": "research",
-          "status": "pending; merged from c489745b, 8197174d, c49e78bc (session 19)"
+          "status": "in_progress: four lines queued for the 2026-09-19 window from agent-b64dc9c4; report and gates after the window."
         },
         {
           "id": "bc091474",
@@ -1226,7 +1233,8 @@
     "7cdc28e9": 0,
     "e1f9a78f": 6,
     "9fb40c83": 3,
-    "f8dd4dde": 1
+    "f8dd4dde": 1,
+    "d45aff82": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1712,7 +1720,8 @@
     "Session 21 (2026-09-18T13:20Z): gate chain results: 85fc5ff4 cargo-ci, code-review, research-review all PASS (advisory on the streaming-cell trend fixed by the lead, ba22729e; no rerun per the session-19 touch-up ruling). e1f9a78f code-review round 3 FAIL, one medium finding, lead fix c10793f0 under invoker authorization; a copied per-call figure in the retention contract test comment removed in the same commit. 9fb40c83 code-review round 2 FAIL: F1 private smoke driver duplicates the runner wire, F2 narrative repeated across four files; resolved by task d45aff82 plus rework 2. 16560579 breakdown-review FAIL twice: a0812b83 text drift (synced), then a stale doc link on 85fc5ff4 to the renamed smoke summarizer (removed, with a rustdoc-link false positive on the feasibility prototype lib.rs). Trap: after merging a branch that renames or deletes a linked file, run `jit doc check-links --scope issue:<id>` before any gate. w-4c1e441f dispatched (opus, agent-c04dd4ac directory on branch worktree-agent-4c1e441f), claimed after the chain.",
     "Session 21 (2026-09-18T14:25Z): 85fc5ff4 DONE (review reviews/85fc5ff4-r1.md; bracket re-review complete: plan-review PASS, coverage-preview PASS, breakdown-review PASS on the third run after the a0812b83 text sync, the stale doc links and the recorded d45aff82 external dependency). f8dd4dde unblocked, claimed and dispatched (opus, new worktree agent-f8dd4dde). 4c1e441f pre-window work merged at 02678ab1 (merged-tree cargo-ci green, 6084 tests; 25 artifacts linked; six campaign mechanisms shared under dev/scripts, a smoke driver and allocation counter added to 6c6b09b1 arm-common); its pilot line is queued, so the 2026-09-19 window selects nine lines (160 min). e1f9a78f code-review round 4 FAIL (streaming banks under the frozen 8 MiB for 9w, 63w, 65w; fixture.rs:117): invoker authorized a worker round with a clause-by-clause addendum audit (w-e1f9a78f-r4, opus). Running: w-d45aff82, w-e1f9a78f-r4, w-f8dd4dde. Pitfall for the ad2a6a58 post-window round: its launcher finalizes the receipt and then rejects a campaign whose session paused at the cell budget (terminal list must equal [complete]); judge the pilot from its execution log, converge the launcher on dev/scripts/verify-campaign-log.py, and resolve merge conflicts in favour of the shared form on main.",
     "Session 21 (2026-09-18T16:30Z): e1f9a78f code-review round 5 found no code or evidence defect, only commit-subject policy (four merge(...) subjects, twelve subjects of 72+ characters). Invoker ruling: fix the history on a new branch. Branch main-subjects rewrites 111 subjects over the 293 commits from 228c0b0b^ (30 merge(...), 3 bench(...), 1 wip(...), 6 default merge messages, 85 long subjects); tree byte-identical to main (7fb93acd), same commit and merge counts, 277 commits change id. The old-to-new map is subject-rewrite-sha-map.tsv; 181 citations in progress.json, handoffs 14-15, the reviews, dense-parity-conformance.md and 613574db/design.md are remapped. Evidence files that cite old ids keep their bytes (source-evidence ledgers of f63a2464, c04dd4ac and the dense harness, a203a23c/receipt-reevaluation.json, one launcher.log): commit ids are informational there, and a ref on the old main tip keeps them resolvable after the swap. main is frozen at its pre-rewrite tip; work continues on main-subjects; the four window worktrees stay on the old history until their window runs, then their post-window commits are rebased with git rebase --onto. Traps: merge commits are chore(jit:<id>): merge ...; jit-generated completion subjects exceed 72 characters for long titles, so write completion commits by hand; list every worker subject of 72 or more characters before merging and reword it on the private branch; a lead-preserve commit is re-subjected before its branch merges; worker prompts forbid host-wide process kills by command-line pattern (a worker took down a sibling's cargo-ci run that way) and allow only kills by the worker's own process id.",
-    "Session 21 (2026-09-18T16:45Z): main now carries the rewritten history; the old tip 7f995007 is tagged archive/main-before-subject-rewrite. f8dd4dde merged (merged-tree cargo-ci green, 6093 tests) and d45aff82 merged (6100 tests); both 2037941f closures regenerated for the new kernel sources. Invoker rulings: DEC-01 removed from e1f9a78f; e1f9a78f converges its private dense smoke on d45aff82 before re-gating (round 6, w-e1f9a78f-r6, opus) and depends on d45aff82; d45aff82 closes only with src/arm.rs in the shared f547c394 closure (w-d45aff82-closure, opus). Gates on the new main: f8dd4dde cargo-ci and asm-artefact-present PASS, code-review FAIL F1 (no committed Rust 1.95 build-and-suite record for REQ-06), rework 1 dispatched (w-f8dd4dde-r1, sonnet); 9fb40c83 cargo-ci PASS, code-review PASS (advisory: a validation fixture supplies five timed windows), research-review FAIL with three high findings on the v4-r2 dynamic profile (no invocation or content-pinned closure for the profiled executable; shares without intervals; single-session counter tables without intervals). Invoker authorized round 3 with a fresh profile session in the 2026-09-19 window if provenance cannot be derived from committed material (w-9fb40c83-r3, opus, new worktree agent-9fb40c83-r3; its queue line must be merged to main before 04:00 EEST). Four workers running."
+    "Session 21 (2026-09-18T16:45Z): main now carries the rewritten history; the old tip 7f995007 is tagged archive/main-before-subject-rewrite. f8dd4dde merged (merged-tree cargo-ci green, 6093 tests) and d45aff82 merged (6100 tests); both 2037941f closures regenerated for the new kernel sources. Invoker rulings: DEC-01 removed from e1f9a78f; e1f9a78f converges its private dense smoke on d45aff82 before re-gating (round 6, w-e1f9a78f-r6, opus) and depends on d45aff82; d45aff82 closes only with src/arm.rs in the shared f547c394 closure (w-d45aff82-closure, opus). Gates on the new main: f8dd4dde cargo-ci and asm-artefact-present PASS, code-review FAIL F1 (no committed Rust 1.95 build-and-suite record for REQ-06), rework 1 dispatched (w-f8dd4dde-r1, sonnet); 9fb40c83 cargo-ci PASS, code-review PASS (advisory: a validation fixture supplies five timed windows), research-review FAIL with three high findings on the v4-r2 dynamic profile (no invocation or content-pinned closure for the profiled executable; shares without intervals; single-session counter tables without intervals). Invoker authorized round 3 with a fresh profile session in the 2026-09-19 window if provenance cannot be derived from committed material (w-9fb40c83-r3, opus, new worktree agent-9fb40c83-r3; its queue line must be merged to main before 04:00 EEST). Four workers running.",
+    "Session 21 end (2026-09-18T18:30Z): f8dd4dde DONE (all four gates, zero findings after rework 1). d45aff82 rework 1 merged (logical launcher on the shared subcommand, usage contract, subreaper hazard); invoker ruling: the shared smoke gains a staged mode, REQ-02 reworded, not yet implemented. e1f9a78f round 6 merged (dense launcher on the shared subcommand); its gates wait for the staged mode. 9fb40c83 round 3 merged (provenance record from committed material, order-statistic intervals, n = 1 labels); gates to re-run. All merged trees passed cargo-ci (6100 tests). No worker and no gate is running; the 2026-09-19 window is armed over nine lines. Handoff: handoff-16.md."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1730,7 +1739,8 @@
     "handoff-12.md",
     "handoff-13.md",
     "handoff-14.md",
-    "handoff-15.md"
+    "handoff-15.md",
+    "handoff-16.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
