@@ -99,12 +99,6 @@
     {
       "commit": null,
       "doc_type": "implementation",
-      "label": "Generator of the prior vector-family receipt pin",
-      "path": "dev/active/ad2a6a58/survey/pin-prior-receipt.py"
-    },
-    {
-      "commit": null,
-      "doc_type": "implementation",
       "format": "markdown",
       "label": "Result-table generator for the published outcome",
       "path": "dev/active/ad2a6a58/survey/make-tables.py"
@@ -210,6 +204,12 @@
       "format": "markdown",
       "label": "Benchmark-window queue carrying this family's pilot line",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Shared prior-receipt pin tool",
+      "path": "dev/scripts/pin-prior-receipt.py"
     }
   ],
   "first_ready_at": "2026-09-16T12:11:10.819218802Z",
@@ -232,5 +232,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-09-18T13:57:03.594599861Z"
+  "updated_at": "2026-09-18T14:13:40.687317329Z"
 }

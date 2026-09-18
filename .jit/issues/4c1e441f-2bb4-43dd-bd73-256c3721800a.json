@@ -8,7 +8,226 @@
     "d45aff82-1878-49a7-8b84-4405c49a0d3a"
   ],
   "description": "Measure the shipped GF(2^8) dense matrix product against the route the\nlibrary takes without it, as a protocol-version-4 A/B family with a pilot and\na confirmation, and publish the receipts and the decision.\n\n## Background\n\nA production change needs a current pinned pre-change baseline and an after\nmeasurement on the same host, including dispatch overhead; a prior study's\nreceipts are context, not a substitute. Both arms are the same shipped\nexecutable, separated by the test-build lane switch, so the comparison\nisolates the change. The accepted matrix-family confirmation receipt under\n`dev/bench_results/19513245/` states the direction an earlier prototype\nreached and is cited for agreement, not inherited; the shipped path writes\nresults in place and restores the transposed operand, neither of which the\nprototype did. The two representations reach different routes without the\nchange — one a batched dot product per output cell, the other a whole-product\ncarry-less-multiply kernel — so each is its own cell. Cells also cover the\nwhole-consumer boundary, where the scratch buffers and the operand restoration\nare paid.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen family addendum is committed before the campaign\n  launches, with every numeric setting from it and the shared protocol\n  settings, and the confirmation addendum is derived from the committed pilot\n  receipt by the repository's canonical confirmation freezer with its\n  derivation record beside it.\n- [hard] REQ-02: The family's append-only ledger opens empty, records each\n  attempt's reservation, and is never hand-edited; an attempt aborted for a\n  procedural defect in its own freeze or launch, before any result is read, is\n  recorded under the voided-attempt rule with its stage preserved.\n- [hard] REQ-03: Every arm and case operation passes a non-timed harness\n  smoke before any timed campaign is queued: the smoke drives each arm with\n  the benchmark runner's own transport encoder and framing, pins its request\n  mirror against the runner's request in a test and records zero timing\n  windows. Every timed run is a committed queue line for the benchmark window\n  rather than a session launch.\n- [hard] REQ-04: Each campaign is verified from its own execution log: the\n  declared cell count starts, checkpoints and completes exactly once, every\n  cell reaches its declared pair count with a measured status, the campaign\n  ends in a terminal complete record, and the acceptance tool recomputes the\n  committed verdict.\n- [hard] REQ-05: The pilot covers both GF(2^8) element representations, at\n  least two square dimensions and the whole-matrix consumer boundary; the\n  confirmation retains as many of those cells as its family's confirmatory\n  budget admits, and the freezer's derivation record names which cells are\n  retained, which are dropped and why. Each cell's selected lane and per-call\n  allocation counts are recorded at run time.\n- [hard] REQ-06: The published outcome states, for each cell, the verdict the\n  acceptance summary records, including any not-material or regressed cell,\n  and states whether the result agrees in direction with the earlier\n  matrix-family confirmation receipt it pins by path and digest. A\n  non-qualifying outcome is published as the result, with retention or removal\n  of the accelerated path decided by the frozen rule rather than after the\n  fact.\n- [hard] REQ-07: No measured or derived figure is copied into prose; each\n  quantitative statement is a conclusion plus a pointer to the generated table\n  row, receipt or ledger line that holds it.\n\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "a4eb8a61fea7c14c8e8c829b8b90591e586a3bf6d940b0251dbaa6bedb9e0c4f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "conformance/lane-equivalence.txt",
+          "resolved_path": "dev/active/4c1e441f/conformance/lane-equivalence.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d45fa31bd7e04295fb780bf532df3639f72bd29f95c3257e6933c97f7b620e8e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-dense-product-pilot.json",
+          "resolved_path": "dev/active/4c1e441f/addendum-v4-dense-product-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "540604887758ecc8e43765da325e56644b458e98743f747bdee49ff7ff4f6f36",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/runner-smoke.txt",
+          "resolved_path": "dev/active/4c1e441f/survey/runner-smoke.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/4c1e441f/dense-product-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dbd898ab26e9e4d0ec43c5dbbaf340cdf7893e97b4a43e7b26a1a2c6321cfa51",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/4c1e441f/tables.md",
+          "resolved_path": "dev/bench_results/4c1e441f/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "da45a53314d79a65ba16eae30aa84b4be1fac9e49800306d0b84417375857cd0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../613574db/design.md",
+          "resolved_path": "dev/active/613574db/design.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "plan",
+      "format": "markdown",
+      "label": "Confirmation plan for the shipped GF(2^8) dense product",
+      "path": "dev/active/4c1e441f/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "protocol",
+      "label": "Frozen protocol-v4 pilot family addendum",
+      "path": "dev/active/4c1e441f/addendum-v4-dense-product-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Pinned prior matrix-family confirmation receipt, by path and SHA-256",
+      "path": "dev/active/4c1e441f/pinned-matrix-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Both lanes agree byte for byte on every declared shape",
+      "path": "dev/active/4c1e441f/conformance/lane-equivalence.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Shipped GF(2^8) table and dense-product suites of the measured tree",
+      "path": "dev/active/4c1e441f/conformance/shipped-conformance.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Non-timed harness smoke of every arm and cell, zero timing windows",
+      "path": "dev/active/4c1e441f/survey/runner-smoke.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Producing-input closure of both campaigns",
+      "path": "dev/active/4c1e441f/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Frozen pilot addendum generator",
+      "path": "dev/active/4c1e441f/survey/make-addendum.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Runner plan projection for this family",
+      "path": "dev/active/4c1e441f/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Producing-input manifest generator",
+      "path": "dev/active/4c1e441f/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Result table generator",
+      "path": "dev/active/4c1e441f/survey/make-tables.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Non-timed arm smoke driver for this family",
+      "path": "dev/active/4c1e441f/survey/smoke-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Append-only family ledger, open and empty",
+      "path": "dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Launcher for the build, window, freeze and tables stages",
+      "path": "dev/bench_results/4c1e441f/run-dense-product-confirmation.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Generated result tables",
+      "path": "dev/bench_results/4c1e441f/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Shared execution-log verification",
+      "path": "dev/scripts/verify-campaign-log.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Tests for the shared execution-log verification",
+      "path": "dev/scripts/verify-campaign-log.test.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Shared runner plan projection",
+      "path": "dev/scripts/campaign_plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Shared result table rendering",
+      "path": "dev/scripts/campaign_tables.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Shared producing-input manifest",
+      "path": "dev/scripts/campaign_inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Shared prior-receipt pin",
+      "path": "dev/scripts/pin-prior-receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Shared non-timed arm smoke script",
+      "path": "dev/scripts/smoke-campaign-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Shared arm smoke driver over the runner wire",
+      "path": "dev/active/6c6b09b1/survey/arm-common/src/smoke.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Shared counting allocator for per-call allocation counts",
+      "path": "dev/active/6c6b09b1/survey/arm-common/src/alloc.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "GF(2^8) dense-product arm workspace manifest",
+      "path": "dev/active/4c1e441f/survey/gemm-arm/Cargo.toml"
+    }
+  ],
   "first_ready_at": "2026-09-16T12:11:34.507392176Z",
   "gates_required": [
     "cargo-ci",
@@ -29,5 +248,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) dense product against the current matrix route",
-  "updated_at": "2026-09-18T13:57:09.814162159Z"
+  "updated_at": "2026-09-18T14:13:40.401946137Z"
 }
