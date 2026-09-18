@@ -16,13 +16,13 @@
   ],
   "gates_status": {
     "breakdown-review": {
-      "status": "passed",
-      "updated_at": "2026-09-15T01:06:30.619679950Z",
+      "status": "failed",
+      "updated_at": "2026-09-18T11:05:21.208691981Z",
       "updated_by": "auto:executor"
     },
     "coverage-preview": {
       "status": "passed",
-      "updated_at": "2026-09-15T01:03:41.813844712Z",
+      "updated_at": "2026-09-18T11:01:08.634568260Z",
       "updated_by": "auto:executor"
     }
   },
@@ -42,5 +42,5 @@
   "priority": "normal",
   "state": "done",
   "title": "breakdown: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-15T01:08:03.120752699Z"
+  "updated_at": "2026-09-18T11:05:21.208691981Z"
 }
