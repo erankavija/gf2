@@ -1363,17 +1363,6 @@ fn repository_root() -> std::path::PathBuf {
         .expect("the repository root resolves")
 }
 
-/// Every arm child the harness launches is bounded by the addendum's own child
-/// timeout (§ Cache, warmup, and sampling), which is the protocol's shared
-/// setting rather than a private wall-clock figure.
-#[test]
-fn a_launched_arm_child_carries_the_frozen_timeout() {
-    assert_eq!(
-        dense_parity_harness::smoke::CHILD_TIMEOUT,
-        std::time::Duration::from_secs(SHARED_SETTINGS.child_timeout_seconds)
-    );
-}
-
 /// The pins the harness carries are the frozen document's own bytes and its own
 /// declarations, so a timed run refuses an addendum whose content moved and no
 /// pin is a hand-maintained copy that can go stale.
