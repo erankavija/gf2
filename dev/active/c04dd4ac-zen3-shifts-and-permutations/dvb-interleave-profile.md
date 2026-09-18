@@ -16,9 +16,10 @@ whole-stage gap of at least the frozen `material_gap_threshold` in the
 comparator's favour the smallest residual worth a bounded feasibility
 investigation, and retains the current scatter below it. A cell speedup above
 one means xdsopl `PCTITL` [Xdsopl2026] is ahead. The evaluator records every
-whole-consumer cell as `regressed`, so no cell reaches the threshold and none
-comes near it; the per-cell decisions and intervals are the `Decision` and
-`Interval` columns of
+whole-consumer cell as `regressed`, so no cell reaches the threshold; the
+decomposition table adds the margin, with the two arms' intervals disjoint and
+the gf2 stage below the comparator in every cell. The per-cell decisions and
+intervals are the `Decision` and `Interval` columns of
 [`v4-r2-pilot/acceptance-summary.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md),
 each over the six paired executions its `Pairs` column states. Because the
 disposition nominates nothing, REQ-05 permits this profile to complete; the
@@ -59,49 +60,62 @@ pass sequences are tabulated in the attribution tables.
 [`dvb-interleave-profile-tables.md`](dvb-interleave-profile-tables.md) is
 written by [`survey/make-dvb-tables.py`](survey/make-dvb-tables.py) from the
 receipt, the profile session records and the source-evidence ledger, and is the
-authoritative location for every figure below.
+authoritative location for every figure below. Each table states the samples it
+summarises and carries the interval the generator's declared method gives that
+sample, or labels the figure descriptive where no interval is available. The
+dynamic profile session's invocation, executable digest, content-pinned source
+and build closure, RNG declaration and sampling plan are the generated
+[`v4-r2-dynamic-profile-provenance.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
 
 - **Isolated cost beside whole-consumer cost.** The isolated scatter and the
   one-frame `BitInterleave::process` that wraps it agree to within the
-  same-binary noise the null cells measure, so the stage wrapper adds no
-  attributable cost and the whole consumer at that boundary is the scatter. The
-  isolated and stage columns are medians over the six pairs of the cells named
-  in the same row.
+  same-binary noise the null cells measure: their intervals overlap in every
+  row of the boundary table, so the stage wrapper adds no attributable cost and
+  the whole consumer at that boundary is the scatter. Each column of that table
+  is a median over the pairs of one cell with its own interval.
 - **Representation conversions.** The gf2 route crosses no representation
-  boundary: its arms report zero pack, unpack and batch-fill time in every
-  pair. The xdsopl arm pays unpack, a destructive-input copy with output
+  boundary: its rows of the conversion-part table are zero for pack, unpack and
+  the input copy, and its remainder is the whole per-call cost. The xdsopl arm
+  pays unpack, a destructive-input copy with output
   allocation, and a pack inside every timed call; those three parts and the
   remainder that holds the `PCTITL` permutation together with the final
-  packed-batch wrap are the decomposition table's columns. The remainder is not
-  a `PCTITL` figure, because the arm does not time the wrap separately.
+  packed-batch wrap are the rows of the conversion-part table, each with its own
+  interval. The remainder is not a `PCTITL` figure, because the arm does not
+  time the wrap separately.
 - **Memory passes.** The two gf2 routes make the fewest logical passes of the
   four; the xdsopl stage adapter and the full BICM channel each make more. The
   sequences are the memory-pass table.
-- **Allocation behavior.** The direct route allocates least per call, the stage
-  one allocation more for the batch it returns, and the xdsopl adapter and the
-  full BICM channel more still and far more bytes. The counts and bytes per
-  call are the `allocations/call` and `bytes/call` columns of
-  [`v4-r2-dynamic-profile/profile-summary.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md),
-  each an across-session value over that table's nine sessions. The counting
-  allocator adds relaxed atomics, so those wall times explain composition only.
+- **Allocation behavior and composition.** The direct route allocates least per
+  call, the stage one allocation more for the batch it returns, and the xdsopl
+  adapter and the full BICM channel more still and far more bytes. The counts
+  and bytes per call are an exact per-call census, and the wall time beside them
+  an across-session median with its interval, in the across-session table; its
+  raw source is the session's own `rep-NN/cases.json` records, which
+  [`v4-r2-dynamic-profile/profile-summary.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md)
+  renders too. The counting allocator adds relaxed atomics, so those wall times
+  explain composition only.
 - **Call graph and hot symbols.** One symbol,
   `DvbT2BitInterleaver::interleave`, carries almost the whole isolated and
   stage profile, while the BICM channel's largest share belongs to the
   demapper; the per-case top symbol and its sample count are the hot-symbol
-  table. The scatter's descriptive share of the full max-log BICM channel is
-  the share column of the profile summary, which labels it descriptive and
-  gives it no decision interval.
+  table, which labels both as descriptive observations of the one session that
+  retains samples. The scatter's share of the full max-log BICM channel is the
+  share table: a per-session quotient over the nine sessions with its interval,
+  and beside it the Amdahl ceiling that follows from the share as an estimate.
+  The profile summary carries the same quotient as a bare descriptive figure
+  formed from across-session medians, and the share table is the figure to
+  cite.
 - **Hot instructions.** Within the scatter the samples concentrate on the
   bounds comparison of the permutation index, the loop counter update and
   back edge, and the data-dependent bit test that decides whether an output
-  bit is set; the per-instruction shares are the hot-instruction table. In
-  the hardware-counter table both FECFRAME lengths execute the same
-  instructions per bit, while the Normal rows pay markedly more cycles per
-  bit and carry nearly all of the branch misses per bit. The Short frame's
-  single repeating fixture is short enough for the predictor to reproduce,
-  so the Normal rows are the ones that expose the scatter's data-dependent
-  branch cost. Those counters come from one retained session and carry no
-  interval.
+  bit is set; the per-instruction shares, the samples behind them and the
+  Wilson interval of each share are the hot-instruction table. That listing,
+  the hot-symbol table and the hardware-counter table all come from the one
+  session that retains counters and perf samples. The tables label them
+  descriptive single-session observations with n = 1; only the first session
+  collects counters, so no repetition retains the data an across-session
+  interval would need, and no conclusion of this report rests on a comparison
+  between their rows.
 
 ## Frozen experiment
 
@@ -163,6 +177,24 @@ packed boundary, and the complete `BicmAwgnChannel` max-log path. Nine sessions
 provide the order-statistic interval for each wall-time figure; one session
 records allocation counts, hardware counters, hot symbols and instruction
 annotation.
+
+That session records its executable digest per repetition but no source or build
+closure, so
+[`survey/make-profile-provenance.py`](survey/make-profile-provenance.py)
+reconstructs one from committed objects and publishes it as
+[`v4-r2-dynamic-profile-provenance.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
+The generator locates the measured tree through the revision the session's host
+record carries as informational and accepts that tree only on content: its
+committed harness-validation record must state the executable digest every
+repetition logs, and its case declaration must hash to the digest the session
+records. From that tree the record pins every path of the producing-input
+manifest by SHA-256 under one closure identity, quotes the queued command and
+the launcher's per-repetition dispatch, and quotes the seeded generator and
+window budget the pinned sources fix. The tie between digest and sources is that
+committed build record, not a rebuild: the survey workspace's release profile
+embeds its checkout location and the measured build ran in another worktree, so
+the digest is reproducible nowhere else and no rebuild is attempted. The
+generator's docstring states this limit and the rest of the method.
 
 That session's own annotation step passes an option its `perf` build rejects, so
 each case keeps an empty `.annotate.txt` beside the `.err` file that names the
