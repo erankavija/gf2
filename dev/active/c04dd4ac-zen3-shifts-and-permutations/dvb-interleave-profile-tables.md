@@ -16,32 +16,52 @@ Each row is the median over the cell's paired executions of the arm's per-call w
 | `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | 6 | 12 170 | [12 140, 12 190] | 30 921 | [30 876, 31 502] | regressed |
 | `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | 6 | 215 160 | [214 828, 215 316] | 434 739 | [433 556, 435 765] | regressed |
 
-### Conversion parts of the xdsopl arm
+### Conversion parts of both arms
 
-The arm times unpack, the destructive-input copy with output allocation, and pack inside every call. The remainder is the per-call total less those three parts and holds the `PCTITL` permutation together with the final packed-batch wrap, which the arm does not time separately, so the remainder is not a `PCTITL` figure. Each part is the median over the same pairs with its own order-statistic interval.
+Each arm times unpack, the destructive-input copy with output allocation, and pack inside every call, and reports them whether or not it crosses a representation boundary. The remainder is the per-call total less those three parts; for the xdsopl arm it holds the `PCTITL` permutation together with the final packed-batch wrap, which the arm does not time separately, so the remainder is not a `PCTITL` figure. Each part is the median over the same pairs with its own order-statistic interval.
 
-| Cell | part | pairs | ns/call | interval |
-|---|---|---:|---:|---|
-| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | unpack | 6 | 27 092 | [26 997, 27 321] |
-| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | input copy and output alloc | 6 | 83 064 | [82 764, 83 354] |
-| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | pack | 6 | 200 256 | [199 672, 201 193] |
-| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | remainder | 6 | 119 330 | [118 525, 120 284] |
-| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | unpack | 6 | 27 021 | [26 966, 27 081] |
-| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | input copy and output alloc | 6 | 82 783 | [82 483, 83 030] |
-| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | pack | 6 | 198 719 | [196 504, 199 628] |
-| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | remainder | 6 | 123 050 | [121 998, 123 380] |
-| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | unpack | 6 | 6 799 | [6 795, 6 825] |
-| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | input copy and output alloc | 6 | 1 400 | [1 397, 1 413] |
-| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | pack | 6 | 11 116 | [11 080, 11 152] |
-| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | remainder | 6 | 15 659 | [15 621, 15 690] |
-| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | unpack | 6 | 6 823 | [6 818, 6 830] |
-| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | input copy and output alloc | 6 | 1 412 | [1 400, 1 427] |
-| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | pack | 6 | 11 192 | [11 111, 11 780] |
-| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | remainder | 6 | 11 515 | [11 476, 11 536] |
-| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | unpack | 6 | 27 100 | [27 043, 27 275] |
-| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | input copy and output alloc | 6 | 83 127 | [82 682, 83 427] |
-| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | pack | 6 | 205 141 | [203 904, 205 775] |
-| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | remainder | 6 | 119 588 | [118 815, 120 560] |
+| Cell | arm | part | pairs | ns/call | interval |
+|---|---|---|---:|---:|---|
+| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | gf2 stage | unpack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | gf2 stage | input copy and output alloc | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | gf2 stage | pack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | gf2 stage | remainder | 6 | 184 608 | [184 012, 185 160] |
+| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | xdsopl | unpack | 6 | 27 092 | [26 997, 27 321] |
+| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | xdsopl | input copy and output alloc | 6 | 83 064 | [82 764, 83 354] |
+| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | xdsopl | pack | 6 | 200 256 | [199 672, 201 193] |
+| `dvb-t2-qam16-r12-normal-warm-sim-stage-gap` | xdsopl | remainder | 6 | 119 330 | [118 525, 120 284] |
+| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | gf2 stage | unpack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | gf2 stage | input copy and output alloc | 6 | 0 | [0, 0] |
+| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | gf2 stage | pack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | gf2 stage | remainder | 6 | 184 992 | [184 644, 185 689] |
+| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | xdsopl | unpack | 6 | 27 021 | [26 966, 27 081] |
+| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | xdsopl | input copy and output alloc | 6 | 82 783 | [82 483, 83 030] |
+| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | xdsopl | pack | 6 | 198 719 | [196 504, 199 628] |
+| `dvb-t2-qam64-r12-normal-warm-sim-stage-gap` | xdsopl | remainder | 6 | 123 050 | [121 998, 123 380] |
+| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | gf2 stage | unpack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | gf2 stage | input copy and output alloc | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | gf2 stage | pack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | gf2 stage | remainder | 6 | 12 195 | [12 179, 12 231] |
+| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | xdsopl | unpack | 6 | 6 799 | [6 795, 6 825] |
+| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | xdsopl | input copy and output alloc | 6 | 1 400 | [1 397, 1 413] |
+| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | xdsopl | pack | 6 | 11 116 | [11 080, 11 152] |
+| `dvb-t2-qam16-r12-short-warm-sim-stage-gap` | xdsopl | remainder | 6 | 15 659 | [15 621, 15 690] |
+| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | gf2 stage | unpack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | gf2 stage | input copy and output alloc | 6 | 0 | [0, 0] |
+| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | gf2 stage | pack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | gf2 stage | remainder | 6 | 12 170 | [12 140, 12 190] |
+| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | xdsopl | unpack | 6 | 6 823 | [6 818, 6 830] |
+| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | xdsopl | input copy and output alloc | 6 | 1 412 | [1 400, 1 427] |
+| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | xdsopl | pack | 6 | 11 192 | [11 111, 11 780] |
+| `dvb-t2-qam64-r12-short-warm-sim-stage-gap` | xdsopl | remainder | 6 | 11 515 | [11 476, 11 536] |
+| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | gf2 stage | unpack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | gf2 stage | input copy and output alloc | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | gf2 stage | pack | 6 | 0 | [0, 0] |
+| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | gf2 stage | remainder | 6 | 215 160 | [214 828, 215 316] |
+| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | xdsopl | unpack | 6 | 27 100 | [27 043, 27 275] |
+| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | xdsopl | input copy and output alloc | 6 | 83 127 | [82 682, 83 427] |
+| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | xdsopl | pack | 6 | 205 141 | [203 904, 205 775] |
+| `dvb-t2-qam16-r12-normal-streaming-sim-stage-gap` | xdsopl | remainder | 6 | 119 588 | [118 815, 120 560] |
 
 ## Isolated scatter beside the whole consumer
 
