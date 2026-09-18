@@ -76,17 +76,20 @@ impl Drop for AlignedSlab {
     }
 }
 
-/// Items per bank for a cache state and per-item byte cost.
+/// Items per bank for a cache state and the bytes one item's fixture holds.
+///
+/// `item_bytes` is the fixture bytes the bank holds for one item, so a
+/// streaming bank rounds up to the smallest integral number of complete tuples
+/// that reaches [`STREAMING_BANK_BYTES`], as the addendum's `streaming` policy
+/// requires (§ Cache, warmup, and sampling). A warm or cold cell rotates
+/// nothing, so its one bank holds one item.
 pub fn items_per_bank(cache: Cache, item_bytes: usize) -> usize {
     match cache {
         Cache::Warm | Cache::Cold => 1,
-        Cache::Streaming => STREAMING_BANK_BYTES.div_ceil(item_bytes).max(1),
+        // The guard keeps the division defined for the empty logical shapes the
+        // oracle builds warm; no streaming cell declares one.
+        Cache::Streaming => STREAMING_BANK_BYTES.div_ceil(item_bytes.max(1)),
     }
-}
-
-/// Item stride that keeps every item start on a 64-byte boundary.
-pub fn stride_words(words: usize) -> usize {
-    words.div_ceil(8) * 8
 }
 
 fn fill(mixer: &mut SplitMix64, words: &mut [u64]) {
@@ -113,10 +116,14 @@ pub struct KernelBanks {
 }
 
 impl KernelBanks {
+    /// Fixture bytes one item holds: the two `words`-word slabs it allocates.
+    pub const fn item_bytes(words: usize) -> usize {
+        2 * words * 8
+    }
+
     /// Builds the working set of one cell.
     pub fn build(words: usize, cache: Cache, seed: u64) -> Self {
-        let item_bytes = 2 * stride_words(words) * 8;
-        let items = items_per_bank(cache, item_bytes);
+        let items = items_per_bank(cache, Self::item_bytes(words));
         let mut mixer = SplitMix64::new(seed);
         let banks = (0..cache.banks())
             .map(|_| {
@@ -134,14 +141,24 @@ impl KernelBanks {
         Self { banks, items, words }
     }
 
+    /// Fixture banks in this working set.
+    pub fn banks(&self) -> usize {
+        self.banks.len()
+    }
+
     /// Items in every bank.
     pub fn items(&self) -> usize {
         self.items
     }
 
+    /// Fixture bytes one bank holds.
+    pub fn bank_bytes(&self) -> usize {
+        self.items * Self::item_bytes(self.words)
+    }
+
     /// Resident bytes across every bank.
     pub fn working_set_bytes(&self) -> usize {
-        self.banks.len() * self.items * 2 * self.words * 8
+        self.banks() * self.bank_bytes()
     }
 
     /// Reads every initialized byte once, outside timing, without executing
@@ -189,11 +206,17 @@ pub struct MatvecBanks {
 }
 
 impl MatvecBanks {
+    /// Fixture bytes one item holds: the matrix's `rows` row slabs of `words`
+    /// words each, which is the stride `BitMatrix::zeros` derives, and the
+    /// vector's `words` words.
+    pub const fn item_bytes(rows: usize, words: usize) -> usize {
+        (rows + 1) * words * 8
+    }
+
     /// Builds the working set of one cell from its shape and cache state.
     pub fn build(rows: usize, columns: usize, cache: Cache, seed: u64) -> Self {
         let words = columns.div_ceil(64);
-        let item_bytes = ((rows + 1) * words * 8).max(1);
-        let items = items_per_bank(cache, item_bytes);
+        let items = items_per_bank(cache, Self::item_bytes(rows, words));
         let mut mixer = SplitMix64::new(seed);
         let tail_bits = columns % 64;
         let mask = |word: u64| {
@@ -236,9 +259,19 @@ impl MatvecBanks {
         Self::build(crate::cells::MATVEC_ROWS, shape.columns(words), cache, seed)
     }
 
+    /// Fixture banks in this working set.
+    pub fn banks(&self) -> usize {
+        self.banks.len()
+    }
+
     /// Items in every bank.
     pub fn items(&self) -> usize {
         self.items
+    }
+
+    /// Fixture bytes one bank holds.
+    pub fn bank_bytes(&self) -> usize {
+        self.items * Self::item_bytes(self.rows, self.words)
     }
 
     /// Logical rows of every matrix.
@@ -253,7 +286,7 @@ impl MatvecBanks {
 
     /// Resident bytes across every bank.
     pub fn working_set_bytes(&self) -> usize {
-        self.banks.len() * self.items * (self.rows + 1) * self.words * 8
+        self.banks() * self.bank_bytes()
     }
 
     /// Reads every initialized byte once, outside timing.

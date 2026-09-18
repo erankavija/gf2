@@ -5,9 +5,9 @@
 # the record carries no clock reading, the arms answer a zero-window request, and
 # no receipt is finalized, so a rerun on the same executables reproduces it byte
 # for byte and the smoke cannot serve as a pilot
-# dense-arm sha256: d2c8c606100ae7cda2026943aa355436c555720f2de2bd2a595d9153c092b08d
-# dense-arm-scalar sha256: 9575874e802f658bbadbfe76e52a3071bcf33435017b7eebaab3752df8a69950
-# dense-m4ri-arm sha256: 4274e716923cb6072d040c4460970ee83217654f9ee3d6598fa63d296395a525
+# dense-arm sha256: ac48c900d002495be0c47d26f1d06757deccd681c04e708f6b3502866a336f2a
+# dense-arm-scalar sha256: 0c26252d13d9c2a22ff5b05e797096c476a89222ba996faf68f6caf8b8e1322d
+# dense-m4ri-arm sha256: 08bb47a579407ea4ac8cfacc9fff6174410258ebee14f95f493c2437421f7824
 PASS semantic oracle: 108 cases, 21465 checks
 PASS 2037941f-dense-isolated-fused-parity: 2 sessions, resume repeated no cell
 PASS and-popcnt-8w-streaming: 2 arms handshook, 0 timing windows, cache streaming
@@ -16,6 +16,7 @@ PASS and-popcnt-a: 2 handshakes, 2 result lines parsed
 PASS and-popcnt-b: 2 handshakes, 2 result lines parsed
 PASS 2037941f-dense-isolated-fused-parity wire: 4 child spawns, 4 clean exits, 0 child diagnostics
 PASS 2037941f-dense-isolated-fused-parity journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
+PASS 2037941f-dense-isolated-fused-parity fixtures: 4 gf2 arms name their fixture banks and a working set those banks account for
 PASS 2037941f-dense-isolated-fused-parity schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 2 cells
 PASS 2037941f-dense-allocated-matvec: 3 sessions, resume repeated no cell
 PASS matvec-r1024-8w-cold: 2 arms handshook, 0 timing windows, cache cold
@@ -26,6 +27,7 @@ PASS matvec-b: 3 handshakes, 3 result lines parsed
 PASS matvec-scalar-reference: 1 handshakes, 1 result lines parsed
 PASS 2037941f-dense-allocated-matvec wire: 6 child spawns, 6 clean exits, 0 child diagnostics
 PASS 2037941f-dense-allocated-matvec journal: 0 timing records, 3 checkpointed cells, 0 finalized receipts
+PASS 2037941f-dense-allocated-matvec fixtures: 6 gf2 arms name their fixture banks and a working set those banks account for
 PASS 2037941f-dense-allocated-matvec schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 3 cells
 PASS 2037941f-dense-matvec-vs-m4ri: 2 sessions, resume repeated no cell
 PASS m4ri-gap-65x512-retained-warm: 2 arms handshook, 0 timing windows, cache warm
@@ -34,6 +36,7 @@ PASS m4ri-mzd-mul: 2 handshakes, 2 result lines parsed
 PASS m4ri-peer-gf2: 2 handshakes, 2 result lines parsed
 PASS 2037941f-dense-matvec-vs-m4ri wire: 4 child spawns, 4 clean exits, 0 child diagnostics
 PASS 2037941f-dense-matvec-vs-m4ri journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
+PASS 2037941f-dense-matvec-vs-m4ri fixtures: 2 gf2 arms name their fixture banks and a working set those banks account for
 PASS 2037941f-dense-matvec-vs-m4ri schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 2 cells
 PASS external comparator object: /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1 sha256 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb, observed by 2 arm handshakes
 PASS 2037941f-dense-matvec-vs-m4ri cells: 8 cells transcribe and verify against the frozen addendum

@@ -54,9 +54,14 @@ fn run() -> Result<(), String> {
                 sink ^= banks.touch();
             }
             let (row_addr, vector_addr) = banks.addresses_mod_64(0, 0);
+            // A receipt retains the observed operand alignment and the fixture
+            // bank sizes, so the provenance names the banks, the bytes one bank
+            // holds and the whole working set.
             let selected = format!(
                 "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w={words}\
-                 /row%64={row_addr}/x%64={vector_addr}/working-set={}B",
+                 /row%64={row_addr}/x%64={vector_addr}/banks={}x{}B/working-set={}B",
+                banks.banks(),
+                banks.bank_bytes(),
                 banks.working_set_bytes()
             );
             let counted = MutCell::new(0_u64);
@@ -93,12 +98,14 @@ fn run() -> Result<(), String> {
             }
             let selected = format!(
                 "gf2-core/BitMatrix::matvec/{}/stride={words}w/shape={}/rows={}/cols={}\
-                 /base%64={}/retain={MAX_RETAINED_OUTPUTS}/working-set={}B",
+                 /base%64={}/retain={MAX_RETAINED_OUTPUTS}/banks={}x{}B/working-set={}B",
                 facts.lane(),
                 shape.id(),
                 banks.rows(),
                 banks.columns(),
                 banks.base_mod_64(0, 0),
+                banks.banks(),
+                banks.bank_bytes(),
                 banks.working_set_bytes()
             );
             let items = banks.items();
@@ -134,12 +141,14 @@ fn run() -> Result<(), String> {
             verify_lane(facts, route)?;
             let selected = format!(
                 "gf2-core/BitMatrix::matvec+release/{}/stride={}w/rows={}/cols={}\
-                 /base%64={}/working-set={}B",
+                 /base%64={}/banks={}x{}B/working-set={}B",
                 facts.lane(),
                 facts.stride_words,
                 shape.rows,
                 shape.cols,
                 banks.base_mod_64(0, 0),
+                banks.banks(),
+                banks.bank_bytes(),
                 banks.working_set_bytes()
             );
             // The comparator boundary charges the release, so the output is

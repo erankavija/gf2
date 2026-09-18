@@ -341,9 +341,9 @@ pub struct WindowPlan {
 /// `body(bank, item)` is the measured operation. The timing loop rotates banks
 /// once per call; the item index advances once per full rotation, so a
 /// streaming execution walks its whole working set. A warm policy runs one
-/// untimed pass of the measured operation over its one-item working set before
-/// calibration; a streaming policy runs no measured operation beforehand; a
-/// cold policy calibrates nothing and uses the frozen call count.
+/// untimed pass of the measured operation over the cell's complete working set
+/// before calibration; a streaming policy runs no measured operation
+/// beforehand; a cold policy calibrates nothing and uses the frozen call count.
 ///
 /// A plan declaring zero windows is the non-timed arrangement pass the
 /// deterministic smoke drives: the cache policy's declared untimed pass runs,
@@ -360,8 +360,22 @@ pub fn run_windows(
             plan.cold_calls
         )));
     }
+    if plan.banks == 0 || plan.items == 0 {
+        return Err(io::Error::other(format!(
+            "cell declares a working set of {} banks of {} items",
+            plan.banks, plan.items
+        )));
+    }
     if plan.cache == Cache::Warm {
-        body(0, 0);
+        // One untimed pass over the cell's complete working set, which the
+        // addendum's `warm` policy fixes: one call per item of every bank, so
+        // the pass covers the buffers every timed call uses, including the
+        // output each of those calls writes.
+        for bank in 0..plan.banks {
+            for item in 0..plan.items {
+                body(bank, item);
+            }
+        }
     }
     if plan.windows == 0 {
         return Ok(Vec::new());
@@ -374,6 +388,9 @@ pub fn run_windows(
         body(bank % banks, item);
     };
     execution_windows_fixed_or_calibrated(
+        // One child is one execution, and an arm reports each window's calls
+        // and elapsed time rather than the helper's execution coordinate, so
+        // every child measures the helper's first execution.
         0,
         u64::from(plan.windows),
         Duration::from_millis(u64::from(plan.window_target_ms)),
