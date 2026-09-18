@@ -4,7 +4,7 @@
 # lines the arms wrote; none carries a clock reading or a timing window, so a rerun on the
 # same executables reproduces this record byte for byte
 # plan: campaign 4c1e441f-dense-product-arms-smoke over dev/active/4c1e441f/addendum-v4-dense-product-pilot.json (8 cells, 4 arms)
-# arm executable gf256-gemm-arm sha256: 44e60c29cc3214e318a4348f7c236b510651d7d53c1c79146712875a6c9a2009
+# arm executable gf256-gemm-arm sha256: baa15fa519ade386344d1cadd10168e84a0a3f8e7ecf353d52970e6d6e41e6a7
 PASS matmul-n64-element/scalar-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=132608
 PASS matmul-n64-element/table-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=143360
 PASS matmul-n256-element/scalar-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2103296

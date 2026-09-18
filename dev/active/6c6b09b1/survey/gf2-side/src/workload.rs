@@ -46,8 +46,9 @@ pub trait ByteField {
     /// The canonical bits of a reduced element.
     fn byte(element: &Self::Elem) -> u8;
     /// The inner route `field::matrix::gemm` takes for this element type on
-    /// this host: the branch its source selects (`source-evidence.json`)
-    /// given the kernels observed available at run time.
+    /// this host when `gf2m::byte_table::gf256_table_dispatch` declines: the
+    /// branch its source selects (`source-evidence.json`) given the kernels
+    /// observed available at run time.
     fn gemm_route() -> &'static str;
 }
 

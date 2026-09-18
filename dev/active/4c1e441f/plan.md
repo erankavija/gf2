@@ -32,9 +32,9 @@ Each execution reports the lane after its timed windows, because the witness
 describes the calls that ran. The reported path carries the witness's lane name,
 the number of product tables the process built, the declining route's name, and
 the allocating calls and bytes one call of the cell's own body makes. That last
-pair is the design's RISK-03 — three scratch byte buffers per call on a path
-whose current counts the profile records — observed per cell rather than
-asserted. The executable links a counting global allocator for it; the counters
+pair is the design's RISK-03, the scratch the accepted path allocates per call,
+observed per cell rather than asserted. The executable links a counting global
+allocator for it; the counters
 are armed for one untimed probe call and disarmed for every timed window, where
 they cost one relaxed load per allocation on both arms of a pair and cancel in
 the ratio the estimator forms.
