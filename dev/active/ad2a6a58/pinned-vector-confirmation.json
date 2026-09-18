@@ -1,0 +1,20 @@
+{
+  "role": "direction agreement only; this family inherits no sample from it",
+  "issue": "19513245",
+  "family_id": "bytefield-consumer-vector",
+  "campaign_id": "19513245-r1-vector-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "receipt": "dev/bench_results/19513245/r1-vector-confirmation/receipt.json",
+  "receipt_sha256": "53f8c413dd1bf90190c6ad7bd51680d4b231063fb7e5aca7f977ead1e99a3b74",
+  "acceptance_summary": "dev/bench_results/19513245/r1-vector-confirmation/acceptance-summary.json",
+  "acceptance_summary_sha256": "4030e2d63c7af0641960f6352fdc6d597efeea36da18a80e0928daea611a0699",
+  "cells": [
+    "axpy-128k-element",
+    "axpy-128k-wide",
+    "axpy-4k-element",
+    "axpy-8m-element",
+    "region-128k-element",
+    "region-128k-wide"
+  ]
+}
