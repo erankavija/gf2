@@ -7,27 +7,21 @@
 #   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh freeze
 #   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh tables
 #
-# `build` compiles the arm, the runner and the acceptance tool with the
-# repository's minimum supported toolchain and runs the correctness checks that
-# precede timing: the two lanes of the measured executable must agree on every
-# byte coefficient at the word-boundary lengths, and the shipped crate's own
-# GF(2^8) table suites must pass. It writes the committed evidence under
-# dev/active/ad2a6a58/conformance/ and runs unlocked in a working session.
+# `build` runs the correctness checks that precede timing — the two lanes of
+# the measured executable agree on every byte coefficient at the word-boundary
+# lengths, and the shipped crate's GF(2^8) table suites pass — and commits
+# their evidence under dev/active/ad2a6a58/conformance/.
 #
 # `window` is the only timed action and the only command a queue line carries.
-# It refuses outside a benchmark window, rebuilds the arm, the runner and the
-# acceptance tool from the current tree, refuses a campaign input that is not
+# It refuses outside a benchmark window, refuses a campaign input that is not
 # committed and unmodified, prints the canonical execution log path before the
-# first bounded run, resumes an interrupted campaign under its own identity
-# without repeating a completed cell, finalizes a complete campaign once, and
-# evaluates the receipt. Re-running it on a finalized campaign re-evaluates and
-# measures nothing.
+# first bounded run, resumes an interrupted campaign under its own identity,
+# and finalizes and evaluates a complete campaign once. Re-running it on a
+# finalized campaign re-evaluates and measures nothing.
 #
 # `freeze` derives the confirmation addendum from the committed pilot receipt
-# with the repository's canonical freezer, writing the derivation record beside
-# it. It reads no result of its own and runs in a working session, before the
-# confirmation is queued. `tables` regenerates the result tables from whatever
-# is committed.
+# with the repository's canonical freezer, reading no result of its own.
+# `tables` regenerates the result tables from whatever is committed.
 #
 # Every numeric setting comes from the frozen addendum and the protocol's
 # frozen shared settings; this script fixes only campaign identities, seeds,
@@ -101,10 +95,9 @@ if [[ "${ACTION}" == tables ]]; then
 fi
 
 if [[ "${ACTION}" == freeze ]]; then
-    # The confirmation's resolution, margins and pilot pin are derived from the
-    # committed pilot receipt, never from a reading taken here. The retained
-    # cells and the reason for every dropped cell are the frozen selection rule
-    # of the pilot addendum's family description.
+    # The confirmation's resolution, margins and pilot pin come from the
+    # committed pilot receipt, never from a reading taken here; the retained and
+    # dropped cells follow the pilot addendum's frozen selection rule.
     for frozen in "${PILOT_ADDENDUM}" "${RESULTS}/r1-axpy-pilot/receipt.json"; do
         git ls-files --error-unmatch "${frozen}" >/dev/null
         git diff --quiet HEAD -- "${frozen}" || {
@@ -188,13 +181,11 @@ if [[ -f "${OUT}/acceptance-summary.json" ]]; then
     exit "${verdict}"
 fi
 
-# Publication precedes measurement: every campaign input is committed and
-# unmodified, so the receipt pins committed bytes. The checked set is the
-# frozen addendum, the receipt pin and the whole producing-input closure the
-# campaign snapshots, which covers the arm sources, the lock files and the
-# pre-timing evidence. The ledger is checked too: a reservation the last
-# attempt appended and nobody committed would leave the chain a receipt pins
-# unreproducible from a fresh checkout.
+# Publication precedes measurement, so the receipt pins committed bytes: the
+# frozen addendum, the receipt pin, the family ledger and the whole
+# producing-input closure the campaign snapshots. An uncommitted ledger
+# reservation would leave the chain a receipt pins unreproducible from a fresh
+# checkout.
 mapfile -t FROZEN < <(
     printf '%s\n' "${ADDENDUM}" "${LEDGER}" "${PIN}" "${PRODUCING}"
     python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))["build_inputs"]))' \
@@ -296,9 +287,8 @@ evaluate
     echo "# finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >>"${LAUNCH_LOG}"
 
-# An exit code says a process ended, not that it produced data: a campaign
-# whose every cell failed can still exit cleanly. The campaign is verified
-# from its own execution log instead, against the plan it measured.
+# A campaign whose every cell failed can still exit cleanly, so the campaign is
+# verified from its own execution log against the plan it measured.
 python3 - "${OUT}/execution.log" "${OUT}/receipt.json" "${PLAN}" <<'PY'
 import collections, json, sys
 

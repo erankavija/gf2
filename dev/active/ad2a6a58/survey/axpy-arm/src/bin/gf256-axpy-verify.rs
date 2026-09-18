@@ -1,14 +1,13 @@
 //! Lane equivalence check of the measured executable (jit:ad2a6a58).
 //!
-//! Correctness precedes timing: the two arms of every pair are this crate's
-//! two lanes, so a campaign is only worth queuing once they agree on the
-//! operands the cells use. The check runs `FieldVec::axpy` on both lanes over
-//! both element representations, at the word-boundary lengths and over every
+//! Both arms of a pair are this crate's two lanes, so a campaign is worth
+//! queuing only once they agree: the check runs `FieldVec::axpy` on both lanes
+//! over both element representations, at the word-boundary lengths and every
 //! byte coefficient, and reads the shipped lane witness to establish that the
 //! lane it asked for is the lane that ran.
 //!
-//! The lane switch is process-global; this binary is single-threaded, so each
-//! toggle-execute-observe section runs alone.
+//! The lane switch is process-global and this binary is single-threaded, so
+//! each toggle-execute-observe section runs alone.
 
 use byte_field_arm_common::{OperandStream, SplitMix64};
 use byte_field_gf2_side::workload::{self, ByteField, RuntimeGf256, WideGf256};
