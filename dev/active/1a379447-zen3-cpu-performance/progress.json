@@ -1120,6 +1120,33 @@
       "status": "resolved",
       "raised_at": "2026-09-16T22:30Z",
       "resolution": "Invoker (session 19): concision rule added to AGENTS.md and the code-review prompt (54e6f1b9); sweep task 807ddab2 created, wired 1362381c->807ddab2->63bad95d."
+    },
+    {
+      "category": "architectural decision (policy item 5)",
+      "issue": "85fc5ff4 / c04dd4ac",
+      "question": "85fc5ff4 nominates an AVX2 lane-crossing funnel and a BMI2-gated scalar funnel, both feasible at Rust 1.95; REQ-05 requires a bracket amendment with candidate leaves",
+      "recommendation": "BMI2 form only",
+      "status": "resolved",
+      "raised_at": "2026-09-17T22:05Z",
+      "resolution": "Invoker (session 21, 2026-09-18): BMI2 form only. The c04dd4ac bracket gains one implementation leaf and one A/B confirmation leaf; a0812b83 re-homes behind them."
+    },
+    {
+      "category": "issue scope change (policy item 3/4)",
+      "issue": "ad2a6a58, 4c1e441f, worker-brief.md",
+      "question": "code-review blocks a real-runner arm smoke as a timed run outside the window (9fb40c83 F1) while REQ-03 of ad2a6a58 and 4c1e441f demanded exactly that smoke",
+      "recommendation": "non-timed harness smoke everywhere",
+      "status": "resolved",
+      "raised_at": "2026-09-18T10:50Z",
+      "resolution": "Invoker (session 21): non-timed harness smoke governs. REQ-03 reworded in ad2a6a58 and 4c1e441f; the brief drops the real-runner option; one rework converts the 9fb40c83 and 85fc5ff4 smokes, a second converts ad2a6a58 before its pilot runs."
+    },
+    {
+      "category": "benchmark window",
+      "issue": "ad2a6a58, 18a87159, f63a2464",
+      "question": "no window ran on 2026-09-18; about 145 minutes of queued measurement wait",
+      "recommendation": "arm tonight",
+      "status": "resolved",
+      "raised_at": "2026-09-18T10:50Z",
+      "resolution": "Invoker (session 21): arm the window for 2026-09-19 04:00 EEST."
     }
   ],
   "rework_counts": {
@@ -1143,7 +1170,7 @@
     "2c487595": 1,
     "77c21ecd": 0,
     "7cdc28e9": 0,
-    "e1f9a78f": 1
+    "e1f9a78f": 2
   },
   "surfaced_pitfalls": [
     {
@@ -1601,7 +1628,8 @@
     "Trap (session 19): a native worker inherits the user CLAUDE.md and delegated to codex; the delegation rule was removed from ~/.claude/CLAUDE.md and every prompt now says to do the work itself.",
     "Session 20 (2026-09-17T21:15Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; four workers at a time in worktrees, reuse over proliferation; check for worker stalls every 20 minutes. Session 19 ended on the weekly usage limit without a handoff; its state was recovered from progress.json, git and the worktrees. The 2026-09-17 window ran both c04dd4ac source jobs (rc 0; results uncommitted in their worktrees). Dispatched into the existing worktrees: 85fc5ff4 (opus, collect window and finish), 9fb40c83 (opus, same), e1f9a78f (opus, finish after the lead-preserve WIP 9ab18326), b64dc9c4 (sonnet, REQ audit, main merge, cargo-ci, Rust 1.95). The lead finishes 0a357f94 itself (branch complete; main merged; closure --check passes; cargo-ci running).",
     "Session 20 (2026-09-17T22:20Z): closed 0a357f94 (code-review R1 closed by an empty-diff regeneration commit aa9a2f5a) and b64dc9c4 (all gates first run). Merged e1f9a78f (8f1ace4e), 9fb40c83 (0e976898), 85fc5ff4 (fd5ac642). e1f9a78f code-review F1 (libm4ri.so runtime identity unpinned): rework 1 sent to its original worker. 9fb40c83 code-review F1 (smoke-dvb-arms.sh finalizes a timed throwaway receipt outside the window) and F2 (narrative comments); smoke-shift-arms.sh of 85fc5ff4 has the same pattern; one rework covers both smokes when a slot frees. 9fb40c83 citation repair applied under the standing approval. 85fc5ff4: disposition material, two forms nominated, both feasible at Rust 1.95 (shift-feasibility-record.md); REQ-05 bracket amendment pending invoker consultation. Dispatched: ad2a6a58 (opus, agent-0a357f94 dir), 18a87159 (opus, agent-b64dc9c4 dir), f63a2464 (opus, agent-9fb40c83 dir). Pitfall: the e1f9a78f dense queue lines are keyed to e1f9a78f and the window skips done issues; c73ffa25 must re-key them. Host race: concurrent cargo-ci runs delete the sccache server scratch dir of another run (reported by three workers).",
-    "Session 21 (2026-09-18T10:30Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; at most four workers in worktrees, reuse over proliferation. Session 20 hung from 22:05Z on an unanswered invoker question (85fc5ff4 REQ-05 bracket amendment: BMI2 form only, both forms, or a REQ-05 amendment) and ended without a handoff; state recovered from progress.json, git, the worktrees and the session-20 transcript. All four session-20 workers finished with clean trees: e1f9a78f rework 1 (14bf8885, 9f33c449; merged this session, merged-tree cargo-ci green, 6083 tests), ad2a6a58 (8 commits, axpy pilot queued), 18a87159 (7 commits, four queue lines), f63a2464 (7 commits, QC candidate pilots queued). No window was armed for 2026-09-18, so every queued measurement still waits. Worktree map: agent-0a357f94 = branch worktree-agent-ad2a6a58; agent-b64dc9c4 = worktree-agent-18a87159; agent-9fb40c83 = worktree-agent-f63a2464; agent-85fc5ff4 and agent-e1f9a78f hold their own branches. Open: 9fb40c83 code-review F1/F2 plus the same smoke pattern in 85fc5ff4's smoke-shift-arms.sh (one rework), 9fb40c83 research-review rerun after the citation repair, 85fc5ff4 gates not yet run."
+    "Session 21 (2026-09-18T10:30Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; at most four workers in worktrees, reuse over proliferation. Session 20 hung from 22:05Z on an unanswered invoker question (85fc5ff4 REQ-05 bracket amendment: BMI2 form only, both forms, or a REQ-05 amendment) and ended without a handoff; state recovered from progress.json, git, the worktrees and the session-20 transcript. All four session-20 workers finished with clean trees: e1f9a78f rework 1 (14bf8885, 9f33c449; merged this session, merged-tree cargo-ci green, 6083 tests), ad2a6a58 (8 commits, axpy pilot queued), 18a87159 (7 commits, four queue lines), f63a2464 (7 commits, QC candidate pilots queued). No window was armed for 2026-09-18, so every queued measurement still waits. Worktree map: agent-0a357f94 = branch worktree-agent-ad2a6a58; agent-b64dc9c4 = worktree-agent-18a87159; agent-9fb40c83 = worktree-agent-f63a2464; agent-85fc5ff4 and agent-e1f9a78f hold their own branches. Open: 9fb40c83 code-review F1/F2 plus the same smoke pattern in 85fc5ff4's smoke-shift-arms.sh (one rework), 9fb40c83 research-review rerun after the citation repair, 85fc5ff4 gates not yet run.",
+    "Session 21 (2026-09-18T11:00Z): e1f9a78f code-review round 2 FAIL on 7a235715: F1 (high) OutputSink::keep clears and drops retained outputs inside a timed window once its bounded capacity is reached (routes.rs:165; e1f9a78f REQ-01, 2037941f REQ-06); F2 (low, blocking) the attributable lead-preserve commit 9ab18326 carries a wip subject and sits in main history since merge 8f1ace4e. Rework 2 dispatched for F1; F2 cannot be closed without rewriting main history and goes to the invoker before the next code-review run. Trap: a lead-preserve wip commit must never reach main with a jit:<id> scope; squash or re-subject it on the worker branch before the merge."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
