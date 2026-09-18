@@ -1,42 +1,42 @@
-# Dense-parity harness non-timed wire smoke (jit:e1f9a78f)
+# Dense-parity harness non-timed arm smoke (jit:e1f9a78f)
 # command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh smoke --m4ri
-# every line below is observed at run time from the semantic oracle, the stage
-# execution logs, the checkpoint stores and the handshake records under target/;
-# the record carries no clock reading and no receipt is finalized, so a rerun on
-# the same executables reproduces it byte for byte and the smoke cannot serve as
-# a pilot
-# dense-arm sha256: 1884bf7ecbf21a0d78233724cc544c139c1331be08859394a84ebbc59fe4f756
-# dense-arm-scalar sha256: b4063dd30b01550cf18aa62e2064c69d2ac93cd3759b5acc03dd0cd4413925e2
-# dense-m4ri-arm sha256: 1f67598f10eca9ffa31549edfe2a3ae97284478a346d7b4b07395b345265c52c
+# contract: benchmark-ab-runner smoke (tuning_campaign_support::arm::smoke)
+# every line below is projected from the semantic oracle's output and the
+# families' smoke records under target/; a rerun on the same executables
+# reproduces it byte for byte
+# dense-arm (target/e1f9a78f-arms/release/dense-arm) sha256: 79879e0fc903882d8cf9d7a7ede9b39ac74034cbfd446b2dbc6109c6a9dc0355
+# dense-m4ri-arm (target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm) sha256: 4af3539204fcbbb86b3376bc0e5c5516c9a4084afbaf6776d2dfae87b46b32ad
+# dense-arm (target/e1f9a78f-scalar-arm/release/dense-arm) sha256: 1b3becd88e045d74e7abf1ea79469848a56b7e0c742e4410836f65079c2537e2
 PASS semantic oracle: 108 cases, 21465 checks
-PASS 2037941f-dense-isolated-fused-parity: 2 sessions, resume repeated no cell
-PASS and-popcnt-8w-streaming: 2 arms handshook, 0 timing windows, cache streaming
-PASS and-popcnt-8w-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS and-popcnt-a: 2 handshakes, 2 result lines parsed
-PASS and-popcnt-b: 2 handshakes, 2 result lines parsed
-PASS 2037941f-dense-isolated-fused-parity wire: 4 child spawns, 4 clean exits, 0 child diagnostics
-PASS 2037941f-dense-isolated-fused-parity journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
-PASS 2037941f-dense-isolated-fused-parity fixtures: 4 gf2 arms name their fixture banks and a working set those banks account for
-PASS 2037941f-dense-isolated-fused-parity schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 2 cells
-PASS 2037941f-dense-allocated-matvec: 3 sessions, resume repeated no cell
-PASS matvec-r1024-8w-cold: 2 arms handshook, 0 timing windows, cache cold
-PASS matvec-r1024-8w-scalar-reference-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS matvec-r1024-8w-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS matvec-a: 2 handshakes, 2 result lines parsed
-PASS matvec-b: 3 handshakes, 3 result lines parsed
-PASS matvec-scalar-reference: 1 handshakes, 1 result lines parsed
-PASS 2037941f-dense-allocated-matvec wire: 6 child spawns, 6 clean exits, 0 child diagnostics
-PASS 2037941f-dense-allocated-matvec journal: 0 timing records, 3 checkpointed cells, 0 finalized receipts
-PASS 2037941f-dense-allocated-matvec fixtures: 6 gf2 arms name their fixture banks and a working set those banks account for
-PASS 2037941f-dense-allocated-matvec schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 3 cells
-PASS 2037941f-dense-matvec-vs-m4ri: 2 sessions, resume repeated no cell
-PASS m4ri-gap-65x512-retained-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS m4ri-gap-65x512-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS m4ri-mzd-mul: 2 handshakes, 2 result lines parsed
-PASS m4ri-peer-gf2: 2 handshakes, 2 result lines parsed
-PASS 2037941f-dense-matvec-vs-m4ri wire: 4 child spawns, 4 clean exits, 0 child diagnostics
-PASS 2037941f-dense-matvec-vs-m4ri journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
-PASS 2037941f-dense-matvec-vs-m4ri fixtures: 2 gf2 arms name their fixture banks and a working set those banks account for
-PASS 2037941f-dense-matvec-vs-m4ri schema: handshake record decodes as dense-parity-nontimed-smoke-v1, 2 cells
-PASS external comparator object: /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1 sha256 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb, observed by 2 arm handshakes
+PASS campaign e1f9a78f-2037941f-dense-isolated-fused-parity-arm-smoke: 2 cells
+PASS cell and-popcnt-8w-warm: and-popcnt-a and and-popcnt-b validated, cache warm, 0 timing windows
+PASS cell and-popcnt-8w-streaming: and-popcnt-a and and-popcnt-b validated, cache streaming, 0 timing windows
+PASS arm and-popcnt-a: 2 dispatches, 0 timing windows
+PASS route and-popcnt-a: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B
+PASS route and-popcnt-a: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B
+PASS arm and-popcnt-b: 2 dispatches, 0 timing windows
+PASS route and-popcnt-b: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B
+PASS route and-popcnt-b: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B
+PASS 2037941f-dense-isolated-fused-parity: 2 cells, 4 dispatches, 0 timing windows, 4 gf2 dispatches naming a working set their banks account for
+PASS campaign e1f9a78f-2037941f-dense-allocated-matvec-arm-smoke: 3 cells
+PASS cell matvec-r1024-8w-warm: matvec-a and matvec-b validated, cache warm, 0 timing windows
+PASS cell matvec-r1024-8w-cold: matvec-a and matvec-b validated, cache cold, 0 timing windows
+PASS cell matvec-r1024-8w-scalar-reference-warm: matvec-scalar-reference and matvec-b validated, cache warm, 0 timing windows
+PASS arm matvec-a: 2 dispatches, 0 timing windows
+PASS route matvec-a: gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B
+PASS arm matvec-b: 3 dispatches, 0 timing windows
+PASS route matvec-b: gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B
+PASS arm matvec-scalar-reference: 1 dispatches, 0 timing windows
+PASS route matvec-scalar-reference: gf2-core/BitMatrix::matvec/scalar-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B
+PASS 2037941f-dense-allocated-matvec: 3 cells, 6 dispatches, 0 timing windows, 6 gf2 dispatches naming a working set their banks account for
+PASS campaign e1f9a78f-2037941f-dense-matvec-vs-m4ri-arm-smoke: 2 cells
+PASS cell m4ri-gap-65x512-warm: m4ri-peer-gf2 and m4ri-mzd-mul validated, cache warm, 0 timing windows
+PASS cell m4ri-gap-65x512-retained-warm: m4ri-peer-gf2 and m4ri-mzd-mul validated, cache warm, 0 timing windows
+PASS arm m4ri-mzd-mul: 2 dispatches, 0 timing windows
+PASS route m4ri-mzd-mul: m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
+PASS route m4ri-mzd-mul: m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
+PASS arm m4ri-peer-gf2: 2 dispatches, 0 timing windows
+PASS route m4ri-peer-gf2: gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B
+PASS 2037941f-dense-matvec-vs-m4ri: 2 cells, 4 dispatches, 0 timing windows, 2 gf2 dispatches naming a working set their banks account for
+PASS external comparator object: /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1 sha256 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb, observed by 2 dispatches
 PASS 2037941f-dense-matvec-vs-m4ri cells: 8 cells transcribe and verify against the frozen addendum
