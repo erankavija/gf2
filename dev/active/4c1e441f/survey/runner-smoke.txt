@@ -1,0 +1,27 @@
+# GF(2^8) dense product arm smoke (jit:4c1e441f)
+# command: dev/active/4c1e441f/survey/smoke-arms.sh
+# every line below is observed at run time from the plan this smoke drove and the result
+# lines the arms wrote; none carries a clock reading or a timing window, so a rerun on the
+# same executables reproduces this record byte for byte
+# plan: campaign 4c1e441f-dense-product-arms-smoke over dev/active/4c1e441f/addendum-v4-dense-product-pilot.json (8 cells, 4 arms)
+# arm executable gf256-gemm-arm sha256: 44e60c29cc3214e318a4348f7c236b510651d7d53c1c79146712875a6c9a2009
+PASS matmul-n64-element/scalar-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=132608
+PASS matmul-n64-element/table-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=143360
+PASS matmul-n256-element/scalar-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2103296
+PASS matmul-n256-element/table-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2293760
+PASS matmul-n512-element/scalar-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=8400896
+PASS matmul-n512-element/table-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=9175040
+PASS matmul-n256-whole-element/scalar-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2103296
+PASS matmul-n256-whole-element/table-element: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2293760
+PASS matmul-n64-wide/scalar-wide: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=163840
+PASS matmul-n64-wide/table-wide: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=77824
+PASS matmul-n256-wide/scalar-wide: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=2621440
+PASS matmul-n256-wide/table-wide: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=1245184
+PASS matmul-n512-wide/scalar-wide: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=10485760
+PASS matmul-n512-wide/table-wide: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=4980736
+PASS matmul-n256-whole-wide/scalar-wide: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=2621440
+PASS matmul-n256-whole-wide/table-wide: cache-state=warm operation=matmul workers=1 windows=0 gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=1245184
+PASS coverage: arms scalar-element,scalar-wide,table-element,table-wide
+PASS coverage: operations matmul
+PASS coverage: cache states warm
+PASS coverage: 16 untimed dispatches, 0 timing windows
