@@ -135,7 +135,11 @@ A committed receipt carries every input file it pins by digest, so a fresh
 checkout reproduces its acceptance verdict. Nested `Cargo.lock` files inside a
 receipt's `inputs/` snapshot are ignored by `.gitignore` and need `git add -f`.
 `dev/scripts/check-receipt-input-snapshots.py` reads the git index rather than
-the working tree and fails CI on an omission.
+the working tree and fails CI on an omission. A campaign plan that names no
+family producing-input closure pins the shared
+`dev/active/f547c394/producing-inputs.json`, which is maintained by hand;
+`dev/scripts/check-campaign-producing-closure.py` fails CI when that closure
+omits a source the benchmark runner compiles.
 
 Keep permanent documentation under `README.md`, crate-level rustdoc, or `docs/`.
 Keep active designs, experiments, plans, presentations, and benchmark receipts
