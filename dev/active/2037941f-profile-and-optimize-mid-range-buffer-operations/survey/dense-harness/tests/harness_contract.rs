@@ -4,9 +4,10 @@
 //! never reaches it: these tests and the launcher's `build` subcommand are the
 //! only thing that runs it.
 
-use dense_parity_harness::campaign::{self, PlanInputs, M4RI_ARM};
+use dense_parity_harness::campaign::{self, PlanInputs, M4RI_ARM, PILOT_PAIRS};
 use dense_parity_harness::cells::{
-    cells, family_cells, Cache, MatvecShape, Question, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS,
+    cells, family_cells, Cache, Cell, MatvecShape, Question, Workload, ADDENDUM_FROZEN_UTC,
+    ADDENDUM_IDENTITY, ADDENDUM_PATH, ADDENDUM_SHA256, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS,
     CAMPAIGN_SEED, MATVEC_ROWS, M4RI_SHAPES, SIMD_LANE_MIN_WORDS, STREAMING_BANKS,
     STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
 };
@@ -28,13 +29,13 @@ use tuning_campaign_support::protocol::{
 use tuning_campaign_support::transport;
 
 const ISSUE: &str = "e1f9a78f";
-const FROZEN: &str = "2026-09-16T16:16:04Z";
+/// Freeze time a transcription carries; the frozen document is its one source.
+const FROZEN: &str = ADDENDUM_FROZEN_UTC;
 
 fn plan_inputs<'a>(
     scalar: Option<&'a str>,
     m4ri: Option<&'a str>,
     max_cells: Option<u32>,
-    pilot_pairs: Option<u32>,
 ) -> PlanInputs<'a> {
     PlanInputs {
         campaign_id: "e1f9a78f-contract-plan",
@@ -48,7 +49,6 @@ fn plan_inputs<'a>(
         scalar_executable: scalar,
         m4ri_executable: m4ri,
         max_cells_per_session: max_cells,
-        pilot_pairs,
     }
 }
 
@@ -244,6 +244,43 @@ fn the_request_mirror_accepts_exactly_the_runner_request() {
     assert_eq!(case.seed(), 7);
 }
 
+/// An arm answers the frozen window protocol or the smoke's zero-window
+/// arrangement pass, and nothing else: § Cache, warmup, and sampling fixes the
+/// window count and target of every timed execution.
+#[test]
+fn an_arm_refuses_a_window_protocol_the_addendum_does_not_declare() {
+    let warm = concat!(
+        r#"{"schema":"zen3-benchmark-arm-request-v1","cell_id":"matvec-r1024-8w-warm","#,
+        r#""arm":"matvec-a","role":"baseline","pair":0,"#,
+        r#""case":{"question":"allocated-matvec","seed":7,"shape":"full","words":8},"#,
+        r#""cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"#,
+        r#""workers_declared":1}"#
+    );
+    let frozen: Request = transport::decode_case(warm).expect("the mirror decodes");
+    assert_eq!(frozen.windows, SHARED_SETTINGS.windows_per_execution);
+    assert_eq!(frozen.window_target_ms, SHARED_SETTINGS.window_target_ms);
+    frozen.verify_window_protocol().expect("the frozen protocol");
+
+    let mut arrangement = frozen;
+    arrangement.windows = 0;
+    arrangement.window_target_ms = 0;
+    arrangement.verify_window_protocol().expect("the zero-window arrangement pass");
+
+    for (windows, target) in [
+        (4, SHARED_SETTINGS.window_target_ms),
+        (SHARED_SETTINGS.windows_per_execution, 250),
+        (0, SHARED_SETTINGS.window_target_ms),
+    ] {
+        let mut overridden = arrangement.clone();
+        overridden.windows = windows;
+        overridden.window_target_ms = target;
+        let refusal = overridden
+            .verify_window_protocol()
+            .expect_err("an undeclared window protocol is refused");
+        assert!(refusal.contains(&overridden.cell_id), "{refusal}");
+    }
+}
+
 #[test]
 fn every_frozen_case_round_trips_and_names_its_workload() {
     for cell in cells() {
@@ -276,6 +313,103 @@ fn isolated_operands_begin_on_the_declared_boundary() {
     }
 }
 
+/// One canonical `SplitMix64` stream per cell, started at that cell's workload
+/// seed, fills every bank in order, and each additional bank consumes the next
+/// outputs of that same stream (§ Input identities and correctness). Every
+/// stored word is one full 64-bit output, and a partial final word is masked
+/// immediately after generation.
+#[test]
+fn one_canonical_stream_fills_every_bank_in_order() {
+    let seed = 0x5eed_0000_5eed_0000;
+    let kernel = KernelBanks::build(9, Cache::Streaming, seed);
+    let mut mixer = SplitMix64::new(seed);
+    for bank in 0..kernel.banks() {
+        for item in 0..kernel.items() {
+            let (row, vector) = kernel.operands(bank, item);
+            for word in row.iter().chain(vector) {
+                assert_eq!(*word, mixer.next_u64(), "bank {bank} item {item}");
+            }
+        }
+    }
+
+    // The allocated fixture fills each item's matrix words in canonical
+    // row-major order and then its vector words, bank after bank.
+    let allocated = MatvecBanks::allocated(9, MatvecShape::Full, Cache::Streaming, seed);
+    let mut mixer = SplitMix64::new(seed);
+    for bank in 0..allocated.banks() {
+        for index in 0..allocated.items() {
+            let item = allocated.item(bank, index);
+            for row in 0..item.matrix.rows() {
+                for word in item.matrix.row_words(row) {
+                    assert_eq!(*word, mixer.next_u64(), "bank {bank} item {index} row {row}");
+                }
+            }
+            for word in item.vector.words() {
+                assert_eq!(*word, mixer.next_u64(), "bank {bank} item {index} vector");
+            }
+        }
+    }
+
+    // A `tail1` shape consumes one full output per stored word and masks the
+    // partial final word of every row and of the vector immediately after.
+    let tail1 = MatvecBanks::allocated(9, MatvecShape::Tail1, Cache::Warm, seed);
+    let item = tail1.item(0, 0);
+    let tail = MatvecShape::Tail1.columns(9) % 64;
+    let mask = (1_u64 << tail) - 1;
+    let mut mixer = SplitMix64::new(seed);
+    for row in 0..item.matrix.rows() {
+        let words = item.matrix.row_words(row);
+        for (index, word) in words.iter().enumerate() {
+            let generated = mixer.next_u64();
+            let expected = if index + 1 == words.len() { generated & mask } else { generated };
+            assert_eq!(*word, expected, "row {row} word {index}");
+        }
+    }
+    let words = item.vector.words();
+    for (index, word) in words.iter().enumerate() {
+        let generated = mixer.next_u64();
+        let expected = if index + 1 == words.len() { generated & mask } else { generated };
+        assert_eq!(*word, expected, "vector word {index}");
+    }
+}
+
+/// Both arms of a cell see the same fixture bytes, which holds because a
+/// working set is a pure function of its shape, cache state and workload seed
+/// (§ Input identities and correctness).
+#[test]
+fn a_working_set_is_a_pure_function_of_its_cell() {
+    for cell in cells().iter().filter(|cell| cell.cache != Cache::Streaming) {
+        let (rows, columns) = match cell.workload {
+            Workload::AndPopcnt { words } => {
+                let (first, second) = (
+                    KernelBanks::build(words, cell.cache, cell.seed),
+                    KernelBanks::build(words, cell.cache, cell.seed),
+                );
+                assert_eq!(first.operands(0, 0), second.operands(0, 0), "{}", cell.cell_id);
+                continue;
+            }
+            Workload::Matvec { words, shape } => (MATVEC_ROWS, shape.columns(words)),
+            Workload::M4riGap { shape, .. } => (shape.rows, shape.cols),
+        };
+        let first = MatvecBanks::build(rows, columns, cell.cache, cell.seed);
+        let second = MatvecBanks::build(rows, columns, cell.cache, cell.seed);
+        for row in 0..rows {
+            assert_eq!(
+                first.item(0, 0).matrix.row_words(row),
+                second.item(0, 0).matrix.row_words(row),
+                "{} row {row}",
+                cell.cell_id
+            );
+        }
+        assert_eq!(
+            first.item(0, 0).vector.words(),
+            second.item(0, 0).vector.words(),
+            "{}",
+            cell.cell_id
+        );
+    }
+}
+
 #[test]
 fn a_tail1_fixture_carries_canonical_zero_tail_padding() {
     for words in ALL_WORDS {
@@ -293,13 +427,133 @@ fn a_tail1_fixture_carries_canonical_zero_tail_padding() {
     }
 }
 
+/// One cell's working set, built exactly as that cell's arm builds it.
+enum Built {
+    Kernel(KernelBanks),
+    Matvec(MatvecBanks),
+}
+
+impl Built {
+    /// The working set of one frozen cell, and the fixture bytes one of its
+    /// items holds, derived from the cell rather than from the builder.
+    fn of(cell: &Cell) -> (Self, usize) {
+        match cell.workload {
+            Workload::AndPopcnt { words } => (
+                Self::Kernel(KernelBanks::build(words, cell.cache, cell.seed)),
+                KernelBanks::item_bytes(words),
+            ),
+            Workload::Matvec { words, shape } => (
+                Self::Matvec(MatvecBanks::allocated(words, shape, cell.cache, cell.seed)),
+                MatvecBanks::item_bytes(MATVEC_ROWS, shape.columns(words).div_ceil(64)),
+            ),
+            Workload::M4riGap { shape, .. } => (
+                Self::Matvec(MatvecBanks::build(shape.rows, shape.cols, cell.cache, cell.seed)),
+                MatvecBanks::item_bytes(shape.rows, shape.cols.div_ceil(64)),
+            ),
+        }
+    }
+
+    fn banks(&self) -> usize {
+        match self {
+            Self::Kernel(banks) => banks.banks(),
+            Self::Matvec(banks) => banks.banks(),
+        }
+    }
+
+    fn items(&self) -> usize {
+        match self {
+            Self::Kernel(banks) => banks.items(),
+            Self::Matvec(banks) => banks.items(),
+        }
+    }
+
+    fn bank_bytes(&self) -> usize {
+        match self {
+            Self::Kernel(banks) => banks.bank_bytes(),
+            Self::Matvec(banks) => banks.bank_bytes(),
+        }
+    }
+
+    fn working_set_bytes(&self) -> usize {
+        match self {
+            Self::Kernel(banks) => banks.working_set_bytes(),
+            Self::Matvec(banks) => banks.working_set_bytes(),
+        }
+    }
+
+    /// Checks every item of every bank, not the first alone.
+    fn each_item(&self, cell: &Cell) {
+        let id = &cell.cell_id;
+        for bank in 0..self.banks() {
+            for item in 0..self.items() {
+                match self {
+                    // The isolated product fixes both operands at address
+                    // 0 (mod 64) and their length at the cell's word count.
+                    Self::Kernel(banks) => {
+                        assert_eq!(banks.addresses_mod_64(bank, item), (0, 0), "{id}");
+                        let (row, vector) = banks.operands(bank, item);
+                        assert_eq!(
+                            (row.len(), vector.len()),
+                            (cell.workload.stride_words(), cell.workload.stride_words()),
+                            "{id}"
+                        );
+                    }
+                    // The allocated and comparator cells declare no operand
+                    // alignment, so the arm reports the base it observes; the
+                    // shape of every item is the frozen one.
+                    Self::Matvec(banks) => {
+                        let tuple = banks.item(bank, item);
+                        verify_shape(&tuple.matrix, &tuple.vector, banks.rows(), banks.columns())
+                            .unwrap_or_else(|error| panic!("{id}: {error}"));
+                        assert_eq!(banks.base_mod_64(bank, item) % size_of::<u64>(), 0, "{id}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The addendum's cache-state construction, at every cell of every family.
+///
+/// § Cache, warmup, and sampling fixes the bank count of each state, the
+/// per-bank minimum and its rounding rule, and the reported total; § Isolated
+/// fused parity fixes the isolated operands' alignment. The bank's size is the
+/// fixture bytes it holds, so the item count and the allocation are derived
+/// from one measure.
 #[test]
-fn a_streaming_working_set_fills_every_declared_bank() {
-    let kernel = KernelBanks::build(8, Cache::Streaming, 1);
-    assert!(kernel.items() > 1);
-    assert!(kernel.working_set_bytes() >= STREAMING_BANKS * STREAMING_BANK_BYTES);
-    let allocated = MatvecBanks::allocated(8, MatvecShape::Full, Cache::Streaming, 1);
-    assert!(allocated.working_set_bytes() >= STREAMING_BANKS * STREAMING_BANK_BYTES);
+fn every_declared_cell_builds_the_working_set_its_cache_state_fixes() {
+    for cell in cells() {
+        let id = cell.cell_id.clone();
+        let (built, item_bytes) = Built::of(&cell);
+        assert_eq!(built.banks(), cell.cache.banks(), "{id}");
+        assert_eq!(built.bank_bytes(), built.items() * item_bytes, "{id}");
+        assert_eq!(built.working_set_bytes(), built.banks() * built.bank_bytes(), "{id}");
+        match cell.cache {
+            Cache::Streaming => {
+                assert_eq!(built.banks(), STREAMING_BANKS, "{id}");
+                assert!(
+                    built.bank_bytes() >= STREAMING_BANK_BYTES,
+                    "{id} holds {} bytes per bank",
+                    built.bank_bytes()
+                );
+                // Rounded up to an integral number of complete tuples: one
+                // item fewer no longer reaches the per-bank minimum.
+                assert!(
+                    (built.items() - 1) * item_bytes < STREAMING_BANK_BYTES,
+                    "{id} holds {} items per bank",
+                    built.items()
+                );
+                assert!(
+                    built.working_set_bytes() >= STREAMING_BANKS * STREAMING_BANK_BYTES,
+                    "{id}"
+                );
+            }
+            // A warm or cold cell holds the one item its untimed arrangement
+            // covers, which is therefore its complete working set.
+            Cache::Warm | Cache::Cold => assert_eq!(built.items(), 1, "{id}"),
+        }
+        built.each_item(&cell);
+    }
 }
 
 #[test]
@@ -323,6 +577,25 @@ fn warm_runs_one_untimed_pass_and_streaming_runs_none() {
     .expect("the arrangement pass succeeds");
     assert!(samples.is_empty());
     assert_eq!(calls, vec![(0, 0)]);
+
+    // The pass covers the complete working set, whatever its extent: a warm
+    // cell holds one item, and an arrangement over more calls each of them
+    // exactly once.
+    let mut wider = Vec::new();
+    run_windows(
+        WindowPlan {
+            cache: Cache::Warm,
+            cold_calls: None,
+            windows: 0,
+            window_target_ms: 100,
+            banks: 3,
+            items: 2,
+        },
+        &mut |bank, item| wider.push((bank, item)),
+        |_| Ok(()),
+    )
+    .expect("the arrangement pass succeeds");
+    assert_eq!(wider, vec![(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1)]);
 
     let mut streaming = 0;
     let samples = run_windows(
@@ -380,6 +653,23 @@ fn a_zero_window_arrangement_pass_collects_no_timing_sample() {
         |_| Ok(()),
     )
     .is_err());
+
+    // An empty working set is a refusal too, not a rotation over nothing.
+    for (banks, items) in [(0, 1), (1, 0)] {
+        assert!(run_windows(
+            WindowPlan {
+                cache: Cache::Streaming,
+                cold_calls: None,
+                windows: 0,
+                window_target_ms: 0,
+                banks,
+                items,
+            },
+            &mut |_, _| {},
+            |_| Ok(()),
+        )
+        .is_err());
+    }
 }
 
 #[test]
@@ -708,7 +998,6 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
                 Some("/nonexistent/dense-arm-scalar"),
                 Some("/nonexistent/dense-m4ri-arm"),
                 Some(2),
-                Some(6),
             ),
         )
         .expect("the plan projects");
@@ -719,19 +1008,52 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
     }
 }
 
+/// The addendum runs exactly the protocol's pilot maximum on every exploratory
+/// cell (§ Cache, warmup, and sampling), so the projection declares that count
+/// rather than leaving the protocol to select its pilot minimum.
+#[test]
+fn every_projected_cell_runs_the_frozen_number_of_paired_executions() {
+    assert_eq!(PILOT_PAIRS, SHARED_SETTINGS.pilot_max_pairs);
+    assert_ne!(PILOT_PAIRS, SHARED_SETTINGS.pilot_min_pairs);
+    for question in Question::ALL {
+        let addendum = campaign::addendum(question, ISSUE, FROZEN);
+        let plan = campaign::plan(
+            question,
+            &addendum,
+            &plan_inputs(
+                Some("/nonexistent/dense-arm-scalar"),
+                Some("/nonexistent/dense-m4ri-arm"),
+                None,
+            ),
+        )
+        .expect("the plan projects");
+        for cell in &plan.cells {
+            let declared = addendum.cell(&cell.cell_id).expect("a declared cell");
+            assert_eq!(declared.role, CellRole::Exploratory, "{}", cell.cell_id);
+            assert_eq!(cell.pilot_pairs, Some(PILOT_PAIRS), "{}", cell.cell_id);
+            assert_eq!(
+                cell.pair_count(declared.role, &SHARED_SETTINGS),
+                PILOT_PAIRS,
+                "{}",
+                cell.cell_id
+            );
+        }
+    }
+}
+
 #[test]
 fn each_external_and_reference_arm_needs_its_own_executable() {
     let comparator = campaign::addendum(Question::MatvecVsM4ri, ISSUE, FROZEN);
     assert!(campaign::plan(
         Question::MatvecVsM4ri,
         &comparator,
-        &plan_inputs(None, None, None, None)
+        &plan_inputs(None, None, None)
     )
     .is_err());
     assert!(campaign::plan(
         Question::MatvecVsM4ri,
         &comparator,
-        &plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None, None)
+        &plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None)
     )
     .is_ok());
 
@@ -739,7 +1061,7 @@ fn each_external_and_reference_arm_needs_its_own_executable() {
     assert!(campaign::plan(
         Question::AllocatedMatvec,
         &allocated,
-        &plan_inputs(None, None, None, None)
+        &plan_inputs(None, None, None)
     )
     .is_err());
 }
@@ -750,7 +1072,7 @@ fn the_comparator_arm_is_the_external_build_and_the_gf2_arms_are_not() {
     let plan = campaign::plan(
         Question::MatvecVsM4ri,
         &addendum,
-        &plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None, None),
+        &plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None),
     )
     .expect("the plan projects");
     let external = plan.arms.get(M4RI_ARM).expect("the comparator arm");
@@ -768,7 +1090,7 @@ fn a_reseeded_campaign_addendum_projects_no_plan() {
     let outcome = campaign::plan(
         question,
         &addendum,
-        &plan_inputs(Some("/nonexistent/dense-arm-scalar"), None, None, None),
+        &plan_inputs(Some("/nonexistent/dense-arm-scalar"), None, None),
     );
     assert!(outcome.is_err());
 
@@ -777,7 +1099,7 @@ fn a_reseeded_campaign_addendum_projects_no_plan() {
     assert!(campaign::plan(
         question,
         &renamed,
-        &plan_inputs(Some("/nonexistent/dense-arm-scalar"), None, None, None)
+        &plan_inputs(Some("/nonexistent/dense-arm-scalar"), None, None)
     )
     .is_err());
 }
@@ -795,6 +1117,25 @@ fn whole_consumer_cells_charge_conversion_costs() {
                 assert!(declaration.conversion_costs_included, "{}", declaration.cell_id);
             }
         }
+    }
+}
+
+/// Every comparator cell declares the warm state and conversion-and-setup costs
+/// included (§ M4RI comparator), which is the arrangement the external arm
+/// converts once and the state its peer charges on its own side.
+#[test]
+fn every_comparator_cell_is_a_warm_whole_consumer_cell() {
+    for cell in family_cells(Question::MatvecVsM4ri) {
+        assert_eq!(cell.cache, Cache::Warm, "{}", cell.cell_id);
+        assert!(cell.whole_consumer(), "{}", cell.cell_id);
+        assert_eq!(cell.objective(), "comparator-gap", "{}", cell.cell_id);
+        assert_eq!(cell.cache.banks(), 1, "{}", cell.cell_id);
+    }
+    let addendum = campaign::addendum(Question::MatvecVsM4ri, ISSUE, FROZEN);
+    for declaration in &addendum.cells {
+        assert!(declaration.conversion_costs_included, "{}", declaration.cell_id);
+        assert_eq!(declaration.metric_kind, MetricKind::WholeConsumer, "{}", declaration.cell_id);
+        assert!(declaration.cold_calls.is_none(), "{}", declaration.cell_id);
     }
 }
 
@@ -1008,6 +1349,56 @@ fn repository_root() -> std::path::PathBuf {
         .expect("the harness crate sits five directories below the repository root")
         .canonicalize()
         .expect("the repository root resolves")
+}
+
+/// Every arm child the harness launches is bounded by the addendum's own child
+/// timeout (§ Cache, warmup, and sampling), which is the protocol's shared
+/// setting rather than a private wall-clock figure.
+#[test]
+fn a_launched_arm_child_carries_the_frozen_timeout() {
+    assert_eq!(
+        dense_parity_harness::smoke::CHILD_TIMEOUT,
+        std::time::Duration::from_secs(SHARED_SETTINGS.child_timeout_seconds)
+    );
+}
+
+/// The pins the harness carries are the frozen document's own bytes and its own
+/// declarations, so a timed run refuses an addendum whose content moved and no
+/// pin is a hand-maintained copy that can go stale.
+#[test]
+fn the_carried_pins_are_the_frozen_addendums_own_identity() {
+    let root = repository_root();
+    let bytes = std::fs::read(root.join(ADDENDUM_PATH)).expect("the frozen addendum is committed");
+    assert_eq!(
+        tuning_campaign_support::protocol::sha256_hex(&bytes),
+        ADDENDUM_SHA256
+    );
+    let text = String::from_utf8(bytes).expect("the addendum is UTF-8");
+    for declaration in [ADDENDUM_IDENTITY, ADDENDUM_FROZEN_UTC] {
+        assert!(text.contains(declaration), "{declaration}");
+    }
+    for cited in [
+        dense_parity_harness::cells::COMPARATOR_PATH,
+        dense_parity_harness::cells::QUALIFICATION_RECORD,
+    ] {
+        assert!(root.join(cited).is_file(), "{cited}");
+    }
+}
+
+/// Every family's canonical ledger is the committed empty genesis file its
+/// first confirmation counts from (§ Estimator, confidence, and multiple
+/// comparisons), and the three families own three distinct ledgers.
+#[test]
+fn every_family_ledger_exists_at_genesis() {
+    let root = repository_root();
+    let mut paths = BTreeSet::new();
+    for question in Question::ALL {
+        let path = question.ledger_path();
+        let bytes = std::fs::read(root.join(path)).unwrap_or_else(|error| panic!("{path}: {error}"));
+        assert!(bytes.is_empty(), "{path} is past genesis");
+        assert!(paths.insert(path), "{path} is shared");
+        assert_eq!(Question::from_family_id(question.family_id()), Some(question));
+    }
 }
 
 /// Decodes `cargo metadata` for one manifest without touching its lock file.

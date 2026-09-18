@@ -13,6 +13,9 @@ This document is the `parity-measurement-interface` named by
 [`plan.md`](plan.md). It fixes cell identity, semantic validation, route
 provenance, append-only logging, checkpoint/resume, and machine-readable output
 for the dense-parity questions.
+[`dense-parity-conformance.md`](dense-parity-conformance.md) maps the frozen
+addendum clause by clause onto the harness location that carries it and the test
+that binds it.
 
 The harness changes no production code and no production selection. Every
 numeric setting reaches it from the frozen addendum or from the protocol's
@@ -188,12 +191,22 @@ that caveat.
 
 `Cache` implements the addendum's three states exactly. `warm` runs one untimed
 pass of the measured operation over the cell's complete working set, including
-the output the timed call writes, before calibration. `streaming` builds eight
-fixture banks of at least 8 MiB each, rounded up to a whole number of tuples,
-touches every initialized byte outside timing without executing the measured
-operation, and rotates banks once per operation, for a reported working set of
-at least 64 MiB. `cold` requires the frozen fixed call count, executes no
-measured operation before the first window, and calibrates nothing.
+the output the timed call writes, before calibration: one call per item of
+every bank, which for a warm cell is its one item. `streaming` builds eight
+fixture banks whose fixture bytes reach 8 MiB each, rounded up to a whole
+number of tuples, touches every initialized byte outside timing without
+executing the measured operation, and rotates banks once per operation, for a
+reported working set of at least 64 MiB. A bank's size is the bytes it holds,
+so the item count and the allocation come from one measure. `cold` requires the
+frozen fixed call count, executes no measured operation before the first
+window, and calibrates nothing.
+
+Each timed execution runs the protocol's five windows at its 100 ms target and
+each exploratory cell runs its pilot maximum of paired executions, both frozen
+by the addendum. The projected plan therefore states that pair count rather
+than leaving the protocol to select its pilot minimum, and every arm refuses a
+request whose window count or target is neither that protocol nor the smoke's
+zero-window arrangement pass.
 
 ## Semantic oracle
 
@@ -315,7 +328,9 @@ substituted object, and the provenance fields.
 
 The shim exposes exactly the charged components the matched-operation
 specification defines and holds no timing loop: one fresh whole-consumer call,
-and the retain, call and release of a retained-state cell.
+and the retain, call and release of a retained-state cell. The arm converts the
+one item its warm bank holds, which is the arrangement every comparator cell
+declares, and refuses a cell declaring another cache state.
 
 ## Entry points
 
@@ -411,9 +426,10 @@ It checks, in order:
    declares zero timing windows, so each arm builds its fixture, verifies its
    shape and lane, runs the untimed arrangement its cache policy declares and
    answers with no timing window; a child that answers a zero-window request
-   with a window fails the smoke. Each comparator arm names the shared object
-   it loaded, and the record carries that path and digest; arms that disagree
-   on the object fail the smoke.
+   with a window fails the smoke. Each gf2 arm names the fixture banks it built
+   and a working set those banks account for. Each comparator arm names the
+   shared object it loaded, and the record carries that path and digest; arms
+   that disagree on the object fail the smoke.
 4. **Append-only logging and resume.** `max_cells_per_session` is one, so every
    family pauses at least once and a later session completes the stage. The
    first session's execution log is a byte prefix of the final log, the resumed
