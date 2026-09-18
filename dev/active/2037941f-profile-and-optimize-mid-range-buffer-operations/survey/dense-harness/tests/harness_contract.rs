@@ -472,11 +472,11 @@ fn the_retention_bound_is_derived_from_the_largest_declared_retaining_cell() {
     assert!(RETAINED_PEAK_BYTES <= RETAINED_BUDGET_BYTES);
 
     // The bound covers a window of the protocol's target length whenever one
-    // call costs at least this many nanoseconds. The addendum's own analogue for
-    // the allocated family reads 16,793 ns per call at 1024x4096
-    // (`dev/bench_results/5cbb6545/tables.md`, row `matvec-1024x4096`), and the
-    // smallest declared stride reads an eighth of that matrix, so no declared
-    // call is anywhere near this floor.
+    // call costs at least this many nanoseconds; `admit` refuses a faster cell
+    // before its window opens, so the floor is a declared limit, not a host
+    // claim. A prior per-call cost of this family is the row
+    // `matvec-1024x4096` of `dev/bench_results/5cbb6545/tables.md`; it is
+    // context and decides nothing here.
     let covered_ns_per_call =
         u64::from(SHARED_SETTINGS.window_target_ms) * 1_000_000 / MAX_RETAINED_OUTPUTS as u64;
     assert!(covered_ns_per_call < 1_000, "{covered_ns_per_call}");

@@ -172,9 +172,9 @@ The bound is derived, not chosen per cell: `RETAINED_BUDGET_BYTES` of retained
 residency divided by the bytes of the largest declared retained output, which is
 one 1024-bit `BitVec` because every retaining cell is an allocated-matvec cell.
 A contract test states the resulting peak against the budget and the per-call
-cost the bound covers at the protocol's window target, so the retention is known
-to be feasible on the prepared host. The arm reports that bound in
-`selected_path`.
+cost the bound covers at the protocol's window target. Whether a calibrated
+cell fits is observed at run time: `admit` refuses a count above the bound
+before the window opens. The arm reports that bound in `selected_path`.
 
 One consequence belongs in the record rather than in a silent choice: while a
 window retains its outputs, the allocator cannot reuse a freed block, so the
