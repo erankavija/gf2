@@ -2561,6 +2561,102 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         .any(|record| record.event == JournalEvent::LockHold));
 }
 
+/// `check` is the untimed half of `run`: it applies the same decode and
+/// validation and then stops, so a working session can refuse a malformed
+/// frozen input without a host lock, a stage directory or a journal.
+#[test]
+fn runner_check_validates_a_plan_and_measures_nothing() {
+    let root = scratch("runner-check");
+    let repo = root.join("repo");
+    stage_repo(&repo);
+    let mut family = addendum(vec![cell(
+        "first",
+        CellObjective::Improvement,
+        CellRole::Exploratory,
+        CoreArm::SingleCore,
+    )]);
+    family.protocol.version = PROTOCOL_VERSION;
+    family.schema = ADDENDUM_SCHEMA_ID.into();
+    family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+    fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
+    write_addendum(&repo, &family);
+    let arm = json!({
+        "build": "conservative-portable",
+        "description": "fixture arm",
+        // `check` reads no executable: it validates the declaration alone.
+        "executable": "target/release/absent-arm",
+        "arguments": [],
+        "environment": {},
+        "rustflags": null,
+        "tuning_profile": null
+    });
+    let plan = json!({
+        "schema": "zen3-benchmark-plan-v1",
+        "campaign_id": "check-contract",
+        "producing_manifest": "producing-inputs.json",
+        "issue": "f547c394",
+        "label": "pilot",
+        "campaign_seed": 11,
+        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "lock_path": "/tmp/unused.lock",
+        "wrapper": "flock",
+        "timing_override": null,
+        "arms": {"baseline": arm, "candidate": arm},
+        "cells": [{
+            "cell_id": "first",
+            "baseline_arm": "baseline",
+            "candidate_arm": "candidate",
+            "case": {"words": 4096, "seed": 1},
+            "pilot_pairs": 6
+        }],
+        "max_cells_per_session": 1
+    });
+    let plan_path = root.join("plan.json");
+    fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
+    let runner = env!("CARGO_BIN_EXE_benchmark-ab-runner");
+    let check = |path: &Path| {
+        Command::new(runner)
+            .arg("check")
+            .arg(path)
+            .current_dir(&repo)
+            .output()
+            .unwrap()
+    };
+
+    let before: BTreeSet<PathBuf> = fs::read_dir(&repo)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect();
+    let accepted = check(&plan_path);
+    let stdout = String::from_utf8_lossy(&accepted.stdout);
+    assert_eq!(
+        accepted.status.code(),
+        Some(0),
+        "{stdout}\n{}",
+        String::from_utf8_lossy(&accepted.stderr)
+    );
+    assert!(stdout.contains(&family.family.id), "{stdout}");
+    assert!(stdout.contains("1 cells"), "{stdout}");
+    let after: BTreeSet<PathBuf> = fs::read_dir(&repo)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect();
+    assert_eq!(before, after);
+
+    let mut undeclared = plan.clone();
+    undeclared["cells"][0]["cell_id"] = json!("second");
+    let undeclared_path = root.join("undeclared.json");
+    fs::write(
+        &undeclared_path,
+        serde_json::to_vec_pretty(&undeclared).unwrap(),
+    )
+    .unwrap();
+    let rejected = check(&undeclared_path);
+    assert_ne!(rejected.status.code(), Some(0));
+    let stderr = String::from_utf8_lossy(&rejected.stderr);
+    assert!(stderr.contains("second"), "{stderr}");
+}
+
 #[test]
 fn v1_published_receipts_keep_their_pinned_rules_and_refuse_v2() {
     for mode in ["pilot", "confirmation"] {
