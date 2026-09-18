@@ -111,7 +111,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-18T16:47:56.920908706Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-18T16:53:04.259174996Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "d45aff82-1878-49a7-8b84-4405c49a0d3a",
   "labels": [
     "type:task",
@@ -122,5 +133,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Provide one shared non-timed arm smoke in the campaign tools",
-  "updated_at": "2026-09-18T16:00:58.762813732Z"
+  "updated_at": "2026-09-18T16:53:04.259174996Z"
 }
