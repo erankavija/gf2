@@ -28,12 +28,6 @@
     {
       "commit": null,
       "doc_type": "tool",
-      "label": "Logical-buffer smoke session over the shared dispatch",
-      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/smoke.rs"
-    },
-    {
-      "commit": null,
-      "doc_type": "tool",
       "format": "markdown",
       "label": "Logical smoke judge and record writer",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-smoke.py"
@@ -133,5 +127,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Provide one shared non-timed arm smoke in the campaign tools",
-  "updated_at": "2026-09-18T17:39:51.540169061Z"
+  "updated_at": "2026-09-18T17:41:13.976451220Z"
 }
