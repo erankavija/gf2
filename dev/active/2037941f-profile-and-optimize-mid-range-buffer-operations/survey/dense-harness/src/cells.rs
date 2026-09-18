@@ -12,6 +12,7 @@
 //! the executable built without the `simd` feature.
 
 use tuning_campaign_support::abtest::SplitMix64;
+use tuning_campaign_support::protocol::CacheState;
 
 /// Repository-relative path of the frozen prose addendum this table transcribes.
 pub const ADDENDUM_PATH: &str =
@@ -172,13 +173,21 @@ impl Cache {
         }
     }
 
-    /// Decodes a request's declared cache state.
-    pub fn from_request(state: &str) -> Result<Self, String> {
+    /// The protocol state this policy answers.
+    pub fn state(self) -> CacheState {
+        match self {
+            Self::Warm => CacheState::Warm,
+            Self::Streaming => CacheState::Streaming,
+            Self::Cold => CacheState::Cold,
+        }
+    }
+
+    /// The policy a request's declared state selects.
+    pub fn from_request(state: CacheState) -> Self {
         match state {
-            "warm" => Ok(Self::Warm),
-            "streaming" => Ok(Self::Streaming),
-            "cold" => Ok(Self::Cold),
-            other => Err(format!("cache state {other:?} is not a protocol state")),
+            CacheState::Warm => Self::Warm,
+            CacheState::Streaming => Self::Streaming,
+            CacheState::Cold => Self::Cold,
         }
     }
 }
