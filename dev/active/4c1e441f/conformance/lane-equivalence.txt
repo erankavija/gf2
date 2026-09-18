@@ -1,0 +1,4 @@
+# GF(2^8) dense product lane equivalence (jit:4c1e441f)
+# every case runs both lanes of this executable on identical operands
+PASS lane equivalence: 10 shapes agree byte for byte, Gf2mElement
+PASS lane equivalence: 10 shapes agree byte for byte, Gf2mWide<1,Gf256x11d>
