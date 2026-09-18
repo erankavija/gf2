@@ -1,40 +1,31 @@
 //! Deterministic non-timed smoke of the campaign wire, journal and checkpoints.
 //!
-//! The smoke drives the same arm executables a timed campaign drives, over the
-//! canonical child-v2 framing, from the same projected runner plan and campaign
-//! addendum. Its requests declare zero timing windows, so each arm builds its
-//! fixture, resolves its route, performs the untimed arrangement its cache
-//! policy declares and reports no timing window: the smoke collects no timing
-//! sample and finalizes no receipt.
+//! Every arm dispatch is the shared `tuning_campaign_support::arm::smoke`
+//! contract: the runner's own request in the validation position, its child
+//! environment, its dispatch and its result parser.
 //!
-//! Everything else is the shared campaign machinery: the append-only execution
-//! log, the immutable checkpoint store keyed by cell, the resume identity that
-//! pins the plan, the addendum, the producing-input closure and both arm
-//! executables, and the plan's own per-session cell budget. A session that
-//! exhausts the budget pauses; the next session resumes from the checkpoints
-//! and repeats no completed cell.
-
-use crate::wire::{ArmResult, Request, RESULT_SCHEMA};
+//! Around those dispatches this smoke adds the campaign machinery a timed
+//! session uses: the append-only execution log, the immutable checkpoint store
+//! keyed by cell, the resume identity that pins the plan, the addendum, the
+//! producing-input closure and both arm executables, and the plan's own
+//! per-session cell budget. A session that exhausts the budget pauses; the next
+//! session resumes from the checkpoints and repeats no completed cell.
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::fs;
 use std::io;
 use std::path::Path;
-use std::process::Command;
-use std::sync::atomic::AtomicBool;
 use std::time::Duration;
-use tuning_campaign_support::campaign::ProcessOutcome;
+use tuning_campaign_support::arm::{validate_arm, CellValidation, JournalObserver};
 use tuning_campaign_support::host::HostObservation;
 use tuning_campaign_support::journal::{
     CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity, TerminalState,
 };
-use tuning_campaign_support::process::run_process;
 use tuning_campaign_support::protocol::{
     sha256_hex, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan, PROTOCOL_PATH,
 };
 use tuning_campaign_support::provenance::ProducingInputs;
-use tuning_campaign_support::transport::{self, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 
 /// Schema identity of the smoke's own output record.
 pub const SMOKE_SCHEMA: &str = "logical-buffer-nontimed-smoke-v1";
@@ -48,38 +39,6 @@ pub const PLAN_FILE: &str = "plan.json";
 pub const CHECKPOINT_DIR: &str = "checkpoints";
 
 const CHILD_TIMEOUT: Duration = Duration::from_secs(300);
-const CHILD_KILL_GRACE: Duration = Duration::from_secs(5);
-static ALL_REAPED: AtomicBool = AtomicBool::new(true);
-
-/// What one arm reported for one cell of the non-timed smoke.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ArmHandshake {
-    /// Arm name the plan gave this child.
-    pub arm: String,
-    /// `baseline` or `candidate`.
-    pub role: String,
-    /// Content identity of the executable the plan named.
-    pub executable_sha256: String,
-    /// Cache state the arm reports applying.
-    pub cache_state_applied: String,
-    /// Route provenance the arm observed at run time.
-    pub selected_path: String,
-    /// Timing windows the arm reported; zero in every non-timed smoke.
-    pub windows: usize,
-}
-
-/// What both arms reported for one cell.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct CellHandshake {
-    /// Frozen cell identifier.
-    pub cell_id: String,
-    /// Cache state the campaign addendum declares for it.
-    pub cache_state: String,
-    /// Baseline then candidate, in the order the smoke drove them.
-    pub arms: Vec<ArmHandshake>,
-}
 
 /// The completed smoke of one family.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -92,7 +51,7 @@ pub struct SmokeRecord {
     /// Family the campaign addendum declares.
     pub family: String,
     /// Every declared cell, in the plan's order.
-    pub cells: Vec<CellHandshake>,
+    pub cells: Vec<CellValidation>,
 }
 
 /// One session's outcome.
@@ -237,7 +196,7 @@ pub fn session(
                 .iter()
                 .map(|cell| {
                     checkpoints
-                        .load::<Value, CellHandshake>(&cell.cell_id)
+                        .load::<Value, CellValidation>(&cell.cell_id)
                         .map(|(_, handshake)| handshake)
                 })
                 .collect::<io::Result<Vec<_>>>()?,
@@ -273,29 +232,34 @@ fn handshake_cell(
         Some(case.clone()),
         json!({"role": declared.role, "core_arm": declared.core_arm}),
     )?;
-    let cache_state = serde_json::to_value(declared.cache_state)?
-        .as_str()
-        .ok_or_else(|| invalid("cache state is not a string"))?
-        .to_owned();
     let mut arms = Vec::with_capacity(2);
-    for (role, name) in [
-        ("baseline", &cell.baseline_arm),
-        ("candidate", &cell.candidate_arm),
-    ] {
-        arms.push(handshake_arm(
-            log,
+    for name in [&cell.baseline_arm, &cell.candidate_arm] {
+        let journal_case = json!({"key": cell.cell_id, "cell_id": cell.cell_id, "arm": name});
+        let mut observer = JournalObserver::new(log, journal_case.clone());
+        let validated = validate_arm(
             root,
             plan,
             cell,
             declared,
-            &cache_state,
-            role,
             name,
-        )?);
+            CHILD_TIMEOUT,
+            &mut observer,
+        )
+        .map_err(|error| invalid(format!("cell {} arm {name}: {error}", cell.cell_id)))?;
+        log.append(
+            JournalEvent::DriverDiagnostic,
+            Some(journal_case),
+            json!({
+                "kind": "arm-handshake",
+                "windows": validated.windows,
+                "selected_path": validated.selected_path,
+            }),
+        )?;
+        arms.push(validated);
     }
-    let handshake = CellHandshake {
+    let handshake = CellValidation {
         cell_id: cell.cell_id.clone(),
-        cache_state,
+        cache_state: declared.cache_state,
         arms,
     };
     let accepted = checkpoints.accept(&cell.cell_id, &case, &handshake)?;
@@ -310,145 +274,6 @@ fn handshake_cell(
         json!({"status": "handshake", "windows": 0, "pairs": 0}),
     )?;
     Ok(())
-}
-
-#[allow(clippy::too_many_arguments)]
-fn handshake_arm(
-    log: &mut ExecutionLog,
-    root: &Path,
-    plan: &RunnerPlan,
-    cell: &PlanCell,
-    declared: &CellDeclaration,
-    cache_state: &str,
-    role: &str,
-    name: &str,
-) -> io::Result<ArmHandshake> {
-    let arm = plan
-        .arms
-        .get(name)
-        .ok_or_else(|| invalid(format!("the plan declares no arm {name:?}")))?;
-    let executable = if Path::new(&arm.executable).is_absolute() {
-        Path::new(&arm.executable).to_path_buf()
-    } else {
-        root.join(&arm.executable)
-    };
-    let executable_sha256 = sha256_hex(&fs::read(&executable)?);
-    // Zero windows and a zero window target: the arm arranges its fixture and
-    // its route and returns without entering the timing protocol.
-    let request = Request {
-        schema: "zen3-benchmark-arm-request-v1".to_owned(),
-        cell_id: cell.cell_id.clone(),
-        arm: name.to_owned(),
-        role: role.to_owned(),
-        pair: 0,
-        case: cell.case.clone(),
-        cache_state: cache_state.to_owned(),
-        cold_calls: declared.cold_calls,
-        decoder: None,
-        windows: 0,
-        window_target_ms: 0,
-        cpus: Vec::new(),
-        workers_declared: declared.workers.declared,
-    };
-    let input = transport::encode_case(&request).map_err(invalid)?;
-    let mut command = Command::new(&executable);
-    command.args(&arm.arguments);
-    command.env_clear();
-    for (variable, value) in ["PATH", "HOME", "RAYON_NUM_THREADS", "RUSTUP_TOOLCHAIN"]
-        .iter()
-        .filter_map(|variable| std::env::var(variable).ok().map(|value| (*variable, value)))
-    {
-        command.env(variable, value);
-    }
-    for (variable, value) in &arm.environment {
-        command.env(variable, value);
-    }
-    command.env(FRESH_CASE_VAR, FRESH_CASE_VALUE);
-
-    let journal_case =
-        json!({"key": cell.cell_id, "cell_id": cell.cell_id, "arm": name, "role": role});
-    let mut stderr = Vec::new();
-    let mut spawned = 0u32;
-    let result = {
-        let log = &mut *log;
-        run_process(
-            command,
-            input.as_bytes(),
-            CHILD_TIMEOUT,
-            CHILD_KILL_GRACE,
-            || Ok(()),
-            &ALL_REAPED,
-            |pid| {
-                spawned = pid;
-                log.append(
-                    JournalEvent::ChildSpawn,
-                    Some(journal_case.clone()),
-                    json!({"pid": pid}),
-                )
-                .map(|_| ())
-            },
-            |chunk| {
-                stderr.extend_from_slice(chunk);
-                Ok(())
-            },
-        )?
-    };
-    if !stderr.is_empty() {
-        log.append(
-            JournalEvent::ChildDiagnostic,
-            Some(journal_case.clone()),
-            json!({"stderr": String::from_utf8_lossy(&stderr)}),
-        )?;
-    }
-    log.append(
-        JournalEvent::ChildExit,
-        Some(journal_case.clone()),
-        json!({"outcome": result.outcome}),
-    )?;
-    if let Some(error) = result.callback_error {
-        return Err(error);
-    }
-    match result.outcome {
-        ProcessOutcome::Exited { exit_code: 0, .. } => {}
-        other => {
-            return Err(invalid(format!(
-                "arm {name} did not exit cleanly: {other:?}"
-            )))
-        }
-    }
-    let text = String::from_utf8(result.stdout).map_err(|_| invalid("arm stdout is not UTF-8"))?;
-    let parsed: ArmResult = transport::parse_result(&text).map_err(invalid)?;
-    if parsed.schema != RESULT_SCHEMA {
-        return Err(invalid(format!("arm result schema {:?}", parsed.schema)));
-    }
-    if !parsed.windows.is_empty() {
-        return Err(invalid(format!(
-            "arm {name} returned {} timing windows for a zero-window request",
-            parsed.windows.len()
-        )));
-    }
-    if parsed.cache_state_applied != cache_state {
-        return Err(invalid(format!(
-            "arm {name} applied cache state {:?} rather than the declared {cache_state:?}",
-            parsed.cache_state_applied
-        )));
-    }
-    let selected_path = parsed
-        .selected_path
-        .ok_or_else(|| invalid(format!("arm {name} reported no route provenance")))?;
-    log.append(
-        JournalEvent::DriverDiagnostic,
-        Some(journal_case),
-        json!({"kind": "arm-handshake", "windows": 0, "selected_path": selected_path}),
-    )?;
-    Ok(ArmHandshake {
-        arm: name.to_owned(),
-        role: role.to_owned(),
-        executable_sha256,
-        cache_state_applied: parsed.cache_state_applied,
-        selected_path,
-        windows: 0,
-    })
 }
 
 /// Resume identity pinning everything whose bytes can change what the smoke

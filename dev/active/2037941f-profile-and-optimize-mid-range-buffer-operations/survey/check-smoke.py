@@ -5,12 +5,10 @@ The smoke is judged by what the arms and the smoke driver wrote, not by exit
 codes: one parsed result line per arm per cell, an append-only execution log
 whose first session is a byte prefix of the final log, one `cell-complete` per
 declared cell, a terminal `complete` record, an immutable checkpoint per cell,
-and a handshake record whose every arm reports zero timing windows. The stage
-is also checked to hold no finalized receipt, so the smoke can state from
-observation that it produced no timing sample and no receipt sample. Every line
-of the record is observed at run time and carries no clock reading, so a rerun
-on the same executables reproduces it byte for byte. The recorded command line
-is the launcher invocation that ran, passed through as `--command`.
+a stage holding no finalized receipt, and a handshake record whose every arm
+reports zero timing windows. Every record line projects one of those
+observations; the smoke's own contract is stated at
+`tuning_campaign_support::arm::smoke`.
 """
 
 import argparse
@@ -171,11 +169,9 @@ def main():
         print(
             "# Logical-buffer harness non-timed wire smoke (jit:bb769456)\n"
             f"# command: {arguments.command}\n"
-            "# every line below is observed at run time from the semantic oracle, the stage\n"
-            "# execution logs, the checkpoint stores and the handshake records under target/;\n"
-            "# the record carries no clock reading, the arms answer a zero-window request, and\n"
-            "# no receipt is finalized, so a rerun on the same executables reproduces it byte\n"
-            "# for byte and the smoke cannot serve as a pilot",
+            "# contract: benchmark-ab-runner smoke (tuning_campaign_support::arm::smoke)\n"
+            "# every line projects the semantic oracle, the stage execution logs, the\n"
+            "# checkpoint stores or the handshake records under target/",
             file=handle,
         )
         for name, path in digests:
