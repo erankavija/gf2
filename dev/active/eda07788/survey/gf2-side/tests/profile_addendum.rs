@@ -6,10 +6,11 @@ use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use survey_gf2_side::CachePolicy;
+use tuning_campaign_support::arm::ArmRequest;
 use tuning_campaign_support::protocol::{CellRole, FamilyAddendum, MetricKind, RunnerPlan};
 use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::schema;
-use tuning_campaign_support::transport::{FRESH_CASE_VALUE, FRESH_CASE_VAR};
+use tuning_campaign_support::transport::{encode_case, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 
 const REPO: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../../..");
 const SCHEMA: &str = "dev/active/f547c394/addendum.schema.json";
@@ -138,32 +139,47 @@ fn a_campaign_child_decodes_the_runner_request_wire() {
     assert_eq!(arm.status.code(), Some(2));
 }
 
-/// The same request in the validation role, at the one worker the family
-/// declares: the role the non-timed arm smoke sends.
-const VALIDATION_REQUEST: &str = concat!(
-    r#"{"schema":"zen3-benchmark-arm-request-v1","#,
-    r#""cell_id":"dvb-t2-qam16-r12-short-warm-isolated-null","#,
-    r#""arm":"gf2-direct-a","role":"validation","pair":0,"#,
-    r#""case":{"modcod":"qam16-r12-short","seed":2103},"cache_state":"warm","#,
-    r#""windows":5,"window_target_ms":100,"cpus":[0],"workers_declared":1}"#,
-);
+/// The cell the non-timed arm smoke validates first for the Short frame.
+const VALIDATION_CELL: &str = "dvb-t2-qam16-r12-short-warm-isolated-null";
 
 #[test]
 fn the_validation_role_dispatches_once_and_reports_no_window() {
-    let mut arm = Command::new(env!("CARGO_BIN_EXE_dvb-profile-arm"))
+    // The request is the shared smoke's own: `ArmRequest::validation` over the
+    // projected plan cell and the frozen declaration, encoded by the transport
+    // the runner uses, so the fixture cannot drift from the wire it mirrors.
+    let addendum = FamilyAddendum::decode(&read(ADDENDUM)).expect("typed addendum decodes");
+    let plan = projected_plan();
+    let cell = plan
+        .cells
+        .iter()
+        .find(|cell| cell.cell_id == VALIDATION_CELL)
+        .expect("the projected plan carries the validated cell");
+    let declared = addendum
+        .cell(&cell.cell_id)
+        .expect("the addendum declares the validated cell");
+    let declared_arm = plan
+        .arms
+        .get(&cell.baseline_arm)
+        .expect("the projected plan declares the cell's baseline arm");
+    let request = ArmRequest::validation(cell, declared, &cell.baseline_arm);
+    let encoded = encode_case(&request).expect("the runner's encoder accepts its own request");
+
+    let mut child = Command::new(env!("CARGO_BIN_EXE_dvb-profile-arm"));
+    child
         .env_remove("GF2_BENCH")
         .env_remove("GF2_BENCH_WINDOW")
         .env(FRESH_CASE_VAR, FRESH_CASE_VALUE)
-        .env("GF2_DVB_PROFILE_ROUTE", "gf2-direct-a")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("arm child spawns");
+        .stderr(Stdio::piped());
+    for (name, value) in &declared_arm.environment {
+        child.env(name, value);
+    }
+    let mut arm = child.spawn().expect("arm child spawns");
     arm.stdin
         .take()
         .expect("child stdin is piped")
-        .write_all(VALIDATION_REQUEST.as_bytes())
+        .write_all(encoded.as_bytes())
         .expect("request writes without a broken pipe");
     let arm = arm.wait_with_output().expect("arm child completes");
     let stdout = String::from_utf8_lossy(&arm.stdout).into_owned();
@@ -220,8 +236,8 @@ fn profile_matrix_covers_modcod_boundaries_and_cache_states() {
     assert_eq!((isolated, whole, streaming), (5, 5, 2));
 }
 
-#[test]
-fn projected_plan_is_valid_for_the_frozen_addendum() {
+/// The runner plan of this campaign, projected by the committed projector.
+fn projected_plan() -> RunnerPlan {
     let plan_path = std::env::temp_dir().join(format!(
         "gf2-9fb40c83-plan-{}-{}.json",
         std::process::id(),
@@ -250,11 +266,16 @@ fn projected_plan_is_valid_for_the_frozen_addendum() {
         .status()
         .expect("plan projection runs");
     assert!(status.success());
-
-    let addendum = FamilyAddendum::decode(&read(ADDENDUM)).expect("typed addendum decodes");
     let plan = RunnerPlan::decode(&std::fs::read(&plan_path).expect("plan reads"))
         .expect("typed plan decodes");
-    plan.validate(&addendum)
-        .unwrap_or_else(|errors| panic!("plan violations: {errors:#?}"));
     std::fs::remove_file(plan_path).expect("temporary plan removes");
+    plan
+}
+
+#[test]
+fn projected_plan_is_valid_for_the_frozen_addendum() {
+    let addendum = FamilyAddendum::decode(&read(ADDENDUM)).expect("typed addendum decodes");
+    projected_plan()
+        .validate(&addendum)
+        .unwrap_or_else(|errors| panic!("plan violations: {errors:#?}"));
 }
