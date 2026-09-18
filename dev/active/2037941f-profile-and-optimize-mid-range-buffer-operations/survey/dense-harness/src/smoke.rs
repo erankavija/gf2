@@ -32,6 +32,7 @@ use tuning_campaign_support::journal::{
 use tuning_campaign_support::process::run_process;
 use tuning_campaign_support::protocol::{
     sha256_hex, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan, PROTOCOL_PATH,
+    SHARED_SETTINGS,
 };
 use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::transport::{self, FRESH_CASE_VALUE, FRESH_CASE_VAR};
@@ -47,7 +48,8 @@ pub const PLAN_FILE: &str = "plan.json";
 /// Directory holding the smoke's immutable per-cell checkpoints.
 pub const CHECKPOINT_DIR: &str = "checkpoints";
 
-const CHILD_TIMEOUT: Duration = Duration::from_secs(300);
+/// The addendum's child timeout, which is the protocol's own shared setting.
+pub const CHILD_TIMEOUT: Duration = Duration::from_secs(SHARED_SETTINGS.child_timeout_seconds);
 const CHILD_KILL_GRACE: Duration = Duration::from_secs(5);
 static ALL_REAPED: AtomicBool = AtomicBool::new(true);
 
