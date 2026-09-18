@@ -24,7 +24,9 @@
 //! Neither kernel touches the one word at the far end of its range that has no
 //! neighbour to funnel in, and neither zeroes the words the shift vacates: the
 //! caller owns both, as `gf2_core::BitVec`'s residual branch does. The buffer
-//! carries no alignment requirement.
+//! carries no alignment requirement. A call outside either argument range
+//! panics: the ranges are the kernels' safety conditions on their indices, so
+//! the published wrappers check them rather than trust them.
 
 /// Safe residual-funnel function pointer, taking `(data, word_shift, bit_shift)`.
 pub type ShiftFunnelFn = fn(&mut [u64], usize, u32);

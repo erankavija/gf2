@@ -232,7 +232,7 @@ fn kernel_route_enabled() -> bool {
 mod tests {
     use super::*;
 
-    /// The funnel contract as written, over a whole buffer, so the module's own
+    /// The left branch as written, over a whole buffer, so the module's own
     /// cases do not depend on `BitVec`.
     fn reference_left(data: &[u64], word_shift: usize, bit_shift: u32) -> Vec<u64> {
         let mut out = data.to_vec();
@@ -242,20 +242,38 @@ mod tests {
         out
     }
 
+    /// The right branch as written.
+    fn reference_right(data: &[u64], word_shift: usize, bit_shift: u32) -> Vec<u64> {
+        let mut out = data.to_vec();
+        portable_shift_right_funnel(&mut out, word_shift, bit_shift);
+        let last = data.len() - 1;
+        out[last - word_shift] = data[last] >> bit_shift;
+        out[last + 1 - word_shift..].fill(0);
+        out
+    }
+
     #[test]
     fn the_selected_route_agrees_with_the_portable_funnel() {
+        type Branch = fn(&mut [u64], usize, u32);
+        type Reference = fn(&[u64], usize, u32) -> Vec<u64>;
+        let branches: [(&str, Branch, Reference); 2] = [
+            ("left", shift_left, reference_left),
+            ("right", shift_right, reference_right),
+        ];
         let source: Vec<u64> = (0..9u64)
             .map(|i| 0x0123_4567_89AB_CDEF ^ (i * 0x9E37))
             .collect();
         for word_shift in 0..source.len() {
             for bit_shift in [1u32, 7, 32, 63] {
-                let expected = reference_left(&source, word_shift, bit_shift);
-                let mut actual = source.clone();
-                shift_left(&mut actual, word_shift, bit_shift);
-                assert_eq!(
-                    actual, expected,
-                    "word_shift {word_shift} bit_shift {bit_shift}"
-                );
+                for (direction, branch, reference) in branches {
+                    let expected = reference(&source, word_shift, bit_shift);
+                    let mut actual = source.clone();
+                    branch(&mut actual, word_shift, bit_shift);
+                    assert_eq!(
+                        actual, expected,
+                        "{direction}: word_shift {word_shift} bit_shift {bit_shift}"
+                    );
+                }
             }
         }
     }
