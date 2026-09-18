@@ -33,20 +33,20 @@
   independent reviews beside the issue gates are void (gates alone decide);
   no new work after ~12:00Z; stall checks every 20 minutes.
 - `3ea122df`: citation appended, one review finding fixed by the lead
-  (cite the preserved 64-word no-win), seven gates pass, closed at `3fd55c47`.
+  (cite the preserved 64-word no-win), seven gates pass, closed at `dd0a781a`.
 - `92385645` round 3: MAKEFLAGS/GNUMAKEFLAGS/MFLAGS/MAKEFILES cleared, build-time
   provenance from `make V=1` and ELF `.comment`, fresh-cache regressions on both
-  channels; seven gates pass; closed at `6a89e820`.
+  channels; seven gates pass; closed at `61923ebb`.
 - `c5e01de3`: three alpha fields, canonical freezer fixed, acceptance schema
-  versioned to v2 (gate F1); gates pass; closed at `6e3eee57`.
+  versioned to v2 (gate F1); gates pass; closed at `770d1d90`.
 - `613574db`: design and manifest merged; holistic failed until the four
-  leaves existed in the tracker; closed at `b47b6592`.
+  leaves existed in the tracker; closed at `ed7c67bc`.
 - `9fb40c83` and `85fc5ff4`: window failures root-caused to the arms (request
   mirror byte order and null-spelled optionals; window-variable demand before
   stdin); arms fixed, runner smoke of every arm, v4-r1 attempts voided per
-  protocol, replacement queue lines committed; merged at `24d0c86e` and
-  `34509f0f`; merged-tree cargo-ci green.
-- `bb769456`: harness merged at `e215ce95`; code-review, research-review and
+  protocol, replacement queue lines committed; merged at `59e4d818` and
+  `34376022`; merged-tree cargo-ci green.
+- `bb769456`: harness merged at `f2bd8f1c`; code-review, research-review and
   holistic-review fail on two converging blockers (see reviews/bb769456-r1.md);
   rework not dispatched on the invoker's instruction.
 - Disk: removed two closed worktrees carrying over 300 GB of build caches and
