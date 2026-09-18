@@ -14,7 +14,8 @@
 #
 # `window` is the only timed action and the only command a queue line carries. It
 # refuses outside a benchmark window, refuses a campaign input that is not
-# committed and unmodified, prints the canonical execution log path before the
+# committed and unmodified, refuses an arm the committed smoke record did not
+# drive, prints the canonical execution log path before the
 # first bounded run, resumes an interrupted campaign under its own identity, and
 # finalizes and evaluates a complete campaign once. Re-running it on a finalized
 # campaign re-evaluates and measures nothing.
@@ -42,6 +43,7 @@ RESULTS=dev/bench_results/${ISSUE}
 LEDGER=${RESULTS}/dense-product-family-ledger.jsonl
 PRODUCING=${SURVEY}/producing-inputs.json
 PLAN_TOOL=${SURVEY}/make-plan.py
+SMOKE_RECORD=${SURVEY}/runner-smoke.txt
 PIN=dev/active/${ISSUE}/pinned-matrix-confirmation.json
 FREEZER=dev/active/c7113c5a/survey/freeze-confirmation.py
 LOG_CHECKER=dev/scripts/verify-campaign-log.py
@@ -208,6 +210,19 @@ git diff --quiet HEAD -- "${FROZEN[@]}" || {
 }
 
 build_binaries
+
+# The committed smoke record names the executable it drove, and that identity
+# covers every byte of the arm's dependency closure, so a campaign measures the
+# arm the smoke established and no other. A mismatch means the record was
+# produced from a different tree or in a different checkout.
+SMOKED=$(sed -n "s/^# arm executable $(basename "${ARM}") sha256: //p" "${SMOKE_RECORD}")
+BUILT=$(sha256sum "${ARM}" | cut -d' ' -f1)
+[[ "${SMOKED}" == "${BUILT}" ]] || {
+    echo "${SMOKE_RECORD} names arm ${SMOKED:-none}, this checkout built ${BUILT}; regenerate the \
+smoke record with ${SURVEY}/smoke-arms.sh and commit it" >&2
+    exit 2
+}
+
 mkdir -p "${STAGES}" "$(dirname "${OUT}")"
 touch "${LOCK}"
 
