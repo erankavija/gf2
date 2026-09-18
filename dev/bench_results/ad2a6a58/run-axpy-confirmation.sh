@@ -45,6 +45,7 @@ PLAN_TOOL=${SURVEY}/make-plan.py
 LAUNCHER=${RESULTS}/run-axpy-confirmation.sh
 PIN=dev/active/${ISSUE}/pinned-vector-confirmation.json
 FREEZER=dev/active/c7113c5a/survey/freeze-confirmation.py
+LOG_CHECKER=dev/scripts/verify-campaign-log.py
 PILOT_ADDENDUM=dev/active/${ISSUE}/addendum-v4-axpy-pilot.json
 CONFIRMATION_ADDENDUM=dev/active/${ISSUE}/addendum-v4-axpy-confirmation.json
 DERIVATION=dev/active/${ISSUE}/confirmation-derivation-axpy.txt
@@ -247,18 +248,10 @@ LAUNCH_LOG="${STAGE}.launcher.log"
 } >>"${LAUNCH_LOG}"
 echo "campaign execution log: ${STAGE}/execution.log" >&2
 
-# A campaign is judged from its own journal, never from an exit code.
-stage_complete() {
-    [[ -f "${STAGE}/execution.log" ]] && python3 - "${STAGE}/execution.log" <<'PY'
-import json, sys
-terminal = [json.loads(line)["event"] for line in open(sys.argv[1])
-            if json.loads(line)["event"] in ("complete", "failed", "paused", "budget-exhausted")]
-raise SystemExit(0 if terminal and terminal[-1] == "complete" else 1)
-PY
-}
-
+# A campaign is judged from its own journal, never from an exit code: the shared
+# checker answers whether the stage has reached its terminal `complete` record.
 session=0
-while ! stage_complete; do
+while ! python3 -B "${LOG_CHECKER}" --log "${STAGE}/execution.log" --stage-complete; do
     session=$((session + 1))
     echo "# session ${session} started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"${LAUNCH_LOG}"
     set +e
@@ -289,59 +282,7 @@ evaluate
 
 # A campaign whose every cell failed can still exit cleanly, so the campaign is
 # verified from its own execution log against the plan it measured.
-python3 - "${OUT}/execution.log" "${OUT}/receipt.json" "${PLAN}" <<'PY'
-import collections, json, sys
-
-log_path, receipt_path, plan_path = sys.argv[1:4]
-events = [json.loads(line) for line in open(log_path)]
-receipt = json.load(open(receipt_path))
-plan = json.load(open(plan_path))
-
-# Declared pairs per cell: an exploratory cell names its own count, a
-# confirmatory one takes the protocol's frozen confirmatory pair count, which
-# the receipt carries in its settings.
-confirmatory = receipt["settings"]["confirmatory_pairs"]
-declared = {cell["cell_id"]: cell["pilot_pairs"] or confirmatory for cell in plan["cells"]}
-
-terminal = [event["event"] for event in events
-            if event["event"] in ("complete", "failed", "paused", "budget-exhausted")]
-if terminal != ["complete"]:
-    raise SystemExit(f"the campaign ended {terminal} rather than one 'complete' record")
-
-def cells_of(name):
-    return [event for event in events
-            if event["event"] == name and event.get("case") is not None]
-
-starts = collections.Counter(event["case"]["cell_id"] for event in cells_of("cell-start"))
-checkpoints = collections.Counter(event["case"]["cell_id"]
-                                  for event in cells_of("checkpoint-accepted"))
-completes = {event["case"]["cell_id"]: event["details"] for event in cells_of("cell-complete")}
-abandoned = collections.Counter(event["case"]["cell_id"]
-                                for event in cells_of("cell-abandoned"))
-
-problems = []
-for cell_id, pairs in sorted(declared.items()):
-    # A restarted attempt is abandoned exactly once by a later session, so the
-    # start count exceeds one only by the abandonments the journal records.
-    if starts[cell_id] != 1 + abandoned[cell_id]:
-        problems.append(f"{cell_id}: {starts[cell_id]} starts, {abandoned[cell_id]} abandoned")
-    if checkpoints[cell_id] != 1:
-        problems.append(f"{cell_id}: {checkpoints[cell_id]} checkpoints accepted")
-    detail = completes.get(cell_id)
-    if detail is None:
-        problems.append(f"{cell_id}: never completed")
-        continue
-    if detail.get("status") != "measured":
-        problems.append(f"{cell_id}: completed with status {detail.get('status')!r}")
-    if detail.get("pairs") != pairs:
-        problems.append(f"{cell_id}: {detail.get('pairs')} pairs, {pairs} declared")
-extra = sorted(set(completes) - set(declared))
-if extra:
-    problems.append(f"the log completes undeclared cells: {', '.join(extra)}")
-if problems:
-    raise SystemExit("execution log: " + "; ".join(problems))
-print(f"execution log: {len(declared)} declared cells, each started once, checkpointed once "
-      f"and completed once at its declared pairs, terminal record 'complete'")
-PY
+python3 -B "${LOG_CHECKER}" --log "${OUT}/execution.log" \
+    --receipt "${OUT}/receipt.json" --plan "${PLAN}"
 echo "receipt: ${OUT}" >&2
 exit "${verdict}"
