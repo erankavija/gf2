@@ -37,7 +37,7 @@ Every figure of this session is read from the files below; their digests identif
 
 ## Executable and build closure
 
-The profiled executable is tied to the measured tree by that tree's committed build record, which the build gate writes from the build that produced the binary. Each repetition of the session logs the same digest. The revision below locates the committed blobs and decides nothing: what this record publishes, and what a reader checks it against, are the content identities.
+The profiled executable is tied to the measured tree by that tree's committed build record, which the build gate writes from the build that produced the binary: the gate `dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/build-dvb-harness.sh` builds the survey binaries and writes the record in one invocation, so a tree whose closure differs carries a different record. Each repetition of the session logs the same digest. The revision below locates the committed blobs and decides nothing: what this record publishes, and what a reader checks it against, are the content identities.
 
 | Fact | value |
 |---|---|
