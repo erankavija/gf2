@@ -45,8 +45,9 @@ pub enum PairPosition {
     Candidate,
     /// The non-timed smoke position: the arm performs one untimed dispatch and
     /// reports no timing window, so a smoke establishes the wire and the
-    /// selected path without measuring. The runner builds no request in this
-    /// position, so no campaign execution can take it.
+    /// selected path without measuring. Only the shared smoke builds a request
+    /// in this position; `ArmRequest::timed` refuses it, so no campaign
+    /// execution can take it.
     Validation,
 }
 
@@ -110,7 +111,7 @@ pub fn validation_request(
 }
 
 /// Field names of the runner's `ArmRequest`, in declaration order, read from
-/// the runner's own source at compile time.
+/// its declaration in `tuning_campaign_support::arm` at compile time.
 ///
 /// The shared transport rejects a request whose re-encoding differs from the
 /// bytes it read, so serialization order is part of the wire contract. A wire
@@ -118,8 +119,7 @@ pub fn validation_request(
 /// field the runner adds, drops or reorders fails there rather than inside a
 /// benchmark window.
 pub fn runner_request_fields() -> Vec<&'static str> {
-    const RUNNER: &str =
-        include_str!("../../../../../tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs");
+    const RUNNER: &str = include_str!("../../../../../tools/tuning-campaign-support/src/arm.rs");
     RUNNER
         .split_once("struct ArmRequest {")
         .expect("the runner declares ArmRequest")
@@ -131,7 +131,8 @@ pub fn runner_request_fields() -> Vec<&'static str> {
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#') && !line.starts_with("//"))
         .map(|line| {
-            line.split_once(':')
+            line.trim_start_matches("pub ")
+                .split_once(':')
                 .expect("every field line names a type")
                 .0
                 .trim()
@@ -480,10 +481,10 @@ fn fatal(message: &str) -> ! {
 
 /// The request wire contract with `benchmark-ab-runner`.
 ///
-/// The runner's `ArmRequest` is private to its binary, so these tests pin the
-/// contract from both ends: `request_round_trips_the_runners_bytes` fixes the
-/// bytes the runner writes, and `runner_request_fields_are_unchanged` fails
-/// when the runner's struct gains, loses or reorders a field.
+/// These tests pin the contract from both ends:
+/// `request_round_trips_the_runners_bytes` fixes the bytes the runner writes,
+/// and `runner_request_fields_are_unchanged` fails when the runner's struct
+/// gains, loses or reorders a field.
 #[cfg(test)]
 mod wire {
     use super::{runner_request_fields, Case, Metric, Operation, PairPosition, Request};
@@ -606,18 +607,14 @@ mod wire {
     }
 
     /// The validation position belongs to a non-timed smoke: it round-trips on
-    /// the wire, and the runner builds no request that carries it.
+    /// the wire, and the shared request type carries no timing window in it.
     #[test]
-    fn the_validation_position_is_no_runner_role() {
+    fn the_validation_position_is_untimed() {
         let line = BASELINE_REQUEST.replace(r#""role":"baseline""#, r#""role":"validation""#);
         let request = decode(&line);
         assert_eq!(request.role, PairPosition::Validation);
         assert_eq!(transport::encode_case(&request).expect("re-encodes"), line);
-
-        const RUNNER: &str = include_str!(
-            "../../../../../tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs"
-        );
-        assert!(!RUNNER.contains(r#""validation""#));
+        assert!(!tuning_campaign_support::arm::PairPosition::Validation.is_timed());
     }
 
     /// Checks the runner's own source still declares [`RUNNER_FIELDS`], so a
