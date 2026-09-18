@@ -1,82 +1,19 @@
-//! Canonical child-v2 wire types shared by both arms.
+//! The dense-parity arm's side of the campaign wire.
 //!
-//! `transport::decode_case` accepts only the exact bytes [`Request`]
-//! re-encodes, so every field spelling, order and omission rule matches the
-//! runner's own request type: the runner omits `cold_calls` and `decoder` for a
-//! cell that declares neither, and a mirror that spells them `null` makes the
-//! runner's request noncanonical and the child rejects it.
-//!
-//! Both arms share these types rather than each carrying a private mirror, so
-//! the wire contract has one form.
+//! The request an arm reads and the result it writes are
+//! `tuning_campaign_support::arm`'s own [`ArmRequest`] and [`ArmResult`], so the
+//! harness declares no mirror of either. This module adds only what the frozen
+//! addendum constrains: the cell case, the window protocol an arm answers, and
+//! the hand-invocation refusal.
 
 use crate::cells::{Cache, M4riShape, MatvecShape, Workload, M4RI_SHAPES};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::io;
+use tuning_campaign_support::arm::{ArmRequest, ArmResult, ARM_RESULT_SCHEMA};
+use tuning_campaign_support::protocol::SHARED_SETTINGS;
+use tuning_campaign_support::receipt::{ConversionCosts, WindowRecord};
 use tuning_campaign_support::timing::TimingSample;
 use tuning_campaign_support::transport;
-
-/// Schema identity of one arm result line.
-pub const RESULT_SCHEMA: &str = "zen3-benchmark-arm-result-v1";
-
-/// Mirror of the runner's arm request.
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct Request {
-    /// Request schema identity.
-    pub schema: String,
-    /// Frozen cell identifier.
-    pub cell_id: String,
-    /// Arm name the plan gave this child.
-    pub arm: String,
-    /// `baseline` or `candidate`.
-    pub role: String,
-    /// Zero-based pair index.
-    pub pair: u32,
-    /// Opaque cell case; see [`Case`].
-    pub case: Value,
-    /// Declared cache state.
-    pub cache_state: String,
-    /// Frozen fixed call count of a cold cell.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cold_calls: Option<u64>,
-    /// Decoder declaration; absent for every dense-parity cell.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub decoder: Option<Value>,
-    /// Timing windows in this execution.
-    pub windows: u32,
-    /// Target length of one window, in milliseconds.
-    pub window_target_ms: u32,
-    /// CPUs the runner resolved for the cell's core arm.
-    pub cpus: Vec<u32>,
-    /// Workers the cell declares.
-    pub workers_declared: u32,
-}
-
-impl Request {
-    /// Refuses a request whose window protocol is not the frozen one.
-    ///
-    /// Every timed execution of the addendum runs five windows targeted at
-    /// 100 ms (§ Cache, warmup, and sampling), which are the protocol's shared
-    /// settings; the non-timed smoke's zero-window request is the only other
-    /// form an arm answers. An arm that followed a timing override would
-    /// measure a window protocol the addendum does not declare.
-    pub fn verify_window_protocol(&self) -> Result<(), String> {
-        let frozen = (
-            tuning_campaign_support::protocol::SHARED_SETTINGS.windows_per_execution,
-            tuning_campaign_support::protocol::SHARED_SETTINGS.window_target_ms,
-        );
-        let observed = (self.windows, self.window_target_ms);
-        if observed == frozen || observed == (0, 0) {
-            return Ok(());
-        }
-        Err(format!(
-            "cell {} requests {} windows of {} ms rather than the frozen {} of {} ms or a \
-             zero-window arrangement pass",
-            self.cell_id, self.windows, self.window_target_ms, frozen.0, frozen.1
-        ))
-    }
-}
 
 /// One cell's case, tagged by the canonical question it belongs to.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -166,108 +103,80 @@ fn parse_shape(name: &str) -> Result<MatvecShape, String> {
     }
 }
 
-/// One timing window of an arm result.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct Window {
-    /// Calls in the window.
-    pub calls: u64,
-    /// Wall-clock nanoseconds the window took.
-    pub elapsed_ns: u64,
-}
-
-/// Conversion costs an arm observed outside its measured operation.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct ConversionCosts {
-    /// Fixture and route setup, once per execution.
-    pub setup_ns: u64,
-    /// Packing into external coordinates; zero for every gf2 arm.
-    pub pack_ns: u64,
-    /// Unpacking from external coordinates; zero for every gf2 arm.
-    pub unpack_ns: u64,
-    /// Batch-fill cost; zero for every dense-parity cell.
-    pub batch_fill_ns: u64,
-    /// Separately observed per-call arrangement cost.
-    pub dispatch_ns: u64,
-}
-
-/// One arm result line.
+/// Refuses a request whose window protocol is not the frozen one.
 ///
-/// The type both arms emit is the type the non-timed smoke parses, so the
-/// result contract has one form and a canonical re-encode of a parsed line
-/// reproduces the bytes the arm wrote.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct ArmResult {
-    /// Result schema identity.
-    pub schema: String,
-    /// Timing windows in acquisition order.
-    pub windows: Vec<Window>,
-    /// Cache state the arm applied.
-    pub cache_state_applied: String,
-    /// Workers the arm observed.
-    pub workers_observed: u32,
-    /// CPUs the arm observed.
-    pub cpus_observed: Vec<u32>,
-    /// Route provenance observed at run time.
-    pub selected_path: Option<String>,
-    /// Conversion costs.
-    pub conversion: Option<ConversionCosts>,
-    /// Decoder quality; absent for every dense-parity cell.
-    pub quality: Option<Value>,
-    /// False exactly when the execution used the frozen fixed call count.
-    pub calibrated: Option<bool>,
+/// Every timed execution of the addendum runs the shared settings' windows at
+/// their target (§ Cache, warmup, and sampling); the validation position's
+/// zero-window request is the only other form an arm answers. An arm that
+/// followed a timing override would measure a window protocol the addendum does
+/// not declare.
+pub fn verify_window_protocol(request: &ArmRequest) -> Result<(), String> {
+    let frozen = (
+        SHARED_SETTINGS.windows_per_execution,
+        SHARED_SETTINGS.window_target_ms,
+    );
+    let observed = (request.windows, request.window_target_ms);
+    if observed == frozen || observed == (0, 0) {
+        return Ok(());
+    }
+    Err(format!(
+        "cell {} requests {} windows of {} ms rather than the frozen {} of {} ms or a \
+         zero-window arrangement pass",
+        request.cell_id, request.windows, request.window_target_ms, frozen.0, frozen.1
+    ))
 }
 
-impl ArmResult {
-    /// Assembles a result from observed samples.
-    pub fn new(
-        samples: &[TimingSample],
-        cache: Cache,
-        selected_path: String,
-        conversion: ConversionCosts,
-    ) -> Self {
-        let cpus_observed = tuning_campaign_support::host::CpuAffinity::observe()
-            .map(|affinity| affinity.cpus().to_vec())
-            .unwrap_or_default();
-        Self {
-            schema: RESULT_SCHEMA.to_owned(),
-            windows: samples
-                .iter()
-                .map(|sample| Window { calls: sample.calls, elapsed_ns: sample.elapsed_ns })
-                .collect(),
-            cache_state_applied: cache.id().to_owned(),
-            workers_observed: 1,
-            cpus_observed,
-            selected_path: Some(selected_path),
-            conversion: Some(conversion),
-            quality: None,
-            calibrated: Some(cache.cold_calls().is_none()),
-        }
-    }
-
-    /// Writes the one canonical result line.
-    pub fn emit(&self) -> io::Result<()> {
-        transport::write_result_line(io::stdout().lock(), self)
-    }
-}
-
-/// Reads and validates the guarded child-v2 request.
-pub fn read_request() -> Result<(Request, Case, Cache), String> {
-    let sentinel = std::env::var(transport::FRESH_CASE_VAR).ok();
-    let request: Request = transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock())?;
+/// Refuses a request the frozen addendum declares no cell for, and resolves the
+/// cell's case and cache policy.
+pub fn accept(request: &ArmRequest) -> Result<(Case, Cache), String> {
     if request.workers_declared != 1 {
         return Err("every dense-parity cell is a one-worker serial cell".into());
     }
     if request.decoder.is_some() {
         return Err("no dense-parity cell is a decoder cell".into());
     }
-    request.verify_window_protocol()?;
-    let cache = Cache::from_request(&request.cache_state)?;
+    verify_window_protocol(request)?;
     let case: Case = serde_json::from_value(request.case.clone())
         .map_err(|error| format!("case does not decode: {error}"))?;
+    Ok((case, Cache::from_request(request.cache_state)))
+}
+
+/// Reads the guarded request on stdin and accepts it.
+pub fn read_request() -> Result<(ArmRequest, Case, Cache), String> {
+    let sentinel = std::env::var(transport::FRESH_CASE_VAR).ok();
+    let request: ArmRequest = transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock())?;
+    let (case, cache) = accept(&request)?;
     Ok((request, case, cache))
+}
+
+/// Writes the one canonical result line from observed samples.
+///
+/// `calibrated` is false exactly when the execution used the frozen fixed call
+/// count, which is the cache policy's own declaration.
+pub fn emit_result(
+    samples: &[TimingSample],
+    cache: Cache,
+    selected_path: String,
+    conversion: ConversionCosts,
+) -> io::Result<()> {
+    let cpus_observed = tuning_campaign_support::host::CpuAffinity::observe()
+        .map(|affinity| affinity.cpus().to_vec())
+        .unwrap_or_default();
+    let result = ArmResult {
+        schema: ARM_RESULT_SCHEMA.to_owned(),
+        windows: samples
+            .iter()
+            .map(|sample| WindowRecord { calls: sample.calls, elapsed_ns: sample.elapsed_ns })
+            .collect(),
+        cache_state_applied: cache.state(),
+        workers_observed: 1,
+        cpus_observed,
+        selected_path: Some(selected_path),
+        conversion: Some(conversion),
+        quality: None,
+        calibrated: Some(cache.cold_calls().is_none()),
+    };
+    transport::write_result_line(io::stdout().lock(), &result)
 }
 
 /// Refuses a hand invocation outside the benchmark window.
@@ -277,9 +186,8 @@ pub fn read_request() -> Result<(Request, Case, Cache), String> {
 /// never observes the window variables its launcher exported. A child carrying
 /// the sentinel therefore defers to the layers that do enforce the window, the
 /// launcher's `window` subcommand and `dev/scripts/ccx1-bench-flock.sh`, and to
-/// the non-timed smoke, whose zero-window requests collect no timing sample.
-/// Every other invocation requires the window variables and exits before
-/// reading a request.
+/// the non-timed smoke, whose requests carry no timing window. Every other
+/// invocation requires the window variables and exits before reading a request.
 pub fn require_window_unless_child() -> Result<(), String> {
     if std::env::var(transport::FRESH_CASE_VAR).as_deref() == Ok(transport::FRESH_CASE_VALUE) {
         return Ok(());

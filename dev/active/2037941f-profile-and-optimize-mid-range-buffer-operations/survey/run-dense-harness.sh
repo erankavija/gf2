@@ -5,7 +5,8 @@
 #   build [--m4ri]                     build the arms, run the crate contract and the oracle
 #   cells --family <id> --issue <hex8> --frozen-utc <t> --output <path>
 #                                      transcribe one family into a campaign addendum
-#   smoke [--m4ri]                     deterministic untimed release smoke (no receipt sample)
+#   smoke [--m4ri]                     untimed release smoke; the arm contract is
+#                                      tuning_campaign_support::arm::smoke
 #   window --family <id> --addendum <path> --run-id <id> [--m4ri]
 #                                      timed campaign, benchmark window only
 #
@@ -140,32 +141,6 @@ cmd_cells() {
     "${CAMPAIGN_TOOL}" cells "$@"
 }
 
-# Drives one family's stage to completion, one cell per session, and fails
-# unless at least one session paused and the last one completed.
-smoke_family() {
-    local family="$1" stage="$2" plan="$3" addendum="$4"
-    local session=0 status=0 paused=0
-    echo "campaign execution log: ${stage}/execution.log" >&2
-    while :; do
-        session=$((session + 1))
-        set +e
-        "${CAMPAIGN_TOOL}" smoke --plan "${plan}" --addendum "${addendum}" --stage "${stage}"
-        status=$?
-        set -e
-        [[ "${session}" == 1 ]] && cp "${stage}/execution.log" \
-            "$(dirname "${stage}")/execution.session-1.log"
-        case "${status}" in
-            0) break ;;
-            3) paused=$((paused + 1)) ;;
-            *) echo "${family}: session ${session} exited ${status}" >&2; exit 2 ;;
-        esac
-    done
-    (( paused > 0 )) || {
-        echo "${family}: no session paused, so resume was not exercised" >&2
-        exit 2
-    }
-}
-
 cmd_smoke() {
     local with_m4ri=0 invocation
     # The record states the invocation that produced it, so the launcher's own
@@ -174,14 +149,18 @@ cmd_smoke() {
     [[ "${1:-}" == "--m4ri" ]] && with_m4ri=1
     build_gf2
     [[ "${with_m4ri}" == 1 ]] && build_m4ri >/dev/null
+    ./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
+        --bin benchmark-ab-runner
+    local runner
+    runner="$(realpath target/release/benchmark-ab-runner)"
     local smoke
     smoke=target/e1f9a78f-campaigns/smoke
     rm -rf "${smoke}"
     mkdir -p "${smoke}"
     "${CAMPAIGN_TOOL}" pins
 
-    # Semantics: the deterministic untimed oracle, whose cases the smoke record
-    # counts, from both gf2 builds. It emits no timing sample.
+    # The untimed semantic oracle from both gf2 builds; the record counts its
+    # cases and checks.
     "${ORACLE}" >"${smoke}/oracle.txt"
     "${SCALAR_ORACLE}" >>"${smoke}/oracle.txt"
     if [[ "${with_m4ri}" == 1 ]]; then
@@ -222,17 +201,15 @@ cmd_smoke() {
     python3 -B "${SURVEY}/make-dense-smoke-addenda.py" --stage "${smoke}" \
         --families "${families[@]}"
 
-    # The smoke never takes the benchmark lock: it collects no timing sample,
-    # so it neither needs a quiet host nor may pretend to have had one.
+    # No benchmark lock: nothing here is a timed run. The lock the plan names is
+    # never opened.
     for family in "${families[@]}"; do
-        local stage="${smoke}/${family}/stage"
         local plan="${smoke}/${family}/plan.json"
-        local addendum="${smoke}/${family}/smoke-addendum.json"
         local external=()
         [[ "${family}" == *matvec-vs-m4ri ]] && external=(--m4ri-executable "${M4RI_ARM}")
         "${CAMPAIGN_TOOL}" plan --family "${family}" \
-            --addendum "${addendum}" \
-            --campaign-id "e1f9a78f-${family}-wire-smoke" \
+            --addendum "${smoke}/${family}/smoke-addendum.json" \
+            --campaign-id "e1f9a78f-${family}-arm-smoke" \
             --campaign-seed 20260917 \
             --label smoke \
             --lock "$(realpath "${smoke}/lock")" \
@@ -240,19 +217,13 @@ cmd_smoke() {
             --scalar-executable "${SCALAR_ARM}" \
             "${external[@]}" \
             --producing-manifest "${PRODUCING}" \
-            --max-cells-per-session 1 \
             --output "${plan}"
-        smoke_family "${family}" "${stage}" "${plan}" "${addendum}"
+        "${runner}" smoke "${plan}" --record "${smoke}/${family}/smoke.json"
     done
 
-    local m4ri_flag=()
-    [[ "${with_m4ri}" == 1 ]] && m4ri_flag=(--m4ri-arm "${M4RI_ARM}")
     python3 -B "${SURVEY}/check-dense-smoke.py" --stage "${smoke}" --record "${SMOKE_RECORD}" \
         --command "${invocation}" \
         --oracle "${smoke}/oracle.txt" \
-        --gf2-arm "${GF2_ARM}" \
-        --scalar-arm "${SCALAR_ARM}" \
-        "${m4ri_flag[@]}" \
         --families "${families[@]}"
     cat "${SMOKE_RECORD}"
     echo "smoke record: ${SMOKE_RECORD}" >&2
@@ -400,5 +371,5 @@ case "${1:-}" in
     cells) shift; cmd_cells "$@" ;;
     smoke) shift; cmd_smoke "$@" ;;
     window) shift; cmd_window "$@" ;;
-    *) sed -n '2,13p' "${BASH_SOURCE[0]}" >&2; exit 2 ;;
+    *) sed -n '2,11p' "${BASH_SOURCE[0]}" >&2; exit 2 ;;
 esac

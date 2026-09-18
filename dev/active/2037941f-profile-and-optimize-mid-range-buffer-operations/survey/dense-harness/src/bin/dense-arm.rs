@@ -13,12 +13,12 @@ use dense_parity_harness::routes::{
     fused_and_popcnt, fused_bundle, observe_output, public_matvec, run_windows, verify_lane,
     verify_shape, OutputSink, Route, WindowPlan, MAX_RETAINED_OUTPUTS,
 };
-use dense_parity_harness::wire::{
-    read_request, require_window_unless_child, ArmResult, ConversionCosts, Request,
-};
+use dense_parity_harness::wire::{emit_result, read_request, require_window_unless_child};
 use std::cell::{Cell as MutCell, RefCell};
 use std::hint::black_box;
 use std::time::Instant;
+use tuning_campaign_support::arm::ArmRequest;
+use tuning_campaign_support::receipt::ConversionCosts;
 use tuning_campaign_support::timing::{TimingProgress, TimingSample};
 
 fn main() {
@@ -167,7 +167,7 @@ fn run() -> Result<(), String> {
         }
     };
     black_box(sink);
-    ArmResult::new(
+    emit_result(
         &samples,
         cache,
         selected_path,
@@ -179,12 +179,11 @@ fn run() -> Result<(), String> {
             dispatch_ns: 0,
         },
     )
-    .emit()
     .map_err(|error| error.to_string())
 }
 
 fn windows(
-    request: &Request,
+    request: &ArmRequest,
     cache: Cache,
     banks: usize,
     items: usize,

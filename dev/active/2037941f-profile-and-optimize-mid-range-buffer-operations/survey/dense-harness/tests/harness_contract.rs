@@ -19,12 +19,13 @@ use dense_parity_harness::routes::{
     run_windows, verify_lane, verify_shape, OutputSink, Route, WindowPlan, MAX_RETAINED_OUTPUTS,
     RETAINED_BUDGET_BYTES, RETAINED_OUTPUT_BYTES, RETAINED_PEAK_BYTES,
 };
-use dense_parity_harness::wire::{Case, Request};
+use dense_parity_harness::wire::{self, Case};
 use gf2_core::BitVec;
 use std::collections::BTreeSet;
 use tuning_campaign_support::abtest::SplitMix64;
+use tuning_campaign_support::arm::{ArmRequest, PairPosition};
 use tuning_campaign_support::protocol::{
-    CellRole, FamilyAddendum, MetricKind, ReceiptLabel, SHARED_SETTINGS,
+    CellRole, FamilyAddendum, MetricKind, ReceiptLabel, RunnerPlan, SHARED_SETTINGS,
 };
 use tuning_campaign_support::transport;
 
@@ -50,6 +51,23 @@ fn plan_inputs<'a>(
         m4ri_executable: m4ri,
         max_cells_per_session: max_cells,
     }
+}
+
+/// One family's validated projected plan, over every arm the family declares.
+fn projected(question: Question, addendum: &FamilyAddendum) -> RunnerPlan {
+    let plan = campaign::plan(
+        question,
+        addendum,
+        &plan_inputs(
+            Some("/nonexistent/dense-arm-scalar"),
+            Some("/nonexistent/dense-m4ri-arm"),
+            None,
+        ),
+    )
+    .expect("the plan projects");
+    plan.validate(addendum)
+        .unwrap_or_else(|errors| panic!("{}: {}", question.family_id(), errors.join("; ")));
+    plan
 }
 
 #[test]
@@ -195,76 +213,63 @@ fn a_changed_margin_or_cell_no_longer_matches_the_transcription() {
     assert_ne!(reseeded, derived);
 }
 
+/// Every declared cell's arms answer the request the shared smoke sends: the
+/// runner's own builder in the validation position, its own encoder, and the
+/// dense acceptance that resolves the cell's frozen workload and cache policy.
 #[test]
-fn the_request_mirror_accepts_exactly_the_runner_request() {
-    // These are the exact bytes `benchmark-ab-runner` writes: its own struct
-    // field order, with the case object as the plan's JSON map. The runner
-    // omits `cold_calls` and `decoder` for a cell that declares neither, and a
-    // mirror that spells them `null` rejects the request.
-    let warm = concat!(
-        r#"{"schema":"zen3-benchmark-arm-request-v1","cell_id":"matvec-r1024-8w-warm","#,
-        r#""arm":"matvec-a","role":"baseline","pair":0,"#,
-        r#""case":{"question":"allocated-matvec","seed":7,"shape":"full","words":8},"#,
-        r#""cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"#,
-        r#""workers_declared":1}"#
-    );
-    let decoded: Request = transport::decode_case(warm).expect("the mirror decodes");
-    assert_eq!(decoded.cell_id, "matvec-r1024-8w-warm");
-    assert!(decoded.cold_calls.is_none());
-    assert!(decoded.decoder.is_none());
-
-    let with_nulls = warm.replace(
-        r#""cache_state":"warm""#,
-        r#""cache_state":"warm","cold_calls":null,"decoder":null"#,
-    );
-    assert!(
-        transport::decode_case::<Request>(&with_nulls).is_err(),
-        "a null-spelled optional is not the runner's canonical request"
-    );
-
-    let cold = concat!(
-        r#"{"schema":"zen3-benchmark-arm-request-v1","cell_id":"matvec-r1024-8w-cold","#,
-        r#""arm":"matvec-a","role":"baseline","pair":0,"#,
-        r#""case":{"question":"allocated-matvec","seed":7,"shape":"full","words":8},"#,
-        r#""cache_state":"cold","cold_calls":1,"windows":5,"window_target_ms":100,"#,
-        r#""cpus":[0],"workers_declared":1}"#
-    );
-    let decoded: Request = transport::decode_case(cold).expect("the mirror decodes");
-    assert_eq!(decoded.cold_calls, Some(1));
-
-    let comparator = concat!(
-        r#"{"schema":"zen3-benchmark-arm-request-v1","cell_id":"m4ri-gap-65x512-warm","#,
-        r#""arm":"m4ri-mzd-mul","role":"candidate","pair":0,"#,
-        r#""case":{"cols":512,"question":"matvec-vs-m4ri","retained":false,"rows":65,"seed":7},"#,
-        r#""cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"#,
-        r#""workers_declared":1}"#
-    );
-    let decoded: Request = transport::decode_case(comparator).expect("the mirror decodes");
-    let case: Case = serde_json::from_value(decoded.case).expect("the case decodes");
-    assert_eq!(case.seed(), 7);
+fn every_dense_arm_accepts_the_shared_validation_request() {
+    for question in Question::ALL {
+        let addendum = campaign::addendum(question, ISSUE, FROZEN);
+        let plan = projected(question, &addendum);
+        let table = family_cells(question);
+        for cell in &plan.cells {
+            let declared = addendum.cell(&cell.cell_id).expect("a declared cell");
+            let frozen = table
+                .iter()
+                .find(|frozen| frozen.cell_id == cell.cell_id)
+                .expect("a frozen cell");
+            for arm in [&cell.baseline_arm, &cell.candidate_arm] {
+                let request = ArmRequest::validation(cell, declared, arm);
+                assert_eq!(request.role, PairPosition::Validation);
+                assert_eq!((request.windows, request.window_target_ms), (0, 0));
+                let bytes = transport::encode_case(&request).expect("the runner's encoder");
+                let received: ArmRequest =
+                    transport::decode_case(&bytes).expect("the arm decodes the canonical bytes");
+                let (case, cache) = wire::accept(&received).expect("the arm accepts");
+                assert_eq!(case.seed(), frozen.seed);
+                assert_eq!(case.workload().expect("a frozen workload"), frozen.workload);
+                assert_eq!(cache, frozen.cache, "{}", cell.cell_id);
+            }
+        }
+    }
 }
 
-/// An arm answers the frozen window protocol or the smoke's zero-window
-/// arrangement pass, and nothing else: § Cache, warmup, and sampling fixes the
-/// window count and target of every timed execution.
+/// An arm answers the frozen window protocol or the validation position's
+/// zero-window request, and nothing else: § Cache, warmup, and sampling fixes
+/// the window count and target of every timed execution.
 #[test]
 fn an_arm_refuses_a_window_protocol_the_addendum_does_not_declare() {
-    let warm = concat!(
-        r#"{"schema":"zen3-benchmark-arm-request-v1","cell_id":"matvec-r1024-8w-warm","#,
-        r#""arm":"matvec-a","role":"baseline","pair":0,"#,
-        r#""case":{"question":"allocated-matvec","seed":7,"shape":"full","words":8},"#,
-        r#""cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"#,
-        r#""workers_declared":1}"#
-    );
-    let frozen: Request = transport::decode_case(warm).expect("the mirror decodes");
-    assert_eq!(frozen.windows, SHARED_SETTINGS.windows_per_execution);
-    assert_eq!(frozen.window_target_ms, SHARED_SETTINGS.window_target_ms);
-    frozen.verify_window_protocol().expect("the frozen protocol");
+    let addendum = campaign::addendum(Question::AllocatedMatvec, ISSUE, FROZEN);
+    let plan = projected(Question::AllocatedMatvec, &addendum);
+    let cell = &plan.cells[0];
+    let declared = addendum.cell(&cell.cell_id).expect("a declared cell");
 
-    let mut arrangement = frozen;
-    arrangement.windows = 0;
-    arrangement.window_target_ms = 0;
-    arrangement.verify_window_protocol().expect("the zero-window arrangement pass");
+    let timed = ArmRequest::timed(
+        cell,
+        declared,
+        &cell.baseline_arm,
+        PairPosition::Baseline,
+        0,
+        vec![0],
+        &SHARED_SETTINGS,
+    )
+    .expect("a pair side is a timed position");
+    assert_eq!(timed.windows, SHARED_SETTINGS.windows_per_execution);
+    assert_eq!(timed.window_target_ms, SHARED_SETTINGS.window_target_ms);
+    wire::verify_window_protocol(&timed).expect("the frozen protocol");
+
+    let arrangement = ArmRequest::validation(cell, declared, &cell.baseline_arm);
+    wire::verify_window_protocol(&arrangement).expect("the validation position");
 
     for (windows, target) in [
         (4, SHARED_SETTINGS.window_target_ms),
@@ -274,8 +279,7 @@ fn an_arm_refuses_a_window_protocol_the_addendum_does_not_declare() {
         let mut overridden = arrangement.clone();
         overridden.windows = windows;
         overridden.window_target_ms = target;
-        let refusal = overridden
-            .verify_window_protocol()
+        let refusal = wire::verify_window_protocol(&overridden)
             .expect_err("an undeclared window protocol is refused");
         assert!(refusal.contains(&overridden.cell_id), "{refusal}");
     }
@@ -691,7 +695,15 @@ fn a_cache_state_and_its_frozen_call_count_must_agree() {
     }
     assert_eq!(Cache::Cold.cold_calls(), Some(1));
     assert_eq!(Cache::Warm.cold_calls(), None);
-    assert!(Cache::from_request("tepid").is_err());
+    // The harness's own name for a policy is the protocol's spelling of the
+    // state it answers, so a provenance string and a record agree on it.
+    for cache in [Cache::Warm, Cache::Streaming, Cache::Cold] {
+        assert_eq!(Cache::from_request(cache.state()), cache);
+        assert_eq!(
+            serde_json::to_value(cache.state()).expect("a protocol state encodes"),
+            serde_json::Value::from(cache.id())
+        );
+    }
 }
 
 #[test]
@@ -1349,17 +1361,6 @@ fn repository_root() -> std::path::PathBuf {
         .expect("the harness crate sits five directories below the repository root")
         .canonicalize()
         .expect("the repository root resolves")
-}
-
-/// Every arm child the harness launches is bounded by the addendum's own child
-/// timeout (§ Cache, warmup, and sampling), which is the protocol's shared
-/// setting rather than a private wall-clock figure.
-#[test]
-fn a_launched_arm_child_carries_the_frozen_timeout() {
-    assert_eq!(
-        dense_parity_harness::smoke::CHILD_TIMEOUT,
-        std::time::Duration::from_secs(SHARED_SETTINGS.child_timeout_seconds)
-    );
 }
 
 /// The pins the harness carries are the frozen document's own bytes and its own
