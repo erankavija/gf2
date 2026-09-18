@@ -20,7 +20,7 @@ use tuning_campaign_support::transport;
 pub const RESULT_SCHEMA: &str = "zen3-benchmark-arm-result-v1";
 
 /// Mirror of the runner's arm request.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Request {
     /// Request schema identity.
@@ -51,6 +51,31 @@ pub struct Request {
     pub cpus: Vec<u32>,
     /// Workers the cell declares.
     pub workers_declared: u32,
+}
+
+impl Request {
+    /// Refuses a request whose window protocol is not the frozen one.
+    ///
+    /// Every timed execution of the addendum runs five windows targeted at
+    /// 100 ms (§ Cache, warmup, and sampling), which are the protocol's shared
+    /// settings; the non-timed smoke's zero-window request is the only other
+    /// form an arm answers. An arm that followed a timing override would
+    /// measure a window protocol the addendum does not declare.
+    pub fn verify_window_protocol(&self) -> Result<(), String> {
+        let frozen = (
+            tuning_campaign_support::protocol::SHARED_SETTINGS.windows_per_execution,
+            tuning_campaign_support::protocol::SHARED_SETTINGS.window_target_ms,
+        );
+        let observed = (self.windows, self.window_target_ms);
+        if observed == frozen || observed == (0, 0) {
+            return Ok(());
+        }
+        Err(format!(
+            "cell {} requests {} windows of {} ms rather than the frozen {} of {} ms or a \
+             zero-window arrangement pass",
+            self.cell_id, self.windows, self.window_target_ms, frozen.0, frozen.1
+        ))
+    }
 }
 
 /// One cell's case, tagged by the canonical question it belongs to.
@@ -238,6 +263,7 @@ pub fn read_request() -> Result<(Request, Case, Cache), String> {
     if request.decoder.is_some() {
         return Err("no dense-parity cell is a decoder cell".into());
     }
+    request.verify_window_protocol()?;
     let cache = Cache::from_request(&request.cache_state)?;
     let case: Case = serde_json::from_value(request.case.clone())
         .map_err(|error| format!("case does not decode: {error}"))?;
