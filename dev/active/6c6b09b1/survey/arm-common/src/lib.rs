@@ -9,7 +9,9 @@
 //!
 //! An arm supplies a [`Workload`]: it prepares its operands once, reports
 //! what the conversions around its kernel cost, and exposes a closure the
-//! timing protocol calls. Everything outside that closure is untimed.
+//! timing protocol calls. Everything outside that closure is untimed. An arm
+//! that can only name its code path once the measured calls have run supplies
+//! an [`ObservedWorkload`] instead.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -17,9 +19,15 @@ use std::io;
 use std::time::{Duration, Instant};
 pub use tuning_campaign_support::abtest::SplitMix64;
 use tuning_campaign_support::host::CpuAffinity;
-use tuning_campaign_support::protocol::CacheState;
+use tuning_campaign_support::protocol::{CacheState, CellDeclaration, SharedSettings};
 use tuning_campaign_support::timing::{execution_windows_fixed_or_calibrated, FIXTURE_BANKS};
 use tuning_campaign_support::transport;
+
+/// Schema of the request `benchmark-ab-runner` writes on an arm's stdin.
+pub const ARM_REQUEST_SCHEMA: &str = "zen3-benchmark-arm-request-v1";
+
+/// Schema of the one canonical result line an arm writes on its stdout.
+pub const ARM_RESULT_SCHEMA: &str = "zen3-benchmark-arm-result-v1";
 
 /// Which side of the A/B pair this execution is.
 ///
@@ -35,6 +43,11 @@ pub enum PairPosition {
     Baseline,
     /// The pair's candidate arm.
     Candidate,
+    /// The non-timed smoke position: the arm performs one untimed dispatch and
+    /// reports no timing window, so a smoke establishes the wire and the
+    /// selected path without measuring. The runner builds no request in this
+    /// position, so no campaign execution can take it.
+    Validation,
 }
 
 /// Request the runner writes on the arm's stdin.
@@ -63,6 +76,67 @@ pub struct Request {
     pub window_target_ms: u32,
     pub cpus: Vec<u32>,
     pub workers_declared: u32,
+}
+
+/// The request the runner would send for this cell, in the non-timed
+/// [`PairPosition::Validation`] position.
+///
+/// Every field but `cpus` and the pair position comes from the frozen
+/// declaration or the shared settings, exactly as `benchmark-ab-runner` builds
+/// it. The runner resolves `cpus` from the host topology, which a smoke does
+/// not reserve, so the caller supplies the declared width instead.
+pub fn validation_request(
+    declaration: &CellDeclaration,
+    arm: &str,
+    case: Value,
+    cpus: Vec<u32>,
+    settings: &SharedSettings,
+) -> Request {
+    Request {
+        schema: ARM_REQUEST_SCHEMA.to_owned(),
+        cell_id: declaration.cell_id.clone(),
+        arm: arm.to_owned(),
+        role: PairPosition::Validation,
+        pair: 0,
+        case,
+        cache_state: declaration.cache_state,
+        cold_calls: declaration.cold_calls,
+        decoder: None,
+        windows: settings.windows_per_execution,
+        window_target_ms: settings.window_target_ms,
+        cpus,
+        workers_declared: declaration.workers.declared,
+    }
+}
+
+/// Field names of the runner's `ArmRequest`, in declaration order, read from
+/// the runner's own source at compile time.
+///
+/// The shared transport rejects a request whose re-encoding differs from the
+/// bytes it read, so serialization order is part of the wire contract. A wire
+/// test or a smoke compares the request it builds against this list, and a
+/// field the runner adds, drops or reorders fails there rather than inside a
+/// benchmark window.
+pub fn runner_request_fields() -> Vec<&'static str> {
+    const RUNNER: &str =
+        include_str!("../../../../../tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs");
+    RUNNER
+        .split_once("struct ArmRequest {")
+        .expect("the runner declares ArmRequest")
+        .1
+        .split_once("\n}")
+        .expect("the declaration closes")
+        .0
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#') && !line.starts_with("//"))
+        .map(|line| {
+            line.split_once(':')
+                .expect("every field line names a type")
+                .0
+                .trim()
+        })
+        .collect()
 }
 
 /// The operation a cell measures.
@@ -128,7 +202,7 @@ pub struct Case {
 /// whole-consumer cell the same work also happens inside every timed call,
 /// so these values say how the timed cost is composed rather than adding to
 /// it. A field whose operation the arm does not perform is zero.
-#[derive(Clone, Copy, Debug, Default, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
 pub struct Conversion {
     /// Building the field or library context.
     pub setup_ns: u64,
@@ -143,23 +217,31 @@ pub struct Conversion {
     pub dispatch_ns: u64,
 }
 
-#[derive(Serialize)]
-struct Window {
-    calls: u64,
-    elapsed_ns: u64,
+/// One timing window of an execution.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Window {
+    pub calls: u64,
+    pub elapsed_ns: u64,
 }
 
-#[derive(Serialize)]
-struct ArmResult {
-    schema: String,
-    windows: Vec<Window>,
-    cache_state_applied: CacheState,
-    workers_observed: u32,
-    cpus_observed: Vec<u32>,
-    selected_path: Option<String>,
-    conversion: Option<Conversion>,
-    quality: Option<Value>,
-    calibrated: bool,
+/// The one canonical result line an arm writes.
+///
+/// `transport::parse_result` re-encodes what it decoded and rejects any
+/// difference, so a reader that decodes through this type is pinned to the
+/// writer: a field added, dropped or reordered fails at the decode.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ArmResult {
+    pub schema: String,
+    pub windows: Vec<Window>,
+    pub cache_state_applied: CacheState,
+    pub workers_observed: u32,
+    pub cpus_observed: Vec<u32>,
+    pub selected_path: Option<String>,
+    pub conversion: Option<Conversion>,
+    pub quality: Option<Value>,
+    pub calibrated: bool,
 }
 
 /// One arm's prepared workload.
@@ -171,6 +253,39 @@ pub struct Workload<'a> {
     /// The measured body. The argument is the fixture bank index, which
     /// rotates across the eight banks when the cell declares `streaming`.
     pub body: Box<dyn FnMut(usize) + 'a>,
+}
+
+impl<'a> Workload<'a> {
+    /// The same workload with its already-known path.
+    fn into_observed(self) -> ObservedWorkload<'a> {
+        let Workload {
+            selected_path,
+            conversion,
+            body,
+        } = self;
+        ObservedWorkload {
+            conversion,
+            body,
+            observe: Box::new(move || selected_path),
+        }
+    }
+}
+
+/// A workload whose selected path is read after the last timed window.
+///
+/// An arm whose lane witness is only set by a measured call cannot name its
+/// path before the windows run: a `cold` cell forbids any execution of the
+/// measured workload before its first timed window, so the first dispatch is
+/// inside that window. [`observe`](Self::observe) runs once the body is
+/// dropped and supplies the path the result line carries.
+pub struct ObservedWorkload<'a> {
+    /// Costs of the conversions around the kernel.
+    pub conversion: Conversion,
+    /// The measured body, as in [`Workload`].
+    pub body: Box<dyn FnMut(usize) + 'a>,
+    /// Reads the runtime-observed identity of the code path the measured
+    /// calls selected.
+    pub observe: Box<dyn FnOnce() -> String + 'a>,
 }
 
 /// Deterministic operands over the shared [`SplitMix64`] [Steele2014]
@@ -250,6 +365,17 @@ pub fn run<F>(build: F) -> !
 where
     F: for<'a> FnOnce(&'a Request, &'a Case) -> Result<Workload<'a>, String>,
 {
+    run_observed(|request, case| build(request, case).map(Workload::into_observed))
+}
+
+/// [`run`] for an arm that reads its selected path after the timed windows.
+///
+/// The framing, the guards and the result line are [`run`]'s; only the moment
+/// the path is read differs.
+pub fn run_observed<F>(build: F) -> !
+where
+    F: for<'a> FnOnce(&'a Request, &'a Case) -> Result<ObservedWorkload<'a>, String>,
+{
     let sentinel = std::env::var(transport::FRESH_CASE_VAR).ok();
     let request: Request =
         match transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock()) {
@@ -263,37 +389,46 @@ where
         Ok(case) => case,
         Err(error) => fatal(&format!("case does not decode: {error}")),
     };
-    if request.cache_state == CacheState::Cold && request.cold_calls.is_none() {
+    let timed = request.role != PairPosition::Validation;
+    if timed && request.cache_state == CacheState::Cold && request.cold_calls.is_none() {
         fatal("a cold cell requires frozen calls; calibration would pre-run the workload");
     }
     let workload = match build(&request, &case) {
         Ok(workload) => workload,
         Err(reason) => fatal(&reason),
     };
-    let Workload {
-        selected_path,
+    let ObservedWorkload {
         conversion,
         mut body,
+        observe,
     } = workload;
 
-    // `warm` gives the working set one untimed pass before calibration;
-    // `cold` runs the frozen call count on first use; `streaming` rotates
-    // the fixture banks through the bank index the timing protocol passes.
-    if request.cache_state == CacheState::Warm {
+    let samples = if timed {
+        // `warm` gives the working set one untimed pass before calibration;
+        // `cold` runs the frozen call count on first use; `streaming` rotates
+        // the fixture banks through the bank index the timing protocol passes.
+        if request.cache_state == CacheState::Warm {
+            body(0);
+        }
+        match execution_windows_fixed_or_calibrated(
+            0,
+            u64::from(request.windows),
+            Duration::from_millis(u64::from(request.window_target_ms)),
+            request.cold_calls,
+            &mut body,
+            |_| Ok(()),
+        ) {
+            Ok(samples) => samples,
+            Err(error) => fatal(&format!("timing failed: {error}")),
+        }
+    } else {
+        // One dispatch, no clock: enough to exercise the wire and set the
+        // path witness, and the result carries no window.
         body(0);
-    }
-    let samples = match execution_windows_fixed_or_calibrated(
-        0,
-        u64::from(request.windows),
-        Duration::from_millis(u64::from(request.window_target_ms)),
-        request.cold_calls,
-        &mut body,
-        |_| Ok(()),
-    ) {
-        Ok(samples) => samples,
-        Err(error) => fatal(&format!("timing failed: {error}")),
+        Vec::new()
     };
     drop(body);
+    let selected_path = observe();
 
     let cpus_observed = CpuAffinity::observe()
         .map(|affinity| affinity.cpus().to_vec())
@@ -303,7 +438,7 @@ where
         Err(error) => fatal(&format!("cannot observe the thread count: {error}")),
     };
     let result = ArmResult {
-        schema: "zen3-benchmark-arm-result-v1".into(),
+        schema: ARM_RESULT_SCHEMA.into(),
         windows: samples
             .iter()
             .map(|sample| Window {
@@ -317,7 +452,7 @@ where
         selected_path: Some(selected_path),
         conversion: Some(conversion),
         quality: None,
-        calibrated: request.cold_calls.is_none(),
+        calibrated: timed && request.cold_calls.is_none(),
     };
     if let Err(error) = transport::write_result_line(io::stdout().lock(), &result) {
         fatal(&format!("cannot write the result line: {error}"));
@@ -346,14 +481,12 @@ fn fatal(message: &str) -> ! {
 /// The request wire contract with `benchmark-ab-runner`.
 ///
 /// The runner's `ArmRequest` is private to its binary, so these tests pin the
-/// contract from both ends: `request_round_trips_the_runners_bytes` fixes
-/// the bytes the runner writes, and `runner_request_fields_are_unchanged`
-/// fails when the runner's struct gains, loses or reorders a field. The 2026-09-12 window lost three
-/// campaigns to a `role` field this survey had typed as the protocol's
-/// sampling `CellRole`; a decode failure now surfaces here instead.
+/// contract from both ends: `request_round_trips_the_runners_bytes` fixes the
+/// bytes the runner writes, and `runner_request_fields_are_unchanged` fails
+/// when the runner's struct gains, loses or reorders a field.
 #[cfg(test)]
 mod wire {
-    use super::{Case, Metric, Operation, PairPosition, Request};
+    use super::{runner_request_fields, Case, Metric, Operation, PairPosition, Request};
     use tuning_campaign_support::protocol::CacheState;
     use tuning_campaign_support::transport;
 
@@ -404,7 +537,7 @@ mod wire {
     /// agrees.
     const INTENDED_TYPE_DIFFERENCES: [(&str, &str); 2] = [
         // The runner sends the pair position as a bare `String`; naming the
-        // two legal values is stricter and costs nothing on the wire.
+        // legal values is stricter and costs nothing on the wire.
         ("role", "PairPosition rather than String"),
         // No cell in this survey carries a decoder, and `run` rejects a
         // request that does, so the arms need not depend on `DecoderCell`.
@@ -463,9 +596,8 @@ mod wire {
         assert_eq!(transport::encode_case(&request).expect("re-encodes"), cold);
     }
 
-    /// The protocol's sampling classification is not a pair position: a
-    /// request spelling `role` the way the pre-fix struct expected must now
-    /// fail to decode, which is what the 2026-09-12 window discovered.
+    /// The protocol's sampling classification is not a pair position, so a
+    /// request that spells `role` with a `CellRole` value fails to decode.
     #[test]
     fn a_sampling_role_is_not_a_pair_position() {
         let sampling = BASELINE_REQUEST.replace(r#""role":"baseline""#, r#""role":"exploratory""#);
@@ -473,33 +605,27 @@ mod wire {
         assert!(error.contains("exploratory"), "{error}");
     }
 
-    /// Reads the runner's own source and checks its `ArmRequest` still
-    /// declares [`RUNNER_FIELDS`], so a field added or reordered on the
-    /// runner side fails here rather than in a benchmark window.
+    /// The validation position belongs to a non-timed smoke: it round-trips on
+    /// the wire, and the runner builds no request that carries it.
     #[test]
-    fn runner_request_fields_are_unchanged() {
+    fn the_validation_position_is_no_runner_role() {
+        let line = BASELINE_REQUEST.replace(r#""role":"baseline""#, r#""role":"validation""#);
+        let request = decode(&line);
+        assert_eq!(request.role, PairPosition::Validation);
+        assert_eq!(transport::encode_case(&request).expect("re-encodes"), line);
+
         const RUNNER: &str = include_str!(
             "../../../../../tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs"
         );
-        let body = RUNNER
-            .split_once("struct ArmRequest {")
-            .expect("the runner declares ArmRequest")
-            .1
-            .split_once("\n}")
-            .expect("the declaration closes")
-            .0;
-        let fields: Vec<&str> = body
-            .lines()
-            .map(str::trim)
-            .filter(|line| !line.is_empty() && !line.starts_with('#') && !line.starts_with("//"))
-            .map(|line| {
-                line.split_once(':')
-                    .expect("every field line names a type")
-                    .0
-                    .trim()
-            })
-            .collect();
-        assert_eq!(fields, RUNNER_FIELDS);
+        assert!(!RUNNER.contains(r#""validation""#));
+    }
+
+    /// Checks the runner's own source still declares [`RUNNER_FIELDS`], so a
+    /// field added or reordered on the runner side fails here rather than in a
+    /// benchmark window.
+    #[test]
+    fn runner_request_fields_are_unchanged() {
+        assert_eq!(runner_request_fields(), RUNNER_FIELDS);
         for (field, reason) in INTENDED_TYPE_DIFFERENCES {
             assert!(
                 RUNNER_FIELDS.contains(&field),
