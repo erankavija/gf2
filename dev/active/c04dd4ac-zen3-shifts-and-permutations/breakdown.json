@@ -260,8 +260,7 @@
             "dev/bench_results/c04dd4ac/dvb-interleave-profile/"
           ],
           "touches": [
-            "dev/active/eda07788/survey/gf2-side/",
-            "dev/active/eda07788/survey/xdsopl-side/"
+            "dev/active/eda07788/survey/gf2-side/"
           ]
         }
       }
