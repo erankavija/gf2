@@ -1,31 +1,32 @@
 #!/usr/bin/env bash
-# Shipped GF(2^8) axpy lane campaigns (jit:ad2a6a58).
+# Shipped GF(2^8) dense-product campaigns (jit:4c1e441f).
 #
 # Usage (from the worker worktree root):
-#   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh build
-#   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh window pilot|confirmation
-#   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh freeze
-#   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh tables
+#   dev/bench_results/4c1e441f/run-dense-product-confirmation.sh build
+#   dev/bench_results/4c1e441f/run-dense-product-confirmation.sh window pilot|confirmation
+#   dev/bench_results/4c1e441f/run-dense-product-confirmation.sh freeze
+#   dev/bench_results/4c1e441f/run-dense-product-confirmation.sh tables
 #
-# `build` runs the correctness checks that precede timing — the two lanes of
-# the measured executable agree on every byte coefficient at the word-boundary
-# lengths, and the shipped crate's GF(2^8) table suites pass — and commits
-# their evidence under dev/active/ad2a6a58/conformance/.
+# `build` runs the correctness checks that precede timing — the two lanes of the
+# measured executable agree byte for byte on every declared shape, and the
+# shipped crate's GF(2^8) table and dense-product suites pass — and commits their
+# evidence under dev/active/4c1e441f/conformance/.
 #
-# `window` is the only timed action and the only command a queue line carries.
-# It refuses outside a benchmark window, refuses a campaign input that is not
-# committed and unmodified, prints the canonical execution log path before the
-# first bounded run, resumes an interrupted campaign under its own identity,
-# and finalizes and evaluates a complete campaign once. Re-running it on a
-# finalized campaign re-evaluates and measures nothing.
+# `window` is the only timed action and the only command a queue line carries. It
+# refuses outside a benchmark window, refuses a campaign input that is not
+# committed and unmodified, refuses an arm the committed smoke record did not
+# drive, prints the canonical execution log path before the
+# first bounded run, resumes an interrupted campaign under its own identity, and
+# finalizes and evaluates a complete campaign once. Re-running it on a finalized
+# campaign re-evaluates and measures nothing.
 #
-# `freeze` derives the confirmation addendum from the committed pilot receipt
-# with the repository's canonical freezer, reading no result of its own.
-# `tables` regenerates the result tables from whatever is committed.
+# `freeze` derives the confirmation addendum from the committed pilot receipt with
+# the repository's canonical freezer, reading no result of its own. `tables`
+# regenerates the result tables from whatever is committed.
 #
-# Every numeric setting comes from the frozen addendum and the protocol's
-# frozen shared settings; this script fixes only campaign identities, seeds,
-# the pilot pair count and the session cell budget.
+# Every numeric setting comes from the frozen addendum and the protocol's frozen
+# shared settings; this script fixes only campaign identities, seeds, the pilot
+# pair count and the session cell budget.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,23 +36,24 @@ REPO="$(cd "${HERE}/../../.." && pwd)"
     exit 2
 }
 
-ISSUE=ad2a6a58
+ISSUE=4c1e441f
 SURVEY=dev/active/${ISSUE}/survey
 EVIDENCE=dev/active/${ISSUE}/conformance
 RESULTS=dev/bench_results/${ISSUE}
-LEDGER=${RESULTS}/axpy-family-ledger.jsonl
+LEDGER=${RESULTS}/dense-product-family-ledger.jsonl
 PRODUCING=${SURVEY}/producing-inputs.json
 PLAN_TOOL=${SURVEY}/make-plan.py
-LAUNCHER=${RESULTS}/run-axpy-confirmation.sh
-PIN=dev/active/${ISSUE}/pinned-vector-confirmation.json
+SMOKE_RECORD=${SURVEY}/runner-smoke.txt
+PIN=dev/active/${ISSUE}/pinned-matrix-confirmation.json
 FREEZER=dev/active/c7113c5a/survey/freeze-confirmation.py
 LOG_CHECKER=dev/scripts/verify-campaign-log.py
-PILOT_ADDENDUM=dev/active/${ISSUE}/addendum-v4-axpy-pilot.json
-CONFIRMATION_ADDENDUM=dev/active/${ISSUE}/addendum-v4-axpy-confirmation.json
-DERIVATION=dev/active/${ISSUE}/confirmation-derivation-axpy.txt
+PIN_TOOL=dev/scripts/pin-prior-receipt.py
+PILOT_ADDENDUM=dev/active/${ISSUE}/addendum-v4-dense-product-pilot.json
+CONFIRMATION_ADDENDUM=dev/active/${ISSUE}/addendum-v4-dense-product-confirmation.json
+DERIVATION=dev/active/${ISSUE}/confirmation-derivation-dense-product.txt
 ARM_TARGET="${REPO}/target/${ISSUE}-arm"
-ARM="${ARM_TARGET}/release/gf256-axpy-arm"
-VERIFY="${ARM_TARGET}/release/gf256-axpy-verify"
+ARM="${ARM_TARGET}/release/gf256-gemm-arm"
+VERIFY="${ARM_TARGET}/release/gf256-gemm-verify"
 STAGES="${REPO}/target/${ISSUE}-campaigns"
 RUNNER="${REPO}/target/release/benchmark-ab-runner"
 ACCEPTANCE="${REPO}/target/release/benchmark-acceptance"
@@ -65,7 +67,7 @@ export RUSTUP_TOOLCHAIN=1.95
 
 build_binaries() {
     CARGO_TARGET_DIR="${ARM_TARGET}" ./scripts/cargo-budget.sh cargo build --release --locked \
-        --manifest-path "${SURVEY}/axpy-arm/Cargo.toml"
+        --manifest-path "${SURVEY}/gemm-arm/Cargo.toml"
     ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
         --bin benchmark-ab-runner --bin benchmark-acceptance
 }
@@ -78,13 +80,18 @@ if [[ "${ACTION}" == build ]]; then
     # Correctness precedes timing: each check exits non-zero on a mismatch.
     "${VERIFY}" >"${EVIDENCE}/lane-equivalence.txt"
     {
-        echo "# Shipped GF(2^8) table suites of the measured tree (jit:${ISSUE})"
+        echo "# Shipped GF(2^8) table and dense-product suites of the measured tree (jit:${ISSUE})"
         echo "# command: cargo nextest run -p gf2-core --all-features --cargo-profile ci-test"
         echo "#          --profile ci -E 'test(gf256) + binary_id(~gf256)'"
         ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features \
             --cargo-profile ci-test --profile ci -E 'test(gf256) + binary_id(~gf256)' 2>&1 |
             sed -E 's/\[[[:space:]]*[0-9]+\.[0-9]+s\]//g'
     } >"${EVIDENCE}/shipped-conformance.txt"
+    python3 -B "${PIN_TOOL}" \
+        --receipt-dir dev/bench_results/19513245/r1-matrix-confirmation \
+        --issue 19513245 \
+        --role 'direction agreement only; this family inherits no sample from it' \
+        --output "${PIN}"
     python3 -B "${SURVEY}/make-producing-inputs.py"
     echo "correctness evidence: ${EVIDENCE}" >&2
     exit 0
@@ -96,10 +103,10 @@ if [[ "${ACTION}" == tables ]]; then
 fi
 
 if [[ "${ACTION}" == freeze ]]; then
-    # The confirmation's resolution, margins and pilot pin come from the
-    # committed pilot receipt, never from a reading taken here; the retained and
-    # dropped cells follow the pilot addendum's frozen selection rule.
-    for frozen in "${PILOT_ADDENDUM}" "${RESULTS}/r1-axpy-pilot/receipt.json"; do
+    # The confirmation's resolution, margins and pilot pin come from the committed
+    # pilot receipt, never from a reading taken here; the retained and dropped
+    # cells follow the pilot addendum's frozen selection rule.
+    for frozen in "${PILOT_ADDENDUM}" "${RESULTS}/r1-dense-product-pilot/receipt.json"; do
         git ls-files --error-unmatch "${frozen}" >/dev/null
         git diff --quiet HEAD -- "${frozen}" || {
             echo "${frozen} differs from the committed bytes" >&2
@@ -108,35 +115,38 @@ if [[ "${ACTION}" == freeze ]]; then
     done
     python3 -B "${FREEZER}" \
         --pilot-addendum "${PILOT_ADDENDUM}" \
-        --pilot "${RESULTS}/r1-axpy-pilot" \
+        --pilot "${RESULTS}/r1-dense-product-pilot" \
         --frozen-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         --output "${CONFIRMATION_ADDENDUM}" \
         --record "${DERIVATION}" \
-        --cell axpy-4k-element --cell axpy-128k-element --cell axpy-2m-stream-element \
-        --cell axpy-4k-wide --cell axpy-128k-wide --cell axpy-2m-stream-wide \
+        --cell matmul-n256-element --cell matmul-n512-element \
+        --cell matmul-n256-whole-element \
+        --cell matmul-n256-wide --cell matmul-n512-wide --cell matmul-n256-whole-wide \
         --selection-rationale \
         "The frozen selection rule of the pilot addendum: P-20's tail-support bound admits six \
 confirmatory comparisons on this family's first attempt, so the confirmation keeps both element \
-representations at an L1-resident size, an L2-resident size and the streaming size; it drops the \
-8 MiB warm cells, whose memory-resident regime the streaming cells already carry, and the 1 KiB \
-cold first-touch cells, whose one table-build window per candidate execution is the whole of the \
-frozen max_flagged_fraction with no margin left, so a confirmatory slot spent there would measure \
-the flagged-window policy rather than the lane. The dropped cells keep their pilot evidence." \
+representations at the middle square dimension, at the largest square dimension and at the \
+whole-matrix consumer boundary, which is where the accepted path's three scratch byte buffers and \
+its restoration of the transposed right operand are paid; it drops the two 64-dimension cells, \
+whose dimension is the pilot's sizing shape for that restoration and allocation overhead rather \
+than a dimension a consumer's product is dominated by. The dropped cells keep their pilot \
+evidence." \
         --family-description \
-        "Confirmatory stage of issue ad2a6a58, protocol version 4: every cell below is \
-confirmatory and decides the shipped GF(2^8) product-table lane on fresh samples. Question, arms, \
-representations and sizes are the pilot's; the resolution, the pilot pin and the retained cells \
-are derived from the committed pilot receipt by the repository's canonical freezer, and the \
-derivation record beside this addendum names them. Both arms remain one executable built from the \
-shipped crate: the baseline arm holds every GF(2^8) call on the scalar element lane through the \
-shipped process-global lane switch and the candidate arm leaves it clear, so a pair differs in \
-the lane and in nothing else, and each execution reports the lane the shipped witness recorded \
-for its measured calls. The frozen decision rule is the pilot's: the accelerated lane is retained \
-when no confirmatory cell records fail and at least one records pass, and is removed otherwise, \
-including when every confirmatory cell records not-material or inconclusive. Direction agreement \
-is stated against the vector-family confirmation receipt of issue 19513245 pinned in \
-dev/active/ad2a6a58/pinned-vector-confirmation.json, which is cited for its direction and not \
-inherited as evidence."
+        "Confirmatory stage of issue 4c1e441f, protocol version 4: every cell below is \
+confirmatory and decides the shipped GF(2^8) dense-product route on fresh samples. Question, arms, \
+representations, dimensions and consumer boundary are the pilot's; the resolution, the pilot pin \
+and the retained cells are derived from the committed pilot receipt by the repository's canonical \
+freezer, and the derivation record beside this addendum names them. Both arms remain one \
+executable built from the shipped crate: the baseline arm holds every GF(2^8) call on the route \
+the library takes without the cached table through the shipped process-global lane switch and the \
+candidate arm leaves it clear, so a pair differs in the lane and in nothing else, and each \
+execution reports the lane the shipped witness recorded for its measured calls together with the \
+allocating calls and bytes one call makes. The frozen decision rule is the pilot's: the \
+accelerated path is retained when no confirmatory cell records fail and at least one records pass, \
+and is removed otherwise, including when every confirmatory cell records not-material or \
+inconclusive. Direction agreement is stated against the matrix-family confirmation receipt of \
+issue 19513245 pinned in dev/active/4c1e441f/pinned-matrix-confirmation.json, which is cited for \
+its direction and not inherited as evidence."
     echo "confirmation addendum: ${CONFIRMATION_ADDENDUM}" >&2
     echo "derivation record: ${DERIVATION}" >&2
     exit 0
@@ -156,16 +166,16 @@ CAMPAIGN_NAME=${2:?pilot or confirmation}
 case "${CAMPAIGN_NAME}" in
     pilot)
         ADDENDUM=${PILOT_ADDENDUM}
-        LABEL=pilot SEED=2026091801 MAX_CELLS=5 PILOT_PAIRS=12 ;;
+        LABEL=pilot SEED=2026091802 MAX_CELLS=4 PILOT_PAIRS=12 ;;
     confirmation)
         ADDENDUM=${CONFIRMATION_ADDENDUM}
-        LABEL=confirmation SEED=2026091811 MAX_CELLS=3 PILOT_PAIRS= ;;
+        LABEL=confirmation SEED=2026091812 MAX_CELLS=3 PILOT_PAIRS= ;;
     *) echo "unknown campaign ${CAMPAIGN_NAME}" >&2; exit 2 ;;
 esac
-CAMPAIGN=${ISSUE}-r1-axpy-${CAMPAIGN_NAME}
+CAMPAIGN=${ISSUE}-r1-dense-product-${CAMPAIGN_NAME}
 STAGE="${STAGES}/${CAMPAIGN}"
 PLAN="${STAGE}.plan.json"
-OUT=${RESULTS}/r1-axpy-${CAMPAIGN_NAME}
+OUT=${RESULTS}/r1-dense-product-${CAMPAIGN_NAME}
 
 evaluate() {
     set +e
@@ -200,6 +210,19 @@ git diff --quiet HEAD -- "${FROZEN[@]}" || {
 }
 
 build_binaries
+
+# The committed smoke record names the executable it drove, and that identity
+# covers every byte of the arm's dependency closure, so a campaign measures the
+# arm the smoke established and no other. A mismatch means the record was
+# produced from a different tree or in a different checkout.
+SMOKED=$(sed -n "s/^# arm executable $(basename "${ARM}") sha256: //p" "${SMOKE_RECORD}")
+BUILT=$(sha256sum "${ARM}" | cut -d' ' -f1)
+[[ "${SMOKED}" == "${BUILT}" ]] || {
+    echo "${SMOKE_RECORD} names arm ${SMOKED:-none}, this checkout built ${BUILT}; regenerate the \
+smoke record with ${SURVEY}/smoke-arms.sh and commit it" >&2
+    exit 2
+}
+
 mkdir -p "${STAGES}" "$(dirname "${OUT}")"
 touch "${LOCK}"
 
@@ -260,8 +283,8 @@ while ! python3 -B "${LOG_CHECKER}" --log "${STAGE}/execution.log" --stage-compl
     rc=${PIPESTATUS[0]}
     set -e
     echo "# session ${session} exit: ${rc}" >>"${LAUNCH_LOG}"
-    # Exit 3 pauses at the session cell budget and releases the mutex so a
-    # queued sibling gets the host; exit 0 completes the campaign.
+    # Exit 3 pauses at the session cell budget and releases the mutex so a queued
+    # sibling gets the host; exit 0 completes the campaign.
     case "${rc}" in
         0) break ;;
         3) ;;
@@ -280,8 +303,6 @@ evaluate
     echo "# finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >>"${LAUNCH_LOG}"
 
-# A campaign whose every cell failed can still exit cleanly, so the campaign is
-# verified from its own execution log against the plan it measured.
 python3 -B "${LOG_CHECKER}" --log "${OUT}/execution.log" \
     --receipt "${OUT}/receipt.json" --plan "${PLAN}"
 echo "receipt: ${OUT}" >&2

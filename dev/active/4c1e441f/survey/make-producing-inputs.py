@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Write the producing-input manifest of this family's campaigns (jit:ad2a6a58).
+"""Write the producing-input manifest of this family's campaigns (jit:4c1e441f).
 
 Usage: make-producing-inputs.py [output]
-       (default dev/active/ad2a6a58/survey/producing-inputs.json)
+       (default dev/active/4c1e441f/survey/producing-inputs.json)
 
 The manifest is written by `dev/scripts/campaign_inputs.py`; this file declares
 which files are this family's closure: the gf2 production crates the arm
-compiles, the harness crates (this family's arm and the two byte-field survey
-crates it reuses), the shared campaign generators, the launcher, the shared lock
-wrapper and the shared campaign tooling.
+compiles, the harness crates (this family's arm, the vector family's lane
+library and the two byte-field survey crates it reuses), the shared campaign
+generators, the launcher, the shared lock wrapper and the shared campaign
+tooling.
 """
 
 import os
@@ -20,14 +21,15 @@ sys.path.insert(0, os.path.join(subprocess.run(
 ).stdout.strip(), "dev/scripts"))
 import campaign_inputs  # noqa: E402
 
-ISSUE = "dev/active/ad2a6a58"
+ISSUE = "dev/active/4c1e441f"
 SURVEY = f"{ISSUE}/survey"
-ARM = f"{SURVEY}/axpy-arm"
+ARM = f"{SURVEY}/gemm-arm"
+LANE = "dev/active/ad2a6a58/survey/axpy-arm"
 REUSED = "dev/active/6c6b09b1/survey"
 TOOL = "dev/tools/tuning-campaign-support"
 SHARED = "dev/scripts"
 LOCK_WRAPPER = f"{SHARED}/ccx1-bench-flock.sh"
-LAUNCHER = "dev/bench_results/ad2a6a58/run-axpy-confirmation.sh"
+LAUNCHER = "dev/bench_results/4c1e441f/run-dense-product-confirmation.sh"
 EVIDENCE = f"{ISSUE}/conformance"
 
 LIFECYCLE = [
@@ -64,6 +66,8 @@ BUILD_EXTRA = [
     f"{TOOL}/Cargo.toml",
     f"{ARM}/Cargo.lock",
     f"{ARM}/Cargo.toml",
+    f"{LANE}/Cargo.lock",
+    f"{LANE}/Cargo.toml",
     f"{SHARED}/campaign_inputs.py",
     f"{SHARED}/campaign_tables.py",
     f"{SHARED}/pin-prior-receipt.py",
@@ -84,6 +88,7 @@ SOURCE_DIRS = [
     "crates/gf2-core/src",
     "crates/gf2-kernels-simd/src",
     f"{ARM}/src",
+    f"{LANE}/src",
     f"{REUSED}/arm-common/src",
     f"{REUSED}/gf2-side/src",
     f"{TOOL}/src",

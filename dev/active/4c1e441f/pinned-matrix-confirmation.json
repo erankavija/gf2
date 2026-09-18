@@ -1,0 +1,20 @@
+{
+  "role": "direction agreement only; this family inherits no sample from it",
+  "issue": "19513245",
+  "family_id": "bytefield-consumer-matrix",
+  "campaign_id": "19513245-r1-matrix-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "receipt": "dev/bench_results/19513245/r1-matrix-confirmation/receipt.json",
+  "receipt_sha256": "0610976ca4c2b0d04681b29f4ff87949c58edb9f5e9dfdea4d4cc5e81c88d8a2",
+  "acceptance_summary": "dev/bench_results/19513245/r1-matrix-confirmation/acceptance-summary.json",
+  "acceptance_summary_sha256": "abfaf06e2e20c63b895e195a772f8d30f85ca46aeef62945433eff20accf5419",
+  "cells": [
+    "matmul-n256-element",
+    "matmul-n256-whole-element",
+    "matmul-n256-whole-wide",
+    "matmul-n256-wide",
+    "matmul-n512-element",
+    "matmul-n512-wide"
+  ]
+}
