@@ -1023,7 +1023,11 @@ fn main() {
             eprintln!(
                 "usage: benchmark-ab-runner run <stage> <plan.json> | \
                  finalize <stage> <out-dir> | check <plan.json> | \
-                 smoke <plan.json> [--record <path>]"
+                 smoke <plan.json> [--record <path>]\n\
+                 smoke drives every arm of every declared cell once in the \
+                 untimed validation position: it takes no lock, writes no \
+                 stage, ledger or receipt, and fails an arm that reports a \
+                 timing window."
             );
             std::process::exit(2);
         }
