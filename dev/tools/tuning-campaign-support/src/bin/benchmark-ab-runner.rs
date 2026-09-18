@@ -24,8 +24,8 @@ use tuning_campaign_support::abtest::{
     bootstrap_seed, decide, median, pair_orders, paired_bootstrap_speedup, ArmOrder,
     PairedObservation,
 };
-use tuning_campaign_support::arm::{dispatch_arm, ArmRequest, ChildObserver, PairPosition};
-use tuning_campaign_support::campaign::{LockEvidence, ProcessOutcome, Token};
+use tuning_campaign_support::arm::{dispatch_arm, ArmRequest, JournalObserver, PairPosition};
+use tuning_campaign_support::campaign::{LockEvidence, Token};
 use tuning_campaign_support::host::{
     inherited_lock, resolve_core_arm, CpuAffinity, HostObservation,
 };
@@ -423,43 +423,6 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
     })
 }
 
-/// Journals one arm child's spawn, diagnostics and exit.
-struct ChildJournal<'a> {
-    log: &'a mut ExecutionLog,
-    case: Value,
-    pid: u32,
-}
-
-impl ChildObserver for ChildJournal<'_> {
-    fn spawned(&mut self, pid: u32) -> io::Result<()> {
-        self.pid = pid;
-        self.log
-            .append(
-                JournalEvent::ChildSpawn,
-                Some(self.case.clone()),
-                json!({"pid": pid}),
-            )
-            .map(|_| ())
-    }
-
-    fn exited(&mut self, outcome: &ProcessOutcome, stderr: &[u8]) -> io::Result<()> {
-        if !stderr.is_empty() {
-            self.log.append(
-                JournalEvent::ChildDiagnostic,
-                Some(self.case.clone()),
-                json!({"stderr": String::from_utf8_lossy(stderr)}),
-            )?;
-        }
-        self.log
-            .append(
-                JournalEvent::ChildExit,
-                Some(self.case.clone()),
-                json!({"outcome": outcome}),
-            )
-            .map(|_| ())
-    }
-}
-
 fn set_affinity(cpus: &[u32]) -> io::Result<()> {
     let mut set = rustix::thread::CpuSet::new();
     for cpu in cpus {
@@ -495,11 +458,7 @@ fn run_arm(
     let case = json!({"key": key, "cell_id": cell_id, "arm": arm_name, "role": role, "pair": pair});
     let start = Instant::now();
     let timeout = Duration::from_secs(session.facts.settings.child_timeout_seconds);
-    let mut journal = ChildJournal {
-        log: &mut session.log,
-        case: case.clone(),
-        pid: 0,
-    };
+    let mut journal = JournalObserver::new(&mut session.log, case.clone());
     let parsed = dispatch_arm(&executable, &arm, request, timeout, &mut journal)?;
     let spawned_pid = journal.pid;
     if parsed.windows.len() != request.windows as usize
