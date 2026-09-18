@@ -81,8 +81,8 @@ impl Drop for AlignedSlab {
 /// `item_bytes` is the fixture bytes the bank holds for one item, so a
 /// streaming bank rounds up to the smallest integral number of complete tuples
 /// that reaches [`STREAMING_BANK_BYTES`], as the addendum's `streaming` policy
-/// requires (§ Cache, warmup, and sampling). A warm or cold bank holds the one
-/// item its untimed pass covers.
+/// requires (§ Cache, warmup, and sampling). A warm or cold cell rotates
+/// nothing, so its one bank holds one item.
 pub fn items_per_bank(cache: Cache, item_bytes: usize) -> usize {
     match cache {
         Cache::Warm | Cache::Cold => 1,

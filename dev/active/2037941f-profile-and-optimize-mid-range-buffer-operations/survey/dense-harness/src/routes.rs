@@ -360,6 +360,12 @@ pub fn run_windows(
             plan.cold_calls
         )));
     }
+    if plan.banks == 0 || plan.items == 0 {
+        return Err(io::Error::other(format!(
+            "cell declares a working set of {} banks of {} items",
+            plan.banks, plan.items
+        )));
+    }
     if plan.cache == Cache::Warm {
         // One untimed pass over the cell's complete working set, which the
         // addendum's `warm` policy fixes: one call per item of every bank, so
@@ -382,6 +388,9 @@ pub fn run_windows(
         body(bank % banks, item);
     };
     execution_windows_fixed_or_calibrated(
+        // One child is one execution, and an arm reports each window's calls
+        // and elapsed time rather than the helper's execution coordinate, so
+        // every child measures the helper's first execution.
         0,
         u64::from(plan.windows),
         Duration::from_millis(u64::from(plan.window_target_ms)),
