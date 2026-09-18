@@ -53,19 +53,16 @@ fn plan_inputs<'a>(
     }
 }
 
-/// One family's projected plan, with `gf2` as the executable of its gf2 arms.
-fn projected(question: Question, addendum: &FamilyAddendum, gf2: &str) -> RunnerPlan {
+/// One family's validated projected plan, over every arm the family declares.
+fn projected(question: Question, addendum: &FamilyAddendum) -> RunnerPlan {
     let plan = campaign::plan(
         question,
         addendum,
-        &PlanInputs {
-            gf2_executable: gf2,
-            ..plan_inputs(
-                Some("/nonexistent/dense-arm-scalar"),
-                Some("/nonexistent/dense-m4ri-arm"),
-                None,
-            )
-        },
+        &plan_inputs(
+            Some("/nonexistent/dense-arm-scalar"),
+            Some("/nonexistent/dense-m4ri-arm"),
+            None,
+        ),
     )
     .expect("the plan projects");
     plan.validate(addendum)
@@ -223,7 +220,7 @@ fn a_changed_margin_or_cell_no_longer_matches_the_transcription() {
 fn every_dense_arm_accepts_the_shared_validation_request() {
     for question in Question::ALL {
         let addendum = campaign::addendum(question, ISSUE, FROZEN);
-        let plan = projected(question, &addendum, "/nonexistent/dense-arm");
+        let plan = projected(question, &addendum);
         let table = family_cells(question);
         for cell in &plan.cells {
             let declared = addendum.cell(&cell.cell_id).expect("a declared cell");
@@ -253,7 +250,7 @@ fn every_dense_arm_accepts_the_shared_validation_request() {
 #[test]
 fn an_arm_refuses_a_window_protocol_the_addendum_does_not_declare() {
     let addendum = campaign::addendum(Question::AllocatedMatvec, ISSUE, FROZEN);
-    let plan = projected(Question::AllocatedMatvec, &addendum, "/nonexistent/dense-arm");
+    let plan = projected(Question::AllocatedMatvec, &addendum);
     let cell = &plan.cells[0];
     let declared = addendum.cell(&cell.cell_id).expect("a declared cell");
 
