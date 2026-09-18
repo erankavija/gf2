@@ -42,9 +42,9 @@
   invoker then ruled: do not wake idle workers (prompt caching); the lead
   finished their remaining steps itself.
 - Merges on main, each gated by `./scripts/cargo-ci.sh` on the merged tree:
-  96c94b81 + 77c21ecd (`f03b8c7c`), 8275a6f8 (`63f72897`) plus a lead fix for
-  a suite-load flake in its new test, bb769456 rework 1 (`2689d021`), 7cdc28e9
-  (`cf25c7b5`), 2c487595 (`5e6d0ee7`), bb769456 rework 2 (`b39cfd65`).
+  96c94b81 + 77c21ecd (`4522673a`), 8275a6f8 (`7997c767`) plus a lead fix for
+  a suite-load flake in its new test, bb769456 rework 1 (`2c4d8c42`), 7cdc28e9
+  (`d74b84a4`), 2c487595 (`d1825118`), bb769456 rework 2 (`29c75271`).
 - Gate rounds surfaced only prose defects after the code reviews passed
   (uncited attributions, a stale design bound, a hard-coded receipt path, a
   rustdoc precedence sentence, an index-reading CI checker); the lead fixed

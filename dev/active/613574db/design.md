@@ -517,7 +517,7 @@ registry in a `static`, and `get_or_init` yielding a `&'static` table from that
 
 ## Source evidence
 
-Project `gf2`, commit `c2e9df896c7835070798260acfb82e69842daf7e` throughout.
+Project `gf2`, commit `f2c0ab2e7d3e9cd4a4e5ff568c1a01c5948f95c0` throughout.
 
 | Claim | Path | Line | Verbatim | Why |
 |---|---|---:|---|---|
