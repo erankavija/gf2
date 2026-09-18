@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Write a resumable protocol-v4 runner plan for issue 85fc5ff4.
 
-The same projection serves the queued profile and the non-timed arm smoke: both
-name the residual and word-aligned arms of one executable and both derive every
-cell from the frozen addendum, so the smoke drives the cases and arms the
-profile sends.
+The same projection serves the queued profile and the non-timed arm smoke, so
+both drive the same cases and arms from the frozen addendum.
 """
 
 import argparse
