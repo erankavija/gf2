@@ -17,7 +17,7 @@
   },
   "tests": {
     "test-residual-shift-unit": {
-      "command": "./scripts/cargo-budget.sh --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-core --features simd --lib -E test(residual_shift)",
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run --color never --cargo-profile ci-test --profile ci -p gf2-core --features simd --lib -E test(residual_shift)",
       "exit": 0,
       "summary": "3 tests run: 3 passed, 2032 skipped",
       "results": [
@@ -27,7 +27,7 @@
       ]
     },
     "test-residual-shift-routes": {
-      "command": "./scripts/cargo-budget.sh --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-core --features simd --test residual_shift_routes",
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run --color never --cargo-profile ci-test --profile ci -p gf2-core --features simd --test residual_shift_routes",
       "exit": 0,
       "summary": "3 tests run: 3 passed, 0 skipped",
       "results": [
@@ -37,7 +37,7 @@
       ]
     },
     "test-shift-funnel-unit": {
-      "command": "./scripts/cargo-budget.sh --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-kernels-simd --lib -E test(shift_funnel)",
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run --color never --cargo-profile ci-test --profile ci -p gf2-kernels-simd --lib -E test(shift_funnel)",
       "exit": 0,
       "summary": "3 tests run: 3 passed, 293 skipped",
       "results": [

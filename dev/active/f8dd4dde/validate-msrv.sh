@@ -2,18 +2,6 @@
 # Rust 1.95 build-and-suite validation record for jit f8dd4dde (REQ-06).
 #
 # Usage: ./validate-msrv.sh [output.json]   (default dev/active/f8dd4dde/validate-msrv-record.json)
-#
-# Builds gf2-core and gf2-kernels-simd under the pinned MSRV toolchain, runs
-# the shared residual-shift suite (gf2-core's residual_shift unit tests and
-# residual_shift_routes integration suite) and gf2-kernels-simd's shift_funnel
-# unit tests through the repository's ci-test/ci nextest profiles, then runs
-# the standalone witness probe in msrv-validation/, which reports the host's
-# own bmi2 detection and the route gf2_core::residual_shift's lane witness
-# recorded for each arm of its force switch.
-#
-# The record states only what this run observed: no duration, no nextest run
-# id, and test results are sorted by name rather than kept in completion
-# order, so re-running on an unchanged tree reproduces it byte for byte.
 
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
@@ -42,9 +30,9 @@ run() {
 status=0
 run build-all-features "$BUDGET" cargo build -p gf2-core -p gf2-kernels-simd --all-features || status=$?
 run build-dispatched-feature-set "$BUDGET" cargo build -p gf2-core -p gf2-kernels-simd --features simd || status=$?
-run test-residual-shift-unit "$BUDGET" --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-core --features simd --lib -E 'test(residual_shift)' || status=$?
-run test-residual-shift-routes "$BUDGET" --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-core --features simd --test residual_shift_routes || status=$?
-run test-shift-funnel-unit "$BUDGET" --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-kernels-simd --lib -E 'test(shift_funnel)' || status=$?
+run test-residual-shift-unit "$BUDGET" --test cargo nextest run --color never --cargo-profile ci-test --profile ci -p gf2-core --features simd --lib -E 'test(residual_shift)' || status=$?
+run test-residual-shift-routes "$BUDGET" --test cargo nextest run --color never --cargo-profile ci-test --profile ci -p gf2-core --features simd --test residual_shift_routes || status=$?
+run test-shift-funnel-unit "$BUDGET" --test cargo nextest run --color never --cargo-profile ci-test --profile ci -p gf2-kernels-simd --lib -E 'test(shift_funnel)' || status=$?
 run witness-probe cargo run --quiet --manifest-path "$WITNESS_MANIFEST" || status=$?
 
 rustc -Vv >"${LOG}.rustc"
@@ -94,6 +82,8 @@ for line in log.splitlines():
         current["witness"][f"arm_{arm.replace('-', '_')}_route"] = route
 
 for step in steps.values():
+    # nextest completion order is not deterministic; sort so re-running
+    # reproduces this record byte for byte.
     step["results"].sort()
 
 record = {
