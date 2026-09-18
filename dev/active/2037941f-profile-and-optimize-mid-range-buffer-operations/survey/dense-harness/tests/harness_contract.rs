@@ -444,6 +444,25 @@ fn warm_runs_one_untimed_pass_and_streaming_runs_none() {
     assert!(samples.is_empty());
     assert_eq!(calls, vec![(0, 0)]);
 
+    // The pass covers the complete working set, whatever its extent: a warm
+    // cell holds one item, and an arrangement over more calls each of them
+    // exactly once.
+    let mut wider = Vec::new();
+    run_windows(
+        WindowPlan {
+            cache: Cache::Warm,
+            cold_calls: None,
+            windows: 0,
+            window_target_ms: 100,
+            banks: 3,
+            items: 2,
+        },
+        &mut |bank, item| wider.push((bank, item)),
+        |_| Ok(()),
+    )
+    .expect("the arrangement pass succeeds");
+    assert_eq!(wider, vec![(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1)]);
+
     let mut streaming = 0;
     let samples = run_windows(
         WindowPlan {
