@@ -8,7 +8,168 @@
     "b9302771-703c-4f47-adb7-a7469d855b7b"
   ],
   "description": "Record the three frozen logical-buffer baselines through the merged harness in one campaign.\n\n## Background\n\n**c489745b — Record the isolated XOR baseline.** Run the frozen isolated XOR cells on the prepared Ryzen 9 5900X and commit the current pre-change evidence. The baseline includes 8, 9, 63, 64, and 65 words, deliberately offset slices, neighboring sizes, declared cache regimes, and selected-route provenance. Earlier exploratory receipts guide prioritization but do not replace this current baseline.\n\n**8197174d — Record the row-XOR consumer baseline.** Run the frozen public `BitMatrix::row_xor` consumer cells and commit the current pre-change evidence. This is the primary unhoisted row-operation route. It is measured at actual mid-range row strides with whole-call costs, output validation, and neighboring sizes; already-hoisted algorithm loops remain controls rather than generic-hoist candidates.\n\n**c49e78bc — Record the coding-route logical baseline.** Select the frozen coding or elimination route whose actual row stride lies in the mid-range band, then record its current whole-consumer baseline. Candidate routes include OSD syndrome/candidate work and coding materialization paths that call matrix parity or `row_xor`; the addendum names exactly one primary route after confirming its runtime stride. Setup, cloning, dispatch, and output costs remain inside the declared whole-consumer boundary.\n\n## Success Criteria\n\n- [hard] REQ-01: (c489745b REQ-01) A committed receipt contains raw samples, exact commands, frozen input identities, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for each isolated XOR cell.\n- [hard] REQ-02: (c489745b REQ-02) Output validation proves exact XOR semantics for aligned and offset cells, and the receipt distinguishes dispatch-inclusive public calls from resolved-function observations.\n- [hard] REQ-03: (c489745b REQ-03) Annotated release assembly and profiles attribute observed costs to dispatch, call overhead, instruction mix, spills, cache traffic, or bandwidth without claiming an unsearched optimum.\n\n- [hard] REQ-04: (8197174d REQ-01) A committed receipt contains raw samples, exact commands, frozen matrix inputs, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for the row-XOR cells.\n- [hard] REQ-05: (8197174d REQ-02) Exact row semantics, canonical bit indexing, and zero tail padding hold for the declared boundary and offset cases.\n- [hard] REQ-06: (8197174d REQ-03) Profiles attribute material time to public dispatch, row access, XOR execution, memory traffic, or downstream work and identify any candidate signal within the frozen search budget.\n\n- [hard] REQ-07: (c49e78bc REQ-01) The receipt identifies the selected production route, proves its actual stride is 8--64 words, and records raw samples, exact commands, input identities, append-only execution log, runtime provenance, and statistical interpretation.\n- [hard] REQ-08: (c49e78bc REQ-02) Seeded results match the canonical implementation for the declared boundary cases and remain deterministic under the measured execution configuration.\n- [hard] REQ-09: (c49e78bc REQ-03) Profiles attribute the route's material cost centers and state whether logical-buffer work is large enough to justify candidate confirmation.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from c489745b, 8197174d, c49e78bc; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\nc489745b: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\n8197174d: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\nc49e78bc: Run only in the benchmark window on the prepared host under the full-host wrapper.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Pilot campaign addendum, isolated XOR family",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isolated-xor.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Pilot campaign addendum, public row-XOR family",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-public-row-xor.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Pilot campaign addendum, NR construction family",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-nr-construction.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Untimed validation record: contract tests, semantic oracle with the observed row offsets and coding-route facts, executable digests",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-harness-validation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Untimed wire smoke: cell generation, semantics, child framing, resume and handshake schema",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-runner-smoke.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Producing-input closure the window guard checks",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Source evidence for the harness's code claims",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Annotated release disassembly of the measured routes in the campaign arm",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/index.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Instruction mix of the measured routes in the campaign arm",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/instruction-mix.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Annotated release disassembly of the measured routes in the profile driver",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/index.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Instruction mix of the measured routes in the profile driver",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/instruction-mix.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Profile driver for the measured logical routes",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-profile.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Profile session launcher, benchmark window only",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-profile.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "One profile repetition under the full-host lock",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/sweep-logical-profile.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Profile attribution table generator",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/summarize-logical-profile.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Annotated release disassembly generator",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/disassemble-logical.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Symbols the annotated disassembly records",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-asm-symbols.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Renders this issue's receipts through the canonical survey-analysis table generator",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/render-logical-tables.sh"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "290685bf5ab2837e9a38602acead3d33005c2c14b8b883a30bcf863d8c2b7074",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "adff007c618c3ccc1b28d3a65755cb438ab854762156070fdfbf99c55831b613",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-comparator.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Logical-buffer measurement harness interface",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-harness.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Benchmark window queue carrying the three baseline pilots and the profile session",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    }
+  ],
   "first_ready_at": "2026-09-16T22:36:13.474372771Z",
   "gates_required": [
     "cargo-ci",
@@ -32,5 +193,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
-  "updated_at": "2026-09-17T21:50:40.332188968Z"
+  "updated_at": "2026-09-18T10:28:21.101318907Z"
 }
