@@ -1,0 +1,57 @@
+{
+  "schema": "f8dd4dde-msrv-1.95-validation-v1",
+  "passed": true,
+  "toolchain": {
+    "rustc_verbose": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
+    "cargo_version": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)"
+  },
+  "builds": {
+    "build-all-features": {
+      "command": "./scripts/cargo-budget.sh cargo build -p gf2-core -p gf2-kernels-simd --all-features",
+      "exit": 0
+    },
+    "build-dispatched-feature-set": {
+      "command": "./scripts/cargo-budget.sh cargo build -p gf2-core -p gf2-kernels-simd --features simd",
+      "exit": 0
+    }
+  },
+  "tests": {
+    "test-residual-shift-unit": {
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-core --features simd --lib -E test(residual_shift)",
+      "exit": 0,
+      "summary": "3 tests run: 3 passed, 2032 skipped",
+      "results": [
+        "PASS gf2-core residual_shift::tests::a_word_aligned_offset_is_not_this_module_s_to_run",
+        "PASS gf2-core residual_shift::tests::the_selected_route_agrees_with_the_portable_funnel",
+        "PASS gf2-core residual_shift::tests::the_witness_reports_the_route_the_reporter_names"
+      ]
+    },
+    "test-residual-shift-routes": {
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-core --features simd --test residual_shift_routes",
+      "exit": 0,
+      "summary": "3 tests run: 3 passed, 0 skipped",
+      "results": [
+        "PASS gf2-core::residual_shift_routes every_route_answers_the_shift_corpus",
+        "PASS gf2-core::residual_shift_routes the_kernel_route_is_selected_exactly_where_it_is_available",
+        "PASS gf2-core::residual_shift_routes the_reference_zero_fills_and_drops_what_leaves_the_vector"
+      ]
+    },
+    "test-shift-funnel-unit": {
+      "command": "./scripts/cargo-budget.sh --test cargo nextest run --cargo-profile ci-test --profile ci -p gf2-kernels-simd --lib -E test(shift_funnel)",
+      "exit": 0,
+      "summary": "3 tests run: 3 passed, 293 skipped",
+      "results": [
+        "PASS gf2-kernels-simd shift_funnel::tests::a_bit_shift_outside_the_residual_range_panics",
+        "PASS gf2-kernels-simd shift_funnel::tests::a_word_shift_outside_the_buffer_panics",
+        "PASS gf2-kernels-simd shift_funnel::tests::the_detected_kernels_answer_the_funnel_contract"
+      ]
+    }
+  },
+  "witness": {
+    "command": "cargo run --quiet --manifest-path dev/active/f8dd4dde/msrv-validation/Cargo.toml",
+    "exit": 0,
+    "host_bmi2": true,
+    "arm_scalar_forced_route": "residual-scalar-funnel",
+    "arm_released_route": "residual-bmi2-funnel"
+  }
+}
