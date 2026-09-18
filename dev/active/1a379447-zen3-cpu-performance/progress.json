@@ -1610,6 +1610,13 @@
       "origin": "lead review (session 21)",
       "disposition": "converge f63a2464 on the runner subcommand in its post-window round",
       "criterion_named_by": "none; invariant convention-convergence"
+    },
+    {
+      "issue": "9fb40c83",
+      "subject": "survey/run-profile.sh records the profiled executable digest and the case digest but no invocation, closure or RNG declaration at run time; round 3 derived them from committed material and left the launcher untouched because changing the retained session's producing tool reads as an invalidation",
+      "origin": "w-9fb40c83-r3 report (session 21)",
+      "disposition": "if research-review accepts the derived provenance record, file a small task outside the measured session so the next profile session (any issue reusing run-profile.sh) records them at run time; if it rejects it, queue a fresh v4-r3 session with a fixed launcher",
+      "criterion_named_by": "9fb40c83 REQ-02 (provenance) via research-review F1"
     }
   ],
   "notes": [
