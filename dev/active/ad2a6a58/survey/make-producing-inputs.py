@@ -10,9 +10,9 @@ the harness crates (this family's arm and the two byte-field survey crates it
 reuses), the plan projection, the launcher, the shared lock wrapper and the
 shared campaign tooling (behavior); the subset that decides campaign lifecycle
 and resume (lifecycle); and the behavior set plus manifests, lock files, build
-configuration and the committed pre-timing evidence (build inputs). Source
-lists are derived from the tree, so an added source file enters the closure
-without an edit here.
+configuration and the committed pre-timing evidence, correctness and smoke
+alike (build inputs). Source lists are derived from the tree, so an added
+source file enters the closure without an edit here.
 """
 
 import json
@@ -63,6 +63,7 @@ BUILD_EXTRA = [
     f"{SURVEY}/make-addendum.py",
     f"{SURVEY}/make-producing-inputs.py",
     f"{SURVEY}/make-tables.py",
+    f"{SURVEY}/runner-smoke.txt",
     f"{SURVEY}/smoke-arms.sh",
     f"{REUSED}/arm-common/Cargo.toml",
     f"{REUSED}/gf2-side/Cargo.lock",
