@@ -86,17 +86,22 @@
   "gates_status": {
     "asm-artefact-present": {
       "status": "passed",
-      "updated_at": "2026-09-18T16:03:39.808873323Z",
+      "updated_at": "2026-09-18T16:55:59.710723435Z",
       "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-18T16:03:39.320395755Z",
+      "updated_at": "2026-09-18T16:55:58.933933487Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-18T16:08:34.067158339Z",
+      "status": "passed",
+      "updated_at": "2026-09-18T17:00:00.413665280Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-18T17:02:32.735521827Z",
       "updated_by": "auto:executor"
     }
   },
@@ -115,5 +120,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Route residual BitVec shifts through a BMI2-gated funnel kernel",
-  "updated_at": "2026-09-18T16:55:20.369286200Z"
+  "updated_at": "2026-09-18T17:02:32.735521827Z"
 }
