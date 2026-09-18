@@ -6,6 +6,7 @@
 //! measures them cannot drift apart on the wire.
 
 use crate::campaign::{ProcessOutcome, CHILD_KILL_GRACE_SECONDS};
+use crate::journal::{ExecutionLog, JournalEvent};
 use crate::process::run_process;
 use crate::protocol::{
     sha256_hex, CacheState, CellDeclaration, DecoderCell, FamilyAddendum, PlanArm, PlanCell,
@@ -14,7 +15,7 @@ use crate::protocol::{
 use crate::receipt::{ArmQuality, ConversionCosts, WindowRecord};
 use crate::transport::{self, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -232,6 +233,51 @@ pub trait ChildObserver {
 }
 
 impl ChildObserver for () {}
+
+/// Journals one arm child's spawn, diagnostics and exit into an execution log.
+pub struct JournalObserver<'a> {
+    log: &'a mut ExecutionLog,
+    case: Value,
+    /// PID of the spawned child, zero until it is observed.
+    pub pid: u32,
+}
+
+impl<'a> JournalObserver<'a> {
+    /// Journals into `log` under `case`, the journal case of this execution.
+    pub fn new(log: &'a mut ExecutionLog, case: Value) -> Self {
+        Self { log, case, pid: 0 }
+    }
+}
+
+impl ChildObserver for JournalObserver<'_> {
+    fn spawned(&mut self, pid: u32) -> io::Result<()> {
+        self.pid = pid;
+        self.log
+            .append(
+                JournalEvent::ChildSpawn,
+                Some(self.case.clone()),
+                json!({"pid": pid}),
+            )
+            .map(|_| ())
+    }
+
+    fn exited(&mut self, outcome: &ProcessOutcome, stderr: &[u8]) -> io::Result<()> {
+        if !stderr.is_empty() {
+            self.log.append(
+                JournalEvent::ChildDiagnostic,
+                Some(self.case.clone()),
+                json!({"stderr": String::from_utf8_lossy(stderr)}),
+            )?;
+        }
+        self.log
+            .append(
+                JournalEvent::ChildExit,
+                Some(self.case.clone()),
+                json!({"outcome": outcome}),
+            )
+            .map(|_| ())
+    }
+}
 
 /// Runs one arm child on `request` and returns the result line it wrote.
 ///
