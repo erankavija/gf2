@@ -3,16 +3,22 @@
 //!
 //! The residual branch of [`BitVec::shift_left`] and [`BitVec::shift_right`] is
 //! the one a non-zero `k % 64` reaches. One corpus and one independent
-//! bit-addressed zero-fill reference drive whichever route the library selects,
-//! so both the scalar funnel and the capability-gated kernel answer the same
-//! cases. The corpus shape is the one the planning-time feasibility record's
+//! bit-addressed zero-fill reference drive both of its routes: the force switch
+//! of [`gf2_core::residual_shift`] holds callers on the scalar funnel for one
+//! arm and releases them for the other, and the lane witness says which route
+//! each arm actually ran. The corpus shape is the one the planning-time record's
 //! prototype uses
 //! (`dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md`):
 //! the repository's word-boundary lengths and offsets, offsets at and beyond
 //! the length, lengths leaving an incomplete final word, and lengths long
 //! enough for an unrolled funnel loop to run.
 
+use gf2_core::residual_shift::{
+    force_scalar_residual_shift, last_residual_shift_route, reset_last_residual_shift_route,
+    residual_shift_route, ResidualShiftRoute,
+};
 use gf2_core::BitVec;
+use std::sync::Mutex;
 
 /// Which public method a case drives.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -158,9 +164,76 @@ fn assert_shift_corpus(route: &str) {
     }
 }
 
+/// Runs one residual shift and returns the route the witness recorded for it.
+///
+/// A caller holds [`ROUTE_MUTEX`] across this, because both the switch the route
+/// depends on and the shift it observes are process-wide.
+fn observed_route() -> ResidualShiftRoute {
+    reset_last_residual_shift_route();
+    let mut bv = BitVec::ones(200);
+    bv.shift_left(65);
+    last_residual_shift_route().expect("a shift by 65 bits reaches the residual branch")
+}
+
+/// Serialises the whole toggle-execute-observe-restore section of every test
+/// that touches the process-wide force switch, following
+/// `crates/gf2-core/tests/prime_route_dispatch.rs`.
+static ROUTE_MUTEX: Mutex<()> = Mutex::new(());
+
+/// Whether this host reports the processor feature the kernel route needs.
+fn host_has_bmi2() -> bool {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        std::arch::is_x86_feature_detected!("bmi2")
+    }
+    #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+    {
+        false
+    }
+}
+
 #[test]
-fn the_selected_route_answers_the_shift_corpus() {
-    assert_shift_corpus("selected route");
+fn every_route_answers_the_shift_corpus() {
+    let guard = ROUTE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let previously_forced = force_scalar_residual_shift(true);
+
+    // Arm A: the fallback, driven as a reachable route rather than assumed.
+    assert_eq!(residual_shift_route(), ResidualShiftRoute::ScalarFunnel);
+    assert_eq!(observed_route(), ResidualShiftRoute::ScalarFunnel);
+    assert_shift_corpus(ResidualShiftRoute::ScalarFunnel.name());
+
+    // Arm B: whatever this build and host select once the switch is clear.
+    force_scalar_residual_shift(false);
+    let released = residual_shift_route();
+    assert_eq!(
+        observed_route(),
+        released,
+        "the executed route is the reported one"
+    );
+    assert_shift_corpus(released.name());
+
+    force_scalar_residual_shift(previously_forced);
+    drop(guard);
+}
+
+#[test]
+fn the_kernel_route_is_selected_exactly_where_it_is_available() {
+    let guard = ROUTE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let previously_forced = force_scalar_residual_shift(false);
+
+    // The gate's verdict against the host's own feature detection and the
+    // build's own feature set, so neither route is assumed from either.
+    let expected_kernel = cfg!(feature = "simd") && host_has_bmi2();
+    assert_eq!(
+        observed_route() == ResidualShiftRoute::Bmi2Funnel,
+        expected_kernel,
+        "simd feature {}, host bmi2 {}",
+        cfg!(feature = "simd"),
+        host_has_bmi2()
+    );
+
+    force_scalar_residual_shift(previously_forced);
+    drop(guard);
 }
 
 #[test]
