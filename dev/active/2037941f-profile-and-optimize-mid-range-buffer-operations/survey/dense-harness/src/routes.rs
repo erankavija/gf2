@@ -21,11 +21,12 @@ pub const ROUTE_VAR: &str = "GF2_DENSE_ROUTE";
 /// Retained-output residency [`OutputSink`] may hold for one timed window.
 ///
 /// The allocated boundary excludes the release, so a whole window's outputs are
-/// resident at once. This budget bounds that residency independently of the
-/// calibrated call count and is a small fraction of the prepared host's memory.
+/// resident at once. This declared budget bounds that residency independently of
+/// the calibrated call count; a contract test states the peak it permits.
 pub const RETAINED_BUDGET_BYTES: usize = 64 << 20;
 
-/// Bytes the allocator reserves beside one block; the glibc chunk header.
+/// Declared bookkeeping the system allocator holds beside one block, so the
+/// derived per-output figure is an upper bound rather than the words alone.
 const ALLOCATOR_BLOCK_BYTES: usize = 16;
 
 /// Bytes one retained output of the largest declared retaining cell occupies.
@@ -192,9 +193,9 @@ impl OutputSink {
     /// admits from the `CalibrationComplete` callback, which the timing helper
     /// runs after calibration and before the first window opens, because the
     /// calibrated count does not exist earlier. The calibration probes retain
-    /// their own outputs and release none; at the protocol's 100 ms window
-    /// target their total stays below the count admitted here, because the probe
-    /// doubles only until it reaches 20 ms and so ends below 80 ms of calls.
+    /// their own outputs and release none, and their total stays below the count
+    /// admitted here: the probe stops at its own target, a fifth of the window's,
+    /// so its doubling ends below four fifths of the window's calls.
     pub fn admit(&mut self, cell_id: &str, calls: u64) -> Result<(), String> {
         let wanted = usize::try_from(calls).unwrap_or(usize::MAX);
         if wanted > MAX_RETAINED_OUTPUTS {
