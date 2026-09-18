@@ -24,14 +24,13 @@ use dense_parity_harness::external::{self, LibraryIdentity};
 use dense_parity_harness::fixture::MatvecBanks;
 use dense_parity_harness::oracle::OracleCase;
 use dense_parity_harness::routes::{observe_output, run_windows, WindowPlan};
-use dense_parity_harness::wire::{
-    read_request, require_window_unless_child, ArmResult, ConversionCosts,
-};
+use dense_parity_harness::wire::{emit_result, read_request, require_window_unless_child};
 use gf2_core::{BitMatrix, BitVec};
 use std::cell::{Cell as MutCell, RefCell};
 use std::ffi::c_void;
 use std::hint::black_box;
 use std::time::Instant;
+use tuning_campaign_support::receipt::ConversionCosts;
 
 unsafe extern "C" {
     /// One fresh whole-consumer call, including disposal of every `mzd_t`.
@@ -298,7 +297,7 @@ fn run() -> Result<(), String> {
         return Err(error);
     }
     black_box(observed.get());
-    ArmResult::new(
+    emit_result(
         &samples,
         cache,
         selected_path,
@@ -310,6 +309,5 @@ fn run() -> Result<(), String> {
             dispatch_ns: 0,
         },
     )
-    .emit()
     .map_err(|error| error.to_string())
 }
