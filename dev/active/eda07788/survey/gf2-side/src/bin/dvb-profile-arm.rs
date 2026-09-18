@@ -25,6 +25,10 @@ use tuning_campaign_support::host::CpuAffinity;
 use tuning_campaign_support::timing::TimingProgress;
 use tuning_campaign_support::transport;
 
+/// Request role that asks for one untimed dispatch and no timing window, so a
+/// non-timed smoke can drive every arm outside a benchmark window.
+const VALIDATION_ROLE: &str = "validation";
+
 /// Mirror of the runner's arm request.
 ///
 /// `transport::decode_case` accepts only the exact bytes this type re-encodes,
@@ -197,6 +201,22 @@ fn run() -> Result<(), String> {
     };
     let setup_ns = elapsed_ns(setup_start);
 
+    if request.role == VALIDATION_ROLE {
+        body(0);
+        let result = Result_ {
+            schema: "zen3-benchmark-arm-result-v1".into(),
+            windows: Vec::new(),
+            cache_state_applied: policy.name().into(),
+            workers_observed: 1,
+            cpus_observed: observed_cpus(),
+            selected_path: Some(route.selected_path(&case.modcod)),
+            conversion: None,
+            quality: None,
+        };
+        return transport::write_result_line(io::stdout().lock(), &result)
+            .map_err(|error| error.to_string());
+    }
+
     let samples = timed_windows(
         policy,
         request.windows,
@@ -216,9 +236,6 @@ fn run() -> Result<(), String> {
     if total_calls == 0 {
         return Err("timing protocol returned no calls".into());
     }
-    let cpus_observed = CpuAffinity::observe()
-        .map(|affinity| affinity.cpus().to_vec())
-        .unwrap_or_default();
     let result = Result_ {
         schema: "zen3-benchmark-arm-result-v1".into(),
         windows: samples
@@ -230,7 +247,7 @@ fn run() -> Result<(), String> {
             .collect(),
         cache_state_applied: policy.name().into(),
         workers_observed: 1,
-        cpus_observed,
+        cpus_observed: observed_cpus(),
         selected_path: Some(route.selected_path(&case.modcod)),
         conversion: Some(ConversionCosts {
             setup_ns,
@@ -244,16 +261,15 @@ fn run() -> Result<(), String> {
     transport::write_result_line(io::stdout().lock(), &result).map_err(|error| error.to_string())
 }
 
-/// Fails a hand invocation closed and leaves window policy to the campaign.
+/// Fails a hand invocation closed and leaves window policy to the caller that
+/// owns it.
 ///
-/// `benchmark-ab-runner` clears the child environment and installs only the
-/// plan's per-arm variables plus the child-v2 sentinel, so a campaign child
-/// never observes the window variables its launcher exported. A child that
-/// carries the sentinel therefore defers to the two layers that do enforce the
-/// window, `survey/run-dvb-campaign.sh` and `dev/scripts/ccx1-bench-flock.sh`,
-/// and to the untimed runner smoke the worker brief requires outside one.
-/// Every other invocation requires the window variables and exits before it
-/// reads a request.
+/// A parent that clears the child environment and installs the child-v2
+/// sentinel — the campaign runner and the non-timed arm smoke — leaves a child
+/// no window variable to read, so the sentinel defers enforcement to
+/// `survey/run-dvb-campaign.sh` and `dev/scripts/ccx1-bench-flock.sh`. Every
+/// other invocation requires the window variables and exits before it reads a
+/// request.
 fn require_benchmark_window(sentinel: Option<&str>) -> Result<(), String> {
     if sentinel == Some(transport::FRESH_CASE_VALUE) {
         return Ok(());
@@ -268,4 +284,10 @@ fn require_benchmark_window(sentinel: Option<&str>) -> Result<(), String> {
 
 fn elapsed_ns(started: Instant) -> u64 {
     u64::try_from(started.elapsed().as_nanos()).unwrap_or(u64::MAX)
+}
+
+fn observed_cpus() -> Vec<u32> {
+    CpuAffinity::observe()
+        .map(|affinity| affinity.cpus().to_vec())
+        .unwrap_or_default()
 }

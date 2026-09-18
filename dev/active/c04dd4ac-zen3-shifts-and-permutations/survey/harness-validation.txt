@@ -17,6 +17,6 @@ PASS qam16-r12-normal: direct, simulation-stage, xdsopl packed adapter and deter
 PASS qam64-r12-normal: direct, simulation-stage, xdsopl packed adapter and deterministic BICM consumer agree on declared boundaries
 PASS qam16-r12-short: direct, simulation-stage, xdsopl packed adapter and deterministic BICM consumer agree on declared boundaries
 PASS qam64-r12-short: direct, simulation-stage, xdsopl packed adapter and deterministic BICM consumer agree on declared boundaries
-# dvb-profile-arm sha256: c16e3b44bd9fb6ffb0a8797c2befbeac2d9a57b787bf3036c68399f8633aaf3e
-# dvb-profile sha256: a9cf1642a44a9685722e52e1ce9af9f7a4f98803f24ed3d26251ac8a1d8fa83d
-# validate-permutation-equivalence sha256: 4032a9a7c05078ea0284365efe9deb46313af4009b23780996276ab57c00a7e8
+# dvb-profile-arm sha256: 686a19d2833211a4bf215e6878bd4a69aa1daed42207a48561f124f052222164
+# dvb-profile sha256: 8025fc66860ce398a61898387c4b7e91e464c692b86fb8209781a8cc24aa7748
+# validate-permutation-equivalence sha256: 6bdb8b50a6cd9caa00cef2b3ea1a1de6642cad9cb390ad79e7279b6b44a6ff35
