@@ -4,12 +4,11 @@
 //! never reaches it: these tests and the launcher's `build` subcommand are the
 //! only thing that runs it.
 
-use dense_parity_harness::campaign::{self, PlanInputs, M4RI_ARM};
+use dense_parity_harness::campaign::{self, PlanInputs, M4RI_ARM, PILOT_PAIRS};
 use dense_parity_harness::cells::{
     cells, family_cells, Cache, Cell, MatvecShape, Question, Workload, ADDENDUM_FROZEN_UTC,
-    ADDENDUM_IDENTITY, ADDENDUM_PATH, ADDENDUM_SHA256, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS,
-    CAMPAIGN_SEED, MATVEC_ROWS, M4RI_SHAPES, SIMD_LANE_MIN_WORDS, STREAMING_BANKS,
-    STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
+    ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, MATVEC_ROWS, M4RI_SHAPES,
+    SIMD_LANE_MIN_WORDS, STREAMING_BANKS, STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
 };
 use dense_parity_harness::external::{self, LibraryIdentity};
 use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
@@ -29,13 +28,13 @@ use tuning_campaign_support::protocol::{
 use tuning_campaign_support::transport;
 
 const ISSUE: &str = "e1f9a78f";
-const FROZEN: &str = "2026-09-16T16:16:04Z";
+/// Freeze time a transcription carries; the frozen document is its one source.
+const FROZEN: &str = ADDENDUM_FROZEN_UTC;
 
 fn plan_inputs<'a>(
     scalar: Option<&'a str>,
     m4ri: Option<&'a str>,
     max_cells: Option<u32>,
-    pilot_pairs: Option<u32>,
 ) -> PlanInputs<'a> {
     PlanInputs {
         campaign_id: "e1f9a78f-contract-plan",
@@ -49,7 +48,6 @@ fn plan_inputs<'a>(
         scalar_executable: scalar,
         m4ri_executable: m4ri,
         max_cells_per_session: max_cells,
-        pilot_pairs,
     }
 }
 
@@ -829,7 +827,6 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
                 Some("/nonexistent/dense-arm-scalar"),
                 Some("/nonexistent/dense-m4ri-arm"),
                 Some(2),
-                Some(6),
             ),
         )
         .expect("the plan projects");
@@ -840,19 +837,52 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
     }
 }
 
+/// The addendum runs exactly the protocol's pilot maximum on every exploratory
+/// cell (§ Cache, warmup, and sampling), so the projection declares that count
+/// rather than leaving the protocol to select its pilot minimum.
+#[test]
+fn every_projected_cell_runs_the_frozen_number_of_paired_executions() {
+    assert_eq!(PILOT_PAIRS, SHARED_SETTINGS.pilot_max_pairs);
+    assert_ne!(PILOT_PAIRS, SHARED_SETTINGS.pilot_min_pairs);
+    for question in Question::ALL {
+        let addendum = campaign::addendum(question, ISSUE, FROZEN);
+        let plan = campaign::plan(
+            question,
+            &addendum,
+            &plan_inputs(
+                Some("/nonexistent/dense-arm-scalar"),
+                Some("/nonexistent/dense-m4ri-arm"),
+                None,
+            ),
+        )
+        .expect("the plan projects");
+        for cell in &plan.cells {
+            let declared = addendum.cell(&cell.cell_id).expect("a declared cell");
+            assert_eq!(declared.role, CellRole::Exploratory, "{}", cell.cell_id);
+            assert_eq!(cell.pilot_pairs, Some(PILOT_PAIRS), "{}", cell.cell_id);
+            assert_eq!(
+                cell.pair_count(declared.role, &SHARED_SETTINGS),
+                PILOT_PAIRS,
+                "{}",
+                cell.cell_id
+            );
+        }
+    }
+}
+
 #[test]
 fn each_external_and_reference_arm_needs_its_own_executable() {
     let comparator = campaign::addendum(Question::MatvecVsM4ri, ISSUE, FROZEN);
     assert!(campaign::plan(
         Question::MatvecVsM4ri,
         &comparator,
-        &plan_inputs(None, None, None, None)
+        &plan_inputs(None, None, None)
     )
     .is_err());
     assert!(campaign::plan(
         Question::MatvecVsM4ri,
         &comparator,
-        &plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None, None)
+        &plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None)
     )
     .is_ok());
 
@@ -860,7 +890,7 @@ fn each_external_and_reference_arm_needs_its_own_executable() {
     assert!(campaign::plan(
         Question::AllocatedMatvec,
         &allocated,
-        &plan_inputs(None, None, None, None)
+        &plan_inputs(None, None, None)
     )
     .is_err());
 }
@@ -871,7 +901,7 @@ fn the_comparator_arm_is_the_external_build_and_the_gf2_arms_are_not() {
     let plan = campaign::plan(
         Question::MatvecVsM4ri,
         &addendum,
-        &plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None, None),
+        &plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None),
     )
     .expect("the plan projects");
     let external = plan.arms.get(M4RI_ARM).expect("the comparator arm");
@@ -889,7 +919,7 @@ fn a_reseeded_campaign_addendum_projects_no_plan() {
     let outcome = campaign::plan(
         question,
         &addendum,
-        &plan_inputs(Some("/nonexistent/dense-arm-scalar"), None, None, None),
+        &plan_inputs(Some("/nonexistent/dense-arm-scalar"), None, None),
     );
     assert!(outcome.is_err());
 
@@ -898,7 +928,7 @@ fn a_reseeded_campaign_addendum_projects_no_plan() {
     assert!(campaign::plan(
         question,
         &renamed,
-        &plan_inputs(Some("/nonexistent/dense-arm-scalar"), None, None, None)
+        &plan_inputs(Some("/nonexistent/dense-arm-scalar"), None, None)
     )
     .is_err());
 }

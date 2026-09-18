@@ -20,11 +20,20 @@ use tuning_campaign_support::protocol::{
     ComplexityBudget, EffectRule, FamilyAddendum, FamilyIdentity, FamilyPurpose, FamilyWise,
     Frozen, Holdout, MetricKind, PlanArm, PlanCell, ProtocolRef, ReceiptLabel, RunnerPlan, Scaling,
     SearchBudget, WorkerDeclaration, ADDENDUM_SCHEMA_ID, PLAN_SCHEMA_ID, PROTOCOL_ID,
-    PROTOCOL_VERSION,
+    PROTOCOL_VERSION, SHARED_SETTINGS,
 };
 
 /// Name the external M4RI comparator arm carries in a plan.
 pub const M4RI_ARM: &str = "m4ri-mzd-mul";
+
+/// Paired executions every exploratory cell runs.
+///
+/// The frozen addendum declares exactly the protocol's pilot maximum for every
+/// exploratory cell (§ Cache, warmup, and sampling), and an omitted count
+/// selects the protocol's pilot minimum instead, so every projected plan states
+/// it. A confirmatory or holdout cell takes the protocol's own confirmatory
+/// count and declares none.
+pub const PILOT_PAIRS: u32 = SHARED_SETTINGS.pilot_max_pairs;
 
 /// Family-level settings the frozen addendum fixes for one question.
 struct FamilyRules {
@@ -306,8 +315,6 @@ pub struct PlanInputs<'a> {
     pub m4ri_executable: Option<&'a str>,
     /// Cells one session measures before it pauses.
     pub max_cells_per_session: Option<u32>,
-    /// Paired executions each exploratory cell runs.
-    pub pilot_pairs: Option<u32>,
 }
 
 impl PlanInputs<'_> {
@@ -400,7 +407,10 @@ pub fn plan(
             candidate_arm: candidate.to_owned(),
             case: serde_json::to_value(Case::of(cell))
                 .map_err(|error| format!("cannot encode case: {error}"))?,
-            pilot_pairs: inputs.pilot_pairs,
+            pilot_pairs: match declared.role {
+                CellRole::Exploratory => Some(PILOT_PAIRS),
+                CellRole::Confirmatory | CellRole::Holdout => None,
+            },
         });
     }
     Ok(RunnerPlan {
