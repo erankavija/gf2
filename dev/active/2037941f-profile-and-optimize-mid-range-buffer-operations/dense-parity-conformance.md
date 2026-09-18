@@ -53,7 +53,7 @@ protocol is unsatisfiable by this harness, and no frozen or pinned byte changed.
 | Component 3, packing through public coordinates, inside timing (fresh) and retained outside (retained) | `survey/m4ri_matvec_arm.c:38`, `survey/m4ri_matvec_arm.c:81` | `dense-m4ri-arm --oracle` | conforms |
 | Component 5, `mzd_read_bit` unpacking into a gf2 `BitVec`, inside timing on both arrangements | `survey/m4ri_matvec_arm.c:49`, `survey/dense-harness/src/bin/dense-m4ri-arm.rs:105` | `dense-m4ri-arm --oracle` | conforms |
 | Component 6, disposal of every owned `mzd_t` inside timing, `y` only when retained | `survey/m4ri_matvec_arm.c:74` frees on every exit path; `survey/dense-harness/src/bin/dense-m4ri-arm.rs:113` releases retained state once | `dense-m4ri-arm --oracle` drives repeated fresh and retained calls on all six shapes | conforms |
-| Component 1 and its gf2 counterparts stay outside timing | `survey/dense-harness/src/bin/dense-m4ri-arm.rs:259` converts before the window | `every_comparator_cell_is_a_warm_whole_consumer_cell` | conforms |
+| Component 1 and its gf2 counterparts stay outside timing | `survey/dense-harness/src/bin/dense-m4ri-arm.rs:258` converts before the window | `every_comparator_cell_is_a_warm_whole_consumer_cell` | conforms |
 | Both arms of a comparator cell "declare conversion and setup costs included" | `survey/dense-harness/src/campaign.rs:197` | `every_comparator_cell_is_a_warm_whole_consumer_cell` | conforms |
 | The comparator and allocated families' per-call numbers are not interchangeable; neither is a baseline or resolution source for the other | `survey/dense-harness/src/cells.rs:93` gives each question its own ledger and family identity | `every_family_ledger_exists_at_genesis` | conforms |
 
