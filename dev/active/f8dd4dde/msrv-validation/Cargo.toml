@@ -1,0 +1,23 @@
+# Witness probe for jit f8dd4dde's Rust 1.95 validation record.
+#
+# Standalone workspace so this probe adds no target, feature, or dependency to
+# the production workspace; it consumes `gf2-core` by path with the `simd` and
+# `test-support` features the residual-shift force switch and lane witness
+# need, exactly as `dev/active/6c6b09b1/survey/field-laws` does for the same
+# two features. Authorizes no production source.
+
+[workspace]
+
+[package]
+name = "residual-shift-msrv-witness"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[[bin]]
+name = "residual-shift-msrv-witness"
+path = "src/main.rs"
+
+[dependencies]
+gf2-core = { path = "../../../../crates/gf2-core", features = ["simd", "test-support"] }
