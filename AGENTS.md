@@ -40,27 +40,16 @@ execution with `./scripts/cargo-budget.sh --test`.
 Tests, examples, simulations, and benchmarks that do substantial work must use
 release mode.
 
-- Test execution goes through `./scripts/cargo-budget.sh --test`, the path
-  the benchmark window serializes; a direct `cargo nextest` is not a permitted
-  path for a suite run.
-- The host is never locked during a working session. Outside the overnight
-  benchmark window (`GF2_BENCH_WINDOW=1`, exported by the window runner) both
-  wrappers run their command unlocked: `scripts/cargo-budget.sh` applies no
-  budget and takes no lock, and `dev/scripts/ccx1-bench-flock.sh` refuses to
-  run. Every timed measurement is queued for the window. Inside the window
-  builds and lints run under the CPU budget, only test execution serializes,
-  and the discipline below applies.
+- Test execution goes through `./scripts/cargo-budget.sh --test`; a direct
+  `cargo nextest` is not a permitted path for a suite run.
+- The host is never locked during a working session. Every timed measurement
+  is a queue line for the overnight benchmark window (`GF2_BENCH_WINDOW=1`,
+  exported by the window runner); outside it `dev/scripts/ccx1-bench-flock.sh`
+  refuses to run and `scripts/cargo-budget.sh` applies no budget and takes no
+  lock.
 - `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
-- `dev/scripts/ccx1-bench-flock.sh --full-host` holds the CCX1 mutex
-  exclusively and budget work holds it shared, so budget work waits. A pending
-  exclusive request does not block a new shared one, so both sides also pass
-  through a turnstile that the measurement run holds for its whole run: without
-  it, sibling builds keep the shared side permanently occupied and the
-  measurement run is never granted. Such a run sets `CARGO_CI_NO_LOCK=1` for
-  its own cargo work or it deadlocks against its own locks.
-- Both lock wrappers hold their locks exactly as long as the wrapped command
-  runs: once it exits, a daemon it started, such as the `sccache` server, holds
-  no lock, and work it left in the background runs unlocked.
+- A `dev/scripts/ccx1-bench-flock.sh --full-host` run sets `CARGO_CI_NO_LOCK=1`
+  for its own cargo work; the script's header states the lock protocol.
 - `RAYON_NUM_THREADS` in `.cargo/config.toml` pairs with `threads-required` in
   `.config/nextest.toml`; change one and change the other. A binary run directly
   from `target/` inherits neither.
@@ -132,14 +121,8 @@ not ordinary tests. Use `GF2_BENCH=1` only on a prepared benchmark host and use
 the applicable lock wrapper under `dev/scripts/`.
 
 A committed receipt carries every input file it pins by digest, so a fresh
-checkout reproduces its acceptance verdict. Nested `Cargo.lock` files inside a
-receipt's `inputs/` snapshot are ignored by `.gitignore` and need `git add -f`.
-`dev/scripts/check-receipt-input-snapshots.py` reads the git index rather than
-the working tree and fails CI on an omission. A campaign plan that names no
-family producing-input closure pins the shared
-`dev/active/f547c394/producing-inputs.json`, which is maintained by hand;
-`dev/scripts/check-campaign-producing-closure.py` fails CI when that closure
-omits a source the benchmark runner compiles.
+checkout reproduces its acceptance verdict; CI enforces it through
+`dev/scripts/check-receipt-input-snapshots.py`.
 
 Keep permanent documentation under `README.md`, crate-level rustdoc, or `docs/`.
 Keep active designs, experiments, plans, presentations, and benchmark receipts
@@ -162,9 +145,14 @@ facts. See `@/inv/single-source-prose`.
 - Preserve one canonical abstraction. Change a shared convention at its source
   or record a named, tracked exception instead of creating a private parallel
   variant.
-- Use conventional commit subjects (`feat`, `fix`, `docs`, `test`, `refactor`,
-  `perf`, or `chore`), keep the first line under 72 characters, and include the
-  JIT short ID in the scope when a commit implements an issue.
+- Commit subjects are `<type>(<scope>): <summary>`, with type one of `feat`,
+  `fix`, `docs`, `test`, `refactor`, `perf`, `chore`; the list is closed. The
+  whole subject line is at most 71 characters. A commit that implements or
+  serves an issue carries `jit:<short-id>` as its scope.
+- The rule binds every commit that enters `main`: merge commits
+  (`chore(jit:<id>): merge ...`), tracker state commits and salvage commits
+  included. Reword a private branch before it merges; the history of `main`
+  is immutable.
 
 <!-- jit:profile-sim-research-guidance:begin -->
 ## gf2 Engineering Invariants

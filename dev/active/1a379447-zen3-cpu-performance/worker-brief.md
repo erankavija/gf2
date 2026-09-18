@@ -35,7 +35,7 @@ Every worker dispatched on a child of epic 1a379447 (Zen 3 CPU performance) foll
 
 ## Repository mechanics
 
-- Commit scopes `jit:<short-id>`, conventional subjects, first line under 72 characters; commit the evidence first, before any prose.
+- Commit subjects follow AGENTS.md: `<type>(jit:<short-id>): <summary>` with a type from its closed list, the whole line at most 71 characters (check with `git log -1 --format=%s | awk '{print length}'` and amend at once if over), never `wip`; commit the evidence first, before any prose.
 - Nested `Cargo.lock` files under a receipt's `inputs/` are git-ignored: `git add -f` them, then run `python3 dev/scripts/check-receipt-input-snapshots.py`.
 - `./scripts/cargo-ci.sh` from the worktree root before delivery; exit 75 / QUEUED OUT is host contention (re-run); "can't find crate" is a stale seeded cache (`cargo clean -p <crate> --profile ci-test`, or remove `target/debug` and `target/ci-test`).
 - Merge `main` into the branch only after the timed runs, so a confirmation measures the tree its pilot measured; the merge must touch no evidence file.
