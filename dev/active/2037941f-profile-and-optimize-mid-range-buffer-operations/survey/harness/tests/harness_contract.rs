@@ -296,8 +296,8 @@ fn a_zero_window_arrangement_pass_collects_no_timing_sample() {
         assert!(samples.is_empty(), "{}", cache.id());
     }
 
-    // A zero-window plan still refuses a cache state paired with the wrong
-    // frozen call count, so the smoke cannot arrange an undeclared cell.
+    // A zero-window request still refuses a cache state paired with the wrong
+    // frozen call count, so no arm arranges an undeclared cell.
     assert!(run_windows(
         WindowPlan {
             cache: Cache::Warm,

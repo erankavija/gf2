@@ -1,40 +1,36 @@
 # Logical-buffer harness non-timed wire smoke (jit:bb769456)
 # command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke --isal
 # contract: benchmark-ab-runner smoke (tuning_campaign_support::arm::smoke)
-# every line projects the semantic oracle, the stage execution logs, the
-# checkpoint stores or the handshake records under target/
-# logical-arm sha256: f500795055faf59e6695920ae6b28a7357a793076143cfad1b28b7c027c33218
-# logical-isal-arm sha256: cdcd03692e7ab939ecf854fdb68b2bb8be5d7242a1b1bf9533da977ca2805ee1
+# every line projects the semantic oracle or a family's smoke record
+# logical-arm sha256: 637effcf4a1bbf622dd10bd67e28a4c1340b3b3947a47002ecd214d0be167cbb
+# logical-isal-arm sha256: 407e1b8b246cb8af549474e97e72a0fc9faac9478eaf521003cebc8c12901364
 PASS semantic oracle: 45 cases, 2366756 checks
-PASS 2037941f-logical-isolated-xor: 2 sessions, resume repeated no cell
-PASS xor-8w-a64-streaming: 2 arms handshook, 0 timing windows, cache streaming
-PASS xor-8w-a64-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS public-xor-a: 2 handshakes, 2 result lines parsed
-PASS public-xor-b: 2 handshakes, 2 result lines parsed
-PASS 2037941f-logical-isolated-xor wire: 4 child spawns, 4 clean exits, 0 child diagnostics
-PASS 2037941f-logical-isolated-xor journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
-PASS 2037941f-logical-isolated-xor schema: handshake record decodes as logical-buffer-nontimed-smoke-v1, 2 cells
-PASS 2037941f-logical-public-row-xor: 2 sessions, resume repeated no cell
-PASS row-xor-8w-full-streaming: 2 arms handshook, 0 timing windows, cache streaming
-PASS row-xor-8w-full-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS row-xor-a: 2 handshakes, 2 result lines parsed
-PASS row-xor-b: 2 handshakes, 2 result lines parsed
-PASS 2037941f-logical-public-row-xor wire: 4 child spawns, 4 clean exits, 0 child diagnostics
-PASS 2037941f-logical-public-row-xor journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
-PASS 2037941f-logical-public-row-xor schema: handshake record decodes as logical-buffer-nontimed-smoke-v1, 2 cells
-PASS 2037941f-logical-nr-construction: 2 sessions, resume repeated no cell
-PASS nr-construct-bg2-256-49-z9-8w-cold: 2 arms handshook, 0 timing windows, cache cold
-PASS nr-construct-bg2-256-49-z9-8w-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS nr-construct-a: 2 handshakes, 2 result lines parsed
-PASS nr-construct-b: 2 handshakes, 2 result lines parsed
-PASS 2037941f-logical-nr-construction wire: 4 child spawns, 4 clean exits, 0 child diagnostics
-PASS 2037941f-logical-nr-construction journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
-PASS 2037941f-logical-nr-construction schema: handshake record decodes as logical-buffer-nontimed-smoke-v1, 2 cells
-PASS 2037941f-logical-isal-base-gap: 2 sessions, resume repeated no cell
-PASS isal-base-gap-8w-a64-streaming: 2 arms handshook, 0 timing windows, cache streaming
-PASS isal-base-gap-8w-a64-warm: 2 arms handshook, 0 timing windows, cache warm
-PASS isal-peer-gf2: 2 handshakes, 2 result lines parsed
-PASS isal-xor-gen-base: 2 handshakes, 2 result lines parsed
-PASS 2037941f-logical-isal-base-gap wire: 4 child spawns, 4 clean exits, 0 child diagnostics
-PASS 2037941f-logical-isal-base-gap journal: 0 timing records, 2 checkpointed cells, 0 finalized receipts
-PASS 2037941f-logical-isal-base-gap schema: handshake record decodes as logical-buffer-nontimed-smoke-v1, 2 cells
+PASS 2037941f-logical-isolated-xor: 2 declared cells smoked, 4 validation dispatches
+PASS xor-8w-a64-streaming: 2 arms validated, 0 timing windows, cache streaming
+PASS xor-8w-a64-warm: 2 arms validated, 0 timing windows, cache warm
+PASS public-xor-a: 2 dispatches, 2 result lines parsed
+PASS public-xor-b: 2 dispatches, 2 result lines parsed
+PASS 2037941f-logical-isolated-xor route: gf2-core/kernels::ops::xor_inplace/simd/w=8/layout=a64/src%64=0/dst%64=0/working-set=128B
+PASS 2037941f-logical-isolated-xor route: gf2-core/kernels::ops::xor_inplace/simd/w=8/layout=a64/src%64=0/dst%64=0/working-set=67108864B
+PASS 2037941f-logical-public-row-xor: 2 declared cells smoked, 4 validation dispatches
+PASS row-xor-8w-full-streaming: 2 arms validated, 0 timing windows, cache streaming
+PASS row-xor-8w-full-warm: 2 arms validated, 0 timing windows, cache warm
+PASS row-xor-a: 2 dispatches, 2 result lines parsed
+PASS row-xor-b: 2 dispatches, 2 result lines parsed
+PASS 2037941f-logical-public-row-xor route: gf2-core/BitMatrix::row_xor/simd/stride=8w/shape=full/base%64=16/dst:src%64=16:16,16:16,16:16,16:16,16:16,16:16,16:16,16:16/working-set=67108864B
+PASS 2037941f-logical-public-row-xor route: gf2-core/BitMatrix::row_xor/simd/stride=8w/shape=full/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=4096B
+PASS 2037941f-logical-nr-construction: 2 declared cells smoked, 4 validation dispatches
+PASS nr-construct-bg2-256-49-z9-8w-cold: 2 arms validated, 0 timing windows, cache cold
+PASS nr-construct-bg2-256-49-z9-8w-warm: 2 arms validated, 0 timing windows, cache warm
+PASS nr-construct-a: 2 dispatches, 2 result lines parsed
+PASS nr-construct-b: 2 dispatches, 2 result lines parsed
+PASS 2037941f-logical-nr-construction route: gf2-coding/QuasiCyclicLdpc::nr_5g_rate_matched(2,256,49)/simd/Z=9/dense=378x468/stride=8w/nnz=1773/h-sha256=1cd2ee73fb6ad2bff8557657add5362f508aa877a7ed1c0255f2dd2c54c386a4
+PASS 2037941f-logical-isal-base-gap: 2 declared cells smoked, 4 validation dispatches
+PASS isal-base-gap-8w-a64-streaming: 2 arms validated, 0 timing windows, cache streaming
+PASS isal-base-gap-8w-a64-warm: 2 arms validated, 0 timing windows, cache warm
+PASS isal-peer-gf2: 2 dispatches, 2 result lines parsed
+PASS isal-xor-gen-base: 2 dispatches, 2 result lines parsed
+PASS 2037941f-logical-isal-base-gap route: gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=8/src0%64=0/src1%64=0/working-set=128B
+PASS 2037941f-logical-isal-base-gap route: gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=8/src0%64=0/src1%64=0/working-set=67108864B
+PASS 2037941f-logical-isal-base-gap route: isa-l/xor_gen_base/scalar/vects=3/len=64B/src0%64=0/src1%64=0/working-set=128B
+PASS 2037941f-logical-isal-base-gap route: isa-l/xor_gen_base/scalar/vects=3/len=64B/src0%64=0/src1%64=0/working-set=67108864B
