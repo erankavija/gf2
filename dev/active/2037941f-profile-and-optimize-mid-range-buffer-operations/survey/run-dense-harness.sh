@@ -5,7 +5,8 @@
 #   build [--m4ri]                     build the arms, run the crate contract and the oracle
 #   cells --family <id> --issue <hex8> --frozen-utc <t> --output <path>
 #                                      transcribe one family into a campaign addendum
-#   smoke [--m4ri]                     deterministic untimed release smoke (no receipt sample)
+#   smoke [--m4ri]                     untimed release smoke; the arm contract is
+#                                      tuning_campaign_support::arm::smoke
 #   window --family <id> --addendum <path> --run-id <id> [--m4ri]
 #                                      timed campaign, benchmark window only
 #
@@ -180,8 +181,8 @@ cmd_smoke() {
     mkdir -p "${smoke}"
     "${CAMPAIGN_TOOL}" pins
 
-    # Semantics: the deterministic untimed oracle, whose cases the smoke record
-    # counts, from both gf2 builds. It emits no timing sample.
+    # The untimed semantic oracle from both gf2 builds; the record counts its
+    # cases and checks.
     "${ORACLE}" >"${smoke}/oracle.txt"
     "${SCALAR_ORACLE}" >>"${smoke}/oracle.txt"
     if [[ "${with_m4ri}" == 1 ]]; then
@@ -222,8 +223,7 @@ cmd_smoke() {
     python3 -B "${SURVEY}/make-dense-smoke-addenda.py" --stage "${smoke}" \
         --families "${families[@]}"
 
-    # The smoke never takes the benchmark lock: it collects no timing sample,
-    # so it neither needs a quiet host nor may pretend to have had one.
+    # No benchmark lock: nothing here is a timed run.
     for family in "${families[@]}"; do
         local stage="${smoke}/${family}/stage"
         local plan="${smoke}/${family}/plan.json"
@@ -400,5 +400,5 @@ case "${1:-}" in
     cells) shift; cmd_cells "$@" ;;
     smoke) shift; cmd_smoke "$@" ;;
     window) shift; cmd_window "$@" ;;
-    *) sed -n '2,13p' "${BASH_SOURCE[0]}" >&2; exit 2 ;;
+    *) sed -n '2,11p' "${BASH_SOURCE[0]}" >&2; exit 2 ;;
 esac

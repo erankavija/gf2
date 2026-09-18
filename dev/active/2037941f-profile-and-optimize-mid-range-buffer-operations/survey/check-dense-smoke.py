@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """Judge the dense-parity non-timed smoke and write its record.
 
-The smoke is judged by what the arms and the smoke driver wrote, not by exit
-codes: one parsed result line per arm per cell, an append-only execution log
-whose first session is a byte prefix of the final log, one `cell-complete` per
-declared cell, a terminal `complete` record, an immutable checkpoint per cell,
-and a handshake record whose every arm reports zero timing windows and names the
-fixture banks it built or the external object it loaded. The stage is also
-checked to hold no finalized receipt, so the smoke can state from observation
-that it produced no timing sample and no receipt sample. Every line
-of the record is observed at run time and carries no clock reading, so a rerun
-on the same executables reproduces it byte for byte. The recorded command line
-is the launcher invocation that ran, passed through as `--command`.
+`tuning_campaign_support::arm::smoke` states the arm contract. This judge reads
+what that dispatch and the harness's own session left behind — the stage
+execution logs, the checkpoint stores and the handshake records — rather than an
+exit code, and refuses a stage holding a finalized receipt. Every recorded line
+is observed at run time and carries no clock reading, so a rerun on the same
+executables reproduces the record byte for byte. The recorded command line is the
+launcher invocation that ran, passed through as `--command`.
 """
 
 import argparse
@@ -22,6 +18,9 @@ import re
 import sys
 
 SMOKE_SCHEMA = "dense-parity-nontimed-smoke-v1"
+# The position the shared record names for every dispatch it holds; a dispatch
+# in either pair position would carry the plan's timing-window budget.
+VALIDATION_ROLE = "validation"
 # Journal events that exist only because a timing interval completed.
 TIMING_EVENTS = ("execution-progress", "window-progress")
 # The shared object an external arm reports having loaded, and its digest. The
@@ -139,8 +138,12 @@ def main():
             if declared.get(cell_id) != cell["cache_state"]:
                 fail(f"{cell_id} reports cache state {cell['cache_state']!r}")
             for arm in cell["arms"]:
+                if arm["role"] != VALIDATION_ROLE:
+                    fail(f"{arm['arm']} in {cell_id} took the {arm['role']!r} position")
                 if arm["windows"] != 0:
                     fail(f"{arm['arm']} in {cell_id} reported {arm['windows']} timing windows")
+                if arm["cache_state_declared"] != cell["cache_state"]:
+                    fail(f"{arm['arm']} in {cell_id} was sent another cache state")
                 if arm["cache_state_applied"] != cell["cache_state"]:
                     fail(f"{arm['arm']} in {cell_id} applied another cache state")
                 if not arm["selected_path"]:
@@ -227,9 +230,9 @@ def main():
             f"# command: {arguments.command}\n"
             "# every line below is observed at run time from the semantic oracle, the stage\n"
             "# execution logs, the checkpoint stores and the handshake records under target/;\n"
-            "# the record carries no clock reading, the arms answer a zero-window request, and\n"
-            "# no receipt is finalized, so a rerun on the same executables reproduces it byte\n"
-            "# for byte and the smoke cannot serve as a pilot",
+            "# the record carries no clock reading and no receipt is finalized, so a rerun on\n"
+            "# the same executables reproduces it byte for byte and the smoke cannot serve as\n"
+            "# a pilot",
             file=handle,
         )
         for name, path in digests:
