@@ -11,7 +11,7 @@ use dense_parity_harness::cells::{Cache, Workload};
 use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
 use dense_parity_harness::routes::{
     fused_and_popcnt, fused_bundle, observe_output, public_matvec, run_windows, verify_lane,
-    verify_shape, OutputSink, Route, WindowPlan,
+    verify_shape, OutputSink, Route, WindowPlan, MAX_RETAINED_OUTPUTS,
 };
 use dense_parity_harness::wire::{
     read_request, require_window_unless_child, ArmResult, ConversionCosts, Request,
@@ -84,18 +84,21 @@ fn run() -> Result<(), String> {
             verify_lane(facts, route)?;
             // The allocated boundary charges the output allocation and excludes
             // its release, so each call's output is retained and the batch is
-            // released after the window closes.
+            // released after the window closes. A frozen fixed call count is
+            // admitted here, before any measured work; a calibrated count is
+            // admitted from the post-calibration callback below.
             let retained = RefCell::new(OutputSink::default());
-            retained.borrow_mut().reserve(request.cold_calls.unwrap_or(0));
+            if let Some(calls) = request.cold_calls {
+                retained.borrow_mut().admit(&request.cell_id, calls)?;
+            }
             let selected = format!(
                 "gf2-core/BitMatrix::matvec/{}/stride={words}w/shape={}/rows={}/cols={}\
-                 /base%64={}/retain={}/working-set={}B",
+                 /base%64={}/retain={MAX_RETAINED_OUTPUTS}/working-set={}B",
                 facts.lane(),
                 shape.id(),
                 banks.rows(),
                 banks.columns(),
                 banks.base_mod_64(0, 0),
-                retained.borrow().capacity(),
                 banks.working_set_bytes()
             );
             let items = banks.items();
@@ -108,10 +111,14 @@ fn run() -> Result<(), String> {
             let samples = windows(&request, cache, cache.banks(), items, &mut body, |progress| {
                 let mut retained = retained.borrow_mut();
                 match progress {
-                    TimingProgress::CalibrationComplete { calls } => retained.reserve(calls),
-                    TimingProgress::WindowComplete(_) => retained.release(),
+                    TimingProgress::CalibrationComplete { calls } => {
+                        retained.admit(&request.cell_id, calls)
+                    }
+                    TimingProgress::WindowComplete(sample) => {
+                        retained.release_window(sample.calls)
+                    }
                 }
-                Ok(())
+                .map_err(std::io::Error::other)
             })?;
             retained.borrow_mut().release();
             (selected, samples, setup_ns)

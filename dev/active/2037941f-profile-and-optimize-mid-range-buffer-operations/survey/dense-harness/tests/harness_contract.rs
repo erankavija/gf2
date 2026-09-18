@@ -16,6 +16,7 @@ use dense_parity_harness::inputs;
 use dense_parity_harness::oracle;
 use dense_parity_harness::routes::{
     run_windows, verify_lane, verify_shape, OutputSink, Route, WindowPlan, MAX_RETAINED_OUTPUTS,
+    RETAINED_BUDGET_BYTES, RETAINED_OUTPUT_BYTES, RETAINED_PEAK_BYTES,
 };
 use dense_parity_harness::wire::{Case, Request};
 use gf2_core::BitVec;
@@ -404,24 +405,81 @@ fn a_cache_state_and_its_frozen_call_count_must_agree() {
 }
 
 #[test]
-fn the_output_sink_releases_a_batch_outside_the_window() {
+fn a_window_at_the_retention_bound_releases_no_output_until_it_closes() {
+    let calls = MAX_RETAINED_OUTPUTS as u64;
     let mut sink = OutputSink::default();
-    sink.reserve(4);
-    let before = sink.capacity();
-    assert!(before >= 4);
-    for _ in 0..before {
+    sink.admit("matvec-r1024-8w-warm", calls).expect("the bound is admissible");
+    for call in 0..calls {
         sink.keep(BitVec::zeros(MATVEC_ROWS));
+        assert_eq!(sink.held(), call as usize + 1);
     }
-    // A full sink releases before it grows, so one window's retention never
-    // exceeds the bound and no reallocation lands inside a timed window.
-    sink.keep(BitVec::zeros(MATVEC_ROWS));
-    assert_eq!(sink.capacity(), before);
-    sink.release();
-    assert_eq!(sink.capacity(), before);
+    sink.release_window(calls).expect("the window retained every output");
+    assert_eq!(sink.held(), 0);
+}
 
-    let mut bounded = OutputSink::default();
-    bounded.reserve(u64::MAX);
-    assert!(bounded.capacity() >= MAX_RETAINED_OUTPUTS);
+#[test]
+fn a_window_over_the_retention_bound_is_refused_before_it_opens() {
+    let over = MAX_RETAINED_OUTPUTS as u64 + 1;
+    let mut sink = OutputSink::default();
+    let refusal = sink
+        .admit("matvec-r1024-8w-warm", over)
+        .expect_err("a count above the bound is refused");
+    for fragment in ["matvec-r1024-8w-warm", &over.to_string(), &MAX_RETAINED_OUTPUTS.to_string()] {
+        assert!(refusal.contains(fragment), "{refusal}");
+    }
+    assert_eq!(sink.held(), 0);
+
+    // The refusal precedes the window: the count of a fixed-call cell is known
+    // before `run_windows`, and a calibrated count reaches the sink from the
+    // post-calibration callback, whose error stops the execution with no sample.
+    let mut kept = 0_usize;
+    let outcome = run_windows(
+        WindowPlan {
+            cache: Cache::Warm,
+            cold_calls: None,
+            windows: 5,
+            window_target_ms: 1,
+            banks: 1,
+            items: 1,
+        },
+        &mut |_, _| kept += 1,
+        |progress| match progress {
+            tuning_campaign_support::timing::TimingProgress::CalibrationComplete { .. } => {
+                Err(std::io::Error::other(refusal.clone()))
+            }
+            tuning_campaign_support::timing::TimingProgress::WindowComplete(_) => {
+                panic!("a refused execution opens no window")
+            }
+        },
+    );
+    assert!(outcome.is_err());
+    assert!(kept > 0);
+}
+
+#[test]
+fn the_retention_bound_is_derived_from_the_largest_declared_retaining_cell() {
+    // Every cell that retains an output is an allocated-matvec cell, so the
+    // largest declared retained output is one MATVEC_ROWS-bit `BitVec`.
+    let retaining = cells()
+        .iter()
+        .filter(|cell| matches!(cell.workload, dense_parity_harness::Workload::Matvec { .. }))
+        .count();
+    assert_eq!(retaining, family_cells(Question::AllocatedMatvec).len());
+    assert_eq!(BitVec::zeros(MATVEC_ROWS).words().len(), MATVEC_ROWS.div_ceil(64));
+    assert_eq!(RETAINED_OUTPUT_BYTES, size_of::<BitVec>() + MATVEC_ROWS / 64 * 8 + 16);
+    assert_eq!(MAX_RETAINED_OUTPUTS, RETAINED_BUDGET_BYTES / RETAINED_OUTPUT_BYTES);
+    assert_eq!(RETAINED_PEAK_BYTES, MAX_RETAINED_OUTPUTS * RETAINED_OUTPUT_BYTES);
+    assert!(RETAINED_PEAK_BYTES <= RETAINED_BUDGET_BYTES);
+
+    // The bound covers a window of the protocol's target length whenever one
+    // call costs at least this many nanoseconds. The addendum's own analogue for
+    // the allocated family reads 16,793 ns per call at 1024x4096
+    // (`dev/bench_results/5cbb6545/tables.md`, row `matvec-1024x4096`), and the
+    // smallest declared stride reads an eighth of that matrix, so no declared
+    // call is anywhere near this floor.
+    let covered_ns_per_call =
+        u64::from(SHARED_SETTINGS.window_target_ms) * 1_000_000 / MAX_RETAINED_OUTPUTS as u64;
+    assert!(covered_ns_per_call < 1_000, "{covered_ns_per_call}");
 }
 
 #[test]
@@ -451,20 +509,23 @@ fn a_windowed_execution_retains_and_releases_through_the_arm_arrangement() {
             let mut retained = retained.borrow_mut();
             match progress {
                 tuning_campaign_support::timing::TimingProgress::CalibrationComplete { calls } => {
-                    retained.reserve(calls)
+                    retained.admit("matvec-r1024-8w-warm", calls)
                 }
-                tuning_campaign_support::timing::TimingProgress::WindowComplete(_) => {
+                tuning_campaign_support::timing::TimingProgress::WindowComplete(sample) => {
                     released += 1;
-                    retained.release();
+                    // The window retained one output per call and released none
+                    // until here, which `release_window` refuses otherwise.
+                    retained.release_window(sample.calls)
                 }
             }
-            Ok(())
+            .map_err(std::io::Error::other)
         },
     )
     .expect("the windowed execution succeeds");
     assert_eq!(samples.len(), 1);
     assert!(samples[0].calls > 0);
     assert_eq!(released, 1);
+    assert_eq!(retained.borrow().held(), 0);
 }
 
 #[test]
