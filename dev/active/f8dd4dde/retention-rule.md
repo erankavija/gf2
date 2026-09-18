@@ -40,6 +40,20 @@ The route has no downstream production caller to weigh against either outcome:
 the two public shift methods are its only consumers, which the profile's empty
 consumer set records.
 
+## Rust 1.95 evidence
+
+`dev/active/f8dd4dde/validate-msrv-record.json`, produced by the committed
+`dev/active/f8dd4dde/validate-msrv.sh`, is REQ-06's build-and-suite record: it
+builds `gf2-core` and `gf2-kernels-simd` and runs the shared residual-shift
+suite and the shift and funnel tests under `RUSTUP_TOOLCHAIN=1.95`, and its
+own witness probe (`dev/active/f8dd4dde/msrv-validation/`) reports the host's
+`bmi2` detection and the route each arm of the force switch executed. The
+assembly artefact's toolchain header reflects whichever default toolchain was
+active when the crate's `dev/scripts/regen-asm.sh` last ran — this crate's
+actual convention, as its `bch_encode.asm.txt` and `transpose.asm.txt`
+siblings already show captured past the repository's 1.95 floor — so REQ-06's
+1.95 obligation rests on the record above rather than on that header.
+
 ## What removal consists of
 
 Removal deletes the kernel route and leaves the residual branch on the funnel
@@ -62,6 +76,9 @@ the portable path already runs. The items that go:
   disposition.
 - The `# Routes` paragraphs of `BitVec::shift_left` and `BitVec::shift_right`
   lose their residual-kernel sentence and keep the word-aligned bundle's.
+- `dev/active/f8dd4dde/validate-msrv.sh`, its record
+  `dev/active/f8dd4dde/validate-msrv-record.json`, and the witness probe
+  `dev/active/f8dd4dde/msrv-validation/`: evidence for the kernel route alone.
 
 Removal also closes this document: a removed route needs no retention rule, and
 the confirmation's outcome record carries the reason.
