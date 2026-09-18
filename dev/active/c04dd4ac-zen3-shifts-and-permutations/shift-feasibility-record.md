@@ -129,18 +129,19 @@ The prototype is also not a candidate implementation. It has no `BitVec`
 dependency, no dispatch table entry and no feature flag; it exists to be
 compiled and read.
 
-## What remains under REQ-05
+## Where REQ-05 continues
 
-The remaining REQ-05 step is the lead's: amending the plan bracket and having
-it re-reviewed, so that the candidate implementation and confirmation leaves
-are created, made to depend on this profile, and publication is re-homed
-behind their sinks in the instantiated dependency graph. This record supplies
-the feasibility evidence that amendment rests on and creates no issue itself.
+The amended [plan](plan.md) rests on this record. It creates the candidate
+implementation leaf for the BMI2-gated scalar funnel (`f8dd4dde`) and its A/B
+confirmation leaf (`00dd43c3`), makes them depend on this profile, and re-homes
+publication behind the confirmation in the instantiated dependency graph. The
+AVX2 lane-crossing funnel stays feasible and unselected in this epic; the
+plan's decision table records the ruling. This record creates no issue itself.
 
 ## Scope proposal for the candidate leaves
 
-Offered as input to that amendment, and held to what the evidence above
-supports.
+Input to that amendment, held to what the evidence above supports. The leaves'
+own criteria govern where they differ from it.
 
 Every claim below about the production shift paths is pinned in
 [`survey/shift-source-evidence.json`](survey/shift-source-evidence.json)

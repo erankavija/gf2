@@ -209,13 +209,15 @@ the MSRV, and that record carries the toolchain and assembly artefacts, the
 correctness evidence and a scope proposal for the leaves. Feasibility is not a
 win, and the record makes no speed claim.
 
-What stays open is the plan bracket: an amended, re-reviewed bracket that
-creates the candidate implementation and confirmation leaves, makes them depend
-on this profile, and re-homes publication behind their sinks in the
-instantiated dependency graph. That amendment is the lead's. A family whose
-downstream consumer set is empty also owes the bracket an argument that the
-primitive is worth the maintenance at all; this profile supplies the cost side
-of that argument only.
+The amended [plan](plan.md) carries the bracket step. It creates the candidate
+implementation leaf for the BMI2-gated scalar funnel (`f8dd4dde`) and its A/B
+confirmation leaf (`00dd43c3`), makes them depend on this profile, and re-homes
+publication (`a0812b83`) behind the confirmation in the instantiated dependency
+graph. The AVX2 lane-crossing funnel is nominated, feasible and unselected in
+this epic; the plan's decision table records the ruling and its reason. A
+family whose downstream consumer set is empty leaves open whether the primitive
+is worth its maintenance: the confirmation's frozen retention rule decides
+that, and this profile supplies the cost side of the argument only.
 
 ## Evidence map
 
