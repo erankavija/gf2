@@ -1,158 +1,271 @@
 {
   "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "85fc5ff4-arms-smoke",
   "issue": "85fc5ff4",
-  "scope": "non-timed validation-role dispatch of every arm of the plan's cells, through the runner's own request framing and child environment; the smoke opens no campaign, takes no lock, reserves nothing in a family ledger, finalizes no receipt and records no timing window",
-  "command": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-shift-arms.sh",
-  "plan": {
-    "path": "target/85fc5ff4-arm-smoke/plan.json",
-    "sha256": "f3180db6ceb4f5d203377d9b95e043e6bfc00e6ff133d52c633920af5a601124",
-    "campaign_id": "85fc5ff4-arms-smoke",
-    "issue": "85fc5ff4",
-    "addendum": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json",
-    "addendum_sha256": "7e7289e083b351d3a5c6778e90e07de019c634a49b92f606ee9c921abf6e3e41",
-    "cells": 10
-  },
-  "arms": [
-    {
-      "arm": "residual-production",
-      "executable": "target/release/deps/shifts-9f8d6039725c588b",
-      "sha256": "be48077c8f4801a56d6c81e13680853ce8c3fc686c7cbed8988ed05d857fe17e",
-      "environment": {
-        "GF2_SHIFT_ARM": "residual-production"
-      },
-      "dispatches": 10,
-      "result_lines": 10,
-      "timing_windows": 0,
-      "workers_observed": [
-        1
-      ],
-      "routes": [
-        "bitvec-residual-scalar-left",
-        "bitvec-residual-scalar-right"
-      ]
-    },
-    {
-      "arm": "word-aligned-control",
-      "executable": "target/release/deps/shifts-9f8d6039725c588b",
-      "sha256": "be48077c8f4801a56d6c81e13680853ce8c3fc686c7cbed8988ed05d857fe17e",
-      "environment": {
-        "GF2_SHIFT_ARM": "word-aligned-control"
-      },
-      "dispatches": 10,
-      "result_lines": 10,
-      "timing_windows": 0,
-      "workers_observed": [
-        1
-      ],
-      "routes": [
-        "bitvec-word-dispatch-left",
-        "bitvec-word-dispatch-right"
-      ]
-    }
-  ],
+  "family": "bitvec-residual-shift-profile",
+  "plan_sha256": "f3180db6ceb4f5d203377d9b95e043e6bfc00e6ff133d52c633920af5a601124",
+  "addendum": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json",
+  "addendum_sha256": "7e7289e083b351d3a5c6778e90e07de019c634a49b92f606ee9c921abf6e3e41",
   "cells": [
     {
       "cell_id": "left-small-r1-w64",
       "cache_state": "warm",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-left",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-word-dispatch-left",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "left-lane-crossing-r7-w64",
       "cache_state": "warm",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-left",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-word-dispatch-left",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "left-byte-residual-r8-w64",
       "cache_state": "warm",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-left",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-word-dispatch-left",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "left-resident-r63-w64",
       "cache_state": "warm",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-left",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-word-dispatch-left",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "left-streaming-r65-w64",
       "cache_state": "streaming",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "bitvec-residual-scalar-left",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "bitvec-word-dispatch-left",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "right-small-r1-w64",
       "cache_state": "warm",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-right",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-word-dispatch-right",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "right-lane-crossing-r7-w64",
       "cache_state": "warm",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-right",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-word-dispatch-right",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "right-byte-residual-r8-w64",
       "cache_state": "warm",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-right",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-word-dispatch-right",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "right-resident-r63-w64",
       "cache_state": "warm",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-right",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-word-dispatch-right",
+          "windows": 0
+        }
+      ]
     },
     {
       "cell_id": "right-streaming-r65-w64",
       "cache_state": "streaming",
       "arms": [
-        "residual-production",
-        "word-aligned-control"
-      ],
-      "result_lines": 2,
-      "timing_windows": 0
+        {
+          "arm": "residual-production",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "bitvec-residual-scalar-right",
+          "windows": 0
+        },
+        {
+          "arm": "word-aligned-control",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "575695ccee425aad7eccdb23ce3d05a57753a51857486193e48a1f4b618a9a1a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "bitvec-word-dispatch-right",
+          "windows": 0
+        }
+      ]
     }
-  ],
-  "dispatches": 20,
-  "result_lines": 20,
-  "timing_windows": 0
+  ]
 }

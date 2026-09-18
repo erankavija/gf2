@@ -106,16 +106,11 @@ The canonical child-v2 framing accepts an arm's request only when the child
 re-encodes the runner's bytes exactly, so an arm whose request type does not
 round-trip the runner's request fails its first child and measures nothing.
 Code reading does not establish that contract.
-[`survey/smoke-shift-arms.sh`](survey/smoke-shift-arms.sh) drives both arms of
-every frozen cell with the runner's own request framing, result parser and child
-environment, in the validation role: each arm performs one untimed dispatch,
-applies its zero-fill oracle and returns no timing window, and the driver
-refuses an arm that reports one. The smoke opens no campaign, so it takes no
-host mutex, reserves nothing in the family ledger, writes no stage, finalizes no
-receipt and emits no timing sample, and it runs outside the benchmark window.
-[`shift-profile-smoke.json`](shift-profile-smoke.json) records the plan and
-executable identities, the route each arm selected, the result lines parsed and
-the window count.
+[`survey/smoke-shift-arms.sh`](survey/smoke-shift-arms.sh) smokes both arms of
+every frozen cell through the shared `benchmark-ab-runner smoke`, whose contract
+`tuning_campaign_support::arm::smoke` states; each arm also applies its zero-fill
+oracle there. [`shift-profile-smoke.json`](shift-profile-smoke.json) is that
+smoke's own record.
 
 ## The voided launch attempt
 
