@@ -6,9 +6,9 @@ codes: one parsed result line per arm per cell, an append-only execution log
 whose first session is a byte prefix of the final log, one `cell-complete` per
 declared cell, a terminal `complete` record, an immutable checkpoint per cell,
 and a handshake record whose every arm reports zero timing windows and names the
-fixture banks it built or the external object it loaded. The stage
-is also checked to hold no finalized receipt, so the smoke can state from
-observation that it produced no timing sample and no receipt sample. Every line
+fixture banks it built or the external object it loaded. The stage is also
+checked to hold no finalized receipt, so the smoke can state from observation
+that it produced no timing sample and no receipt sample. Every line
 of the record is observed at run time and carries no clock reading, so a rerun
 on the same executables reproduces it byte for byte. The recorded command line
 is the launcher invocation that ran, passed through as `--command`.
