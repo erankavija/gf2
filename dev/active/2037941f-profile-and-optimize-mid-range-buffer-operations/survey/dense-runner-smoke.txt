@@ -2,12 +2,12 @@
 # command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh smoke --m4ri
 # every line below is observed at run time from the semantic oracle, the stage
 # execution logs, the checkpoint stores and the handshake records under target/;
-# the record carries no clock reading, the arms answer a zero-window request, and
-# no receipt is finalized, so a rerun on the same executables reproduces it byte
-# for byte and the smoke cannot serve as a pilot
-# dense-arm sha256: ac48c900d002495be0c47d26f1d06757deccd681c04e708f6b3502866a336f2a
-# dense-arm-scalar sha256: 0c26252d13d9c2a22ff5b05e797096c476a89222ba996faf68f6caf8b8e1322d
-# dense-m4ri-arm sha256: 08bb47a579407ea4ac8cfacc9fff6174410258ebee14f95f493c2437421f7824
+# the record carries no clock reading and no receipt is finalized, so a rerun on
+# the same executables reproduces it byte for byte and the smoke cannot serve as
+# a pilot
+# dense-arm sha256: 1884bf7ecbf21a0d78233724cc544c139c1331be08859394a84ebbc59fe4f756
+# dense-arm-scalar sha256: b4063dd30b01550cf18aa62e2064c69d2ac93cd3759b5acc03dd0cd4413925e2
+# dense-m4ri-arm sha256: 1f67598f10eca9ffa31549edfe2a3ae97284478a346d7b4b07395b345265c52c
 PASS semantic oracle: 108 cases, 21465 checks
 PASS 2037941f-dense-isolated-fused-parity: 2 sessions, resume repeated no cell
 PASS and-popcnt-8w-streaming: 2 arms handshook, 0 timing windows, cache streaming
