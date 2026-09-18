@@ -14,7 +14,7 @@
     "defect_diagnostics": [
       "shifts: fresh tuning stdin is not canonical compact JSON\n"
     ],
-    "resolution": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json records the same executable, rebuilt from the corrected arm, completing the handshake and the result framing through the same runner on a throwaway plan.",
+    "resolution": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json records the arm, rebuilt from the corrected request mirror, completing the canonical child-v2 handshake and the result framing under the runner's own encoder, parser and child environment, in the untimed validation role on every frozen cell.",
     "results_read": false,
     "results_read_detail": "No cell reached a checkpoint and no execution produced a window: the first child of the first cell failed the handshake. No interval, decision or outcome of this attempt exists to be read, and none is quoted anywhere in this profile.",
     "abort": {

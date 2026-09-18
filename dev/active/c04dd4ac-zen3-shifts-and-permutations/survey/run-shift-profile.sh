@@ -29,8 +29,7 @@ producing="$survey/shift-profile-producing-inputs.json"
 out=dev/bench_results/c04dd4ac/residual-shift-profile
 # One attempt token names the campaign and its stage together, so a replacement
 # attempt neither resumes an earlier stage nor reserves on an earlier campaign's
-# ledger line. `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json` records
-# the voided attempt this token succeeds.
+# ledger line (`dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json`).
 attempt=a2
 campaign="residual-shift-profile-85fc5ff4-v4-$attempt"
 stage="target/bench-stage/85fc5ff4-residual-shift-profile-$attempt"
