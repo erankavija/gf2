@@ -13247,3 +13247,4 @@
 {"fields":["dependencies"],"id":"21944bb2-c74a-4d5b-8910-34d1260f5da3","issue_id":"a0812b83-3d03-4317-aad4-f0d702444f14","timestamp":"2026-09-18T11:00:37.191825149Z","type":"issue_updated","updated_by":"dependency-add"}
 {"gate_key":"coverage-preview","id":"2d782935-fdc3-4e39-886e-096e68f98cd1","issue_id":"16560579-abd8-446c-9a02-9715feeee1af","timestamp":"2026-09-18T11:01:08.634568260Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"breakdown-review","id":"47cf6ecc-2624-4e93-98fc-3be7f77fcf3f","issue_id":"16560579-abd8-446c-9a02-9715feeee1af","timestamp":"2026-09-18T11:05:21.208691981Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["description"],"id":"4994a325-e876-428a-ad57-95acde79d6ef","issue_id":"a0812b83-3d03-4317-aad4-f0d702444f14","timestamp":"2026-09-18T12:36:48.757169099Z","type":"issue_updated","updated_by":"issue-update"}
