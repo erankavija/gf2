@@ -243,12 +243,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-17T21:51:11.772515211Z",
+      "updated_at": "2026-09-18T10:06:50.425834134Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-09-17T21:56:26.337030533Z",
+      "updated_at": "2026-09-18T10:11:57.248933499Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -271,5 +271,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the dense-parity measurement harness",
-  "updated_at": "2026-09-17T22:04:07.758405099Z"
+  "updated_at": "2026-09-18T10:11:57.248933499Z"
 }
