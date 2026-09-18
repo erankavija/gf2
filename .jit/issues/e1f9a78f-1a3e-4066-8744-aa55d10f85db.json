@@ -90,12 +90,6 @@
     {
       "commit": null,
       "doc_type": "tool",
-      "label": "Non-timed smoke driver over the shared journal and checkpoints",
-      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/smoke.rs"
-    },
-    {
-      "commit": null,
-      "doc_type": "tool",
       "label": "Producing-input closure guard: tracked and clean campaign inputs",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/inputs.rs"
     },
@@ -321,5 +315,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the dense-parity measurement harness",
-  "updated_at": "2026-09-18T16:00:41.973838573Z"
+  "updated_at": "2026-09-18T17:41:02.333150699Z"
 }
