@@ -7,8 +7,9 @@
 use dense_parity_harness::campaign::{self, PlanInputs, M4RI_ARM, PILOT_PAIRS};
 use dense_parity_harness::cells::{
     cells, family_cells, Cache, Cell, MatvecShape, Question, Workload, ADDENDUM_FROZEN_UTC,
-    ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, MATVEC_ROWS, M4RI_SHAPES,
-    SIMD_LANE_MIN_WORDS, STREAMING_BANKS, STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
+    ADDENDUM_IDENTITY, ADDENDUM_PATH, ADDENDUM_SHA256, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS,
+    CAMPAIGN_SEED, MATVEC_ROWS, M4RI_SHAPES, SIMD_LANE_MIN_WORDS, STREAMING_BANKS,
+    STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
 };
 use dense_parity_harness::external::{self, LibraryIdentity};
 use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
@@ -1159,6 +1160,45 @@ fn repository_root() -> std::path::PathBuf {
         .expect("the harness crate sits five directories below the repository root")
         .canonicalize()
         .expect("the repository root resolves")
+}
+
+/// The pins the harness carries are the frozen document's own bytes and its own
+/// declarations, so a timed run refuses an addendum whose content moved and no
+/// pin is a hand-maintained copy that can go stale.
+#[test]
+fn the_carried_pins_are_the_frozen_addendums_own_identity() {
+    let root = repository_root();
+    let bytes = std::fs::read(root.join(ADDENDUM_PATH)).expect("the frozen addendum is committed");
+    assert_eq!(
+        tuning_campaign_support::protocol::sha256_hex(&bytes),
+        ADDENDUM_SHA256
+    );
+    let text = String::from_utf8(bytes).expect("the addendum is UTF-8");
+    for declaration in [ADDENDUM_IDENTITY, ADDENDUM_FROZEN_UTC] {
+        assert!(text.contains(declaration), "{declaration}");
+    }
+    for cited in [
+        dense_parity_harness::cells::COMPARATOR_PATH,
+        dense_parity_harness::cells::QUALIFICATION_RECORD,
+    ] {
+        assert!(root.join(cited).is_file(), "{cited}");
+    }
+}
+
+/// Every family's canonical ledger is the committed empty genesis file its
+/// first confirmation counts from (§ Estimator, confidence, and multiple
+/// comparisons), and the three families own three distinct ledgers.
+#[test]
+fn every_family_ledger_exists_at_genesis() {
+    let root = repository_root();
+    let mut paths = BTreeSet::new();
+    for question in Question::ALL {
+        let path = question.ledger_path();
+        let bytes = std::fs::read(root.join(path)).unwrap_or_else(|error| panic!("{path}: {error}"));
+        assert!(bytes.is_empty(), "{path} is past genesis");
+        assert!(paths.insert(path), "{path} is shared");
+        assert_eq!(Question::from_family_id(question.family_id()), Some(question));
+    }
 }
 
 /// Decodes `cargo metadata` for one manifest without touching its lock file.
