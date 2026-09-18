@@ -4,7 +4,8 @@
   "context": {},
   "created_at": "2026-09-15T00:57:24.562407727Z",
   "dependencies": [
-    "16560579-abd8-446c-9a02-9715feeee1af"
+    "16560579-abd8-446c-9a02-9715feeee1af",
+    "d45aff82-1878-49a7-8b84-4405c49a0d3a"
   ],
   "description": "Attribute the production DVB-T2 packed-bit scatter cost inside its real BICM consumers and issue a bounded materiality disposition without authorizing candidate implementation.\n\n## Background\n\nThe repaired protocol-v3 re-measurement is accepted exploratory evidence: gf2 wins the whole packed-operation comparison, while conversion-subtracted 16-QAM cells leave a residual in which xdsopl's gather is faster. Earlier warm receipts remain withdrawn and cannot confirm the gap. This task rebuilds the current gf2 and xdsopl arms from exact pinned sources, profiles the actual `BitInterleaver::interleave` route used by the BICM harness and simulation stages, and attributes representation conversion, memory passes and scatter work. The result may nominate a concrete candidate only as input to an amended and re-reviewed breakdown.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen protocol-v4 addendum and append-only family-ledger reservation predeclare Normal and Short FECFRAME paths for 16-QAM and 64-QAM, a streaming case, exploratory role, isolated and whole-consumer boundaries, cache states, conversion accounting, materiality rule, complexity budget and bounded search before timing.\n- [hard] REQ-02: Scheduled benchmark-window execution produces an accepted exploratory receipt with exact rebuilt gf2 and xdsopl source, build and executable pins, raw paired samples, append-only execution log, checkpoints, runtime host provenance and durable negative or unavailable outcomes.\n- [hard] REQ-03: The profile identifies the selected production route, BICM harness and simulation-stage consumers, call graph, hot instructions, allocation behavior, representation conversions, memory passes and isolated interleave cost beside whole-consumer cost.\n- [hard] REQ-04: The disposition records the scatter as not material or nominates no more than two profile-supported branch-free or packed-word forms under the predeclared budget; withdrawn warm receipts remain historical context and do not confirm a candidate.\n- [hard] REQ-05: A no-candidate or no-win disposition permits this profile to complete. If it nominates a material branch-free or packed-word form, this profile remains open until a planning-time Rust 1.95 compile and assembly record proves feasibility, including a runtime-gated scalar fallback for any capability-gated form, and the plan bracket is amended and re-reviewed to create the required candidate implementation and confirmation leaves, make them depend on this profile, and re-home publication behind their sinks in the instantiated dependency graph.\n\n## Notes\n\nThe comparator remains xdsopl `PCTITL` for the ETSI bit-interleave operation. AFF3CT and circular shifts are not substitutes. Timed work runs only in a scheduled benchmark window.\n\nSource references: [Etsi2015], [Xdsopl2026].",
   "documents": [
@@ -353,5 +354,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-18T12:53:29.316776415Z"
+  "updated_at": "2026-09-18T13:56:57.344114718Z"
 }
