@@ -313,6 +313,103 @@ fn isolated_operands_begin_on_the_declared_boundary() {
     }
 }
 
+/// One canonical `SplitMix64` stream per cell, started at that cell's workload
+/// seed, fills every bank in order, and each additional bank consumes the next
+/// outputs of that same stream (§ Input identities and correctness). Every
+/// stored word is one full 64-bit output, and a partial final word is masked
+/// immediately after generation.
+#[test]
+fn one_canonical_stream_fills_every_bank_in_order() {
+    let seed = 0x5eed_0000_5eed_0000;
+    let kernel = KernelBanks::build(9, Cache::Streaming, seed);
+    let mut mixer = SplitMix64::new(seed);
+    for bank in 0..kernel.banks() {
+        for item in 0..kernel.items() {
+            let (row, vector) = kernel.operands(bank, item);
+            for word in row.iter().chain(vector) {
+                assert_eq!(*word, mixer.next_u64(), "bank {bank} item {item}");
+            }
+        }
+    }
+
+    // The allocated fixture fills each item's matrix words in canonical
+    // row-major order and then its vector words, bank after bank.
+    let allocated = MatvecBanks::allocated(9, MatvecShape::Full, Cache::Streaming, seed);
+    let mut mixer = SplitMix64::new(seed);
+    for bank in 0..allocated.banks() {
+        for index in 0..allocated.items() {
+            let item = allocated.item(bank, index);
+            for row in 0..item.matrix.rows() {
+                for word in item.matrix.row_words(row) {
+                    assert_eq!(*word, mixer.next_u64(), "bank {bank} item {index} row {row}");
+                }
+            }
+            for word in item.vector.words() {
+                assert_eq!(*word, mixer.next_u64(), "bank {bank} item {index} vector");
+            }
+        }
+    }
+
+    // A `tail1` shape consumes one full output per stored word and masks the
+    // partial final word of every row and of the vector immediately after.
+    let tail1 = MatvecBanks::allocated(9, MatvecShape::Tail1, Cache::Warm, seed);
+    let item = tail1.item(0, 0);
+    let tail = MatvecShape::Tail1.columns(9) % 64;
+    let mask = (1_u64 << tail) - 1;
+    let mut mixer = SplitMix64::new(seed);
+    for row in 0..item.matrix.rows() {
+        let words = item.matrix.row_words(row);
+        for (index, word) in words.iter().enumerate() {
+            let generated = mixer.next_u64();
+            let expected = if index + 1 == words.len() { generated & mask } else { generated };
+            assert_eq!(*word, expected, "row {row} word {index}");
+        }
+    }
+    let words = item.vector.words();
+    for (index, word) in words.iter().enumerate() {
+        let generated = mixer.next_u64();
+        let expected = if index + 1 == words.len() { generated & mask } else { generated };
+        assert_eq!(*word, expected, "vector word {index}");
+    }
+}
+
+/// Both arms of a cell see the same fixture bytes, which holds because a
+/// working set is a pure function of its shape, cache state and workload seed
+/// (§ Input identities and correctness).
+#[test]
+fn a_working_set_is_a_pure_function_of_its_cell() {
+    for cell in cells().iter().filter(|cell| cell.cache != Cache::Streaming) {
+        let (rows, columns) = match cell.workload {
+            Workload::AndPopcnt { words } => {
+                let (first, second) = (
+                    KernelBanks::build(words, cell.cache, cell.seed),
+                    KernelBanks::build(words, cell.cache, cell.seed),
+                );
+                assert_eq!(first.operands(0, 0), second.operands(0, 0), "{}", cell.cell_id);
+                continue;
+            }
+            Workload::Matvec { words, shape } => (MATVEC_ROWS, shape.columns(words)),
+            Workload::M4riGap { shape, .. } => (shape.rows, shape.cols),
+        };
+        let first = MatvecBanks::build(rows, columns, cell.cache, cell.seed);
+        let second = MatvecBanks::build(rows, columns, cell.cache, cell.seed);
+        for row in 0..rows {
+            assert_eq!(
+                first.item(0, 0).matrix.row_words(row),
+                second.item(0, 0).matrix.row_words(row),
+                "{} row {row}",
+                cell.cell_id
+            );
+        }
+        assert_eq!(
+            first.item(0, 0).vector.words(),
+            second.item(0, 0).vector.words(),
+            "{}",
+            cell.cell_id
+        );
+    }
+}
+
 #[test]
 fn a_tail1_fixture_carries_canonical_zero_tail_padding() {
     for words in ALL_WORDS {
