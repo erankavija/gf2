@@ -84,6 +84,8 @@ fn main() {
             std::process::exit(2);
         }
     };
+    // The validation position asks for one untimed dispatch and no window.
+    let timed = request.role != "validation";
     // Arms differ through their environment, never through the shared case.
     let passes: u32 = std::env::var("GF2_SMOKE_PASSES")
         .ok()
@@ -98,7 +100,7 @@ fn main() {
     let buffers: Vec<Vec<u64>> = (0..banks)
         .map(|_| (0..case.words).map(|_| mixer.next_u64()).collect())
         .collect();
-    if request.cache_state == "cold" && request.cold_calls.is_none() {
+    if timed && request.cache_state == "cold" && request.cold_calls.is_none() {
         eprintln!("cold cell requires frozen calls; pre-calibration is forbidden");
         std::process::exit(2);
     }
@@ -112,19 +114,24 @@ fn main() {
             sink ^= fold(black_box(buffer));
         }
     };
-    let samples = match execution_windows_fixed_or_calibrated(
-        0,
-        u64::from(request.windows),
-        Duration::from_millis(u64::from(request.window_target_ms)),
-        request.cold_calls,
-        &mut body,
-        |_| Ok(()),
-    ) {
-        Ok(samples) => samples,
-        Err(error) => {
-            eprintln!("ab-smoke-workload: timing failed: {error}");
-            std::process::exit(1);
+    let samples = if timed {
+        match execution_windows_fixed_or_calibrated(
+            0,
+            u64::from(request.windows),
+            Duration::from_millis(u64::from(request.window_target_ms)),
+            request.cold_calls,
+            &mut body,
+            |_| Ok(()),
+        ) {
+            Ok(samples) => samples,
+            Err(error) => {
+                eprintln!("ab-smoke-workload: timing failed: {error}");
+                std::process::exit(1);
+            }
         }
+    } else {
+        body(0);
+        Vec::new()
     };
     black_box(sink);
     let cpus_observed = CpuAffinity::observe()
@@ -145,7 +152,7 @@ fn main() {
         selected_path: Some("xor-fold-scalar".into()),
         conversion: None,
         quality: request.decoder.as_ref().map(synthetic_quality),
-        calibrated: request.cold_calls.is_none(),
+        calibrated: timed && request.cold_calls.is_none(),
     };
     if let Err(error) = transport::write_result_line(io::stdout().lock(), &result) {
         eprintln!("ab-smoke-workload: {error}");
