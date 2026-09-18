@@ -28,7 +28,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Route residual BitVec shifts through a BMI2-gated funnel kernel",
-  "updated_at": "2026-09-18T11:00:09.636689799Z"
+  "updated_at": "2026-09-18T14:17:45.520939717Z"
 }
