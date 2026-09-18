@@ -1,0 +1,162 @@
+{
+  "schema": "ldpc-intrinsic-feasibility-v1",
+  "toolchain": {
+    "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+    "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+  },
+  "assembly": {
+    "path": "dev/bench_results/f63a2464/intrinsic-feasibility/probe.s",
+    "sha256": "e81bd010649afc48492a88aaa009145fc57d8d227ce891546afcc2e635b1edfa",
+    "source_sha256": "9bf8476e5f688ab230aeec9b710c352d5ca4c19032a0526317c7b17b6aa73217"
+  },
+  "behavioural_tests": {
+    "command": "cargo +1.95 test --offline --release",
+    "exit_code": 0,
+    "log": "dev/bench_results/f63a2464/intrinsic-feasibility/tests.log"
+  },
+  "probes": [
+    {
+      "function": "clip_symmetric_i8",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe17clip_symmetric_i817hdde6a9234763c22aE",
+      "instructions": [
+        "vmovd",
+        "vpbroadcastb",
+        "neg",
+        "vpminsb",
+        "vpmaxsb",
+        "vmovdqu",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "fold_two_minima_i16",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe19fold_two_minima_i1617hf1a0de09b7006087E",
+      "instructions": [
+        "vmovdqu",
+        "vpabsw",
+        "vpminsw",
+        "vpmaxsw",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "fold_two_minima_i8",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe18fold_two_minima_i817h66fa37ba554ab459E",
+      "instructions": [
+        "vmovdqu",
+        "vpabsb",
+        "vpminsb",
+        "vpmaxsb",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "magnitude_and_sign_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe22magnitude_and_sign_f3217h2a6df523831d0609E",
+      "instructions": [
+        "vmovups",
+        "vbroadcastss",
+        "vandps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "negative_by_comparison_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe26negative_by_comparison_f3217h01caf0eaba63442aE",
+      "instructions": [
+        "vmovups",
+        "vxorps",
+        "vcmpltps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "rotate_bytes_i8_by_sixteen",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe26rotate_bytes_i8_by_sixteen17h8cc09a31a5549baaE",
+      "instructions": [
+        "vpermpd",
+        "vmovups",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "rotate_bytes_i8_by_three",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe24rotate_bytes_i8_by_three17he200418661337542E",
+      "instructions": [
+        "vmovdqu",
+        "vpermq",
+        "vpalignr",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "rotate_lanes_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe16rotate_lanes_f3217hf2ceead5e3b8cc07E",
+      "instructions": [
+        "vmovups",
+        "vpermps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "saturating_add_i16",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe18saturating_add_i1617h0f8961910f9d44a9E",
+      "instructions": [
+        "vmovdqu",
+        "vpaddsw",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "saturating_add_i8",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe17saturating_add_i817h0d0695b9ca1df843E",
+      "instructions": [
+        "vmovdqu",
+        "vpaddsb",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "saturating_sub_i16",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe18saturating_sub_i1617hf72bd60c12ea4fedE",
+      "instructions": [
+        "vmovdqu",
+        "vpsubsw",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "saturating_sub_i8",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe17saturating_sub_i817hcf4a8049e48b1d42E",
+      "instructions": [
+        "vmovdqu",
+        "vpsubsb",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "sign_mask_and_apply_i8",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe22sign_mask_and_apply_i817h0623d82ad0e977feE",
+      "instructions": [
+        "vpxor",
+        "vpcmpgtb",
+        "vpsubb",
+        "vmovdqu",
+        "vzeroupper"
+      ]
+    }
+  ]
+}
