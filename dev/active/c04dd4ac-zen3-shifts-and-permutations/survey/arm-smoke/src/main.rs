@@ -1,17 +1,14 @@
 //! Non-timed wire-contract smoke of a protocol-v4 plan's arms (jit:9fb40c83,
 //! jit:85fc5ff4).
 //!
-//! Drives every arm of every cell of a saved runner plan the way
-//! `benchmark-ab-runner` drives it — the runner's own request encoder, result
-//! parser and child environment — in the [`VALIDATION_ROLE`], so each arm
-//! performs one untimed dispatch and returns no timing window. Reading an arm's
-//! source does not establish the wire contract between the runner and a child;
-//! running it does.
-//!
-//! The smoke opens no campaign: it takes no lock, reserves nothing in a family
-//! ledger, writes no stage and finalizes no receipt. It refuses an arm that
-//! reports a timing window, so no invocation of it can produce a timing sample.
-//! Its output is the observation document a story's record generator renders.
+//! Reading an arm's source does not establish its wire contract with the
+//! runner; running it does. This drives every arm of every cell of a saved plan
+//! the way `benchmark-ab-runner` drives it — the runner's own request encoder,
+//! result parser and child environment — in the [`VALIDATION_ROLE`], so each arm
+//! performs one untimed dispatch and returns no timing window; an arm that
+//! reports one is refused. The smoke opens no campaign, so it takes no lock,
+//! reserves nothing in a family ledger and finalizes no receipt. Its output is
+//! the observation document a story's record generator renders.
 //!
 //! Usage: arm-smoke --plan <plan.json> --output <observations.json>
 
