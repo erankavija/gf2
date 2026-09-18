@@ -1,0 +1,11 @@
+# Symbols the annotated release disassembly records, as `label|pattern`.
+# A pattern that matches no text symbol is recorded as inlined into its
+# caller rather than as a silent gap.
+public-xor-inplace|gf2_core::kernels::ops::xor_inplace
+resolve-xor-inplace|gf2_core::kernels::ops::resolve_xor_inplace
+select-backend-for-size|gf2_core::kernels::select_backend_for_size
+scalar-xor-inplace|gf2_core::kernels::ops::scalar_xor_inplace
+avx2-xor-into|gf2_kernels_simd::x86::avx2::avx2_xor_into
+avx512-xor-into|gf2_kernels_simd::x86::avx512::avx512_xor_into
+public-row-xor|gf2_core::matrix::BitMatrix::row_xor
+nr-rate-matched|QuasiCyclicLdpc>::nr_5g_rate_matched

@@ -1,0 +1,350 @@
+# label: scalar-xor-inplace
+# pattern: gf2_core::kernels::ops::scalar_xor_inplace
+# binary: logical-arm
+# binary sha256: a2b8d3913050408209adb291f142f3b0d28432ab621b899cff253359d45c988e
+# text symbols matching this pattern: 3
+
+## symbol at 000000000004e4e0, 0x00000000000001de bytes
+000000000004e4e0 <gf2_core::kernels::ops::scalar_xor_inplace>:
+   4e4e0:	push   %rax
+   4e4e1:	movabs $0xffffffffffffffc,%r10
+   4e4eb:	cmp    %rsi,%rcx
+   4e4ee:	mov    %rsi,%r9
+   4e4f1:	cmovb  %rcx,%r9
+   4e4f5:	mov    %r9,%r11
+   4e4f8:	and    %r10,%r11
+   4e4fb:	je     4e5ae <gf2_core::kernels::ops::scalar_xor_inplace+0xce>
+   4e501:	mov    $0x3,%eax
+   4e506:	cs nopw 0x0(%rax,%rax,1)
+   4e510:	lea    -0x3(%rax),%r8
+   4e514:	cmp    %rcx,%r8
+   4e517:	jae    4e6ab <gf2_core::kernels::ops::scalar_xor_inplace+0x1cb>
+   4e51d:	cmp    %rsi,%r8
+   4e520:	jae    4e69b <gf2_core::kernels::ops::scalar_xor_inplace+0x1bb>
+   4e526:	mov    -0x18(%rdx,%rax,8),%r8
+   4e52b:	xor    %r8,-0x18(%rdi,%rax,8)
+   4e530:	lea    -0x2(%rax),%r8
+   4e534:	cmp    %rcx,%r8
+   4e537:	jae    4e688 <gf2_core::kernels::ops::scalar_xor_inplace+0x1a8>
+   4e53d:	cmp    %rsi,%r8
+   4e540:	jae    4e678 <gf2_core::kernels::ops::scalar_xor_inplace+0x198>
+   4e546:	mov    -0x10(%rdx,%rax,8),%r8
+   4e54b:	xor    %r8,-0x10(%rdi,%rax,8)
+   4e550:	lea    -0x1(%rax),%r8
+   4e554:	cmp    %rcx,%r8
+   4e557:	jae    4e665 <gf2_core::kernels::ops::scalar_xor_inplace+0x185>
+   4e55d:	cmp    %rsi,%r8
+   4e560:	jae    4e655 <gf2_core::kernels::ops::scalar_xor_inplace+0x175>
+   4e566:	mov    -0x8(%rdx,%rax,8),%r8
+   4e56b:	xor    %r8,-0x8(%rdi,%rax,8)
+   4e570:	cmp    %rcx,%rax
+   4e573:	jae    4e642 <gf2_core::kernels::ops::scalar_xor_inplace+0x162>
+   4e579:	cmp    %rsi,%rax
+   4e57c:	jae    4e632 <gf2_core::kernels::ops::scalar_xor_inplace+0x152>
+   4e582:	mov    (%rdx,%rax,8),%r8
+   4e586:	xor    %r8,(%rdi,%rax,8)
+   4e58a:	lea    0x4(%rax),%r8
+   4e58e:	inc    %rax
+   4e591:	cmp    %r11,%rax
+   4e594:	mov    %r8,%rax
+   4e597:	jb     4e510 <gf2_core::kernels::ops::scalar_xor_inplace+0x30>
+   4e59d:	add    $0xfffffffffffffffd,%r8
+   4e5a1:	mov    %r9,%rcx
+   4e5a4:	sub    %r8,%rcx
+   4e5a7:	ja     4e5b9 <gf2_core::kernels::ops::scalar_xor_inplace+0xd9>
+   4e5a9:	jmp    4e630 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   4e5ae:	xor    %r8d,%r8d
+   4e5b1:	mov    %r9,%rcx
+   4e5b4:	sub    %r8,%rcx
+   4e5b7:	jbe    4e630 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   4e5b9:	cmp    $0x4,%rcx
+   4e5bd:	jae    4e5c4 <gf2_core::kernels::ops::scalar_xor_inplace+0xe4>
+   4e5bf:	mov    %r8,%rax
+   4e5c2:	jmp    4e620 <gf2_core::kernels::ops::scalar_xor_inplace+0x140>
+   4e5c4:	and    %rcx,%r10
+   4e5c7:	lea    (%r8,%r10,1),%rax
+   4e5cb:	lea    (%rdi,%r8,8),%rsi
+   4e5cf:	add    $0x10,%rsi
+   4e5d3:	lea    (%rdx,%r8,8),%r8
+   4e5d7:	add    $0x10,%r8
+   4e5db:	xor    %r11d,%r11d
+   4e5de:	xchg   %ax,%ax
+   4e5e0:	movups -0x10(%r8,%r11,8),%xmm0
+   4e5e6:	movups (%r8,%r11,8),%xmm1
+   4e5eb:	movups -0x10(%rsi,%r11,8),%xmm2
+   4e5f1:	xorps  %xmm0,%xmm2
+   4e5f4:	movups (%rsi,%r11,8),%xmm0
+   4e5f9:	xorps  %xmm1,%xmm0
+   4e5fc:	movups %xmm2,-0x10(%rsi,%r11,8)
+   4e602:	movups %xmm0,(%rsi,%r11,8)
+   4e607:	add    $0x4,%r11
+   4e60b:	cmp    %r11,%r10
+   4e60e:	jne    4e5e0 <gf2_core::kernels::ops::scalar_xor_inplace+0x100>
+   4e610:	cmp    %r10,%rcx
+   4e613:	je     4e630 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   4e615:	data16 cs nopw 0x0(%rax,%rax,1)
+   4e620:	mov    (%rdx,%rax,8),%rcx
+   4e624:	xor    %rcx,(%rdi,%rax,8)
+   4e628:	inc    %rax
+   4e62b:	cmp    %rax,%r9
+   4e62e:	jne    4e620 <gf2_core::kernels::ops::scalar_xor_inplace+0x140>
+   4e630:	pop    %rax
+   4e631:	ret
+   4e632:	lea    0x6dc27(%rip),%rdx        # bc260 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x808>
+   4e639:	mov    %rax,%rdi
+   4e63c:	call   *0x713ee(%rip)        # bfa30 <_DYNAMIC+0x208>
+   4e642:	lea    0x6dbff(%rip),%rdx        # bc248 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x7f0>
+   4e649:	mov    %rax,%rdi
+   4e64c:	mov    %rcx,%rsi
+   4e64f:	call   *0x713db(%rip)        # bfa30 <_DYNAMIC+0x208>
+   4e655:	lea    0x6dbd4(%rip),%rdx        # bc230 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x7d8>
+   4e65c:	mov    %r8,%rdi
+   4e65f:	call   *0x713cb(%rip)        # bfa30 <_DYNAMIC+0x208>
+   4e665:	lea    0x6dbac(%rip),%rdx        # bc218 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x7c0>
+   4e66c:	mov    %r8,%rdi
+   4e66f:	mov    %rcx,%rsi
+   4e672:	call   *0x713b8(%rip)        # bfa30 <_DYNAMIC+0x208>
+   4e678:	lea    0x6db81(%rip),%rdx        # bc200 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x7a8>
+   4e67f:	mov    %r8,%rdi
+   4e682:	call   *0x713a8(%rip)        # bfa30 <_DYNAMIC+0x208>
+   4e688:	lea    0x6db59(%rip),%rdx        # bc1e8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x790>
+   4e68f:	mov    %r8,%rdi
+   4e692:	mov    %rcx,%rsi
+   4e695:	call   *0x71395(%rip)        # bfa30 <_DYNAMIC+0x208>
+   4e69b:	lea    0x6db2e(%rip),%rdx        # bc1d0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x778>
+   4e6a2:	mov    %r8,%rdi
+   4e6a5:	call   *0x71385(%rip)        # bfa30 <_DYNAMIC+0x208>
+   4e6ab:	lea    0x6db06(%rip),%rdx        # bc1b8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x760>
+   4e6b2:	mov    %r8,%rdi
+   4e6b5:	mov    %rcx,%rsi
+   4e6b8:	call   *0x71372(%rip)        # bfa30 <_DYNAMIC+0x208>
+
+## symbol at 00000000000571c0, 0x00000000000001de bytes
+00000000000571c0 <gf2_core::kernels::ops::scalar_xor_inplace>:
+   571c0:	push   %rax
+   571c1:	movabs $0xffffffffffffffc,%r10
+   571cb:	cmp    %rsi,%rcx
+   571ce:	mov    %rsi,%r9
+   571d1:	cmovb  %rcx,%r9
+   571d5:	mov    %r9,%r11
+   571d8:	and    %r10,%r11
+   571db:	je     5728e <gf2_core::kernels::ops::scalar_xor_inplace+0xce>
+   571e1:	mov    $0x3,%eax
+   571e6:	cs nopw 0x0(%rax,%rax,1)
+   571f0:	lea    -0x3(%rax),%r8
+   571f4:	cmp    %rcx,%r8
+   571f7:	jae    5738b <gf2_core::kernels::ops::scalar_xor_inplace+0x1cb>
+   571fd:	cmp    %rsi,%r8
+   57200:	jae    5737b <gf2_core::kernels::ops::scalar_xor_inplace+0x1bb>
+   57206:	mov    -0x18(%rdx,%rax,8),%r8
+   5720b:	xor    %r8,-0x18(%rdi,%rax,8)
+   57210:	lea    -0x2(%rax),%r8
+   57214:	cmp    %rcx,%r8
+   57217:	jae    57368 <gf2_core::kernels::ops::scalar_xor_inplace+0x1a8>
+   5721d:	cmp    %rsi,%r8
+   57220:	jae    57358 <gf2_core::kernels::ops::scalar_xor_inplace+0x198>
+   57226:	mov    -0x10(%rdx,%rax,8),%r8
+   5722b:	xor    %r8,-0x10(%rdi,%rax,8)
+   57230:	lea    -0x1(%rax),%r8
+   57234:	cmp    %rcx,%r8
+   57237:	jae    57345 <gf2_core::kernels::ops::scalar_xor_inplace+0x185>
+   5723d:	cmp    %rsi,%r8
+   57240:	jae    57335 <gf2_core::kernels::ops::scalar_xor_inplace+0x175>
+   57246:	mov    -0x8(%rdx,%rax,8),%r8
+   5724b:	xor    %r8,-0x8(%rdi,%rax,8)
+   57250:	cmp    %rcx,%rax
+   57253:	jae    57322 <gf2_core::kernels::ops::scalar_xor_inplace+0x162>
+   57259:	cmp    %rsi,%rax
+   5725c:	jae    57312 <gf2_core::kernels::ops::scalar_xor_inplace+0x152>
+   57262:	mov    (%rdx,%rax,8),%r8
+   57266:	xor    %r8,(%rdi,%rax,8)
+   5726a:	lea    0x4(%rax),%r8
+   5726e:	inc    %rax
+   57271:	cmp    %r11,%rax
+   57274:	mov    %r8,%rax
+   57277:	jb     571f0 <gf2_core::kernels::ops::scalar_xor_inplace+0x30>
+   5727d:	add    $0xfffffffffffffffd,%r8
+   57281:	mov    %r9,%rcx
+   57284:	sub    %r8,%rcx
+   57287:	ja     57299 <gf2_core::kernels::ops::scalar_xor_inplace+0xd9>
+   57289:	jmp    57310 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   5728e:	xor    %r8d,%r8d
+   57291:	mov    %r9,%rcx
+   57294:	sub    %r8,%rcx
+   57297:	jbe    57310 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   57299:	cmp    $0x4,%rcx
+   5729d:	jae    572a4 <gf2_core::kernels::ops::scalar_xor_inplace+0xe4>
+   5729f:	mov    %r8,%rax
+   572a2:	jmp    57300 <gf2_core::kernels::ops::scalar_xor_inplace+0x140>
+   572a4:	and    %rcx,%r10
+   572a7:	lea    (%r8,%r10,1),%rax
+   572ab:	lea    (%rdi,%r8,8),%rsi
+   572af:	add    $0x10,%rsi
+   572b3:	lea    (%rdx,%r8,8),%r8
+   572b7:	add    $0x10,%r8
+   572bb:	xor    %r11d,%r11d
+   572be:	xchg   %ax,%ax
+   572c0:	movups -0x10(%r8,%r11,8),%xmm0
+   572c6:	movups (%r8,%r11,8),%xmm1
+   572cb:	movups -0x10(%rsi,%r11,8),%xmm2
+   572d1:	xorps  %xmm0,%xmm2
+   572d4:	movups (%rsi,%r11,8),%xmm0
+   572d9:	xorps  %xmm1,%xmm0
+   572dc:	movups %xmm2,-0x10(%rsi,%r11,8)
+   572e2:	movups %xmm0,(%rsi,%r11,8)
+   572e7:	add    $0x4,%r11
+   572eb:	cmp    %r11,%r10
+   572ee:	jne    572c0 <gf2_core::kernels::ops::scalar_xor_inplace+0x100>
+   572f0:	cmp    %r10,%rcx
+   572f3:	je     57310 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   572f5:	data16 cs nopw 0x0(%rax,%rax,1)
+   57300:	mov    (%rdx,%rax,8),%rcx
+   57304:	xor    %rcx,(%rdi,%rax,8)
+   57308:	inc    %rax
+   5730b:	cmp    %rax,%r9
+   5730e:	jne    57300 <gf2_core::kernels::ops::scalar_xor_inplace+0x140>
+   57310:	pop    %rax
+   57311:	ret
+   57312:	lea    0x65557(%rip),%rdx        # bc870 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0xf0>
+   57319:	mov    %rax,%rdi
+   5731c:	call   *0x6870e(%rip)        # bfa30 <_DYNAMIC+0x208>
+   57322:	lea    0x6552f(%rip),%rdx        # bc858 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0xd8>
+   57329:	mov    %rax,%rdi
+   5732c:	mov    %rcx,%rsi
+   5732f:	call   *0x686fb(%rip)        # bfa30 <_DYNAMIC+0x208>
+   57335:	lea    0x65504(%rip),%rdx        # bc840 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0xc0>
+   5733c:	mov    %r8,%rdi
+   5733f:	call   *0x686eb(%rip)        # bfa30 <_DYNAMIC+0x208>
+   57345:	lea    0x654dc(%rip),%rdx        # bc828 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0xa8>
+   5734c:	mov    %r8,%rdi
+   5734f:	mov    %rcx,%rsi
+   57352:	call   *0x686d8(%rip)        # bfa30 <_DYNAMIC+0x208>
+   57358:	lea    0x654b1(%rip),%rdx        # bc810 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x90>
+   5735f:	mov    %r8,%rdi
+   57362:	call   *0x686c8(%rip)        # bfa30 <_DYNAMIC+0x208>
+   57368:	lea    0x65489(%rip),%rdx        # bc7f8 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x78>
+   5736f:	mov    %r8,%rdi
+   57372:	mov    %rcx,%rsi
+   57375:	call   *0x686b5(%rip)        # bfa30 <_DYNAMIC+0x208>
+   5737b:	lea    0x6545e(%rip),%rdx        # bc7e0 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x60>
+   57382:	mov    %r8,%rdi
+   57385:	call   *0x686a5(%rip)        # bfa30 <_DYNAMIC+0x208>
+   5738b:	lea    0x65436(%rip),%rdx        # bc7c8 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x48>
+   57392:	mov    %r8,%rdi
+   57395:	mov    %rcx,%rsi
+   57398:	call   *0x68692(%rip)        # bfa30 <_DYNAMIC+0x208>
+
+## symbol at 000000000006fe30, 0x00000000000001de bytes
+000000000006fe30 <gf2_core::kernels::ops::scalar_xor_inplace>:
+   6fe30:	push   %rax
+   6fe31:	movabs $0xffffffffffffffc,%r10
+   6fe3b:	cmp    %rsi,%rcx
+   6fe3e:	mov    %rsi,%r9
+   6fe41:	cmovb  %rcx,%r9
+   6fe45:	mov    %r9,%r11
+   6fe48:	and    %r10,%r11
+   6fe4b:	je     6fefe <gf2_core::kernels::ops::scalar_xor_inplace+0xce>
+   6fe51:	mov    $0x3,%eax
+   6fe56:	cs nopw 0x0(%rax,%rax,1)
+   6fe60:	lea    -0x3(%rax),%r8
+   6fe64:	cmp    %rcx,%r8
+   6fe67:	jae    6fffb <gf2_core::kernels::ops::scalar_xor_inplace+0x1cb>
+   6fe6d:	cmp    %rsi,%r8
+   6fe70:	jae    6ffeb <gf2_core::kernels::ops::scalar_xor_inplace+0x1bb>
+   6fe76:	mov    -0x18(%rdx,%rax,8),%r8
+   6fe7b:	xor    %r8,-0x18(%rdi,%rax,8)
+   6fe80:	lea    -0x2(%rax),%r8
+   6fe84:	cmp    %rcx,%r8
+   6fe87:	jae    6ffd8 <gf2_core::kernels::ops::scalar_xor_inplace+0x1a8>
+   6fe8d:	cmp    %rsi,%r8
+   6fe90:	jae    6ffc8 <gf2_core::kernels::ops::scalar_xor_inplace+0x198>
+   6fe96:	mov    -0x10(%rdx,%rax,8),%r8
+   6fe9b:	xor    %r8,-0x10(%rdi,%rax,8)
+   6fea0:	lea    -0x1(%rax),%r8
+   6fea4:	cmp    %rcx,%r8
+   6fea7:	jae    6ffb5 <gf2_core::kernels::ops::scalar_xor_inplace+0x185>
+   6fead:	cmp    %rsi,%r8
+   6feb0:	jae    6ffa5 <gf2_core::kernels::ops::scalar_xor_inplace+0x175>
+   6feb6:	mov    -0x8(%rdx,%rax,8),%r8
+   6febb:	xor    %r8,-0x8(%rdi,%rax,8)
+   6fec0:	cmp    %rcx,%rax
+   6fec3:	jae    6ff92 <gf2_core::kernels::ops::scalar_xor_inplace+0x162>
+   6fec9:	cmp    %rsi,%rax
+   6fecc:	jae    6ff82 <gf2_core::kernels::ops::scalar_xor_inplace+0x152>
+   6fed2:	mov    (%rdx,%rax,8),%r8
+   6fed6:	xor    %r8,(%rdi,%rax,8)
+   6feda:	lea    0x4(%rax),%r8
+   6fede:	inc    %rax
+   6fee1:	cmp    %r11,%rax
+   6fee4:	mov    %r8,%rax
+   6fee7:	jb     6fe60 <gf2_core::kernels::ops::scalar_xor_inplace+0x30>
+   6feed:	add    $0xfffffffffffffffd,%r8
+   6fef1:	mov    %r9,%rcx
+   6fef4:	sub    %r8,%rcx
+   6fef7:	ja     6ff09 <gf2_core::kernels::ops::scalar_xor_inplace+0xd9>
+   6fef9:	jmp    6ff80 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   6fefe:	xor    %r8d,%r8d
+   6ff01:	mov    %r9,%rcx
+   6ff04:	sub    %r8,%rcx
+   6ff07:	jbe    6ff80 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   6ff09:	cmp    $0x4,%rcx
+   6ff0d:	jae    6ff14 <gf2_core::kernels::ops::scalar_xor_inplace+0xe4>
+   6ff0f:	mov    %r8,%rax
+   6ff12:	jmp    6ff70 <gf2_core::kernels::ops::scalar_xor_inplace+0x140>
+   6ff14:	and    %rcx,%r10
+   6ff17:	lea    (%r8,%r10,1),%rax
+   6ff1b:	lea    (%rdi,%r8,8),%rsi
+   6ff1f:	add    $0x10,%rsi
+   6ff23:	lea    (%rdx,%r8,8),%r8
+   6ff27:	add    $0x10,%r8
+   6ff2b:	xor    %r11d,%r11d
+   6ff2e:	xchg   %ax,%ax
+   6ff30:	movups -0x10(%r8,%r11,8),%xmm0
+   6ff36:	movups (%r8,%r11,8),%xmm1
+   6ff3b:	movups -0x10(%rsi,%r11,8),%xmm2
+   6ff41:	xorps  %xmm0,%xmm2
+   6ff44:	movups (%rsi,%r11,8),%xmm0
+   6ff49:	xorps  %xmm1,%xmm0
+   6ff4c:	movups %xmm2,-0x10(%rsi,%r11,8)
+   6ff52:	movups %xmm0,(%rsi,%r11,8)
+   6ff57:	add    $0x4,%r11
+   6ff5b:	cmp    %r11,%r10
+   6ff5e:	jne    6ff30 <gf2_core::kernels::ops::scalar_xor_inplace+0x100>
+   6ff60:	cmp    %r10,%rcx
+   6ff63:	je     6ff80 <gf2_core::kernels::ops::scalar_xor_inplace+0x150>
+   6ff65:	data16 cs nopw 0x0(%rax,%rax,1)
+   6ff70:	mov    (%rdx,%rax,8),%rcx
+   6ff74:	xor    %rcx,(%rdi,%rax,8)
+   6ff78:	inc    %rax
+   6ff7b:	cmp    %rax,%r9
+   6ff7e:	jne    6ff70 <gf2_core::kernels::ops::scalar_xor_inplace+0x140>
+   6ff80:	pop    %rax
+   6ff81:	ret
+   6ff82:	lea    0x4cdaf(%rip),%rdx        # bcd38 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x5b8>
+   6ff89:	mov    %rax,%rdi
+   6ff8c:	call   *0x4fa9e(%rip)        # bfa30 <_DYNAMIC+0x208>
+   6ff92:	lea    0x4cd87(%rip),%rdx        # bcd20 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x5a0>
+   6ff99:	mov    %rax,%rdi
+   6ff9c:	mov    %rcx,%rsi
+   6ff9f:	call   *0x4fa8b(%rip)        # bfa30 <_DYNAMIC+0x208>
+   6ffa5:	lea    0x4cd5c(%rip),%rdx        # bcd08 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x588>
+   6ffac:	mov    %r8,%rdi
+   6ffaf:	call   *0x4fa7b(%rip)        # bfa30 <_DYNAMIC+0x208>
+   6ffb5:	lea    0x4cd34(%rip),%rdx        # bccf0 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x570>
+   6ffbc:	mov    %r8,%rdi
+   6ffbf:	mov    %rcx,%rsi
+   6ffc2:	call   *0x4fa68(%rip)        # bfa30 <_DYNAMIC+0x208>
+   6ffc8:	lea    0x4cd09(%rip),%rdx        # bccd8 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x558>
+   6ffcf:	mov    %r8,%rdi
+   6ffd2:	call   *0x4fa58(%rip)        # bfa30 <_DYNAMIC+0x208>
+   6ffd8:	lea    0x4cce1(%rip),%rdx        # bccc0 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x540>
+   6ffdf:	mov    %r8,%rdi
+   6ffe2:	mov    %rcx,%rsi
+   6ffe5:	call   *0x4fa45(%rip)        # bfa30 <_DYNAMIC+0x208>
+   6ffeb:	lea    0x4ccb6(%rip),%rdx        # bcca8 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x528>
+   6fff2:	mov    %r8,%rdi
+   6fff5:	call   *0x4fa35(%rip)        # bfa30 <_DYNAMIC+0x208>
+   6fffb:	lea    0x4cc8e(%rip),%rdx        # bcc90 <anon.fc0f47fa9653821f57d5a55292b6eb36.2.llvm.11340752617015147710+0x510>
+   70002:	mov    %r8,%rdi
+   70005:	mov    %rcx,%rsi
+   70008:	call   *0x4fa22(%rip)        # bfa30 <_DYNAMIC+0x208>

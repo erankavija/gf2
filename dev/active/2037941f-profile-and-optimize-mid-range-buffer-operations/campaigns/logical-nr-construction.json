@@ -1,0 +1,240 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "2037941f-logical-nr-construction",
+    "issue": "18a87159",
+    "purpose": "consumer-family",
+    "description": "Whole public QuasiCyclicLdpc::nr_5g_rate_matched construction over the selected eight-word route and its four non-regression controls. This addendum is the pilot: every cell is exploratory and no cell decides adoption."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-17T22:00:39Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.02,
+    "rationale": "Two percent of the whole constructor is worthwhile because maintenance is one existing resolver plus one fixed-width loop binding.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.015,
+    "equivalence_rationale": "The four control constructors must remain not-worse within one and a half percent.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The NR family selects a candidate; it declares no external comparator gap."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 32,
+    "maintenance_rationale": "One resolver-hoist candidate, at most 32 added nonblank production lines in the existing NR construction module, and no unsafe code, dependency, allocation, public API, semantic type or alternate matrix abstraction."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 4,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "nr-construct-bg2-256-49-z9-8w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-bg2-construction-nr-construct-bg2-256-49-z9-8w-warm",
+        "size": {
+          "base_graph": 2,
+          "dense_columns": 468,
+          "dense_rows": 378,
+          "lifting_factor": 9,
+          "stride_words": 8,
+          "target_k": 49,
+          "target_n": 256
+        },
+        "seed": 15413205403186234864
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-construct-bg2-256-121-z22-18w-warm",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-bg2-construction-nr-construct-bg2-256-121-z22-18w-warm",
+        "size": {
+          "base_graph": 2,
+          "dense_columns": 1144,
+          "dense_rows": 924,
+          "lifting_factor": 22,
+          "stride_words": 18,
+          "target_k": 121,
+          "target_n": 256
+        },
+        "seed": 9482013226125561501
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-construct-bg2-625-225-z30-25w-warm",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-bg2-construction-nr-construct-bg2-625-225-z30-25w-warm",
+        "size": {
+          "base_graph": 2,
+          "dense_columns": 1560,
+          "dense_rows": 1260,
+          "lifting_factor": 30,
+          "stride_words": 25,
+          "target_k": 225,
+          "target_n": 625
+        },
+        "seed": 17418674417637293791
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-construct-bg1-1024-640-z30-32w-warm",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-bg2-construction-nr-construct-bg1-1024-640-z30-32w-warm",
+        "size": {
+          "base_graph": 1,
+          "dense_columns": 2040,
+          "dense_rows": 1380,
+          "lifting_factor": 30,
+          "stride_words": 32,
+          "target_k": 640,
+          "target_n": 1024
+        },
+        "seed": 2914858308840861240
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-construct-bg2-1024-441-z56-46w-warm",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-bg2-construction-nr-construct-bg2-1024-441-z56-46w-warm",
+        "size": {
+          "base_graph": 2,
+          "dense_columns": 2912,
+          "dense_rows": 2352,
+          "lifting_factor": 56,
+          "stride_words": 46,
+          "target_k": 441,
+          "target_n": 1024
+        },
+        "seed": 7485290927449283065
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "nr-construct-bg2-256-49-z9-8w-cold",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-bg2-construction-nr-construct-bg2-256-49-z9-8w-cold",
+        "size": {
+          "base_graph": 2,
+          "dense_columns": 468,
+          "dense_rows": 378,
+          "lifting_factor": 9,
+          "stride_words": 8,
+          "target_k": 49,
+          "target_n": 256
+        },
+        "seed": 14602770261201244162
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "cold_calls": 1,
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
