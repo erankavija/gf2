@@ -8,9 +8,10 @@
 //! child process speaking the canonical child-v2 framing. Under protocol
 //! version 4 a resumed session journals `cell-abandoned` for a cell attempt
 //! that an interruption left unfinished, then measures that cell again from
-//! its first pair.
+//! its first pair. `smoke <plan.json>` drives the same arms untimed;
+//! `tuning_campaign_support::arm::smoke` states that contract.
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::env;
@@ -18,12 +19,12 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::atomic::AtomicBool;
 use std::time::{Duration, Instant};
 use tuning_campaign_support::abtest::{
     bootstrap_seed, decide, median, pair_orders, paired_bootstrap_speedup, ArmOrder,
     PairedObservation,
 };
+use tuning_campaign_support::arm::{dispatch_arm, ArmRequest, ChildObserver, PairPosition};
 use tuning_campaign_support::campaign::{LockEvidence, ProcessOutcome, Token};
 use tuning_campaign_support::host::{
     inherited_lock, resolve_core_arm, CpuAffinity, HostObservation,
@@ -31,66 +32,19 @@ use tuning_campaign_support::host::{
 use tuning_campaign_support::journal::{
     atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity, TerminalState,
 };
-use tuning_campaign_support::process::run_process;
 use tuning_campaign_support::protocol::{
-    sha256_hex, ArtifactPin, CacheState, FamilyAddendum, PlanCell, RunnerPlan,
-    ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
+    sha256_hex, ArtifactPin, FamilyAddendum, PlanCell, RunnerPlan, ADDENDUM_SCHEMA_PATH,
+    CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
 };
 use tuning_campaign_support::provenance::{ProducingInputs, ProducingSnapshot};
 use tuning_campaign_support::receipt::{
-    ArmQuality, ArmRecord, BenchmarkReceipt, CampaignFacts, CellAbandonment, CellAttempts,
-    CellClaim, CellRecord, CellStatus, CheckpointRecord, ConversionCosts, ExecutionRecord,
-    LockRecord, LogRecord, PairRecord, SourceIdentity, WindowRecord, WorkerReport, CHECKPOINT_DIR,
-    LOG_FILE, PLAN_FILE, RECEIPT_FILE,
+    ArmRecord, BenchmarkReceipt, CampaignFacts, CellAbandonment, CellAttempts, CellClaim,
+    CellRecord, CellStatus, CheckpointRecord, ExecutionRecord, LockRecord, LogRecord, PairRecord,
+    SourceIdentity, WorkerReport, CHECKPOINT_DIR, LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
-use tuning_campaign_support::transport::{self, FRESH_CASE_VALUE, FRESH_CASE_VAR};
-
-/// Schema of the request each arm child reads on stdin.
-const ARM_REQUEST_SCHEMA: &str = "zen3-benchmark-arm-request-v1";
-/// Schema of the one result line each arm child writes.
-const ARM_RESULT_SCHEMA: &str = "zen3-benchmark-arm-result-v1";
-const CHILD_KILL_GRACE: Duration = Duration::from_secs(5);
-static ALL_REAPED: AtomicBool = AtomicBool::new(true);
 
 fn invalid(message: impl ToString) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message.to_string())
-}
-
-/// Request forwarded to an arm child.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ArmRequest {
-    schema: String,
-    cell_id: String,
-    arm: String,
-    role: String,
-    pair: u32,
-    case: Value,
-    cache_state: CacheState,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    cold_calls: Option<u64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    decoder: Option<tuning_campaign_support::protocol::DecoderCell>,
-    windows: u32,
-    window_target_ms: u32,
-    cpus: Vec<u32>,
-    workers_declared: u32,
-}
-
-/// Result line an arm child writes.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ArmResult {
-    schema: String,
-    windows: Vec<WindowRecord>,
-    cache_state_applied: CacheState,
-    workers_observed: u32,
-    cpus_observed: Vec<u32>,
-    selected_path: Option<String>,
-    conversion: Option<ConversionCosts>,
-    quality: Option<ArmQuality>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    calibrated: Option<bool>,
 }
 
 fn command_text(program: &str, args: &[&str], cwd: &Path) -> io::Result<String> {
@@ -469,6 +423,43 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
     })
 }
 
+/// Journals one arm child's spawn, diagnostics and exit.
+struct ChildJournal<'a> {
+    log: &'a mut ExecutionLog,
+    case: Value,
+    pid: u32,
+}
+
+impl ChildObserver for ChildJournal<'_> {
+    fn spawned(&mut self, pid: u32) -> io::Result<()> {
+        self.pid = pid;
+        self.log
+            .append(
+                JournalEvent::ChildSpawn,
+                Some(self.case.clone()),
+                json!({"pid": pid}),
+            )
+            .map(|_| ())
+    }
+
+    fn exited(&mut self, outcome: &ProcessOutcome, stderr: &[u8]) -> io::Result<()> {
+        if !stderr.is_empty() {
+            self.log.append(
+                JournalEvent::ChildDiagnostic,
+                Some(self.case.clone()),
+                json!({"stderr": String::from_utf8_lossy(stderr)}),
+            )?;
+        }
+        self.log
+            .append(
+                JournalEvent::ChildExit,
+                Some(self.case.clone()),
+                json!({"outcome": outcome}),
+            )
+            .map(|_| ())
+    }
+}
+
 fn set_affinity(cpus: &[u32]) -> io::Result<()> {
     let mut set = rustix::thread::CpuSet::new();
     for cpu in cpus {
@@ -483,7 +474,7 @@ fn run_arm(
     cell_id: &str,
     key: &str,
     arm_name: &str,
-    role: &str,
+    role: PairPosition,
     pair: u32,
     request: &ArmRequest,
 ) -> io::Result<ExecutionRecord> {
@@ -491,81 +482,26 @@ fn run_arm(
         .plan
         .arms
         .get(arm_name)
-        .ok_or_else(|| invalid("unknown arm"))?;
-    let record = session
-        .facts
-        .arms
-        .get(arm_name)
-        .ok_or_else(|| invalid("unknown arm"))?;
-    let mut command = Command::new(&record.executable_path);
-    command.args(&arm.arguments);
-    command.env_clear();
-    for (name, value) in ["PATH", "HOME", "RAYON_NUM_THREADS", "RUSTUP_TOOLCHAIN"]
-        .iter()
-        .filter_map(|name| env::var(name).ok().map(|value| (*name, value)))
-    {
-        command.env(name, value);
-    }
-    for (name, value) in &arm.environment {
-        command.env(name, value);
-    }
-    command.env(FRESH_CASE_VAR, FRESH_CASE_VALUE);
-    let input = transport::encode_case(request).map_err(invalid)?;
+        .ok_or_else(|| invalid("unknown arm"))?
+        .clone();
+    let executable = PathBuf::from(
+        &session
+            .facts
+            .arms
+            .get(arm_name)
+            .ok_or_else(|| invalid("unknown arm"))?
+            .executable_path,
+    );
     let case = json!({"key": key, "cell_id": cell_id, "arm": arm_name, "role": role, "pair": pair});
     let start = Instant::now();
     let timeout = Duration::from_secs(session.facts.settings.child_timeout_seconds);
-    let log = &mut session.log;
-    let mut spawned_pid = 0;
-    let mut stderr = Vec::new();
-    let result = run_process(
-        command,
-        input.as_bytes(),
-        timeout,
-        CHILD_KILL_GRACE,
-        || Ok(()),
-        &ALL_REAPED,
-        |pid| {
-            spawned_pid = pid;
-            log.append(
-                JournalEvent::ChildSpawn,
-                Some(case.clone()),
-                json!({"pid": pid}),
-            )
-            .map(|_| ())
-        },
-        |chunk| {
-            stderr.extend_from_slice(chunk);
-            Ok(())
-        },
-    )?;
-    if !stderr.is_empty() {
-        session.log.append(
-            JournalEvent::ChildDiagnostic,
-            Some(case.clone()),
-            json!({"stderr": String::from_utf8_lossy(&stderr)}),
-        )?;
-    }
-    session.log.append(
-        JournalEvent::ChildExit,
-        Some(case.clone()),
-        json!({"outcome": result.outcome}),
-    )?;
-    if let Some(error) = result.callback_error {
-        return Err(error);
-    }
-    match result.outcome {
-        ProcessOutcome::Exited { exit_code: 0, .. } => {}
-        other => {
-            return Err(invalid(format!(
-                "arm {arm_name} did not exit cleanly: {other:?}"
-            )))
-        }
-    }
-    let text = String::from_utf8(result.stdout).map_err(|_| invalid("arm stdout is not UTF-8"))?;
-    let parsed: ArmResult = transport::parse_result(&text).map_err(invalid)?;
-    if parsed.schema != ARM_RESULT_SCHEMA {
-        return Err(invalid(format!("arm result schema {:?}", parsed.schema)));
-    }
+    let mut journal = ChildJournal {
+        log: &mut session.log,
+        case: case.clone(),
+        pid: 0,
+    };
+    let parsed = dispatch_arm(&executable, &arm, request, timeout, &mut journal)?;
+    let spawned_pid = journal.pid;
     if parsed.windows.len() != request.windows as usize
         || parsed
             .windows
@@ -658,31 +594,28 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
             set_affinity(&cpus)?;
             let outcome = (|| -> io::Result<()> {
                 for (pair, order) in orders.iter().enumerate() {
-                    let request = |arm: &str, role: &str| ArmRequest {
-                        schema: ARM_REQUEST_SCHEMA.into(),
-                        cell_id: plan_cell.cell_id.clone(),
-                        arm: arm.to_owned(),
-                        role: role.to_owned(),
-                        pair: pair as u32,
-                        case: plan_cell.case.clone(),
-                        cache_state: declared.cache_state,
-                        cold_calls: declared.cold_calls,
-                        decoder: declared.decoder.clone(),
-                        windows: settings.windows_per_execution,
-                        window_target_ms: settings.window_target_ms,
-                        cpus: cpus.clone(),
-                        workers_declared: declared.workers.declared,
+                    let request = |arm: &str, role: PairPosition| {
+                        ArmRequest::timed(
+                            &plan_cell,
+                            &declared,
+                            arm,
+                            role,
+                            pair as u32,
+                            cpus.clone(),
+                            &settings,
+                        )
+                        .map_err(invalid)
                     };
                     let baseline = plan_cell.baseline_arm.clone();
                     let candidate = plan_cell.candidate_arm.clone();
                     let (first, second) = match order {
                         ArmOrder::BaselineFirst => (
-                            ("baseline", baseline.clone()),
-                            ("candidate", candidate.clone()),
+                            (PairPosition::Baseline, baseline.clone()),
+                            (PairPosition::Candidate, candidate.clone()),
                         ),
                         ArmOrder::CandidateFirst => (
-                            ("candidate", candidate.clone()),
-                            ("baseline", baseline.clone()),
+                            (PairPosition::Candidate, candidate.clone()),
+                            (PairPosition::Baseline, baseline.clone()),
                         ),
                     };
                     let first_record = run_arm(
@@ -692,7 +625,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                         &first.1,
                         first.0,
                         pair as u32,
-                        &request(&first.1, first.0),
+                        &request(&first.1, first.0)?,
                     )?;
                     let second_record = run_arm(
                         session,
@@ -701,7 +634,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                         &second.1,
                         second.0,
                         pair as u32,
-                        &request(&second.1, second.0),
+                        &request(&second.1, second.0)?,
                     )?;
                     let (baseline_record, candidate_record) = match order {
                         ArmOrder::BaselineFirst => (first_record, second_record),
@@ -1078,6 +1011,37 @@ fn check(plan_path: &Path) -> io::Result<i32> {
     Ok(0)
 }
 
+/// Drives every arm of a plan's cells once, untimed, and writes the smoke's
+/// record when `--record` names a path.
+///
+/// `tuning_campaign_support::arm::smoke` states the contract this subcommand
+/// exposes; this function only resolves paths and renders the record.
+fn smoke(plan_path: &Path, record_path: Option<&Path>) -> io::Result<i32> {
+    let root = repository_root()?;
+    let record = tuning_campaign_support::arm::smoke(&root, plan_path)?;
+    if let Some(path) = record_path {
+        let mut bytes = serde_json::to_vec_pretty(&record)?;
+        bytes.push(b'\n');
+        if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(path, bytes)?;
+    }
+    let dispatches: usize = record.cells.iter().map(|cell| cell.arms.len()).sum();
+    let windows: usize = record
+        .cells
+        .iter()
+        .flat_map(|cell| cell.arms.iter().map(|arm| arm.windows))
+        .sum();
+    println!(
+        "campaign {}: {dispatches} validation dispatches over {} cells, {windows} timing windows{}",
+        record.campaign_id,
+        record.cells.len(),
+        record_path.map_or_else(String::new, |path| format!(" -> {}", path.display())),
+    );
+    Ok(0)
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let result = match args
@@ -1091,10 +1055,13 @@ fn main() {
             finalize(Path::new(stage), Path::new(out_dir)).map(|()| 0)
         }
         [_, "check", plan] => check(Path::new(plan)),
+        [_, "smoke", plan] => smoke(Path::new(plan), None),
+        [_, "smoke", plan, "--record", record] => smoke(Path::new(plan), Some(Path::new(record))),
         _ => {
             eprintln!(
                 "usage: benchmark-ab-runner run <stage> <plan.json> | \
-                 finalize <stage> <out-dir> | check <plan.json>"
+                 finalize <stage> <out-dir> | check <plan.json> | \
+                 smoke <plan.json> [--record <path>]"
             );
             std::process::exit(2);
         }
