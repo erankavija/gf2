@@ -25,12 +25,14 @@ Each accepted exploratory receipt pins the producing closure, rebuilt release
 executables, semantic fixtures, raw paired samples, bounded append-only log,
 checkpoints and runtime-observed host state. Exploratory evidence may nominate
 a candidate but never authorizes production. A candidate's confirmatory stage is
-a pilot followed by a confirmation whose addendum the canonical freezer derives
-from the committed pilot receipt, with both arms the same shipped executable
-separated by the test-build lane switch and every cell inside the family's P-20
-confirmatory budget. Negative, unavailable and non-qualifying outcomes remain
-part of the durable record, and a frozen rule decides retention before the
-result is known.
+its own protocol family, with its own ledger opening empty, a pilot, and a
+confirmation whose addendum the canonical freezer derives from the committed
+pilot receipt; both arms are the same shipped executable separated by the
+test-build lane switch, every cell sits inside that family's own P-20
+confirmatory budget, and the nominating profile's receipt is context pinned by
+path and digest rather than inherited evidence. Negative, unavailable and
+non-qualifying outcomes remain part of the durable record, and a frozen rule
+decides retention before the result is known.
 
 ### `semantic-boundaries` [plan-fixed] — distinct operation semantics
 
@@ -113,7 +115,7 @@ retention: the route ships in order to be measured.
 ### `shift-candidate-outcome` [implementation-produced] — the candidate's verdict
 
 Produced by `shift-bmi2-confirmation`. It binds the frozen pilot and confirmation
-addenda, the family ledger reservations, the accepted receipts, the per-cell
+addenda, its own family ledger's reservations, the accepted receipts, the per-cell
 verdicts the acceptance summary records and the retention or removal the frozen
 rule produces. A non-qualifying verdict is the outcome rather than a reason to
 re-open the rule.
@@ -133,7 +135,7 @@ above unspent; any later nomination re-enters that barrier.
 |---|---|---|---|---|---|---|---|---|
 | shift-workload-profile | Profile the residual BitVec shift family | simulation | Residual-shift materiality has a protocol-complete disposition | measurement-authority, semantic-boundaries, family-scope, candidate-bracket-rule | REQ-01, REQ-07, REQ-08, REQ-09, REQ-11, INV-CLASSIFICATION, INV-CONSUMERS, INV-ARCHITECTURE, MEASUREMENT-CONTRACT, PROTOCOL-V4 | creates 4, touches 1 | — | — |
 | shift-bmi2-implementation | Route residual BitVec shifts through a BMI2-gated funnel kernel | task | Residual BitVec shifts run a BMI2-gated funnel kernel behind runtime detection | measurement-authority, semantic-boundaries, family-scope, layer-ownership, candidate-bracket-rule, shift-profile-disposition | REQ-07, REQ-08, REQ-09, REQ-11, INV-ARCHITECTURE, MEASUREMENT-CONTRACT, SHIFT-PROFILE, SHIFT-FEASIBILITY | creates 4, touches 4 | — | shift-workload-profile |
-| shift-bmi2-confirmation | Confirm the BMI2 residual shift route against the scalar funnel | simulation | The gated residual shift route has a protocol-complete A/B verdict at the profile's material cells | measurement-authority, semantic-boundaries, family-scope, candidate-bracket-rule, shift-profile-disposition, residual-shift-kernel-route | REQ-01, REQ-07, REQ-11, MEASUREMENT-CONTRACT, PROTOCOL-V4, SHIFT-PROFILE | creates 3, touches 3 | — | shift-bmi2-implementation |
+| shift-bmi2-confirmation | Confirm the BMI2 residual shift route against the scalar funnel | simulation | The gated residual shift route has a protocol-complete A/B verdict at the profile's material cells | measurement-authority, semantic-boundaries, family-scope, candidate-bracket-rule, shift-profile-disposition, residual-shift-kernel-route | REQ-01, REQ-07, REQ-11, MEASUREMENT-CONTRACT, PROTOCOL-V4, SHIFT-PROFILE | creates 4, touches 2 | — | shift-bmi2-implementation |
 | dvb-interleave-profile | Profile the production DVB-T2 bit interleaver | simulation | DVB-T2 interleave materiality has a protocol-complete disposition | measurement-authority, semantic-boundaries, family-scope, layer-ownership, candidate-bracket-rule | REQ-01, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, INV-CONSUMERS, INV-PRIOR-ART, INV-ARCHITECTURE, EDA07788-FINDINGS, DVB-REPAIR, MEASUREMENT-CONTRACT, PROTOCOL-V4 | creates 4, touches 2 | — | — |
 | story-evidence-publication | Publish the shift-permutation dispositions | task | Generated evidence publishes each workload family's current disposition | measurement-authority, semantic-boundaries, family-scope, candidate-bracket-rule, shift-profile-disposition, shift-candidate-outcome, dvb-profile-disposition | REQ-01, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, INV-CLASSIFICATION, INV-CONSUMERS, INV-PRIOR-ART, INV-ARCHITECTURE, EDA07788-FINDINGS, DVB-REPAIR, MEASUREMENT-CONTRACT, PROTOCOL-V4, SHIFT-PROFILE, SHIFT-FEASIBILITY | creates 3 | — | dvb-interleave-profile, shift-bmi2-confirmation |
 
