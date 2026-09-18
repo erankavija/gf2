@@ -653,6 +653,23 @@ fn a_zero_window_arrangement_pass_collects_no_timing_sample() {
         |_| Ok(()),
     )
     .is_err());
+
+    // An empty working set is a refusal too, not a rotation over nothing.
+    for (banks, items) in [(0, 1), (1, 0)] {
+        assert!(run_windows(
+            WindowPlan {
+                cache: Cache::Streaming,
+                cold_calls: None,
+                windows: 0,
+                window_target_ms: 0,
+                banks,
+                items,
+            },
+            &mut |_, _| {},
+            |_| Ok(()),
+        )
+        .is_err());
+    }
 }
 
 #[test]
