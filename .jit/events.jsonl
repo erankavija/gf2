@@ -13356,3 +13356,4 @@
 {"fields":["documents"],"id":"537ac32d-2e36-4048-9fc7-4593589886af","issue_id":"ad2a6a58-39f1-4d1e-bdcc-e6a1e909fe67","timestamp":"2026-09-18T14:13:40.543065289Z","type":"issue_updated","updated_by":"doc-remove"}
 {"fields":["documents"],"id":"bad6295d-ac3b-4183-9b91-4c91749b6821","issue_id":"ad2a6a58-39f1-4d1e-bdcc-e6a1e909fe67","timestamp":"2026-09-18T14:13:40.687317329Z","type":"issue_updated","updated_by":"doc-add"}
 {"gate_key":"breakdown-review","id":"b612f27c-3058-4c0e-855f-ff549410b7cd","issue_id":"16560579-abd8-446c-9a02-9715feeee1af","timestamp":"2026-09-18T14:16:26.942803809Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"8c9eea23-3186-4081-9b0b-d67c90b56ce9","issue_id":"85fc5ff4-b6c0-4cc2-ab31-6df8df98bdce","timestamp":"2026-09-18T14:17:36.617092102Z","type":"issue_updated","updated_by":"doc-add"}

@@ -421,6 +421,13 @@
       "format": "markdown",
       "label": "Arm-smoke record renderer (text and JSON) for both c04dd4ac smokes",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-arm-smoke.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "85fc5ff4 lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/85fc5ff4-r1.md"
     }
   ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
@@ -462,5 +469,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile the residual BitVec shift family",
-  "updated_at": "2026-09-18T13:54:37.020636854Z"
+  "updated_at": "2026-09-18T14:17:36.617092102Z"
 }
