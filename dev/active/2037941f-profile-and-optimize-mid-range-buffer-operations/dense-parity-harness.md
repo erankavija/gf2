@@ -426,9 +426,10 @@ It checks, in order:
    declares zero timing windows, so each arm builds its fixture, verifies its
    shape and lane, runs the untimed arrangement its cache policy declares and
    answers with no timing window; a child that answers a zero-window request
-   with a window fails the smoke. Each comparator arm names the shared object
-   it loaded, and the record carries that path and digest; arms that disagree
-   on the object fail the smoke.
+   with a window fails the smoke. Each gf2 arm names the fixture banks it built
+   and a working set those banks account for. Each comparator arm names the
+   shared object it loaded, and the record carries that path and digest; arms
+   that disagree on the object fail the smoke.
 4. **Append-only logging and resume.** `max_cells_per_session` is one, so every
    family pauses at least once and a later session completes the stage. The
    first session's execution log is a byte prefix of the final log, the resumed

@@ -5,7 +5,8 @@ The smoke is judged by what the arms and the smoke driver wrote, not by exit
 codes: one parsed result line per arm per cell, an append-only execution log
 whose first session is a byte prefix of the final log, one `cell-complete` per
 declared cell, a terminal `complete` record, an immutable checkpoint per cell,
-and a handshake record whose every arm reports zero timing windows. The stage
+and a handshake record whose every arm reports zero timing windows and names the
+fixture banks it built or the external object it loaded. The stage
 is also checked to hold no finalized receipt, so the smoke can state from
 observation that it produced no timing sample and no receipt sample. Every line
 of the record is observed at run time and carries no clock reading, so a rerun
@@ -27,6 +28,9 @@ TIMING_EVENTS = ("execution-progress", "window-progress")
 # arm refuses a run whose object is not the qualified one, so a handshake that
 # carries this pair is a handshake against the qualified comparator.
 EXTERNAL_OBJECT = re.compile(r"/loaded=(?P<path>.+)/sha256=(?P<digest>[0-9a-f]{64})$")
+# The fixture banks a gf2 arm built and the bytes they hold, which a receipt
+# retains beside the cache claim they arrange.
+GF2_BANKS = re.compile(r"/banks=(?P<banks>\d+)x(?P<bank>\d+)B/working-set=(?P<total>\d+)B")
 
 
 def events(path):
@@ -129,6 +133,7 @@ def main():
             fail(f"{family} wrote schema {handshake['schema']!r}")
         parsed = {}
         cells = {}
+        fixtures = 0
         for cell in handshake["cells"]:
             cell_id = cell["cell_id"]
             if declared.get(cell_id) != cell["cache_state"]:
@@ -146,6 +151,13 @@ def main():
                         fail(f"{arm['arm']} in {cell_id} named no loaded shared object")
                     key = (observed["path"], observed["digest"])
                     external[key] = external.get(key, 0) + 1
+                else:
+                    banks = GF2_BANKS.search(arm["selected_path"])
+                    if not banks:
+                        fail(f"{arm['arm']} in {cell_id} named no fixture banks")
+                    if int(banks["banks"]) * int(banks["bank"]) != int(banks["total"]):
+                        fail(f"{arm['arm']} in {cell_id} reports banks the working set contradicts")
+                    fixtures += 1
                 parsed[arm["arm"]] = parsed.get(arm["arm"], 0) + 1
             cells[cell_id] = (len(cell["arms"]), cell["cache_state"])
         if sorted(cells) != sorted(keys):
@@ -179,6 +191,10 @@ def main():
         lines.append(
             f"PASS {family} journal: {len(timed)} timing records, {len(units)} checkpointed "
             f"cells, {len(receipts)} finalized receipts"
+        )
+        lines.append(
+            f"PASS {family} fixtures: {fixtures} gf2 arms name their fixture banks and a "
+            "working set those banks account for"
         )
         lines.append(
             f"PASS {family} schema: handshake record decodes as {handshake['schema']}, "
