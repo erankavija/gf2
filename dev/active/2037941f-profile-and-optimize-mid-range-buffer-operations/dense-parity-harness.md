@@ -137,8 +137,9 @@ Every arm reports `selected_path` from what it observes at run time: the entry
 point, the lane `matvec_route` resolves for the cell's stride, the observed
 rows, columns, stride and allocation base modulo 64, and the resident working
 set. The isolated arm adds both operand addresses modulo 64. The M4RI arm adds
-the matched operation, the qualified shape and the coordinate accessors. No arm
-embeds a prior figure, file inventory, or host assertion.
+the matched operation, the qualified shape, the coordinate accessors, and the
+path and digest of the shared object it loaded. No arm embeds a prior figure,
+file inventory, or host assertion.
 
 Before timing is enabled, every allocated and comparator arm verifies the
 constructed public objects: `verify_shape` checks the observed rows, columns,
@@ -273,6 +274,30 @@ producing an arm whose external identity is unknown. The install is created by
 `.agents/ext/92385645/prefix-qualified-v3` and is shared, never rebuilt
 destructively.
 
+### The loaded object, observed at run time
+
+The executed qualification of `92385645` links M4RI as a shared object, and the
+comparator is that arm only while it does the same, so the harness keeps the
+dynamic link rather than making the library part of the executable. The link is
+a `RUNPATH`, which `LD_LIBRARY_PATH` overrides, so the arm's own digest does not
+say which object the loader hands the timed process.
+
+Every entry point of `dense-m4ri-arm` therefore reads `/proc/self/maps`, takes
+the one mapped file whose name begins `libm4ri.so`, hashes its bytes, and
+refuses unless that digest is the one the qualification record pins;
+`survey/dense-harness/src/external.rs` holds the observation and the refusal.
+The pin reaches the arm from `build.rs`, which already reads it from the record,
+so no prior digest is typed in the arm's source. Zero mapped objects and several
+distinct ones are refusals of their own: the first says the arm is not running
+what it linked against, the second that no sample could name which object
+executed.
+
+The identity travels in the provenance the arm reports: `--backend` adds
+`loaded_library` and `loaded_sha256`, and each timed sample's `selected_path`
+carries `loaded=<path>/sha256=<digest>`, so a receipt names the object that
+produced it. Contract tests cover the mapping-table decode, the refusal on a
+substituted object, and the provenance fields.
+
 The shim exposes exactly the charged components the matched-operation
 specification defines and holds no timing loop: one fresh whole-consumer call,
 and the retain, call and release of a retained-state cell.
@@ -371,7 +396,9 @@ It checks, in order:
    declares zero timing windows, so each arm builds its fixture, verifies its
    shape and lane, runs the untimed arrangement its cache policy declares and
    answers with no timing window; a child that answers a zero-window request
-   with a window fails the smoke.
+   with a window fails the smoke. Each comparator arm names the shared object
+   it loaded, and the record carries that path and digest; arms that disagree
+   on the object fail the smoke.
 4. **Append-only logging and resume.** `max_cells_per_session` is one, so every
    family pauses at least once and a later session completes the stage. The
    first session's execution log is a byte prefix of the final log, the resumed

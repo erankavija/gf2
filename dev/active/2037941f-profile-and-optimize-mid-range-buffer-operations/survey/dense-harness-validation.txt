@@ -13,7 +13,7 @@
 # unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
-PASS harness contract: 38 tests pass
+PASS harness contract: 41 tests pass
 PASS matvec-cols-0-rows-0: 6 checks
 PASS matvec-cols-0-rows-1: 9 checks
 PASS matvec-cols-0-rows-63: 195 checks
@@ -118,16 +118,16 @@ PASS and-popcnt-64w: 3 checks
 PASS and-popcnt-65w: 3 checks
 PASS and-popcnt-66w: 3 checks
 # m4ri prefix: /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3
-# {"library":"m4ri","entrypoint":"mzd_mul","matched_operation":"mzd_mul(y, A, x, 0)","coordinates":"mzd_write_bit/mzd_read_bit","qualified_shapes":"65x512,65x4096,1x1,63x63,64x64,65x65","comparator":"dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"}
+# {"library":"m4ri","entrypoint":"mzd_mul","matched_operation":"mzd_mul(y, A, x, 0)","coordinates":"mzd_write_bit/mzd_read_bit","qualified_shapes":"65x512,65x4096,1x1,63x63,64x64,65x65","comparator":"dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md","loaded_library":"/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1","loaded_sha256":"1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"}
 PASS m4ri-65x512: 71 checks
 PASS m4ri-65x4096: 71 checks
 PASS m4ri-1x1: 7 checks
 PASS m4ri-63x63: 69 checks
 PASS m4ri-64x64: 70 checks
 PASS m4ri-65x65: 71 checks
-# dense-m4ri-arm sha256: 228bf03d59a70c377050a68b3890713fb058370bfb881ddea9cf66007b0e0e42
+# dense-m4ri-arm sha256: a19becd3ea05f19b45a2dcd5053fa6bfb79a4d2fcf8660568a98e8b084b30ef4
 # libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
-# dense-arm sha256: 9909d730a0b51b08544f4ab02cddb243bd1bdb880a4f8d2f21de1a5a8059beea
-# dense-campaign sha256: 72c31147538a2625b0859e83977453ada6951d4308fba621bb49e44f93ec5d3d
+# dense-arm sha256: d16736b611b290aeb565d005ae72a5e7f8b26065575b7802fe8a942231b84706
+# dense-campaign sha256: 68ae1a92e413b0c86f9a698beec8f8d5e6cf05f614d1d989eeb86ab940a6c42a
 # dense-oracle sha256: 3a3869bef9d46bbd7db47d9cea6517f070d918e0735c973811d4a3795510a8cb
-# dense-arm (scalar-reference) sha256: d6f5bd889ff8836f61fc7e49e51b0e4b2b430041acdfaf8236a4c0f2e5f3b3de
+# dense-arm (scalar-reference) sha256: 7647ba58ad4d8fce5733620ed32798ea21e8c5092edaf796efa92eaa6f3f7ebe
