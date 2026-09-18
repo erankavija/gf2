@@ -409,7 +409,6 @@ pub struct SmokeRecord {
 /// against, `observer` the caller's journal. Fails when the arm reports a
 /// timing window, applies a cache state other than the declared one, or reports
 /// no route provenance.
-#[allow(clippy::too_many_arguments)]
 pub fn validate_arm(
     root: &Path,
     plan: &RunnerPlan,
