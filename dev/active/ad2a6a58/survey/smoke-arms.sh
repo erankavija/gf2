@@ -8,19 +8,16 @@
 # A campaign that reaches the benchmark window and dies on its first arm spends
 # the window and measures nothing, and reading the runner and the arm side by
 # side does not establish the wire between two processes. Three untimed steps
-# establish it instead. The arm workspace's tests pin the request mirror against
-# `benchmark-ab-runner`'s own `ArmRequest` declaration, so the record below can
-# only be regenerated while the two still agree. `benchmark-ab-runner check`
-# then applies the decode and validation the runner applies before its first
-# measurement, over a throwaway plan projected from the frozen addendum.
-# `gf256-axpy-smoke` finally drives every arm of every declared cell with the
-# runner's own case encoder, sentinel, child environment and result parser in
-# the `validation` position, so each arm performs one untimed dispatch and
-# returns no timing window.
+# establish it. The arm workspace's tests pin the request mirror against
+# `benchmark-ab-runner`'s own `ArmRequest` declaration, so the record can only
+# be regenerated while the two agree; `benchmark-ab-runner check` applies the
+# decode and validation the runner applies before its first measurement;
+# `gf256-axpy-smoke` drives every arm of every declared cell over the runner's
+# wire in the `validation` position, one untimed dispatch each.
 #
-# Nothing here is timed and nothing it writes is evidence of performance: the
-# plan and the throwaway lock live under `target/`, the family ledger is never
-# opened, no receipt is finalized and no record line carries a clock reading.
+# Nothing here is timed: the throwaway plan and its unused lock live under
+# `target/`, the family ledger is never opened, no receipt is finalized and no
+# record line carries a clock reading.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

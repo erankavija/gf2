@@ -7,11 +7,6 @@
 # shipped crate compiles the lane switch and the lane witness
 # (`gf2m::byte_table`). The environment selects the lane and the element
 # representation, so a pair differs in nothing else.
-#
-# It reuses the byte-field survey's arm driver (`byte-field-arm-common`, the
-# runner's wire contract and the conversion accounting) and its element
-# representations and byte conversions (`byte-field-gf2-side`) rather than
-# restating either.
 
 [workspace]
 

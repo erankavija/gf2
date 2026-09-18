@@ -38,11 +38,21 @@ execution is distinguishable from one that found the table cached.
 |---|---|---|
 | Frozen pilot family | [`addendum-v4-axpy-pilot.json`](addendum-v4-axpy-pilot.json) | committed before launch |
 | Genesis ledger | [`axpy-family-ledger.jsonl`](../../bench_results/ad2a6a58/axpy-family-ledger.jsonl) | open and empty |
-| Runner-wire smoke | [`survey/runner-smoke.txt`](survey/runner-smoke.txt) | every arm, operation and cache state through the real runner |
+| Arm smoke | [`survey/runner-smoke.txt`](survey/runner-smoke.txt) | every arm, cell, operation and cache state, untimed |
 | Pilot campaign | `dev/bench_results/ad2a6a58/r1-axpy-pilot` | queued for the benchmark window |
 | Confirmation addendum | `addendum-v4-axpy-confirmation.json` | frozen from the committed pilot receipt |
 | Confirmation campaign | `dev/bench_results/ad2a6a58/r1-axpy-confirmation` | queued after the freeze |
 | Published outcome | [`tables.md`](../../bench_results/ad2a6a58/tables.md) | generated from committed receipts |
+
+Every stage that measures is preceded by an untimed one.
+`survey/smoke-arms.sh` projects a throwaway plan from the frozen addendum,
+validates it with the runner's own `check`, and drives every arm of every
+declared cell through `gf256-axpy-smoke`, which speaks the runner's wire — its
+case encoder, fresh-child sentinel, child environment and result parser — in
+the `validation` position. Each arm performs one untimed dispatch and reports
+no timing window; the smoke refuses one that does, and the record is a build
+input of both campaigns, so a timed run refuses to launch until the smoke is
+committed. Timing belongs to the queued window alone.
 
 The freezer derives the measurement resolution from the whole pilot, dropped
 cells included, so a cold cell's width sizes the confirmation's margins even
