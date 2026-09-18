@@ -33,6 +33,9 @@ decision to it.
 The seven fixed clauses are the rows whose verdict names a commit. Every other
 row conformed before this round; no clause of the addendum, the contract or the
 protocol is unsatisfiable by this harness, and no frozen or pinned byte changed.
+One further fix, `838275b0`, makes the timing loop refuse a declared working set
+with no bank or no item rather than divide by it; no clause admits such a cell,
+so it carries no row of its own.
 
 ## Operations and cost boundaries
 
