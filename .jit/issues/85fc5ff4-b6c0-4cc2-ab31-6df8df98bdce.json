@@ -114,13 +114,6 @@
     {
       "commit": null,
       "doc_type": "notes",
-      "format": "markdown",
-      "label": "Wire-smoke summarizer",
-      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-shift-smoke.py"
-    },
-    {
-      "commit": null,
-      "doc_type": "notes",
       "label": "Residual-shift runner-plan projector",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-plan.py"
     },
@@ -321,23 +314,6 @@
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/Cargo.toml"
     },
     {
-      "assets": [
-        {
-          "asset_type": "missing",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "words_for",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/words_for"
-        }
-      ],
-      "commit": null,
-      "doc_type": "notes",
-      "format": "markdown",
-      "label": "Prototype entry points, runtime capability gate and fallback",
-      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/lib.rs"
-    },
-    {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
@@ -486,5 +462,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile the residual BitVec shift family",
-  "updated_at": "2026-09-18T13:04:15.064685285Z"
+  "updated_at": "2026-09-18T13:54:37.020636854Z"
 }
