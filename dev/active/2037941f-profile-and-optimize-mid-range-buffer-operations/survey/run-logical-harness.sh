@@ -135,6 +135,10 @@ cmd_smoke() {
     [[ "${1:-}" == "--isal" ]] && with_isal=1
     build_gf2
     [[ "${with_isal}" == 1 ]] && build_isal >/dev/null
+    ./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
+        --bin benchmark-ab-runner
+    local runner
+    runner="$(realpath target/release/benchmark-ab-runner)"
     local smoke
     smoke=target/bb769456-campaigns/smoke
     rm -rf "${smoke}"
@@ -178,10 +182,7 @@ cmd_smoke() {
     python3 -B "${SURVEY}/make-smoke-addenda.py" --stage "${smoke}" \
         --families "${families[@]}"
 
-    # The smoke never takes the benchmark lock: it collects no timing sample,
-    # so it neither needs a quiet host nor may pretend to have had one.
     for family in "${families[@]}"; do
-        local stage="${smoke}/${family}/stage"
         local plan="${smoke}/${family}/plan.json"
         local addendum="${smoke}/${family}/smoke-addendum.json"
         local isal_flag=()
@@ -195,26 +196,8 @@ cmd_smoke() {
             --gf2-executable "${GF2_ARM}" \
             "${isal_flag[@]}" \
             --producing-manifest "${PRODUCING}" \
-            --max-cells-per-session 1 \
             --output "${plan}"
-        echo "campaign execution log: ${stage}/execution.log" >&2
-        # Session one pauses after its first cell; session two completes the
-        # stage from the checkpoint without repeating it.
-        set +e
-        "${CAMPAIGN_TOOL}" smoke --plan "${plan}" --addendum "${addendum}" --stage "${stage}"
-        local first=$?
-        cp "${stage}/execution.log" "${smoke}/${family}/execution.session-1.log"
-        "${CAMPAIGN_TOOL}" smoke --plan "${plan}" --addendum "${addendum}" --stage "${stage}"
-        local second=$?
-        set -e
-        [[ "${first}" == 3 ]] || {
-            echo "${family}: the first session exited ${first} rather than pausing" >&2
-            exit 2
-        }
-        [[ "${second}" == 0 ]] || {
-            echo "${family}: the resumed session exited ${second}" >&2
-            exit 2
-        }
+        "${runner}" smoke "${plan}" --record "${smoke}/${family}/smoke.json"
     done
 
     python3 -B "${SURVEY}/check-smoke.py" --stage "${smoke}" --record "${SMOKE_RECORD}" \

@@ -18,7 +18,6 @@ pub mod fixture;
 pub mod inputs;
 pub mod oracle;
 pub mod routes;
-pub mod smoke;
 pub mod wire;
 
 pub use cells::{
