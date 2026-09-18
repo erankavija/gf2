@@ -1,0 +1,8 @@
+# label: public-xor-inplace
+# pattern: gf2_core::kernels::ops::xor_inplace
+# binary: logical-profile
+# binary sha256: 10a73e2a0457f23887cea418dbcb287b75d10800150a76fa38a0e1565130d8c8
+# text symbols matching this pattern: 0
+# no text symbol of this pattern is present in the measured binary, either
+# because the routine is inlined into its callers or because the build
+# contains no such path; this file records that rather than a silent gap.

@@ -7,12 +7,16 @@
 //! timing sample and cannot serve as a pilot.
 
 use crate::cells::{
-    Cache, Layout, RowShape, ALL_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, NR_TARGETS, ROW_MATRIX_ROWS,
-    ROW_PAIRS,
+    Cache, Layout, RowShape, ALL_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, MID_RANGE_MAX_WORDS,
+    MID_RANGE_MIN_WORDS, NR_TARGETS, ROW_MATRIX_ROWS, ROW_PAIRS,
 };
 use crate::fixture::{RowBanks, XorBanks, SLAB_ALIGN};
-use crate::routes::{nr_construct, public_row_xor, public_xor, resolved_xor, verify_nr};
-use gf2_core::BitMatrix;
+use crate::routes::{
+    canonical_structure_digest, nr_construct, public_row_xor, public_xor, resolved_xor, verify_nr,
+};
+use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode;
+use gf2_coding::traits::BlockEncoder;
+use gf2_core::{BitMatrix, BitVec};
 use tuning_campaign_support::abtest::SplitMix64;
 
 /// One oracle case and the number of checks it performed.
@@ -22,11 +26,28 @@ pub struct OracleCase {
     pub name: String,
     /// Checks the case performed.
     pub checks: usize,
+    /// Observed facts the case establishes, rendered after the check count.
+    pub detail: String,
+}
+
+impl OracleCase {
+    /// A case whose name and check count say everything it establishes.
+    pub fn plain(name: String, checks: usize) -> Self {
+        Self {
+            name,
+            checks,
+            detail: String::new(),
+        }
+    }
 }
 
 impl std::fmt::Display for OracleCase {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(formatter, "PASS {}: {} checks", self.name, self.checks)
+        write!(formatter, "PASS {}: {} checks", self.name, self.checks)?;
+        if self.detail.is_empty() {
+            return Ok(());
+        }
+        write!(formatter, " [{}]", self.detail)
     }
 }
 
@@ -93,7 +114,7 @@ fn bit_length_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
             return Err(fail(&name, "the logical length changed"));
         }
         checks += 1;
-        report.push(OracleCase { name, checks });
+        report.push(OracleCase::plain(name, checks));
     }
     Ok(())
 }
@@ -170,7 +191,7 @@ fn isolated_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
                 ));
             }
             checks += 1;
-            report.push(OracleCase { name, checks });
+            report.push(OracleCase::plain(name, checks));
         }
     }
     Ok(())
@@ -196,6 +217,32 @@ fn row_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
                 }
             }
             let matrix = banks.matrix(0, 0);
+            // The offsets are the unmodified production allocation's: every
+            // declared row sits at its own stride from the base.
+            let base = banks.base_mod_64(0, 0);
+            let stride_bytes = matrix.stride_words() * 8;
+            let observed = banks.pair_addresses_mod_64(0, 0);
+            let offsets = observed
+                .iter()
+                .map(|(dst, src)| format!("{dst}:{src}"))
+                .collect::<Vec<_>>()
+                .join(",");
+            for (&(dst, src), &(dst_addr, src_addr)) in ROW_PAIRS.iter().zip(observed.iter()) {
+                let wanted = (
+                    (base + dst * stride_bytes) % 64,
+                    (base + src * stride_bytes) % 64,
+                );
+                if (dst_addr, src_addr) != wanted {
+                    return Err(fail(
+                        &name,
+                        format!(
+                            "pair ({dst}, {src}) sits at {:?} rather than {wanted:?} mod 64",
+                            (dst_addr, src_addr)
+                        ),
+                    ));
+                }
+                checks += 2;
+            }
             for (row, expected) in model.iter().enumerate() {
                 if matrix.row_words(row) != expected.as_slice() {
                     return Err(fail(&name, format!("row {row} differs from the model")));
@@ -220,7 +267,14 @@ fn row_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
                 ));
             }
             checks += 1;
-            report.push(OracleCase { name, checks });
+            report.push(OracleCase {
+                name,
+                checks,
+                detail: format!(
+                    "stride={}w columns={columns} base%64={base} dst:src%64={offsets}",
+                    matrix.stride_words()
+                ),
+            });
         }
     }
     Ok(())
@@ -244,18 +298,139 @@ fn check_indexing(name: &str, matrix: &BitMatrix, columns: usize) -> Result<usiz
     Ok(checks)
 }
 
+/// Seeded boundary messages of one route, in the order the oracle encodes them.
+///
+/// The all-zero word anchors linearity, the two unit vectors reach the ends of
+/// the systematic section, the all-ones word saturates it, and the seeded word
+/// is the campaign stream's own draw for this route.
+fn boundary_messages(k: usize, seed: u64) -> Vec<BitVec> {
+    let mut unit_low = BitVec::zeros(k);
+    unit_low.set(0, true);
+    let mut unit_high = BitVec::zeros(k);
+    unit_high.set(k - 1, true);
+    let mut ones = BitVec::zeros(k);
+    let mut seeded_word = BitVec::zeros(k);
+    let mut mixer = SplitMix64::new(seed);
+    let mut draw = mixer.next_u64();
+    for index in 0..k {
+        ones.set(index, true);
+        if index % 64 == 0 && index > 0 {
+            draw = mixer.next_u64();
+        }
+        seeded_word.set(index, (draw >> (index % 64)) & 1 == 1);
+    }
+    vec![BitVec::zeros(k), unit_low, unit_high, ones, seeded_word]
+}
+
+/// Bitwise XOR of two equally long words.
+fn xor_bits(left: &BitVec, right: &BitVec) -> BitVec {
+    let mut combined = BitVec::zeros(left.len());
+    for index in 0..left.len() {
+        combined.set(index, left.get(index) ^ right.get(index));
+    }
+    combined
+}
+
+/// Checks the seeded encodings of one route against the canonical linear model.
+///
+/// A linear block code answers the sum of two messages with the sum of their
+/// codewords, and the zero message with the zero codeword. Two independently
+/// constructed objects answer identically, which is the determinism the
+/// measured configuration relies on.
+fn nr_encode_checks(
+    name: &str,
+    code: &Nr5gRateMatchedCode,
+    again: &Nr5gRateMatchedCode,
+    k: usize,
+    n: usize,
+    seed: u64,
+) -> Result<usize, String> {
+    let messages = boundary_messages(k, seed);
+    let codewords: Vec<BitVec> = messages
+        .iter()
+        .map(|message| code.encode(message))
+        .collect();
+    let mut checks = 0;
+    for (message, codeword) in messages.iter().zip(codewords.iter()) {
+        if codeword.len() != n {
+            return Err(fail(
+                name,
+                format!("a codeword is {} bits, not {n}", codeword.len()),
+            ));
+        }
+        let repeated = again.encode(message);
+        if (0..n).any(|index| repeated.get(index) != codeword.get(index)) {
+            return Err(fail(
+                name,
+                "two constructions of the route encode differently",
+            ));
+        }
+        checks += 2;
+    }
+    if (0..n).any(|index| codewords[0].get(index)) {
+        return Err(fail(
+            name,
+            "the zero message does not encode to the zero codeword",
+        ));
+    }
+    checks += 1;
+    for left in 1..messages.len() {
+        for right in (left + 1)..messages.len() {
+            let combined = code.encode(&xor_bits(&messages[left], &messages[right]));
+            if (0..n).any(|index| {
+                combined.get(index) != codewords[left].get(index) ^ codewords[right].get(index)
+            }) {
+                return Err(fail(
+                    name,
+                    "the encoding is not linear over the boundary messages",
+                ));
+            }
+            checks += 1;
+        }
+    }
+    Ok(checks)
+}
+
 /// Checks every selected NR route against its frozen declaration.
 fn nr_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
     for target in NR_TARGETS {
         let name = format!("nr-construct-{}", target.suffix);
         let code = nr_construct(&target);
+        // `verify_nr` reads the lifting factor, both dense dimensions, the
+        // stride, its mid-range band and the public (n, k) from the returned
+        // object: seven of this case's checks.
         let facts = verify_nr(&code, &target).map_err(|error| fail(&name, error))?;
+        let mut checks = 7;
+        let canonical = canonical_structure_digest(target.base_graph, facts.lifting_factor)
+            .map_err(|error| fail(&name, error))?;
+        if facts.structure_digest != canonical {
+            return Err(fail(
+                &name,
+                "the parity-check structure differs from the canonical 3GPP expansion",
+            ));
+        }
+        checks += 1;
         let again = nr_construct(&target);
         let repeated = verify_nr(&again, &target).map_err(|error| fail(&name, error))?;
-        if facts.structure_digest != repeated.structure_digest {
-            return Err(fail(&name, "the sparse structure digest is not stable"));
+        if facts != repeated {
+            return Err(fail(&name, "two constructions observe different facts"));
         }
-        report.push(OracleCase { name, checks: 6 });
+        checks += 1;
+        let seed = CAMPAIGN_SEED ^ ((target.target_n as u64) << 32) ^ target.target_k as u64;
+        checks += nr_encode_checks(&name, &code, &again, target.target_k, target.target_n, seed)?;
+        report.push(OracleCase {
+            name,
+            checks,
+            detail: format!(
+                "Z={} dense={}x{} stride={}w band={MID_RANGE_MIN_WORDS}-{MID_RANGE_MAX_WORDS}w nnz={} h-sha256={}",
+                facts.lifting_factor,
+                facts.dense_rows,
+                facts.dense_cols,
+                facts.stride_words,
+                facts.nnz,
+                facts.structure_digest
+            ),
+        });
     }
     Ok(())
 }

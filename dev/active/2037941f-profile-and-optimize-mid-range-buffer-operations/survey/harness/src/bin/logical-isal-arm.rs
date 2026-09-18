@@ -168,7 +168,7 @@ fn oracle() -> Result<Vec<OracleCase>, String> {
             return Err(format!("FAIL {name}: a source changed"));
         }
         checks += 2;
-        report.push(OracleCase { name, checks });
+        report.push(OracleCase::plain(name, checks));
     }
     Ok(report)
 }

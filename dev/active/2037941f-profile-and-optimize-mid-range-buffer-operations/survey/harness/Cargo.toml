@@ -37,6 +37,10 @@ name = "logical-oracle"
 path = "src/bin/logical-oracle.rs"
 
 [[bin]]
+name = "logical-profile"
+path = "src/bin/logical-profile.rs"
+
+[[bin]]
 name = "logical-isal-arm"
 path = "src/bin/logical-isal-arm.rs"
 required-features = ["isal"]

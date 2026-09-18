@@ -1,0 +1,151 @@
+# label: public-row-xor
+# pattern: gf2_core::matrix::BitMatrix::row_xor
+# binary: logical-profile
+# binary sha256: 10a73e2a0457f23887cea418dbcb287b75d10800150a76fa38a0e1565130d8c8
+# text symbols matching this pattern: 1
+
+## symbol at 0000000000043410, 0x000000000000025c bytes
+0000000000043410 <gf2_core::matrix::BitMatrix::row_xor>:
+   43410:	push   %r15
+   43412:	push   %r14
+   43414:	push   %r12
+   43416:	push   %rbx
+   43417:	sub    $0x38,%rsp
+   4341b:	mov    %rsi,0x28(%rsp)
+   43420:	mov    %rdx,0x30(%rsp)
+   43425:	lea    0x18(%rdi),%rax
+   43429:	mov    0x18(%rdi),%rcx
+   4342d:	cmp    %rcx,%rsi
+   43430:	jae    4356b <gf2_core::matrix::BitMatrix::row_xor+0x15b>
+   43436:	cmp    %rcx,%rdx
+   43439:	jae    435a4 <gf2_core::matrix::BitMatrix::row_xor+0x194>
+   4343f:	mov    0x28(%rdi),%rbx
+   43443:	mov    %rbx,%rax
+   43446:	imul   %rsi,%rax
+   4344a:	cmp    %rdx,%rsi
+   4344d:	jne    4348d <gf2_core::matrix::BitMatrix::row_xor+0x7d>
+   4344f:	test   %rbx,%rbx
+   43452:	je     43481 <gf2_core::matrix::BitMatrix::row_xor+0x71>
+   43454:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   43460:	mov    0x10(%rdi),%rsi
+   43464:	cmp    %rsi,%rax
+   43467:	jae    4365c <gf2_core::matrix::BitMatrix::row_xor+0x24c>
+   4346d:	mov    0x8(%rdi),%rcx
+   43471:	movq   $0x0,(%rcx,%rax,8)
+   43479:	inc    %rax
+   4347c:	dec    %rbx
+   4347f:	jne    43460 <gf2_core::matrix::BitMatrix::row_xor+0x50>
+   43481:	add    $0x38,%rsp
+   43485:	pop    %rbx
+   43486:	pop    %r12
+   43488:	pop    %r14
+   4348a:	pop    %r15
+   4348c:	ret
+   4348d:	imul   %rbx,%rdx
+   43491:	mov    0x8(%rdi),%rcx
+   43495:	mov    0x10(%rdi),%r8
+   43499:	cmp    %rdx,%rax
+   4349c:	jae    434fe <gf2_core::matrix::BitMatrix::row_xor+0xee>
+   4349e:	sub    %rdx,%r8
+   434a1:	jb     4362a <gf2_core::matrix::BitMatrix::row_xor+0x21a>
+   434a7:	mov    %rax,%rsi
+   434aa:	add    %rbx,%rsi
+   434ad:	jb     435f2 <gf2_core::matrix::BitMatrix::row_xor+0x1e2>
+   434b3:	cmp    %rdx,%rsi
+   434b6:	ja     435f2 <gf2_core::matrix::BitMatrix::row_xor+0x1e2>
+   434bc:	cmp    %r8,%rbx
+   434bf:	ja     43602 <gf2_core::matrix::BitMatrix::row_xor+0x1f2>
+   434c5:	lea    (%rcx,%rdx,8),%rdx
+   434c9:	lea    (%rcx,%rax,8),%rdi
+   434cd:	cmp    $0x8,%rbx
+   434d1:	jb     43551 <gf2_core::matrix::BitMatrix::row_xor+0x141>
+   434d3:	mov    0x5feae(%rip),%r14        # a3388 <_DYNAMIC+0x550>
+   434da:	mov    0x90(%r14),%eax
+   434e1:	test   %eax,%eax
+   434e3:	je     43545 <gf2_core::matrix::BitMatrix::row_xor+0x135>
+   434e5:	mov    %rdx,%r15
+   434e8:	mov    %rdi,%r12
+   434eb:	call   42574 <std::sync::once_lock::OnceLock<T>::initialize>
+   434f0:	mov    %r12,%rdi
+   434f3:	mov    %r15,%rdx
+   434f6:	cmpq   $0x0,(%r14)
+   434fa:	jne    4354b <gf2_core::matrix::BitMatrix::row_xor+0x13b>
+   434fc:	jmp    43551 <gf2_core::matrix::BitMatrix::row_xor+0x141>
+   434fe:	sub    %rax,%r8
+   43501:	jb     43643 <gf2_core::matrix::BitMatrix::row_xor+0x233>
+   43507:	cmp    %r8,%rbx
+   4350a:	ja     435dd <gf2_core::matrix::BitMatrix::row_xor+0x1cd>
+   43510:	mov    %rdx,%rsi
+   43513:	add    %rbx,%rsi
+   43516:	jb     43617 <gf2_core::matrix::BitMatrix::row_xor+0x207>
+   4351c:	cmp    %rax,%rsi
+   4351f:	ja     43617 <gf2_core::matrix::BitMatrix::row_xor+0x207>
+   43525:	lea    (%rcx,%rax,8),%rdi
+   43529:	lea    (%rcx,%rdx,8),%rdx
+   4352d:	cmp    $0x8,%rbx
+   43531:	jb     43551 <gf2_core::matrix::BitMatrix::row_xor+0x141>
+   43533:	mov    0x5fe4e(%rip),%r14        # a3388 <_DYNAMIC+0x550>
+   4353a:	mov    0x90(%r14),%eax
+   43541:	test   %eax,%eax
+   43543:	jne    434e5 <gf2_core::matrix::BitMatrix::row_xor+0xd5>
+   43545:	cmpq   $0x0,(%r14)
+   43549:	je     43551 <gf2_core::matrix::BitMatrix::row_xor+0x141>
+   4354b:	mov    0x10(%r14),%rax
+   4354f:	jmp    43558 <gf2_core::matrix::BitMatrix::row_xor+0x148>
+   43551:	lea    0xcd8(%rip),%rax        # 44230 <gf2_core::kernels::ops::scalar_xor_inplace>
+   43558:	mov    %rbx,%rsi
+   4355b:	mov    %rbx,%rcx
+   4355e:	add    $0x38,%rsp
+   43562:	pop    %rbx
+   43563:	pop    %r12
+   43565:	pop    %r14
+   43567:	pop    %r15
+   43569:	jmp    *%rax
+   4356b:	lea    0x28(%rsp),%rcx
+   43570:	mov    %rcx,0x8(%rsp)
+   43575:	mov    0x5fd44(%rip),%rcx        # a32c0 <_DYNAMIC+0x488>
+   4357c:	mov    %rcx,0x10(%rsp)
+   43581:	mov    %rax,0x18(%rsp)
+   43586:	mov    %rcx,0x20(%rsp)
+   4358b:	lea    -0x3b2f4(%rip),%rdi        # 829e <anon.5e37b2a355f3f40f4a08b3a945a506d5.35.llvm.4687050193203398573+0x265>
+   43592:	lea    0x5ceef(%rip),%rdx        # a0488 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x530>
+   43599:	lea    0x8(%rsp),%rsi
+   4359e:	call   *0x5fb24(%rip)        # a30c8 <_DYNAMIC+0x290>
+   435a4:	lea    0x30(%rsp),%rcx
+   435a9:	mov    %rcx,0x8(%rsp)
+   435ae:	mov    0x5fd0b(%rip),%rcx        # a32c0 <_DYNAMIC+0x488>
+   435b5:	mov    %rcx,0x10(%rsp)
+   435ba:	mov    %rax,0x18(%rsp)
+   435bf:	mov    %rcx,0x20(%rsp)
+   435c4:	lea    -0x3b866(%rip),%rdi        # 7d65 <anon.eb89d4395b0ead844ef0b45b8b54da85.141.llvm.3643936799275306673+0x226>
+   435cb:	lea    0x5cece(%rip),%rdx        # a04a0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x548>
+   435d2:	lea    0x8(%rsp),%rsi
+   435d7:	call   *0x5faeb(%rip)        # a30c8 <_DYNAMIC+0x290>
+   435dd:	lea    0x5cf04(%rip),%rcx        # a04e8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x590>
+   435e4:	xor    %edi,%edi
+   435e6:	mov    %rbx,%rsi
+   435e9:	mov    %r8,%rdx
+   435ec:	call   *0x5fb9e(%rip)        # a3190 <_DYNAMIC+0x358>
+   435f2:	lea    0x5cf37(%rip),%rcx        # a0530 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x5d8>
+   435f9:	mov    %rax,%rdi
+   435fc:	call   *0x5fb8e(%rip)        # a3190 <_DYNAMIC+0x358>
+   43602:	lea    0x5cf0f(%rip),%rcx        # a0518 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x5c0>
+   43609:	xor    %edi,%edi
+   4360b:	mov    %rbx,%rsi
+   4360e:	mov    %r8,%rdx
+   43611:	call   *0x5fb79(%rip)        # a3190 <_DYNAMIC+0x358>
+   43617:	lea    0x5ceb2(%rip),%rcx        # a04d0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x578>
+   4361e:	mov    %rdx,%rdi
+   43621:	mov    %rax,%rdx
+   43624:	call   *0x5fb66(%rip)        # a3190 <_DYNAMIC+0x358>
+   4362a:	lea    -0x21c53(%rip),%rdi        # 219de <anon.58baeeae7d5fe476157d296c9f08f803.334.llvm.5844774155465566772+0x14dbb>
+   43631:	lea    0x5cec8(%rip),%rdx        # a0500 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x5a8>
+   43638:	mov    $0x13,%esi
+   4363d:	call   *0x5fa85(%rip)        # a30c8 <_DYNAMIC+0x290>
+   43643:	lea    -0x21c6c(%rip),%rdi        # 219de <anon.58baeeae7d5fe476157d296c9f08f803.334.llvm.5844774155465566772+0x14dbb>
+   4364a:	lea    0x5ce67(%rip),%rdx        # a04b8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x560>
+   43651:	mov    $0x13,%esi
+   43656:	call   *0x5fa6c(%rip)        # a30c8 <_DYNAMIC+0x290>
+   4365c:	lea    0x5cee5(%rip),%rdx        # a0548 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x5f0>
+   43663:	mov    %rax,%rdi
+   43666:	call   *0x5fa0c(%rip)        # a3078 <_DYNAMIC+0x240>

@@ -1,0 +1,20 @@
+# Instruction mix of the measured logical routes (jit:18a87159)
+# binary: logical-profile
+# binary sha256: 10a73e2a0457f23887cea418dbcb287b75d10800150a76fa38a0e1565130d8c8
+# Counts are of instruction lines within the named symbol; the symbols are
+# those the disassembly table names plus the harness route bodies calling them.
+
+## call indirect-call vector-xor scalar-xor stack-slot-move total-instructions symbol
+2 2 0 0 16 51 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched::{{closure}}>:
+82 72 1 162 425 2186 <gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched>:
+24 24 0 21 0 342 <gf2_core::kernels::ops::scalar_xor_inplace>:
+10 9 0 2 10 147 <gf2_core::matrix::BitMatrix::row_xor>:
+0 0 8 5 0 105 <gf2_kernels_simd::x86::avx2::avx2_xor_into>:
+1 1 0 17 6 98 <logical_buffer_harness::routes::Route::parse>:
+1 0 0 0 0 42 <logical_buffer_harness::routes::observe_nr>:
+16 10 0 6 32 322 <logical_buffer_harness::routes::structure_digest>:
+7 6 0 4 44 135 <logical_buffer_harness::routes::verify_nr>:
+13 3 0 11 39 196 <logical_profile::drive>:
+53 38 0 15 121 638 <logical_profile::main>:
+7 6 0 0 22 132 <logical_profile::measure::{{closure}}>:
+143 99 10 49 443 1861 <logical_profile::measure>:

@@ -4,9 +4,11 @@
 //! layout, copies no row into an aligned private representation and changes no
 //! production selection.
 
-use crate::cells::{Cache, NrTarget, Question, ROW_PAIRS};
+use crate::cells::{
+    Cache, NrTarget, Question, MID_RANGE_MAX_WORDS, MID_RANGE_MIN_WORDS, ROW_PAIRS,
+};
 use crate::fixture::AlignedSlab;
-use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode;
+use gf2_coding::ldpc::nr_5g::{lifting_set_index, shift_table, Nr5gRateMatchedCode};
 use gf2_coding::ldpc::QuasiCyclicLdpc;
 use gf2_core::kernels::ops::{resolve_xor_inplace, xor_inplace, XorInplaceFn};
 use gf2_core::kernels::select_backend_for_size;
@@ -187,30 +189,73 @@ pub struct NrFacts {
     pub structure_digest: String,
 }
 
-/// Reads the observable parameters and structure digest of a returned code.
-pub fn observe_nr(code: &Nr5gRateMatchedCode) -> NrFacts {
-    let mother = code.mother_code();
-    let parity = mother.parity_check_matrix();
-    let rows = parity.rows();
-    let cols = parity.cols();
+/// Digest of a sparse parity-check structure: its dimensions, then every row's
+/// sorted column list.
+///
+/// Both the observed structure and the canonical model below are digested here,
+/// so an agreement between them is an agreement about the same bytes.
+fn structure_digest(rows: usize, cols: usize, row_columns: impl Fn(usize) -> Vec<u32>) -> String {
     let mut bytes = Vec::new();
     bytes.extend_from_slice(&(rows as u64).to_le_bytes());
     bytes.extend_from_slice(&(cols as u64).to_le_bytes());
     for row in 0..rows {
-        let mut columns: Vec<u32> = parity.row_iter(row).map(|col| col as u32).collect();
+        let mut columns = row_columns(row);
         columns.sort_unstable();
         bytes.extend_from_slice(&(columns.len() as u32).to_le_bytes());
         for column in columns {
             bytes.extend_from_slice(&column.to_le_bytes());
         }
     }
+    sha256_hex(&bytes)
+}
+
+/// The canonical 3GPP expansion of a base graph at one lifting factor.
+///
+/// The model reads the public TS 38.212 shift table and applies the standard's
+/// own circulant rule itself, reaching neither `QuasiCyclicLdpc` nor the
+/// constructor's expansion, so an agreement is evidence about the returned
+/// object rather than a restatement of how it was built.
+pub fn canonical_structure_digest(base_graph: u8, lifting_factor: usize) -> Result<String, String> {
+    let index = lifting_set_index(
+        u16::try_from(lifting_factor)
+            .map_err(|_| format!("Z={lifting_factor} is not a lifting size"))?,
+    )
+    .ok_or_else(|| format!("Z={lifting_factor} is not a 5G NR lifting size"))?;
+    let table = shift_table(base_graph, index);
+    let z = lifting_factor;
+    let rows = table.len() * z;
+    let cols = table[0].len() * z;
+    let mut per_row: Vec<Vec<u32>> = vec![Vec::new(); rows];
+    for (i, base_row) in table.iter().enumerate() {
+        for (j, &shift) in base_row.iter().enumerate() {
+            if shift < 0 {
+                continue;
+            }
+            let shift = shift as usize % z;
+            for offset in 0..z {
+                per_row[i * z + offset].push((j * z + (offset + shift) % z) as u32);
+            }
+        }
+    }
+    Ok(structure_digest(rows, cols, |row| per_row[row].clone()))
+}
+
+/// Reads the observable parameters and structure digest of a returned code.
+pub fn observe_nr(code: &Nr5gRateMatchedCode) -> NrFacts {
+    let mother = code.mother_code();
+    let parity = mother.parity_check_matrix();
+    let rows = parity.rows();
+    let cols = parity.cols();
+    let digest = structure_digest(rows, cols, |row| {
+        parity.row_iter(row).map(|col| col as u32).collect()
+    });
     NrFacts {
         lifting_factor: code.params().lifting_factor,
         dense_rows: rows,
         dense_cols: cols,
         stride_words: cols.div_ceil(64),
         nnz: parity.nnz(),
-        structure_digest: sha256_hex(&bytes),
+        structure_digest: digest,
     }
 }
 
@@ -246,6 +291,15 @@ pub fn verify_nr(code: &Nr5gRateMatchedCode, target: &NrTarget) -> Result<NrFact
             code.k(),
             target.target_n,
             target.target_k
+        ));
+    }
+    // The route is admitted because its runtime stride is a mid-range one; a
+    // stride outside the band asks a different question and the cell is
+    // unavailable rather than substituted.
+    if !(MID_RANGE_MIN_WORDS..=MID_RANGE_MAX_WORDS).contains(&facts.stride_words) {
+        return Err(format!(
+            "{}: observed stride {} words is outside the declared {MID_RANGE_MIN_WORDS}--{MID_RANGE_MAX_WORDS}-word band",
+            target.suffix, facts.stride_words
         ));
     }
     Ok(facts)

@@ -247,6 +247,10 @@ cmd_window() {
         exit 2
     }
 
+    # The window unit may start from a cleaned target directory, so the tool
+    # this command reads the pins with exists before it is read.
+    [[ -x "${CAMPAIGN_TOOL}" ]] || build_gf2
+
     local ledger
     ledger="$("${CAMPAIGN_TOOL}" pins | sed -n "s/^family=${family} ledger=\\([^ ]*\\).*/\\1/p")"
     [[ -n "${ledger}" ]] || { echo "${family} is not a frozen family" >&2; exit 2; }

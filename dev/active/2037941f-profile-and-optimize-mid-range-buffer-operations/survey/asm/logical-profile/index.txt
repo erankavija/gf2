@@ -1,0 +1,13 @@
+# Annotated release disassembly of the measured logical routes (jit:18a87159)
+# binary: logical-profile
+# binary sha256: 10a73e2a0457f23887cea418dbcb287b75d10800150a76fa38a0e1565130d8c8
+# rustc: rustc 1.95.0 (59807616e 2026-04-14)
+# Fields: file  symbols  bytes  pattern
+public-xor-inplace.asm.txt  0  0  gf2_core::kernels::ops::xor_inplace
+resolve-xor-inplace.asm.txt  0  0  gf2_core::kernels::ops::resolve_xor_inplace
+select-backend-for-size.asm.txt  0  0  gf2_core::kernels::select_backend_for_size
+scalar-xor-inplace.asm.txt  3  1434  gf2_core::kernels::ops::scalar_xor_inplace
+avx2-xor-into.asm.txt  1  412  gf2_kernels_simd::x86::avx2::avx2_xor_into
+avx512-xor-into.asm.txt  0  0  gf2_kernels_simd::x86::avx512::avx512_xor_into
+public-row-xor.asm.txt  1  604  gf2_core::matrix::BitMatrix::row_xor
+nr-rate-matched.asm.txt  2  10977  QuasiCyclicLdpc>::nr_5g_rate_matched
