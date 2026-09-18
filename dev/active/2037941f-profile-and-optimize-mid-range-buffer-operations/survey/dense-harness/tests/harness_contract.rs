@@ -244,6 +244,43 @@ fn the_request_mirror_accepts_exactly_the_runner_request() {
     assert_eq!(case.seed(), 7);
 }
 
+/// An arm answers the frozen window protocol or the smoke's zero-window
+/// arrangement pass, and nothing else: § Cache, warmup, and sampling fixes the
+/// window count and target of every timed execution.
+#[test]
+fn an_arm_refuses_a_window_protocol_the_addendum_does_not_declare() {
+    let warm = concat!(
+        r#"{"schema":"zen3-benchmark-arm-request-v1","cell_id":"matvec-r1024-8w-warm","#,
+        r#""arm":"matvec-a","role":"baseline","pair":0,"#,
+        r#""case":{"question":"allocated-matvec","seed":7,"shape":"full","words":8},"#,
+        r#""cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"#,
+        r#""workers_declared":1}"#
+    );
+    let frozen: Request = transport::decode_case(warm).expect("the mirror decodes");
+    assert_eq!(frozen.windows, SHARED_SETTINGS.windows_per_execution);
+    assert_eq!(frozen.window_target_ms, SHARED_SETTINGS.window_target_ms);
+    frozen.verify_window_protocol().expect("the frozen protocol");
+
+    let mut arrangement = frozen;
+    arrangement.windows = 0;
+    arrangement.window_target_ms = 0;
+    arrangement.verify_window_protocol().expect("the zero-window arrangement pass");
+
+    for (windows, target) in [
+        (4, SHARED_SETTINGS.window_target_ms),
+        (SHARED_SETTINGS.windows_per_execution, 250),
+        (0, SHARED_SETTINGS.window_target_ms),
+    ] {
+        let mut overridden = arrangement.clone();
+        overridden.windows = windows;
+        overridden.window_target_ms = target;
+        let refusal = overridden
+            .verify_window_protocol()
+            .expect_err("an undeclared window protocol is refused");
+        assert!(refusal.contains(&overridden.cell_id), "{refusal}");
+    }
+}
+
 #[test]
 fn every_frozen_case_round_trips_and_names_its_workload() {
     for cell in cells() {
