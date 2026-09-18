@@ -106,9 +106,9 @@
     },
     {
       "commit": null,
-      "doc_type": "notes",
+      "doc_type": "tool",
       "format": "markdown",
-      "label": "Arm wire smoke through the real runner",
+      "label": "Residual-shift non-timed arm smoke launcher",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-shift-arms.sh"
     },
     {
@@ -154,6 +154,297 @@
       "doc_type": "notes",
       "label": "Voided-attempt record generator",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-voided-attempt-record.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Accepted residual-shift exploratory receipt",
+      "path": "dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Residual-shift acceptance summary",
+      "path": "dev/bench_results/c04dd4ac/residual-shift-profile/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Residual-shift campaign execution journal",
+      "path": "dev/bench_results/c04dd4ac/residual-shift-profile/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Generated residual-shift evidence tables",
+      "path": "dev/bench_results/c04dd4ac/residual-shift-tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Residual-shift evidence-table generator",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-shift-receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Residual-shift source-evidence generator",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Pinned residual-shift source claims",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/shift-source-evidence.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5f1998bae672ff5788fd1a2d418f654670dedd925061bc8622f42ade2ea15dd9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/shift-source-evidence.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/shift-source-evidence.json"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/residual-shift-feasibility/",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "09e71874a67e22dae4f67840fd3ad5509ea36d7f92553023fab2349adc553515",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/residual-shift-feasibility/asm/shift_right_funnel_avx2.s",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_right_funnel_avx2.s"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2ce3f966012c8cb3510549c829dd05930e204d3592717099986f0f672ebad0e9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/residual-shift-feasibility/capture-asm.sh",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/capture-asm.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "48998348040112314317a52234e048fc60ea12950981606de120ebeffb313290",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/residual-shift-feasibility/asm/shift_right_funnel_bmi2_pair.s",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_right_funnel_bmi2_pair.s"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dc469e96bf212443b9a34034e1d4c0c5cfd75411c3847efdac12cb05f61a724f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/residual-shift-feasibility/asm/shift_right_funnel_bmi2_dp.s",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_right_funnel_bmi2_dp.s"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bf308a74c681d183f472ffe723f7a467947417b64f8701807ef54a4a8e6f61d9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "shift-profile.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7714bd602ea7d352daf529e39283eaaa67b30e6f7de6e949670c1e7aab6076c9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/residual-shift-feasibility/toolchain.txt",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/toolchain.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d7a50c717a25172c6fd08e6cdf1c2d8e3c325693aed8acdd0a56c2c684a6bde0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/residual-shift-feasibility/asm/shift_left_funnel_bmi2_pair.s",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_left_funnel_bmi2_pair.s"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "440d6be50a0255e464102d843748210b96bd31bb53a22cbd0dbbfbea688fb983",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/residual-shift-feasibility/asm/shift_left_funnel_avx2.s",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_left_funnel_avx2.s"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "52c819efc14ff22447108fd28fb4bd6434253a370a78d742d3bfe00b726806e7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/residual-shift-feasibility/intrinsic-probe.txt",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/intrinsic-probe.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d0e89455b6ff8f0b930d0d2d1ae5f16ae6d20a915b58ef204f11b7676c048e97",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/residual-shift-feasibility/asm/shift_left_funnel_bmi2_dp.s",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_left_funnel_bmi2_dp.s"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "242b0174e02723fbfcf570a536f6edf4311018f295baa8b672467ee5ca4e8e78",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "REQ-05 planning-time Rust 1.95 feasibility record",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Standalone residual-shift feasibility prototype manifest",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/Cargo.toml"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "words_for",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/words_for"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Prototype entry points, runtime capability gate and fallback",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Nominated AVX2 lane-crossing funnel",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/avx2.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Nominated BMI2-gated scalar funnel, both expressions",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/bmi2.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Portable residual funnel, the gated fallback",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/scalar.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Independent bit-addressed zero-fill reference",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/reference.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Deterministic form-vs-reference and gate-fallback suite",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/tests/equivalence.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Double-precision shift intrinsic probe source",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/probe/shld_probe.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Toolchain, intrinsic-probe and assembly capture script",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/capture-asm.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Rust 1.95 toolchain identity, emit command and build baseline",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/toolchain.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "rustc verdict on _shld_u64 / _shrd_u64 at 1.95",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/intrinsic-probe.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Emitted AVX2 left funnel hot loop",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_left_funnel_avx2.s"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Emitted AVX2 right funnel hot loop",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_right_funnel_avx2.s"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Emitted BMI2 left funnel, shift-and-complement",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_left_funnel_bmi2_pair.s"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Emitted BMI2 right funnel, shift-and-complement",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_right_funnel_bmi2_pair.s"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Emitted BMI2 left funnel, double-precision shift",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_left_funnel_bmi2_dp.s"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Emitted BMI2 right funnel, double-precision shift",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/asm/shift_right_funnel_bmi2_dp.s"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Non-timed validation-role arm smoke driver for both c04dd4ac plans",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/arm-smoke/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Arm-smoke record renderer (text and JSON) for both c04dd4ac smokes",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-arm-smoke.py"
     }
   ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
@@ -179,5 +470,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile the residual BitVec shift family",
-  "updated_at": "2026-09-16T22:39:00.458981427Z"
+  "updated_at": "2026-09-18T12:38:01.000391617Z"
 }

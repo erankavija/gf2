@@ -181,9 +181,9 @@
     },
     {
       "commit": null,
-      "doc_type": "test",
+      "doc_type": "tool",
       "format": "markdown",
-      "label": "DVB arm runner-wire smoke script",
+      "label": "DVB-T2 interleaver non-timed arm smoke launcher",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh"
     },
     {
@@ -353,5 +353,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-17T22:04:28.389016123Z"
+  "updated_at": "2026-09-18T12:38:01.149752372Z"
 }

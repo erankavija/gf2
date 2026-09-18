@@ -7,7 +7,210 @@
     "77c21ecd-5350-449f-ba32-dab1b2c6a8a6"
   ],
   "description": "Measure the shipped GF(2^8) vector fused multiply-add against the route the\nlibrary takes without it, as a protocol-version-4 A/B family with a pilot and\na confirmation, and publish the receipts and the decision.\n\n## Background\n\nA production change needs a current pinned pre-change baseline and an after\nmeasurement on the same host, including dispatch overhead; a prior study's\nreceipts are context, not a substitute. Both arms are the same shipped\nexecutable: the baseline arm holds every call on the scalar element lane\nthrough the test-build lane switch, and the candidate arm lets the accelerated\nlane run, so the comparison isolates the change and nothing else. The accepted\nvector-family confirmation receipt under `dev/bench_results/19513245/` states\nthe direction and rough size an earlier prototype reached and is cited for\nagreement, not inherited as evidence; the shipped path also writes results in\nplace, which the prototype did not, so the sizes need not match. Cells cover\nboth GF(2^8) representations, the cache regimes that family used, and small\nlengths, since no committed cell sits below its smallest size and a\nfirst-touch table build is unamortized there.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen family addendum is committed before the campaign\n  launches, with every numeric setting from it and the shared protocol\n  settings, and the confirmation addendum is derived from the committed pilot\n  receipt by the repository's canonical confirmation freezer with its\n  derivation record beside it.\n- [hard] REQ-02: The family's append-only ledger opens empty, records each\n  attempt's reservation, and is never hand-edited; an attempt aborted for a\n  procedural defect in its own freeze or launch, before any result is read, is\n  recorded under the voided-attempt rule with its stage preserved.\n- [hard] REQ-03: Every arm and case operation passes a non-timed harness\n  smoke before any timed campaign is queued: the smoke drives each arm with\n  the benchmark runner's own transport encoder and framing, pins its request\n  mirror against the runner's request in a test and records zero timing\n  windows. Every timed run is a committed queue line for the benchmark window\n  rather than a session launch.\n- [hard] REQ-04: Each campaign is verified from its own execution log: the\n  declared cell count starts, checkpoints and completes exactly once, every\n  cell reaches its declared pair count with a measured status, the campaign\n  ends in a terminal complete record, and the acceptance tool recomputes the\n  committed verdict.\n- [hard] REQ-05: The pilot covers both GF(2^8) element representations, at\n  least three sizes spanning cache-resident and streaming operands, and at\n  least one size small enough that the first table build is unamortized; the\n  confirmation retains as many of those cells as its family's confirmatory\n  budget admits, and the freezer's derivation record names which cells are\n  retained, which are dropped and why. Each cell's selected lane is recorded\n  at run time.\n- [hard] REQ-06: The published outcome states, for each cell, the verdict the\n  acceptance summary records, including any not-material or regressed cell,\n  and states whether the result agrees in direction with the earlier\n  vector-family confirmation receipt it pins by path and digest. A\n  non-qualifying outcome is published as the result, with retention or removal\n  of the accelerated path decided by the frozen rule rather than after the\n  fact.\n- [hard] REQ-07: No measured or derived figure is copied into prose; each\n  quantitative statement is a conclusion plus a pointer to the generated table\n  row, receipt or ledger line that holds it.\n\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d96762a9121aca3e31366a522138a6c2b05ec58fe3621bf4d9959139b8367930",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/ad2a6a58/tables.md",
+          "resolved_path": "dev/bench_results/ad2a6a58/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3ab42b522841f21b97e5ca45ab4dc2f5b5a8f701bf5b1dd676490c639c3a54b4",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/runner-smoke.txt",
+          "resolved_path": "dev/active/ad2a6a58/survey/runner-smoke.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/ad2a6a58/axpy-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "da45a53314d79a65ba16eae30aa84b4be1fac9e49800306d0b84417375857cd0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../613574db/design.md",
+          "resolved_path": "dev/active/613574db/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6fd13ee5f2e28713a306343f458cf4cffb95d753cb69d7a18266ecf20d7868b6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-axpy-pilot.json",
+          "resolved_path": "dev/active/ad2a6a58/addendum-v4-axpy-pilot.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Stage plan for the shipped GF(2^8) axpy lane confirmation",
+      "path": "dev/active/ad2a6a58/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen protocol-v4 pilot addendum of the gf256-shipped-axpy-lane family",
+      "path": "dev/active/ad2a6a58/addendum-v4-axpy-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Path and SHA-256 pin of the 19513245 vector-family confirmation receipt",
+      "path": "dev/active/ad2a6a58/pinned-vector-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Producing-input closure this family's campaigns pin",
+      "path": "dev/active/ad2a6a58/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Generator of the frozen pilot addendum",
+      "path": "dev/active/ad2a6a58/survey/make-addendum.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Runner-plan projector for this family's campaigns",
+      "path": "dev/active/ad2a6a58/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Generator of the producing-input closure",
+      "path": "dev/active/ad2a6a58/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Generator of the prior vector-family receipt pin",
+      "path": "dev/active/ad2a6a58/survey/pin-prior-receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Result-table generator for the published outcome",
+      "path": "dev/active/ad2a6a58/survey/make-tables.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Driver of the non-timed arm smoke: mirror tests, plan check, untimed dispatches",
+      "path": "dev/active/ad2a6a58/survey/smoke-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Standalone arm workspace: shipped gf2-core with simd and test-support",
+      "path": "dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Lane selection and the shipped lane witness both arms report",
+      "path": "dev/active/ad2a6a58/survey/axpy-arm/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Lane-selecting A/B arm; one executable carries both arms of every pair",
+      "path": "dev/active/ad2a6a58/survey/axpy-arm/src/bin/gf256-axpy-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Non-timed harness smoke over the runner's wire; pins the request mirror",
+      "path": "dev/active/ad2a6a58/survey/axpy-arm/src/bin/gf256-axpy-smoke.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Lane equivalence check of the measured executable",
+      "path": "dev/active/ad2a6a58/survey/axpy-arm/src/bin/gf256-axpy-verify.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Shared arm driver (6c6b09b1); gains the untimed validation position",
+      "path": "dev/active/6c6b09b1/survey/arm-common/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Shared A/B runner; gains the untimed `check <plan.json>` subcommand",
+      "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Campaign launcher: build, window, freeze and tables",
+      "path": "dev/bench_results/ad2a6a58/run-axpy-confirmation.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Both lanes of the measured executable agree elementwise",
+      "path": "dev/active/ad2a6a58/conformance/lane-equivalence.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Shipped GF(2^8) table suites of the measured tree",
+      "path": "dev/active/ad2a6a58/conformance/shipped-conformance.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Smoke record: every arm, cell, operation and cache state, zero timing windows",
+      "path": "dev/active/ad2a6a58/survey/runner-smoke.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger, opened empty",
+      "path": "dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "analysis",
+      "format": "markdown",
+      "label": "Generated result tables of the axpy lane family",
+      "path": "dev/bench_results/ad2a6a58/tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Benchmark-window queue carrying this family's pilot line",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    }
+  ],
   "first_ready_at": "2026-09-16T12:11:10.819218802Z",
   "gates_required": [
     "cargo-ci",
@@ -28,5 +231,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-09-18T10:20:28.576292858Z"
+  "updated_at": "2026-09-18T12:37:56.880266705Z"
 }
