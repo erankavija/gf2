@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
-# Non-timed wire-contract smoke of the residual-shift arms (jit:85fc5ff4).
-#
-# Drives both arms of every frozen cell in the validation role with the runner's
-# own request framing and child environment, so each arm performs one untimed
-# dispatch and returns no timing window. The smoke opens no campaign: it takes
-# no lock, reserves nothing in the family ledger, writes no stage and finalizes
-# no receipt. Reading the arm's source does not establish the wire contract
-# between the runner and a child.
+# Non-timed smoke of the residual-shift arms (jit:85fc5ff4).
 #
 # Usage (from the worker worktree root): smoke-shift-arms.sh [--check]
+# Contract: `benchmark-ab-runner smoke`, stated at
+# `tuning_campaign_support::arm::smoke`.
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 [[ "$(pwd -P)" == "$(cd "$repo" && pwd -P)" ]] || {
@@ -27,14 +22,13 @@ esac
 active=dev/active/c04dd4ac-zen3-shifts-and-permutations
 survey="$active/survey"
 record="$active/shift-profile-smoke.json"
-manifest="$survey/arm-smoke/Cargo.toml"
-driver="$survey/arm-smoke/target/release/arm-smoke"
 smoke=target/85fc5ff4-arm-smoke
 rm -rf "$smoke"
 mkdir -p "$smoke"
 
-./scripts/cargo-budget.sh cargo build --release --manifest-path "$manifest" >/dev/null
-./scripts/cargo-budget.sh --test cargo test --release --manifest-path "$manifest"
+./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
+  --bin benchmark-ab-runner
+runner=$(realpath target/release/benchmark-ab-runner)
 
 # The smoked executable is the queued executable: the same bench target the
 # window job resolves, built from the current tree.
@@ -43,13 +37,15 @@ mkdir -p "$smoke"
 arm=$(python3 "$survey/find-shift-executable.py" "$smoke/shifts-build.jsonl")
 
 # The plan is the campaign's own projection of the frozen addendum over every
-# frozen cell; the lock it names is never opened, because the smoke measures
-# nothing.
+# frozen cell; the lock it names is never opened.
 python3 -B "$survey/make-shift-plan.py" "$smoke/plan.json" "$arm" \
   "$(realpath -m "$smoke/unused.lock")" --label smoke --campaign-id 85fc5ff4-arms-smoke
 "$arm" --check-plan "$smoke/plan.json"
 
-"$driver" --plan "$smoke/plan.json" --output "$smoke/observations.json"
-python3 -B "$survey/summarize-arm-smoke.py" \
-  --observations "$smoke/observations.json" --format json --output "$record" \
-  --command "$survey/smoke-shift-arms.sh" ${mode:+--check}
+if [[ "$mode" == --check ]]; then
+  "$runner" smoke "$smoke/plan.json" --record "$smoke/smoke.json"
+  cmp "$smoke/smoke.json" "$record"
+  echo "$record: unchanged by this smoke"
+else
+  "$runner" smoke "$smoke/plan.json" --record "$record"
+fi

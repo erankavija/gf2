@@ -3,13 +3,15 @@
 //!
 //! This development-only crate deliberately knows nothing about gf2 selector
 //! types or installation. Owner crates retain all tuning policy and semantic
-//! validation; this crate supplies the byte framing, timing, deterministic
-//! seed, empirical selection, journal, checkpoint, host-observation, process
-//! and paired A/B statistics primitives around it.
+//! validation; this crate supplies the byte framing, the arm wire and its
+//! non-timed smoke, timing, deterministic seed, empirical selection, journal,
+//! checkpoint, host-observation, process and paired A/B statistics primitives
+//! around it.
 
 #![forbid(unsafe_code)]
 
 pub mod abtest;
+pub mod arm;
 pub mod campaign;
 pub mod host;
 pub mod journal;

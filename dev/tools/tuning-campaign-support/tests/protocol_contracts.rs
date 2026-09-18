@@ -3916,3 +3916,505 @@ fn v3_receipts_keep_rejecting_a_restarted_cell_and_refuse_later_rules() {
     assert_eq!(later.verdict, Verdict::Rejected);
     assert!(later.findings.iter().any(|finding| finding.rule == "P-01"));
 }
+
+/// The one arm-request contract, from both ends: the request the runner builds
+/// and the mirrors campaign arms decode it with.
+mod arm_wire {
+    use super::{cell, CellObjective, CellRole, CoreArm};
+    use serde::{Deserialize, Serialize};
+    use serde_json::{json, Value};
+    use tuning_campaign_support::arm::{ArmRequest, PairPosition, ARM_REQUEST_SCHEMA};
+    use tuning_campaign_support::protocol::{CacheState, PlanCell, SHARED_SETTINGS};
+    use tuning_campaign_support::transport;
+
+    /// The mirror of an arm that names the position with its own enumeration
+    /// and leaves the decoder opaque, as `6c6b09b1/survey/arm-common` does.
+    #[derive(Debug, Deserialize, Serialize)]
+    #[serde(deny_unknown_fields)]
+    struct TypedMirror {
+        schema: String,
+        cell_id: String,
+        arm: String,
+        role: PairPosition,
+        pair: u32,
+        case: Value,
+        cache_state: CacheState,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        cold_calls: Option<u64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        decoder: Option<Value>,
+        windows: u32,
+        window_target_ms: u32,
+        cpus: Vec<u32>,
+        workers_declared: u32,
+    }
+
+    /// The mirror of an arm that keeps the position and the cache state as
+    /// strings, as the shift, interleaver and logical-buffer arms do.
+    #[derive(Debug, Deserialize, Serialize)]
+    #[serde(deny_unknown_fields)]
+    struct StringMirror {
+        schema: String,
+        cell_id: String,
+        arm: String,
+        role: String,
+        pair: u32,
+        case: Value,
+        cache_state: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        cold_calls: Option<u64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        decoder: Option<Value>,
+        windows: u32,
+        window_target_ms: u32,
+        cpus: Vec<u32>,
+        workers_declared: u32,
+    }
+
+    /// A mirror that names every field but declares two of them in the wrong
+    /// order.
+    #[derive(Debug, Deserialize, Serialize)]
+    #[serde(deny_unknown_fields)]
+    struct ReorderedMirror {
+        schema: String,
+        arm: String,
+        cell_id: String,
+        role: String,
+        pair: u32,
+        case: Value,
+        cache_state: String,
+        windows: u32,
+        window_target_ms: u32,
+        cpus: Vec<u32>,
+        workers_declared: u32,
+    }
+
+    /// A mirror carrying a field the runner does not send.
+    #[derive(Debug, Deserialize, Serialize)]
+    struct ExtraFieldMirror {
+        schema: String,
+        cell_id: String,
+        arm: String,
+        role: String,
+        pair: u32,
+        case: Value,
+        cache_state: String,
+        windows: u32,
+        window_target_ms: u32,
+        cpus: Vec<u32>,
+        workers_declared: u32,
+        #[serde(default)]
+        repetitions: u32,
+    }
+
+    /// A mirror that spells an absent optional field `null`.
+    #[derive(Debug, Deserialize, Serialize)]
+    #[serde(deny_unknown_fields)]
+    struct NullOptionalMirror {
+        schema: String,
+        cell_id: String,
+        arm: String,
+        role: String,
+        pair: u32,
+        case: Value,
+        cache_state: String,
+        #[serde(default)]
+        cold_calls: Option<u64>,
+        #[serde(default)]
+        decoder: Option<Value>,
+        windows: u32,
+        window_target_ms: u32,
+        cpus: Vec<u32>,
+        workers_declared: u32,
+    }
+
+    fn plan_cell() -> PlanCell {
+        PlanCell {
+            cell_id: "first".to_owned(),
+            baseline_arm: "baseline".to_owned(),
+            candidate_arm: "candidate".to_owned(),
+            case: json!({"seed": 1, "words": 4096}),
+            pilot_pairs: None,
+        }
+    }
+
+    /// Both mirror shapes decode the smoke's request and re-encode the exact
+    /// bytes the runner wrote; a mirror that disagrees in field order, in field
+    /// set or in the omission of an absent optional field fails at the decode,
+    /// because the canonical framing compares its own re-encoding with the
+    /// bytes it read.
+    #[test]
+    fn arm_mirrors_round_trip_the_runners_validation_request() {
+        let declared = cell(
+            "first",
+            CellObjective::Improvement,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        );
+        let request = ArmRequest::validation(&plan_cell(), &declared, "baseline");
+        assert_eq!(request.schema, ARM_REQUEST_SCHEMA);
+        assert_eq!(request.role, PairPosition::Validation);
+        assert_eq!((request.windows, request.window_target_ms), (0, 0));
+        let bytes = transport::encode_case(&request).expect("the runner's encoder");
+        assert!(
+            !bytes.contains("cold_calls") && !bytes.contains("decoder"),
+            "{bytes}"
+        );
+
+        let typed: TypedMirror = transport::decode_case(&bytes).expect("the arm-common mirror");
+        assert_eq!(typed.role, PairPosition::Validation);
+        assert_eq!(transport::encode_case(&typed).expect("re-encodes"), bytes);
+        let loose: StringMirror = transport::decode_case(&bytes).expect("the string mirror");
+        assert_eq!(loose.role, "validation");
+        assert_eq!(transport::encode_case(&loose).expect("re-encodes"), bytes);
+
+        for reason in [
+            transport::decode_case::<ReorderedMirror>(&bytes).expect_err("field order"),
+            transport::decode_case::<ExtraFieldMirror>(&bytes).expect_err("field set"),
+            transport::decode_case::<NullOptionalMirror>(&bytes).expect_err("null optional"),
+        ] {
+            assert!(reason.contains("canonical"), "{reason}");
+        }
+    }
+
+    /// A timed execution takes one side of the pair and carries the settings'
+    /// window budget; the validation position is no campaign execution, so the
+    /// timed request refuses it.
+    #[test]
+    fn a_timed_request_takes_a_pair_side_and_refuses_the_validation_position() {
+        let declared = cell(
+            "first",
+            CellObjective::Improvement,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        );
+        for (position, spelling) in [
+            (PairPosition::Baseline, "baseline"),
+            (PairPosition::Candidate, "candidate"),
+        ] {
+            let request = ArmRequest::timed(
+                &plan_cell(),
+                &declared,
+                "baseline",
+                position,
+                3,
+                vec![0],
+                &SHARED_SETTINGS,
+            )
+            .expect("a pair side is a timed position");
+            assert_eq!(request.windows, SHARED_SETTINGS.windows_per_execution);
+            assert_eq!(request.window_target_ms, SHARED_SETTINGS.window_target_ms);
+            assert_eq!(request.pair, 3);
+            let bytes = transport::encode_case(&request).expect("the runner's encoder");
+            assert!(
+                bytes.contains(&format!("\"role\":\"{spelling}\"")),
+                "{bytes}"
+            );
+        }
+        let refused = ArmRequest::timed(
+            &plan_cell(),
+            &declared,
+            "baseline",
+            PairPosition::Validation,
+            0,
+            vec![0],
+            &SHARED_SETTINGS,
+        )
+        .expect_err("a campaign execution cannot take the validation position");
+        assert!(refused.contains("validation"), "{refused}");
+    }
+}
+
+/// The non-timed smoke end to end, through the subcommand a harness invokes.
+mod arm_smoke {
+    use super::{
+        addendum, cell, git, scratch, write_addendum, CellObjective, CellRole, CoreArm,
+        ADDENDUM_SCHEMA_ID, PROTOCOL_VERSION,
+    };
+    use serde_json::{json, Value};
+    use std::fs;
+    use std::path::{Path, PathBuf};
+    use std::process::{Command, Output};
+    use tuning_campaign_support::arm::{PairPosition, SmokeRecord, SMOKE_RECORD_SCHEMA};
+    use tuning_campaign_support::protocol::{sha256_hex, CacheState};
+    use tuning_campaign_support::scratch::Scratch;
+
+    const ADDENDUM: &str = "dev/active/f547c394/addendum-fixture.json";
+    const CELLS: [&str; 2] = ["first", "second"];
+
+    /// A conforming arm: the crate's own synthetic workload, which serves the
+    /// validation position with one untimed dispatch.
+    fn conforming(passes: &str) -> Value {
+        json!({
+            "build": "conservative-portable",
+            "description": format!("xor-fold {passes} pass"),
+            "executable": env!("CARGO_BIN_EXE_ab-smoke-workload"),
+            "arguments": [],
+            "environment": {"GF2_SMOKE_PASSES": passes},
+            "rustflags": null,
+            "tuning_profile": null
+        })
+    }
+
+    /// An arm whose whole behavior is the shell script `body`, so a test fixes
+    /// exactly what the child writes on its standard output.
+    fn scripted(description: &str, body: &str) -> Value {
+        json!({
+            "build": "conservative-portable",
+            "description": description,
+            "executable": "/bin/sh",
+            "arguments": ["-c", body],
+            "environment": {},
+            "rustflags": null,
+            "tuning_profile": null
+        })
+    }
+
+    /// A plan over two warm cells, the conforming baseline and `candidate`.
+    struct Fixture {
+        _root: Scratch,
+        repo: PathBuf,
+        plan: PathBuf,
+        record: PathBuf,
+        lock: PathBuf,
+    }
+
+    fn fixture(name: &str, candidate: Value, cell_ids: [&str; 2]) -> Fixture {
+        let root = scratch(name);
+        let repo = root.join("repo");
+        fs::create_dir_all(repo.join("dev/active/f547c394")).unwrap();
+        let mut family = addendum(
+            CELLS
+                .iter()
+                .map(|id| {
+                    cell(
+                        id,
+                        CellObjective::Improvement,
+                        CellRole::Exploratory,
+                        CoreArm::SingleCore,
+                    )
+                })
+                .collect(),
+        );
+        family.protocol.version = PROTOCOL_VERSION;
+        family.schema = ADDENDUM_SCHEMA_ID.into();
+        family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+        fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
+        write_addendum(&repo, &family);
+        git(&repo, &["init", "-q"]);
+        let lock = root.join("absent.lock");
+        let plan = json!({
+            "schema": "zen3-benchmark-plan-v1",
+            "campaign_id": "smoke-contract",
+            "producing_manifest": "producing-inputs.json",
+            "issue": "f547c394",
+            "label": "smoke",
+            "campaign_seed": 13,
+            "addendum": ADDENDUM,
+            "lock_path": lock,
+            "wrapper": "flock",
+            "timing_override": null,
+            "arms": {"baseline": conforming("2"), "candidate": candidate},
+            "cells": cell_ids.iter().enumerate().map(|(index, id)| json!({
+                "cell_id": id,
+                "baseline_arm": "baseline",
+                "candidate_arm": "candidate",
+                "case": {"words": 4096, "seed": index + 1},
+                "pilot_pairs": 6
+            })).collect::<Vec<_>>(),
+            "max_cells_per_session": null
+        });
+        let plan_path = root.join("plan.json");
+        fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
+        Fixture {
+            repo,
+            plan: plan_path,
+            record: root.join("record.json"),
+            lock,
+            _root: root,
+        }
+    }
+
+    impl Fixture {
+        /// Runs the smoke subcommand from the repository root, as a harness does.
+        fn smoke(&self, record: Option<&Path>) -> Output {
+            let mut command = Command::new(env!("CARGO_BIN_EXE_benchmark-ab-runner"));
+            command.arg("smoke").arg(&self.plan);
+            if let Some(path) = record {
+                command.arg("--record").arg(path);
+            }
+            command.current_dir(&self.repo).output().unwrap()
+        }
+
+        /// Every file in the repository, outside source control's own tree.
+        fn tree(&self) -> Vec<String> {
+            let mut paths = Vec::new();
+            walk(&self.repo, &self.repo, &mut paths);
+            paths.sort();
+            paths
+        }
+    }
+
+    fn walk(root: &Path, dir: &Path, paths: &mut Vec<String>) {
+        for entry in fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            let relative = path
+                .strip_prefix(root)
+                .unwrap()
+                .to_string_lossy()
+                .into_owned();
+            if relative == ".git" {
+                continue;
+            }
+            if path.is_dir() {
+                walk(root, &path, paths);
+            } else {
+                paths.push(relative);
+            }
+        }
+    }
+
+    fn failure(output: &Output) -> String {
+        assert_eq!(output.status.code(), Some(1), "{output:?}");
+        String::from_utf8_lossy(&output.stderr).into_owned()
+    }
+
+    /// The smoke drives every arm of every cell once in the validation
+    /// position, records only what the plan declares and the arms report, and
+    /// writes nothing else: no stage, no checkpoint, no receipt, no ledger
+    /// reservation and no lock. Two runs over one build reproduce the record
+    /// byte for byte.
+    #[test]
+    fn smoke_drives_every_arm_untimed_and_reproduces_its_record() {
+        let fixture = fixture("smoke-conforming", conforming("1"), CELLS);
+        let before = fixture.tree();
+        let first = fixture.smoke(Some(&fixture.record));
+        assert_eq!(
+            first.status.code(),
+            Some(0),
+            "{}",
+            String::from_utf8_lossy(&first.stderr)
+        );
+        let stdout = String::from_utf8_lossy(&first.stdout);
+        assert!(
+            stdout.contains("4 validation dispatches over 2 cells, 0 timing windows"),
+            "{stdout}"
+        );
+        let bytes = fs::read(&fixture.record).unwrap();
+        let record: SmokeRecord = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(record.schema, SMOKE_RECORD_SCHEMA);
+        assert_eq!(record.campaign_id, "smoke-contract");
+        assert_eq!(record.issue, "f547c394");
+        assert_eq!(record.family, "fixture-family");
+        assert_eq!(record.addendum, ADDENDUM);
+        assert_eq!(
+            record.addendum_sha256,
+            sha256_hex(&fs::read(fixture.repo.join(ADDENDUM)).unwrap())
+        );
+        assert_eq!(
+            record.plan_sha256,
+            sha256_hex(&fs::read(&fixture.plan).unwrap())
+        );
+        let workload = sha256_hex(&fs::read(env!("CARGO_BIN_EXE_ab-smoke-workload")).unwrap());
+        assert_eq!(
+            record
+                .cells
+                .iter()
+                .map(|cell| cell.cell_id.as_str())
+                .collect::<Vec<_>>(),
+            CELLS
+        );
+        for cell in &record.cells {
+            assert_eq!(cell.cache_state, CacheState::Warm);
+            assert_eq!(
+                cell.arms
+                    .iter()
+                    .map(|arm| arm.arm.as_str())
+                    .collect::<Vec<_>>(),
+                ["baseline", "candidate"]
+            );
+            for arm in &cell.arms {
+                assert_eq!(arm.role, PairPosition::Validation);
+                assert_eq!(arm.windows, 0);
+                assert_eq!(arm.executable_sha256, workload);
+                assert_eq!(arm.cache_state_declared, CacheState::Warm);
+                assert_eq!(arm.cache_state_applied, CacheState::Warm);
+                assert_eq!(arm.selected_path, "xor-fold-scalar");
+            }
+        }
+        assert_eq!(
+            fixture.tree(),
+            before,
+            "the smoke wrote inside the repository"
+        );
+        assert!(!fixture.lock.exists(), "the smoke created the plan's lock");
+        assert!(fs::read(fixture.repo.join("family-ledger.jsonl"))
+            .unwrap()
+            .is_empty());
+
+        let again = fixture._root.join("record-again.json");
+        assert!(fixture.smoke(Some(&again)).status.success());
+        assert_eq!(fs::read(&again).unwrap(), bytes);
+    }
+
+    /// The smoke measures nothing, so an arm that reports a timing window is a
+    /// defect the smoke names by cell and arm.
+    #[test]
+    fn smoke_fails_an_arm_that_reports_a_timing_window() {
+        const TIMED: &str = r#"cat >/dev/null
+printf 'GF2_TUNING_RESULT={"schema":"zen3-benchmark-arm-result-v1","windows":[{"calls":8,"elapsed_ns":9}],"cache_state_applied":"warm","workers_observed":1,"cpus_observed":[0],"selected_path":"scripted","conversion":null,"quality":null}\n'"#;
+        let fixture = fixture("smoke-window", scripted("times a window", TIMED), CELLS);
+        let reason = failure(&fixture.smoke(Some(&fixture.record)));
+        assert!(
+            reason.contains("cell first arm candidate")
+                && reason.contains("1 timing windows")
+                && reason.contains("measures none"),
+            "{reason}"
+        );
+        assert!(!fixture.record.exists());
+    }
+
+    /// An arm that exits without its one result line fails the smoke.
+    #[test]
+    fn smoke_fails_an_arm_that_writes_no_result_line() {
+        let fixture = fixture(
+            "smoke-silent",
+            scripted("writes nothing", "cat >/dev/null"),
+            CELLS,
+        );
+        let reason = failure(&fixture.smoke(None));
+        assert!(
+            reason.contains("cell first arm candidate") && reason.contains("0 lines"),
+            "{reason}"
+        );
+    }
+
+    /// A result line the canonical parser refuses fails the smoke.
+    #[test]
+    fn smoke_fails_a_malformed_result_line() {
+        const MALFORMED: &str = r#"cat >/dev/null
+printf 'GF2_TUNING_RESULT={"schema":"zen3-benchmark-arm-result-v1","windows":[]\n'"#;
+        let fixture = fixture(
+            "smoke-malformed",
+            scripted("truncates its line", MALFORMED),
+            CELLS,
+        );
+        let reason = failure(&fixture.smoke(None));
+        assert!(
+            reason.contains("cell first arm candidate") && reason.contains("child result"),
+            "{reason}"
+        );
+    }
+
+    /// A plan cell the frozen addendum does not declare fails before any arm
+    /// runs, exactly as it fails the timed path's validation.
+    #[test]
+    fn smoke_fails_a_plan_cell_the_addendum_does_not_declare() {
+        let fixture = fixture("smoke-undeclared", conforming("1"), ["first", "undeclared"]);
+        let reason = failure(&fixture.smoke(None));
+        assert!(
+            reason.contains("plan invalid") && reason.contains("\"undeclared\""),
+            "{reason}"
+        );
+    }
+}
