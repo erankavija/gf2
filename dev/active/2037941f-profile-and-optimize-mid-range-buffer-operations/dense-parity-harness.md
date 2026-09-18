@@ -154,12 +154,27 @@ The allocated boundary charges the output allocation and its appends and
 excludes the release, which the addendum states explicitly when it contrasts
 the two gf2 arms: the comparator arm charges releasing the returned `BitVec`
 and the allocated arm does not. `routes::OutputSink` implements that boundary.
-Each timed call's output is retained in a `Vec` reserved to the calibrated call
-count, and the batch is released in the timing helper's post-window callback,
-which runs strictly outside the measured interval. The retention is bounded by
-`MAX_RETAINED_OUTPUTS`; a window that would exceed the bound releases inside
-itself rather than growing without limit, and the arm reports the sink's
-capacity in `selected_path`.
+Each timed call's output is retained in a `Vec`, and the batch is released in the
+timing helper's post-window callback, which runs strictly outside the measured
+interval and refuses a window that retained anything other than one output per
+call. The sink reserves and releases only outside a window, so no window clears,
+truncates or reallocates it.
+
+`OutputSink::admit` reserves one window's outputs before the window opens and
+refuses, naming the cell, the call count and the bound, a count above
+`MAX_RETAINED_OUTPUTS`. A cell with the addendum's frozen fixed call count is
+admitted before any measured work; a calibrated cell is admitted from the
+post-calibration callback, which the timing helper runs before the first window
+opens, because the calibrated count does not exist earlier. The calibration
+probes retain their own outputs and release none.
+
+The bound is derived, not chosen per cell: `RETAINED_BUDGET_BYTES` of retained
+residency divided by the bytes of the largest declared retained output, which is
+one 1024-bit `BitVec` because every retaining cell is an allocated-matvec cell.
+A contract test states the resulting peak against the budget and the per-call
+cost the bound covers at the protocol's window target, so the retention is known
+to be feasible on the prepared host. The arm reports that bound in
+`selected_path`.
 
 One consequence belongs in the record rather than in a silent choice: while a
 window retains its outputs, the allocator cannot reuse a freed block, so the

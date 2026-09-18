@@ -4,7 +4,7 @@
 //! behind an optimisation barrier. The harness reads no private layout and
 //! changes no production selection.
 
-use crate::cells::{Cache, Question, SIMD_LANE_MIN_WORDS};
+use crate::cells::{Cache, Question, MATVEC_ROWS, SIMD_LANE_MIN_WORDS};
 use gf2_core::matrix::{matvec_route, MatvecRoute};
 use gf2_core::{BitMatrix, BitVec};
 use gf2_kernels_simd::LogicalFns;
@@ -18,9 +18,34 @@ use tuning_campaign_support::timing::{
 /// Environment variable selecting one gf2 route in `dense-arm`.
 pub const ROUTE_VAR: &str = "GF2_DENSE_ROUTE";
 
-/// Retention bound of [`OutputSink`]; a longer window releases inside itself
-/// rather than growing without limit.
-pub const MAX_RETAINED_OUTPUTS: usize = 1 << 18;
+/// Retained-output residency [`OutputSink`] may hold for one timed window.
+///
+/// The allocated boundary excludes the release, so a whole window's outputs are
+/// resident at once. This declared budget bounds that residency independently of
+/// the calibrated call count; a contract test states the peak it permits.
+pub const RETAINED_BUDGET_BYTES: usize = 64 << 20;
+
+/// Declared bookkeeping the system allocator holds beside one block, so the
+/// derived per-output figure is an upper bound rather than the words alone.
+const ALLOCATOR_BLOCK_BYTES: usize = 16;
+
+/// Bytes one retained output of the largest declared retaining cell occupies.
+///
+/// Every cell that retains an output is an `allocated-matvec` cell, so the
+/// largest declared output is one [`MATVEC_ROWS`]-bit `BitVec`: its handle in
+/// the sink's vector plus the exact word block `BitMatrix::matvec` returns,
+/// which is `BitVec::with_capacity(rows)` and holds `rows.div_ceil(64)` words.
+pub const RETAINED_OUTPUT_BYTES: usize = size_of::<BitVec>()
+    + MATVEC_ROWS.div_ceil(64) * size_of::<u64>()
+    + ALLOCATOR_BLOCK_BYTES;
+
+/// Outputs [`OutputSink`] retains for one window, derived from the budget and
+/// the largest declared output. A window whose call count exceeds it is refused
+/// before the window opens.
+pub const MAX_RETAINED_OUTPUTS: usize = RETAINED_BUDGET_BYTES / RETAINED_OUTPUT_BYTES;
+
+/// Peak retained-output bytes at the bound for the largest declared cell.
+pub const RETAINED_PEAK_BYTES: usize = MAX_RETAINED_OUTPUTS * RETAINED_OUTPUT_BYTES;
 
 /// One measured gf2 route.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -146,36 +171,70 @@ pub fn observe_output(output: &BitVec) -> u64 {
     }
 }
 
-/// Retains each timed call's output so its release falls outside the window.
+/// Retains every timed call's output so no release falls inside a window.
+///
+/// The allocated boundary charges the output allocation and its appends and
+/// excludes the release, which the addendum states where it contrasts the two
+/// gf2 arms of the comparator and the allocated families. The sink therefore
+/// holds a whole window's outputs and releases them only from the timing
+/// helper's post-window callback. It never clears, truncates or reallocates
+/// inside a window: [`OutputSink::admit`] refuses a call count the bound cannot
+/// hold and reserves the exact count before the window opens.
 #[derive(Default)]
 pub struct OutputSink {
     held: Vec<BitVec>,
 }
 
 impl OutputSink {
-    /// Reserves room for one window's outputs, up to [`MAX_RETAINED_OUTPUTS`].
-    pub fn reserve(&mut self, calls: u64) {
-        let wanted = usize::try_from(calls).unwrap_or(MAX_RETAINED_OUTPUTS);
-        self.held.reserve_exact(wanted.min(MAX_RETAINED_OUTPUTS));
+    /// Admits one window's call count, reserving its outputs and releasing
+    /// whatever the arrangement before it retained.
+    ///
+    /// A fixed-count cell admits before [`run_windows`]; a calibrated cell
+    /// admits from the `CalibrationComplete` callback, which the timing helper
+    /// runs after calibration and before the first window opens, because the
+    /// calibrated count does not exist earlier. The calibration probes retain
+    /// their own outputs and release none, and their total stays below the count
+    /// admitted here: the probe stops at its own target, a fifth of the window's,
+    /// so its doubling ends below four fifths of the window's calls.
+    pub fn admit(&mut self, cell_id: &str, calls: u64) -> Result<(), String> {
+        let wanted = usize::try_from(calls).unwrap_or(usize::MAX);
+        if wanted > MAX_RETAINED_OUTPUTS {
+            return Err(format!(
+                "cell {cell_id} calls its operation {wanted} times per window, above the \
+                 {MAX_RETAINED_OUTPUTS}-output retention bound ({RETAINED_PEAK_BYTES} B); \
+                 the allocated boundary releases no output inside a window"
+            ));
+        }
+        self.held.clear();
+        self.held.reserve_exact(wanted);
+        Ok(())
     }
 
-    /// Retains one output, releasing the batch first when the bound is reached.
+    /// Retains one output. This never releases, so no measured call frees.
     #[inline]
     pub fn keep(&mut self, output: BitVec) {
-        if self.held.len() == self.held.capacity() {
-            self.held.clear();
-        }
         self.held.push(output);
     }
 
-    /// Releases every retained output.
+    /// Releases one closed window's outputs, refusing a count that is not the
+    /// window's own: the sink retains every call's output or the arm fails.
+    pub fn release_window(&mut self, calls: u64) -> Result<(), String> {
+        let held = self.held.len() as u64;
+        if held != calls {
+            return Err(format!("a window of {calls} calls retained {held} outputs"));
+        }
+        self.held.clear();
+        Ok(())
+    }
+
+    /// Releases every retained output, outside every window.
     pub fn release(&mut self) {
         self.held.clear();
     }
 
-    /// Outputs the sink can retain before it releases inside a window.
-    pub fn capacity(&self) -> usize {
-        self.held.capacity()
+    /// Outputs the sink currently retains.
+    pub fn held(&self) -> usize {
+        self.held.len()
     }
 }
 
