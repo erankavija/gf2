@@ -242,6 +242,17 @@ fn run() -> Result<(), String> {
     let Workload::M4riGap { shape, retained } = case.workload()? else {
         return Err("the M4RI comparator arm serves only matvec-vs-m4ri cells".into());
     };
+    // Every cell of the comparator family declares the warm state, so this arm
+    // converts the one item its bank holds. A rotating working set would need a
+    // converted item per bank, which this arm refuses rather than measuring one
+    // item while reporting the whole set.
+    if cache != Cache::Warm {
+        return Err(format!(
+            "every comparator cell declares the warm cache state; {} declares {}",
+            request.cell_id,
+            cache.id()
+        ));
+    }
     let library = qualified()?;
     let setup_start = Instant::now();
     let banks = MatvecBanks::build(shape.rows, shape.cols, cache, case.seed());

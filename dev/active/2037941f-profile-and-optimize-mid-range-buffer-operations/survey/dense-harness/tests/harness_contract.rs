@@ -1103,6 +1103,25 @@ fn whole_consumer_cells_charge_conversion_costs() {
     }
 }
 
+/// Every comparator cell declares the warm state and conversion-and-setup costs
+/// included (§ M4RI comparator), which is the arrangement the external arm
+/// converts once and the state its peer charges on its own side.
+#[test]
+fn every_comparator_cell_is_a_warm_whole_consumer_cell() {
+    for cell in family_cells(Question::MatvecVsM4ri) {
+        assert_eq!(cell.cache, Cache::Warm, "{}", cell.cell_id);
+        assert!(cell.whole_consumer(), "{}", cell.cell_id);
+        assert_eq!(cell.objective(), "comparator-gap", "{}", cell.cell_id);
+        assert_eq!(cell.cache.banks(), 1, "{}", cell.cell_id);
+    }
+    let addendum = campaign::addendum(Question::MatvecVsM4ri, ISSUE, FROZEN);
+    for declaration in &addendum.cells {
+        assert!(declaration.conversion_costs_included, "{}", declaration.cell_id);
+        assert_eq!(declaration.metric_kind, MetricKind::WholeConsumer, "{}", declaration.cell_id);
+        assert!(declaration.cold_calls.is_none(), "{}", declaration.cell_id);
+    }
+}
+
 #[test]
 fn every_qualified_comparator_shape_is_a_frozen_cell() {
     let ids: BTreeSet<String> = family_cells(Question::MatvecVsM4ri)
