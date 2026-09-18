@@ -138,6 +138,45 @@ fn a_campaign_child_decodes_the_runner_request_wire() {
     assert_eq!(arm.status.code(), Some(2));
 }
 
+/// The same request in the validation role, at the one worker the family
+/// declares: the role the non-timed arm smoke sends.
+const VALIDATION_REQUEST: &str = concat!(
+    r#"{"schema":"zen3-benchmark-arm-request-v1","#,
+    r#""cell_id":"dvb-t2-qam16-r12-short-warm-isolated-null","#,
+    r#""arm":"gf2-direct-a","role":"validation","pair":0,"#,
+    r#""case":{"modcod":"qam16-r12-short","seed":2103},"cache_state":"warm","#,
+    r#""windows":5,"window_target_ms":100,"cpus":[0],"workers_declared":1}"#,
+);
+
+#[test]
+fn the_validation_role_dispatches_once_and_reports_no_window() {
+    let mut arm = Command::new(env!("CARGO_BIN_EXE_dvb-profile-arm"))
+        .env_remove("GF2_BENCH")
+        .env_remove("GF2_BENCH_WINDOW")
+        .env(FRESH_CASE_VAR, FRESH_CASE_VALUE)
+        .env("GF2_DVB_PROFILE_ROUTE", "gf2-direct-a")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("arm child spawns");
+    arm.stdin
+        .take()
+        .expect("child stdin is piped")
+        .write_all(VALIDATION_REQUEST.as_bytes())
+        .expect("request writes without a broken pipe");
+    let arm = arm.wait_with_output().expect("arm child completes");
+    let stdout = String::from_utf8_lossy(&arm.stdout).into_owned();
+    assert_eq!(arm.status.code(), Some(0), "{stdout}");
+    assert!(arm.stderr.is_empty());
+    assert!(stdout.contains(r#""windows":[]"#), "{stdout}");
+    assert!(stdout.contains(r#""conversion":null"#), "{stdout}");
+    assert!(
+        stdout.contains("DvbT2BitInterleaver::interleave/scalar-bit-scatter/qam16-r12-short"),
+        "{stdout}"
+    );
+}
+
 #[test]
 fn profile_matrix_covers_modcod_boundaries_and_cache_states() {
     let addendum = FamilyAddendum::decode(&read(ADDENDUM)).expect("typed addendum decodes");

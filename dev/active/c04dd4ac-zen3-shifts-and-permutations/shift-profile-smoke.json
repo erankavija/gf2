@@ -1,74 +1,158 @@
 {
-  "schema": "bitvec-residual-shift-wire-smoke-v1",
+  "schema": "zen3-arm-smoke-record-v1",
   "issue": "85fc5ff4",
-  "scope": "throwaway protocol-v4 run of the queued arm executable through the real benchmark-ab-runner; the handshake and the result framing are the observation, the durations are discarded",
-  "campaign_id": "85fc5ff4-arms-smoke",
-  "family_id": "bitvec-residual-shift-arms-smoke",
-  "runner": {
-    "path": "target/release/benchmark-ab-runner",
-    "sha256": "5a544af0de11b1aae4e822e2a3caa645137376091ef192fd96829858d3dc17d2"
+  "scope": "non-timed validation-role dispatch of every arm of the plan's cells, through the runner's own request framing and child environment; the smoke opens no campaign, takes no lock, reserves nothing in a family ledger, finalizes no receipt and records no timing window",
+  "command": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-shift-arms.sh",
+  "plan": {
+    "path": "target/85fc5ff4-arm-smoke/plan.json",
+    "sha256": "f3180db6ceb4f5d203377d9b95e043e6bfc00e6ff133d52c633920af5a601124",
+    "campaign_id": "85fc5ff4-arms-smoke",
+    "issue": "85fc5ff4",
+    "addendum": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json",
+    "addendum_sha256": "7e7289e083b351d3a5c6778e90e07de019c634a49b92f606ee9c921abf6e3e41",
+    "cells": 10
   },
-  "arm_executable": {
-    "path": "target/release/deps/shifts-0bf958b31b19206c",
-    "sha256": "0b50f7ced1010b0a3b70453126b4874a84038931f5e24b7dfb26aaafba2a3cd5"
-  },
-  "children_spawned": 24,
-  "children_exited_zero": 24,
-  "children_reaped": 24,
-  "child_diagnostics": [],
-  "terminal_events": [
-    "complete"
+  "arms": [
+    {
+      "arm": "residual-production",
+      "executable": "target/release/deps/shifts-9f8d6039725c588b",
+      "sha256": "be48077c8f4801a56d6c81e13680853ce8c3fc686c7cbed8988ed05d857fe17e",
+      "environment": {
+        "GF2_SHIFT_ARM": "residual-production"
+      },
+      "dispatches": 10,
+      "result_lines": 10,
+      "timing_windows": 0,
+      "workers_observed": [
+        1
+      ],
+      "routes": [
+        "bitvec-residual-scalar-left",
+        "bitvec-residual-scalar-right"
+      ]
+    },
+    {
+      "arm": "word-aligned-control",
+      "executable": "target/release/deps/shifts-9f8d6039725c588b",
+      "sha256": "be48077c8f4801a56d6c81e13680853ce8c3fc686c7cbed8988ed05d857fe17e",
+      "environment": {
+        "GF2_SHIFT_ARM": "word-aligned-control"
+      },
+      "dispatches": 10,
+      "result_lines": 10,
+      "timing_windows": 0,
+      "workers_observed": [
+        1
+      ],
+      "routes": [
+        "bitvec-word-dispatch-left",
+        "bitvec-word-dispatch-right"
+      ]
+    }
   ],
   "cells": [
     {
       "cell_id": "left-small-r1-w64",
-      "role": "exploratory",
-      "status": "measured",
-      "baseline_arm": "residual-production",
-      "candidate_arm": "word-aligned-control",
-      "pairs": 6
+      "cache_state": "warm",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
+    },
+    {
+      "cell_id": "left-lane-crossing-r7-w64",
+      "cache_state": "warm",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
+    },
+    {
+      "cell_id": "left-byte-residual-r8-w64",
+      "cache_state": "warm",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
+    },
+    {
+      "cell_id": "left-resident-r63-w64",
+      "cache_state": "warm",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
+    },
+    {
+      "cell_id": "left-streaming-r65-w64",
+      "cache_state": "streaming",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
+    },
+    {
+      "cell_id": "right-small-r1-w64",
+      "cache_state": "warm",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
+    },
+    {
+      "cell_id": "right-lane-crossing-r7-w64",
+      "cache_state": "warm",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
+    },
+    {
+      "cell_id": "right-byte-residual-r8-w64",
+      "cache_state": "warm",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
+    },
+    {
+      "cell_id": "right-resident-r63-w64",
+      "cache_state": "warm",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
     },
     {
       "cell_id": "right-streaming-r65-w64",
-      "role": "exploratory",
-      "status": "measured",
-      "baseline_arm": "residual-production",
-      "candidate_arm": "word-aligned-control",
-      "pairs": 6
+      "cache_state": "streaming",
+      "arms": [
+        "residual-production",
+        "word-aligned-control"
+      ],
+      "result_lines": 2,
+      "timing_windows": 0
     }
   ],
-  "arms": [
-    {
-      "arm": "residual-production",
-      "result_lines_parsed": 12,
-      "selected_paths": [
-        "bitvec-residual-scalar-left",
-        "bitvec-residual-scalar-right"
-      ],
-      "result_fields_present": [
-        "cache_state_applied",
-        "selected_path",
-        "windows",
-        "workers_observed"
-      ],
-      "complete_result_lines": 12
-    },
-    {
-      "arm": "word-aligned-control",
-      "result_lines_parsed": 12,
-      "selected_paths": [
-        "bitvec-word-dispatch-left",
-        "bitvec-word-dispatch-right"
-      ],
-      "result_fields_present": [
-        "cache_state_applied",
-        "selected_path",
-        "windows",
-        "workers_observed"
-      ],
-      "complete_result_lines": 12
-    }
-  ],
-  "passed": true,
-  "failures": []
+  "dispatches": 20,
+  "result_lines": 20,
+  "timing_windows": 0
 }

@@ -275,6 +275,16 @@ fn fixture_banks(cache_state: CacheState, case: &ShiftCase) -> Result<Vec<BitVec
         .collect())
 }
 
+/// Request role that asks for one untimed dispatch and no timing window, so a
+/// non-timed smoke can drive the arm end to end outside a benchmark window.
+const VALIDATION_ROLE: &str = "validation";
+
+fn observed_cpus() -> Result<Vec<u32>, String> {
+    CpuAffinity::observe()
+        .map(|affinity| affinity.cpus().to_vec())
+        .map_err(|error| format!("cannot observe affinity: {error}"))
+}
+
 fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
     if request.schema != REQUEST_SCHEMA {
         return Err(format!(
@@ -289,9 +299,12 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
             mode.name()
         ));
     }
-    if request.role != "baseline" && request.role != "candidate" {
+    if !matches!(
+        request.role.as_str(),
+        "baseline" | "candidate" | VALIDATION_ROLE
+    ) {
         return Err(format!(
-            "request role {:?} names neither arm of a pair",
+            "request role {:?} names neither arm of a pair nor a validation dispatch",
             request.role
         ));
     }
@@ -328,6 +341,20 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
         apply_shift(vector, case.direction, offset);
         black_box(vector.words());
     };
+    if request.role == VALIDATION_ROLE {
+        body(0);
+        return Ok(ArmOutput {
+            schema: RESULT_SCHEMA,
+            windows: Vec::new(),
+            cache_state_applied: request.cache_state,
+            workers_observed: 1,
+            cpus_observed: observed_cpus()?,
+            selected_path: Some(mode.selected_path(case.direction)),
+            conversion: None,
+            quality: None,
+            calibrated: false,
+        });
+    }
     let samples = execution_windows_fixed_or_calibrated(
         0,
         u64::from(request.windows),
@@ -337,9 +364,7 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
         |_| Ok(()),
     )
     .map_err(|error| format!("timing failed: {error}"))?;
-    let cpus_observed = CpuAffinity::observe()
-        .map(|affinity| affinity.cpus().to_vec())
-        .map_err(|error| format!("cannot observe affinity: {error}"))?;
+    let cpus_observed = observed_cpus()?;
     Ok(ArmOutput {
         schema: RESULT_SCHEMA,
         windows: samples

@@ -97,7 +97,7 @@ preserves length and zero tail padding.
 
 The receipt pins the behaviour digest of every producing source file. The
 digests of the measured `bitvec.rs` and of the measured benchmark arm equal the
-digests `survey/shift-source-evidence.json` records for the committed files, so
+digests `survey/shift-source-evidence.json` records at the commits it pins, so
 the paths described above are the paths that ran.
 
 ## Wire contract
@@ -106,15 +106,16 @@ The canonical child-v2 framing accepts an arm's request only when the child
 re-encodes the runner's bytes exactly, so an arm whose request type does not
 round-trip the runner's request fails its first child and measures nothing.
 Code reading does not establish that contract.
-[`survey/smoke-shift-arms.sh`](survey/smoke-shift-arms.sh) carries the queued
-arm executable through the same `benchmark-ab-runner` binary, the same plan
-projector and the same framing on a throwaway family under `target/`, over two
-cells that between them name both arms, both directions and both cache states
-the frozen addendum declares. The smoke takes no host mutex and its durations
-are discarded; [`shift-profile-smoke.json`](shift-profile-smoke.json) records
-the executables that spoke, the children the runner spawned and reaped, the
-child diagnostics, and the fields of each arm's one result line the runner
-parsed.
+[`survey/smoke-shift-arms.sh`](survey/smoke-shift-arms.sh) drives both arms of
+every frozen cell with the runner's own request framing, result parser and child
+environment, in the validation role: each arm performs one untimed dispatch,
+applies its zero-fill oracle and returns no timing window, and the driver
+refuses an arm that reports one. The smoke opens no campaign, so it takes no
+host mutex, reserves nothing in the family ledger, writes no stage, finalizes no
+receipt and emits no timing sample, and it runs outside the benchmark window.
+[`shift-profile-smoke.json`](shift-profile-smoke.json) records the plan and
+executable identities, the route each arm selected, the result lines parsed and
+the window count.
 
 ## The voided launch attempt
 
@@ -224,7 +225,7 @@ of that argument only.
 | [`shift-profile-trial-ledger.jsonl`](shift-profile-trial-ledger.jsonl) | The replacement campaign's genesis reservation; tables § *Family accounting* projects it |
 | [`shift-profile-validation.json`](shift-profile-validation.json) | Passing independent-oracle corpus; tables § *Semantic oracle corpus* |
 | [`shift-profile-consumer-audit.json`](shift-profile-consumer-audit.json) | Passing; no downstream production caller; tables § *Production-consumer audit* |
-| [`shift-profile-smoke.json`](shift-profile-smoke.json) | Passing: the queued arm executable completes the handshake and the result framing through the real runner |
+| [`shift-profile-smoke.json`](shift-profile-smoke.json) | Passing: both arms answer the runner's request framing on every frozen cell, with zero timing windows |
 | [`shift-feasibility-record.md`](shift-feasibility-record.md) | The REQ-05 planning-time record: both nominated forms feasible at Rust 1.95, with the toolchain, assembly and correctness artefacts |
 | [`survey/shift-source-evidence.json`](survey/shift-source-evidence.json) | The pinned code claims behind every mechanism statement above |
 | [`dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json`](../../bench_results/85fc5ff4/v4-voided-launch-attempt.json) | The voided launch attempt, its preserved stage and its unmeasured cells |

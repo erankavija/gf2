@@ -41,8 +41,9 @@ DEFECT = (
 )
 RESOLUTION = (
     "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json records "
-    "the same executable, rebuilt from the corrected arm, completing the handshake and "
-    "the result framing through the same runner on a throwaway plan."
+    "the arm, rebuilt from the corrected request mirror, completing the canonical "
+    "child-v2 handshake and the result framing under the runner's own encoder, parser "
+    "and child environment, in the untimed validation role on every frozen cell."
 )
 RULE = (
     "dev/active/f547c394/protocol.md, the voided-attempt paragraph of the "
