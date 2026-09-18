@@ -159,8 +159,8 @@ under the frozen rule*). The two arms differ there by a fixed per-call cost
 rather than by per-word work.
 
 From the lane-crossing size upward the gap opens and grows with the amount of
-data touched, and at the resident size it is larger to the right than to the
-left. Most cells are material under the predeclared threshold; the exceptions
+data touched up to the resident size, where it is larger to the right than to
+the left; at the streaming size it is smaller again in both directions. Most cells are material under the predeclared threshold; the exceptions
 are the smallest-size cells in both directions, where the residual path is the
 cheaper one, and the right-hand lane-crossing cell, whose interval straddles
 the threshold rather than clearing it. Tables § *Materiality disposition under
