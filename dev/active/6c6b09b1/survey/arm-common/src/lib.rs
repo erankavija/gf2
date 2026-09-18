@@ -12,6 +12,13 @@
 //! timing protocol calls. Everything outside that closure is untimed. An arm
 //! that can only name its code path once the measured calls have run supplies
 //! an [`ObservedWorkload`] instead.
+//!
+//! [`smoke`] drives those same arms over the same wire untimed, from a saved
+//! runner plan, and [`alloc`] counts what one call allocates for an arm whose
+//! cell reports that count.
+
+pub mod alloc;
+pub mod smoke;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
