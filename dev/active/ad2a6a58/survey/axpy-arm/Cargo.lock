@@ -230,6 +230,8 @@ dependencies = [
  "byte-field-arm-common",
  "byte-field-gf2-side",
  "gf2-core",
+ "serde_json",
+ "tuning-campaign-support",
 ]
 
 [[package]]
