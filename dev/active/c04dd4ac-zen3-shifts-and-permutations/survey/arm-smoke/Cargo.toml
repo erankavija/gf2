@@ -4,11 +4,9 @@
 # A standalone workspace, like the `f63a2464` and `bb769456` survey crates: it
 # adds no target, feature or dependency to the production workspace and keeps
 # its own target directory, so the arm executables it launches stay
-# byte-identical to the ones a campaign launches.
-#
-# It links `tuning-campaign-support` for the runner's own plan decoder, request
-# framing and result parser, and links no arm: an arm is an executable this
-# crate launches.
+# byte-identical to the ones a campaign launches. It links
+# `tuning-campaign-support` for the runner's own plan decoder, request framing
+# and result parser, and links no arm: an arm is an executable it launches.
 
 [workspace]
 
