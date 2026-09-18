@@ -64,14 +64,7 @@
 
 ## Open questions needing invoker input
 
-- Question: keep the four-line addition to `AGENTS.md` that documents the shared-closure guard?
-  - Context: `w-d45aff82-closure` added it beside the receipt-snapshot sentence; it states a mechanism, no policy.
-  - Options: keep; move to the tools' rustdoc.
-  - Recommendation: keep.
-- Question: should the frozen per-issue closures of measured campaigns (about 20) ever gain `src/arm.rs`?
-  - Context: they are evidence of what a past campaign measured; the CI guard covers the shared closure only.
-  - Options: leave as evidence; regenerate.
-  - Recommendation: leave.
+None. Settled at session end (recorded in `progress.json` `notes`): `AGENTS.md` lost the four mechanism notes this epic had added and gained a closed commit-subject rule; measured campaigns' closures stay as evidence; every rework round past the second stays an invoker decision.
 
 ## Reference artefacts
 
