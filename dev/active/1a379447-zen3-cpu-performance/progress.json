@@ -1170,7 +1170,8 @@
     "2c487595": 1,
     "77c21ecd": 0,
     "7cdc28e9": 0,
-    "e1f9a78f": 2
+    "e1f9a78f": 2,
+    "9fb40c83": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1525,6 +1526,27 @@
       "origin": "rework 1 (session 18)",
       "disposition": "lead amended the brief: a non-timed harness smoke using the runner's own encoder and a pinned request mirror qualifies; the runner change stays unimplemented (versioned protocol question) and is recorded here for 1362381c",
       "criterion_named_by": "bb769456 REQ-03 (met by the harness smoke)"
+    },
+    {
+      "issue": "85fc5ff4 / 9fb40c83",
+      "subject": "shift-profile-consumer-audit.json and both c04dd4ac producing-input closures are stale against main since 7cc591a0 and b64dc9c4 added three source files; inspect-shift-consumers.py --check fails and run-shift-profile.sh build aborts",
+      "origin": "w-smokes report (session 21)",
+      "disposition": "committed campaign inputs of measured campaigns keep their bytes; 00dd43c3 builds its own inputs; regenerate only if a gate names it",
+      "criterion_named_by": "none found; 85fc5ff4 REQ-04 names the consumer result, not its freshness"
+    },
+    {
+      "issue": "ad2a6a58",
+      "subject": "conformance/shipped-conformance.txt carries a nextest run id, a duration line and completion-ordered PASS lines, so it cannot reproduce byte for byte; it follows the 6c6b09b1 capture convention",
+      "origin": "w-ad2a6a58 report (session 21)",
+      "disposition": "left; a filter belongs to the 6c6b09b1 convention and is outside ad2a6a58",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "ad2a6a58 / f63a2464",
+      "subject": "two pre-window plan validators exist: benchmark-ab-runner check (shared, tested) and f63a2464 ldpc-plan-check (private)",
+      "origin": "lead review (session 21)",
+      "disposition": "converge f63a2464 on the runner subcommand in its post-window round",
+      "criterion_named_by": "none; invariant convention-convergence"
     }
   ],
   "notes": [
@@ -1630,7 +1652,8 @@
     "Session 20 (2026-09-17T22:20Z): closed 0a357f94 (code-review R1 closed by an empty-diff regeneration commit aa9a2f5a) and b64dc9c4 (all gates first run). Merged e1f9a78f (8f1ace4e), 9fb40c83 (0e976898), 85fc5ff4 (fd5ac642). e1f9a78f code-review F1 (libm4ri.so runtime identity unpinned): rework 1 sent to its original worker. 9fb40c83 code-review F1 (smoke-dvb-arms.sh finalizes a timed throwaway receipt outside the window) and F2 (narrative comments); smoke-shift-arms.sh of 85fc5ff4 has the same pattern; one rework covers both smokes when a slot frees. 9fb40c83 citation repair applied under the standing approval. 85fc5ff4: disposition material, two forms nominated, both feasible at Rust 1.95 (shift-feasibility-record.md); REQ-05 bracket amendment pending invoker consultation. Dispatched: ad2a6a58 (opus, agent-0a357f94 dir), 18a87159 (opus, agent-b64dc9c4 dir), f63a2464 (opus, agent-9fb40c83 dir). Pitfall: the e1f9a78f dense queue lines are keyed to e1f9a78f and the window skips done issues; c73ffa25 must re-key them. Host race: concurrent cargo-ci runs delete the sccache server scratch dir of another run (reported by three workers).",
     "Session 21 (2026-09-18T10:30Z): invocation: drive the epic; subagent model by difficulty (opus/sonnet), no Fable; at most four workers in worktrees, reuse over proliferation. Session 20 hung from 22:05Z on an unanswered invoker question (85fc5ff4 REQ-05 bracket amendment: BMI2 form only, both forms, or a REQ-05 amendment) and ended without a handoff; state recovered from progress.json, git, the worktrees and the session-20 transcript. All four session-20 workers finished with clean trees: e1f9a78f rework 1 (14bf8885, 9f33c449; merged this session, merged-tree cargo-ci green, 6083 tests), ad2a6a58 (8 commits, axpy pilot queued), 18a87159 (7 commits, four queue lines), f63a2464 (7 commits, QC candidate pilots queued). No window was armed for 2026-09-18, so every queued measurement still waits. Worktree map: agent-0a357f94 = branch worktree-agent-ad2a6a58; agent-b64dc9c4 = worktree-agent-18a87159; agent-9fb40c83 = worktree-agent-f63a2464; agent-85fc5ff4 and agent-e1f9a78f hold their own branches. Open: 9fb40c83 code-review F1/F2 plus the same smoke pattern in 85fc5ff4's smoke-shift-arms.sh (one rework), 9fb40c83 research-review rerun after the citation repair, 85fc5ff4 gates not yet run.",
     "Session 21 (2026-09-18T11:00Z): e1f9a78f code-review round 2 FAIL on 7a235715: F1 (high) OutputSink::keep clears and drops retained outputs inside a timed window once its bounded capacity is reached (routes.rs:165; e1f9a78f REQ-01, 2037941f REQ-06); F2 (low, blocking) the attributable lead-preserve commit 9ab18326 carries a wip subject and sits in main history since merge 8f1ace4e. Rework 2 dispatched for F1; F2 cannot be closed without rewriting main history and goes to the invoker before the next code-review run. Trap: a lead-preserve wip commit must never reach main with a jit:<id> scope; squash or re-subject it on the worker branch before the merge.",
-    "Session 21 (2026-09-18T12:00Z): dispatched four opus workers: w-smokes (9fb40c83 rework 1 plus the same-class 85fc5ff4 correction, agent-85fc5ff4), w-ad2a6a58 (smoke conversion before the pilot, agent-0a357f94, no main merge), w-e1f9a78f (rework 2 of 2 for R2-F1, agent-e1f9a78f), w-bracket (c04dd4ac plan and manifest amendment for the BMI2 leaves, new agent-c04dd4ac). Merged pre-window harness branches so their queue lines reach main: 18a87159 (merge before 7747a36e, merged-tree cargo-ci green) and f63a2464 (7747a36e; queue.tsv conflict resolved keeping both sides; first cargo-ci run lost gf2-coding to the sccache temp-dir race with worker builds, rerun with CARGO_CI_NO_SCCACHE=1 green, 6083 tests). 30 artifacts linked (18a87159 20, f63a2464 10). Both issues stay in_progress until their window runs, reports land and gates pass. Pitfall: ad2a6a58 added `benchmark-ab-runner check <plan>` while f63a2464 wrote its own `ldpc-plan-check` for the same pre-window validation; converge on the runner subcommand when ad2a6a58 merges."
+    "Session 21 (2026-09-18T12:00Z): dispatched four opus workers: w-smokes (9fb40c83 rework 1 plus the same-class 85fc5ff4 correction, agent-85fc5ff4), w-ad2a6a58 (smoke conversion before the pilot, agent-0a357f94, no main merge), w-e1f9a78f (rework 2 of 2 for R2-F1, agent-e1f9a78f), w-bracket (c04dd4ac plan and manifest amendment for the BMI2 leaves, new agent-c04dd4ac). Merged pre-window harness branches so their queue lines reach main: 18a87159 (merge before 7747a36e, merged-tree cargo-ci green) and f63a2464 (7747a36e; queue.tsv conflict resolved keeping both sides; first cargo-ci run lost gf2-coding to the sccache temp-dir race with worker builds, rerun with CARGO_CI_NO_SCCACHE=1 green, 6083 tests). 30 artifacts linked (18a87159 20, f63a2464 10). Both issues stay in_progress until their window runs, reports land and gates pass. Pitfall: ad2a6a58 added `benchmark-ab-runner check <plan>` while f63a2464 wrote its own `ldpc-plan-check` for the same pre-window validation; converge on the runner subcommand when ad2a6a58 merges.",
+    "Session 21 (2026-09-18T12:45Z): all four workers finished. e1f9a78f rework 2 merged at d772848e (keep only pushes, admit refuses over the derived bound before the window, release outside); DEC-01 recorded on e1f9a78f by invoker ruling (9ab18326 stands, main history immutable); first gate rerun lost cargo-ci to a 15 s calibration-test timeout at load 25 while w-smokes built. ad2a6a58 smoke conversion merged at 89eaedbf (validation pair position in 6c6b09b1 arm-common, gf256-axpy-smoke, runner check kept with a test; merged-tree cargo-ci green, 6084 tests); its pilot line is in the queue, so the 2026-09-19 window selects eight lines (145 min). c04dd4ac bracket amended (b26d831c, 3333bfb0): plan-review PASS, coverage-preview PASS, breakdown-review FAIL F1 (a0812b83 text drifted from the manifest) closed by syncing the text on invoker approval (f7b53fe7); leaves f8dd4dde (BMI2 implementation) and 00dd43c3 (A/B confirmation, own ledger shift-confirmation-trial-ledger.jsonl) created, a0812b83 re-homed behind 00dd43c3. 9fb40c83 rework 1 and the 85fc5ff4 same-class correction merged at 779bbbb1 (shared survey/arm-smoke driver, validation role in both arms, zero windows; merged-tree cargo-ci green). 53 artifacts linked (ad2a6a58, 85fc5ff4, 9fb40c83). Gate chain started: 16560579 breakdown-review, then e1f9a78f, 9fb40c83, 85fc5ff4."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
