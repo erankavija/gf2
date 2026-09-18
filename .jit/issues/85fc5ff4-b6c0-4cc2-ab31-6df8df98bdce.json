@@ -453,7 +453,23 @@
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-18T12:54:07.704612385Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-18T12:58:28.201800641Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-18T13:04:15.064685285Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "85fc5ff4-b6c0-4cc2-ab31-6df8df98bdce",
   "labels": [
     "type:simulation",
@@ -470,5 +486,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Profile the residual BitVec shift family",
-  "updated_at": "2026-09-18T12:38:01.000391617Z"
+  "updated_at": "2026-09-18T13:04:15.064685285Z"
 }
