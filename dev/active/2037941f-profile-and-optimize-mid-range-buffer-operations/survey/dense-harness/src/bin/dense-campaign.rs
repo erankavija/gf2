@@ -10,7 +10,7 @@
 //!                        --producing-manifest <path> --output <path>
 //!                        [--candidate-executable <path>] [--scalar-executable <path>]
 //!                        [--m4ri-executable <path>] [--label pilot|smoke]
-//!                        [--max-cells-per-session <n>] [--pilot-pairs <n>]
+//!                        [--max-cells-per-session <n>]
 //! dense-campaign smoke   --plan <path> --addendum <path> --stage <dir>
 //! dense-campaign inputs  --producing-manifest <path> [--also <path>]...
 //! ```
@@ -307,7 +307,6 @@ fn project(arguments: &Arguments) -> Result<(), String> {
             max_cells_per_session: arguments
                 .number("max-cells-per-session")?
                 .map(|value| value as u32),
-            pilot_pairs: arguments.number("pilot-pairs")?.map(|value| value as u32),
         },
     )?;
     plan.validate(&addendum)
