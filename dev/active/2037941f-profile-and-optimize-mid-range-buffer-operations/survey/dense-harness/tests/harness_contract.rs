@@ -6,7 +6,8 @@
 
 use dense_parity_harness::campaign::{self, PlanInputs, M4RI_ARM};
 use dense_parity_harness::cells::{
-    cells, family_cells, Cache, MatvecShape, Question, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS,
+    cells, family_cells, Cache, Cell, MatvecShape, Question, Workload, ADDENDUM_FROZEN_UTC,
+    ADDENDUM_IDENTITY, ADDENDUM_PATH, ADDENDUM_SHA256, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS,
     CAMPAIGN_SEED, MATVEC_ROWS, M4RI_SHAPES, SIMD_LANE_MIN_WORDS, STREAMING_BANKS,
     STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
 };
@@ -293,13 +294,133 @@ fn a_tail1_fixture_carries_canonical_zero_tail_padding() {
     }
 }
 
+/// One cell's working set, built exactly as that cell's arm builds it.
+enum Built {
+    Kernel(KernelBanks),
+    Matvec(MatvecBanks),
+}
+
+impl Built {
+    /// The working set of one frozen cell, and the fixture bytes one of its
+    /// items holds, derived from the cell rather than from the builder.
+    fn of(cell: &Cell) -> (Self, usize) {
+        match cell.workload {
+            Workload::AndPopcnt { words } => (
+                Self::Kernel(KernelBanks::build(words, cell.cache, cell.seed)),
+                KernelBanks::item_bytes(words),
+            ),
+            Workload::Matvec { words, shape } => (
+                Self::Matvec(MatvecBanks::allocated(words, shape, cell.cache, cell.seed)),
+                MatvecBanks::item_bytes(MATVEC_ROWS, shape.columns(words).div_ceil(64)),
+            ),
+            Workload::M4riGap { shape, .. } => (
+                Self::Matvec(MatvecBanks::build(shape.rows, shape.cols, cell.cache, cell.seed)),
+                MatvecBanks::item_bytes(shape.rows, shape.cols.div_ceil(64)),
+            ),
+        }
+    }
+
+    fn banks(&self) -> usize {
+        match self {
+            Self::Kernel(banks) => banks.banks(),
+            Self::Matvec(banks) => banks.banks(),
+        }
+    }
+
+    fn items(&self) -> usize {
+        match self {
+            Self::Kernel(banks) => banks.items(),
+            Self::Matvec(banks) => banks.items(),
+        }
+    }
+
+    fn bank_bytes(&self) -> usize {
+        match self {
+            Self::Kernel(banks) => banks.bank_bytes(),
+            Self::Matvec(banks) => banks.bank_bytes(),
+        }
+    }
+
+    fn working_set_bytes(&self) -> usize {
+        match self {
+            Self::Kernel(banks) => banks.working_set_bytes(),
+            Self::Matvec(banks) => banks.working_set_bytes(),
+        }
+    }
+
+    /// Checks every item of every bank, not the first alone.
+    fn each_item(&self, cell: &Cell) {
+        let id = &cell.cell_id;
+        for bank in 0..self.banks() {
+            for item in 0..self.items() {
+                match self {
+                    // The isolated product fixes both operands at address
+                    // 0 (mod 64) and their length at the cell's word count.
+                    Self::Kernel(banks) => {
+                        assert_eq!(banks.addresses_mod_64(bank, item), (0, 0), "{id}");
+                        let (row, vector) = banks.operands(bank, item);
+                        assert_eq!(
+                            (row.len(), vector.len()),
+                            (cell.workload.stride_words(), cell.workload.stride_words()),
+                            "{id}"
+                        );
+                    }
+                    // The allocated and comparator cells declare no operand
+                    // alignment, so the arm reports the base it observes; the
+                    // shape of every item is the frozen one.
+                    Self::Matvec(banks) => {
+                        let tuple = banks.item(bank, item);
+                        verify_shape(&tuple.matrix, &tuple.vector, banks.rows(), banks.columns())
+                            .unwrap_or_else(|error| panic!("{id}: {error}"));
+                        assert_eq!(banks.base_mod_64(bank, item) % size_of::<u64>(), 0, "{id}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The addendum's cache-state construction, at every cell of every family.
+///
+/// § Cache, warmup, and sampling fixes the bank count of each state, the
+/// per-bank minimum and its rounding rule, and the reported total; § Isolated
+/// fused parity fixes the isolated operands' alignment. The bank's size is the
+/// fixture bytes it holds, so the item count and the allocation are derived
+/// from one measure.
 #[test]
-fn a_streaming_working_set_fills_every_declared_bank() {
-    let kernel = KernelBanks::build(8, Cache::Streaming, 1);
-    assert!(kernel.items() > 1);
-    assert!(kernel.working_set_bytes() >= STREAMING_BANKS * STREAMING_BANK_BYTES);
-    let allocated = MatvecBanks::allocated(8, MatvecShape::Full, Cache::Streaming, 1);
-    assert!(allocated.working_set_bytes() >= STREAMING_BANKS * STREAMING_BANK_BYTES);
+fn every_declared_cell_builds_the_working_set_its_cache_state_fixes() {
+    for cell in cells() {
+        let id = cell.cell_id.clone();
+        let (built, item_bytes) = Built::of(&cell);
+        assert_eq!(built.banks(), cell.cache.banks(), "{id}");
+        assert_eq!(built.bank_bytes(), built.items() * item_bytes, "{id}");
+        assert_eq!(built.working_set_bytes(), built.banks() * built.bank_bytes(), "{id}");
+        match cell.cache {
+            Cache::Streaming => {
+                assert_eq!(built.banks(), STREAMING_BANKS, "{id}");
+                assert!(
+                    built.bank_bytes() >= STREAMING_BANK_BYTES,
+                    "{id} holds {} bytes per bank",
+                    built.bank_bytes()
+                );
+                // Rounded up to an integral number of complete tuples: one
+                // item fewer no longer reaches the per-bank minimum.
+                assert!(
+                    (built.items() - 1) * item_bytes < STREAMING_BANK_BYTES,
+                    "{id} holds {} items per bank",
+                    built.items()
+                );
+                assert!(
+                    built.working_set_bytes() >= STREAMING_BANKS * STREAMING_BANK_BYTES,
+                    "{id}"
+                );
+            }
+            // A warm or cold cell holds the one item its untimed arrangement
+            // covers, which is therefore its complete working set.
+            Cache::Warm | Cache::Cold => assert_eq!(built.items(), 1, "{id}"),
+        }
+        built.each_item(&cell);
+    }
 }
 
 #[test]
