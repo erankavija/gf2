@@ -32,6 +32,7 @@ pub mod llr;
 pub mod mersenne;
 pub mod modem;
 pub mod prefetch;
+pub mod shift_funnel;
 pub mod transpose;
 
 pub use clmul_scalar::clmul_u64_scalar;
