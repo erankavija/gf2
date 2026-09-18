@@ -193,10 +193,8 @@ acceptance summary written by `benchmark-acceptance`. Arms emit exactly one
 
 The non-timed smoke produces no receipt. Its output is
 `logical-buffer-nontimed-smoke-v1`, written as `handshake.json` beside the
-stage's execution log: one entry per declared cell carrying the cell's declared
-cache state and, for each arm, the arm name, its role, the executable digest,
-the cache state the arm applied, the route provenance it observed, and its
-window count, which is zero.
+stage's execution log: one `tuning_campaign_support::arm::CellValidation` per
+declared cell, which states what each arm reported.
 
 ## Provenance artifacts
 
@@ -331,15 +329,12 @@ The command runs from the worktree root, takes no benchmark lock, never calls
    `FamilyAddendum::decode` and `validate`.
 2. **Semantics.** `logical-oracle` and, when the ISA-L arm is built,
    `logical-isal-arm --oracle` report every case as `PASS`.
-3. **The wire.** Every arm the family's plan declares runs as a fresh child
-   process speaking the canonical child-v2 framing, from the projected plan and
-   the throwaway campaign addendum, with a throwaway ledger path and stage under
-   `target/`. Each family contributes two cells: its smallest anchor plus one
-   cell in a second cache state, so warm, streaming and the frozen cold call
-   count all reach the wire. Every request declares zero timing windows, so each
-   arm builds its fixture, resolves its route, runs the untimed arrangement its
-   cache policy declares and answers with no timing window; a child that answers
-   a zero-window request with a window fails the smoke.
+3. **The wire.** Every arm the family's plan declares is dispatched through the
+   shared smoke contract of `tuning_campaign_support::arm::smoke`, from the
+   projected plan and the throwaway campaign addendum, with a throwaway ledger
+   path and stage under `target/`. Each family contributes two cells: its
+   smallest anchor plus one cell in a second cache state, so warm, streaming and
+   the frozen cold call count all reach the wire.
 4. **Append-only logging and resume.** `max_cells_per_session` is one, so the
    first session pauses and a second completes the stage. The first session's
    execution log is a byte prefix of the final log, no cell carries two
@@ -358,14 +353,12 @@ executable digests, all observed by that run.
 The record is `survey/logical-runner-smoke.txt`. Every line is observed at run
 time from the execution log, the checkpoint store and the handshake record; it
 carries no clock reading, so a rerun on the same executables reproduces it byte
-for byte. The smoke collects zero timing samples and finalizes zero receipts,
-both stated in the record from observation, so it cannot serve as a pilot.
+for byte.
 
-The smoke drives the arms directly rather than through `benchmark-ab-runner`.
-The runner has one measurement path: a cell whose core arm resolves is measured
-at the plan's pair count, and its paired statistic is computed from the median
-of each execution's windows, which an execution with no window cannot supply. A
-smoke that reached the arms through the runner would therefore collect timing
-samples outside the benchmark window. The smoke instead speaks the runner's own
-wire types and drives the runner's own journal, checkpoint store and resume
-identity, so the contract it establishes is the contract the runner uses.
+The smoke reaches the arms through the shared library entry point rather than
+through `benchmark-ab-runner run`: the runner's measurement path computes each
+cell's paired statistic from the median of every execution's windows, which an
+untimed execution cannot supply, so a `run` over these plans would measure
+outside the benchmark window. Around those dispatches this smoke drives the
+runner's own journal, checkpoint store and resume identity, which the shared
+smoke leaves to its caller.
