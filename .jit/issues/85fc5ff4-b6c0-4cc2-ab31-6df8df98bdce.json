@@ -12,19 +12,91 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "9f19b8ef0868355a8af85f9fa14d09608ebabb18c92b2e39874595f082db0ef2",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/85fc5ff4/v4-voided-launch-attempt.json",
-          "resolved_path": "dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "4767a66105bb43b403c544ff8beaa092c582aae0544f0f0daa38799222bd0351",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../f547c394/protocol.md",
           "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "86a1a89859c57539218a81bb8afdd70c09130bf42592a7e34e2a671e9f1e7c85",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/summarize-shift-receipt.py",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-shift-receipt.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b711f763f69d77a34f25ec51a25ecfa9e19abcd46fa4723850641cc062ff07a1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f549536d341a2deaffdfed0348f21bca7e4dc794c2529b7508e11b87e20f54bb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "shift-profile-trial-ledger.jsonl",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "368c2b22c122f3f719ec236c551faba985871ed5eb07a31b5e3c689911cb1a72",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "shift-profile-smoke.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a73e9a67fe6605126c90c1d3eedd01cff27ed886a7190c5dafbed821986f416c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "shift-profile-consumer-audit.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-consumer-audit.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "08dcef4388e1ca9f72076045f0f229809937c3a7a37d4231d32e5aef18bde686",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c04dd4ac/residual-shift-tables.md",
+          "resolved_path": "dev/bench_results/c04dd4ac/residual-shift-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5f1998bae672ff5788fd1a2d418f654670dedd925061bc8622f42ade2ea15dd9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/shift-source-evidence.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/shift-source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a0c87667315b41a4174bdc8294b96ab85cf4495dbae6681b4fe2ffc17594348b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "shift-profile-validation.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-validation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ac337dcb0c6c0b1c4252eb85e62d0702d9fe215ae0de49afcd4b42119cdbdda3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/make-shift-source-evidence.py",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-source-evidence.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1738ab405e6da15b3b102dfc550050e88a70866aebde767ed623f7736ed02cc8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "shift-feasibility-record.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md"
         },
         {
           "asset_type": "local",
@@ -35,12 +107,36 @@
           "resolved_path": "dev/bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned/execution.log"
         },
         {
-          "asset_type": "local",
-          "content_hash": "67ee67015e44834b8760c1c10579f0900cc7b4d2604f56a943d121c45de6ee28",
+          "asset_type": "directory",
+          "content_hash": null,
           "is_shared": false,
           "mime_type": null,
-          "original_path": "shift-profile-smoke.json",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json"
+          "original_path": "../../bench_results/c04dd4ac/residual-shift-profile/",
+          "resolved_path": "dev/bench_results/c04dd4ac/residual-shift-profile"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e1edcb2b54715ada093bd290f8e3c1901ed0c726d8f864c7d46f7ba433893ee5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/85fc5ff4/v4-voided-launch-attempt.json",
+          "resolved_path": "dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3eb6d625f5daf92a0ff70068044ea2481f358ba0e55a4fabc3b4549c85627d37",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/smoke-shift-arms.sh",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-shift-arms.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e7289e083b351d3a5c6778e90e07de019c634a49b92f606ee9c921abf6e3e41",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "shift-profile-addendum.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json"
         }
       ],
       "commit": null,
@@ -82,7 +178,7 @@
     {
       "commit": null,
       "doc_type": "report",
-      "label": "Arm wire-smoke record",
+      "label": "Shared smoke record of both residual-shift arms",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json"
     },
     {
@@ -412,12 +508,6 @@
     {
       "commit": null,
       "doc_type": "tool",
-      "label": "Non-timed validation-role arm smoke driver for both c04dd4ac plans",
-      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/arm-smoke/src/main.rs"
-    },
-    {
-      "commit": null,
-      "doc_type": "tool",
       "format": "markdown",
       "label": "Arm-smoke record renderer (text and JSON) for both c04dd4ac smokes",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-arm-smoke.py"
@@ -470,5 +560,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Profile the residual BitVec shift family",
-  "updated_at": "2026-09-18T14:17:40.475868096Z"
+  "updated_at": "2026-09-18T16:01:00.092904760Z"
 }
