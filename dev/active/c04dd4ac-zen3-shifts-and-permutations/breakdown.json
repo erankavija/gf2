@@ -19,11 +19,7 @@
     "gates": [
       "cargo-ci",
       "code-review",
-      "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
+      "research-review"
     ],
     "depends_on": [],
     "planning": {
@@ -68,6 +64,139 @@
     }
   },
   {
+    "key": "shift-bmi2-implementation",
+    "title": "Route residual BitVec shifts through a BMI2-gated funnel kernel",
+    "description": "Dispatch the residual, non-word-aligned branch of the public `BitVec` shifts to a BMI2-gated funnel kernel, with the present scalar funnel as the tested fallback.\n\n## Background\n\n`BitVec::shift_left` and `BitVec::shift_right` consult the SIMD kernel bundle only when the offset is a whole number of words; a non-zero residual falls straight into a safe scalar double-word funnel. The residual-shift workload profile at `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` records that branch as material at consequential sizes under its frozen rule and nominates two forms. The planning-time record at `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md` establishes both as feasible at the repository's Rust 1.95 floor and ranks the BMI2-gated scalar funnel first: it reaches its intended instructions from the expression the production loop already writes, so it costs a target-feature scope and a runtime gate rather than a new algorithm. That record is the source for which expression the compiler lowers to which instruction at that floor, for the six-bit count mask the 128-bit double-precision form needs, and for the absence of a double-precision shift intrinsic in `core::arch::x86_64` there; read it rather than re-deriving them. The nominated AVX2 lane-crossing funnel is feasible and is not selected for implementation here.\n\nThe kernel bundle is built once behind an AVX2 detection, and one of its fields already selects itself by its own capability check, so a BMI2 route follows that precedent rather than widening the bundle's gate. The family has no downstream production caller: the two public methods are the route's only consumers, and whether the route stays in production is decided by the frozen rule of its A/B confirmation rather than after the fact.\n\n## Success Criteria\n\n- [hard] REQ-01: The funnel kernel lives in `gf2-kernels-simd` and carries an explicit safety contract at every unsafe boundary and at the target-feature scope it needs; no other production crate gains unsafe code.\n- [hard] REQ-02: The residual branch of both public shift methods consults the kernel bundle behind the same non-default `simd` cargo feature the word-aligned branch uses, and the BMI2 route is selected by its own `is_x86_feature_detected!` result rather than by another capability's gate.\n- [hard] REQ-03: A host or build without the capability runs the present scalar funnel, and a test drives that fallback as a reachable route instead of assuming it.\n- [hard] REQ-04: Both routes run one shared behavioural suite: the existing `BitVec` shift tests extended with the feasibility corpus shape, covering lengths and offsets 0, 1, 7, 8, 63, 64 and 65, offsets at and beyond the length, and sizes leaving an incomplete final word; every result matches an independent zero-fill reference over canonical little-endian indices and keeps zero tail padding.\n- [hard] REQ-05: The test-only route forcing is a process-global override serialized by a mutex held across the whole toggle-execute-observe-restore section, following `crates/gf2-core/tests/prime_route_dispatch.rs`.\n- [hard] REQ-06: The crates build and the shared suite passes on Rust 1.95, and a regenerated annotated release-build assembly artefact under the kernel crate's `x86/asm/<module>.asm.txt` convention shows the emitted loop of the dispatched path in both directions.\n- [hard] REQ-07: Rustdoc on the dispatched path names the cargo feature that enables it and the runtime capability it requires, and states each unsafe boundary's safety condition.\n- [hard] REQ-08: Production retention of the route is decided by the frozen rule of its confirmation rather than after the fact: the route ships to be measured, a non-qualifying confirmation removes it and retains the scalar funnel, and this work publishes no speed claim.\n\n## Notes\n\n`dev/active/1a379447-zen3-cpu-performance/measurement-contract.md` states the MSRV, scalar-fallback and unsafe-isolation requirements this work inherits. Nothing here is timed.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-shifts-and-permutations",
+      "component:gf2-core",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-07",
+      "satisfies:REQ-08",
+      "satisfies:REQ-09",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "shift-workload-profile"
+    ],
+    "planning": {
+      "outcome": "Residual BitVec shifts run a BMI2-gated funnel kernel behind runtime detection",
+      "contract_refs": [
+        "measurement-authority",
+        "semantic-boundaries",
+        "family-scope",
+        "layer-ownership",
+        "candidate-bracket-rule",
+        "shift-profile-disposition"
+      ],
+      "produces_contracts": [
+        "residual-shift-kernel-route"
+      ],
+      "source_refs": [
+        "REQ-07",
+        "REQ-08",
+        "REQ-09",
+        "REQ-11",
+        "INV-ARCHITECTURE",
+        "MEASUREMENT-CONTRACT",
+        "SHIFT-PROFILE",
+        "SHIFT-FEASIBILITY"
+      ],
+      "terminal": {
+        "consumer_family": "Public BitVec residual-offset shift callers",
+        "test_boundary": "The shared BitVec shift behavioural suite run once per selected route",
+        "worker_sized_reason": "One gated kernel with its dispatch branch reuses the existing shift suite extended by a pinned corpus shape",
+        "footprint": {
+          "creates": [
+            "crates/gf2-kernels-simd/src/x86/shift_funnel.rs",
+            "crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt",
+            "crates/gf2-core/tests/residual_shift_routes.rs"
+          ],
+          "touches": [
+            "crates/gf2-core/src/bitvec.rs",
+            "crates/gf2-kernels-simd/src/lib.rs",
+            "crates/gf2-kernels-simd/src/x86/mod.rs",
+            "crates/gf2-kernels-simd/src/x86/avx2.rs",
+            "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt"
+          ],
+          "uncertainty": "The kernel bundle is constructed inside the AVX2 module, so the bundle field and its artefact may land there instead of a new module"
+        }
+      }
+    }
+  },
+  {
+    "key": "shift-bmi2-confirmation",
+    "title": "Confirm the BMI2 residual shift route against the scalar funnel",
+    "description": "Measure the shipped BMI2-gated residual shift route against the scalar funnel the library takes without it, as a protocol-version-4 A/B family with a pilot and a confirmation, and publish the receipts and the decision.\n\n## Background\n\nThe residual-shift workload profile at `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` records the residual branch as material against a word-aligned control that performs strictly less work per word, so no row of it supports adoption. This family answers the question it leaves open by comparing residual against residual at the cells that profile records as material. Both arms are the same shipped executable separated by the test-build lane switch: the baseline arm holds the residual branch on the scalar funnel and the candidate arm lets the gated route run, so the comparison isolates the dispatched route and nothing else. The family has no downstream production caller, so whole-consumer measurement is inapplicable and the public primitive is measured in isolation. The frozen rule decides retention, so a non-qualifying outcome removes the dispatched route instead of keeping it on a later argument.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen family addendum is committed before the pilot launches, with every numeric setting from it and the shared protocol settings, and the confirmation addendum is derived from the committed pilot receipt by the repository's canonical confirmation freezer, with its derivation record beside it and a family description that states the confirmatory stage rather than the pilot's exploratory one.\n- [hard] REQ-02: Both arms are the same shipped executable separated by the test-build lane switch, the baseline arm held on the scalar funnel and the candidate arm on the gated route, and each cell's selected route is recorded at run time.\n- [hard] REQ-03: The pilot's cells are material cells of the residual-shift workload profile in both shift directions, and the confirmation retains as many of them as this family's confirmatory budget admits under the protocol's P-20 rule recomputed from the campaign-support sources for this family's ledger; the derivation record names which cells are retained, which are dropped and why, and a ledger history admitting no confirmatory cell records that arithmetic as the outcome.\n- [hard] REQ-04: The family's append-only ledger records each attempt's reservation and is never hand-edited; an attempt aborted for a procedural defect in its own freeze or launch, before any result is read, is recorded under the voided-attempt rule with its stage preserved.\n- [hard] REQ-05: Every arm and case operation passes a non-timed harness smoke before any timed campaign is queued: the smoke drives each arm with the benchmark runner's own transport encoder and framing, pins its request mirror against the runner's request in a test and records zero timing windows.\n- [hard] REQ-06: Every timed run is a committed queue line for the benchmark window rather than a session launch, and an interrupted campaign resumes under its own identity without repeating a completed cell.\n- [hard] REQ-07: Each campaign is verified from its own execution log: the declared cell count starts, checkpoints and completes exactly once, every cell reaches its declared pair count with a measured status, the campaign ends in a terminal complete record, and the acceptance tool recomputes the committed verdict.\n- [hard] REQ-08: The published outcome states the verdict the acceptance summary records for each cell, including any not-material or regressed cell, and a non-qualifying outcome is published as the result, with retention or removal of the dispatched route decided by the frozen rule rather than after the fact.\n- [hard] REQ-09: No measured or derived figure is copied into prose; each quantitative statement is a conclusion plus a pointer to the generated table row, receipt or ledger line that holds it.\n\n## Notes\n\n`dev/active/1a379447-zen3-cpu-performance/measurement-contract.md` and `dev/active/f547c394/protocol.md` are normative, and timed work runs only in a scheduled benchmark window. The canonical confirmation freezer is `dev/active/c7113c5a/survey/freeze-confirmation.py`; its family-description input carries the confirmation's own family prose.",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-shifts-and-permutations",
+      "component:gf2-core",
+      "component:benchmarks",
+      "satisfies:REQ-01",
+      "satisfies:REQ-07",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "shift-bmi2-implementation"
+    ],
+    "planning": {
+      "outcome": "The gated residual shift route has a protocol-complete A/B verdict at the profile's material cells",
+      "contract_refs": [
+        "measurement-authority",
+        "semantic-boundaries",
+        "family-scope",
+        "candidate-bracket-rule",
+        "shift-profile-disposition",
+        "residual-shift-kernel-route"
+      ],
+      "produces_contracts": [
+        "shift-candidate-outcome"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-07",
+        "REQ-11",
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4",
+        "SHIFT-PROFILE"
+      ],
+      "terminal": {
+        "consumer_family": "Public BitVec residual-offset shift callers",
+        "test_boundary": "Independent acceptance re-evaluation of the committed confirmation receipt",
+        "worker_sized_reason": "One A/B family over two lanes of one shipped executable reuses the residual-shift campaign tooling",
+        "footprint": {
+          "creates": [
+            "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-confirmation.md",
+            "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-confirmation-addendum.json",
+            "dev/bench_results/c04dd4ac/residual-shift-confirmation/"
+          ],
+          "touches": [
+            "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
+            "crates/gf2-core/benches/shifts.rs",
+            "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+          ]
+        }
+      }
+    }
+  },
+  {
     "key": "dvb-interleave-profile",
     "title": "Profile the production DVB-T2 bit interleaver",
     "description": "Attribute the production DVB-T2 packed-bit scatter cost inside its real BICM consumers and issue a bounded materiality disposition without authorizing candidate implementation.\n\n## Background\n\nThe repaired protocol-v3 re-measurement is accepted exploratory evidence: gf2 wins the whole packed-operation comparison, while conversion-subtracted 16-QAM cells leave a residual in which xdsopl's gather is faster. Earlier warm receipts remain withdrawn and cannot confirm the gap. This task rebuilds the current gf2 and xdsopl arms from exact pinned sources, profiles the actual `BitInterleaver::interleave` route used by the BICM harness and simulation stages, and attributes representation conversion, memory passes and scatter work. The result may nominate a concrete candidate only as input to an amended and re-reviewed breakdown.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen protocol-v4 addendum and append-only family-ledger reservation predeclare Normal and Short FECFRAME paths for 16-QAM and 64-QAM, a streaming case, exploratory role, isolated and whole-consumer boundaries, cache states, conversion accounting, materiality rule, complexity budget and bounded search before timing.\n- [hard] REQ-02: Scheduled benchmark-window execution produces an accepted exploratory receipt with exact rebuilt gf2 and xdsopl source, build and executable pins, raw paired samples, append-only execution log, checkpoints, runtime host provenance and durable negative or unavailable outcomes.\n- [hard] REQ-03: The profile identifies the selected production route, BICM harness and simulation-stage consumers, call graph, hot instructions, allocation behavior, representation conversions, memory passes and isolated interleave cost beside whole-consumer cost.\n- [hard] REQ-04: The disposition records the scatter as not material or nominates no more than two profile-supported branch-free or packed-word forms under the predeclared budget; withdrawn warm receipts remain historical context and do not confirm a candidate.\n- [hard] REQ-05: A no-candidate or no-win disposition permits this profile to complete. If it nominates a material branch-free or packed-word form, this profile remains open until a planning-time Rust 1.95 compile and assembly record proves feasibility, including a runtime-gated scalar fallback for any capability-gated form, and the plan bracket is amended and re-reviewed to create the required candidate implementation and confirmation leaves, make them depend on this profile, and re-home publication behind their sinks in the instantiated dependency graph.\n\n## Notes\n\nThe comparator remains xdsopl `PCTITL` for the ETSI bit-interleave operation. AFF3CT and circular shifts are not substitutes. Timed work runs only in a scheduled benchmark window.",
@@ -90,11 +219,7 @@
     "gates": [
       "cargo-ci",
       "code-review",
-      "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
+      "research-review"
     ],
     "depends_on": [],
     "planning": {
@@ -146,7 +271,7 @@
   {
     "key": "story-evidence-publication",
     "title": "Publish the shift-permutation dispositions",
-    "description": "Publish generated story evidence that preserves family boundaries, negative results and every material candidate's completed evidence path without changing production code itself.\n\n## Background\n\nThe report presents shifts, QC construction, generic puncturing and interleaving as separate workload families. It derives numeric statements from committed machine-readable artifacts, identifies actual production consumers, records QC runtime rotation as inapplicable, preserves the accepted AFF3CT NR no-win unless `prepare_llrs` changed, and treats withdrawn DVB warm receipts only as history. The initial dependency graph is sufficient only when both profiles end in no-candidate or no-win dispositions. A material nomination activates the repository's plan-amendment bracket: the lead must add and review the required candidate leaves, re-home this publication behind their sinks, and complete them before this issue or the story can close.\n\n## Success Criteria\n\n- [hard] REQ-01: A deterministic generator reproduces the publication tables from committed receipts, profiles and content-pinned dispositions, including latency, throughput, whole-consumer costs, intervals, sample counts, conversion stages and runtime provenance where applicable.\n- [hard] REQ-02: The findings map every story criterion to durable evidence and preserve the QC inapplicability, generic-puncturing separation, NR accepted no-win, unavailable mappings, withdrawn DVB evidence and profile no-win outcomes.\n- [hard] REQ-03: Each profile has either a no-candidate or no-win disposition, or an amended and re-reviewed bracket has created the required candidate implementation and confirmation leaves, made them depend on the nominating profile, re-homed this issue behind their terminal sinks in the instantiated dependency graph, and those leaves are complete.\n- [hard] REQ-04: This issue remains open and the story does not complete while a material nomination lacks its pre-breakdown Rust 1.95 compile, assembly and scalar-fallback feasibility record, amended reviewed manifest, exact instantiated dependencies or completed candidate evidence.\n- [hard] REQ-05: Each performance claim cites its accepted receipt and protocol identity, while each absent comparison has an explicit semantic or consumer reason.\n\n## Notes\n\nThe report stays in the story's development area; permanent prose cites it rather than copying volatile measurements. The execution lead applies the repository's bracket amendment mechanism before closing a material profile or this publication.",
+    "description": "Publish generated story evidence that preserves family boundaries, negative results and each material candidate's completed evidence path without changing production code itself.\n\n## Background\n\nThe report presents shifts, QC construction, generic puncturing and interleaving as separate workload families. It derives numeric statements from committed machine-readable artifacts, identifies actual production consumers, records QC runtime rotation as inapplicable, keeps the ETSI [Etsi2015] bit-interleave permutation distinct from the other interleavers, preserves the accepted AFF3CT [Cassagne2019] NR no-win unless `prepare_llrs` changed, and treats withdrawn DVB warm receipts against xdsopl `PCTITL` [Xdsopl2026] only as history. A family whose profile nominates no form ends at that profile. A family whose profile nominates a material form reaches this report only through the candidate implementation and confirmation leaves its nomination requires, and this report sits behind their terminal sinks in the dependency graph. The residual `BitVec` shift family is the one with such a path: its BMI2-gated funnel candidate carries the A/B confirmation whose outcome this report publishes, and the AVX2 lane-crossing funnel the same profile nominated is feasible at the MSRV, unselected for implementation in this epic, and preserved here as an outcome rather than dropped.\n\n## Success Criteria\n\n- [hard] REQ-01: A deterministic generator reproduces the publication tables from committed receipts, profiles and content-pinned dispositions, including latency, throughput, whole-consumer costs, intervals, sample counts, conversion stages and runtime provenance where applicable.\n- [hard] REQ-02: The findings map every story criterion to durable evidence and preserve the QC inapplicability, generic-puncturing separation, NR accepted no-win, unavailable mappings, withdrawn DVB evidence and profile no-win outcomes.\n- [hard] REQ-03: Each family's disposition reaches this report through its own graph path: a profile nominating no form ends at that profile, while a material nomination's candidate implementation and confirmation work is complete and this report sits behind its terminal sink in the instantiated dependency graph.\n- [hard] REQ-04: This report and the story stay open while a material nomination lacks its planning-time Rust 1.95 compile, assembly and scalar-fallback feasibility record, its reviewed amended manifest, its exact instantiated dependencies or its completed candidate evidence.\n- [hard] REQ-05: Each performance claim cites its accepted receipt and protocol identity, while each absent comparison has an explicit semantic or consumer reason.\n- [hard] REQ-06: The report states the residual-shift candidate's outcome as its confirmation's acceptance summary records it, qualifying or not, together with the retention decision the frozen rule produces, and records the nominated AVX2 lane-crossing funnel as feasible at the MSRV and not selected for implementation in this epic with the reason on record.\n\n## Notes\n\nThe report stays in the story's development area; permanent prose cites it rather than copying volatile measurements.\n\nSource references: [Cassagne2019], [Etsi2015], [Xdsopl2026].",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -169,14 +294,11 @@
       "cargo-ci",
       "code-review",
       "doc-review",
-      "research-review",
-      "asm-artefact-present",
-      "holistic-review",
-      "repo-validate"
+      "research-review"
     ],
     "depends_on": [
-      "shift-workload-profile",
-      "dvb-interleave-profile"
+      "dvb-interleave-profile",
+      "shift-bmi2-confirmation"
     ],
     "planning": {
       "outcome": "Generated evidence publishes each workload family's current disposition",
@@ -186,6 +308,7 @@
         "family-scope",
         "candidate-bracket-rule",
         "shift-profile-disposition",
+        "shift-candidate-outcome",
         "dvb-profile-disposition"
       ],
       "produces_contracts": [],
@@ -203,7 +326,9 @@
         "EDA07788-FINDINGS",
         "DVB-REPAIR",
         "MEASUREMENT-CONTRACT",
-        "PROTOCOL-V4"
+        "PROTOCOL-V4",
+        "SHIFT-PROFILE",
+        "SHIFT-FEASIBILITY"
       ],
       "terminal": {
         "consumer_family": "Story reviewers",
