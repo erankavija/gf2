@@ -168,6 +168,133 @@
       "format": "markdown",
       "label": "Benchmark window queue carrying the three baseline pilots and the profile session",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "label": "Isolated XOR pilot receipt (v4-r1)",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "acceptance",
+      "format": "markdown",
+      "label": "Isolated XOR pilot acceptance summary",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "acceptance",
+      "label": "Isolated XOR pilot acceptance verdict record",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Isolated XOR pilot append-only execution log",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Isolated XOR family trial ledger",
+      "path": "dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "label": "Public row-XOR pilot receipt (v4-r1)",
+      "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "acceptance",
+      "format": "markdown",
+      "label": "Public row-XOR pilot acceptance summary",
+      "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "acceptance",
+      "label": "Public row-XOR pilot acceptance verdict record",
+      "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Public row-XOR pilot append-only execution log",
+      "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Public row-XOR family trial ledger",
+      "path": "dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "label": "NR construction pilot receipt (v4-r1)",
+      "path": "dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "acceptance",
+      "format": "markdown",
+      "label": "NR construction pilot acceptance summary",
+      "path": "dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "acceptance",
+      "label": "NR construction pilot acceptance verdict record",
+      "path": "dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "NR construction pilot append-only execution log",
+      "path": "dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "NR construction family trial ledger",
+      "path": "dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Logical-buffer profile attribution tables (generated)",
+      "path": "dev/bench_results/2037941f/logical-profile/profile-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Logical-buffer profile append-only repetition log",
+      "path": "dev/bench_results/2037941f/logical-profile/repetitions.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "provenance",
+      "format": "markdown",
+      "label": "Logical-buffer profile session host record",
+      "path": "dev/bench_results/2037941f/logical-profile/host.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Logical baseline interval tables (generated)",
+      "path": "dev/bench_results/2037941f/logical-tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Three logical-buffer baseline records",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md"
     }
   ],
   "first_ready_at": "2026-09-16T22:36:13.474372771Z",
@@ -180,6 +307,16 @@
     "cargo-ci": {
       "status": "passed",
       "updated_at": "2026-09-19T15:39:13.494931295Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-19T15:43:57.054278346Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-19T15:50:11.451121088Z",
       "updated_by": "auto:executor"
     }
   },
@@ -199,5 +336,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
-  "updated_at": "2026-09-19T15:39:13.494931295Z"
+  "updated_at": "2026-09-19T15:50:45.652546703Z"
 }
