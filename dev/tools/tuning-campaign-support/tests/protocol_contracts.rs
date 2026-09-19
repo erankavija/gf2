@@ -4125,6 +4125,199 @@ mod arm_wire {
     }
 }
 
+/// The staged smoke drives the runner's own session loop: one invocation runs
+/// at most the plan's cells-per-session budget and pauses, the next resumes
+/// from the checkpoints without repeating a completed cell, the stage carries
+/// no timing sample, no lock hold and no ledger reservation, the record lands
+/// only once the session completes, and `finalize` refuses the stage.
+#[test]
+fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
+    use tuning_campaign_support::arm::{PairPosition, SmokeRecord};
+    let root = scratch("staged-smoke");
+    let repo = root.join("repo");
+    stage_repo(&repo);
+    stage_runner_producing(&repo);
+    let mut family = addendum(vec![
+        cell(
+            "first",
+            CellObjective::Improvement,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        ),
+        cell(
+            "second",
+            CellObjective::NonRegression,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        ),
+    ]);
+    family.protocol.version = PROTOCOL_VERSION;
+    family.schema = ADDENDUM_SCHEMA_ID.into();
+    family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+    family.effect.measurement_resolution = None;
+    family.effect.resolution_evidence = None;
+    fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
+    for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
+        fs::copy(repo_root().join(relative), repo.join(relative)).unwrap();
+    }
+    write_addendum(&repo, &family);
+    git(&repo, &["init", "-q"]);
+    let lock = root.join("absent.lock");
+    let workload = env!("CARGO_BIN_EXE_ab-smoke-workload");
+    let arm = |passes: &str| {
+        json!({
+            "build": "conservative-portable",
+            "description": format!("xor-fold {passes} pass"),
+            "executable": workload,
+            "arguments": [],
+            "environment": {"GF2_SMOKE_PASSES": passes},
+            "rustflags": null,
+            "tuning_profile": null
+        })
+    };
+    let plan = json!({
+        "schema": "zen3-benchmark-plan-v1",
+        "campaign_id": "smoke-stage",
+        "producing_manifest": "producing-inputs.json",
+        "issue": "f547c394",
+        "label": "smoke",
+        "campaign_seed": 11,
+        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "lock_path": lock,
+        "wrapper": "flock",
+        "timing_override": null,
+        "arms": {"baseline": arm("2"), "candidate": arm("1")},
+        "cells": [
+            {"cell_id": "first", "baseline_arm": "baseline", "candidate_arm": "candidate", "case": {"words": 4096, "seed": 1}, "pilot_pairs": 6},
+            {"cell_id": "second", "baseline_arm": "baseline", "candidate_arm": "candidate", "case": {"words": 4096, "seed": 2}, "pilot_pairs": 6}
+        ],
+        "max_cells_per_session": 1
+    });
+    let plan_path = root.join("plan.json");
+    fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
+    let stage = root.join("stage");
+    let record = root.join("record.json");
+    let runner = env!("CARGO_BIN_EXE_benchmark-ab-runner");
+    let smoke = || {
+        Command::new(runner)
+            .args(["smoke"])
+            .arg(&plan_path)
+            .arg("--stage")
+            .arg(&stage)
+            .arg("--record")
+            .arg(&record)
+            .current_dir(&repo)
+            .output()
+            .unwrap()
+    };
+    let journal = || -> Vec<JournalRecord> {
+        ExecutionLog::validate_prefix(&fs::read(stage.join(LOG_FILE)).unwrap(), "smoke-stage")
+            .unwrap()
+    };
+    let cells_of = |records: &[JournalRecord], event: JournalEvent| -> Vec<String> {
+        records
+            .iter()
+            .filter(|record| record.event == event)
+            .map(|record| {
+                record.case.as_ref().unwrap()["cell_id"]
+                    .as_str()
+                    .unwrap()
+                    .to_owned()
+            })
+            .collect()
+    };
+
+    // One invocation spends the plan's cells-per-session budget and pauses.
+    let first = smoke();
+    assert_eq!(
+        first.status.code(),
+        Some(3),
+        "{}",
+        String::from_utf8_lossy(&first.stderr)
+    );
+    let paused = journal();
+    assert_eq!(cells_of(&paused, JournalEvent::CellStart), ["first"]);
+    assert_eq!(cells_of(&paused, JournalEvent::CellComplete), ["first"]);
+    assert_eq!(paused.last().unwrap().event, JournalEvent::Paused);
+    assert!(!record.exists(), "a paused staged smoke wrote its record");
+
+    // The next invocation resumes and never repeats the completed cell.
+    let second = smoke();
+    assert_eq!(
+        second.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&second.stderr)
+    );
+    let complete = journal();
+    assert_eq!(
+        cells_of(&complete, JournalEvent::CellStart),
+        ["first", "second"]
+    );
+    assert_eq!(complete.last().unwrap().event, JournalEvent::Complete);
+    assert_eq!(
+        complete
+            .iter()
+            .filter(|record| record.event == JournalEvent::ChildSpawn)
+            .count(),
+        4
+    );
+
+    // The stage carries no timing sample, no lock hold and no reservation.
+    for entry in &complete {
+        assert!(
+            !matches!(
+                entry.event,
+                JournalEvent::ExecutionProgress
+                    | JournalEvent::WindowProgress
+                    | JournalEvent::LockHold
+            ),
+            "{entry:?}"
+        );
+        assert!(entry.details.get("ns_per_call").is_none(), "{entry:?}");
+        if let Some(windows) = entry.details.get("windows") {
+            assert_eq!(windows, &json!(0), "{entry:?}");
+        }
+    }
+    assert!(!lock.exists(), "the staged smoke created the plan's lock");
+    assert!(
+        fs::read(repo.join("family-ledger.jsonl"))
+            .unwrap()
+            .is_empty(),
+        "the staged smoke reserved a ledger attempt"
+    );
+    assert!(!stage.join(RECEIPT_FILE).exists());
+
+    // The record covers the whole plan and reports no window.
+    let written: SmokeRecord = serde_json::from_slice(&fs::read(&record).unwrap()).unwrap();
+    assert_eq!(
+        written
+            .cells
+            .iter()
+            .map(|cell| cell.cell_id.as_str())
+            .collect::<Vec<_>>(),
+        ["first", "second"]
+    );
+    assert!(written
+        .cells
+        .iter()
+        .flat_map(|cell| &cell.arms)
+        .all(|arm| arm.windows == 0 && arm.role == PairPosition::Validation));
+
+    // Finalize assembles a timed campaign's receipt and refuses this stage.
+    let refused = Command::new(runner)
+        .args(["finalize"])
+        .arg(&stage)
+        .arg(root.join("out"))
+        .current_dir(&repo)
+        .output()
+        .unwrap();
+    assert!(!refused.status.success());
+    let reason = String::from_utf8_lossy(&refused.stderr);
+    assert!(reason.contains("is a non-timed smoke stage"), "{reason}");
+    assert!(!root.join("out").exists());
+}
+
 /// The non-timed smoke end to end, through the subcommand a harness invokes.
 mod arm_smoke {
     use super::{

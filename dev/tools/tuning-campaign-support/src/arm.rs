@@ -218,6 +218,13 @@ pub struct ArmResult {
 /// Observer of one arm child's lifecycle, so a caller with an execution log
 /// journals what it did. `()` observes nothing.
 pub trait ChildObserver {
+    /// Announces the validation dispatch of `arm` on `cell_id`, so an observer
+    /// that journals files the dispatch's records under that dispatch's case.
+    fn validating(&mut self, cell_id: &str, arm: &str) -> io::Result<()> {
+        let _ = (cell_id, arm);
+        Ok(())
+    }
+
     /// Receives the PID of the spawned child.
     fn spawned(&mut self, pid: u32) -> io::Result<()> {
         let _ = pid;
@@ -250,6 +257,16 @@ impl<'a> JournalObserver<'a> {
 }
 
 impl ChildObserver for JournalObserver<'_> {
+    fn validating(&mut self, cell_id: &str, arm: &str) -> io::Result<()> {
+        self.case = json!({
+            "key": cell_id,
+            "cell_id": cell_id,
+            "arm": arm,
+            "role": PairPosition::Validation,
+        });
+        Ok(())
+    }
+
     fn spawned(&mut self, pid: u32) -> io::Result<()> {
         self.pid = pid;
         self.log
@@ -403,6 +420,29 @@ pub struct SmokeRecord {
     pub cells: Vec<CellValidation>,
 }
 
+impl SmokeRecord {
+    /// The record of `cells` validated against the plan and the family
+    /// addendum whose bytes these are, in the plan's cell order.
+    pub fn of(
+        plan: &RunnerPlan,
+        plan_bytes: &[u8],
+        addendum: &FamilyAddendum,
+        addendum_bytes: &[u8],
+        cells: Vec<CellValidation>,
+    ) -> Self {
+        Self {
+            schema: SMOKE_RECORD_SCHEMA.to_owned(),
+            campaign_id: plan.campaign_id.clone(),
+            issue: plan.issue.clone(),
+            family: addendum.family.id.clone(),
+            plan_sha256: sha256_hex(plan_bytes),
+            addendum: plan.addendum.clone(),
+            addendum_sha256: sha256_hex(addendum_bytes),
+            cells,
+        }
+    }
+}
+
 /// Drives one arm of one declared cell once in the validation position.
 ///
 /// `root` is the repository root a repository-relative executable resolves
@@ -453,6 +493,40 @@ pub fn validate_arm(
     })
 }
 
+/// Drives both arms of one cell of a saved plan once in the validation
+/// position, in the plan's baseline-then-candidate order.
+///
+/// `observer` hears each dispatch before it starts, so a caller with an
+/// execution log journals the cell's children under their own cases. Fails,
+/// naming the cell and the arm, on every defect [`validate_arm`] names, and
+/// before any arm runs when the addendum declares no such cell.
+pub fn validate_cell(
+    root: &Path,
+    plan: &RunnerPlan,
+    addendum: &FamilyAddendum,
+    cell: &PlanCell,
+    timeout: Duration,
+    observer: &mut dyn ChildObserver,
+) -> io::Result<CellValidation> {
+    let declared = addendum
+        .cell(&cell.cell_id)
+        .ok_or_else(|| invalid(format!("the addendum declares no cell {}", cell.cell_id)))?;
+    let mut arms = Vec::with_capacity(2);
+    for arm_name in [&cell.baseline_arm, &cell.candidate_arm] {
+        observer.validating(&cell.cell_id, arm_name)?;
+        arms.push(
+            validate_arm(root, plan, cell, declared, arm_name, timeout, observer).map_err(
+                |error| invalid(format!("cell {} arm {arm_name}: {error}", cell.cell_id)),
+            )?,
+        );
+    }
+    Ok(CellValidation {
+        cell_id: cell.cell_id.clone(),
+        cache_state: declared.cache_state,
+        arms,
+    })
+}
+
 /// Drives every arm of every declared cell of a saved runner plan once, untimed.
 ///
 /// The smoke establishes the runner-to-arm wire in a working session: it reads
@@ -463,12 +537,18 @@ pub fn validate_arm(
 /// fresh-child sentinel, child environment, child dispatch and result parser.
 ///
 /// It is non-timed by construction: the request carries no timing window, the
-/// smoke takes no host lock, opens no family ledger, writes no stage,
-/// checkpoint or receipt, and emits no timing sample. It fails, naming the cell
-/// and the arm, when an arm reports a timing window, exits other than cleanly,
-/// writes something other than one canonical result line, applies another cache
-/// state or reports no route provenance; a plan cell the addendum does not
-/// declare fails before any arm runs.
+/// smoke takes no host lock, opens no family ledger, writes no receipt, and
+/// emits no timing sample. It fails, naming the cell and the arm, when an arm
+/// reports a timing window, exits other than cleanly, writes something other
+/// than one canonical result line, applies another cache state or reports no
+/// route provenance; a plan cell the addendum does not declare fails before any
+/// arm runs.
+///
+/// This entry point writes nothing. `benchmark-ab-runner smoke <plan> --stage
+/// <dir>` drives the same validation dispatches through the runner's session
+/// loop, append-only execution log and checkpoints, pausing at the plan's
+/// cells-per-session budget and resuming without repeating a completed cell;
+/// such a stage carries zero timing samples and `finalize` refuses it.
 ///
 /// `root` is the repository root the plan's relative paths resolve against.
 ///
@@ -489,33 +569,22 @@ pub fn smoke(root: &Path, plan_path: &Path) -> io::Result<SmokeRecord> {
     let timeout = Duration::from_secs(plan.settings().0.child_timeout_seconds);
     let mut cells = Vec::with_capacity(plan.cells.len());
     for cell in &plan.cells {
-        let declared = addendum
-            .cell(&cell.cell_id)
-            .ok_or_else(|| invalid(format!("the addendum declares no cell {}", cell.cell_id)))?;
-        let mut arms = Vec::with_capacity(2);
-        for arm_name in [&cell.baseline_arm, &cell.candidate_arm] {
-            arms.push(
-                validate_arm(root, &plan, cell, declared, arm_name, timeout, &mut ()).map_err(
-                    |error| invalid(format!("cell {} arm {arm_name}: {error}", cell.cell_id)),
-                )?,
-            );
-        }
-        cells.push(CellValidation {
-            cell_id: cell.cell_id.clone(),
-            cache_state: declared.cache_state,
-            arms,
-        });
+        cells.push(validate_cell(
+            root,
+            &plan,
+            &addendum,
+            cell,
+            timeout,
+            &mut (),
+        )?);
     }
-    Ok(SmokeRecord {
-        schema: SMOKE_RECORD_SCHEMA.to_owned(),
-        campaign_id: plan.campaign_id.clone(),
-        issue: plan.issue.clone(),
-        family: addendum.family.id.clone(),
-        plan_sha256: sha256_hex(&plan_bytes),
-        addendum: plan.addendum.clone(),
-        addendum_sha256: sha256_hex(&addendum_bytes),
+    Ok(SmokeRecord::of(
+        &plan,
+        &plan_bytes,
+        &addendum,
+        &addendum_bytes,
         cells,
-    })
+    ))
 }
 
 fn resolve(root: &Path, executable: &str) -> io::Result<PathBuf> {
