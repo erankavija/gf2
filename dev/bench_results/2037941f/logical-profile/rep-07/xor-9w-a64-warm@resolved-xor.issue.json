@@ -1,0 +1,1 @@
+{"cache_state":"warm","calls":125829119,"case":"xor-9w-a64-warm@resolved-xor","cell":"xor-9w-a64-warm","elapsed_ns":1014733529,"route":"resolved-xor","schema":"logical-buffer-profile-case-v1","selected_path":"gf2-core/kernels::ops::resolve_xor_inplace/simd/w=9/layout=a64/src%64=0/dst%64=0/working-set=256B"}
