@@ -1,0 +1,186 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "ldpc-qc-comparator-single-worker-v1",
+    "issue": "f63a2464",
+    "purpose": "decoder-family",
+    "description": "Confirmatory stage: every cell is confirmatory and decides this family on fresh samples under the material-gap threshold this addendum freezes from the pilot receipt it pins. The QC-aware intra-frame candidate against the matched external arm, AFF3CT v4.7.0's scalar f32 flooding normalized-min-sum decoder [Cassagne2019], under the same contract on the same recorded frames. It decides whether the residual gap against that arm is material and selects nothing for production. The fastest quality-compatible external arm is a separate question whose shortlist `c077a88b` closed empty: no surveyed candidate satisfied the paired quality-admission rule on this corpus, and that outcome is preserved rather than replaced by a matched arm. The steady-state operation of `3be770d5`, unchanged: every worker is a thread pinned to one resolved CPU and owns one decoder built before timing. AList parsing and construction are reported as setup, outside the timed windows. A timed call makes every worker decode its declared batch of recorded frames of fixture bank zero, including conversion of the recorded f32 LLRs, the dispatch to the workers and extraction of the information-window decisions. The candidate is the QC-aware intra-frame prototype of `f63a2464`, which declares the canonical numerical contract unchanged: f32 flooding normalized min-sum at factor 0.75, iteration cap 50, syndrome stopping, one frame per decoder invocation, vectorized across the lifted positions of one frame's circulant blocks rather than across frames, so it fills no batch. The `c077a88b` prepared 128-frame quality evidence is reused without resampling and every timed execution checks each worker's per-frame bit errors against it, so a candidate that parted from the contract fails the run. The DVB-T2 workload declares no cell in this family: its check rows carry no equal-degree circulant block partition, which `f63a2464`'s numerical-contract review records with its evidence. Arms report observed per-worker affinity, CPUs and process thread counts; no nested pool is declared. Two confirmatory cells decide it, both comparator-gap cells: sustained throughput and single-frame latency."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-19T14:55:11Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "A pilot observes the resolution that later fixes this family's margins; declaring them here would defeat the observation.",
+    "measurement_resolution": 0.05,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/receipt.json",
+      "sha256": "cef1c9ba35d1945295211061f4a15bb957b809d8550006b09d5f5bd964227d8e"
+    },
+    "equivalence_margin": 1.06,
+    "equivalence_rationale": "Parity with the matched external arm means the candidate is at most this factor slower at the family confidence. The pilot resolves this family to five percent, set by the sustained-throughput cell, so six percent is the smallest two-decimal margin that lies strictly outside that resolution.",
+    "material_gap_threshold": 1.2,
+    "material_gap_rationale": "A fifth of the runtime is the smallest residual gap against the pinned external arm that would justify further kernel work on this candidate rather than a reported measurement; a smaller gap is reported and left, because it changes no decision a consumer of the gf2 decoder makes. The pilot resolves this family to five percent, so a fifth lies far outside what the measurement can confuse with parity."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 1,
+    "max_added_source_lines": 1200,
+    "maintenance_rationale": "The candidate is one block layout, one flooding decoder over it and one AVX2 check kernel with its scalar reference, which is the single unsafe kernel the budget allows. The source budget is the size of those modules and their behavioural suite. Nothing in the production decoder changes under this issue."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/f63a2464/v4-qc-comparator-single-worker-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "nr-bg1-z384-qc-comparator-w1",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-qc-comparator-latency",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 1,
+          "workers": 1,
+          "timed_frames": 1,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    }
+  ]
+}

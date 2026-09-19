@@ -1,0 +1,17 @@
+pilot receipt  dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot/receipt.json
+receipt sha256 3b032ba8d7df356bcad93c5414a92483890d59e882652fb6c2062adfdb5e3a1f
+campaign       f63a2464-v4-r1-qc-intra-frame-single-worker-pilot
+verdict        accepted (label pilot)
+family         ldpc-qc-intra-frame-single-worker-v1: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+nr-bg1-z384-qc-w1                        6      8.8132      8.7793      8.8607    0.0054
+nr-bg1-z384-qc-latency                   6      8.8813      8.8438      8.9431    0.0070
+
+widest relative half-width   0.006965
+frozen measurement resolution 0.01
+replaced worthwhile_speedup None -> 1.1
+replaced equivalence_margin None -> 1.02
+restated the family description for the confirmatory stage
+margins: equivalence 1.02, material gap None
+confirmation addendum dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker.json

@@ -1,0 +1,17 @@
+pilot receipt  dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/receipt.json
+receipt sha256 cef1c9ba35d1945295211061f4a15bb957b809d8550006b09d5f5bd964227d8e
+campaign       f63a2464-v4-r1-qc-comparator-single-worker-pilot
+verdict        accepted (label pilot)
+family         ldpc-qc-comparator-single-worker-v1: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+nr-bg1-z384-qc-comparator-w1             6     0.19466     0.18584      0.1958    0.0453
+nr-bg1-z384-qc-comparator-latency        6     0.19322     0.19256      0.1947    0.0076
+
+widest relative half-width   0.045315
+frozen measurement resolution 0.05
+replaced equivalence_margin None -> 1.06
+replaced material_gap_threshold None -> 1.2
+restated the family description for the confirmatory stage
+margins: equivalence 1.06, material gap 1.2
+confirmation addendum dev/active/f63a2464/addendum-ldpc-qc-comparator-single-worker.json
