@@ -93,6 +93,7 @@
     {
       "commit": null,
       "doc_type": "implementation",
+      "format": "markdown",
       "label": "Generator of the producing-input closure",
       "path": "dev/active/ad2a6a58/survey/make-producing-inputs.py"
     },
@@ -107,7 +108,7 @@
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
-      "label": "Driver of the non-timed arm smoke: mirror tests, plan check, untimed dispatches",
+      "label": "Driver of the non-timed arm smoke over the shared campaign smoke script",
       "path": "dev/active/ad2a6a58/survey/smoke-arms.sh"
     },
     {
@@ -182,13 +183,13 @@
       "commit": null,
       "doc_type": "validation",
       "format": "markdown",
-      "label": "Smoke record: every arm, cell, operation and cache state, zero timing windows",
+      "label": "Non-timed smoke record of the pilot plan: every arm and cell, zero timing windows",
       "path": "dev/active/ad2a6a58/survey/runner-smoke.txt"
     },
     {
       "commit": null,
       "doc_type": "benchmark",
-      "label": "Append-only family ledger, opened empty",
+      "label": "Append-only family ledger carrying the pilot reservation",
       "path": "dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl"
     },
     {
@@ -202,7 +203,7 @@
       "commit": null,
       "doc_type": "specification",
       "format": "markdown",
-      "label": "Benchmark-window queue carrying this family's pilot line",
+      "label": "Benchmark-window queue carrying this family's confirmation line",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
     },
     {
@@ -210,6 +211,70 @@
       "doc_type": "tool",
       "label": "Shared prior-receipt pin tool",
       "path": "dev/scripts/pin-prior-receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Pilot campaign receipt of the gf256-shipped-axpy-lane family",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Recomputed acceptance summary of the pilot campaign",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "analysis",
+      "format": "markdown",
+      "label": "Readable acceptance summary of the pilot campaign",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Pilot campaign journal the verification reads",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Runner plan the pilot campaign measured",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Launcher record of the pilot campaign's sessions",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen protocol-v4 confirmation addendum derived from the pilot receipt",
+      "path": "dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "Freezer derivation record: resolution, retained and dropped cells",
+      "path": "dev/active/ad2a6a58/confirmation-derivation-axpy.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Shared campaign-log verifier the launcher calls",
+      "path": "dev/scripts/verify-campaign-log.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test of the shared campaign-log verifier",
+      "path": "dev/scripts/verify-campaign-log.test.sh"
     }
   ],
   "first_ready_at": "2026-09-16T12:11:10.819218802Z",
@@ -232,5 +297,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-09-18T14:13:40.687317329Z"
+  "updated_at": "2026-09-19T15:03:53.948456995Z"
 }

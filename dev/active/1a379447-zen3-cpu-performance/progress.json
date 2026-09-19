@@ -536,7 +536,7 @@
           "short_id": "ad2a6a58",
           "title": "Confirm the GF(2^8) axpy path against the current vector route",
           "classification": "research",
-          "status": "in_progress: pre-window work merged (non-timed smoke, REQ-03 reworded by the invoker); pilot queued for the 2026-09-19 window from agent-0a357f94; post-window round: judge the pilot from its execution log (the launcher rejects a paused-then-complete campaign after finalizing), freeze the confirmation, converge on dev/scripts shared forms and on d45aff82's smoke, add src/arm.rs to its closure, rebase onto the rewritten main."
+          "status": "in_progress: pilot collected from the 2026-09-19 window and merged at e736999ee; confirmation frozen (6 of 10 cells; equivalence margin replaced 1.15 -> 1.3 by the freezer's sanctioned option because the cold cells set the resolution at 0.29, recorded in the derivation record as plan.md anticipates) and queued for the 2026-09-20 window from the pinned worktree agent-0a357f94. Replay note: the worker's launcher/closure convergence on the shared log checker duplicated main's 2d95c4d4f and was resolved to main's side; its two-stage private smoke commit 37b14c464 was skipped on main (main's smoke-arms.sh stays on dev/scripts/smoke-campaign-arms.sh over the pilot plan), so main carries no smoke record of the confirmation plan while the pinned tree does. Final round after the confirmation: converge the smoke on benchmark-ab-runner smoke over both plans, add the finding count to the tables' Source line, outcome prose, rebase, gates."
         },
         {
           "id": "b9302771",
@@ -1617,6 +1617,34 @@
       "origin": "w-9fb40c83-r3 report (session 21)",
       "disposition": "if research-review accepts the derived provenance record, file a small task outside the measured session so the next profile session (any issue reusing run-profile.sh) records them at run time; if it rejects it, queue a fresh v4-r3 session with a fixed launcher",
       "criterion_named_by": "9fb40c83 REQ-02 (provenance) via research-review F1"
+    },
+    {
+      "issue": "ad2a6a58 / 4c1e441f",
+      "subject": "the pinned worktrees' trees lag main's copies of their own launchers and closures (main converged the axpy family on shared generators in 2d95c4d4f after the pin), so a post-window replay conflicts on files both sides changed; main's side wins for shared-form files and the pinned tree keeps its own for the window run",
+      "origin": "lead replay (session 22)",
+      "disposition": "resolved per file at replay time; recorded so the final rounds regenerate closure, smoke record and tables on main's forms",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "an sccache server spawned by a gate or cargo run inside a temporary directory keeps TMPDIR=/tmp/tmp.*/scratch after that directory is deleted; every later cold compile through it fails (259 requests, 14 executed, zero hits). The window runner replaces such a server at window start (no SCCACHE_IDLE_TIMEOUT=0), so window builds are safe; in-session builds are not",
+      "origin": "w-ad2a6a58-pw report (session 22), verified",
+      "disposition": "lead stopped the server; workers build with CARGO_CI_NO_SCCACHE=1 when it recurs",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "ad2a6a58",
+      "subject": "dev/bench_results/ad2a6a58/tables.md carries no finding count on its Source line, which the brief's citation convention needs for the REQ-06 outcome prose",
+      "origin": "w-ad2a6a58-pw report (session 22)",
+      "disposition": "final round adds it at the generator",
+      "criterion_named_by": "ad2a6a58 REQ-07 (single-source prose) at outcome time"
+    },
+    {
+      "issue": "4c1e441f",
+      "subject": "dev/scripts/smoke-campaign-arms.sh passes --label pilot unconditionally, so a confirmation's throwaway smoke plan is labelled pilot (accepted by the runner's check; reaches no record)",
+      "origin": "w-4c1e441f-pw report (session 22)",
+      "disposition": "fix at the shared source in the final-round convergence on benchmark-ab-runner smoke",
+      "criterion_named_by": "none"
     }
   ],
   "notes": [
