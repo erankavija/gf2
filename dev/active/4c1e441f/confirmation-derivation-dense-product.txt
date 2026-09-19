@@ -1,0 +1,32 @@
+pilot receipt  dev/bench_results/4c1e441f/r1-dense-product-pilot/receipt.json
+receipt sha256 fdba1b601318ed2660225ceca8cf0edb9a96f4ca72759dda46a2ef28c6c7762f
+campaign       4c1e441f-r1-dense-product-pilot
+verdict        accepted (label pilot)
+family         gf256-shipped-dense-product: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+matmul-n64-element                      12      7.7713      7.7601      7.8253    0.0069
+matmul-n256-element                     12      8.9409      8.9171      8.9745    0.0038
+matmul-n512-element                     12      10.456       10.43      10.517    0.0058
+matmul-n256-whole-element               12      8.3118      8.2978      8.3414    0.0036
+matmul-n64-wide                         12       3.558      3.5477      3.5675    0.0029
+matmul-n256-wide                        12      3.4464      3.4371      3.4521    0.0027
+matmul-n512-wide                        12      3.6817       3.676      3.6895    0.0021
+matmul-n256-whole-wide                  12      3.4272      3.4169      3.4353    0.0030
+
+widest relative half-width   0.006938
+frozen measurement resolution 0.01
+restated the family description for the confirmatory stage
+
+selection      6 of 8 pilot cells become confirmatory
+rationale      The frozen selection rule of the pilot addendum: P-20's tail-support bound admits six confirmatory comparisons on this family's first attempt, so the confirmation keeps both element representations at the middle square dimension, at the largest square dimension and at the whole-matrix consumer boundary, which is where the accepted path's three scratch byte buffers and its restoration of the transposed right operand are paid; it drops the two 64-dimension cells, whose dimension is the pilot's sizing shape for that restoration and allocation overhead rather than a dimension a consumer's product is dominated by. The dropped cells keep their pilot evidence.
+retained       matmul-n256-element
+retained       matmul-n512-element
+retained       matmul-n256-whole-element
+retained       matmul-n256-wide
+retained       matmul-n512-wide
+retained       matmul-n256-whole-wide
+dropped        matmul-n64-element
+dropped        matmul-n64-wide
+margins: equivalence 1.15, material gap None
+confirmation addendum dev/active/4c1e441f/addendum-v4-dense-product-confirmation.json
