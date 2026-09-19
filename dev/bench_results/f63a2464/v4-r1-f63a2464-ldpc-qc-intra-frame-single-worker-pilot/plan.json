@@ -1,0 +1,69 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "f63a2464-v4-r1-qc-intra-frame-single-worker-pilot",
+  "issue": "f63a2464",
+  "label": "pilot",
+  "campaign_seed": 762304518899223041,
+  "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker-pilot.json",
+  "producing_manifest": "dev/active/f63a2464/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2-nms-f32-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding LdpcDecoder over the canonical EdgeLayout and the shared minimum, second-minimum and sign reduction, f32 flooding normalized min-sum, syndrome stopping, one reused decoder per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-baseline/release/gf2-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "qc-intra-frame-nms-f32-nr-bg1-z384": {
+      "build": "native",
+      "description": "QC-aware intra-frame prototype: the same f32 flooding normalized min-sum contract vectorized across the lifted positions of one frame's circulant blocks, syndrome stopping, one reused decoder per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-arms/release/qc-decoder-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "nr-bg1-z384-qc-w1",
+      "baseline_arm": "gf2-nms-f32-nr-bg1-z384",
+      "candidate_arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "nr-bg1-z384-qc-latency",
+      "baseline_arm": "gf2-nms-f32-nr-bg1-z384",
+      "candidate_arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 1
+}
