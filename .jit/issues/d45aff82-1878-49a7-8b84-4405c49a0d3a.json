@@ -108,12 +108,17 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-18T16:47:56.920908706Z",
+      "updated_at": "2026-09-19T15:35:39.300134341Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-18T16:53:04.259174996Z",
+      "status": "passed",
+      "updated_at": "2026-09-19T15:28:02.300749143Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-19T15:37:21.523567537Z",
       "updated_by": "auto:executor"
     }
   },
@@ -127,5 +132,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Provide one shared non-timed arm smoke in the campaign tools",
-  "updated_at": "2026-09-18T17:41:13.976451220Z"
+  "updated_at": "2026-09-19T15:37:21.523567537Z"
 }

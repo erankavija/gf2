@@ -13475,3 +13475,10 @@
 {"fields":["documents"],"id":"0aa683cf-b775-4feb-897e-4d9a028466a0","issue_id":"f63a2464-424d-4def-a740-8ff1471f0108","timestamp":"2026-09-19T15:06:51.620438349Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"55c3e7da-3385-424d-8cec-b99410f8bbe2","issue_id":"f63a2464-424d-4def-a740-8ff1471f0108","timestamp":"2026-09-19T15:06:52.004044951Z","type":"issue_updated","updated_by":"doc-update"}
 {"fields":["documents"],"id":"75a7008c-7b1d-4a4c-bd68-5599e977be3d","issue_id":"f63a2464-424d-4def-a740-8ff1471f0108","timestamp":"2026-09-19T15:06:52.357890394Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"code-review","id":"7669060f-9e2d-4d5d-b91e-33c6d5a4e60f","issue_id":"d45aff82-1878-49a7-8b84-4405c49a0d3a","timestamp":"2026-09-19T15:28:02.300749143Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"824e4916-42c2-48d0-9d23-ea7678fea6f1","issue_id":"d45aff82-1878-49a7-8b84-4405c49a0d3a","timestamp":"2026-09-19T15:35:39.300134341Z","type":"gate_passed","updated_by":"auto:executor"}
+{"id":"c0d24ea5-4576-4be0-8b49-196f859aead4","issue_id":"5ac79460-2713-470c-a83e-42227064f25d","priority":"high","timestamp":"2026-09-19T15:36:33.499490699Z","title":"Resolve an omitted exploratory pilot_pairs to pilot_min_pairs in the log checker","type":"issue_created"}
+{"fields":["dependencies"],"id":"9ac6fa94-72a3-4575-b626-b440aaebc423","issue_id":"bc091474-8c85-4758-aef6-fffb012fad36","timestamp":"2026-09-19T15:37:14.916171816Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"f4f2442d-4a3c-45d6-bfae-f1befa814cf4","issue_id":"5ac79460-2713-470c-a83e-42227064f25d","timestamp":"2026-09-19T15:37:17.848919848Z","type":"gate_added"}
+{"gate_key":"code-review","id":"53d74c0d-d41e-47e6-9fe8-fb040041a8d6","issue_id":"5ac79460-2713-470c-a83e-42227064f25d","timestamp":"2026-09-19T15:37:18.160350937Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"571d3b86-4924-4f28-a0c7-4e775ad557af","issue_id":"d45aff82-1878-49a7-8b84-4405c49a0d3a","timestamp":"2026-09-19T15:37:21.523567537Z","type":"gate_passed","updated_by":"auto:executor"}
