@@ -537,12 +537,18 @@ pub fn validate_cell(
 /// fresh-child sentinel, child environment, child dispatch and result parser.
 ///
 /// It is non-timed by construction: the request carries no timing window, the
-/// smoke takes no host lock, opens no family ledger, writes no stage,
-/// checkpoint or receipt, and emits no timing sample. It fails, naming the cell
-/// and the arm, when an arm reports a timing window, exits other than cleanly,
-/// writes something other than one canonical result line, applies another cache
-/// state or reports no route provenance; a plan cell the addendum does not
-/// declare fails before any arm runs.
+/// smoke takes no host lock, opens no family ledger, writes no receipt, and
+/// emits no timing sample. It fails, naming the cell and the arm, when an arm
+/// reports a timing window, exits other than cleanly, writes something other
+/// than one canonical result line, applies another cache state or reports no
+/// route provenance; a plan cell the addendum does not declare fails before any
+/// arm runs.
+///
+/// This entry point writes nothing. `benchmark-ab-runner smoke <plan> --stage
+/// <dir>` drives the same validation dispatches through the runner's session
+/// loop, append-only execution log and checkpoints, pausing at the plan's
+/// cells-per-session budget and resuming without repeating a completed cell;
+/// such a stage carries zero timing samples and `finalize` refuses it.
 ///
 /// `root` is the repository root the plan's relative paths resolve against.
 ///
