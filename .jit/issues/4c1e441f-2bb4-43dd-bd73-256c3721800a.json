@@ -21,6 +21,14 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "05a6341637595d52b5e8aea3ce3414e3fa96736842e0c7e851a55171413667c6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-dense-product-confirmation.json",
+          "resolved_path": "dev/active/4c1e441f/addendum-v4-dense-product-confirmation.json"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "d45fa31bd7e04295fb780bf532df3639f72bd29f95c3257e6933c97f7b620e8e",
           "is_shared": false,
           "mime_type": null,
@@ -29,23 +37,7 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "540604887758ecc8e43765da325e56644b458e98743f747bdee49ff7ff4f6f36",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "survey/runner-smoke.txt",
-          "resolved_path": "dev/active/4c1e441f/survey/runner-smoke.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/4c1e441f/dense-product-family-ledger.jsonl",
-          "resolved_path": "dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "dbd898ab26e9e4d0ec43c5dbbaf340cdf7893e97b4a43e7b26a1a2c6321cfa51",
+          "content_hash": "90cb64e75d4de3f71d1d3b01da610a049ef16bb54508028b2b2fb4d52efe87c4",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../../bench_results/4c1e441f/tables.md",
@@ -53,17 +45,49 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "da45a53314d79a65ba16eae30aa84b4be1fac9e49800306d0b84417375857cd0",
+          "content_hash": "301b1666527bf536f09b1cc89dee23dc3da9927ae33fe67d7f383bb85fa99895",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/runner-smoke.txt",
+          "resolved_path": "dev/active/4c1e441f/survey/runner-smoke.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8dd24624ac1f2583ccfcb570ef7989e946555bf558ff13ef226c8b13a91d1ff4",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../613574db/design.md",
           "resolved_path": "dev/active/613574db/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "859c4520a130d1a12db77ba21c3fd38da1fa7f70b9ff80edd39a2d44ebaaa407",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/4c1e441f/dense-product-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "65cbdae038f6a2e593656eabeafa43030ada1999413c62f305320c5e7d4bbb32",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "confirmation-derivation-dense-product.txt",
+          "resolved_path": "dev/active/4c1e441f/confirmation-derivation-dense-product.txt"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/4c1e441f/r1-dense-product-pilot",
+          "resolved_path": "dev/bench_results/4c1e441f/r1-dense-product-pilot"
         }
       ],
       "commit": null,
       "doc_type": "plan",
       "format": "markdown",
-      "label": "Confirmation plan for the shipped GF(2^8) dense product",
+      "label": "Dense-product confirmation plan and stage table",
       "path": "dev/active/4c1e441f/plan.md"
     },
     {
@@ -94,9 +118,9 @@
     },
     {
       "commit": null,
-      "doc_type": "evidence",
+      "doc_type": "smoke",
       "format": "markdown",
-      "label": "Non-timed harness smoke of every arm and cell, zero timing windows",
+      "label": "Untimed arm smoke of the confirmation plan",
       "path": "dev/active/4c1e441f/survey/runner-smoke.txt"
     },
     {
@@ -135,15 +159,15 @@
     },
     {
       "commit": null,
-      "doc_type": "implementation",
+      "doc_type": "tool",
       "format": "markdown",
-      "label": "Non-timed arm smoke driver for this family",
+      "label": "Stage-selecting dense-product smoke driver",
       "path": "dev/active/4c1e441f/survey/smoke-arms.sh"
     },
     {
       "commit": null,
-      "doc_type": "evidence",
-      "label": "Append-only family ledger, open and empty",
+      "doc_type": "ledger",
+      "label": "Dense-product family trial ledger",
       "path": "dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl"
     },
     {
@@ -155,9 +179,9 @@
     },
     {
       "commit": null,
-      "doc_type": "report",
+      "doc_type": "tables",
       "format": "markdown",
-      "label": "Generated result tables",
+      "label": "Dense-product result tables",
       "path": "dev/bench_results/4c1e441f/tables.md"
     },
     {
@@ -226,6 +250,57 @@
       "format": "markdown",
       "label": "GF(2^8) dense-product arm workspace manifest",
       "path": "dev/active/4c1e441f/survey/gemm-arm/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "label": "Dense-product pilot receipt (jit:4c1e441f)",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "acceptance",
+      "label": "Dense-product pilot acceptance summary, JSON",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "acceptance",
+      "format": "markdown",
+      "label": "Dense-product pilot acceptance summary, Markdown",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "Dense-product pilot campaign execution log",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "format": "markdown",
+      "label": "Dense-product pilot launcher log",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "addendum",
+      "label": "Frozen dense-product confirmation addendum",
+      "path": "dev/active/4c1e441f/addendum-v4-dense-product-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "derivation",
+      "label": "Confirmation freeze derivation record",
+      "path": "dev/active/4c1e441f/confirmation-derivation-dense-product.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "queue",
+      "format": "markdown",
+      "label": "Benchmark-window queue carrying the confirmation line",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
     }
   ],
   "first_ready_at": "2026-09-16T12:11:34.507392176Z",
@@ -248,5 +323,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) dense product against the current matrix route",
-  "updated_at": "2026-09-18T14:13:40.401946137Z"
+  "updated_at": "2026-09-19T14:59:45.269814817Z"
 }
