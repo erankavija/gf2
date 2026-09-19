@@ -24,17 +24,21 @@ use tuning_campaign_support::abtest::{
     bootstrap_seed, decide, median, pair_orders, paired_bootstrap_speedup, ArmOrder,
     PairedObservation,
 };
-use tuning_campaign_support::arm::{dispatch_arm, ArmRequest, JournalObserver, PairPosition};
+use tuning_campaign_support::arm::{
+    dispatch_arm, validate_cell, ArmRequest, CellValidation, JournalObserver, PairPosition,
+    SmokeRecord,
+};
 use tuning_campaign_support::campaign::{LockEvidence, Token};
 use tuning_campaign_support::host::{
     inherited_lock, resolve_core_arm, CpuAffinity, HostObservation,
 };
 use tuning_campaign_support::journal::{
-    atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity, TerminalState,
+    atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, JournalRecord, ResumeIdentity,
+    TerminalState,
 };
 use tuning_campaign_support::protocol::{
-    sha256_hex, ArtifactPin, FamilyAddendum, PlanCell, RunnerPlan, ADDENDUM_SCHEMA_PATH,
-    CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
+    sha256_hex, ArtifactPin, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan,
+    ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
 };
 use tuning_campaign_support::provenance::{ProducingInputs, ProducingSnapshot};
 use tuning_campaign_support::receipt::{
@@ -275,7 +279,35 @@ fn capture_pilot_input(
     atomic_write_new(&destination, &bytes)
 }
 
+/// What a session dispatches over the plan's cells.
+///
+/// The session loop, the execution log and the checkpoint store are the same
+/// in both; the dispatch decides what each cell sends its arms and, with it,
+/// whether the session holds the host lock and reserves a ledger attempt.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SessionDispatch {
+    /// The counterbalanced timed pairs of a campaign cell.
+    Timed,
+    /// One untimed validation dispatch per arm, as
+    /// [`tuning_campaign_support::arm::smoke`] states.
+    Validation,
+}
+
+/// Journal marker of a stage a validation session opened.
+const DISPATCH_MODE_DIAGNOSTIC: &str = "dispatch-mode";
+
+/// Whether these log records belong to a stage a validation session opened.
+fn validation_stage(records: &[JournalRecord]) -> bool {
+    records.iter().any(|record| {
+        record.event == JournalEvent::DriverDiagnostic
+            && record.details.get("kind").and_then(Value::as_str) == Some(DISPATCH_MODE_DIAGNOSTIC)
+            && record.details.get("mode").and_then(Value::as_str) == Some("validation")
+    })
+}
+
 struct Session {
+    root: PathBuf,
+    dispatch: SessionDispatch,
     log: ExecutionLog,
     checkpoints: CheckpointStore,
     plan: RunnerPlan,
@@ -285,7 +317,12 @@ struct Session {
     host: HostObservation,
 }
 
-fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Session> {
+fn open_session(
+    root: &Path,
+    stage: &Path,
+    plan_path: &Path,
+    dispatch: SessionDispatch,
+) -> io::Result<Session> {
     let (plan, plan_bytes) = read_plan(plan_path)?;
     fs::create_dir_all(stage)?;
     let stage = fs::canonicalize(stage)?;
@@ -312,7 +349,10 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
         ));
     }
     capture_referenced_receipts(root, &stage, &addendum)?;
-    let holder = inherited_lock(Path::new(&plan.lock_path))?;
+    let timed = dispatch == SessionDispatch::Timed;
+    let holder = timed
+        .then(|| inherited_lock(Path::new(&plan.lock_path)))
+        .transpose()?;
     if addendum.protocol.version >= 2 {
         if !tuning_campaign_support::protocol::freeze_precedes(
             &addendum.frozen,
@@ -324,14 +364,20 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
         ) {
             return Err(invalid("addendum freeze timestamp is after campaign start"));
         }
-        facts.trial_ledger = Some(tuning_campaign_support::trial_ledger::reserve(
-            root,
-            &stage,
-            &addendum,
-            &plan.campaign_id,
-            &facts.addendum.sha256,
-            &tuning_campaign_support::trial_ledger::candidate_ids(&addendum, &plan, &facts.arms)?,
-        )?);
+        if timed {
+            facts.trial_ledger = Some(tuning_campaign_support::trial_ledger::reserve(
+                root,
+                &stage,
+                &addendum,
+                &plan.campaign_id,
+                &facts.addendum.sha256,
+                &tuning_campaign_support::trial_ledger::candidate_ids(
+                    &addendum,
+                    &plan,
+                    &facts.arms,
+                )?,
+            )?);
+        }
     }
     let session_id = format!("session-{}-{}", utc_compact(), std::process::id());
     let log_path = stage.join(LOG_FILE);
@@ -358,12 +404,24 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
                 "resume identity differs from the campaign-start facts",
             ));
         }
+        if validation_stage(&records) == timed {
+            return Err(invalid(
+                "the stage was opened under the other dispatch; a resume keeps it",
+            ));
+        }
     }
     log.append(
         JournalEvent::OrchestrationStart,
         None,
         json!({"kind": "execution-log-announced", "path": log.path()}),
     )?;
+    if !timed {
+        log.append(
+            JournalEvent::DriverDiagnostic,
+            None,
+            json!({"kind": DISPATCH_MODE_DIAGNOSTIC, "mode": "validation"}),
+        )?;
+    }
     let checkpoint_root = stage.join(CHECKPOINT_DIR);
     let mut checkpoints = if checkpoint_root.join("manifest.json").exists() {
         CheckpointStore::resume(
@@ -396,12 +454,14 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
         None,
         json!({"kind": "host-observation", "observation": host}),
     )?;
-    let evidence = LockEvidence {
-        lock_path: fs::canonicalize(&plan.lock_path)?,
-        holder_pid: holder,
-        observation: Token::new("inherited-fd-and-independent-flock-conflict")?,
-    };
-    log.append(JournalEvent::LockHold, None, json!({"evidence": evidence}))?;
+    if let Some(holder) = holder {
+        let evidence = LockEvidence {
+            lock_path: fs::canonicalize(&plan.lock_path)?,
+            holder_pid: holder,
+            observation: Token::new("inherited-fd-and-independent-flock-conflict")?,
+        };
+        log.append(JournalEvent::LockHold, None, json!({"evidence": evidence}))?;
+    }
     log.append(
         JournalEvent::DriverDiagnostic,
         None,
@@ -413,6 +473,8 @@ fn open_session(root: &Path, stage: &Path, plan_path: &Path) -> io::Result<Sessi
     )?;
     let affinity = host.affinity.clone();
     Ok(Session {
+        root: root.to_path_buf(),
+        dispatch,
         log,
         checkpoints,
         plan,
@@ -505,24 +567,18 @@ fn cell_case(cell: &PlanCell) -> Value {
     json!({"key": cell.cell_id, "cell_id": cell.cell_id, "case": cell.case})
 }
 
-fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
-    let plan_cell = session.plan.cells[index].clone();
-    let key = plan_cell.cell_id.clone();
-    let declared = session
-        .addendum
-        .cell(&plan_cell.cell_id)
-        .cloned()
-        .ok_or_else(|| invalid("undeclared cell"))?;
-    let case = cell_case(&plan_cell);
-    session.log.append(
-        JournalEvent::CellStart,
-        Some(case.clone()),
-        json!({"role": declared.role, "core_arm": declared.core_arm}),
-    )?;
+/// Measures one cell's counterbalanced timed pairs and claims its effect.
+fn measure_pairs(
+    session: &mut Session,
+    plan_cell: &PlanCell,
+    declared: &CellDeclaration,
+    key: &str,
+    case: &Value,
+) -> io::Result<CellRecord> {
     let settings = session.facts.settings;
     let mut record = CellRecord {
         cell_id: plan_cell.cell_id.clone(),
-        key: key.clone(),
+        key: key.to_owned(),
         role: declared.role,
         baseline_arm: plan_cell.baseline_arm.clone(),
         candidate_arm: plan_cell.candidate_arm.clone(),
@@ -548,15 +604,15 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
             record.resolved_cpus = cpus.clone();
             record.status = CellStatus::Measured;
             let pairs = plan_cell.pair_count(declared.role, &settings);
-            let cell_seed = bootstrap_seed(session.plan.campaign_seed, &key);
+            let cell_seed = bootstrap_seed(session.plan.campaign_seed, key);
             let orders = pair_orders(cell_seed, pairs as usize);
             set_affinity(&cpus)?;
             let outcome = (|| -> io::Result<()> {
                 for (pair, order) in orders.iter().enumerate() {
                     let request = |arm: &str, role: PairPosition| {
                         ArmRequest::timed(
-                            &plan_cell,
-                            &declared,
+                            plan_cell,
+                            declared,
                             arm,
                             role,
                             pair as u32,
@@ -580,7 +636,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                     let first_record = run_arm(
                         session,
                         &plan_cell.cell_id,
-                        &key,
+                        key,
                         &first.1,
                         first.0,
                         pair as u32,
@@ -589,7 +645,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                     let second_record = run_arm(
                         session,
                         &plan_cell.cell_id,
-                        &key,
+                        key,
                         &second.1,
                         second.0,
                         pair as u32,
@@ -674,7 +730,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
                 cell_seed,
             )
             .map_err(invalid)?;
-            if let Some(margins) = session.addendum.margins(&declared) {
+            if let Some(margins) = session.addendum.margins(declared) {
                 let decision = decide(&interval, &margins).map_err(invalid)?;
                 record.claimed = Some(CellClaim {
                     interval,
@@ -684,23 +740,82 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
             }
         }
     }
-    let accepted = session.checkpoints.accept(&key, &case, &record)?;
+    Ok(record)
+}
+
+/// Drives one cell's arms once in the untimed validation position, journaling
+/// each child under its own case.
+fn validate_dispatches(session: &mut Session, plan_cell: &PlanCell) -> io::Result<CellValidation> {
+    let timeout = Duration::from_secs(session.facts.settings.child_timeout_seconds);
+    let mut journal = JournalObserver::new(&mut session.log, Value::Null);
+    validate_cell(
+        &session.root,
+        &session.plan,
+        &session.addendum,
+        plan_cell,
+        timeout,
+        &mut journal,
+    )
+}
+
+/// Runs one cell of the session's dispatch, checkpoints what it produced and
+/// journals the cell's completion.
+fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
+    let plan_cell = session.plan.cells[index].clone();
+    let key = plan_cell.cell_id.clone();
+    let declared = session
+        .addendum
+        .cell(&plan_cell.cell_id)
+        .cloned()
+        .ok_or_else(|| invalid("undeclared cell"))?;
+    let case = cell_case(&plan_cell);
+    session.log.append(
+        JournalEvent::CellStart,
+        Some(case.clone()),
+        json!({"role": declared.role, "core_arm": declared.core_arm}),
+    )?;
+    let (accepted, completion) = match session.dispatch {
+        SessionDispatch::Timed => {
+            let record = measure_pairs(session, &plan_cell, &declared, &key, &case)?;
+            let completion = json!({
+                "status": record.status,
+                "pairs": record.pairs.len(),
+                "claimed": record.claimed,
+            });
+            (
+                session.checkpoints.accept(&key, &case, &record)?,
+                completion,
+            )
+        }
+        SessionDispatch::Validation => {
+            let validation = validate_dispatches(session, &plan_cell)?;
+            let completion = json!({"arms": validation.arms.len(), "windows": 0});
+            (
+                session.checkpoints.accept(&key, &case, &validation)?,
+                completion,
+            )
+        }
+    };
     session.log.append(
         JournalEvent::CheckpointAccepted,
         Some(case.clone()),
         json!({"sha256": accepted.sha256, "path": accepted.path}),
     )?;
-    session.log.append(
-        JournalEvent::CellComplete,
-        Some(case),
-        json!({"status": record.status, "pairs": record.pairs.len(), "claimed": record.claimed}),
-    )?;
+    session
+        .log
+        .append(JournalEvent::CellComplete, Some(case), completion)?;
     Ok(())
 }
 
-fn run(stage: &Path, plan_path: &Path) -> io::Result<i32> {
+/// Drives the plan's unfinished cells under `dispatch`, then pauses or
+/// completes.
+///
+/// One invocation runs at most the plan's cells-per-session budget and pauses
+/// at it; the next resumes from the checkpoints without repeating a completed
+/// cell. Exit code 3 reports the pause.
+fn run_session(stage: &Path, plan_path: &Path, dispatch: SessionDispatch) -> io::Result<i32> {
     let root = repository_root()?;
-    let mut session = open_session(&root, stage, plan_path)?;
+    let mut session = open_session(&root, stage, plan_path, dispatch)?;
     let budget = session.plan.max_cells_per_session;
     let mut measured = 0u32;
     let outcome = (|| -> io::Result<TerminalState> {
@@ -776,11 +891,29 @@ fn copy_tree(source: &Path, target: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
-    let root = repository_root()?;
-    let stage = fs::canonicalize(stage)?;
-    let (plan, plan_bytes) = read_plan(&stage.join(PLAN_FILE))?;
-    let log_bytes = fs::read(stage.join(LOG_FILE))?;
+/// A stage as its own records describe it: the plan it pins, the validated
+/// execution log, the campaign facts its campaign-start carries and the family
+/// addendum those facts authenticate.
+struct Stage {
+    /// Canonical stage directory.
+    root: PathBuf,
+    plan: RunnerPlan,
+    plan_bytes: Vec<u8>,
+    log_bytes: Vec<u8>,
+    records: Vec<JournalRecord>,
+    facts: CampaignFacts,
+    addendum: FamilyAddendum,
+    addendum_bytes: Vec<u8>,
+    /// Whether a validation session opened the stage.
+    validation: bool,
+}
+
+/// Reads a stage and binds its plan, execution log, campaign facts and
+/// addendum to each other.
+fn open_stage(stage: &Path) -> io::Result<Stage> {
+    let root = fs::canonicalize(stage)?;
+    let (plan, plan_bytes) = read_plan(&root.join(PLAN_FILE))?;
+    let log_bytes = fs::read(root.join(LOG_FILE))?;
     let records = ExecutionLog::validate_prefix(&log_bytes, &plan.campaign_id)?;
     let facts: CampaignFacts = serde_json::from_value(
         records
@@ -796,8 +929,64 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
             "staged plan differs from the campaign-start plan digest",
         ));
     }
-    let addendum = FamilyAddendum::decode(&facts.addendum.verify_content(&stage).map_err(invalid)?)
-        .map_err(invalid)?;
+    let addendum_bytes = facts.addendum.verify_content(&root).map_err(invalid)?;
+    let addendum = FamilyAddendum::decode(&addendum_bytes).map_err(invalid)?;
+    let validation = validation_stage(&records);
+    Ok(Stage {
+        root,
+        plan,
+        plan_bytes,
+        log_bytes,
+        records,
+        facts,
+        addendum,
+        addendum_bytes,
+        validation,
+    })
+}
+
+/// The smoke's record of a completed validation stage, read from the
+/// checkpoints the session accepted.
+fn staged_record(stage: &Path) -> io::Result<SmokeRecord> {
+    let staged = open_stage(stage)?;
+    let checkpoints = CheckpointStore::resume(
+        staged.root.join(CHECKPOINT_DIR),
+        staged.plan.campaign_id.clone(),
+        staged.facts.identity.clone(),
+    )?;
+    let mut cells = Vec::with_capacity(staged.plan.cells.len());
+    for plan_cell in &staged.plan.cells {
+        let (_case, validation): (Value, CellValidation) = checkpoints.load(&plan_cell.cell_id)?;
+        cells.push(validation);
+    }
+    Ok(SmokeRecord::of(
+        &staged.plan,
+        &staged.plan_bytes,
+        &staged.addendum,
+        &staged.addendum_bytes,
+        cells,
+    ))
+}
+
+fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
+    let root = repository_root()?;
+    let staged = open_stage(stage)?;
+    if staged.validation {
+        return Err(invalid(format!(
+            "stage {} is a non-timed smoke stage; finalize assembles the receipt of a timed campaign",
+            staged.root.display()
+        )));
+    }
+    let Stage {
+        root: stage,
+        plan,
+        plan_bytes,
+        log_bytes,
+        records,
+        facts,
+        addendum,
+        ..
+    } = staged;
     let terminal = records.iter().rev().find(|record| {
         matches!(
             record.event,
@@ -974,10 +1163,28 @@ fn check(plan_path: &Path) -> io::Result<i32> {
 /// record when `--record` names a path.
 ///
 /// `tuning_campaign_support::arm::smoke` states the contract this subcommand
-/// exposes; this function only resolves paths and renders the record.
-fn smoke(plan_path: &Path, record_path: Option<&Path>) -> io::Result<i32> {
-    let root = repository_root()?;
-    let record = tuning_campaign_support::arm::smoke(&root, plan_path)?;
+/// exposes. Without a stage this function resolves paths and renders the
+/// record; with one it opens a validation session over the stage, which pauses
+/// at the plan's cells-per-session budget, and renders the record of the whole
+/// plan once that session completes.
+fn smoke(plan_path: &Path, record_path: Option<&Path>, stage: Option<&Path>) -> io::Result<i32> {
+    let (code, record) = match stage {
+        None => {
+            let root = repository_root()?;
+            (
+                0,
+                Some(tuning_campaign_support::arm::smoke(&root, plan_path)?),
+            )
+        }
+        Some(stage) => {
+            let code = run_session(stage, plan_path, SessionDispatch::Validation)?;
+            let record = (code == 0).then(|| staged_record(stage)).transpose()?;
+            (code, record)
+        }
+    };
+    let Some(record) = record else {
+        return Ok(code);
+    };
     if let Some(path) = record_path {
         let mut bytes = serde_json::to_vec_pretty(&record)?;
         bytes.push(b'\n');
@@ -1001,7 +1208,43 @@ fn smoke(plan_path: &Path, record_path: Option<&Path>) -> io::Result<i32> {
         record.cells.len(),
         record_path.map_or_else(String::new, |path| format!(" -> {}", path.display())),
     );
-    Ok(0)
+    Ok(code)
+}
+
+/// The smoke's `--record <path>` and `--stage <dir>`, in either order, each at
+/// most once. `None` is a usage error.
+fn smoke_options(options: &[&str]) -> Option<(Option<PathBuf>, Option<PathBuf>)> {
+    let (mut record, mut stage) = (None, None);
+    let mut rest = options;
+    while let [flag, value, tail @ ..] = rest {
+        let slot = match *flag {
+            "--record" => &mut record,
+            "--stage" => &mut stage,
+            _ => return None,
+        };
+        if slot.is_some() {
+            return None;
+        }
+        *slot = Some(PathBuf::from(value));
+        rest = tail;
+    }
+    rest.is_empty().then_some((record, stage))
+}
+
+fn usage() -> ! {
+    eprintln!(
+        "usage: benchmark-ab-runner run <stage> <plan.json> | \
+         finalize <stage> <out-dir> | check <plan.json> | \
+         smoke <plan.json> [--record <path>] [--stage <dir>]\n\
+         smoke drives every arm of every declared cell once in the untimed \
+         validation position: it takes no lock, opens no ledger, writes no \
+         receipt, and fails an arm that reports a timing window. --stage \
+         drives those dispatches through the session loop, execution log and \
+         checkpoints, pausing at the plan\'s cells-per-session budget and \
+         resuming without repeating a completed cell; finalize refuses such a \
+         stage."
+    );
+    std::process::exit(2);
 }
 
 fn main() {
@@ -1012,25 +1255,18 @@ fn main() {
         .collect::<Vec<_>>()
         .as_slice()
     {
-        [_, "run", stage, plan] => run(Path::new(stage), Path::new(plan)),
+        [_, "run", stage, plan] => {
+            run_session(Path::new(stage), Path::new(plan), SessionDispatch::Timed)
+        }
         [_, "finalize", stage, out_dir] => {
             finalize(Path::new(stage), Path::new(out_dir)).map(|()| 0)
         }
         [_, "check", plan] => check(Path::new(plan)),
-        [_, "smoke", plan] => smoke(Path::new(plan), None),
-        [_, "smoke", plan, "--record", record] => smoke(Path::new(plan), Some(Path::new(record))),
-        _ => {
-            eprintln!(
-                "usage: benchmark-ab-runner run <stage> <plan.json> | \
-                 finalize <stage> <out-dir> | check <plan.json> | \
-                 smoke <plan.json> [--record <path>]\n\
-                 smoke drives every arm of every declared cell once in the \
-                 untimed validation position: it takes no lock, writes no \
-                 stage, ledger or receipt, and fails an arm that reports a \
-                 timing window."
-            );
-            std::process::exit(2);
-        }
+        [_, "smoke", plan, options @ ..] => match smoke_options(options) {
+            Some((record, stage)) => smoke(Path::new(plan), record.as_deref(), stage.as_deref()),
+            None => usage(),
+        },
+        _ => usage(),
     };
     match result {
         Ok(code) => std::process::exit(code),
