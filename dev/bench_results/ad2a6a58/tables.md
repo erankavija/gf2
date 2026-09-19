@@ -5,7 +5,51 @@ acceptance summaries, family ledger and receipt pin named on the Source lines be
 
 ## Pilot
 
-No committed pilot receipt at `dev/bench_results/ad2a6a58/r1-axpy-pilot`.
+Campaign `ad2a6a58-r1-axpy-pilot`, verdict `accepted`, qualifies `False`.
+
+| family                  | comparisons | family alpha | attempt alpha | corrected alpha | per-comparison confidence |
+|-------------------------|-------------|--------------|---------------|-----------------|---------------------------|
+| gf256-shipped-axpy-lane | 1           | 0.05         | 0.025         | 0.025           | 0.975                     |
+
+| cell                   | outcome | pairs | estimate           | lower              | upper              | flagged windows | total windows |
+|------------------------|---------|-------|--------------------|--------------------|--------------------|-----------------|---------------|
+| axpy-1k-cold-element   | pilot   | 12    | 10.771508379888267 | 8.685135135135136  | 13.846153846153847 | 12              | 120           |
+| axpy-4k-element        | pilot   | 12    | 12.359527102818161 | 12.337695923890669 | 12.39361056881566  | 0               | 120           |
+| axpy-128k-element      | pilot   | 12    | 12.997371094234612 | 12.98844479057128  | 13.014522606364826 | 0               | 120           |
+| axpy-8m-element        | pilot   | 12    | 5.899185989944629  | 5.887322569813726  | 5.951526368873891  | 0               | 120           |
+| axpy-2m-stream-element | pilot   | 12    | 4.9672771573605194 | 4.953519752742944  | 4.9739502048556465 | 0               | 120           |
+| axpy-1k-cold-wide      | pilot   | 12    | 145.68720930232558 | 112.0              | 167.01333333333332 | 12              | 120           |
+| axpy-4k-wide           | pilot   | 12    | 155.50046093941083 | 151.12755254625932 | 156.24277912807543 | 0               | 120           |
+| axpy-128k-wide         | pilot   | 12    | 169.11861392549238 | 168.28475636038058 | 169.67497275141582 | 0               | 120           |
+| axpy-8m-wide           | pilot   | 12    | 87.86255529195496  | 86.59844752591512  | 88.94132937185346  | 0               | 120           |
+| axpy-2m-stream-wide    | pilot   | 12    | 86.37908334934689  | 86.298083017974    | 86.47769194406007  | 0               | 120           |
+
+### Pilot lane witness
+
+The path each arm reported after its timed windows, as the receipt records it.
+
+| cell                   | position  | arm            | selected path                                                                                      | executions |
+|------------------------|-----------|----------------|----------------------------------------------------------------------------------------------------|------------|
+| axpy-128k-element      | baseline  | scalar-element | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0           | 12         |
+| axpy-128k-element      | candidate | table-element  | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1            | 12         |
+| axpy-128k-wide         | baseline  | scalar-wide    | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0 | 12         |
+| axpy-128k-wide         | candidate | table-wide     | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1  | 12         |
+| axpy-1k-cold-element   | baseline  | scalar-element | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0           | 12         |
+| axpy-1k-cold-element   | candidate | table-element  | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1            | 12         |
+| axpy-1k-cold-wide      | baseline  | scalar-wide    | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0 | 12         |
+| axpy-1k-cold-wide      | candidate | table-wide     | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1  | 12         |
+| axpy-2m-stream-element | baseline  | scalar-element | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0           | 12         |
+| axpy-2m-stream-element | candidate | table-element  | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1            | 12         |
+| axpy-2m-stream-wide    | baseline  | scalar-wide    | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0 | 12         |
+| axpy-2m-stream-wide    | candidate | table-wide     | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1  | 12         |
+| axpy-4k-element        | baseline  | scalar-element | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0           | 12         |
+| axpy-4k-element        | candidate | table-element  | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1            | 12         |
+| axpy-4k-wide           | baseline  | scalar-wide    | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0 | 12         |
+| axpy-4k-wide           | candidate | table-wide     | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1  | 12         |
+| axpy-8m-element        | baseline  | scalar-element | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0           | 12         |
+| axpy-8m-element        | candidate | table-element  | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1            | 12         |
+| axpy-8m-wide           | baseline  | scalar-wide    | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0 | 12         |
+| axpy-8m-wide           | candidate | table-wide     | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1  | 12         |
 
 ## Confirmation
 
@@ -13,7 +57,9 @@ No committed confirmation receipt at `dev/bench_results/ad2a6a58/r1-axpy-confirm
 
 ## Family ledger
 
-The genesis ledger is open and holds no reservation.
+| sequence | family                  | campaign               | protocol | comparisons | addendum sha256  |
+|----------|-------------------------|------------------------|----------|-------------|------------------|
+| 0        | gf256-shipped-axpy-lane | ad2a6a58-r1-axpy-pilot | 4        | 0           | 6fd13ee5f2e28713 |
 
 ## Direction agreement with the pinned vector-family confirmation
 
@@ -29,7 +75,9 @@ No committed confirmation receipt, so no direction is stated yet.
 
 | path                                                                      | sha256                                                           |
 |---------------------------------------------------------------------------|------------------------------------------------------------------|
-| dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl                       | e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 |
+| dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl                       | 484133560a5afe20a8720bcc23ff3fc6ceee245903a0dcebdc2845d9f3554c4e |
 | dev/active/ad2a6a58/pinned-vector-confirmation.json                       | 32d1bfb05003fdf7276a8004d30c4837a36c2564739ef41bc7db2421c90614ad |
 | dev/bench_results/19513245/r1-vector-confirmation/receipt.json            | 53f8c413dd1bf90190c6ad7bd51680d4b231063fb7e5aca7f977ead1e99a3b74 |
 | dev/bench_results/19513245/r1-vector-confirmation/acceptance-summary.json | 4030e2d63c7af0641960f6352fdc6d597efeea36da18a80e0928daea611a0699 |
+| dev/bench_results/ad2a6a58/r1-axpy-pilot/receipt.json                     | 60b5311ca7655d61be5bba58e6b28c99efb002b5791dfac8cf6322e1cdd1ce9c |
+| dev/bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.json          | 6021eeb9d0a9d233663bf465b68df18d5e76149652aea8837813793312d7c5bd |
