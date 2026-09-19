@@ -96,9 +96,11 @@ if [[ "${ACTION}" == tables ]]; then
 fi
 
 if [[ "${ACTION}" == freeze ]]; then
-    # The confirmation's resolution, margins and pilot pin come from the
-    # committed pilot receipt, never from a reading taken here; the retained and
-    # dropped cells follow the pilot addendum's frozen selection rule.
+    # The confirmation's resolution and pilot pin come from the committed pilot
+    # receipt, never from a reading taken here; the retained and dropped cells
+    # follow the pilot addendum's frozen selection rule. The pilot's equivalence
+    # margin is narrower than that resolution admits, so the freezer's margin
+    # option replaces it with its own rationale and records the replacement.
     for frozen in "${PILOT_ADDENDUM}" "${RESULTS}/r1-axpy-pilot/receipt.json"; do
         git ls-files --error-unmatch "${frozen}" >/dev/null
         git diff --quiet HEAD -- "${frozen}" || {
@@ -112,6 +114,17 @@ if [[ "${ACTION}" == freeze ]]; then
         --frozen-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         --output "${CONFIRMATION_ADDENDUM}" \
         --record "${DERIVATION}" \
+        --equivalence-margin 1.30 \
+        --equivalence-rationale \
+        "This family resolves no band narrower than the measurement resolution the canonical \
+freezer derives from the whole pilot and records in the derivation record beside this addendum; \
+the pilot's equivalence band lies inside that resolution and would claim a precision the \
+measurement does not have. The margin is therefore the smallest two-decimal factor strictly \
+above one plus that resolution, which coincides with this family's worthwhile-speedup \
+threshold: a lane slower than the smallest return that repays a second GF(2^8) multiplication \
+route is reported as interchangeable rather than as a regression. The unamortized first-touch \
+cells whose first table build widens the pilot's interval set that resolution, keep their pilot \
+evidence and are dropped from the confirmatory selection." \
         --cell axpy-4k-element --cell axpy-128k-element --cell axpy-2m-stream-element \
         --cell axpy-4k-wide --cell axpy-128k-wide --cell axpy-2m-stream-wide \
         --selection-rationale \
