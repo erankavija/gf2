@@ -1,0 +1,10 @@
+start=2026-09-19T01:12:11Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-campaigns/v4-r1-comparator-single-worker-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-campaigns/v4-r1-comparator-single-worker-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-campaigns/v4-r1-comparator-single-worker-pilot/execution.log
+terminal=3 end=2026-09-19T01:12:23Z
+start=2026-09-19T01:12:23Z
+command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/release/benchmark-ab-runner run /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-campaigns/v4-r1-comparator-single-worker-pilot /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-campaigns/v4-r1-comparator-single-worker-pilot.plan.json
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-campaigns/v4-r1-comparator-single-worker-pilot/execution.log
+terminal=0 end=2026-09-19T01:12:32Z

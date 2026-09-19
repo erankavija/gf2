@@ -1,0 +1,254 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "ldpc-qc-intra-frame-multicore-v1",
+    "issue": "f63a2464",
+    "purpose": "decoder-family",
+    "description": "Confirmatory stage: every cell is confirmatory and decides this family on fresh samples under the margins this addendum freezes from the pilot receipt it pins. The same two arms decoding independent frames on several workers, which decides how the candidate shares the memory system rather than deciding adoption on its own. The steady-state operation of `3be770d5`, unchanged: every worker is a thread pinned to one resolved CPU and owns one decoder built before timing. AList parsing and construction are reported as setup, outside the timed windows. A timed call makes every worker decode its declared batch of recorded frames of fixture bank zero, including conversion of the recorded f32 LLRs, the dispatch to the workers and extraction of the information-window decisions. The candidate is the QC-aware intra-frame prototype of `f63a2464`, which declares the canonical numerical contract unchanged: f32 flooding normalized min-sum at factor 0.75, iteration cap 50, syndrome stopping, one frame per decoder invocation, vectorized across the lifted positions of one frame's circulant blocks rather than across frames, so it fills no batch. The `c077a88b` prepared 128-frame quality evidence is reused without resampling and every timed execution checks each worker's per-frame bit errors against it, so a candidate that parted from the contract fails the run. The DVB-T2 workload declares no cell in this family: its check rows carry no equal-degree circulant block partition, which `f63a2464`'s numerical-contract review records with its evidence. Arms report observed per-worker affinity, CPUs and process thread counts; no nested pool is declared. Three confirmatory cells decide it, all improvement cells against the canonical decoder: six physical cores, twelve physical cores and twenty-four logical CPUs."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-19T14:55:11Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The consumer rule is this issue's single-worker rule applied to the shared-memory arms: a tenth of the decode time is the smallest gain that repays maintaining a second decoder and its unsafe AVX2 kernel beside the canonical one, because below it a consumer decoding on every core sees the same sustained frame rate. The pilot resolves this family to five percent, set by the twenty-four-logical-CPU cell where two threads share one core's memory pipeline, and a tenth lies strictly outside that resolution.",
+    "measurement_resolution": 0.05,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/receipt.json",
+      "sha256": "82610c2d8c31f7bac799478d3fb1b40ada916d6848904e2304dbe5ac4e9fac12"
+    },
+    "equivalence_margin": 1.06,
+    "equivalence_rationale": "A core arm that gains nothing must not cost anything. The pilot resolves this family to five percent, so five percent cannot separate a candidate that costs nothing from one that costs something; six percent is the smallest two-decimal margin that lies strictly outside that resolution, and it stays below the gain the worthwhile threshold requires.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "A confirmatory addendum fixes the material-gap threshold from this pilot's observed resolution."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 1,
+    "max_added_source_lines": 1200,
+    "maintenance_rationale": "The candidate is one block layout, one flooding decoder over it and one AVX2 check kernel with its scalar reference, which is the single unsafe kernel the budget allows. The source budget is the size of those modules and their behavioural suite. Nothing in the production decoder changes under this issue."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/f63a2464/v4-qc-intra-frame-multicore-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "nr-bg1-z384-qc-w6",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 6,
+          "timed_frames": 48,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 6,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-qc-w12",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 12,
+          "timed_frames": 96,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-qc-w24",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 24,
+          "timed_frames": 192,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "logical-cpus-24",
+      "workers": {
+        "declared": 24,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    }
+  ]
+}

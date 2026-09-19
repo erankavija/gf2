@@ -8,7 +8,7 @@
   "families": [
     {
       "ledger": "dev/bench_results/f63a2464/v4-qc-comparator-single-worker-family-ledger.jsonl",
-      "entries": 0,
+      "entries": 1,
       "reservations_spending_a_comparison": 0,
       "next_attempt_index": 1,
       "attempt_alpha": 0.025,
@@ -16,7 +16,7 @@
     },
     {
       "ledger": "dev/bench_results/f63a2464/v4-qc-intra-frame-multicore-family-ledger.jsonl",
-      "entries": 0,
+      "entries": 1,
       "reservations_spending_a_comparison": 0,
       "next_attempt_index": 1,
       "attempt_alpha": 0.025,
@@ -24,7 +24,7 @@
     },
     {
       "ledger": "dev/bench_results/f63a2464/v4-qc-intra-frame-single-worker-family-ledger.jsonl",
-      "entries": 0,
+      "entries": 1,
       "reservations_spending_a_comparison": 0,
       "next_attempt_index": 1,
       "attempt_alpha": 0.025,
