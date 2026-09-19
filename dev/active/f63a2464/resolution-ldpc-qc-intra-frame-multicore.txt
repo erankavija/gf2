@@ -1,0 +1,18 @@
+pilot receipt  dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/receipt.json
+receipt sha256 82610c2d8c31f7bac799478d3fb1b40ada916d6848904e2304dbe5ac4e9fac12
+campaign       f63a2464-v4-r1-qc-intra-frame-multicore-pilot
+verdict        accepted (label pilot)
+family         ldpc-qc-intra-frame-multicore-v1: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+nr-bg1-z384-qc-w6                        6       8.655       8.645      8.7074    0.0061
+nr-bg1-z384-qc-w12                       6      8.2037      8.1766      8.3497    0.0178
+nr-bg1-z384-qc-w24                       6      6.1791      6.0471      6.4757    0.0480
+
+widest relative half-width   0.048005
+frozen measurement resolution 0.05
+replaced worthwhile_speedup None -> 1.1
+replaced equivalence_margin None -> 1.06
+restated the family description for the confirmatory stage
+margins: equivalence 1.06, material gap None
+confirmation addendum dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore.json

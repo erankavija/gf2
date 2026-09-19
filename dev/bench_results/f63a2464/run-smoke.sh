@@ -17,6 +17,11 @@
 # arm sources does not establish the wire contract between the runner and a
 # child.
 #
+# Both stages are smoked. A confirmation plan declares the confirmatory role
+# and the protocol's confirmatory pair count, so its arms answer a different
+# request than a pilot's; queueing it on the pilot's smoke would leave that
+# wire contract unproven.
+#
 # Usage (from the worktree root): run-smoke.sh
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
@@ -32,29 +37,32 @@ rm -rf "$SCRATCH"
 mkdir -p "$SCRATCH"
 
 for family in intra-frame-single-worker intra-frame-multicore comparator-single-worker; do
-  python3 - "$family" "$SCRATCH" <<'PY'
+ for mode in pilot confirmation; do
+  python3 - "$family" "$mode" "$SCRATCH" <<'PY'
 import json, pathlib, sys
 
-family, scratch = sys.argv[1], pathlib.Path(sys.argv[2])
-source = pathlib.Path(f"dev/active/f63a2464/addendum-ldpc-qc-{family}-pilot.json")
+family, mode, scratch = sys.argv[1], sys.argv[2], pathlib.Path(sys.argv[3])
+suffix = "-pilot" if mode == "pilot" else ""
+source = pathlib.Path(f"dev/active/f63a2464/addendum-ldpc-qc-{family}{suffix}.json")
 addendum = json.loads(source.read_text())
 addendum["family"]["description"] = (
     "Throwaway wire-contract smoke of the arms this issue measures. It publishes no receipt "
     "and supports no performance claim."
 )
-addendum["family_wise"]["ledger_path"] = str(scratch / f"{family}-ledger.jsonl")
-path = scratch / f"{family}-addendum.json"
+addendum["family_wise"]["ledger_path"] = str(scratch / f"{family}-{mode}-ledger.jsonl")
+path = scratch / f"{family}-{mode}-addendum.json"
 path.write_text(json.dumps(addendum, indent=2) + "\n")
 pathlib.Path(addendum["family_wise"]["ledger_path"]).touch()
 print(path)
 PY
-  python3 "$SURVEY/make-plan.py" --family "ldpc-qc-${family}-v1" --label pilot \
-    --addendum "$SCRATCH/$family-addendum.json" \
+  python3 "$SURVEY/make-plan.py" --family "ldpc-qc-${family}-v1" --label "$mode" \
+    --addendum "$SCRATCH/$family-$mode-addendum.json" \
     --baseline-dir "$BASELINE" --candidate-dir "$CANDIDATE" \
     --bundles-dir "$repo/target/ldpc-inputs" --quality-dir "$QUALITY" \
-    --campaign-id "f63a2464-smoke-$family" --pilot-pairs 6 \
-    --max-cells-per-session 1 --output "$SCRATCH/$family.plan.json"
-  "$BASELINE/ldpc-plan-check" "$SCRATCH/$family.plan.json"
-  "$CANDIDATE/qc-arm-smoke" "$SCRATCH/$family.plan.json"
+    --campaign-id "f63a2464-smoke-$family-$mode" --pilot-pairs 6 \
+    --max-cells-per-session 1 --output "$SCRATCH/$family-$mode.plan.json"
+  "$BASELINE/ldpc-plan-check" "$SCRATCH/$family-$mode.plan.json"
+  "$CANDIDATE/qc-arm-smoke" "$SCRATCH/$family-$mode.plan.json"
+ done
 done
 echo "smoke complete: $SCRATCH"
