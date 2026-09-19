@@ -1,0 +1,86 @@
+{
+  "schema": "zen3-benchmark-acceptance-v2",
+  "receipt_sha256": "3b032ba8d7df356bcad93c5414a92483890d59e882652fb6c2062adfdb5e3a1f",
+  "campaign_id": "f63a2464-v4-r1-qc-intra-frame-single-worker-pilot",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "ldpc-qc-intra-frame-single-worker-v1",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "attempt_alpha": 0.025,
+    "corrected_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "nr-bg1-z384-qc-w1",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 8.81318243201851,
+        "lower": 8.77927763769818,
+        "upper": 8.860650759898292,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 5716611769104698565,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.worthwhile_speedup",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-qc-latency",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 8.881265724513312,
+        "lower": 8.843812532701042,
+        "upper": 8.943125272636168,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 2866979748848270158,
+        "pairs": 6
+      },
+      "decision": null,
+      "margins": null,
+      "unresolved_settings": [
+        "effect.measurement_resolution",
+        "effect.worthwhile_speedup",
+        "effect.equivalence_margin"
+      ],
+      "reason": null
+    }
+  ]
+}
