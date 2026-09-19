@@ -20,6 +20,14 @@
       "assets": [
         {
           "asset_type": "local",
+          "content_hash": "691d4077306cf79e1d0d2c8cbeba9b6182eda1f2435c4432701c93d612e002a9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "019a84f495b59419a3c27e2a6498306995c6a5c673f748ae524f2691c579955c",
           "is_shared": false,
           "mime_type": null,
@@ -28,27 +36,91 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "content_hash": "30e640b27c0fb1b1d6bf16af4013cb2641d9f95e779f9680d0b074e4c9838f93",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/f63a2464/quality/execution.log",
+          "resolved_path": "dev/bench_results/f63a2464/quality/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a7fbba1d0727a0327af26e8ba48ae75cfe375b2ddef5224b58869ce083328369",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "resolution-ldpc-qc-intra-frame-single-worker.txt",
+          "resolved_path": "dev/active/f63a2464/resolution-ldpc-qc-intra-frame-single-worker.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1445271087651355de8b03d506a56c6be7cd880483124fe9d93cf2465d8f8a78",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/confirmatory-budget.py",
+          "resolved_path": "dev/active/f63a2464/survey/confirmatory-budget.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c9997e2fcd71cd6903b9701b9a4ad9a2e84c7543ccb7e1a96b30cf185afb2fa5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/record-preparation.py",
+          "resolved_path": "dev/active/f63a2464/survey/record-preparation.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7b059dfa055d05e857cb7d7d47161ab2351b0d1fd94bc40b15bca6cb09ba1698",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-qc-comparator-single-worker-pilot.json",
+          "resolved_path": "dev/active/f63a2464/addendum-ldpc-qc-comparator-single-worker-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "651354a189a22098dfb06739455b1113591b8333b296c084eb554fe472da1877",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/record-intrinsic-feasibility.py",
+          "resolved_path": "dev/active/f63a2464/survey/record-intrinsic-feasibility.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ea4c8c4bd952162be219ac16b4918c2a730098d8236bf1409aee2482444f495a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/f63a2464/intrinsic-feasibility/feasibility.json",
+          "resolved_path": "dev/bench_results/f63a2464/intrinsic-feasibility/feasibility.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e0fe8d8a369117d536735791bcfbe0a22258c5d18a61e05b9b77c370bf634c45",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-qc-intra-frame-single-worker-pilot.json",
+          "resolved_path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3ad26e2d2767a2dc1eb901dc88bf9b2085d3bb400bbbf642f2b86996b7bb437f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/run-quality.py",
+          "resolved_path": "dev/active/f63a2464/survey/run-quality.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "deb71afa52e3d865de51a802c3c19bf155879030d74c900fbf5585ffb6c3ad40",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../f547c394/protocol.md",
-          "resolved_path": "dev/active/f547c394/protocol.md"
+          "original_path": "numerical-contract-review.md",
+          "resolved_path": "dev/active/f63a2464/numerical-contract-review.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "9a150176e9e4a05c4f556f0e7987629d23bb5273c001a64215ba831057eb0d26",
+          "content_hash": "89bb2785166d7be70a52cb16be9607cdf2abf716f1788a6f763382106f2beef1",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../bench_results/f63a2464/run-smoke.sh",
-          "resolved_path": "dev/bench_results/f63a2464/run-smoke.sh"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "263adad757f139e6381d4e2da37f0319125d34845539c5e5603dda5b00d67d62",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/source-evidence.json",
-          "resolved_path": "dev/active/f63a2464/survey/source-evidence.json"
+          "original_path": "../../bench_results/f63a2464/confirmatory-budget.json",
+          "resolved_path": "dev/bench_results/f63a2464/confirmatory-budget.json"
         },
         {
           "asset_type": "local",
@@ -68,115 +140,19 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "7cdda6644a2ccfa7b055204d324a9330d053b8030af5eb06576b3de560ee8f02",
+          "content_hash": "29104fe8d136349f49f48a5ddc08b65ef7a7d1d92479937e3e79e2bbf685b4a2",
           "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/f63a2464/quality/tables.md",
-          "resolved_path": "dev/bench_results/f63a2464/quality/tables.md"
+          "mime_type": "text/plain",
+          "original_path": "resolution-ldpc-qc-comparator-single-worker.txt",
+          "resolved_path": "dev/active/f63a2464/resolution-ldpc-qc-comparator-single-worker.txt"
         },
         {
           "asset_type": "local",
-          "content_hash": "e0fe8d8a369117d536735791bcfbe0a22258c5d18a61e05b9b77c370bf634c45",
+          "content_hash": "2b50d4291f01b0d816591cd00ebe218367f7cc10ef9ab511ddbd9cc6ed7c3421",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "addendum-ldpc-qc-intra-frame-single-worker-pilot.json",
-          "resolved_path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker-pilot.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "1445271087651355de8b03d506a56c6be7cd880483124fe9d93cf2465d8f8a78",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/confirmatory-budget.py",
-          "resolved_path": "dev/active/f63a2464/survey/confirmatory-budget.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7b059dfa055d05e857cb7d7d47161ab2351b0d1fd94bc40b15bca6cb09ba1698",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "addendum-ldpc-qc-comparator-single-worker-pilot.json",
-          "resolved_path": "dev/active/f63a2464/addendum-ldpc-qc-comparator-single-worker-pilot.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c339a53b02b47f8bc95498be50923e00755bba9e727d8e109f31e110493e268b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/f63a2464/run-campaign.sh",
-          "resolved_path": "dev/bench_results/f63a2464/run-campaign.sh"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "432b12dac0a1f5a8179afe84e0e74b5207531d507958e7a9513e4abedaa09003",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../1a379447-zen3-cpu-performance/bench-window/queue.tsv",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "359b4cc9a71ce8f33b7df7a16a340fec5efc0122a2b0fc9c9797f6e5dab58193",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "quality-tolerances.md",
-          "resolved_path": "dev/active/f63a2464/quality-tolerances.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "25aa93fe5ecbfb057803c3faa3bbc62fa9f7efa9946ed476f5c845bbcb5146d7",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/f63a2464/confirmatory-budget.json",
-          "resolved_path": "dev/bench_results/f63a2464/confirmatory-budget.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e41d63d8fde1c043a9f5e19772a0a8be0dc312ffd1160adf3475408e7e4af123",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "addendum-ldpc-qc-intra-frame-multicore-pilot.json",
-          "resolved_path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "30e640b27c0fb1b1d6bf16af4013cb2641d9f95e779f9680d0b074e4c9838f93",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/f63a2464/quality/execution.log",
-          "resolved_path": "dev/bench_results/f63a2464/quality/execution.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "651354a189a22098dfb06739455b1113591b8333b296c084eb554fe472da1877",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/record-intrinsic-feasibility.py",
-          "resolved_path": "dev/active/f63a2464/survey/record-intrinsic-feasibility.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "3ad26e2d2767a2dc1eb901dc88bf9b2085d3bb400bbbf642f2b86996b7bb437f",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/run-quality.py",
-          "resolved_path": "dev/active/f63a2464/survey/run-quality.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ea4c8c4bd952162be219ac16b4918c2a730098d8236bf1409aee2482444f495a",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/f63a2464/intrinsic-feasibility/feasibility.json",
-          "resolved_path": "dev/bench_results/f63a2464/intrinsic-feasibility/feasibility.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "789700a8ef0c6a8acc5ce8969999a1109dc4568169c8652eb1fc29e1c00873ba",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/summarize-quality.py",
-          "resolved_path": "dev/active/f63a2464/survey/summarize-quality.py"
+          "original_path": "../../bench_results/f63a2464/run-smoke.sh",
+          "resolved_path": "dev/bench_results/f63a2464/run-smoke.sh"
         },
         {
           "asset_type": "directory",
@@ -188,6 +164,86 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "dbc303c15c808b7c25998ef6857bd590c8fe5c73258468a10d3be9f217e072dc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b2801204560e7f59e88b2dea8ae3ecd3b2d05ba0d20371a2406f6aebca0a81f4",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "789700a8ef0c6a8acc5ce8969999a1109dc4568169c8652eb1fc29e1c00873ba",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/summarize-quality.py",
+          "resolved_path": "dev/active/f63a2464/survey/summarize-quality.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c339a53b02b47f8bc95498be50923e00755bba9e727d8e109f31e110493e268b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/f63a2464/run-campaign.sh",
+          "resolved_path": "dev/bench_results/f63a2464/run-campaign.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1e48d9462f35e15d1d8ea89ce654023367d092994ae7468969ad7ef40bd05479",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "resolution-ldpc-qc-intra-frame-multicore.txt",
+          "resolved_path": "dev/active/f63a2464/resolution-ldpc-qc-intra-frame-multicore.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e41d63d8fde1c043a9f5e19772a0a8be0dc312ffd1160adf3475408e7e4af123",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-qc-intra-frame-multicore-pilot.json",
+          "resolved_path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c12f5ac3b0375b1f1ec8c1857405e8e81c2a3ac369389b23a800933ad4d39009",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/bench-window/queue.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a115a5f3b1bbec080dcfc117246cb3be2f7adfc7951313b6ea33f0ec58161c7b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../c7113c5a/survey/freeze-confirmation.py",
+          "resolved_path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "263adad757f139e6381d4e2da37f0319125d34845539c5e5603dda5b00d67d62",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/f63a2464/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "00ed1be6bed748985123a405bf59f06c4674b1be2df0fb767254526dd5281c3f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-ldpc-qc-intra-frame-single-worker.json",
+          "resolved_path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker.json"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "00c425a686fb09ae9a257df2f77903ac843eb8664d3aa269438ce0eba50dd35d",
           "is_shared": false,
           "mime_type": "text/markdown",
@@ -196,25 +252,41 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "c9997e2fcd71cd6903b9701b9a4ad9a2e84c7543ccb7e1a96b30cf185afb2fa5",
+          "content_hash": "7cdda6644a2ccfa7b055204d324a9330d053b8030af5eb06576b3de560ee8f02",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/record-preparation.py",
-          "resolved_path": "dev/active/f63a2464/survey/record-preparation.py"
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/f63a2464/quality/tables.md",
+          "resolved_path": "dev/bench_results/f63a2464/quality/tables.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "deb71afa52e3d865de51a802c3c19bf155879030d74c900fbf5585ffb6c3ad40",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "numerical-contract-review.md",
-          "resolved_path": "dev/active/f63a2464/numerical-contract-review.md"
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "359b4cc9a71ce8f33b7df7a16a340fec5efc0122a2b0fc9c9797f6e5dab58193",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "quality-tolerances.md",
+          "resolved_path": "dev/active/f63a2464/quality-tolerances.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca7ee6d66c166fad840257efbb5493133c1bda1b763d05af88578c79232f7abf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "freeze-confirmations.sh",
+          "resolved_path": "dev/active/f63a2464/freeze-confirmations.sh"
         }
       ],
       "commit": null,
-      "doc_type": "explanation",
+      "doc_type": "report",
       "format": "markdown",
-      "label": "Quantized, layered and QC-aware LDPC candidate outcome record",
+      "label": "Quantized, layered and QC-aware LDPC candidates: per-family proceed and no-proceed decisions",
       "path": "dev/active/f63a2464/findings.md"
     },
     {
@@ -379,8 +451,8 @@
     },
     {
       "commit": null,
-      "doc_type": "receipt",
-      "label": "Per-family confirmatory cell budget recomputed from each ledger",
+      "doc_type": "benchmark",
+      "label": "P-20 confirmatory cell budget recomputed from the three committed ledgers",
       "path": "dev/bench_results/f63a2464/confirmatory-budget.json"
     },
     {
@@ -398,10 +470,195 @@
     },
     {
       "commit": null,
-      "doc_type": "procedure",
+      "doc_type": "benchmark",
       "format": "markdown",
-      "label": "Non-timed wire-contract smoke of every timed arm",
+      "label": "Wire-contract smoke of the QC arms at both the pilot and confirmation stages",
       "path": "dev/bench_results/f63a2464/run-smoke.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Accepted QC intra-frame single-worker pilot, receipt",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Accepted QC intra-frame single-worker pilot, acceptance summary",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Accepted QC intra-frame single-worker pilot, acceptance summary in prose",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only execution log, QC intra-frame single-worker pilot",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Launcher record captured in the QC intra-frame single-worker pilot receipt",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Benchmark-window launcher log, QC intra-frame single-worker pilot",
+      "path": "dev/bench_results/f63a2464/v4-r1-qc-intra-frame-single-worker-pilot-launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Accepted QC intra-frame multicore pilot, receipt",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Accepted QC intra-frame multicore pilot, acceptance summary",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Accepted QC intra-frame multicore pilot, acceptance summary in prose",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only execution log, QC intra-frame multicore pilot",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Launcher record captured in the QC intra-frame multicore pilot receipt",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Benchmark-window launcher log, QC intra-frame multicore pilot",
+      "path": "dev/bench_results/f63a2464/v4-r1-qc-intra-frame-multicore-pilot-launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Accepted QC comparator single-worker pilot, receipt",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Accepted QC comparator single-worker pilot, acceptance summary",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Accepted QC comparator single-worker pilot, acceptance summary in prose",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only execution log, QC comparator single-worker pilot",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Launcher record captured in the QC comparator single-worker pilot receipt",
+      "path": "dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Benchmark-window launcher log, QC comparator single-worker pilot",
+      "path": "dev/bench_results/f63a2464/v4-r1-qc-comparator-single-worker-pilot-launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger, QC intra-frame single-worker family",
+      "path": "dev/bench_results/f63a2464/v4-qc-intra-frame-single-worker-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger, QC intra-frame multicore family",
+      "path": "dev/bench_results/f63a2464/v4-qc-intra-frame-multicore-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Append-only family ledger, QC comparator single-worker family",
+      "path": "dev/bench_results/f63a2464/v4-qc-comparator-single-worker-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, QC intra-frame single-worker confirmation",
+      "path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Derivation of the QC intra-frame single-worker confirmation addendum from its pilot receipt",
+      "path": "dev/active/f63a2464/resolution-ldpc-qc-intra-frame-single-worker.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, QC intra-frame multicore confirmation",
+      "path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Derivation of the QC intra-frame multicore confirmation addendum from its pilot receipt",
+      "path": "dev/active/f63a2464/resolution-ldpc-qc-intra-frame-multicore.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen v4 addendum, QC comparator single-worker confirmation",
+      "path": "dev/active/f63a2464/addendum-ldpc-qc-comparator-single-worker.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Derivation of the QC comparator single-worker confirmation addendum from its pilot receipt",
+      "path": "dev/active/f63a2464/resolution-ldpc-qc-comparator-single-worker.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Argument record of the canonical freeze of the three QC confirmations",
+      "path": "dev/active/f63a2464/freeze-confirmations.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Benchmark-window queue carrying the three QC confirmation lines",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Addendum-schema version table, counting the three new QC pilot receipts",
+      "path": "dev/active/f547c394/schema-versions.json"
     }
   ],
   "first_ready_at": "2026-09-06T19:59:26.709153676Z",
@@ -429,5 +686,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Evaluate quantized layered and QC-aware LDPC candidates",
-  "updated_at": "2026-09-18T13:57:16.046885799Z"
+  "updated_at": "2026-09-19T15:06:52.357890394Z"
 }
