@@ -574,7 +574,7 @@
           "short_id": "f63a2464",
           "title": "Evaluate quantized layered and QC-aware LDPC candidates",
           "classification": "research",
-          "status": "in_progress: pre-window work merged; three QC pilots queued for the 2026-09-19 window from agent-9fb40c83; post-window round also converges qc-arm-smoke and ldpc-plan-check on the shared runner subcommands and adds src/arm.rs to its closure."
+          "status": "in_progress: three QC pilots collected from the 2026-09-19 window and merged at 3c6c8274c; frozen stop rules applied: Q no-proceed (S2), L no-proceed (S2), QC proceeds to its confirmatory attempt on each of its three ledgers (single-worker, multicore, comparator; the decision record's 'family' read as the ledger's question, recorded in findings.md Limits); confirmations frozen by the canonical freezer via freeze-confirmations.sh, every pilot cell retained (budget six per ledger), smoked untimed, three lines queued for the 2026-09-20 window from the pinned worktree agent-9fb40c83. Comparator pilot ratio below one on both cells (candidate slower than the matched AFF3CT arm), preserved. Final round after the confirmations: outcomes, S4, converge qc-arm-smoke and ldpc-plan-check on the runner subcommands, rebase, gates cargo-ci, code-review, research-review."
         },
         {
           "id": "4c1e441f",
@@ -1644,6 +1644,20 @@
       "subject": "dev/scripts/smoke-campaign-arms.sh passes --label pilot unconditionally, so a confirmation's throwaway smoke plan is labelled pilot (accepted by the runner's check; reaches no record)",
       "origin": "w-4c1e441f-pw report (session 22)",
       "disposition": "fix at the shared source in the final-round convergence on benchmark-ab-runner smoke",
+      "criterion_named_by": "none"
+    },
+    {
+      "issue": "f63a2464",
+      "subject": "decision-record.md uses 'family' for the candidate (Q, L, QC) in prose and for the ledger's question in its budget arithmetic; QC has three ledgers, so it spent three pilots and enters three confirmations against a cap the candidate reading puts at one. The worker applied the ledger reading (the one the frozen arithmetic performs and the only executable one) and recorded the ambiguity in findings.md Limits",
+      "origin": "w-f63a2464-pw report (session 22)",
+      "disposition": "research-review judges at closure; the lead did not amend the frozen record",
+      "criterion_named_by": "f63a2464 REQ-02 (fixed search/stop budget)"
+    },
+    {
+      "issue": "1a379447",
+      "subject": "dev/active/f547c394/schema-versions.json counts pinning receipts and the checker (cargo-ci step addendum-schema-versions, reads HEAD) fails once a merge adds receipts; each receipt-bearing merge must be followed by `check-addendum-schema-versions.py --write` and a commit before the merged-tree cargo-ci",
+      "origin": "lead (session 22): the checker reported main stale after the ad2a6a58 merge; a worker commit on the pinned tree had bumped it to 62 and conflicted",
+      "disposition": "regenerated on main at 2bf651eee (65); the pinned-tree bump is dropped at replay",
       "criterion_named_by": "none"
     }
   ],
