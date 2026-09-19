@@ -1,0 +1,206 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "gf256-shipped-dense-product",
+    "issue": "4c1e441f",
+    "purpose": "consumer-family",
+    "description": "Confirmatory stage of issue 4c1e441f, protocol version 4: every cell below is confirmatory and decides the shipped GF(2^8) dense-product route on fresh samples. Question, arms, representations, dimensions and consumer boundary are the pilot's; the resolution, the pilot pin and the retained cells are derived from the committed pilot receipt by the repository's canonical freezer, and the derivation record beside this addendum names them. Both arms remain one executable built from the shipped crate: the baseline arm holds every GF(2^8) call on the route the library takes without the cached table through the shipped process-global lane switch and the candidate arm leaves it clear, so a pair differs in the lane and in nothing else, and each execution reports the lane the shipped witness recorded for its measured calls together with the allocating calls and bytes one call makes. The frozen decision rule is the pilot's: the accelerated path is retained when no confirmatory cell records fail and at least one records pass, and is removed otherwise, including when every confirmatory cell records not-material or inconclusive. Direction agreement is stated against the matrix-family confirmation receipt of issue 19513245 pinned in dev/active/4c1e441f/pinned-matrix-confirmation.json, which is cited for its direction and not inherited as evidence."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-19T14:50:10Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.3,
+    "rationale": "Retaining the accelerated path keeps a permanent second GF(2^8) dense-product route in gf2-core: a cached table type with a process-lifetime registry, a whole-product kernel that restores the transposed operand into scratch of its own, and an override on the shared whole-product hook for each of the two representations. Thirty percent of the consumer's measured runtime is the smallest return that repays that second path, and it is the point at which a consumer whose work is dominated by these products sees the change. The threshold is a complexity judgement, not a measurement one: the confirmation freezes a pilot-derived resolution far below it.",
+    "measurement_resolution": 0.01,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/4c1e441f/r1-dense-product-pilot/receipt.json",
+      "sha256": "fdba1b601318ed2660225ceca8cf0edb9a96f4ca72759dda46a2ef28c6c7762f"
+    },
+    "equivalence_margin": 1.15,
+    "equivalence_rationale": "Within fifteen percent the two routes are interchangeable for a consumer, which is the band in which this family reports a route as no improvement rather than as a regression. The confirmation freezes a pilot-derived resolution strictly below this margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell is a comparator-gap cell: every cell compares two routes of one gf2 executable over the same field rather than gf2 against an external library, so no material-gap threshold applies. The external gap at these shapes is the committed evidence of the byte-field comparison survey 6c6b09b1."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 700,
+    "maintenance_rationale": "What retention keeps is production source, not new source: the cached-table module with its registry, its region kernel, its whole-product kernel and its single dispatch point, plus the hook overrides on the two GF(2^8) representations. Seven hundred lines with their rustdoc is the ceiling this family allows that route to occupy, and no new unsafe kernel is allowed, because a vectorised successor would be a separate proposal with its own feasibility evidence."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "matmul-n256-element",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-square-product-n256",
+        "size": {
+          "n": 256
+        },
+        "seed": 4402
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-n512-element",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-square-product-n512",
+        "size": {
+          "n": 512
+        },
+        "seed": 4403
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-n256-whole-element",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-square-product-n256",
+        "size": {
+          "n": 256
+        },
+        "seed": 4402
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-n256-wide",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-square-product-n256",
+        "size": {
+          "n": 256
+        },
+        "seed": 4402
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-n512-wide",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-square-product-n512",
+        "size": {
+          "n": 512
+        },
+        "seed": 4403
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "matmul-n256-whole-wide",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "gf256-0x11d-square-product-n256",
+        "size": {
+          "n": 256
+        },
+        "seed": 4402
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
