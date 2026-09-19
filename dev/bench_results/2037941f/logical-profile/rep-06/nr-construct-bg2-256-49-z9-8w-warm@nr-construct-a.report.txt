@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cpu/cycles/Pu'
+# Event count (approx.): 4846988770
+#
+# Overhead  Command          Shared Object         Symbol                                                                                         
+# ........  ...............  ....................  ...............................................................................................
+#
+    85.90%  logical-profile  logical-profile       [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     2.04%  logical-profile  logical-profile       [.] gf2_core::sparse::SpBitMatrix::from_coo
+     1.60%  logical-profile  logical-profile       [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.95%  logical-profile  logical-profile       [.] gf2_coding::ldpc::core::QuasiCyclicLdpc::to_edges
+     0.90%  logical-profile  logical-profile       [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.89%  logical-profile  logical-profile       [.] gf2_core::matrix::BitMatrix::row_xor
+     0.67%  logical-profile  logical-profile       [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+     0.67%  logical-profile  libc.so.6             [.] cfree
+     0.51%  logical-profile  libc.so.6             [.] malloc
+
+
+#
+# (Tip: Skip collecting build-id when recording: perf record -B)
+#

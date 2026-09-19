@@ -1,0 +1,23 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cpu/cycles/Pu'
+# Event count (approx.): 4828769135
+#
+# Overhead  Command          Shared Object         Symbol                                                                                         
+# ........  ...............  ....................  ...............................................................................................
+#
+    85.64%  logical-profile  logical-profile       [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     1.74%  logical-profile  logical-profile       [.] gf2_core::sparse::SpBitMatrix::from_coo
+     1.73%  logical-profile  logical-profile       [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     1.48%  logical-profile  logical-profile       [.] gf2_core::matrix::BitMatrix::row_xor
+     0.99%  logical-profile  logical-profile       [.] gf2_coding::ldpc::core::QuasiCyclicLdpc::to_edges
+     0.77%  logical-profile  logical-profile       [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.57%  logical-profile  libc.so.6             [.] cfree
+
+
+#
+# (Tip: To trace only single function with Processor Trace use perf record --filter 'filter func @ program' -e intel_pt//u ./program ; perf script --insn-trace)
+#

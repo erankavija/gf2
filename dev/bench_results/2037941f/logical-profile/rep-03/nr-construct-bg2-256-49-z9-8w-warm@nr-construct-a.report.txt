@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cpu/cycles/Pu'
+# Event count (approx.): 4827934188
+#
+# Overhead  Command          Shared Object         Symbol                                                                                         
+# ........  ...............  ....................  ...............................................................................................
+#
+    86.20%  logical-profile  logical-profile       [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     1.88%  logical-profile  logical-profile       [.] gf2_core::sparse::SpBitMatrix::from_coo
+     1.50%  logical-profile  logical-profile       [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.89%  logical-profile  logical-profile       [.] gf2_core::sparse::SpBitMatrix::transpose
+     0.85%  logical-profile  logical-profile       [.] gf2_core::matrix::BitMatrix::row_xor
+     0.81%  logical-profile  logical-profile       [.] gf2_coding::ldpc::core::QuasiCyclicLdpc::to_edges
+     0.75%  logical-profile  logical-profile       [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+     0.71%  logical-profile  libc.so.6             [.] cfree
+     0.57%  logical-profile  libc.so.6             [.] malloc
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#
