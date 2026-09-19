@@ -1,0 +1,6 @@
+# started on Sat Sep 19 04:09:00 2026
+
+6040210024,,L1-dcache-loads:u,1010060775,100.00,,
+27727,,L1-dcache-load-misses:u,1010060775,100.00,,
+<not supported>,,LLC-loads:u,0,100.00,,
+<not supported>,,LLC-load-misses:u,0,100.00,,

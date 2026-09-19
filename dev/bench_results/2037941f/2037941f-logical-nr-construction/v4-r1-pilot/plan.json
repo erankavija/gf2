@@ -1,0 +1,117 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "v4-r1-2037941f-logical-nr-construction",
+  "issue": "18a87159",
+  "label": "pilot",
+  "campaign_seed": 20260916,
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-nr-construction.json",
+  "producing_manifest": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "nr-construct-a": {
+      "build": "conservative-portable",
+      "description": "Whole public QuasiCyclicLdpc::nr_5g_rate_matched constructor, including lifting selection, sparse creation, dense conversion, allocation and RREF row operations",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-b64dc9c4/target/bb769456-arms/release/logical-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LOGICAL_ROUTE": "nr-construct-a"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    },
+    "nr-construct-b": {
+      "build": "conservative-portable",
+      "description": "Byte-identical executable constructing the same public code, as the pre-candidate identity comparison",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-b64dc9c4/target/bb769456-arms/release/logical-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LOGICAL_ROUTE": "nr-construct-b"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "nr-construct-bg2-256-49-z9-8w-warm",
+      "baseline_arm": "nr-construct-a",
+      "candidate_arm": "nr-construct-b",
+      "case": {
+        "base_graph": 2,
+        "question": "nr-bg2-construction",
+        "seed": 15413205403186234864,
+        "target_k": 49,
+        "target_n": 256
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-construct-bg2-256-121-z22-18w-warm",
+      "baseline_arm": "nr-construct-a",
+      "candidate_arm": "nr-construct-b",
+      "case": {
+        "base_graph": 2,
+        "question": "nr-bg2-construction",
+        "seed": 9482013226125561501,
+        "target_k": 121,
+        "target_n": 256
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-construct-bg2-625-225-z30-25w-warm",
+      "baseline_arm": "nr-construct-a",
+      "candidate_arm": "nr-construct-b",
+      "case": {
+        "base_graph": 2,
+        "question": "nr-bg2-construction",
+        "seed": 17418674417637293791,
+        "target_k": 225,
+        "target_n": 625
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-construct-bg1-1024-640-z30-32w-warm",
+      "baseline_arm": "nr-construct-a",
+      "candidate_arm": "nr-construct-b",
+      "case": {
+        "base_graph": 1,
+        "question": "nr-bg2-construction",
+        "seed": 2914858308840861240,
+        "target_k": 640,
+        "target_n": 1024
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-construct-bg2-1024-441-z56-46w-warm",
+      "baseline_arm": "nr-construct-a",
+      "candidate_arm": "nr-construct-b",
+      "case": {
+        "base_graph": 2,
+        "question": "nr-bg2-construction",
+        "seed": 7485290927449283065,
+        "target_k": 441,
+        "target_n": 1024
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-construct-bg2-256-49-z9-8w-cold",
+      "baseline_arm": "nr-construct-a",
+      "candidate_arm": "nr-construct-b",
+      "case": {
+        "base_graph": 2,
+        "question": "nr-bg2-construction",
+        "seed": 14602770261201244162,
+        "target_k": 49,
+        "target_n": 256
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 2
+}
