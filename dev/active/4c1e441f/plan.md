@@ -44,16 +44,17 @@ the ratio the estimator forms.
 | Stage | Artifact | State |
 |---|---|---|
 | Frozen pilot family | [`addendum-v4-dense-product-pilot.json`](addendum-v4-dense-product-pilot.json) | committed before launch |
-| Genesis ledger | [`dense-product-family-ledger.jsonl`](../../bench_results/4c1e441f/dense-product-family-ledger.jsonl) | open and empty |
+| Family ledger | [`dense-product-family-ledger.jsonl`](../../bench_results/4c1e441f/dense-product-family-ledger.jsonl) | opened empty; carries the pilot reservation |
 | Lane equivalence | [`conformance/lane-equivalence.txt`](conformance/lane-equivalence.txt) | both lanes on every declared shape |
-| Arm smoke | [`survey/runner-smoke.txt`](survey/runner-smoke.txt) | every arm, cell and operation, untimed |
-| Pilot campaign | `dev/bench_results/4c1e441f/r1-dense-product-pilot` | queued for the benchmark window |
-| Confirmation addendum | `addendum-v4-dense-product-confirmation.json` | frozen from the committed pilot receipt |
-| Confirmation campaign | `dev/bench_results/4c1e441f/r1-dense-product-confirmation` | queued after the freeze |
+| Arm smoke | [`survey/runner-smoke.txt`](survey/runner-smoke.txt) | every arm, cell and operation of the stage it names, untimed |
+| Pilot campaign | [`r1-dense-product-pilot`](../../bench_results/4c1e441f/r1-dense-product-pilot) | measured, verified from its own log, receipt committed |
+| Confirmation addendum | [`addendum-v4-dense-product-confirmation.json`](addendum-v4-dense-product-confirmation.json) | frozen from the committed pilot receipt, with [its derivation record](confirmation-derivation-dense-product.txt) |
+| Confirmation campaign | `dev/bench_results/4c1e441f/r1-dense-product-confirmation` | queued for the benchmark window |
 | Published outcome | [`tables.md`](../../bench_results/4c1e441f/tables.md) | generated from committed receipts |
 
 Every stage that measures is preceded by an untimed one.
-`survey/smoke-arms.sh` projects a throwaway plan from the frozen addendum,
+`survey/smoke-arms.sh` takes the stage whose frozen addendum it drives, projects
+a throwaway plan from that addendum,
 validates it with the runner's own `check`, and drives every arm of every
 declared cell through `gf256-gemm-smoke`, which speaks the runner's wire — its
 case encoder, fresh-child sentinel, child environment and result parser — in the
