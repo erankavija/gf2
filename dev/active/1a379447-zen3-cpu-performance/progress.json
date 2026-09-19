@@ -562,7 +562,7 @@
           "short_id": "d45aff82",
           "title": "Provide one shared non-timed arm smoke in the campaign tools",
           "classification": "implementation",
-          "status": "in_progress: shared smoke merged; rework 1 merged (logical launcher calls the subcommand, usage text states the contract, subreaper hazard in rustdoc); src/arm.rs in the shared closure with a CI guard; NEXT: staged mode per the reworded REQ-02 (invoker ruling), then gates"
+          "status": "done. Session 22: rework 2 (staged smoke mode on the runner's session loop) merged at b556c449b; cargo-ci, code-review, doc-review pass with zero findings; review reviews/d45aff82-r2.md; closed at 3b47b939b."
         }
       ]
     },
@@ -600,7 +600,7 @@
           "short_id": "18a87159",
           "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
           "classification": "research",
-          "status": "in_progress: four lines queued for the 2026-09-19 window from agent-b64dc9c4; report and gates after the window."
+          "status": "in_progress: post-window round merged at da6ca8163 (three logical pilot receipts, nine-repetition profile, logical-tables.md, logical-baselines.md with the bc091474 confirmatory budget of six cells per family, REQ-09 negative); 20 artifacts linked; cargo-ci PASS, code-review PASS (zero findings), research-review FAIL round 1 F1 (high, blocking): the three receipts and the profile omit their exact executed top-level invocations (window command, runner and perf invocations), REQ-01/REQ-04/REQ-07 and @/inv/claims-trace-to-artifacts. Rework 1 not dispatched (invoker: no new work in session 22); verdict in reviews/18a87159-r1.md."
         },
         {
           "id": "bc091474",
@@ -846,6 +846,12 @@
       "type": "task",
       "in_epic": true,
       "reason": "session 21: shared non-timed arm smoke in tuning-campaign-support (invoker ruling after 9fb40c83 code-review round 2 F1 blocked the private driver under convention-convergence; the ruling places it inside the provenance freeze); 9fb40c83, ad2a6a58, 4c1e441f, f63a2464 and 00dd43c3 depend on it"
+    },
+    {
+      "id": "5ac79460",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "18a87159 post-window round: dev/scripts/verify-campaign-log.py resolves an omitted exploratory pilot_pairs to confirmatory_pairs against protocol.md's pilot_min_pairs rule (the logical harness writes pilot_pairs: null), so it rejects the three correct 18a87159 pilots; created session 22, gates cargo-ci and code-review, bc091474 depends on it; not dispatched"
     }
   ],
   "escalations": [
@@ -1208,6 +1214,24 @@
       "status": "resolved",
       "raised_at": "2026-09-18T11:50Z",
       "resolution": "Invoker (session 21): DEC-01 on e1f9a78f (8884c0e9); the round-3 reviewer honoured it."
+    },
+    {
+      "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5; session-21 ruling 4)",
+      "issue": "9fb40c83",
+      "question": "research-review round 4 keeps F3 (retained-session hardware-counter and hot-symbol tables carry n = 1 and no interval; only the first profile repetition collected counters). Options: (1) round 4 with a launcher that collects counters and hot symbols in every repetition plus a v4-r3 profile session as a window line and per-repetition order-statistic intervals; (2) an overrule decision recorded on the issue and a gate re-run; (3) drop the two tables at REQ-03's cost",
+      "recommendation": "option 1",
+      "status": "open",
+      "raised_at": "2026-09-19T15:15Z",
+      "resolution": null
+    },
+    {
+      "category": "frozen-record interpretation (f63a2464 REQ-02)",
+      "issue": "f63a2464",
+      "question": "the decision record caps confirmatory campaigns at one per family while QC has three ledgers; the worker queued three confirmations under the ledger reading (findings.md Limits). Confirm before the 2026-09-20 window or hold the lines",
+      "recommendation": "confirm the ledger reading",
+      "status": "open",
+      "raised_at": "2026-09-19T15:40Z",
+      "resolution": null
     }
   ],
   "rework_counts": {
@@ -1234,7 +1258,7 @@
     "e1f9a78f": 6,
     "9fb40c83": 3,
     "f8dd4dde": 1,
-    "d45aff82": 1
+    "d45aff82": 2
   },
   "surfaced_pitfalls": [
     {
@@ -1773,7 +1797,8 @@
     "Session 21 end (2026-09-18T18:30Z): f8dd4dde DONE (all four gates, zero findings after rework 1). d45aff82 rework 1 merged (logical launcher on the shared subcommand, usage contract, subreaper hazard); invoker ruling: the shared smoke gains a staged mode, REQ-02 reworded, not yet implemented. e1f9a78f round 6 merged (dense launcher on the shared subcommand); its gates wait for the staged mode. 9fb40c83 round 3 merged (provenance record from committed material, order-statistic intervals, n = 1 labels); gates to re-run. All merged trees passed cargo-ci (6100 tests). No worker and no gate is running; the 2026-09-19 window is armed over nine lines. Handoff: handoff-16.md.",
     "Session 21 closing rulings (2026-09-18T19:15Z, invoker interview): (1) AGENTS.md trimmed of four mechanism notes this epic had added (turnstile rationale, lock lifetime, Cargo.lock and git-index detail, the shared-closure note); the script headers already carry them; contract statements stay. (2) Commit convention in AGENTS.md is a closed rule: `<type>(<scope>): <summary>`, closed type list, whole line at most 71 characters, jit scope, binding on every commit that enters main including merges, tracker state commits and salvage commits; worker brief aligned. (3) Measured campaigns' per-issue closures stay as evidence and never gain src/arm.rs; only closures of campaigns that have not run gain it. (4) Rework rounds past the limit of two stay an invoker decision every time; no standing authorization.",
     "Session 22 (2026-09-19T14:30Z): invocation: drive the epic; subagent model by difficulty, no Fable; at most four workers in worktrees, reuse over proliferation. The 2026-09-19 window ran all nine queued lines (01:00Z-01:18Z): every campaign verified complete from its own execution log (18a87159: 17/17/6 cells plus the profile session; f63a2464: 2/3/2; ad2a6a58: 10; 4c1e441f: 8), every receipt 'Accepted qualifies=false findings=0' (pilots). ad2a6a58's job rc=1 was the launcher's terminal-list check rejecting a paused-then-complete run; the lead wrote its done marker after verifying the log. Dispatched (opus): w-d45aff82-r2 (staged smoke mode, agent-85fc5ff4 reset to main), w-ad2a6a58-pw and w-4c1e441f-pw (evidence, freeze and queue the confirmation; trees stay pinned), w-f63a2464-pw (stop rules; rebases onto main only if no family confirms). 9fb40c83 gates on main: cargo-ci PASS; code-review and research-review re-run in sequence. Window gf2-bench-window-20260920 armed for 2026-09-20 04:00 EEST.",
-    "Session 22 (2026-09-19T15:20Z): 9fb40c83 gate chain on main c011e69a2: cargo-ci PASS, code-review PASS (zero findings), research-review FAIL round 4 with F1 and F2 closed and F3 open (retained-session hardware-counter and hot-symbol tables carry n = 1 and no interval; only the first profile session collected counters, so closing F3 needs a fresh v4-r3 profile session that collects counters in every repetition). Rework count is 3, past the limit: invoker decision required (session-21 ruling 4). 4c1e441f post-window round accepted for the interim: pilot verified from its log, confirmation frozen (6 of 8 cells, derivation record beside the addendum), queued for the 2026-09-20 window; replayed onto the rewritten main (replay branch rebased --onto main from 58bcfe84b, identical 237-file diff) and merged at 57ded10db, merged-tree cargo-ci green, 13 artifacts linked; the pinned worktree agent-c04dd4ac stays on its pilot tree for the confirmation."
+    "Session 22 (2026-09-19T15:20Z): 9fb40c83 gate chain on main c011e69a2: cargo-ci PASS, code-review PASS (zero findings), research-review FAIL round 4 with F1 and F2 closed and F3 open (retained-session hardware-counter and hot-symbol tables carry n = 1 and no interval; only the first profile session collected counters, so closing F3 needs a fresh v4-r3 profile session that collects counters in every repetition). Rework count is 3, past the limit: invoker decision required (session-21 ruling 4). 4c1e441f post-window round accepted for the interim: pilot verified from its log, confirmation frozen (6 of 8 cells, derivation record beside the addendum), queued for the 2026-09-20 window; replayed onto the rewritten main (replay branch rebased --onto main from 58bcfe84b, identical 237-file diff) and merged at 57ded10db, merged-tree cargo-ci green, 13 artifacts linked; the pinned worktree agent-c04dd4ac stays on its pilot tree for the confirmation.",
+    "Session 22 end (2026-09-19T15:55Z): invoker ruling mid-session: no new work, finish running tasks, hand off. d45aff82 DONE (all gates, zero findings). 4c1e441f, ad2a6a58, f63a2464 pilots merged, confirmations frozen and queued for the armed 2026-09-20 window; trees pinned; commits replayed onto main through scratch replay branches. 18a87159 merged with cargo-ci and code-review PASS; research-review FAIL F1 (exact executed invocations missing from receipts and profile), rework 1 owed. 9fb40c83 gates: cargo-ci and code-review PASS, research-review FAIL F3 only; rework count 3, invoker decision open. Bug 5ac79460 filed ahead of bc091474. Lock-contention fix requested from the just-in-time session. Five opus dispatches, no stalls. Handoff: handoff-17.md."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1792,7 +1817,8 @@
     "handoff-13.md",
     "handoff-14.md",
     "handoff-15.md",
-    "handoff-16.md"
+    "handoff-16.md",
+    "handoff-17.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
