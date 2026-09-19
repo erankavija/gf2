@@ -1,0 +1,235 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "ad2a6a58-r1-axpy-pilot",
+  "issue": "ad2a6a58",
+  "label": "pilot",
+  "campaign_seed": 2026091801,
+  "addendum": "dev/active/ad2a6a58/addendum-v4-axpy-pilot.json",
+  "producing_manifest": "dev/active/ad2a6a58/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "scalar-element": {
+      "build": "conservative-portable",
+      "description": "FieldVec<Gf2mElement> over Gf2mField::gf256(): the shipped gf2-core axpy path, which holds every GF(2^8) call on the scalar element lane through the shipped lane switch, so FieldVec::axpy runs the element loop it runs when the hook declines; conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-arm/release/gf256-axpy-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_GF256_LANE": "scalar",
+        "GF2_GF256_REPR": "element"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "table-element": {
+      "build": "conservative-portable",
+      "description": "FieldVec<Gf2mElement> over Gf2mField::gf256(): the shipped gf2-core axpy path, which leaves the shipped lane switch clear, so gf256_table_dispatch selects the cached product table; conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-arm/release/gf256-axpy-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_GF256_LANE": "table",
+        "GF2_GF256_REPR": "element"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "scalar-wide": {
+      "build": "conservative-portable",
+      "description": "FieldVec<Gf2mWide<1,Gf256x11d>>: the shipped gf2-core axpy path, which holds every GF(2^8) call on the scalar element lane through the shipped lane switch, so FieldVec::axpy runs the element loop it runs when the hook declines; conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-arm/release/gf256-axpy-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_GF256_LANE": "scalar",
+        "GF2_GF256_REPR": "wide"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "table-wide": {
+      "build": "conservative-portable",
+      "description": "FieldVec<Gf2mWide<1,Gf256x11d>>: the shipped gf2-core axpy path, which leaves the shipped lane switch clear, so gf256_table_dispatch selects the cached product table; conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-arm/release/gf256-axpy-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_GF256_LANE": "table",
+        "GF2_GF256_REPR": "wide"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "axpy-1k-cold-element",
+      "baseline_arm": "scalar-element",
+      "candidate_arm": "table-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 1024,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4101,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-4k-element",
+      "baseline_arm": "scalar-element",
+      "candidate_arm": "table-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4102,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-128k-element",
+      "baseline_arm": "scalar-element",
+      "candidate_arm": "table-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4103,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-8m-element",
+      "baseline_arm": "scalar-element",
+      "candidate_arm": "table-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 8388608,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4104,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-2m-stream-element",
+      "baseline_arm": "scalar-element",
+      "candidate_arm": "table-element",
+      "case": {
+        "operation": "axpy",
+        "bytes": 2097152,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4105,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-1k-cold-wide",
+      "baseline_arm": "scalar-wide",
+      "candidate_arm": "table-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 1024,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4101,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-4k-wide",
+      "baseline_arm": "scalar-wide",
+      "candidate_arm": "table-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 4096,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4102,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-128k-wide",
+      "baseline_arm": "scalar-wide",
+      "candidate_arm": "table-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 131072,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4103,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-8m-wide",
+      "baseline_arm": "scalar-wide",
+      "candidate_arm": "table-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 8388608,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4104,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "axpy-2m-stream-wide",
+      "baseline_arm": "scalar-wide",
+      "candidate_arm": "table-wide",
+      "case": {
+        "operation": "axpy",
+        "bytes": 2097152,
+        "n": 0,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4105,
+        "workers": 1
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 5
+}

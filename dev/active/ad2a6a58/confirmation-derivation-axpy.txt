@@ -1,0 +1,37 @@
+pilot receipt  dev/bench_results/ad2a6a58/r1-axpy-pilot/receipt.json
+receipt sha256 60b5311ca7655d61be5bba58e6b28c99efb002b5791dfac8cf6322e1cdd1ce9c
+campaign       ad2a6a58-r1-axpy-pilot
+verdict        accepted (label pilot)
+family         gf256-shipped-axpy-lane: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+axpy-1k-cold-element                    12      10.772      8.6851      13.846    0.2854
+axpy-4k-element                         12       12.36      12.338      12.394    0.0028
+axpy-128k-element                       12      12.997      12.988      13.015    0.0013
+axpy-8m-element                         12      5.8992      5.8873      5.9515    0.0089
+axpy-2m-stream-element                  12      4.9673      4.9535       4.974    0.0028
+axpy-1k-cold-wide                       12      145.69         112      167.01    0.2312
+axpy-4k-wide                            12       155.5      151.13      156.24    0.0281
+axpy-128k-wide                          12      169.12      168.28      169.67    0.0049
+axpy-8m-wide                            12      87.863      86.598      88.941    0.0144
+axpy-2m-stream-wide                     12      86.379      86.298      86.478    0.0011
+
+widest relative half-width   0.285442
+frozen measurement resolution 0.29
+replaced equivalence_margin 1.15 -> 1.3
+restated the family description for the confirmatory stage
+
+selection      6 of 10 pilot cells become confirmatory
+rationale      The frozen selection rule of the pilot addendum: P-20's tail-support bound admits six confirmatory comparisons on this family's first attempt, so the confirmation keeps both element representations at an L1-resident size, an L2-resident size and the streaming size; it drops the 8 MiB warm cells, whose memory-resident regime the streaming cells already carry, and the 1 KiB cold first-touch cells, whose one table-build window per candidate execution is the whole of the frozen max_flagged_fraction with no margin left, so a confirmatory slot spent there would measure the flagged-window policy rather than the lane. The dropped cells keep their pilot evidence.
+retained       axpy-4k-element
+retained       axpy-128k-element
+retained       axpy-2m-stream-element
+retained       axpy-4k-wide
+retained       axpy-128k-wide
+retained       axpy-2m-stream-wide
+dropped        axpy-1k-cold-element
+dropped        axpy-8m-element
+dropped        axpy-1k-cold-wide
+dropped        axpy-8m-wide
+margins: equivalence 1.3, material gap None
+confirmation addendum dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json
