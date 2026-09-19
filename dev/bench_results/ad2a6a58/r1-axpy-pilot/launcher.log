@@ -1,0 +1,27 @@
+# command: dev/bench_results/ad2a6a58/run-axpy-confirmation.sh window pilot
+# invocation: new
+# started_utc: 2026-09-19T01:12:32Z
+# gf2 revision (informational): 711e4fa7d3a3a8994f91bca8903c808fb81ccb53
+# addendum: dev/active/ad2a6a58/addendum-v4-axpy-pilot.json sha256=6fd13ee5f2e28713a306343f458cf4cffb95d753cb69d7a18266ecf20d7868b6
+# producing manifest: dev/active/ad2a6a58/survey/producing-inputs.json sha256=072028f0e009ce190cb9487c634968119859ea66d6d297cc250250ccf388d2a5
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-campaigns/ad2a6a58-r1-axpy-pilot.plan.json sha256=74012eca224b77045839e74c47de32a6d6f3c28cd857ecaac939b92b2ec7b893
+# ledger: dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+# arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-arm/release/gf256-axpy-arm sha256=9f8b8f70bcf18a95356edaf2ac50a669e3f5cce237dcf64f25602a6df31d8d38
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/release/benchmark-ab-runner sha256=f349e85297a681a462773bd8ec4bb6bd29a91aea501d56c7dca307702d2e37cf
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/release/benchmark-acceptance sha256=e05f21a7687d5d4d515313eb052fad4c16f9bb4a23aeac22dc15b9cf685c5913
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 6.34 2.90 1.45
+# session 1 started_utc: 2026-09-19T01:12:32Z
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-campaigns/ad2a6a58-r1-axpy-pilot/execution.log
+# session 1 exit: 3
+# session 2 started_utc: 2026-09-19T01:13:44Z
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-campaigns/ad2a6a58-r1-axpy-pilot/execution.log
+# session 2 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/ad2a6a58/r1-axpy-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# sessions this invocation: 2
+# load_avg_end: 1.76 2.29 1.44
+# finished_utc: 2026-09-19T01:15:13Z
