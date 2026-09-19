@@ -1,0 +1,24 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cpu/cycles/Pu'
+# Event count (approx.): 4825727348
+#
+# Overhead  Command          Shared Object         Symbol                                                                                         
+# ........  ...............  ....................  ...............................................................................................
+#
+    85.53%  logical-profile  logical-profile       [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     2.22%  logical-profile  logical-profile       [.] gf2_core::sparse::SpBitMatrix::from_coo
+     2.02%  logical-profile  logical-profile       [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     1.03%  logical-profile  logical-profile       [.] gf2_core::sparse::SpBitMatrix::transpose
+     1.03%  logical-profile  logical-profile       [.] gf2_coding::ldpc::core::QuasiCyclicLdpc::to_edges
+     0.65%  logical-profile  logical-profile       [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+     0.63%  logical-profile  logical-profile       [.] gf2_core::matrix::BitMatrix::row_xor
+     0.55%  logical-profile  logical-profile       [.] gf2_core::matrix::BitMatrix::swap_rows
+
+
+#
+# (Tip: To analyze particular parallelism levels, try: perf report --latency --parallelism=32-64)
+#

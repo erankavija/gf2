@@ -1,0 +1,6 @@
+# started on Sat Sep 19 04:08:30 2026
+
+8180816757,,L1-dcache-loads:u,1006870414,100.00,,
+53871,,L1-dcache-load-misses:u,1006870414,100.00,,
+<not supported>,,LLC-loads:u,0,100.00,,
+<not supported>,,LLC-load-misses:u,0,100.00,,
