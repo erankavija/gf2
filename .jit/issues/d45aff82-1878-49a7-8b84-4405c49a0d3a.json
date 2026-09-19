@@ -97,6 +97,13 @@
       "format": "markdown",
       "label": "Epic worker brief",
       "path": "dev/active/1a379447-zen3-cpu-performance/worker-brief.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "d45aff82 review round 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/d45aff82-r2.md"
     }
   ],
   "done_at": "2026-09-19T15:37:52.487971350Z",
@@ -133,5 +140,5 @@
   "priority": "high",
   "state": "done",
   "title": "Provide one shared non-timed arm smoke in the campaign tools",
-  "updated_at": "2026-09-19T15:37:52.487971350Z"
+  "updated_at": "2026-09-19T15:51:47.633331783Z"
 }

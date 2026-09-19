@@ -295,6 +295,13 @@
       "format": "markdown",
       "label": "Three logical-buffer baseline records",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "18a87159 review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/18a87159-r1.md"
     }
   ],
   "first_ready_at": "2026-09-16T22:36:13.474372771Z",
@@ -336,5 +343,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
-  "updated_at": "2026-09-19T15:50:45.652546703Z"
+  "updated_at": "2026-09-19T15:51:47.300128274Z"
 }
