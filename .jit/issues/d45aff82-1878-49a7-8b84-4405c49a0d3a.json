@@ -99,6 +99,7 @@
       "path": "dev/active/1a379447-zen3-cpu-performance/worker-brief.md"
     }
   ],
+  "done_at": "2026-09-19T15:37:52.487971350Z",
   "first_ready_at": "2026-09-18T13:55:58.476677743Z",
   "gates_required": [
     "cargo-ci",
@@ -130,7 +131,7 @@
     "satisfies:REQ-01"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Provide one shared non-timed arm smoke in the campaign tools",
-  "updated_at": "2026-09-19T15:37:21.523567537Z"
+  "updated_at": "2026-09-19T15:37:52.487971350Z"
 }
