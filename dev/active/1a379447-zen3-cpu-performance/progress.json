@@ -397,7 +397,7 @@
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "backlog; current wave3 container: logical baselines and checker closed; dense harness awaiting additional-rework decision; ISA-L comparison and logical candidates active.",
+          "status": "backlog; dense harness done; dense baseline, ISA-L and logical candidate jobs prepared for September 27 02:00 EEST window.",
           "tracker_state": "backlog"
         },
         {
@@ -405,7 +405,7 @@
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "backlog; current wave3 container: residual BMI2 pilot prepared and queued; DVB fourth rework authorization remains pending.",
+          "status": "backlog; residual BMI2 pilot queued; DVB round5 annotation correction merged, round6 generated renderer-hash update awaits approval.",
           "tracker_state": "backlog"
         },
         {
@@ -675,8 +675,19 @@
           "short_id": "c73ffa25",
           "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
           "classification": "research",
-          "status": "in_progress; Sol xhigh prepares baseline and profile queue in agent-c73ffa25",
-          "tracker_state": "in_progress"
+          "status": "in_progress; preparation merged and CI passed; code gate requires queued receipts/profile and the resulting portfolio before closure.",
+          "tracker_state": "in_progress",
+          "dispatch": {
+            "model": "gpt-6-sol xhigh",
+            "worktree": ".agents/worktrees/agent-c73ffa25",
+            "branch": "worktree-agent-c73ffa25",
+            "base": "4e76145b588c0c8941d9e2836a4368e3175e8392",
+            "session": 24
+          },
+          "merge_commit": "efaea4eaf",
+          "reviews": [
+            "reviews/c73ffa25-preparation.md"
+          ]
         },
         {
           "id": "50f0bd42",
@@ -1328,6 +1339,15 @@
       "recommendation": "focused repair; retained-data annotation without that option succeeds with exit 0",
       "gate_run": "744db121-87b0-4a45-a6e7-536d08823a34",
       "resolution": "2026-09-26: invoker explicitly approved focused round 5 in the follow-up interview."
+    },
+    {
+      "category": "rework limit",
+      "issue": "9fb40c83",
+      "status": "open",
+      "raised_at": "2026-09-26T13:45Z",
+      "question": "Approve round6: commit the existing generator output changing only the current renderer hash in v4-r2-dynamic-profile-provenance.md and rerun code review.",
+      "recommendation": "approve one-line regeneration",
+      "gate_run": "ec204e2a-79fb-4494-b78d-bd71f838038d"
     }
   ],
   "rework_counts": {
@@ -1924,7 +1944,8 @@
     "handoff-15.md",
     "handoff-16.md",
     "handoff-17.md",
-    "handoff-18.md"
+    "handoff-18.md",
+    "handoff-19.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -1935,7 +1956,7 @@
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
     "note": "User authorizes 02:00 Europe/Helsinki on subsequent nights as needed for current wave 3. Arm each next window after reviewing prior results and queue readiness.",
-    "current_observation": "2026-09-26: 02:00 EEST September 27 timer armed. DVB fresh profile held after code-review finding until round-5 approval and passing gate; other eight pending jobs remain enabled (116 estimated minutes). Dense baseline preparation continues."
+    "current_observation": "Verified active September 27 02:00 EEST timer. Eleven pending jobs, 208 estimated minutes; DVB fresh profile remains held pending round6 generated renderer-hash update and code gate. M4RI comparison held for 50f0bd42; later independent confirmations held outside wave3."
   },
   "session_scope": {
     "session": 24,
@@ -1964,13 +1985,7 @@
     "completed_this_session": [
       "e1f9a78f"
     ],
-    "active_workers": {
-      "c73ffa25": {
-        "agent": "/root/dense_baseline",
-        "model": "gpt-6-sol",
-        "worktree": ".agents/worktrees/agent-c73ffa25",
-        "base": "4e76145b588c0c8941d9e2836a4368e3175e8392"
-      }
-    }
+    "active_workers": {},
+    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at 815010276"
   }
 }
