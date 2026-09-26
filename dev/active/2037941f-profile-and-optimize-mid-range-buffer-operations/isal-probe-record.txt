@@ -1,14 +1,21 @@
 ISA-L XOR comparator semantic qualification record
 issue: 3e83c116
-execution date: 2026-09-15
+execution date: 2026-09-26
 host: Linux 7.2.2-arch1-1 x86_64
-compiler: cc (GCC) 16.2.1 20260810
+compiler command: /usr/bin/gcc
+compiler identity: gcc (GCC) 16.2.1 20260810
+make override channels: MAKEFLAGS GNUMAKEFLAGS MFLAGS MAKEFILES cleared
 binutils: GNU nm 2.47; GNU objdump 2.47
 ISA-L revision: 7c3479e0a9dac17f448603ec1ad64c7c625f530c
 raid/raid_base.c sha256: 4fb636b16cebebadfb52236871421f1a143d3d7e488e7bc9b23b2fc25bd04aeb
 include/raid.h sha256: 5e51c4abcd86ade41426cef509c3eeb06b0c0b3f9ef28080ddedb6af02a5cd03
 LICENSE sha256: bc8fd4a3d031e65e05e9c9e2add2c3f336ce527fa85c1e31031c808b58216217
-build flags: cc -std=c11 -O3 -march=native -Wall -Wextra -Werror
+build flags: /usr/bin/gcc -std=c11 -O3 -march=native -Wall -Wextra -Werror
+verbose build transcript: isal-probe-build.log sha256 356ae4f84cf0b6a6f8e495d96ac16b17957ea8eabd02a85f4b6d4320e2d98661
+probe.o sha256: 56b51d90e87c665c44a33ad369699e1d7c428bf6adf4efe52722d55caa453be8
+probe.o .comment: GCC: (GNU) 16.2.1 20260810
+raid_base.o sha256: 93661231241ddf793b5e46583f46bd425774aabb43db6370ae8f4f4060151cd1
+raid_base.o .comment: GCC: (GNU) 16.2.1 20260810
 
 Command (from repository root):
   ISAL_SOURCE="$PWD/.agents/ext/6fb89a3c/isa-l" bash dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-isal-xor-probe.sh
