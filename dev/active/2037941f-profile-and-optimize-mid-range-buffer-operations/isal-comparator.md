@@ -29,8 +29,12 @@ ISAL_SOURCE="$PWD/isa-l" bash \
 ```
 
 The script compiles `raid/raid_base.c` and the probe with
-`cc -std=c11 -O3 -march=native -Wall -Wextra -Werror`, verifies the pinned
-source and license bytes before compilation, proves the linked
+the resolved GCC compiler with `-std=c11 -O3 -march=native -Wall -Wextra -Werror`, verifies the pinned
+source and license bytes before compilation, records the resolved compiler
+path and version, clears inherited GNU Make override channels, and retains
+the verbose transcript and each object’s `.comment` producer. The
+[`isal-arm-build-record.txt`](isal-arm-build-record.txt) gives the observed
+compiler path and version for the campaign arm. It proves the linked
 `xor_gen_base` symbol with `nm`, and emits its disassembly with `objdump`.
 It is an untimed check.
 
