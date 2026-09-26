@@ -228,17 +228,19 @@ checked against the same parity oracle as the SIMD lane.
 
 ## Logging, checkpoint, and resume
 
-Execution logging, checkpointing, and resume belong to `benchmark-ab-runner run`
-over the canonical `tuning_campaign_support::journal`: one append-only
-`execution.log` per stage, one immutable checkpoint unit per cell, and a manifest
+Execution logging, checkpointing, and resume belong to the session loop shared
+by `benchmark-ab-runner run` and staged `smoke` over the canonical
+`tuning_campaign_support::journal`: one append-only `execution.log` per stage,
+one immutable checkpoint unit per cell, and a manifest
 pinning the run's resume identity over the protocol document, the producing-input
 closure, the ordered cell list, the arm descriptors, every arm executable, the
 campaign addendum and the plan. The harness adds no session of its own; the
 launcher prints the canonical log path before launching work, treats console
 output as a view of that record, and bounds one session with
-`max_cells_per_session`. An untimed smoke opens no session.
+`max_cells_per_session`. The staged smoke opens a validation session per cell,
+pauses after each nonfinal cell, and leaves its receipt absent.
 
-The launcher verifies completion from the execution log, never from an exit
+The timed launcher verifies completion from the execution log, never from an exit
 code: the terminal record is `complete` and every declared cell has one
 `cell-complete`.
 
@@ -410,14 +412,18 @@ It checks, in order:
    this smoke does not drive its arms.
 2. **Semantics.** `dense-oracle` from both gf2 builds and, when the M4RI arm is
    built, `dense-m4ri-arm --oracle` report every case as `PASS`.
-3. **The arms.** `benchmark-ab-runner smoke <plan.json> --record <path>` drives
+3. **The arms.** `benchmark-ab-runner smoke <plan.json> --stage <dir> --record <path>` drives
    every arm of each family's projected plan, whose throwaway campaign addendum
    names a ledger path under `target/`. The allocated family contributes its warm
    anchor, the frozen cold cell and the scalar-reference cell, so warm, the frozen
    cold call count and the reference build all reach an arm; the isolated family
    adds a streaming cell and the comparator family adds a retained-state cell.
-4. **The record.** Every dispatch of every declared cell answers in the
-   validation position with its declared cache state and no timing window. Each
+4. **The sessions and record.** The runner checkpoints one cell per validation
+   session, appends to the same execution log on resume, and completes without
+   repeating a cell. The judge checks each session's log prefix and the
+   runner's refusal to finalize the validation stage as a receipt. Every
+   dispatch answers in the validation position with its declared cache state
+   and no timing window. Each
    gf2 arm names the fixture banks it built and a working set those banks account
    for; each comparator arm names the shared object it loaded, with its digest,
    and a family whose comparator arms disagree on that object fails.
