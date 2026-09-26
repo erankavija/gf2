@@ -330,23 +330,32 @@ pub fn plan(
     producing_manifest: &str,
     lock_path: &str,
     gf2_executable: &str,
+    candidate_gf2: Option<(&str, &str)>,
     isal_executable: Option<&str>,
     isolated_candidate: Route,
     max_cells_per_session: Option<u32>,
     pilot_pairs: Option<u32>,
 ) -> Result<RunnerPlan, String> {
+    if candidate_gf2.is_some()
+        && !matches!(question, Question::IsolatedXor | Question::PublicRowXor)
+    {
+        return Err("a separate gf2 candidate build serves only XOR and row-XOR".to_owned());
+    }
     let (baseline, candidate) = arm_pair(question, isolated_candidate);
     let mut arms: BTreeMap<String, PlanArm> = BTreeMap::new();
-    let gf2_arm = |route: Route| PlanArm {
+    let gf2_arm = |route: Route, executable: &str, rustflags: &str| PlanArm {
         build: BuildIdentity::ConservativePortable,
         description: arm_description(route).to_owned(),
-        executable: gf2_executable.to_owned(),
+        executable: executable.to_owned(),
         arguments: Vec::new(),
         environment: BTreeMap::from([(crate::routes::ROUTE_VAR.to_owned(), route.id().to_owned())]),
-        rustflags: Some(String::new()),
+        rustflags: Some(rustflags.to_owned()),
         tuning_profile: None,
     };
-    arms.insert(baseline.id().to_owned(), gf2_arm(baseline));
+    arms.insert(
+        baseline.id().to_owned(),
+        gf2_arm(baseline, gf2_executable, ""),
+    );
     let candidate_name = if question == Question::IsalBaseGap {
         let executable = isal_executable
             .ok_or("the ISA-L family needs the external comparator executable")?
@@ -371,7 +380,11 @@ pub fn plan(
         );
         ISAL_ARM.to_owned()
     } else {
-        arms.insert(candidate.id().to_owned(), gf2_arm(candidate));
+        let (executable, rustflags) = candidate_gf2.unwrap_or((gf2_executable, ""));
+        arms.insert(
+            candidate.id().to_owned(),
+            gf2_arm(candidate, executable, rustflags),
+        );
         candidate.id().to_owned()
     };
 

@@ -15,6 +15,23 @@ unsafe fn storeu(ptr: *mut u8, v: __m256i) {
     _mm256_storeu_si256(ptr as *mut __m256i, v)
 }
 
+#[cfg(all(gf2_xor_unroll2, gf2_xor_unroll4))]
+compile_error!("select at most one experimental XOR unroll factor");
+
+#[cfg(gf2_xor_unroll2)]
+const XOR_UNROLL: usize = 2;
+#[cfg(gf2_xor_unroll4)]
+const XOR_UNROLL: usize = 4;
+
+/// XORs the common prefix of two word slices using the AVX2 body.
+///
+/// # Safety
+///
+/// The caller must have passed runtime AVX2 detection; the safe logical
+/// function bundle keeps the scalar fallback reachable on other hosts. Rust
+/// slice validity and exclusive `dst` borrowing cover pointer validity and
+/// mutable aliasing. Every vector spans four words inside the common prefix,
+/// and the scalar suffix stays inside both slices.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {
     let len = dst.len().min(src.len());
@@ -22,6 +39,16 @@ unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {
     let dst_ptr = dst.as_mut_ptr() as *mut u8;
     let src_ptr = src.as_ptr() as *const u8;
     let mut i = 0usize;
+    #[cfg(any(gf2_xor_unroll2, gf2_xor_unroll4))]
+    while nvec - i >= XOR_UNROLL {
+        for lane in 0..XOR_UNROLL {
+            let off = ((i + lane) * 32) as isize;
+            let a = loadu(dst_ptr.offset(off));
+            let b = loadu(src_ptr.offset(off));
+            storeu(dst_ptr.offset(off), _mm256_xor_si256(a, b));
+        }
+        i += XOR_UNROLL;
+    }
     while i < nvec {
         let off = (i * 32) as isize;
         let a = loadu(dst_ptr.offset(off));

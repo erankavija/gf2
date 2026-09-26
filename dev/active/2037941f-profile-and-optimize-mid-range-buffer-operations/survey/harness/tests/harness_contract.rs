@@ -441,6 +441,7 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
             "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
             "/tmp/gf2-contract.lock",
             "/nonexistent/logical-arm",
+            None,
             Some("/nonexistent/logical-isal-arm"),
             Route::PublicXorB,
             Some(2),
@@ -451,6 +452,47 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
             .unwrap_or_else(|errors| panic!("{}: {}", question.family_id(), errors.join("; ")));
         assert_eq!(plan.cells.len(), addendum.cells.len());
         assert_eq!(plan.arms.len(), 2);
+    }
+}
+
+#[test]
+fn a_candidate_build_keeps_public_routes_and_declares_its_compiler_flag() {
+    for (question, baseline, candidate) in [
+        (Question::IsolatedXor, "public-xor-a", "public-xor-b"),
+        (Question::PublicRowXor, "row-xor-a", "row-xor-b"),
+    ] {
+        let addendum = campaign::addendum(question, "bb769456", "2026-09-15T03:56:39Z");
+        let plan = campaign::plan(
+            question,
+            &addendum,
+            "bc091474-contract-plan",
+            1,
+            tuning_campaign_support::protocol::ReceiptLabel::Pilot,
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaign.json",
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
+            "/tmp/gf2-contract.lock",
+            "/nonexistent/baseline-arm",
+            Some(("/nonexistent/candidate-arm", "--cfg gf2_xor_unroll2")),
+            None,
+            Route::PublicXorB,
+            Some(2),
+            None,
+        )
+        .expect("the plan projects separate public-route builds");
+        plan.validate(&addendum)
+            .expect("the frozen cells remain valid");
+        assert_eq!(plan.arms[baseline].executable, "/nonexistent/baseline-arm");
+        assert_eq!(plan.arms[baseline].rustflags.as_deref(), Some(""));
+        assert_eq!(
+            plan.arms[candidate].executable,
+            "/nonexistent/candidate-arm"
+        );
+        assert_eq!(
+            plan.arms[candidate].rustflags.as_deref(),
+            Some("--cfg gf2_xor_unroll2")
+        );
+        assert_eq!(plan.cells[0].baseline_arm, baseline);
+        assert_eq!(plan.cells[0].candidate_arm, candidate);
     }
 }
 
@@ -468,6 +510,7 @@ fn the_isal_family_needs_its_external_comparator_executable() {
         "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
         "/tmp/gf2-contract.lock",
         "/nonexistent/logical-arm",
+        None,
         None,
         Route::PublicXorB,
         None,

@@ -10,7 +10,7 @@ name = "gf2_kernels_simd"
 crate-type = ["rlib"]
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(gf2_tuning_baked)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(gf2_tuning_baked)', 'cfg(gf2_xor_unroll2)', 'cfg(gf2_xor_unroll4)'] }
 
 [features]
 default = []
