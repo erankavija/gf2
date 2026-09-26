@@ -202,9 +202,9 @@ rejected option. The samples themselves are complete, and
 [`survey/render-hot-instructions.sh`](survey/render-hot-instructions.sh)
 disassembles the pinned executable against them to produce each case's
 `.instructions.txt`. That render measures nothing and takes no host mutex, so
-it reproduces outside the benchmark window;
-[`survey/run-profile.sh`](survey/run-profile.sh) carries the same flags for a
-session that renders its listing directly.
+it reproduces outside the benchmark window. The current
+[`survey/run-profile.sh`](survey/run-profile.sh) records instruction listings
+within each repetition; its source declares the annotation command.
 
 One attempt of this family is voided: campaign
 `v4-r1-9fb40c83-dvb-interleave-profile` aborts on a procedural defect in its
