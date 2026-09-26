@@ -1,0 +1,54 @@
+# public-matvec: gf2_core::matrix::BitMatrix::matvec
+# binary sha256: 588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+
+## gf2_core::matrix::BitMatrix::matvec at 000000000005b8e0, 0x00000000000000a4 bytes
+000000000005b8e0 <gf2_core::matrix::BitMatrix::matvec>:
+   5b8e0:	push   %r15
+   5b8e2:	push   %r14
+   5b8e4:	push   %r12
+   5b8e6:	push   %rbx
+   5b8e7:	push   %rax
+   5b8e8:	mov    0x18(%rdx),%rax
+   5b8ec:	mov    %rax,(%rsp)
+   5b8f0:	cmp    0x20(%rsi),%rax
+   5b8f4:	jne    5b92d <gf2_core::matrix::BitMatrix::matvec+0x4d>
+   5b8f6:	mov    %rdi,%rbx
+   5b8f9:	cmpq   $0x7,0x28(%rsi)
+   5b8fe:	jbe    5b96d <gf2_core::matrix::BitMatrix::matvec+0x8d>
+   5b900:	mov    0x4d6f9(%rip),%r14        # a9000 <_DYNAMIC+0x6e0>
+   5b907:	mov    0x90(%r14),%eax
+   5b90e:	test   %eax,%eax
+   5b910:	jne    5b956 <gf2_core::matrix::BitMatrix::matvec+0x76>
+   5b912:	cmpq   $0x0,(%r14)
+   5b916:	je     5b96d <gf2_core::matrix::BitMatrix::matvec+0x8d>
+   5b918:	mov    0x8(%rdx),%rax
+   5b91c:	mov    0x10(%rdx),%rcx
+   5b920:	mov    %rbx,%rdi
+   5b923:	mov    %rax,%rdx
+   5b926:	call   5b280 <gf2_core::matrix::BitMatrix::matvec_simd>
+   5b92b:	jmp    5b975 <gf2_core::matrix::BitMatrix::matvec+0x95>
+   5b92d:	add    $0x20,%rsi
+   5b931:	lea    -0x4e69d(%rip),%rcx        # d29b <anon.fe72b17733f4e05d6c726019e522a586.608.llvm.12321553074421741178>
+   5b938:	lea    0x4ae09(%rip),%r9        # a6748 <anon.fe72b17733f4e05d6c726019e522a586.609.llvm.12321553074421741178>
+   5b93f:	mov    %rsp,%rax
+   5b942:	mov    $0x47,%r8d
+   5b948:	xor    %edi,%edi
+   5b94a:	mov    %rsi,%rdx
+   5b94d:	mov    %rax,%rsi
+   5b950:	call   *0x4d282(%rip)        # a8bd8 <_DYNAMIC+0x2b8>
+   5b956:	mov    %rsi,%r15
+   5b959:	mov    %rdx,%r12
+   5b95c:	call   5b094 <std::sync::once_lock::OnceLock<T>::initialize>
+   5b961:	mov    %r12,%rdx
+   5b964:	mov    %r15,%rsi
+   5b967:	cmpq   $0x0,(%r14)
+   5b96b:	jne    5b918 <gf2_core::matrix::BitMatrix::matvec+0x38>
+   5b96d:	mov    %rbx,%rdi
+   5b970:	call   5b4c0 <gf2_core::matrix::BitMatrix::matvec_scalar>
+   5b975:	mov    %rbx,%rax
+   5b978:	add    $0x8,%rsp
+   5b97c:	pop    %rbx
+   5b97d:	pop    %r12
+   5b97f:	pop    %r14
+   5b981:	pop    %r15
+   5b983:	ret
