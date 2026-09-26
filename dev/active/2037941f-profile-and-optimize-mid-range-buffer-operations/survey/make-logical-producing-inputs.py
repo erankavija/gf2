@@ -39,6 +39,7 @@ def closure():
         "isal-build-pins.sh",
     )] + ["dev/scripts/ccx1-bench-flock.sh"]
     lifecycle += files_under(SUPPORT)
+    lifecycle.append("dev/active/bc091474/run-candidate.sh")
     behavior = sorted(
         set(
             files_under(HARNESS / "src", pathlib.Path("crates/gf2-core/src"), pathlib.Path("crates/gf2-coding/src"))
@@ -79,6 +80,7 @@ def closure():
                 str(SURVEY / "make-logical-producing-inputs.py"),
                 str(SURVEY / "logical-source-evidence.json"),
                 str(STORY / "logical-harness.md"),
+                "dev/active/bc091474/portfolio.md",
                 "dev/active/f547c394/addendum.schema.json",
                 "dev/active/f547c394/protocol.md",
                 "dev/active/f547c394/amendment-v4.md",

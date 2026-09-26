@@ -1,0 +1,453 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "bc091474-u4-isolated-smoke",
+  "issue": "18a87159",
+  "family": "2037941f-logical-isolated-xor",
+  "plan_sha256": "c2d404f71232c890c385dcb6332cef48e631d9089b0a720090209294d0197e35",
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isolated-xor.json",
+  "addendum_sha256": "c40c953814cf0e97295fe93b87f065fc14653eec6cc0174d704f6d3acf6ce2aa",
+  "cells": [
+    {
+      "cell_id": "xor-8w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=8/layout=a64/src%64=0/dst%64=0/working-set=128B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=8/layout=a64/src%64=0/dst%64=0/working-set=128B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-9w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=9/layout=a64/src%64=0/dst%64=0/working-set=256B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=9/layout=a64/src%64=0/dst%64=0/working-set=256B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-63w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=63/layout=a64/src%64=0/dst%64=0/working-set=1024B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=63/layout=a64/src%64=0/dst%64=0/working-set=1024B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-64w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=64/layout=a64/src%64=0/dst%64=0/working-set=1024B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=64/layout=a64/src%64=0/dst%64=0/working-set=1024B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-65w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=65/layout=a64/src%64=0/dst%64=0/working-set=1152B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=65/layout=a64/src%64=0/dst%64=0/working-set=1152B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-7w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/scalar/w=7/layout=a64/src%64=0/dst%64=0/working-set=128B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/scalar/w=7/layout=a64/src%64=0/dst%64=0/working-set=128B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-66w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=66/layout=a64/src%64=0/dst%64=0/working-set=1152B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=66/layout=a64/src%64=0/dst%64=0/working-set=1152B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-8w-o8-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=8/layout=o8/src%64=8/dst%64=8/working-set=128B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=8/layout=o8/src%64=8/dst%64=8/working-set=128B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-9w-o8-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=9/layout=o8/src%64=8/dst%64=8/working-set=256B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=9/layout=o8/src%64=8/dst%64=8/working-set=256B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-63w-o8-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=63/layout=o8/src%64=8/dst%64=8/working-set=1024B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=63/layout=o8/src%64=8/dst%64=8/working-set=1024B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-64w-o8-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=64/layout=o8/src%64=8/dst%64=8/working-set=1024B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=64/layout=o8/src%64=8/dst%64=8/working-set=1024B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-65w-o8-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=65/layout=o8/src%64=8/dst%64=8/working-set=1152B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=65/layout=o8/src%64=8/dst%64=8/working-set=1152B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-8w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=8/layout=a64/src%64=0/dst%64=0/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=8/layout=a64/src%64=0/dst%64=0/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-9w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=9/layout=a64/src%64=0/dst%64=0/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=9/layout=a64/src%64=0/dst%64=0/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-63w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=63/layout=a64/src%64=0/dst%64=0/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=63/layout=a64/src%64=0/dst%64=0/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-64w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=64/layout=a64/src%64=0/dst%64=0/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=64/layout=a64/src%64=0/dst%64=0/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-65w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "public-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=65/layout=a64/src%64=0/dst%64=0/working-set=67110912B",
+          "windows": 0
+        },
+        {
+          "arm": "public-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll4/release/logical-arm",
+          "executable_sha256": "4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/w=65/layout=a64/src%64=0/dst%64=0/working-set=67110912B",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
