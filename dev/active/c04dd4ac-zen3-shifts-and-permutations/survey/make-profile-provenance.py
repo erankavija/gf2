@@ -49,6 +49,8 @@ SEEDED = re.compile(r"seeded_word_banks\(")
 MIXER = re.compile(r"SplitMix64::new")
 REVISION = re.compile(r"^# gf2 revision \(informational\): ([0-9a-f]{40})$")
 EXECUTABLE = re.compile(r"^# dvb-profile sha256: ([0-9a-f]{64})$")
+INPUTS = re.compile(r"^# producing inputs sha256: ([0-9a-f]{64})$")
+LOGGED_INPUTS = re.compile(r"^rep-[0-9]+ start .* inputs=([0-9a-f]{64}) ")
 LOGGED = re.compile(r"^(rep-[0-9]+) start \S+ dvb-profile=([0-9a-f]{64})")
 SERIES = re.compile(r"^series done \S+ sessions=([0-9]+)$")
 DIGEST_LINE = re.compile(r"^([0-9a-f]{64})\s+(\S+)$")
@@ -154,6 +156,16 @@ def main() -> None:
     log = (session / "repetitions.log").read_text()
     revision, recorded, host_digests = host_facts(host)
     logged, repetitions, series = logged_digests(log)
+    input_snapshot = session / "profile-inputs.sha256"
+    input_digest = None
+    if input_snapshot.exists():
+        input_digest = sha256(input_snapshot.read_bytes())
+        host_inputs = [match.group(1) for line in host.splitlines()
+                       if (match := INPUTS.match(line))]
+        log_inputs = [match.group(1) for line in log.splitlines()
+                      if (match := LOGGED_INPUTS.match(line))]
+        if host_inputs != [input_digest] or set(log_inputs) != {input_digest}:
+            fail("profile input snapshot differs from host or repetition log")
     if logged != {recorded}:
         fail(f"the session log carries {sorted(logged)} against the host record's {recorded}")
 
@@ -173,6 +185,18 @@ def main() -> None:
     manifest = json.loads(manifest_bytes)
     paths = closure(manifest)
     pinned = [(path, role, sha256(tree.blob(path))) for path, role in paths]
+    if input_digest:
+        snapshot_rows = [DIGEST_LINE.match(line) for line in input_snapshot.read_text().splitlines()]
+        if not all(snapshot_rows):
+            fail("profile input snapshot has an invalid digest line")
+        for row in snapshot_rows:
+            assert row is not None
+            digest, path = row.groups()
+            expected = recorded if path.endswith("/release/dvb-profile") else sha256(tree.blob(path))
+            if digest != expected:
+                fail(f"profile input snapshot differs from measured tree at {path}")
+        if not any(row and row.group(2) == LAUNCHER for row in snapshot_rows):
+            fail("profile input snapshot omits the launcher")
     identity = sha256("".join(f"{digest}  {path}\n" for path, _, digest in pinned).encode())
     profile_source = tree.text(PROFILE_SOURCE)
     library_source = tree.text(LIBRARY_SOURCE)
@@ -216,6 +240,13 @@ def main() -> None:
     for line in queue:
         fields = line.split("\t")
         print(f"| queued command | `{QUEUE}` | | `{fields[-1]}` |", file=out)
+    if input_digest:
+        for line in host.splitlines():
+            if line.startswith("# top-level argv:"):
+                print(f"| observed top-level argv | `host.txt` | | `{line[2:]}` |", file=out)
+        for line in log.splitlines():
+            if " inner argv:" in line:
+                print(f"| observed inner argv | `repetitions.log` | | `{line}` |", file=out)
     print(f"| launcher | `{LAUNCHER}` | `{sha256(launcher)}` | |", file=out)
     for number, line in quoted(launcher.decode(), re.compile(r'--session "\$\{OUT\}"|FLOCK\}" --full-host'), LAUNCHER):
         print(f"| per-repetition dispatch | `{LAUNCHER}:{number}` | | `{line}` |", file=out)
@@ -233,6 +264,7 @@ def main() -> None:
     print("|---|---|", file=out)
     for path in sorted(
         [session / "host.txt", session / "repetitions.log", session / "ladder.json"]
+        + ([input_snapshot] if input_digest else [])
         + sorted(session.glob("rep-*/cases.json"))
     ):
         print(
@@ -282,6 +314,8 @@ def main() -> None:
     print("| Fact | value |", file=out)
     print("|---|---|", file=out)
     print(f"| profiled executable SHA-256 | `{recorded}` |", file=out)
+    if input_digest:
+        print(f"| runtime producing-input snapshot SHA-256 | `{input_digest}` |", file=out)
     print(f"| repetitions logging that digest | {len(repetitions)} |", file=out)
     print(f"| build record | `{BUILD_RECORD}` at `{revision}` |", file=out)
     for line in header:
