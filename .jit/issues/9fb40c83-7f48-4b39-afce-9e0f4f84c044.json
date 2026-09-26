@@ -369,6 +369,23 @@
       "format": "markdown",
       "label": "Scheduled fresh DVB profile",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7967cc7a76813fce37cc61c16055ce52d0102c04762091946cacf03f8993c2eb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../c04dd4ac-zen3-shifts-and-permutations/dvb-profile-r4-preparation.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-r4-preparation.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "DVB profile preparation lead review: annotation blocker",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r4.md"
     }
   ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
@@ -413,5 +430,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-26T13:11:34.148599106Z"
+  "updated_at": "2026-09-26T13:14:50.736917932Z"
 }
