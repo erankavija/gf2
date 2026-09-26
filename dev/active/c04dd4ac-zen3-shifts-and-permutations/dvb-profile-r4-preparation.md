@@ -47,3 +47,21 @@ pending the scheduled run.
 | R2 research F2 | BICM scatter shares lacked intervals. | `dvb-interleave-profile-tables.md`, “Scatter share of the BICM channel across sessions,” gives nine-session intervals. |
 | R2 research F3 | Counter, symbol and instruction tables came from one session. | `survey/run-profile.sh` collects all three in every fresh repetition; `survey/make-dvb-tables.py` computes nine-session intervals. **Pending scheduled evidence.** |
 | R3 research F3 | Retained-session counters and top symbols still lacked intervals. | Fresh profile and renderer prepared as above. **Pending scheduled evidence and report update.** |
+
+## Annotation command validation
+
+Both annotation entry points use the validated `perf annotate --stdio
+--percent-limit 1.0` command. Offline rendering of retained
+`qam16-r12-normal-sim-stage.data` succeeds; the existing instruction parser
+recognizes 148 instruction rows, including 16 with nonzero samples. The listing
+includes available source lines, which the instruction parser ignores. This
+check reads committed samples and collects no measurements.
+
+| Round | Finding | Resolution at this tree |
+|---|---|---|
+| R4 code F1 | Unsupported annotation option prevents hot-data collection. | Both annotation entry points omit the flagged option and use the validated command. |
+
+The gate reported an unsupported option after a help-only probe. Offline
+annotation of actual retained data succeeds both with and without that option;
+the command change resolves the flagged usage without claiming a reproduced
+runtime failure. The actual renderer and existing parser pass on retained data.
