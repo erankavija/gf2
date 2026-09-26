@@ -71,8 +71,7 @@ build_isal() {
     local source
     source="$(isal_source)"
     GF2_ISAL_SOURCE="${source}" CARGO_TARGET_DIR="${ISAL_TARGET}" \
-        ./scripts/cargo-budget.sh cargo build --release --features isal \
-        --manifest-path "${MANIFEST}" --bin logical-isal-arm
+        bash "${SURVEY}/build-isal-arm.sh" >&2
     printf '%s\n' "${source}"
 }
 

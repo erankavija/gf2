@@ -397,7 +397,7 @@
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "in progress. Session 21: e1f9a78f rounds 2-6 merged (in-window release, host claim, bank sizing plus a 112-clause addendum audit with seven further fixes, dense smoke on the shared runner smoke); its gates wait for d45aff82's staged smoke mode because e1f9a78f REQ-03 names logging and checkpoint/resume; the three dense queue lines stay commented out until c73ffa25 re-keys them. 18a87159 pre-window work merged, four lines queued for the 2026-09-19 window. bb769456's logical smoke converged on the shared smoke under d45aff82.",
+          "status": "backlog; current wave3 container: logical baselines and checker closed; dense harness awaiting additional-rework decision; ISA-L comparison and logical candidates active.",
           "tracker_state": "backlog"
         },
         {
@@ -405,7 +405,7 @@
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "in progress. Session 21: 85fc5ff4 DONE (reviews/85fc5ff4-r1.md); bracket amended and re-reviewed for the BMI2 form only (invoker); f8dd4dde DONE (reviews/f8dd4dde-r1.md; rework 1 added the Rust 1.95 record); 00dd43c3 (A/B confirmation) backlog, waits for d45aff82; 9fb40c83 in progress: code-review PASS after the shared smoke, research-review FAIL on the dynamic profile, round 3 merged (provenance record from committed material, order-statistic intervals, n = 1 labels), gates not yet re-run; a0812b83 sits behind 00dd43c3 and 9fb40c83.",
+          "status": "backlog; current wave3 container: residual BMI2 pilot prepared and queued; DVB fourth rework authorization remains pending.",
           "tracker_state": "backlog"
         },
         {
@@ -640,16 +640,16 @@
           "short_id": "18a87159",
           "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
           "classification": "research",
-          "status": "in_progress: post-window round merged at da6ca8163 (three logical pilot receipts, nine-repetition profile, logical-tables.md, logical-baselines.md with the bc091474 confirmatory budget of six cells per family, REQ-09 negative); 20 artifacts linked; cargo-ci PASS, code-review PASS (zero findings), research-review FAIL round 1 F1 (high, blocking): the three receipts and the profile omit their exact executed top-level invocations (window command, runner and perf invocations), REQ-01/REQ-04/REQ-07 and @/inv/claims-trace-to-artifacts. Rework 1 not dispatched (invoker: no new work in session 22); verdict in reviews/18a87159-r1.md.",
-          "tracker_state": "in_progress"
+          "status": "done; session23: invocation companions and future runtime argv capture merged. Invoker D-01 accepts labelled reconstruction for existing evidence. Cargo, code and research gates pass; reviews/18a87159-r3.md.",
+          "tracker_state": "done"
         },
         {
           "id": "bc091474",
           "short_id": "bc091474",
           "title": "Freeze, measure and select the logical-buffer candidates",
           "classification": "research",
-          "status": "pending; merged from 0064b0a2, 42a22210, 80ed6e9f, a5f29ae5 (session 19)",
-          "tracker_state": "backlog"
+          "status": "in progress; session23: dispatched Sol xhigh atfd0abe631 in agent-bc091474 for profile-grounded candidate portfolio and measurement readiness.",
+          "tracker_state": "in_progress"
         },
         {
           "id": "fcb04d66",
@@ -1281,6 +1281,32 @@
       "status": "open",
       "raised_at": "2026-09-19T15:40Z",
       "resolution": null
+    },
+    {
+      "category": "rework limit",
+      "issue": "e1f9a78f",
+      "status": "open",
+      "raised_at": "2026-09-26",
+      "question": "Authorize focused additional round: preserve original timed launcher argv and provide main-ancestry evidence for historical subject findings; no history rewrite or gate changes.",
+      "recommendation": "authorize focused repair",
+      "resolution": null
+    },
+    {
+      "category": "historical command provenance",
+      "issue": "18a87159",
+      "status": "resolved",
+      "raised_at": "2026-09-26",
+      "question": "Accept observed window commands and labelled inner commands reconstructed from pinned producing source for existing receipts/profile?",
+      "resolution": "Invoker accepts documented reconstruction and prioritizes results over excessive bookkeeping. D-01 recorded; code/research reruns both pass."
+    },
+    {
+      "category": "benchmark window time",
+      "issue": "1a379447",
+      "status": "open",
+      "raised_at": "2026-09-26",
+      "question": "Schedule prepared current-wave jobs on2026-09-27 at04:00 Europe/Helsinki? Prior timer expired; no new timer armed.",
+      "recommendation": "04:00 Helsinki; hold unrelated confirmations",
+      "resolution": null
     }
   ],
   "rework_counts": {
@@ -1849,7 +1875,8 @@
     "Session 22 (2026-09-19T14:30Z): invocation: drive the epic; subagent model by difficulty, no Fable; at most four workers in worktrees, reuse over proliferation. The 2026-09-19 window ran all nine queued lines (01:00Z-01:18Z): every campaign verified complete from its own execution log (18a87159: 17/17/6 cells plus the profile session; f63a2464: 2/3/2; ad2a6a58: 10; 4c1e441f: 8), every receipt 'Accepted qualifies=false findings=0' (pilots). ad2a6a58's job rc=1 was the launcher's terminal-list check rejecting a paused-then-complete run; the lead wrote its done marker after verifying the log. Dispatched (opus): w-d45aff82-r2 (staged smoke mode, agent-85fc5ff4 reset to main), w-ad2a6a58-pw and w-4c1e441f-pw (evidence, freeze and queue the confirmation; trees stay pinned), w-f63a2464-pw (stop rules; rebases onto main only if no family confirms). 9fb40c83 gates on main: cargo-ci PASS; code-review and research-review re-run in sequence. Window gf2-bench-window-20260920 armed for 2026-09-20 04:00 EEST.",
     "Session 22 (2026-09-19T15:20Z): 9fb40c83 gate chain on main c011e69a2: cargo-ci PASS, code-review PASS (zero findings), research-review FAIL round 4 with F1 and F2 closed and F3 open (retained-session hardware-counter and hot-symbol tables carry n = 1 and no interval; only the first profile session collected counters, so closing F3 needs a fresh v4-r3 profile session that collects counters in every repetition). Rework count is 3, past the limit: invoker decision required (session-21 ruling 4). 4c1e441f post-window round accepted for the interim: pilot verified from its log, confirmation frozen (6 of 8 cells, derivation record beside the addendum), queued for the 2026-09-20 window; replayed onto the rewritten main (replay branch rebased --onto main from 58bcfe84b, identical 237-file diff) and merged at 57ded10db, merged-tree cargo-ci green, 13 artifacts linked; the pinned worktree agent-c04dd4ac stays on its pilot tree for the confirmation.",
     "Session 22 end (2026-09-19T15:55Z): invoker ruling mid-session: no new work, finish running tasks, hand off. d45aff82 DONE (all gates, zero findings). 4c1e441f, ad2a6a58, f63a2464 pilots merged, confirmations frozen and queued for the armed 2026-09-20 window; trees pinned; commits replayed onto main through scratch replay branches. 18a87159 merged with cargo-ci and code-review PASS; research-review FAIL F1 (exact executed invocations missing from receipts and profile), rework 1 owed. 9fb40c83 gates: cargo-ci and code-review PASS, research-review FAIL F3 only; rework count 3, invoker decision open. Bug 5ac79460 filed ahead of bc091474. Lock-contention fix requested from the just-in-time session. Five opus dispatches, no stalls. Handoff: handoff-17.md.",
-    "Session 23 (2026-09-26): resume through current wave 3 only. JIT audit: 12 direct wave entries done, 2 rejected, 2 backlog stories with 14 unfinished descendants. Cleared one stale claims lock. No user benchmark timer exists; window.log ends 2026-09-19. Sol high handles 5ac79460 and 18a87159 rework 1; Sol xhigh continues the already-authorized e1f9a78f staged-smoke convergence after d45aff82. No timed runs or Astra. Asked invoker for the outstanding 9fb40c83 fourth rework, concretely collecting counter/hot-symbol repetitions and intervals in a fresh overnight profile. Pinned out-of-wave confirmation trees preserved."
+    "Session 23 (2026-09-26): resume through current wave 3 only. JIT audit: 12 direct wave entries done, 2 rejected, 2 backlog stories with 14 unfinished descendants. Cleared one stale claims lock. No user benchmark timer exists; window.log ends 2026-09-19. Sol high handles 5ac79460 and 18a87159 rework 1; Sol xhigh continues the already-authorized e1f9a78f staged-smoke convergence after d45aff82. No timed runs or Astra. Asked invoker for the outstanding 9fb40c83 fourth rework, concretely collecting counter/hot-symbol repetitions and intervals in a fresh overnight profile. Pinned out-of-wave confirmation trees preserved.",
+    "Session23 continuation:5ac79460 and18a87159 DONE. Dense smoke merged but code-review failed exact timed argv and old-ref subjects; all cited old SHAs are outside main; escalated without overriding.00dd43c3 prepared and queued with no timing; main CI passes.65c0e13d andbc091474 dispatched in fresh trees atfd0abe631, ISA-L heavy build slot first. Invoker accepted18a87159 D-01. Other rework and scheduling questions pending; no Astra used."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1891,8 +1918,6 @@
       "c04dd4ac"
     ],
     "remaining_descendants": [
-      "18a87159",
-      "5ac79460",
       "e1f9a78f",
       "65c0e13d",
       "bc091474",
@@ -1906,6 +1931,7 @@
       "9fb40c83",
       "a0812b83"
     ],
-    "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation."
+    "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation.",
+    "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery."
   }
 }

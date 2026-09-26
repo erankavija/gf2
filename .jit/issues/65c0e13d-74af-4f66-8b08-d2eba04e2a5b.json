@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-26T08:02:17.956365982Z",
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
@@ -14,7 +14,13 @@
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-26T08:13:09.612103020Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "65c0e13d-74af-4f66-8b08-d2eba04e2a5b",
   "labels": [
     "type:task",
@@ -30,5 +36,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Measure the ISA-L XOR comparison",
-  "updated_at": "2026-09-26T08:02:17.956365982Z"
+  "updated_at": "2026-09-26T08:13:09.612103020Z"
 }

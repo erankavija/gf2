@@ -1,0 +1,78 @@
+compiler_command=/usr/bin/gcc
+compiler_identity=gcc (GCC) 16.2.1 20260810
+make_override_channels=MAKEFLAGS GNUMAKEFLAGS MFLAGS MAKEFILES
+make_override_state=cleared
++ /usr/bin/gcc -v -std=c11 -O3 -march=native -Wall -Wextra -Werror -I/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include -c /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/isal_xor_probe.c -o /tmp/gf2-isal-xor-probe.fmEZ17/probe.o
+Using built-in specs.
+COLLECT_GCC=/usr/bin/gcc
+Target: x86_64-pc-linux-gnu
+Configured with: ../gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-gcc-major-version-only --with-linker-hash-style=gnu --with-system-zlib --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-fixincludes --disable-libssp --disable-libstdcxx-pch --disable-werror
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 16.2.1 20260810 (GCC)
+COLLECT_GCC_OPTIONS='-v' '-std=c11' '-O3' '-march=native' '-Wall' '-Wextra' '-Werror' '-I' '/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include' '-c' '-o' '/tmp/gf2-isal-xor-probe.fmEZ17/probe.o' '-dumpdir' '/tmp/gf2-isal-xor-probe.fmEZ17/'
+ /usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1 -quiet -v -I /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/isal_xor_probe.c -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param l1-cache-size=32 --param l1-cache-line-size=64 --param l2-cache-size=512 -mtune=znver3 -quiet -dumpdir /tmp/gf2-isal-xor-probe.fmEZ17/ -dumpbase probe.c -dumpbase-ext .c -O3 -Wall -Wextra -Werror -std=c11 -version -o /tmp/ccunQLW0.s
+GNU C11 (GCC) version 16.2.1 20260810 (x86_64-pc-linux-gnu)
+	compiled by GNU C version 16.2.1 20260810, GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.4.1, isl version isl-0.28-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/16/include-fixed"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../x86_64-pc-linux-gnu/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include
+ /usr/lib/gcc/x86_64-pc-linux-gnu/16/include
+ /usr/local/include
+ /usr/include
+End of search list.
+Compiler executable checksum: f931fde8682f21d1ebcf65f6b881e532
+COLLECT_GCC_OPTIONS='-v' '-std=c11' '-O3' '-march=native' '-Wall' '-Wextra' '-Werror' '-I' '/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include' '-c' '-o' '/tmp/gf2-isal-xor-probe.fmEZ17/probe.o' '-dumpdir' '/tmp/gf2-isal-xor-probe.fmEZ17/'
+ as -v -I /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include --64 -o /tmp/gf2-isal-xor-probe.fmEZ17/probe.o /tmp/ccunQLW0.s
+GNU assembler version 2.47 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.47
+COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-std=c11' '-O3' '-march=native' '-Wall' '-Wextra' '-Werror' '-I' '/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include' '-c' '-o' '/tmp/gf2-isal-xor-probe.fmEZ17/probe.o' '-dumpdir' '/tmp/gf2-isal-xor-probe.fmEZ17/probe.'
++ /usr/bin/gcc -v -std=c11 -O3 -march=native -Wall -Wextra -Werror -I/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include -c /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/raid/raid_base.c -o /tmp/gf2-isal-xor-probe.fmEZ17/raid_base.o
+Using built-in specs.
+COLLECT_GCC=/usr/bin/gcc
+Target: x86_64-pc-linux-gnu
+Configured with: ../gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-gcc-major-version-only --with-linker-hash-style=gnu --with-system-zlib --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-fixincludes --disable-libssp --disable-libstdcxx-pch --disable-werror
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 16.2.1 20260810 (GCC)
+COLLECT_GCC_OPTIONS='-v' '-std=c11' '-O3' '-march=native' '-Wall' '-Wextra' '-Werror' '-I' '/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include' '-c' '-o' '/tmp/gf2-isal-xor-probe.fmEZ17/raid_base.o' '-dumpdir' '/tmp/gf2-isal-xor-probe.fmEZ17/'
+ /usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1 -quiet -v -I /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/raid/raid_base.c -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param l1-cache-size=32 --param l1-cache-line-size=64 --param l2-cache-size=512 -mtune=znver3 -quiet -dumpdir /tmp/gf2-isal-xor-probe.fmEZ17/ -dumpbase raid_base.c -dumpbase-ext .c -O3 -Wall -Wextra -Werror -std=c11 -version -o /tmp/ccJBD0Gk.s
+GNU C11 (GCC) version 16.2.1 20260810 (x86_64-pc-linux-gnu)
+	compiled by GNU C version 16.2.1 20260810, GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.4.1, isl version isl-0.28-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/16/include-fixed"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../x86_64-pc-linux-gnu/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include
+ /usr/lib/gcc/x86_64-pc-linux-gnu/16/include
+ /usr/local/include
+ /usr/include
+End of search list.
+Compiler executable checksum: f931fde8682f21d1ebcf65f6b881e532
+COLLECT_GCC_OPTIONS='-v' '-std=c11' '-O3' '-march=native' '-Wall' '-Wextra' '-Werror' '-I' '/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include' '-c' '-o' '/tmp/gf2-isal-xor-probe.fmEZ17/raid_base.o' '-dumpdir' '/tmp/gf2-isal-xor-probe.fmEZ17/'
+ as -v -I /home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include --64 -o /tmp/gf2-isal-xor-probe.fmEZ17/raid_base.o /tmp/ccJBD0Gk.s
+GNU assembler version 2.47 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.47
+COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-std=c11' '-O3' '-march=native' '-Wall' '-Wextra' '-Werror' '-I' '/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include' '-c' '-o' '/tmp/gf2-isal-xor-probe.fmEZ17/raid_base.o' '-dumpdir' '/tmp/gf2-isal-xor-probe.fmEZ17/raid_base.'
++ /usr/bin/gcc -v -std=c11 -O3 -march=native -Wall -Wextra -Werror /tmp/gf2-isal-xor-probe.fmEZ17/probe.o /tmp/gf2-isal-xor-probe.fmEZ17/raid_base.o -o /tmp/gf2-isal-xor-probe.fmEZ17/isal_xor_probe
+Using built-in specs.
+COLLECT_GCC=/usr/bin/gcc
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper
+Target: x86_64-pc-linux-gnu
+Configured with: ../gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-gcc-major-version-only --with-linker-hash-style=gnu --with-system-zlib --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-fixincludes --disable-libssp --disable-libstdcxx-pch --disable-werror
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 16.2.1 20260810 (GCC)
+COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-std=c11' '-O3' '-march=native' '-Wall' '-Wextra' '-Werror' '-o' '/tmp/gf2-isal-xor-probe.fmEZ17/isal_xor_probe' '-dumpdir' '/tmp/gf2-isal-xor-probe.fmEZ17/isal_xor_probe.'
+ /usr/lib/gcc/x86_64-pc-linux-gnu/16/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccF4WRnM.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s_asneeded -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s_asneeded --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o /tmp/gf2-isal-xor-probe.fmEZ17/isal_xor_probe /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib /tmp/gf2-isal-xor-probe.fmEZ17/probe.o /tmp/gf2-isal-xor-probe.fmEZ17/raid_base.o -lgcc -lgcc_s_asneeded -latomic_asneeded -lc -lgcc -lgcc_s_asneeded /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-std=c11' '-O3' '-march=native' '-Wall' '-Wextra' '-Werror' '-o' '/tmp/gf2-isal-xor-probe.fmEZ17/isal_xor_probe' '-dumpdir' '/tmp/gf2-isal-xor-probe.fmEZ17/isal_xor_probe.'
