@@ -1,0 +1,453 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "bc091474-u2-row-smoke",
+  "issue": "18a87159",
+  "family": "2037941f-logical-public-row-xor",
+  "plan_sha256": "97ca526f40a296cce86a7589a2a79158d768224634155c54b8e0f3c46a4cff01",
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-public-row-xor.json",
+  "addendum_sha256": "27d4bc4d7c65fbc34eba37a39a22defc1691a3665a9c1f3c0e14afb2205c99b2",
+  "cells": [
+    {
+      "cell_id": "row-xor-8w-full-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=8w/shape=full/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=4096B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=8w/shape=full/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=4096B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-9w-full-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=9w/shape=full/base%64=48/dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56/working-set=4608B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=9w/shape=full/base%64=48/dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56/working-set=4608B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-63w-full-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=63w/shape=full/base%64=48/dst:src%64=40:48,48:40,40:48,48:40,40:48,48:40,40:48,48:40/working-set=32256B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=63w/shape=full/base%64=48/dst:src%64=40:48,48:40,40:48,48:40,40:48,48:40,40:48,48:40/working-set=32256B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-64w-full-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=64w/shape=full/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=32768B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=64w/shape=full/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=32768B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-65w-full-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=65w/shape=full/base%64=48/dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56/working-set=33280B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=65w/shape=full/base%64=48/dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56/working-set=33280B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-7w-full-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/scalar/stride=7w/shape=full/base%64=48/dst:src%64=40:48,48:40,40:48,48:40,40:48,48:40,40:48,48:40/working-set=3584B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/scalar/stride=7w/shape=full/base%64=48/dst:src%64=40:48,48:40,40:48,48:40,40:48,48:40,40:48,48:40/working-set=3584B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-66w-full-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=66w/shape=full/base%64=48/dst:src%64=0:48,48:0,0:48,48:0,0:48,48:0,0:48,48:0/working-set=33792B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=66w/shape=full/base%64=48/dst:src%64=0:48,48:0,0:48,48:0,0:48,48:0,0:48,48:0/working-set=33792B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-8w-tail63-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=8w/shape=tail63/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=4096B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=8w/shape=tail63/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=4096B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-9w-tail63-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=9w/shape=tail63/base%64=48/dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56/working-set=4608B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=9w/shape=tail63/base%64=48/dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56/working-set=4608B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-63w-tail63-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=63w/shape=tail63/base%64=48/dst:src%64=40:48,48:40,40:48,48:40,40:48,48:40,40:48,48:40/working-set=32256B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=63w/shape=tail63/base%64=48/dst:src%64=40:48,48:40,40:48,48:40,40:48,48:40,40:48,48:40/working-set=32256B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-64w-tail63-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=64w/shape=tail63/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=32768B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=64w/shape=tail63/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=32768B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-65w-tail63-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=65w/shape=tail63/base%64=48/dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56/working-set=33280B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=65w/shape=tail63/base%64=48/dst:src%64=56:48,48:56,56:48,48:56,56:48,48:56,56:48,48:56/working-set=33280B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-8w-full-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=8w/shape=full/base%64=16/dst:src%64=16:16,16:16,16:16,16:16,16:16,16:16,16:16,16:16/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=8w/shape=full/base%64=16/dst:src%64=16:16,16:16,16:16,16:16,16:16,16:16,16:16,16:16/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-9w-full-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=9w/shape=full/base%64=0/dst:src%64=8:0,0:8,8:0,0:8,8:0,0:8,8:0,0:8/working-set=67129344B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=9w/shape=full/base%64=0/dst:src%64=8:0,0:8,8:0,0:8,8:0,0:8,8:0,0:8/working-set=67129344B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-63w-full-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=63w/shape=full/base%64=0/dst:src%64=56:0,0:56,56:0,0:56,56:0,0:56,56:0,0:56/working-set=67350528B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=63w/shape=full/base%64=0/dst:src%64=56:0,0:56,56:0,0:56,56:0,0:56,56:0,0:56/working-set=67350528B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-64w-full-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=64w/shape=full/base%64=16/dst:src%64=16:16,16:16,16:16,16:16,16:16,16:16,16:16,16:16/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=64w/shape=full/base%64=16/dst:src%64=16:16,16:16,16:16,16:16,16:16,16:16,16:16,16:16/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "row-xor-65w-full-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "row-xor-a",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=65w/shape=full/base%64=0/dst:src%64=8:0,0:8,8:0,0:8,8:0,0:8,8:0,0:8/working-set=67358720B",
+          "windows": 0
+        },
+        {
+          "arm": "row-xor-b",
+          "role": "validation",
+          "executable": "target/bc091474-unroll2/release/logical-arm",
+          "executable_sha256": "6854dfd04cc529de2c604f3318c3e35bb1833b90b87e880848ea2767bdcda9b1",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/BitMatrix::row_xor/simd/stride=65w/shape=full/base%64=0/dst:src%64=8:0,0:8,8:0,0:8,8:0,0:8,8:0,0:8/working-set=67358720B",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
