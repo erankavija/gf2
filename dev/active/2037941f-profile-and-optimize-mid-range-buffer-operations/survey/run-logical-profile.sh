@@ -30,7 +30,13 @@ SURVEY="${STORY}/survey"
 source "${SURVEY}/record-invocation.sh"
 TOP_LEVEL=("$0" "$@")
 MANIFEST="${REPO}/${SURVEY}/harness/Cargo.toml"
-TARGET="${REPO}/target/bb769456-arms"
+TARGET="$(realpath -m "${GF2_LOGICAL_PROFILE_TARGET:-${REPO}/target/bb769456-arms}")"
+PROFILE_RUSTFLAGS="${GF2_LOGICAL_PROFILE_RUSTFLAGS:-}"
+PROFILE_SCOPE="${GF2_LOGICAL_PROFILE_SCOPE:-baseline}"
+[[ "${PROFILE_SCOPE}" == baseline || "${PROFILE_SCOPE}" == candidate ]] || {
+    echo 'profile scope must be baseline or candidate' >&2
+    exit 2
+}
 DRIVER="${TARGET}/release/logical-profile"
 FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
 # Nine is the smallest repetition count whose order-statistic interval for a
@@ -64,14 +70,29 @@ esac
 OUT="${2:-dev/bench_results/2037941f/logical-profile}"
 
 # Builds finish before any timed work.
-CARGO_TARGET_DIR="${TARGET}" ./scripts/cargo-budget.sh cargo build --release \
+RUSTFLAGS="${PROFILE_RUSTFLAGS}" CARGO_TARGET_DIR="${TARGET}" \
+    ./scripts/cargo-budget.sh cargo build --release \
     --manifest-path "${MANIFEST}" --bin logical-profile
 mapfile -t CASES < <("${DRIVER}" cases)
+if [[ "${PROFILE_SCOPE}" == candidate ]]; then
+    # Candidate attribution covers public XOR and row-XOR.
+    selected=()
+    for profile_case in "${CASES[@]}"; do
+        case "${profile_case}" in
+            xor-*@public-xor-a|row-xor-*@row-xor-a) selected+=("${profile_case}") ;;
+        esac
+    done
+    CASES=("${selected[@]}")
+    RECORDED_CASES=(
+        "xor-8w-a64-warm@public-xor-a"
+        "row-xor-8w-full-warm@row-xor-a"
+    )
+fi
 [[ "${#CASES[@]}" -gt 0 ]] || { echo 'the driver declares no profile case' >&2; exit 2; }
 
 if [[ "${MODE}" == build ]]; then
     printf '%s\n' "${CASES[@]}"
-    echo "# ${#CASES[@]} frozen profile cases; driver ${DRIVER}" >&2
+    echo "# ${#CASES[@]} frozen profile cases; driver ${DRIVER}; scope=${PROFILE_SCOPE}; rustflags=${PROFILE_RUSTFLAGS:-<empty>}" >&2
     echo '# non-timed preparation complete' >&2
     exit 0
 fi
@@ -138,6 +159,7 @@ else
         echo
         echo '## driver'
         printf '%s logical-profile\n' "${DIGEST}"
+        echo "scope=${PROFILE_SCOPE}; rustflags=${PROFILE_RUSTFLAGS:-<empty>}"
         echo
         echo '## load average at start'
         uptime

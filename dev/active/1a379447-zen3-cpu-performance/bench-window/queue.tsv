@@ -29,3 +29,9 @@ ad2a6a58	.agents/worktrees/agent-0a357f94	8	dev/bench_results/ad2a6a58/run-axpy-
 4c1e441f	.agents/worktrees/agent-c04dd4ac	6	dev/bench_results/4c1e441f/run-dense-product-confirmation.sh window confirmation
 00dd43c3	.agents/worktrees/agent-00dd43c3	20	dev/active/00dd43c3/survey/run-campaign.sh window pilot
 65c0e13d	.agents/worktrees/agent-65c0e13d	20	dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh window --family 2037941f-logical-isal-base-gap --addendum dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isal-base-gap.json --run-id v4-r1 --isal
+bc091474	.agents/worktrees/agent-bc091474	15	dev/active/bc091474/run-candidate.sh window 2 isolated
+bc091474	.agents/worktrees/agent-bc091474	15	dev/active/bc091474/run-candidate.sh window 2 row
+bc091474	.agents/worktrees/agent-bc091474	15	dev/active/bc091474/run-candidate.sh window 4 isolated
+bc091474	.agents/worktrees/agent-bc091474	15	dev/active/bc091474/run-candidate.sh window 4 row
+bc091474	.agents/worktrees/agent-bc091474	8	dev/active/bc091474/run-candidate.sh profile-window 2 profile
+bc091474	.agents/worktrees/agent-bc091474	8	dev/active/bc091474/run-candidate.sh profile-window 4 profile
