@@ -179,6 +179,13 @@
       "format": "markdown",
       "label": "Scheduled dense baseline and profile queue lines",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Dense preparation review: overnight criteria pending",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/c73ffa25-preparation.md"
     }
   ],
   "first_ready_at": "2026-09-16T22:37:03.248580933Z",
@@ -216,5 +223,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
-  "updated_at": "2026-09-26T13:37:17.701850524Z"
+  "updated_at": "2026-09-26T13:46:17.690006408Z"
 }
