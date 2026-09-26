@@ -50,6 +50,7 @@ def main():
             f"{ACTIVE}/pilot-addendum.json",
             f"{ACTIVE}/profile-context.json",
             f"{SURVEY}/freeze-pilot.py",
+            f"{SURVEY}/freeze-confirmation.py",
             f"{SURVEY}/make-producing-inputs.py",
             f"{SURVEY}/verify-smoke.py",
             "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/find-shift-executable.py",

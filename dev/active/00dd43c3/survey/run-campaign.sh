@@ -7,6 +7,7 @@ cd "$repo"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
 
+original_argv=("$@")
 action=${1:?prepare or window}
 phase=${2:?pilot or confirmation}
 case "$action:$phase" in
@@ -99,6 +100,15 @@ fi
 
 echo "GF2_CAMPAIGN_EXECUTION_LOG=$stage/execution.log"
 {
+  printf '# launcher argv:'
+  printf ' %q' "$0" "${original_argv[@]}"
+  printf '\n'
+  printf '# runner argv:'
+  printf ' %q' "$runner" run "$stage" "$plan"
+  printf '\n'
+  printf '# wrapper argv: GF2_BENCH=1'
+  printf ' %q' dev/scripts/ccx1-bench-flock.sh --full-host "$runner" run "$stage" "$plan"
+  printf '\n'
   echo "# campaign: $campaign"
   echo "# plan: $plan"
   echo "# stage: $stage"
