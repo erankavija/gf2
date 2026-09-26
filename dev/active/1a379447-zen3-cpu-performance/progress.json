@@ -648,8 +648,19 @@
           "short_id": "bc091474",
           "title": "Freeze, measure and select the logical-buffer candidates",
           "classification": "research",
-          "status": "in progress; session23: dispatched Sol xhigh atfd0abe631 in agent-bc091474 for profile-grounded candidate portfolio and measurement readiness.",
-          "tracker_state": "in_progress"
+          "status": "in progress; session23 preparation merged at59bff36c8. Frozen factors2/4, both release harnesses31 tests, four staged17-cell smokes with zero timing. Four pilots and two profiles queued (76-minute estimate); timed evidence and selection remain pending.",
+          "tracker_state": "in_progress",
+          "merge_commit": "59bff36c8",
+          "dispatch": {
+            "model": "gpt-6-sol xhigh",
+            "worktree": ".agents/worktrees/agent-bc091474",
+            "branch": "worktree-agent-bc091474",
+            "pinned_commit": "2d33ac5ca6902ab66d613902a61cfaa4260e89b6",
+            "session": 23
+          },
+          "gates": {
+            "cargo-ci": "PASS a35c8d88-8778-45e8-8dbf-e127a904dd98 at59bff36c8:6101 passed,0 failed,248 skipped. inputs_moved reflects only concurrent lead handoff/progress/doc-link writes; source stayed fixed. Final code/research review awaits timed evidence."
+          }
         },
         {
           "id": "fcb04d66",
@@ -1877,7 +1888,8 @@
     "Session 22 end (2026-09-19T15:55Z): invoker ruling mid-session: no new work, finish running tasks, hand off. d45aff82 DONE (all gates, zero findings). 4c1e441f, ad2a6a58, f63a2464 pilots merged, confirmations frozen and queued for the armed 2026-09-20 window; trees pinned; commits replayed onto main through scratch replay branches. 18a87159 merged with cargo-ci and code-review PASS; research-review FAIL F1 (exact executed invocations missing from receipts and profile), rework 1 owed. 9fb40c83 gates: cargo-ci and code-review PASS, research-review FAIL F3 only; rework count 3, invoker decision open. Bug 5ac79460 filed ahead of bc091474. Lock-contention fix requested from the just-in-time session. Five opus dispatches, no stalls. Handoff: handoff-17.md.",
     "Session 23 (2026-09-26): resume through current wave 3 only. JIT audit: 12 direct wave entries done, 2 rejected, 2 backlog stories with 14 unfinished descendants. Cleared one stale claims lock. No user benchmark timer exists; window.log ends 2026-09-19. Sol high handles 5ac79460 and 18a87159 rework 1; Sol xhigh continues the already-authorized e1f9a78f staged-smoke convergence after d45aff82. No timed runs or Astra. Asked invoker for the outstanding 9fb40c83 fourth rework, concretely collecting counter/hot-symbol repetitions and intervals in a fresh overnight profile. Pinned out-of-wave confirmation trees preserved.",
     "Session23 continuation:5ac79460 and18a87159 DONE. Dense smoke merged but code-review failed exact timed argv and old-ref subjects; all cited old SHAs are outside main; escalated without overriding.00dd43c3 prepared and queued with no timing; main CI passes.65c0e13d andbc091474 dispatched in fresh trees atfd0abe631, ISA-L heavy build slot first. Invoker accepted18a87159 D-01. Other rework and scheduling questions pending; no Astra used.",
-    "Session23 ISA-L preparation merged in two stages, each passes merged cargo-ci. Final pinned worker8f2875d8c includes frozen12-cell pilot,24 untimed dispatches, compiler/object evidence and queue line. Fixed masked build-helper error and Rust-only relink digest handling during preparation. Candidate worker now has heavy slot and incorporates shared launcher fixes. No timing or timer; invoker time decision pending."
+    "Session23 ISA-L preparation merged in two stages, each passes merged cargo-ci. Final pinned worker8f2875d8c includes frozen12-cell pilot,24 untimed dispatches, compiler/object evidence and queue line. Fixed masked build-helper error and Rust-only relink digest handling during preparation. Candidate worker now has heavy slot and incorporates shared launcher fixes. No timing or timer; invoker time decision pending.",
+    "Session23 candidate preparation merged at59bff36c8; no timing. All workers finished and measurement trees pinned. User accepted historical reconstruction only (18a87159 D-01); dense additional rework, DVB additional rework, and window time remain pending. See handoff-18.md; wave3 remains incomplete."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1897,7 +1909,8 @@
     "handoff-14.md",
     "handoff-15.md",
     "handoff-16.md",
-    "handoff-17.md"
+    "handoff-17.md",
+    "handoff-18.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -1908,7 +1921,7 @@
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
     "note": "Armed session 22 via systemd-run --user (XDG_RUNTIME_DIR=/run/user/1000, DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus), working directory the primary checkout, PATH=~/.cargo/bin:/usr/local/bin:/usr/bin, GF2_WINDOW_UNIT set. Runs the A/B confirmations queued this session (4c1e441f line merged; ad2a6a58 and any f63a2464 line follow). The 2026-09-19 window's nine jobs are all marked done (the ad2a6a58 pilot marker written by the lead after log verification).",
-    "current_observation": "2026-09-26: systemctl --user list-timers --all reports zero timers; window.log last event is 2026-09-19 window end. Historical armed_for does not establish execution."
+    "current_observation": "2026-09-26 session23: no timer armed; window.log ends September19. Pending invoker decision on September27 04:00 Europe/Helsinki. Prepared current-wave rows estimate116 minutes. Hold five unrelated confirmation rows before arming."
   },
   "session_scope": {
     "session": 23,
