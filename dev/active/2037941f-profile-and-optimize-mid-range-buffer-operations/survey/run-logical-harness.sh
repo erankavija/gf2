@@ -23,6 +23,7 @@ REPO="$(cd "${HERE}/../../../.." && pwd)"
 
 STORY=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
 SURVEY="${STORY}/survey"
+source "${SURVEY}/record-invocation.sh"
 MANIFEST="${REPO}/${SURVEY}/harness/Cargo.toml"
 PRODUCING="${SURVEY}/logical-producing-inputs.json"
 VALIDATION="${SURVEY}/logical-harness-validation.txt"
@@ -270,7 +271,7 @@ cmd_window() {
     "${CAMPAIGN_TOOL}" inputs --producing-manifest "${PRODUCING}" \
         --also "${addendum}" --also "${ledger}"
 
-    local runner acceptance campaign stage plan out lock launch
+    local runner acceptance campaign stage plan out lock launch invocation
     runner="$(realpath target/release/benchmark-ab-runner)"
     acceptance="$(realpath target/release/benchmark-acceptance)"
     campaign="${run_id}-${family}"
@@ -298,8 +299,12 @@ cmd_window() {
     fi
 
     launch="${stage}.launcher.log"
+    invocation="${stage}.invocations.log"
+    record_invocation "${invocation}" top-level "${TOP_LEVEL[@]}"
     {
-        echo "# command: $0 $*"
+        printf "# command:"
+        printf " %q" "${TOP_LEVEL[@]}"
+        printf "\n"
         echo "# started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
         echo "# gf2 revision (informational): $(git rev-parse HEAD)"
         "${CAMPAIGN_TOOL}" pins | sed 's/^/# /'
@@ -326,8 +331,11 @@ PY
     while ! stage_complete; do
         session=$((session + 1))
         set +e
-        GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host \
-            "${runner}" run "${stage}" "${plan}" | tee -a "${launch}"
+        runner_command=(dev/scripts/ccx1-bench-flock.sh --full-host \
+            "${runner}" run "${stage}" "${plan}")
+        record_invocation "${invocation}" runner-run \
+            GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "${runner_command[@]}"
+        GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "${runner_command[@]}" | tee -a "${launch}"
         rc=${PIPESTATUS[0]}
         set -e
         echo "# session ${session} exit: ${rc}" >>"${launch}"
@@ -338,17 +346,23 @@ PY
         esac
     done
 
-    "${runner}" finalize "${stage}" "${out}" | tee -a "${launch}"
+    finalize_command=("${runner}" finalize "${stage}" "${out}")
+    record_invocation "${invocation}" runner-finalize "${finalize_command[@]}"
+    "${finalize_command[@]}" | tee -a "${launch}"
     cp "${launch}" "${out}/launcher.log"
     set +e
-    "${acceptance}" "${out}" | tee -a "${out}/launcher.log"
+    acceptance_command=("${acceptance}" "${out}")
+    record_invocation "${invocation}" acceptance "${acceptance_command[@]}"
+    "${acceptance_command[@]}" | tee -a "${out}/launcher.log"
     local verdict=${PIPESTATUS[0]}
     set -e
     echo "# acceptance exit: ${verdict}" >>"${out}/launcher.log"
+    cp "${invocation}" "${out}/invocations.log"
     echo "exploratory receipt: ${out}" >&2
     exit "${verdict}"
 }
 
+TOP_LEVEL=("$0" "$@")
 case "${1:-}" in
     build) shift; cmd_build "$@" ;;
     cells) shift; cmd_cells "$@" ;;
