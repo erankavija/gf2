@@ -1343,11 +1343,12 @@
     {
       "category": "rework limit",
       "issue": "9fb40c83",
-      "status": "open",
+      "status": "resolved",
       "raised_at": "2026-09-26T13:45Z",
       "question": "Approve round6: commit the existing generator output changing only the current renderer hash in v4-r2-dynamic-profile-provenance.md and rerun code review.",
       "recommendation": "approve one-line regeneration",
-      "gate_run": "ec204e2a-79fb-4494-b78d-bd71f838038d"
+      "gate_run": "ec204e2a-79fb-4494-b78d-bd71f838038d",
+      "resolution": "2026-09-26: invoker explicitly approved round6 one-line regeneration and code-review rerun."
     }
   ],
   "rework_counts": {
@@ -1372,7 +1373,7 @@
     "77c21ecd": 0,
     "7cdc28e9": 0,
     "e1f9a78f": 7,
-    "9fb40c83": 5,
+    "9fb40c83": 6,
     "f8dd4dde": 1,
     "d45aff82": 2,
     "18a87159": 1
