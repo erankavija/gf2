@@ -235,19 +235,9 @@ cmd_window() {
         echo 'window needs --family, --addendum and --run-id' >&2
         exit 2
     }
-    if [[ -n "${candidate_gf2}" || -n "${candidate_rustflags}" || -n "${pilot_pairs}" ]]; then
-        [[ -n "${candidate_gf2}" && -n "${candidate_rustflags}" && "${pilot_pairs}" == 24 ]] || {
-            echo 'candidate window needs executable, rustflags and 24 pilot pairs' >&2
-            exit 2
-        }
-        [[ "${candidate_rustflags}" == '--cfg gf2_xor_unroll2' ||
-           "${candidate_rustflags}" == '--cfg gf2_xor_unroll4' ]] || {
-            echo 'candidate rustflags must select a frozen XOR unroll factor' >&2
-            exit 2
-        }
-        [[ "${family}" == 2037941f-logical-isolated-xor ||
-           "${family}" == 2037941f-logical-public-row-xor ]] || {
-            echo 'candidate build serves only isolated XOR or public row XOR' >&2
+    if [[ -n "${candidate_gf2}" || -n "${candidate_rustflags}" ]]; then
+        [[ -n "${candidate_gf2}" && -n "${candidate_rustflags}" ]] || {
+            echo 'candidate executable and rustflags must be given together' >&2
             exit 2
         }
     fi
@@ -274,6 +264,7 @@ cmd_window() {
     # prebuilt arm can carry bytes the check never saw.
     build_gf2
     local candidate_flag=() pilot_flag=()
+    [[ -n "${pilot_pairs}" ]] && pilot_flag=(--pilot-pairs "${pilot_pairs}")
     if [[ -n "${candidate_gf2}" ]]; then
         local candidate_target
         candidate_target="$(dirname "$(dirname "${candidate_gf2}")")"
@@ -286,7 +277,6 @@ cmd_window() {
             --bin logical-arm
         candidate_flag=(--candidate-gf2-executable "${candidate_gf2}" \
                         --candidate-gf2-rustflags "${candidate_rustflags}")
-        pilot_flag=(--pilot-pairs "${pilot_pairs}")
     fi
     local isal_flag=()
     if [[ "${with_isal}" == 1 ]]; then

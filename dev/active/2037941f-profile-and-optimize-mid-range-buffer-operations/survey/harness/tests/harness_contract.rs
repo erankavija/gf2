@@ -476,7 +476,7 @@ fn a_candidate_build_keeps_public_routes_and_declares_its_compiler_flag() {
             None,
             Route::PublicXorB,
             Some(2),
-            None,
+            Some(24),
         )
         .expect("the plan projects separate public-route builds");
         plan.validate(&addendum)
@@ -493,6 +493,7 @@ fn a_candidate_build_keeps_public_routes_and_declares_its_compiler_flag() {
         );
         assert_eq!(plan.cells[0].baseline_arm, baseline);
         assert_eq!(plan.cells[0].candidate_arm, candidate);
+        assert!(plan.cells.iter().all(|cell| cell.pilot_pairs == Some(24)));
     }
 }
 
