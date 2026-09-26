@@ -35,7 +35,7 @@ Every figure of this session is read from the files below; their digests identif
 | `rep-09/cases.json` | `e31d7136465d42f61caab1534138d923daf400c76d6501a6328f53b52f78e6b6` |
 | `repetitions.log` | `9b10d100cede9fcfb4980a8a503bb45af9ba25ea6ff74808617894c4d8d27d3f` |
 | counter and sample files (176), aggregate | `b86c80883e601c35a195dd4ba132d61f6a9a48bda3cb9e7295fb44b8e2892053` |
-| `dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/render-hot-instructions.sh` at this checkout | `f7b3bff2bae6cfb0f0bd824f8e5e0517acabf1158fada95a4bb8378558994dbc` |
+| `dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/render-hot-instructions.sh` at this checkout | `5caae7875322a4ee230a4e462488a91c2c1dfe92f0178acb6edb7e095c2d4a6d` |
 
 The aggregate is the SHA-256 of the `<digest>  <path>` lines of every counter and sample file the session retains, in path order. The instruction listings beside those samples are the renderer's output over them and the executable the samples name, which is why the renderer's identity belongs to this record.
 
