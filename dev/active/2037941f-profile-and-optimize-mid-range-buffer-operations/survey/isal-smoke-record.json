@@ -1,0 +1,323 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "65c0e13d-isal-wire-smoke",
+  "issue": "65c0e13d",
+  "family": "2037941f-logical-isal-base-gap",
+  "plan_sha256": "43f58cec4cdeb5649698b862172d77b7e7923694c632c5f4f76a2201209f98b4",
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isal-base-gap.json",
+  "addendum_sha256": "47edde468edc884c30b202b8290575a33d01de4f39d4df55f857e0c9936edbd2",
+  "cells": [
+    {
+      "cell_id": "isal-base-gap-8w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=8/src0%64=0/src1%64=0/working-set=128B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=64B/src0%64=0/src1%64=0/working-set=128B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-9w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=9/src0%64=0/src1%64=0/working-set=256B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=72B/src0%64=0/src1%64=0/working-set=256B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-63w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=63/src0%64=0/src1%64=0/working-set=1024B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=504B/src0%64=0/src1%64=0/working-set=1024B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-64w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=64/src0%64=0/src1%64=0/working-set=1024B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=512B/src0%64=0/src1%64=0/working-set=1024B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-65w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=65/src0%64=0/src1%64=0/working-set=1152B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=520B/src0%64=0/src1%64=0/working-set=1152B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-7w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/scalar/fresh-destination+copy/w=7/src0%64=0/src1%64=0/working-set=128B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=56B/src0%64=0/src1%64=0/working-set=128B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-66w-a64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=66/src0%64=0/src1%64=0/working-set=1152B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=528B/src0%64=0/src1%64=0/working-set=1152B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-8w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=8/src0%64=0/src1%64=0/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=64B/src0%64=0/src1%64=0/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-9w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=9/src0%64=0/src1%64=0/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=72B/src0%64=0/src1%64=0/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-63w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=63/src0%64=0/src1%64=0/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=504B/src0%64=0/src1%64=0/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-64w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=64/src0%64=0/src1%64=0/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=512B/src0%64=0/src1%64=0/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "isal-base-gap-65w-a64-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "isal-peer-gf2",
+          "role": "validation",
+          "executable": "target/bb769456-arms/release/logical-arm",
+          "executable_sha256": "491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/simd/fresh-destination+copy/w=65/src0%64=0/src1%64=0/working-set=67110912B",
+          "windows": 0
+        },
+        {
+          "arm": "isal-xor-gen-base",
+          "role": "validation",
+          "executable": "target/bb769456-isal-arm/release/logical-isal-arm",
+          "executable_sha256": "84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "isa-l/xor_gen_base/scalar/vects=3/len=520B/src0%64=0/src1%64=0/working-set=67110912B",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
