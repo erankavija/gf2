@@ -1,0 +1,19 @@
+{
+  "profile_receipt": {
+    "path": "dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json",
+    "sha256": "bb70db8ce001425b1cbd8d4b3d144beb04cba5331fb53a9a7dc27e2f60d45616"
+  },
+  "profile_summary": {
+    "path": "dev/bench_results/c04dd4ac/residual-shift-profile/acceptance-summary.json",
+    "sha256": "cedd125de55b43a42172da544ae0960314cc79f4af1e17b825db0acf5d57369b"
+  },
+  "material_cells": [
+    "left-lane-crossing-r7-w64",
+    "left-byte-residual-r8-w64",
+    "left-resident-r63-w64",
+    "left-streaming-r65-w64",
+    "right-byte-residual-r8-w64",
+    "right-resident-r63-w64",
+    "right-streaming-r65-w64"
+  ]
+}
