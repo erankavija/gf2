@@ -283,6 +283,20 @@
       "format": "markdown",
       "label": "Round 6 continuation review and escalation",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/e1f9a78f-r6.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Dense launcher argv repair and cumulative audit",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/e1f9a78f-r7-worker.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "format": "markdown",
+      "label": "Dense launcher argv regression",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/test-dense-launcher-argv.py"
     }
   ],
   "first_ready_at": "2026-09-16T20:37:02.481753350Z",
@@ -294,7 +308,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-26T07:35:24.289308593Z",
+      "updated_at": "2026-09-26T12:54:36.748481733Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -322,5 +336,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the dense-parity measurement harness",
-  "updated_at": "2026-09-26T07:42:05.278050667Z"
+  "updated_at": "2026-09-26T12:56:22.174580409Z"
 }
