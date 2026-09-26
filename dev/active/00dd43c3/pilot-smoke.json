@@ -1,0 +1,193 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "00dd43c3-residual-bmi2-pilot-v4-r1",
+  "issue": "00dd43c3",
+  "family": "bitvec-residual-bmi2-route",
+  "plan_sha256": "dba2051bd6a250f03e194d6a412c82de4c0f3c7edc7e1a60e71b0ff1dbb7a794",
+  "addendum": "dev/active/00dd43c3/pilot-addendum.json",
+  "addendum_sha256": "8712cd79a9d511d9bbc9b8701aa3241c85279959c3272f15c0c56f08a3df0d2f",
+  "cells": [
+    {
+      "cell_id": "left-lane-crossing-r7-w64",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "residual-scalar",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-funnel-left",
+          "windows": 0
+        },
+        {
+          "arm": "residual-gated",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-bmi2-funnel-left",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "left-byte-residual-r8-w64",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "residual-scalar",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-funnel-left",
+          "windows": 0
+        },
+        {
+          "arm": "residual-gated",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-bmi2-funnel-left",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "left-resident-r63-w64",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "residual-scalar",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-funnel-left",
+          "windows": 0
+        },
+        {
+          "arm": "residual-gated",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-bmi2-funnel-left",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "left-streaming-r65-w64",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "residual-scalar",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "bitvec-residual-scalar-funnel-left",
+          "windows": 0
+        },
+        {
+          "arm": "residual-gated",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "bitvec-residual-bmi2-funnel-left",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "right-byte-residual-r8-w64",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "residual-scalar",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-funnel-right",
+          "windows": 0
+        },
+        {
+          "arm": "residual-gated",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-bmi2-funnel-right",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "right-resident-r63-w64",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "residual-scalar",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-scalar-funnel-right",
+          "windows": 0
+        },
+        {
+          "arm": "residual-gated",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bitvec-residual-bmi2-funnel-right",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "right-streaming-r65-w64",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "residual-scalar",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "bitvec-residual-scalar-funnel-right",
+          "windows": 0
+        },
+        {
+          "arm": "residual-gated",
+          "role": "validation",
+          "executable": "target/release/deps/shifts-9f8d6039725c588b",
+          "executable_sha256": "bbba2a1b50209c6622b08a78a73fe918c83e7a2ff75fd342f13a0575fc7e2918",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "bitvec-residual-bmi2-funnel-right",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
