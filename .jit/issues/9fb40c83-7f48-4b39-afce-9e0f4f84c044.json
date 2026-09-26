@@ -403,6 +403,31 @@
       "format": "markdown",
       "label": "DVB round-five review: renderer projection pending",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r5.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "05675671a6dffeed426a569a687542f3519dabfb687b6734c3910b9efa615356",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "9fb40c83-r5.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r5.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "283070fe51481a0e7872751a2aafbb7231dd418411c34a1e685c741dea943e9b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "9fb40c83-r4.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r4.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Round-seven review: code passes, measured profile pending",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r7.md"
     }
   ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
@@ -447,5 +472,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-26T14:40:15.319640305Z"
+  "updated_at": "2026-09-26T14:42:36.068283578Z"
 }

@@ -969,6 +969,87 @@
       "format": "markdown",
       "label": "Session 24: 02:00 window and pending DVB projection repair",
       "path": "dev/active/1a379447-zen3-cpu-performance/handoff-19.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "bd04f71ba13a959efdf66baea0cc13106d4495c61f6004f32b77edf7fef3eddb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "worker-brief.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/worker-brief.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca6aac725517482c5c47b4d93529ab13f6a726f0a051ea7ebfac1f380f11de84",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reviews/9fb40c83-r7.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r7.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "810d76a30f34e8c7a7c7b8c3fec5451e36662740467dcfcf305d1d45797360e5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-19.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-19.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f0468627f32207c865f70d036287383557b01c50c6a70147bd07342aecd8a88b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "bench-window/queue.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a2c54f279d2a2194eae1b5cdaf11360cd96f26fe162674e36e5042ba1ecbd79a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "progress.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/progress.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7dbdd8bec478f49616c36f357637f160b9e1d75557f43f837f949c1124722f83",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "bench-window/run-window.sh",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3a7a7aba8190290099e609ccf3974a569f5782c0463b17e9f8919f0a5d592b1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "09296fa0eb7753e68bb84e6a9d5285c016308b1c7d2e76966ceb9d2dd9d98989",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Session 25: DVB restored to 02:00 queue, handoff requested",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-20.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -992,5 +1073,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-26T13:49:12.441150285Z"
+  "updated_at": "2026-09-26T14:42:36.203789580Z"
 }
