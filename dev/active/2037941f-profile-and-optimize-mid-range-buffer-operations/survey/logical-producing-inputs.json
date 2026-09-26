@@ -208,6 +208,7 @@
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/routes.rs",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/wire.rs",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/isal_xor_probe.c",
+    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/record-invocation.sh",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-isal-xor-probe.sh",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh",
     "dev/scripts/ccx1-bench-flock.sh",
@@ -234,6 +235,7 @@
     "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
   ],
   "lifecycle_sources": [
+    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/record-invocation.sh",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh",
     "dev/scripts/ccx1-bench-flock.sh",
     "dev/tools/tuning-campaign-support/src/abtest.rs",
@@ -554,6 +556,7 @@
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-source-evidence.json",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-logical-producing-inputs.py",
+    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/record-invocation.sh",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-isal-xor-probe.sh",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh",
     "dev/active/f547c394/addendum.schema.json",
