@@ -1922,8 +1922,8 @@
     "armed_for": "2026-09-27T02:00:00+03:00",
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
-    "note": "Timer configuration pending. Current wave scope only; subsequent windows use the same local start time as needed.",
-    "current_observation": "02:00 Europe/Helsinki authorized from September 27 onward for wave 3. Five out-of-wave confirmation lines held; initial eight queued jobs estimate 116 minutes; DVB profile preparation running."
+    "note": "User authorizes 02:00 Europe/Helsinki on subsequent nights as needed for current wave 3. Arm each next window after reviewing prior results and queue readiness.",
+    "current_observation": "Verified active timer gf2-bench-window-20260927.timer: next elapse 2026-09-27 02:00 EEST. Canonical runner, primary working directory and cargo PATH verified. Current pending queue: eight jobs, estimated 116 minutes; five later-wave confirmations held. DVB profile line pending preparation."
   },
   "session_scope": {
     "session": 24,
