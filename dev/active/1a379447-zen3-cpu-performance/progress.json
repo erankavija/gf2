@@ -1341,8 +1341,8 @@
     "2c487595": 1,
     "77c21ecd": 0,
     "7cdc28e9": 0,
-    "e1f9a78f": 6,
-    "9fb40c83": 3,
+    "e1f9a78f": 7,
+    "9fb40c83": 4,
     "f8dd4dde": 1,
     "d45aff82": 2,
     "18a87159": 1
@@ -1890,7 +1890,8 @@
     "Session23 continuation:5ac79460 and18a87159 DONE. Dense smoke merged but code-review failed exact timed argv and old-ref subjects; all cited old SHAs are outside main; escalated without overriding.00dd43c3 prepared and queued with no timing; main CI passes.65c0e13d andbc091474 dispatched in fresh trees atfd0abe631, ISA-L heavy build slot first. Invoker accepted18a87159 D-01. Other rework and scheduling questions pending; no Astra used.",
     "Session23 ISA-L preparation merged in two stages, each passes merged cargo-ci. Final pinned worker8f2875d8c includes frozen12-cell pilot,24 untimed dispatches, compiler/object evidence and queue line. Fixed masked build-helper error and Rust-only relink digest handling during preparation. Candidate worker now has heavy slot and incorporates shared launcher fixes. No timing or timer; invoker time decision pending.",
     "Session23 candidate preparation merged at59bff36c8; no timing. All workers finished and measurement trees pinned. User accepted historical reconstruction only (18a87159 D-01); dense additional rework, DVB additional rework, and window time remain pending. See handoff-18.md; wave3 remains incomplete.",
-    "Session 24 (2026-09-26): interview approves e1f9a78f round 7 (original argv and historical-ref ancestry), 9fb40c83 round 4 (nine-repetition counters/hot-symbol intervals), overnight windows for wave 3 only. Latest steering sets 02:00 Europe/Helsinki starting September 27; five later-wave confirmations held. Models by difficulty; Astra requires explicit permission and is not authorized."
+    "Session 24 (2026-09-26): interview approves e1f9a78f round 7 (original argv and historical-ref ancestry), 9fb40c83 round 4 (nine-repetition counters/hot-symbol intervals), overnight windows for wave 3 only. Latest steering sets 02:00 Europe/Helsinki starting September 27; five later-wave confirmations held. Models by difficulty; Astra requires explicit permission and is not authorized.",
+    "Session 24 dispatch: Sol high e1f9a78f round7 in agent-e1f9a78f-r7; Sol xhigh 9fb40c83 round4 in agent-9fb40c83-r4; Sol high read-only wave readiness survey. Both worker trees anchored to 93d3d72fb. Gates only; no additional independent review. Stale September15 DVB lease recovered. No Astra."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1917,12 +1918,12 @@
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
   },
   "benchmark_window": {
-    "unit": "gf2-bench-window-20260920",
-    "armed_for": "2026-09-20T04:00 Europe/Helsinki (01:00Z)",
+    "unit": "gf2-bench-window-20260927",
+    "armed_for": "2026-09-27T02:00:00+03:00",
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
-    "note": "Armed session 22 via systemd-run --user (XDG_RUNTIME_DIR=/run/user/1000, DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus), working directory the primary checkout, PATH=~/.cargo/bin:/usr/local/bin:/usr/bin, GF2_WINDOW_UNIT set. Runs the A/B confirmations queued this session (4c1e441f line merged; ad2a6a58 and any f63a2464 line follow). The 2026-09-19 window's nine jobs are all marked done (the ad2a6a58 pilot marker written by the lead after log verification).",
-    "current_observation": "Session 24: 02:00 Helsinki windows approved; timer configuration pending readiness checks."
+    "note": "Timer configuration pending. Current wave scope only; subsequent windows use the same local start time as needed.",
+    "current_observation": "02:00 Europe/Helsinki authorized from September 27 onward for wave 3. Five out-of-wave confirmation lines held; initial eight queued jobs estimate 116 minutes; DVB profile preparation running."
   },
   "session_scope": {
     "session": 24,
