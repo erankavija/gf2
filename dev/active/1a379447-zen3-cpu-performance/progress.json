@@ -1280,9 +1280,9 @@
       "issue": "9fb40c83",
       "question": "research-review round 4 keeps F3 (retained-session hardware-counter and hot-symbol tables carry n = 1 and no interval; only the first profile repetition collected counters). Options: (1) round 4 with a launcher that collects counters and hot symbols in every repetition plus a v4-r3 profile session as a window line and per-repetition order-statistic intervals; (2) an overrule decision recorded on the issue and a gate re-run; (3) drop the two tables at REQ-03's cost",
       "recommendation": "option 1",
-      "status": "open",
+      "status": "resolved",
       "raised_at": "2026-09-19T15:15Z",
-      "resolution": null
+      "resolution": "2026-09-26 interview: invoker explicitly approves one further scoped repair round; dense argv and ancestry audit (e1f9a78f), or nine-repetition DVB counters/hot-symbol profile with intervals (9fb40c83). Existing accepted evidence stays unchanged."
     },
     {
       "category": "frozen-record interpretation (f63a2464 REQ-02)",
@@ -1296,11 +1296,11 @@
     {
       "category": "rework limit",
       "issue": "e1f9a78f",
-      "status": "open",
+      "status": "resolved",
       "raised_at": "2026-09-26",
       "question": "Authorize focused additional round: preserve original timed launcher argv and provide main-ancestry evidence for historical subject findings; no history rewrite or gate changes.",
       "recommendation": "authorize focused repair",
-      "resolution": null
+      "resolution": "2026-09-26 interview: invoker explicitly approves one further scoped repair round; dense argv and ancestry audit (e1f9a78f), or nine-repetition DVB counters/hot-symbol profile with intervals (9fb40c83). Existing accepted evidence stays unchanged."
     },
     {
       "category": "historical command provenance",
@@ -1313,11 +1313,11 @@
     {
       "category": "benchmark window time",
       "issue": "1a379447",
-      "status": "open",
+      "status": "resolved",
       "raised_at": "2026-09-26",
       "question": "Schedule prepared current-wave jobs on2026-09-27 at04:00 Europe/Helsinki? Prior timer expired; no new timer armed.",
       "recommendation": "04:00 Helsinki; hold unrelated confirmations",
-      "resolution": null
+      "resolution": "Invoker approves windows needed for current wave only, then changes start to 02:00 Europe/Helsinki from September 27 onward. Hold later-wave confirmations."
     }
   ],
   "rework_counts": {
@@ -1889,7 +1889,8 @@
     "Session 23 (2026-09-26): resume through current wave 3 only. JIT audit: 12 direct wave entries done, 2 rejected, 2 backlog stories with 14 unfinished descendants. Cleared one stale claims lock. No user benchmark timer exists; window.log ends 2026-09-19. Sol high handles 5ac79460 and 18a87159 rework 1; Sol xhigh continues the already-authorized e1f9a78f staged-smoke convergence after d45aff82. No timed runs or Astra. Asked invoker for the outstanding 9fb40c83 fourth rework, concretely collecting counter/hot-symbol repetitions and intervals in a fresh overnight profile. Pinned out-of-wave confirmation trees preserved.",
     "Session23 continuation:5ac79460 and18a87159 DONE. Dense smoke merged but code-review failed exact timed argv and old-ref subjects; all cited old SHAs are outside main; escalated without overriding.00dd43c3 prepared and queued with no timing; main CI passes.65c0e13d andbc091474 dispatched in fresh trees atfd0abe631, ISA-L heavy build slot first. Invoker accepted18a87159 D-01. Other rework and scheduling questions pending; no Astra used.",
     "Session23 ISA-L preparation merged in two stages, each passes merged cargo-ci. Final pinned worker8f2875d8c includes frozen12-cell pilot,24 untimed dispatches, compiler/object evidence and queue line. Fixed masked build-helper error and Rust-only relink digest handling during preparation. Candidate worker now has heavy slot and incorporates shared launcher fixes. No timing or timer; invoker time decision pending.",
-    "Session23 candidate preparation merged at59bff36c8; no timing. All workers finished and measurement trees pinned. User accepted historical reconstruction only (18a87159 D-01); dense additional rework, DVB additional rework, and window time remain pending. See handoff-18.md; wave3 remains incomplete."
+    "Session23 candidate preparation merged at59bff36c8; no timing. All workers finished and measurement trees pinned. User accepted historical reconstruction only (18a87159 D-01); dense additional rework, DVB additional rework, and window time remain pending. See handoff-18.md; wave3 remains incomplete.",
+    "Session 24 (2026-09-26): interview approves e1f9a78f round 7 (original argv and historical-ref ancestry), 9fb40c83 round 4 (nine-repetition counters/hot-symbol intervals), overnight windows for wave 3 only. Latest steering sets 02:00 Europe/Helsinki starting September 27; five later-wave confirmations held. Models by difficulty; Astra requires explicit permission and is not authorized."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1921,10 +1922,10 @@
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
     "note": "Armed session 22 via systemd-run --user (XDG_RUNTIME_DIR=/run/user/1000, DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus), working directory the primary checkout, PATH=~/.cargo/bin:/usr/local/bin:/usr/bin, GF2_WINDOW_UNIT set. Runs the A/B confirmations queued this session (4c1e441f line merged; ad2a6a58 and any f63a2464 line follow). The 2026-09-19 window's nine jobs are all marked done (the ad2a6a58 pilot marker written by the lead after log verification).",
-    "current_observation": "2026-09-26 session23: no timer armed; window.log ends September19. Pending invoker decision on September27 04:00 Europe/Helsinki. Prepared current-wave rows estimate116 minutes. Hold five unrelated confirmation rows before arming."
+    "current_observation": "Session 24: 02:00 Helsinki windows approved; timer configuration pending readiness checks."
   },
   "session_scope": {
-    "session": 23,
+    "session": 24,
     "date": "2026-09-26",
     "instruction": "Complete current wave 3 only; model by task difficulty; Astra requires explicit permission.",
     "wave_3_containers": [
@@ -1946,6 +1947,7 @@
       "a0812b83"
     ],
     "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation.",
-    "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery."
+    "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
+    "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3"
   }
 }
