@@ -1,0 +1,1 @@
+{"cache_state":"warm","calls":100663295,"case":"row-xor-9w-full-warm@row-xor-a","cell":"row-xor-9w-full-warm","elapsed_ns":1010223077,"route":"row-xor-a","schema":"logical-buffer-profile-case-v1","selected_path":"gf2-core/BitMatrix::row_xor/simd/stride=9w/shape=full/base%64=0/dst:src%64=8:0,0:8,8:0,0:8,8:0,0:8,8:0,0:8/working-set=4608B"}
