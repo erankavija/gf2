@@ -34,7 +34,7 @@ def closure():
     # The measured routes are public gf2-core and gf2-coding entry points, so
     # the behavioral closure is those two crates' sources plus the harness that
     # calls them and the shared campaign support that times them.
-    lifecycle = [str(SURVEY / "run-logical-harness.sh"), "dev/scripts/ccx1-bench-flock.sh"]
+    lifecycle = [str(SURVEY / "run-logical-harness.sh"), str(SURVEY / "record-invocation.sh"), "dev/scripts/ccx1-bench-flock.sh"]
     lifecycle += files_under(SUPPORT)
     behavior = sorted(
         set(
