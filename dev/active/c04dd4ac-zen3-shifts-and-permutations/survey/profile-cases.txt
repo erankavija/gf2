@@ -1,4 +1,4 @@
-# Cases whose first completed session records perf counters and hot instructions.
+# Cases whose every completed session records perf counters and hot instructions.
 qam16-r12-normal-direct
 qam16-r12-normal-sim-stage
 qam16-r12-normal-xdsopl-packed

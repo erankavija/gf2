@@ -85,33 +85,31 @@ def main():
 
     print("## Hardware counters and hot instructions")
     print()
-    counter_root = root / "rep-01" / "counters"
-    hot_root = root / "rep-01" / "hot"
-    if not counter_root.is_dir():
-        print("Hardware counter collection is unavailable in the retained session.")
-        return
-    print("| Case | perf stat | perf record | counter data | hot-symbol report | instruction listing |")
-    print("|---|---:|---:|---|---|---|")
-    for status in sorted(counter_root.glob("*.status")):
-        case = status.stem
-        stat_rc = status.read_text().strip()
-        record_status = hot_root / f"{case}.status"
-        record_rc = record_status.read_text().strip() if record_status.exists() else "missing"
-        listing = hot_root / f"{case}.instructions.txt"
-        rendered = f"`rep-01/hot/{case}.instructions.txt`" if listing.exists() else "absent"
-        print(
-            f"| `{case}` | {stat_rc} | {record_rc} | `rep-01/counters/{case}.csv` | "
-            f"`rep-01/hot/{case}.report.txt` | {rendered} |"
-        )
-    print()
     print(
-        "Exit status zero means the host exposed the requested user-mode counters. Nonzero "
-        "status is retained with stderr as the durable unavailable outcome; it is not replaced "
-        "by inferred counter values. An instruction listing disassembles the pinned executable "
-        "against the samples already recorded beside it, so `render-hot-instructions.sh` "
-        "reproduces it outside the benchmark window; a session whose own annotation step "
-        "leaves an empty `.annotate.txt` keeps that file and its `.err` record."
+        "Each completed repetition records perf-stat counters, sampled hot symbols, "
+        "and an instruction listing. Status zero means collection succeeded; a nonzero "
+        "status retains stderr as the unavailable outcome. The attribution-table "
+        "generator forms across-repetition intervals from these files."
     )
+    print()
+    print("| Case | repetitions | perf stat success | perf record success | source directories |")
+    print("|---|---:|---:|---:|---|")
+    for case in ladder:
+        statuses = []
+        for path in session_paths:
+            rep = path.parent
+            stat = rep / "counters" / f"{case}.status"
+            record = rep / "hot" / f"{case}.status"
+            statuses.append(
+                (stat.is_file() and stat.read_text().strip() == "0",
+                 record.is_file() and record.read_text().strip() == "0")
+            )
+        print(
+            f"| `{case}` | {len(statuses)} | "
+            f"{sum(stat for stat, _ in statuses)}/{len(statuses)} | "
+            f"{sum(record for _, record in statuses)}/{len(statuses)} | "
+            "`rep-NN/counters/`, `rep-NN/hot/` |"
+        )
 
 
 def render(values):

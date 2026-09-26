@@ -1,9 +1,9 @@
 # DVB-T2 interleaver profile non-timed arm smoke (jit:9fb40c83)
 # command: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh
 # contract: benchmark-ab-runner smoke (tuning_campaign_support::arm::smoke)
-# campaign: 9fb40c83-dvb-interleave-arms-smoke plan sha256 b6977c0f56ed42bc07534905d91e50d2b3740f513d66d70b198a4ab141b0521c
+# campaign: 9fb40c83-dvb-interleave-arms-smoke plan sha256 ab8dba4a3c348d9ca559d77e6faef31440896d88dcc608347bdc823097744de4
 # addendum: dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json sha256 47865f3f83bba6dc085d91fcfc828cc0424a0869289a0505564b548ab2a3d869
-# dvb-profile-arm sha256: 686a19d2833211a4bf215e6878bd4a69aa1daed42207a48561f124f052222164
+# dvb-profile-arm sha256: fa9e90434ec664294b1e429ccf3fdc4665d9677b74f8b53c0c23ffa3508cecc5
 PASS cell dvb-t2-qam16-r12-normal-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, cache warm, 0 timing windows
 PASS cell dvb-t2-qam16-r12-normal-warm-sim-stage-gap: gf2-stage and xdsopl-stage validated, cache warm, 0 timing windows
 PASS cell dvb-t2-qam64-r12-normal-warm-isolated-null: gf2-direct-a and gf2-direct-b validated, cache warm, 0 timing windows
