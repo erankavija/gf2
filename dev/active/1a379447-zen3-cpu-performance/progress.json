@@ -675,8 +675,8 @@
           "short_id": "c73ffa25",
           "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
           "classification": "research",
-          "status": "pending; merged from 2094958d, 833dff1a (session 19)",
-          "tracker_state": "backlog"
+          "status": "in_progress; Sol xhigh prepares baseline and profile queue in agent-c73ffa25",
+          "tracker_state": "in_progress"
         },
         {
           "id": "50f0bd42",
@@ -1318,6 +1318,15 @@
       "question": "Schedule prepared current-wave jobs on2026-09-27 at04:00 Europe/Helsinki? Prior timer expired; no new timer armed.",
       "recommendation": "04:00 Helsinki; hold unrelated confirmations",
       "resolution": "Invoker approves windows needed for current wave only, then changes start to 02:00 Europe/Helsinki from September 27 onward. Hold later-wave confirmations."
+    },
+    {
+      "category": "rework limit",
+      "issue": "9fb40c83",
+      "status": "open",
+      "raised_at": "2026-09-26T13:14Z",
+      "question": "Approve round 5: remove unsupported perf annotate --no-source, check parsing against retained samples, rerun configured gates before re-enabling fresh profile queue.",
+      "recommendation": "focused repair; retained-data annotation without that option succeeds with exit 0",
+      "gate_run": "744db121-87b0-4a45-a6e7-536d08823a34"
     }
   ],
   "rework_counts": {
@@ -1924,7 +1933,7 @@
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
     "note": "User authorizes 02:00 Europe/Helsinki on subsequent nights as needed for current wave 3. Arm each next window after reviewing prior results and queue readiness.",
-    "current_observation": "Active timer verified for September27 02:00 EEST. Nine pending current-wave jobs estimate128 minutes, including approved fresh DVB nine-repetition profile. Five later-wave confirmations remain held. Dense baseline preparation follows completed e1f9a78f."
+    "current_observation": "2026-09-26: 02:00 EEST September 27 timer armed. DVB fresh profile held after code-review finding until round-5 approval and passing gate; other eight pending jobs remain enabled (116 estimated minutes). Dense baseline preparation continues."
   },
   "session_scope": {
     "session": 24,
@@ -1949,6 +1958,17 @@
     ],
     "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation.",
     "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
-    "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3"
+    "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3",
+    "completed_this_session": [
+      "e1f9a78f"
+    ],
+    "active_workers": {
+      "c73ffa25": {
+        "agent": "/root/dense_baseline",
+        "model": "gpt-6-sol",
+        "worktree": ".agents/worktrees/agent-c73ffa25",
+        "base": "4e76145b588c0c8941d9e2836a4368e3175e8392"
+      }
+    }
   }
 }
