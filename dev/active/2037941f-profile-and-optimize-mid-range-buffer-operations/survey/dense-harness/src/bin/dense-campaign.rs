@@ -12,6 +12,8 @@
 //!                        [--m4ri-executable <path>] [--label pilot|smoke]
 //!                        [--max-cells-per-session <n>]
 //! dense-campaign inputs  --producing-manifest <path> [--also <path>]...
+//! dense-campaign profile-request --family <id> --addendum <path>
+//!                        --cell <id> --arm <name> --cpu <n>
 //! ```
 //!
 //! `verify` re-derives the transcription of the named family and compares it
@@ -24,8 +26,11 @@
 use dense_parity_harness::campaign::{self, PlanInputs};
 use dense_parity_harness::cells::{family_cells, Question, UNAVAILABLE_ROWS};
 use dense_parity_harness::inputs;
+use dense_parity_harness::wire::Case;
 use std::collections::BTreeMap;
-use tuning_campaign_support::protocol::{FamilyAddendum, ReceiptLabel};
+use tuning_campaign_support::arm::{ArmRequest, PairPosition};
+use tuning_campaign_support::protocol::{FamilyAddendum, PlanCell, ReceiptLabel, SHARED_SETTINGS};
+use tuning_campaign_support::transport;
 
 fn main() {
     if let Err(error) = run() {
@@ -129,7 +134,7 @@ fn transcribe(arguments: &Arguments) -> Result<FamilyAddendum, String> {
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     let (command, rest) = raw.split_first().ok_or(
-        "usage: dense-campaign <pins|list|cells|verify|plan|inputs> --flag value ...",
+        "usage: dense-campaign <pins|list|cells|verify|plan|inputs|profile-request> --flag value ...",
     )?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
@@ -158,10 +163,14 @@ fn run() -> Result<(), String> {
         }
         "verify" => verify(&arguments),
         "plan" => project(&arguments),
+        "profile-request" => profile_request(&arguments),
         "inputs" => {
             let manifest = arguments.required("producing-manifest")?;
             let checked = inputs::check(&repository_root()?, manifest, arguments.repeated())?;
-            println!("{manifest}: {} campaign inputs committed and clean", checked.len());
+            println!(
+                "{manifest}: {} campaign inputs committed and clean",
+                checked.len()
+            );
             Ok(())
         }
         other => Err(format!("unknown command {other:?}")),
@@ -182,9 +191,18 @@ fn pins() -> Result<(), String> {
     }
     println!("addendum={path}");
     println!("addendum_sha256={observed}");
-    println!("addendum_identity={}", dense_parity_harness::cells::ADDENDUM_IDENTITY);
-    println!("addendum_frozen_utc={}", dense_parity_harness::cells::ADDENDUM_FROZEN_UTC);
-    println!("comparator={}", dense_parity_harness::cells::COMPARATOR_PATH);
+    println!(
+        "addendum_identity={}",
+        dense_parity_harness::cells::ADDENDUM_IDENTITY
+    );
+    println!(
+        "addendum_frozen_utc={}",
+        dense_parity_harness::cells::ADDENDUM_FROZEN_UTC
+    );
+    println!(
+        "comparator={}",
+        dense_parity_harness::cells::COMPARATOR_PATH
+    );
     for question in Question::ALL {
         println!(
             "family={} ledger={} cells={}",
@@ -202,8 +220,8 @@ fn pins() -> Result<(), String> {
     Ok(())
 }
 
-/// Re-derives a family's transcription and compares it with a candidate JSON.
-fn verify(arguments: &Arguments) -> Result<(), String> {
+/// Re-derives a family's transcription and compares it with committed JSON.
+fn verified_addendum(arguments: &Arguments) -> Result<(Question, FamilyAddendum), String> {
     let question = question(arguments)?;
     let path = arguments.required("addendum")?;
     let bytes = std::fs::read(path).map_err(|error| format!("cannot read {path}: {error}"))?;
@@ -225,11 +243,19 @@ fn verify(arguments: &Arguments) -> Result<(), String> {
         .ok_or("the campaign addendum declares no freeze time")?;
     let derived = campaign::addendum(question, &candidate.family.issue, &frozen);
     if derived != candidate {
-        return Err(format!("{path} is not the harness transcription of the frozen addendum"));
+        return Err(format!(
+            "{path} is not the harness transcription of the frozen addendum"
+        ));
     }
     if render(&derived)? != String::from_utf8_lossy(&bytes) {
         return Err(format!("{path} is not canonically rendered"));
     }
+    Ok((question, candidate))
+}
+
+fn verify(arguments: &Arguments) -> Result<(), String> {
+    let (question, candidate) = verified_addendum(arguments)?;
+    let path = arguments.required("addendum")?;
     println!(
         "{path}: transcribes {} with {} cells from {} ({})",
         question.family_id(),
@@ -282,7 +308,11 @@ fn project(arguments: &Arguments) -> Result<(), String> {
         .map_err(|error| format!("cannot encode the plan: {error}"))?;
     text.push('\n');
     std::fs::write(output, &text).map_err(|error| format!("cannot write {output}: {error}"))?;
-    println!("{output}: {} cells, {} arms", plan.cells.len(), plan.arms.len());
+    println!(
+        "{output}: {} cells, {} arms",
+        plan.cells.len(),
+        plan.arms.len()
+    );
     Ok(())
 }
 
@@ -290,4 +320,58 @@ fn project(arguments: &Arguments) -> Result<(), String> {
 fn repository_root() -> Result<std::path::PathBuf, String> {
     std::fs::canonicalize(".")
         .map_err(|error| format!("cannot resolve the working directory: {error}"))
+}
+
+/// Emits one canonical timed request for profiler attribution of a frozen cell.
+///
+/// The profiler invokes the existing arm and is not a campaign or a source of
+/// acceptance samples. The request uses the protocol's builder and frozen
+/// window settings, so the arm follows its measured cost boundary.
+fn profile_request(arguments: &Arguments) -> Result<(), String> {
+    let (question, addendum) = verified_addendum(arguments)?;
+    if question == Question::MatvecVsM4ri {
+        return Err("the M4RI comparison is a separate family".into());
+    }
+    let cell_id = arguments.required("cell")?;
+    let cell = family_cells(question)
+        .into_iter()
+        .find(|cell| cell.cell_id == cell_id)
+        .ok_or_else(|| format!("{cell_id} is not a frozen cell of {}", question.family_id()))?;
+    let (baseline, candidate) = campaign::cell_arms(&cell);
+    let arm = arguments.required("arm")?;
+    if arm != baseline && arm != candidate {
+        return Err(format!("{arm} is not an arm of {cell_id}"));
+    }
+    let declared = addendum
+        .cell(cell_id)
+        .ok_or("the cell is absent from the addendum")?;
+    let plan_cell = PlanCell {
+        cell_id: cell.cell_id.clone(),
+        baseline_arm: baseline.to_owned(),
+        candidate_arm: candidate.to_owned(),
+        case: serde_json::to_value(Case::of(&cell))
+            .map_err(|error| format!("cannot encode case: {error}"))?,
+        pilot_pairs: Some(campaign::PILOT_PAIRS),
+    };
+    let cpu = arguments
+        .number("cpu")?
+        .ok_or("--cpu is required")?
+        .try_into()
+        .map_err(|_| "--cpu exceeds the supported CPU range")?;
+    let role = if arm == baseline {
+        PairPosition::Baseline
+    } else {
+        PairPosition::Candidate
+    };
+    let request = ArmRequest::timed(
+        &plan_cell,
+        declared,
+        arm,
+        role,
+        0,
+        vec![cpu],
+        &SHARED_SETTINGS,
+    )?;
+    println!("{}", transport::encode_case(&request)?);
+    Ok(())
 }

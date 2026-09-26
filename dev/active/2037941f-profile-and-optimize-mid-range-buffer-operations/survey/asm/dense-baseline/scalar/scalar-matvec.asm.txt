@@ -1,0 +1,2 @@
+# scalar-matvec: gf2_core::matrix::BitMatrix::matvec_scalar
+# binary sha256: 2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e

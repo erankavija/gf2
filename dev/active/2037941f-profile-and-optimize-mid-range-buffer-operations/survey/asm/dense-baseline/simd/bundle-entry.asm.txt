@@ -1,0 +1,6 @@
+# bundle-entry: gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+# binary sha256: 588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+
+## gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn at 000000000005d1d0, 0x0000000000000005 bytes
+000000000005d1d0 <gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn>:
+   5d1d0:	jmp    5c1f0 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt>
