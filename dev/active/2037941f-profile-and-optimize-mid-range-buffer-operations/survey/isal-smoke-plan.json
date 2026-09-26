@@ -1,0 +1,181 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "65c0e13d-isal-wire-smoke",
+  "issue": "65c0e13d",
+  "label": "smoke",
+  "campaign_seed": 20260916,
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isal-base-gap.json",
+  "producing_manifest": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
+  "lock_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/65c0e13d-smoke/lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "isal-peer-gf2": {
+      "build": "conservative-portable",
+      "description": "Operation-equivalent gf2 arm: fresh aligned destination, copy of source zero, public in-place XOR with source one and output observation, all inside the call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-arms/release/logical-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LOGICAL_ROUTE": "isal-peer-gf2"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    },
+    "isal-xor-gen-base": {
+      "build": "external",
+      "description": "ISA-L xor_gen_base/scalar with its fresh aligned destination, its void * pointer array built inside the call and output observation",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/logical-isal-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "C -std=c11 -O3 -march=native -Wall -Wextra -Werror; Rust glue without a target-cpu override",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "isal-base-gap-8w-a64-warm",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 6304319779043369078,
+        "words": 8
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-9w-a64-warm",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 2382401999512260064,
+        "words": 9
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-63w-a64-warm",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 2745164440061170567,
+        "words": 63
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-64w-a64-warm",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 3966122322295925345,
+        "words": 64
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-65w-a64-warm",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 17594899724642321088,
+        "words": 65
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-7w-a64-warm",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 16974648034209860281,
+        "words": 7
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-66w-a64-warm",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 14294654012469412926,
+        "words": 66
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-8w-a64-streaming",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 5413099796061979027,
+        "words": 8
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-9w-a64-streaming",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 8162132454104802985,
+        "words": 9
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-63w-a64-streaming",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 13368635410864293247,
+        "words": 63
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-64w-a64-streaming",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 17767765956473611411,
+        "words": 64
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "isal-base-gap-65w-a64-streaming",
+      "baseline_arm": "isal-peer-gf2",
+      "candidate_arm": "isal-xor-gen-base",
+      "case": {
+        "layout": "a64",
+        "question": "isal-base-gap",
+        "seed": 14299361640431224536,
+        "words": 65
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": null
+}

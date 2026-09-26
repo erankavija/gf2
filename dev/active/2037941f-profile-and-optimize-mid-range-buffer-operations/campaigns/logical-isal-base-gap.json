@@ -1,0 +1,371 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "2037941f-logical-isal-base-gap",
+    "issue": "65c0e13d",
+    "purpose": "kernel-family",
+    "description": "Operation-equivalent comparison of public gf2 in-place XOR with ISA-L xor_gen_base/scalar at the frozen word counts. This addendum is the pilot: every cell is exploratory and no cell decides adoption."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-26T08:18:04Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "The scalar comparator gap is not an adoption objective.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "A five percent band separates a comparable external arm from a recorded difference.",
+    "material_gap_threshold": 1.1,
+    "material_gap_rationale": "A ten-percent external gap warrants attribution, not selection. The scalar result cannot stand in for dispatched ISA-L."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "Zero production lines and zero unsafe kernels; no production change is selected from an external comparator."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 4,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "isal-base-gap-8w-a64-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-8w-a64-warm",
+        "size": {
+          "bits": 512,
+          "words": 8
+        },
+        "seed": 6304319779043369078
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-9w-a64-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-9w-a64-warm",
+        "size": {
+          "bits": 576,
+          "words": 9
+        },
+        "seed": 2382401999512260064
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-63w-a64-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-63w-a64-warm",
+        "size": {
+          "bits": 4032,
+          "words": 63
+        },
+        "seed": 2745164440061170567
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-64w-a64-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-64w-a64-warm",
+        "size": {
+          "bits": 4096,
+          "words": 64
+        },
+        "seed": 3966122322295925345
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-65w-a64-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-65w-a64-warm",
+        "size": {
+          "bits": 4160,
+          "words": 65
+        },
+        "seed": 17594899724642321088
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-7w-a64-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-7w-a64-warm",
+        "size": {
+          "bits": 448,
+          "words": 7
+        },
+        "seed": 16974648034209860281
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-66w-a64-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-66w-a64-warm",
+        "size": {
+          "bits": 4224,
+          "words": 66
+        },
+        "seed": 14294654012469412926
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-8w-a64-streaming",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-8w-a64-streaming",
+        "size": {
+          "bits": 512,
+          "words": 8
+        },
+        "seed": 5413099796061979027
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-9w-a64-streaming",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-9w-a64-streaming",
+        "size": {
+          "bits": 576,
+          "words": 9
+        },
+        "seed": 8162132454104802985
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-63w-a64-streaming",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-63w-a64-streaming",
+        "size": {
+          "bits": 4032,
+          "words": 63
+        },
+        "seed": 13368635410864293247
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-64w-a64-streaming",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-64w-a64-streaming",
+        "size": {
+          "bits": 4096,
+          "words": 64
+        },
+        "seed": 17767765956473611411
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "isal-base-gap-65w-a64-streaming",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "isal-base-gap-isal-base-gap-65w-a64-streaming",
+        "size": {
+          "bits": 4160,
+          "words": 65
+        },
+        "seed": 14299361640431224536
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
