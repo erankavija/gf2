@@ -22,13 +22,21 @@ REPO="$(cd "${HERE}/../../../.." && pwd)"
     exit 2
 }
 
+TOP_LEVEL=("$0" "$@")
+format_invocation() {
+    local arg separator=''
+    for arg in "${TOP_LEVEL[@]}"; do
+        printf '%s%q' "${separator}" "${arg}"
+        separator=' '
+    done
+}
+
 STORY=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
 SURVEY="${STORY}/survey"
 MANIFEST="${REPO}/${SURVEY}/dense-harness/Cargo.toml"
 PRODUCING="${SURVEY}/dense-producing-inputs.json"
 VALIDATION="${SURVEY}/dense-harness-validation.txt"
 SMOKE_RECORD="${SURVEY}/dense-runner-smoke.txt"
-LAUNCHER="${SURVEY}/run-dense-harness.sh"
 GF2_TARGET="${REPO}/target/e1f9a78f-arms"
 SCALAR_TARGET="${REPO}/target/e1f9a78f-scalar-arm"
 M4RI_TARGET="${REPO}/target/e1f9a78f-m4ri-arm"
@@ -85,9 +93,7 @@ build_m4ri() {
 
 cmd_build() {
     local with_m4ri=0 prefix='' invocation
-    # The record states the invocation that produced it, so the launcher's own
-    # arguments are passed through rather than reconstructed.
-    invocation="${LAUNCHER} build${*:+ $*}"
+    invocation="$(format_invocation)"
     [[ "${1:-}" == "--m4ri" ]] && with_m4ri=1
     build_gf2
     # The survey harness is its own workspace, so the repository CI contract
@@ -143,9 +149,7 @@ cmd_cells() {
 
 cmd_smoke() {
     local with_m4ri=0 invocation
-    # The record states the invocation that produced it, so the launcher's own
-    # arguments are passed through rather than reconstructed.
-    invocation="${LAUNCHER} smoke${*:+ $*}"
+    invocation="$(format_invocation)"
     [[ "${1:-}" == "--m4ri" ]] && with_m4ri=1
     build_gf2
     [[ "${with_m4ri}" == 1 ]] && build_m4ri >/dev/null
@@ -333,7 +337,7 @@ cmd_window() {
 
     launch="${stage}.launcher.log"
     {
-        echo "# command: $0 $*"
+        printf "# command: %s\n" "$(format_invocation)"
         echo "# started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
         echo "# gf2 revision (informational): $(git rev-parse HEAD)"
         "${CAMPAIGN_TOOL}" pins | sed 's/^/# /'
