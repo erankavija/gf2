@@ -8,7 +8,89 @@
     "f8dd4dde-bafd-42a2-a329-5edcf900b520"
   ],
   "description": "Measure the shipped BMI2-gated residual shift route against the scalar funnel the library takes without it, as a protocol-version-4 A/B family with a pilot and a confirmation, and publish the receipts and the decision.\n\n## Background\n\nThe residual-shift workload profile at `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` records the residual branch as material against a word-aligned control that performs strictly less work per word, so no row of it supports adoption. This family answers the question it leaves open by comparing residual against residual at the cells that profile records as material. Both arms are the same shipped executable separated by the test-build lane switch: the baseline arm holds the residual branch on the scalar funnel and the candidate arm lets the gated route run, so the comparison isolates the dispatched route and nothing else. The family has no downstream production caller, so whole-consumer measurement is inapplicable and the public primitive is measured in isolation. This candidate is its own protocol family with its own append-only ledger, and the exploratory profile's receipt is context it pins by path and digest rather than evidence it inherits. The frozen rule decides retention, so a non-qualifying outcome removes the dispatched route instead of keeping it on a later argument.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen family addendum is committed before the pilot launches, with every numeric setting from it and the shared protocol settings, and the confirmation addendum is derived from the committed pilot receipt by the repository's canonical confirmation freezer, with its derivation record beside it and a family description that states the confirmatory stage rather than the pilot's exploratory one.\n- [hard] REQ-02: Both arms are the same shipped executable separated by the test-build lane switch, the baseline arm held on the scalar funnel and the candidate arm on the gated route, and each cell's selected route is recorded at run time.\n- [hard] REQ-03: The pilot's cells are material cells of the residual-shift workload profile in both shift directions, and the confirmation retains as many of them as this family's confirmatory budget admits under the protocol's P-20 rule recomputed from the campaign-support sources for this family's own ledger; the derivation record names which cells are retained, which are dropped and why, and a ledger history admitting no confirmatory cell records that arithmetic as the outcome.\n- [hard] REQ-04: The family's append-only ledger opens empty, records each attempt's reservation and is never hand-edited; an attempt aborted for a procedural defect in its own freeze or launch, before any result is read, is recorded under the voided-attempt rule with its stage preserved.\n- [hard] REQ-05: Every arm and case operation passes a non-timed harness smoke before any timed campaign is queued: the smoke drives each arm with the benchmark runner's own transport encoder and framing, pins its request mirror against the runner's request in a test and records zero timing windows.\n- [hard] REQ-06: Every timed run is a committed queue line for the benchmark window rather than a session launch, and an interrupted campaign resumes under its own identity without repeating a completed cell.\n- [hard] REQ-07: Each campaign is verified from its own execution log: the declared cell count starts, checkpoints and completes exactly once, every cell reaches its declared pair count with a measured status, the campaign ends in a terminal complete record, and the acceptance tool recomputes the committed verdict.\n- [hard] REQ-08: The published outcome states the verdict the acceptance summary records for each cell, including any not-material or regressed cell, and states how the verdict relates to the exploratory profile receipt it pins by path and digest as context; a non-qualifying outcome is published as the result, with retention or removal of the dispatched route decided by the frozen rule rather than after the fact.\n- [hard] REQ-09: No measured or derived figure is copied into prose; each quantitative statement is a conclusion plus a pointer to the generated table row, receipt or ledger line that holds it.\n\n## Notes\n\n`dev/active/1a379447-zen3-cpu-performance/measurement-contract.md` and `dev/active/f547c394/protocol.md` are normative, and timed work runs only in a scheduled benchmark window. The canonical confirmation freezer is `dev/active/c7113c5a/survey/freeze-confirmation.py`; its family-description input carries the confirmation's own family prose.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "protocol",
+      "label": "Frozen residual BMI2 pilot addendum",
+      "path": "dev/active/00dd43c3/pilot-addendum.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Pinned material workload profile receipt",
+      "path": "dev/active/00dd43c3/profile-context.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "smoke",
+      "label": "Shared runner zero-window route smoke",
+      "path": "dev/active/00dd43c3/pilot-smoke.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Residual route producing-input closure",
+      "path": "dev/active/00dd43c3/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Resumable pilot and confirmation launcher",
+      "path": "dev/active/00dd43c3/survey/run-campaign.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Canonical confirmation freezer wrapper",
+      "path": "dev/active/00dd43c3/survey/freeze-confirmation.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Material workload pilot projection",
+      "path": "dev/active/00dd43c3/survey/freeze-pilot.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Residual pilot and confirmation plan projection",
+      "path": "dev/active/00dd43c3/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Producing-input closure generator",
+      "path": "dev/active/00dd43c3/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "test",
+      "label": "Pilot material-cell selection checks",
+      "path": "dev/active/00dd43c3/survey/test_pilot_freeze.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Runtime route and executable smoke verification",
+      "path": "dev/active/00dd43c3/survey/verify-smoke.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Empty append-only family ledger genesis",
+      "path": "dev/bench_results/00dd43c3/residual-shift-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "plan",
+      "format": "markdown",
+      "label": "Overnight residual BMI2 pilot queue line",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    }
+  ],
   "first_ready_at": "2026-09-19T15:37:57.876881427Z",
   "gates_required": [
     "cargo-ci",
@@ -36,5 +118,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Confirm the BMI2 residual shift route against the scalar funnel",
-  "updated_at": "2026-09-26T07:49:42.026000386Z"
+  "updated_at": "2026-09-26T08:02:17.734767345Z"
 }
