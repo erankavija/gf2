@@ -1,0 +1,13 @@
+# Dense baseline release assembly
+# binary: target/e1f9a78f-arms/release/dense-arm
+# sha256: 588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+# rustc: rustc 1.95.0 (59807616e 2026-04-14)
+# objdump: GNU objdump (GNU Binutils) 2.47
+# label symbols bytes source-pattern
+public-matvec 1 164 gf2_core::matrix::BitMatrix::matvec
+simd-matvec 1 571 gf2_core::matrix::BitMatrix::matvec_simd
+scalar-matvec 1 1048 gf2_core::matrix::BitMatrix::matvec_scalar
+avx2-fused 1 979 gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+bundle-entry 1 5 gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+retained-output 4 864 dense_parity_harness::routes::OutputSink
+arm-body 5 1474 dense_arm::run::{{closure}}
