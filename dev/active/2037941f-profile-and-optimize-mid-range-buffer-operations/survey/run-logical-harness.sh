@@ -69,9 +69,9 @@ build_gf2() {
 
 build_isal() {
     local source
-    source="$(isal_source)"
+    source="$(isal_source)" || return
     GF2_ISAL_SOURCE="${source}" CARGO_TARGET_DIR="${ISAL_TARGET}" \
-        bash "${SURVEY}/build-isal-arm.sh" >&2
+        bash "${SURVEY}/build-isal-arm.sh" >&2 || return
     printf '%s\n' "${source}"
 }
 
@@ -90,7 +90,9 @@ cmd_build() {
     echo "${contract}"
     passed="$(printf '%s\n' "${contract}" |
         awk '/^test result: ok\./ { total += $4 } END { print total + 0 }')"
-    [[ "${with_isal}" == 1 ]] && source="$(build_isal)"
+    if [[ "${with_isal}" == 1 ]]; then
+        source="$(build_isal)" || return
+    fi
 
     local version llvm host
     version="$(rustc --version | sed 's/^rustc //')"
@@ -134,7 +136,9 @@ cmd_smoke() {
     invocation="${LAUNCHER} smoke${*:+ $*}"
     [[ "${1:-}" == "--isal" ]] && with_isal=1
     build_gf2
-    [[ "${with_isal}" == 1 ]] && build_isal >/dev/null
+    if [[ "${with_isal}" == 1 ]]; then
+        build_isal >/dev/null || return
+    fi
     ./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
         --bin benchmark-ab-runner
     local runner
@@ -249,7 +253,7 @@ cmd_window() {
     build_gf2
     local isal_flag=()
     if [[ "${with_isal}" == 1 ]]; then
-        build_isal >/dev/null
+        build_isal >/dev/null || return
         isal_flag=(--isal-executable "${ISAL_ARM}")
     fi
     ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
