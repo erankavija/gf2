@@ -4,11 +4,12 @@
 # every line below is projected from the semantic oracle's output and the
 # families' smoke records under target/; a rerun on the same executables
 # reproduces it byte for byte
-# dense-arm (target/e1f9a78f-arms/release/dense-arm) sha256: 79879e0fc903882d8cf9d7a7ede9b39ac74034cbfd446b2dbc6109c6a9dc0355
-# dense-m4ri-arm (target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm) sha256: 4af3539204fcbbb86b3376bc0e5c5516c9a4084afbaf6776d2dfae87b46b32ad
-# dense-arm (target/e1f9a78f-scalar-arm/release/dense-arm) sha256: 1b3becd88e045d74e7abf1ea79469848a56b7e0c742e4410836f65079c2537e2
+# dense-arm (target/e1f9a78f-arms/release/dense-arm) sha256: 2c77115f47e5114b2101f6521de9836bb8ee0b86427e63ebdc92a3f387a07bd3
+# dense-m4ri-arm (target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm) sha256: 1e49f6a01096ec6835bb093dc941625b0b3b6e47dbc17eb5b11fe8cdfbb26548
+# dense-arm (target/e1f9a78f-scalar-arm/release/dense-arm) sha256: abf9a95d7776d57ca2e4f42eb00f45f83de7e713aa486e2758969029184cfcc5
 PASS semantic oracle: 108 cases, 21465 checks
 PASS campaign e1f9a78f-2037941f-dense-isolated-fused-parity-arm-smoke: 2 cells
+PASS staged campaign e1f9a78f-2037941f-dense-isolated-fused-parity-arm-smoke: 2 sessions, 1 pause, append-only log and checkpoints, 0 timing samples, finalize refused
 PASS cell and-popcnt-8w-warm: and-popcnt-a and and-popcnt-b validated, cache warm, 0 timing windows
 PASS cell and-popcnt-8w-streaming: and-popcnt-a and and-popcnt-b validated, cache streaming, 0 timing windows
 PASS arm and-popcnt-a: 2 dispatches, 0 timing windows
@@ -19,6 +20,7 @@ PASS route and-popcnt-b: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8
 PASS route and-popcnt-b: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B
 PASS 2037941f-dense-isolated-fused-parity: 2 cells, 4 dispatches, 0 timing windows, 4 gf2 dispatches naming a working set their banks account for
 PASS campaign e1f9a78f-2037941f-dense-allocated-matvec-arm-smoke: 3 cells
+PASS staged campaign e1f9a78f-2037941f-dense-allocated-matvec-arm-smoke: 3 sessions, 2 pauses, append-only log and checkpoints, 0 timing samples, finalize refused
 PASS cell matvec-r1024-8w-warm: matvec-a and matvec-b validated, cache warm, 0 timing windows
 PASS cell matvec-r1024-8w-cold: matvec-a and matvec-b validated, cache cold, 0 timing windows
 PASS cell matvec-r1024-8w-scalar-reference-warm: matvec-scalar-reference and matvec-b validated, cache warm, 0 timing windows
@@ -30,6 +32,7 @@ PASS arm matvec-scalar-reference: 1 dispatches, 0 timing windows
 PASS route matvec-scalar-reference: gf2-core/BitMatrix::matvec/scalar-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B
 PASS 2037941f-dense-allocated-matvec: 3 cells, 6 dispatches, 0 timing windows, 6 gf2 dispatches naming a working set their banks account for
 PASS campaign e1f9a78f-2037941f-dense-matvec-vs-m4ri-arm-smoke: 2 cells
+PASS staged campaign e1f9a78f-2037941f-dense-matvec-vs-m4ri-arm-smoke: 2 sessions, 1 pause, append-only log and checkpoints, 0 timing samples, finalize refused
 PASS cell m4ri-gap-65x512-warm: m4ri-peer-gf2 and m4ri-mzd-mul validated, cache warm, 0 timing windows
 PASS cell m4ri-gap-65x512-retained-warm: m4ri-peer-gf2 and m4ri-mzd-mul validated, cache warm, 0 timing windows
 PASS arm m4ri-mzd-mul: 2 dispatches, 0 timing windows

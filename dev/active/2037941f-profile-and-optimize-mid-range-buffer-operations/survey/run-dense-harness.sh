@@ -216,14 +216,32 @@ cmd_smoke() {
             --gf2-executable "${GF2_ARM}" \
             --scalar-executable "${SCALAR_ARM}" \
             "${external[@]}" \
-            --producing-manifest "${PRODUCING}" \
+            --producing-manifest "${PRODUCING}" --max-cells-per-session 1 \
             --output "${plan}"
-        "${runner}" smoke "${plan}" --record "${smoke}/${family}/smoke.json"
+        local stage_dir="${smoke}/${family}/stage" cells session rc
+        cells="$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["cells"]))' "${plan}")"
+        for ((session=1; session<=cells; session++)); do
+            set +e
+            "${runner}" smoke "${plan}" --stage "${stage_dir}" \
+                --record "${smoke}/${family}/smoke.json" |
+                tee "${smoke}/${family}/session-$(printf '%02d' "${session}").stdout"
+            rc=${PIPESTATUS[0]}
+            set -e
+            cp "${stage_dir}/execution.log" \
+                "${smoke}/${family}/session-$(printf '%02d' "${session}").log"
+            case "${rc}" in
+                0) break ;;
+                3) ;;
+                *) echo "staged smoke session ${session} failed with ${rc}" >&2; exit "${rc}" ;;
+            esac
+        done
+        [[ "${rc}" == 0 ]] || { echo "staged smoke of ${family} did not complete" >&2; exit 2; }
     done
 
     python3 -B "${SURVEY}/check-dense-smoke.py" --stage "${smoke}" --record "${SMOKE_RECORD}" \
         --command "${invocation}" \
         --oracle "${smoke}/oracle.txt" \
+        --runner "${runner}" \
         --families "${families[@]}"
     cat "${SMOKE_RECORD}"
     echo "smoke record: ${SMOKE_RECORD}" >&2
