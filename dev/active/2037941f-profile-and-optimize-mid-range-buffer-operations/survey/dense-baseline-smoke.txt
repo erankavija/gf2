@@ -1,0 +1,33 @@
+# Dense-parity harness non-timed arm smoke (jit:e1f9a78f)
+# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh smoke
+# contract: benchmark-ab-runner smoke (tuning_campaign_support::arm::smoke)
+# every line below is projected from the semantic oracle's output and the
+# families' smoke records under target/; a rerun on the same executables
+# reproduces it byte for byte
+# dense-arm (target/e1f9a78f-arms/release/dense-arm) sha256: 588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+# dense-arm (target/e1f9a78f-scalar-arm/release/dense-arm) sha256: 2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e
+PASS semantic oracle: 102 cases, 21106 checks
+PASS campaign e1f9a78f-2037941f-dense-isolated-fused-parity-arm-smoke: 2 cells
+PASS staged campaign e1f9a78f-2037941f-dense-isolated-fused-parity-arm-smoke: 2 sessions, 1 pause, append-only log and checkpoints, 0 timing samples, finalize refused
+PASS cell and-popcnt-8w-warm: and-popcnt-a and and-popcnt-b validated, cache warm, 0 timing windows
+PASS cell and-popcnt-8w-streaming: and-popcnt-a and and-popcnt-b validated, cache streaming, 0 timing windows
+PASS arm and-popcnt-a: 2 dispatches, 0 timing windows
+PASS route and-popcnt-a: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B
+PASS route and-popcnt-a: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B
+PASS arm and-popcnt-b: 2 dispatches, 0 timing windows
+PASS route and-popcnt-b: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B
+PASS route and-popcnt-b: gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B
+PASS 2037941f-dense-isolated-fused-parity: 2 cells, 4 dispatches, 0 timing windows, 4 gf2 dispatches naming a working set their banks account for
+PASS campaign e1f9a78f-2037941f-dense-allocated-matvec-arm-smoke: 3 cells
+PASS staged campaign e1f9a78f-2037941f-dense-allocated-matvec-arm-smoke: 3 sessions, 2 pauses, append-only log and checkpoints, 0 timing samples, finalize refused
+PASS cell matvec-r1024-8w-warm: matvec-a and matvec-b validated, cache warm, 0 timing windows
+PASS cell matvec-r1024-8w-cold: matvec-a and matvec-b validated, cache cold, 0 timing windows
+PASS cell matvec-r1024-8w-scalar-reference-warm: matvec-scalar-reference and matvec-b validated, cache warm, 0 timing windows
+PASS arm matvec-a: 2 dispatches, 0 timing windows
+PASS route matvec-a: gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B
+PASS arm matvec-b: 3 dispatches, 0 timing windows
+PASS route matvec-b: gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B
+PASS arm matvec-scalar-reference: 1 dispatches, 0 timing windows
+PASS route matvec-scalar-reference: gf2-core/BitMatrix::matvec/scalar-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B
+PASS 2037941f-dense-allocated-matvec: 3 cells, 6 dispatches, 0 timing windows, 6 gf2 dispatches naming a working set their banks account for
+PASS 2037941f-dense-matvec-vs-m4ri cells: 8 cells transcribe and verify against the frozen addendum
