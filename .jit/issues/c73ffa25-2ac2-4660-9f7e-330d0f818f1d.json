@@ -7,14 +7,193 @@
     "e1f9a78f-1a3e-4066-8744-aa55d10f85db"
   ],
   "description": "Record the dense-matvec baseline and freeze the dense-parity candidate portfolio.\n\n## Background\n\n**2094958d — Record the dense-matvec baseline.** Run the frozen allocated `BitMatrix::matvec` cells and commit the current fused AND-popcount production baseline. The measurement covers row strides of 8, 9, 63, 64, and 65 words plus neighboring dimensions and declared cache regimes. The scalar four-accumulator route is a semantic/reference arm; the retained fused SIMD route is the production comparator.\n\n**833dff1a — Freeze the dense-parity candidate portfolio.** Turn the current dense-matvec baseline and profile into a bounded fusion experiment before candidate samples are collected. The portfolio admits at most one profile-justified fusion distinct from the retained fused AND-popcount route. It keeps the generic carry-save no-win out of the search. M4RI remains an external matched-operation comparison under its qualified adapter contract.\n\n## Success Criteria\n\n- [hard] REQ-01: (2094958d REQ-01) A committed receipt contains raw samples, exact commands, frozen matrix/vector identities, append-only execution log, runtime provenance, statistical summary, and acceptance interpretation for the dense-matvec cells.\n- [hard] REQ-02: (2094958d REQ-02) Exact parity output, canonical bit indexing, zero tail padding, and declared boundary semantics match the scalar reference.\n- [hard] REQ-03: (2094958d REQ-03) Annotated release assembly and profiles attribute observed costs to allocation, fused kernel work, dependencies, instruction mix, spills, cache traffic, or bandwidth.\n\n- [hard] REQ-04: (833dff1a REQ-01) The portfolio names at most one exact fusion candidate, target cells, rationale from current profiles, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-05: (833dff1a REQ-02) A missing profile signal is recorded as a no-candidate outcome, and the selected fused AND-popcount plus rejected generic carry-save routes remain prior evidence.\n- [hard] REQ-06: (833dff1a REQ-03) Candidate scope uses the canonical matvec and kernel boundary without pre-authorizing a production change.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 2094958d, 833dff1a; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n2094958d: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\n833dff1a: This is an experimental selection contract, not a production adoption decision.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "498d6e3f695e847f52c5c57e5a1d4551bba6c8935c558e2679b6cdce0d1344ca",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/dense-baseline-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-baseline-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5549587aefcadafed7606226af6a1180e9e4787627ecaef8659afba337228adb",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/dense-baseline-smoke.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-baseline-smoke.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9c11fc367a3273e568d552d0e21427003fc94cdc24b12beb18e98a13611cc852",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/summarize-dense-profile.py",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/summarize-dense-profile.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e9b539402b63ca31e4a562a2baaf5e8124eb2917b924ec522ac0b34f92b30305",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/simd/avx2-fused.asm.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/avx2-fused.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca8c3c6b24aa1fe8f6b3f0957cb82f645ce14ec86f8211a536b1f0acb3f0e2da",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-harness.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-harness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "87dc770c4a20e49ac66f54b031ea436190d09953be71dcc6a53c360cf3a7ac04",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/simd/index.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/index.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b7a8aa941325c1458bb7fd3e03b3bd673efe45323082a26680c53033ee3997e6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/disassemble-dense.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/disassemble-dense.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fdbbad278188853a9a8b21b9c30a297170bd632c24b22995de5e8c01659a67a8",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/scalar/public-matvec.asm.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/public-matvec.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "210928aee3bf56336ab6b9733bb69f27a247a339d3de73f4b33e4b0b18b1b293",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/scalar/index.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/index.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "63c8d4864ac0833140ed7f862418ad57fd4b76eaa9284cf4e1fb4afaa847c50e",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/simd/public-matvec.asm.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/public-matvec.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6e1765e2b32e79bebba2b21d76948861f3a3f1fbf7dd511420c47091006dc3fa",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/simd/simd-matvec.asm.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/simd-matvec.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c013347f8a4a5bccd41b2fb777f38563bc41b59e1032e6d5e4ce9ade491fc4c9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/bench-window/queue.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "04e8cb0e5fc84a3704f90e8693eb4de5cfac6825eaa3e87c95434e6b33b048a9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/run-dense-profile.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "08728f65bc197989d994caf72355d5b45cd8ed89374cfbfed6a57b1ca190aedd",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/simd/bundle-entry.asm.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/bundle-entry.asm.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Dense baseline and profile preparation",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-baseline-preparation.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Release dense arm and semantic validation",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-baseline-validation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Shared staged smoke and resume validation",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-baseline-smoke.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "SIMD release assembly index",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/index.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Scalar release assembly index",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/index.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Scheduled dense baseline and profile queue lines",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    }
+  ],
   "first_ready_at": "2026-09-16T22:37:03.248580933Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-26T13:33:27.744614107Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c73ffa25-2ac2-4660-9f7e-330d0f818f1d",
   "labels": [
     "component:benchmarks",
@@ -32,5 +211,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
-  "updated_at": "2026-09-26T13:06:55.611203299Z"
+  "updated_at": "2026-09-26T13:33:44.249020847Z"
 }
