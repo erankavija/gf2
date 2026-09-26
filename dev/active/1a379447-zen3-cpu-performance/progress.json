@@ -1349,6 +1349,14 @@
       "recommendation": "approve one-line regeneration",
       "gate_run": "ec204e2a-79fb-4494-b78d-bd71f838038d",
       "resolution": "2026-09-26: invoker explicitly approved round6 one-line regeneration and code-review rerun."
+    },
+    {
+      "category": "rework limit",
+      "issue": "9fb40c83",
+      "status": "resolved",
+      "raised_at": "2026-09-26T14:35Z",
+      "question": "Approve round7 clarification of historical/current annotation wording and related wording check.",
+      "resolution": "Invoker explicitly approved in chat."
     }
   ],
   "rework_counts": {
@@ -1373,7 +1381,7 @@
     "77c21ecd": 0,
     "7cdc28e9": 0,
     "e1f9a78f": 7,
-    "9fb40c83": 6,
+    "9fb40c83": 7,
     "f8dd4dde": 1,
     "d45aff82": 2,
     "18a87159": 1
