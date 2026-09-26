@@ -27,6 +27,8 @@ REPO="$(cd "${HERE}/../../../.." && pwd)"
 
 STORY=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
 SURVEY="${STORY}/survey"
+source "${SURVEY}/record-invocation.sh"
+TOP_LEVEL=("$0" "$@")
 MANIFEST="${REPO}/${SURVEY}/harness/Cargo.toml"
 TARGET="${REPO}/target/bb769456-arms"
 DRIVER="${TARGET}/release/logical-profile"
@@ -88,6 +90,7 @@ if [[ -n "${FIRST}" && "${FIRST}" != "${DIGEST}" ]]; then
     echo "logical-profile changed since the first repetition (${FIRST} -> ${DIGEST})" >&2
     exit 2
 fi
+record_invocation "${OUT}/invocations.log" top-level "${TOP_LEVEL[@]}"
 
 if [[ -e "${OUT}/host.txt" ]]; then
     {
@@ -156,10 +159,12 @@ for index in $(seq 1 "${REPETITIONS}"); do
     rm -rf "${OUT:?}/${rep}"
     mkdir -p "${OUT}/${rep}"
     echo "${rep} start $(date -u +%Y-%m-%dT%H:%M:%SZ) logical-profile=${DIGEST} load=[$(uptime)]" >>"${LOG}"
-    GF2_BENCH=1 GF2_BENCH_WINDOW=1 CARGO_CI_NO_LOCK=1 "${FLOCK}" --full-host \
-        bash "${HERE}/sweep-logical-profile.sh" "${OUT}/${rep}" "${DRIVER}" \
-        "${SECONDS_PER_PASS}" "${GROUP_ISSUE}" "${GROUP_MEMORY}" \
-        "${OUT}/cases.txt" "${OUT}/recorded-cases.txt"
+    sweep_command=("${FLOCK}" --full-host bash "${HERE}/sweep-logical-profile.sh" \
+        "${OUT}/${rep}" "${DRIVER}" "${SECONDS_PER_PASS}" "${GROUP_ISSUE}" \
+        "${GROUP_MEMORY}" "${OUT}/cases.txt" "${OUT}/recorded-cases.txt")
+    record_invocation "${OUT}/${rep}/invocations.log" sweep \
+        GF2_BENCH=1 GF2_BENCH_WINDOW=1 CARGO_CI_NO_LOCK=1 "${sweep_command[@]}"
+    GF2_BENCH=1 GF2_BENCH_WINDOW=1 CARGO_CI_NO_LOCK=1 "${sweep_command[@]}"
     echo "${rep} done $(date -u +%Y-%m-%dT%H:%M:%SZ) load=[$(uptime)]" >>"${LOG}"
 done
 if ! grep -q '^series done ' "${LOG}"; then
