@@ -84,7 +84,17 @@ case "${action}" in
             --producing-manifest "${PRODUCING}" \
             --max-cells-per-session 2 --pilot-pairs "${PILOT_PAIRS}" --output "${plan}"
         rm -rf "${stage}"
-        "${RUNNER}" smoke "${plan}" --stage "${stage}" --record "${record}"
+        while true; do
+            set +e
+            "${RUNNER}" smoke "${plan}" --stage "${stage}" --record "${record}"
+            outcome=$?
+            set -e
+            case "${outcome}" in
+                0) break ;;
+                3) ;; # The frozen two-cell session bound pauses this untimed smoke.
+                *) exit "${outcome}" ;;
+            esac
+        done
         echo "candidate smoke record: ${record}"
         ;;
     window)
