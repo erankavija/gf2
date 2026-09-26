@@ -1,0 +1,146 @@
+# variant: unroll4
+# binary: target/bc091474-unroll4/release/logical-arm
+# sha256: 4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a
+# rustflags: --cfg gf2_xor_unroll4
+# symbol: gf2_kernels_simd::x86::avx2::avx2_xor_into
+# address: 0x4ed90; size: 540 bytes
+# command: objdump -d -C --start-address=322960 --stop-address=323500 target/bc091474-unroll4/release/logical-arm
+
+
+target/bc091474-unroll4/release/logical-arm:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000004ed90 <gf2_kernels_simd::x86::avx2::avx2_xor_into>:
+   4ed90:	48 39 f1             	cmp    %rsi,%rcx
+   4ed93:	48 0f 42 f1          	cmovb  %rcx,%rsi
+   4ed97:	48 89 f0             	mov    %rsi,%rax
+   4ed9a:	48 c1 e8 02          	shr    $0x2,%rax
+   4ed9e:	48 83 fe 10          	cmp    $0x10,%rsi
+   4eda2:	72 7d                	jb     4ee21 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x91>
+   4eda4:	41 b8 60 00 00 00    	mov    $0x60,%r8d
+   4edaa:	31 c9                	xor    %ecx,%ecx
+   4edac:	0f 1f 40 00          	nopl   0x0(%rax)
+   4edb0:	c4 a1 7c 10 44 02 a0 	vmovups -0x60(%rdx,%r8,1),%ymm0
+   4edb7:	c4 a1 7c 57 44 07 a0 	vxorps -0x60(%rdi,%r8,1),%ymm0,%ymm0
+   4edbe:	c4 a1 7c 11 44 07 a0 	vmovups %ymm0,-0x60(%rdi,%r8,1)
+   4edc5:	c4 a1 7c 10 44 02 c0 	vmovups -0x40(%rdx,%r8,1),%ymm0
+   4edcc:	c4 a1 7c 57 44 07 c0 	vxorps -0x40(%rdi,%r8,1),%ymm0,%ymm0
+   4edd3:	c4 a1 7c 11 44 07 c0 	vmovups %ymm0,-0x40(%rdi,%r8,1)
+   4edda:	c4 a1 7c 10 44 02 e0 	vmovups -0x20(%rdx,%r8,1),%ymm0
+   4ede1:	c4 a1 7c 57 44 07 e0 	vxorps -0x20(%rdi,%r8,1),%ymm0,%ymm0
+   4ede8:	c4 a1 7c 11 44 07 e0 	vmovups %ymm0,-0x20(%rdi,%r8,1)
+   4edef:	c4 a1 7c 10 04 02    	vmovups (%rdx,%r8,1),%ymm0
+   4edf5:	c4 a1 7c 57 04 07    	vxorps (%rdi,%r8,1),%ymm0,%ymm0
+   4edfb:	c4 a1 7c 11 04 07    	vmovups %ymm0,(%rdi,%r8,1)
+   4ee01:	4c 8d 0c 08          	lea    (%rax,%rcx,1),%r9
+   4ee05:	49 83 c1 fc          	add    $0xfffffffffffffffc,%r9
+   4ee09:	48 83 c1 fc          	add    $0xfffffffffffffffc,%rcx
+   4ee0d:	49 83 e8 80          	sub    $0xffffffffffffff80,%r8
+   4ee11:	49 83 f9 03          	cmp    $0x3,%r9
+   4ee15:	77 99                	ja     4edb0 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x20>
+   4ee17:	48 f7 d9             	neg    %rcx
+   4ee1a:	48 39 c8             	cmp    %rcx,%rax
+   4ee1d:	77 09                	ja     4ee28 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x98>
+   4ee1f:	eb 6a                	jmp    4ee8b <gf2_kernels_simd::x86::avx2::avx2_xor_into+0xfb>
+   4ee21:	31 c9                	xor    %ecx,%ecx
+   4ee23:	48 39 c8             	cmp    %rcx,%rax
+   4ee26:	76 63                	jbe    4ee8b <gf2_kernels_simd::x86::avx2::avx2_xor_into+0xfb>
+   4ee28:	41 89 c1             	mov    %eax,%r9d
+   4ee2b:	41 29 c9             	sub    %ecx,%r9d
+   4ee2e:	4c 8d 41 01          	lea    0x1(%rcx),%r8
+   4ee32:	41 f6 c1 01          	test   $0x1,%r9b
+   4ee36:	74 16                	je     4ee4e <gf2_kernels_simd::x86::avx2::avx2_xor_into+0xbe>
+   4ee38:	48 c1 e1 05          	shl    $0x5,%rcx
+   4ee3c:	c5 fc 10 04 0a       	vmovups (%rdx,%rcx,1),%ymm0
+   4ee41:	c5 fc 57 04 0f       	vxorps (%rdi,%rcx,1),%ymm0,%ymm0
+   4ee46:	c5 fc 11 04 0f       	vmovups %ymm0,(%rdi,%rcx,1)
+   4ee4b:	4c 89 c1             	mov    %r8,%rcx
+   4ee4e:	4c 39 c0             	cmp    %r8,%rax
+   4ee51:	74 38                	je     4ee8b <gf2_kernels_simd::x86::avx2::avx2_xor_into+0xfb>
+   4ee53:	48 29 c8             	sub    %rcx,%rax
+   4ee56:	48 c1 e1 05          	shl    $0x5,%rcx
+   4ee5a:	48 83 c1 20          	add    $0x20,%rcx
+   4ee5e:	66 90                	xchg   %ax,%ax
+   4ee60:	c5 fc 10 44 0a e0    	vmovups -0x20(%rdx,%rcx,1),%ymm0
+   4ee66:	c5 fc 57 44 0f e0    	vxorps -0x20(%rdi,%rcx,1),%ymm0,%ymm0
+   4ee6c:	c5 fc 11 44 0f e0    	vmovups %ymm0,-0x20(%rdi,%rcx,1)
+   4ee72:	c5 fc 10 04 0a       	vmovups (%rdx,%rcx,1),%ymm0
+   4ee77:	c5 fc 57 04 0f       	vxorps (%rdi,%rcx,1),%ymm0,%ymm0
+   4ee7c:	c5 fc 11 04 0f       	vmovups %ymm0,(%rdi,%rcx,1)
+   4ee81:	48 83 c1 40          	add    $0x40,%rcx
+   4ee85:	48 83 c0 fe          	add    $0xfffffffffffffffe,%rax
+   4ee89:	75 d5                	jne    4ee60 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0xd0>
+   4ee8b:	49 b8 fc ff ff ff ff 	movabs $0xffffffffffffffc,%r8
+   4ee92:	ff ff 0f
+   4ee95:	49 21 f0             	and    %rsi,%r8
+   4ee98:	49 39 f0             	cmp    %rsi,%r8
+   4ee9b:	0f 84 ff 00 00 00    	je     4efa0 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x210>
+   4eea1:	4c 89 c1             	mov    %r8,%rcx
+   4eea4:	48 83 c9 01          	or     $0x1,%rcx
+   4eea8:	48 39 ce             	cmp    %rcx,%rsi
+   4eeab:	48 0f 47 ce          	cmova  %rsi,%rcx
+   4eeaf:	48 89 c8             	mov    %rcx,%rax
+   4eeb2:	4c 29 c0             	sub    %r8,%rax
+   4eeb5:	48 83 f8 04          	cmp    $0x4,%rax
+   4eeb9:	73 08                	jae    4eec3 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x133>
+   4eebb:	4c 89 c0             	mov    %r8,%rax
+   4eebe:	e9 cd 00 00 00       	jmp    4ef90 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x200>
+   4eec3:	48 83 f8 10          	cmp    $0x10,%rax
+   4eec7:	73 08                	jae    4eed1 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x141>
+   4eec9:	45 31 c9             	xor    %r9d,%r9d
+   4eecc:	e9 93 00 00 00       	jmp    4ef64 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x1d4>
+   4eed1:	53                   	push   %rbx
+   4eed2:	49 89 c1             	mov    %rax,%r9
+   4eed5:	49 83 e1 f0          	and    $0xfffffffffffffff0,%r9
+   4eed9:	49 89 f3             	mov    %rsi,%r11
+   4eedc:	49 83 e3 fc          	and    $0xfffffffffffffffc,%r11
+   4eee0:	4e 8d 14 df          	lea    (%rdi,%r11,8),%r10
+   4eee4:	49 83 c2 60          	add    $0x60,%r10
+   4eee8:	4e 8d 1c da          	lea    (%rdx,%r11,8),%r11
+   4eeec:	49 83 c3 60          	add    $0x60,%r11
+   4eef0:	31 db                	xor    %ebx,%ebx
+   4eef2:	66 66 66 66 66 2e 0f 	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   4eef9:	1f 84 00 00 00 00 00
+   4ef00:	c4 c1 7c 10 44 da a0 	vmovups -0x60(%r10,%rbx,8),%ymm0
+   4ef07:	c4 c1 7c 10 4c da c0 	vmovups -0x40(%r10,%rbx,8),%ymm1
+   4ef0e:	c4 c1 7c 10 54 da e0 	vmovups -0x20(%r10,%rbx,8),%ymm2
+   4ef15:	c4 c1 7c 10 1c da    	vmovups (%r10,%rbx,8),%ymm3
+   4ef1b:	c4 c1 7c 57 44 db a0 	vxorps -0x60(%r11,%rbx,8),%ymm0,%ymm0
+   4ef22:	c4 c1 74 57 4c db c0 	vxorps -0x40(%r11,%rbx,8),%ymm1,%ymm1
+   4ef29:	c4 c1 6c 57 54 db e0 	vxorps -0x20(%r11,%rbx,8),%ymm2,%ymm2
+   4ef30:	c4 c1 64 57 1c db    	vxorps (%r11,%rbx,8),%ymm3,%ymm3
+   4ef36:	c4 c1 7c 11 44 da a0 	vmovups %ymm0,-0x60(%r10,%rbx,8)
+   4ef3d:	c4 c1 7c 11 4c da c0 	vmovups %ymm1,-0x40(%r10,%rbx,8)
+   4ef44:	c4 c1 7c 11 54 da e0 	vmovups %ymm2,-0x20(%r10,%rbx,8)
+   4ef4b:	c4 c1 7c 11 1c da    	vmovups %ymm3,(%r10,%rbx,8)
+   4ef51:	48 83 c3 10          	add    $0x10,%rbx
+   4ef55:	49 39 d9             	cmp    %rbx,%r9
+   4ef58:	75 a6                	jne    4ef00 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x170>
+   4ef5a:	4c 39 c8             	cmp    %r9,%rax
+   4ef5d:	5b                   	pop    %rbx
+   4ef5e:	74 40                	je     4efa0 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x210>
+   4ef60:	a8 0c                	test   $0xc,%al
+   4ef62:	74 40                	je     4efa4 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x214>
+   4ef64:	83 e1 03             	and    $0x3,%ecx
+   4ef67:	48 29 c8             	sub    %rcx,%rax
+   4ef6a:	4c 01 c0             	add    %r8,%rax
+   4ef6d:	4d 01 c1             	add    %r8,%r9
+   4ef70:	c4 a1 7c 10 04 cf    	vmovups (%rdi,%r9,8),%ymm0
+   4ef76:	c4 a1 7c 57 04 ca    	vxorps (%rdx,%r9,8),%ymm0,%ymm0
+   4ef7c:	c4 a1 7c 11 04 cf    	vmovups %ymm0,(%rdi,%r9,8)
+   4ef82:	49 83 c1 04          	add    $0x4,%r9
+   4ef86:	4c 39 c8             	cmp    %r9,%rax
+   4ef89:	75 e5                	jne    4ef70 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x1e0>
+   4ef8b:	48 85 c9             	test   %rcx,%rcx
+   4ef8e:	74 10                	je     4efa0 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x210>
+   4ef90:	48 8b 0c c2          	mov    (%rdx,%rax,8),%rcx
+   4ef94:	48 31 0c c7          	xor    %rcx,(%rdi,%rax,8)
+   4ef98:	48 ff c0             	inc    %rax
+   4ef9b:	48 39 f0             	cmp    %rsi,%rax
+   4ef9e:	72 f0                	jb     4ef90 <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x200>
+   4efa0:	c5 f8 77             	vzeroupper
+   4efa3:	c3                   	ret
+   4efa4:	4d 01 c8             	add    %r9,%r8
+   4efa7:	e9 0f ff ff ff       	jmp    4eebb <gf2_kernels_simd::x86::avx2::avx2_xor_into+0x12b>
