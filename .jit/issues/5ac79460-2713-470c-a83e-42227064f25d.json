@@ -5,7 +5,16 @@
   "created_at": "2026-09-19T15:36:33.499490699Z",
   "dependencies": [],
   "description": "`dev/scripts/verify-campaign-log.py` resolves an omitted exploratory `pilot_pairs` to the receipt's `confirmatory_pairs`, so it rejects a correct exploratory campaign whose plan leaves `pilot_pairs` null.\n\n## Background\n\nThe protocol (`dev/active/f547c394/protocol.md`, acceptance section) states that an omitted exploratory `pilot_pairs` selects the frozen `pilot_min_pairs` and that a confirmation uses `confirmatory_pairs`. The shared checker's declared-pairs rule (`cell[\"pilot_pairs\"] or confirmatory`) applies the confirmatory count to every omitted value. The logical-buffer harness's `logical-campaign plan` writes `pilot_pairs: null` for its exploratory cells, so the three accepted 18a87159 pilots (17, 17 and 6 cells at six pairs) fail the shared check although their receipts and the acceptance tool accept them; other families' plans write the number and never reach the branch. The receipt's `settings` carries `pilot_min_pairs`, `pilot_max_pairs` and `confirmatory_pairs`.\n\n## Success Criteria\n\n- [hard] REQ-01: The checker resolves an omitted `pilot_pairs` by the cell's role exactly as the protocol states: an exploratory cell to the receipt's `pilot_min_pairs`, a confirmatory cell to `confirmatory_pairs`, reading the role from the receipt's addendum snapshot or the plan's declared role rather than assuming it.\n- [hard] REQ-02: `dev/scripts/verify-campaign-log.test.sh` covers an exploratory plan with a null `pilot_pairs` at `pilot_min_pairs`, a confirmatory plan, and an exploratory plan whose log ran at the wrong count, and the three committed 18a87159 pilot campaigns under `dev/bench_results/2037941f/` pass the checker unchanged.\n- [hard] REQ-03: Every launcher that calls the checker (ad2a6a58, 4c1e441f and any other caller found by search) keeps passing on its committed campaigns, and no committed evidence file changes.\n\n## Notes\n\nFound by the 18a87159 post-window round (session 22). The checker is shared campaign tooling under the epic's provenance freeze: no protocol, schema or receipt version changes. Follow `dev/active/1a379447-zen3-cpu-performance/worker-brief.md`.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/5ac79460-r1.md"
+    }
+  ],
+  "done_at": "2026-09-26T07:30:33.095446585Z",
   "first_ready_at": "2026-09-19T15:36:33.499490699Z",
   "gates_required": [
     "cargo-ci",
@@ -13,14 +22,14 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-09-19T15:37:17.848919848Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-26T07:25:23.642032460Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-09-19T15:37:18.160350937Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-26T07:28:41.994268924Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "5ac79460-2713-470c-a83e-42227064f25d",
@@ -30,7 +39,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Resolve an omitted exploratory pilot_pairs to pilot_min_pairs in the log checker",
-  "updated_at": "2026-09-26T07:24:27.486214629Z"
+  "updated_at": "2026-09-26T07:30:33.095446585Z"
 }
