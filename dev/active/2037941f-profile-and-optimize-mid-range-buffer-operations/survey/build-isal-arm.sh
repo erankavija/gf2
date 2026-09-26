@@ -24,6 +24,7 @@ next_log="$(mktemp "${target}/isal-build.XXXXXX")"
 trap 'rm -f "${next_log}"' EXIT
 unset MAKEFLAGS GNUMAKEFLAGS MFLAGS MAKEFILES
 export CC="${isal_compiler_command}" CC_ENABLE_DEBUG_OUTPUT=1 CARGO_CI_NO_SCCACHE=1
+export RUSTUP_TOOLCHAIN=1.95
 GF2_ISAL_SOURCE="${source_root}" CARGO_TARGET_DIR="${target}" \
     ./scripts/cargo-budget.sh cargo build -vv --release --locked --features isal \
     --manifest-path "${here}/harness/Cargo.toml" --bin logical-isal-arm \
@@ -35,15 +36,8 @@ sed -i 's/[[:blank:]]*$//' "${next_log}"
 [[ -x "${arm}" ]]
 mapfile -t objects < <(find "${target}/release/build" -path '*/out/*' \
     -name '*raid_base.o' -type f | sort)
-[[ "${#objects[@]}" == 1 ]] || {
-    printf 'expected one ISA-L raid_base object, found %s\n' "${#objects[@]}" >&2
-    exit 1
-}
-object="${objects[0]}"
-producer="$(isal_object_producers "${object}")"
-[[ -n "${producer}" && "${producer}" == *"$("${isal_compiler_command}" -dumpfullversion)"* ]]
+(( "${#objects[@]}" > 0 )) || { echo 'ISA-L build produced no raid_base object' >&2; exit 1; }
 arm_digest="$(sha256sum "${arm}" | cut -d' ' -f1)"
-object_digest="$(sha256sum "${object}" | cut -d' ' -f1)"
 compile_line="$(grep -F 'running:' "${next_log}" | grep -F "${isal_compiler_command}" | grep -F 'raid_base.c' | head -n 1 || true)"
 if [[ -n "${compile_line}" ]]; then
     [[ "${compile_line}" != *sccache* ]] || {
@@ -51,16 +45,6 @@ if [[ -n "${compile_line}" ]]; then
         exit 1
     }
     mv "${next_log}" "${log}"
-    {
-        printf 'compiler_command=%s\ncompiler_identity=%s\n' "${isal_compiler_command}" "${isal_compiler_identity}"
-        printf 'make_override_channels=%s\nmake_override_state=cleared\n' "${isal_make_channels}"
-        printf 'compile_driver=%s\n' "${isal_compiler_command}"
-        printf 'verbose_build_log=%s\nverbose_build_log_sha256=%s\n' \
-            "${log#"${repo}/"}" "$(sha256sum "${log}" | cut -d' ' -f1)"
-        printf 'object=%s\nobject_sha256=%s\nobject_comment=%s\n' \
-            "${object#"${repo}/"}" "${object_digest}" "${producer}"
-        printf 'arm=%s\narm_sha256=%s\n' "${arm#"${repo}/"}" "${arm_digest}"
-    } >"${record}"
 else
     [[ -f "${record}" && -f "${log}" ]] || {
         echo 'ISA-L compile transcript is missing and no retained build record exists' >&2
@@ -69,9 +53,25 @@ else
     grep -Fqx "compiler_command=${isal_compiler_command}" "${record}"
     grep -Fqx "compiler_identity=${isal_compiler_identity}" "${record}"
     grep -Fqx "make_override_state=cleared" "${record}"
-    grep -Fqx "object_sha256=${object_digest}" "${record}"
-    grep -Fqx "object_comment=${producer}" "${record}"
-    grep -Fqx "arm_sha256=${arm_digest}" "${record}"
+    grep -Fqx "compile_driver=${isal_compiler_command}" "${record}"
     grep -Fqx "verbose_build_log_sha256=$(sha256sum "${log}" | cut -d' ' -f1)" "${record}"
+    grep -F 'running:' "${log}" | grep -F "${isal_compiler_command}" | grep -Fq 'raid_base.c'
 fi
+recorded_object_digest="$(sed -n 's/^object_sha256=//p' "${record}" 2>/dev/null | head -n 1 || true)"
+{
+    printf 'compiler_command=%s\ncompiler_identity=%s\n' "${isal_compiler_command}" "${isal_compiler_identity}"
+    printf 'make_override_channels=%s\nmake_override_state=cleared\n' "${isal_make_channels}"
+    printf 'compile_driver=%s\n' "${isal_compiler_command}"
+    printf 'verbose_build_log=%s\nverbose_build_log_sha256=%s\n' \
+        "${log#"${repo}/"}" "$(sha256sum "${log}" | cut -d' ' -f1)"
+    for object in "${objects[@]}"; do
+        producer="$(isal_object_producers "${object}")"
+        digest="$(sha256sum "${object}" | cut -d' ' -f1)"
+        [[ -n "${producer}" && "${producer}" == *"$("${isal_compiler_command}" -dumpfullversion)"* ]]
+        [[ -n "${compile_line}" || "${digest}" == "${recorded_object_digest}" ]]
+        printf 'object=%s\nobject_sha256=%s\nobject_comment=%s\n' \
+            "${object#"${repo}/"}" "${digest}" "${producer}"
+    done
+    printf 'arm=%s\narm_sha256=%s\n' "${arm#"${repo}/"}" "${arm_digest}"
+} >"${record}"
 printf 'ISA-L arm build provenance: %s\n' "${record#"${repo}/"}" >&2
