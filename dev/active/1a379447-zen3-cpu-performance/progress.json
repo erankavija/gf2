@@ -405,7 +405,7 @@
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "backlog; residual BMI2 pilot queued; DVB round5 annotation correction merged, round6 generated renderer-hash update awaits approval.",
+          "status": "backlog; residual BMI2 and DVB fresh profile queued for 02:00 window; coverage advisory tracked by prerequisite9f0e385e.",
           "tracker_state": "backlog"
         },
         {
@@ -923,6 +923,12 @@
       "type": "bug",
       "in_epic": true,
       "reason": "18a87159 post-window round: dev/scripts/verify-campaign-log.py resolves an omitted exploratory pilot_pairs to confirmatory_pairs against protocol.md's pilot_min_pairs rule (the logical harness writes pilot_pairs: null), so it rejects the three correct 18a87159 pilots; created session 22, gates cargo-ci and code-review, bc091474 depends on it; not dispatched"
+    },
+    {
+      "id": "9f0e385e",
+      "type": "bug",
+      "in_epic": true,
+      "reason": "Track the pre-existing breakdown satisfies:REQ-06 addressability advisory from DVB code review; c04dd4ac depends on resolution."
     }
   ],
   "escalations": [
@@ -1932,7 +1938,8 @@
     "Session 24 (2026-09-26): interview approves e1f9a78f round 7 (original argv and historical-ref ancestry), 9fb40c83 round 4 (nine-repetition counters/hot-symbol intervals), overnight windows for wave 3 only. Latest steering sets 02:00 Europe/Helsinki starting September 27; five later-wave confirmations held. Models by difficulty; Astra requires explicit permission and is not authorized.",
     "Session 24 dispatch: Sol high e1f9a78f round7 in agent-e1f9a78f-r7; Sol xhigh 9fb40c83 round4 in agent-9fb40c83-r4; Sol high read-only wave readiness survey. Both worker trees anchored to 93d3d72fb. Gates only; no additional independent review. Stale September15 DVB lease recovered. No Astra.",
     "Session24: e1f9a78f DONE at8a9d49c79; lead review r7; code/doc review zero findings, clean merged-tree cargo-ci passes. DVB round4 preparation merged with cargo-ci pass; old attribution and provenance reproduce byte-for-byte; fresh profile queued (12-minute estimate), F3 stays open pending evidence. c73ffa25 now dependency-ready.",
-    "Session 24: c73ffa25 preparation merged at efaea4eaf; merged CI passes. Code gate76ce431c reports absent receipts, profile and portfolio (REQ-01,03-06); these require the queued window. No completion claim. Invoker approves DVB round5 after interview."
+    "Session 24: c73ffa25 preparation merged at efaea4eaf; merged CI passes. Code gate76ce431c reports absent receipts, profile and portfolio (REQ-01,03-06); these require the queued window. No completion claim. Invoker approves DVB round5 after interview.",
+    "Session25: approved DVB rounds6/7 complete; code gate547264f9 passes with coverage advisory tracked as9f0e385e. Queue restored, lease released, handoff requested by user. Research criteria still await scheduled evidence."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1954,7 +1961,8 @@
     "handoff-16.md",
     "handoff-17.md",
     "handoff-18.md",
-    "handoff-19.md"
+    "handoff-19.md",
+    "handoff-20.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -1965,10 +1973,10 @@
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
     "note": "User authorizes 02:00 Europe/Helsinki on subsequent nights as needed for current wave 3. Arm each next window after reviewing prior results and queue readiness.",
-    "current_observation": "Verified active September 27 02:00 EEST timer. Eleven pending jobs, 208 estimated minutes; DVB fresh profile remains held pending round6 generated renderer-hash update and code gate. M4RI comparison held for 50f0bd42; later independent confirmations held outside wave3."
+    "current_observation": "September 27 02:00 EEST timer verified active. DVB round7 code gate passes; fresh profile restored. Twelve pending jobs, 220 estimated minutes. Pinned measurement trees unchanged. Later independent confirmations and M4RI remain held."
   },
   "session_scope": {
-    "session": 24,
+    "session": 25,
     "date": "2026-09-26",
     "instruction": "Complete current wave 3 only; model by task difficulty; Astra requires explicit permission.",
     "wave_3_containers": [
@@ -1986,7 +1994,8 @@
       "2ad3a3e0",
       "00dd43c3",
       "9fb40c83",
-      "a0812b83"
+      "a0812b83",
+      "9f0e385e"
     ],
     "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation.",
     "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
@@ -1995,6 +2004,7 @@
       "e1f9a78f"
     ],
     "active_workers": {},
-    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at 815010276"
+    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at 815010276",
+    "handoff_instruction": "User requests handoff after the current rework; stop after recording round7 result and queue status."
   }
 }

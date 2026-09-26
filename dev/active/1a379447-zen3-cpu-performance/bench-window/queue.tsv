@@ -36,4 +36,4 @@ bc091474	.agents/worktrees/agent-bc091474	15	dev/active/bc091474/run-candidate.s
 bc091474	.agents/worktrees/agent-bc091474	15	dev/active/bc091474/run-candidate.sh window 4 row
 bc091474	.agents/worktrees/agent-bc091474	8	dev/active/bc091474/run-candidate.sh profile-window 2 profile
 bc091474	.agents/worktrees/agent-bc091474	8	dev/active/bc091474/run-candidate.sh profile-window 4 profile
-# held pending round-5 approval and passing code gate: 9fb40c83	.agents/worktrees/agent-9fb40c83-r4	12	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-profile.sh dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile
+9fb40c83	.agents/worktrees/agent-9fb40c83-r4	12	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-profile.sh dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile
