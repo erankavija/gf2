@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Judge the dense-parity arm smoke and write its committed record.
+"""Judge the dense-parity staged arm smoke and write its committed record.
 
 The smoke's contract is stated once, at `tuning_campaign_support::arm::smoke`.
-This judge reads each family's `benchmark-ab-runner smoke` record plus the
-semantic oracle's output, refuses what the frozen addendum forbids, and projects
-every recorded line; it carries no clock reading, so a rerun on the same
-executables reproduces the record byte for byte. The recorded command line is the
-launcher invocation that ran, passed through as `--command`.
+This judge reads each family's runner stage and smoke record plus the semantic
+oracle's output, refuses what the frozen addendum forbids, and projects every
+recorded line. It carries no clock reading, so a rerun on the same executables
+reproduces the record byte for byte. The recorded command line is the launcher
+invocation that ran, passed through as `--command`.
 """
 
 import argparse
@@ -14,6 +14,7 @@ import json
 import os
 import pathlib
 import re
+import subprocess
 import sys
 
 # The position every dispatch of a record takes; either pair position would
@@ -32,6 +33,54 @@ def fail(message):
     raise SystemExit(f"smoke failed: {message}")
 
 
+def check_stage(directory, plan, runner):
+    stage = directory / "stage"
+    log_path = stage / "execution.log"
+    if not log_path.is_file():
+        fail(f"{directory.name} has no staged execution log")
+    cells = [cell["cell_id"] for cell in plan["cells"]]
+    if len(cells) < 2 or plan["max_cells_per_session"] != 1:
+        fail(f"{directory.name} cannot demonstrate a cell-boundary pause")
+    log = log_path.read_bytes()
+    records = [json.loads(line) for line in log.splitlines()]
+    events = [entry["event"] for entry in records]
+    starts = [entry["case"]["cell_id"] for entry in records if entry["event"] == "cell-start"]
+    completed = [entry["case"]["cell_id"] for entry in records if entry["event"] == "cell-complete"]
+    if starts != cells or completed != cells:
+        fail(f"{directory.name} repeated or missed a cell: {starts}, {completed}")
+    if events.count("checkpoint-accepted") != len(cells):
+        fail(f"{directory.name} did not checkpoint every completed cell")
+    terminals = [event for event in events if event in ("paused", "complete", "failed")]
+    if terminals != ["paused"] * (len(cells) - 1) + ["complete"]:
+        fail(f"{directory.name} has terminal sequence {terminals}")
+    if len({entry["session_id"] for entry in records if entry["event"] == "cell-start"}) != len(cells):
+        fail(f"{directory.name} did not resume in a fresh session for each cell")
+    previous = b""
+    for index in range(1, len(cells) + 1):
+        prefix = (directory / f"session-{index:02d}.log").read_bytes()
+        if not prefix.startswith(previous) or not log.startswith(prefix) or len(prefix) <= len(previous):
+            fail(f"{directory.name} session {index} did not append to its log")
+        stdout = (directory / f"session-{index:02d}.stdout").read_text().splitlines()
+        if not stdout or stdout[0] != f"GF2_CAMPAIGN_EXECUTION_LOG={log_path.resolve()}":
+            fail(f"{directory.name} did not announce its log before work")
+        previous = prefix
+    if previous != log:
+        fail(f"{directory.name} changed its log after its last session")
+    if not (stage / "checkpoints" / "manifest.json").is_file():
+        fail(f"{directory.name} has no checkpoint manifest")
+    if any(event in ("execution-progress", "window-progress", "lock-hold") for event in events):
+        fail(f"{directory.name} logged timing or a lock hold")
+    if any("ns_per_call" in entry["details"] or entry["details"].get("windows", 0) != 0 for entry in records):
+        fail(f"{directory.name} logged a timing sample")
+    if (stage / "receipt.json").exists():
+        fail(f"{directory.name} wrote a receipt")
+    out = directory / "finalize-refusal"
+    refused = subprocess.run([runner, "finalize", str(stage), str(out)], capture_output=True, text=True)
+    if refused.returncode == 0 or "is a non-timed smoke stage" not in refused.stderr or out.exists():
+        fail(f"{directory.name} finalize did not refuse its smoke stage: {refused.stderr}")
+    return len(cells)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage", required=True)
@@ -39,6 +88,7 @@ def main():
     parser.add_argument("--record", required=True)
     parser.add_argument("--oracle", required=True)
     parser.add_argument("--families", required=True, nargs="+")
+    parser.add_argument("--runner", required=True)
     arguments = parser.parse_args()
     stage = pathlib.Path(arguments.stage)
 
@@ -60,6 +110,8 @@ def main():
     external = {}
     for family in arguments.families:
         directory = stage / family
+        plan = json.loads((directory / "plan.json").read_text())
+        staged_cells = check_stage(directory, plan, arguments.runner)
         record = json.loads((directory / "smoke.json").read_text())
         if record["family"] != f"{family}-arm-smoke":
             fail(f"{family} recorded family {record['family']!r}")
@@ -101,6 +153,12 @@ def main():
             fail(f"{family} validated {recorded} rather than the declared {sorted(declared)}")
 
         lines.append(f"PASS campaign {record['campaign_id']}: {len(record['cells'])} cells")
+        pauses = staged_cells - 1
+        lines.append(
+            f"PASS staged campaign {record['campaign_id']}: {staged_cells} sessions, "
+            f"{pauses} pause{'s' if pauses != 1 else ''}, append-only log and checkpoints, "
+            "0 timing samples, finalize refused"
+        )
         for cell in record["cells"]:
             names = " and ".join(arm["arm"] for arm in cell["arms"])
             windows = sum(arm["windows"] for arm in cell["arms"])
