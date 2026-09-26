@@ -7,6 +7,8 @@
 #                                      transcribe one family into a campaign addendum
 #   smoke [--isal]                     deterministic untimed release smoke (no receipt sample)
 #   window --family <id> --addendum <path> --run-id <id> [--isal]
+#          [--candidate-gf2-executable <path> --candidate-gf2-rustflags <flags>
+#           --pilot-pairs <n>]
 #                                      timed campaign, benchmark window only
 #
 # Every numeric setting comes from the frozen addendum or the protocol's shared
@@ -212,11 +214,15 @@ cmd_smoke() {
 
 cmd_window() {
     local family='' addendum='' run_id='' with_isal=0
+    local candidate_gf2='' candidate_rustflags='' pilot_pairs=''
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --family) family="$2"; shift 2 ;;
             --addendum) addendum="$2"; shift 2 ;;
             --run-id) run_id="$2"; shift 2 ;;
+            --candidate-gf2-executable) candidate_gf2="$2"; shift 2 ;;
+            --candidate-gf2-rustflags) candidate_rustflags="$2"; shift 2 ;;
+            --pilot-pairs) pilot_pairs="$2"; shift 2 ;;
             --isal) with_isal=1; shift ;;
             *) echo "unknown window argument $1" >&2; exit 2 ;;
         esac
@@ -225,6 +231,22 @@ cmd_window() {
         echo 'window needs --family, --addendum and --run-id' >&2
         exit 2
     }
+    if [[ -n "${candidate_gf2}" || -n "${candidate_rustflags}" || -n "${pilot_pairs}" ]]; then
+        [[ -n "${candidate_gf2}" && -n "${candidate_rustflags}" && "${pilot_pairs}" == 24 ]] || {
+            echo 'candidate window needs executable, rustflags and 24 pilot pairs' >&2
+            exit 2
+        }
+        [[ "${candidate_rustflags}" == '--cfg gf2_xor_unroll2' ||
+           "${candidate_rustflags}" == '--cfg gf2_xor_unroll4' ]] || {
+            echo 'candidate rustflags must select a frozen XOR unroll factor' >&2
+            exit 2
+        }
+        [[ "${family}" == 2037941f-logical-isolated-xor ||
+           "${family}" == 2037941f-logical-public-row-xor ]] || {
+            echo 'candidate build serves only isolated XOR or public row XOR' >&2
+            exit 2
+        }
+    fi
     [[ "${GF2_BENCH_WINDOW:-0}" == 1 ]] || {
         echo 'timed logical-buffer measurement runs only in the scheduled benchmark window' >&2
         exit 2
@@ -247,6 +269,21 @@ cmd_window() {
     # before the closure is checked, so no build can follow the check and no
     # prebuilt arm can carry bytes the check never saw.
     build_gf2
+    local candidate_flag=() pilot_flag=()
+    if [[ -n "${candidate_gf2}" ]]; then
+        local candidate_target
+        candidate_target="$(dirname "$(dirname "${candidate_gf2}")")"
+        [[ "${candidate_gf2}" == "${candidate_target}/release/logical-arm" ]] || {
+            echo 'candidate executable must be a release logical-arm' >&2
+            exit 2
+        }
+        RUSTFLAGS="${candidate_rustflags}" CARGO_TARGET_DIR="${candidate_target}" \
+            ./scripts/cargo-budget.sh cargo build --release --manifest-path "${MANIFEST}" \
+            --bin logical-arm
+        candidate_flag=(--candidate-gf2-executable "${candidate_gf2}" \
+                        --candidate-gf2-rustflags "${candidate_rustflags}")
+        pilot_flag=(--pilot-pairs "${pilot_pairs}")
+    fi
     local isal_flag=()
     if [[ "${with_isal}" == 1 ]]; then
         build_isal >/dev/null
@@ -284,9 +321,10 @@ cmd_window() {
 
     "${CAMPAIGN_TOOL}" plan --family "${family}" --addendum "${addendum}" \
         --campaign-id "${campaign}" --campaign-seed 20260916 --label pilot \
-        --lock "${lock}" --gf2-executable "${GF2_ARM}" "${isal_flag[@]}" \
+        --lock "${lock}" --gf2-executable "${GF2_ARM}" \
+        "${candidate_flag[@]}" "${isal_flag[@]}" \
         --producing-manifest "${PRODUCING}" --max-cells-per-session 2 \
-        --output "${plan}.projected"
+        "${pilot_flag[@]}" --output "${plan}.projected"
     if [[ -e "${plan}" ]]; then
         cmp -s "${plan}.projected" "${plan}" || {
             echo "${plan} differs from the current projection; resume is refused" >&2
@@ -310,6 +348,8 @@ cmd_window() {
         echo "# campaign addendum: ${addendum} sha256=$(sha256sum "${addendum}" | cut -d' ' -f1)"
         echo "# producing manifest: ${PRODUCING} sha256=$(sha256sum "${PRODUCING}" | cut -d' ' -f1)"
         echo "# gf2 arm: ${GF2_ARM} sha256=$(sha256sum "${GF2_ARM}" | cut -d' ' -f1)"
+        [[ -n "${candidate_gf2}" ]] &&
+            echo "# candidate gf2 arm: ${candidate_gf2} sha256=$(sha256sum "${candidate_gf2}" | cut -d' ' -f1) rustflags=${candidate_rustflags}"
         [[ "${with_isal}" == 1 ]] &&
             echo "# isal arm: ${ISAL_ARM} sha256=$(sha256sum "${ISAL_ARM}" | cut -d' ' -f1)"
         echo "# plan: ${plan} sha256=$(sha256sum "${plan}" | cut -d' ' -f1)"

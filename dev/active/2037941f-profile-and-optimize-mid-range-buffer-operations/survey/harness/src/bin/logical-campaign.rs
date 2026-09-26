@@ -11,6 +11,8 @@
 //!                          [--isal-executable <path>] [--label pilot|smoke]
 //!                          [--max-cells-per-session <n>] [--pilot-pairs <n>]
 //!                          [--isolated-candidate <route>]
+//!                          [--candidate-gf2-executable <path>]
+//!                          [--candidate-gf2-rustflags <flags>]
 //! logical-campaign inputs  --producing-manifest <path> [--also <path>]...
 //! ```
 //!
@@ -127,9 +129,9 @@ fn transcribe(arguments: &Arguments) -> Result<(Question, FamilyAddendum), Strin
 
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
-    let (command, rest) = raw.split_first().ok_or(
-        "usage: logical-campaign <pins|list|cells|verify|plan|inputs> --flag value ...",
-    )?;
+    let (command, rest) = raw
+        .split_first()
+        .ok_or("usage: logical-campaign <pins|list|cells|verify|plan|inputs> --flag value ...")?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
         "pins" => {
@@ -253,6 +255,18 @@ fn run() -> Result<(), String> {
             let seed = arguments
                 .number("campaign-seed")?
                 .ok_or("--campaign-seed is required")?;
+            let candidate_gf2 = match (
+                arguments.optional("candidate-gf2-executable"),
+                arguments.optional("candidate-gf2-rustflags"),
+            ) {
+                (None, None) => None,
+                (Some(executable), Some(rustflags)) => Some((executable, rustflags)),
+                _ => {
+                    return Err(
+                        "candidate gf2 executable and rustflags must be given together".to_owned(),
+                    )
+                }
+            };
             let plan = campaign::plan(
                 question,
                 &addendum,
@@ -263,6 +277,7 @@ fn run() -> Result<(), String> {
                 arguments.required("producing-manifest")?,
                 arguments.required("lock")?,
                 arguments.required("gf2-executable")?,
+                candidate_gf2,
                 arguments.optional("isal-executable"),
                 candidate,
                 arguments
