@@ -22,10 +22,10 @@ never, and `paused`, `budget-exhausted` or `interrupted` for each session that
 resumed. A launcher that demanded a single `complete` record would reject a
 campaign that paused at its session cell budget and then finished.
 
-The declared pair count comes from the plan: an exploratory cell names its own
-count and a confirmatory one takes the protocol's frozen confirmatory pair count,
-which the receipt carries in its settings. Nothing here is a protocol check; the
-acceptance tool recomputes the verdict.
+The declared pair count comes from the plan. A cell with no count uses the
+frozen pilot minimum or confirmatory count according to its role. The receipt
+carries both settings and pins the addendum's cell roles.
+Nothing here is a protocol check; the acceptance tool recomputes the verdict.
 """
 
 import argparse
@@ -46,8 +46,22 @@ def verify(log_path, receipt_path, plan_path):
     with open(plan_path) as handle:
         plan = json.load(handle)
 
-    confirmatory = receipt["settings"]["confirmatory_pairs"]
-    declared = {cell["cell_id"]: cell["pilot_pairs"] or confirmatory for cell in plan["cells"]}
+    snapshot = os.path.join(os.path.dirname(receipt_path), receipt["addendum"]["snapshot"])
+    with open(snapshot) as handle:
+        addendum = json.load(handle)
+    roles = {cell["cell_id"]: cell["role"] for cell in addendum["cells"]}
+    declared = {}
+    for cell in plan["cells"]:
+        pairs = cell.get("pilot_pairs")
+        if pairs is None:
+            role = roles[cell["cell_id"]]
+            if role == "exploratory":
+                pairs = receipt["settings"]["pilot_min_pairs"]
+            elif role in ("confirmatory", "holdout"):
+                pairs = receipt["settings"]["confirmatory_pairs"]
+            else:
+                raise SystemExit(f"{cell['cell_id']}: unknown role {role!r}")
+        declared[cell["cell_id"]] = pairs
 
     terminal = [event["event"] for event in events if event["event"] in TERMINAL]
     if terminal[-1:] != ["complete"] or terminal.count("complete") != 1:
