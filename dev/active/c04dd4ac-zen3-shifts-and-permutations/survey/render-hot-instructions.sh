@@ -5,10 +5,8 @@
 # name. It measures nothing, takes no host mutex and runs outside the scheduled
 # benchmark window; the samples are whatever the profile session recorded.
 #
-# `--no-source` keeps the listing a function of the perf data and the executable
-# alone, so re-running over the same committed directory reproduces it byte for
-# byte however the Rust sources move afterwards. `run-profile.sh` renders the
-# same listing inside a session with the same flags.
+# The listing includes available source lines beside sampled instructions.
+# `run-profile.sh` renders the same listing inside each session.
 #
 # Usage: render-hot-instructions.sh <profile-dir>
 set -euo pipefail
@@ -26,7 +24,7 @@ for data in "${OUT}"/rep-*/hot/*.data; do
     }
     status="${data%.data}.status"
     [[ -e "${status}" && "$(cat "${status}")" == 0 ]] || continue
-    perf annotate --stdio --no-source --percent-limit "${PERCENT_LIMIT}" \
+    perf annotate --stdio --percent-limit "${PERCENT_LIMIT}" \
         -i "${data}" >"${data%.data}.instructions.txt"
     rendered=$((rendered + 1))
 done

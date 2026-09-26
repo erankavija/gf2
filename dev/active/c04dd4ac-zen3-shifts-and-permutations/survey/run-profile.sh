@@ -110,7 +110,7 @@ if [[ "${MODE}" == session ]]; then
                     -i "${OUT}/${REP}/hot/${case}.data" \
                     >"${OUT}/${REP}/hot/${case}.report.txt" 2>>"${OUT}/${REP}/hot/${case}.err"
                 report_rc=$?
-                perf annotate --stdio --no-source --percent-limit 1.0 \
+                perf annotate --stdio --percent-limit 1.0 \
                     -i "${OUT}/${REP}/hot/${case}.data" \
                     >"${OUT}/${REP}/hot/${case}.instructions.txt" 2>>"${OUT}/${REP}/hot/${case}.err"
                 annotate_rc=$?
