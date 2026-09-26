@@ -331,6 +331,44 @@
       "format": "markdown",
       "label": "Profile provenance closure generator, content-verified against the measured tree",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-profile-provenance.py"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "62fdea27611ea416adf97a094a5529e655c45f609a69d06d9ded5120062d8218",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/bench-window/queue.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "be4d9ad84207513d80a6c4e9b5d0b2b47ed106b6d73adbe5f8aa1100762833ef",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "DVB nine-session interval preparation and audit",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-r4-preparation.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "DVB interval regression tests",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/test-profile-intervals.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Scheduled fresh DVB profile",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
     }
   ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
@@ -342,7 +380,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-19T14:46:04.119731421Z",
+      "updated_at": "2026-09-26T13:05:54.481424808Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -375,5 +413,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-26T12:43:09.894915063Z"
+  "updated_at": "2026-09-26T13:06:56.439142863Z"
 }
