@@ -17,7 +17,7 @@ one run, where the uncertainty is perf's sampling rather than repetition, gets
 the Wilson interval on the sampled proportion at the samples the listing states.
 A quotient of two unpaired medians gets neither and is labelled descriptive.
 
-Usage: make-dvb-tables.py <receipt> <profile-dir> <source-evidence> <addendum>
+Usage: make-dvb-tables.py <receipt> <profile-dir> <source-evidence> <addendum> [<perf-profile-dir>]
 """
 
 from __future__ import annotations
@@ -47,6 +47,9 @@ COUNTER_EVENTS = (
     "cache-misses:u",
 )
 HOT_ROW = re.compile(r"^\s*([0-9.]+)%\s+(\d+)\s+(\S+)\s+\[\.\]\s+(\S+)")
+HOT_ROW_FULL = re.compile(
+    r"^\s*([0-9.]+)%\s+(\d+)\s+(\S+)\s+\[\.\]\s+(.+?)\s{2,}-\s+-\s*$"
+)
 INSTRUCTION_ROW = re.compile(r"^\s*([0-9.]+)\s+:\s+([0-9a-f]+):\s+(\S+)\s*(.*)$")
 ANNOTATED_SAMPLES = re.compile(r"\((\d+) samples, percent: local period\)")
 
@@ -418,6 +421,162 @@ def hot_instructions(profile: pathlib.Path) -> None:
     print()
 
 
+
+def complete_perf_repetitions(profile: pathlib.Path, ladder: list[str]) -> list[pathlib.Path]:
+    """Require the nine completed repetitions and both perf outcomes for every case."""
+    log = (profile / "repetitions.log").read_text()
+    if not re.search(r"^series done .* sessions=9$", log, re.MULTILINE):
+        raise ValueError("the profile series has no nine-session terminal record")
+    repetitions = [profile / f"rep-{number:02d}" for number in range(1, 10)]
+    for rep in repetitions:
+        if not re.search(rf"^{rep.name} done ", log, re.MULTILINE):
+            raise ValueError(f"{rep.name} has no completed log record")
+        if not (rep / "cases.json").is_file():
+            raise ValueError(f"{rep.name} has no case record")
+        for case in ladder:
+            for location in ("counters", "hot"):
+                stem = rep / location / case
+                status = stem.with_suffix(".status")
+                if not status.is_file() or status.read_text().strip() != "0":
+                    raise ValueError(f"{status}: perf collection unavailable")
+    return repetitions
+
+
+def repeated_counters(repetitions: list[pathlib.Path], ladder: list[str],
+                      bits: dict[str, int], modcods: dict[str, str]) -> None:
+    print("## Hardware counters across sessions")
+    print()
+    print(
+        "Each value is the median of nine perf-stat repetitions, with the [x(2), x(8)] "
+        "order-statistic interval on that median (coverage 0.961). Counts divide by "
+        "reported calls and the addendum's frame bits. IPC divides the instruction and "
+        "cycle counts within each repetition before the interval is formed."
+    )
+    print()
+    print("| Case | sessions | cycles/bit | interval | instructions/bit | interval | IPC | interval | branches/bit | interval | branch-misses/bit | interval | cache-misses/bit | interval |")
+    print("|---|---:|---:|---|---:|---|---:|---|---:|---|---:|---|---:|---|")
+    for case in ladder:
+        values: dict[str, list[float]] = {name: [] for name in (
+            "cycles", "instructions", "ipc", "branches", "branch_misses", "cache_misses"
+        )}
+        for rep in repetitions:
+            stem = rep / "counters" / case
+            record = json.loads(stem.with_suffix(".json").read_text())
+            if record["case"] != case or record["calls"] <= 0:
+                raise ValueError(f"{stem}: invalid case or call count")
+            events = {}
+            with stem.with_suffix(".csv").open() as handle:
+                for row in csv.reader(handle):
+                    if len(row) > 2 and row[2] in COUNTER_EVENTS:
+                        events[row[2]] = float(row[0])
+            if set(events) != set(COUNTER_EVENTS) or any(
+                not math.isfinite(value) or value < 0 for value in events.values()
+            ) or events["cycles:u"] == 0:
+                raise ValueError(f"{stem}: incomplete counter values")
+            total = record["calls"] * bits[modcods[case]]
+            for name, event in (
+                ("cycles", "cycles:u"), ("instructions", "instructions:u"),
+                ("branches", "branches:u"), ("branch_misses", "branch-misses:u"),
+                ("cache_misses", "cache-misses:u"),
+            ):
+                values[name].append(events[event] / total)
+            values["ipc"].append(events["instructions:u"] / events["cycles:u"])
+        cells = []
+        for name in values:
+            point, low, high, _ = order_statistic(values[name])
+            digits = 6 if name in ("branch_misses", "cache_misses") else 3
+            cells.extend((
+                f"{point:.{digits}f}",
+                f"[{low:.{digits}f}, {high:.{digits}f}]",
+            ))
+        print(f"| `{case}` | {len(repetitions)} | " + " | ".join(cells) + " |")
+    print()
+
+
+def repeated_symbols(repetitions: list[pathlib.Path], ladder: list[str]) -> None:
+    print("## Hot symbols across sessions")
+    print()
+    print(
+        "The symbol with the greatest median perf-report share in each case is shown. "
+        "Its interval is [x(2), x(8)] across nine repetitions (coverage 0.961). "
+        "The sample-count range states the report's backing counts across repetitions; "
+        "a symbol absent from any thresholded report has no interval."
+    )
+    print()
+    print("| Case | sessions | symbol | share | interval | samples per session |")
+    print("|---|---:|---|---:|---|---:|")
+    for case in ladder:
+        reports = []
+        for rep in repetitions:
+            path = rep / "hot" / f"{case}.report.txt"
+            matched = [row for line in path.read_text().splitlines()
+                       if (row := HOT_ROW_FULL.match(line))]
+            if not matched:
+                raise ValueError(f"{path}: no reported symbols")
+            reports.append({row.group(4): (float(row.group(1)), int(row.group(2)))
+                            for row in matched})
+        symbols = set.intersection(*(set(report) for report in reports))
+        if not symbols:
+            raise ValueError(f"{case}: no symbol retained in every repetition")
+        symbol = max(sorted(symbols), key=lambda name: median(
+            [report[name][0] for report in reports]))
+        shares = [report[symbol][0] for report in reports]
+        samples = [report[symbol][1] for report in reports]
+        point, low, high, _ = order_statistic(shares)
+        print(f"| `{case}` | {len(repetitions)} | `{symbol}` | "
+              f"{point:.2f}% | [{low:.2f}%, {high:.2f}%] | "
+              f"{fixed(min(samples))}..{fixed(max(samples))} |")
+    print()
+
+
+def repeated_instructions(repetitions: list[pathlib.Path]) -> None:
+    print("## Hot instructions of the selected production route across sessions")
+    print()
+    print(
+        "Each share is the percentage assigned to one instruction in its own perf "
+        "annotation. Rows reach the 1.0 percent median threshold across nine repetitions. "
+        "Intervals are [x(2), x(8)] across repetitions (coverage 0.961); the "
+        "sample-count range gives the local-period samples behind the annotations."
+    )
+    print()
+    print("| address | instruction | sessions | share | interval | samples per session |")
+    print("|---|---|---:|---:|---|---:|")
+    records = []
+    sample_counts = []
+    for rep in repetitions:
+        path = rep / "hot" / "qam16-r12-normal-direct.instructions.txt"
+        text = path.read_text()
+        header = ANNOTATED_SAMPLES.search(text)
+        if header is None:
+            raise ValueError(f"{path}: no local sample count")
+        sample_counts.append(int(header.group(1)))
+        rows = {}
+        for line in text.splitlines():
+            row = INSTRUCTION_ROW.match(line)
+            if row:
+                operands = row.group(4).split("<")[0].strip()
+                instruction = f"{row.group(3)} {operands}".strip()
+                rows[row.group(2)] = (instruction, float(row.group(1)))
+        if not rows:
+            raise ValueError(f"{path}: no instructions")
+        records.append(rows)
+    addresses = set.intersection(*(set(record) for record in records))
+    if not addresses:
+        raise ValueError("no instruction retained in every repetition")
+    for address in sorted(addresses, key=lambda value: int(value, 16)):
+        instructions = {record[address][0] for record in records}
+        if len(instructions) != 1:
+            raise ValueError(f"{address}: instruction text changes across repetitions")
+        point, low, high, _ = order_statistic(
+            [record[address][1] for record in records]
+        )
+        if point < ANNOTATED_PERCENT_LIMIT:
+            continue
+        print(f"| `{address}` | `{next(iter(instructions))}` | {len(repetitions)} | "
+              f"{point:.2f}% | [{low:.2f}%, {high:.2f}%] | "
+              f"{fixed(min(sample_counts))}..{fixed(max(sample_counts))} |")
+    print()
+
 def memory_passes(evidence: dict) -> None:
     print("## Logical memory passes per route")
     print()
@@ -434,9 +593,12 @@ def memory_passes(evidence: dict) -> None:
 
 
 def main() -> None:
+    if len(sys.argv) not in (5, 6):
+        raise SystemExit("usage: make-dvb-tables.py <receipt> <profile-dir> <source-evidence> <addendum> [<perf-profile-dir>]")
     receipt_path, profile_path, evidence_path, addendum_path = (
         pathlib.Path(argument) for argument in sys.argv[1:5]
     )
+    perf_profile = pathlib.Path(sys.argv[5]) if len(sys.argv) == 6 else None
     receipt = json.loads(receipt_path.read_text())
     evidence = json.loads(evidence_path.read_text())
     addendum = json.loads(addendum_path.read_text())
@@ -450,21 +612,36 @@ def main() -> None:
     print(
         f"Generated by `survey/make-dvb-tables.py` from `{receipt_path.as_posix()}`, "
         f"`{profile_path.as_posix()}`, `{evidence_path.as_posix()}` and "
-        f"`{addendum_path.as_posix()}`. Campaign cell verdicts stay in the receipt's acceptance "
+        f"`{addendum_path.as_posix()}`"
+        + (f" and perf outputs in `{perf_profile.as_posix()}`" if perf_profile else "")
+        + ". Campaign cell verdicts stay in the receipt's acceptance "
         "summary; these tables attribute the cost the receipt compares. The interval method is "
         "the one the generator's docstring declares, and every table states the sample count it "
         "summarises. The dynamic profile session's invocation, executable digest, pinned "
         "source and build closure, RNG declaration and sampling plan are in "
         "`dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md`."
+        + (
+            " The fresh perf profile's own provenance record is beside its session."
+            if perf_profile else ""
+        )
     )
     print()
     decomposition(receipt)
     boundaries(receipt, cell_bits)
     across_sessions(profile)
     scatter_shares(profile)
-    counter_table(profile, modcod_bits, case_modcods(profile))
-    hot_symbols(profile)
-    hot_instructions(profile)
+    if perf_profile is None:
+        counter_table(profile, modcod_bits, case_modcods(profile))
+        hot_symbols(profile)
+        hot_instructions(profile)
+    else:
+        ladder = [case["id"] for case in json.loads((perf_profile / "ladder.json").read_text())]
+        if set(ladder) != set(case_modcods(profile)):
+            raise ValueError("fresh perf ladder differs from the accepted profile")
+        repetitions = complete_perf_repetitions(perf_profile, ladder)
+        repeated_counters(repetitions, ladder, modcod_bits, case_modcods(perf_profile))
+        repeated_symbols(repetitions, ladder)
+        repeated_instructions(repetitions)
     memory_passes(evidence)
 
 
