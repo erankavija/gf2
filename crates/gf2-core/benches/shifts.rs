@@ -6,12 +6,16 @@
 //! paths against an independent zero-fill oracle without running a timer.
 
 use criterion::{black_box, criterion_group, BenchmarkId, Criterion, Throughput};
+use gf2_core::residual_shift::{
+    force_scalar_residual_shift, last_residual_shift_route, reset_last_residual_shift_route,
+};
 use gf2_core::BitVec;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeSet;
 use std::io::{self, Write};
 use std::process::ExitCode;
+use std::sync::Mutex;
 use std::time::Duration;
 use tuning_campaign_support::abtest::SplitMix64;
 use tuning_campaign_support::host::CpuAffinity;
@@ -23,6 +27,15 @@ use tuning_campaign_support::transport;
 const ARM_VAR: &str = "GF2_SHIFT_ARM";
 const REQUEST_SCHEMA: &str = "zen3-benchmark-arm-request-v1";
 const RESULT_SCHEMA: &str = "zen3-benchmark-arm-result-v1";
+static ROUTE_MUTEX: Mutex<()> = Mutex::new(());
+
+struct RestoreScalarRoute(bool);
+
+impl Drop for RestoreScalarRoute {
+    fn drop(&mut self) {
+        force_scalar_residual_shift(self.0);
+    }
+}
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -34,6 +47,8 @@ enum Direction {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ArmMode {
     ResidualProduction,
+    ResidualScalar,
+    ResidualGated,
     WordAlignedControl,
 }
 
@@ -41,6 +56,8 @@ impl ArmMode {
     fn parse(value: &str) -> Result<Self, String> {
         match value {
             "residual-production" => Ok(Self::ResidualProduction),
+            "residual-scalar" => Ok(Self::ResidualScalar),
+            "residual-gated" => Ok(Self::ResidualGated),
             "word-aligned-control" => Ok(Self::WordAlignedControl),
             other => Err(format!("unknown shift arm {other:?}")),
         }
@@ -49,23 +66,31 @@ impl ArmMode {
     fn name(self) -> &'static str {
         match self {
             Self::ResidualProduction => "residual-production",
+            Self::ResidualScalar => "residual-scalar",
+            Self::ResidualGated => "residual-gated",
             Self::WordAlignedControl => "word-aligned-control",
         }
     }
 
     fn offset(self, case: &ShiftCase) -> usize {
         match self {
-            Self::ResidualProduction => case.residual_offset,
+            Self::ResidualProduction | Self::ResidualScalar | Self::ResidualGated => {
+                case.residual_offset
+            }
             Self::WordAlignedControl => case.control_offset,
         }
     }
 
-    fn selected_path(self, direction: Direction) -> &'static str {
+    fn selected_path(self, direction: Direction) -> Result<String, String> {
+        let suffix = match direction {
+            Direction::Left => "left",
+            Direction::Right => "right",
+        };
         match (self, direction) {
-            (Self::ResidualProduction, Direction::Left) => "bitvec-residual-scalar-left",
-            (Self::ResidualProduction, Direction::Right) => "bitvec-residual-scalar-right",
-            (Self::WordAlignedControl, Direction::Left) => "bitvec-word-dispatch-left",
-            (Self::WordAlignedControl, Direction::Right) => "bitvec-word-dispatch-right",
+            (Self::WordAlignedControl, _) => Ok(format!("bitvec-word-dispatch-{suffix}")),
+            _ => last_residual_shift_route()
+                .map(|route| format!("bitvec-{}-{suffix}", route.name()))
+                .ok_or_else(|| "residual shift did not record its selected route".to_owned()),
         }
     }
 }
@@ -129,7 +154,7 @@ struct ArmOutput {
     cache_state_applied: CacheState,
     workers_observed: u32,
     cpus_observed: Vec<u32>,
-    selected_path: Option<&'static str>,
+    selected_path: Option<String>,
     conversion: Option<ConversionCosts>,
     quality: Option<Value>,
     calibrated: bool,
@@ -320,12 +345,17 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
     let case: ShiftCase = serde_json::from_value(request.case.clone())
         .map_err(|error| format!("shift case does not decode: {error}"))?;
     case.validate()?;
+    let _route_guard = ROUTE_MUTEX
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    let _restore = RestoreScalarRoute(force_scalar_residual_shift(mode == ArmMode::ResidualScalar));
     let offset = mode.offset(&case);
     let expected = {
         let initial = fixture(case.length_bits, case.seed);
         reference_shift(&initial, case.direction, offset)
     };
     let mut probe = fixture(case.length_bits, case.seed);
+    reset_last_residual_shift_route();
     apply_shift(&mut probe, case.direction, offset);
     if (0..probe.len()).any(|index| probe.get(index) != expected[index]) || !tail_is_zero(&probe) {
         return Err("selected arm failed the independent zero-fill oracle".to_owned());
@@ -349,7 +379,7 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
             cache_state_applied: request.cache_state,
             workers_observed: 1,
             cpus_observed: observed_cpus()?,
-            selected_path: Some(mode.selected_path(case.direction)),
+            selected_path: Some(mode.selected_path(case.direction)?),
             conversion: None,
             quality: None,
             calibrated: false,
@@ -377,7 +407,7 @@ fn run_arm(request: ArmRequest, mode: ArmMode) -> Result<ArmOutput, String> {
         cache_state_applied: request.cache_state,
         workers_observed: 1,
         cpus_observed,
-        selected_path: Some(mode.selected_path(case.direction)),
+        selected_path: Some(mode.selected_path(case.direction)?),
         conversion: None,
         quality: None,
         calibrated: true,
@@ -388,6 +418,38 @@ fn write_pretty(value: &impl Serialize) -> Result<(), String> {
     let mut stdout = io::stdout().lock();
     serde_json::to_writer_pretty(&mut stdout, value).map_err(|error| error.to_string())?;
     writeln!(stdout).map_err(|error| error.to_string())
+}
+
+fn check_request_mirror() -> Result<(), String> {
+    for (role, windows, target_ms) in [("validation", 0, 0), ("baseline", 5, 100)] {
+        let value = serde_json::json!({
+            "schema": REQUEST_SCHEMA,
+            "cell_id": "left-lane-crossing-r7",
+            "arm": "residual-scalar",
+            "role": role,
+            "pair": 0,
+            "case": {"direction": "left", "length_bits": 257,
+                     "residual_offset": 7, "control_offset": 7, "seed": 8502},
+            "cache_state": "warm",
+            "windows": windows,
+            "window_target_ms": target_ms,
+            "cpus": [0],
+            "workers_declared": 1
+        });
+        let canonical: tuning_campaign_support::arm::ArmRequest =
+            serde_json::from_value(value.clone()).map_err(|error| error.to_string())?;
+        let mirror: ArmRequest =
+            serde_json::from_value(value).map_err(|error| error.to_string())?;
+        let canonical_bytes = serde_json::to_vec(&canonical).map_err(|error| error.to_string())?;
+        let mirror_bytes = serde_json::to_vec(&mirror).map_err(|error| error.to_string())?;
+        if mirror_bytes != canonical_bytes {
+            return Err(format!(
+                "{role} request mirror differs from the runner's request"
+            ));
+        }
+    }
+    println!("shift arm request mirror matches the runner");
+    Ok(())
 }
 
 fn verify_plan(path: &str) -> Result<(), String> {
@@ -649,6 +711,7 @@ fn main() -> ExitCode {
             .ok_or_else(|| "--check-plan requires a path".to_owned())
             .and_then(|path| verify_plan(&path))
             .map(|()| true),
+        Some("--check-request-mirror") => check_request_mirror().map(|()| true),
         Some("--build-identity") => {
             println!(
                 "{{\"crate\":\"gf2-core\",\"target\":\"shifts\",\"rust_version\":\"1.95\",\"features\":\"all\"}}"
