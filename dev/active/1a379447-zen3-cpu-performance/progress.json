@@ -1322,11 +1322,12 @@
     {
       "category": "rework limit",
       "issue": "9fb40c83",
-      "status": "open",
+      "status": "resolved",
       "raised_at": "2026-09-26T13:14Z",
       "question": "Approve round 5: remove unsupported perf annotate --no-source, check parsing against retained samples, rerun configured gates before re-enabling fresh profile queue.",
       "recommendation": "focused repair; retained-data annotation without that option succeeds with exit 0",
-      "gate_run": "744db121-87b0-4a45-a6e7-536d08823a34"
+      "gate_run": "744db121-87b0-4a45-a6e7-536d08823a34",
+      "resolution": "2026-09-26: invoker explicitly approved focused round 5 in the follow-up interview."
     }
   ],
   "rework_counts": {
@@ -1351,7 +1352,7 @@
     "77c21ecd": 0,
     "7cdc28e9": 0,
     "e1f9a78f": 7,
-    "9fb40c83": 4,
+    "9fb40c83": 5,
     "f8dd4dde": 1,
     "d45aff82": 2,
     "18a87159": 1
@@ -1901,7 +1902,8 @@
     "Session23 candidate preparation merged at59bff36c8; no timing. All workers finished and measurement trees pinned. User accepted historical reconstruction only (18a87159 D-01); dense additional rework, DVB additional rework, and window time remain pending. See handoff-18.md; wave3 remains incomplete.",
     "Session 24 (2026-09-26): interview approves e1f9a78f round 7 (original argv and historical-ref ancestry), 9fb40c83 round 4 (nine-repetition counters/hot-symbol intervals), overnight windows for wave 3 only. Latest steering sets 02:00 Europe/Helsinki starting September 27; five later-wave confirmations held. Models by difficulty; Astra requires explicit permission and is not authorized.",
     "Session 24 dispatch: Sol high e1f9a78f round7 in agent-e1f9a78f-r7; Sol xhigh 9fb40c83 round4 in agent-9fb40c83-r4; Sol high read-only wave readiness survey. Both worker trees anchored to 93d3d72fb. Gates only; no additional independent review. Stale September15 DVB lease recovered. No Astra.",
-    "Session24: e1f9a78f DONE at8a9d49c79; lead review r7; code/doc review zero findings, clean merged-tree cargo-ci passes. DVB round4 preparation merged with cargo-ci pass; old attribution and provenance reproduce byte-for-byte; fresh profile queued (12-minute estimate), F3 stays open pending evidence. c73ffa25 now dependency-ready."
+    "Session24: e1f9a78f DONE at8a9d49c79; lead review r7; code/doc review zero findings, clean merged-tree cargo-ci passes. DVB round4 preparation merged with cargo-ci pass; old attribution and provenance reproduce byte-for-byte; fresh profile queued (12-minute estimate), F3 stays open pending evidence. c73ffa25 now dependency-ready.",
+    "Session 24: c73ffa25 preparation merged at efaea4eaf; merged CI passes. Code gate76ce431c reports absent receipts, profile and portfolio (REQ-01,03-06); these require the queued window. No completion claim. Invoker approves DVB round5 after interview."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
