@@ -35,7 +35,8 @@
             "code-review": "passed 2026-09-08T17:24:50Z at 78a20863 with zero findings",
             "doc-review": "passed 2026-09-08T17:27:18Z at 78a20863 with zero findings",
             "research-review": "passed 2026-09-08T17:31:12Z at 78a20863 on gpt-5.6-terra xhigh, converging with both independent Terra xhigh final reviews"
-          }
+          },
+          "tracker_state": "done"
         }
       ]
     },
@@ -56,7 +57,8 @@
             "attempt": 5,
             "session": 11
           },
-          "merge_commit": "f1a1c975"
+          "merge_commit": "f1a1c975",
+          "tracker_state": "done"
         },
         {
           "id": "6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2",
@@ -71,7 +73,8 @@
             "base": "3ec7e22c",
             "attempt": 3,
             "session": 11
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "c077a88b-2d35-49ed-bfe0-6fbc7055cea1",
@@ -87,7 +90,8 @@
             "attempt": 3,
             "session": 6
           },
-          "merge_commit": "3b6026fc"
+          "merge_commit": "3b6026fc",
+          "tracker_state": "done"
         },
         {
           "id": "eda07788-23a0-4852-939b-2cfcda36f9d1",
@@ -103,7 +107,8 @@
             "attempt": 3,
             "session": 7
           },
-          "merge_commit": "3e1ae250"
+          "merge_commit": "3e1ae250",
+          "tracker_state": "done"
         },
         {
           "id": "c7113c5a-94da-462f-954e-3b7894bb95df",
@@ -119,14 +124,15 @@
             "attempt": 3,
             "session": 7
           },
-          "merge_commit": "4edbadf1"
+          "merge_commit": "4edbadf1",
+          "tracker_state": "done"
         },
         {
           "id": "26465e6c-6852-44b6-9183-ba2cb5a5fca5",
           "short_id": "26465e6c",
           "title": "Establish population-count and fused-reduction baselines",
           "classification": "research",
-          "status": "done. Rework round 1 (doc-review F1, launcher resume comment) merged at fec1f140; the lead then swept the narrative protocol v4 invalidated and regenerated reevaluation.txt against the v4 evaluator built from main — every verdict, finding and summary comparison unchanged, the two evaluator digest lines the whole diff, and tables.md byte-identical. All four gates pass on be0986af and two independent Terra xhigh reviews return zero findings. Closed at session 10. Worktree agent-26465e6c-r1 reclaimed.",
+          "status": "done. Rework round 1 (doc-review F1, launcher resume comment) merged at fec1f140; the lead then swept the narrative protocol v4 invalidated and regenerated reevaluation.txt against the v4 evaluator built from main \u2014 every verdict, finding and summary comparison unchanged, the two evaluator digest lines the whole diff, and tables.md byte-identical. All four gates pass on be0986af and two independent Terra xhigh reviews return zero findings. Closed at session 10. Worktree agent-26465e6c-r1 reclaimed.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c-r1",
@@ -135,7 +141,8 @@
             "attempt": 4,
             "session": 9
           },
-          "merge_commit": "85cd6415"
+          "merge_commit": "85cd6415",
+          "tracker_state": "done"
         },
         {
           "id": "6fb89a3c-f1a7-439d-a397-add1782afe2b",
@@ -160,7 +167,8 @@
             "code-review": "passed 28f96566",
             "doc-review": "passed 28f96566",
             "research-review": "passed 28f96566"
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
@@ -177,7 +185,8 @@
             "session": 7
           },
           "merge_commit": "e36ad350",
-          "note": "F14 biases toward declaring improvement and this receipt declined to, so the negative result holds a fortiori: the known defect works against the conclusion reached, not for it."
+          "note": "F14 biases toward declaring improvement and this receipt declined to, so the negative result holds a fortiori: the known defect works against the conclusion reached, not for it.",
+          "tracker_state": "done"
         },
         {
           "id": "bdc507a3",
@@ -192,7 +201,8 @@
             "base": "3aa2920b",
             "attempt": 1,
             "session": 9
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "428f2f6b",
@@ -207,14 +217,15 @@
             "base": "ad76be4a",
             "attempt": 1,
             "session": 11
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "a387825e",
           "short_id": "a387825e",
           "title": "Close the host-lock leak into daemons started under the lock wrappers",
           "classification": "implementation",
-          "status": "merged at 3c173cc5 with cargo-ci green; cargo-ci and code-review pass on be0986af. doc-review failed with two present-tense findings (dated incident and commit-history narration in the wrapper's lock-lifetime section and the regression test's section 3); the lead fixed both at 5daab50e as rework round 1, bash -n, shellcheck and the wrapper test suite passing. doc-review re-run and one independent review in flight.",
+          "status": "done; reconciled against JIT on 2026-09-26. merged at 3c173cc5 with cargo-ci green; cargo-ci and code-review pass on be0986af. doc-review failed with two present-tense findings (dated incident and commit-history narration in the wrapper's lock-lifetime section and the regression test's section 3); the lead fixed both at 5daab50e as rework round 1, bash -n, shellcheck and the wrapper test suite passing. doc-review re-run and one independent review in flight.",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-26465e6c-v3",
@@ -222,7 +233,8 @@
             "base": "bf762c43",
             "attempt": 1,
             "session": 9
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "3e59cb9a",
@@ -237,7 +249,8 @@
             "base": "cea30281",
             "attempt": 1,
             "session": 9
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
@@ -262,7 +275,8 @@
             "code-review": "passed 5ac7d50c",
             "doc-review": "passed c034bbd8",
             "research-review": "passed c034bbd8"
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "a203a23c",
@@ -278,7 +292,8 @@
             "attempt": 2,
             "session": 11
           },
-          "merge_commit": "b6fa4719"
+          "merge_commit": "b6fa4719",
+          "tracker_state": "done"
         }
       ]
     },
@@ -299,7 +314,8 @@
             "attempt": 3,
             "rework_round": null,
             "session": 14
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "19513245-7fb9-4490-8e41-d9c01405db01",
@@ -315,7 +331,8 @@
             "attempt": 1,
             "rework_round": null,
             "session": 14
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "1d4fd63d-c522-47cb-9448-fe8f5220f0ed",
@@ -342,7 +359,8 @@
             "code-review": "passed a531b17b",
             "doc-review": "passed a531b17b",
             "cargo-ci": "passed 2026-09-13T18:20Z at 3d9281e8 (5988 passed, 0 failed, 248 skipped; all 27 steps green)"
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "5cbb6545-4496-4325-8fa9-d50aaa9fcf50",
@@ -371,21 +389,24 @@
             "code-review": "passed with zero findings after public rustdoc correction",
             "doc-review": "passed with zero findings after route and scope corrections",
             "research-review": "passed with zero findings after evidence repin and scope correction"
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "2037941f-852c-4d94-9d49-ad06a364dca8",
           "short_id": "2037941f",
           "title": "Profile and optimize mid-range buffer operations (8-64 words)",
           "classification": "implementation",
-          "status": "in progress. Session 21: e1f9a78f rounds 2-6 merged (in-window release, host claim, bank sizing plus a 112-clause addendum audit with seven further fixes, dense smoke on the shared runner smoke); its gates wait for d45aff82's staged smoke mode because e1f9a78f REQ-03 names logging and checkpoint/resume; the three dense queue lines stay commented out until c73ffa25 re-keys them. 18a87159 pre-window work merged, four lines queued for the 2026-09-19 window. bb769456's logical smoke converged on the shared smoke under d45aff82."
+          "status": "in progress. Session 21: e1f9a78f rounds 2-6 merged (in-window release, host claim, bank sizing plus a 112-clause addendum audit with seven further fixes, dense smoke on the shared runner smoke); its gates wait for d45aff82's staged smoke mode because e1f9a78f REQ-03 names logging and checkpoint/resume; the three dense queue lines stay commented out until c73ffa25 re-keys them. 18a87159 pre-window work merged, four lines queued for the 2026-09-19 window. bb769456's logical smoke converged on the shared smoke under d45aff82.",
+          "tracker_state": "backlog"
         },
         {
           "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "in progress. Session 21: 85fc5ff4 DONE (reviews/85fc5ff4-r1.md); bracket amended and re-reviewed for the BMI2 form only (invoker); f8dd4dde DONE (reviews/f8dd4dde-r1.md; rework 1 added the Rust 1.95 record); 00dd43c3 (A/B confirmation) backlog, waits for d45aff82; 9fb40c83 in progress: code-review PASS after the shared smoke, research-review FAIL on the dynamic profile, round 3 merged (provenance record from committed material, order-statistic intervals, n = 1 labels), gates not yet re-run; a0812b83 sits behind 00dd43c3 and 9fb40c83."
+          "status": "in progress. Session 21: 85fc5ff4 DONE (reviews/85fc5ff4-r1.md); bracket amended and re-reviewed for the BMI2 form only (invoker); f8dd4dde DONE (reviews/f8dd4dde-r1.md; rework 1 added the Rust 1.95 record); 00dd43c3 (A/B confirmation) backlog, waits for d45aff82; 9fb40c83 in progress: code-review PASS after the shared smoke, research-review FAIL on the dynamic profile, round 3 merged (provenance record from committed material, order-statistic intervals, n = 1 labels), gates not yet re-run; a0812b83 sits behind 00dd43c3 and 9fb40c83.",
+          "tracker_state": "backlog"
         },
         {
           "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
@@ -400,7 +421,8 @@
             "base": "ad76be4a",
             "attempt": 1,
             "session": 11
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "1c602857-5e5b-4981-949a-09bb7639476b",
@@ -426,63 +448,72 @@
             "code-review": "passed e479a99c",
             "doc-review": "passed e479a99c",
             "research-review": "passed e479a99c (A1 advisory)"
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "c5e01de3-c6ae-4a0a-80c5-646d744aff80",
           "short_id": "c5e01de3",
           "title": "Name attempt alpha correctly in acceptance summaries",
           "classification": "implementation",
-          "status": "done. Session 17: producer split of family/attempt/corrected alpha (round 1), canonical freezer fixed and acceptance schema versioned to zen3-benchmark-acceptance-v2 with a schema-keyed legacy branch (round 2); cargo-ci, code-review, doc-review pass at d0960d2d; reviews reviews/c5e01de3-r1.md, -r2.md; closed at 770d1d90."
+          "status": "done. Session 17: producer split of family/attempt/corrected alpha (round 1), canonical freezer fixed and acceptance schema versioned to zen3-benchmark-acceptance-v2 with a schema-keyed legacy branch (round 2); cargo-ci, code-review, doc-review pass at d0960d2d; reviews reviews/c5e01de3-r1.md, -r2.md; closed at 770d1d90.",
+          "tracker_state": "done"
         },
         {
           "id": "613574db-f283-425f-b664-369f3e93d756",
           "short_id": "613574db",
           "title": "Design cached GF(2^8) tables and consumer hooks",
           "classification": "design",
-          "status": "done. Session 17: design.md and breakdown.md merged at 341e0216; repo-validate, doc-review and holistic-review pass after the four manifest leaves were instantiated (77c21ecd, b64dc9c4, ad2a6a58, 4c1e441f); review reviews/613574db-r1.md; closed at ed7c67bc."
+          "status": "done. Session 17: design.md and breakdown.md merged at 341e0216; repo-validate, doc-review and holistic-review pass after the four manifest leaves were instantiated (77c21ecd, b64dc9c4, ad2a6a58, 4c1e441f); review reviews/613574db-r1.md; closed at ed7c67bc.",
+          "tracker_state": "done"
         },
         {
           "id": "77c21ecd",
           "short_id": "77c21ecd",
           "title": "Cache GF(2^8) byte product tables and route FieldVec::axpy through them",
           "classification": "implementation",
-          "status": "merged at 4522673a (worker 47ff752c, 0c5ffc4e; lead-committed rustdoc sweep 8facfc83); merged-tree cargo-ci green (cargo-ci-main-1); lead-run Rust 1.95 build and 2712 gf2-core tests green; gates pending. (2026-09-16T17:32Z) Wave 2: code-review and cargo-ci pass; doc-review F1 (design.md 30-table bound), research-review F1-F3 (Seroussi and Gauss attributions without citekeys; 65536-step claim) fixed by the lead in wave 3; reruns queued. All eight gates pass; done (session 18)."
+          "status": "done; reconciled against JIT on 2026-09-26. merged at 4522673a (worker 47ff752c, 0c5ffc4e; lead-committed rustdoc sweep 8facfc83); merged-tree cargo-ci green (cargo-ci-main-1); lead-run Rust 1.95 build and 2712 gf2-core tests green; gates pending. (2026-09-16T17:32Z) Wave 2: code-review and cargo-ci pass; doc-review F1 (design.md 30-table bound), research-review F1-F3 (Seroussi and Gauss attributions without citekeys; 65536-step claim) fixed by the lead in wave 3; reruns queued. All eight gates pass; done (session 18).",
+          "tracker_state": "done"
         },
         {
           "id": "8275a6f8",
           "short_id": "8275a6f8",
           "title": "Keep captured child diagnostics when the runner's request write fails",
           "classification": "implementation",
-          "status": "merged at 7997c767 (worker 07002ffc, 9d261b74); merged-tree cargo-ci exposed the new regression test flaking under suite load (stderr callback suppressed when the write error arrived first); lead fix as rework 1 on main (write failure tracked separately, 0/20 stress failures); cargo-ci-main-3 green; gates pending. (2026-09-16T17:32Z) Wave 2: code-review and cargo-ci pass; doc-review F1 twice on callback_error precedence wording, fixed by the lead (fbaf3380, 403d8ecf); rerun queued. All three gates pass; done (session 18)."
+          "status": "done; reconciled against JIT on 2026-09-26. merged at 7997c767 (worker 07002ffc, 9d261b74); merged-tree cargo-ci exposed the new regression test flaking under suite load (stderr callback suppressed when the write error arrived first); lead fix as rework 1 on main (write failure tracked separately, 0/20 stress failures); cargo-ci-main-3 green; gates pending. (2026-09-16T17:32Z) Wave 2: code-review and cargo-ci pass; doc-review F1 twice on callback_error precedence wording, fixed by the lead (fbaf3380, 403d8ecf); rerun queued. All three gates pass; done (session 18).",
+          "tracker_state": "done"
         },
         {
           "id": "7cdc28e9",
           "short_id": "7cdc28e9",
           "title": "Skip non-benchmark receipts in the receipt re-evaluation checker",
           "classification": "implementation",
-          "status": "merged at d74b84a4 (worker e0a9e376, 188d33a1, 5d53b954; sonnet); lead verified the regenerated record keeps all 62 baseline verdicts and adds 63 receipts plus 1 skipped; code-review F1 (tool docstring named a live receipt) fixed by the lead; doc-review and cargo-ci pass; gates re-run in wave 3 (2026-09-16T18:51Z). Done."
+          "status": "done; reconciled against JIT on 2026-09-26. merged at d74b84a4 (worker e0a9e376, 188d33a1, 5d53b954; sonnet); lead verified the regenerated record keeps all 62 baseline verdicts and adds 63 receipts plus 1 skipped; code-review F1 (tool docstring named a live receipt) fixed by the lead; doc-review and cargo-ci pass; gates re-run in wave 3 (2026-09-16T18:51Z). Done.",
+          "tracker_state": "done"
         },
         {
           "id": "94bbe5d7",
           "short_id": "94bbe5d7",
           "title": "Freeze confirmation addenda with stage-specific family prose",
           "classification": "implementation",
-          "status": "pending (sonnet slot)"
+          "status": "rejected; reconciled against JIT on 2026-09-26. pending (sonnet slot)",
+          "tracker_state": "rejected"
         },
         {
           "id": "706a8f93",
           "short_id": "706a8f93",
           "title": "Record the achieved scheduling priority in receipt host observations",
           "classification": "implementation",
-          "status": "pending (sonnet slot)"
+          "status": "rejected; reconciled against JIT on 2026-09-26. pending (sonnet slot)",
+          "tracker_state": "rejected"
         },
         {
           "id": "2c487595",
           "short_id": "2c487595",
           "title": "Version the addendum schema alongside its predecessors",
           "classification": "implementation",
-          "status": "merged at d1825118; lead fix 2badfb20 (checker reads HEAD); gates code-review rerun failed; open (2026-09-16T19:12Z). Done after the staged-decoy self-test fix (4f6031a2)."
+          "status": "done; reconciled against JIT on 2026-09-26. merged at d1825118; lead fix 2badfb20 (checker reads HEAD); gates code-review rerun failed; open (2026-09-16T19:12Z). Done after the staged-decoy self-test fix (4f6031a2).",
+          "tracker_state": "done"
         }
       ]
     },
@@ -507,21 +538,23 @@
           "reviews": [
             "reviews/07ca8585-r1.md",
             "reviews/07ca8585-r4.md"
-          ]
+          ],
+          "tracker_state": "done"
         },
         {
           "id": "63bad95d-0e69-459b-840b-c37521036f52",
           "short_id": "63bad95d",
           "title": "Calibrate production dispatch for the 5900X",
           "classification": "implementation",
-          "status": "pending"
+          "status": "pending",
+          "tracker_state": "backlog"
         },
         {
           "id": "b64dc9c4",
           "short_id": "b64dc9c4",
           "title": "Route the dense FieldMatrix product for GF(2^8) through the cached table",
           "classification": "implementation",
-          "status": "in_progress: dispatched session 19 (after the 7cc591a0 /tmp fix merged at 4d81c629)",
+          "status": "done; reconciled against JIT on 2026-09-26. in_progress: dispatched session 19 (after the 7cc591a0 /tmp fix merged at 4d81c629)",
           "dispatch": {
             "model": "claude-opus (native subagent)",
             "worktree": ".agents/worktrees/agent-b64dc9c4",
@@ -529,14 +562,16 @@
             "base": "62996c67",
             "attempt": 1,
             "session": 19
-          }
+          },
+          "tracker_state": "done"
         },
         {
           "id": "ad2a6a58",
           "short_id": "ad2a6a58",
           "title": "Confirm the GF(2^8) axpy path against the current vector route",
           "classification": "research",
-          "status": "in_progress: pilot collected from the 2026-09-19 window and merged at e736999ee; confirmation frozen (6 of 10 cells; equivalence margin replaced 1.15 -> 1.3 by the freezer's sanctioned option because the cold cells set the resolution at 0.29, recorded in the derivation record as plan.md anticipates) and queued for the 2026-09-20 window from the pinned worktree agent-0a357f94. Replay note: the worker's launcher/closure convergence on the shared log checker duplicated main's 2d95c4d4f and was resolved to main's side; its two-stage private smoke commit 37b14c464 was skipped on main (main's smoke-arms.sh stays on dev/scripts/smoke-campaign-arms.sh over the pilot plan), so main carries no smoke record of the confirmation plan while the pinned tree does. Final round after the confirmation: converge the smoke on benchmark-ab-runner smoke over both plans, add the finding count to the tables' Source line, outcome prose, rebase, gates."
+          "status": "in_progress: pilot collected from the 2026-09-19 window and merged at e736999ee; confirmation frozen (6 of 10 cells; equivalence margin replaced 1.15 -> 1.3 by the freezer's sanctioned option because the cold cells set the resolution at 0.29, recorded in the derivation record as plan.md anticipates) and queued for the 2026-09-20 window from the pinned worktree agent-0a357f94. Replay note: the worker's launcher/closure convergence on the shared log checker duplicated main's 2d95c4d4f and was resolved to main's side; its two-stage private smoke commit 37b14c464 was skipped on main (main's smoke-arms.sh stays on dev/scripts/smoke-campaign-arms.sh over the pilot plan), so main carries no smoke record of the confirmation plan while the pinned tree does. Final round after the confirmation: converge the smoke on benchmark-ab-runner smoke over both plans, add the finding count to the tables' Source line, outcome prose, rebase, gates.",
+          "tracker_state": "in_progress"
         },
         {
           "id": "b9302771",
@@ -555,14 +590,16 @@
           "merge_commit": "a646b2a1",
           "reviews": [
             "reviews/b9302771-r1.md"
-          ]
+          ],
+          "tracker_state": "done"
         },
         {
           "id": "d45aff82",
           "short_id": "d45aff82",
           "title": "Provide one shared non-timed arm smoke in the campaign tools",
           "classification": "implementation",
-          "status": "done. Session 22: rework 2 (staged smoke mode on the runner's session loop) merged at b556c449b; cargo-ci, code-review, doc-review pass with zero findings; review reviews/d45aff82-r2.md; closed at 3b47b939b."
+          "status": "done. Session 22: rework 2 (staged smoke mode on the runner's session loop) merged at b556c449b; cargo-ci, code-review, doc-review pass with zero findings; review reviews/d45aff82-r2.md; closed at 3b47b939b.",
+          "tracker_state": "done"
         }
       ]
     },
@@ -574,14 +611,16 @@
           "short_id": "f63a2464",
           "title": "Evaluate quantized layered and QC-aware LDPC candidates",
           "classification": "research",
-          "status": "in_progress: three QC pilots collected from the 2026-09-19 window and merged at 3c6c8274c; frozen stop rules applied: Q no-proceed (S2), L no-proceed (S2), QC proceeds to its confirmatory attempt on each of its three ledgers (single-worker, multicore, comparator; the decision record's 'family' read as the ledger's question, recorded in findings.md Limits); confirmations frozen by the canonical freezer via freeze-confirmations.sh, every pilot cell retained (budget six per ledger), smoked untimed, three lines queued for the 2026-09-20 window from the pinned worktree agent-9fb40c83. Comparator pilot ratio below one on both cells (candidate slower than the matched AFF3CT arm), preserved. Final round after the confirmations: outcomes, S4, converge qc-arm-smoke and ldpc-plan-check on the runner subcommands, rebase, gates cargo-ci, code-review, research-review."
+          "status": "in_progress: three QC pilots collected from the 2026-09-19 window and merged at 3c6c8274c; frozen stop rules applied: Q no-proceed (S2), L no-proceed (S2), QC proceeds to its confirmatory attempt on each of its three ledgers (single-worker, multicore, comparator; the decision record's 'family' read as the ledger's question, recorded in findings.md Limits); confirmations frozen by the canonical freezer via freeze-confirmations.sh, every pilot cell retained (budget six per ledger), smoked untimed, three lines queued for the 2026-09-20 window from the pinned worktree agent-9fb40c83. Comparator pilot ratio below one on both cells (candidate slower than the matched AFF3CT arm), preserved. Final round after the confirmations: outcomes, S4, converge qc-arm-smoke and ldpc-plan-check on the runner subcommands, rebase, gates cargo-ci, code-review, research-review.",
+          "tracker_state": "in_progress"
         },
         {
           "id": "4c1e441f",
           "short_id": "4c1e441f",
           "title": "Confirm the GF(2^8) dense product against the current matrix route",
           "classification": "research",
-          "status": "in_progress: pilot collected from the 2026-09-19 window and merged at 57ded10db; confirmation frozen (6 of 8 cells) and queued for the 2026-09-20 window from the pinned worktree agent-c04dd4ac; final round after the confirmation: converge smoke-arms.sh on benchmark-ab-runner smoke (the shared smoke script labels the throwaway plan 'pilot' unconditionally: fix at the shared source then), tables, outcome prose, rebase, gates."
+          "status": "in_progress: pilot collected from the 2026-09-19 window and merged at 57ded10db; confirmation frozen (6 of 8 cells) and queued for the 2026-09-20 window from the pinned worktree agent-c04dd4ac; final round after the confirmation: converge smoke-arms.sh on benchmark-ab-runner smoke (the shared smoke script labels the throwaway plan 'pilot' unconditionally: fix at the shared source then), tables, outcome prose, rebase, gates.",
+          "tracker_state": "in_progress"
         }
       ]
     },
@@ -593,56 +632,64 @@
           "short_id": "ed3d490e",
           "title": "Vectorize LDPC decoding across frames",
           "classification": "implementation",
-          "status": "pending"
+          "status": "pending",
+          "tracker_state": "backlog"
         },
         {
           "id": "18a87159",
           "short_id": "18a87159",
           "title": "Record the isolated XOR, row-XOR consumer and coding-route logical baselines",
           "classification": "research",
-          "status": "in_progress: post-window round merged at da6ca8163 (three logical pilot receipts, nine-repetition profile, logical-tables.md, logical-baselines.md with the bc091474 confirmatory budget of six cells per family, REQ-09 negative); 20 artifacts linked; cargo-ci PASS, code-review PASS (zero findings), research-review FAIL round 1 F1 (high, blocking): the three receipts and the profile omit their exact executed top-level invocations (window command, runner and perf invocations), REQ-01/REQ-04/REQ-07 and @/inv/claims-trace-to-artifacts. Rework 1 not dispatched (invoker: no new work in session 22); verdict in reviews/18a87159-r1.md."
+          "status": "in_progress: post-window round merged at da6ca8163 (three logical pilot receipts, nine-repetition profile, logical-tables.md, logical-baselines.md with the bc091474 confirmatory budget of six cells per family, REQ-09 negative); 20 artifacts linked; cargo-ci PASS, code-review PASS (zero findings), research-review FAIL round 1 F1 (high, blocking): the three receipts and the profile omit their exact executed top-level invocations (window command, runner and perf invocations), REQ-01/REQ-04/REQ-07 and @/inv/claims-trace-to-artifacts. Rework 1 not dispatched (invoker: no new work in session 22); verdict in reviews/18a87159-r1.md.",
+          "tracker_state": "in_progress"
         },
         {
           "id": "bc091474",
           "short_id": "bc091474",
           "title": "Freeze, measure and select the logical-buffer candidates",
           "classification": "research",
-          "status": "pending; merged from 0064b0a2, 42a22210, 80ed6e9f, a5f29ae5 (session 19)"
+          "status": "pending; merged from 0064b0a2, 42a22210, 80ed6e9f, a5f29ae5 (session 19)",
+          "tracker_state": "backlog"
         },
         {
           "id": "fcb04d66",
           "short_id": "fcb04d66",
           "title": "Implement and confirm the logical-buffer outcome",
           "classification": "implementation",
-          "status": "pending; merged from 23a08297, b8ef6f13 (session 19)"
+          "status": "pending; merged from 23a08297, b8ef6f13 (session 19)",
+          "tracker_state": "backlog"
         },
         {
           "id": "c73ffa25",
           "short_id": "c73ffa25",
           "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
           "classification": "research",
-          "status": "pending; merged from 2094958d, 833dff1a (session 19)"
+          "status": "pending; merged from 2094958d, 833dff1a (session 19)",
+          "tracker_state": "backlog"
         },
         {
           "id": "50f0bd42",
           "short_id": "50f0bd42",
           "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
           "classification": "research",
-          "status": "pending; merged from 44fcbdc2, 5db985b0, 6ba2e919 (session 19)"
+          "status": "pending; merged from 44fcbdc2, 5db985b0, 6ba2e919 (session 19)",
+          "tracker_state": "backlog"
         },
         {
           "id": "6e87c436",
           "short_id": "6e87c436",
           "title": "Implement and confirm the dense-parity outcome",
           "classification": "implementation",
-          "status": "pending; merged from 1956017f, 49b1611b (session 19)"
+          "status": "pending; merged from 1956017f, 49b1611b (session 19)",
+          "tracker_state": "backlog"
         },
         {
           "id": "a1ad6d4e",
           "short_id": "a1ad6d4e",
           "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
           "classification": "research",
-          "status": "pending; merged from 552fae3b, c9cf13ee, 3f57a279, c71becc5, 7d3ced35, 4497e541 (session 19)"
+          "status": "pending; merged from 552fae3b, c9cf13ee, 3f57a279, c71becc5, 7d3ced35, 4497e541 (session 19)",
+          "tracker_state": "backlog"
         }
       ]
     },
@@ -654,14 +701,16 @@
           "short_id": "807ddab2",
           "title": "Trim comments and rustdoc in epic-touched files to the non-obvious-only standard",
           "classification": "implementation",
-          "status": "pending; after 63bad95d"
+          "status": "pending; after 63bad95d",
+          "tracker_state": "backlog"
         },
         {
           "id": "1362381c-78c0-42eb-bdc9-4327f20bc343",
           "short_id": "1362381c",
           "title": "Publish end-to-end competitive results and remaining limits",
           "classification": "documentation",
-          "status": "pending"
+          "status": "pending",
+          "tracker_state": "backlog"
         }
       ]
     }
@@ -1258,7 +1307,8 @@
     "e1f9a78f": 6,
     "9fb40c83": 3,
     "f8dd4dde": 1,
-    "d45aff82": 2
+    "d45aff82": 2,
+    "18a87159": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1298,7 +1348,7 @@
     },
     {
       "issue": "f547c394",
-      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set — declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property — is the rework's design target.",
+      "subject": "research-review's 7 blocking findings grew to 12 (F1-F7 from the gate, F8 elevated from advisory, F13-F19 from a read-only audit the lead commissioned). The audit's closing rule set \u2014 declared decimals stay decimal; declared is checked against observed and a digest is not a value; rules are total over their class and guards total over their property \u2014 is the rework's design target.",
       "origin": "issue-impact",
       "disposition": "all recorded in reviews/f547c394-r3.md; the rework worker reads that file as part of its mandatory audit step",
       "criterion_named_by": "REQ-02, REQ-03, REQ-04, REQ-06 of f547c394"
@@ -1431,7 +1481,7 @@
     },
     {
       "issue": "6c6b09b1",
-      "subject": "the launcher completeness guard read measured_cells from the terminal record, which benchmark-ab-runner increments regardless of outcome and which a resumed session that finds every cell checkpointed reports as zero — so the guard would have passed an all-inapplicable campaign and failed a legitimately resumed one",
+      "subject": "the launcher completeness guard read measured_cells from the terminal record, which benchmark-ab-runner increments regardless of outcome and which a resumed session that finds every cell checkpointed reports as zero \u2014 so the guard would have passed an all-inapplicable campaign and failed a legitimately resumed one",
       "origin": "issue-impact (session 10)",
       "disposition": "found only because the lead required the untested host-unavailable branch to be exercised against a synthesized fixture rather than code-read. Guard now counts cell-complete records carrying pairs; ten cases committed as dev/bench_results/6c6b09b1/run-byte-field-v4.test.sh, two of them pinned to real artifacts. Exit 4 distinguishes a sound run whose plan does not fit the host from exit 1, a run that broke.",
       "criterion_named_by": "epic REQ-01 (measurement contract)"
@@ -1459,23 +1509,23 @@
     },
     {
       "issue": "6fb89a3c",
-      "subject": "dev/active/6fb89a3c/survey/freeze-remeasure.py no longer reproduces the addenda it froze: pilot_history() globs dev/bench_results/6fb89a3c/*/execution.log and filters only on family id and exploratory role, with no skip for the campaign the addendum itself drives, while main() adds +1 for 'this campaign' — so now that the three re-measurement receipts are committed, each campaign is counted twice",
+      "subject": "dev/active/6fb89a3c/survey/freeze-remeasure.py no longer reproduces the addenda it froze: pilot_history() globs dev/bench_results/6fb89a3c/*/execution.log and filters only on family id and exploratory role, with no skip for the campaign the addendum itself drives, while main() adds +1 for 'this campaign' \u2014 so now that the three re-measurement receipts are committed, each campaign is counted twice",
       "origin": "lead review (session 10), by reading; not confirmable by running from main because the arm executables are gitignored",
-      "disposition": "OPEN — blocks closing 6fb89a3c. Identical defect to the one 3e59cb9a found and fixed in dev/active/eda07788/survey/freeze-remeasure.py (skip a campaign whose campaign-start record names this addendum as its own path). A reviewer rerunning the script would find the frozen addendum disagreeing with the receipt that measured it.",
+      "disposition": "OPEN \u2014 blocks closing 6fb89a3c. Identical defect to the one 3e59cb9a found and fixed in dev/active/eda07788/survey/freeze-remeasure.py (skip a campaign whose campaign-start record names this addendum as its own path). A reviewer rerunning the script would find the frozen addendum disagreeing with the receipt that measured it.",
       "criterion_named_by": "6fb89a3c REQ-01 (reproducible release benchmarks) and epic REQ-01"
     },
     {
       "issue": "bdc507a3",
       "subject": "protocol v4 replaced dev/active/f547c394/addendum.schema.json in place instead of versioning it alongside; addendum-v1.schema.json is preserved but v2 and v3 are not, so the only surviving copies of the v3 schema are inside receipt inputs/ snapshots",
       "origin": "issue-impact (session 10), found by 3e59cb9a when its frozen-addendum test went red on the merge",
-      "disposition": "OPEN — bdc507a3 is already closed, so this needs its own issue. Anything validating a frozen v3 addendum against the shared path fails on two const constraints ($id and protocol.version). Workaround in use: validate against the version-3 snapshot the receipt pins and assert that snapshot's digest against receipt.addendum_schema.sha256. FamilyAddendum::validate() itself accepts 1..=PROTOCOL_VERSION, so only the JSON-Schema file is affected.",
+      "disposition": "OPEN \u2014 bdc507a3 is already closed, so this needs its own issue. Anything validating a frozen v3 addendum against the shared path fails on two const constraints ($id and protocol.version). Workaround in use: validate against the version-3 snapshot the receipt pins and assert that snapshot's digest against receipt.addendum_schema.sha256. FamilyAddendum::validate() itself accepts 1..=PROTOCOL_VERSION, so only the JSON-Schema file is affected.",
       "criterion_named_by": "epic REQ-01 and REQ-06 (deterministic, reproducible execution)"
     },
     {
       "issue": "04b85d10",
       "subject": "code-review round 2 returned three issue-impact blocking findings: F1 the frozen layout addendum labels degree-14 short-frame BCH measurements as normal-frame so its declared workload does not match the receipt (addendum-bit-storage-layout-v3-confirmation.json:11); F2 the n=64800 whole-consumer receipt reports conversion costs from a short-code setup and a 32448-bit proxy rather than the declared normal-frame consumer (survey/gf2-side/src/lib.rs:781 in the count-v3-confirmation producing snapshot); F3 summarize-receipts.py hard-codes receipt-specific provenance and correction prose instead of deriving it from structured receipt evidence (:93)",
       "origin": "gate (session 10)",
-      "disposition": "OPEN — blocks closing 04b85d10; rework round 2 of 2, so a third failure escalates per policy item 5. F1 and F2 are measurement-validity defects, not wording: the declared workload does not match what was measured. Verdict references @/issue/04b85d10/requirement/REQ-01..03 and @/invariant/benchmark-backed-performance.",
+      "disposition": "OPEN \u2014 blocks closing 04b85d10; rework round 2 of 2, so a third failure escalates per policy item 5. F1 and F2 are measurement-validity defects, not wording: the declared workload does not match what was measured. Verdict references @/issue/04b85d10/requirement/REQ-01..03 and @/invariant/benchmark-backed-performance.",
       "criterion_named_by": "04b85d10 REQ-01, REQ-02, REQ-03 and epic REQ-01"
     },
     {
@@ -1489,14 +1539,14 @@
       "issue": "a203a23c",
       "subject": "research-review F1 (high, blocking): tagged commit 76812a4e reports the checker's 23.1 s -> 2.59 s and the restoration generator's 60.2 s -> 10.1 s reductions without a committed benchmark artifact, invocation, hardware or provenance",
       "origin": "gate (session 10)",
-      "disposition": "OPEN — blocks closing a203a23c; its other three gates pass. The lead caused this by asking for the cost measurement without also asking where the artifact recording it would live. Fix: commit an artifact carrying the invocation, host and timings with provenance, and point the claim at it. References @/invariant/claims-trace-to-artifacts and @/invariant/benchmark-backed-performance.",
+      "disposition": "OPEN \u2014 blocks closing a203a23c; its other three gates pass. The lead caused this by asking for the cost measurement without also asking where the artifact recording it would live. Fix: commit an artifact carrying the invocation, host and timings with provenance, and point the claim at it. References @/invariant/claims-trace-to-artifacts and @/invariant/benchmark-backed-performance.",
       "criterion_named_by": "epic REQ-01 (measurement contract)"
     },
     {
       "issue": "1a379447",
       "subject": "the CCX1 wrapper's `nice -n -5` always fails on this host (RLIMIT_NICE max nice priority is 0), so every campaign runs at NI=0; the receipt's host observation records governor, SMT and load but not the achieved scheduling priority",
       "origin": "invoker observation (session 10), verified",
-      "disposition": "benign and consistent: GNU nice warns and still runs the command (exit status is the command's), the wrapper's own comment already calls the pin best-effort, and 146 committed evidence files carry the same warning back to 2026-05-27 — so all committed measurements are mutually comparable at NI=0. The gap is provenance, not validity: on a host where the pin succeeded, measurements would shift and nothing would flag it. Worth recording achieved niceness in the host observation.",
+      "disposition": "benign and consistent: GNU nice warns and still runs the command (exit status is the command's), the wrapper's own comment already calls the pin best-effort, and 146 committed evidence files carry the same warning back to 2026-05-27 \u2014 so all committed measurements are mutually comparable at NI=0. The gap is provenance, not validity: on a host where the pin succeeded, measurements would shift and nothing would flag it. Worth recording achieved niceness in the host observation.",
       "criterion_named_by": "epic REQ-01 (measurement contract) and REQ-06 (deterministic seeded execution)"
     },
     {
@@ -1704,13 +1754,13 @@
     "Session 4 lead direction on f547c394 F12: the rework materially amends P-17, P-18, P-19 and P-22, so the protocol becomes version 2. Version-1 receipts stay valid as version-1 evidence and acceptance must refuse to evaluate a receipt under a version it was not pinned to.",
     "Session 4: all eight wave-2 branches merged current main and were lead-preserved first. c7113c5a's confirmatory receipt and 26465e6c's popcount pilot receipt were sitting uncommitted in their worktrees and are now on their branches.",
     "Session 4 confirmed empirically: codex --add-dir <repo>/.git does NOT make a linked worktree's git directory writable; the sandbox mounts it read-only regardless. Codex workers keep a COMMIT-PLAN.md and the lead commits for them.",
-    "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations — but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
+    "Session 4 trap: a native subagent's provider-limit stop is NOT terminal. The lead read four such notices as deaths, preserved the trees and spawned four continuations \u2014 but a SendMessage to a stopped agent revives it from its transcript, and the lead's own post-reset messages had already done so. Four worktrees were double-dispatched. One continuation detected it from fresh commits landing under it and stopped before writing; the others were stood down. Check ListAgents for running/idle before re-dispatching, and prefer reviving the original by message over spawning a replacement.",
     "Session 4: the CCX1 mutex starved every exclusive waiter because cargo-budget.sh took the shared side with flock -s and a pending flock -x does not block a new flock -s on Linux. Fixed at d088c284 with a turnstile both sides pass through, authorized by the invoker as a shared-infrastructure change. The fix binds only checkouts that have it, so the lead merged main into all nine live worktrees and then held the turnstile to drain the six runners launched under the old wrapper.",
-    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record — c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
+    "Session 4: three independent instances of the pooled-outlier defect (receipt.rs:1315) are now on record \u2014 c7113c5a at 167x-857x arm ratios (116-119 of 240 flagged, 0 per arm) and eda07788 at ~6x (3 of 60, sibling 0 of 60, every 2.2x cell clean). It is elevated from advisory to blocking and its fixture must cover the small-ratio case.",
     "Session 4: the lead commissioned two stood-down duplicate workers as read-only auditors rather than idling them. One verified 106 citations across all five survey findings documents and nine external checkouts; the other audited the shared crate for the defect class the first F13 instance revealed. Between them they produced F13-F19 and two false claims that would have reached receipts. Neither wrote a byte in any worktree.",
     "Session 4 convention adopted: a survey records code claims in a source-evidence.json ledger (project, commit, path, line, the verbatim text of that line, and why) rather than putting line numbers in prose. c077a88b did this and audited clean on 37 citations in seconds; the four prose-citation surveys took minutes each and two carried claims their citations did not support.",
-    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted — the F3 repair it needs to emit a decoder receipt at all — in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
-    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots — re-read each branch before acting.",
+    "Session 4 collision, one layer down: c077a88b was editing benchmark-ab-runner.rs and protocol_contracts.rs uncommitted \u2014 the F3 repair it needs to emit a decoder receipt at all \u2014 in the same files the f547c394 v2 rework is editing. Preserved in a lead checkpoint; resolve at merge in favour of the rework's implementation, then re-run that survey.",
+    "Session 4 ended 2026-09-08 on the invoker's instruction to hand off while letting the workers finish. Eight workers were still running: the f547c394 rework plus c077a88b, 6fb89a3c and 04b85d10 on codex, and c7113c5a, 26465e6c, 6c6b09b1 and eda07788 as native subagents. Branch heads are recorded in handoff-4.md and are snapshots \u2014 re-read each branch before acting.",
     "Session 4 sequencing rule still in force: four surveys were told to hold their confirmatory campaigns until the lead says protocol v2 has landed. v2 is the critical path.",
     "Session 4 open question for the invoker: whether the 5G NR whole-consumer encoder cell eda07788 proposed becomes a new survey family in this epic, a tracked follow-up outside it, or is dropped. Lead recommends a tracked follow-up outside the epic.",
     "Session 6 halted on the invoker request after stopping all three subagents and releasing the c077a88b, 1d0da41f and eda07788 leases. c077a88b is merged but open; 1d0da41f is complete on an unmerged branch; eda07788 completed all six frozen confirmation cells while the interrupt was being delivered and preserves the generated result uncommitted. Exact state and resume order are in handoff-5.md.",
@@ -1742,7 +1792,7 @@
     "Pruned six stale worktrees (02b8137c, 3f7edef1, 5ee83cd3, 97410c80, b1bd75ca, e1e0e7ff), all clean and fully merged; branches kept. Free disk 38G -> 74G. agent-02b8137c-run kept: 22 untracked validation-journal files belonging to another epic.",
     "Session 10: 26465e6c and bdc507a3 closed; a387825e in doc-review rework round 1 (lead-authored, comments only).",
     "Session 10: reclaimed worktrees agent-26465e6c-r1 and agent-c7113c5a-v3 after their issues closed; free disk 69G -> 78G.",
-    "Session 10: the Codex weekly usage limit was exhausted at 07:05Z by four gate suites plus four independent Terra xhigh reviews, failing two gate suites with 'Agent produced no output' — which records as a gate FAILURE indistinguishable from a finding. The invoker reset it; both suites were re-run.",
+    "Session 10: the Codex weekly usage limit was exhausted at 07:05Z by four gate suites plus four independent Terra xhigh reviews, failing two gate suites with 'Agent produced no output' \u2014 which records as a gate FAILURE indistinguishable from a finding. The invoker reset it; both suites were re-run.",
     "Session 10: merged a387825e, bdc507a3, 26465e6c, 04b85d10, 6fb89a3c, 3e59cb9a and a203a23c to main, cargo-ci green after each.",
     "Session 10 (invoker, mid-session): no more new work this session; finish what is in flight and hand off.",
     "2026-09-12T08:36Z: invoker directed the pending campaigns to start immediately, independent of the session. Window launched as systemd user unit gf2-bench-window-20260912b over the committed queue (7 jobs, ~215 min): 3be770d5 profile re-run, 6c6b09b1 three v4 pilots, 3be770d5 two v4 confirmations, 1c602857 pilot. All seven pre-flighted before launch (worktree present, launcher present, no .done key collision with the 2026-09-12 01:00Z window). Follow with dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh.",
@@ -1798,7 +1848,8 @@
     "Session 21 closing rulings (2026-09-18T19:15Z, invoker interview): (1) AGENTS.md trimmed of four mechanism notes this epic had added (turnstile rationale, lock lifetime, Cargo.lock and git-index detail, the shared-closure note); the script headers already carry them; contract statements stay. (2) Commit convention in AGENTS.md is a closed rule: `<type>(<scope>): <summary>`, closed type list, whole line at most 71 characters, jit scope, binding on every commit that enters main including merges, tracker state commits and salvage commits; worker brief aligned. (3) Measured campaigns' per-issue closures stay as evidence and never gain src/arm.rs; only closures of campaigns that have not run gain it. (4) Rework rounds past the limit of two stay an invoker decision every time; no standing authorization.",
     "Session 22 (2026-09-19T14:30Z): invocation: drive the epic; subagent model by difficulty, no Fable; at most four workers in worktrees, reuse over proliferation. The 2026-09-19 window ran all nine queued lines (01:00Z-01:18Z): every campaign verified complete from its own execution log (18a87159: 17/17/6 cells plus the profile session; f63a2464: 2/3/2; ad2a6a58: 10; 4c1e441f: 8), every receipt 'Accepted qualifies=false findings=0' (pilots). ad2a6a58's job rc=1 was the launcher's terminal-list check rejecting a paused-then-complete run; the lead wrote its done marker after verifying the log. Dispatched (opus): w-d45aff82-r2 (staged smoke mode, agent-85fc5ff4 reset to main), w-ad2a6a58-pw and w-4c1e441f-pw (evidence, freeze and queue the confirmation; trees stay pinned), w-f63a2464-pw (stop rules; rebases onto main only if no family confirms). 9fb40c83 gates on main: cargo-ci PASS; code-review and research-review re-run in sequence. Window gf2-bench-window-20260920 armed for 2026-09-20 04:00 EEST.",
     "Session 22 (2026-09-19T15:20Z): 9fb40c83 gate chain on main c011e69a2: cargo-ci PASS, code-review PASS (zero findings), research-review FAIL round 4 with F1 and F2 closed and F3 open (retained-session hardware-counter and hot-symbol tables carry n = 1 and no interval; only the first profile session collected counters, so closing F3 needs a fresh v4-r3 profile session that collects counters in every repetition). Rework count is 3, past the limit: invoker decision required (session-21 ruling 4). 4c1e441f post-window round accepted for the interim: pilot verified from its log, confirmation frozen (6 of 8 cells, derivation record beside the addendum), queued for the 2026-09-20 window; replayed onto the rewritten main (replay branch rebased --onto main from 58bcfe84b, identical 237-file diff) and merged at 57ded10db, merged-tree cargo-ci green, 13 artifacts linked; the pinned worktree agent-c04dd4ac stays on its pilot tree for the confirmation.",
-    "Session 22 end (2026-09-19T15:55Z): invoker ruling mid-session: no new work, finish running tasks, hand off. d45aff82 DONE (all gates, zero findings). 4c1e441f, ad2a6a58, f63a2464 pilots merged, confirmations frozen and queued for the armed 2026-09-20 window; trees pinned; commits replayed onto main through scratch replay branches. 18a87159 merged with cargo-ci and code-review PASS; research-review FAIL F1 (exact executed invocations missing from receipts and profile), rework 1 owed. 9fb40c83 gates: cargo-ci and code-review PASS, research-review FAIL F3 only; rework count 3, invoker decision open. Bug 5ac79460 filed ahead of bc091474. Lock-contention fix requested from the just-in-time session. Five opus dispatches, no stalls. Handoff: handoff-17.md."
+    "Session 22 end (2026-09-19T15:55Z): invoker ruling mid-session: no new work, finish running tasks, hand off. d45aff82 DONE (all gates, zero findings). 4c1e441f, ad2a6a58, f63a2464 pilots merged, confirmations frozen and queued for the armed 2026-09-20 window; trees pinned; commits replayed onto main through scratch replay branches. 18a87159 merged with cargo-ci and code-review PASS; research-review FAIL F1 (exact executed invocations missing from receipts and profile), rework 1 owed. 9fb40c83 gates: cargo-ci and code-review PASS, research-review FAIL F3 only; rework count 3, invoker decision open. Bug 5ac79460 filed ahead of bc091474. Lock-contention fix requested from the just-in-time session. Five opus dispatches, no stalls. Handoff: handoff-17.md.",
+    "Session 23 (2026-09-26): resume through current wave 3 only. JIT audit: 12 direct wave entries done, 2 rejected, 2 backlog stories with 14 unfinished descendants. Cleared one stale claims lock. No user benchmark timer exists; window.log ends 2026-09-19. Sol high handles 5ac79460 and 18a87159 rework 1; Sol xhigh continues the already-authorized e1f9a78f staged-smoke convergence after d45aff82. No timed runs or Astra. Asked invoker for the outstanding 9fb40c83 fourth rework, concretely collecting counter/hot-symbol repetitions and intervals in a fresh overnight profile. Pinned out-of-wave confirmation trees preserved."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1828,6 +1879,33 @@
     "armed_for": "2026-09-20T04:00 Europe/Helsinki (01:00Z)",
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
-    "note": "Armed session 22 via systemd-run --user (XDG_RUNTIME_DIR=/run/user/1000, DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus), working directory the primary checkout, PATH=~/.cargo/bin:/usr/local/bin:/usr/bin, GF2_WINDOW_UNIT set. Runs the A/B confirmations queued this session (4c1e441f line merged; ad2a6a58 and any f63a2464 line follow). The 2026-09-19 window's nine jobs are all marked done (the ad2a6a58 pilot marker written by the lead after log verification)."
+    "note": "Armed session 22 via systemd-run --user (XDG_RUNTIME_DIR=/run/user/1000, DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus), working directory the primary checkout, PATH=~/.cargo/bin:/usr/local/bin:/usr/bin, GF2_WINDOW_UNIT set. Runs the A/B confirmations queued this session (4c1e441f line merged; ad2a6a58 and any f63a2464 line follow). The 2026-09-19 window's nine jobs are all marked done (the ad2a6a58 pilot marker written by the lead after log verification).",
+    "current_observation": "2026-09-26: systemctl --user list-timers --all reports zero timers; window.log last event is 2026-09-19 window end. Historical armed_for does not establish execution."
+  },
+  "session_scope": {
+    "session": 23,
+    "date": "2026-09-26",
+    "instruction": "Complete current wave 3 only; model by task difficulty; Astra requires explicit permission.",
+    "wave_3_containers": [
+      "2037941f",
+      "c04dd4ac"
+    ],
+    "remaining_descendants": [
+      "18a87159",
+      "5ac79460",
+      "e1f9a78f",
+      "65c0e13d",
+      "bc091474",
+      "fcb04d66",
+      "a1ad6d4e",
+      "c73ffa25",
+      "50f0bd42",
+      "6e87c436",
+      "2ad3a3e0",
+      "00dd43c3",
+      "9fb40c83",
+      "a0812b83"
+    ],
+    "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation."
   }
 }
