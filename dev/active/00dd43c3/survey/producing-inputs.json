@@ -338,6 +338,7 @@
     "crates/gf2-kernels-simd/src/x86/transpose.rs",
     "dev/active/00dd43c3/pilot-addendum.json",
     "dev/active/00dd43c3/profile-context.json",
+    "dev/active/00dd43c3/survey/freeze-confirmation.py",
     "dev/active/00dd43c3/survey/freeze-pilot.py",
     "dev/active/00dd43c3/survey/make-plan.py",
     "dev/active/00dd43c3/survey/make-producing-inputs.py",
