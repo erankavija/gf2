@@ -1,0 +1,1 @@
+{"cache_state":"streaming","calls":33030143,"case":"row-xor-64w-full-streaming@row-xor-a","cell":"row-xor-64w-full-streaming","elapsed_ns":1004157949,"route":"row-xor-a","schema":"logical-buffer-profile-case-v1","selected_path":"gf2-core/BitMatrix::row_xor/simd/stride=64w/shape=full/base%64=48/dst:src%64=48:48,48:48,48:48,48:48,48:48,48:48,48:48,48:48/working-set=67108864B"}
