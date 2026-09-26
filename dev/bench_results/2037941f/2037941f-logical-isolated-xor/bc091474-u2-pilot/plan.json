@@ -1,0 +1,243 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "bc091474-u2-2037941f-logical-isolated-xor",
+  "issue": "18a87159",
+  "label": "pilot",
+  "campaign_seed": 20260916,
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isolated-xor.json",
+  "producing_manifest": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "public-xor-a": {
+      "build": "conservative-portable",
+      "description": "Public gf2_core::kernels::ops::xor_inplace, one call per logical operation, with per-call dispatch inside the measured region",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-arms/release/logical-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LOGICAL_ROUTE": "public-xor-a"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    },
+    "public-xor-b": {
+      "build": "conservative-portable",
+      "description": "Byte-identical executable and public in-place XOR route, independently launched as the pre-candidate identity comparison",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bc091474-unroll2/release/logical-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LOGICAL_ROUTE": "public-xor-b"
+      },
+      "rustflags": "--cfg gf2_xor_unroll2",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "xor-8w-a64-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 2321486994848424671,
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-9w-a64-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 13633757928082271450,
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-63w-a64-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 16115194359174302255,
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-64w-a64-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 15918720729511618500,
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-65w-a64-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 14267296182557858454,
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-7w-a64-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 1837115473580572245,
+        "words": 7
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-66w-a64-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 17175135014391788643,
+        "words": 66
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-8w-o8-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "o8",
+        "question": "isolated-xor",
+        "seed": 16156431033300177415,
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-9w-o8-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "o8",
+        "question": "isolated-xor",
+        "seed": 9229130992898457282,
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-63w-o8-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "o8",
+        "question": "isolated-xor",
+        "seed": 9391114251795375824,
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-64w-o8-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "o8",
+        "question": "isolated-xor",
+        "seed": 4178068976868291933,
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-65w-o8-warm",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "o8",
+        "question": "isolated-xor",
+        "seed": 17493942236861456296,
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-8w-a64-streaming",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 4121416940162179919,
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-9w-a64-streaming",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 13426436795046580976,
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-63w-a64-streaming",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 4532189289085035454,
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-64w-a64-streaming",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 17059762262206293089,
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "xor-65w-a64-streaming",
+      "baseline_arm": "public-xor-a",
+      "candidate_arm": "public-xor-b",
+      "case": {
+        "layout": "a64",
+        "question": "isolated-xor",
+        "seed": 18175591272758656396,
+        "words": 65
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}
