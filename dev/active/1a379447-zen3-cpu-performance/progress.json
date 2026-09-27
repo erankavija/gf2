@@ -648,8 +648,8 @@
           "short_id": "bc091474",
           "title": "Freeze, measure and select the logical-buffer candidates",
           "classification": "research",
-          "status": "in progress; session23 preparation merged at59bff36c8. Frozen factors2/4, both release harnesses31 tests, four staged17-cell smokes with zero timing. Four pilots and two profiles queued (76-minute estimate); timed evidence and selection remain pending.",
-          "tracker_state": "in_progress",
+          "status": "done01482e86d. Four24-pair pilots, two9-repetition profiles; no eligible factor-band pair, no NR candidate, no adoption. Codea316789a/research04010013 pass zero findings; lead reviewbc091474-r1.md.",
+          "tracker_state": "done",
           "merge_commit": "59bff36c8",
           "dispatch": {
             "model": "gpt-6-sol xhigh",
@@ -1983,7 +1983,8 @@
     "Session26 continuation: 9f0e385e DONE at a8b294998. Residual confirmation six cells frozen/smoked/queued, merged4d1beee1d CI PASS. Dense baseline evidence and newline fix merged09555e7ee CI PASS; new profile awaits September28. DVB fresh9rep evidence mergede759188c9 CI PASS; research review closes counter finding but flags bare setup/share statistics, round8 approved. ISA pilot merged919ea1c9b CI PASS; family resolution exceeds fixed cap, no confirmation; approved contract clarification91cb9b7fc. Logical portfolio no candidate; final report about to merge. No Astra or active-session timing.",
     "Session26: approved DVB round8 merged dde907e5b, ISA clarification merged9d1955123, logical sampled-symbol uncertainty merged08ec2888a; each clean merged-tree CI PASS. ISA and DVB document checks have zero errors. Logical checker treats Python f-string templates as literal Markdown links; generated outputs resolve. Final code/research gate chain starts after links. No worker active; pinned dense/residual timers unchanged.",
     "Session26: DVB9fb40c83 DONE eb7d94e0a. Code b753b580 passes with existing coverage advisory resolved by9f0e385e; research36a97137 passes zero findings. Story publication still waits residual-shift confirmation00dd43c3. ISA-L code review next.",
-    "Session26: ISA-L65c0e13d DONE ec5ad6fe1. Code0c538d09 PASS zero findings; researchbd066df1 PASS sampling advisory. Citation-only repair uses standing handoff15 authorization. User approved terminal six-pair exception ISA-PILOT-6; review65c0e13d-r1.md. Logical codea316789a PASS zero findings; research next. All raw receipt bytes preserved."
+    "Session26: ISA-L65c0e13d DONE ec5ad6fe1. Code0c538d09 PASS zero findings; researchbd066df1 PASS sampling advisory. Citation-only repair uses standing handoff15 authorization. User approved terminal six-pair exception ISA-PILOT-6; review65c0e13d-r1.md. Logical codea316789a PASS zero findings; research next. All raw receipt bytes preserved.",
+    "Session26: bc091474 DONE01482e86d; fcb04d66 and a1ad6d4e newly ready. Next dispatch Sol high for no-change production verification and Sol xhigh for private BitSlice candidate assessment. Wave3 remains current; dense/residual measurements still scheduled02:00 Helsinki."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2028,7 +2029,6 @@
       "c04dd4ac"
     ],
     "remaining_descendants": [
-      "bc091474",
       "fcb04d66",
       "a1ad6d4e",
       "c73ffa25",
@@ -2044,7 +2044,8 @@
     "completed_this_session": [
       "9f0e385e",
       "9fb40c83",
-      "65c0e13d"
+      "65c0e13d",
+      "bc091474"
     ],
     "active_workers": {},
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
