@@ -296,6 +296,95 @@
       "format": "markdown",
       "label": "ISA-L unavailable-route row generator",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/render-isal-availability.py"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "f3460aaa053fc8f0398c489118324bdc3947fa06a1666b21b4019de266fa325b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/tables.md",
+          "resolved_path": "dev/bench_results/04b85d10/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcabe66f6c713a62d8ce8e9d07ab403e775650e5e1faa5eb8a17767f61997c58",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-comparator.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f3ed481c92c24b6887aa1258f5260809dce9d62c602955162da260289bce0d72",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../04b85d10/findings.md",
+          "resolved_path": "dev/active/04b85d10/findings.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Frozen logical addendum and approved ISA-L clarification",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcabe66f6c713a62d8ce8e9d07ab403e775650e5e1faa5eb8a17767f61997c58",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-comparator.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8b4e4b3d16f693a2d445570f0a6e5f5022588cd620673bb4ff54ed582eb96a22",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Canonical logical harness contract",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-harness.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Authoritative mid-range breakdown manifest",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
     }
   ],
   "first_ready_at": "2026-09-16T22:42:51.432965529Z",
@@ -326,5 +415,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Measure the ISA-L XOR comparison",
-  "updated_at": "2026-09-27T19:31:01.956878660Z"
+  "updated_at": "2026-09-27T19:36:47.343916826Z"
 }
