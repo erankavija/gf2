@@ -146,6 +146,69 @@
       "verbatim": "    pub fn row_xor(&mut self, dst: usize, src: usize) {",
       "why": "The public row XOR is the whole-consumer path.",
       "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/cells.rs",
+      "line": 19,
+      "verbatim": "pub const ADDENDUM_IDENTITY: &str = \"2037941f-logical-buffer-v1\";",
+      "why": "The fixed profile cell table names its frozen addendum version.",
+      "sha256": "75d580a8ca245d483f07cfdbdd816f4c0f4414cd20d1252082c55e446a86c209"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/cells.rs",
+      "line": 27,
+      "verbatim": "pub const CAMPAIGN_SEED: u64 = 0x2037_941f_3ea1_22df;",
+      "why": "The cell table declares the campaign seed.",
+      "sha256": "75d580a8ca245d483f07cfdbdd816f4c0f4414cd20d1252082c55e446a86c209"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/cells.rs",
+      "line": 467,
+      "verbatim": "    let mut mixer = SplitMix64::new(CAMPAIGN_SEED);",
+      "why": "Cell seeds derive from one canonical SplitMix64 stream.",
+      "sha256": "75d580a8ca245d483f07cfdbdd816f4c0f4414cd20d1252082c55e446a86c209"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-profile.rs",
+      "line": 130,
+      "verbatim": "    let seed = cell.seed;",
+      "why": "The profile driver uses each frozen cell seed.",
+      "sha256": "bfb66df1548cde5e4d11768728e5fe8f70aa780c60118231b1d20a6b1c168dbf"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-profile.rs",
+      "line": 225,
+      "verbatim": "            \"schema\": \"logical-buffer-profile-case-v1\",",
+      "why": "The driver declares its output record schema.",
+      "sha256": "bfb66df1548cde5e4d11768728e5fe8f70aa780c60118231b1d20a6b1c168dbf"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/fixture.rs",
+      "line": 3,
+      "verbatim": "//! One canonical `SplitMix64` stream per cell, started at that cell's workload",
+      "why": "The fixture specifies its seeded fill stream and ordering.",
+      "sha256": "9e4957f4605950d3705a430a4b5deaa2d87140b32f915a5620e79090d0544cdb"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "dev/tools/tuning-campaign-support/src/abtest.rs",
+      "line": 31,
+      "verbatim": "pub struct SplitMix64(u64);",
+      "why": "The shared generator supplies the fixture RNG implementation.",
+      "sha256": "095deb55202c80bda2b2eb0b3362f524ab77891f4f05da7c549e7b3f8053e824"
     }
   ]
 }
