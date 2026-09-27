@@ -1380,6 +1380,14 @@
       "raised_at": "2026-09-27",
       "question": "Clarify qualified aligned/boundary equivalence, inapplicable offsets, and companion unavailable rows.",
       "resolution": "Invoker approved both clarifications. REQ02 and ruling recorded at91cb9b7fc; worker aligns versioned addendum and generated availability table. Numeric rules and raw receipts unchanged."
+    },
+    {
+      "category": "frozen sampling exception",
+      "issue": "65c0e13d",
+      "status": "resolved",
+      "raised_at": "2026-09-27",
+      "question": "Accept the six-pair pilot as terminal exploratory evidence despite the frozen 24-pair prose requirement, or run a corrected fresh pilot?",
+      "resolution": "Invoker approved the named ISA-PILOT-6 exception. Exact receipt digest, discrepancy, original requirement, no confirmation and no adoption preserved; no future six-pair family run authorized. Recorded1492b480c."
     }
   ],
   "rework_counts": {
@@ -1408,7 +1416,8 @@
     "f8dd4dde": 1,
     "d45aff82": 2,
     "18a87159": 1,
-    "bc091474": 1
+    "bc091474": 1,
+    "65c0e13d": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1838,6 +1847,13 @@
       "issue": "65c0e13d",
       "status": "resolved",
       "finding": "Worker initially proposed widening generic freezer margins. Family frozen addendum instead fixes margins and stops when primary resolution exceeds .030. Lead stopped preparation; uncommitted confirmation edits discarded; raw pilot preserved as resolution-insufficient. Generic helper capability never overrides stricter frozen family rules."
+    },
+    {
+      "issue": "65c0e13d",
+      "subject": "ISA-L queue omitted --pilot-pairs24; null override uses six-pair runner default despite frozen prose requiring24.",
+      "origin": "research bd066df1 advisory",
+      "disposition": "Resolved by explicit invoker-approved ISA-PILOT-6 terminal exception, scoped to exact receipt; original discrepancy preserved. Always compare each executed pair count against family prose, not only runner acceptance.",
+      "criterion_named_by": "2037941f REQ06 and65c0e13d measurement contract"
     }
   ],
   "notes": [
@@ -1966,7 +1982,8 @@
     "Session26: resume current wave3 only. Three Sol workers finalize dense, DVB and logical candidate evidence from September27 window; no Astra. Dense profile launch failed before sampling. Lead audits coverage addressability and remaining pilot paths. Existing pinned measurement trees preserved.",
     "Session26 continuation: 9f0e385e DONE at a8b294998. Residual confirmation six cells frozen/smoked/queued, merged4d1beee1d CI PASS. Dense baseline evidence and newline fix merged09555e7ee CI PASS; new profile awaits September28. DVB fresh9rep evidence mergede759188c9 CI PASS; research review closes counter finding but flags bare setup/share statistics, round8 approved. ISA pilot merged919ea1c9b CI PASS; family resolution exceeds fixed cap, no confirmation; approved contract clarification91cb9b7fc. Logical portfolio no candidate; final report about to merge. No Astra or active-session timing.",
     "Session26: approved DVB round8 merged dde907e5b, ISA clarification merged9d1955123, logical sampled-symbol uncertainty merged08ec2888a; each clean merged-tree CI PASS. ISA and DVB document checks have zero errors. Logical checker treats Python f-string templates as literal Markdown links; generated outputs resolve. Final code/research gate chain starts after links. No worker active; pinned dense/residual timers unchanged.",
-    "Session26: DVB9fb40c83 DONE eb7d94e0a. Code b753b580 passes with existing coverage advisory resolved by9f0e385e; research36a97137 passes zero findings. Story publication still waits residual-shift confirmation00dd43c3. ISA-L code review next."
+    "Session26: DVB9fb40c83 DONE eb7d94e0a. Code b753b580 passes with existing coverage advisory resolved by9f0e385e; research36a97137 passes zero findings. Story publication still waits residual-shift confirmation00dd43c3. ISA-L code review next.",
+    "Session26: ISA-L65c0e13d DONE ec5ad6fe1. Code0c538d09 PASS zero findings; researchbd066df1 PASS sampling advisory. Citation-only repair uses standing handoff15 authorization. User approved terminal six-pair exception ISA-PILOT-6; review65c0e13d-r1.md. Logical codea316789a PASS zero findings; research next. All raw receipt bytes preserved."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2011,7 +2028,6 @@
       "c04dd4ac"
     ],
     "remaining_descendants": [
-      "65c0e13d",
       "bc091474",
       "fcb04d66",
       "a1ad6d4e",
@@ -2027,7 +2043,8 @@
     "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3",
     "completed_this_session": [
       "9f0e385e",
-      "9fb40c83"
+      "9fb40c83",
+      "65c0e13d"
     ],
     "active_workers": {},
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
