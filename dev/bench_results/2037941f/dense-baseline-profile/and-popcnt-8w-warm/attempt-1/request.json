@@ -1,0 +1,1 @@
+{"schema":"zen3-benchmark-arm-request-v1","cell_id":"and-popcnt-8w-warm","arm":"and-popcnt-a","role":"baseline","pair":0,"case":{"question":"isolated-fused-parity","seed":2321486996327451521,"words":8},"cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"workers_declared":1}

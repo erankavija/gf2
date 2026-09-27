@@ -1,0 +1,171 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "v4-r1-2037941f-dense-isolated-fused-parity",
+  "issue": "e1f9a78f",
+  "label": "pilot",
+  "campaign_seed": 20260917,
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-isolated-fused-parity.json",
+  "producing_manifest": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "and-popcnt-a": {
+      "build": "conservative-portable",
+      "description": "One call to the detected bundle's and_popcnt_fn over one row and the vector, reached through the bundle function pointer behind an optimisation barrier",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-arms/release/dense-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DENSE_ROUTE": "and-popcnt-a"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    },
+    "and-popcnt-b": {
+      "build": "conservative-portable",
+      "description": "The same bundle entry and optimisation barrier, independently launched as the pre-candidate identity comparison or carrying the single candidate fusion body",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-arms/release/dense-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DENSE_ROUTE": "and-popcnt-b"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "and-popcnt-8w-warm",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 2321486996327451521,
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-9w-warm",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 4753145896412340504,
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-63w-warm",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 17148963807832978103,
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-64w-warm",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 10967803942208214426,
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-65w-warm",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 3240581074667839197,
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-7w-warm",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 11659743146836513938,
+        "words": 7
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-66w-warm",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 8616225918994224998,
+        "words": 66
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-8w-streaming",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 3844196989419024866,
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-9w-streaming",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 805649719888145275,
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-63w-streaming",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 8612390784212865105,
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-64w-streaming",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 12030604777397187438,
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "and-popcnt-65w-streaming",
+      "baseline_arm": "and-popcnt-a",
+      "candidate_arm": "and-popcnt-b",
+      "case": {
+        "question": "isolated-fused-parity",
+        "seed": 3639733647289882297,
+        "words": 65
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}
